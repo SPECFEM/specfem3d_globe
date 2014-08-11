@@ -199,6 +199,8 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
                COMPUTE_STACEY_ACOUSTIC_BACKWARD_GPU) (long *Mesh_pointer_f,
@@ -251,7 +253,7 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     break;
 
   default:
-    exit_on_error ("compute_stacey_acoustic_gpu: unknown interface type");
+    exit_on_error ("compute_stacey_acoustic_backward_gpu: unknown interface type");
     break;
   }
 
@@ -407,7 +409,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     break;
 
   default:
-    exit_on_error ("compute_stacey_acoustic_gpu: unknown interface type");
+    exit_on_error ("compute_stacey_acoustic_undoatt_gpu: unknown interface type");
     break;
   }
 

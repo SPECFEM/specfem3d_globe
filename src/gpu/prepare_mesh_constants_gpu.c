@@ -63,6 +63,8 @@
 #endif
 #endif
 
+/* ----------------------------------------------------------------------------------------------- */
+
 #ifdef USE_OPENCL
 const char *memset_kern_code[] = {" __kernel void memset_uint4(__global uint4*mem, __private uint4 val) { mem[get_global_id(0)]=val; }"};
 
@@ -223,6 +225,8 @@ void initialize_dummy_buffers(Mesh *mp) {
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 // setup functions
 void setConst (gpu_realw_mem *buffer, size_t size, realw *array) {
   size *= sizeof(realw);
@@ -246,6 +250,8 @@ void setConst (gpu_realw_mem *buffer, size_t size, realw *array) {
   }
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_constants_device,
@@ -661,7 +667,7 @@ void FC_FUNC_ (prepare_fields_rotation_device,
   if (*NSPEC_OUTER_CORE_ROTATION != mp->NSPEC_OUTER_CORE) {
     printf ("error prepare_fields_rotation_device: rotation array has wrong size: %d instead of %d\n",
             *NSPEC_OUTER_CORE_ROTATION, mp->NSPEC_OUTER_CORE);
-    exit_on_gpu_error ("prepare_fields_rotation_device: rotation array has wrong size");
+    exit_on_error ("prepare_fields_rotation_device: rotation array has wrong size");
   }
 
   // rotation arrays (needed only for outer core region)
@@ -777,10 +783,6 @@ void FC_FUNC_ (prepare_fields_attenuat_device,
   if( ! mp->attenuation ){ exit_on_error("prepare_fields_attenuat_device attenuation not properly initialized"); }
 
   // crust_mantle
-  if (!mp->attenuation) {
-    exit_on_gpu_error ("prepare_fields_attenuat_device attenuation not properly initialized");
-  }
-
   R_size1 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
   if (mp->use_3d_attenuation_arrays) {
     R_size2 = NGLL3*mp->NSPEC_CRUST_MANTLE;
@@ -901,7 +903,7 @@ void FC_FUNC_ (prepare_fields_strain_device,
 
   // checks flag
   if (!mp->compute_and_store_strain) {
-    exit_on_gpu_error ("prepare_fields_strain_device strain not properly initialized");
+    exit_on_error ("prepare_fields_strain_device strain not properly initialized");
   }
 
   // crust_mantle
@@ -983,7 +985,6 @@ void FC_FUNC_ (prepare_fields_strain_device,
 // STRAIN simulations
 /*----------------------------------------------------------------------------------------------- */
 
-
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_fields_absorb_device,
                PREPARE_FIELDS_ABSORB_DEVICE) (long *Mesh_pointer_f,
@@ -1022,7 +1023,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
 #endif
   // checks flag
   if (! mp->absorbing_conditions) {
-    exit_on_gpu_error ("prepare_fields_absorb_device absorbing_conditions not properly initialized");
+    exit_on_error ("prepare_fields_absorb_device absorbing_conditions not properly initialized");
   }
 
   // crust_mantle
@@ -1290,7 +1291,6 @@ void FC_FUNC_ (prepare_fields_absorb_device,
 // MPI interfaces
 /*----------------------------------------------------------------------------------------------- */
 
-
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_mpi_buffers_device,
                PREPARE_MPI_BUFFERS_DEVICE) (long *Mesh_pointer_f,
@@ -1359,10 +1359,10 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
 #endif
     }
 
+    // asynchronous MPI buffer
+    if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
-    if (run_opencl) {
-      // asynchronous MPI buffer
-      if (GPU_ASYNC_COPY) {
+      if (run_opencl) {
         ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
         ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
 
@@ -1371,26 +1371,9 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
           ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
         }
       }
-    }
-#endif
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      // asynchronous MPI buffer
-      if (GPU_ASYNC_COPY) {
-        ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-        ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-
-        if (mp->simulation_type == 3) {
-          ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-          ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_cm, sizeof(realw)* size_mpi_buffer);
-        }
-      }
-    }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda) {
-      // asynchronous MPI buffer
-      if( GPU_ASYNC_COPY ){
+      if (run_cuda) {
         // note: Allocate pinned MPI buffers.
         //       MPI buffers use pinned memory allocated by cudaMallocHost, which
         //       enables the use of asynchronous memory copies from host <-> device
@@ -1403,8 +1386,8 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
           print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
         }
       }
-    }
 #endif
+    }
   }
 
   // inner core mesh
@@ -1451,10 +1434,10 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
 #endif
     }
 
+    // asynchronous MPI buffer
+    if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
-    if (run_opencl) {
-      // asynchronous MPI buffer
-      if (GPU_ASYNC_COPY) {
+      if (run_opencl) {
         ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
         ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
 
@@ -1463,12 +1446,9 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
           ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_ic, sizeof(realw)* size_mpi_buffer);
         }
       }
-    }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda) {
-      // asynchronous MPI buffer
-      if( GPU_ASYNC_COPY ){
+      if (run_cuda) {
         // note: Allocate pinned MPI buffers.
         //       MPI buffers use pinned memory allocated by cudaMallocHost, which
         //       enables the use of asynchronous memory copies from host <-> device
@@ -1482,8 +1462,8 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
           print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
         }
       }
-    }
 #endif
+    }
   }
   // outer core mesh
   // note: uses only scalar wavefield arrays
@@ -1504,68 +1484,59 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
 #ifdef USE_OPENCL
     if (run_opencl) {
       mp->d_send_accel_buffer_outer_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
-                                                               mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core * sizeof (realw),
+                                                               size_mpi_buffer * sizeof (realw),
                                                                NULL, clck_(&errcode));
     }
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_outer_core),
-                                         NDIM*(mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw)),4004);
+      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_outer_core),size_mpi_buffer*sizeof(realw)),4004);
     }
 #endif
-
-    /***************************/
 
     if (mp->simulation_type == 3) {
 #ifdef USE_OPENCL
       if (run_opencl) {
         mp->d_b_send_accel_buffer_outer_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
-                                                                   mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core * sizeof (realw), NULL, clck_(&errcode));
+                                                                   size_mpi_buffer * sizeof (realw), NULL, clck_(&errcode));
       }
 #endif
 #ifdef USE_CUDA
       if (run_cuda) {
-        print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_accel_buffer_outer_core.cuda),
-                                           NDIM*(mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core)*sizeof(realw)),4004);
+        print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_send_accel_buffer_outer_core.cuda),size_mpi_buffer*sizeof(realw)),4004);
       }
 #endif
     }
 
-    /**************************/
-
-#ifdef USE_OPENCL
-  if (run_opencl) {
     // asynchronous MPI buffer
     if (GPU_ASYNC_COPY) {
-      ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
-      ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
+#ifdef USE_OPENCL
+      if (run_opencl) {
+        ALLOC_PINNED_BUFFER_OCL(send_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
+        ALLOC_PINNED_BUFFER_OCL(recv_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
 
-      if (mp->simulation_type == 3) {
-        ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
-        ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
+        if (mp->simulation_type == 3) {
+          ALLOC_PINNED_BUFFER_OCL(b_send_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
+          ALLOC_PINNED_BUFFER_OCL(b_recv_accel_buffer_oc, sizeof(realw)* size_mpi_buffer);
+        }
       }
-    }
-  }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    // asynchronous MPI buffer
-    if( GPU_ASYNC_COPY ){
-      // note: Allocate pinned MPI buffers.
-      //       MPI buffers use pinned memory allocated by cudaMallocHost, which
-      //       enables the use of asynchronous memory copies from host <-> device
-      // send buffer
-      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_send_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
-      // receive buffer
-      print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
-      if( mp->simulation_type == 3){
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
+      if (run_cuda) {
+        // note: Allocate pinned MPI buffers.
+        //       MPI buffers use pinned memory allocated by cudaMallocHost, which
+        //       enables the use of asynchronous memory copies from host <-> device
+        // send buffer
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_send_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
+        // receive buffer
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
+        if( mp->simulation_type == 3){
+          print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
+          print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
+        }
       }
-    }
-  }
 #endif
+    }
   }
 }
 
@@ -1670,7 +1641,6 @@ void FC_FUNC_ (prepare_fields_noise_device,
 // OCEANS
 /*----------------------------------------------------------------------------------------------- */
 
-
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_oceans_device,
                PREPARE_OCEANS_DEVICE) (long *Mesh_pointer_f,
@@ -1711,7 +1681,6 @@ void FC_FUNC_ (prepare_oceans_device,
 // Earth regions
 // CRUST / MANTLE
 /*----------------------------------------------------------------------------------------------- */
-
 
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_crust_mantle_device,
@@ -2191,7 +2160,6 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     }
   }
 
-
   // mesh locations
   // ystore & zstore needed for tiso elements
   copy_todevice_realw (mp, &mp->d_ystore_crust_mantle, h_ystore, size_glob);
@@ -2453,7 +2421,6 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 /*----------------------------------------------------------------------------------------------- */
 // OUTER CORE
 /*----------------------------------------------------------------------------------------------- */
-
 
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_outer_core_device,
@@ -2843,7 +2810,6 @@ void FC_FUNC_ (prepare_outer_core_device,
 /*----------------------------------------------------------------------------------------------- */
 // INNER CORE
 /*----------------------------------------------------------------------------------------------- */
-
 
 extern EXTERN_LANG
 void FC_FUNC_ (prepare_inner_core_device,
@@ -4364,7 +4330,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     cudaFree(mp->d_phase_ispec_inner_crust_mantle.cuda);
     cudaFree(mp->d_ibelm_bottom_crust_mantle.cuda);
 
-  // wavefield
+    // wavefield
     cudaFree(mp->d_displ_crust_mantle.cuda);
     cudaFree(mp->d_veloc_crust_mantle.cuda);
     cudaFree(mp->d_accel_crust_mantle.cuda);
@@ -4379,24 +4345,24 @@ void FC_FUNC_ (prepare_cleanup_device,
       cudaFree(mp->d_rmassx_crust_mantle.cuda);
       cudaFree(mp->d_rmassy_crust_mantle.cuda);
     }
-  // kernel simulations
-  if( mp->simulation_type == 3 ){
-    if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
-      cudaFree(mp->d_b_rmassx_crust_mantle.cuda);
-      cudaFree(mp->d_b_rmassy_crust_mantle.cuda);
+    // kernel simulations
+    if( mp->simulation_type == 3 ){
+      if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+        cudaFree(mp->d_b_rmassx_crust_mantle.cuda);
+        cudaFree(mp->d_b_rmassy_crust_mantle.cuda);
+      }
+      // kernels
+      cudaFree(mp->d_rho_kl_crust_mantle.cuda);
+      if(! mp->anisotropic_kl){
+        cudaFree(mp->d_alpha_kl_crust_mantle.cuda);
+        cudaFree(mp->d_beta_kl_crust_mantle.cuda);
+      }else{
+        cudaFree(mp->d_cijkl_kl_crust_mantle.cuda);
+      }
+      if(mp->approximate_hess_kl){ cudaFree(mp->d_hess_kl_crust_mantle.cuda);}
     }
-    // kernels
-    cudaFree(mp->d_rho_kl_crust_mantle.cuda);
-    if(! mp->anisotropic_kl){
-      cudaFree(mp->d_alpha_kl_crust_mantle.cuda);
-      cudaFree(mp->d_beta_kl_crust_mantle.cuda);
-    }else{
-      cudaFree(mp->d_cijkl_kl_crust_mantle.cuda);
-    }
-    if(mp->approximate_hess_kl){ cudaFree(mp->d_hess_kl_crust_mantle.cuda);}
-  }
 
-   //------------------------------------------
+    //------------------------------------------
     // outer_core
     //------------------------------------------
     cudaFree(mp->d_xix_outer_core.cuda);
@@ -4429,7 +4395,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     cudaFree(mp->d_normal_bottom_outer_core.cuda);
     cudaFree(mp->d_jacobian2D_bottom_outer_core.cuda);
 
-  // wavefield
+    // wavefield
     cudaFree(mp->d_displ_outer_core.cuda);
     cudaFree(mp->d_veloc_outer_core.cuda);
     cudaFree(mp->d_accel_outer_core.cuda);
@@ -4441,10 +4407,10 @@ void FC_FUNC_ (prepare_cleanup_device,
     // mass matrix
     cudaFree(mp->d_rmass_outer_core.cuda);
 
-  if( mp->simulation_type == 3 ){
-    cudaFree(mp->d_rho_kl_outer_core.cuda);
-    cudaFree(mp->d_alpha_kl_outer_core.cuda);
-  }
+    if( mp->simulation_type == 3 ){
+      cudaFree(mp->d_rho_kl_outer_core.cuda);
+      cudaFree(mp->d_alpha_kl_outer_core.cuda);
+    }
     //------------------------------------------
     // inner_core
     //------------------------------------------
@@ -4473,18 +4439,18 @@ void FC_FUNC_ (prepare_cleanup_device,
     if( mp->simulation_type == 3 && mp->save_boundary_mesh ){
       cudaFree(mp->d_rhostore_inner_core.cuda);
     }
-  cudaFree(mp->d_ibool_inner_core.cuda);
+    cudaFree(mp->d_ibool_inner_core.cuda);
     cudaFree(mp->d_idoubling_inner_core.cuda);
-  // gravity
+    // gravity
     if( mp->gravity ){
       cudaFree(mp->d_xstore_inner_core.cuda);
       cudaFree(mp->d_ystore_inner_core.cuda);
       cudaFree(mp->d_zstore_inner_core.cuda);
     }
     cudaFree(mp->d_phase_ispec_inner_inner_core.cuda);
-  cudaFree(mp->d_ibelm_top_inner_core.cuda);
+    cudaFree(mp->d_ibelm_top_inner_core.cuda);
 
-  // wavefield
+    // wavefield
     cudaFree(mp->d_displ_inner_core.cuda);
     cudaFree(mp->d_veloc_inner_core.cuda);
     cudaFree(mp->d_accel_inner_core.cuda);
@@ -4492,22 +4458,22 @@ void FC_FUNC_ (prepare_cleanup_device,
       cudaFree(mp->d_b_displ_inner_core.cuda);
       cudaFree(mp->d_b_veloc_inner_core.cuda);
       cudaFree(mp->d_b_accel_inner_core.cuda);
-  }
-
-  // mass matrix
-  cudaFree(mp->d_rmassz_inner_core.cuda);
-  if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
-    cudaFree(mp->d_rmassx_inner_core.cuda);
-    cudaFree(mp->d_rmassy_inner_core.cuda);
-  }
-
-  // kernel simulations
-  if( mp->simulation_type == 3 ) {
-    if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
-      cudaFree(mp->d_b_rmassx_inner_core.cuda);
-      cudaFree(mp->d_b_rmassy_inner_core.cuda);
     }
-    // kernels
+
+    // mass matrix
+    cudaFree(mp->d_rmassz_inner_core.cuda);
+    if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+      cudaFree(mp->d_rmassx_inner_core.cuda);
+      cudaFree(mp->d_rmassy_inner_core.cuda);
+    }
+
+    // kernel simulations
+    if( mp->simulation_type == 3 ) {
+      if( mp->rotation && mp->exact_mass_matrix_for_rotation ){
+        cudaFree(mp->d_b_rmassx_inner_core.cuda);
+        cudaFree(mp->d_b_rmassy_inner_core.cuda);
+      }
+      // kernels
       cudaFree(mp->d_rho_kl_inner_core.cuda);
       cudaFree(mp->d_alpha_kl_inner_core.cuda);
       cudaFree(mp->d_beta_kl_inner_core.cuda);
@@ -4516,23 +4482,23 @@ void FC_FUNC_ (prepare_cleanup_device,
     // oceans
     if( mp->oceans ){
       cudaFree(mp->d_ibool_ocean_load.cuda);
-    cudaFree(mp->d_rmass_ocean_load.cuda);
+      cudaFree(mp->d_rmass_ocean_load.cuda);
       cudaFree(mp->d_normal_ocean_load.cuda);
     }
 
-  // cleans up asynchronous streams
-  cudaStreamDestroy(mp->compute_stream);
-  cudaStreamDestroy(mp->copy_stream);
+    // cleans up asynchronous streams
+    cudaStreamDestroy(mp->compute_stream);
+    cudaStreamDestroy(mp->copy_stream);
 
-  // synchronizes device
-  synchronize_cuda();
+    // synchronizes device
+    synchronize_cuda();
     // releases previous contexts
 #if CUDA_VERSION < 4000
     cudaThreadExit();
 #else
     cudaDeviceReset();
 #endif
-}
+  }
 #endif
   // mesh pointer - not needed anymore
   free (mp);

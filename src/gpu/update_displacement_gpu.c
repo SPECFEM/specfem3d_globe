@@ -144,7 +144,6 @@ void FC_FUNC_ (update_displacement_ic_gpu,
 //crust/mantle
 /*----------------------------------------------------------------------------------------------- */
 
-
 extern EXTERN_LANG
 void FC_FUNC_ (update_displacement_cm_gpu,
                UPDATE_DISPLACMENT_CM_GPU) (long *Mesh_pointer_f,
@@ -254,6 +253,8 @@ void FC_FUNC_ (update_displacement_cm_gpu,
 #endif
 
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
 void FC_FUNC_ (update_displacement_oc_gpu,
@@ -527,6 +528,8 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (update_veloc_elastic_gpu,
                UPDATE_VELOC_ELASTIC_GPU) (long *Mesh_pointer,
@@ -652,6 +655,8 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (multiply_accel_acoustic_gpu,
                MULTIPLY_ACCEL_ACOUSTIC_GPU) (long *Mesh_pointer,
@@ -722,6 +727,8 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
   exit_on_gpu_error ("after multiply_accel_acoustic_gpu");
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
 void FC_FUNC_ (update_veloc_acoustic_gpu,

@@ -748,12 +748,14 @@
 ! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
 
+!!-- uncomment for using S362ANI as reference model
   integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
-  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
+  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI
 
-!!-- uncomment for using S362ANI as reference model  (Hejun Zhu)
+!!-- uncomment for using S29EA as reference model
 !  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
-!  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI
+!  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
+
 
 !!-----------------------------------------------------------
 !!

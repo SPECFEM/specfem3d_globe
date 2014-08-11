@@ -177,6 +177,8 @@ const char *clGetErrorString (cl_int error) {
 }
 #endif
 
+/* ----------------------------------------------------------------------------------------------- */
+
 void exit_on_gpu_error (char *kernel_name) {
   //check to catch errors from previous operations
   // /!\ in opencl, we can't have information about the last ASYNC error
@@ -257,6 +259,8 @@ void exit_on_error (char *info) {
 #endif
   exit (EXIT_FAILURE);
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 #ifdef USE_CUDA
 void print_CUDA_error_if_any(cudaError_t err, int num) {
@@ -604,6 +608,8 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   exit_on_gpu_error ("after check_norm_acoustic_from_device");
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
 void FC_FUNC_ (check_norm_elastic_from_device,

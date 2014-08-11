@@ -26,9 +26,9 @@
 !=====================================================================
 
   subroutine meshfem3D_models_broadcast(myrank,NSPEC, &
-                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
-                        R80,R220,R670,RCMB,RICB, &
-                        LOCAL_PATH)
+                                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
+                                        R80,R220,R670,RCMB,RICB, &
+                                        LOCAL_PATH)
 
 ! preparing model parameter coefficients on all processes
 
@@ -36,12 +36,12 @@
 
   implicit none
 
-  integer myrank
+  integer :: myrank
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
 
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
-  double precision R80,R220,R670,RCMB,RICB
+  double precision :: R80,R220,R670,RCMB,RICB
 
   character(len=150) :: LOCAL_PATH
 

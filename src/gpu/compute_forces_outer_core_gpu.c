@@ -40,6 +40,8 @@ realw_texture d_b_accel_oc_tex;
 #endif
 #endif
 
+/* ----------------------------------------------------------------------------------------------- */
+
 void outer_core (int nb_blocks_to_compute, Mesh *mp,
                  int iphase,
                  gpu_int_mem d_ibool,

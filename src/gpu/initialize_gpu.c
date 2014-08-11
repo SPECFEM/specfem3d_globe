@@ -253,6 +253,8 @@ exiting...\n");
 }
 #endif
 
+/* ----------------------------------------------------------------------------------------------- */
+
 #ifdef USE_OPENCL
 struct _mesh_opencl mocl;
 
@@ -564,7 +566,10 @@ static char *trim_and_default(char *s)
   return s;
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 enum gpu_runtime_e {COMPILE, CUDA, OPENCL};
+
 extern EXTERN_LANG
 void FC_FUNC_ (initialize_gpu_device,
                INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_filter, char *device_filter, int *myrank_f, int *nb_devices) {

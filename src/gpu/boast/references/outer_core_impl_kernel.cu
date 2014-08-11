@@ -11,10 +11,12 @@ typedef float * realw_p;
 typedef const float* __restrict__ realw_const_p;
 
 #ifdef USE_TEXTURES_FIELDS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_oc_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_oc_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_b_displ_oc_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_b_accel_oc_tex;
+//forward
+realw_texture d_displ_oc_tex;
+realw_texture d_accel_oc_tex;
+//backward/reconstructed
+realw_texture d_b_displ_oc_tex;
+realw_texture d_b_accel_oc_tex;
 // templates definitions
 template<int FORWARD_OR_ADJOINT> __device__ float texfetch_displ_oc(int x);
 template<int FORWARD_OR_ADJOINT> __device__ float texfetch_accel_oc(int x);
@@ -27,9 +29,14 @@ template<> __device__ float texfetch_displ_oc<3>(int x) { return tex1Dfetch(d_b_
 template<> __device__ float texfetch_accel_oc<3>(int x) { return tex1Dfetch(d_b_accel_oc_tex, x); }
 #endif
 
-#ifdef USE_TEXTURES_CONSTANTS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_oc_tex;
-#endif
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// elemental routines
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// fluid rotation
 
 __device__ void compute_element_oc_rotation(int tx,int working_element,
                                             realw time,
@@ -73,6 +80,12 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
   d_B_array_rotation[tx + working_element*NGLL3] += source_euler_B;
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// KERNEL 2
+//
+// for outer core ( acoustic domain )
+/* ----------------------------------------------------------------------------------------------- */
 
 
 template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_blocks_to_compute,

@@ -30,10 +30,10 @@
 #include <string.h>
 
 #include "mesh_constants_gpu.h"
+
 /* ----------------------------------------------------------------------------------------------- */
 // MPI transfer
 /* ----------------------------------------------------------------------------------------------- */
-
 
 // prepares and transfers the inter-element edge-nodes to the host to be MPI'd
 // (elements on boundary)
@@ -337,7 +337,10 @@ void FC_FUNC_(transfer_boun_from_device,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 // FORWARD_OR_ADJOINT == 1 for accel, and == 3 for b_accel
+
 extern EXTERN_LANG
 void FC_FUNC_ (transfer_asmbl_accel_to_device,
                TRANSFER_ASMBL_ACCEL_TO_DEVICE) (long *Mesh_pointer,
@@ -467,7 +470,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
             // (cudaMemcpy implicitly synchronizes all other cuda operations)
             // copies vector buffer values to GPU
             print_CUDA_error_if_any(cudaMemcpy(mp->d_b_send_accel_buffer_crust_mantle.cuda, buffer_recv_vector,
-                                               NDIM*(mp->max_nibool_interfaces_cm)*(mp->num_interfaces_crust_mantle)*sizeof(realw),
+                                               size_mpi_buffer*sizeof(realw),
                                                cudaMemcpyHostToDevice),41000);
           }
 

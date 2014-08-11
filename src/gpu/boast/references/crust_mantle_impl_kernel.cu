@@ -8,11 +8,23 @@
 #define N_SLS 3
 #define R_EARTH_KM 6371.0f
 
+typedef float realw;
+typedef float * realw_p;
+typedef const float* __restrict__ realw_const_p;
+
 #ifdef USE_TEXTURES_FIELDS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_cm_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_cm_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_b_displ_cm_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_b_accel_cm_tex;
+//forward
+realw_texture d_displ_cm_tex;
+realw_texture d_accel_cm_tex;
+//backward/reconstructed
+realw_texture d_b_displ_cm_tex;
+realw_texture d_b_accel_cm_tex;
+
+//note: texture variables are implicitly static, and cannot be passed as arguments to cuda kernels;
+//      thus, 1) we thus use if-statements (FORWARD_OR_ADJOINT) to determine from which texture to fetch from
+//            2) we use templates
+//      since if-statements are a bit slower as the variable is only known at runtime, we use option 2)
+
 // templates definitions
 template<int FORWARD_OR_ADJOINT> __device__ float texfetch_displ_cm(int x);
 template<int FORWARD_OR_ADJOINT> __device__ float texfetch_accel_cm(int x);
@@ -27,21 +39,28 @@ template<> __device__ float texfetch_accel_cm<3>(int x) { return tex1Dfetch(d_b_
 #endif
 
 #ifdef USE_TEXTURES_CONSTANTS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_cm_tex;
+realw_texture d_hprime_xx_tex;
 __constant__ size_t d_hprime_xx_tex_offset;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprimewgll_xx_cm_tex;
+// weighted
+realw_texture d_hprimewgll_xx_tex;
 __constant__ size_t d_hprimewgll_xx_tex_offset;
 #endif
 
-typedef float realw;
-typedef const restrict float * realw_const_p;
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// elemental routines
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// updates stress
 
 __device__ void compute_element_cm_att_stress(int tx,int working_element,
-                                              realw* R_xx,
-                                              realw* R_yy,
-                                              realw* R_xy,
-                                              realw* R_xz,
-                                              realw* R_yz,
+                                              realw_p R_xx,
+                                              realw_p R_yy,
+                                              realw_p R_xy,
+                                              realw_p R_xz,
+                                              realw_p R_yz,
                                               realw* sigma_xx,
                                               realw* sigma_yy,
                                               realw* sigma_zz,
@@ -50,39 +69,53 @@ __device__ void compute_element_cm_att_stress(int tx,int working_element,
                                               realw* sigma_yz) {
 
   realw R_xx_val,R_yy_val;
+  int offset_sls;
 
   for(int i_sls = 0; i_sls < N_SLS; i_sls++){
     // index
-    // note: index for R_xx,.. here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
-    //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
-    R_xx_val = R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)];
-    R_yy_val = R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    // note: index for R_xx,.. here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
+    //       see local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
+    // indexing examples:
+    //   (i,j,k,ispec,i_sls) -> offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls)
+    //   (i_sls,i,j,k,ispec) -> offset_sls = i_sls + N_SLS*(tx + NGLL3*working_element)
+    //   (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
+    offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element);
+
+    R_xx_val = R_xx[offset_sls];
+    R_yy_val = R_yy[offset_sls];
 
     *sigma_xx = *sigma_xx - R_xx_val;
     *sigma_yy = *sigma_yy - R_yy_val;
     *sigma_zz = *sigma_zz + R_xx_val + R_yy_val;
-    *sigma_xy = *sigma_xy - R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)];
-    *sigma_xz = *sigma_xz - R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)];
-    *sigma_yz = *sigma_yz - R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)];
+    *sigma_xy = *sigma_xy - R_xy[offset_sls];
+    *sigma_xz = *sigma_xz - R_xz[offset_sls];
+    *sigma_yz = *sigma_yz - R_yz[offset_sls];
   }
 }
 
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// updates R_memory
+
 __device__ void compute_element_cm_att_memory(int tx,int working_element,
-                                              realw* d_muvstore,
-                                              realw* factor_common,
-                                              realw* alphaval,realw* betaval,realw* gammaval,
-                                              realw* R_xx,realw* R_yy,realw* R_xy,realw* R_xz,realw* R_yz,
-                                              realw* epsilondev_xx,realw* epsilondev_yy,realw* epsilondev_xy,
-                                              realw* epsilondev_xz,realw* epsilondev_yz,
+                                              realw_const_p d_muvstore,
+                                              realw_const_p factor_common,
+                                              realw_const_p alphaval,realw_const_p betaval,realw_const_p gammaval,
+                                              realw_p R_xx,realw_p R_yy,realw_p R_xy,realw_p R_xz,realw_p R_yz,
+                                              realw_p epsilondev_xx,realw_p epsilondev_yy,realw_p epsilondev_xy,
+                                              realw_p epsilondev_xz,realw_p epsilondev_yz,
                                               realw epsilondev_xx_loc,realw epsilondev_yy_loc,realw epsilondev_xy_loc,
                                               realw epsilondev_xz_loc,realw epsilondev_yz_loc,
-                                              realw* d_c44store,
-                                              int ANISOTROPY,
-                                              int USE_3D_ATTENUATION_ARRAYS) {
+                                              realw_const_p d_c44store,
+                                              const int ANISOTROPY,
+                                              const int USE_3D_ATTENUATION_ARRAYS) {
 
   realw fac;
+  realw factor_loc;
   realw alphaval_loc,betaval_loc,gammaval_loc;
-  realw factor_loc,Sn,Snp1;
+  realw Sn,Snp1;
+  int offset_sls;
 
   // shear moduli for common factor (only Q_mu attenuation)
   if( ANISOTROPY ){
@@ -94,16 +127,19 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
   // use Runge-Kutta scheme to march in time
   for(int i_sls = 0; i_sls < N_SLS; i_sls++){
     // indices
-    // note: index for R_xx,... here is (i_sls,i,j,k,ispec) and not (i,j,k,ispec,i_sls) as in local version
-    //          local version: offset_sls = tx + NGLL3*(working_element + NSPEC*i_sls);
+    // note: index for R_xx,... here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
     //
-    // either mustore(i,j,k,ispec) * factor_common(i_sls,i,j,k,ispec)
+    // index:
+    // (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
+    offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element);
+
+    // either mustore(i,j,k,ispec) * factor_common(i,j,k,i_sls,ispec)
     // or       factor_common(i_sls,:,:,:,ispec) * c44store(:,:,:,ispec)
     if( USE_3D_ATTENUATION_ARRAYS ){
       // array dimension: factor_common(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC)
-      factor_loc = fac * factor_common[i_sls + N_SLS*(tx + NGLL3*working_element)];
+      factor_loc = fac * factor_common[offset_sls];
     }else{
-      // array dimension: factor_common(N_SLS,1,1,1,NSPEC)
+      // array dimension: factor_common(1,1,1,N_SLS,NSPEC)
       factor_loc = fac * factor_common[i_sls + N_SLS*working_element];
     }
 
@@ -115,35 +151,35 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
     // term in xx
     Sn   = factor_loc * epsilondev_xx[tx + NGLL3 * working_element]; //(i,j,k,ispec)
     Snp1   = factor_loc * epsilondev_xx_loc; //(i,j,k)
-    R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_xx[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xx[offset_sls] = alphaval_loc * R_xx[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in yy
     Sn   = factor_loc * epsilondev_yy[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_yy_loc;
-    R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_yy[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_yy[offset_sls] = alphaval_loc * R_yy[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
+
     // term in zz not computed since zero trace
 
     // term in xy
     Sn   = factor_loc * epsilondev_xy[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_xy_loc;
-    R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_xy[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xy[offset_sls] = alphaval_loc * R_xy[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in xz
     Sn   = factor_loc * epsilondev_xz[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_xz_loc;
-    R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_xz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_xz[offset_sls] = alphaval_loc * R_xz[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
 
     // term in yz
     Sn   = factor_loc * epsilondev_yz[tx + NGLL3 * working_element];
     Snp1   = factor_loc * epsilondev_yz_loc;
-    R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] =
-      alphaval_loc * R_yz[i_sls + N_SLS*(tx + NGLL3*working_element)] + betaval_loc * Sn + gammaval_loc * Snp1;
+    R_yz[offset_sls] = alphaval_loc * R_yz[offset_sls] + betaval_loc * Sn + gammaval_loc * Snp1;
   }
 }
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// pre-computes gravity term
 
 __device__ void compute_element_cm_gravity(int tx,
                                           const int iglob,
@@ -267,15 +303,19 @@ __device__ void compute_element_cm_gravity(int tx,
   *rho_s_H3 = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl);
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// computes stresses for anisotropic element
+
 __device__ void compute_element_cm_aniso(int offset,
-                                         realw* d_c11store,realw* d_c12store,realw* d_c13store,
-                                         realw* d_c14store,realw* d_c15store,realw* d_c16store,
-                                         realw* d_c22store,realw* d_c23store,realw* d_c24store,
-                                         realw* d_c25store,realw* d_c26store,realw* d_c33store,
-                                         realw* d_c34store,realw* d_c35store,realw* d_c36store,
-                                         realw* d_c44store,realw* d_c45store,realw* d_c46store,
-                                         realw* d_c55store,realw* d_c56store,realw* d_c66store,
-                                         int ATTENUATION,
+                                         realw_const_p d_c11store,realw_const_p d_c12store,realw_const_p d_c13store,
+                                         realw_const_p d_c14store,realw_const_p d_c15store,realw_const_p d_c16store,
+                                         realw_const_p d_c22store,realw_const_p d_c23store,realw_const_p d_c24store,
+                                         realw_const_p d_c25store,realw_const_p d_c26store,realw_const_p d_c33store,
+                                         realw_const_p d_c34store,realw_const_p d_c35store,realw_const_p d_c36store,
+                                         realw_const_p d_c44store,realw_const_p d_c45store,realw_const_p d_c46store,
+                                         realw_const_p d_c55store,realw_const_p d_c56store,realw_const_p d_c66store,
+                                         const int ATTENUATION,
                                          realw one_minus_sum_beta_use,
                                          realw duxdxl,realw duxdyl,realw duxdzl,
                                          realw duydxl,realw duydyl,realw duydzl,
@@ -340,9 +380,13 @@ __device__ void compute_element_cm_aniso(int offset,
              c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl;
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// computes stresses for isotropic element
+
 __device__ void compute_element_cm_iso(int offset,
-                                       realw* d_kappavstore,realw* d_muvstore,
-                                       int ATTENUATION,
+                                       realw_const_p d_kappavstore,realw_const_p d_muvstore,
+                                       const int ATTENUATION,
                                        realw one_minus_sum_beta_use,
                                        realw duxdxl,realw duydyl,realw duzdzl,
                                        realw duxdxl_plus_duydyl,realw duxdxl_plus_duzdzl,realw duydyl_plus_duzdzl,
@@ -375,17 +419,21 @@ __device__ void compute_element_cm_iso(int offset,
 
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// computes stresses for transversely isotropic element
+
 __device__ void compute_element_cm_tiso(int offset,
-                                        realw* d_kappavstore,realw* d_muvstore,
-                                        realw* d_kappahstore,realw* d_muhstore,realw* d_eta_anisostore,
-                                        int ATTENUATION,
+                                        realw_const_p d_kappavstore,realw_const_p d_muvstore,
+                                        realw_const_p d_kappahstore,realw_const_p d_muhstore,realw_const_p d_eta_anisostore,
+                                        const int ATTENUATION,
                                         realw one_minus_sum_beta_use,
                                         realw duxdxl,realw duxdyl,realw duxdzl,
                                         realw duydxl,realw duydyl,realw duydzl,
                                         realw duzdxl,realw duzdyl,realw duzdzl,
                                         realw duxdyl_plus_duydxl,realw duzdxl_plus_duxdzl,realw duzdyl_plus_duydzl,
                                         int iglob,
-                                        realw* d_ystore, realw* d_zstore,
+                                        realw_const_p d_ystore, realw_const_p d_zstore,
                                         realw* sigma_xx,realw* sigma_yy,realw* sigma_zz,
                                         realw* sigma_xy,realw* sigma_xz,realw* sigma_yz){
 
@@ -397,10 +445,9 @@ __device__ void compute_element_cm_tiso(int offset,
   realw costwothetasq,costwophisq,sintwophisq;
   realw etaminone,twoetaminone;
   realw two_eta_aniso,four_eta_aniso,six_eta_aniso;
-  realw two_rhovsvsq,two_rhovshsq; // two_rhovpvsq,two_rhovphsq
-  realw four_rhovsvsq,four_rhovshsq; // four_rhovpvsq,four_rhovphsq
+  realw two_rhovsvsq,two_rhovshsq;
+  realw four_rhovsvsq,four_rhovshsq;
   realw c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66;
-
   // cosine and sine function in CUDA only supported for float
   realw theta,phi;
 
@@ -410,6 +457,7 @@ __device__ void compute_element_cm_tiso(int offset,
 
   kappahl = d_kappahstore[offset];
   muhl = d_muhstore[offset];
+
   // use unrelaxed parameters if attenuation
   // eta does not need to be shifted since it is a ratio
   if( ATTENUATION ){
@@ -430,7 +478,7 @@ __device__ void compute_element_cm_tiso(int offset,
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
 
-  if( sizeof( theta ) == sizeof( float ) ){
+  if( sizeof( realw ) == sizeof( float ) ){
     // float operations
 
     // sincos function return sinus and cosine for given value
@@ -494,23 +542,17 @@ __device__ void compute_element_cm_tiso(int offset,
   twoetaminone = 2.0f * eta_aniso - 1.0f;
 
   // precompute some products to reduce the CPU time
-
   two_eta_aniso = 2.0f * eta_aniso;
   four_eta_aniso = 4.0f * eta_aniso;
   six_eta_aniso = 6.0f * eta_aniso;
 
-  //two_rhovpvsq = 2.0f * rhovpvsq;
-  //two_rhovphsq = 2.0f * rhovphsq;
   two_rhovsvsq = 2.0f * rhovsvsq;
   two_rhovshsq = 2.0f * rhovshsq;
 
-  //four_rhovpvsq = 4.0f * rhovpvsq;
-  //four_rhovphsq = 4.0f * rhovphsq;
   four_rhovsvsq = 4.0f * rhovsvsq;
   four_rhovshsq = 4.0f * rhovshsq;
 
   // the 21 anisotropic coefficients computed using Mathematica
-
   c11 = rhovphsq*sinphifour + 2.0f*cosphisq*sinphisq*
         (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)*
         sinthetasq) + cosphifour*
@@ -637,6 +679,10 @@ __device__ void compute_element_cm_tiso(int offset,
               c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl;
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+
+// loads displacement into shared memory for element
 
 template<int FORWARD_OR_ADJOINT>
 __device__ void load_shared_memory_cm(const int* tx, const int* iglob,
@@ -659,6 +705,9 @@ __device__ void load_shared_memory_cm(const int* tx, const int* iglob,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// loads hprime into shared memory for element
 
 __device__ void load_shared_memory_hprime(const int* tx,
                                           realw_const_p d_hprime_xx,
@@ -694,9 +743,18 @@ __device__ void load_shared_memory_hprimewgll(const int* tx,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// KERNEL 2
+//
+// for crust_mantle
+
+/* ----------------------------------------------------------------------------------------------- */
 
 template<int FORWARD_OR_ADJOINT> __global__ void
-#ifdef USE_LAUNCH_BOUNDS__launch_bounds__(NGLL3_PADDED,LAUNCH_MIN_BLOCKS)
+#ifdef USE_LAUNCH_BOUNDS
+// adds compiler specification
+__launch_bounds__(NGLL3_PADDED,LAUNCH_MIN_BLOCKS)
 #endif
 crust_mantle_impl_kernel( int nb_blocks_to_compute,
                           const int* d_ibool,

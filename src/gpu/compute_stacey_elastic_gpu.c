@@ -29,6 +29,8 @@
 
 #include "mesh_constants_gpu.h"
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_elastic_gpu,
                COMPUTE_STACEY_ELASTIC_GPU) (long *Mesh_pointer_f,
@@ -198,6 +200,8 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
                COMPUTE_STACEY_ELASTIC_BACKWARD_GPU) (long *Mesh_pointer_f,
@@ -244,7 +248,7 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
     break;
 
   default:
-    exit_on_error ("compute_stacey_elastic_gpu: unknown interface type");
+    exit_on_error ("compute_stacey_elastic_backward_gpu: unknown interface type");
     break;
   }
 

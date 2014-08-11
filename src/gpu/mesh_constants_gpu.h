@@ -115,8 +115,6 @@ typedef float realw;
 #define MAX(x, y)                  (((x) < (y)) ? (y) : (x))
 
 /*----------------------------------------------------------------------------------------------- */
-
-/*----------------------------------------------------------------------------------------------- */
 // GPU constant arrays
 /*----------------------------------------------------------------------------------------------- */
 // (must match constants.h definitions)
@@ -155,6 +153,7 @@ typedef float realw;
 #ifndef GPU_ASYNC_COPY
 #define GPU_ASYNC_COPY 1
 #endif
+
 /*----------------------------------------------------------------------------------------------- */
 
 // (optional) pre-processing directive used in kernels: if defined check that it is also set in src/shared/constants.h:
@@ -945,6 +944,7 @@ void synchronize_mpi ();
 void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
 realw get_device_array_maximum_value (Mesh *mp, gpu_realw_mem *d_array, int size);
 
+/* ----------------------------------------------------------------------------------------------- */
 
 #ifndef TAKE_REF_OCL
 #define TAKE_REF_OCL(_buffer_)

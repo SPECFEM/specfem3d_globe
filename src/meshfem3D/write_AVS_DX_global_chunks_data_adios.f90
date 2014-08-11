@@ -44,7 +44,7 @@ module AVS_DX_global_chunks_mod
 contains
 
 
-subroutine define_AVS_DX_global_chunks_data(adios_group, &
+  subroutine define_AVS_DX_global_chunks_data(adios_group, &
                                             myrank,nspec,iboun,ibool, &
                                             mask_ibool, &
                                             npointot, &
@@ -223,9 +223,10 @@ subroutine define_AVS_DX_global_chunks_data(adios_group, &
   endif
 
 
-end subroutine define_AVS_DX_global_chunks_data
+  end subroutine define_AVS_DX_global_chunks_data
 
 !===============================================================================
+
   subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
                                                      iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                                      npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
@@ -827,7 +828,7 @@ end subroutine define_AVS_DX_global_chunks_data
     endif
   enddo
 
-! check that number of global points output is okay
+  ! check that number of global points output is okay
   if(numpoin /= npoin) &
     call exit_MPI(myrank,&
         'incorrect number of global points in AVS or DX file creation')
@@ -989,11 +990,12 @@ end subroutine define_AVS_DX_global_chunks_data
     call exit_MPI(myrank, &
         'incorrect number of surface elements in AVS or DX file creation')
 
-end subroutine prepare_AVS_DX_global_chunks_data_adios
+  end subroutine prepare_AVS_DX_global_chunks_data_adios
 
 !===============================================================================
-subroutine write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
-    sizeprocs, avs_dx_adios, ISOTROPIC_3D_MANTLE)
+
+  subroutine write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
+                                                   sizeprocs, avs_dx_adios, ISOTROPIC_3D_MANTLE)
 
   use adios_write_mod
   use adios_helpers_mod
@@ -1045,16 +1047,17 @@ subroutine write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
 
   if(ISOTROPIC_3D_MANTLE) then
     call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                     "elements_chunks/dvp", avs_dx_adios%dvp)
+                                     "elements_faces/dvp", avs_dx_adios%dvp)
     call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                     "elements_chunks/dvs", avs_dx_adios%dvs)
+                                     "elements_faces/dvs", avs_dx_adios%dvs)
   endif
 
-end subroutine write_AVS_DX_global_chunks_data_adios
+  end subroutine write_AVS_DX_global_chunks_data_adios
 
 !===============================================================================
-subroutine free_AVS_DX_global_chunks_data_adios(myrank, avs_dx_adios, &
-    ISOTROPIC_3D_MANTLE)
+
+  subroutine free_AVS_DX_global_chunks_data_adios(myrank, avs_dx_adios, &
+                                                  ISOTROPIC_3D_MANTLE)
   implicit none
   !--- Arguments
   integer, intent(in) :: myrank
@@ -1103,6 +1106,7 @@ subroutine free_AVS_DX_global_chunks_data_adios(myrank, avs_dx_adios, &
 
   avs_dx_adios%npoin = 0
   avs_dx_adios%nspecface = 0
-end subroutine free_AVS_DX_global_chunks_data_adios
+
+  end subroutine free_AVS_DX_global_chunks_data_adios
 
 end module

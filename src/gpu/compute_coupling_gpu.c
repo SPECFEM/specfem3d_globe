@@ -129,6 +129,8 @@ skip_exec:;
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
                COMPUTE_COUPLING_FLUID_ICB_GPU) (long *Mesh_pointer_f,
@@ -327,6 +329,8 @@ skipexec: ;
   exit_on_gpu_error ("compute_coupling_CMB_fluid_gpu");
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_coupling_icb_fluid_gpu,

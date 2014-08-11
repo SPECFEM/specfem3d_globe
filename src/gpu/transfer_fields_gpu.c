@@ -29,6 +29,8 @@
 
 #include "mesh_constants_gpu.h"
 
+/* ----------------------------------------------------------------------------------------------- */
+
 // crust_mantle
 extern EXTERN_LANG
 void FC_FUNC_(transfer_fields_cm_to_device,
@@ -60,6 +62,8 @@ void FC_FUNC_(transfer_fields_cm_to_device,
   }
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 // inner_core
 extern EXTERN_LANG
@@ -94,6 +98,8 @@ void FC_FUNC_(transfer_fields_ic_to_device,
   }
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 // outer_core
 extern EXTERN_LANG
@@ -169,6 +175,8 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 // inner_core
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_fields_ic_to_device,
@@ -205,6 +213,8 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
   }
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 // outer_core
 extern EXTERN_LANG
@@ -610,9 +620,9 @@ void FC_FUNC_(transfer_displ_oc_from_device,
     print_CUDA_error_if_any(cudaMemcpy(displ,mp->d_displ_outer_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
   }
 #endif
-  /* ----------------------------------------------------------------------------------------------- */
 }
 
+/* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_displ_oc_from_device,
@@ -776,6 +786,7 @@ void FC_FUNC_(transfer_accel_cm_from_device,
 }
 
 /* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_accel_cm_from_device,
               TRANSFER_B_ACCEL_CM_FROM_DEVICE)(int *size, realw *b_accel, long *Mesh_pointer_f) {
@@ -801,7 +812,6 @@ void FC_FUNC_(transfer_b_accel_cm_from_device,
 }
 
 /* ----------------------------------------------------------------------------------------------- */
-
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_accel_ic_from_device,
@@ -856,7 +866,6 @@ void FC_FUNC_(transfer_accel_oc_from_device,
 /* ----------------------------------------------------------------------------------------------- */
 // strain fields
 /* ----------------------------------------------------------------------------------------------- */
-
 
 // crust/mantle
 extern EXTERN_LANG
@@ -1128,6 +1137,29 @@ void FC_FUNC_(transfer_rmemory_cm_from_device,
 
   int size = N_SLS * NGLL3 * mp->NSPEC_CRUST_MANTLE;
 
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_xx_crust_mantle.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_xx, 0, NULL, NULL));
+
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_yy_crust_mantle.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_yy, 0, NULL, NULL));
+
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_xy_crust_mantle.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_xy, 0, NULL, NULL));
+
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_xz_crust_mantle.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_xz, 0, NULL, NULL));
+
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_yz_crust_mantle.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_yz, 0, NULL, NULL));
+  }
+#endif
 #if USE_CUDA
   if(run_cuda) {
   print_CUDA_error_if_any(cudaMemcpy(R_xx,mp->d_R_xx_crust_mantle.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),360011);
@@ -1206,8 +1238,6 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
 }
 
 /* ----------------------------------------------------------------------------------------------- */
-
-
 // inner core
 
 extern EXTERN_LANG
@@ -1224,15 +1254,38 @@ void FC_FUNC_(transfer_rmemory_ic_from_device,
   Mesh* mp = (Mesh*)(*Mesh_pointer);
 
   int size = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
-#ifdef USE_CUDA
-    if (run_cuda) {
-  print_CUDA_error_if_any(cudaMemcpy(R_xx,mp->d_R_xx_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370011);
-  print_CUDA_error_if_any(cudaMemcpy(R_yy,mp->d_R_yy_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370012);
-  print_CUDA_error_if_any(cudaMemcpy(R_xy,mp->d_R_xy_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370013);
-  print_CUDA_error_if_any(cudaMemcpy(R_xz,mp->d_R_xz_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370014);
-  print_CUDA_error_if_any(cudaMemcpy(R_yz,mp->d_R_yz_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370015);
 
-}
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_xx_inner_core.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_xx, 0, NULL, NULL));
+
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_yy_inner_core.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_yy, 0, NULL, NULL));
+
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_xy_inner_core.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_xy, 0, NULL, NULL));
+
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_xz_inner_core.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_xz, 0, NULL, NULL));
+
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_R_yz_inner_core.ocl, CL_TRUE, 0,
+                                 size * sizeof (realw),
+                                 R_yz, 0, NULL, NULL));
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    print_CUDA_error_if_any(cudaMemcpy(R_xx,mp->d_R_xx_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370011);
+    print_CUDA_error_if_any(cudaMemcpy(R_yy,mp->d_R_yy_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370012);
+    print_CUDA_error_if_any(cudaMemcpy(R_xy,mp->d_R_xy_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370013);
+    print_CUDA_error_if_any(cudaMemcpy(R_xz,mp->d_R_xz_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370014);
+    print_CUDA_error_if_any(cudaMemcpy(R_yz,mp->d_R_yz_inner_core.cuda,size*sizeof(realw),cudaMemcpyDeviceToHost),370015);
+  }
 #endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_rmemory_ic_from_device");
@@ -1579,9 +1632,8 @@ void FC_FUNC_(transfer_kernels_noise_to_host,
   }
 #endif
 }
+
 /* ----------------------------------------------------------------------------------------------- */
-
-
 // for Hess kernel calculations
 
 extern EXTERN_LANG

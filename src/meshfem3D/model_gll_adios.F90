@@ -72,15 +72,16 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
 
   integer(kind=8) :: sel
 
+  ! only crust and mantle
+  write(file_name,'(a)') trim(PATHNAME_GLL_modeldir) // 'model_gll.bp'
+
+  ! user output
   if( myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
+    write(IMAIN,*)'ADIOS file: ',trim(file_name)
+    call flush_IMAIN()
   endif
-
-  ! only crust and mantle
-  write(file_name,'(a,i6.6,a)')                                  &
-        PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir)) &
-        // 'model_gll.bp'
 
   call world_get_comm(comm)
 
@@ -88,7 +89,7 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  call adios_read_open_file (adios_handle, trim(file_name), 0, comm, adios_err)
   if( adios_err /= 0 ) then
     print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
@@ -131,6 +132,9 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
       MGLL_V%rho_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
 
   call adios_perform_reads(adios_handle, adios_err)
+  call check_adios_err(myrank,adios_err)
+
   call adios_read_close(adios_handle, adios_err)
+  call check_adios_err(myrank,adios_err)
 
 end subroutine read_gll_model_adios

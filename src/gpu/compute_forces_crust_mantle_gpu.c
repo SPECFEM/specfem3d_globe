@@ -48,6 +48,8 @@ __constant__ size_t d_hprimewgll_xx_tex_offset;
 #endif
 #endif
 
+/* ----------------------------------------------------------------------------------------------- */
+
 void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                    int iphase,
                    gpu_int_mem d_ibool,
