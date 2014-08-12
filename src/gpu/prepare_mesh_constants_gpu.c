@@ -3375,34 +3375,44 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   if (mp->nrec_local > 0) {
 #ifdef USE_OPENCL
-    if (run_opencl && GPU_ASYNC_COPY) {
-      RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
-    } else
+    if (run_opencl ){
+      if (GPU_ASYNC_COPY) {
+        RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
+      } else {
+        free (mp->h_station_seismo_field);
+      }
+    }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda && GPU_ASYNC_COPY) {
-      cudaFreeHost(mp->h_station_seismo_field);
-    } else
-#endif
-    {
-      free (mp->h_station_seismo_field);
+    if (run_cuda ){
+      if (GPU_ASYNC_COPY) {
+        cudaFreeHost(mp->h_station_seismo_field);
+      } else {
+        free (mp->h_station_seismo_field);
+      }
     }
+#endif
   }
 
   if (mp->nadj_rec_local > 0) {
 #ifdef USE_OPENCL
-    if (run_opencl && GPU_ASYNC_COPY) {
-      RELEASE_PINNED_BUFFER_OCL (adj_sourcearrays_slice);
+    if (run_opencl){
+      if (GPU_ASYNC_COPY) {
+        RELEASE_PINNED_BUFFER_OCL (adj_sourcearrays_slice);
+      } else {
+        free (mp->h_adj_sourcearrays_slice);
+      }
     }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda && GPU_ASYNC_COPY) {
-      cudaFreeHost(mp->h_adj_sourcearrays_slice);
-    } else
-#endif
-    {
-      free (mp->h_adj_sourcearrays_slice);
+    if (run_cuda){
+      if (GPU_ASYNC_COPY) {
+        cudaFreeHost(mp->h_adj_sourcearrays_slice);
+      } else {
+        free (mp->h_adj_sourcearrays_slice);
+      }
     }
+#endif
   }
 
 #ifdef USE_OPENCL

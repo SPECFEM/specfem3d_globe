@@ -233,9 +233,11 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
 
-    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
-      copy_evt = &mp->last_copy_evt;
-      num_evt = 1;
+    if (GPU_ASYNC_COPY ){
+      if ( mp->has_last_copy_evt) {
+        copy_evt = &mp->last_copy_evt;
+        num_evt = 1;
+      }
     }
 
     if (*FORWARD_OR_ADJOINT == 1) {
@@ -288,9 +290,11 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.assemble_boundary_potential_on_device, 2, NULL,
                                        global_work_size, local_work_size, num_evt, copy_evt, NULL));
     }
-    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
-      clCheck (clReleaseEvent (mp->last_copy_evt));
-      mp->has_last_copy_evt = 0;
+    if (GPU_ASYNC_COPY ){
+      if ( mp->has_last_copy_evt) {
+        clCheck (clReleaseEvent (mp->last_copy_evt));
+        mp->has_last_copy_evt = 0;
+      }
     }
   }
 #endif

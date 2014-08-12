@@ -63,9 +63,11 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
 
-    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
-      copy_evt = &mp->last_copy_evt;
-      num_evt = 1;
+    if (GPU_ASYNC_COPY ){
+      if (mp->has_last_copy_evt) {
+        copy_evt = &mp->last_copy_evt;
+        num_evt = 1;
+      }
     }
 
     clCheck (clSetKernelArg (mocl.kernels.write_seismograms_transfer_from_device_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_number_receiver_global.ocl));
@@ -369,7 +371,7 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   }
 
   // checks async-memcpy
-  if (GPU_ASYNC_COPY ==  0){
+  if (! GPU_ASYNC_COPY ){
     exit_on_error("transfer_seismo_from_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_cuda.h");
   }
 

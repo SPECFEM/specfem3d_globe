@@ -150,9 +150,8 @@ typedef float realw;
 //#define R_EARTH_KM 6368.0f
 
 // Asynchronous memory copies between GPU and CPU
-#ifndef GPU_ASYNC_COPY
+// (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
 #define GPU_ASYNC_COPY 1
-#endif
 
 /*----------------------------------------------------------------------------------------------- */
 
@@ -942,7 +941,7 @@ void exit_on_gpu_error (char *kernel_name);
 void exit_on_error (char *info);
 void synchronize_mpi ();
 void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
-realw get_device_array_maximum_value (Mesh *mp, gpu_realw_mem *d_array, int size);
+realw get_device_array_maximum_value (gpu_realw_mem *d_array, int size);
 
 /* ----------------------------------------------------------------------------------------------- */
 

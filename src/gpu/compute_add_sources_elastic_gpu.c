@@ -221,9 +221,11 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
 
-    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
-      copy_evt = &mp->last_copy_evt;
-      num_evt = 1;
+    if (GPU_ASYNC_COPY){
+      if (mp->has_last_copy_evt) {
+        copy_evt = &mp->last_copy_evt;
+        num_evt = 1;
+      }
     }
 
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_adjoint_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
@@ -245,9 +247,11 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_add_sources_adjoint_kernel, 3, NULL,
                                      global_work_size, local_work_size, num_evt, copy_evt, NULL));
 
-    if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
-      clCheck (clReleaseEvent (mp->last_copy_evt));
-      mp->has_last_copy_evt = 0;
+    if (GPU_ASYNC_COPY){
+      if (mp->has_last_copy_evt) {
+        clCheck (clReleaseEvent (mp->last_copy_evt));
+        mp->has_last_copy_evt = 0;
+      }
     }
   }
 #endif
@@ -380,7 +384,7 @@ void FC_FUNC_(transfer_adj_to_device_async,
   }
 
   // checks async-memcpy
-  if (GPU_ASYNC_COPY == 0) {
+  if (! GPU_ASYNC_COPY ) {
     exit_on_error("transfer_adj_to_device_async must be called with GPU_ASYNC_COPY == 1, \
 please check mesh_constants_cuda.h");
   }

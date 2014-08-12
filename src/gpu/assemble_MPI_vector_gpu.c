@@ -379,9 +379,11 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
 #ifdef USE_OPENCL
       if (run_opencl) {
-        if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
-          copy_evt = &mp->last_copy_evt;
-          num_evt = 1;
+        if (GPU_ASYNC_COPY){
+          if ( mp->has_last_copy_evt) {
+            copy_evt = &mp->last_copy_evt;
+            num_evt = 1;
+          }
         }
 
         if (*FORWARD_OR_ADJOINT == 1) {
@@ -506,9 +508,11 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
       if (run_opencl) {
         idx = 0;
 
-        if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
-          copy_evt = &mp->last_copy_evt;
-          num_evt = 1;
+        if (GPU_ASYNC_COPY){
+          if ( mp->has_last_copy_evt) {
+            copy_evt = &mp->last_copy_evt;
+            num_evt = 1;
+          }
         }
 
         if (*FORWARD_OR_ADJOINT == 1) {
@@ -558,9 +562,11 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
           clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.assemble_boundary_accel_on_device, 2, NULL, global_work_size, local_work_size, num_evt, copy_evt, NULL));
         }
 
-        if (GPU_ASYNC_COPY && mp->has_last_copy_evt) {
-          clCheck (clReleaseEvent (mp->last_copy_evt));
-          mp->has_last_copy_evt = 0;
+        if (GPU_ASYNC_COPY){
+          if( mp->has_last_copy_evt) {
+            clCheck (clReleaseEvent (mp->last_copy_evt));
+            mp->has_last_copy_evt = 0;
+          }
         }
       }
 #endif
@@ -639,7 +645,7 @@ void FC_FUNC_(transfer_buffer_to_device_async,
   Mesh *mp = (Mesh *)(*Mesh_pointer); // get Mesh from Fortran integer wrapper
 
   // checks async-memcpy
-  if (GPU_ASYNC_COPY == 0) {
+  if ( ! GPU_ASYNC_COPY ) {
     exit_on_error("transfer_buffer_to_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_cuda.h");
   }
 
@@ -809,7 +815,7 @@ void FC_FUNC_(sync_copy_from_device,
   Mesh *mp = (Mesh *)(*Mesh_pointer); // get Mesh from Fortran integer wrapper
 
   // checks async-memcpy
-  if (GPU_ASYNC_COPY == 0) {
+  if ( ! GPU_ASYNC_COPY ) {
     exit_on_error("sync_copy_from_device must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_gpu.h");
   }
 

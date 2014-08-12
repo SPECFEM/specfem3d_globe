@@ -44,13 +44,12 @@ void FC_FUNC_ (update_displacement_ic_gpu,
 
   int size = NDIM * mp->NGLOB_INNER_CORE;
 
-  //debug
-
 #if DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1
+  //debug
   realw max_d, max_v, max_a;
-  max_d = get_device_array_maximum_value (mp, mp->d_b_displ_inner_core, size);
-  max_v = get_device_array_maximum_value (mp, mp->d_b_veloc_inner_core, size);
-  max_a = get_device_array_maximum_value (mp, mp->d_b_accel_inner_core, size);
+  max_d = get_device_array_maximum_value(&mp->d_b_displ_inner_core, size);
+  max_v = get_device_array_maximum_value(&mp->d_b_veloc_inner_core, size);
+  max_a = get_device_array_maximum_value(&mp->d_b_accel_inner_core, size);
   printf ("rank %d - max inner_core displ: %f veloc: %f accel: %f\n", mp->myrank, max_d, max_v, max_a);
   fflush (stdout);
   synchronize_mpi ();
@@ -163,9 +162,9 @@ void FC_FUNC_ (update_displacement_cm_gpu,
 
 #if DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1
   realw max_d, max_v, max_a;
-  max_d = get_device_array_maximum_value (mp, mp->d_b_displ_crust_mantle, size);
-  max_v = get_device_array_maximum_value (mp, mp->d_b_veloc_crust_mantle, size);
-  max_a = get_device_array_maximum_value (mp, mp->d_b_accel_crust_mantle, size);
+  max_d = get_device_array_maximum_value(&mp->d_b_displ_crust_mantle, size);
+  max_v = get_device_array_maximum_value(&mp->d_b_veloc_crust_mantle, size);
+  max_a = get_device_array_maximum_value(&mp->d_b_accel_crust_mantle, size);
   printf ("rank %d - max crust_mantle displ: %f veloc: %f accel: %f\n", mp->myrank, max_d, max_v, max_a);
   fflush (stdout);
   synchronize_mpi ();
@@ -275,9 +274,9 @@ void FC_FUNC_ (update_displacement_oc_gpu,
 
 #if DEBUG_BACKWARD_SIMULATIONS == 1 && DEBUG == 1
   realw max_d, max_v, max_a;
-  max_d = get_device_array_maximum_value (mp, mp->d_b_displ_outer_core, size);
-  max_v = get_device_array_maximum_value (mp, mp->d_b_veloc_outer_core, size);
-  max_a = get_device_array_maximum_value (mp, mp->d_b_accel_outer_core, size);
+  max_d = get_device_array_maximum_value(&mp->d_b_displ_outer_core, size);
+  max_v = get_device_array_maximum_value(&mp->d_b_veloc_outer_core, size);
+  max_a = get_device_array_maximum_value(&mp->d_b_accel_outer_core, size);
   printf ("rank %d - max outer_core displ: %f veloc: %f accel: %f\n", mp->myrank, max_d, max_v, max_a);
   fflush (stdout);
   synchronize_mpi ();
