@@ -1,5 +1,6 @@
 //note: please do not modify this file manually!
 //      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
 
 /*
 !=====================================================================
@@ -153,9 +154,9 @@ __global__ void compute_stacey_elastic_backward_kernel(float * b_accel, const fl
         }
         break;
       }
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+    atomicAdd(b_accel + (iglob) * (3) + 0,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)]));
+    atomicAdd(b_accel + (iglob) * (3) + 1,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)]));
+    atomicAdd(b_accel + (iglob) * (3) + 2,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)]));
   }
-  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
-  atomicAdd(b_accel + (iglob) * (3) + 0,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)]));
-  atomicAdd(b_accel + (iglob) * (3) + 1,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)]));
-  atomicAdd(b_accel + (iglob) * (3) + 2,  -(b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)]));
 }

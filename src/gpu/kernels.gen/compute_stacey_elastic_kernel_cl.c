@@ -1,5 +1,6 @@
 //note: please do not modify this file manually!
 //      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
 
 /*
 !=====================================================================
@@ -182,28 +183,28 @@ __kernel void compute_stacey_elastic_kernel(const __global float * veloc, __glob
         fac1 = wgllwgll[(k) * (NGLLX) + i - (0)];\n\
         break;\n\
       }\n\
-  }\n\
-  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
-  vx = veloc[(iglob) * (3) + 0 - (0)];\n\
-  vy = veloc[(iglob) * (3) + 1 - (0)];\n\
-  vz = veloc[(iglob) * (3) + 2 - (0)];\n\
-  nx = abs_boundary_normal[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)];\n\
-  ny = abs_boundary_normal[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)];\n\
-  nz = abs_boundary_normal[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)];\n\
-  vn = (vx) * (nx) + (vy) * (ny) + (vz) * (nz);\n\
-  rho_vp_temp = rho_vp[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)];\n\
-  rho_vs_temp = rho_vs[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)];\n\
-  tx = ((rho_vp_temp) * (vn)) * (nx) + (rho_vs_temp) * (vx - ((vn) * (nx)));\n\
-  ty = ((rho_vp_temp) * (vn)) * (ny) + (rho_vs_temp) * (vy - ((vn) * (ny)));\n\
-  tz = ((rho_vp_temp) * (vn)) * (nz) + (rho_vs_temp) * (vz - ((vn) * (nz)));\n\
-  jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - (0)]) * (fac1);\n\
-  atomicAdd(accel + (iglob) * (3) + 0, ( -(tx)) * (jacobianw));\n\
-  atomicAdd(accel + (iglob) * (3) + 1, ( -(ty)) * (jacobianw));\n\
-  atomicAdd(accel + (iglob) * (3) + 2, ( -(tz)) * (jacobianw));\n\
-  if(SAVE_FORWARD){\n\
-    b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)] = (tx) * (jacobianw);\n\
-    b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)] = (ty) * (jacobianw);\n\
-    b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)] = (tz) * (jacobianw);\n\
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
+    vx = veloc[(iglob) * (3) + 0 - (0)];\n\
+    vy = veloc[(iglob) * (3) + 1 - (0)];\n\
+    vz = veloc[(iglob) * (3) + 2 - (0)];\n\
+    nx = abs_boundary_normal[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)];\n\
+    ny = abs_boundary_normal[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)];\n\
+    nz = abs_boundary_normal[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)];\n\
+    vn = (vx) * (nx) + (vy) * (ny) + (vz) * (nz);\n\
+    rho_vp_temp = rho_vp[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)];\n\
+    rho_vs_temp = rho_vs[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)];\n\
+    tx = ((rho_vp_temp) * (vn)) * (nx) + (rho_vs_temp) * (vx - ((vn) * (nx)));\n\
+    ty = ((rho_vp_temp) * (vn)) * (ny) + (rho_vs_temp) * (vy - ((vn) * (ny)));\n\
+    tz = ((rho_vp_temp) * (vn)) * (nz) + (rho_vs_temp) * (vz - ((vn) * (nz)));\n\
+    jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - (0)]) * (fac1);\n\
+    atomicAdd(accel + (iglob) * (3) + 0, ( -(tx)) * (jacobianw));\n\
+    atomicAdd(accel + (iglob) * (3) + 1, ( -(ty)) * (jacobianw));\n\
+    atomicAdd(accel + (iglob) * (3) + 2, ( -(tz)) * (jacobianw));\n\
+    if(SAVE_FORWARD){\n\
+      b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)] = (tx) * (jacobianw);\n\
+      b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)] = (ty) * (jacobianw);\n\
+      b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)] = (tz) * (jacobianw);\n\
+    }\n\
   }\n\
 }\n\
 ";

@@ -1,5 +1,6 @@
 //note: please do not modify this file manually!
 //      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
 
 /*
 !=====================================================================
@@ -97,7 +98,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
 #undef USE_TEXTURES_CONSTANTS\n\
 #endif\n\
-void compute_element_oc_rotation(const int tx, const int working_element, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const float dpotentialdxl, const float dpotentialdyl, float * dpotentialdx_with_rot, float * dpotentialdy_with_rot){\n\
+static void compute_element_oc_rotation(const int tx, const int working_element, const float time, const float two_omega_earth, const float deltat, __global float * d_A_array_rotation, __global float * d_B_array_rotation, const float dpotentialdxl, const float dpotentialdyl, float * dpotentialdx_with_rot, float * dpotentialdy_with_rot){\n\
   float two_omega_deltat;\n\
   float cos_two_omega_t;\n\
   float sin_two_omega_t;\n\

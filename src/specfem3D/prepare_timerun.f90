@@ -1566,8 +1566,8 @@
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
   ! allocates buffers
-  if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! xmin
+  if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     nabs_xmin_oc = nspec2D_xmin_outer_core
   else
     nabs_xmin_oc = 1
@@ -1575,8 +1575,8 @@
   allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nabs_xmin_oc),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmin')
 
-  if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! xmax
+  if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     nabs_xmax_oc = nspec2D_xmax_outer_core
   else
     nabs_xmax_oc = 1
@@ -1584,8 +1584,8 @@
   allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nabs_xmax_oc),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmax')
 
-  if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! ymin
+  if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     nabs_ymin_oc = nspec2D_ymin_outer_core
   else
     nabs_ymin_oc = 1
@@ -1593,8 +1593,8 @@
   allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nabs_ymin_oc),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymin')
 
-  if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! ymax
+  if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     nabs_ymax_oc = nspec2D_ymax_outer_core
   else
     nabs_ymax_oc = 1
@@ -1602,8 +1602,8 @@
   allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nabs_ymax_oc),stat=ier)
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
 
-  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! zmin
+  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
     nabs_zmin_oc = nspec2D_zmin_outer_core
   else
     nabs_zmin_oc = 1
@@ -1612,8 +1612,8 @@
   if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb zmin')
 
   ! file I/O for re-construction of wavefields
-  if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! xmin
+  if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
 
     ! size of single record
     reclen_xmin_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmin_outer_core)
@@ -1630,8 +1630,8 @@
                           filesize)
     endif
   endif
-  if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! xmax
+  if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
 
     ! size of single record
     reclen_xmax_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmax_outer_core)
@@ -1648,8 +1648,8 @@
                           filesize)
    endif
   endif
-  if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! ymin
+  if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
 
     ! size of single record
     reclen_ymin_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymin_outer_core)
@@ -1666,8 +1666,8 @@
                           filesize)
     endif
   endif
-  if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  ! ymanx
+  if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
 
     ! size of single record
     reclen_ymax_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymax_outer_core)
@@ -1684,8 +1684,8 @@
                           filesize)
     endif
   endif
-  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
+  ! zmin
+  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
 
     ! size of single record
     reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * nspec2D_zmin_outer_core)
@@ -1816,7 +1816,8 @@
                                 SAVE_BOUNDARY_MESH, &
                                 USE_MESH_COLORING_GPU, &
                                 ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
-                                deltat,b_deltat)
+                                deltat,b_deltat, &
+                                GPU_ASYNC_COPY)
 
   ! prepares rotation arrays
   if( ROTATION_VAL ) then

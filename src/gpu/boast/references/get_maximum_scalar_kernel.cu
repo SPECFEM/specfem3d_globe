@@ -10,9 +10,9 @@ __global__ void get_maximum_scalar_kernel(realw* array, int size, realw* d_max){
    max = 0;
    // finds maximum value in array
    if( size > 0 ){
-   max = abs(array[0]);
+   max = fabs(array[0]);
    for( int i=1; i < size; i++){
-   if( abs(array[i]) > max ) max = abs(array[i]);
+   if( fabs(array[i]) > max ) max = fabs(array[i]);
    }
    }
    *d_max = max;

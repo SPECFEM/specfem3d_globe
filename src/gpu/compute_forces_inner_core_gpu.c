@@ -92,6 +92,11 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
   exit_on_gpu_error ("before kernel inner_core");
 #endif
 
+  // safety check
+  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
+    exit_on_error("error invalid FORWARD_OR_ADJOINT in inner_core() routine");
+  }
+
   // if the grid can handle the number of blocks, we let it be 1D
   // grid_2_x = nb_elem_color;
   // nb_elem_color is just how many blocks we are computing now
@@ -109,15 +114,11 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     cl_kernel *inner_core_kernel_p;
     cl_uint idx = 0;
 
-    if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
-      goto skipexec;
-    } else if (FORWARD_OR_ADJOINT == 3) {
-      DEBUG_BACKWARD_FORCES ();
-    }
-
     if (FORWARD_OR_ADJOINT == 1) {
       inner_core_kernel_p = &mocl.kernels.inner_core_impl_kernel_forward;
     } else {
+      // adjoint/kernel simulations
+      DEBUG_BACKWARD_FORCES ();
       inner_core_kernel_p = &mocl.kernels.inner_core_impl_kernel_adjoint;
     }
 
@@ -233,9 +234,9 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *inner_core_kernel_p, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *inner_core_kernel_p, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
-skipexec: ;
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
@@ -285,7 +286,7 @@ skipexec: ;
                                                                             mp->d_wgll_cube.cuda,
                                                                             mp->NSPEC_INNER_CORE_STRAIN_ONLY,
                                                                             mp->NSPEC_INNER_CORE);
-    }else if( FORWARD_OR_ADJOINT == 3 ){
+    } else {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
       // debug
       DEBUG_BACKWARD_FORCES();
@@ -352,8 +353,14 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
 
   Mesh *mp = (Mesh *) *Mesh_pointer_f;   // get Mesh from Fortran integer wrapper
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
-  int num_elements;
 
+  // safety check
+  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
+    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_forces_inner_core_gpu() routine");
+  }
+
+  // determines number of elements to loop over (inner/outer elements
+  int num_elements;
   if (*iphase == 1) {
     num_elements = mp->nspec_outer_inner_core;
   } else {

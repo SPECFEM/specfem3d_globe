@@ -27,9 +27,16 @@
 !=====================================================================
 */
 
+#ifndef MESH_CONSTANTS_CUDA_H
+#define MESH_CONSTANTS_CUDA_H
+
 #include "kernel_proto.cu.h"
 
+
 void synchronize_cuda();
+void print_CUDA_error_if_any(cudaError_t err, int num);
+
+/* ----------------------------------------------------------------------------------------------- */
 
 // textures
 typedef texture<float, cudaTextureType1D, cudaReadModeElementType> realw_texture;
@@ -39,6 +46,7 @@ typedef texture<float, cudaTextureType1D, cudaReadModeElementType> realw_texture
 typedef const float* __restrict__ realw_const_p; // otherwise use: //typedef const float* realw_const_p;
 typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
 
+/* ----------------------------------------------------------------------------------------------- */
 
 #define INITIALIZE_OFFSET_CUDA()
 
@@ -51,7 +59,7 @@ typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
 
 #define TAKE_REF_CUDA(_buffer_)
 
-void print_CUDA_error_if_any(cudaError_t err, int num);
+/* ----------------------------------------------------------------------------------------------- */
 
 #ifndef USE_OLDER_CUDA4_GPU
 #ifdef USE_TEXTURES_FIELDS
@@ -85,3 +93,5 @@ void print_CUDA_error_if_any(cudaError_t err, int num);
     extern __constant__ size_t d_hprimewgll_xx_tex_offset;
   #endif
 #endif
+
+#endi

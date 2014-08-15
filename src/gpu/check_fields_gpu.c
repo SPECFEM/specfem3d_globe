@@ -33,7 +33,7 @@
 // Helper functions
 /*----------------------------------------------------------------------------------------------- */
 
-double get_time () {
+double get_time_val () {
   struct timeval t;
   struct timezone tzp;
   gettimeofday (&t, &tzp);
@@ -187,6 +187,7 @@ void exit_on_gpu_error (char *kernel_name) {
 
 #ifdef USE_OPENCL
   if (run_opencl) {
+    clFinish (mocl.command_queue);
     cl_int err = clGetLastError ();
 
     error = err != CL_SUCCESS;
@@ -417,14 +418,14 @@ void output_free_memory (int myrank, char *info_str) {
   if( do_output_info ){
 
     // gets memory usage
-  get_free_memory (&free_db, &used_db, &total_db);
+    get_free_memory (&free_db, &used_db, &total_db);
 
     // file output
-  fp = fopen (filename, "a+");
-  if (fp != NULL) {
+    fp = fopen (filename, "a+");
+    if (fp != NULL) {
       fprintf(fp,"%d: @%s GPU memory usage: used = %f MB, free = %f MB, total = %f MB\n", myrank, info_str,
               used_db/1024.0/1024.0, free_db/1024.0/1024.0, total_db/1024.0/1024.0);
-    fclose (fp);
+      fclose (fp);
     }
   }
 }
@@ -465,7 +466,7 @@ void FC_FUNC_ (get_free_device_memory,
 // Auxiliary functions
 /*----------------------------------------------------------------------------------------------- */
 
-realw get_device_array_maximum_value (gpu_realw_mem *d_array, int size) {
+realw get_device_array_maximum_value (gpu_realw_mem d_array, int size) {
 
 // gets maximum of array on GPU by copying over to CPU and handle it there
 
@@ -475,12 +476,14 @@ realw get_device_array_maximum_value (gpu_realw_mem *d_array, int size) {
   // checks if anything to do
   if (size > 0) {
     h_array = (realw *) calloc (size, sizeof (realw));
-    
+    if( h_array == NULL ){ exit_on_error("error allocating h_array array in get_device_array_maximum_value() routine"); }
+
 #ifdef USE_OPENCL
     if (run_opencl) {
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_array->ocl, CL_TRUE, 0,
-                                    sizeof (realw) * size,
-                                    h_array, 0, NULL, NULL));
+      // explicitly wait for cuda kernels to finish
+      clCheck( clFinish (mocl.command_queue));
+      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_array.ocl, CL_TRUE, 0,
+                                    sizeof (realw) * size, h_array, 0, NULL, NULL));
     }
 #endif
 #ifdef USE_CUDA
@@ -488,16 +491,18 @@ realw get_device_array_maximum_value (gpu_realw_mem *d_array, int size) {
       // explicitly wait for cuda kernels to finish
       // (cudaMemcpy implicitly synchronizes all other cuda operations)
       synchronize_cuda();
-      print_CUDA_error_if_any(cudaMemcpy(h_array,d_array->cuda,sizeof(realw)*size,cudaMemcpyDeviceToHost),33001);
+      print_CUDA_error_if_any(cudaMemcpy(h_array,d_array.cuda,sizeof(realw)*size,cudaMemcpyDeviceToHost),33001);
     }
 #endif
     // finds maximum value in array
-    max = abs(h_array[0]);
+    max = fabs(h_array[0]);
     int i;
     for (i = 1; i < size; i++) {
-      if (abs (h_array[i]) > max)
-        max = abs (h_array[i]);
+      if (fabs(h_array[i]) > max)
+        max = fabs(h_array[i]);
     }
+
+    // frees temporary array
     free (h_array);
   }
   return max;
@@ -517,12 +522,15 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
 
   Mesh *mp = (Mesh *) *Mesh_pointer_f;     //get mesh pointer out of Fortran integer container
   realw max;
-
-  max = 0.0f;
-
-  // launch simple reduction kernel
   gpu_realw_mem d_max;
   realw *h_max;
+
+  // safety check
+  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
+    exit_on_error("error invalid FORWARD_OR_ADJOINT in check_norm_acoustic_from_device() routine");
+  }
+
+  // launch simple reduction kernel
   int blocksize = BLOCKSIZE_TRANSFER;
 
   // outer core
@@ -534,6 +542,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
+  if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_acoustic_from_device() routine"); }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -546,7 +555,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
 
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_outer_core.ocl));
-    } else if (*FORWARD_OR_ADJOINT == 3) {
+    } else {
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_outer_core.ocl));
     }
 
@@ -558,12 +567,12 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
 
     // copies to CPU
     clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                  num_blocks_x * num_blocks_y * sizeof (realw),
-                                  h_max, 0, NULL, NULL));
+                                  num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -575,7 +584,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
 
     if(*FORWARD_OR_ADJOINT == 1 ){
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_outer_core.cuda,size,d_max.cuda);
-    }else if(*FORWARD_OR_ADJOINT == 3 ){
+    } else {
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_outer_core.cuda,size,d_max.cuda);
     }
     // copies to CPU
@@ -583,6 +592,17 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
                                        cudaMemcpyDeviceToHost),222);
   }
 #endif
+  //debug
+  if( DEBUG_FIELDS ){
+    realw max_d, max_v, max_a;
+    max_d = get_device_array_maximum_value(mp->d_displ_outer_core, mp->NGLOB_OUTER_CORE);
+    max_v = get_device_array_maximum_value(mp->d_veloc_outer_core, mp->NGLOB_OUTER_CORE);
+    max_a = get_device_array_maximum_value(mp->d_accel_outer_core, mp->NGLOB_OUTER_CORE);
+    printf ("rank %d - max outer_core displ: %e veloc: %e accel: %e\n", mp->myrank, max_d, max_v, max_a);
+    fflush (stdout);
+    synchronize_mpi ();
+  }
+
   // determines max for all blocks
   max = h_max[0];
   int i;
@@ -623,15 +643,19 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) (*Mesh_pointer_f);
 
+  realw max_d, max_v, max_a;
   realw max, max_crust_mantle, max_inner_core;
 
   int size, size_padded;
-
-  max = 0.0f;
-
-  // launch simple reduction kernel
   gpu_realw_mem d_max;
   realw *h_max;
+
+  // safety check
+  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
+    exit_on_error("error invalid FORWARD_OR_ADJOINT in check_norm_elastic_from_device() routine");
+  }
+
+  // launch simple reduction kernel
   int blocksize = BLOCKSIZE_TRANSFER;
 
   // crust_mantle
@@ -643,6 +667,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
+  if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_elastic_from_device() routine"); }
 
 #ifdef USE_OPENCL
   cl_int errcode;
@@ -656,7 +681,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
-    } else if (*FORWARD_OR_ADJOINT == 3) {
+    } else {
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_crust_mantle.ocl));
     }
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size));
@@ -667,12 +692,12 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
 
     // copies to CPU
     clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                  num_blocks_x * num_blocks_y * sizeof (realw),
-                                  h_max, 0, NULL, NULL));
+                                  num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -685,31 +710,30 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
     if(*FORWARD_OR_ADJOINT == 1 ){
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,size,d_max.cuda);
-    }else if(*FORWARD_OR_ADJOINT == 3 ){
+    } else {
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle.cuda,size,d_max.cuda);
     }
     // copies to CPU
     print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
                                        cudaMemcpyDeviceToHost),222);
-
-    //debug
-    //realw max_d, max_v, max_a;
-    //max_d = get_device_array_maximum_value(&mp->d_displ_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
-    //max_v = get_device_array_maximum_value(&mp->d_veloc_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
-    //max_a = get_device_array_maximum_value(&mp->d_accel_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
-    //printf ("rank %d - max crust_mantle displ: %e veloc: %e accel: %e\n", mp->myrank, max_d, max_v, max_a);
-    //fflush (stdout);
-    //synchronize_mpi ();
   }
 #endif
+  //debug
+  if( DEBUG_FIELDS){
+    max_d = get_device_array_maximum_value(mp->d_displ_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
+    max_v = get_device_array_maximum_value(mp->d_veloc_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
+    max_a = get_device_array_maximum_value(mp->d_accel_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
+    printf ("rank %d - max crust_mantle displ: %e veloc: %e accel: %e\n", mp->myrank, max_d, max_v, max_a);
+    fflush (stdout);
+    synchronize_mpi ();
+  }
 
   // determines max for all blocks
   max = h_max[0];
   int i;
   for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
     // sets maximum
-    if (max < h_max[i])
-      max = h_max[i];
+    if (max < h_max[i]) max = h_max[i];
   }
   max_crust_mantle = max;
 
@@ -727,7 +751,6 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   free (h_max);
 
   // inner_core
-  max = 0.0f;
   size = mp->NGLOB_INNER_CORE;
 
   size_padded = ((int) ceil (((double) size) / ((double) blocksize))) * blocksize;
@@ -736,6 +759,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
+  if( h_max == NULL ){ exit_on_error("error allocating h_max array for inner core in check_norm_elastic_from_device() routine"); }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -744,12 +768,9 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_inner_core.ocl));
-    } else if (*FORWARD_OR_ADJOINT == 3) {
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_inner_core.ocl));
     } else {
-      goto skip_exec;
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_inner_core.ocl));
     }
-
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
@@ -758,13 +779,12 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
 
-  skip_exec:
     // copies to CPU
     clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                  num_blocks_x * num_blocks_y * sizeof (realw),
-                                  h_max, 0, NULL, NULL));
+                                  num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -776,7 +796,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
     if(*FORWARD_OR_ADJOINT == 1 ){
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,size,d_max.cuda);
-    }else if(*FORWARD_OR_ADJOINT == 3 ){
+    } else {
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core.cuda,size,d_max.cuda);
     }
     // copies to CPU
@@ -784,11 +804,20 @@ void FC_FUNC_ (check_norm_elastic_from_device,
                                        cudaMemcpyDeviceToHost),222);
   }
 #endif
+  //debug
+  if( DEBUG_FIELDS){
+    max_d = get_device_array_maximum_value(mp->d_displ_inner_core, NDIM * mp->NGLOB_INNER_CORE);
+    max_v = get_device_array_maximum_value(mp->d_veloc_inner_core, NDIM * mp->NGLOB_INNER_CORE);
+    max_a = get_device_array_maximum_value(mp->d_accel_inner_core, NDIM * mp->NGLOB_INNER_CORE);
+    printf ("rank %d - max inner_core displ: %e veloc: %e accel: %e\n", mp->myrank, max_d, max_v, max_a);
+    fflush (stdout);
+    synchronize_mpi ();
+  }
+
   // determines max for all blocks
   max = h_max[0];
   for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
-    if (max < h_max[i])
-      max = h_max[i];
+    if (max < h_max[i]) max = h_max[i];
   }
   max_inner_core = max;
 
@@ -806,8 +835,12 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   free (h_max);
 
   //debug
-  //printf ("rank %d - max norm elastic: crust_mantle = %e inner_core = %e\n",mp->myrank,max_crust_mantle,max_inner_core);
-  
+  if( DEBUG_FIELDS ){
+    printf ("rank %d - max norm elastic: crust_mantle = %e inner_core = %e \n",mp->myrank,max_crust_mantle,max_inner_core);
+    fflush (stdout);
+    synchronize_mpi ();
+  }
+
   // return result
   max = MAX (max_inner_core, max_crust_mantle);
   *norm = max;
@@ -857,6 +890,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
+  if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_strain_from_device() routine"); }
 
   max = 0.0f;
 
@@ -879,11 +913,11 @@ void FC_FUNC_ (check_norm_strain_from_device,
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
     // copies to CPU
     clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                  num_blocks_x * num_blocks_y * sizeof (realw),
-                                  h_max, 0, NULL, NULL));
+                                  num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -932,6 +966,8 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
+  if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_strain_from_device() routine"); }
+
   max_eps = 0.0f;
 
 #ifdef USE_OPENCL
@@ -957,8 +993,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
                                        global_work_size, local_work_size, 0, NULL, NULL));
 
       clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                    num_blocks_x * num_blocks_y * sizeof (realw),
-                                    h_max, 0, NULL, NULL));
+                                    num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
 
       max = h_max[0];
       for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
@@ -973,7 +1008,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
   if (run_cuda) {
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
-  
+
     cudaMalloc((void**)&d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw));
 
     // determines max for: epsilondev_xx_crust_mantle
@@ -983,8 +1018,6 @@ void FC_FUNC_ (check_norm_strain_from_device,
                                        cudaMemcpyDeviceToHost),222);
     max = h_max[0];
     for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
-      //debug
-      //if(mp->myrank == 0 ){printf ("rank %d - max %i %e %i %i\n",mp->myrank,i,h_max[i],num_blocks_x,num_blocks_y);}
       if( max < h_max[i]) max = h_max[i];
     }
     max_eps = MAX(max_eps,max);

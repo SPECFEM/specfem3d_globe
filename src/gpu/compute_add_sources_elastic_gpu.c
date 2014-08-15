@@ -56,7 +56,7 @@ void FC_FUNC_ (compute_add_sources_gpu,
     cl_uint idx = 0;
 
     // copies source time function buffer values to GPU
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_TRUE, 0,
                                    NSOURCES * sizeof (double),
                                    h_stf_pre_compute, 0, NULL, NULL));
 
@@ -138,7 +138,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
     cl_uint idx = 0;
 
     // copies source time function buffer values to GPU
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_TRUE, 0,
                                    NSOURCES * sizeof (double),
                                    h_stf_pre_compute, 0, NULL, NULL));
 
@@ -222,6 +222,8 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     cl_uint num_evt = 0;
 
     if (GPU_ASYNC_COPY){
+      // waits for previous copy to finish
+      clCheck (clFinish (mocl.copy_queue));
       if (mp->has_last_copy_evt) {
         copy_evt = &mp->last_copy_evt;
         num_evt = 1;
@@ -408,7 +410,6 @@ please check mesh_constants_cuda.h");
       clCheck (clReleaseEvent (mp->last_copy_evt));
       mp->has_last_copy_evt = 0;
     }
-
     clCheck (clFinish (mocl.copy_queue));
   }
 #endif
@@ -418,6 +419,7 @@ please check mesh_constants_cuda.h");
     cudaStreamSynchronize(mp->copy_stream);
   }
 #endif
+
   int i,j,k,irec,irec_local;
   irec_local = 0;
   for(irec = 0; irec < nrec; irec++) {
@@ -450,6 +452,9 @@ please check mesh_constants_cuda.h");
   if (run_opencl) {
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
+
+    // waits for previous compute_add_sources_adjoint_cuda_kernel() call to be finished
+    clCheck (clFinish (mocl.command_queue));
 
     if (mp->has_last_copy_evt) {
       clCheck (clReleaseEvent (mp->last_copy_evt));

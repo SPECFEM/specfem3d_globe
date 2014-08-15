@@ -399,7 +399,7 @@ end subroutine write_asdf_data
 subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, nproc)
 
   use adios_write_mod,only: adios_string
-  
+
   use adios_helpers_mod,only: define_adios_scalar,define_adios_global_integer_1d_array, &
     define_adios_global_real_1d_array,define_adios_local_string_1d_array !,check_adios_err
 

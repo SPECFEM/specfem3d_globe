@@ -105,12 +105,13 @@ ifeq ($(OCL), yes)
   BUILD_VERSION_TXT += OpenCL
   LDFLAGS += $(OCL_LINK)
   SELECTOR_CFLAG += -DUSE_OPENCL
-
+  ifneq ($(strip $(OCL_GPU_FLAGS)),)
+    SELECTOR_CFLAG += -DOCL_GPU_CFLAGS="$(OCL_GPU_FLAGS)"
+  endif
   ifeq ($(CUDA),yes)
     CUDA_LINK += $(OCL_LINK)
     NVCC_CFLAGS += $(OCL_INC)
-    NVCC_CFLAGS += -DOCL_GPU_CFLAGS=$(OCL_GPU_CFLAGS)
-    NVCC_CFLAGS += $(OCL_CPU_FLAGS) 
+    NVCC_CFLAGS += $(OCL_CPU_FLAGS)
   endif
 endif
 
@@ -122,6 +123,10 @@ BUILD_VERSION_TXT += support
 
 CUDA_DEBUG := --cudart=shared
 
+###
+### boast kernel generation
+###
+
 boast_kernels :
 	@echo ""
 	@echo "building boast kernels: in directory $(BOAST_DIR_NAME)"
@@ -131,13 +136,22 @@ boast_kernels :
 	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME)
 	@echo ""
 
+test_boast_kernels :
+	@echo ""
+	@echo "building and testing boast kernels: in directory $(BOAST_DIR_NAME)"
+	@echo ""
+	cd src/gpu/boast ;\
+	mkdir -p ../$(BOAST_DIR_NAME);\
+	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME) --check
+	@echo ""
+
 ###
 ### compilation
 ###
 
 ifeq ($(CUDA),yes)
 $O/%.cuda-kernel.o: $(BOAST_DIR)/%.cu $S/mesh_constants_gpu.h $S/mesh_constants_cuda.h
-	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} $(SELECTOR_CFLAG) -I$(BOAST_DIR) $(CUDA_DEBUG) -include $(word 2,$^)
+	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG) $(CUDA_DEBUG) -include $(word 2,$^)
 
 $(cuda_specfem3D_DEVICE_OBJ): $(subst $(cuda_specfem3D_DEVICE_OBJ), ,$(gpu_specfem3D_OBJECTS)) $(cuda_kernels_OBJS)
 	${NVCCLINK} -o $@ $^
@@ -146,8 +160,8 @@ endif
 $O/%.cuda-ocl.o: $O/%.cuda.o
 	cd $O && cp $(shell basename $<) $(shell basename $@)
 
-$O/%.ocl.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h
-	${CC} -c $< -o $@ -I${SETUP} -I$(BOAST_DIR) $(OCL_CPU_FLAGS) $(SELECTOR_CFLAG) "-DOCL_GPU_CFLAGS=$(OCL_GPU_CFLAGS)"
+$O/%.ocl.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h $S/mesh_constants_ocl.h
+	${CC} -c $< -o $@ $(OCL_CPU_FLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
 
 $O/%.cuda.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h
 	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG) $(CUDA_DEBUG)

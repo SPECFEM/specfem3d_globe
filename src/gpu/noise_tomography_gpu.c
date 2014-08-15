@@ -62,13 +62,13 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
     global_work_size[0] = num_blocks_x * NGLL2;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_transfer_surface_to_host_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_transfer_surface_to_host_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
 
     // copies noise array to CPU
 
     clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
-                                  NDIM * NGLL2 * mp->nspec2D_top_crust_mantle * sizeof (realw),
-                                  h_noise_surface_movie, 0, NULL, NULL));
+                                  NDIM * NGLL2 * mp->nspec2D_top_crust_mantle * sizeof (realw), h_noise_surface_movie, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -172,27 +172,32 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->nspec2D_top_crust_mantle, &num_blocks_x, &num_blocks_y);
 
-  // copies surface movie to GPU
 #ifdef USE_OPENCL
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
+#endif
+#ifdef USE_CUDA
+  dim3 grid(num_blocks_x,num_blocks_y,1);
+  dim3 threads(NGLL2,1,1);
+#endif
 
+  // copies surface movie to GPU
+#ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
                                    NDIM*NGLL2 *(mp->nspec2D_top_crust_mantle)*sizeof (realw),
                                    h_noise_surface_movie, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
-  dim3 grid(num_blocks_x,num_blocks_y,1);
-  dim3 threads(NGLL2,1,1);
   if (run_cuda) {
     cudaMemcpy(mp->d_noise_surface_movie.cuda,h_noise_surface_movie,
                NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice);
   }
-
 #endif
+
+
   switch (mp->noise_tomography) {
   case 2:
     // adds surface source to forward field
@@ -216,7 +221,8 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
       global_work_size[0] = num_blocks_x * NGLL3;
       global_work_size[1] = num_blocks_y;
 
-      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_add_surface_movie_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_add_surface_movie_kernel, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
     }
 #endif
 #ifdef USE_CUDA
@@ -258,7 +264,8 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
       global_work_size[0] = num_blocks_x * NGLL3;
       global_work_size[1] = num_blocks_y;
 
-      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_add_surface_movie_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_add_surface_movie_kernel, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
     }
 #endif
 #ifdef USE_CUDA

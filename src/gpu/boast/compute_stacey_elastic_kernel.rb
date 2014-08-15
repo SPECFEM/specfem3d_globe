@@ -79,71 +79,72 @@ module BOAST
         print ispec === abs_boundary_ispec[iface]-1
 
         print Case( interface_type,
-          0, lambda {
-            print If( Expression("||", nkmin_xi[INDEX2(2,0,iface)] == 0, njmin[INDEX2(2,0,iface)] == 0) )   { print Return(nil) }
-            print i === 0
-            print k === igll/ngllx
-            print j === igll-k*ngllx
-            print If( Expression("||", k < nkmin_xi[INDEX2(2,0,iface)]-1, k > ngllx-1) )                    { print Return(nil) }
-            print If( Expression("||", j <    njmin[INDEX2(2,0,iface)]-1, j > ngllx-1) )                    { print Return(nil) } #incoherent with acoustic checks
-            print fac1 === wgllwgll[k*ngllx+j] if type == :forward
-          },
-          1, lambda {
-            print If( Expression("||", nkmin_xi[INDEX2(2,1,iface)] == 0, njmin[INDEX2(2,1,iface)] == 0) )   { print Return(nil) }
-            print i === ngllx-1
-            print k === igll/ngllx
-            print j === igll-k*ngllx
-            print If( Expression("||", k < nkmin_xi[INDEX2(2,1,iface)]-1, k > ngllx-1) )                    { print Return(nil) }
-            print If( Expression("||", j <    njmin[INDEX2(2,1,iface)]-1, j > njmax[INDEX2(2,1,iface)]-1) ) { print Return(nil) }
-            print fac1 === wgllwgll[k*ngllx+j] if type == :forward
-          },
-          2, lambda {
-            print If( Expression("||", nkmin_eta[INDEX2(2,0,iface)] == 0, nimin[INDEX2(2,0,iface)] == 0) )  { print Return(nil) }
-            print j === 0
-            print k === igll/ngllx
-            print i === igll-k*ngllx
-            print If( Expression("||", k < nkmin_eta[INDEX2(2,0,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
-            print If( Expression("||", i <     nimin[INDEX2(2,0,iface)]-1, i > nimax[INDEX2(2,0,iface)]-1) ){ print Return(nil) }
-            print fac1 === wgllwgll[k*ngllx+i] if type == :forward
-          },
-          3, lambda {
-            print If( Expression("||", nkmin_eta[INDEX2(2,1,iface)] == 0, nimin[INDEX2(2,1,iface)] == 0) )  { print Return(nil) }
-            print j === ngllx-1
-            print k === igll/ngllx
-            print i === igll-k*ngllx
-            print If( Expression("||", k < nkmin_eta[INDEX2(2,1,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
-            print If( Expression("||", i <     nimin[INDEX2(2,1,iface)]-1, i > nimax[INDEX2(2,1,iface)]-1) ){ print Return(nil) }
-            print fac1 === wgllwgll[k*ngllx+i] if type == :forward
-          })
-      }
-      print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] - 1
-      if type == :forward then
-        (0..2).each { |indx|
-          print v[indx] === veloc[iglob*3+indx]
-        }
-        (0..2).each { |indx|
-          print n[indx] === abs_boundary_normal[INDEX3(ndim,ngll2,indx,igll,iface)]
-        }
-        print vn === v[0]*n[0] + v[1]*n[1] + v[2]*n[2]
-        print rho_vp_temp === rho_vp[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]
-        print rho_vs_temp === rho_vs[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]
-        (0..2).each { |indx|
-          print t[indx] === rho_vp_temp*vn*n[indx] + rho_vs_temp*(v[indx] - vn*n[indx])
-        }
-        print jacobianw === abs_boundary_jacobian2D[INDEX2(ngll2,igll,iface)]*fac1
-        (0..2).each { |indx|
-          print atomicAdd(accel + iglob*3 + indx, -t[indx]*jacobianw)
-        }
-        print If( save_forward ) {
+        0, lambda {
+          print If( Expression("||", nkmin_xi[INDEX2(2,0,iface)] == 0, njmin[INDEX2(2,0,iface)] == 0) )   { print Return(nil) }
+          print i === 0
+          print k === igll/ngllx
+          print j === igll-k*ngllx
+          print If( Expression("||", k < nkmin_xi[INDEX2(2,0,iface)]-1, k > ngllx-1) )                    { print Return(nil) }
+          print If( Expression("||", j <    njmin[INDEX2(2,0,iface)]-1, j > ngllx-1) )                    { print Return(nil) } #incoherent with acoustic checks
+          print fac1 === wgllwgll[k*ngllx+j] if type == :forward
+        },
+        1, lambda {
+          print If( Expression("||", nkmin_xi[INDEX2(2,1,iface)] == 0, njmin[INDEX2(2,1,iface)] == 0) )   { print Return(nil) }
+          print i === ngllx-1
+          print k === igll/ngllx
+          print j === igll-k*ngllx
+          print If( Expression("||", k < nkmin_xi[INDEX2(2,1,iface)]-1, k > ngllx-1) )                    { print Return(nil) }
+          print If( Expression("||", j <    njmin[INDEX2(2,1,iface)]-1, j > njmax[INDEX2(2,1,iface)]-1) ) { print Return(nil) }
+          print fac1 === wgllwgll[k*ngllx+j] if type == :forward
+        },
+        2, lambda {
+          print If( Expression("||", nkmin_eta[INDEX2(2,0,iface)] == 0, nimin[INDEX2(2,0,iface)] == 0) )  { print Return(nil) }
+          print j === 0
+          print k === igll/ngllx
+          print i === igll-k*ngllx
+          print If( Expression("||", k < nkmin_eta[INDEX2(2,0,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
+          print If( Expression("||", i <     nimin[INDEX2(2,0,iface)]-1, i > nimax[INDEX2(2,0,iface)]-1) ){ print Return(nil) }
+          print fac1 === wgllwgll[k*ngllx+i] if type == :forward
+        },
+        3, lambda {
+          print If( Expression("||", nkmin_eta[INDEX2(2,1,iface)] == 0, nimin[INDEX2(2,1,iface)] == 0) )  { print Return(nil) }
+          print j === ngllx-1
+          print k === igll/ngllx
+          print i === igll-k*ngllx
+          print If( Expression("||", k < nkmin_eta[INDEX2(2,1,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
+          print If( Expression("||", i <     nimin[INDEX2(2,1,iface)]-1, i > nimax[INDEX2(2,1,iface)]-1) ){ print Return(nil) }
+          print fac1 === wgllwgll[k*ngllx+i] if type == :forward
+        })
+
+        print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] - 1
+        if type == :forward then
           (0..2).each { |indx|
-            print b_absorb_field[INDEX3(ndim,ngll2,indx,igll,iface)] === t[indx]*jacobianw
+            print v[indx] === veloc[iglob*3+indx]
           }
-        }
-      else
-        (0..2).each { |indx|
-          print atomicAdd(b_accel + iglob*3 + indx, -b_absorb_field[INDEX3(ndim,ngll2,indx,igll,iface)])
-        }
-      end
+          (0..2).each { |indx|
+            print n[indx] === abs_boundary_normal[INDEX3(ndim,ngll2,indx,igll,iface)]
+          }
+          print vn === v[0]*n[0] + v[1]*n[1] + v[2]*n[2]
+          print rho_vp_temp === rho_vp[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]
+          print rho_vs_temp === rho_vs[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]
+          (0..2).each { |indx|
+            print t[indx] === rho_vp_temp*vn*n[indx] + rho_vs_temp*(v[indx] - vn*n[indx])
+          }
+          print jacobianw === abs_boundary_jacobian2D[INDEX2(ngll2,igll,iface)]*fac1
+          (0..2).each { |indx|
+            print atomicAdd(accel + iglob*3 + indx, -t[indx]*jacobianw)
+          }
+          print If( save_forward ) {
+            (0..2).each { |indx|
+              print b_absorb_field[INDEX3(ndim,ngll2,indx,igll,iface)] === t[indx]*jacobianw
+            }
+          }
+        else
+          (0..2).each { |indx|
+            print atomicAdd(b_accel + iglob*3 + indx, -b_absorb_field[INDEX3(ndim,ngll2,indx,igll,iface)])
+          }
+        end
+      }
       close p
     else
       raise "Unsupported language!"

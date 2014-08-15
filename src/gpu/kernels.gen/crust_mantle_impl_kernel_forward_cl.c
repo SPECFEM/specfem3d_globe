@@ -1,5 +1,6 @@
 //note: please do not modify this file manually!
 //      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
 
 /*
 !=====================================================================
@@ -94,7 +95,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-void compute_element_cm_att_stress(const int tx, const int working_element, const __global float * R_xx, const __global float * R_yy, const __global float * R_xy, const __global float * R_xz, const __global float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
+static void compute_element_cm_att_stress(const int tx, const int working_element, const __global float * R_xx, const __global float * R_yy, const __global float * R_xy, const __global float * R_xz, const __global float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   int offset;\n\
   int i_sls;\n\
   float R_xx_val;\n\
@@ -111,7 +112,7 @@ void compute_element_cm_att_stress(const int tx, const int working_element, cons
     sigma_yz[0 - (0)] = sigma_yz[0 - (0)] - (R_yz[offset - (0)]);\n\
   }\n\
 }\n\
-void compute_element_cm_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const __global float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){\n\
+static void compute_element_cm_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const __global float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){\n\
   int offset;\n\
   int i_sls;\n\
   float mul;\n\
@@ -153,7 +154,7 @@ void compute_element_cm_att_memory(const int tx, const int working_element, cons
     R_yz[offset - (0)] = (alphaval_loc) * (R_yz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
   }\n\
 }\n\
-void compute_element_cm_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
+static void compute_element_cm_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
   float radius;\n\
   float theta;\n\
   float phi;\n\
@@ -231,7 +232,7 @@ void compute_element_cm_gravity(const int tx, const int iglob, const __global fl
   rho_s_H2[0 - (0)] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
   rho_s_H3[0 - (0)] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
 }\n\
-void compute_element_cm_aniso(const int offset, const __global float * d_c11store, const __global float * d_c12store, const __global float * d_c13store, const __global float * d_c14store, const __global float * d_c15store, const __global float * d_c16store, const __global float * d_c22store, const __global float * d_c23store, const __global float * d_c24store, const __global float * d_c25store, const __global float * d_c26store, const __global float * d_c33store, const __global float * d_c34store, const __global float * d_c35store, const __global float * d_c36store, const __global float * d_c44store, const __global float * d_c45store, const __global float * d_c46store, const __global float * d_c55store, const __global float * d_c56store, const __global float * d_c66store, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
+static void compute_element_cm_aniso(const int offset, const __global float * d_c11store, const __global float * d_c12store, const __global float * d_c13store, const __global float * d_c14store, const __global float * d_c15store, const __global float * d_c16store, const __global float * d_c22store, const __global float * d_c23store, const __global float * d_c24store, const __global float * d_c25store, const __global float * d_c26store, const __global float * d_c33store, const __global float * d_c34store, const __global float * d_c35store, const __global float * d_c36store, const __global float * d_c44store, const __global float * d_c45store, const __global float * d_c46store, const __global float * d_c55store, const __global float * d_c56store, const __global float * d_c66store, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   float c11;\n\
   float c12;\n\
   float c13;\n\
@@ -296,7 +297,7 @@ void compute_element_cm_aniso(const int offset, const __global float * d_c11stor
   *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);\n\
   *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);\n\
 }\n\
-void compute_element_cm_iso(const int offset, const __global float * d_kappavstore, const __global float * d_muvstore, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
+static void compute_element_cm_iso(const int offset, const __global float * d_kappavstore, const __global float * d_muvstore, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duydyl, const float duzdzl, const float duxdxl_plus_duydyl, const float duxdxl_plus_duzdzl, const float duydyl_plus_duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   float lambdal;\n\
   float mul;\n\
   float lambdalplus2mul;\n\
@@ -315,7 +316,7 @@ void compute_element_cm_iso(const int offset, const __global float * d_kappavsto
   *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);\n\
   *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);\n\
 }\n\
-void compute_element_cm_tiso(const int offset, const __global float * d_kappavstore, const __global float * d_muvstore, const __global float * d_kappahstore, const __global float * d_muhstore, const __global float * d_eta_anisostore, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, const int iglob, const __global float * d_ystore, const __global float * d_zstore, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
+static void compute_element_cm_tiso(const int offset, const __global float * d_kappavstore, const __global float * d_muvstore, const __global float * d_kappahstore, const __global float * d_muhstore, const __global float * d_eta_anisostore, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, const int iglob, const __global float * d_ystore, const __global float * d_zstore, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   float kappavl;\n\
   float muvl;\n\
   float kappahl;\n\

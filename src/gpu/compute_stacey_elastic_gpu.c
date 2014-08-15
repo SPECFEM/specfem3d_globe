@@ -39,7 +39,7 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
 
   TRACE ("compute_stacey_elastic_gpu");
 
-  int num_abs_boundary_faces;
+  int num_abs_boundary_faces = 0;
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_abs_boundary_normal;
   gpu_realw_mem *d_abs_boundary_jacobian2D;
@@ -179,9 +179,11 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
     // copies array to CPU
 #ifdef USE_OPENCL
     if (run_opencl) {
+      // explicitly waits until kernel is finished
+      clCheck (clFinish (mocl.command_queue));
+
       clCheck (clEnqueueReadBuffer (mocl.command_queue, d_b_absorb_field->ocl, CL_TRUE, 0,
-                                    NDIM * NGLL2 * num_abs_boundary_faces * sizeof (realw),
-                                    absorb_field, 0, NULL, NULL));
+                                    NDIM * NGLL2 * num_abs_boundary_faces * sizeof (realw), absorb_field, 0, NULL, NULL));
     }
 #endif
 #ifdef USE_CUDA
@@ -189,7 +191,7 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
       // explicitly waits until previous compute stream finishes
       // (cudaMemcpy implicitly synchronizes all other cuda operations)
       cudaStreamSynchronize(mp->compute_stream);
-      print_CUDA_error_if_any(cudaMemcpy(absorb_field,d_b_absorb_field,
+      print_CUDA_error_if_any(cudaMemcpy(absorb_field,d_b_absorb_field->cuda,
                                          NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyDeviceToHost),7701);
     }
 #endif
@@ -210,7 +212,7 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
 
   TRACE ("compute_stacey_elastic_backward_gpu");
 
-  int num_abs_boundary_faces;
+  int num_abs_boundary_faces = 0;
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_b_absorb_field;
 
@@ -276,8 +278,7 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
 
     // adjoint simulations: needs absorbing boundary buffer
     // copies array to GPU
-
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_b_absorb_field->ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_b_absorb_field->ocl, CL_TRUE, 0,
                                    NDIM * NGLL2 * num_abs_boundary_faces * sizeof (realw),
                                    absorb_field, 0, NULL, NULL));
 
@@ -300,7 +301,8 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_elastic_backward_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_elastic_backward_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -310,7 +312,7 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
 
     // adjoint simulations: needs absorbing boundary buffer
     // copies array to GPU
-    print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_field,absorb_field,
+    print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_field->cuda,absorb_field,
                                        NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyHostToDevice),7700);
 
     // absorbing boundary contributions
@@ -342,7 +344,8 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 
   TRACE ("compute_stacey_elastic_undoatt_gpu");
 
-  int num_abs_boundary_faces;
+  int num_abs_boundary_faces = 0;
+
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_abs_boundary_normal;
   gpu_realw_mem *d_abs_boundary_jacobian2D;
@@ -446,7 +449,8 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_elastic_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_elastic_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA

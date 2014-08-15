@@ -67,7 +67,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_rho_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_rho_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -125,7 +126,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
         global_work_size[0] = num_blocks_x * blocksize;
         global_work_size[1] = num_blocks_y;
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undo_att_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undo_att_kernel, 2, NULL,
+                                         global_work_size, local_work_size, 0, NULL, NULL));
 
       } else {
         // anisotropic kernels
@@ -157,7 +159,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
         global_work_size[0] = num_blocks_x * blocksize;
         global_work_size[1] = num_blocks_y;
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL,
+                                         global_work_size, local_work_size, 0, NULL, NULL));
       }
     }
 #endif
@@ -231,7 +234,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
         global_work_size[0] = num_blocks_x * blocksize;
         global_work_size[1] = num_blocks_y;
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_kernel, 2, NULL,
+                                         global_work_size, local_work_size, 0, NULL, NULL));
 
       } else {
         // anisotropic kernels
@@ -256,7 +260,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
         global_work_size[0] = num_blocks_x * blocksize;
         global_work_size[1] = num_blocks_y;
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_kernel, 2, NULL,
+                                         global_work_size, local_work_size, 0, NULL, NULL));
       }
     }
 #endif
@@ -348,7 +353,8 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_rho_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_rho_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -413,7 +419,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
-                                       
+
     }
 #endif
 #ifdef USE_CUDA
@@ -552,7 +558,8 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_acoustic_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_acoustic_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -611,7 +618,7 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
     cl_uint idx = 0;
 
     // copies surface buffer to GPU
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
                                    NDIM * NGLL2 * mp->nspec2D_top_crust_mantle * sizeof (realw),
                                    h_noise_surface_movie, 0, NULL, NULL));
 
@@ -632,8 +639,8 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
     global_work_size[0] = num_blocks_x * NGLL2;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_strength_noise_kernel,
-                                     2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_strength_noise_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA

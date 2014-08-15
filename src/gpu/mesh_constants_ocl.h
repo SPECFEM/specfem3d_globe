@@ -27,7 +27,14 @@
 !=====================================================================
 */
 
+#ifndef MESH_CONSTANTS_OCL_H
+#define MESH_CONSTANTS_OCL_H
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 const char* clewErrorString (cl_int error);
 
@@ -82,11 +89,15 @@ const char* clewErrorString (cl_int error);
                                   0, NULL, NULL));                      \
   clCheck(clReleaseMemObject (mp->h_pinned_##_buffer_))
 
+
+/* ----------------------------------------------------------------------------------------------- */
+
 extern int mocl_errcode;
+
 static inline cl_int _clCheck(cl_int errcode, const char *file, int line, const char *func) {
   mocl_errcode = errcode;
   if (mocl_errcode != CL_SUCCESS) {
-    fprintf (stderr, "Error %d/%s at %s:%d %s\n", mocl_errcode,
+    fprintf (stderr, "OpenCL Error %d/%s at %s:%d %s\n", mocl_errcode,
              clewErrorString(mocl_errcode),
              file, line, func);
     fflush(NULL);
@@ -99,10 +110,14 @@ static inline cl_int _clCheck(cl_int errcode, const char *file, int line, const 
 
 #define clck_(var) var); clCheck(*var
 
+/* ----------------------------------------------------------------------------------------------- */
+
 #define TAKE_REF_OCL(_buffer_)                                  \
   if (run_opencl) {                                             \
     clCheck(clRetainMemObject(_buffer_.ocl));                   \
   }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 struct mesh_programs_s {
 #undef BOAST_KERNEL
@@ -111,12 +126,16 @@ struct mesh_programs_s {
   #include "kernel_list.h"
 };
 
+/* ----------------------------------------------------------------------------------------------- */
+
 struct mesh_kernels_s {
 #undef BOAST_KERNEL
 #define BOAST_KERNEL(__kern_name__) cl_kernel __kern_name__
 
   #include "kernel_list.h"
 };
+
+/* ----------------------------------------------------------------------------------------------- */
 
 void release_kernels (void);
 
@@ -129,3 +148,5 @@ extern struct _mesh_opencl {
   cl_device_id device;
   cl_int nb_devices;
 } mocl;
+
+#endif

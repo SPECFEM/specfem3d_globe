@@ -134,7 +134,7 @@
   call prepare_AVS_DX_global_data_adios(myrank, &
                                         nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
                                         mask_ibool, npointot, avs_dx_global_vars)
-                                        
+
   call write_AVS_DX_global_data_adios(adios_handle, myrank, &
       sizeprocs, avs_dx_global_vars)
 
@@ -146,7 +146,7 @@
                                               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
                                               RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                               avs_dx_global_faces_vars)
-      
+
   call write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
       sizeprocs, avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
 

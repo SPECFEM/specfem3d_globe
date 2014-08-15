@@ -64,6 +64,9 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     cl_uint num_evt = 0;
 
     if (GPU_ASYNC_COPY ){
+      // waits for previous copy
+      clCheck (clFinish (mocl.copy_queue));
+
       if (mp->has_last_copy_evt) {
         copy_evt = &mp->last_copy_evt;
         num_evt = 1;
@@ -82,10 +85,14 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_from_device_kernel, 2, NULL, global_work_size, local_work_size, num_evt, copy_evt, &kernel_evt));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_from_device_kernel, 2, NULL,
+                                     global_work_size, local_work_size, num_evt, copy_evt, &kernel_evt));
 
     //copies array to CPU
     if (GPU_ASYNC_COPY) {
+      // waits until kernel is finished
+      clCheck (clFinish (mocl.command_queue));
+
       if (mp->has_last_copy_evt) {
         clCheck (clReleaseEvent (mp->last_copy_evt));
       }
@@ -95,6 +102,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
                                     mp->h_station_seismo_field, 1, &kernel_evt, &mp->last_copy_evt));
       mp->has_last_copy_evt = 1;
     } else {
+      // blocking copy
       clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_station_seismo_field.ocl, CL_TRUE, 0,
                                     3 * NGLL3 * mp->nrec_local * sizeof (realw),
                                     mp->h_station_seismo_field, 0, NULL, NULL));
@@ -138,6 +146,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
   }
   }
 #endif
+
   if (!GPU_ASYNC_COPY) {
     for (irec_local = 0; irec_local < mp->nrec_local; irec_local++) {
       irec = number_receiver_global[irec_local] - 1;
@@ -151,6 +160,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
       }
     }
   }
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("write_seismograms_transfer_from_device");
 #endif
@@ -199,7 +209,8 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_strain_from_device_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.write_seismograms_transfer_strain_from_device_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
 
     //copies array to CPU
     clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_station_seismo_field.ocl, CL_TRUE, 0,

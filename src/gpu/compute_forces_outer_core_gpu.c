@@ -65,6 +65,11 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
   exit_on_gpu_error ("before outer_core kernel Kernel_2");
 #endif
 
+  // safety check
+  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
+    exit_on_error("error invalid FORWARD_OR_ADJOINT in outer_core() routine");
+  }
+
   // if the grid can handle the number of blocks, we let it be 1D
   // grid_2_x = nb_elem_color;
   // nb_elem_color is just how many blocks we are computing now
@@ -80,16 +85,12 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     cl_kernel *outer_core_kernel_p;
     cl_uint idx = 0;
 
-    if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
-      goto skipexec;
-    } else if (FORWARD_OR_ADJOINT == 3) {
-      // debug
-      DEBUG_BACKWARD_FORCES ();
-    }
-
     if (FORWARD_OR_ADJOINT == 1) {
       outer_core_kernel_p = &mocl.kernels.outer_core_impl_kernel_forward;
     } else {
+      // debug
+      DEBUG_BACKWARD_FORCES ();
+      // adjoint/kernel simulations
       outer_core_kernel_p = &mocl.kernels.outer_core_impl_kernel_adjoint;
     }
 
@@ -159,9 +160,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *outer_core_kernel_p, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
-
   }
-skipexec: ;
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
@@ -206,7 +205,7 @@ skipexec: ;
                                                                             d_A_array_rotation.cuda,
                                                                             d_B_array_rotation.cuda,
                                                                             mp->NSPEC_OUTER_CORE);
-    }else if( FORWARD_OR_ADJOINT == 3 ){
+    } else {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
       // debug
       DEBUG_BACKWARD_FORCES();
@@ -263,8 +262,14 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
   Mesh *mp = (Mesh *) (*Mesh_pointer_f);   // get Mesh from Fortran integer wrapper
   realw time = *time_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
-  int num_elements;
 
+  // safety check
+  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
+    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_forces_outer_core_gpu() routine");
+  }
+
+  // determines number of elements to loop over (inner/outer elements)
+  int num_elements;
   if (*iphase == 1) {
     num_elements = mp->nspec_outer_outer_core;
   } else {
@@ -421,7 +426,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  //double end_time = get_time ();
+  //double end_time = get_time_val ();
   //printf ("Elapsed time: %e\n", end_time-start_time);
   exit_on_gpu_error ("compute_forces_outer_core_gpu");
 #endif

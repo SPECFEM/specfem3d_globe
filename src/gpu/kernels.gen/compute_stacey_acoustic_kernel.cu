@@ -1,5 +1,6 @@
 //note: please do not modify this file manually!
 //      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
 
 /*
 !=====================================================================
@@ -172,12 +173,12 @@ __global__ void compute_stacey_acoustic_kernel(const float * potential_dot_acous
         fac1 = wgllwgll[(j) * (NGLLX) + i - (0)];
         break;
       }
-  }
-  iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
-  sn = (potential_dot_acoustic[iglob - (0)]) / (vpstore[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)]);
-  jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - (0)]) * (fac1);
-  atomicAdd(potential_dot_dot_acoustic + iglob, ( -(sn)) * (jacobianw));
-  if(SAVE_FORWARD){
-    b_absorb_potential[INDEX2(NGLL2, igll, iface) - (0)] = (sn) * (jacobianw);
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+    sn = (potential_dot_acoustic[iglob - (0)]) / (vpstore[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)]);
+    jacobianw = (abs_boundary_jacobian2D[INDEX2(NGLL2, igll, iface) - (0)]) * (fac1);
+    atomicAdd(potential_dot_dot_acoustic + iglob, ( -(sn)) * (jacobianw));
+    if(SAVE_FORWARD){
+      b_absorb_potential[INDEX2(NGLL2, igll, iface) - (0)] = (sn) * (jacobianw);
+    }
   }
 }

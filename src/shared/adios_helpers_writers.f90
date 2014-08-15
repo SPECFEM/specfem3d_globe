@@ -1052,7 +1052,7 @@ subroutine write_1D_global_array_adios_dims_offset(adios_handle, myrank, local_d
   ! to avoid compiler warnings
   idummy = myrank
   idummy = sizeprocs
-  
+
 end subroutine write_1D_global_array_adios_dims_offset
 
 !===============================================================================

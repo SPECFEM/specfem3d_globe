@@ -5,6 +5,7 @@ module BOAST
     v = Gem.latest_spec_for('BOAST').version.to_s
     var = "//note: please do not modify this file manually!\n"
     var += "//      this file has been generated automatically by BOAST version #{v}\n"
+    var += "//      by: make boast_kernels\n"
     var += "\n"
     return var
   end

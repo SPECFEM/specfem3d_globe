@@ -43,13 +43,13 @@ void FC_FUNC_(transfer_fields_cm_to_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_crust_mantle.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_crust_mantle.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   displ, 0, NULL, NULL));
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_crust_mantle.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_crust_mantle.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   veloc, 0, NULL, NULL));
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_crust_mantle.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_crust_mantle.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   accel, 0, NULL, NULL));
   }
@@ -77,15 +77,15 @@ void FC_FUNC_(transfer_fields_ic_to_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_inner_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_inner_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   displ, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_inner_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_inner_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   veloc, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_inner_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_inner_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   accel, 0, NULL, NULL));
   }
@@ -113,15 +113,15 @@ void FC_FUNC_(transfer_fields_oc_to_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_outer_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_outer_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   displ, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_outer_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_outer_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   veloc, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_outer_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_outer_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   accel, 0, NULL, NULL));
   }
@@ -153,15 +153,15 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_crust_mantle.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_crust_mantle.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   b_displ, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_crust_mantle.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_crust_mantle.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   b_veloc, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_accel_crust_mantle.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_accel_crust_mantle.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   b_accel, 0, NULL, NULL));
   }
@@ -192,15 +192,15 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_inner_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_inner_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   b_displ, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_inner_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_inner_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   b_veloc, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_accel_inner_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_accel_inner_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   b_accel, 0, NULL, NULL));
   }
@@ -232,11 +232,11 @@ void FC_FUNC_(transfer_b_fields_oc_to_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_outer_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_outer_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   b_displ, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_outer_core.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_outer_core.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   b_veloc, 0, NULL, NULL));
 
@@ -747,7 +747,7 @@ void FC_FUNC_(transfer_accel_cm_to_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_crust_mantle.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_crust_mantle.ocl, CL_TRUE, 0,
                                   sizeof (realw) * (*size),
                                   accel, 0, NULL, NULL));
   }
@@ -953,23 +953,23 @@ void FC_FUNC_(transfer_b_strain_cm_to_device,
   if (! mp->undo_attenuation) {
 #ifdef USE_OPENCL
     if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xx_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xx_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_xx, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yy_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yy_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_yy, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xy_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xy_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_xy, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xz_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xz_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_xz, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yz_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yz_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_yz, 0, NULL, NULL));
     }
@@ -1079,23 +1079,23 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
 
 #ifdef USE_OPENCL
     if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xx_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xx_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_xx, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yy_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yy_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_yy, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xy_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xy_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_xy, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xz_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xz_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_xz, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yz_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yz_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     epsilondev_yz, 0, NULL, NULL));
     }
@@ -1200,23 +1200,23 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
   if (! mp->partial_phys_dispersion_only) {
 #ifdef USE_OPENCL
     if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xx_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xx_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_xx, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yy_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yy_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_yy, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xy_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xy_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_xy, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xz_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xz_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_xz, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yz_crust_mantle.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yz_crust_mantle.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_yz, 0, NULL, NULL));
     }
@@ -1318,23 +1318,23 @@ void FC_FUNC_(transfer_b_rmemory_ic_to_device,
 
 #ifdef USE_OPENCL
     if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xx_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xx_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_xx, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yy_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yy_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_yy, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xy_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xy_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_xy, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xz_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xz_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_xz, 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yz_inner_core.ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yz_inner_core.ocl, CL_TRUE, 0,
                                     size * sizeof (realw),
                                     b_R_yz, 0, NULL, NULL));
     }
@@ -1419,11 +1419,11 @@ void FC_FUNC_(transfer_b_rotation_to_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_A_array_rotation.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_A_array_rotation.ocl, CL_TRUE, 0,
                                   size * sizeof (realw),
                                   A_array_rotation, 0, NULL, NULL));
 
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_B_array_rotation.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_B_array_rotation.ocl, CL_TRUE, 0,
                                   size * sizeof (realw),
                                   B_array_rotation, 0, NULL, NULL));
   }

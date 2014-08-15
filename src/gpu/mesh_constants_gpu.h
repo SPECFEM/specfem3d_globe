@@ -69,10 +69,13 @@ typedef float realw;
 // debug: outputs traces
 #define DEBUG 0
 #if DEBUG == 1
-#define TRACE(x) printf ("%s\n", x);
+#define TRACE(x) printf ("%s\n", x); fflush(stdout);
 #else
 #define TRACE(x)
 #endif
+
+// debug: outputs maximum values of wavefields
+#define DEBUG_FIELDS 0
 
 // more outputs
 #define MAXDEBUG 0
@@ -86,7 +89,7 @@ typedef float realw;
 #define PRINT5(var, offset)   // for (i=0;i<10;i++) printf ("var (%d)=%f\n", i, var[offset+i]);
 #endif
 
-// daniel debug: run backward simulations with/without GPU routines and empty arrays for debugging
+// debug: run backward simulations with/without GPU routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
 #define DEBUG_BACKWARD_ASSEMBLY() return;
@@ -105,7 +108,6 @@ typedef float realw;
 #define DEBUG_BACKWARD_TRANSFER()
 #define DEBUG_BACKWARD_UPDATE()
 #endif
-
 
 // error checking after cuda function calls
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
@@ -151,7 +153,7 @@ typedef float realw;
 
 // Asynchronous memory copies between GPU and CPU
 // (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
-#define GPU_ASYNC_COPY 1
+#define GPU_ASYNC_COPY 0
 
 /*----------------------------------------------------------------------------------------------- */
 
@@ -934,14 +936,14 @@ typedef struct mesh_ {
 // utility functions: defined in check_fields_ocl.cu
 /*----------------------------------------------------------------------------------------------- */
 
-double get_time ();
+double get_time_val ();
 void get_free_memory (double *free_db, double *used_db, double *total_db);
 void pause_for_debugger (int pause);
 void exit_on_gpu_error (char *kernel_name);
 void exit_on_error (char *info);
 void synchronize_mpi ();
 void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
-realw get_device_array_maximum_value (gpu_realw_mem *d_array, int size);
+realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -991,4 +993,5 @@ realw get_device_array_maximum_value (gpu_realw_mem *d_array, int size);
 #define RELEASE_OFFSET(_buffer_, _offset_)      \
   RELEASE_OFFSET_OCL(_buffer_, _offset_)        \
   RELEASE_OFFSET_CUDA(_buffer_, _offset_)
+
 #endif   // MESH_CONSTANTS_GPU_H

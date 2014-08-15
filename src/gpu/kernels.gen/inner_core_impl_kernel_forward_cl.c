@@ -1,5 +1,6 @@
 //note: please do not modify this file manually!
 //      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
 
 /*
 !=====================================================================
@@ -97,7 +98,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
 #undef USE_TEXTURES_CONSTANTS\n\
 #endif\n\
-void compute_element_ic_att_stress(const int tx, const int working_element, const __global float * R_xx, const __global float * R_yy, const __global float * R_xy, const __global float * R_xz, const __global float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
+static void compute_element_ic_att_stress(const int tx, const int working_element, const __global float * R_xx, const __global float * R_yy, const __global float * R_xy, const __global float * R_xz, const __global float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   int offset;\n\
   int i_sls;\n\
   float R_xx_val;\n\
@@ -114,7 +115,7 @@ void compute_element_ic_att_stress(const int tx, const int working_element, cons
     sigma_yz[0 - (0)] = sigma_yz[0 - (0)] - (R_yz[offset - (0)]);\n\
   }\n\
 }\n\
-void compute_element_ic_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){\n\
+static void compute_element_ic_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){\n\
   int offset;\n\
   int i_sls;\n\
   float mul;\n\
@@ -152,7 +153,7 @@ void compute_element_ic_att_memory(const int tx, const int working_element, cons
     R_yz[offset - (0)] = (alphaval_loc) * (R_yz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
   }\n\
 }\n\
-void compute_element_ic_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
+static void compute_element_ic_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
   float radius;\n\
   float theta;\n\
   float phi;\n\

@@ -125,7 +125,10 @@ kerns.each { |kern|
     if lang == :CUDA then
       k = "#{v}" + k
       f.puts k
-      k.build( :LDFLAGS => " -L/usr/local/cuda-5.5.22/lib64", :NVCCFLAGS => "-arch sm_20 -O2 --compiler-options -Wall", :verbose => $options[:verbose] ) if $options[:check]
+      if $options[:check] then
+        puts "  building kernel"
+        k.build( :LDFLAGS => " -L/usr/local/cuda-5.5.22/lib64", :NVCCFLAGS => "-arch sm_20 -O2 --compiler-options -Wall", :verbose => $options[:verbose] )
+      end
     elsif lang == :CL then
       s = k.to_s
       res = "const char * #{kern}_program = \"\\\n"
@@ -135,11 +138,15 @@ kerns.each { |kern|
       res += "\";\n"
       res = "#{v}\n" + res
       f.print res
-      k.build(:verbose => $options[:verbose], :platform_vendor => $options[:platform] ) if $options[:check]
+      if $options[:check] then
+        puts "  building kernel"
+        k.build(:verbose => $options[:verbose], :platform_vendor => $options[:platform] )
+      end
     end
     
     # regression testing
     if $options[:check] then
+      puts "  testing kernel with ../kernels.test/ cases"
       inputs = k.load_ref_inputs("../kernels.test/")
       outputs_ref = k.load_ref_outputs("../kernels.test/")
       inputs.each_key { |key|
