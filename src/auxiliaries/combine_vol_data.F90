@@ -88,13 +88,13 @@ program combine_vol_data_vtk
 
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core ! to get rid of fictitious elements in central cube
 
-!!! .mesh specific !!!!!!!!!!!
 #ifndef USE_VTK_INSTEAD_OF_MESH
+!!! .mesh specific !!!!!!!!!!!
   integer :: pfd, efd
   character(len=1038) :: command_name
   character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file
-!!! .vtk specific !!!!!!!!!!!
 #else
+!!! .vtk specific !!!!!!!!!!!
   character(len=256) :: mesh_file
   integer ier
   ! global point data
@@ -107,9 +107,7 @@ program combine_vol_data_vtk
   integer :: sizeprocs, ierr, mpier
   character(len=256) :: var_name, value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
-
 #endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! starts here---------------------------------------------------------------
 #ifdef ADIOS_INPUT

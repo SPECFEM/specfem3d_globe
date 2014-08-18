@@ -185,7 +185,8 @@
       ! note: we step back in time (using time steps - DT ), i.e. wavefields b_displ_..() are time-reversed here
 
       ! reconstructs forward wavefields based on last stored wavefield data
-      do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
+      ! note: NSTAGE_TIME_SCHEME is equal to 1 if Newmark because only one stage then
+      do istage = 1, NSTAGE_TIME_SCHEME
 
         if(USE_LDDRK)then
           ! update displacement using Runge-Kutta time scheme
@@ -325,18 +326,23 @@
 
   else if (SIMULATION_TYPE == 3) then
     ! to store kernels
-    call transfer_kernels_oc_to_host(Mesh_pointer, &
-                                     rho_kl_outer_core,&
-                                     alpha_kl_outer_core,NSPEC_OUTER_CORE)
-    call transfer_kernels_cm_to_host(Mesh_pointer, &
-                                     rho_kl_crust_mantle, &
-                                     alpha_kl_crust_mantle, &
-                                     beta_kl_crust_mantle, &
-                                     cijkl_kl_crust_mantle,NSPEC_CRUST_MANTLE)
+    ! inner core
     call transfer_kernels_ic_to_host(Mesh_pointer, &
                                      rho_kl_inner_core, &
                                      alpha_kl_inner_core, &
                                      beta_kl_inner_core,NSPEC_INNER_CORE)
+    ! outer core
+    call transfer_kernels_oc_to_host(Mesh_pointer, &
+                                     rho_kl_outer_core,&
+                                     alpha_kl_outer_core,NSPEC_OUTER_CORE)
+    ! crust/mantle
+    call transfer_kernels_cm_to_host(Mesh_pointer, &
+                                     rho_kl_crust_mantle,alpha_kl_crust_mantle,beta_kl_crust_mantle, &
+                                     NSPEC_CRUST_MANTLE)
+    ! full anisotropic kernel
+    if( ANISOTROPIC_KL ) then
+      call transfer_kernels_ani_cm_to_host(Mesh_pointer,cijkl_kl_crust_mantle,NSPEC_CRUST_MANTLE)
+    endif
 
     ! specific noise strength kernel
     if( NOISE_TOMOGRAPHY == 3 ) then

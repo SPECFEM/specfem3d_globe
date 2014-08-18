@@ -48,7 +48,8 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
   TRACE ("transfer_boun_pot_from_device");
   int size_mpi_buffer;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
   if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
@@ -211,7 +212,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_ (transfer_asmbl_pot_to_device,
-               TRANSFER_ASMBL_POT_TO_DEVICE) (long *Mesh_pointer,
+               TRANSFER_ASMBL_POT_TO_DEVICE) (long *Mesh_pointer_f,
                                               realw *buffer_recv_scalar,
                                               int *FORWARD_OR_ADJOINT) {
 
@@ -219,7 +220,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
   int size_mpi_buffer;
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) (*Mesh_pointer);
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
   if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){

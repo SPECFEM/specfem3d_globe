@@ -41,12 +41,11 @@ void FC_FUNC_ (compute_add_sources_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks if anything to do
-  if (mp->nsources_local == 0)
-    return;
+  if (mp->nsources_local == 0) return;
 
   int NSOURCES = *NSOURCESf;
 
-  int num_blocks_x,  num_blocks_y;
+  int num_blocks_x, num_blocks_y;
   get_blocks_xy (NSOURCES, &num_blocks_x, &num_blocks_y);
 
 #ifdef USE_OPENCL
@@ -57,8 +56,7 @@ void FC_FUNC_ (compute_add_sources_gpu,
 
     // copies source time function buffer values to GPU
     clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_TRUE, 0,
-                                   NSOURCES * sizeof (double),
-                                   h_stf_pre_compute, 0, NULL, NULL));
+                                   NSOURCES * sizeof (double), h_stf_pre_compute, 0, NULL, NULL));
 
     // adds source contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
@@ -123,8 +121,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks if anything to do
-  if (mp->nsources_local == 0)
-    return;
+  if (mp->nsources_local == 0) return;
 
   int NSOURCES = *NSOURCESf;
 
@@ -133,19 +130,19 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    size_t global_work_size[2];
-    size_t local_work_size[2];
+    size_t global_work_size[3];
+    size_t local_work_size[3];
     cl_uint idx = 0;
 
     // copies source time function buffer values to GPU
     clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_TRUE, 0,
-                                   NSOURCES * sizeof (double),
-                                   h_stf_pre_compute, 0, NULL, NULL));
+                                   NSOURCES * sizeof (double), h_stf_pre_compute, 0, NULL, NULL));
 
+    // adds source contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_sourcearrays.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (gpu_double_mem), (void *) &mp->d_stf_pre_compute));
+    clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_stf_pre_compute.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (int), (void *) &mp->myrank));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_islice_selected_source.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_source.ocl));
@@ -153,10 +150,12 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
 
     local_work_size[0] = NGLLX;
     local_work_size[1] = NGLLX;
+    local_work_size[2] = NGLLX;
     global_work_size[0] = num_blocks_x * NGLLX;
     global_work_size[1] = num_blocks_y * NGLLX;
+    global_work_size[2] = NGLLX;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_add_sources_kernel, 2, NULL,
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_add_sources_kernel, 3, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
@@ -191,7 +190,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_add_sources_adjoint_gpu,
-               COMPUTE_ADD_SOURCES_ADJOINT_GPU) (long *Mesh_pointer,
+               COMPUTE_ADD_SOURCES_ADJOINT_GPU) (long *Mesh_pointer_f,
                                                  int *h_nrec) {
 
   // adds adjoint sources
@@ -199,7 +198,8 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
 
   TRACE("compute_add_sources_adjoint_gpu");
 
-  Mesh *mp = (Mesh *)(*Mesh_pointer); //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // check if anything to do
   if( mp->nadj_rec_local == 0 ) return;
@@ -269,12 +269,12 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
     compute_add_sources_adjoint_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
-                                                                                   nrec,
-                                                                                   mp->d_adj_sourcearrays.cuda,
-                                                                                   mp->d_ibool_crust_mantle.cuda,
-                                                                                   mp->d_ispec_selected_rec.cuda,
-                                                                                   mp->d_pre_computed_irec.cuda,
-                                                                                   mp->nadj_rec_local);
+                                                                              nrec,
+                                                                              mp->d_adj_sourcearrays.cuda,
+                                                                              mp->d_ibool_crust_mantle.cuda,
+                                                                              mp->d_ispec_selected_rec.cuda,
+                                                                              mp->d_pre_computed_irec.cuda,
+                                                                              mp->nadj_rec_local);
   }
 #endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
@@ -288,7 +288,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_adj_to_device,
-              TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer,
+              TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer_f,
                                       int* h_nrec,
                                       realw* h_adj_sourcearrays,
                                       int* h_islice_selected_rec) {
@@ -297,11 +297,11 @@ void FC_FUNC_(transfer_adj_to_device,
 
   TRACE("transfer_adj_to_device");
 
-  Mesh* mp = (Mesh*)(*Mesh_pointer); //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // check if anything to do
-  if (mp->nadj_rec_local == 0)
-    return;
+  if (mp->nadj_rec_local == 0) return;
 
   // total number of receivers/adjoint sources
   int nrec = *h_nrec;
@@ -369,21 +369,19 @@ void FC_FUNC_(transfer_adj_to_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_adj_to_device_async,
-              TRANSFER_ADJ_TO_DEVICE_ASYNC)(long *Mesh_pointer,
+              TRANSFER_ADJ_TO_DEVICE_ASYNC)(long *Mesh_pointer_f,
                                             int *h_nrec,
                                             realw *h_adj_sourcearrays,
-                                            int *h_islice_selected_rec)
-{
+                                            int *h_islice_selected_rec) {
   // asynchronous transfer for next adjoint source arrays from host to device
 
   TRACE("transfer_adj_to_device_async");
 
-  Mesh *mp = (Mesh *)(*Mesh_pointer); //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // check if anything to do
-  if (mp->nadj_rec_local == 0) {
-    return;
-  }
+  if (mp->nadj_rec_local == 0) return;
 
   // checks async-memcpy
   if (! GPU_ASYNC_COPY ) {

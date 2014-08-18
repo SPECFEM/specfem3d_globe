@@ -231,7 +231,8 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_b_absorb_potential;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // absorbing boundary type
   int interface_type = *itype;

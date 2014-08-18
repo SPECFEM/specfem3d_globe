@@ -150,9 +150,15 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
 
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_OUTER_CORE));
 
-    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_oc_tex));
-    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_oc_tex));
-
+    
+    if (FORWARD_OR_ADJOINT == 1) {
+      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_oc_tex));
+      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_oc_tex));
+    } else {
+      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_oc_tex));
+      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_oc_tex));
+    }
+    
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
@@ -259,7 +265,8 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
 
   TRACE ("compute_forces_outer_core_gpu");
 
-  Mesh *mp = (Mesh *) (*Mesh_pointer_f);   // get Mesh from Fortran integer wrapper
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
   realw time = *time_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 

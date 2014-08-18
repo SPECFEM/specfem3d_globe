@@ -33,13 +33,14 @@
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_cm_gpu,
-               COMPUTE_KERNELS_CM_GPU) (long *Mesh_pointer, realw *deltat_f) {
+               COMPUTE_KERNELS_CM_GPU) (long *Mesh_pointer_f, realw *deltat_f) {
 
   TRACE ("compute_cm_gpu");
   // debug
   DEBUG_BACKWARD_KERNEL ();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int blocksize = NGLL3;
   realw deltat = *deltat_f;
@@ -319,13 +320,14 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_ic_gpu,
-               COMPUTE_KERNELS_IC_GPU) (long *Mesh_pointer, realw *deltat_f) {
+               COMPUTE_KERNELS_IC_GPU) (long *Mesh_pointer_f, realw *deltat_f) {
 
   TRACE("compute_kernels_ic_gpu");
   // debug
   DEBUG_BACKWARD_KERNEL();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int blocksize = NGLL3;
   realw deltat = *deltat_f;
@@ -513,11 +515,14 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_oc_gpu,
-               COMPUTE_KERNELS_OC_GPU) (long *Mesh_pointer, realw *deltat_f) {
+               COMPUTE_KERNELS_OC_GPU) (long *Mesh_pointer_f, realw *deltat_f) {
 
   TRACE ("compute_kernels_oc_gpu");
+  // debug
+  DEBUG_BACKWARD_KERNEL();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int blocksize = NGLL3;   // NGLLX*NGLLY*NGLLZ
   realw deltat = *deltat_f;
@@ -598,13 +603,16 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
-               COMPUTE_KERNELS_STRGTH_NOISE_GPU) (long *Mesh_pointer,
+               COMPUTE_KERNELS_STRGTH_NOISE_GPU) (long *Mesh_pointer_f,
                                                   realw *h_noise_surface_movie,
                                                   realw *deltat_f) {
 
   TRACE ("compute_kernels_strgth_noise_gpu");
+  // debug
+  DEBUG_BACKWARD_KERNEL();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   realw deltat = *deltat_f;
 
@@ -675,11 +683,14 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_hess_gpu,
-               COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer,
+               COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer_f,
                                           realw *deltat_f) {
   TRACE ("compute_hess_kernel_gpu");
+  // debug
+  DEBUG_BACKWARD_KERNEL();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks
   if (! mp->approximate_hess_kl) {

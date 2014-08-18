@@ -46,7 +46,8 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
   gpu_realw_mem *d_wgllwgll;
   gpu_realw_mem *d_b_absorb_field;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -216,7 +217,8 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_b_absorb_field;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -352,7 +354,8 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
   gpu_realw_mem *d_wgllwgll;
   gpu_realw_mem *d_b_absorb_field = NULL;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks if anything to do
   if (mp->simulation_type /= 3 || mp->save_forward)

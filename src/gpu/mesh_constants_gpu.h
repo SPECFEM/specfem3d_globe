@@ -94,11 +94,11 @@ typedef float realw;
 #if DEBUG_BACKWARD_SIMULATIONS == 1
 #define DEBUG_BACKWARD_ASSEMBLY() return;
 #define DEBUG_BACKWARD_COUPLING() return;
-#define DEBUG_BACKWARD_FORCES() return;
-#define DEBUG_BACKWARD_KERNEL() return;
-#define DEBUG_BACKWARD_SOURCES() return;
+#define DEBUG_BACKWARD_FORCES()   return;
+#define DEBUG_BACKWARD_KERNEL()   return;
+#define DEBUG_BACKWARD_SOURCES()  return;
 #define DEBUG_BACKWARD_TRANSFER() return;
-#define DEBUG_BACKWARD_UPDATE() return;
+#define DEBUG_BACKWARD_UPDATE()   return;
 #else
 #define DEBUG_BACKWARD_ASSEMBLY()
 #define DEBUG_BACKWARD_COUPLING()
@@ -845,32 +845,6 @@ typedef struct mesh_ {
   // noise sensitivity kernel
   gpu_realw_mem d_Sigma_kl;
 
-#ifdef USE_OPENCL
-  // forward
-  cl_mem d_displ_cm_tex;
-  cl_mem d_accel_cm_tex;
-
-  cl_mem d_displ_oc_tex;
-  cl_mem d_accel_oc_tex;
-
-  cl_mem d_displ_ic_tex;
-  cl_mem d_accel_ic_tex;
-
-  // backward/reconstructed
-  cl_mem d_b_displ_cm_tex;
-  cl_mem d_b_accel_cm_tex;
-
-  cl_mem d_b_displ_oc_tex;
-  cl_mem d_b_accel_oc_tex;
-
-  cl_mem d_b_displ_ic_tex;
-  cl_mem d_b_accel_ic_tex;
-
-  // hprime
-  cl_mem d_hprime_xx_cm_tex;
-  // weighted hprime
-  cl_mem d_hprimewgll_xx_cm_tex;
-#endif
   // ------------------------------------------------------------------ //
   // optimizations
   // ------------------------------------------------------------------ //
@@ -919,6 +893,7 @@ typedef struct mesh_ {
   cl_mem h_pinned_b_recv_accel_buffer_oc;
 #endif
 
+  // streams
 #if USE_CUDA
   // overlapped memcpy streams
   cudaStream_t compute_stream;
@@ -927,6 +902,36 @@ typedef struct mesh_ {
 #if USE_OPENCL
   cl_event last_copy_evt;
   int has_last_copy_evt;
+#endif
+
+  // specific OpenCL texture arrays
+#if USE_OPENCL
+// note: need to be defined as they are passed as function arguments
+  // USE_TEXTURES_FIELDS
+  // forward
+  cl_mem d_displ_cm_tex;
+  cl_mem d_accel_cm_tex;
+
+  cl_mem d_displ_oc_tex;
+  cl_mem d_accel_oc_tex;
+
+  cl_mem d_displ_ic_tex;
+  cl_mem d_accel_ic_tex;
+
+  // backward/reconstructed
+  cl_mem d_b_displ_cm_tex;
+  cl_mem d_b_accel_cm_tex;
+
+  cl_mem d_b_displ_oc_tex;
+  cl_mem d_b_accel_oc_tex;
+
+  cl_mem d_b_displ_ic_tex;
+  cl_mem d_b_accel_ic_tex;
+  // USE_TEXTURES_CONSTANTS
+  // hprime
+  cl_mem d_hprime_xx_cm_tex;
+  // weighted hprime
+  cl_mem d_hprimewgll_xx_cm_tex;
 #endif
 
 } Mesh;

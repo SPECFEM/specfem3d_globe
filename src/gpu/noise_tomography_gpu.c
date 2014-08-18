@@ -40,7 +40,8 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
                                                 realw *h_noise_surface_movie) {
   TRACE ("noise_transfer_surface_to_host");
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   // get Mesh from Fortran integer wrapper
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->nspec2D_top_crust_mantle, &num_blocks_x, &num_blocks_y);
@@ -106,13 +107,11 @@ void FC_FUNC_ (noise_add_source_master_rec_gpu,
 
   TRACE ("noise_add_source_master_rec_cu");
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int it = *it_f - 1;   // -1 for Fortran -> C indexing differences
   int irec_master_noise = *irec_master_noise_f-1;
-
-
-
 
   // adds noise source at master location
   if (mp->myrank == islice_selected_rec[irec_master_noise]) {
@@ -167,7 +166,8 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
 
   TRACE ("noise_add_surface_movie_gpu");
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->nspec2D_top_crust_mantle, &num_blocks_x, &num_blocks_y);

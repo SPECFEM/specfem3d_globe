@@ -62,7 +62,7 @@ typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
 /* ----------------------------------------------------------------------------------------------- */
 
 #ifndef USE_OLDER_CUDA4_GPU
-#ifdef USE_TEXTURES_FIELDS
+  #ifdef USE_TEXTURES_FIELDS
     // forward
     extern realw_texture d_displ_cm_tex;
     extern realw_texture d_accel_cm_tex;
@@ -94,4 +94,5 @@ typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
   #endif
 #endif
 
-#endi
+#endif
+

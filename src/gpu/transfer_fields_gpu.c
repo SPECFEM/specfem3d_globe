@@ -61,6 +61,10 @@ void FC_FUNC_(transfer_fields_cm_to_device,
     print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_crust_mantle.cuda,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_fields_cm_to_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -96,6 +100,10 @@ void FC_FUNC_(transfer_fields_ic_to_device,
     print_CUDA_error_if_any(cudaMemcpy(mp->d_veloc_inner_core.cuda,veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_inner_core.cuda,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_fields_ic_to_device");
 #endif
 }
 
@@ -133,6 +141,10 @@ void FC_FUNC_(transfer_fields_oc_to_device,
     print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_outer_core.cuda,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_fields_oc_to_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -141,8 +153,7 @@ void FC_FUNC_(transfer_fields_oc_to_device,
 // crust_mantle
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_fields_cm_to_device,
-              TRANSFER_FIELDS_B_CM_TO_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel,
-                                              long *Mesh_pointer_f) {
+              TRANSFER_FIELDS_B_CM_TO_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel, long *Mesh_pointer_f) {
 
   TRACE("transfer_fields_b_cm_to_device");
   // debug
@@ -151,6 +162,7 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
+  // copies last wavefield snapshots to GPU
 #ifdef USE_OPENCL
   if (run_opencl) {
     clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_crust_mantle.ocl, CL_TRUE, 0,
@@ -173,6 +185,10 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_crust_mantle.cuda,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_fields_cm_to_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -180,8 +196,7 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
 // inner_core
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_fields_ic_to_device,
-              TRANSFER_FIELDS_B_IC_TO_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel,
-                                              long *Mesh_pointer_f) {
+              TRANSFER_FIELDS_B_IC_TO_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel, long *Mesh_pointer_f) {
 
   TRACE("transfer_fields_b_ic_to_device");
   // debug
@@ -190,6 +205,7 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
+  // copies last wavefield snapshots to GPU
 #ifdef USE_OPENCL
   if (run_opencl) {
     clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_inner_core.ocl, CL_TRUE, 0,
@@ -212,6 +228,10 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_inner_core.cuda,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_fields_ic_to_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -219,17 +239,16 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
 // outer_core
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_fields_oc_to_device,
-              TRANSFER_FIELDS_B_OC_TO_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel,
-                                              long *Mesh_pointer_f) {
+              TRANSFER_FIELDS_B_OC_TO_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel, long *Mesh_pointer_f) {
 
   TRACE("transfer_fields_b_oc_to_device");
-
   // debug
   DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
+  // copies last wavefield snapshots to GPU
 #ifdef USE_OPENCL
   if (run_opencl) {
     clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_outer_core.ocl, CL_TRUE, 0,
@@ -251,6 +270,10 @@ void FC_FUNC_(transfer_b_fields_oc_to_device,
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_veloc_outer_core.cuda,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
     print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_outer_core.cuda,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_fields_oc_to_device");
 #endif
 }
 
@@ -291,6 +314,10 @@ void FC_FUNC_(transfer_fields_cm_from_device,
     print_CUDA_error_if_any(cudaMemcpy(accel,mp->d_accel_crust_mantle.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40008);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_fields_cm_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -326,6 +353,10 @@ void FC_FUNC_(transfer_fields_ic_from_device,
     print_CUDA_error_if_any(cudaMemcpy(veloc,mp->d_veloc_inner_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
     print_CUDA_error_if_any(cudaMemcpy(accel,mp->d_accel_inner_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40008);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_fields_ic_from_device");
 #endif
 }
 /* ----------------------------------------------------------------------------------------------- */
@@ -364,6 +395,10 @@ void FC_FUNC_(transfer_fields_oc_from_device,
     print_CUDA_error_if_any(cudaMemcpy(accel,mp->d_accel_outer_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40008);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_fields_oc_from_device");
+#endif
 }
 
 
@@ -374,8 +409,7 @@ void FC_FUNC_(transfer_fields_oc_from_device,
 // crust_mantle
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_fields_cm_from_device,
-              TRANSFER_B_FIELDS_CM_FROM_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel,
-                                                long *Mesh_pointer_f) {
+              TRANSFER_B_FIELDS_CM_FROM_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel, long *Mesh_pointer_f) {
 
   TRACE("transfer_b_fields_cm_from_device");
 
@@ -405,6 +439,10 @@ void FC_FUNC_(transfer_b_fields_cm_from_device,
     print_CUDA_error_if_any(cudaMemcpy(b_accel,mp->d_b_accel_crust_mantle.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40008);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_fields_cm_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -413,8 +451,7 @@ void FC_FUNC_(transfer_b_fields_cm_from_device,
 // inner_core
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_fields_ic_from_device,
-              TRANSFER_B_FIELDS_IC_FROM_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel,
-                                                long *Mesh_pointer_f) {
+              TRANSFER_B_FIELDS_IC_FROM_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel, long *Mesh_pointer_f) {
   TRACE("transfer_fields_b_ic_from_device");
 
   //get mesh pointer out of Fortran integer container
@@ -442,6 +479,10 @@ void FC_FUNC_(transfer_b_fields_ic_from_device,
     print_CUDA_error_if_any(cudaMemcpy(b_accel,mp->d_b_accel_inner_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40008);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_fields_ic_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -450,8 +491,7 @@ void FC_FUNC_(transfer_b_fields_ic_from_device,
 // outer_core
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_fields_oc_from_device,
-              TRANSFER_B_FIELDS_OC_FROM_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel,
-                                                long *Mesh_pointer_f) {
+              TRANSFER_B_FIELDS_OC_FROM_DEVICE)(int *size, realw *b_displ, realw *b_veloc, realw *b_accel, long *Mesh_pointer_f) {
 
   TRACE("transfer_b_fields_oc_from_device");
 
@@ -480,6 +520,10 @@ void FC_FUNC_(transfer_b_fields_oc_from_device,
     print_CUDA_error_if_any(cudaMemcpy(b_veloc,mp->d_b_veloc_outer_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
     print_CUDA_error_if_any(cudaMemcpy(b_accel,mp->d_b_accel_outer_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40008);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_fields_oc_from_device");
 #endif
 }
 
@@ -513,6 +557,10 @@ void FC_FUNC_(transfer_displ_cm_from_device,
     print_CUDA_error_if_any(cudaMemcpy(displ,mp->d_displ_crust_mantle.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_displ_cm_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -538,6 +586,10 @@ void FC_FUNC_(transfer_b_displ_cm_from_device,
   if (run_cuda) {
     print_CUDA_error_if_any(cudaMemcpy(displ,mp->d_b_displ_crust_mantle.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_displ_cm_from_device");
 #endif
 }
 
@@ -566,6 +618,10 @@ void FC_FUNC_(transfer_displ_ic_from_device,
     print_CUDA_error_if_any(cudaMemcpy(displ,mp->d_displ_inner_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_displ_ic_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -592,6 +648,10 @@ void FC_FUNC_(transfer_b_displ_ic_from_device,
   if (run_cuda) {
     print_CUDA_error_if_any(cudaMemcpy(displ,mp->d_b_displ_inner_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_displ_ic_from_device");
 #endif
 }
 
@@ -620,6 +680,10 @@ void FC_FUNC_(transfer_displ_oc_from_device,
     print_CUDA_error_if_any(cudaMemcpy(displ,mp->d_displ_outer_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_displ_oc_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -645,6 +709,10 @@ void FC_FUNC_(transfer_b_displ_oc_from_device,
   if (run_cuda) {
     print_CUDA_error_if_any(cudaMemcpy(displ,mp->d_b_displ_outer_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40006);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_displ_oc_from_device");
 #endif
 }
 
@@ -674,6 +742,10 @@ void FC_FUNC_(transfer_veloc_cm_from_device,
     print_CUDA_error_if_any(cudaMemcpy(veloc,mp->d_veloc_crust_mantle.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_veloc_cm_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -701,6 +773,10 @@ void FC_FUNC_(transfer_veloc_ic_from_device,
     print_CUDA_error_if_any(cudaMemcpy(veloc,mp->d_veloc_inner_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_veloc_ic_from_device");
+#endif
 }
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -726,6 +802,10 @@ void FC_FUNC_(transfer_veloc_oc_from_device,
   if (run_cuda) {
     print_CUDA_error_if_any(cudaMemcpy(veloc,mp->d_veloc_outer_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40007);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_veloc_oc_from_device");
 #endif
 }
 
@@ -757,6 +837,10 @@ void FC_FUNC_(transfer_accel_cm_to_device,
     print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_crust_mantle.cuda,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40016);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_accel_cm_to_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -782,6 +866,10 @@ void FC_FUNC_(transfer_accel_cm_from_device,
   if (run_cuda) {
     print_CUDA_error_if_any(cudaMemcpy(accel,mp->d_accel_crust_mantle.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40026);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_accel_cm_from_device");
 #endif
 }
 
@@ -809,6 +897,10 @@ void FC_FUNC_(transfer_b_accel_cm_from_device,
     print_CUDA_error_if_any(cudaMemcpy(b_accel,mp->d_b_accel_crust_mantle.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40036);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_accel_cm_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -834,6 +926,10 @@ void FC_FUNC_(transfer_accel_ic_from_device,
   if (run_cuda) {
     print_CUDA_error_if_any(cudaMemcpy(accel,mp->d_accel_inner_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40026);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_accel_ic_from_device");
 #endif
 }
 
@@ -861,6 +957,10 @@ void FC_FUNC_(transfer_accel_oc_from_device,
     print_CUDA_error_if_any(cudaMemcpy(accel,mp->d_accel_outer_core.cuda,sizeof(realw)*(*size),cudaMemcpyDeviceToHost),40026);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_accel_oc_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -870,7 +970,7 @@ void FC_FUNC_(transfer_accel_oc_from_device,
 // crust/mantle
 extern EXTERN_LANG
 void FC_FUNC_(transfer_strain_cm_from_device,
-              TRANSFER_STRAIN_CM_FROM_DEVICE)(long *Mesh_pointer,
+              TRANSFER_STRAIN_CM_FROM_DEVICE)(long *Mesh_pointer_f,
                                               realw *eps_trace_over_3,
                                               realw *epsilondev_xx,
                                               realw *epsilondev_yy,
@@ -880,7 +980,7 @@ void FC_FUNC_(transfer_strain_cm_from_device,
   TRACE("transfer_strain_cm_from_device");
   //get mesh pointer out of Fortran integer container
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = NGLL3*mp->NSPEC_CRUST_MANTLE;
 
@@ -934,7 +1034,7 @@ void FC_FUNC_(transfer_strain_cm_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_strain_cm_to_device,
-              TRANSFER_B_STRAIN_CM_TO_DEVICE)(long *Mesh_pointer,
+              TRANSFER_B_STRAIN_CM_TO_DEVICE)(long *Mesh_pointer_f,
                                               realw *epsilondev_xx,
                                               realw *epsilondev_yy,
                                               realw *epsilondev_xy,
@@ -946,7 +1046,7 @@ void FC_FUNC_(transfer_b_strain_cm_to_device,
   DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = NGLL3*mp->NSPEC_CRUST_MANTLE;
 
@@ -995,7 +1095,7 @@ void FC_FUNC_(transfer_b_strain_cm_to_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_strain_ic_from_device,
-              TRANSFER_STRAIN_IC_FROM_DEVICE)(long *Mesh_pointer,
+              TRANSFER_STRAIN_IC_FROM_DEVICE)(long *Mesh_pointer_f,
                                               realw *eps_trace_over_3,
                                               realw *epsilondev_xx,
                                               realw *epsilondev_yy,
@@ -1005,7 +1105,7 @@ void FC_FUNC_(transfer_strain_ic_from_device,
   TRACE("transfer_strain_ic_from_device");
   //get mesh pointer out of Fortran integer container
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = NGLL3 * mp->NSPEC_INNER_CORE;
 
@@ -1060,7 +1160,7 @@ void FC_FUNC_(transfer_strain_ic_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_strain_ic_to_device,
-              TRANSFER_B_STRAIN_IC_TO_DEVICE)(long *Mesh_pointer,
+              TRANSFER_B_STRAIN_IC_TO_DEVICE)(long *Mesh_pointer_f,
                                               realw *epsilondev_xx,
                                               realw *epsilondev_yy,
                                               realw *epsilondev_xy,
@@ -1071,7 +1171,7 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
   DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = NGLL3*mp->NSPEC_INNER_CORE;
 
@@ -1124,7 +1224,7 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_rmemory_cm_from_device,
-              TRANSFER_RMEMORY_CM_FROM_DEVICE)(long* Mesh_pointer,
+              TRANSFER_RMEMORY_CM_FROM_DEVICE)(long* Mesh_pointer_f,
                                                realw* R_xx,
                                                realw* R_yy,
                                                realw* R_xy,
@@ -1133,7 +1233,7 @@ void FC_FUNC_(transfer_rmemory_cm_from_device,
   TRACE("transfer_rmemory_cm_from_device");
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *)(*Mesh_pointer);
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = N_SLS * NGLL3 * mp->NSPEC_CRUST_MANTLE;
 
@@ -1181,7 +1281,7 @@ void FC_FUNC_(transfer_rmemory_cm_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_rmemory_cm_to_device,
-              TRANSFER_B_RMEMORY_CM_TO_DEVICE)(long *Mesh_pointer,
+              TRANSFER_B_RMEMORY_CM_TO_DEVICE)(long *Mesh_pointer_f,
                                                realw *b_R_xx,
                                                realw *b_R_yy,
                                                realw *b_R_xy,
@@ -1193,7 +1293,7 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
   DEBUG_BACKWARD_TRANSFER();
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
 
@@ -1242,7 +1342,7 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_rmemory_ic_from_device,
-              TRANSFER_RMEMORY_IC_FROM_DEVICE)(long* Mesh_pointer,
+              TRANSFER_RMEMORY_IC_FROM_DEVICE)(long* Mesh_pointer_f,
                                                realw* R_xx,
                                                realw* R_yy,
                                                realw* R_xy,
@@ -1251,7 +1351,7 @@ void FC_FUNC_(transfer_rmemory_ic_from_device,
   TRACE("transfer_rmemory_cm_from_device");
 
   //get mesh pointer out of Fortran integer container
-  Mesh* mp = (Mesh*)(*Mesh_pointer);
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
 
@@ -1297,7 +1397,7 @@ void FC_FUNC_(transfer_rmemory_ic_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_rmemory_ic_to_device,
-              TRANSFER_B_RMEMORY_IC_TO_DEVICE)(long *Mesh_pointer,
+              TRANSFER_B_RMEMORY_IC_TO_DEVICE)(long *Mesh_pointer_f,
                                                realw *b_R_xx,
                                                realw *b_R_yy,
                                                realw *b_R_xy,
@@ -1310,7 +1410,7 @@ void FC_FUNC_(transfer_b_rmemory_ic_to_device,
 
   //get mesh pointer out of Fortran integer container
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
 
@@ -1363,14 +1463,14 @@ void FC_FUNC_(transfer_b_rmemory_ic_to_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_rotation_from_device,
-              TRANSFER_ROTATION_FROM_DEVICE)(long *Mesh_pointer,
+              TRANSFER_ROTATION_FROM_DEVICE)(long *Mesh_pointer_f,
                                              realw *A_array_rotation,
                                              realw *B_array_rotation) {
   TRACE("transfer_rotation_from_device");
 
   //get mesh pointer out of Fortran integer container
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = NGLL3*mp->NSPEC_OUTER_CORE;
 
@@ -1395,6 +1495,10 @@ void FC_FUNC_(transfer_rotation_from_device,
 
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_rotation_from_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1402,7 +1506,7 @@ void FC_FUNC_(transfer_rotation_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_rotation_to_device,
-              TRANSFER_B_ROTATION_TO_DEVICE)(long *Mesh_pointer,
+              TRANSFER_B_ROTATION_TO_DEVICE)(long *Mesh_pointer_f,
                                              realw *A_array_rotation,
                                              realw *B_array_rotation) {
   TRACE("transfer_b_rotation_to_device");
@@ -1412,7 +1516,7 @@ void FC_FUNC_(transfer_b_rotation_to_device,
 
   //get mesh pointer out of Fortran integer container
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = NGLL3*mp->NSPEC_OUTER_CORE;
 
@@ -1436,6 +1540,10 @@ void FC_FUNC_(transfer_b_rotation_to_device,
                                        size*sizeof(realw),cudaMemcpyHostToDevice),390002);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_b_rotation_to_device");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1446,23 +1554,20 @@ void FC_FUNC_(transfer_b_rotation_to_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_kernels_cm_to_host,
-              TRANSFER_KERNELS_CM_TO_HOST)(long *Mesh_pointer,
+              TRANSFER_KERNELS_CM_TO_HOST)(long *Mesh_pointer_f,
                                            realw *h_rho_kl,
                                            realw *h_alpha_kl,
                                            realw *h_beta_kl,
-                                           realw *h_cijkl_kl,
                                            int *NSPEC) {
   TRACE("transfer_kernels_cm_to_host");
 
   //get mesh pointer out of Fortran integer container
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = (*NSPEC)*NGLL3;
 
   // density kernel
-
-
 #ifdef USE_OPENCL
   if (run_opencl) {
     clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_rho_kl_crust_mantle.ocl, CL_TRUE, 0,
@@ -1498,24 +1603,54 @@ void FC_FUNC_(transfer_kernels_cm_to_host,
                                          size*sizeof(realw),cudaMemcpyDeviceToHost),40103);
     }
 #endif
-  } else {
-    // anisotropic kernels
+  }
 
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_kernels_cm_to_host");
+#endif
+}
+
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// crust/mantle
+
+extern EXTERN_LANG
+void FC_FUNC_(transfer_kernels_ani_cm_to_host,
+              TRANSFER_KERNELS_ANI_CM_TO_HOST)(long *Mesh_pointer_f,
+                                               realw *h_cijkl_kl,
+                                               int *NSPEC) {
+  TRACE("transfer_kernels_ani_cm_to_host");
+
+  //get mesh pointer out of Fortran integer container
+
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
+  int size = (*NSPEC)*NGLL3;
+
+
+  // anisotropic kernel
+  if( ! mp->anisotropic_kl ){ exit_on_error("error invalid ANISOTROPIC_KL in transfer_kernels_ani_cm_to_host() routine");}
+
+  // anisotropic kernels
 #ifdef USE_OPENCL
-    if (run_opencl) {
-      clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_cijkl_kl_crust_mantle.ocl, CL_TRUE, 0,
-                                   21 * size * sizeof (realw),
-                                   h_cijkl_kl, 0, NULL, NULL));
-    }
+  if (run_opencl) {
+    clCheck (clEnqueueReadBuffer(mocl.command_queue, mp->d_cijkl_kl_crust_mantle.ocl, CL_TRUE, 0,
+                                 21 * size * sizeof (realw),
+                                 h_cijkl_kl, 0, NULL, NULL));
+  }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(h_cijkl_kl,mp->d_cijkl_kl_crust_mantle.cuda,
-                                         21*size*sizeof(realw),cudaMemcpyDeviceToHost),40102);
+  if (run_cuda) {
+    print_CUDA_error_if_any(cudaMemcpy(h_cijkl_kl,mp->d_cijkl_kl_crust_mantle.cuda,
+                                       21*size*sizeof(realw),cudaMemcpyDeviceToHost),40102);
 
-    }
-#endif
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_kernels_ani_cm_to_host");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1523,7 +1658,7 @@ void FC_FUNC_(transfer_kernels_cm_to_host,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_kernels_ic_to_host,
-              TRANSFER_KERNELS_IC_TO_HOST)(long *Mesh_pointer,
+              TRANSFER_KERNELS_IC_TO_HOST)(long *Mesh_pointer_f,
                                            realw *h_rho_kl,
                                            realw *h_alpha_kl,
                                            realw *h_beta_kl,
@@ -1532,7 +1667,7 @@ void FC_FUNC_(transfer_kernels_ic_to_host,
 
   //get mesh pointer out of Fortran integer container
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = (*NSPEC) * NGLL3;
 
@@ -1562,6 +1697,10 @@ void FC_FUNC_(transfer_kernels_ic_to_host,
                                        size*sizeof(realw),cudaMemcpyDeviceToHost),40103);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_kernels_ic_to_host");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1569,7 +1708,7 @@ void FC_FUNC_(transfer_kernels_ic_to_host,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_kernels_oc_to_host,
-              TRANSFER_KERNELS_OC_TO_HOST)(long *Mesh_pointer,
+              TRANSFER_KERNELS_OC_TO_HOST)(long *Mesh_pointer_f,
                                            realw *h_rho_kl,
                                            realw *h_alpha_kl,
                                            int *NSPEC) {
@@ -1578,7 +1717,7 @@ void FC_FUNC_(transfer_kernels_oc_to_host,
 
   //get mesh pointer out of Fortran integer container
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int size = (*NSPEC)*NGLL3;
 
@@ -1603,6 +1742,10 @@ void FC_FUNC_(transfer_kernels_oc_to_host,
                                        size*sizeof(realw),cudaMemcpyDeviceToHost),54102);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_kernels_oc_to_host");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1610,13 +1753,13 @@ void FC_FUNC_(transfer_kernels_oc_to_host,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_kernels_noise_to_host,
-              TRANSFER_KERNELS_NOISE_TO_HOST)(long *Mesh_pointer,
+              TRANSFER_KERNELS_NOISE_TO_HOST)(long *Mesh_pointer_f,
                                               realw *h_Sigma_kl,
                                               int *NSPEC) {
   TRACE("transfer_kernels_noise_to_host");
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -1631,6 +1774,10 @@ void FC_FUNC_(transfer_kernels_noise_to_host,
                                        cudaMemcpyDeviceToHost),40201);
   }
 #endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_kernels_noise_to_host");
+#endif
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1638,13 +1785,13 @@ void FC_FUNC_(transfer_kernels_noise_to_host,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_kernels_hess_cm_tohost,
-              TRANSFER_KERNELS_HESS_CM_TOHOST)(long *Mesh_pointer,
+              TRANSFER_KERNELS_HESS_CM_TOHOST)(long *Mesh_pointer_f,
                                                realw *h_hess_kl,
                                                int *NSPEC) {
   TRACE("transfer_kernels_hess_cm_tohost");
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -1658,5 +1805,9 @@ void FC_FUNC_(transfer_kernels_hess_cm_tohost,
     print_CUDA_error_if_any(cudaMemcpy(h_hess_kl,mp->d_hess_kl_crust_mantle.cuda,NGLL3*(*NSPEC)*sizeof(realw),
                                        cudaMemcpyDeviceToHost),70201);
   }
+#endif
+
+#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+  exit_on_gpu_error("after transfer_kernels_hess_cm_tohost");
 #endif
 }

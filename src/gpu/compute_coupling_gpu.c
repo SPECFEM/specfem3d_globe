@@ -95,30 +95,30 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
     // launches GPU kernel
     if( *FORWARD_OR_ADJOINT == 1 ){
       compute_coupling_fluid_CMB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,
-                                                          mp->d_accel_outer_core.cuda,
-                                                          mp->d_ibool_crust_mantle.cuda,
-                                                          mp->d_ibelm_bottom_crust_mantle.cuda,
-                                                          mp->d_normal_top_outer_core.cuda,
-                                                          mp->d_jacobian2D_top_outer_core.cuda,
-                                                          mp->d_wgllwgll_xy.cuda,
-                                                          mp->d_ibool_outer_core.cuda,
-                                                          mp->d_ibelm_top_outer_core.cuda,
-                                                          mp->nspec2D_top_outer_core);
+                                                                               mp->d_accel_outer_core.cuda,
+                                                                               mp->d_ibool_crust_mantle.cuda,
+                                                                               mp->d_ibelm_bottom_crust_mantle.cuda,
+                                                                               mp->d_normal_top_outer_core.cuda,
+                                                                               mp->d_jacobian2D_top_outer_core.cuda,
+                                                                               mp->d_wgllwgll_xy.cuda,
+                                                                               mp->d_ibool_outer_core.cuda,
+                                                                               mp->d_ibelm_top_outer_core.cuda,
+                                                                               mp->nspec2D_top_outer_core);
     } else {
       // debug
       DEBUG_BACKWARD_COUPLING();
 
       // adjoint simulations
       compute_coupling_fluid_CMB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle.cuda,
-                                                          mp->d_b_accel_outer_core.cuda,
-                                                          mp->d_ibool_crust_mantle.cuda,
-                                                          mp->d_ibelm_bottom_crust_mantle.cuda,
-                                                          mp->d_normal_top_outer_core.cuda,
-                                                          mp->d_jacobian2D_top_outer_core.cuda,
-                                                          mp->d_wgllwgll_xy.cuda,
-                                                          mp->d_ibool_outer_core.cuda,
-                                                          mp->d_ibelm_top_outer_core.cuda,
-                                                          mp->nspec2D_top_outer_core);
+                                                                               mp->d_b_accel_outer_core.cuda,
+                                                                               mp->d_ibool_crust_mantle.cuda,
+                                                                               mp->d_ibelm_bottom_crust_mantle.cuda,
+                                                                               mp->d_normal_top_outer_core.cuda,
+                                                                               mp->d_jacobian2D_top_outer_core.cuda,
+                                                                               mp->d_wgllwgll_xy.cuda,
+                                                                               mp->d_ibool_outer_core.cuda,
+                                                                               mp->d_ibelm_top_outer_core.cuda,
+                                                                               mp->nspec2D_top_outer_core);
     }
   }
 #endif
@@ -137,7 +137,8 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
 
   TRACE ("compute_coupling_fluid_icb_gpu");
 
-  Mesh *mp = (Mesh *)*Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
   if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
@@ -191,30 +192,30 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
     // launches GPU kernel
     if( *FORWARD_OR_ADJOINT == 1 ){
       compute_coupling_fluid_ICB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,
-                                                          mp->d_accel_outer_core.cuda,
-                                                          mp->d_ibool_inner_core.cuda,
-                                                          mp->d_ibelm_top_inner_core.cuda,
-                                                          mp->d_normal_bottom_outer_core.cuda,
-                                                          mp->d_jacobian2D_bottom_outer_core.cuda,
-                                                          mp->d_wgllwgll_xy.cuda,
-                                                          mp->d_ibool_outer_core.cuda,
-                                                          mp->d_ibelm_bottom_outer_core.cuda,
-                                                          mp->nspec2D_bottom_outer_core);
+                                                                               mp->d_accel_outer_core.cuda,
+                                                                               mp->d_ibool_inner_core.cuda,
+                                                                               mp->d_ibelm_top_inner_core.cuda,
+                                                                               mp->d_normal_bottom_outer_core.cuda,
+                                                                               mp->d_jacobian2D_bottom_outer_core.cuda,
+                                                                               mp->d_wgllwgll_xy.cuda,
+                                                                               mp->d_ibool_outer_core.cuda,
+                                                                               mp->d_ibelm_bottom_outer_core.cuda,
+                                                                               mp->nspec2D_bottom_outer_core);
     } else {
       // debug
       DEBUG_BACKWARD_COUPLING();
 
       // adjoint simulations
       compute_coupling_fluid_ICB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core.cuda,
-                                                          mp->d_b_accel_outer_core.cuda,
-                                                          mp->d_ibool_inner_core.cuda,
-                                                          mp->d_ibelm_top_inner_core.cuda,
-                                                          mp->d_normal_bottom_outer_core.cuda,
-                                                          mp->d_jacobian2D_bottom_outer_core.cuda,
-                                                          mp->d_wgllwgll_xy.cuda,
-                                                          mp->d_ibool_outer_core.cuda,
-                                                          mp->d_ibelm_bottom_outer_core.cuda,
-                                                          mp->nspec2D_bottom_outer_core);
+                                                                               mp->d_b_accel_outer_core.cuda,
+                                                                               mp->d_ibool_inner_core.cuda,
+                                                                               mp->d_ibelm_top_inner_core.cuda,
+                                                                               mp->d_normal_bottom_outer_core.cuda,
+                                                                               mp->d_jacobian2D_bottom_outer_core.cuda,
+                                                                               mp->d_wgllwgll_xy.cuda,
+                                                                               mp->d_ibool_outer_core.cuda,
+                                                                               mp->d_ibelm_bottom_outer_core.cuda,
+                                                                               mp->nspec2D_bottom_outer_core);
     }
   }
 #endif
@@ -233,7 +234,8 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
 
   TRACE ("compute_coupling_cmb_fluid_gpu");
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
   if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
@@ -291,38 +293,38 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
     // launches GPU kernel
     if( *FORWARD_OR_ADJOINT == 1 ){
       compute_coupling_CMB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,
-                                                          mp->d_accel_crust_mantle.cuda,
-                                                          mp->d_accel_outer_core.cuda,
-                                                          mp->d_ibool_crust_mantle.cuda,
-                                                          mp->d_ibelm_bottom_crust_mantle.cuda,
-                                                          mp->d_normal_top_outer_core.cuda,
-                                                          mp->d_jacobian2D_top_outer_core.cuda,
-                                                          mp->d_wgllwgll_xy.cuda,
-                                                          mp->d_ibool_outer_core.cuda,
-                                                          mp->d_ibelm_top_outer_core.cuda,
-                                                          mp->RHO_TOP_OC,
-                                                          mp->minus_g_cmb,
-                                                          mp->gravity,
-                                                          mp->nspec2D_bottom_crust_mantle);
+                                                                               mp->d_accel_crust_mantle.cuda,
+                                                                               mp->d_accel_outer_core.cuda,
+                                                                               mp->d_ibool_crust_mantle.cuda,
+                                                                               mp->d_ibelm_bottom_crust_mantle.cuda,
+                                                                               mp->d_normal_top_outer_core.cuda,
+                                                                               mp->d_jacobian2D_top_outer_core.cuda,
+                                                                               mp->d_wgllwgll_xy.cuda,
+                                                                               mp->d_ibool_outer_core.cuda,
+                                                                               mp->d_ibelm_top_outer_core.cuda,
+                                                                               mp->RHO_TOP_OC,
+                                                                               mp->minus_g_cmb,
+                                                                               mp->gravity,
+                                                                               mp->nspec2D_bottom_crust_mantle);
     } else {
       // debug
       DEBUG_BACKWARD_COUPLING();
 
       //  adjoint simulations
       compute_coupling_CMB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle.cuda,
-                                                          mp->d_b_accel_crust_mantle.cuda,
-                                                          mp->d_b_accel_outer_core.cuda,
-                                                          mp->d_ibool_crust_mantle.cuda,
-                                                          mp->d_ibelm_bottom_crust_mantle.cuda,
-                                                          mp->d_normal_top_outer_core.cuda,
-                                                          mp->d_jacobian2D_top_outer_core.cuda,
-                                                          mp->d_wgllwgll_xy.cuda,
-                                                          mp->d_ibool_outer_core.cuda,
-                                                          mp->d_ibelm_top_outer_core.cuda,
-                                                          mp->RHO_TOP_OC,
-                                                          mp->minus_g_cmb,
-                                                          mp->gravity,
-                                                          mp->nspec2D_bottom_crust_mantle);
+                                                                               mp->d_b_accel_crust_mantle.cuda,
+                                                                               mp->d_b_accel_outer_core.cuda,
+                                                                               mp->d_ibool_crust_mantle.cuda,
+                                                                               mp->d_ibelm_bottom_crust_mantle.cuda,
+                                                                               mp->d_normal_top_outer_core.cuda,
+                                                                               mp->d_jacobian2D_top_outer_core.cuda,
+                                                                               mp->d_wgllwgll_xy.cuda,
+                                                                               mp->d_ibool_outer_core.cuda,
+                                                                               mp->d_ibelm_top_outer_core.cuda,
+                                                                               mp->RHO_TOP_OC,
+                                                                               mp->minus_g_cmb,
+                                                                               mp->gravity,
+                                                                               mp->nspec2D_bottom_crust_mantle);
     }
   }
 #endif
@@ -340,7 +342,8 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
                                                 int *FORWARD_OR_ADJOINT) {
   TRACE ("compute_coupling_icb_fluid_gpu");
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
   if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
@@ -398,37 +401,37 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
     // launches GPU kernel
     if( *FORWARD_OR_ADJOINT == 1 ){
       compute_coupling_ICB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,
-                                                          mp->d_accel_inner_core.cuda,
-                                                          mp->d_accel_outer_core.cuda,
-                                                          mp->d_ibool_inner_core.cuda,
-                                                          mp->d_ibelm_top_inner_core.cuda,
-                                                          mp->d_normal_bottom_outer_core.cuda,
-                                                          mp->d_jacobian2D_bottom_outer_core.cuda,
-                                                          mp->d_wgllwgll_xy.cuda,
-                                                          mp->d_ibool_outer_core.cuda,
-                                                          mp->d_ibelm_bottom_outer_core.cuda,
-                                                          mp->RHO_BOTTOM_OC,
-                                                          mp->minus_g_icb,
-                                                          mp->gravity,
-                                                          mp->nspec2D_top_inner_core);
+                                                                               mp->d_accel_inner_core.cuda,
+                                                                               mp->d_accel_outer_core.cuda,
+                                                                               mp->d_ibool_inner_core.cuda,
+                                                                               mp->d_ibelm_top_inner_core.cuda,
+                                                                               mp->d_normal_bottom_outer_core.cuda,
+                                                                               mp->d_jacobian2D_bottom_outer_core.cuda,
+                                                                               mp->d_wgllwgll_xy.cuda,
+                                                                               mp->d_ibool_outer_core.cuda,
+                                                                               mp->d_ibelm_bottom_outer_core.cuda,
+                                                                               mp->RHO_BOTTOM_OC,
+                                                                               mp->minus_g_icb,
+                                                                               mp->gravity,
+                                                                               mp->nspec2D_top_inner_core);
     } else {
       // debug
       DEBUG_BACKWARD_COUPLING();
       //  adjoint simulations
       compute_coupling_ICB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core.cuda,
-                                                          mp->d_b_accel_inner_core.cuda,
-                                                          mp->d_b_accel_outer_core.cuda,
-                                                          mp->d_ibool_inner_core.cuda,
-                                                          mp->d_ibelm_top_inner_core.cuda,
-                                                          mp->d_normal_bottom_outer_core.cuda,
-                                                          mp->d_jacobian2D_bottom_outer_core.cuda,
-                                                          mp->d_wgllwgll_xy.cuda,
-                                                          mp->d_ibool_outer_core.cuda,
-                                                          mp->d_ibelm_bottom_outer_core.cuda,
-                                                          mp->RHO_BOTTOM_OC,
-                                                          mp->minus_g_icb,
-                                                          mp->gravity,
-                                                          mp->nspec2D_top_inner_core);
+                                                                               mp->d_b_accel_inner_core.cuda,
+                                                                               mp->d_b_accel_outer_core.cuda,
+                                                                               mp->d_ibool_inner_core.cuda,
+                                                                               mp->d_ibelm_top_inner_core.cuda,
+                                                                               mp->d_normal_bottom_outer_core.cuda,
+                                                                               mp->d_jacobian2D_bottom_outer_core.cuda,
+                                                                               mp->d_wgllwgll_xy.cuda,
+                                                                               mp->d_ibool_outer_core.cuda,
+                                                                               mp->d_ibelm_bottom_outer_core.cuda,
+                                                                               mp->RHO_BOTTOM_OC,
+                                                                               mp->minus_g_icb,
+                                                                               mp->gravity,
+                                                                               mp->nspec2D_top_inner_core);
     }
   }
 #endif
@@ -506,26 +509,26 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
     // uses corrected mass matrices
     if( *FORWARD_OR_ADJOINT == 1 ){
       compute_coupling_ocean_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
-                                                      mp->d_rmassx_crust_mantle.cuda,
-                                                      mp->d_rmassy_crust_mantle.cuda,
-                                                      mp->d_rmassz_crust_mantle.cuda,
-                                                      mp->d_rmass_ocean_load.cuda,
-                                                      mp->npoin_oceans,
-                                                      mp->d_ibool_ocean_load.cuda,
-                                                      mp->d_normal_ocean_load.cuda);
+                                                                           mp->d_rmassx_crust_mantle.cuda,
+                                                                           mp->d_rmassy_crust_mantle.cuda,
+                                                                           mp->d_rmassz_crust_mantle.cuda,
+                                                                           mp->d_rmass_ocean_load.cuda,
+                                                                           mp->npoin_oceans,
+                                                                           mp->d_ibool_ocean_load.cuda,
+                                                                           mp->d_normal_ocean_load.cuda);
     } else {
       // debug
       DEBUG_BACKWARD_COUPLING();
 
       // for backward/reconstructed potentials
       compute_coupling_ocean_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle.cuda,
-                                                      mp->d_b_rmassx_crust_mantle.cuda,
-                                                      mp->d_b_rmassy_crust_mantle.cuda,
-                                                      mp->d_b_rmassz_crust_mantle.cuda,
-                                                      mp->d_rmass_ocean_load.cuda,
-                                                      mp->npoin_oceans,
-                                                      mp->d_ibool_ocean_load.cuda,
-                                                      mp->d_normal_ocean_load.cuda);
+                                                                           mp->d_b_rmassx_crust_mantle.cuda,
+                                                                           mp->d_b_rmassy_crust_mantle.cuda,
+                                                                           mp->d_b_rmassz_crust_mantle.cuda,
+                                                                           mp->d_rmass_ocean_load.cuda,
+                                                                           mp->npoin_oceans,
+                                                                           mp->d_ibool_ocean_load.cuda,
+                                                                           mp->d_normal_ocean_load.cuda);
     }
   }
 #endif

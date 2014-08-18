@@ -64,48 +64,89 @@
 #endif
 
 /* ----------------------------------------------------------------------------------------------- */
+// OpenCL helper functions
+/* ----------------------------------------------------------------------------------------------- */
 
 #ifdef USE_OPENCL
-const char *memset_kern_code[] = {" __kernel void memset_uint4(__global uint4*mem, __private uint4 val) { mem[get_global_id(0)]=val; }"};
+const char *memset_kern_code[] = { "\
+__kernel void memset_uint4(__global int *mem, const int size, __private int val){ \n\
+int tid = get_local_id(0); \n\
+int bx = (get_group_id(1)) * (get_num_groups(0)) + get_group_id(0); \n\
+int i = tid + (bx) * (get_local_size(0)); \n\
+//debug \n\
+//if( i == 0 ){ printf(\"memset size = %i value = %i buffer %i \\n\",size,val,mem[0]); } \n\
+if( i < size ){ mem[i]=val; } \n\
+}" };
 
 
-cl_kernel *setup_ocl_memset (Mesh *mp, int do_setup) {
+/* ----------------------------------------------------------------------------------------------- */
+
+cl_kernel *setup_ocl_memset (int do_setup) {
+
   static int inited = 0;
   static cl_kernel memset_kern;
   cl_int errcode;
 
-  if (!inited && do_setup) {
-    cl_program memset_program = clCreateProgramWithSource(mocl.context, 1,
-                                                          memset_kern_code, 0,
-                                                          clck_(&errcode));
-    clCheck (clBuildProgram (memset_program, 0, NULL, NULL, NULL, NULL));
-    memset_kern = clCreateKernel (memset_program, "memset_uint4", clck_(&errcode));
-    inited = 1;
-  } else if (inited && !do_setup) {
-    clCheck(clReleaseKernel (memset_kern));
+  if( do_setup ){
+    if (!inited ) {
+      // creates openCL kernel
+      cl_program memset_program = clCreateProgramWithSource(mocl.context, 1,
+                                                            memset_kern_code, 0,
+                                                            clck_(&errcode));
+      clCheck (clBuildProgram (memset_program, 0, NULL, NULL, NULL, NULL));
+      memset_kern = clCreateKernel (memset_program, "memset_uint4", clck_(&errcode));
+      inited = 1;
+    }
+  } else {
+    // releases kernel
+    if (inited ){ clCheck(clReleaseKernel (memset_kern)); }
   }
 
   return &memset_kern;
 }
 
-void moclEnqueueFillBuffer (Mesh *mp, cl_mem *buffer, int val, size_t size) {
-  cl_kernel *memset_kern = setup_ocl_memset(mp, 1);
+/* ----------------------------------------------------------------------------------------------- */
+
+void moclEnqueueFillBuffer (cl_mem *buffer, int val, size_t size_byte) {
+
+  cl_kernel *memset_kern = setup_ocl_memset(1);
+
+  // value to fill buffer
+  cl_int value = val;
+  
+  // gets size as number of integer values
+  int size;
+  size = size_byte / sizeof(cl_int);
+
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
 
   clCheck (clSetKernelArg (*memset_kern, idx++, sizeof (cl_mem), (void *) buffer));
-  clCheck (clSetKernelArg (*memset_kern, idx++, sizeof (cl_int), (void *) &val));
+  clCheck (clSetKernelArg (*memset_kern, idx++, sizeof (cl_int), (void *) &size));
+  clCheck (clSetKernelArg (*memset_kern, idx++, sizeof (cl_int), (void *) &value));
 
-  local_work_size[0] = size/sizeof(cl_int);
+  int blocksize = BLOCKSIZE_TRANSFER;
+  int size_padded = ((int) ceil ((double) size / (double) blocksize)) * blocksize;
+
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
+
+  local_work_size[0] = blocksize;
   local_work_size[1] = 1;
-  global_work_size[0] = 1 * size/sizeof(cl_int);
-  global_work_size[1] = 1;
+  global_work_size[0] = num_blocks_x * blocksize;
+  global_work_size[1] = num_blocks_y;
+
+  //debug
+  //printf("moclEnqueueFillBuffer: size %i value %i - work_size %zu %zu \n",size,value,local_work_size[0],global_work_size[0]);
 
   clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *memset_kern, 2, NULL,
                                    global_work_size, local_work_size, 0, NULL, NULL));
-
+  // synchronizes
+  clFinish (mocl.command_queue);
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 cl_mem moclGetDummyImage2D (Mesh *mp) {
   static int inited = 0;
@@ -126,7 +167,7 @@ cl_mem moclGetDummyImage2D (Mesh *mp) {
 #endif
 
 /*----------------------------------------------------------------------------------------------- */
-// helper functions
+// GPU helper functions
 /*----------------------------------------------------------------------------------------------- */
 
 // copies integer array from CPU host to GPU device
@@ -438,20 +479,18 @@ void FC_FUNC_ (prepare_constants_device,
   mp->nsources_local = *nsources_local;
   if (mp->simulation_type == 1 || mp->simulation_type == 3) {
     // not needed in case of pure adjoint simulations (SIMULATION_TYPE == 2)
-    copy_todevice_realw (mp, &mp->d_sourcearrays, h_sourcearrays,
-                         (*NSOURCES) * NDIM * NGLL3);
+    copy_todevice_realw (mp, &mp->d_sourcearrays, h_sourcearrays, (*NSOURCES) * NDIM * NGLL3);
+
+    // buffer for source time function values
 #ifdef USE_OPENCL
     if (run_opencl) {
-      // buffer for source time function values
       mp->d_stf_pre_compute.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
-                                                  (*NSOURCES) * sizeof (double),
-                                                  NULL, clck_(&errcode));
+                                                  (*NSOURCES) * sizeof (double), NULL, clck_(&errcode));
     }
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_stf_pre_compute.cuda,
-                                         (*NSOURCES)*sizeof(double)),1303);
+      print_CUDA_error_if_any(cudaMalloc((void**)&mp->d_stf_pre_compute.cuda, (*NSOURCES)*sizeof(double)),1303);
     }
 #endif
   }
@@ -473,8 +512,7 @@ void FC_FUNC_ (prepare_constants_device,
 #ifdef USE_OPENCL
     if (run_opencl) {
       mp->d_station_seismo_field.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
-                                                       NDIM * NGLL3 * mp->nrec_local * sizeof (realw),
-                                                       NULL, clck_(&errcode));
+                                                       NDIM * NGLL3 * mp->nrec_local * sizeof (realw), NULL, clck_(&errcode));
       // for transferring values from GPU to CPU
       if (GPU_ASYNC_COPY) {
         ALLOC_PINNED_BUFFER_OCL (station_seismo_field, NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
@@ -489,8 +527,7 @@ void FC_FUNC_ (prepare_constants_device,
       // for adjoint strain
       if (mp->simulation_type == 2) {
         mp->d_station_strain_field.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
-                                                         NGLL3 * mp->nrec_local * sizeof (realw),
-                                                         NULL, clck_(&errcode));
+                                                         NGLL3 * mp->nrec_local * sizeof (realw), NULL, clck_(&errcode));
         mp->h_station_strain_field = (realw *) malloc (NGLL3 * mp->nrec_local * sizeof(realw));
 
         if (mp->h_station_strain_field == NULL) {
@@ -1643,8 +1680,7 @@ void FC_FUNC_ (prepare_fields_noise_device,
                                            NULL, clck_(&errcode));
 
       // initializes kernel values to zero
-      moclEnqueueFillBuffer(mp, &mp->d_Sigma_kl.ocl, 0,
-                            NGLL3 * mp->NSPEC_CRUST_MANTLE * sizeof (realw));
+      moclEnqueueFillBuffer(&mp->d_Sigma_kl.ocl, 0, NGLL3 * mp->NSPEC_CRUST_MANTLE * sizeof (realw));
     }
 #endif
 #ifdef USE_CUDA
@@ -1788,31 +1824,31 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #ifdef USE_OPENCL
     if (run_opencl) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3 * sizeof (realw), &h_xix[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3 * sizeof (realw), &h_xiy[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_xiz[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_etax[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_etay[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_etaz[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_gammax[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_gammay[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_crust_mantle.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw),&h_gammaz[i*NGLL3], 0, NULL, NULL));
     }
 #endif
@@ -1888,19 +1924,19 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappahstore_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappahstore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_kappah[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muhstore_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muhstore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_muh[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_eta_anisostore_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_eta_anisostore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_eta_aniso[i*NGLL3], 0, NULL, NULL));
       }
 #endif
@@ -2005,67 +2041,67 @@ void FC_FUNC_ (prepare_crust_mantle_device,
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c11store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c11store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw),&c11store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c12store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c12store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c12store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c13store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c13store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c13store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c14store_crust_mantle.ocl, CL_TRUE,  offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c14store_crust_mantle.ocl, CL_FALSE,  offset,
                                        NGLL3*sizeof (realw), &c14store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c15store_crust_mantle.ocl, CL_TRUE,  offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c15store_crust_mantle.ocl, CL_FALSE,  offset,
                                        NGLL3*sizeof (realw), &c15store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c16store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c16store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c16store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c22store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c22store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c22store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c23store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c23store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c23store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c24store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c24store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c24store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c25store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c25store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c25store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c26store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c26store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c26store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c33store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c33store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c33store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c34store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c34store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c34store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c35store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c35store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c35store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c36store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c36store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c36store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c44store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c44store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c44store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c45store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c45store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c45store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c46store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c46store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c46store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c55store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c55store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c55store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c56store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c56store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c56store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c66store_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c66store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c66store[i*NGLL3], 0, NULL, NULL));
       }
 #endif
@@ -2135,7 +2171,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof(realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_crust_mantle.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3 * sizeof (realw), &h_rho[i * NGLL3], 0, NULL, NULL));
       }
 #endif
@@ -2194,6 +2230,12 @@ void FC_FUNC_ (prepare_crust_mantle_device,
       mp->d_b_displ_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size, NULL, clck_(&errcode));
       mp->d_b_veloc_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size, NULL, clck_(&errcode));
       mp->d_b_accel_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size, NULL, clck_(&errcode));
+      //debugging with empty arrays
+      if (DEBUG_BACKWARD_SIMULATIONS == 1){
+        moclEnqueueFillBuffer(&mp->d_b_displ_crust_mantle.ocl, 0, size * sizeof(realw));
+        moclEnqueueFillBuffer(&mp->d_b_veloc_crust_mantle.ocl, 0, size * sizeof(realw));
+        moclEnqueueFillBuffer(&mp->d_b_veloc_crust_mantle.ocl, 0, size * sizeof(realw));
+      }
     }
 #endif
 #ifdef USE_CUDA
@@ -2201,25 +2243,13 @@ void FC_FUNC_ (prepare_crust_mantle_device,
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_crust_mantle.cuda),sizeof(realw)*size),4011);
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_crust_mantle.cuda),sizeof(realw)*size),4012);
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_crust_mantle.cuda),sizeof(realw)*size),4013);
+      //debugging with empty arrays
+      if (DEBUG_BACKWARD_SIMULATIONS == 1){
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_crust_mantle.cuda, 0, sizeof(realw)*size),5111);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_crust_mantle.cuda, 0, sizeof(realw)*size),5111);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_crust_mantle.cuda, 0, sizeof(realw)*size),5111);
+      }
     }
-#endif
-    // debug
-#if DEBUG_BACKWARD_SIMULATIONS == 1
-    //debugging with empty arrays
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      moclEnqueueFillBuffer(mp, &mp->d_b_displ_crust_core, 0, size * sizeof (realw));
-      moclEnqueueFillBuffer(mp, &mp->d_b_veloc_crust_core, 0, size * sizeof (realw));
-      moclEnqueueFillBuffer(mp, &mp->d_b_veloc_crust_core, 0, size * sizeof (realw));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_crust_mantle.cuda, 0,sizeof(realw)*size),5111);
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_crust_mantle.cuda, 0,sizeof(realw)*size),5111);
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_crust_mantle.cuda, 0,sizeof(realw)*size),5111);
-    }
-#endif
 #endif
   }
 
@@ -2230,15 +2260,18 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 
     mp->d_displ_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_crust_mantle.ocl, clck_(&errcode));
     mp->d_accel_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_crust_mantle.ocl, clck_(&errcode));
-
+    // backward/reconstructed fields
     if (mp->simulation_type == 3) {
       mp->d_b_displ_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_crust_mantle.ocl, clck_(&errcode));
       mp->d_b_accel_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_crust_mantle.ocl, clck_(&errcode));
+    } else {
+      mp->d_b_displ_cm_tex = moclGetDummyImage2D(mp);
+      mp->d_b_accel_cm_tex = moclGetDummyImage2D(mp);
     }
 #else
     mp->d_displ_cm_tex = moclGetDummyImage2D(mp);
     mp->d_accel_cm_tex = moclGetDummyImage2D(mp);
-
+    // backward/reconstructed fields
     mp->d_b_displ_cm_tex = moclGetDummyImage2D(mp);
     mp->d_b_accel_cm_tex = moclGetDummyImage2D(mp);
 #endif
@@ -2319,13 +2352,11 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     size = NGLL3 * (mp->NSPEC_CRUST_MANTLE);
 
     // density kernel
-
 #ifdef USE_OPENCL
     if (run_opencl) {
       mp->d_rho_kl_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, size*sizeof (realw), NULL, clck_(&errcode));
       // initializes kernel values to zero
-
-      moclEnqueueFillBuffer(mp, &mp->d_rho_kl_crust_mantle.ocl, 0, size * sizeof (realw));
+      moclEnqueueFillBuffer(&mp->d_rho_kl_crust_mantle.ocl, 0, size * sizeof (realw));
     }
 #endif
 #ifdef USE_CUDA
@@ -2338,15 +2369,16 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     }
 #endif
 
+    // wavespeed kernels
     if (! mp->anisotropic_kl) {
       // isotropic kernels
-
 #ifdef USE_OPENCL
       if (run_opencl) {
         mp->d_alpha_kl_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, size * sizeof (realw), NULL, clck_(&errcode));
         mp->d_beta_kl_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, size * sizeof (realw), NULL, clck_(&errcode));
-        moclEnqueueFillBuffer(mp, &mp->d_alpha_kl_crust_mantle.ocl, 0, size * sizeof (realw));
-        moclEnqueueFillBuffer(mp, &mp->d_beta_kl_crust_mantle.ocl, 0, size * sizeof (realw));
+        // sets array values to zero
+        moclEnqueueFillBuffer(&mp->d_alpha_kl_crust_mantle.ocl, 0, size * sizeof (realw));
+        moclEnqueueFillBuffer(&mp->d_beta_kl_crust_mantle.ocl, 0, size * sizeof (realw));
       }
 #endif
 #ifdef USE_CUDA
@@ -2365,7 +2397,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         mp->d_cijkl_kl_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, 21 * size * sizeof (realw), NULL, clck_(&errcode));
-        moclEnqueueFillBuffer(mp, &mp->d_cijkl_kl_crust_mantle.ocl, 0, 21 * size * sizeof (realw));
+        moclEnqueueFillBuffer(&mp->d_cijkl_kl_crust_mantle.ocl, 0, 21 * size * sizeof (realw));
       }
 #endif
 #ifdef USE_CUDA
@@ -2382,7 +2414,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         mp->d_hess_kl_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, size*sizeof (realw), NULL, clck_(&errcode));
-        moclEnqueueFillBuffer(mp, &mp->d_hess_kl_crust_mantle.ocl, 0, size * sizeof (realw));
+        moclEnqueueFillBuffer(&mp->d_hess_kl_crust_mantle.ocl, 0, size * sizeof (realw));
       }
 #endif
 #ifdef USE_CUDA
@@ -2400,6 +2432,10 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   mp->num_colors_inner_crust_mantle = *num_colors_inner;
   mp->h_num_elem_colors_crust_mantle = (int *) num_elem_colors;
 
+#ifdef USE_OPENCL
+  // executes gpu calls
+  if (run_opencl){clFinish (mocl.command_queue);}
+#endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("prepare_crust_mantle_device");
 #endif
@@ -2486,34 +2522,34 @@ void FC_FUNC_ (prepare_outer_core_device,
 #ifdef USE_OPENCL
     if (run_opencl) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_xix[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_xiy[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_xiz[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3 * sizeof (realw), &h_etax[i * NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3 * sizeof (realw), &h_etay[i * NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3 * sizeof (realw), &h_etaz[i * NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_gammax[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_gammay[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_gammaz[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_outer_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
     }
 #endif
@@ -2563,7 +2599,7 @@ void FC_FUNC_ (prepare_outer_core_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_outer_core.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_outer_core.ocl, CL_FALSE, offset,
                                        NGLL3 * sizeof (realw), &h_rho[i*NGLL3], 0, NULL, NULL));
       }
 #endif
@@ -2632,6 +2668,12 @@ void FC_FUNC_ (prepare_outer_core_device,
       mp->d_b_displ_outer_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size_glob, NULL, clck_(&errcode));
       mp->d_b_veloc_outer_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size_glob, NULL, clck_(&errcode));
       mp->d_b_accel_outer_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size_glob, NULL, clck_(&errcode));
+      //debugging with empty arrays
+      if (DEBUG_BACKWARD_SIMULATIONS == 1){
+        moclEnqueueFillBuffer(&mp->d_b_displ_outer_core.ocl, 0, size_glob * sizeof (realw));
+        moclEnqueueFillBuffer(&mp->d_b_veloc_outer_core.ocl, 0, size_glob * sizeof (realw));
+        moclEnqueueFillBuffer(&mp->d_b_veloc_outer_core.ocl, 0, size_glob * sizeof (realw));
+      }
     }
 #endif
 #ifdef USE_CUDA
@@ -2639,28 +2681,13 @@ void FC_FUNC_ (prepare_outer_core_device,
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_outer_core.cuda),sizeof(realw)*size_glob),5011);
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_outer_core.cuda),sizeof(realw)*size_glob),5022);
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_outer_core.cuda),sizeof(realw)*size_glob),5033);
-
+      //debugging with empty arrays
+      if (DEBUG_BACKWARD_SIMULATIONS == 1){
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_outer_core.cuda,0,sizeof(realw)*size_glob),5111);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_outer_core.cuda,0,sizeof(realw)*size_glob),5111);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_outer_core.cuda,0,sizeof(realw)*size_glob),5111);
+      }
     }
-#endif
-
-    // debug
-#if DEBUG_BACKWARD_SIMULATIONS == 1
-    //debugging with empty arrays
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      moclEnqueueFillBuffer(mp, &mp->d_b_displ_outer_core.ocl, 0, size_glob * sizeof (realw));
-      moclEnqueueFillBuffer(mp, &mp->d_b_veloc_outer_core.ocl, 0, size_glob * sizeof (realw));
-      moclEnqueueFillBuffer(mp, &mp->d_b_veloc_outer_core.ocl, 0, size_glob * sizeof (realw));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_outer_core.cuda,0,sizeof(realw)*size_glob),5111);
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_outer_core.cuda,0,sizeof(realw)*size_glob),5111);
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_outer_core.cuda,0,sizeof(realw)*size_glob),5111);
-
-    }
-#endif
 #endif
   }
 
@@ -2669,20 +2696,20 @@ void FC_FUNC_ (prepare_outer_core_device,
 #ifdef USE_TEXTURES_FIELDS
     cl_image_format format = {CL_R, CL_UNSIGNED_INT32};
 
-    mp->d_displ_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format,
-                                      size_glob, 1, 0, mp->d_displ_outer_core.ocl,
-                                      clck_(&errcode));
-    mp->d_accel_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format,
-                                      size_glob, 1, 0, mp->d_accel_outer_core.ocl,
-                                      clck_(&errcode));
+    mp->d_displ_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size_glob, 1, 0, mp->d_displ_outer_core.ocl, clck_(&errcode));
+    mp->d_accel_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size_glob, 1, 0, mp->d_accel_outer_core.ocl, clck_(&errcode));
+    // backward/reconstructed fields
     if (mp->simulation_type == 3) {
       mp->d_b_displ_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size_glob, 1, 0, mp->d_b_displ_outer_core.ocl, clck_(&errcode));
       mp->d_b_accel_oc_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size_glob, 1, 0, mp->d_b_accel_outer_core.ocl, clck_(&errcode));
+    } else {
+      mp->d_b_displ_oc_tex = moclGetDummyImage2D(mp);
+      mp->d_b_accel_oc_tex = moclGetDummyImage2D(mp);
     }
 #else
     mp->d_displ_oc_tex = moclGetDummyImage2D(mp);
     mp->d_accel_oc_tex = moclGetDummyImage2D(mp);
-
+    // backward/reconstructed fields
     mp->d_b_displ_oc_tex = moclGetDummyImage2D(mp);
     mp->d_b_accel_oc_tex = moclGetDummyImage2D(mp);
 #endif
@@ -2748,11 +2775,11 @@ void FC_FUNC_ (prepare_outer_core_device,
       // density kernel
       mp->d_rho_kl_outer_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
                                                     size*sizeof (realw), NULL, clck_(&errcode));
-      moclEnqueueFillBuffer(mp, &mp->d_rho_kl_outer_core.ocl, 0, size_glob * sizeof (realw));
+      moclEnqueueFillBuffer(&mp->d_rho_kl_outer_core.ocl, 0, size_glob * sizeof (realw));
       // isotropic kernel
       mp->d_alpha_kl_outer_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
                                                       size*sizeof (realw), NULL, clck_(&errcode));
-      moclEnqueueFillBuffer(mp, &mp->d_alpha_kl_outer_core.ocl, 0, size * sizeof (realw));
+      moclEnqueueFillBuffer(&mp->d_alpha_kl_outer_core.ocl, 0, size * sizeof (realw));
     }
 #endif
 #ifdef USE_CUDA
@@ -2775,6 +2802,10 @@ void FC_FUNC_ (prepare_outer_core_device,
   mp->num_colors_inner_outer_core = *num_colors_inner;
   mp->h_num_elem_colors_outer_core = (int *) num_elem_colors;
 
+#ifdef USE_OPENCL
+  // executes gpu calls
+  if (run_opencl){clFinish (mocl.command_queue);}
+#endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("prepare_outer_core_device");
 #endif
@@ -2867,34 +2898,34 @@ void FC_FUNC_ (prepare_inner_core_device,
     if (run_opencl) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_xix[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiy_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_xiy[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xiz_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_xiz[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etax_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_etax[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etay_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_etay[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_etaz_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_etaz[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammax_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_gammax[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammay_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw),&h_gammay[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_gammaz[i*NGLL3], 0, NULL, NULL));
 
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_inner_core.ocl, CL_TRUE, offset,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
     }
 #endif
@@ -2946,7 +2977,7 @@ void FC_FUNC_ (prepare_inner_core_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_inner_core.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
       }
 #endif
@@ -2990,19 +3021,19 @@ void FC_FUNC_ (prepare_inner_core_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c11store_inner_core.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c11store_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c11store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c12store_inner_core.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c12store_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c12store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c13store_inner_core.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c13store_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c13store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c33store_inner_core.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c33store_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c33store[i*NGLL3], 0, NULL, NULL));
 
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c44store_inner_core.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c44store_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c44store[i*NGLL3], 0, NULL, NULL));
       }
 #endif
@@ -3041,7 +3072,7 @@ void FC_FUNC_ (prepare_inner_core_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
-        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_inner_core.ocl, CL_TRUE, offset,
+        clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_rho[i*NGLL3], 0, NULL, NULL));
       }
 #endif
@@ -3107,14 +3138,12 @@ void FC_FUNC_ (prepare_inner_core_device,
       mp->d_b_displ_inner_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size, NULL, clck_(&errcode));
       mp->d_b_veloc_inner_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size, NULL, clck_(&errcode));
       mp->d_b_accel_inner_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, sizeof (realw)*size, NULL, clck_(&errcode));
-
-      // debug
-#if DEBUG_BACKWARD_SIMULATIONS == 1
-      // debugging with empty arrays
-      moclEnqueueFillBuffer(mp, &mp->d_b_displ_inner_core, 0, size * sizeof (realw));
-      moclEnqueueFillBuffer(mp, &mp->d_b_veloc_innter_core, 0, size * sizeof (realw));
-      moclEnqueueFillBuffer(mp, &mp->d_b_veloc_innter_core, 0, size * sizeof (realw));
-#endif
+      //debugging with empty arrays
+      if (DEBUG_BACKWARD_SIMULATIONS == 1){
+        moclEnqueueFillBuffer(&mp->d_b_displ_inner_core.ocl, 0, size * sizeof (realw));
+        moclEnqueueFillBuffer(&mp->d_b_veloc_inner_core.ocl, 0, size * sizeof (realw));
+        moclEnqueueFillBuffer(&mp->d_b_veloc_inner_core.ocl, 0, size * sizeof (realw));
+      }
     }
 #endif
 #ifdef USE_CUDA
@@ -3122,13 +3151,12 @@ void FC_FUNC_ (prepare_inner_core_device,
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_displ_inner_core.cuda),sizeof(realw)*size),6011);
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_veloc_inner_core.cuda),sizeof(realw)*size),6012);
       print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_b_accel_inner_core.cuda),sizeof(realw)*size),6013);
-      // debug
-#if DEBUG_BACKWARD_SIMULATIONS == 1
-      // debugging with empty arrays
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_inner_core.cuda,0,sizeof(realw)*size),5111);
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_inner_core.cuda,0,sizeof(realw)*size),5111);
-      print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_inner_core.cuda,0,sizeof(realw)*size),5111);
-#endif
+      //debugging with empty arrays
+      if (DEBUG_BACKWARD_SIMULATIONS == 1){
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_displ_inner_core.cuda,0,sizeof(realw)*size),5111);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_veloc_inner_core.cuda,0,sizeof(realw)*size),5111);
+        print_CUDA_error_if_any(cudaMemset(mp->d_b_accel_inner_core.cuda,0,sizeof(realw)*size),5111);
+      }
     }
 #endif
   }
@@ -3139,15 +3167,18 @@ void FC_FUNC_ (prepare_inner_core_device,
     cl_image_format format = {CL_R, CL_UNSIGNED_INT32};
     mp->d_displ_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_inner_core.ocl, clck_(&errcode));
     mp->d_accel_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_inner_core.ocl, clck_(&errcode));
-
+    // backward/reconstructed fields
     if( mp->simulation_type == 3 ){
       mp->d_b_displ_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_inner_core.ocl, clck_(&errcode));
       mp->d_b_accel_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_inner_core.ocl, clck_(&errcode));
+    } else {
+      mp->d_b_displ_ic_tex = moclGetDummyImage2D(mp);
+      mp->d_b_accel_ic_tex = moclGetDummyImage2D(mp);
     }
 #else
     mp->d_displ_ic_tex = moclGetDummyImage2D(mp);
     mp->d_accel_ic_tex = moclGetDummyImage2D(mp);
-
+    // backward/reconstructed fields
     mp->d_b_displ_ic_tex = moclGetDummyImage2D(mp);
     mp->d_b_accel_ic_tex = moclGetDummyImage2D(mp);
 #endif
@@ -3231,7 +3262,7 @@ void FC_FUNC_ (prepare_inner_core_device,
       mp->d_rho_kl_inner_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
                                                     size*sizeof (realw), NULL, clck_(&errcode));
 
-      moclEnqueueFillBuffer(mp, &mp->d_rho_kl_inner_core.ocl, 0, size * sizeof (realw));
+      moclEnqueueFillBuffer(&mp->d_rho_kl_inner_core.ocl, 0, size * sizeof (realw));
 
       // isotropic kernel
       mp->d_alpha_kl_inner_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
@@ -3240,8 +3271,8 @@ void FC_FUNC_ (prepare_inner_core_device,
       mp->d_beta_kl_inner_core.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
                                                      size*sizeof (realw), NULL, clck_(&errcode));
 
-      moclEnqueueFillBuffer(mp, &mp->d_alpha_kl_inner_core.ocl, 0, size * sizeof (realw));
-      moclEnqueueFillBuffer(mp, &mp->d_beta_kl_inner_core.ocl, 0, size * sizeof (realw));
+      moclEnqueueFillBuffer(&mp->d_alpha_kl_inner_core.ocl, 0, size * sizeof (realw));
+      moclEnqueueFillBuffer(&mp->d_beta_kl_inner_core.ocl, 0, size * sizeof (realw));
     }
 #endif
 #ifdef USE_CUDA
@@ -3266,6 +3297,10 @@ void FC_FUNC_ (prepare_inner_core_device,
   mp->num_colors_inner_inner_core = *num_colors_inner;
   mp->h_num_elem_colors_inner_core = (int *) num_elem_colors;
 
+#ifdef USE_OPENCL
+  // executes gpu calls
+  if (run_opencl){clFinish (mocl.command_queue);}
+#endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("prepare_inner_core_device");
 #endif
@@ -3784,7 +3819,6 @@ void FC_FUNC_ (prepare_cleanup_device,
 
     clReleaseMemObject (mp->d_ystore_crust_mantle.ocl);
     clReleaseMemObject (mp->d_zstore_crust_mantle.ocl);
-
     if (mp->gravity) {
       clReleaseMemObject (mp->d_xstore_crust_mantle.ocl);
     }
@@ -3969,23 +4003,33 @@ void FC_FUNC_ (prepare_cleanup_device,
       clReleaseMemObject (mp->d_normal_ocean_load.ocl);
     }
 
-#ifdef USE_TEXTURES_FIELDS
+// note: texture arrays in OpenCL are always allocated (either dummy or valid ones)
     clReleaseMemObject (mp->d_displ_cm_tex);
     clReleaseMemObject (mp->d_accel_cm_tex);
+    clReleaseMemObject (mp->d_b_displ_cm_tex);
+    clReleaseMemObject (mp->d_b_accel_cm_tex);
 
     clReleaseMemObject (mp->d_displ_oc_tex);
     clReleaseMemObject (mp->d_accel_oc_tex);
+    clReleaseMemObject (mp->d_b_displ_oc_tex);
+    clReleaseMemObject (mp->d_b_accel_oc_tex);
 
     clReleaseMemObject (mp->d_displ_ic_tex);
     clReleaseMemObject (mp->d_accel_ic_tex);
-#endif
-#ifdef USE_TEXTURES_CONSTANTS
+    clReleaseMemObject (mp->d_b_displ_ic_tex);
+    clReleaseMemObject (mp->d_b_accel_ic_tex);
+
     clReleaseMemObject (mp->d_hprime_xx_cm_tex);
-#endif
+    clReleaseMemObject (mp->d_hprimewgll_xx_cm_tex);
+
     clFinish (mocl.command_queue);
+    if ( GPU_ASYNC_COPY ){ clFinish (mocl.copy_queue); }
+    
     release_kernels();
+
     clReleaseCommandQueue (mocl.command_queue);
     if ( GPU_ASYNC_COPY ){ clReleaseCommandQueue (mocl.copy_queue); }
+
     clReleaseContext (mocl.context);
   }
 #endif

@@ -128,22 +128,22 @@ void write_seismograms_transfer_from_device (Mesh *mp,
                                                                                          d_field->cuda,
                                                                                          mp->nrec_local);
 
- // copies array to CPU
-  if( GPU_ASYNC_COPY ){
-    // waits for previous compute call to be finished
-    cudaStreamSynchronize(mp->compute_stream);
+    // copies array to CPU
+    if( GPU_ASYNC_COPY ){
+      // waits for previous compute call to be finished
+      cudaStreamSynchronize(mp->compute_stream);
 
-    // asynchronous copy
-    // note: we need to update the host array in a subsequent call to transfer_seismo_from_device_async() routine
-    cudaMemcpyAsync(mp->h_station_seismo_field,mp->d_station_seismo_field.cuda,
-                    3*NGLL3*(mp->nrec_local)*sizeof(realw),
-                    cudaMemcpyDeviceToHost,mp->copy_stream);
-  }else{
-    // synchronous copy
-    print_CUDA_error_if_any(cudaMemcpy(mp->h_station_seismo_field,mp->d_station_seismo_field.cuda,
-                                       3*NGLL3*(mp->nrec_local)*sizeof(realw),cudaMemcpyDeviceToHost),77000);
+      // asynchronous copy
+      // note: we need to update the host array in a subsequent call to transfer_seismo_from_device_async() routine
+      cudaMemcpyAsync(mp->h_station_seismo_field,mp->d_station_seismo_field.cuda,
+                      3*NGLL3*(mp->nrec_local)*sizeof(realw),
+                      cudaMemcpyDeviceToHost,mp->copy_stream);
+    }else{
+      // synchronous copy
+      print_CUDA_error_if_any(cudaMemcpy(mp->h_station_seismo_field,mp->d_station_seismo_field.cuda,
+                                         3*NGLL3*(mp->nrec_local)*sizeof(realw),cudaMemcpyDeviceToHost),77000);
 
-  }
+    }
   }
 #endif
 
@@ -237,6 +237,7 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
                                        NGLL3*(mp->nrec_local)*sizeof(realw),cudaMemcpyDeviceToHost),77001);
   }
 #endif
+
   // updates host array
   for (irec_local = 0; irec_local < mp->nrec_local; irec_local++) {
     irec = number_receiver_global[irec_local] - 1;
@@ -370,7 +371,8 @@ void FC_FUNC_(transfer_seismo_from_device_async,
 
   TRACE("transfer_seismo_from_device_async");
 
-  Mesh* mp = (Mesh*)(*Mesh_pointer_f); // get Mesh from Fortran integer wrapper
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int irec,ispec,iglob,i;
   realw* h_field;

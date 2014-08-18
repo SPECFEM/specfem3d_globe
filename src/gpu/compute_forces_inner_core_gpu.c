@@ -188,7 +188,6 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_factor_common.ocl));
 
     if (FORWARD_OR_ADJOINT == 1) {
-
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_R_xx.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_R_yy.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_R_xy.ocl));
@@ -198,7 +197,6 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_betaval.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gammaval.ocl));
     } else {
-
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_R_xx.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_R_yy.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_R_xy.ocl));
@@ -226,8 +224,13 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE_STRAIN_ONLY));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
 
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_ic_tex));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_ic_tex));
+    if (FORWARD_OR_ADJOINT == 1) {
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_ic_tex));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_ic_tex));
+    } else {
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_ic_tex));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_ic_tex));
+    }
 
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
@@ -351,7 +354,8 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
 
   TRACE ("compute_forces_inner_core_gpu");
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   // get Mesh from Fortran integer wrapper
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check

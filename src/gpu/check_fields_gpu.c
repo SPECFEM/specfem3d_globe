@@ -520,7 +520,8 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
                                                  int *FORWARD_OR_ADJOINT) {
   TRACE ("check_norm_acoustic_from_device");
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;     //get mesh pointer out of Fortran integer container
+  // get Mesh from Fortran integer wrapper
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
   realw max;
   gpu_realw_mem d_max;
   realw *h_max;
@@ -598,7 +599,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     max_d = get_device_array_maximum_value(mp->d_displ_outer_core, mp->NGLOB_OUTER_CORE);
     max_v = get_device_array_maximum_value(mp->d_veloc_outer_core, mp->NGLOB_OUTER_CORE);
     max_a = get_device_array_maximum_value(mp->d_accel_outer_core, mp->NGLOB_OUTER_CORE);
-    printf ("rank %d - max outer_core displ: %e veloc: %e accel: %e\n", mp->myrank, max_d, max_v, max_a);
+    printf ("rank %d - check norm max outer_core displ: %e veloc: %e accel: %e, %i\n", mp->myrank, max_d, max_v, max_a, *FORWARD_OR_ADJOINT);
     fflush (stdout);
     synchronize_mpi ();
   }
@@ -641,7 +642,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   TRACE ("check_norm_elastic_from_device");
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) (*Mesh_pointer_f);
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   realw max_d, max_v, max_a;
   realw max, max_crust_mantle, max_inner_core;
@@ -723,7 +724,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     max_d = get_device_array_maximum_value(mp->d_displ_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
     max_v = get_device_array_maximum_value(mp->d_veloc_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
     max_a = get_device_array_maximum_value(mp->d_accel_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
-    printf ("rank %d - max crust_mantle displ: %e veloc: %e accel: %e\n", mp->myrank, max_d, max_v, max_a);
+    printf ("rank %d - check norm max crust_mantle displ: %e veloc: %e accel: %e, %i\n", mp->myrank, max_d, max_v, max_a, *FORWARD_OR_ADJOINT);
     fflush (stdout);
     synchronize_mpi ();
   }
@@ -809,7 +810,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     max_d = get_device_array_maximum_value(mp->d_displ_inner_core, NDIM * mp->NGLOB_INNER_CORE);
     max_v = get_device_array_maximum_value(mp->d_veloc_inner_core, NDIM * mp->NGLOB_INNER_CORE);
     max_a = get_device_array_maximum_value(mp->d_accel_inner_core, NDIM * mp->NGLOB_INNER_CORE);
-    printf ("rank %d - max inner_core displ: %e veloc: %e accel: %e\n", mp->myrank, max_d, max_v, max_a);
+    printf ("rank %d - check norm max inner_core displ: %e veloc: %e accel: %e, %i\n", mp->myrank, max_d, max_v, max_a, *FORWARD_OR_ADJOINT);
     fflush (stdout);
     synchronize_mpi ();
   }
@@ -836,7 +837,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
   //debug
   if( DEBUG_FIELDS ){
-    printf ("rank %d - max norm elastic: crust_mantle = %e inner_core = %e \n",mp->myrank,max_crust_mantle,max_inner_core);
+    printf ("rank %d - norm elastic: crust_mantle = %e inner_core = %e \n",mp->myrank,max_crust_mantle,max_inner_core);
     fflush (stdout);
     synchronize_mpi ();
   }
@@ -861,7 +862,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
   TRACE ("check_norm_strain_from_device");
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) (*Mesh_pointer_f);
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   realw max, max_eps;
   gpu_realw_mem d_max;

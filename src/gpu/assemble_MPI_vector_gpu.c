@@ -41,9 +41,9 @@
 extern EXTERN_LANG
 void FC_FUNC_(transfer_boun_from_device,
               TRANSFER_BOUN_FROM_DEVICE)(long *Mesh_pointer_f,
-                                                 realw *send_accel_buffer,
-                                                 int *IREGION,
-                                                 int *FORWARD_OR_ADJOINT) {
+                                         realw *send_accel_buffer,
+                                         int *IREGION,
+                                         int *FORWARD_OR_ADJOINT) {
   TRACE("transfer_boun_from_device");
 
   int blocksize, size_padded;
@@ -347,7 +347,7 @@ void FC_FUNC_(transfer_boun_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_ (transfer_asmbl_accel_to_device,
-               TRANSFER_ASMBL_ACCEL_TO_DEVICE) (long *Mesh_pointer,
+               TRANSFER_ASMBL_ACCEL_TO_DEVICE) (long *Mesh_pointer_f,
                                                 realw *buffer_recv_vector,
                                                 int *IREGION,
                                                 int *FORWARD_OR_ADJOINT) {
@@ -369,7 +369,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 #endif
 
   //get mesh pointer out of Fortran integer container
-  Mesh *mp = (Mesh *) *Mesh_pointer;
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
   if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
@@ -651,16 +651,17 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_buffer_to_device_async,
-              TRANSFER_BUFFER_TO_DEVICE_ASYNC)(long* Mesh_pointer,
-                                             realw* buffer,
-                                             int* IREGION,
-                                             int* FORWARD_OR_ADJOINT)
-{
+              TRANSFER_BUFFER_TO_DEVICE_ASYNC)(long* Mesh_pointer_f,
+                                               realw* buffer,
+                                               int* IREGION,
+                                               int* FORWARD_OR_ADJOINT) {
   // asynchronous transfer from host to device
   TRACE("transfer_buffer_to_device_async");
 
   int size_mpi_buffer;
-  Mesh *mp = (Mesh *)(*Mesh_pointer); // get Mesh from Fortran integer wrapper
+
+  // get Mesh from Fortran integer wrapper
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks async-memcpy
   if ( ! GPU_ASYNC_COPY ) {
@@ -828,17 +829,18 @@ void FC_FUNC_(transfer_buffer_to_device_async,
 
 extern EXTERN_LANG
 void FC_FUNC_(sync_copy_from_device,
-              SYNC_copy_FROM_DEVICE)(long* Mesh_pointer,
+              SYNC_copy_FROM_DEVICE)(long* Mesh_pointer_f,
                                      int* iphase,
                                      realw* send_buffer,
                                      int* IREGION,
-                                     int* FORWARD_OR_ADJOINT)
-{
+                                     int* FORWARD_OR_ADJOINT) {
   // synchronizes copy stream before copying buffers from pinned memory to CPU host
   TRACE("sync_copy_from_device");
 
   int size_mpi_buffer;
-  Mesh *mp = (Mesh *)(*Mesh_pointer); // get Mesh from Fortran integer wrapper
+  
+  // get Mesh from Fortran integer wrapper
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks async-memcpy
   if ( ! GPU_ASYNC_COPY ) {
