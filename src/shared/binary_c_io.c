@@ -184,7 +184,7 @@ void open_file_abs_r_fbin(int *fid, char *filename,int *length, long long *files
   }
 
   // opens file
-  ft = fopen( fncopy, "rb+" );
+  ft = fopen( fncopy, "rb" );
   if( ft == NULL ) { perror("fopen"); exit(-1); }
 
   // sets mode for full buffering

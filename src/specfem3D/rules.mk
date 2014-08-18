@@ -119,6 +119,7 @@ specfem3D_MODULES = \
 specfem3D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
+	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
@@ -148,7 +149,6 @@ specfem3D_SHARED_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
-	$O/write_c_binary.cc.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
