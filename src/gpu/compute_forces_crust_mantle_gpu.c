@@ -272,7 +272,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_cm_tex));
     }
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx_cm_tex));
-    
+
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;

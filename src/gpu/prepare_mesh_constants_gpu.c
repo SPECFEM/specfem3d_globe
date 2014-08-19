@@ -113,7 +113,7 @@ void moclEnqueueFillBuffer (cl_mem *buffer, int val, size_t size_byte) {
 
   // value to fill buffer
   cl_int value = val;
-  
+
   // gets size as number of integer values
   int size;
   size = size_byte / sizeof(cl_int);
@@ -4012,7 +4012,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
     clFinish (mocl.command_queue);
     if (GPU_ASYNC_COPY) { clFinish (mocl.copy_queue); }
-    
+
     release_kernels();
 
     clReleaseCommandQueue (mocl.command_queue);

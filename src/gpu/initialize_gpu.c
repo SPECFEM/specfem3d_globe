@@ -525,7 +525,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
           fprintf(stderr,"OpenCL error: No OpenCL platform info available!\n");
           exit(1);
         }
-        
+
         // allocates info buffer and gets info string
         info = (char *) malloc(info_length * sizeof(char));
         clCheck( clGetPlatformInfo(platform_ids[i], props_to_check[j], info_length, info, NULL));
@@ -584,7 +584,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
     // only gets number of devices for this platform
     clCheck( clGetDeviceIDs((cl_platform_id) properties[1], OCL_DEV_TYPE, 0, NULL, &num_devices));
-    
+
     // checks
     if (num_devices == 0) {
       fprintf(stderr,"No OpenCL device of type %d!\n", (int) OCL_DEV_TYPE);

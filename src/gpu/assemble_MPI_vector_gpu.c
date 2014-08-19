@@ -137,7 +137,7 @@ void FC_FUNC_(transfer_boun_from_device,
           if (mp->has_last_copy_evt) {
             clCheck (clReleaseEvent (mp->last_copy_evt));
           }
-          
+
           clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_b_send_accel_buffer_crust_mantle.ocl, CL_FALSE, 0,
                                         size_mpi_buffer * sizeof (realw), mp->h_b_send_accel_buffer_cm, 1, &kernel_evt, &mp->last_copy_evt));
           mp->has_last_copy_evt = 1;
@@ -242,7 +242,7 @@ void FC_FUNC_(transfer_boun_from_device,
           if (mp->has_last_copy_evt) {
             clCheck (clReleaseEvent (mp->last_copy_evt));
           }
-          
+
           clCheck (clEnqueueReadBuffer (mocl.copy_queue, mp->d_send_accel_buffer_inner_core.ocl, CL_FALSE, 0,
                                         size_mpi_buffer * sizeof (realw), mp->h_send_accel_buffer_ic, 1, &kernel_evt, &mp->last_copy_evt));
           mp->has_last_copy_evt = 1;
@@ -344,7 +344,7 @@ void FC_FUNC_(transfer_boun_from_device,
   default:
     exit_on_error("error invalid IREGION in transfer_boun_from_device() routine");
   } // switch (*IREGION)
-  
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("transfer_boun_from_device");
 #endif
@@ -392,7 +392,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
     // checks if anything to do
     if( size_mpi_buffer == 0 ) return;
-    
+
     // assembles values
     blocksize = BLOCKSIZE_TRANSFER;
     size_padded = ((int) ceil (((double) mp->max_nibool_interfaces_cm) / ((double) blocksize))) * blocksize;
@@ -531,7 +531,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
     // checks if anything to do
     if (size_mpi_buffer == 0) return;
-    
+
     // assembles values
     blocksize = BLOCKSIZE_TRANSFER;
     size_padded = ((int) ceil (((double) mp->max_nibool_interfaces_ic) / ((double) blocksize))) * blocksize;
@@ -663,7 +663,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
   default:
     exit_on_error("error invalid IREGION in transfer_asmbl_accel_to_device() routine");
   } // switch (*IREGION)
-  
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("transfer_asmbl_accel_to_device");
 #endif
@@ -748,7 +748,7 @@ void FC_FUNC_(transfer_buffer_to_device_async,
 #endif
     }
     break;
-    
+
   case IREGION_INNER_CORE:
     // inner core region
     size_mpi_buffer = NDIM * mp->max_nibool_interfaces_ic * mp->num_interfaces_inner_core;
@@ -870,7 +870,7 @@ void FC_FUNC_(sync_copy_from_device,
   TRACE("sync_copy_from_device");
 
   int size_mpi_buffer;
-  
+
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
@@ -897,7 +897,7 @@ void FC_FUNC_(sync_copy_from_device,
 
     // checks if anything to do
     if (size_mpi_buffer == 0) return;
-    
+
     // waits for asynchronous copy to finish
 #ifdef USE_OPENCL
     if (run_opencl) {
@@ -925,14 +925,14 @@ void FC_FUNC_(sync_copy_from_device,
       memcpy(send_buffer, mp->h_b_send_accel_buffer_cm, size_mpi_buffer * sizeof(realw));
     }
     break;
-    
+
   case IREGION_INNER_CORE:
     // inner core
     size_mpi_buffer = NDIM * mp->max_nibool_interfaces_ic * mp->num_interfaces_inner_core;
-    
+
     // checks if anything to do
     if (size_mpi_buffer == 0) return;
-    
+
     // waits for asynchronous copy to finish
 #ifdef USE_OPENCL
     if (run_opencl) {
@@ -960,7 +960,7 @@ void FC_FUNC_(sync_copy_from_device,
       memcpy(send_buffer,mp->h_b_send_accel_buffer_ic,size_mpi_buffer*sizeof(realw));
     }
     break;
-    
+
   case IREGION_OUTER_CORE:
     // outer core
     size_mpi_buffer = mp->max_nibool_interfaces_oc * mp->num_interfaces_outer_core;
@@ -995,13 +995,13 @@ void FC_FUNC_(sync_copy_from_device,
       memcpy(send_buffer, mp->h_b_send_accel_buffer_oc, size_mpi_buffer * sizeof(realw));
     }
     break;
-  
+
   default:
     exit_on_error("error invalid IREGION in sync_copy_from_device() routine");
   } // switch (*IREGION)
-  
+
   // memory copy is now finished, so non-blocking MPI send can proceed
-  
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("sync_copy_from_device");
 #endif

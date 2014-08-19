@@ -96,7 +96,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
       if (GPU_ASYNC_COPY) {
         // waits until kernel is finished before starting async memcpy
         clCheck (clFinish (mocl.command_queue));
-        
+
         if (mp->has_last_copy_evt) {
           clCheck (clReleaseEvent (mp->last_copy_evt));
         }
