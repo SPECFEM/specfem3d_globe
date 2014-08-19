@@ -482,7 +482,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
   // first OpenCL call
   // only gets number of platforms
-  clGetPlatformIDs(0, NULL, &num_platforms);
+  clCheck( clGetPlatformIDs(0, NULL, &num_platforms) );
 
   // checks if OpenCL platforms available
   if (num_platforms == 0) {
@@ -493,15 +493,22 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   platform_ids = (cl_platform_id *) malloc(num_platforms * sizeof(cl_platform_id));
 
   // gets platform infos
-  clGetPlatformIDs(num_platforms, platform_ids, NULL);
+  clCheck( clGetPlatformIDs(num_platforms, platform_ids, NULL));
 
   cl_context_properties properties[] = {CL_CONTEXT_PLATFORM, 0, 0 };
+
+  // temporary array to store infos
+  int i,j;
   char *info_all[num_platforms][2];
+  // initializes pointers
+  for (i = 0; i < num_platforms; i++) {
+    info_all[i][0] = NULL;
+    info_all[i][1] = NULL;
+  }
 
   // looks for platform matching GPU_PLATFORM string given in Par_file
   if (strlen(platform_filter)) {
     cl_uint found = 0;
-    cl_uint i;
 
     for (i = 0; i < num_platforms && !found; i++) {
       size_t info_length;
@@ -509,14 +516,19 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
       // checks vendor and platform names for matching with GPU_PLATFORM
       int props_to_check[] = {CL_PLATFORM_VENDOR, CL_PLATFORM_NAME};
-      int j;
       for (j = 0; j < 2 && !found; j++) {
         // gets property info length
-        clGetPlatformInfo(platform_ids[i], props_to_check[j], 0, NULL, &info_length);
+        clCheck( clGetPlatformInfo(platform_ids[i], props_to_check[j], 0, NULL, &info_length));
 
+        // checks info
+        if( info_length == 0 ){
+          fprintf(stderr,"OpenCL error: No OpenCL platform info available!\n");
+          exit(1);
+        }
+        
         // allocates info buffer and gets info string
         info = (char *) malloc(info_length * sizeof(char));
-        clGetPlatformInfo(platform_ids[i], props_to_check[j], info_length, info, NULL);
+        clCheck( clGetPlatformInfo(platform_ids[i], props_to_check[j], info_length, info, NULL));
 
         // stores info
         info_all[i][j] = malloc( strlen(info) + 1);
@@ -571,7 +583,9 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     cl_device_id *matching_device_ids;
 
     // only gets number of devices for this platform
-    clGetDeviceIDs((cl_platform_id) properties[1], OCL_DEV_TYPE, 0, NULL, &num_devices);
+    clCheck( clGetDeviceIDs((cl_platform_id) properties[1], OCL_DEV_TYPE, 0, NULL, &num_devices));
+    
+    // checks
     if (num_devices == 0) {
       fprintf(stderr,"No OpenCL device of type %d!\n", (int) OCL_DEV_TYPE);
       exit(1);
@@ -582,20 +596,25 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     matching_device_ids = (cl_device_id *) malloc(num_devices * sizeof(cl_device_id));
 
     // gets device infos
-    clGetDeviceIDs((cl_platform_id) properties[1], OCL_DEV_TYPE, num_devices, device_ids, NULL);
+    clCheck( clGetDeviceIDs((cl_platform_id) properties[1], OCL_DEV_TYPE, num_devices, device_ids, NULL));
 
+    // temporary array to store device infos
     char *info_device_all[num_devices];
+    // initializes pointers
+    for (i = 0; i < num_devices; i++) {
+      info_device_all[i] = NULL;
+    }
 
     // searches device matching GPU_DEVICE string
     for (i = 0; i < num_devices; i++) {
       size_t info_length;
       char *info;
 
-      clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, 0, NULL, &info_length);
+      clCheck( clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, 0, NULL, &info_length));
 
       info = (char *) malloc(info_length * sizeof(char));
 
-      clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, info_length, info, NULL);
+      clCheck( clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, info_length, info, NULL));
 
       // stores info
       info_device_all[i] = malloc( strlen(info) + 1);
@@ -647,6 +666,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   //get the number of devices available in the context (devices which are of DEVICE_TYPE_GPU of platform platform_ids[0])
   struct _opencl_version  platform_version;
   get_platform_version((cl_platform_id) properties[1], &platform_version);
+
 #ifdef CL_VERSION_1_1
   if (compare_opencl_version(platform_version, opencl_version_1_1) >= 0 ) {
     clGetContextInfo(mocl.context, CL_CONTEXT_NUM_DEVICES, sizeof(*nb_devices), nb_devices, NULL);
@@ -657,6 +677,8 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     clGetContextInfo(mocl.context, CL_CONTEXT_DEVICES, 0, 0, &nContextDescriptorSize);
     *nb_devices = nContextDescriptorSize / sizeof(cl_device_id);
   }
+
+  // stores info in mesh opencl structure
   mocl.nb_devices = *nb_devices;
   free(platform_ids);
 
@@ -674,7 +696,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
   // command kernel queues
   mocl.command_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
-  if ( GPU_ASYNC_COPY ){
+  if (GPU_ASYNC_COPY) {
     mocl.copy_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
   }
 }

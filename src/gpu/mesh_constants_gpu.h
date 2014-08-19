@@ -92,15 +92,19 @@ typedef float realw;
 // debug: run backward simulations with/without GPU routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
-#define DEBUG_BACKWARD_ASSEMBLY() return;
-#define DEBUG_BACKWARD_COUPLING() return;
-#define DEBUG_BACKWARD_FORCES()   return;
-#define DEBUG_BACKWARD_KERNEL()   return;
-#define DEBUG_BACKWARD_SOURCES()  return;
-#define DEBUG_BACKWARD_TRANSFER() return;
-#define DEBUG_BACKWARD_UPDATE()   return;
+#define DEBUG_BACKWARD_ASSEMBLY_OC()  return;
+#define DEBUG_BACKWARD_ASSEMBLY_IC()  return;
+#define DEBUG_BACKWARD_ASSEMBLY_CM()  return;
+#define DEBUG_BACKWARD_COUPLING()     return;
+#define DEBUG_BACKWARD_FORCES()       return;
+#define DEBUG_BACKWARD_KERNEL()       return;
+#define DEBUG_BACKWARD_SOURCES()      return;
+#define DEBUG_BACKWARD_TRANSFER()     return;
+#define DEBUG_BACKWARD_UPDATE()       return;
 #else
-#define DEBUG_BACKWARD_ASSEMBLY()
+#define DEBUG_BACKWARD_ASSEMBLY_OC()
+#define DEBUG_BACKWARD_ASSEMBLY_IC()
+#define DEBUG_BACKWARD_ASSEMBLY_CM()
 #define DEBUG_BACKWARD_COUPLING()
 #define DEBUG_BACKWARD_FORCES()
 #define DEBUG_BACKWARD_KERNEL()
@@ -153,7 +157,7 @@ typedef float realw;
 
 // Asynchronous memory copies between GPU and CPU
 // (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
-#define GPU_ASYNC_COPY 0
+#define GPU_ASYNC_COPY 1
 
 /*----------------------------------------------------------------------------------------------- */
 
@@ -871,6 +875,7 @@ typedef struct mesh_ {
   float* h_b_recv_accel_buffer_oc;
 
 #ifdef USE_OPENCL
+  // pinned memory allocated by ALLOC_PINNED_BUFFER_OCL
   cl_mem h_pinned_station_seismo_field;
   cl_mem h_pinned_adj_sourcearrays_slice;
 

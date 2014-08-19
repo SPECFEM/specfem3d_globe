@@ -154,7 +154,7 @@
       call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,1)
 
       ! initiates asynchronous MPI transfer
-      if( GPU_ASYNC_COPY .and. iphase == 2 ) then
+      if (GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! crust/mantle region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_crust_mantle,IREGION_CRUST_MANTLE,1)
@@ -171,7 +171,7 @@
       call compute_forces_inner_core_gpu(Mesh_pointer,iphase,1)
 
       ! initiates asynchronous MPI transfer
-      if( GPU_ASYNC_COPY .and. iphase == 2 ) then
+      if (GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! inner core region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_vector_inner_core,IREGION_INNER_CORE,1)
@@ -356,7 +356,7 @@
                               request_send_vector_ic,request_recv_vector_ic)
       else
         ! on GPU
-        if( GPU_ASYNC_COPY ) then
+        if (GPU_ASYNC_COPY) then
           ! while inner elements compute "Kernel_2", we wait for MPI to
           ! finish and transfer the boundary terms to the device asynchronously
           !
@@ -604,7 +604,7 @@
       call compute_forces_crust_mantle_gpu(Mesh_pointer,iphase,3)
 
       ! initiates asynchronous MPI transfer
-      if( GPU_ASYNC_COPY .and. iphase == 2 ) then
+      if (GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! crust/mantle region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_cm,IREGION_CRUST_MANTLE,3)
@@ -621,7 +621,7 @@
       call compute_forces_inner_core_gpu(Mesh_pointer,iphase,3)
 
       ! initiates asynchronous MPI transfer
-      if( GPU_ASYNC_COPY .and. iphase == 2 ) then
+      if (GPU_ASYNC_COPY .and. iphase == 2 ) then
         ! inner core region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_vector_inner_core,IREGION_INNER_CORE,3)
@@ -794,7 +794,7 @@
 
       else
         ! on GPU
-        if( GPU_ASYNC_COPY ) then
+        if (GPU_ASYNC_COPY) then
           ! while inner elements compute "Kernel_2", we wait for MPI to
           ! finish and transfer the boundary terms to the device asynchronously
           ! wait for asynchronous copy to finish

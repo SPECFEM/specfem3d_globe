@@ -344,7 +344,7 @@ void FC_FUNC_ (prepare_constants_device,
   if (*GPU_ASYNC_COPY_f) {
     if( ! GPU_ASYNC_COPY) { exit_on_error ("GPU_ASYNC_COPY must be set to 1 for GPU devices in mesh_constants_gpu.h; please re-compile"); }
   }else{
-    if( GPU_ASYNC_COPY) { exit_on_error ("GPU_ASYNC_COPY must be set to 0 for GPU devices in mesh_constants_gpu.h; please re-compile"); }
+    if (GPU_ASYNC_COPY) { exit_on_error ("GPU_ASYNC_COPY must be set to 0 for GPU devices in mesh_constants_gpu.h; please re-compile"); }
   }
 #ifdef USE_MESH_COLORING_GPU
   if (! *USE_MESH_COLORING_GPU_f) { exit_on_error("error with USE_MESH_COLORING_GPU constant; please re-compile\n"); }
@@ -518,10 +518,7 @@ void FC_FUNC_ (prepare_constants_device,
         ALLOC_PINNED_BUFFER_OCL (station_seismo_field, NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
       } else {
         mp->h_station_seismo_field = (realw *) malloc (NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
-
-        if (mp->h_station_seismo_field == NULL) {
-          exit_on_error("h_station_seismo_field not allocated \n");
-        }
+        if (mp->h_station_seismo_field == NULL) { exit_on_error("h_station_seismo_field not allocated \n"); }
       }
 
       // for adjoint strain
@@ -529,34 +526,28 @@ void FC_FUNC_ (prepare_constants_device,
         mp->d_station_strain_field.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
                                                          NGLL3 * mp->nrec_local * sizeof (realw), NULL, clck_(&errcode));
         mp->h_station_strain_field = (realw *) malloc (NGLL3 * mp->nrec_local * sizeof(realw));
-
-        if (mp->h_station_strain_field == NULL) {
-          exit_on_error("h_station_strain_field not allocated \n");
-        }
+        if (mp->h_station_strain_field == NULL) { exit_on_error("h_station_strain_field not allocated \n"); }
       }
     }
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_station_seismo_field.cuda),
-                                         NDIM*NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
+      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_station_seismo_field.cuda), NDIM*NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
       // for transferring values from GPU to CPU
       if (GPU_ASYNC_COPY) {
-       // TODO
-       // only pinned memory can handle memcpy calls asynchronously
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_station_seismo_field),
-                                               NDIM*NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
+        // TODO
+        // only pinned memory can handle memcpy calls asynchronously
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_station_seismo_field), NDIM*NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
       } else {
         mp->h_station_seismo_field = (realw*) malloc( NDIM*NGLL3*(mp->nrec_local)*sizeof(realw) );
-        if (mp->h_station_seismo_field == NULL) exit_on_error("h_station_seismo_field not allocated \n");
+        if (mp->h_station_seismo_field == NULL) { exit_on_error("h_station_seismo_field not allocated \n"); }
       }
 
       // for adjoint strain
       if (mp->simulation_type == 2) {
-        print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_station_strain_field),
-                                           NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
+        print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_station_strain_field), NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
         mp->h_station_strain_field = (realw*) malloc( NGLL3*(mp->nrec_local)*sizeof(realw) );
-        if (mp->h_station_strain_field == NULL) exit_on_error("h_station_strain_field not allocated \n");
+        if (mp->h_station_strain_field == NULL) { exit_on_error("h_station_strain_field not allocated \n"); }
       }
     }
 #endif
@@ -637,7 +628,7 @@ void FC_FUNC_ (prepare_constants_device,
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      if( GPU_ASYNC_COPY ){
+      if (GPU_ASYNC_COPY) {
         // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronously.
         print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_adj_sourcearrays_slice),
                                                (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw)),6011);
@@ -1395,8 +1386,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
 #ifdef USE_OPENCL
     if (run_opencl) {
       mp->d_send_accel_buffer_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
-                                                                 NDIM * mp->max_nibool_interfaces_cm * mp->num_interfaces_crust_mantle * sizeof (realw),
-                                                                 NULL, clck_(&errcode));
+                                                                 size_mpi_buffer * sizeof (realw), NULL, clck_(&errcode));
     }
 #endif
 #ifdef USE_CUDA
@@ -1408,8 +1398,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
 #ifdef USE_OPENCL
       if (run_opencl) {
         mp->d_b_send_accel_buffer_crust_mantle.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE,
-                                                                     NDIM * mp->max_nibool_interfaces_cm * mp->num_interfaces_crust_mantle * sizeof (realw),
-                                                                     NULL, clck_(&errcode));
+                                                                     size_mpi_buffer * sizeof (realw), NULL, clck_(&errcode));
       }
 #endif
 #ifdef USE_CUDA
@@ -1550,7 +1539,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_outer_core),size_mpi_buffer*sizeof(realw)),4004);
+      print_CUDA_error_if_any(cudaMalloc((void**)&(mp->d_send_accel_buffer_outer_core.cuda),size_mpi_buffer*sizeof(realw)),4004);
     }
 #endif
 
@@ -2434,7 +2423,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 
 #ifdef USE_OPENCL
   // executes gpu calls
-  if (run_opencl){clFinish (mocl.command_queue);}
+  if (run_opencl) {clFinish (mocl.command_queue);}
 #endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("prepare_crust_mantle_device");
@@ -2722,23 +2711,23 @@ void FC_FUNC_ (prepare_outer_core_device,
     cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
     const textureReference* d_displ_oc_tex_ref_ptr;
     print_CUDA_error_if_any(cudaGetTextureReference(&d_displ_oc_tex_ref_ptr, "d_displ_oc_tex"), 5021);
-    print_CUDA_error_if_any(cudaBindTexture(0, d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core,
+    print_CUDA_error_if_any(cudaBindTexture(0, d_displ_oc_tex_ref_ptr, mp->d_displ_outer_core.cuda,
                                             &channelDesc, sizeof(realw)*size_glob), 5021);
 
     const textureReference* d_accel_oc_tex_ref_ptr;
     print_CUDA_error_if_any(cudaGetTextureReference(&d_accel_oc_tex_ref_ptr, "d_accel_oc_tex"), 5023);
-    print_CUDA_error_if_any(cudaBindTexture(0, d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core,
+    print_CUDA_error_if_any(cudaBindTexture(0, d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core.cuda,
                                             &channelDesc, sizeof(realw)*size_glob), 5023);
     // backward/reconstructed wavefields
     if( mp->simulation_type == 3 ){
       const textureReference* d_b_displ_oc_tex_ref_ptr;
       print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_oc_tex_ref_ptr, "d_b_displ_oc_tex"), 5021);
-      print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_oc_tex_ref_ptr, mp->d_b_displ_outer_core,
+      print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_oc_tex_ref_ptr, mp->d_b_displ_outer_core.cuda,
                                               &channelDesc, sizeof(realw)*size_glob), 5021);
 
       const textureReference* d_b_accel_oc_tex_ref_ptr;
       print_CUDA_error_if_any(cudaGetTextureReference(&d_b_accel_oc_tex_ref_ptr, "d_b_accel_oc_tex"), 5023);
-        print_CUDA_error_if_any(cudaBindTexture(0, d_b_accel_oc_tex_ref_ptr, mp->d_b_accel_outer_core,
+        print_CUDA_error_if_any(cudaBindTexture(0, d_b_accel_oc_tex_ref_ptr, mp->d_b_accel_outer_core.cuda,
                                                 &channelDesc, sizeof(realw)*size_glob), 5023);
     }
 #else
@@ -2804,7 +2793,7 @@ void FC_FUNC_ (prepare_outer_core_device,
 
 #ifdef USE_OPENCL
   // executes gpu calls
-  if (run_opencl){clFinish (mocl.command_queue);}
+  if (run_opencl) {clFinish (mocl.command_queue);}
 #endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("prepare_outer_core_device");
@@ -3299,7 +3288,7 @@ void FC_FUNC_ (prepare_inner_core_device,
 
 #ifdef USE_OPENCL
   // executes gpu calls
-  if (run_opencl){clFinish (mocl.command_queue);}
+  if (run_opencl) {clFinish (mocl.command_queue);}
 #endif
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("prepare_inner_core_device");
@@ -3372,7 +3361,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda ){
+    if (run_cuda) {
       if (GPU_ASYNC_COPY) {
         cudaFreeHost(mp->h_station_seismo_field);
       } else {
@@ -3384,7 +3373,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   if (mp->nadj_rec_local > 0) {
 #ifdef USE_OPENCL
-    if (run_opencl){
+    if (run_opencl) {
       if (GPU_ASYNC_COPY) {
         RELEASE_PINNED_BUFFER_OCL (adj_sourcearrays_slice);
       } else {
@@ -3393,7 +3382,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda){
+    if (run_cuda) {
       if (GPU_ASYNC_COPY) {
         cudaFreeHost(mp->h_adj_sourcearrays_slice);
       } else {
@@ -3431,7 +3420,6 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (GPU_ASYNC_COPY) {
         RELEASE_PINNED_BUFFER_OCL (send_accel_buffer_oc);
         RELEASE_PINNED_BUFFER_OCL (recv_accel_buffer_oc);
-
         if (mp->simulation_type == 3) {
           RELEASE_PINNED_BUFFER_OCL (b_send_accel_buffer_oc);
           RELEASE_PINNED_BUFFER_OCL (b_recv_accel_buffer_oc);
@@ -3443,7 +3431,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 #ifdef USE_CUDA
   if (run_cuda) {
     if (mp->num_interfaces_crust_mantle > 0) {
-      if( GPU_ASYNC_COPY){
+      if (GPU_ASYNC_COPY) {
         cudaFreeHost(mp->h_send_accel_buffer_cm);
         cudaFreeHost(mp->h_recv_accel_buffer_cm);
         if( mp->simulation_type == 3 ){
@@ -3453,7 +3441,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       }
     }
     if( mp->num_interfaces_inner_core > 0 ){
-      if( GPU_ASYNC_COPY){
+      if (GPU_ASYNC_COPY) {
         cudaFreeHost(mp->h_send_accel_buffer_ic);
         cudaFreeHost(mp->h_recv_accel_buffer_ic);
         if( mp->simulation_type == 3 ){
@@ -3463,7 +3451,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       }
     }
     if( mp->num_interfaces_outer_core > 0 ){
-      if( GPU_ASYNC_COPY){
+      if (GPU_ASYNC_COPY) {
         cudaFreeHost(mp->h_send_accel_buffer_oc);
         cudaFreeHost(mp->h_recv_accel_buffer_oc);
         if( mp->simulation_type == 3 ){
@@ -4023,12 +4011,12 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_hprimewgll_xx_cm_tex);
 
     clFinish (mocl.command_queue);
-    if ( GPU_ASYNC_COPY ){ clFinish (mocl.copy_queue); }
+    if (GPU_ASYNC_COPY) { clFinish (mocl.copy_queue); }
     
     release_kernels();
 
     clReleaseCommandQueue (mocl.command_queue);
-    if ( GPU_ASYNC_COPY ){ clReleaseCommandQueue (mocl.copy_queue); }
+    if (GPU_ASYNC_COPY) { clReleaseCommandQueue (mocl.copy_queue); }
 
     clReleaseContext (mocl.context);
   }

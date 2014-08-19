@@ -257,7 +257,7 @@
     ! current time index
     ivec_index = iadj_vec(it)
 
-    if( GPU_ASYNC_COPY ) then
+    if (GPU_ASYNC_COPY) then
       ! only synchronously transfers array at beginning or whenever new arrays were read in
       if( ibool_read_adj_arrays ) then
         ! transfers adjoint arrays to GPU device memory
@@ -274,7 +274,7 @@
     ! adds adjoint source contributions
     call compute_add_sources_adjoint_gpu(Mesh_pointer,nrec)
 
-    if( GPU_ASYNC_COPY ) then
+    if (GPU_ASYNC_COPY) then
       ! starts asynchronously transfer of next adjoint arrays to GPU device memory
       ! (making sure the next adj_sourcearrays values were already read in)
       if( (.not. ibool_read_adj_arrays) .and. &

@@ -98,7 +98,6 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
 
   default:
     exit_on_error ("compute_stacey_acoustic_gpu: unknown interface type");
-    break;
   }
 
   // checks if anything to do
@@ -274,7 +273,6 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
 
   default:
     exit_on_error ("compute_stacey_acoustic_backward_gpu: unknown interface type");
-    break;
   }
 
   // checks if anything to do
@@ -433,7 +431,6 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
 
   default:
     exit_on_error ("compute_stacey_acoustic_undoatt_gpu: unknown interface type");
-    break;
   }
 
   // checks if anything to do

@@ -63,7 +63,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
 
-    if (GPU_ASYNC_COPY ){
+    if (GPU_ASYNC_COPY) {
       // waits for previous copy
       clCheck (clFinish (mocl.copy_queue));
 
@@ -114,7 +114,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
 #if USE_CUDA
   if (run_cuda) {
     // waits for previous copy call to be finished
-    if( GPU_ASYNC_COPY ){
+    if (GPU_ASYNC_COPY) {
       cudaStreamSynchronize(mp->copy_stream);
     }
     dim3 grid(num_blocks_x,num_blocks_y);
@@ -129,7 +129,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
                                                                                          mp->nrec_local);
 
     // copies array to CPU
-    if( GPU_ASYNC_COPY ){
+    if (GPU_ASYNC_COPY) {
       // waits for previous compute call to be finished
       cudaStreamSynchronize(mp->compute_stream);
 
@@ -147,7 +147,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
   }
 #endif
 
-  if (!GPU_ASYNC_COPY) {
+  if (! GPU_ASYNC_COPY) {
     for (irec_local = 0; irec_local < mp->nrec_local; irec_local++) {
       irec = number_receiver_global[irec_local] - 1;
       ispec = h_ispec_selected[irec] - 1;
@@ -352,7 +352,10 @@ void FC_FUNC_ (write_seismograms_transfer_gpu,
                                             ispec_selected_rec,
                                             ibool);
     break;
+  default:
+    exit_on_error("error invalid simulation_type in write_seismograms_transfer_gpu() routine");
   }
+
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -384,7 +387,7 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   }
 
   // checks async-memcpy
-  if (! GPU_ASYNC_COPY ){
+  if (! GPU_ASYNC_COPY) {
     exit_on_error("transfer_seismo_from_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_cuda.h");
   }
 
@@ -407,23 +410,26 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   // transfers displacements
   // select target array on host
   switch (mp->simulation_type) {
-    case 1:
-      // forward simulation
-      h_field = displ;
-      h_ispec_selected = ispec_selected_rec;
-      break;
+  case 1:
+    // forward simulation
+    h_field = displ;
+    h_ispec_selected = ispec_selected_rec;
+    break;
 
-    case 2:
-      // adjoint simulation
-      h_field = displ;
-      h_ispec_selected = ispec_selected_source;
-      break;
+  case 2:
+    // adjoint simulation
+    h_field = displ;
+    h_ispec_selected = ispec_selected_source;
+    break;
 
-    case 3:
-      // kernel simulation
-      h_field = b_displ;
-      h_ispec_selected = ispec_selected_rec;
-      break;
+  case 3:
+    // kernel simulation
+    h_field = b_displ;
+    h_ispec_selected = ispec_selected_rec;
+    break;
+
+  default:
+    exit_on_error("error invalid simulation_type in transfer_seismo_from_device_async() routine");
   }
 
   // updates corresponding array on CPU

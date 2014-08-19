@@ -104,13 +104,13 @@ endif
 ifeq ($(OCL), yes)
   BUILD_VERSION_TXT += OpenCL
   LDFLAGS += $(OCL_LINK)
+  OCL_CPU_FLAGS += $(OCL_INC)
   SELECTOR_CFLAG += -DUSE_OPENCL
   ifneq ($(strip $(OCL_GPU_FLAGS)),)
     SELECTOR_CFLAG += -DOCL_GPU_CFLAGS="$(OCL_GPU_FLAGS)"
   endif
   ifeq ($(CUDA),yes)
     CUDA_LINK += $(OCL_LINK)
-    NVCC_CFLAGS += $(OCL_INC)
     NVCC_CFLAGS += $(OCL_CPU_FLAGS)
   endif
 endif

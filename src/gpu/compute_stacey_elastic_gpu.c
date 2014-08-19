@@ -94,7 +94,6 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
 
   default:
     exit_on_error ("compute_stacey_elastic_gpu: unknown interface type");
-    break;
   }
 
   // checks if anything to do
@@ -253,7 +252,6 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
 
   default:
     exit_on_error ("compute_stacey_elastic_backward_gpu: unknown interface type");
-    break;
   }
 
   // checks if anything to do
@@ -402,7 +400,6 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 
   default:
     exit_on_error ("compute_stacey_elastic_undoatt_gpu: unknown interface type");
-    break;
   }
 
   // checks if anything to do
