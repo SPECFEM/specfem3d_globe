@@ -6824,9 +6824,9 @@ fi
 
 if test x"$want_opencl" != xno; then :
 
-    $as_echo "## --- ##
-## OCL ##
-## --- ##"
+    $as_echo "## ------ ##
+## OpenCL ##
+## ------ ##"
 
 
 
@@ -6848,8 +6848,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     OCL_CFLAGS="-I$OCL_INC"
     CFLAGS="$OCL_CFLAGS $CFLAGS"
   fi
-  ac_fn_c_check_header_mongrel "$LINENO" "CL/cl.h" "ac_cv_header_CL_cl_h" "$ac_includes_default"
-if test "x$ac_cv_header_CL_cl_h" = xyes; then :
+  # tests for Apple Mac OsX OpenCL header file
+  case $host in
+  *apple*) HEADER_H="OpenCL/cl.h";;
+  *) HEADER_H="CL/cl.h";;
+  esac
+  as_ac_Header=`$as_echo "ac_cv_header_${HEADER_H}" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "${HEADER_H}" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 
 else
 
@@ -6860,16 +6866,32 @@ fi
 
 
   if test "x$OCL_LIB" != "x"; then
-    OCL_LDFLAGS="-L$OCL_LIB"
+    # tests for Apple Mac OsX which could add "-framework OpenCL"
+    case $host in
+    *apple*) OCL_LDFLAGS="$OCL_LIB";;
+    *) OCL_LDFLAGS="-L$OCL_LIB";;
+    esac
     LDFLAGS="$OCL_LDFLAGS $LDFLAGS"
+  else
+    # adds default OpenCL library
+    case $host in
+    *apple*) OCL_LIBS="-framework OpenCL";;
+    *) OCL_LIBS="-lOpenCL";;
+    esac
   fi
-  OCL_LIBS="-lOpenCL"
+
   LIBS="$OCL_LIBS $LIBS"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clCreateBuffer in -lOpenCL" >&5
-$as_echo_n "checking for clCreateBuffer in -lOpenCL... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformIDs in OpenCL" >&5
+$as_echo_n "checking for clGetPlatformIDs in OpenCL... " >&6; }
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
+
 #ifdef FC_DUMMY_MAIN
 #ifndef FC_DUMMY_MAIN_EQ_F77
 #  ifdef __cplusplus

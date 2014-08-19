@@ -203,7 +203,7 @@ AS_IF([test x"$want_cuda" != xno], [
 ])
 
 AS_IF([test x"$want_opencl" != xno], [
-    AS_BOX([OCL])
+    AS_BOX([OpenCL])
     AC_ARG_VAR(OCL_CPU_FLAGS, [OpenCL CPU compiler flags])
     AC_ARG_VAR(OCL_GPU_FLAGS, [OpenCL GPU compiler flags])
     CIT_OPENCL_CONFIG
