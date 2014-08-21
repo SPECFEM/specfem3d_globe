@@ -287,6 +287,16 @@ typedef union {
 #endif
 } gpu_double_mem;
 
+typedef union {
+#ifdef USE_OPENCL
+  cl_mem ocl;
+#endif
+#ifdef USE_CUDA
+  void *cuda;
+#endif
+} gpu_mem;
+
+
 #ifdef __cplusplus
 #define EXTERN_LANG "C"
 #else
@@ -904,6 +914,7 @@ typedef struct mesh_ {
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
 #endif
+
 #if USE_OPENCL
   cl_event last_copy_evt;
   int has_last_copy_evt;
@@ -943,16 +954,33 @@ typedef struct mesh_ {
 
 
 /*----------------------------------------------------------------------------------------------- */
-// utility functions: defined in check_fields_ocl.cu
+// utility functions
 /*----------------------------------------------------------------------------------------------- */
 
-double get_time_val ();
-void get_free_memory (double *free_db, double *used_db, double *total_db);
-void pause_for_debugger (int pause);
+// defined in helper_functions_gpu.c
+void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+
+void gpuMalloc_int (gpu_int_mem *buffer, int size);
+void gpuMalloc_realw (gpu_realw_mem *buffer, int size);
+void gpuMalloc_double (gpu_double_mem *buffer, int size);
+
+void gpuMemset_realw (gpu_realw_mem *buffer, int size, int value);
+
+void gpuSetConst (gpu_realw_mem *buffer, size_t size, realw *array);
+void gpuFree (void *d_array_addr_ptr);
+void gpuInitialize_buffers (Mesh *mp);
+void gpuSynchronize ();
+
 void exit_on_gpu_error (char *kernel_name);
 void exit_on_error (char *info);
 void synchronize_mpi ();
+double get_time_val ();
 void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
+
+// defined in check_fields_gpu.c
+void get_free_memory (double *free_db, double *used_db, double *total_db);
 realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 
 /* ----------------------------------------------------------------------------------------------- */

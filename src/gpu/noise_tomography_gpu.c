@@ -65,11 +65,6 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_transfer_surface_to_host_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
-
-    // copies noise array to CPU
-
-    clCheck (clEnqueueReadBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
-                                  NDIM * NGLL2 * mp->nspec2D_top_crust_mantle * sizeof (realw), h_noise_surface_movie, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -82,12 +77,11 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
                                                             mp->d_ibool_crust_mantle.cuda,
                                                             mp->d_displ_crust_mantle.cuda,
                                                             mp->d_noise_surface_movie.cuda);
-
-    // copies noise array to CPU
-    cudaMemcpy(h_noise_surface_movie,mp->d_noise_surface_movie.cuda,
-               NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),cudaMemcpyDeviceToHost);
   }
 #endif
+
+  // copies noise array to CPU
+  gpuCopy_from_device_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("noise_transfer_surface_to_host");

@@ -29,339 +29,6 @@
 
 #include "mesh_constants_gpu.h"
 
-/*----------------------------------------------------------------------------------------------- */
-// Helper functions
-/*----------------------------------------------------------------------------------------------- */
-
-double get_time_val () {
-  struct timeval t;
-  struct timezone tzp;
-  gettimeofday (&t, &tzp);
-  return t.tv_sec + t.tv_usec*1e-6;
-}
-
-/*----------------------------------------------------------------------------------------------- */
-
-extern EXTERN_LANG
-void FC_FUNC_ (pause_for_debug,
-               PAUSE_FOR_DEBUG) () {
-  TRACE ("pause_for_debug");
-
-  pause_for_debugger (1);
-}
-
-/*----------------------------------------------------------------------------------------------- */
-
-void pause_for_debugger (int pause) {
-  if (pause) {
-    int myrank;
-#ifdef WITH_MPI
-    MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
-#else
-    myrank = 0;
-#endif
-    printf ("I'm rank %d\n", myrank);
-    int i = 0;
-    char hostname[256];
-    gethostname (hostname, sizeof (hostname));
-    printf ("PID %d on %s:%d ready for attach\n", getpid (), hostname, myrank);
-
-    FILE *file = fopen ("./attach_gdb.txt", "w+");
-    if (file != NULL) {
-      fprintf (file, "PID %d on %s:%d ready for attach\n", getpid (), hostname, myrank);
-      fclose (file);
-    }
-
-    fflush (stdout);
-    while (0 == i)
-      sleep (5);
-  }
-}
-
-/*----------------------------------------------------------------------------------------------- */
-
-#ifdef USE_OPENCL
-cl_int mocl_errcode;
-
-cl_int clGetLastError () {
-  return mocl_errcode;
-}
-
-/* The OpenCL Extension Wrangler Library
- * https://code.google.com/p/clew/
- * MIT License
- * */
-
-const char* clewErrorString (cl_int error) {
-  static const char* strings[] = {
-    // Error Codes
-    "CL_SUCCESS"                                  //   0
-    , "CL_DEVICE_NOT_FOUND"                         //  -1
-    , "CL_DEVICE_NOT_AVAILABLE"                     //  -2
-    , "CL_COMPILER_NOT_AVAILABLE"                   //  -3
-    , "CL_MEM_OBJECT_ALLOCATION_FAILURE"            //  -4
-    , "CL_OUT_OF_RESOURCES"                         //  -5
-    , "CL_OUT_OF_HOST_MEMORY"                       //  -6
-    , "CL_PROFILING_INFO_NOT_AVAILABLE"             //  -7
-    , "CL_MEM_COPY_OVERLAP"                         //  -8
-    , "CL_IMAGE_FORMAT_MISMATCH"                    //  -9
-    , "CL_IMAGE_FORMAT_NOT_SUPPORTED"               //  -10
-    , "CL_BUILD_PROGRAM_FAILURE"                    //  -11
-    , "CL_MAP_FAILURE"                              //  -12
-
-    , ""    //  -13
-    , ""    //  -14
-    , ""    //  -15
-    , ""    //  -16
-    , ""    //  -17
-    , ""    //  -18
-    , ""    //  -19
-
-    , ""    //  -20
-    , ""    //  -21
-    , ""    //  -22
-    , ""    //  -23
-    , ""    //  -24
-    , ""    //  -25
-    , ""    //  -26
-    , ""    //  -27
-    , ""    //  -28
-    , ""    //  -29
-
-    , "CL_INVALID_VALUE"                            //  -30
-    , "CL_INVALID_DEVICE_TYPE"                      //  -31
-    , "CL_INVALID_PLATFORM"                         //  -32
-    , "CL_INVALID_DEVICE"                           //  -33
-    , "CL_INVALID_CONTEXT"                          //  -34
-    , "CL_INVALID_QUEUE_PROPERTIES"                 //  -35
-    , "CL_INVALID_COMMAND_QUEUE"                    //  -36
-    , "CL_INVALID_HOST_PTR"                         //  -37
-    , "CL_INVALID_MEM_OBJECT"                       //  -38
-    , "CL_INVALID_IMAGE_FORMAT_DESCRIPTOR"          //  -39
-    , "CL_INVALID_IMAGE_SIZE"                       //  -40
-    , "CL_INVALID_SAMPLER"                          //  -41
-    , "CL_INVALID_BINARY"                           //  -42
-    , "CL_INVALID_BUILD_OPTIONS"                    //  -43
-    , "CL_INVALID_PROGRAM"                          //  -44
-    , "CL_INVALID_PROGRAM_EXECUTABLE"               //  -45
-    , "CL_INVALID_KERNEL_NAME"                      //  -46
-    , "CL_INVALID_KERNEL_DEFINITION"                //  -47
-    , "CL_INVALID_KERNEL"                           //  -48
-    , "CL_INVALID_ARG_INDEX"                        //  -49
-    , "CL_INVALID_ARG_VALUE"                        //  -50
-    , "CL_INVALID_ARG_SIZE"                         //  -51
-    , "CL_INVALID_KERNEL_ARGS"                      //  -52
-    , "CL_INVALID_WORK_DIMENSION"                   //  -53
-    , "CL_INVALID_WORK_GROUP_SIZE"                  //  -54
-    , "CL_INVALID_WORK_ITEM_SIZE"                   //  -55
-    , "CL_INVALID_GLOBAL_OFFSET"                    //  -56
-    , "CL_INVALID_EVENT_WAIT_LIST"                  //  -57
-    , "CL_INVALID_EVENT"                            //  -58
-    , "CL_INVALID_OPERATION"                        //  -59
-    , "CL_INVALID_GL_OBJECT"                        //  -60
-    , "CL_INVALID_BUFFER_SIZE"                      //  -61
-    , "CL_INVALID_MIP_LEVEL"                        //  -62
-    , "CL_INVALID_GLOBAL_WORK_SIZE"                 //  -63
-    , "CL_UNKNOWN_ERROR_CODE"
-  };
-
-  if (error >= -63 && error <= 0) {
-    return strings[-error];
-  } else {
-    return strings[64];
-  }
-}
-
-const char *clGetErrorString (cl_int error) {
-  return clewErrorString (error);
-}
-#endif
-
-/* ----------------------------------------------------------------------------------------------- */
-
-void exit_on_gpu_error (char *kernel_name) {
-  //check to catch errors from previous operations
-  // /!\ in opencl, we can't have information about the last ASYNC error
-  int error = 0;
-  const char *strerr = NULL;
-
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clFinish (mocl.command_queue);
-    cl_int err = clGetLastError ();
-
-    error = err != CL_SUCCESS;
-    strerr = clGetErrorString (err);
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaThreadSynchronize();
-    cudaError_t err = cudaGetLastError();
-    error = err != cudaSuccess;
-    strerr = cudaGetErrorString(err);
-  }
-#endif
-
-  if (error) {
-    fprintf(stderr,"Error after %s: %s\n", kernel_name, strerr);
-
-    // outputs error file
-    FILE *fp;
-    int myrank;
-    char filename[BUFSIZ];
-#ifdef WITH_MPI
-    MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
-#else
-    myrank = 0;
-#endif
-    sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
-    fp = fopen (filename, "a+");
-    if (fp != NULL) {
-      fprintf (fp, "Error after %s: %s\n", kernel_name, strerr);
-      fclose (fp);
-    }
-
-    // stops program
-#ifdef WITH_MPI
-    MPI_Abort (MPI_COMM_WORLD, 1);
-#endif
-    exit (EXIT_FAILURE);
-  }
-}
-
-/*----------------------------------------------------------------------------------------------- */
-
-void exit_on_error (char *info) {
-  printf ("\nERROR: %s\n", info);
-  fflush (stdout);
-
-  // outputs error file
-  FILE *fp;
-  int myrank;
-  char filename[BUFSIZ];
-#ifdef WITH_MPI
-  MPI_Comm_rank (MPI_COMM_WORLD, &myrank);
-#else
-  myrank = 0;
-#endif
-  sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
-  fp = fopen (filename, "a+");
-  if (fp != NULL) {
-    fprintf (fp, "ERROR: %s\n", info);
-    fclose (fp);
-  }
-
-  // stops program
-#ifdef WITH_MPI
-  MPI_Abort (MPI_COMM_WORLD, 1);
-#endif
-  exit (EXIT_FAILURE);
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
-#ifdef USE_CUDA
-void print_CUDA_error_if_any(cudaError_t err, int num) {
-  if (cudaSuccess != err)
-  {
-    printf("\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
-    fflush(stdout);
-
-    // outputs error file
-    FILE* fp;
-    int myrank;
-    char filename[BUFSIZ];
-#ifdef WITH_MPI
-    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
-#else
-    myrank = 0;
-#endif
-    sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
-    fp = fopen(filename,"a+");
-    if (fp != NULL){
-      fprintf(fp,"\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
-      fclose(fp);
-    }
-
-    // stops program
-#ifdef WITH_MPI
-    MPI_Abort(MPI_COMM_WORLD,1);
-#endif
-    exit(EXIT_FAILURE);
-  }
-  return;
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-// CUDA synchronization
-/* ----------------------------------------------------------------------------------------------- */
-
-void synchronize_cuda() {
-#if CUDA_VERSION >= 4000
-    cudaDeviceSynchronize();
-#else
-    cudaThreadSynchronize();
-#endif
-}
-
-#endif
-
-/*----------------------------------------------------------------------------------------------- */
-
-void synchronize_mpi () {
-#ifdef WITH_MPI
-  MPI_Barrier (MPI_COMM_WORLD);
-#endif
-}
-
-#ifdef USE_CUDA
-/*----------------------------------------------------------------------------------------------- */
-// Timing helper functions
-/* ----------------------------------------------------------------------------------------------- */
-
-
-void start_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop){
-  // creates & starts event
-  cudaEventCreate(start);
-  cudaEventCreate(stop);
-  cudaEventRecord( *start, 0 );
-}
-
-/* ----------------------------------------------------------------------------------------------- */
-
-void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop, char* info_str){
-  realw time;
-  // stops events
-  cudaEventRecord( *stop, 0 );
-  cudaEventSynchronize( *stop );
-  cudaEventElapsedTime( &time, *start, *stop );
-  cudaEventDestroy( *start );
-  cudaEventDestroy( *stop );
-  // user output
-  printf("%s: Execution Time = %f ms\n",info_str,time);
-}
-
-#endif
-
-/* ----------------------------------------------------------------------------------------------- */
-// GPU kernel setup functions
-/* ----------------------------------------------------------------------------------------------- */
-
-void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y) {
-  // Initially sets the blocks_x to be the num_blocks, and adds rows as needed (block size limit of 65535).
-  // If an additional row is added, the row length is cut in
-  // half. If the block count is odd, there will be 1 too many blocks,
-  // which must be managed at runtime with an if statement.
-
-  *num_blocks_x = num_blocks;
-  *num_blocks_y = 1;
-
-  while (*num_blocks_x > MAXIMUM_GRID_DIM) {
-    *num_blocks_x = (int) ceil (*num_blocks_x * 0.5f);
-    *num_blocks_y = *num_blocks_y * 2;
-  }
-}
 
 /*----------------------------------------------------------------------------------------------- */
 // GPU device memory functions
@@ -475,25 +142,16 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size) {
 
   // checks if anything to do
   if (size > 0) {
+
+    // explicitly wait for gpu kernels to finish
+    gpuSynchronize();
+
     h_array = (realw *) calloc (size, sizeof (realw));
     if( h_array == NULL ){ exit_on_error("error allocating h_array array in get_device_array_maximum_value() routine"); }
 
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      // explicitly wait for cuda kernels to finish
-      clCheck( clFinish (mocl.command_queue));
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_array.ocl, CL_TRUE, 0,
-                                    sizeof (realw) * size, h_array, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // explicitly wait for cuda kernels to finish
-      // (cudaMemcpy implicitly synchronizes all other cuda operations)
-      synchronize_cuda();
-      print_CUDA_error_if_any(cudaMemcpy(h_array,d_array.cuda,sizeof(realw)*size,cudaMemcpyDeviceToHost),33001);
-    }
-#endif
+    // copies values from gpu to cpu array
+    gpuCopy_from_device_realw (&d_array, h_array, size);
+
     // finds maximum value in array
     max = fabs(h_array[0]);
     int i;
@@ -545,14 +203,19 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_acoustic_from_device() routine"); }
 
+  // creates array on GPU
+  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
-    cl_int errcode;
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
 
-    d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x * num_blocks_y * sizeof (realw), NULL, &errcode);
+    local_work_size[0] = blocksize;
+    local_work_size[1] = 1;
+    global_work_size[0] = num_blocks_x * blocksize;
+    global_work_size[1] = num_blocks_y;
 
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_outer_core.ocl));
@@ -563,17 +226,8 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
-
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
-
-    // copies to CPU
-    clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                  num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -581,18 +235,17 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    cudaMalloc((void**)&d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw));
-
     if(*FORWARD_OR_ADJOINT == 1 ){
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_outer_core.cuda,size,d_max.cuda);
     } else {
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_outer_core.cuda,size,d_max.cuda);
     }
-    // copies to CPU
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),222);
   }
 #endif
+
+  // copies to CPU
+  gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
+
   //debug
   if( DEBUG_FIELDS ){
     realw max_d, max_v, max_a;
@@ -611,16 +264,9 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     if (max < h_max[i])
       max = h_max[i];
   }
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clReleaseMemObject (d_max.ocl);
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaFree(d_max.cuda);
-  }
-#endif
+
+  // frees arrays
+  gpuFree (&d_max);
   free (h_max);
 
   // return result
@@ -670,15 +316,19 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_elastic_from_device() routine"); }
 
-#ifdef USE_OPENCL
-  cl_int errcode;
+  // creates array on GPU
+  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
+#ifdef USE_OPENCL
   size_t global_work_size[2];
   size_t local_work_size[2];
   cl_uint idx = 0;
 
   if (run_opencl) {
-    d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x*num_blocks_y*sizeof (realw), NULL, &errcode);
+    local_work_size[0] = blocksize;
+    local_work_size[1] = 1;
+    global_work_size[0] = num_blocks_x * blocksize;
+    global_work_size[1] = num_blocks_y;
 
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
@@ -688,17 +338,8 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
-
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
-
-    // copies to CPU
-    clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                  num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -707,18 +348,17 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    cudaMalloc((void**)&d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw));
-
     if(*FORWARD_OR_ADJOINT == 1 ){
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,size,d_max.cuda);
     } else {
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle.cuda,size,d_max.cuda);
     }
-    // copies to CPU
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),222);
   }
 #endif
+
+  // copies to CPU
+  gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
+
   //debug
   if( DEBUG_FIELDS){
     max_d = get_device_array_maximum_value(mp->d_displ_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
@@ -739,16 +379,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   max_crust_mantle = max;
 
   // frees arrays
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clReleaseMemObject (d_max.ocl);
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaFree(d_max.cuda);
-  }
-#endif
+  gpuFree (&d_max);
   free (h_max);
 
   // inner_core
@@ -762,10 +393,17 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if( h_max == NULL ){ exit_on_error("error allocating h_max array for inner core in check_norm_elastic_from_device() routine"); }
 
+  // creates array on GPU
+  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
+    local_work_size[0] = blocksize;
+    local_work_size[1] = 1;
+    global_work_size[0] = num_blocks_x * blocksize;
+    global_work_size[1] = num_blocks_y;
+
     idx = 0;
-    d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x * num_blocks_y * sizeof (realw), NULL, &errcode);
 
     if (*FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_inner_core.ocl));
@@ -775,17 +413,8 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
-
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
-
-    // copies to CPU
-    clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                  num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -793,18 +422,17 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    cudaMalloc((void**)&d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw));
-
     if(*FORWARD_OR_ADJOINT == 1 ){
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,size,d_max.cuda);
     } else {
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core.cuda,size,d_max.cuda);
     }
-    // copies to CPU
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),222);
   }
 #endif
+
+  // copies to CPU
+  gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
+
   //debug
   if( DEBUG_FIELDS){
     max_d = get_device_array_maximum_value(mp->d_displ_inner_core, NDIM * mp->NGLOB_INNER_CORE);
@@ -823,16 +451,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   max_inner_core = max;
 
   // frees arrays
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clReleaseMemObject (d_max.ocl);
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaFree(d_max.cuda);
-  }
-#endif
+  gpuFree (&d_max);
   free (h_max);
 
   //debug
@@ -868,16 +487,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
   gpu_realw_mem d_max;
   int num_blocks_x, num_blocks_y;
   int size, size_padded;
-#ifdef USE_OPENCL
-  cl_int errcode;
 
-  size_t local_work_size[2];
-  size_t global_work_size[2];
-  cl_uint idx = 0;
-#endif
-#ifdef USE_CUDA
-  dim3 grid,threads;
-#endif
   // launch simple reduction kernel
   realw *h_max;
   int blocksize = BLOCKSIZE_TRANSFER;
@@ -893,48 +503,44 @@ void FC_FUNC_ (check_norm_strain_from_device,
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_strain_from_device() routine"); }
 
-  max = 0.0f;
+  // creates array on GPU
+  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
+  // determines max for: eps_trace_over_3_crust_mantle
 #ifdef USE_OPENCL
+  size_t local_work_size[2];
+  size_t global_work_size[2];
+  cl_uint idx = 0;
   if (run_opencl) {
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
+    // reduction kernel
     idx = 0;
-    d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x * num_blocks_y * sizeof (realw), NULL, clck_(&errcode));
-
-    // determines max for: eps_trace_over_3_crust_mantle
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
-    // copies to CPU
-    clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                  num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
+  dim3 grid,threads;
   if (run_cuda) {
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
-
-    cudaMalloc((void**)&d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw));
-
-    // determines max for: eps_trace_over_3_crust_mantle
+    // reduction kernel
     get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_eps_trace_over_3_crust_mantle.cuda,size,d_max.cuda);
-    // copies to CPU
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),221);
   }
 #endif
+
+  // copies to CPU
+  gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
+
+  // determines maximum
   max = h_max[0];
   int i;
   for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
@@ -945,16 +551,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
   *strain_norm = max;
 
   // frees arrays
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clReleaseMemObject (d_max.ocl);
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaFree(d_max.cuda);
-  }
-#endif
+  gpuFree (&d_max);
   free (h_max);
 
   // initializes
@@ -971,117 +568,62 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
   max_eps = 0.0f;
 
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    d_max.ocl = clCreateBuffer (mocl.context, CL_MEM_READ_WRITE, num_blocks_x * num_blocks_y * sizeof (realw), NULL, clck_(&errcode));
+  // creates array on GPU
+  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
-    int loop;
-    gpu_realw_mem d_epsilondev_HH_crust_mantle[] =
-      {mp->d_epsilondev_xx_crust_mantle,
-       mp->d_epsilondev_yy_crust_mantle,
-       mp->d_epsilondev_xy_crust_mantle,
-       mp->d_epsilondev_xz_crust_mantle,
-       mp->d_epsilondev_yz_crust_mantle
-      };
-    for (loop = 0; loop < 5; loop++) {
+  // determines max for: epsilondev_xx_crust_mantle,..
+  int loop;
+  gpu_realw_mem d_epsilondev_HH_crust_mantle[] =
+    {mp->d_epsilondev_xx_crust_mantle,
+     mp->d_epsilondev_yy_crust_mantle,
+     mp->d_epsilondev_xy_crust_mantle,
+     mp->d_epsilondev_xz_crust_mantle,
+     mp->d_epsilondev_yz_crust_mantle
+    };
+  for (loop = 0; loop < 5; loop++) {
+    // gets maximum by gpu reduction kernel
+#ifdef USE_OPENCL
+    if (run_opencl) {
+      local_work_size[0] = blocksize;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize;
+      global_work_size[1] = num_blocks_y;
+
+      // determines max
       idx = 0;
-      // determines max for: epsilondev_xx_crust_mantle
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_epsilondev_HH_crust_mantle[loop].ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
-
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_max.ocl, CL_TRUE, 0,
-                                    num_blocks_x * num_blocks_y * sizeof (realw), h_max, 0, NULL, NULL));
-
-      max = h_max[0];
-      for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
-        if (max < h_max[i])
-          max = h_max[i];
-      }
-      max_eps = MAX (max_eps, max);
     }
-  }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    grid = dim3(num_blocks_x,num_blocks_y);
-    threads = dim3(blocksize,1,1);
+    if (run_cuda) {
+      grid = dim3(num_blocks_x,num_blocks_y);
+      threads = dim3(blocksize,1,1);
 
-    cudaMalloc((void**)&d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw));
-
-    // determines max for: epsilondev_xx_crust_mantle
-    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,size,d_max.cuda);
-
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),222);
-    max = h_max[0];
-    for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
-      if( max < h_max[i]) max = h_max[i];
+      // determines max for: epsilondev_xx_crust_mantle
+      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(d_epsilondev_HH_crust_mantle[loop].cuda,size,d_max.cuda);
     }
-    max_eps = MAX(max_eps,max);
-
-    // determines max for: epsilondev_yy_crust_mantle
-    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_yy_crust_mantle.cuda,size,d_max.cuda);
-
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),223);
-    max = h_max[0];
-    for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
-      if( max < h_max[i]) max = h_max[i];
-    }
-    max_eps = MAX(max_eps,max);
-
-    // determines max for: epsilondev_xy_crust_mantle
-    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xy_crust_mantle.cuda,size,d_max.cuda);
-
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),224);
-    max = h_max[0];
-    for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
-      if( max < h_max[i]) max = h_max[i];
-    }
-    max_eps = MAX(max_eps,max);
-
-    // determines max for: epsilondev_xz_crust_mantle
-    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xz_crust_mantle.cuda,size,d_max.cuda);
-
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),225);
-    max = h_max[0];
-    for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
-      if( max < h_max[i]) max = h_max[i];
-    }
-    max_eps = MAX(max_eps,max);
-
-    // determines max for: epsilondev_yz_crust_mantle
-    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_yz_crust_mantle.cuda,size,d_max.cuda);
-
-    print_CUDA_error_if_any(cudaMemcpy(h_max,d_max.cuda,num_blocks_x*num_blocks_y*sizeof(realw),
-                                       cudaMemcpyDeviceToHost),226);
-    max = h_max[0];
-    for(int i=1;i<num_blocks_x*num_blocks_y;i++) {
-      if( max < h_max[i]) max = h_max[i];
-    }
-    max_eps = MAX(max_eps,max);
-  }
 #endif
+    // copies array to CPU
+    gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x * num_blocks_y);
+
+    // determines maximum
+    max = h_max[0];
+    for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
+      if (max < h_max[i]) max = h_max[i];
+    }
+    max_eps = MAX (max_eps, max);
+  }
+
   // strain maximum
   *strain_norm2 = max_eps;
 
   // frees arrays
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clReleaseMemObject (d_max.ocl);
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaFree(d_max.cuda);
-  }
-#endif
+  gpuFree (&d_max);
   free (h_max);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

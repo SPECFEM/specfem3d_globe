@@ -32,8 +32,8 @@
 
 // GPU initialization
 
-/* macro definitions used in GPU kernels */
 #ifdef USE_OPENCL
+// macro definitions used in GPU kernels
 
 #define STR(x) #x
 #define PASS(x) {#x, STR(x)}
@@ -42,7 +42,7 @@ static struct {
   const char *name;
   const char *value;
 } _macro_to_kernel[] = {
-  /* macro values */
+  // macro values
   PASS(NDIM),
   PASS(NGLLX), PASS(NGLL2), PASS(NGLL3), PASS(NGLL3_PADDED),
   PASS(N_SLS),
@@ -51,7 +51,7 @@ static struct {
   PASS(COLORING_MIN_NSPEC_OUTER_CORE), PASS(COLORING_MIN_NSPEC_INNER_CORE),
   PASS(R_EARTH_KM),
 
-  /* macro functions: not working yet, spaces not allowed in OCL compiler*/
+  // macro functions: not working yet, spaces not allowed in OCL compiler
 
 /* PASS(INDEX2(xsize, x, y)),
    PASS(INDEX3(xsize, ysize, x, y, z)),
@@ -60,7 +60,7 @@ static struct {
    PASS(INDEX5(xsize, ysize, zsize, isize, x, y, z, i, j)),
    PASS(INDEX6(xsize, ysize, zsize, isize, jsize, x, y, z, i, j, k)), */
 
-  /* macro flags, passed only ifdefed */
+  // macro flags, passed only ifdefed
   PASS(MANUALLY_UNROLLED_LOOPS), PASS(USE_TEXTURES_CONSTANTS), PASS(USE_TEXTURES_FIELDS),
 
   PASS(USE_LAUNCH_BOUNDS),
@@ -76,6 +76,8 @@ static struct {
 int run_cuda = 0;
 int run_opencl = 0;
 
+/* ----------------------------------------------------------------------------------------------- */
+// CUDA initialization
 /* ----------------------------------------------------------------------------------------------- */
 
 #ifdef USE_CUDA
@@ -257,6 +259,8 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
 #endif
 
 /* ----------------------------------------------------------------------------------------------- */
+// OpenCL initialization
+/* ----------------------------------------------------------------------------------------------- */
 
 #ifdef USE_OPENCL
 
@@ -353,6 +357,7 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
 #define PARAMETER_STR_SIZE 1024
 
 void build_kernels (void) {
+
   static char parameters[PARAMETER_STR_SIZE] = _OCL_GPU_CFLAGS " ";
   cl_int errcode;
   char *pos = parameters + strlen(_OCL_GPU_CFLAGS) + 1;
@@ -408,16 +413,6 @@ void build_kernels (void) {
 
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-
-void release_kernels (void) {
-#undef BOAST_KERNEL
-#define BOAST_KERNEL(__kern_name__)                                     \
-  clCheck (clReleaseKernel (mocl.kernels.__kern_name__));               \
-  clCheck (clReleaseProgram (mocl.programs.__kern_name__ ## _program));
-
-  #include "kernel_list.h"
-}
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -446,28 +441,29 @@ cl_int compare_opencl_version(struct _opencl_version v1, struct _opencl_version 
 /* ----------------------------------------------------------------------------------------------- */
 
 static void get_platform_version(cl_platform_id platform_id, struct _opencl_version *version) {
-    size_t cl_platform_version_size;
-    clCheck(clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, 0, NULL, &cl_platform_version_size));
 
-    char *cl_platform_version;
-    cl_platform_version = (char *) malloc(cl_platform_version_size);
+  size_t cl_platform_version_size;
+  clCheck(clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, 0, NULL, &cl_platform_version_size));
 
-    if (cl_platform_version == NULL) {
-      fprintf(stderr,"Error: Failed to create string (out of memory)!\n");
-      exit(1);
-    }
+  char *cl_platform_version;
+  cl_platform_version = (char *) malloc(cl_platform_version_size);
 
-    clCheck(clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, cl_platform_version_size, cl_platform_version, NULL));
+  if (cl_platform_version == NULL) {
+    fprintf(stderr,"Error: Failed to create string (out of memory)!\n");
+    exit(1);
+  }
 
-    //OpenCL<space><major_version.minor_version><space><platform-specific information>
-    char minor[2], major[2];
-    major[0] = cl_platform_version[7];
-    major[1] = 0;
-    minor[0] = cl_platform_version[9];
-    minor[1] = 0;
-    version->major = atoi(major);
-    version->major = atoi(minor);
-    free(cl_platform_version);
+  clCheck(clGetPlatformInfo(platform_id, CL_PLATFORM_VERSION, cl_platform_version_size, cl_platform_version, NULL));
+
+  //OpenCL<space><major_version.minor_version><space><platform-specific information>
+  char minor[2], major[2];
+  major[0] = cl_platform_version[7];
+  major[1] = 0;
+  minor[0] = cl_platform_version[9];
+  minor[1] = 0;
+  version->major = atoi(major);
+  version->major = atoi(minor);
+  free(cl_platform_version);
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -703,6 +699,8 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 #endif
 
 /* ----------------------------------------------------------------------------------------------- */
+// GPU initialization
+/* ----------------------------------------------------------------------------------------------- */
 
 #define isspace(c) ((c) == ' ')
 
@@ -743,6 +741,7 @@ enum gpu_runtime_e {COMPILE, CUDA, OPENCL};
 extern EXTERN_LANG
 void FC_FUNC_ (initialize_gpu_device,
                INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_filter, char *device_filter, int *myrank_f, int *nb_devices) {
+
   TRACE ("initialize_device");
 
   enum gpu_runtime_e runtime_type = (enum gpu_runtime_e) *runtime_f;
@@ -782,7 +781,7 @@ This simulation will continue using the Cuda runtime...\n", runtime_type, CUDA, 
     }
   }
 #else
-  #error "GPU code compiled but neither Cuda nor OpenCL are enabled"
+  #error "GPU code compiled but neither CUDA nor OpenCL are enabled"
 #endif
 
   // initializes gpu cards

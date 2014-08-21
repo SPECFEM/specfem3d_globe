@@ -176,25 +176,10 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
 #endif
   // adjoint simulations: stores absorbed wavefield part
   if (mp->save_forward) {
+    // explicitly waits until kernel is finished
+    gpuSynchronize();
     // copies array to CPU
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      // explicitly waits until kernel is finished
-      clCheck (clFinish (mocl.command_queue));
-
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_b_absorb_field->ocl, CL_TRUE, 0,
-                                    NDIM * NGLL2 * num_abs_boundary_faces * sizeof (realw), absorb_field, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // explicitly waits until previous compute stream finishes
-      // (cudaMemcpy implicitly synchronizes all other cuda operations)
-      cudaStreamSynchronize(mp->compute_stream);
-      print_CUDA_error_if_any(cudaMemcpy(absorb_field,d_b_absorb_field->cuda,
-                                         NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyDeviceToHost),7701);
-    }
-#endif
+    gpuCopy_from_device_realw (d_b_absorb_field, absorb_field, NDIM * NGLL2 * num_abs_boundary_faces);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

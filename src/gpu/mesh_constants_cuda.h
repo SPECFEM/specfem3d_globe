@@ -33,7 +33,6 @@
 #include "kernel_proto.cu.h"
 
 
-void synchronize_cuda();
 void print_CUDA_error_if_any(cudaError_t err, int num);
 
 /* ----------------------------------------------------------------------------------------------- */

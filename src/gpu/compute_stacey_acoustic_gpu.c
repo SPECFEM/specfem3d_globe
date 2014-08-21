@@ -189,27 +189,10 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
 
   //  adjoint simulations: stores absorbed wavefield part
   if (mp->save_forward) {
+    // explicitly waits until kernel is finished
+    gpuSynchronize();
     // copies array to CPU
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      // explicitly waits until kernel is finished
-      clCheck (clFinish (mocl.command_queue));
-
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_b_absorb_potential->ocl, CL_TRUE, 0,
-                                    NGLL2 * num_abs_boundary_faces * sizeof (realw), absorb_potential, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // explicitly waits until previous compute stream finishes
-      // (cudaMemcpy implicitly synchronizes all other cuda operations)
-      cudaStreamSynchronize(mp->compute_stream);
-      print_CUDA_error_if_any(cudaMemcpy(absorb_potential,d_b_absorb_potential->cuda,
-                                         NGLL2*num_abs_boundary_faces*sizeof(realw),
-                                         cudaMemcpyDeviceToHost),7701);
-    }
-
-#endif
+    gpuCopy_from_device_realw (d_b_absorb_potential, absorb_potential, NGLL2 * num_abs_boundary_faces);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING

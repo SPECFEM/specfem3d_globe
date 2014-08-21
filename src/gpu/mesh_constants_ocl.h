@@ -135,9 +135,8 @@ struct mesh_kernels_s {
   #include "kernel_list.h"
 };
 
-/* ----------------------------------------------------------------------------------------------- */
 
-void release_kernels (void);
+/* ----------------------------------------------------------------------------------------------- */
 
 extern struct _mesh_opencl {
   struct mesh_programs_s programs;
