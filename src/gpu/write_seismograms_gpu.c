@@ -159,9 +159,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("write_seismograms_transfer_from_device");
-#endif
+  GPU_ERROR_CHECKING ("write_seismograms_transfer_from_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -238,9 +236,7 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("write_seismograms_transfer_strain_from_device");
-#endif
+  GPU_ERROR_CHECKING ("write_seismograms_transfer_strain_from_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */

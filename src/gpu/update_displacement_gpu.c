@@ -128,9 +128,8 @@ void FC_FUNC_ (update_displacement_ic_gpu,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("update_displacement_ic_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("update_displacement_ic_gpu");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -235,10 +234,8 @@ void FC_FUNC_ (update_displacement_cm_gpu,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("update_displacement_cm_gpu");
-#endif
 
+  GPU_ERROR_CHECKING ("update_displacement_cm_gpu");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -340,9 +337,8 @@ void FC_FUNC_ (update_displacement_oc_gpu,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("update_displacement_oc_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("update_displacement_oc_gpu");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -504,9 +500,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after multiply_accel_elastic_gpu");
-#endif
+  GPU_ERROR_CHECKING ("after multiply_accel_elastic_gpu");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -636,9 +630,8 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after update_veloc_3_b");
-#endif
+
+  GPU_ERROR_CHECKING ("after update_veloc_3_b");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -715,9 +708,8 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after multiply_accel_acoustic_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("after multiply_accel_acoustic_gpu");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -801,7 +793,6 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after update_veloc_acoustic_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("after update_veloc_acoustic_gpu");
 }

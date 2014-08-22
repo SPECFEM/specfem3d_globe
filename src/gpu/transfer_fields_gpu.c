@@ -47,9 +47,7 @@ void FC_FUNC_(transfer_fields_cm_to_device,
   gpuCopy_todevice_realw (&mp->d_veloc_crust_mantle, veloc, *size);
   gpuCopy_todevice_realw (&mp->d_accel_crust_mantle, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_fields_cm_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_fields_cm_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -68,9 +66,7 @@ void FC_FUNC_(transfer_fields_ic_to_device,
   gpuCopy_todevice_realw (&mp->d_veloc_inner_core, veloc, *size);
   gpuCopy_todevice_realw (&mp->d_accel_inner_core, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_fields_ic_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_fields_ic_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -89,9 +85,7 @@ void FC_FUNC_(transfer_fields_oc_to_device,
   gpuCopy_todevice_realw (&mp->d_veloc_outer_core, veloc, *size);
   gpuCopy_todevice_realw (&mp->d_accel_outer_core, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_fields_oc_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_fields_oc_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -114,9 +108,7 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
   gpuCopy_todevice_realw (&mp->d_b_veloc_crust_mantle, b_veloc, *size);
   gpuCopy_todevice_realw (&mp->d_b_accel_crust_mantle, b_accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_fields_cm_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_fields_cm_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -138,9 +130,7 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
   gpuCopy_todevice_realw (&mp->d_b_veloc_inner_core, b_veloc, *size);
   gpuCopy_todevice_realw (&mp->d_b_accel_inner_core, b_accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_fields_ic_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_fields_ic_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -162,9 +152,7 @@ void FC_FUNC_(transfer_b_fields_oc_to_device,
   gpuCopy_todevice_realw (&mp->d_b_veloc_outer_core, b_veloc, *size);
   gpuCopy_todevice_realw (&mp->d_b_accel_outer_core, b_accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_fields_oc_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_fields_oc_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -186,9 +174,7 @@ void FC_FUNC_(transfer_fields_cm_from_device,
   gpuCopy_from_device_realw (&mp->d_veloc_crust_mantle, veloc, *size);
   gpuCopy_from_device_realw (&mp->d_accel_crust_mantle, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_fields_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_fields_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -207,9 +193,7 @@ void FC_FUNC_(transfer_fields_ic_from_device,
   gpuCopy_from_device_realw (&mp->d_veloc_inner_core, veloc, *size);
   gpuCopy_from_device_realw (&mp->d_accel_inner_core, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_fields_ic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_fields_ic_from_device");
 }
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -229,9 +213,7 @@ void FC_FUNC_(transfer_fields_oc_from_device,
   gpuCopy_from_device_realw (&mp->d_veloc_outer_core, veloc, *size);
   gpuCopy_from_device_realw (&mp->d_accel_outer_core, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_fields_oc_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_fields_oc_from_device");
 }
 
 
@@ -254,9 +236,7 @@ void FC_FUNC_(transfer_b_fields_cm_from_device,
   gpuCopy_from_device_realw (&mp->d_b_veloc_crust_mantle, b_veloc, *size);
   gpuCopy_from_device_realw (&mp->d_b_accel_crust_mantle, b_accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_fields_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_fields_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -276,9 +256,7 @@ void FC_FUNC_(transfer_b_fields_ic_from_device,
   gpuCopy_from_device_realw (&mp->d_b_veloc_inner_core, b_veloc, *size);
   gpuCopy_from_device_realw (&mp->d_b_accel_inner_core, b_accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_fields_ic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_fields_ic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -299,9 +277,7 @@ void FC_FUNC_(transfer_b_fields_oc_from_device,
   gpuCopy_from_device_realw (&mp->d_b_veloc_outer_core, b_veloc, *size);
   gpuCopy_from_device_realw (&mp->d_b_accel_outer_core, b_accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_fields_oc_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_fields_oc_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -324,9 +300,7 @@ void FC_FUNC_(transfer_displ_cm_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_displ_crust_mantle, displ, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_displ_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_displ_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -343,9 +317,7 @@ void FC_FUNC_(transfer_b_displ_cm_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_b_displ_crust_mantle, displ, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_displ_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_displ_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -363,9 +335,7 @@ void FC_FUNC_(transfer_displ_ic_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_displ_inner_core, displ, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_displ_ic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_displ_ic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -383,9 +353,7 @@ void FC_FUNC_(transfer_b_displ_ic_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_b_displ_inner_core, displ, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_displ_ic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_displ_ic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -403,9 +371,7 @@ void FC_FUNC_(transfer_displ_oc_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_displ_outer_core, displ, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_displ_oc_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_displ_oc_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -422,9 +388,7 @@ void FC_FUNC_(transfer_b_displ_oc_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_b_displ_outer_core, displ, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_displ_oc_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_displ_oc_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -443,9 +407,7 @@ void FC_FUNC_(transfer_veloc_cm_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_veloc_crust_mantle, veloc, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_veloc_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_veloc_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -463,9 +425,7 @@ void FC_FUNC_(transfer_veloc_ic_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_veloc_inner_core, veloc, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_veloc_ic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_veloc_ic_from_device");
 }
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -482,9 +442,7 @@ void FC_FUNC_(transfer_veloc_oc_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_veloc_outer_core, veloc, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_veloc_oc_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_veloc_oc_from_device");
 }
 
 
@@ -504,9 +462,7 @@ void FC_FUNC_(transfer_accel_cm_to_device,
 
   gpuCopy_todevice_realw (&mp->d_accel_crust_mantle, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_accel_cm_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_accel_cm_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -523,9 +479,7 @@ void FC_FUNC_(transfer_accel_cm_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_accel_crust_mantle, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_accel_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_accel_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -542,9 +496,7 @@ void FC_FUNC_(transfer_b_accel_cm_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_b_accel_crust_mantle, b_accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_accel_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_accel_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -561,9 +513,7 @@ void FC_FUNC_(transfer_accel_ic_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_accel_inner_core, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_accel_ic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_accel_ic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -580,9 +530,7 @@ void FC_FUNC_(transfer_accel_oc_from_device,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_accel_outer_core, accel, *size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_accel_oc_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_accel_oc_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -614,9 +562,7 @@ void FC_FUNC_(transfer_strain_cm_from_device,
   gpuCopy_from_device_realw (&mp->d_epsilondev_xz_crust_mantle, epsilondev_xz, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_yz_crust_mantle, epsilondev_yz, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_strain_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_strain_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -650,9 +596,7 @@ void FC_FUNC_(transfer_b_strain_cm_to_device,
   gpuCopy_todevice_realw (&mp->d_b_epsilondev_xz_crust_mantle, epsilondev_xz, size);
   gpuCopy_todevice_realw (&mp->d_b_epsilondev_yz_crust_mantle, epsilondev_yz, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_strain_cm_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_strain_cm_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -682,9 +626,7 @@ void FC_FUNC_(transfer_strain_ic_from_device,
   gpuCopy_from_device_realw (&mp->d_epsilondev_xz_inner_core, epsilondev_xz, size);
   gpuCopy_from_device_realw (&mp->d_epsilondev_yz_inner_core, epsilondev_yz, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_strain_ic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_strain_ic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -717,9 +659,7 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
   gpuCopy_todevice_realw (&mp->d_b_epsilondev_xz_inner_core, epsilondev_xz, size);
   gpuCopy_todevice_realw (&mp->d_b_epsilondev_yz_inner_core, epsilondev_yz, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_strain_ic_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_strain_ic_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -750,9 +690,7 @@ void FC_FUNC_(transfer_rmemory_cm_from_device,
   gpuCopy_from_device_realw (&mp->d_R_xz_crust_mantle, R_xz, size);
   gpuCopy_from_device_realw (&mp->d_R_yz_crust_mantle, R_yz, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_rmemory_cm_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_rmemory_cm_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -786,9 +724,7 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
   gpuCopy_todevice_realw (&mp->d_b_R_xz_crust_mantle, b_R_xz, size);
   gpuCopy_todevice_realw (&mp->d_b_R_yz_crust_mantle, b_R_yz, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_rmemory_cm_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_rmemory_cm_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -816,9 +752,7 @@ void FC_FUNC_(transfer_rmemory_ic_from_device,
   gpuCopy_from_device_realw (&mp->d_R_xz_inner_core, R_xz, size);
   gpuCopy_from_device_realw (&mp->d_R_yz_inner_core, R_yz, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_rmemory_ic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_rmemory_ic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -852,9 +786,7 @@ void FC_FUNC_(transfer_b_rmemory_ic_to_device,
   gpuCopy_todevice_realw (&mp->d_b_R_xz_inner_core, b_R_xz, size);
   gpuCopy_todevice_realw (&mp->d_b_R_yz_inner_core, b_R_yz, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_rmemory_ic_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_rmemory_ic_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -880,9 +812,7 @@ void FC_FUNC_(transfer_rotation_from_device,
   gpuCopy_from_device_realw (&mp->d_A_array_rotation, A_array_rotation, size);
   gpuCopy_from_device_realw (&mp->d_B_array_rotation, B_array_rotation, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_rotation_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_rotation_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -908,9 +838,7 @@ void FC_FUNC_(transfer_b_rotation_to_device,
   gpuCopy_from_device_realw (&mp->d_b_A_array_rotation, A_array_rotation, size);
   gpuCopy_from_device_realw (&mp->d_b_B_array_rotation, B_array_rotation, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_b_rotation_to_device");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_b_rotation_to_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -945,9 +873,7 @@ void FC_FUNC_(transfer_kernels_cm_to_host,
     gpuCopy_from_device_realw (&mp->d_beta_kl_crust_mantle, h_beta_kl, size);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_kernels_cm_to_host");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_kernels_cm_to_host");
 }
 
 
@@ -975,9 +901,7 @@ void FC_FUNC_(transfer_kernels_ani_cm_to_host,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_cijkl_kl_crust_mantle, h_cijkl_kl, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_kernels_ani_cm_to_host");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_kernels_ani_cm_to_host");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1003,9 +927,7 @@ void FC_FUNC_(transfer_kernels_ic_to_host,
   gpuCopy_from_device_realw (&mp->d_alpha_kl_inner_core, h_alpha_kl, size);
   gpuCopy_from_device_realw (&mp->d_beta_kl_inner_core, h_beta_kl, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_kernels_ic_to_host");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_kernels_ic_to_host");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1030,9 +952,7 @@ void FC_FUNC_(transfer_kernels_oc_to_host,
   gpuCopy_from_device_realw (&mp->d_rho_kl_outer_core, h_rho_kl, size);
   gpuCopy_from_device_realw (&mp->d_alpha_kl_outer_core, h_alpha_kl, size);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_kernels_oc_to_host");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_kernels_oc_to_host");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1051,9 +971,7 @@ void FC_FUNC_(transfer_kernels_noise_to_host,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_Sigma_kl, h_Sigma_kl, NGLL3 * (*NSPEC));
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_kernels_noise_to_host");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_kernels_noise_to_host");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -1072,7 +990,5 @@ void FC_FUNC_(transfer_kernels_hess_cm_tohost,
   // copies array to CPU
   gpuCopy_from_device_realw (&mp->d_hess_kl_crust_mantle, h_hess_kl, NGLL3 * (*NSPEC));
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("after transfer_kernels_hess_cm_tohost");
-#endif
+  GPU_ERROR_CHECKING ("after transfer_kernels_hess_cm_tohost");
 }

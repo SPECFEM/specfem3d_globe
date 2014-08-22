@@ -389,9 +389,7 @@ void FC_FUNC_ (prepare_constants_device,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_constants_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_constants_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -436,9 +434,7 @@ void FC_FUNC_ (prepare_fields_rotation_device,
     gpuCreateCopy_todevice_realw (&mp->d_b_B_array_rotation, b_B_array_rotation, NGLL3 * mp->NSPEC_OUTER_CORE);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_fields_rotation_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_rotation_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -487,9 +483,7 @@ void FC_FUNC_ (prepare_fields_gravity_device,
   mp->RHO_BOTTOM_OC = (realw) *RHO_BOTTOM_OC;
   mp->RHO_TOP_OC = (realw) *RHO_TOP_OC;
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_fields_gravity_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_gravity_device");
 }
 
 
@@ -617,9 +611,7 @@ void FC_FUNC_ (prepare_fields_attenuat_device,
     gpuCreateCopy_todevice_realw (&mp->d_b_gammaval, b_gammaval, N_SLS);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_fields_attenuat_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_attenuat_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -731,9 +723,7 @@ void FC_FUNC_ (prepare_fields_strain_device,
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_fields_strain_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_strain_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -915,9 +905,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_fields_absorb_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_absorb_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -1101,9 +1089,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_mpi_buffers_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_mpi_buffers_device");
 }
 
 
@@ -1168,9 +1154,7 @@ void FC_FUNC_ (prepare_fields_noise_device,
     gpuMemset_realw (&mp->d_Sigma_kl, NGLL3 * mp->NSPEC_CRUST_MANTLE, 0);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_fields_noise_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_fields_noise_device");
 }
 
 
@@ -1207,9 +1191,7 @@ void FC_FUNC_ (prepare_oceans_device,
   // normals
   gpuCreateCopy_todevice_realw (&mp->d_normal_ocean_load, h_normal_ocean_load, NDIM * mp->npoin_oceans);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_oceans_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_oceans_device");
 }
 
 
@@ -1739,9 +1721,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   // (especially needed for OpenCL kernels to finish executing)
   gpuSynchronize();
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_crust_mantle_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_crust_mantle_device");
 }
 
 
@@ -2033,9 +2013,7 @@ void FC_FUNC_ (prepare_outer_core_device,
   // (especially needed for OpenCL kernels to finish executing)
   gpuSynchronize();
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_outer_core_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_outer_core_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -2411,9 +2389,7 @@ void FC_FUNC_ (prepare_inner_core_device,
   // (especially needed for OpenCL kernels to finish executing)
   gpuSynchronize();
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("prepare_inner_core_device");
-#endif
+  GPU_ERROR_CHECKING ("prepare_inner_core_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */

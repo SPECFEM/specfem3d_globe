@@ -181,9 +181,7 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
     gpuCopy_from_device_realw (d_b_absorb_field, absorb_field, NDIM * NGLL2 * num_abs_boundary_faces);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_elastic_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_elastic_gpu");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -303,9 +301,7 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_elastic_backward_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_elastic_backward_gpu");
 }
 
 
@@ -455,7 +451,5 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_elastic_undoatt_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_elastic_undoatt_gpu");
 }

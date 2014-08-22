@@ -345,9 +345,7 @@ void FC_FUNC_(transfer_boun_from_device,
     exit_on_error("Error invalid IREGION in transfer_boun_from_device() routine");
   } // switch (*IREGION)
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_boun_from_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_boun_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -520,9 +518,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
       }
     }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_asmbl_accel_to_device in crust_mantle");
-#endif
+    GPU_ERROR_CHECKING ("transfer_asmbl_accel_to_device in crust_mantle");
     break; // IREGION_CRUST_MANTLE
 
   // inner core region
@@ -655,18 +651,14 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
       }
     }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_asmbl_accel_to_device in inner_core");
-#endif
+    GPU_ERROR_CHECKING ("transfer_asmbl_accel_to_device in inner_core");
     break; // IREGION_INNER_CORE
 
   default:
     exit_on_error("Error invalid IREGION in transfer_asmbl_accel_to_device() routine");
   } // switch (*IREGION)
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_asmbl_accel_to_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_asmbl_accel_to_device");
 }
 
 
@@ -851,9 +843,7 @@ void FC_FUNC_(transfer_buffer_to_device_async,
     exit_on_error("Error invalid IREGION in transfer_buffer_to_device_async() routine");
   } // switch (*IREGION)
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_buffer_to_device_async");
-#endif
+  GPU_ERROR_CHECKING ("transfer_buffer_to_device_async");
 }
 
 
@@ -1002,8 +992,6 @@ void FC_FUNC_(sync_copy_from_device,
 
   // memory copy is now finished, so non-blocking MPI send can proceed
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("sync_copy_from_device");
-#endif
+  GPU_ERROR_CHECKING ("sync_copy_from_device");
 }
 

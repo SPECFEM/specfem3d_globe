@@ -61,9 +61,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_b_B_array_rotation,
                  int FORWARD_OR_ADJOINT) {
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("before outer_core kernel Kernel_2");
-#endif
+  GPU_ERROR_CHECKING ("before outer_core kernel Kernel_2");
 
   // safety check
   if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
@@ -245,9 +243,8 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("kernel outer_core");
-#endif
+
+  GPU_ERROR_CHECKING ("kernel outer_core");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -432,9 +429,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                 FORWARD_OR_ADJOINT);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time_val ();
   //printf ("Elapsed time: %e\n", end_time-start_time);
-  exit_on_gpu_error ("compute_forces_outer_core_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_forces_outer_core_gpu");
 }

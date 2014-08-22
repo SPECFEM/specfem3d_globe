@@ -88,9 +88,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_b_R_yz,
                  int FORWARD_OR_ADJOINT) {
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("before kernel inner_core");
-#endif
+  GPU_ERROR_CHECKING ("before kernel inner_core");
 
   // safety check
   if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
@@ -338,9 +336,8 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("inner_core");
-#endif
+
+  GPU_ERROR_CHECKING ("inner_core");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -481,7 +478,7 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
         nb_blocks_to_compute = num_elements;
       }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
       // checks
       if (nb_blocks_to_compute <= 0) {
         printf ("Error number of color blocks in inner_core: %d -- color = %d \n",
@@ -694,7 +691,5 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
                 FORWARD_OR_ADJOINT);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_forces_inner_core_ocl");
-#endif
+  GPU_ERROR_CHECKING ("compute_forces_inner_core_ocl");
 }

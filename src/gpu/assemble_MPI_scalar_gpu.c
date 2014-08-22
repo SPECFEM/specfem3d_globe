@@ -201,9 +201,8 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_boun_pot_from_device");
-#endif
+
+  GPU_ERROR_CHECKING ("transfer_boun_pot_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -369,9 +368,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time_val ();
   //printf ("Elapsed time: %e\n", end_time-start_time);
-  exit_on_gpu_error ("transfer_asmbl_pot_to_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_asmbl_pot_to_device");
 }

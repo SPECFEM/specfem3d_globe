@@ -94,9 +94,7 @@ void FC_FUNC_ (compute_add_sources_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_add_sources_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_add_sources_gpu");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -169,9 +167,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_add_sources_backward_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_add_sources_backward_gpu");
 }
 
 
@@ -268,9 +264,8 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
                                                                               mp->nadj_rec_local);
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error("compute_add_sources_adjoint_cuda");
-#endif
+
+  GPU_ERROR_CHECKING("compute_add_sources_adjoint_cuda");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -338,9 +333,7 @@ void FC_FUNC_(transfer_adj_to_device,
   // copies extracted array values onto GPU
   gpuCopy_todevice_realw (&mp->d_adj_sourcearrays, mp->h_adj_sourcearrays_slice, mp->nadj_rec_local * NDIM * NGLL3);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_add_sources_adjoint_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_add_sources_adjoint_gpu");
 }
 
 

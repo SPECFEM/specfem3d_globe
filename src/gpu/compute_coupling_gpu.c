@@ -123,9 +123,7 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_coupling_fluid_CMB_kernel");
-#endif
+  GPU_ERROR_CHECKING ("compute_coupling_fluid_CMB_kernel");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -220,9 +218,7 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_coupling_fluid_ICB_kernel");
-#endif
+  GPU_ERROR_CHECKING ("compute_coupling_fluid_ICB_kernel");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -329,9 +325,7 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_coupling_CMB_fluid_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_coupling_CMB_fluid_gpu");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -436,9 +430,7 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_coupling_ICB_fluid_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_coupling_ICB_fluid_gpu");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -533,7 +525,5 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_coupling_ocean_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_coupling_ocean_gpu");
 }

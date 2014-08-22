@@ -272,9 +272,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   // return result
   *norm = max;
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after check_norm_acoustic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after check_norm_acoustic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -465,9 +463,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   max = MAX (max_inner_core, max_crust_mantle);
   *norm = max;
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after check_norm_elastic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after check_norm_elastic_from_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -626,7 +622,5 @@ void FC_FUNC_ (check_norm_strain_from_device,
   gpuFree (&d_max);
   free (h_max);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after check_norm_strain_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after check_norm_strain_from_device");
 }

@@ -115,7 +115,12 @@ typedef float realw;
 
 // error checking after cuda function calls
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
-//#define ENABLE_VERY_SLOW_ERROR_CHECKING
+#define ENABLE_VERY_SLOW_ERROR_CHECKING 0
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
+#define GPU_ERROR_CHECKING(x) exit_on_gpu_error(x);
+#else
+#define GPU_ERROR_CHECKING(x)
+#endif
 
 // maximum function
 #define MAX(x, y)                  (((x) < (y)) ? (y) : (x))

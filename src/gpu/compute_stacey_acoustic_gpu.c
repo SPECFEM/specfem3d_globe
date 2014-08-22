@@ -194,9 +194,7 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     gpuCopy_from_device_realw (d_b_absorb_potential, absorb_potential, NGLL2 * num_abs_boundary_faces);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_acoustic_kernel");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_acoustic_kernel");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -320,9 +318,7 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_acoustic_backward_kernel");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_acoustic_backward_kernel");
 }
 
 
@@ -470,7 +466,5 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_acoustic_undoatt_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_acoustic_undoatt_gpu");
 }

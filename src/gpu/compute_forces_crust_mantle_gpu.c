@@ -115,9 +115,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                    gpu_realw_mem d_b_R_yz,
                    int FORWARD_OR_ADJOINT) {
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("before kernel crust_mantle");
-#endif
+  GPU_ERROR_CHECKING ("before kernel crust_mantle");
 
   // safety check
   if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
@@ -384,9 +382,8 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("crust_mantle");
-#endif
+
+  GPU_ERROR_CHECKING ("crust_mantle");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -481,7 +478,7 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
     for (icolor = istart; icolor < nb_colors; icolor++) {
       nb_blocks_to_compute = mp->h_num_elem_colors_crust_mantle[icolor];
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
       // checks
       if (nb_blocks_to_compute <= 0) {
         printf ("Error number of color blocks in crust_mantle: %d -- color = %d \n",
@@ -773,7 +770,5 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
                  FORWARD_OR_ADJOINT);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_forces_crust_mantle_ocl");
-#endif
+  GPU_ERROR_CHECKING ("compute_forces_crust_mantle_ocl");
 }

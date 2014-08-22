@@ -308,9 +308,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
     }
 #endif
   }
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_cm_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_cm_gpu");
 }
 
 
@@ -506,9 +505,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #endif
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_ic_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_ic_gpu");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -594,9 +591,8 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
                                                                    mp->NSPEC_OUTER_CORE);
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_kernels_oc_kernel");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_kernels_oc_kernel");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -668,9 +664,7 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_strength_noise_kernel_kernel");
-#endif
+  GPU_ERROR_CHECKING ("compute_strength_noise_kernel_kernel");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -732,7 +726,6 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
                                                                mp->NSPEC_CRUST_MANTLE);
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_hess_kernel_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_hess_kernel_gpu");
 }
