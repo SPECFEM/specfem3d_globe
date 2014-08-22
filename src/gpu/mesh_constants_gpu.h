@@ -958,8 +958,13 @@ typedef struct mesh_ {
 /*----------------------------------------------------------------------------------------------- */
 
 // defined in helper_functions_gpu.c
-void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+
 void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array, int size);
+void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+
 void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
 
 void gpuMalloc_int (gpu_int_mem *buffer, int size);

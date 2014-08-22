@@ -212,7 +212,7 @@
 
     if (SIMULATION_TYPE == 3) then
       b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
-      if (.not. UNDO_ATTENUATION)then
+      if (.not. UNDO_ATTENUATION) then
         write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
         write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
       endif

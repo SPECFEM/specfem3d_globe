@@ -247,7 +247,7 @@
   eps = 0.01
 
   do ipar = 1,14
-     if (thickness < eps)then
+     if (thickness < eps) then
       pc1 = anispara(ipar,1,1)
       pc2 = anispara(ipar,1,2)
       pc3 = anispara(ipar,1,3)
@@ -437,7 +437,7 @@
 ! bet2(11,...)=Hc, bet2(12,...)=Hs,bet2(13,...)=Ec,bet2(14,...)=Es
 !
         do ilon = 1,ny
-          if (nf <= 3 .or. nf >= 6)then
+          if (nf <= 3 .or. nf >= 6) then
             bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01*ppp + ppp
           else
             if (nf == 4)bet2(ipa,idep,ilat,ilon) = AMM_V_beta(ipa,idep,ilat,ilon)*0.01 + 1.

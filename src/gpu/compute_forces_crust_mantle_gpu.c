@@ -418,8 +418,7 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
   }
 
   // checks if anything to do
-  if (num_elements == 0)
-    return;
+  if (num_elements == 0) return;
 
   // mesh coloring
   if (mp->use_mesh_coloring_gpu) {

@@ -101,8 +101,7 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
   }
 
   // checks if anything to do
-  if (num_abs_boundary_faces == 0)
-    return;
+  if (num_abs_boundary_faces == 0) return;
 
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -259,8 +258,7 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
   }
 
   // checks if anything to do
-  if (num_abs_boundary_faces == 0)
-    return;
+  if (num_abs_boundary_faces == 0) return;
 
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -273,25 +271,9 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (num_abs_boundary_faces, &num_blocks_x, &num_blocks_y);
 
-  //  adjoint simulations: needs absorbing boundary buffer
-  if (num_abs_boundary_faces > 0) {
-    // copies array to GPU
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_b_absorb_potential->ocl, CL_TRUE, 0,
-                                     NGLL2 * num_abs_boundary_faces * sizeof (realw),
-                                     absorb_potential, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_potential->cuda,absorb_potential,
-                                         NGLL2*num_abs_boundary_faces*sizeof(realw),
-                                         cudaMemcpyHostToDevice),7700);
-    }
-
-#endif
-  }
+  // adjoint simulations: needs absorbing boundary buffer
+  // copies array to GPU
+  gpuCopy_todevice_realw (d_b_absorb_potential, absorb_potential, NGLL2 * num_abs_boundary_faces);
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -337,6 +319,7 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
                                                               mp->d_ibool_outer_core.cuda);
   }
 #endif
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("compute_stacey_acoustic_backward_kernel");
 #endif
@@ -366,8 +349,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
 
 
   // checks if anything to do
-  if (mp->simulation_type /= 3 || mp->save_forward)
-    return;
+  if (mp->simulation_type /= 3 || mp->save_forward) return;
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -417,8 +399,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
   }
 
   // checks if anything to do
-  if (num_abs_boundary_faces == 0)
-    return;
+  if (num_abs_boundary_faces == 0) return;
 
   // way 1: Elapsed time: 4.385948e-03
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -470,24 +451,25 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     dim3 threads(blocksize,1,1);
 
     compute_stacey_acoustic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_outer_core.cuda,
-                                                     mp->d_b_accel_outer_core.cuda,
-                                                     interface_type,
-                                                     num_abs_boundary_faces,
-                                                     d_abs_boundary_ispec->cuda,
-                                                     mp->d_nkmin_xi_outer_core.cuda,
-                                                     mp->d_nkmin_eta_outer_core.cuda,
-                                                     mp->d_njmin_outer_core.cuda,
-                                                     mp->d_njmax_outer_core.cuda,
-                                                     mp->d_nimin_outer_core.cuda,
-                                                     mp->d_nimax_outer_core.cuda,
-                                                     d_abs_boundary_jacobian2D->cuda,
-                                                     d_wgllwgll->cuda,
-                                                     mp->d_ibool_outer_core.cuda,
-                                                     mp->d_vp_outer_core.cuda,
-                                                     mp->save_forward,
-                                                     d_b_absorb_potential->cuda);
+                                                                          mp->d_b_accel_outer_core.cuda,
+                                                                          interface_type,
+                                                                          num_abs_boundary_faces,
+                                                                          d_abs_boundary_ispec->cuda,
+                                                                          mp->d_nkmin_xi_outer_core.cuda,
+                                                                          mp->d_nkmin_eta_outer_core.cuda,
+                                                                          mp->d_njmin_outer_core.cuda,
+                                                                          mp->d_njmax_outer_core.cuda,
+                                                                          mp->d_nimin_outer_core.cuda,
+                                                                          mp->d_nimax_outer_core.cuda,
+                                                                          d_abs_boundary_jacobian2D->cuda,
+                                                                          d_wgllwgll->cuda,
+                                                                          mp->d_ibool_outer_core.cuda,
+                                                                          mp->d_vp_outer_core.cuda,
+                                                                          mp->save_forward,
+                                                                          d_b_absorb_potential->cuda);
   }
 #endif
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("compute_stacey_acoustic_undoatt_gpu");
 #endif

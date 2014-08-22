@@ -43,26 +43,9 @@ void FC_FUNC_(transfer_fields_cm_to_device,
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_crust_mantle.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  displ, 0, NULL, NULL));
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_crust_mantle.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  veloc, 0, NULL, NULL));
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_crust_mantle.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  accel, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_displ_crust_mantle.cuda,displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_veloc_crust_mantle.cuda,veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_crust_mantle.cuda,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
-  }
-#endif
+  gpuCopy_todevice_realw (&mp->d_displ_crust_mantle, displ, *size);
+  gpuCopy_todevice_realw (&mp->d_veloc_crust_mantle, veloc, *size);
+  gpuCopy_todevice_realw (&mp->d_accel_crust_mantle, accel, *size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_fields_cm_to_device");
@@ -81,28 +64,9 @@ void FC_FUNC_(transfer_fields_ic_to_device,
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_inner_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  displ, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_inner_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  veloc, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_inner_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  accel, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_displ_inner_core.cuda,displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_veloc_inner_core.cuda,veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_inner_core.cuda,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
-  }
-#endif
+  gpuCopy_todevice_realw (&mp->d_displ_inner_core, displ, *size);
+  gpuCopy_todevice_realw (&mp->d_veloc_inner_core, veloc, *size);
+  gpuCopy_todevice_realw (&mp->d_accel_inner_core, accel, *size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_fields_ic_to_device");
@@ -121,28 +85,9 @@ void FC_FUNC_(transfer_fields_oc_to_device,
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_displ_outer_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  displ, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_veloc_outer_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  veloc, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_outer_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  accel, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_displ_outer_core.cuda,displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_veloc_outer_core.cuda,veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_outer_core.cuda,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
-  }
-#endif
+  gpuCopy_todevice_realw (&mp->d_displ_outer_core, displ, *size);
+  gpuCopy_todevice_realw (&mp->d_veloc_outer_core, veloc, *size);
+  gpuCopy_todevice_realw (&mp->d_accel_outer_core, accel, *size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_fields_oc_to_device");
@@ -165,28 +110,9 @@ void FC_FUNC_(transfer_b_fields_cm_to_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // copies last wavefield snapshots to GPU
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_crust_mantle.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_displ, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_crust_mantle.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_veloc, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_accel_crust_mantle.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_accel, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_crust_mantle.cuda,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_veloc_crust_mantle.cuda,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_crust_mantle.cuda,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
-  }
-#endif
+  gpuCopy_todevice_realw (&mp->d_b_displ_crust_mantle, b_displ, *size);
+  gpuCopy_todevice_realw (&mp->d_b_veloc_crust_mantle, b_veloc, *size);
+  gpuCopy_todevice_realw (&mp->d_b_accel_crust_mantle, b_accel, *size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_b_fields_cm_to_device");
@@ -208,28 +134,9 @@ void FC_FUNC_(transfer_b_fields_ic_to_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // copies last wavefield snapshots to GPU
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_inner_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_displ, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_inner_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_veloc, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_accel_inner_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_accel, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_inner_core.cuda,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_veloc_inner_core.cuda,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_inner_core.cuda,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
-  }
-#endif
+  gpuCopy_todevice_realw (&mp->d_b_displ_inner_core, b_displ, *size);
+  gpuCopy_todevice_realw (&mp->d_b_veloc_inner_core, b_veloc, *size);
+  gpuCopy_todevice_realw (&mp->d_b_accel_inner_core, b_accel, *size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_b_fields_ic_to_device");
@@ -251,28 +158,9 @@ void FC_FUNC_(transfer_b_fields_oc_to_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // copies last wavefield snapshots to GPU
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_displ_outer_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_displ, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_veloc_outer_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_veloc, 0, NULL, NULL));
-
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_accel_outer_core.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  b_accel, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_displ_outer_core.cuda,b_displ,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40003);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_veloc_outer_core.cuda,b_veloc,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40004);
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_b_accel_outer_core.cuda,b_accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40005);
-  }
-#endif
+  gpuCopy_todevice_realw (&mp->d_b_displ_outer_core, b_displ, *size);
+  gpuCopy_todevice_realw (&mp->d_b_veloc_outer_core, b_veloc, *size);
+  gpuCopy_todevice_realw (&mp->d_b_accel_outer_core, b_accel, *size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_b_fields_oc_to_device");
@@ -614,19 +502,7 @@ void FC_FUNC_(transfer_accel_cm_to_device,
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_accel_crust_mantle.ocl, CL_TRUE, 0,
-                                  sizeof (realw) * (*size),
-                                  accel, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_accel_crust_mantle.cuda,accel,sizeof(realw)*(*size),cudaMemcpyHostToDevice),40016);
-  }
-#endif
+  gpuCopy_todevice_realw (&mp->d_accel_crust_mantle, accel, *size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_accel_cm_to_device");
@@ -764,40 +640,15 @@ void FC_FUNC_(transfer_b_strain_cm_to_device,
 
   int size = NGLL3*mp->NSPEC_CRUST_MANTLE;
 
-  if (! mp->undo_attenuation) {
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xx_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_xx, 0, NULL, NULL));
+  // checks flag
+  if (mp->undo_attenuation) exit_on_error("Error invalid undo_attenuation flag in transfer_b_strain_cm_to_device()");
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yy_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_yy, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xy_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_xy, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xz_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_xz, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yz_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_yz, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_xx_crust_mantle.cuda,epsilondev_xx,size*sizeof(realw),cudaMemcpyHostToDevice),330001);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_yy_crust_mantle.cuda,epsilondev_yy,size*sizeof(realw),cudaMemcpyHostToDevice),330002);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_xy_crust_mantle.cuda,epsilondev_xy,size*sizeof(realw),cudaMemcpyHostToDevice),330003);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_xz_crust_mantle.cuda,epsilondev_xz,size*sizeof(realw),cudaMemcpyHostToDevice),330004);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_yz_crust_mantle.cuda,epsilondev_yz,size*sizeof(realw),cudaMemcpyHostToDevice),330005);
-    }
-#endif
-  }
+  // transfers strains
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_xx_crust_mantle, epsilondev_xx, size);
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_yy_crust_mantle, epsilondev_yy, size);
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_xy_crust_mantle, epsilondev_xy, size);
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_xz_crust_mantle, epsilondev_xz, size);
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_yz_crust_mantle, epsilondev_yz, size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_b_strain_cm_to_device");
@@ -856,41 +707,15 @@ void FC_FUNC_(transfer_b_strain_ic_to_device,
 
   int size = NGLL3*mp->NSPEC_INNER_CORE;
 
-  if (! mp->undo_attenuation) {
+  // checks flag
+  if (mp->undo_attenuation) exit_on_error("Error invalid undo_attenuation flag in transfer_b_strain_ic_to_device()");
 
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xx_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_xx, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yy_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_yy, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xy_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_xy, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_xz_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_xz, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_epsilondev_yz_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    epsilondev_yz, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_xx_inner_core.cuda,epsilondev_xx,size*sizeof(realw),cudaMemcpyHostToDevice),350001);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_yy_inner_core.cuda,epsilondev_yy,size*sizeof(realw),cudaMemcpyHostToDevice),350002);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_xy_inner_core.cuda,epsilondev_xy,size*sizeof(realw),cudaMemcpyHostToDevice),350003);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_xz_inner_core.cuda,epsilondev_xz,size*sizeof(realw),cudaMemcpyHostToDevice),350004);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_epsilondev_yz_inner_core.cuda,epsilondev_yz,size*sizeof(realw),cudaMemcpyHostToDevice),350005);
-    }
-#endif
-  }
+  // transfers strains to GPU
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_xx_inner_core, epsilondev_xx, size);
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_yy_inner_core, epsilondev_yy, size);
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_xy_inner_core, epsilondev_xy, size);
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_xz_inner_core, epsilondev_xz, size);
+  gpuCopy_todevice_realw (&mp->d_b_epsilondev_yz_inner_core, epsilondev_yz, size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_b_strain_ic_to_device");
@@ -952,40 +777,14 @@ void FC_FUNC_(transfer_b_rmemory_cm_to_device,
 
   int size = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
 
-  if (! mp->partial_phys_dispersion_only) {
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xx_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_xx, 0, NULL, NULL));
+  // checks if anything to do
+  if (mp->partial_phys_dispersion_only) return;
 
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yy_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_yy, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xy_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_xy, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xz_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_xz, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yz_crust_mantle.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_yz, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_xx_crust_mantle.cuda,b_R_xx,size*sizeof(realw),cudaMemcpyHostToDevice),360001);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_yy_crust_mantle.cuda,b_R_yy,size*sizeof(realw),cudaMemcpyHostToDevice),360002);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_xy_crust_mantle.cuda,b_R_xy,size*sizeof(realw),cudaMemcpyHostToDevice),360003);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_xz_crust_mantle.cuda,b_R_xz,size*sizeof(realw),cudaMemcpyHostToDevice),360004);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_yz_crust_mantle.cuda,b_R_yz,size*sizeof(realw),cudaMemcpyHostToDevice),360005);
-    }
-#endif
-  }
+  gpuCopy_todevice_realw (&mp->d_b_R_xx_crust_mantle, b_R_xx, size);
+  gpuCopy_todevice_realw (&mp->d_b_R_yy_crust_mantle, b_R_yy, size);
+  gpuCopy_todevice_realw (&mp->d_b_R_xy_crust_mantle, b_R_xy, size);
+  gpuCopy_todevice_realw (&mp->d_b_R_xz_crust_mantle, b_R_xz, size);
+  gpuCopy_todevice_realw (&mp->d_b_R_yz_crust_mantle, b_R_yz, size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_b_rmemory_cm_to_device");
@@ -1044,41 +843,14 @@ void FC_FUNC_(transfer_b_rmemory_ic_to_device,
 
   int size = N_SLS*NGLL3*mp->NSPEC_INNER_CORE;
 
-  if (! mp->partial_phys_dispersion_only) {
+  // checks if anything to do
+  if (mp->partial_phys_dispersion_only) return;
 
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xx_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_xx, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yy_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_yy, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xy_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_xy, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_xz_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_xz, 0, NULL, NULL));
-
-      clCheck (clEnqueueWriteBuffer(mocl.command_queue, mp->d_b_R_yz_inner_core.ocl, CL_TRUE, 0,
-                                    size * sizeof (realw),
-                                    b_R_yz, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_xx_inner_core.cuda,b_R_xx,size*sizeof(realw),cudaMemcpyHostToDevice),370001);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_yy_inner_core.cuda,b_R_yy,size*sizeof(realw),cudaMemcpyHostToDevice),370002);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_xy_inner_core.cuda,b_R_xy,size*sizeof(realw),cudaMemcpyHostToDevice),370003);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_xz_inner_core.cuda,b_R_xz,size*sizeof(realw),cudaMemcpyHostToDevice),370004);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_b_R_yz_inner_core.cuda,b_R_yz,size*sizeof(realw),cudaMemcpyHostToDevice),370005);
-    }
-#endif
-  }
+  gpuCopy_todevice_realw (&mp->d_b_R_xx_inner_core, b_R_xx, size);
+  gpuCopy_todevice_realw (&mp->d_b_R_yy_inner_core, b_R_yy, size);
+  gpuCopy_todevice_realw (&mp->d_b_R_xy_inner_core, b_R_xy, size);
+  gpuCopy_todevice_realw (&mp->d_b_R_xz_inner_core, b_R_xz, size);
+  gpuCopy_todevice_realw (&mp->d_b_R_yz_inner_core, b_R_yz, size);
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error("after transfer_b_rmemory_ic_to_device");

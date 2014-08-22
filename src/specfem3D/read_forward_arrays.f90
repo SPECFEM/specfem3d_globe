@@ -316,16 +316,13 @@
   if (GPU_MODE) then
     ! transfers initialized wavefields to GPU device
     call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                    Mesh_pointer)
+                                        b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle,Mesh_pointer)
 
     call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE, &
-                                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                                    Mesh_pointer)
+                                        b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core,Mesh_pointer)
 
     call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE, &
-                                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                                    Mesh_pointer)
+                                        b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core,Mesh_pointer)
     ! rotation
     if (ROTATION_VAL) then
       call transfer_b_rotation_to_device(Mesh_pointer,b_A_array_rotation,b_B_array_rotation)

@@ -406,7 +406,7 @@
     ! temporary counter to check if any files are found at all
     nadj_files_found = 0
     do irec = 1,nrec
-      if (myrank == islice_selected_rec(irec))then
+      if (myrank == islice_selected_rec(irec)) then
         ! adjoint receiver station in this process slice
         if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) &
           call exit_MPI(myrank,'something is wrong with the source slice number in adjoint simulation')

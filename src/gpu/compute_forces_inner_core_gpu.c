@@ -371,8 +371,7 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
     num_elements = mp->nspec_inner_inner_core;
   }
   // checks if anything to do
-  if (num_elements == 0)
-    return;
+  if (num_elements == 0) return;
 
   // mesh coloring
   if (mp->use_mesh_coloring_gpu) {

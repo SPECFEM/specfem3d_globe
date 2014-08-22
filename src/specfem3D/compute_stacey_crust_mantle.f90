@@ -82,7 +82,7 @@
   ! if two chunks exclude this face for one of them
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
 
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_xmin_crust_mantle
 
@@ -143,7 +143,7 @@
   ! if two chunks exclude this face for one of them
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
 
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_xmax_crust_mantle
 
@@ -204,7 +204,7 @@
 
   !   ymin
 
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     do ispec2D = 1,nspec2D_ymin_crust_mantle
 
@@ -262,7 +262,7 @@
 
   !   ymax
 
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     do ispec2D = 1,nspec2D_ymax_crust_mantle
 
@@ -379,7 +379,7 @@
       call read_abs(0,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle,NSTEP-it+1)
     endif
 
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_xmin_crust_mantle
 
@@ -416,7 +416,7 @@
       call read_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,NSTEP-it+1)
     endif
 
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_xmax_crust_mantle
 
@@ -451,7 +451,7 @@
     call read_abs(2,absorb_ymin_crust_mantle, reclen_ymin_crust_mantle,NSTEP-it+1)
   endif
 
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     do ispec2D = 1,nspec2D_ymin_crust_mantle
 
@@ -484,7 +484,7 @@
     call read_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,NSTEP-it+1)
   endif
 
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     do ispec2D = 1,nspec2D_ymax_crust_mantle
 
@@ -523,7 +523,7 @@
   use constants_solver
 
   use specfem_par,only: &
-    ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
+    ichunk,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION, &
     wgllwgll_xz,wgllwgll_yz
 
   use specfem_par,only: GPU_MODE,Mesh_pointer
@@ -561,8 +561,9 @@
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   ! checks
-  if (SIMULATION_TYPE /= 3 ) return
-  if (SAVE_FORWARD ) return
+  if (SIMULATION_TYPE /= 3) return
+  if (SAVE_FORWARD) return
+  if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_crust_mantle_backward_undoatt()'
 
   ! crust & mantle
 
@@ -570,7 +571,7 @@
   ! if two chunks exclude this face for one of them
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
 
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_xmin_crust_mantle
 
@@ -619,7 +620,7 @@
   ! if two chunks exclude this face for one of them
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
 
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_xmax_crust_mantle
 
@@ -666,7 +667,7 @@
 
   !   ymin
 
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     do ispec2D = 1,nspec2D_ymin_crust_mantle
 
@@ -711,7 +712,7 @@
 
   !   ymax
 
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     do ispec2D = 1,nspec2D_ymax_crust_mantle
 

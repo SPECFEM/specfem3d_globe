@@ -133,7 +133,7 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
     atomicAdd(&accel[iglob*3+1],-ty*jacobianw);
     atomicAdd(&accel[iglob*3+2],-tz*jacobianw);
 
-    if( SAVE_FORWARD ){
+    if (SAVE_FORWARD) {
       b_absorb_field[INDEX3(NDIM,NGLL2,0,igll,iface)] = tx*jacobianw;
       b_absorb_field[INDEX3(NDIM,NGLL2,1,igll,iface)] = ty*jacobianw;
       b_absorb_field[INDEX3(NDIM,NGLL2,2,igll,iface)] = tz*jacobianw;

@@ -398,7 +398,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
 
   if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
     local_dim = nglob_xy
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1

@@ -183,7 +183,7 @@ USE LIB_VTK_IO
       rgb = (r_bottom / R_EARTH)*gamma
 
     ! define the mesh points on the top and the bottom in the six regions of the cubed shpere
-      select case (ichunk)
+      select case(ichunk)
 
         case(CHUNK_AB)
 

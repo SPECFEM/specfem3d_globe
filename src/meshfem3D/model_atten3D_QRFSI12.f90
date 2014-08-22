@@ -141,7 +141,7 @@
     j = 0
     do l = 0,MAXL_Q
       do m = 0,l
-        if (m == 0)then
+        if (m == 0) then
           j=j+1
           read(10,*)ll,mm,v1
           QRFSI12_Q_dqmu(k,j)=v1
@@ -255,11 +255,11 @@
 
     ifnd = 0
     do i=2,NDEPTHS_REFQ
-      if (depth >= QRFSI12_Q_refdepth(i-1) .and. depth < QRFSI12_Q_refdepth(i))then
+      if (depth >= QRFSI12_Q_refdepth(i-1) .and. depth < QRFSI12_Q_refdepth(i)) then
         ifnd=i
       endif
     enddo
-    if (ifnd == 0)then
+    if (ifnd == 0) then
       write(6,"('problem finding reference Q value at depth: ',f8.3)") depth
       stop
     endif

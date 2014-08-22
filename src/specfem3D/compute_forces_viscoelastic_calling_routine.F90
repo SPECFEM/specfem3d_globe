@@ -76,7 +76,7 @@
 
     ! compute internal forces in the solid regions
     ! note: for anisotropy and gravity, x y and z contain r theta and phi
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       if (USE_DEVILLE_PRODUCTS_VAL) then
         ! uses Deville (2002) optimizations
@@ -283,7 +283,7 @@
 
     if (iphase == 1) then
       ! sends out MPI interface data
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         ! sends accel values to corresponding MPI interface neighbors
         ! crust mantle
@@ -338,7 +338,7 @@
       endif ! GPU_MODE
     else
       ! waits for send/receive requests to be completed and assembles values
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         ! crust mantle
         call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
@@ -392,7 +392,7 @@
   enddo ! iphase
 
   ! updates (only) acceleration w/ rotation in the crust/mantle and inner core region
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! crust/mantle region
     call multiply_accel_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
@@ -411,7 +411,7 @@
   ! couples ocean with crust mantle
   ! (updates acceleration with ocean load approximation)
   if (OCEANS_VAL) then
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       call compute_coupling_ocean(NGLOB_CRUST_MANTLE,accel_crust_mantle, &
                                   rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
@@ -523,7 +523,7 @@
 
     ! compute internal forces in the solid regions
     ! note: for anisotropy and gravity, x y and z contain r theta and phi
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       ! adjoint / kernel runs
       if (USE_DEVILLE_PRODUCTS_VAL) then
@@ -719,7 +719,7 @@
     if (iphase == 1) then
       ! sends out MPI interface data
       ! adjoint / kernel runs
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         ! sends accel values to corresponding MPI interface neighbors
         ! crust mantle
@@ -775,7 +775,7 @@
     else
       ! adjoint / kernel runs
       ! waits for send/receive requests to be completed and assembles values
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         ! crust mantle
         call assemble_MPI_vector_w(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
@@ -831,7 +831,7 @@
   enddo ! iphase
 
   ! updates (only) acceleration w/ rotation in the crust/mantle and inner core region
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! adjoint / kernel runs
     ! crust/mantle region
@@ -851,7 +851,7 @@
   ! couples ocean with crust mantle
   ! (updates acceleration with ocean load approximation)
   if (OCEANS_VAL) then
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       call compute_coupling_ocean(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle, &
                                   b_rmassx_crust_mantle,b_rmassy_crust_mantle,b_rmassz_crust_mantle, &

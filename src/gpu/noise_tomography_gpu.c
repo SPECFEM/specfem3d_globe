@@ -177,20 +177,7 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
 #endif
 
   // copies surface movie to GPU
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
-                                   NDIM*NGLL2 *(mp->nspec2D_top_crust_mantle)*sizeof (realw),
-                                   h_noise_surface_movie, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaMemcpy(mp->d_noise_surface_movie.cuda,h_noise_surface_movie,
-               NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice);
-  }
-#endif
-
+  gpuCopy_todevice_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM*NGLL2 *(mp->nspec2D_top_crust_mantle));
 
   switch (mp->noise_tomography) {
   case 2:

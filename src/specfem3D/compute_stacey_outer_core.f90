@@ -79,7 +79,7 @@
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
     if (nspec2D_xmin_outer_core > 0) then
       ! adds boundary contributions
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         do ispec2D = 1,nspec2D_xmin_outer_core
 
@@ -123,7 +123,7 @@
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
     if (nspec2D_xmax_outer_core > 0) then
       ! adds boundary contributions
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         do ispec2D = 1,nspec2D_xmax_outer_core
 
@@ -166,7 +166,7 @@
   !   ymin
   if (nspec2D_ymin_outer_core > 0) then
     ! adds boundary contributions
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_ymin_outer_core
 
@@ -206,7 +206,7 @@
   !   ymax
   if (nspec2D_ymax_outer_core > 0) then
     ! adds boundary contributions
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_ymax_outer_core
 
@@ -248,7 +248,7 @@
   ! for surface elements exactly on the ICB
   if (nspec2D_zmin_outer_core > 0) then
     ! adds boundary contributions
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_zmin_outer_core
 
@@ -343,7 +343,7 @@
       call read_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,NSTEP-it+1)
 
       ! adds boundary contributions
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         do ispec2D = 1,nspec2D_xmin_outer_core
 
@@ -376,7 +376,7 @@
       call read_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,NSTEP-it+1)
 
       ! adds boundary contributions
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         do ispec2D = 1,nspec2D_xmax_outer_core
 
@@ -407,7 +407,7 @@
     call read_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,NSTEP-it+1)
 
     ! adds boundary contributions
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_ymin_outer_core
 
@@ -437,7 +437,7 @@
     call read_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,NSTEP-it+1)
 
     ! adds boundary contributions
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_ymax_outer_core
 
@@ -469,7 +469,7 @@
     call read_abs(8,absorb_zmin_outer_core,reclen_zmin,NSTEP-it+1)
 
     ! adds boundary contributions
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_zmin_outer_core
 
@@ -501,7 +501,7 @@
   use constants_solver
 
   use specfem_par,only: &
-    ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
+    ichunk,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION, &
     wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
 
   use specfem_par,only: GPU_MODE,Mesh_pointer
@@ -528,7 +528,8 @@
 
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
-  if (SAVE_FORWARD ) return
+  if (SAVE_FORWARD) return
+  if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_outer_core_backward_undoatt()'
 
   ! outer core
 
@@ -537,7 +538,7 @@
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
     if (nspec2D_xmin_outer_core > 0) then
       ! adds boundary contribution
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         do ispec2D = 1,nspec2D_xmin_outer_core
 
@@ -572,7 +573,7 @@
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
     if (nspec2D_xmax_outer_core > 0) then
       ! adds boundary contribution
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         do ispec2D = 1,nspec2D_xmax_outer_core
 
@@ -605,7 +606,7 @@
   !   ymin
   if (nspec2D_ymin_outer_core > 0) then
     ! adds boundary contribution
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_ymin_outer_core
 
@@ -637,7 +638,7 @@
   !   ymax
   if (nspec2D_ymax_outer_core > 0) then
     ! adds boundary contribution
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_ymax_outer_core
 
@@ -671,7 +672,7 @@
   ! for surface elements exactly on the ICB
   if (nspec2D_zmin_outer_core > 0) then
     ! adds boundary contribution
-    if (.NOT. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_zmin_outer_core
 

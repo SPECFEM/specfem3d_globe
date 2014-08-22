@@ -191,22 +191,22 @@
 !
 !---
 
-  select case (ITYPE_CRUSTAL_MODEL )
+  select case(ITYPE_CRUSTAL_MODEL )
 
-    case (ICRUST_CRUST1)
+    case(ICRUST_CRUST1)
       ! crust 1.0
       call model_crust_1_0_broadcast(myrank)
 
-    case (ICRUST_CRUST2)
+    case(ICRUST_CRUST2)
       ! default
       ! crust 2.0
       call model_crust_2_0_broadcast(myrank)
 
-    case (ICRUST_CRUSTMAPS)
+    case(ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps_broadcast(myrank)
 
-    case (ICRUST_EPCRUST)
+    case(ICRUST_EPCRUST)
       ! EPcrust
       call model_epcrust_broadcast(myrank)
 
@@ -259,7 +259,7 @@
 !---
 
   ! gets 1-D reference model parameters
-  select case ( REFERENCE_1D_MODEL )
+  select case( REFERENCE_1D_MODEL )
 
     case(REFERENCE_MODEL_PREM)
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
@@ -669,7 +669,7 @@
   found_crust = .false.
 
   ! crustal model can vary for different 3-D models
-  select case (THREE_D_MODEL )
+  select case(THREE_D_MODEL )
 
     case(THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
       ! tries to use Zhao's model of the crust
@@ -684,7 +684,7 @@
         call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
       endif
 
-    case ( THREE_D_MODEL_PPM )
+    case( THREE_D_MODEL_PPM )
       ! takes vs,rho from default crust
       call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
@@ -769,22 +769,22 @@
 !
 !---
 
-  select case (ITYPE_CRUSTAL_MODEL )
+  select case(ITYPE_CRUSTAL_MODEL )
 
-    case (ICRUST_CRUST1)
+    case(ICRUST_CRUST1)
       ! crust 1.0
       call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case (ICRUST_CRUST2)
+    case(ICRUST_CRUST2)
       ! default
       ! crust 2.0
       call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case (ICRUST_CRUSTMAPS)
+    case(ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case (ICRUST_EPCRUST)
+    case(ICRUST_EPCRUST)
       call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case default
@@ -869,7 +869,7 @@
 
   else
 
-    select case (REFERENCE_1D_MODEL)
+    select case(REFERENCE_1D_MODEL)
 
       ! case(REFERENCE_MODEL_PREM)
       ! this case is probably not needed since Qmu is 600. between R80 and surface

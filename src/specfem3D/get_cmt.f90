@@ -148,7 +148,7 @@
   close(1)
 
   ! Sets tshift_cmt to zero to initiate the simulation!
-  if (NSOURCES == 1)then
+  if (NSOURCES == 1) then
       tshift_cmt = 0.d0
       min_tshift_cmt_original = t_shift(1)
   else

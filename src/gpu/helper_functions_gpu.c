@@ -124,9 +124,9 @@ void moclEnqueueFillBuffer (cl_mem *buffer, int val, size_t size_byte) {
 /*----------------------------------------------------------------------------------------------- */
 
 // copies integer array from CPU host to GPU device
-void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size) {
+void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size) {
 
-  TRACE ("gpuCopy_todevice_int");
+  TRACE ("gpuCreateCopy_todevice_int");
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -164,9 +164,9 @@ void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size
 /*----------------------------------------------------------------------------------------------- */
 
 // copies real array from CPU host to GPU device
-void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size) {
+void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size) {
 
-  TRACE ("gpuCopy_todevice_realw");
+  TRACE ("gpuCreateCopy_todevice_realw");
 
   // allocates memory on GPU
 #ifdef USE_OPENCL
@@ -193,6 +193,75 @@ void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, in
 #endif
 }
 
+/*----------------------------------------------------------------------------------------------- */
+
+// copies real array from CPU host to GPU device
+void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size) {
+
+  TRACE ("gpuCopy_todevice_realw");
+
+  // copies memory on from CPU to GPU
+  // uses blocking copies
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    // copies values onto GPU
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_array_addr_ptr->ocl, CL_TRUE, 0, size * sizeof (realw), h_array, 0, NULL, NULL));
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    // copies values onto GPU
+    print_CUDA_error_if_any(cudaMemcpy((realw*) d_array_addr_ptr->cuda,h_array,size*sizeof(realw),cudaMemcpyHostToDevice),22003);
+  }
+#endif
+}
+
+/*----------------------------------------------------------------------------------------------- */
+
+// copies double array from CPU host to GPU device
+void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array, int size) {
+
+  TRACE ("gpuCopy_todevice_double");
+
+  // copies memory on from CPU to GPU
+  // uses blocking copies
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    // copies values onto GPU
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_array_addr_ptr->ocl, CL_TRUE, 0, size * sizeof (double), h_array, 0, NULL, NULL));
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    // copies values onto GPU
+    print_CUDA_error_if_any(cudaMemcpy((double*) d_array_addr_ptr->cuda,h_array,size*sizeof(double),cudaMemcpyHostToDevice),22003);
+  }
+#endif
+}
+
+/*----------------------------------------------------------------------------------------------- */
+
+// copies integer array from CPU host to GPU device
+void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size) {
+
+  TRACE ("gpuCopy_todevice_int");
+
+  // copies memory on from CPU to GPU
+  // uses blocking copies
+#ifdef USE_OPENCL
+  if (run_opencl) {
+    // copies values onto GPU
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_array_addr_ptr->ocl, CL_TRUE, 0, size * sizeof (int), h_array, 0, NULL, NULL));
+  }
+#endif
+#ifdef USE_CUDA
+  if (run_cuda) {
+    // copies values onto GPU
+    print_CUDA_error_if_any(cudaMemcpy((int*) d_array_addr_ptr->cuda,h_array,size*sizeof(int),cudaMemcpyHostToDevice),22003);
+  }
+#endif
+}
+
 /* ----------------------------------------------------------------------------------------------- */
 
 // copies array from GPU to CPU
@@ -214,6 +283,7 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
   }
 #endif
 }
+
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -548,7 +618,6 @@ void print_CUDA_error_if_any(cudaError_t err, int num) {
 #endif
     exit(EXIT_FAILURE);
   }
-  return;
 }
 
 /*----------------------------------------------------------------------------------------------- */

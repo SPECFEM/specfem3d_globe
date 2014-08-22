@@ -556,21 +556,19 @@
     do iloop_corners = 1,2
 
     select case(iloop_corners)
+    case(1)
+      ipointnumber1_horiz = iglob1
+      ipointnumber2_horiz = iglob2
 
-      case(1)
-        ipointnumber1_horiz = iglob1
-        ipointnumber2_horiz = iglob2
+      ipointnumber1_vert = iglob1
+      ipointnumber2_vert = iglob4
 
-        ipointnumber1_vert = iglob1
-        ipointnumber2_vert = iglob4
+    case(2)
+      ipointnumber1_horiz = iglob4
+      ipointnumber2_horiz = iglob3
 
-      case(2)
-        ipointnumber1_horiz = iglob4
-        ipointnumber2_horiz = iglob3
-
-        ipointnumber1_vert = iglob2
-        ipointnumber2_vert = iglob3
-
+      ipointnumber1_vert = iglob2
+      ipointnumber2_vert = iglob3
     end select
 
     distance_horiz = &

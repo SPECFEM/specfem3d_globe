@@ -145,7 +145,7 @@
 
     do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-      if (USE_LDDRK)then
+      if (USE_LDDRK) then
         ! update displacement using Runge-Kutta time scheme
         call update_displacement_lddrk()
       else
@@ -188,7 +188,7 @@
       ! note: NSTAGE_TIME_SCHEME is equal to 1 if Newmark because only one stage then
       do istage = 1, NSTAGE_TIME_SCHEME
 
-        if (USE_LDDRK)then
+        if (USE_LDDRK) then
           ! update displacement using Runge-Kutta time scheme
           call update_displacement_lddrk_backward()
         else

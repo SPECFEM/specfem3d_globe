@@ -105,7 +105,7 @@
       y = y_top*rn + y_bot*(ONE-rn)
       z = z_top*rn + z_bot*(ONE-rn)
 
-      select case (ichunk)
+      select case(ichunk)
         case(CHUNK_AB)
           xelm(ignod) = -y
           yelm(ignod) = x
@@ -163,7 +163,7 @@
       rgb = (r_bottom / R_EARTH)*gamma
 
     ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
-      select case (ichunk)
+      select case(ichunk)
 
         case(CHUNK_AB)
 
@@ -429,7 +429,7 @@
       rgt = R_UNIT_SPHERE*gamma
 
     ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
-      select case (ichunk)
+      select case(ichunk)
 
         case(CHUNK_AB)
 

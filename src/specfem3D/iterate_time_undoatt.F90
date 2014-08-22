@@ -51,7 +51,7 @@
 !
 
   ! checks
-  if (.not. UNDO_ATTENUATION ) return
+  if (.not. UNDO_ATTENUATION) return
 
   ! allocates buffers
   if (SIMULATION_TYPE == 3) then
@@ -141,7 +141,7 @@
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-          if (USE_LDDRK)then
+          if (USE_LDDRK) then
             ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk()
           else
@@ -201,7 +201,7 @@
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-          if (USE_LDDRK)then
+          if (USE_LDDRK) then
             ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk_backward()
           else
@@ -217,6 +217,9 @@
           call compute_forces_viscoelastic_backward()
 
         enddo ! istage
+
+        ! daniel debug
+        if (GPU_MODE ) stop 'error storing wavefield in buffers not implement yet in GPU'
 
         ! stores wavefield in buffers
         b_displ_crust_mantle_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
@@ -255,6 +258,9 @@
           enddo
         enddo
 
+        ! daniel debug
+        if (GPU_MODE ) stop 'error reading back wavefield from buffers not implement yet in GPU'
+
         it = it + 1
 
         ! simulation status output and stability check
@@ -264,7 +270,7 @@
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-          if (USE_LDDRK)then
+          if (USE_LDDRK) then
             ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk()
           else
@@ -335,6 +341,9 @@
   implicit none
   ! local parameters
   integer :: ispec
+
+  ! daniel debug
+  if (GPU_MODE) stop 'error itu_compute_strain_att() not implemented yet for GPU'
 
   ! checks
   if (USE_DEVILLE_PRODUCTS_VAL) then
@@ -423,6 +432,9 @@
   implicit none
   ! local parameters
   integer :: ispec
+
+  ! daniel debug
+  if (GPU_MODE) stop 'error itu_compute_strain_att_backward() not implemented yet for GPU'
 
   ! checks
   if (USE_DEVILLE_PRODUCTS_VAL) then

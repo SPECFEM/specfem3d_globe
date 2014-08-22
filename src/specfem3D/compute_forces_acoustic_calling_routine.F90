@@ -49,7 +49,7 @@
   ! compute internal forces in the fluid region
 
   ! current simulated time
-  if (USE_LDDRK)then
+  if (USE_LDDRK) then
     timeval = real((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
     timeval = real((dble(it-1)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
@@ -167,7 +167,7 @@
     ! in outer core
     if (iphase == 1) then
       ! sends out MPI interface data (non-blocking)
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 accel_outer_core, &
@@ -201,7 +201,7 @@
     else
       ! make sure the last communications are finished and processed
       ! waits for send/receive requests to be completed and assembles values
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                    accel_outer_core, &
@@ -235,7 +235,7 @@
 
   ! multiply by the inverse of the mass matrix
 
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     call multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
   else
@@ -294,13 +294,13 @@
   !       for reconstructing the rotational contributions
 
   ! current simulated time
-  if (USE_LDDRK)then
+  if (USE_LDDRK) then
     b_time = real((dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
     b_time = real((dble(NSTEP-it)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
-  if (UNDO_ATTENUATION)then
+  if (UNDO_ATTENUATION) then
     b_time = real((dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv, &
                   kind=CUSTOM_REAL)
   endif
@@ -369,7 +369,7 @@
 
       ! Stacey absorbing boundaries
       if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-        if (UNDO_ATTENUATION)then
+        if (UNDO_ATTENUATION) then
           call compute_stacey_outer_core_backward_undoatt()
         else
           call compute_stacey_outer_core_backward()
@@ -424,7 +424,7 @@
     if (iphase == 1) then
       ! sends out MPI interface data (non-blocking)
       ! adjoint simulations
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                               b_accel_outer_core, &
@@ -459,7 +459,7 @@
       ! make sure the last communications are finished and processed
       ! waits for send/receive requests to be completed and assembles values
       ! adjoint simulations
-      if (.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                    b_accel_outer_core, &
@@ -492,7 +492,7 @@
   enddo ! iphase
 
   ! multiply by the inverse of the mass matrix
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     call multiply_accel_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core,b_rmass_outer_core)
   else

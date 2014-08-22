@@ -218,7 +218,7 @@
   read(IIN) rmassz
 
   if (((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE))then
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
     read(IIN) b_rmassx
     read(IIN) b_rmassy
   endif

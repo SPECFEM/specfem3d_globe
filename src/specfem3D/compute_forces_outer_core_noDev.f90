@@ -331,7 +331,7 @@
 
     ! update rotation term with Euler scheme
     if (ROTATION_VAL) then
-      if (USE_LDDRK)then
+      if (USE_LDDRK) then
         ! use the source saved above
         A_array_rotation_lddrk(:,:,:,ispec) = ALPHA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec) + source_euler_A(:,:,:)
         A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + BETA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec)

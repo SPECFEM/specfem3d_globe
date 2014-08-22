@@ -183,14 +183,11 @@
   ! transfers wavefields from GPU device to CPU host
   if (GPU_MODE) then
     call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                    displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                                    Mesh_pointer)
+                                        displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle,Mesh_pointer)
     call transfer_fields_ic_from_device(NDIM*NGLOB_INNER_CORE, &
-                                    displ_inner_core,veloc_inner_core,accel_inner_core, &
-                                    Mesh_pointer)
+                                        displ_inner_core,veloc_inner_core,accel_inner_core,Mesh_pointer)
     call transfer_fields_oc_from_device(NGLOB_OUTER_CORE, &
-                                    displ_outer_core,veloc_outer_core,accel_outer_core, &
-                                    Mesh_pointer)
+                                        displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
     if (ROTATION_VAL) then
       call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
     endif

@@ -277,9 +277,9 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
  ! mass matrices for backward simulation when ROTATION is .true.
   local_dim = nglob_xy
-  if (EXACT_MASS_MATRIX_FOR_ROTATION)then
+  if (EXACT_MASS_MATRIX_FOR_ROTATION) then
     if ((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+       (ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
       call define_adios_global_real_1d_array(adios_group,group_size_inc, local_dim,region_name, STRINGIFY_VAR(b_rmassx) )
       call define_adios_global_real_1d_array(adios_group,group_size_inc, local_dim,region_name, STRINGIFY_VAR(b_rmassy) )
     endif
@@ -528,9 +528,9 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   ! mass matrices for backward simulation when ROTATION is .true.
   local_dim = nglob_xy
-  if (EXACT_MASS_MATRIX_FOR_ROTATION)then
+  if (EXACT_MASS_MATRIX_FOR_ROTATION) then
     if ((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+       (ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
       call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
                                        trim(region_name) // STRINGIFY_VAR(b_rmassx))
       call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &

@@ -43,9 +43,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
   int ispec, iglob, i;
 
   //checks if anything to do
-
-  if (mp->nrec_local == 0)
-    return;
+  if (mp->nrec_local == 0) return;
 
   int blocksize = NGLL3;
 
@@ -182,8 +180,7 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
   int ispec, iglob, i;
 
   //checks if anything to do
-  if (mp->nrec_local == 0)
-    return;
+  if (mp->nrec_local == 0) return;
 
   int blocksize = NGLL3;
 
@@ -339,9 +336,7 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   int* h_ispec_selected;
 
   // checks if anything to do
-  if (mp->nrec_local == 0) {
-    return;
-  }
+  if (mp->nrec_local == 0) return;
 
   // checks async-memcpy
   if (! GPU_ASYNC_COPY) {

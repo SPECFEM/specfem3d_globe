@@ -612,7 +612,7 @@
                 if (MOVIE_COARSE) then
                   if (NCHUNKS == 6) then
                     ! chunks mapped such that element corners increase in long/lat
-                    select case (iproc/NPROC+1)
+                    select case(iproc/NPROC+1)
                       case(CHUNK_AB)
                         xp(ieoff) = dble(x(1,NGLLY))
                         yp(ieoff) = dble(y(1,NGLLY))

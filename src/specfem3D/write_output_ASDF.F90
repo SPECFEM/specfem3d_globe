@@ -647,7 +647,7 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
                                  rank, nproc)
   !==========================
   !write out the string info
-  if (rank == 0)then
+  if (rank == 0) then
     call adios_write(adios_handle, "receiver_name", trim(receiver_name_total),adios_err)
     call adios_write(adios_handle, "network", trim(network_total), adios_err)
     call adios_write(adios_handle, "component",trim(component_total), adios_err)
@@ -676,7 +676,7 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
 
   !===========================
   !scalar
-  if (rank == 0)then
+  if (rank == 0) then
     call adios_write(adios_handle, "nrecords", nrecords_total, adios_err)
     call adios_write(adios_handle, "receiver_name_len", rn_len_total, adios_err)
     call adios_write(adios_handle, "network_len", nw_len_total, adios_err)
@@ -786,7 +786,7 @@ subroutine gather_offset_info(local_dim, global_dim, offset, rank, nproc)
 
   call gather_all_singlei(local_dim,dim_all_proc,nproc)
 
-  if (rank == 0)then
+  if (rank == 0) then
     offset_proc(1) = 0
     do i=2, nproc
       offset_proc(i)=sum(dim_all_proc(1:(i-1)))
@@ -820,7 +820,7 @@ subroutine gather_string_total_length(local_dim, global_dim, rank, nproc)
   integer, allocatable :: local_dim_all_proc(:)
   integer :: ierr
 
-  if (rank == 0)then
+  if (rank == 0) then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   else
@@ -830,7 +830,7 @@ subroutine gather_string_total_length(local_dim, global_dim, rank, nproc)
 
   call gather_all_singlei(local_dim,local_dim_all_proc,nproc)
 
-  if (rank == 0)then
+  if (rank == 0) then
     global_dim=sum(local_dim_all_proc(1:nproc))
   endif
 
@@ -872,7 +872,7 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset, &
   if (len_trim(string_piece) /= local_dim ) stop 'Error local string and local dim have different lengths'
 
   ! temporary arrays
-  if (rank == 0)then
+  if (rank == 0) then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(offset_all_proc(nproc),STAT=ierr)
@@ -887,7 +887,7 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset, &
   ! master gets all local string lengths
   call gather_all_singlei(local_dim,local_dim_all_proc,nproc)
 
-  if (rank == 0)then
+  if (rank == 0) then
     offset_all_proc(1) = 0
     do i=2, nproc
       offset_all_proc(i)=sum(local_dim_all_proc(1:(i-1)))
@@ -897,7 +897,7 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset, &
     string_total=trim(string_total)//trim(string_piece(1:local_dim))
   endif
 
-  if (rank == 0)then
+  if (rank == 0) then
     do i = 1,nproc-1
       ! checks if buffer length is sufficient
       if (local_dim_all_proc(i+1) > BUFFER_LENGTH) &

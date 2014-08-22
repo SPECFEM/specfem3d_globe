@@ -119,7 +119,7 @@ module BOAST
           print sn === potential_dot_acoustic[iglob] / vpstore[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]
           print jacobianw === abs_boundary_jacobian2D[INDEX2(ngll2,igll,iface)]*fac1
           print atomicAdd(potential_dot_dot_acoustic + iglob, -sn*jacobianw)
-          print if (save_forward ) {
+          print if (save_forward) {
             print b_absorb_potential[INDEX2(ngll2,igll,iface)] === sn*jacobianw
           }
         elsif type == :acoustic_backward then

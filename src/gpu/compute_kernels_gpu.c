@@ -619,16 +619,14 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->nspec2D_top_crust_mantle, &num_blocks_x, &num_blocks_y);
 
+  // copies surface buffer to GPU
+  gpuCopy_todevice_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-
-    // copies surface buffer to GPU
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
-                                   NDIM * NGLL2 * mp->nspec2D_top_crust_mantle * sizeof (realw),
-                                   h_noise_surface_movie, 0, NULL, NULL));
 
     // calculates noise strength kernel
     clCheck (clSetKernelArg (mocl.kernels.compute_strength_noise_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
@@ -656,11 +654,6 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLL2,1,1);
 
-    // copies surface buffer to GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_noise_surface_movie.cuda,h_noise_surface_movie,
-                                       NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),
-                                       cudaMemcpyHostToDevice),90900);
-
     // calculates noise strength kernel
     compute_strength_noise_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,
                                                                          mp->d_ibelm_top_crust_mantle.cuda,
@@ -674,6 +667,7 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
                                                                          mp->nspec2D_top_crust_mantle);
   }
 #endif
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("compute_strength_noise_kernel_kernel");
 #endif

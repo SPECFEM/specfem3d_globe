@@ -134,7 +134,7 @@ module BOAST
           (0..2).each { |indx|
             print atomicAdd(accel + iglob*3 + indx, -t[indx]*jacobianw)
           }
-          print if (save_forward ) {
+          print if (save_forward) {
             (0..2).each { |indx|
               print b_absorb_field[INDEX3(ndim,ngll2,indx,igll,iface)] === t[indx]*jacobianw
             }

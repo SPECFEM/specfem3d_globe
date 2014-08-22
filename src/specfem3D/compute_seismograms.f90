@@ -325,7 +325,7 @@
 !  ! checks if anything to do
 !  if (nrec_local == 0 ) return
 !
-!  if (mod(NT_DUMP_ATTENUATION,2) == 0)then
+!  if (mod(NT_DUMP_ATTENUATION,2) == 0) then
 !
 !    do irec_local = 1,nrec_local
 !      do i = 1,seismo_current/NT_DUMP_ATTENUATION

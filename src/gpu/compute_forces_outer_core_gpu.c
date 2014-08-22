@@ -283,8 +283,8 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
     num_elements = mp->nspec_inner_outer_core;
   }
 
-  if (num_elements == 0)
-    return;
+  // checks if anything to do
+  if (num_elements == 0) return;
 
   // mesh coloring
   if (mp->use_mesh_coloring_gpu) {

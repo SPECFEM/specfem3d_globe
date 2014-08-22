@@ -1685,7 +1685,7 @@
     endif
   endif
   ! zmin
-  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)))then
+  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
 
     ! size of single record
     reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * nspec2D_zmin_outer_core)

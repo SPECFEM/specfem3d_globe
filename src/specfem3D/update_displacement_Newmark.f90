@@ -240,7 +240,7 @@
   implicit none
 
   ! corrector terms for fluid parts to update velocity
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     call update_veloc_acoustic(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
                                deltatover2) !!!!!! ,rmass_outer_core)
@@ -265,7 +265,7 @@
   implicit none
 
   ! corrector terms for fluid parts to update velocity
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! adjoint / kernel runs
     call update_veloc_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
@@ -326,7 +326,7 @@
   implicit none
 
   ! corrector terms for elastic parts updates velocity
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     call update_veloc_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
                               NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
@@ -353,7 +353,7 @@
 
   ! corrector terms for elastic parts updates velocity
 
-  if (.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! adjoint / kernel runs
     ! uses corrected mass matrices for update

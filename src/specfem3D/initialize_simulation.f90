@@ -366,7 +366,7 @@
     if (ATTENUATION_VAL) then
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
-      if (.not. EXACT_UNDOING_TO_DISK)then
+      if (.not. EXACT_UNDOING_TO_DISK) then
         if (.not. UNDO_ATTENUATION) then
           if (.not. PARTIAL_PHYS_DISPERSION_ONLY) then
             call exit_MPI(myrank, &

@@ -60,7 +60,7 @@
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-          if (USE_LDDRK)then
+          if (USE_LDDRK) then
             stf_used = FACTOR_FORCE_SOURCE * &
                      comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
           else
@@ -74,7 +74,7 @@
                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
         else
-          if (USE_LDDRK)then
+          if (USE_LDDRK) then
             stf = comp_source_time_function(dble(it-1)*DT + &
                                             dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
           else
@@ -109,7 +109,7 @@
     ! prepares buffer with source time function values, to be copied onto GPU
     if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
-        if (USE_LDDRK)then
+        if (USE_LDDRK) then
           stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * &
                      comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
         else
@@ -119,7 +119,7 @@
       enddo
     else
       do isource = 1,NSOURCES
-        if (USE_LDDRK)then
+        if (USE_LDDRK) then
           stf_pre_compute(isource) = comp_source_time_function(dble(it-1)*DT + &
                                             dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
         else

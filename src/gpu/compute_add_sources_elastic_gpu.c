@@ -48,15 +48,14 @@ void FC_FUNC_ (compute_add_sources_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (NSOURCES, &num_blocks_x, &num_blocks_y);
 
+  // copies source time function buffer values to GPU
+  gpuCopy_todevice_double (&mp->d_stf_pre_compute, h_stf_pre_compute, NSOURCES);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[3];
     size_t local_work_size[3];
     cl_uint idx = 0;
-
-    // copies source time function buffer values to GPU
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_TRUE, 0,
-                                   NSOURCES * sizeof (double), h_stf_pre_compute, 0, NULL, NULL));
 
     // adds source contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
@@ -83,11 +82,6 @@ void FC_FUNC_ (compute_add_sources_gpu,
   if (run_cuda) {
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLLX,NGLLX,NGLLX);
-
-    // copies source time function buffer values to GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_stf_pre_compute.cuda,h_stf_pre_compute,
-                                       NSOURCES*sizeof(double),cudaMemcpyHostToDevice),71018);
-
     // adds source contributions
     compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
@@ -99,6 +93,7 @@ void FC_FUNC_ (compute_add_sources_gpu,
                                                                       NSOURCES);
   }
 #endif
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("compute_add_sources_gpu");
 #endif
@@ -128,15 +123,14 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (NSOURCES, &num_blocks_x, &num_blocks_y);
 
+  // copies source time function buffer values to GPU
+  gpuCopy_todevice_double (&mp->d_stf_pre_compute, h_stf_pre_compute, NSOURCES);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[3];
     size_t local_work_size[3];
     cl_uint idx = 0;
-
-    // copies source time function buffer values to GPU
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_stf_pre_compute.ocl, CL_TRUE, 0,
-                                   NSOURCES * sizeof (double), h_stf_pre_compute, 0, NULL, NULL));
 
     // adds source contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_add_sources_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
@@ -164,10 +158,6 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLLX,NGLLX,NGLLX);
 
-    // copies source time function buffer values to GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_stf_pre_compute.cuda,h_stf_pre_compute,
-                                       NSOURCES*sizeof(double),cudaMemcpyHostToDevice),71019);
-
     compute_add_sources_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle.cuda,
                                                                       mp->d_ibool_crust_mantle.cuda,
                                                                       mp->d_sourcearrays.cuda,
@@ -178,6 +168,7 @@ void FC_FUNC_ (compute_add_sources_backward_gpu,
                                                                       NSOURCES);
   }
 #endif
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("compute_add_sources_backward_gpu");
 #endif
@@ -345,19 +336,8 @@ void FC_FUNC_(transfer_adj_to_device,
   }
 
   // copies extracted array values onto GPU
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_adj_sourcearrays.ocl, CL_TRUE, 0,
-                                   mp->nadj_rec_local * NDIM * NGLL3 * sizeof (realw),
-                                   mp->h_adj_sourcearrays_slice, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_adj_sourcearrays.cuda, mp->h_adj_sourcearrays_slice,
-                                       (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw),cudaMemcpyHostToDevice),71000);
-  }
-#endif
+  gpuCopy_todevice_realw (&mp->d_adj_sourcearrays, mp->h_adj_sourcearrays_slice, mp->nadj_rec_local * NDIM * NGLL3);
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("compute_add_sources_adjoint_gpu");
 #endif
@@ -443,9 +423,9 @@ please check mesh_constants_cuda.h");
   }
 
   // check all local sources were added
-  if (irec_local != mp->nadj_rec_local) {
-    exit_on_error("irec_local not equal to nadj_rec_local\n");
-  }
+  if (irec_local != mp->nadj_rec_local) exit_on_error("irec_local not equal to nadj_rec_local\n");
+
+  // copies to GPU asynchronuously
 #ifdef USE_OPENCL
   if (run_opencl) {
     cl_event *copy_evt = NULL;
