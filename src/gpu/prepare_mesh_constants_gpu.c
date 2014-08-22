@@ -43,8 +43,7 @@ cl_mem moclGetDummyImage2D (Mesh *mp) {
 
   if (!inited) {
     cl_image_format format = {CL_RGBA, CL_UNSIGNED_INT32};
-    image2d = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY,
-                               &format, 10, 10, 0, NULL, clck_(&errcode));
+    image2d = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, 10, 10, 0, NULL, clck_(&errcode));
     inited = 1;
   } else {
     clRetainMemObject (image2d);
@@ -109,7 +108,7 @@ void FC_FUNC_ (prepare_constants_device,
   Mesh *mp = (Mesh *) malloc (sizeof (Mesh));
 
   // checks pointer
-  if (! mp) exit_on_error ("error allocating mesh pointer");
+  if (! mp) exit_on_error ("Error allocating mesh pointer");
 
   // sets fortran pointer
   *Mesh_pointer = (long) mp;
@@ -118,12 +117,12 @@ void FC_FUNC_ (prepare_constants_device,
   // constants defined in constants.h and mesh_constants_gpu.h have to match
   if (*h_NGLLX != NGLLX) { exit_on_error ("NGLLX must be set to 5 for GPU devices in constants.h; please re-compile"); }
   if (*GPU_ASYNC_COPY_f) {
-    if( ! GPU_ASYNC_COPY) { exit_on_error ("GPU_ASYNC_COPY must be set to 1 for GPU devices in mesh_constants_gpu.h; please re-compile"); }
+    if (! GPU_ASYNC_COPY) { exit_on_error ("GPU_ASYNC_COPY must be set to 1 for GPU devices in mesh_constants_gpu.h; please re-compile"); }
   }else{
     if (GPU_ASYNC_COPY) { exit_on_error ("GPU_ASYNC_COPY must be set to 0 for GPU devices in mesh_constants_gpu.h; please re-compile"); }
   }
 #ifdef USE_MESH_COLORING_GPU
-  if (! *USE_MESH_COLORING_GPU_f) { exit_on_error("error with USE_MESH_COLORING_GPU constant; please re-compile\n"); }
+  if (! *USE_MESH_COLORING_GPU_f) { exit_on_error("Error with USE_MESH_COLORING_GPU constant; please re-compile\n"); }
 #endif
 
   // initializes gpu array pointers
@@ -174,7 +173,7 @@ void FC_FUNC_ (prepare_constants_device,
     // in the code with #USE_TEXTURES_FIELDS not-defined.
 #ifdef USE_TEXTURES_CONSTANTS
     // checks that realw is a float
-    if( sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
+    if (sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
 
     // note: device memory returned by cudaMalloc guarantee that the offset is 0,
     //       however here we use the global memory array d_hprime_xx and need to provide an offset variable
@@ -203,14 +202,14 @@ void FC_FUNC_ (prepare_constants_device,
     // d_hprime_xx was cudaMalloced, so offset is 0
     //print_CUDA_error_if_any(cudaMemcpyToSymbol(d_hprime_xx_tex_offset,&offset,sizeof(offset)),11202);
     // debug
-    //if( mp->myrank == 0 ) printf("texture constants hprime_xx: offset = %lu \n",offset);
+    //if (mp->myrank == 0 ) printf("texture constants hprime_xx: offset = %lu \n",offset);
 
     // weighted
     print_CUDA_error_if_any(cudaBindTexture(&offset, &d_hprimewgll_xx_tex, mp->d_hprimewgll_xx.cuda,
                                             &channelDesc, sizeof(realw)*(NGLL2)), 11204);
     //print_CUDA_error_if_any(cudaMemcpyToSymbol(d_hprimewgll_xx_tex_offset,&offset,sizeof(offset)),11205);
     // debug
-    //if( mp->myrank == 0 ) printf("texture constants hprimewgll_xx: offset = %lu \n",offset);
+    //if (mp->myrank == 0 ) printf("texture constants hprimewgll_xx: offset = %lu \n",offset);
 #endif
 #endif
   }
@@ -324,7 +323,7 @@ void FC_FUNC_ (prepare_constants_device,
   if (mp->nadj_rec_local > 0) {
     // adjoint simulations
     // checks simulation flag
-    if( mp->simulation_type != 2 && mp->simulation_type != 3 )
+    if (mp->simulation_type != 2 && mp->simulation_type != 3 )
       exit_on_error ("prepare_constants_device: nadj_rec_local invalid with simulation type\n");
 
     // prepares local irec array:
@@ -394,7 +393,7 @@ void FC_FUNC_ (prepare_constants_device,
   mp->two_omega_earth = 0.f;
   mp->b_two_omega_earth = 0.f;
 
-#if USE_OPENCL
+#ifdef USE_OPENCL
   if (run_opencl) {
     mp->has_last_copy_evt = 0;
   }
@@ -426,11 +425,11 @@ void FC_FUNC_ (prepare_fields_rotation_device,
 
   // arrays only needed when rotation is required
 
-  if( ! mp->rotation ){exit_on_error("prepare_fields_rotation_device: rotation flag not properly initialized");}
+  if (! mp->rotation) {exit_on_error("prepare_fields_rotation_device: rotation flag not properly initialized");}
 
   // checks array size
   if (*NSPEC_OUTER_CORE_ROTATION != mp->NSPEC_OUTER_CORE) {
-    printf ("error prepare_fields_rotation_device: rotation array has wrong size: %d instead of %d\n",
+    printf ("Error prepare_fields_rotation_device: rotation array has wrong size: %d instead of %d\n",
             *NSPEC_OUTER_CORE_ROTATION, mp->NSPEC_OUTER_CORE);
     exit_on_error ("prepare_fields_rotation_device: rotation array has wrong size");
   }
@@ -544,7 +543,7 @@ void FC_FUNC_ (prepare_fields_attenuat_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks flag
-  if( ! mp->attenuation ){ exit_on_error("prepare_fields_attenuat_device attenuation not properly initialized"); }
+  if (! mp->attenuation) { exit_on_error("prepare_fields_attenuat_device attenuation not properly initialized"); }
 
   // crust_mantle
   R_size1 = N_SLS*NGLL3*mp->NSPEC_CRUST_MANTLE;
@@ -1007,7 +1006,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
         print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_send_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
         // receive buffer
         print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
-        if( mp->simulation_type == 3){
+        if (mp->simulation_type == 3) {
           print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
           print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_cm),sizeof(realw)* size_mpi_buffer ),8004);
         }
@@ -1058,7 +1057,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
         // receive buffer
         print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
         // adjoint
-        if( mp->simulation_type == 3){
+        if (mp->simulation_type == 3) {
           print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
           print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_ic),sizeof(realw)*size_mpi_buffer ),8004);
         }
@@ -1109,7 +1108,7 @@ void FC_FUNC_ (prepare_mpi_buffers_device,
         print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_send_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
         // receive buffer
         print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_recv_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
-        if( mp->simulation_type == 3){
+        if (mp->simulation_type == 3) {
           print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_send_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
           print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_b_recv_accel_buffer_oc),sizeof(realw)*size_mpi_buffer ),8004);
         }
@@ -1326,23 +1325,23 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_crust_mantle.cuda + i*NGLL3_PADDED, &h_xix[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_crust_mantle.cuda+i*NGLL3_PADDED, &h_xix[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1501);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_crust_mantle.cuda+i*NGLL3_PADDED,   &h_xiy[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_crust_mantle.cuda+i*NGLL3_PADDED, &h_xiy[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1502);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_crust_mantle.cuda+i*NGLL3_PADDED,   &h_xiz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_crust_mantle.cuda+i*NGLL3_PADDED, &h_xiz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1503);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_crust_mantle.cuda+i*NGLL3_PADDED,  &h_etax[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_crust_mantle.cuda+i*NGLL3_PADDED, &h_etax[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1504);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_crust_mantle.cuda+i*NGLL3_PADDED,  &h_etay[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_crust_mantle.cuda+i*NGLL3_PADDED, &h_etay[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1505);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_crust_mantle.cuda+i*NGLL3_PADDED,  &h_etaz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_crust_mantle.cuda+i*NGLL3_PADDED, &h_etaz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1506);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_crust_mantle.cuda+i*NGLL3_PADDED,&h_gammax[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_crust_mantle.cuda+i*NGLL3_PADDED, &h_gammax[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1507);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_crust_mantle.cuda+i*NGLL3_PADDED,&h_gammay[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_crust_mantle.cuda+i*NGLL3_PADDED, &h_gammay[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1508);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_crust_mantle.cuda+i*NGLL3_PADDED,&h_gammaz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_crust_mantle.cuda+i*NGLL3_PADDED, &h_gammaz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1509);
     }
 #endif
@@ -1401,7 +1400,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
         print_CUDA_error_if_any(cudaMemcpy(mp->d_kappahstore_crust_mantle.cuda+i*NGLL3_PADDED,&h_kappah[i*NGLL3],
                                            NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1511);
 
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_muvstore_crust_mantle.cuda+i*NGLL3_PADDED,   &h_muv[i*NGLL3],
+        print_CUDA_error_if_any(cudaMemcpy(mp->d_muvstore_crust_mantle.cuda+i*NGLL3_PADDED,  &h_muv[i*NGLL3],
                                            NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1512);
         print_CUDA_error_if_any(cudaMemcpy(mp->d_muhstore_crust_mantle.cuda+i*NGLL3_PADDED,&h_muh[i*NGLL3],
                                            NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1513);
@@ -1614,7 +1613,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     gpuMalloc_realw (&mp->d_b_accel_crust_mantle, size);
 
     //debugging with empty arrays
-    if (DEBUG_BACKWARD_SIMULATIONS == 1){
+    if (DEBUG_BACKWARD_SIMULATIONS == 1) {
       gpuMemset_realw (&mp->d_b_displ_crust_mantle, size, 0);
       gpuMemset_realw (&mp->d_b_veloc_crust_mantle, size, 0);
       gpuMemset_realw (&mp->d_b_accel_crust_mantle, size, 0);
@@ -1651,7 +1650,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #ifdef USE_TEXTURES_FIELDS
     {
     // checks single precision
-    if( sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
+    if (sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
     // binds textures
 #ifdef USE_OLDER_CUDA4_GPU
       cudaChannelFormatDesc channelDesc = cudaCreateChannelDesc<realw>();
@@ -1666,7 +1665,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
                                               &channelDesc, sizeof(realw)*size), 4023);
 
       // backward/reconstructed wavefields
-      if( mp->simulation_type == 3 ){
+      if (mp->simulation_type == 3) {
         const textureReference* d_b_displ_cm_tex_ref_ptr;
         print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_cm_tex_ref_ptr, "d_b_displ_cm_tex"), 4021);
         print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_cm_tex_ref_ptr, mp->d_b_displ_crust_mantle.cuda,
@@ -1684,7 +1683,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
       print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_cm_tex, mp->d_accel_crust_mantle.cuda,
                                               &channelDesc, sizeof(realw)*size), 4023);
       // backward/reconstructed wavefields
-      if( mp->simulation_type == 3 ){
+      if (mp->simulation_type == 3) {
         print_CUDA_error_if_any(cudaBindTexture(0, &d_b_displ_cm_tex, mp->d_b_displ_crust_mantle.cuda,
                                                 &channelDesc, sizeof(realw)*size), 4021);
         print_CUDA_error_if_any(cudaBindTexture(0, &d_b_accel_cm_tex, mp->d_b_accel_crust_mantle.cuda,
@@ -1853,23 +1852,23 @@ void FC_FUNC_ (prepare_outer_core_device,
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_outer_core.cuda + i*NGLL3_PADDED, &h_xix[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_outer_core.cuda+i*NGLL3_PADDED, &h_xix[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1501);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_outer_core.cuda+i*NGLL3_PADDED,   &h_xiy[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_outer_core.cuda+i*NGLL3_PADDED, &h_xiy[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1502);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_outer_core.cuda+i*NGLL3_PADDED,   &h_xiz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_outer_core.cuda+i*NGLL3_PADDED, &h_xiz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1503);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_outer_core.cuda+i*NGLL3_PADDED,  &h_etax[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_outer_core.cuda+i*NGLL3_PADDED, &h_etax[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1504);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_outer_core.cuda+i*NGLL3_PADDED,  &h_etay[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_outer_core.cuda+i*NGLL3_PADDED, &h_etay[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1505);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_outer_core.cuda+i*NGLL3_PADDED,  &h_etaz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_outer_core.cuda+i*NGLL3_PADDED, &h_etaz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1506);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_outer_core.cuda+i*NGLL3_PADDED,&h_gammax[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_outer_core.cuda+i*NGLL3_PADDED, &h_gammax[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1507);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_outer_core.cuda+i*NGLL3_PADDED,&h_gammay[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_outer_core.cuda+i*NGLL3_PADDED, &h_gammay[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1508);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_outer_core.cuda+i*NGLL3_PADDED,&h_gammaz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_outer_core.cuda+i*NGLL3_PADDED, &h_gammaz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1509);
 
       print_CUDA_error_if_any(cudaMemcpy(mp->d_kappavstore_outer_core.cuda+i*NGLL3_PADDED,&h_kappav[i*NGLL3],
@@ -1945,7 +1944,7 @@ void FC_FUNC_ (prepare_outer_core_device,
     gpuMalloc_realw (&mp->d_b_accel_outer_core, size_glob);
 
     //debugging with empty arrays
-    if (DEBUG_BACKWARD_SIMULATIONS == 1){
+    if (DEBUG_BACKWARD_SIMULATIONS == 1) {
       gpuMemset_realw (&mp->d_b_displ_outer_core, size_glob, 0);
       gpuMemset_realw (&mp->d_b_veloc_outer_core, size_glob, 0);
       gpuMemset_realw (&mp->d_b_accel_outer_core, size_glob, 0);
@@ -1992,7 +1991,7 @@ void FC_FUNC_ (prepare_outer_core_device,
     print_CUDA_error_if_any(cudaBindTexture(0, d_accel_oc_tex_ref_ptr, mp->d_accel_outer_core.cuda,
                                             &channelDesc, sizeof(realw)*size_glob), 5023);
     // backward/reconstructed wavefields
-    if( mp->simulation_type == 3 ){
+    if (mp->simulation_type == 3) {
       const textureReference* d_b_displ_oc_tex_ref_ptr;
       print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_oc_tex_ref_ptr, "d_b_displ_oc_tex"), 5021);
       print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_oc_tex_ref_ptr, mp->d_b_displ_outer_core.cuda,
@@ -2010,7 +2009,7 @@ void FC_FUNC_ (prepare_outer_core_device,
     print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_oc_tex, mp->d_accel_outer_core.cuda,
                                             &channelDesc, sizeof(realw)*size_glob), 5023);
     // backward/reconstructed wavefields
-    if( mp->simulation_type == 3 ){
+    if (mp->simulation_type == 3) {
       print_CUDA_error_if_any(cudaBindTexture(0, &d_b_displ_oc_tex, mp->d_b_displ_outer_core.cuda,
                                               &channelDesc, sizeof(realw)*size_glob), 5021);
       print_CUDA_error_if_any(cudaBindTexture(0, &d_b_accel_oc_tex, mp->d_b_accel_outer_core.cuda,
@@ -2107,7 +2106,7 @@ void FC_FUNC_ (prepare_inner_core_device,
 
   // transfer constant element data with padding
   int i;
-  for (i=0;i < mp->NSPEC_INNER_CORE;i++) {
+  for (i = 0;i < mp->NSPEC_INNER_CORE;i++) {
 #ifdef USE_OPENCL
     if (run_opencl) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
@@ -2145,26 +2144,26 @@ void FC_FUNC_ (prepare_inner_core_device,
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_inner_core.cuda + i*NGLL3_PADDED, &h_xix[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_inner_core.cuda+i*NGLL3_PADDED, &h_xix[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1501);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_inner_core.cuda+i*NGLL3_PADDED,   &h_xiy[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_inner_core.cuda+i*NGLL3_PADDED, &h_xiy[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1502);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_inner_core.cuda+i*NGLL3_PADDED,   &h_xiz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_inner_core.cuda+i*NGLL3_PADDED, &h_xiz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1503);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_inner_core.cuda+i*NGLL3_PADDED,  &h_etax[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_inner_core.cuda+i*NGLL3_PADDED, &h_etax[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1504);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_inner_core.cuda+i*NGLL3_PADDED,  &h_etay[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_inner_core.cuda+i*NGLL3_PADDED, &h_etay[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1505);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_inner_core.cuda+i*NGLL3_PADDED,  &h_etaz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_inner_core.cuda+i*NGLL3_PADDED, &h_etaz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1506);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_inner_core.cuda+i*NGLL3_PADDED,&h_gammax[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_inner_core.cuda+i*NGLL3_PADDED, &h_gammax[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1507);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_inner_core.cuda+i*NGLL3_PADDED,&h_gammay[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_inner_core.cuda+i*NGLL3_PADDED, &h_gammay[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1508);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_inner_core.cuda+i*NGLL3_PADDED,&h_gammaz[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_inner_core.cuda+i*NGLL3_PADDED, &h_gammaz[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1509);
 
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_muvstore_inner_core.cuda+i*NGLL3_PADDED,   &h_muv[i*NGLL3],
+      print_CUDA_error_if_any(cudaMemcpy(mp->d_muvstore_inner_core.cuda+i*NGLL3_PADDED, &h_muv[i*NGLL3],
                                          NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1511);
     }
 #endif
@@ -2304,7 +2303,7 @@ void FC_FUNC_ (prepare_inner_core_device,
     gpuMalloc_realw (&mp->d_b_accel_inner_core, size);
 
     //debugging with empty arrays
-    if (DEBUG_BACKWARD_SIMULATIONS == 1){
+    if (DEBUG_BACKWARD_SIMULATIONS == 1) {
       gpuMemset_realw (&mp->d_displ_inner_core, size, 0);
       gpuMemset_realw (&mp->d_veloc_inner_core, size, 0);
       gpuMemset_realw (&mp->d_accel_inner_core, size, 0);
@@ -2319,7 +2318,7 @@ void FC_FUNC_ (prepare_inner_core_device,
     mp->d_displ_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_displ_inner_core.ocl, clck_(&errcode));
     mp->d_accel_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_accel_inner_core.ocl, clck_(&errcode));
     // backward/reconstructed fields
-    if( mp->simulation_type == 3 ){
+    if (mp->simulation_type == 3) {
       mp->d_b_displ_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_displ_inner_core.ocl, clck_(&errcode));
       mp->d_b_accel_ic_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, size, 1, 0, mp->d_b_accel_inner_core.ocl, clck_(&errcode));
     } else {
@@ -2351,7 +2350,7 @@ void FC_FUNC_ (prepare_inner_core_device,
       print_CUDA_error_if_any(cudaBindTexture(0, d_accel_ic_tex_ref_ptr, mp->d_accel_inner_core,
                                               &channelDesc, sizeof(realw)*size), 6023);
       // backward/reconstructed wavefields
-      if( mp->simulation_type == 3 ){
+      if (mp->simulation_type == 3) {
         const textureReference* d_b_displ_ic_tex_ref_ptr;
         print_CUDA_error_if_any(cudaGetTextureReference(&d_b_displ_ic_tex_ref_ptr, "d_b_displ_ic_tex"), 6021);
         print_CUDA_error_if_any(cudaBindTexture(0, d_b_displ_ic_tex_ref_ptr, mp->d_b_displ_inner_core,
@@ -2370,7 +2369,7 @@ void FC_FUNC_ (prepare_inner_core_device,
       print_CUDA_error_if_any(cudaBindTexture(0, &d_accel_ic_tex, mp->d_accel_inner_core.cuda,
                                               &channelDesc, sizeof(realw)*size), 6023);
       // backward/reconstructed wavefields
-      if( mp->simulation_type == 3 ){
+      if (mp->simulation_type == 3) {
         print_CUDA_error_if_any(cudaBindTexture(0, &d_b_displ_ic_tex, mp->d_b_displ_inner_core.cuda,
                                                 &channelDesc, sizeof(realw)*size), 6021);
         print_CUDA_error_if_any(cudaBindTexture(0, &d_b_accel_ic_tex, mp->d_b_accel_inner_core.cuda,
@@ -2463,19 +2462,19 @@ void FC_FUNC_ (prepare_cleanup_device,
 #ifdef USE_TEXTURES_FIELDS
     cudaUnbindTexture(d_displ_cm_tex);
     cudaUnbindTexture(d_accel_cm_tex);
-    if( mp->simulation_type == 3 ){
+    if (mp->simulation_type == 3) {
       cudaUnbindTexture(d_b_displ_cm_tex);
       cudaUnbindTexture(d_b_accel_cm_tex);
     }
     cudaUnbindTexture(d_displ_ic_tex);
     cudaUnbindTexture(d_accel_ic_tex);
-    if( mp->simulation_type == 3 ){
+    if (mp->simulation_type == 3) {
       cudaUnbindTexture(d_b_displ_ic_tex);
       cudaUnbindTexture(d_b_accel_ic_tex);
     }
     cudaUnbindTexture(d_displ_oc_tex);
     cudaUnbindTexture(d_accel_oc_tex);
-    if( mp->simulation_type == 3 ){
+    if (mp->simulation_type == 3) {
       cudaUnbindTexture(d_b_displ_oc_tex);
       cudaUnbindTexture(d_b_accel_oc_tex);
     }
@@ -2557,27 +2556,27 @@ void FC_FUNC_ (prepare_cleanup_device,
       if (GPU_ASYNC_COPY) {
         cudaFreeHost(mp->h_send_accel_buffer_cm);
         cudaFreeHost(mp->h_recv_accel_buffer_cm);
-        if( mp->simulation_type == 3 ){
+        if (mp->simulation_type == 3) {
           cudaFreeHost(mp->h_b_send_accel_buffer_cm);
           cudaFreeHost(mp->h_b_recv_accel_buffer_cm);
         }
       }
     }
-    if( mp->num_interfaces_inner_core > 0 ){
+    if (mp->num_interfaces_inner_core > 0) {
       if (GPU_ASYNC_COPY) {
         cudaFreeHost(mp->h_send_accel_buffer_ic);
         cudaFreeHost(mp->h_recv_accel_buffer_ic);
-        if( mp->simulation_type == 3 ){
+        if (mp->simulation_type == 3) {
           cudaFreeHost(mp->h_b_send_accel_buffer_ic);
           cudaFreeHost(mp->h_b_recv_accel_buffer_ic);
         }
       }
     }
-    if( mp->num_interfaces_outer_core > 0 ){
+    if (mp->num_interfaces_outer_core > 0) {
       if (GPU_ASYNC_COPY) {
         cudaFreeHost(mp->h_send_accel_buffer_oc);
         cudaFreeHost(mp->h_recv_accel_buffer_oc);
-        if( mp->simulation_type == 3 ){
+        if (mp->simulation_type == 3) {
           cudaFreeHost(mp->h_b_send_accel_buffer_oc);
           cudaFreeHost(mp->h_b_recv_accel_buffer_oc);
         }
@@ -2700,7 +2699,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     gpuFree (&mp->d_eps_trace_over_3_crust_mantle);
     gpuFree (&mp->d_eps_trace_over_3_inner_core);
 
-    if (mp->simulation_type == 3 && ! mp->undo_attenuation){
+    if (mp->simulation_type == 3 && ! mp->undo_attenuation) {
       gpuFree (&mp->d_b_epsilondev_xx_crust_mantle);
       gpuFree (&mp->d_b_epsilondev_yy_crust_mantle);
       gpuFree (&mp->d_b_epsilondev_xy_crust_mantle);
@@ -2721,7 +2720,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
   // absorbing boundaries arrays
   //------------------------------------------
-  if (mp->absorbing_conditions){
+  if (mp->absorbing_conditions) {
     gpuFree (&mp->d_rho_vp_crust_mantle);
     gpuFree (&mp->d_rho_vs_crust_mantle);
     gpuFree (&mp->d_nkmin_xi_crust_mantle);
@@ -2912,7 +2911,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   // mass matrix
   gpuFree (&mp->d_rmassz_crust_mantle);
-  if (*NCHUNKS_VAL != 6 && mp->absorbing_conditions){
+  if (*NCHUNKS_VAL != 6 && mp->absorbing_conditions) {
     gpuFree (&mp->d_rmassx_crust_mantle);
     gpuFree (&mp->d_rmassy_crust_mantle);
   }
@@ -2925,7 +2924,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     }
     // kernels
     gpuFree (&mp->d_rho_kl_crust_mantle);
-    if (!mp->anisotropic_kl){
+    if (!mp->anisotropic_kl) {
       gpuFree (&mp->d_alpha_kl_crust_mantle);
       gpuFree (&mp->d_beta_kl_crust_mantle);
     } else {

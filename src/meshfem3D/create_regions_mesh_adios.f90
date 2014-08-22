@@ -122,7 +122,7 @@
   !--- Open an ADIOS handler to the AVS_DX file. ---------
   outputname = trim(reg_name) // "AVS_DX.bp"
   ! user output
-  if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+  if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
   call adios_open (adios_handle, group_name, outputname, "w", comm, ier)
   call check_adios_err(myrank,ier)
@@ -177,12 +177,9 @@
   call adios_close(adios_handle, ier)
 
   !--- Clean up temporary arrays -------------------------
-  call free_AVS_DX_global_data_adios(myrank, avs_dx_global_vars)
-  call free_AVS_DX_global_faces_data_adios(myrank, avs_dx_global_faces_vars, &
-      ISOTROPIC_3D_MANTLE)
-  call free_AVS_DX_global_chunks_data_adios(myrank, avs_dx_global_chunks_vars, &
-      ISOTROPIC_3D_MANTLE)
-  call free_AVS_DX_surfaces_data_adios(myrank, avs_dx_surface_vars, &
-      ISOTROPIC_3D_MANTLE)
+  call free_AVS_DX_global_data_adios(avs_dx_global_vars)
+  call free_AVS_DX_global_faces_data_adios(avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
+  call free_AVS_DX_global_chunks_data_adios(avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
+  call free_AVS_DX_surfaces_data_adios(avs_dx_surface_vars, ISOTROPIC_3D_MANTLE)
 
   end subroutine crm_save_mesh_files_adios

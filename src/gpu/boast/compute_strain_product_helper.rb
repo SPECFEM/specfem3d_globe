@@ -34,12 +34,12 @@ module BOAST
       print For(i, 0, 5) {
         print For(j, 0, 5) {
           print prod[p] === eps[i]*b_eps[j]
-          print If(j>i) {
+          print if (j>i) {
             print prod[p] === prod[p] + eps[j]*b_eps[i]
-            print If( Expression("&&", j>2, i<3) ) {
+            print if (Expression("&&", j>2, i<3) ) {
               print prod[p] === prod[p]*2.0
             }
-            print If(i>2) {
+            print if (i>2) {
               print prod[p] === prod[p]*4.0
             }
             print p === p + 1

@@ -60,7 +60,7 @@
   call read_value_integer(NCHUNKS, 'NCHUNKS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: NCHUNKS'
 
-  if( NCHUNKS == 6 ) then
+  if (NCHUNKS == 6) then
     ! global simulations
     ANGULAR_WIDTH_XI_IN_DEGREES = 90.d0
     ANGULAR_WIDTH_ETA_IN_DEGREES = 90.d0
@@ -260,24 +260,24 @@
   call close_parameter_file()
 
   ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
-  if(.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+  if (.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
 
   ! produces simulations compatible with old globe version 5.1.5
-  if( USE_OLD_VERSION_5_1_5_FORMAT ) then
+  if (USE_OLD_VERSION_5_1_5_FORMAT) then
     print*
     print*,'**************'
     print*,'using globe version 5.1.5 compatible simulation parameters'
-    if( .not. ATTENUATION_1D_WITH_3D_STORAGE ) &
+    if (.not. ATTENUATION_1D_WITH_3D_STORAGE ) &
       stop 'ATTENUATION_1D_WITH_3D_STORAGE should be set to .true. for compatibility with globe version 5.1.5 '
-    if( UNDO_ATTENUATION ) then
+    if (UNDO_ATTENUATION) then
       print*,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
       UNDO_ATTENUATION = .false.
     endif
-    if( USE_LDDRK ) then
+    if (USE_LDDRK) then
       print*,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
       USE_LDDRK = .false.
     endif
-    if( EXACT_MASS_MATRIX_FOR_ROTATION ) then
+    if (EXACT_MASS_MATRIX_FOR_ROTATION) then
       print*,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
       EXACT_MASS_MATRIX_FOR_ROTATION = .false.
     endif
@@ -286,11 +286,11 @@
   endif
 
   ! checks flags when perfect sphere is set
-  if( ASSUME_PERFECT_SPHERE ) then
-    if( ELLIPTICITY ) then
+  if (ASSUME_PERFECT_SPHERE) then
+    if (ELLIPTICITY) then
       stop 'ELLIPTICITY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
     endif
-    if( TOPOGRAPHY ) then
+    if (TOPOGRAPHY) then
       stop 'TOPOGRAPHY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
     endif
   endif
@@ -304,27 +304,27 @@
 ! please remove these security checks only after validating new features
 
 !! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
-  if( ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
+  if (ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
     stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
-  if( ADIOS_ENABLED .and. UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 ) &
+  if (ADIOS_ENABLED .and. UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 ) &
     stop 'ADIOS_ENABLED support not implemented yet for UNDO_ATTENUATION and SIMULATION_TYPE == 3'
 
-  if( USE_LDDRK .and. SIMULATION_TYPE == 3 ) &
+  if (USE_LDDRK .and. SIMULATION_TYPE == 3 ) &
     stop 'USE_LDDRK support not implemented yet for SIMULATION_TYPE == 3'
-  if( USE_LDDRK .and. GPU_MODE ) &
+  if (USE_LDDRK .and. GPU_MODE ) &
     stop 'USE_LDDRK support not implemented yet for GPU simulations'
 
-  if( UNDO_ATTENUATION .and. NOISE_TOMOGRAPHY > 0 ) &
+  if (UNDO_ATTENUATION .and. NOISE_TOMOGRAPHY > 0 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for noise simulations'
-  if( UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
+  if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
-  if( UNDO_ATTENUATION .and. GPU_MODE ) &
+  if (UNDO_ATTENUATION .and. GPU_MODE ) &
     stop 'UNDO_ATTENUATION support not implemented yet for GPU simulations'
-  if( UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &
+  if (UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &
     stop 'UNDO_ATTENUATION support not implemented yet for SIMULATION_TYPE == 3 and movie simulations'
 
   ! ASDF
-  if( OUTPUT_SEISMOS_ASDF .and. WRITE_SEISMOGRAMS_BY_MASTER ) &
+  if (OUTPUT_SEISMOS_ASDF .and. WRITE_SEISMOGRAMS_BY_MASTER ) &
     stop 'OUTPUT_SEISMOS_ASDF support not implemented yet for WRITE_SEISMOGRAMS_BY_MASTER set to .true.'
 
   end subroutine read_parameter_file

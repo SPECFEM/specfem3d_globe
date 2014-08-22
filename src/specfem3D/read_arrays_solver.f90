@@ -104,7 +104,7 @@
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data.bin', &
         status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data.bin')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening solver_data.bin')
 
   ! read coordinates of the mesh
 
@@ -112,17 +112,17 @@
   read(IIN) lnglob
 
   ! checks dimensions
-  if( lnspec /= nspec ) then
+  if (lnspec /= nspec) then
     close(IIN)
-    print*,'error file dimension: nspec in file = ',lnspec,' but nspec desired:',nspec
+    print*,'Error file dimension: nspec in file = ',lnspec,' but nspec desired:',nspec
     print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
-    call exit_mpi(myrank,'error dimensions in solver_data.bin')
+    call exit_mpi(myrank,'Error dimensions in solver_data.bin')
   endif
-  if( lnglob /= nglob ) then
+  if (lnglob /= nglob) then
     close(IIN)
-    print*,'error file dimension: nglob in file = ',lnglob,' but nglob desired:',nglob
+    print*,'Error file dimension: nglob in file = ',lnglob,' but nglob desired:',nglob
     print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
-    call exit_mpi(myrank,'error dimensions in solver_data.bin')
+    call exit_mpi(myrank,'Error dimensions in solver_data.bin')
   endif
 
   ! mesh coordinates
@@ -149,16 +149,16 @@
   read(IIN) rhostore
   read(IIN) kappavstore
 
-  if(READ_KAPPA_MU) read(IIN) muvstore
+  if (READ_KAPPA_MU) read(IIN) muvstore
 
   ! for anisotropy, gravity and rotation
-  if(TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
+  if (TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
     read(IIN) kappahstore
     read(IIN) muhstore
     read(IIN) eta_anisostore
   endif
 
-  if(ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
+  if (ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
     read(IIN) c11store
     read(IIN) c12store
     read(IIN) c13store
@@ -166,7 +166,7 @@
     read(IIN) c44store
   endif
 
-  if(ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
+  if (ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
     read(IIN) c11store
     read(IIN) c12store
     read(IIN) c13store
@@ -191,11 +191,11 @@
   endif
 
   ! Stacey
-  if(ABSORBING_CONDITIONS) then
-    if(iregion_code == IREGION_CRUST_MANTLE) then
+  if (ABSORBING_CONDITIONS) then
+    if (iregion_code == IREGION_CRUST_MANTLE) then
       read(IIN) rho_vp
       read(IIN) rho_vs
-    else if(iregion_code == IREGION_OUTER_CORE) then
+    else if (iregion_code == IREGION_OUTER_CORE) then
       read(IIN) rho_vp
     endif
   endif
@@ -208,7 +208,7 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if( ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+  if (((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
     read(IIN) rmassx
@@ -217,14 +217,14 @@
 
   read(IIN) rmassz
 
-  if( ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+  if (((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE))then
     read(IIN) b_rmassx
     read(IIN) b_rmassy
   endif
 
   ! read additional ocean load mass matrix
-  if(OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
+  if (OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) read(IIN) rmass_ocean_load
 
   close(IIN) ! solver_data.bin
 

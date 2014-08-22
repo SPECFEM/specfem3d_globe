@@ -64,7 +64,7 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   write(region_name_scalar,"('reg',i1)") iregion_code
 
   ! checks if attenuation is on and anything to do
-  if( .not. ATTENUATION_VAL) return
+  if (.not. ATTENUATION_VAL) return
 
   call world_duplicate(comm)
 
@@ -76,8 +76,8 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   call check_adios_err(myrank,adios_err)
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
-  if( adios_err /= 0 ) then
-    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+  if (adios_err /= 0) then
+    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 

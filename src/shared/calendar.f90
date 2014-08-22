@@ -36,7 +36,7 @@
   data mon /0,31,59,90,120,151,181,212,243,273,304,334/
 
   julian_day = da + mon(mo)
-  if(mo>2) julian_day = julian_day + lpyr(yr)
+  if (mo>2) julian_day = julian_day + lpyr(yr)
 
   end function julian_day
 
@@ -50,12 +50,12 @@
 !
 !---- returns 1 if leap year
 !
-  lpyr=0
-  if(mod(yr,400) == 0) then
-    lpyr=1
-  else if(mod(yr,4) == 0) then
-    lpyr=1
-    if(mod(yr,100) == 0) lpyr=0
+  lpyr = 0
+  if (mod(yr,400) == 0) then
+    lpyr = 1
+  else if (mod(yr,4) == 0) then
+    lpyr = 1
+    if (mod(yr,100) == 0) lpyr = 0
   endif
 
   end function lpyr
@@ -72,7 +72,7 @@
   integer, external :: lpyr
 
 !---- function lpyr above returns 1 if leap year
-  if(lpyr(yr) == 1) then
+  if (lpyr(yr) == 1) then
     is_leap_year = .true.
   else
     is_leap_year = .false.
@@ -197,7 +197,7 @@
 ! By convention, there is no year 0 under the BC/AD year numbering
 ! scheme.  That is, years proceed as 2 BC, 1 BC, 1 AD, 2 AD, etc.,
 ! without including 0.  Subroutine calndr() will print an error message
-! and stop if you specify iyear=0.
+! and stop if you specify iyear = 0.
 !
 ! "idayct" is a day count.  It is either the day number during the
 ! specified year or the Julian Day number, depending on the value
@@ -286,7 +286,7 @@
 ! for Julian Day number 2299161.
 !     ioptn = 5
 !     call calndr (ioptn, iday, month, iyear, 2299161)
-! calndr() should return iday=288, month=1, iyear=1582
+! calndr() should return iday=288, month = 1, iyear=1582
 !
 ! Given 15 October 1582 under the Gregorian calendar,
 ! find the date (idayJ,imonthJ,iyearJ) under the Julian calendar.
@@ -406,7 +406,7 @@
 !  jyear=iyear   when iyear is positive
 !       =iyear+1 when iyear is negative.
 ! Thus, jyear does not experience a 1 year jump like iyear does
-! when going from BC to AD.  Specifically, jyear=0 when iyear=-1,
+! when going from BC to AD.  Specifically, jyear = 0 when iyear=-1,
 ! i.e., when the year is 1 BC.
 !
 ! For simplicity in dealing with February, inside this subroutine,
@@ -460,7 +460,7 @@
 ! jyear   Year index,  jyear=iyear if iyear > 0, jyear=iyear+1
 !            if iyear < 0.  Thus, jyear does not skip year 0
 !            like iyear does between BC and AD years.
-! leap    =1 if the year is a leap year, =0 if not.
+! leap    =1 if the year is a leap year,  = 0 if not.
 ! n1yr    Number of complete individual years between iyear and
 !            the reference year after all 4, 100,
 !            and 400 year periods have been removed.
@@ -517,7 +517,7 @@
    endif
    if ((ioptn > 0)               .and. &
          ((jyear/100)*100 == jyear) .and. &
-         ((jyear/400)*400 /= jyear)      ) then
+         ((jyear/400)*400 /= jyear)     ) then
          leap = 0
    endif
   endif
@@ -690,7 +690,7 @@
 !
   ndays  = ndays - 365*n1yr
 !            = number of days so far in the current year,
-!              where ndays=0 on 1 March.
+!              where ndays = 0 on 1 March.
 !
   iyear  = n1yr + 4*n4yr + 100*n100yr + 400*n400yr + yrref
 !            = year, as counted in the standard way,
@@ -718,7 +718,7 @@
 !
 ! This code handles abs(ioptn)=5, finding the day number during the year.
   else
-!        ioptn=5 always returns month=1, which we set now.
+!        ioptn=5 always returns month = 1, which we set now.
    month = 1
 !
 !        We need to determine whether this is a leap year.
@@ -728,13 +728,13 @@
    endif
    if ((ioptn > 0)               .and. &
       ((jyear/100)*100 == jyear) .and. &
-      ((jyear/400)*400 /= jyear)      ) then
+      ((jyear/400)*400 /= jyear)     ) then
          leap = 0
    endif
 !
 !        Now find the day number "iday".
 !        ndays is the number of days since the most recent 1 March,
-!        so ndays=0 on 1 March.
+!        so ndays = 0 on 1 March.
    if (ndays <=305) then
       iday  = ndays + 60 + leap
    else

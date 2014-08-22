@@ -56,11 +56,11 @@
   character(len=150) :: prname
 
   ! checks if attenuation is on and anything to do
-  if( .not. ATTENUATION_VAL) return
+  if (.not. ATTENUATION_VAL) return
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
-  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
     call read_attenuation_adios(myrank, iregion_code, &
                                 factor_common, scale_factor, tau_s, vnspec, T_c_source)
   else
@@ -69,7 +69,7 @@
     call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
     open(unit=IIN, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file attenuation.bin')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file attenuation.bin')
 
     read(IIN) tau_s
     read(IIN) factor_common ! tau_e_store
@@ -216,8 +216,8 @@
   scale_factor = factor_scale_mu * factor_scale_mu0
 
   !--- check that the correction factor is close to one
-  if(scale_factor < 0.8d0 .or. scale_factor > 1.2d0) then
-     print*,'error: incorrect scale factor: ', scale_factor
+  if (scale_factor < 0.8d0 .or. scale_factor > 1.2d0) then
+     print*,'Error: incorrect scale factor: ', scale_factor
      call exit_MPI(myrank,'incorrect correction factor in attenuation model')
   endif
 

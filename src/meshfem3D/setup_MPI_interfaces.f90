@@ -52,18 +52,18 @@
   ! allocates temporary arrays for setup routines
   ! estimates a maximum size of needed arrays
   MAX_NEIGHBOURS = 8 + NCORNERSCHUNKS
-  if( INCLUDE_CENTRAL_CUBE ) MAX_NEIGHBOURS = MAX_NEIGHBOURS + NUMMSGS_FACES
+  if (INCLUDE_CENTRAL_CUBE ) MAX_NEIGHBOURS = MAX_NEIGHBOURS + NUMMSGS_FACES
 
   allocate(my_neighbours(MAX_NEIGHBOURS), &
           nibool_neighbours(MAX_NEIGHBOURS),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating my_neighbours array')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating my_neighbours array')
 
   ! estimates initial maximum ibool array
   max_nibool = npoin2D_max_all_CM_IC * NUMFACES_SHARED &
                + non_zero_nb_msgs_theor_in_cube*npoin2D_cube_from_slices
 
   allocate(ibool_neighbours(max_nibool,MAX_NEIGHBOURS), stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating ibool_neighbours')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating ibool_neighbours')
 
   ! sets up MPI interfaces between different processes
   select case( iregion_code )
@@ -143,7 +143,7 @@
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
     buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
@@ -154,10 +154,10 @@
 
   ! sets up MPI interfaces
   ! crust mantle region
-  if( myrank == 0 ) write(IMAIN,*) 'crust mantle MPI:'
+  if (myrank == 0 ) write(IMAIN,*) 'crust mantle MPI:'
   allocate(test_flag(NGLOB_CRUST_MANTLE), &
           stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag')
 
   ! sets flag to rank id (+1 to avoid problems with zero rank)
   test_flag(:) = myrank + 1.0
@@ -182,7 +182,7 @@
   test_flag(:) = test_flag(:) - ( myrank + 1.0)
 
   allocate(dummy_i(NSPEC_CRUST_MANTLE),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
 
   ! determines neighbor rank for shared faces
   call get_MPI_interfaces(myrank,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
@@ -200,15 +200,15 @@
   allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
           stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_crust_mantle etc.')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbours_crust_mantle etc.')
   my_neighbours_crust_mantle = -1
   nibool_interfaces_crust_mantle = 0
 
   ! copies interfaces arrays
-  if( num_interfaces_crust_mantle > 0 ) then
+  if (num_interfaces_crust_mantle > 0) then
     allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_crust_mantle')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
     ibool_interfaces_crust_mantle = 0
 
     ! ranks of neighbour processes
@@ -224,8 +224,8 @@
   endif
 
   ! debug: outputs MPI interface
-  if( DEBUG ) then
-    do i=1,num_interfaces_crust_mantle
+  if (DEBUG) then
+    do i = 1,num_interfaces_crust_mantle
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_crust_mantle_proc',myrank, &
                       '_',my_neighbours_crust_mantle(i)
       call write_VTK_data_points(NGLOB_crust_mantle, &
@@ -272,7 +272,7 @@
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
     buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
@@ -283,11 +283,11 @@
 
   ! sets up MPI interfaces
   ! outer core region
-  if( myrank == 0 ) write(IMAIN,*) 'outer core MPI:'
+  if (myrank == 0 ) write(IMAIN,*) 'outer core MPI:'
 
   allocate(test_flag(NGLOB_OUTER_CORE), &
           stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag outer core')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag outer core')
 
   ! sets flag to rank id (+1 to avoid problems with zero rank)
   test_flag(:) = myrank + 1.0
@@ -313,7 +313,7 @@
   test_flag(:) = test_flag(:) - ( myrank + 1.0)
 
   allocate(dummy_i(NSPEC_OUTER_CORE),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating dummy_i')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
 
   ! determines neighbor rank for shared faces
   call get_MPI_interfaces(myrank,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
@@ -331,15 +331,15 @@
   allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
           nibool_interfaces_outer_core(num_interfaces_outer_core), &
           stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_outer_core etc.')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbours_outer_core etc.')
   my_neighbours_outer_core = -1
   nibool_interfaces_outer_core = 0
 
   ! copies interfaces arrays
-  if( num_interfaces_outer_core > 0 ) then
+  if (num_interfaces_outer_core > 0) then
     allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_outer_core')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
     ibool_interfaces_outer_core = 0
 
     ! ranks of neighbour processes
@@ -355,8 +355,8 @@
   endif
 
   ! debug: outputs MPI interface
-  if( DEBUG ) then
-    do i=1,num_interfaces_outer_core
+  if (DEBUG) then
+    do i = 1,num_interfaces_outer_core
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_outer_core_proc',myrank, &
                       '_',my_neighbours_outer_core(i)
       call write_VTK_data_points(NGLOB_OUTER_CORE, &
@@ -404,7 +404,7 @@
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
-  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) ::  &
+  real(kind=CUSTOM_REAL), dimension(npoin2D_max_all_CM_IC) :: &
     buffer_send_faces_scalar,buffer_received_faces_scalar
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer :: i,j,k,ispec,iglob,ier
@@ -415,17 +415,17 @@
 
   ! sets up MPI interfaces
   ! inner core
-  if( myrank == 0 ) write(IMAIN,*) 'inner core MPI:'
+  if (myrank == 0 ) write(IMAIN,*) 'inner core MPI:'
 
   allocate(test_flag(NGLOB_INNER_CORE), &
           stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating test_flag inner core')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag inner core')
 
   ! sets flag to rank id (+1 to avoid problems with zero rank)
   test_flag(:) = 0.0
-  do ispec=1,NSPEC_INNER_CORE
+  do ispec = 1,NSPEC_INNER_CORE
     ! suppress fictitious elements in central cube
-    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
     ! sets flags
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -454,7 +454,7 @@
             NGLOB2DMAX_XY,NCHUNKS)
 
   ! debug: idoubling inner core
-  if( DEBUG ) then
+  if (DEBUG) then
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
     call write_VTK_data_elem_i(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                             xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -464,9 +464,9 @@
   endif
 
   ! including central cube
-  if(INCLUDE_CENTRAL_CUBE) then
+  if (INCLUDE_CENTRAL_CUBE) then
     ! user output
-    if( myrank == 0 ) write(IMAIN,*) 'inner core with central cube MPI:'
+    if (myrank == 0 ) write(IMAIN,*) 'inner core with central cube MPI:'
 
     ! test_flag is a scalar, not a vector
     ndim_assemble = 1
@@ -492,8 +492,8 @@
   where( test_flag < 0.0 ) test_flag = 0.0
 
   ! debug: in sequential order, for testing purpose
-  !do i=0,NPROCTOT - 1
-  !  if( myrank == i ) then
+  !do i = 0,NPROCTOT - 1
+  !  if (myrank == i) then
   !    ! gets new interfaces for inner_core without central cube yet
   !    ! determines neighbor rank for shared faces
   !    call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
@@ -523,15 +523,15 @@
   allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
           nibool_interfaces_inner_core(num_interfaces_inner_core), &
           stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating array my_neighbours_inner_core etc.')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbours_inner_core etc.')
   my_neighbours_inner_core = -1
   nibool_interfaces_inner_core = 0
 
   ! copies interfaces arrays
-  if( num_interfaces_inner_core > 0 ) then
+  if (num_interfaces_inner_core > 0) then
     allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
            stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array ibool_interfaces_inner_core')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
     ibool_interfaces_inner_core = 0
 
     ! ranks of neighbour processes
@@ -547,8 +547,8 @@
   endif
 
   ! debug: saves MPI interfaces
-  if( DEBUG ) then
-    do i=1,num_interfaces_inner_core
+  if (DEBUG) then
+    do i = 1,num_interfaces_inner_core
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_inner_core_proc',myrank, &
                       '_',my_neighbours_inner_core(i)
       call write_VTK_data_points(NGLOB_INNER_CORE, &

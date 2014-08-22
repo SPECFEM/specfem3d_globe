@@ -1197,7 +1197,7 @@ void FC_FUNC_(transfer_kernels_ani_cm_to_host,
   int size = 21 * (*NSPEC) * NGLL3;
 
   // anisotropic kernel
-  if( ! mp->anisotropic_kl ){ exit_on_error("error invalid ANISOTROPIC_KL in transfer_kernels_ani_cm_to_host() routine");}
+  if (! mp->anisotropic_kl) { exit_on_error("Error invalid ANISOTROPIC_KL in transfer_kernels_ani_cm_to_host() routine");}
 
   // anisotropic kernels
   // copies array to CPU

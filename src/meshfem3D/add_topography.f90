@@ -70,7 +70,7 @@
 
     ! add elevation to all the points of that element
     ! also make sure gamma makes sense
-    if(gamma < -0.02 .or. gamma > 1.02) call exit_MPI(myrank,'incorrect value of gamma for topography')
+    if (gamma < -0.02 .or. gamma > 1.02) call exit_MPI(myrank,'incorrect value of gamma for topography')
 
     xelm(ia) = x*(ONE + gamma * elevation / r)
     yelm(ia) = y*(ONE + gamma * elevation / r)
@@ -132,7 +132,7 @@
 
         ! add elevation to all the points of that element
         ! also make sure factor makes sense
-        if(gamma < -0.02 .or. gamma > 1.02) then
+        if (gamma < -0.02 .or. gamma > 1.02) then
           call exit_MPI(myrank,'incorrect value of factor for topography GLL points')
         endif
 

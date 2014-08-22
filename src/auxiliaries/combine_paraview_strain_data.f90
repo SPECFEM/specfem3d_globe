@@ -72,7 +72,7 @@ program combine_paraview_movie_data
   read(arg(5),*) comp
   read(arg(6),*) MOVIE_COARSE
 
-  if(num_node>1000) stop 'change array sizes for num_node > 1000 and recompile xcombine_paraview_movie_data'
+  if (num_node>1000) stop 'change array sizes for num_node > 1000 and recompile xcombine_paraview_movie_data'
 
   print *, 'Number of nodes: ',num_node
   print *, ' '
@@ -89,7 +89,7 @@ program combine_paraview_movie_data
     !   print *, 'reading: ',trim(dimension_file)
     open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
     if (ios /= 0) then
-      print*, 'error opening file: ',trim(dimension_file)
+      print*, 'Error opening file: ',trim(dimension_file)
       stop 'Error opening file'
     endif
     read(27,*) npoint(iproc),nelement(iproc)
@@ -148,7 +148,7 @@ program combine_paraview_movie_data
     endif
     close(27)
 
-    if( (comp /= 'SI1') .and. (comp /= 'SI2')) then
+    if ((comp /= 'SI1') .and. (comp /= 'SI2')) then
 !comp == 'SEE' .or. comp == 'SNN' .or. comp == 'SZZ' .or. comp == 'SEZ' .or. comp == 'SNZ' .or. comp == 'SNE') then
       write(local_data_file,'(a,a,i6.6,a)') 'movie3D_',comp,it,'.bin'
 
@@ -156,20 +156,20 @@ program combine_paraview_movie_data
 
       open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
         read(27) datstore(1:npoint(iproc))
       endif
       close(27)
-    else if(comp == 'SI1' .or. comp == 'SI2') then
+    else if (comp == 'SI1' .or. comp == 'SI2') then
       write(local_data_file,'(a,i6.6,a)') 'movie3D_SEE',it,'.bin'
       !print *, iproc,'reading from file:'//trim(prname)//trim(local_data_file)
       !print *, 'reading from file:',local_data_file
       open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -181,7 +181,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -193,7 +193,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -205,7 +205,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -217,7 +217,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -229,7 +229,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -237,11 +237,11 @@ program combine_paraview_movie_data
       endif
       close(27)
     else
-      stop 'unrecognized component'
+      stop 'Error unrecognized component'
     endif !strain or invariant
 
     datstore=datstore
-    do ipoint=1,npoint(iproc)
+    do ipoint = 1,npoint(iproc)
        numpoin = numpoin + 1
        x = xstore(ipoint)
        y = ystore(ipoint)
@@ -254,7 +254,7 @@ program combine_paraview_movie_data
         !   print *, 'point:',ipoint,x,y,z,dat
     enddo
 
-    if (numpoin /= npoint(iproc)) stop 'different number of points'
+    if (numpoin /= npoint(iproc)) stop 'Error different number of points'
     np = np + npoint(iproc)
 
   enddo  ! all slices for points
@@ -285,22 +285,22 @@ program combine_paraview_movie_data
     !  print *, trim(local_element_file)
 
     if (iproc == 1) then
-      if(MOVIE_COARSE) then
+      if (MOVIE_COARSE) then
         call write_integer_fd(fid,nelement_all)
       else
         call write_integer_fd(fid,nelement_all*64)
       endif
     endif
 
-    if(MOVIE_COARSE) then
+    if (MOVIE_COARSE) then
       nelement_local = nelement(iproc)
     else
       nelement_local = nelement(iproc)*64
     endif
     do i = 1, nelement_local
       read(27,iostat=ios) n1, n2, n3, n4, n5, n6, n7, n8
-      if( ios /= 0 ) then
-        print*,'error reading file: ',trim(local_element_file)
+      if (ios /= 0) then
+        print*,'Error reading file: ',trim(local_element_file)
         stop 'Error reading file movie3D_elements.bin, please check if number of elements is correct (MOVIE_COARSE?)'
       endif
       n1 = n1+np

@@ -85,7 +85,7 @@
         tempz2l = 0._CUSTOM_REAL
         tempz3l = 0._CUSTOM_REAL
 
-        do l=1,NGLLX
+        do l = 1,NGLLX
           hp1 = hprime_xx(i,l)
           tempx1l = tempx1l + displ_s(1,l,j,k)*hp1
           tempy1l = tempy1l + displ_s(2,l,j,k)*hp1
@@ -147,7 +147,7 @@
   enddo
 
   ! interpolate the strain eps_s(:,:) from eps_array(:,:,i,j,k)
-  eps_s = 0.; eps_m_s=0.;
+  eps_s = 0.; eps_m_s = 0.;
   xix_s = 0.;  xiy_s = 0.;  xiz_s = 0.
   etax_s = 0.; etay_s = 0.; etaz_s = 0.
   gammax_s = 0.; gammay_s = 0.; gammaz_s = 0.

@@ -39,7 +39,7 @@
   call compute_kernels_crust_mantle()
 
   ! only information to compute the crust_mantle kernels was saved to disk
-  if(EXACT_UNDOING_TO_DISK) return
+  if (EXACT_UNDOING_TO_DISK) return
 
   ! outer core
   call compute_kernels_outer_core(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
@@ -54,13 +54,13 @@
   call compute_kernels_inner_core()
 
   ! NOISE TOMOGRAPHY --- source strength kernel
-  if( NOISE_TOMOGRAPHY == 3 ) call compute_kernels_strength_noise()
+  if (NOISE_TOMOGRAPHY == 3 ) call compute_kernels_strength_noise()
 
   ! boundary kernels
-  if( SAVE_BOUNDARY_MESH ) call compute_boundary_kernels()
+  if (SAVE_BOUNDARY_MESH ) call compute_boundary_kernels()
 
   ! approximate hessian
-  if( APPROXIMATE_HESS_KL ) call compute_kernels_hessian()
+  if (APPROXIMATE_HESS_KL ) call compute_kernels_hessian()
 
   end subroutine compute_kernels
 
@@ -89,7 +89,7 @@
 
   integer :: i,j,k,ispec,iglob
 
-  if( .not. GPU_MODE ) then
+  if (.not. GPU_MODE) then
 
     ! on CPU
     ! crust_mantle
@@ -97,8 +97,8 @@
 
       ! simulations with UNDO_ATTENUATION save as much memory as possible;
       ! backward/reconstructed wavefield strain will be re-computed locally here
-      if( UNDO_ATTENUATION ) then
-        if( USE_DEVILLE_PRODUCTS_VAL ) then
+      if (UNDO_ATTENUATION) then
+        if (USE_DEVILLE_PRODUCTS_VAL) then
           call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
                                                    b_displ_crust_mantle,ibool_crust_mantle, &
                                                    hprime_xx,hprime_xxT,&
@@ -313,7 +313,7 @@
 
   ! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
 
-  if( .not. GPU_MODE ) then
+  if (.not. GPU_MODE) then
     ! on CPU
 
     ! pre-calculates gradients in outer core on CPU
@@ -327,7 +327,7 @@
             iglob = ibool_outer_core(i,j,k,ispec)
 
             ! only calculate the gradients once for shared nodes
-            if( .not. mask_ibool(iglob) ) then
+            if (.not. mask_ibool(iglob)) then
 
               ! masks this global point
               mask_ibool(iglob) = .true.
@@ -346,13 +346,13 @@
               tempx1l = 0._CUSTOM_REAL
               tempx2l = 0._CUSTOM_REAL
               tempx3l = 0._CUSTOM_REAL
-              do l=1,NGLLX
+              do l = 1,NGLLX
                 tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
               enddo
-              do l=1,NGLLY
+              do l = 1,NGLLY
                 tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
               enddo
-              do l=1,NGLLZ
+              do l = 1,NGLLZ
                 tempx3l = tempx3l + b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
               enddo
               gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
@@ -368,13 +368,13 @@
               tempx1l = 0._CUSTOM_REAL
               tempx2l = 0._CUSTOM_REAL
               tempx3l = 0._CUSTOM_REAL
-              do l=1,NGLLX
+              do l = 1,NGLLX
                 tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
               enddo
-              do l=1,NGLLY
+              do l = 1,NGLLY
                 tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
               enddo
-              do l=1,NGLLZ
+              do l = 1,NGLLZ
                 tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
               enddo
               gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
@@ -387,17 +387,17 @@
               vector_accel_outer_core(3,iglob) = gradz
 
               ! calculates gradient grad(displ) (also needed for boundary kernels)
-              if( SAVE_BOUNDARY_MESH .or. deviatoric_outercore ) then
+              if (SAVE_BOUNDARY_MESH .or. deviatoric_outercore) then
                 tempx1l = 0._CUSTOM_REAL
                 tempx2l = 0._CUSTOM_REAL
                 tempx3l = 0._CUSTOM_REAL
-                do l=1,NGLLX
+                do l = 1,NGLLX
                   tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
                 enddo
-                do l=1,NGLLY
+                do l = 1,NGLLY
                   tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
                 enddo
-                do l=1,NGLLZ
+                do l = 1,NGLLZ
                   tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
                 enddo
                 gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
@@ -447,7 +447,7 @@
     enddo
 
     !deviatoric kernel check
-    if( deviatoric_outercore ) then
+    if (deviatoric_outercore) then
 
       do ispec = 1, NSPEC_OUTER_CORE
         do k = 1, NGLLZ
@@ -466,7 +466,7 @@
               tempz3l = 0._CUSTOM_REAL
 
               ! assumes NGLLX = NGLLY = NGLLZ
-              do l=1,NGLLX
+              do l = 1,NGLLX
                 tempx1l = tempx1l + b_vector_displ_outer_core(1,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
                 tempy1l = tempy1l + b_vector_displ_outer_core(2,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
                 tempz1l = tempz1l + b_vector_displ_outer_core(3,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
@@ -481,29 +481,29 @@
               enddo
 
               !deviatoric strain
-              b_epsilondev_loc(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l  &
+              b_epsilondev_loc(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-              b_epsilondev_loc(2) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l  &
+              b_epsilondev_loc(2) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-              b_epsilondev_loc(3) = 0.5*( xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l  &
+              b_epsilondev_loc(3) = 0.5*( xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l &
                                         + xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l ) &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-              b_epsilondev_loc(4) = 0.5*( xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l  &
+              b_epsilondev_loc(4) = 0.5*( xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l &
                                         + xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l ) &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-              b_epsilondev_loc(5) = 0.5*( xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l  &
+              b_epsilondev_loc(5) = 0.5*( xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l &
                                         + xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l ) &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
@@ -522,7 +522,7 @@
               tempz3l = 0._CUSTOM_REAL
 
               ! assumes NGLLX = NGLLY = NGLLZ
-              do l=1,NGLLX
+              do l = 1,NGLLX
                 tempx1l = tempx1l + vector_displ_outer_core(1,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
                 tempy1l = tempy1l + vector_displ_outer_core(2,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
                 tempz1l = tempz1l + vector_displ_outer_core(3,ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
@@ -537,29 +537,29 @@
               enddo
 
               !deviatoric strain
-              epsilondev_loc(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l  &
+              epsilondev_loc(1) = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-              epsilondev_loc(2) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l  &
+              epsilondev_loc(2) = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-              epsilondev_loc(3) = 0.5*( xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l  &
+              epsilondev_loc(3) = 0.5*( xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l &
                                         + xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l ) &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-              epsilondev_loc(4) = 0.5*( xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l  &
+              epsilondev_loc(4) = 0.5*( xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l &
                                         + xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l ) &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
                                 + xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l )
 
-              epsilondev_loc(5) = 0.5*( xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l  &
+              epsilondev_loc(5) = 0.5*( xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l &
                                         + xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l ) &
                   - ONE_THIRD* (xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l &
                                 + xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l &
@@ -580,7 +580,7 @@
 
   else
     ! updates kernel contribution on GPU
-    if( deviatoric_outercore ) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
+    if (deviatoric_outercore ) call exit_mpi(myrank,'deviatoric kernel on GPU not supported yet')
 
     ! computes contribution to density and bulk modulus kernel
     call compute_kernels_oc_gpu(Mesh_pointer,deltat)
@@ -613,14 +613,14 @@
 
   integer :: i,j,k,ispec,iglob
 
-  if( .not. GPU_MODE ) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! inner_core
     do ispec = 1, NSPEC_INNER_CORE
 
       ! gets element strain
-      if( UNDO_ATTENUATION ) then
-        if( USE_DEVILLE_PRODUCTS_VAL ) then
+      if (UNDO_ATTENUATION) then
+        if (USE_DEVILLE_PRODUCTS_VAL) then
           call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core, &
                                                    b_displ_inner_core,ibool_inner_core, &
                                                    hprime_xx,hprime_xxT, &
@@ -739,16 +739,16 @@
   b_eps(6)=b_epsdev(3)
 
   ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
-  p=1
-  do i=1,6
-    do j=i,6
-      prod(p)=eps(i)*b_eps(j)
-      if(j>i) then
-        prod(p)=prod(p)+eps(j)*b_eps(i)
-        if(j>3 .and. i<4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
+  p = 1
+  do i = 1,6
+    do j = i,6
+      prod(p) = eps(i)*b_eps(j)
+      if (j>i) then
+        prod(p) = prod(p)+eps(j)*b_eps(i)
+        if (j>3 .and. i<4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
       endif
-      if(i>3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
-      p=p+1
+      if (i>3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
+      p = p+1
     enddo
   enddo
 
@@ -770,7 +770,7 @@
   ! local parameters
   integer :: i,j,k,ispec,iglob
 
-  if( .not. GPU_MODE ) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! crust_mantle
     do ispec = 1, NSPEC_CRUST_MANTLE

@@ -62,10 +62,10 @@
   ! allocates model array
   allocate(HMM_rho_in(N_R*N_THETA*N_PHI), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating HMM array')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating HMM array')
 
   ! master process reads in model
-  if(myrank == 0) then
+  if (myrank == 0) then
      write(IMAIN,*) 'Reading in model_heterogen_mantle.'
      call flush_IMAIN()
 
@@ -78,7 +78,7 @@
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(HMM_rho_in,N_R*N_THETA*N_PHI)
 
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*) 'model_heterogen_mantle is broadcast.'
     write(IMAIN,*) 'First value in HMM:',HMM_rho_in(1)
     write(IMAIN,*) 'Last value in HMM:',HMM_rho_in(N_R*N_THETA*N_PHI)
@@ -109,7 +109,7 @@
   ! open heterogen.dat
   open(unit=10,file='./DATA/heterogen/heterogen.dat',access='direct',&
        form='formatted',recl=20,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening model file heterogen.dat')
+  if (ier /= 0 ) call exit_MPI(0,'Error opening model file heterogen.dat')
 
   j = N_R*N_THETA*N_PHI
 
@@ -209,8 +209,8 @@
     c = (z-z_low*delta)/delta       ! weight for z
 
     drho = rho1*(1.-a)*(1.-b)*(1.-c) + rho2*(1.-a)*b*(1.-c) + &
-     & rho3*a*(1.-b)*(1.-c) + rho4*a*b*(1.-c) + rho5*(1.-a)*(1.-b)*c + &
-     & rho6*(1.-a)*b*c + rho7*a*(1.-b)*c + rho8*a*b*c
+           rho3*a*(1.-b)*(1.-c) + rho4*a*b*(1.-c) + rho5*(1.-a)*(1.-b)*c + &
+           rho6*(1.-a)*b*c + rho7*a*(1.-b)*c + rho8*a*b*c
 
     ! calculate delta vp,vs from the interpolated delta rho
     dvp = (0.55/0.30)*drho

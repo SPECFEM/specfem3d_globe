@@ -48,13 +48,13 @@
   character(len=256) :: system_command
 
   ! save movie on surface
-  if( MOVIE_SURFACE ) then
-    if( mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
+  if (MOVIE_SURFACE) then
+    if (mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
       ! gets resulting array values onto CPU
-      if( GPU_MODE ) then
+      if (GPU_MODE) then
         ! transfers whole fields
-        if(MOVIE_VOLUME_TYPE == 5) then
+        if (MOVIE_VOLUME_TYPE == 5) then
           call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
         else
           call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
@@ -65,11 +65,11 @@
       call write_movie_surface()
 
       ! executes an external script on the node
-      if( RUN_EXTERNAL_MOVIE_SCRIPT ) then
+      if (RUN_EXTERNAL_MOVIE_SCRIPT) then
         ! synchronizes outputs
         call synchronize_all()
         ! calls shell external command
-        if( myrank == 0 ) then
+        if (myrank == 0) then
           write(system_command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
           !print*,trim(system_command)
           call system(system_command)
@@ -81,12 +81,12 @@
 
 
   ! save movie in full 3D mesh
-  if(MOVIE_VOLUME ) then
+  if (MOVIE_VOLUME) then
 
     ! updates integral of strain for adjoint movie volume
-    if( MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3 ) then
+    if (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3) then
       ! transfers strain arrays onto CPU
-      if( GPU_MODE ) then
+      if (GPU_MODE) then
         call transfer_strain_cm_from_device(Mesh_pointer,eps_trace_over_3_crust_mantle, &
                                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
                                          epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
@@ -106,7 +106,7 @@
     endif
 
     ! file output
-    if( mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
+    if (mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 &
       .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
       select case( MOVIE_VOLUME_TYPE )
@@ -114,7 +114,7 @@
         ! output strains
 
         ! gets resulting array values onto CPU
-        if( GPU_MODE ) then
+        if (GPU_MODE) then
           call transfer_strain_cm_from_device(Mesh_pointer, &
                                 eps_trace_over_3_crust_mantle, &
                                 epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle, &
@@ -144,7 +144,7 @@
         ! output divergence and curl in whole volume
 
         ! gets resulting array values onto CPU
-        if( GPU_MODE ) then
+        if (GPU_MODE) then
           ! strains
           call transfer_strain_cm_from_device(Mesh_pointer, &
                                 eps_trace_over_3_crust_mantle, &
@@ -173,7 +173,7 @@
 
       case( 5 )
         !output displacement
-        if( GPU_MODE ) then
+        if (GPU_MODE) then
           call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
         endif
 
@@ -185,7 +185,7 @@
 
       case( 6 )
         !output velocity
-        if( GPU_MODE ) then
+        if (GPU_MODE) then
           call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
         endif
 
@@ -199,7 +199,7 @@
         ! output norm of displacement
 
         ! gets resulting array values onto CPU
-        if( GPU_MODE ) then
+        if (GPU_MODE) then
           ! displacement wavefields
           call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
           call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
@@ -214,7 +214,7 @@
         ! output norm of velocity
 
         ! gets resulting array values onto CPU
-        if( GPU_MODE ) then
+        if (GPU_MODE) then
           ! velocity wavefields
           call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
           call transfer_veloc_ic_from_device(NDIM*NGLOB_INNER_CORE,veloc_inner_core,Mesh_pointer)
@@ -229,7 +229,7 @@
         ! output norm of acceleration
 
         ! gets resulting array values onto CPU
-        if( GPU_MODE ) then
+        if (GPU_MODE) then
           ! acceleration wavefields
           call transfer_accel_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
           call transfer_accel_ic_from_device(NDIM*NGLOB_INNER_CORE,accel_inner_core,Mesh_pointer)
@@ -246,11 +246,11 @@
       end select ! MOVIE_VOLUME_TYPE
 
       ! executes an external script on the node
-      if( RUN_EXTERNAL_MOVIE_SCRIPT ) then
+      if (RUN_EXTERNAL_MOVIE_SCRIPT) then
         ! synchronizes outputs
         call synchronize_all()
         ! calls shell external command
-        if( myrank == 0 ) then
+        if (myrank == 0) then
           write(system_command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
           !print*,trim(system_command)
           call system(system_command)
@@ -261,12 +261,12 @@
   endif ! MOVIE_VOLUME
 
   ! debugging
-  if( DEBUG_SNAPSHOT ) then
-    if( mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0  &
+  if (DEBUG_SNAPSHOT) then
+    if (mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 &
       .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
       !output displacement
-      if( GPU_MODE ) then
+      if (GPU_MODE) then
         call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
         call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
       endif
@@ -287,7 +287,7 @@
                           displ_crust_mantle,filename)
 
       ! backward/reconstructed field
-      if( SIMULATION_TYPE == 3 ) then
+      if (SIMULATION_TYPE == 3) then
         write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_b_displ_',it
         call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &

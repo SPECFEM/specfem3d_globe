@@ -46,11 +46,11 @@
   call setup_receivers_precompute_intp()
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Total number of samples for seismograms = ',NSTEP
     write(IMAIN,*)
-    if(NSOURCES > 1) write(IMAIN,*) 'Using ',NSOURCES,' point sources'
+    if (NSOURCES > 1) write(IMAIN,*) 'Using ',NSOURCES,' point sources'
     call flush_IMAIN()
   endif
   call synchronize_all()
@@ -59,8 +59,8 @@
   deallocate(theta_source,phi_source)
 
   ! topography array no more needed
-  if( TOPOGRAPHY ) then
-    if(allocated(ibathy_topo) ) deallocate(ibathy_topo)
+  if (TOPOGRAPHY) then
+    if (allocated(ibathy_topo) ) deallocate(ibathy_topo)
   endif
 
   end subroutine setup_sources_receivers
@@ -86,7 +86,7 @@
   logical,parameter :: USE_SMALLER_HDUR_MOVIE = .true.
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'sources:'
     call flush_IMAIN()
@@ -101,33 +101,33 @@
            Mxy(NSOURCES), &
            Mxz(NSOURCES), &
            Myz(NSOURCES),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
   allocate(xi_source(NSOURCES), &
            eta_source(NSOURCES), &
            gamma_source(NSOURCES),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
   allocate(tshift_cmt(NSOURCES), &
            hdur(NSOURCES), &
            hdur_gaussian(NSOURCES),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
   allocate(theta_source(NSOURCES), &
            phi_source(NSOURCES),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating source arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
   ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow
-  if(myrank == 0) then
+  if (myrank == 0) then
   ! write source and receiver VTK files for Paraview
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
     open(IOUT_VTK,file=trim(filename),status='unknown',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening temporary file sr_temp.vtk')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening temporary file sr_temp.vtk')
     write(IOUT_VTK,'(a)') '# vtk DataFile Version 2.0'
     write(IOUT_VTK,'(a)') 'Source and Receiver VTK file'
     write(IOUT_VTK,'(a)') 'ASCII'
@@ -143,21 +143,21 @@
                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                      ELLIPTICITY_VAL,min_tshift_cmt_original)
 
-  if(abs(minval(tshift_cmt)) > TINYVAL) &
+  if (abs(minval(tshift_cmt)) > TINYVAL) &
     call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
 
   ! count number of sources located in this slice
   nsources_local = 0
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     do isource = 1,NSOURCES
-      if(myrank == islice_selected_source(isource)) nsources_local = nsources_local + 1
+      if (myrank == islice_selected_source(isource)) nsources_local = nsources_local + 1
     enddo
   endif
 
   ! filter source time function by Gaussian with hdur = HDUR_MOVIE when writing movies or shakemaps
-  if (MOVIE_SURFACE .or. MOVIE_VOLUME ) then
+  if (MOVIE_SURFACE .or. MOVIE_VOLUME) then
     ! smaller hdur_movie will do
-    if( USE_SMALLER_HDUR_MOVIE ) then
+    if (USE_SMALLER_HDUR_MOVIE) then
       ! hdur_movie gets assigned an automatic value based on the simulation resolution
       ! this will make that a bit smaller to have a higher-frequency movie output
       HDUR_MOVIE = 0.5* HDUR_MOVIE
@@ -165,7 +165,7 @@
 
     ! new hdur for simulation
     hdur = sqrt(hdur**2 + HDUR_MOVIE**2)
-    if(myrank == 0) then
+    if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'Each source is being convolved with HDUR_MOVIE = ',HDUR_MOVIE
       write(IMAIN,*)
@@ -179,7 +179,7 @@
   t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
 
   ! point force sources will start depending on the frequency given by hdur
-  if( USE_FORCE_POINT_SOURCE ) then
+  if (USE_FORCE_POINT_SOURCE) then
     ! note: point force sources will give the dominant frequency in hdur,
     !          thus the main period is 1/hdur.
     !          also, these sources use a Ricker source time function instead of a Gaussian.
@@ -189,13 +189,13 @@
 
   ! checks if user set USER_T0 to fix simulation start time
   ! note: USER_T0 has to be positive
-  if( USER_T0 > 0.d0 ) then
+  if (USER_T0 > 0.d0) then
     ! user cares about origin time and time shifts of the CMTSOLUTION
     ! and wants to fix simulation start time to a constant start time
     ! time 0 on time axis will correspond to given origin time
 
     ! notifies user
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) 'USER_T0: ',USER_T0
       write(IMAIN,*) 't0: ',t0,'min_tshift_cmt_original: ',min_tshift_cmt_original
       write(IMAIN,*)
@@ -203,7 +203,7 @@
 
     ! checks if automatically set t0 is too small
     ! note: min_tshift_cmt_original can be a positive or negative time shift (minimum from all tshift)
-    if( t0 <= USER_T0 + min_tshift_cmt_original ) then
+    if (t0 <= USER_T0 + min_tshift_cmt_original) then
       ! by default, tshift_cmt(:) holds relative time shifts with a minimum time shift set to zero
       ! re-adds (minimum) original time shift such that sources will kick in
       ! according to their absolute time shift
@@ -214,35 +214,35 @@
       t0 = USER_T0
 
       ! notifies user
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         write(IMAIN,*) '  set new simulation start time: ', - t0
         write(IMAIN,*)
       endif
     else
       ! start time needs to be at least t0 for numerical stability
       ! notifies user
-      if( myrank == 0 ) then
-        write(IMAIN,*) 'error: USER_T0 is too small'
+      if (myrank == 0) then
+        write(IMAIN,*) 'Error: USER_T0 is too small'
         write(IMAIN,*) '       must make one of three adjustements:'
         write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-min_tshift_cmt_original
         write(IMAIN,*) '       - decrease time shift in CMTSOLUTION file'
         write(IMAIN,*) '       - decrease hdur in CMTSOLUTION file'
         call flush_IMAIN()
       endif
-      call exit_mpi(myrank,'error USER_T0 is set but too small')
+      call exit_mpi(myrank,'Error USER_T0 is set but too small')
     endif
-  else if( USER_T0 < 0.d0 ) then
-    if( myrank == 0 ) then
-      write(IMAIN,*) 'error: USER_T0 is negative, must be set zero or positive!'
+  else if (USER_T0 < 0.d0) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'Error: USER_T0 is negative, must be set zero or positive!'
     endif
-    call exit_mpi(myrank,'error negative USER_T0 parameter in constants.h')
+    call exit_mpi(myrank,'Error negative USER_T0 parameter in constants.h')
   endif
 
   ! determines number of times steps for simulation
   call setup_timesteps()
 
   ! prints source time functions to output files
-  if(PRINT_SOURCE_TIME_FUNCTION .and. myrank == 0) then
+  if (PRINT_SOURCE_TIME_FUNCTION .and. myrank == 0) then
     do isource = 1,NSOURCES
         ! print source time function and spectrum
          call print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
@@ -277,7 +277,7 @@
   logical :: is_initial_guess
 
   ! checks if set by initial guess from read_compute_parameters() routine
-  if( NTSTEP_BETWEEN_OUTPUT_SEISMOS == NSTEP) then
+  if (NTSTEP_BETWEEN_OUTPUT_SEISMOS == NSTEP) then
     is_initial_guess = .true.
   else
     is_initial_guess = .false.
@@ -295,26 +295,26 @@
 
   ! noise tomography:
   ! time steps needs to be doubled, due to +/- branches
-  if ( NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1
+  if (NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1
 
 !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
     NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
   endif
   it_end = NSTEP
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
-  if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP .or. is_initial_guess) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+  if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP .or. is_initial_guess) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
 
   ! re-checks output steps?
-  !if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5)/=0)) &
+  !if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5) /= 0)) &
   !  stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
 
   ! subsets used to save adjoint sources must not be larger than the whole time series,
   ! otherwise we waste memory
-  if( SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 ) then
-    if(NTSTEP_BETWEEN_READ_ADJSRC > NSTEP) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
+    if (NTSTEP_BETWEEN_READ_ADJSRC > NSTEP) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
   endif
 
   end subroutine setup_timesteps
@@ -339,7 +339,7 @@
   double precision :: sizeval
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'receivers:'
     call flush_IMAIN()
@@ -351,7 +351,7 @@
            xi_receiver(nrec), &
            eta_receiver(nrec), &
            gamma_receiver(nrec),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
 
   allocate(station_name(nrec), &
            network_name(nrec), &
@@ -359,13 +359,13 @@
            stlon(nrec), &
            stele(nrec), &
            stbur(nrec),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
 
   allocate(nu(NDIM,NDIM,nrec),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver arrays')
 
   !  receivers
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       write(IMAIN,*) 'Total number of receivers = ', nrec
@@ -389,12 +389,12 @@
     !       (excludes stations located outside of chunk)
     nrec_simulation = nrec
     do irec = 1,nrec
-      if(myrank == islice_selected_rec(irec)) nrec_local = nrec_local + 1
+      if (myrank == islice_selected_rec(irec)) nrec_local = nrec_local + 1
     enddo
   else
     nrec_simulation = NSOURCES
     do isource = 1, NSOURCES
-      if(myrank == islice_selected_source(isource)) nrec_local = nrec_local + 1
+      if (myrank == islice_selected_source(isource)) nrec_local = nrec_local + 1
     enddo
   endif
 
@@ -406,9 +406,9 @@
     ! temporary counter to check if any files are found at all
     nadj_files_found = 0
     do irec = 1,nrec
-      if(myrank == islice_selected_rec(irec))then
+      if (myrank == islice_selected_rec(irec))then
         ! adjoint receiver station in this process slice
-        if(islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) &
+        if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) &
           call exit_MPI(myrank,'something is wrong with the source slice number in adjoint simulation')
 
         ! updates counter
@@ -421,22 +421,22 @@
 
     ! checks if any adjoint source files found at all
     call sum_all_i(nadj_files_found,nadj_files_found_tot)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '    ',nadj_files_found_tot,' adjoint component traces found in all slices'
-      if(nadj_files_found_tot == 0) &
+      if (nadj_files_found_tot == 0) &
         call exit_MPI(myrank,'no adjoint traces found, please check adjoint sources in directory SEM/')
     endif
   endif
 
   ! check that the sum of the number of receivers in each slice is nrec
   call sum_all_i(nrec_local,nrec_tot_found)
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'found a total of ',nrec_tot_found,' receivers in all slices'
     ! checks for number of receivers
     ! note: for 1-chunk simulations, nrec_simulations is the number of receivers/sources found in this chunk
-    if(nrec_tot_found /= nrec_simulation) then
+    if (nrec_tot_found /= nrec_simulation) then
       call exit_MPI(myrank,'problem when dispatching the receivers')
     else
       write(IMAIN,*) 'this total is okay'
@@ -446,28 +446,28 @@
   endif
 
   ! check that the sum of the number of receivers in each slice is nrec
-  if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
-    if(myrank == 0 .and. nrec_tot_found /= nrec) &
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+    if (myrank == 0 .and. nrec_tot_found /= nrec) &
       call exit_MPI(myrank,'total number of receivers is incorrect')
   endif
 
   ! statistics about allocation memory for seismograms & adj_sourcearrays
   ! gathers info about receivers on master
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     ! only master process needs full arrays allocated
     allocate(tmp_rec_local_all(NPROCTOT_VAL),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_rec_local_all')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_rec_local_all')
   else
     ! dummy arrays
     allocate(tmp_rec_local_all(1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_rec_local_all')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_rec_local_all')
   endif
 
   ! user output info
   ! sources
-  if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     ! user output
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       ! note: all process allocate the full sourcearrays array
       ! sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES)
       sizeval = dble(NSOURCES) * dble(NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL / 1024. / 1024. )
@@ -485,16 +485,16 @@
   ! gather from slaves on master
   tmp_rec_local_all(:) = 0
   tmp_rec_local_all(1) = nrec_local
-  if( NPROCTOT_VAL > 1 ) then
+  if (NPROCTOT_VAL > 1) then
     call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
   endif
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     ! determines maximum number of local receivers and corresponding rank
     maxrec = maxval(tmp_rec_local_all(:))
     maxproc = maxloc(tmp_rec_local_all(:))
     ! seismograms array size in MB
-    if( SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
       sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_OUTPUT_SEISMOS * CUSTOM_REAL / 1024. / 1024. )
     else
@@ -512,20 +512,20 @@
   endif
 
   ! adjoint sources
-  if( SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 ) then
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     ! gather from slaves on master
     tmp_rec_local_all(:) = 0
     tmp_rec_local_all(1) = nadj_rec_local
-    if( NPROCTOT_VAL > 1 ) then
+    if (NPROCTOT_VAL > 1) then
       call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
     endif
     ! user output
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       ! determines maximum number of local receivers and corresponding rank
       maxrec = maxval(tmp_rec_local_all(:))
       maxproc = maxloc(tmp_rec_local_all(:))
       !do i = 1, NPROCTOT_VAL
-      !  if( tmp_rec_local_all(i) > maxrec ) then
+      !  if (tmp_rec_local_all(i) > maxrec) then
       !    maxrec = tmp_rec_local_all(i)
       !    maxproc = i-1
       !  endif
@@ -539,7 +539,7 @@
       ! outputs info
       write(IMAIN,*) 'adjoint source arrays:'
       write(IMAIN,*) '  reading adjoint sources at every NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
-      if( IO_ASYNC_COPY ) then
+      if (IO_ASYNC_COPY) then
         write(IMAIN,*) '  using asynchronous buffer for file I/O of adjoint sources'
       endif
       write(IMAIN,*) '  maximum number of local adjoint sources is ',maxrec,' in slice ',maxproc(1)
@@ -567,7 +567,7 @@
   character(len=256) :: filename,system_command,filename_new
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
 
     ! finishes VTK file
     !  we should know NSOURCES+nrec at this point...
@@ -584,7 +584,7 @@
     ! only extract receiver locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/receiver.vtk'
     write(system_command, &
-  "('awk ',a1,'{if(NR<5) print $0;if(NR==6)print ',a1,'POINTS',i6,' float',a1,';if(NR>5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
+  "('awk ',a1,'{if (NR<5) print $0;if (NR==6)print ',a1,'POINTS',i6,' float',a1,';if (NR>5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
 
     ! note: this system() routine is non-standard fortran
@@ -593,7 +593,7 @@
     ! only extract source locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/source.vtk'
     write(system_command, &
-  "('awk ',a1,'{if(NR< 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
+  "('awk ',a1,'{if (NR< 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
 
     ! note: this system() routine is non-standard fortran
@@ -621,7 +621,7 @@
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
     ! source interpolated on all GLL points in source element
     allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating sourcearrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating sourcearrays')
     sourcearrays(:,:,:,:,:) = 0._CUSTOM_REAL
 
     ! stores source arrays
@@ -633,28 +633,28 @@
     ! initializes adjoint source buffer
     ! reverse indexing
     allocate(iadj_vec(NSTEP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating iadj_vec')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating iadj_vec')
     ! initializes iadj_vec
-    do it=1,NSTEP
+    do it = 1,NSTEP
        iadj_vec(it) = NSTEP-it+1  ! default is for reversing entire record, e.g. 3000,2999,..,1
     enddo
 
     ! total number of adjoint source blocks to read in
     NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
-    if(nadj_rec_local > 0) then
+    if (nadj_rec_local > 0) then
       ! allocate adjoint source arrays
       allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
                stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint sourcearrays')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
       adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
       ! additional buffer for asynchronous file i/o
-      if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) then
+      if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1) then
         ! allocates read buffer
         allocate(buffer_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
                  stat=ier)
-        if( ier /= 0 ) call exit_MPI(myrank,'error allocating array buffer_sourcearrays')
+        if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array buffer_sourcearrays')
 
         ! array size in bytes (note: the multiplication is split into two line to avoid integer-overflow)
         arraysize = NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL
@@ -670,7 +670,7 @@
       ! allocate indexing arrays
       allocate(iadjsrc(NSTEP_SUB_ADJ,2), &
                iadjsrc_len(NSTEP_SUB_ADJ),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating adjoint indexing arrays')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating adjoint indexing arrays')
 
       ! initializes iadjsrc, iadjsrc_len and iadj_vec
       call setup_sources_receivers_adjindx(NSTEP,NSTEP_SUB_ADJ, &
@@ -703,18 +703,18 @@
     sourcearray(:,:,:,:) = 0._CUSTOM_REAL
 
     !   check that the source slice number is okay
-    if(islice_selected_source(isource) < 0 .or. islice_selected_source(isource) > NPROCTOT_VAL-1) &
-      call exit_MPI(myrank,'error: source slice number invalid')
+    if (islice_selected_source(isource) < 0 .or. islice_selected_source(isource) > NPROCTOT_VAL-1) &
+      call exit_MPI(myrank,'Error: source slice number invalid')
 
     !   compute source arrays in source slice
-    if(myrank == islice_selected_source(isource)) then
+    if (myrank == islice_selected_source(isource)) then
 
       ! element id which holds source
       ispec = ispec_selected_source(isource)
 
       ! checks bounds
-      if( ispec < 1 .or. ispec > NSPEC_CRUST_MANTLE ) &
-        call exit_MPI(myrank,'error: source ispec number invalid')
+      if (ispec < 1 .or. ispec > NSPEC_CRUST_MANTLE ) &
+        call exit_MPI(myrank,'Error: source ispec number invalid')
 
       ! gets source location
       xi = xi_source(isource)
@@ -730,15 +730,15 @@
                           xigll,yigll,zigll)
 
       ! point forces, initializes sourcearray, used for simplified CUDA routines
-      if(USE_FORCE_POINT_SOURCE) then
+      if (USE_FORCE_POINT_SOURCE) then
         ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
         iglob = ibool_crust_mantle(nint(xi),nint(eta),nint(gamma),ispec)
 
         ! sets sourcearrays
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
-              if( ibool_crust_mantle(i,j,k,ispec) == iglob ) then
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
+              if (ibool_crust_mantle(i,j,k,ispec) == iglob) then
                 ! elastic source components
                 sourcearray(:,i,j,k) = nu_source(COMPONENT_FORCE_SOURCE,:,isource)
               endif
@@ -796,7 +796,7 @@
   ! e.g. increases from 1 (case it=1-1000), 2 (case it=1001-2000) to 3 (case it=2001-3000)
   it_sub_adj = 0
   iadj_block = 1
-  do it=1,NSTEP
+  do it = 1,NSTEP
 
     ! block number
     ! e.g. increases from 1 (case it=1-1000), 2 (case it=1001-2000) to 3 (case it=2001-3000)
@@ -804,7 +804,7 @@
     !it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
     ! we are at the edge of a block
-    if(mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then
+    if (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then
       ! sets it_sub_adj subset number
       it_sub_adj = iadj_block
 
@@ -813,7 +813,7 @@
       ! final adj src array
       ! e.g. will be from 1000 to 1, but doesn't go below 1 in cases where NSTEP isn't
       ! a multiple of NTSTEP_BETWEEN_READ_ADJSRC
-      if( istart < 1 ) istart = 1
+      if (istart < 1 ) istart = 1
 
       ! block end time (e.g. 3000)
       iend = NSTEP-(it_sub_adj-1)*NTSTEP_BETWEEN_READ_ADJSRC
@@ -829,11 +829,11 @@
     endif
 
     ! checks that ceiling function above returns correct integer values
-    if( it_sub_adj /= iadj_block-1 ) then
-      print*,'error: confusing block number for reverse adjoint source indexing'
+    if (it_sub_adj /= iadj_block-1) then
+      print*,'Error: confusing block number for reverse adjoint source indexing'
       print*,'  it_sub_adj = ',it_sub_adj,'should be equal to ',iadj_block-1
       print*,'  it = ',it,' istart/iend = ',istart,iend,' NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
-      stop 'error reverse adjoint source indexing'
+      stop 'Error reverse adjoint source indexing'
     endif
 
     ! time stepping for adjoint sources:
@@ -847,7 +847,7 @@
     iadj_vec(it) = iadjsrc_len(it_sub_adj) - mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC)
 
     ! checks that index is non-negative
-    if( iadj_vec(it) < 1 ) iadj_vec(it) = 1
+    if (iadj_vec(it) < 1 ) iadj_vec(it) = 1
   enddo
 
   end subroutine setup_sources_receivers_adjindx
@@ -867,7 +867,7 @@
   ! define local to global receiver numbering mapping
   ! needs to be allocated for subroutine calls (even if nrec_local == 0)
   allocate(number_receiver_global(nrec_local),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating global receiver numbering')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating global receiver numbering')
 
   ! allocates receiver interpolators
   if (nrec_local > 0) then
@@ -875,7 +875,7 @@
     allocate(hxir_store(nrec_local,NGLLX), &
             hetar_store(nrec_local,NGLLY), &
             hgammar_store(nrec_local,NGLLZ),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating receiver interpolators')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver interpolators')
 
     ! defines and stores Lagrange interpolators at all the receivers
     if (SIMULATION_TYPE == 2) then
@@ -886,7 +886,7 @@
     allocate(hpxir_store(nadj_hprec_local,NGLLX), &
             hpetar_store(nadj_hprec_local,NGLLY), &
             hpgammar_store(nadj_hprec_local,NGLLZ),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating derivative interpolators')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating derivative interpolators')
 
     ! stores interpolators for receiver positions
     call setup_sources_receivers_intp(NSOURCES,myrank, &
@@ -902,15 +902,15 @@
     ! allocates seismogram array
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       allocate(seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-      if(ier /= 0) stop 'error while allocating seismograms'
+      if (ier /= 0) stop 'Error while allocating seismograms'
     else
       ! adjoint seismograms
       allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-      if(ier /= 0) stop 'error while allocating adjoint seismograms'
+      if (ier /= 0) stop 'Error while allocating adjoint seismograms'
       ! allocates Frechet derivatives array
       allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
               stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating Frechet derivatives arrays')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Frechet derivatives arrays')
 
       moment_der(:,:,:) = 0._CUSTOM_REAL
       sloc_der(:,:) = 0._CUSTOM_REAL
@@ -925,7 +925,7 @@
     ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...
     allocate(seismograms(NDIM,0,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-    if( ier /= 0) stop 'error while allocating zero seismograms'
+    if (ier /= 0) stop 'Error while allocating zero seismograms'
   endif
 
   end subroutine setup_receivers_precompute_intp
@@ -988,14 +988,14 @@
   irec_local = 0
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     do irec = 1,nrec
-      if(myrank == islice_selected_rec(irec)) then
+      if (myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
         number_receiver_global(irec_local) = irec
       endif
     enddo
   else
     do isource = 1,NSOURCES
-      if(myrank == islice_selected_source(isource)) then
+      if (myrank == islice_selected_source(isource)) then
         irec_local = irec_local + 1
         number_receiver_global(irec_local) = isource
       endif

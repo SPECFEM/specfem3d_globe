@@ -26,7 +26,7 @@ module BOAST
 
     variables += [ num_interfaces, max_nibool_interfaces, d_nibool_interfaces, d_ibool_interfaces]
     p = Procedure::new(function_name, variables)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CUDA or get_lang == CL) then
       make_specfem3d_header
@@ -41,7 +41,7 @@ module BOAST
       decl iinterface
       print id === get_global_id(0)+get_global_size(0)*get_global_id(1)
       print For(iinterface, 0, num_interfaces-1) {
-        print If(id<d_nibool_interfaces[iinterface]) {
+        print if (id<d_nibool_interfaces[iinterface]) {
           print iloc === id + max_nibool_interfaces*iinterface
           print iglob === d_ibool_interfaces[iloc] - 1
           if type == :accel then

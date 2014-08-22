@@ -188,7 +188,7 @@
     ispec = ispec_selected_source(irec)
 
     ! adjoint strain
-    if( UNDO_ATTENUATION ) then
+    if (UNDO_ATTENUATION) then
       ! recomputes strain
       call compute_element_strain_undo_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
                                                  displ_crust_mantle, &
@@ -323,9 +323,9 @@
 !  real(kind=CUSTOM_REAL), dimension(3) :: seismograms_temp
 !
 !  ! checks if anything to do
-!  if( nrec_local == 0 ) return
+!  if (nrec_local == 0 ) return
 !
-!  if(mod(NT_DUMP_ATTENUATION,2) == 0)then
+!  if (mod(NT_DUMP_ATTENUATION,2) == 0)then
 !
 !    do irec_local = 1,nrec_local
 !      do i = 1,seismo_current/NT_DUMP_ATTENUATION

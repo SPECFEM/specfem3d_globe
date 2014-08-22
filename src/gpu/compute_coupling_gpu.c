@@ -45,8 +45,8 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_coupling_fluid_cmb_gpu() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_coupling_fluid_cmb_gpu() routine");
   }
 
   int num_blocks_x, num_blocks_y;
@@ -93,7 +93,7 @@ void FC_FUNC_ (compute_coupling_fluid_cmb_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    if( *FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       compute_coupling_fluid_CMB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,
                                                                                mp->d_accel_outer_core.cuda,
                                                                                mp->d_ibool_crust_mantle.cuda,
@@ -141,8 +141,8 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_coupling_fluid_icb_gpu() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_coupling_fluid_icb_gpu() routine");
   }
 
   int num_blocks_x, num_blocks_y;
@@ -190,7 +190,7 @@ void FC_FUNC_ (compute_coupling_fluid_icb_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    if( *FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       compute_coupling_fluid_ICB_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,
                                                                                mp->d_accel_outer_core.cuda,
                                                                                mp->d_ibool_inner_core.cuda,
@@ -238,8 +238,8 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_coupling_cmb_fluid_gpu() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_coupling_cmb_fluid_gpu() routine");
   }
 
   int num_blocks_x, num_blocks_y;
@@ -291,7 +291,7 @@ void FC_FUNC_ (compute_coupling_cmb_fluid_gpu,
     dim3 threads(5,5,1);
 
     // launches GPU kernel
-    if( *FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       compute_coupling_CMB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,
                                                                                mp->d_accel_crust_mantle.cuda,
                                                                                mp->d_accel_outer_core.cuda,
@@ -346,8 +346,8 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_coupling_icb_fluid_gpu() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_coupling_icb_fluid_gpu() routine");
   }
 
   int num_blocks_x, num_blocks_y;
@@ -399,7 +399,7 @@ void FC_FUNC_ (compute_coupling_icb_fluid_gpu,
     dim3 threads(NGLLX,NGLLX,1);
 
     // launches GPU kernel
-    if( *FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       compute_coupling_ICB_fluid_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,
                                                                                mp->d_accel_inner_core.cuda,
                                                                                mp->d_accel_outer_core.cuda,
@@ -455,8 +455,8 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_coupling_ocean_gpu() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_coupling_ocean_gpu() routine");
   }
 
   int blocksize = BLOCKSIZE_TRANSFER;
@@ -507,7 +507,7 @@ void FC_FUNC_ (compute_coupling_ocean_gpu,
     dim3 threads(blocksize,1,1);
 
     // uses corrected mass matrices
-    if( *FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       compute_coupling_ocean_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
                                                                            mp->d_rmassx_crust_mantle.cuda,
                                                                            mp->d_rmassy_crust_mantle.cuda,

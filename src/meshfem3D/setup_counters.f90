@@ -70,7 +70,7 @@
   ! local parameters
   integer :: iregion
 
-  do iregion=1,MAX_NUM_REGIONS
+  do iregion = 1,MAX_NUM_REGIONS
     NSPEC1D_RADIAL_CORNER(iregion,:) = NSPEC1D_RADIAL(iregion)
     NSPEC2D_XI_FACE(iregion,:) = NSPEC2D_XI(iregion)
     NSPEC2D_ETA_FACE(iregion,:) = NSPEC2D_ETA(iregion)

@@ -96,7 +96,7 @@ static void initialize_cuda_device(const char *platform_filter, const char *devi
   //
   // being verbose and catches error from first call to CUDA runtime function, without synchronize call
   cudaError_t err = cudaGetLastError();
-  if (err != cudaSuccess){
+  if (err != cudaSuccess) {
     fprintf(stderr,"Error after cudaGetDeviceCount: %s\n", cudaGetErrorString(err));
     exit_on_error("\
 CUDA runtime error: cudaGetDeviceCount failed\n\n\
@@ -133,7 +133,7 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
   }
 
   if (nbMatchingDevices == 0) {
-    printf("ERROR: no matching devices for criteria %s/%s\n", platform_filter, device_filter);
+    printf("Error: no matching devices for criteria %s/%s\n", platform_filter, device_filter);
     exit(1);
   }
 
@@ -144,7 +144,7 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
   cudaGetDeviceProperties(&deviceProp, myDevice);
 
   // exit if the machine has no CUDA-enabled device
-  if (deviceProp.major == 9999 && deviceProp.minor == 9999){
+  if (deviceProp.major == 9999 && deviceProp.minor == 9999) {
     fprintf(stderr,"No CUDA-enabled device found, exiting...\n\n");
     exit_on_error("CUDA runtime error: there is no CUDA-enabled device found\n");
   }
@@ -160,15 +160,15 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
   }
   // debugging
-  if (DEBUG){
+  if (DEBUG) {
     do_output_info = 1;
     sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
   }
 
   // output to file
-  if( do_output_info ){
+  if (do_output_info) {
     fp = fopen(filename,"w");
-    if (fp != NULL){
+    if (fp != NULL) {
       // display device properties
       fprintf(fp,"Device Name = %s\n",deviceProp.name);
       fprintf(fp,"memory:\n");
@@ -187,17 +187,17 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
       fprintf(fp,"features:\n");
       fprintf(fp,"  Compute capability of the device = %d.%d\n", deviceProp.major, deviceProp.minor);
       fprintf(fp,"  multiProcessorCount: %d\n",deviceProp.multiProcessorCount);
-      if(deviceProp.canMapHostMemory){
+      if (deviceProp.canMapHostMemory) {
         fprintf(fp,"  canMapHostMemory: TRUE\n");
       }else{
         fprintf(fp,"  canMapHostMemory: FALSE\n");
       }
-      if(deviceProp.deviceOverlap){
+      if (deviceProp.deviceOverlap) {
         fprintf(fp,"  deviceOverlap: TRUE\n");
       }else{
         fprintf(fp,"  deviceOverlap: FALSE\n");
       }
-      if(deviceProp.concurrentKernels){
+      if (deviceProp.concurrentKernels) {
         fprintf(fp,"  concurrentKernels: TRUE\n");
       }else{
         fprintf(fp,"  concurrentKernels: FALSE\n");
@@ -215,17 +215,17 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
   }
 
   // make sure that the device has compute capability >= 1.3
-  if (deviceProp.major < 1){
+  if (deviceProp.major < 1) {
     fprintf(stderr,"Compute capability major number should be at least 1, exiting...\n\n");
     exit_on_error("CUDA Compute capability major number should be at least 1\n");
   }
-  if (deviceProp.major == 1 && deviceProp.minor < 3){
+  if (deviceProp.major == 1 && deviceProp.minor < 3) {
     fprintf(stderr,"Compute capability should be at least 1.3, exiting...\n");
     exit_on_error("CUDA Compute capability major number should be at least 1.3\n");
   }
   // we use pinned memory for asynchronous copy
   if (GPU_ASYNC_COPY) {
-    if (! deviceProp.canMapHostMemory){
+    if (! deviceProp.canMapHostMemory) {
       fprintf(stderr,"Device capability should allow to map host memory, exiting...\n");
       exit_on_error("CUDA Device capability canMapHostMemory should be TRUE\n");
     }
@@ -290,15 +290,15 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
   }
   // debugging
-  if (DEBUG){
+  if (DEBUG) {
     do_output_info = 1;
     sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
   }
 
   // output to file
-  if( do_output_info ){
+  if (do_output_info) {
     fp = fopen(filename,"w");
-    if (fp != NULL){
+    if (fp != NULL) {
       cl_device_type device_type;
       size_t max_work_group_size;
       cl_ulong mem_size;
@@ -371,7 +371,7 @@ void build_kernels (void) {
       continue;
     }
     if (!len) {
-      printf("ERROR: OpenCL buffer for macro parameters is not large enough, please review its size (%s:%d)\n", __FILE__, __LINE__);
+      printf("Error: OpenCL buffer for macro parameters is not large enough, please review its size (%s:%d)\n", __FILE__, __LINE__);
       exit(1);
     }
     int written = snprintf(pos, len, "-D%s=%s ", _macro_to_kernel[i].name, _macro_to_kernel[i].value);
@@ -388,25 +388,18 @@ void build_kernels (void) {
   // defines OpenCL build program macro
 #undef BOAST_KERNEL
 #define BOAST_KERNEL(__kern_name__)                                     \
-  mocl.programs.__kern_name__##_program = clCreateProgramWithSource(    \
-                       mocl.context, 1,                                 \
-                       &__kern_name__##_program, NULL, clck_(&errcode));\
-  mocl_errcode = clBuildProgram(mocl.programs.__kern_name__##_program,  \
-           0, NULL, parameters, NULL, NULL);\
+  mocl.programs.__kern_name__##_program = clCreateProgramWithSource( mocl.context, 1, \
+                                                                     &__kern_name__##_program, NULL, clck_(&errcode));\
+  mocl_errcode = clBuildProgram(mocl.programs.__kern_name__##_program, 0, NULL, parameters, NULL, NULL);\
   if (mocl_errcode != CL_SUCCESS) {                                     \
-    fprintf(stderr,"OpenCL Error: Failed to build program "#__kern_name__": %s\n", \
-            clewErrorString(mocl_errcode));                             \
+    fprintf(stderr,"OpenCL Error: Failed to build program "#__kern_name__": %s\n", clewErrorString(mocl_errcode)); \
     char cBuildLog[10240];                                              \
-    clGetProgramBuildInfo(mocl.programs.__kern_name__##_program,        \
-                          mocl.device,                                  \
-                          CL_PROGRAM_BUILD_LOG,                         \
-                          sizeof(cBuildLog), cBuildLog, NULL );         \
+    clGetProgramBuildInfo(mocl.programs.__kern_name__##_program, mocl.device, CL_PROGRAM_BUILD_LOG, \
+                          sizeof(cBuildLog), cBuildLog, NULL ); \
     fprintf(stderr,"OpenCL Log: %s\n",cBuildLog);                                   \
     exit(1);                                                            \
   }                                                                     \
-  mocl.kernels.__kern_name__ = clCreateKernel (                         \
-                               mocl.programs.__kern_name__ ## _program, \
-                               #__kern_name__ , clck_(&errcode));
+  mocl.kernels.__kern_name__ = clCreateKernel (mocl.programs.__kern_name__ ## _program, #__kern_name__ , clck_(&errcode));
 
   // builds each OpenCL kernel
   #include "kernel_list.h"
@@ -427,13 +420,13 @@ struct _opencl_version opencl_version_1_2 = {1,2};
 /* ----------------------------------------------------------------------------------------------- */
 
 cl_int compare_opencl_version(struct _opencl_version v1, struct _opencl_version v2) {
-  if(v1.major > v2.major)
+  if (v1.major > v2.major)
     return 1;
-  if(v1.major < v2.major)
+  if (v1.major < v2.major)
     return -1;
-  if(v1.minor > v2.minor)
+  if (v1.minor > v2.minor)
     return 1;
-  if(v1.minor < v2.minor)
+  if (v1.minor < v2.minor)
     return -1;
   return 0;
 }
@@ -517,7 +510,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         clCheck( clGetPlatformInfo(platform_ids[i], props_to_check[j], 0, NULL, &info_length));
 
         // checks info
-        if( info_length == 0 ){
+        if (info_length == 0) {
           fprintf(stderr,"OpenCL error: No OpenCL platform info available!\n");
           exit(1);
         }
@@ -542,17 +535,17 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
     // checks if platform found
     if (!found) {
-      if( myrank == 0 ){
+      if (myrank == 0) {
         fprintf(stderr, "\nAvailable platforms are:\n");
         for (i = 0; i < num_platforms; i++) {
-          if( info_all[i][0] ){ fprintf(stderr, "  platform %i: vendor = %s , name = %s\n",i,info_all[i][0],info_all[i][1]);}
+          if (info_all[i][0]) { fprintf(stderr, "  platform %i: vendor = %s , name = %s\n",i,info_all[i][0],info_all[i][1]);}
         }
         fprintf(stderr, "Please check your parameter GPU_PLATFORM in Par_file\n\n");
       }
       // frees info array
       for (i = 0; i < num_platforms; i++) {
-        if( info_all[i][0] ){ free(info_all[i][0]); }
-        if( info_all[i][1] ){ free(info_all[i][1]); }
+        if (info_all[i][0]) { free(info_all[i][0]); }
+        if (info_all[i][1]) { free(info_all[i][1]); }
       }
       // exits
       fprintf(stderr, "No matching OpenCL platform available : %s\n", platform_filter);
@@ -561,8 +554,8 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
     // frees info array
     for (i = 0; i < num_platforms; i++) {
-      if( info_all[i][0] ){ free(info_all[i][0]); }
-      if( info_all[i][1] ){ free(info_all[i][1]); }
+      if (info_all[i][0]) { free(info_all[i][0]); }
+      if (info_all[i][1]) { free(info_all[i][1]); }
     }
 
   } else {
@@ -627,16 +620,16 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
     if (!found) {
       // user output
-      if( myrank == 0 ){
+      if (myrank == 0) {
         fprintf(stderr, "\nAvailable devices are:\n");
         for (i = 0; i < num_devices; i++) {
-          if( info_device_all[i] ){ fprintf(stderr, "  device %i: name = %s\n",i,info_device_all[i]);}
+          if (info_device_all[i]) { fprintf(stderr, "  device %i: name = %s\n",i,info_device_all[i]);}
         }
         fprintf(stderr, "Please check your parameter GPU_DEVICE in Par_file\n\n");
       }
       // frees info array
       for (i = 0; i < num_devices; i++) {
-        if( info_device_all[i] ){ free(info_device_all[i]); }
+        if (info_device_all[i]) { free(info_device_all[i]); }
       }
       // exits
       fprintf(stderr, "No matching OpenCL device available : %s\n", device_filter);
@@ -651,7 +644,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     free (device_ids);
     // frees info array
     for (i = 0; i < num_devices; i++) {
-      if( info_device_all[i] ){ free(info_device_all[i]); }
+      if (info_device_all[i]) { free(info_device_all[i]); }
     }
 
   } else {
@@ -707,7 +700,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 static char *trim_and_default(char *s)
 {
   // trim before
-  while (*s != '\0' && isspace(*s)){ s++; }
+  while (*s != '\0' && isspace(*s)) { s++; }
 
   if (*s == '\0') {
     return s;
@@ -719,7 +712,7 @@ static char *trim_and_default(char *s)
   // debug
   //printf("string: %s has length %i \n",s,strlen(s));
   int len = strlen(s);
-  if( len > 11 ) len = 11;
+  if (len > 11 ) len = 11;
 
   // trim after
   char *back = s + len;
@@ -755,9 +748,9 @@ void FC_FUNC_ (initialize_gpu_device,
   run_cuda = runtime_type == CUDA;
   run_opencl = runtime_type == OPENCL;
   if (runtime_type == COMPILE) {
-    if(*myrank_f == 0 ){
+    if (*myrank_f == 0) {
       printf("\
-ERROR: GPU_RUNTIME set to compile time decision (%d), but both OpenCL (%d) and CUDA (%d) are compiled.\n\
+Error: GPU_RUNTIME set to compile time decision (%d), but both OpenCL (%d) and CUDA (%d) are compiled.\n\
 Please set Par_file accordingly...\n\n", COMPILE, OPENCL, CUDA);
     }
     exit(1);
@@ -765,7 +758,7 @@ Please set Par_file accordingly...\n\n", COMPILE, OPENCL, CUDA);
 #elif defined(USE_OPENCL)
   run_opencl = 1;
   if (runtime_type != COMPILE && runtime_type != OPENCL) {
-    if(*myrank_f == 0 ){
+    if (*myrank_f == 0) {
       printf("\
 Warning: GPU_RUNTIME parameter in Par_file set to (%d) is incompatible with OpenCL-only compilation (OPENCL=%d, COMPILE=%d).\n\
 This simulation will continue using the OpenCL runtime...\n\n", runtime_type, OPENCL, COMPILE);
@@ -774,7 +767,7 @@ This simulation will continue using the OpenCL runtime...\n\n", runtime_type, OP
 #elif defined(USE_CUDA)
   run_cuda = 1;
   if (runtime_type != COMPILE && runtime_type != CUDA) {
-    if(*myrank_f == 0 ){
+    if (*myrank_f == 0) {
       printf("\
 Warning: GPU_RUNTIME parameter in Par_file set to (%d) is incompatible with Cuda-only compilation (CUDA=%d, COMPILE=%d).\n\
 This simulation will continue using the Cuda runtime...\n", runtime_type, CUDA, COMPILE);

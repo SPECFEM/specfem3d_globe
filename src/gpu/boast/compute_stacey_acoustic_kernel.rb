@@ -48,7 +48,7 @@ module BOAST
     ngll2 = Int("NGLL2", :const => n_gll2)
 
     p = Procedure(function_name, variables)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2 )
@@ -65,52 +65,52 @@ module BOAST
       print igll === get_local_id(0)
       print iface === get_group_id(0)+get_group_id(1)*get_num_groups(0)
 
-      print If( iface < num_abs_boundary_faces ) {
+      print if (iface < num_abs_boundary_faces ) {
         print ispec === abs_boundary_ispec[iface]-1
 
         print Case( interface_type,
         4, lambda {
-          print If( Expression("||", nkmin_xi[INDEX2(2,0,iface)] == 0, njmin[INDEX2(2,0,iface)] == 0) )   { print Return(nil) }
+          print if (Expression("||", nkmin_xi[INDEX2(2,0,iface)] == 0, njmin[INDEX2(2,0,iface)] == 0) )   { print Return(nil) }
           print i === 0
           print k === igll/ngllx
           print j === igll-k*ngllx
-          print If( Expression("||", k < nkmin_xi[INDEX2(2,0,iface)]-1, k > ngllx-1) )                    { print Return(nil) }
-          print If( Expression("||", j <    njmin[INDEX2(2,0,iface)]-1, j > njmax[INDEX2(2,0,iface)]-1) ) { print Return(nil) }
+          print if (Expression("||", k < nkmin_xi[INDEX2(2,0,iface)]-1, k > ngllx-1) )                    { print Return(nil) }
+          print if (Expression("||", j <    njmin[INDEX2(2,0,iface)]-1, j > njmax[INDEX2(2,0,iface)]-1) ) { print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+j] if type == :acoustic_forward
         },
         5, lambda {
-          print If( Expression("||", nkmin_xi[INDEX2(2,1,iface)] == 0, njmin[INDEX2(2,1,iface)] == 0) )   { print Return(nil) }
+          print if (Expression("||", nkmin_xi[INDEX2(2,1,iface)] == 0, njmin[INDEX2(2,1,iface)] == 0) )   { print Return(nil) }
           print i === ngllx-1
           print k === igll/ngllx
           print j === igll-k*ngllx
-          print If( Expression("||", k < nkmin_xi[INDEX2(2,1,iface)]-1, k > ngllx-1) )                    { print Return(nil) }
-          print If( Expression("||", j <    njmin[INDEX2(2,1,iface)]-1, j > njmax[INDEX2(2,1,iface)]-1) ) { print Return(nil) }
+          print if (Expression("||", k < nkmin_xi[INDEX2(2,1,iface)]-1, k > ngllx-1) )                    { print Return(nil) }
+          print if (Expression("||", j <    njmin[INDEX2(2,1,iface)]-1, j > njmax[INDEX2(2,1,iface)]-1) ) { print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+j] if type == :acoustic_forward
         },
         6, lambda {
-          print If( Expression("||", nkmin_eta[INDEX2(2,0,iface)] == 0, nimin[INDEX2(2,0,iface)] == 0) )  { print Return(nil) }
+          print if (Expression("||", nkmin_eta[INDEX2(2,0,iface)] == 0, nimin[INDEX2(2,0,iface)] == 0) )  { print Return(nil) }
           print j === 0
           print k === igll/ngllx
           print i === igll-k*ngllx
-          print If( Expression("||", k < nkmin_eta[INDEX2(2,0,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
-          print If( Expression("||", i <     nimin[INDEX2(2,0,iface)]-1, i > nimax[INDEX2(2,0,iface)]-1) ){ print Return(nil) }
+          print if (Expression("||", k < nkmin_eta[INDEX2(2,0,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
+          print if (Expression("||", i <     nimin[INDEX2(2,0,iface)]-1, i > nimax[INDEX2(2,0,iface)]-1) ){ print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+i] if type == :acoustic_forward
         },
         7, lambda {
-          print If( Expression("||", nkmin_eta[INDEX2(2,1,iface)] == 0, nimin[INDEX2(2,1,iface)] == 0) )  { print Return(nil) }
+          print if (Expression("||", nkmin_eta[INDEX2(2,1,iface)] == 0, nimin[INDEX2(2,1,iface)] == 0) )  { print Return(nil) }
           print j === ngllx-1
           print k === igll/ngllx
           print i === igll-k*ngllx
-          print If( Expression("||", k < nkmin_eta[INDEX2(2,1,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
-          print If( Expression("||", i <     nimin[INDEX2(2,1,iface)]-1, i > nimax[INDEX2(2,1,iface)]-1) ){ print Return(nil) }
+          print if (Expression("||", k < nkmin_eta[INDEX2(2,1,iface)]-1, k > ngllx-1) )                   { print Return(nil) }
+          print if (Expression("||", i <     nimin[INDEX2(2,1,iface)]-1, i > nimax[INDEX2(2,1,iface)]-1) ){ print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+i] if type == :acoustic_forward
         },
         8, lambda {
           print k === 0
           print j === igll/ngllx
           print i === igll - j*ngllx
-          print If( Expression("||", j < 0, j > ngllx-1) )                                                { print Return(nil) }
-          print If( Expression("||", i < 0, i > ngllx-1) )                                                { print Return(nil) }
+          print if (Expression("||", j < 0, j > ngllx-1) )                                                { print Return(nil) }
+          print if (Expression("||", i < 0, i > ngllx-1) )                                                { print Return(nil) }
           print fac1 === wgllwgll[j*ngllx+i] if type == :acoustic_forward
         })
 
@@ -119,7 +119,7 @@ module BOAST
           print sn === potential_dot_acoustic[iglob] / vpstore[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]
           print jacobianw === abs_boundary_jacobian2D[INDEX2(ngll2,igll,iface)]*fac1
           print atomicAdd(potential_dot_dot_acoustic + iglob, -sn*jacobianw)
-          print If( save_forward ) {
+          print if (save_forward ) {
             print b_absorb_potential[INDEX2(ngll2,igll,iface)] === sn*jacobianw
           }
         elsif type == :acoustic_backward then

@@ -81,7 +81,7 @@
     do k = 1,NGLLZ,NGLLZ-1
       do j  = 1,NGLLY,NGLLY-1
         do i = 1,NGLLX,NGLLX-1
-          if(mask_ibool(ibool(i,j,k,ispec))) then
+          if (mask_ibool(ibool(i,j,k,ispec))) then
             is_on_a_slice_edge(ispec) = .true.
             goto 888
           endif
@@ -127,30 +127,30 @@
   logical, dimension(nglob) :: mask_ibool
   integer :: ipoin,ispec,i,j,k,imsg,ispec2D
 
-  if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
+  if (ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
       ispec = ibelm_bottom_inner_core(ispec2D)
       is_on_a_slice_edge(ispec) = .true.
     enddo
   endif
 
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+  if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
     do ispec = 1,nspec
-      if(idoubling_inner_core(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
+      if (idoubling_inner_core(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
          idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) &
         is_on_a_slice_edge(ispec) = .true.
     enddo
   endif
 
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+  if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     ! clean the mask
     mask_ibool(:) = .false.
 
     do imsg = 1,nb_msgs_theor_in_cube
       do ipoin = 1,npoin2D_cube_from_slices
-        if(NPROC_XI==1) then
-          if(ibool_central_cube(imsg,ipoin) > 0 ) then
+        if (NPROC_XI == 1) then
+          if (ibool_central_cube(imsg,ipoin) > 0) then
             mask_ibool(ibool_central_cube(imsg,ipoin)) = .true.
           endif
         else
@@ -168,7 +168,7 @@
       do k = 1,NGLLZ,NGLLZ-1
         do j  = 1,NGLLY,NGLLY-1
           do i = 1,NGLLX,NGLLX-1
-            if(mask_ibool(ibool(i,j,k,ispec))) then
+            if (mask_ibool(ibool(i,j,k,ispec))) then
               is_on_a_slice_edge(ispec) = .true.
               goto 888
             endif

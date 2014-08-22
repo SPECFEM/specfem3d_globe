@@ -17,7 +17,7 @@ module BOAST
     ngll2 = Int("NGLL2", :const => n_gll2)
 
     p = Procedure(function_name, [ibelm_top,nspec_top,ibool,displ,noise_surface_movie])
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx, :ngll2 => n_gll2)
@@ -27,7 +27,7 @@ module BOAST
 
         print igll === get_local_id(0)
         print iface === get_group_id(0) + get_group_id(1)*get_num_groups(0)
-        print If( iface < nspec_top ) {
+        print if (iface < nspec_top ) {
           decl i = Int("i")
           decl j = Int("j")
           decl k = Int("k")

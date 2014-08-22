@@ -170,7 +170,7 @@
     iz_elem = ner(ilayer)
     step_mult = 2
   else
-    if(iregion_code==IREGION_OUTER_CORE .and. ilayer==ilast_region &
+    if (iregion_code==IREGION_OUTER_CORE .and. ilayer==ilast_region &
       .and. (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
       nspec_sb = NSPEC_DOUBLING_BASICBRICK
       step_mult = 1
@@ -191,20 +191,20 @@
       if (step_mult == 1) then
         ! for xi direction
         if (.not. CUT_SUPERBRICK_XI) then
-          if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+          if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer))) == 0) then
             case_xi = 1
           else
             case_xi = 2
           endif
         else
           if (offset_proc_xi == 0) then
-            if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+            if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer))) == 0) then
               case_xi = 1
             else
               case_xi = 2
             endif
           else
-            if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))/=0) then
+            if (mod((ix_elem-1),(2*step_mult*ratio_sampling_array(ilayer))) /= 0) then
               case_xi = 1
             else
               case_xi = 2
@@ -213,20 +213,20 @@
         endif
         ! for eta direction
         if (.not. CUT_SUPERBRICK_ETA) then
-          if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+          if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer))) == 0) then
             case_eta = 1
           else
             case_eta = 2
           endif
         else
           if (offset_proc_eta == 0) then
-            if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))==0) then
+            if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer))) == 0) then
               case_eta = 1
             else
               case_eta = 2
             endif
           else
-            if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer)))/=0) then
+            if (mod((iy_elem-1),(2*step_mult*ratio_sampling_array(ilayer))) /= 0) then
               case_eta = 1
             else
               case_eta = 2
@@ -275,7 +275,7 @@
 
         ! add one spectral element to the list
         ispec = ispec + 1
-        if(ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
+        if (ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
 
         ! new get_flag_boundaries
         ! xmin & xmax
@@ -300,7 +300,7 @@
         if (ilayer==ifirst_region) then
           iboun(6,ispec)= iboun_sb(ispec_superbrick,6)
         endif
-        if (ilayer==ilast_region .and. iz_elem==1) then
+        if (ilayer==ilast_region .and. iz_elem == 1) then
           iboun(5,ispec)= iboun_sb(ispec_superbrick,5)
         endif
 

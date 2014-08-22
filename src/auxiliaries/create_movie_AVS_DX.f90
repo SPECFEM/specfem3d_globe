@@ -123,7 +123,7 @@
   print *
   print *,'enter value:'
   read(5,*) iformat
-  if( iformat < 1 .or. iformat > 4 ) stop 'exiting...'
+  if (iformat < 1 .or. iformat > 4 ) stop 'exiting...'
 
   print *,'movie frames have been saved every ',NTSTEP_BETWEEN_FRAMES,' time steps'
   print *
@@ -136,42 +136,42 @@
 
   print *,'enter component (e.g. 1=Z, 2=N, 3=E)'
   read(5,*) USE_COMPONENT
-  if( USE_COMPONENT < 1 .or. USE_COMPONENT > 3 ) stop 'component must be 1, 2 or 3'
+  if (USE_COMPONENT < 1 .or. USE_COMPONENT > 3 ) stop 'component must be 1, 2 or 3'
 
   print *
   print *,'--------'
   print *
 
   ! checks options
-  if( it1 < 1 ) stop 'the first time step must be >= 1'
-  if( it2 == -1 ) it2 = NSTEP
+  if (it1 < 1 ) stop 'the first time step must be >= 1'
+  if (it2 == -1 ) it2 = NSTEP
 
 ! --------------------------------------
 
   ! runs the main program
   ! sets flags
-  if(iformat == 1) then
+  if (iformat == 1) then
     USE_OPENDX = .true.
     USE_AVS = .false.
     USE_GMT = .false.
     UNIQUE_FILE = .false.
-  else if(iformat == 2) then
+  else if (iformat == 2) then
     USE_OPENDX = .false.
     USE_AVS = .true.
     USE_GMT = .false.
     UNIQUE_FILE = .false.
-  else if(iformat == 3) then
+  else if (iformat == 3) then
     USE_OPENDX = .false.
     USE_AVS = .true.
     USE_GMT = .false.
     UNIQUE_FILE = .true.
-  else if(iformat == 4) then
+  else if (iformat == 4) then
     USE_OPENDX = .false.
     USE_AVS = .false.
     USE_GMT = .true.
     UNIQUE_FILE = .false.
   else
-    stop 'error: invalid format'
+    stop 'Error: invalid format'
   endif
 
   print *
@@ -181,7 +181,7 @@
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
 
-  if(MOVIE_COARSE) then
+  if (MOVIE_COARSE) then
     ! note:
     ! nex_per_proc_xi*nex_per_proc_eta = nex_xi*nex_eta/nproc = nspec2d_top(iregion_crust_mantle)
     ! used in specfem3D.f90
@@ -200,34 +200,34 @@
 
 
   allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_x'
+  if (ierror /= 0) stop 'Error while allocating store_val_x'
 
   allocate(store_val_y(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_y'
+  if (ierror /= 0) stop 'Error while allocating store_val_y'
 
   allocate(store_val_z(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_z'
+  if (ierror /= 0) stop 'Error while allocating store_val_z'
 
   allocate(store_val_ux(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_ux'
+  if (ierror /= 0) stop 'Error while allocating store_val_ux'
 
   allocate(store_val_uy(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_uy'
+  if (ierror /= 0) stop 'Error while allocating store_val_uy'
 
   allocate(store_val_uz(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_uz'
+  if (ierror /= 0) stop 'Error while allocating store_val_uz'
 
   allocate(x(NGLLX,NGLLY),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating x'
+  if (ierror /= 0) stop 'Error while allocating x'
 
   allocate(y(NGLLX,NGLLY),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating y'
+  if (ierror /= 0) stop 'Error while allocating y'
 
   allocate(z(NGLLX,NGLLY),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating z'
+  if (ierror /= 0) stop 'Error while allocating z'
 
   allocate(displn(NGLLX,NGLLY),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating displn'
+  if (ierror /= 0) stop 'Error while allocating displn'
 
   print *
   print *,'looping from ',it1,' to ',it2,' every ',NTSTEP_BETWEEN_FRAMES,' time steps'
@@ -235,18 +235,18 @@
 ! count number of movie frames
   nframes = 0
   do it = it1,it2
-    if(mod(it,NTSTEP_BETWEEN_FRAMES) == 0) nframes = nframes + 1
+    if (mod(it,NTSTEP_BETWEEN_FRAMES) == 0) nframes = nframes + 1
   enddo
   print *
   print *,'total number of frames will be ',nframes
-  if(nframes == 0) stop 'null number of frames'
+  if (nframes == 0) stop 'null number of frames'
 
 ! Make OpenDX think that each "grid cell" between GLL points is actually
 ! a finite element with four corners. This means that inside each real
 ! spectral element one should have (NGLL-1)^2 OpenDX "elements"
 
 ! define the total number of OpenDX "elements" at the surface
-  if(MOVIE_COARSE) then
+  if (MOVIE_COARSE) then
     nspectot_AVS_max = NCHUNKS * NEX_XI * NEX_ETA
   else
     nspectot_AVS_max = NCHUNKS * NEX_XI * NEX_ETA * (NGLLX-1) * (NGLLY-1)
@@ -265,48 +265,48 @@
 
 ! allocate arrays for sorting routine
   allocate(iglob(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating iglob'
+  if (ierror /= 0) stop 'Error while allocating iglob'
 
   allocate(locval(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating loc'
+  if (ierror /= 0) stop 'Error while allocating loc'
 
   allocate(ifseg(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating ifseg'
+  if (ierror /= 0) stop 'Error while allocating ifseg'
 
   allocate(xp(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating xp'
+  if (ierror /= 0) stop 'Error while allocating xp'
 
   allocate(yp(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating yp'
+  if (ierror /= 0) stop 'Error while allocating yp'
 
   allocate(zp(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating zp'
+  if (ierror /= 0) stop 'Error while allocating zp'
 
   allocate(xp_save(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating xp_save'
+  if (ierror /= 0) stop 'Error while allocating xp_save'
 
   allocate(yp_save(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating yp_save'
+  if (ierror /= 0) stop 'Error while allocating yp_save'
 
   allocate(zp_save(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating zp_save'
+  if (ierror /= 0) stop 'Error while allocating zp_save'
 
   allocate(field_display(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating field_display'
+  if (ierror /= 0) stop 'Error while allocating field_display'
 
   allocate(mask_point(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating mask_point'
+  if (ierror /= 0) stop 'Error while allocating mask_point'
 
   allocate(ireorder(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating ireorder'
+  if (ierror /= 0) stop 'Error while allocating ireorder'
 
 !--- ****** read data saved by solver ******
 
   print *
 
-  if(APPLY_THRESHOLD) print *,'Will apply a threshold to amplitude below ',100.*THRESHOLD,' %'
+  if (APPLY_THRESHOLD) print *,'Will apply a threshold to amplitude below ',100.*THRESHOLD,' %'
 
-  if(NONLINEAR_SCALING) print *,'Will apply a non linear scaling with coef ',POWER_SCALING
+  if (NONLINEAR_SCALING) print *,'Will apply a non linear scaling with coef ',POWER_SCALING
 
 ! --------------------------------------
 
@@ -314,9 +314,9 @@
   outputname = "/moviedata_xyz.bin"
   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
        status='old',action='read',form='unformatted',iostat=ierror)
-  if(ierror /= 0 ) then
-    print*,'error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
-    stop 'error opening moviedata file'
+  if (ierror /= 0) then
+    print*,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
+    stop 'Error opening moviedata file'
   endif
 
   ! reads in point locations
@@ -334,7 +334,7 @@
   do it = it1,it2
 
     ! check if time step corresponds to a movie frame
-    if(mod(it,NTSTEP_BETWEEN_FRAMES) /= 0) cycle
+    if (mod(it,NTSTEP_BETWEEN_FRAMES) /= 0) cycle
 
     iframe = iframe + 1
 
@@ -346,9 +346,9 @@
     write(outputname,"('/moviedata',i6.6)") it
     open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname, &
          status='old',action='read',form='unformatted',iostat=ierror)
-    if(ierror /= 0 ) then
-      print*,'error opening file: ',trim(OUTPUT_FILES)//outputname
-      stop 'error opening moviedata file'
+    if (ierror /= 0) then
+      print*,'Error opening file: ',trim(OUTPUT_FILES)//outputname
+      stop 'Error opening moviedata file'
     endif
 
     ! reads in associated values (displacement or velocity..)
@@ -403,23 +403,23 @@
             z(i,j) = zcoord
 
             ! saves the desired component
-            if(USE_COMPONENT == 1) then
+            if (USE_COMPONENT == 1) then
                ! compute unit normal vector to the surface
                RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
-               if( RRval < 1.e-10 ) stop 'error unit normal vector'
+               if (RRval < 1.e-10 ) stop 'Error unit normal vector'
                normal_x = xcoord / RRval
                normal_y = ycoord / RRval
                normal_z = zcoord / RRval
 
                displn(i,j) = displx*normal_x + disply*normal_y + displz*normal_z
 
-            else if(USE_COMPONENT == 2) then
+            else if (USE_COMPONENT == 2) then
 
                ! compute unit tangent vector to the surface (N-S)
                RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
-               if( RRval < 1.e-10 ) stop 'error unit normal vector'
+               if (RRval < 1.e-10 ) stop 'Error unit normal vector'
                rhoval = sqrt(xcoord**2 + ycoord**2)
-               if( rhoval < 1.e-10 ) then
+               if (rhoval < 1.e-10) then
                 ! location at pole
                 thetahat_x = 0.0
                 thetahat_y = 0.0
@@ -431,11 +431,11 @@
 
                displn(i,j) = - (displx*thetahat_x + disply*thetahat_y + displz*thetahat_z)
 
-            else if(USE_COMPONENT == 3) then
+            else if (USE_COMPONENT == 3) then
 
                ! compute unit tangent to the surface (E-W)
                rhoval = sqrt(xcoord**2 + ycoord**2)
-               if( rhoval < 1.e-10 ) then
+               if (rhoval < 1.e-10) then
                 ! location at pole
                 phihat_x = 0.0
                 phihat_y = 0.0
@@ -452,7 +452,7 @@
 
         ! assign the values of the corners of the OpenDX "elements"
         ispec = ispec + 1
-        if(MOVIE_COARSE) then
+        if (MOVIE_COARSE) then
           ielm = ispec-1
         else
           ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
@@ -461,7 +461,7 @@
         do j = 1,NGLLY-NIT
           do i = 1,NGLLX-NIT
             ! offset (starts at 0)
-            if(MOVIE_COARSE) then
+            if (MOVIE_COARSE) then
               ieoff = NGNOD2D_AVS_DX * ielm
             else
               ieoff = NGNOD2D_AVS_DX * (ielm+(i-1)+(j-1)*(NGLLX-1))
@@ -472,18 +472,18 @@
               ! for movie_coarse e.g. x(i,j) is defined at x(1,1), x(1,NGLLY), x(NGLLX,1) and x(NGLLX,NGLLY)
               ! be aware that for the cubed sphere, the mapping changes for different chunks,
               ! i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates
-              if(MOVIE_COARSE) then
-                if(ilocnum == 1) then
+              if (MOVIE_COARSE) then
+                if (ilocnum == 1) then
                   xp(ieoff+ilocnum) = dble(x(1,1))
                   yp(ieoff+ilocnum) = dble(y(1,1))
                   zp(ieoff+ilocnum) = dble(z(1,1))
                   field_display(ieoff+ilocnum) = dble(displn(1,1))
-                else if(ilocnum == 2) then
+                else if (ilocnum == 2) then
                   xp(ieoff+ilocnum) = dble(x(NGLLX,1))
                   yp(ieoff+ilocnum) = dble(y(NGLLX,1))
                   zp(ieoff+ilocnum) = dble(z(NGLLX,1))
                   field_display(ieoff+ilocnum) = dble(displn(NGLLX,1))
-                else if(ilocnum == 3) then
+                else if (ilocnum == 3) then
                   xp(ieoff+ilocnum) = dble(x(NGLLX,NGLLY))
                   yp(ieoff+ilocnum) = dble(y(NGLLX,NGLLY))
                   zp(ieoff+ilocnum) = dble(z(NGLLX,NGLLY))
@@ -496,17 +496,17 @@
                 endif
               else
                 ! movie saved on fine grid (all GLL points)
-                if(ilocnum == 1) then
+                if (ilocnum == 1) then
                   xp(ieoff+ilocnum) = dble(x(i,j))
                   yp(ieoff+ilocnum) = dble(y(i,j))
                   zp(ieoff+ilocnum) = dble(z(i,j))
                   field_display(ieoff+ilocnum) = dble(displn(i,j))
-                else if(ilocnum == 2) then
+                else if (ilocnum == 2) then
                   xp(ieoff+ilocnum) = dble(x(i+1,j))
                   yp(ieoff+ilocnum) = dble(y(i+1,j))
                   zp(ieoff+ilocnum) = dble(z(i+1,j))
                   field_display(ieoff+ilocnum) = dble(displn(i+1,j))
-                else if(ilocnum == 3) then
+                else if (ilocnum == 3) then
                   xp(ieoff+ilocnum) = dble(x(i+1,j+1))
                   yp(ieoff+ilocnum) = dble(y(i+1,j+1))
                   zp(ieoff+ilocnum) = dble(z(i+1,j+1))
@@ -548,15 +548,15 @@
       print *
       print *,'minimum amplitude in current snapshot = ',min_field_current
       print *,'maximum amplitude in current snapshot = ',max_field_current
-      if( FIX_SCALING ) then
+      if (FIX_SCALING) then
         print *,'  to be normalized by : ',MAX_VALUE
-        if( max_field_current > MAX_VALUE ) stop 'increase MAX_VALUE'
+        if (max_field_current > MAX_VALUE ) stop 'increase MAX_VALUE'
       endif
       print *
 
       ! normalize field to [0:1]
       print *,'normalizing... '
-      if( FIX_SCALING ) then
+      if (FIX_SCALING) then
         field_display(:) = (field_display(:) + MAX_VALUE) / (2.0*MAX_VALUE)
       else
         field_display(:) = (field_display(:) - min_field_current) / (max_field_current - min_field_current)
@@ -565,13 +565,13 @@
       field_display(:) = 2.*field_display(:) - 1.
 
       ! apply threshold to normalized field
-      if(APPLY_THRESHOLD) then
+      if (APPLY_THRESHOLD) then
         print *,'thresholding... '
         where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
       endif
 
       ! apply non linear scaling to normalized field if needed
-      if(NONLINEAR_SCALING) then
+      if (NONLINEAR_SCALING) then
         print *,'nonlinear scaling... '
         where(field_display(:) >= 0.)
           field_display = field_display ** POWER_SCALING
@@ -621,23 +621,23 @@
     !--- ****** create AVS file using sorted list ******
 
     ! create file name and open file
-    if(USE_OPENDX) then
-      if( USE_COMPONENT == 1) then
+    if (USE_OPENDX) then
+      if (USE_COMPONENT == 1) then
         write(outputname,"('/DX_movie_',i6.6,'.Z.dx')") it
-      else if( USE_COMPONENT == 2) then
+      else if (USE_COMPONENT == 2) then
         write(outputname,"('/DX_movie_',i6.6,'.N.dx')") it
-      else if( USE_COMPONENT == 3) then
+      else if (USE_COMPONENT == 3) then
         write(outputname,"('/DX_movie_',i6.6,'.E.dx')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
       write(11,*) 'object 1 class array type float rank 1 shape 3 items ',nglob,' data follows'
-    else if(USE_AVS) then
-      if(UNIQUE_FILE .and. iframe == 1) then
-        if( USE_COMPONENT == 1) then
+    else if (USE_AVS) then
+      if (UNIQUE_FILE .and. iframe == 1) then
+        if (USE_COMPONENT == 1) then
           outputname = '/AVS_movie_all.Z.inp'
-        else if( USE_COMPONENT == 2) then
+        else if (USE_COMPONENT == 2) then
           outputname = '/AVS_movie_all.N.inp'
-        else if( USE_COMPONENT == 3) then
+        else if (USE_COMPONENT == 3) then
           outputname = '/AVS_movie_all.E.inp'
         endif
         open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
@@ -645,23 +645,23 @@
         write(11,*) 'data'
         write(11,"('step',i1,' image',i1)") 1,1
         write(11,*) nglob,' ',nspectot_AVS_max
-      else if(.not. UNIQUE_FILE) then
-        if( USE_COMPONENT == 1) then
+      else if (.not. UNIQUE_FILE) then
+        if (USE_COMPONENT == 1) then
           write(outputname,"('/AVS_movie_',i6.6,'.Z.inp')") it
-        else if( USE_COMPONENT == 2) then
+        else if (USE_COMPONENT == 2) then
           write(outputname,"('/AVS_movie_',i6.6,'.N.inp')") it
-        else if( USE_COMPONENT == 3) then
+        else if (USE_COMPONENT == 3) then
           write(outputname,"('/AVS_movie_',i6.6,'.E.inp')") it
         endif
         open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
         write(11,*) nglob,' ',nspectot_AVS_max,' 1 0 0'
       endif
-    else if(USE_GMT) then
-      if( USE_COMPONENT == 1) then
+    else if (USE_GMT) then
+      if (USE_COMPONENT == 1) then
         write(outputname,"('/gmt_movie_',i6.6,'.Z.xyz')") it
-      else if( USE_COMPONENT == 2) then
+      else if (USE_COMPONENT == 2) then
         write(outputname,"('/gmt_movie_',i6.6,'.N.xyz')") it
-      else if( USE_COMPONENT == 3) then
+      else if (USE_COMPONENT == 3) then
         write(outputname,"('/gmt_movie_',i6.6,'.E.xyz')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
@@ -669,16 +669,16 @@
       stop 'wrong output format selected'
     endif
 
-    if(USE_GMT) then
+    if (USE_GMT) then
 
       ! output list of points
       mask_point = .false.
-      do ispec=1,nspectot_AVS_max
+      do ispec = 1,nspectot_AVS_max
         ieoff = NGNOD2D_AVS_DX*(ispec-1)
         ! four points for each element
         do ilocnum = 1,NGNOD2D_AVS_DX
           ibool_number = iglob(ilocnum+ieoff)
-          if(.not. mask_point(ibool_number)) then
+          if (.not. mask_point(ibool_number)) then
             ! gets Cartesian coordinates
             xcoord = sngl(xp_save(ilocnum+ieoff))
             ycoord = sngl(yp_save(ilocnum+ieoff))
@@ -693,7 +693,7 @@
             ! gets geographic latitude and longitude in degrees
             lat = (PI_OVER_TWO-thetaval)*RADIANS_TO_DEGREES
             long = phival*RADIANS_TO_DEGREES
-            if(long > 180.0) long = long-360.0
+            if (long > 180.0) long = long-360.0
 
             write(11,*) long,lat,sngl(field_display(ilocnum+ieoff))
           endif
@@ -703,23 +703,23 @@
 
     else
       ! if unique file, output geometry only once
-      if(.not. UNIQUE_FILE .or. iframe == 1) then
+      if (.not. UNIQUE_FILE .or. iframe == 1) then
 
         ! output list of points
         mask_point = .false.
         ipoin = 0
-        do ispec=1,nspectot_AVS_max
+        do ispec = 1,nspectot_AVS_max
           ieoff = NGNOD2D_AVS_DX*(ispec-1)
           ! four points for each element
           do ilocnum = 1,NGNOD2D_AVS_DX
             ibool_number = iglob(ilocnum+ieoff)
-            if(.not. mask_point(ibool_number)) then
+            if (.not. mask_point(ibool_number)) then
               ipoin = ipoin + 1
               ireorder(ibool_number) = ipoin
-              if(USE_OPENDX) then
+              if (USE_OPENDX) then
                 write(11,"(f10.7,1x,f10.7,1x,f10.7)") &
                   xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
-              else if(USE_AVS) then
+              else if (USE_AVS) then
                 write(11,"(i10,1x,f10.7,1x,f10.7,1x,f10.7)") ireorder(ibool_number), &
                   xp_save(ilocnum+ieoff),yp_save(ilocnum+ieoff),zp_save(ilocnum+ieoff)
               endif
@@ -728,18 +728,18 @@
           enddo
         enddo
 
-        if(USE_OPENDX) &
+        if (USE_OPENDX) &
           write(11,*) 'object 2 class array type int rank 1 shape 4 items ',nspectot_AVS_max,' data follows'
 
         ! output list of elements
-        do ispec=1,nspectot_AVS_max
+        do ispec = 1,nspectot_AVS_max
           ieoff = NGNOD2D_AVS_DX*(ispec-1)
           ! four points for each element
           ibool_number1 = iglob(ieoff + 1)
           ibool_number2 = iglob(ieoff + 2)
           ibool_number3 = iglob(ieoff + 3)
           ibool_number4 = iglob(ieoff + 4)
-          if(USE_OPENDX) then
+          if (USE_OPENDX) then
             ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
             write(11,"(i10,1x,i10,1x,i10,1x,i10)") ireorder(ibool_number1)-1, &
               ireorder(ibool_number4)-1,ireorder(ibool_number2)-1,ireorder(ibool_number3)-1
@@ -751,19 +751,19 @@
 
       endif
 
-      if(USE_OPENDX) then
+      if (USE_OPENDX) then
         write(11,*) 'attribute "element type" string "quads"'
         write(11,*) 'attribute "ref" string "positions"'
         write(11,*) 'object 3 class array type float rank 0 items ',nglob,' data follows'
       else
-        if(UNIQUE_FILE) then
+        if (UNIQUE_FILE) then
           ! step number for AVS multistep file
-          if(iframe > 1) then
-            if(iframe < 10) then
+          if (iframe > 1) then
+            if (iframe < 10) then
               write(11,"('step',i1,' image',i1)") iframe,iframe
-            else if(iframe < 100) then
+            else if (iframe < 100) then
               write(11,"('step',i2,' image',i2)") iframe,iframe
-            else if(iframe < 1000) then
+            else if (iframe < 1000) then
               write(11,"('step',i3,' image',i3)") iframe,iframe
             else
               write(11,"('step',i4,' image',i4)") iframe,iframe
@@ -780,20 +780,20 @@
       mask_point = .false.
 
       ! output point data
-      do ispec=1,nspectot_AVS_max
+      do ispec = 1,nspectot_AVS_max
         ieoff = NGNOD2D_AVS_DX*(ispec-1)
         ! four points for each element
         do ilocnum = 1,NGNOD2D_AVS_DX
           ibool_number = iglob(ilocnum+ieoff)
-          if(.not. mask_point(ibool_number)) then
-            if( .not. ALL_THRESHOLD_OFF ) then
-              if(USE_OPENDX) then
+          if (.not. mask_point(ibool_number)) then
+            if (.not. ALL_THRESHOLD_OFF) then
+              if (USE_OPENDX) then
                 write(11,"(f11.4)") field_display(ilocnum+ieoff)
               else
                 write(11,"(i10,1x,f11.4)") ireorder(ibool_number),field_display(ilocnum+ieoff)
               endif
             else
-              if(USE_OPENDX) then
+              if (USE_OPENDX) then
                 write(11,"(e11.4)") field_display(ilocnum+ieoff)
               else
                 ! format specifier has problems w/ very small values
@@ -807,7 +807,7 @@
       enddo
 
       ! define OpenDX field
-      if(USE_OPENDX) then
+      if (USE_OPENDX) then
         write(11,*) 'attribute "dep" string "positions"'
         write(11,*) 'object "irregular positions irregular connections" class field'
         write(11,*) 'component "positions" value 1'
@@ -819,19 +819,19 @@
     ! end of test for GMT format
     endif
 
-    if(.not. UNIQUE_FILE) close(11)
+    if (.not. UNIQUE_FILE) close(11)
 
   ! end of loop and test on all the time steps for all the movie images
   enddo
 
-  if(UNIQUE_FILE) close(11)
+  if (UNIQUE_FILE) close(11)
 
   print *
   print *,'done creating movie'
   print *
-  if(USE_OPENDX) print *,'DX files are stored in ', trim(OUTPUT_FILES), '/DX_*.dx'
-  if(USE_AVS) print *,'AVS files are stored in ', trim(OUTPUT_FILES), '/AVS_*.inp'
-  if(USE_GMT) print *,'GMT files are stored in ', trim(OUTPUT_FILES), '/gmt_*.xyz'
+  if (USE_OPENDX) print *,'DX files are stored in ', trim(OUTPUT_FILES), '/DX_*.dx'
+  if (USE_AVS) print *,'AVS files are stored in ', trim(OUTPUT_FILES), '/AVS_*.inp'
+  if (USE_GMT) print *,'GMT files are stored in ', trim(OUTPUT_FILES), '/gmt_*.xyz'
   print *
 
   end program xcreate_movie_AVS_DX
@@ -860,14 +860,14 @@
 !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
 !! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
 !! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
-  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
     NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
     ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-    if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+    if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
   endif
 
   ! checks
-  if(.not. MOVIE_SURFACE) stop 'movie surface frames were not saved by the solver'
+  if (.not. MOVIE_SURFACE) stop 'movie surface frames were not saved by the solver'
 
   end subroutine read_AVS_DX_parameters
 

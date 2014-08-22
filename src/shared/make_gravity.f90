@@ -124,7 +124,7 @@
   enddo
 
 ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
-  do i=1,NR
+  do i = 1,NR
     call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN_GRAVITY)
   enddo
@@ -138,11 +138,11 @@
 !
 ! get ready to spline g
 !
-  nspl=1
+  nspl = 1
   rspl(1)=r(1)
   gspl(1)=g(1)
   do i=2,NR
-    if(r(i)/=r(i-1)) then
+    if (r(i)/=r(i-1)) then
       nspl=nspl+1
       rspl(nspl)=r(i)
       gspl(nspl)=g(i)

@@ -60,13 +60,13 @@
   double precision :: ratio_xi, ratio_eta, fact_xi, fact_eta, fact_xi_,fact_eta_
 
 ! this to avoid compilation warnings
-  x_=0
-  y_=0
+  x_ = 0
+  y_ = 0
 
 ! loop on all the nodes in this element
   do ignod = 1,NGNOD
 
-    if(ilayer == NUMBER_OF_MESH_LAYERS .and. INCLUDE_CENTRAL_CUBE) then
+    if (ilayer == NUMBER_OF_MESH_LAYERS .and. INCLUDE_CENTRAL_CUBE) then
 ! case of the inner core
       ratio_xi = ((iproc_xi + offset_x(ignod)/dble(NEX_PER_PROC_XI))/dble(NPROC_XI))
       fact_xi = 2.d0*ratio_xi-1.d0
@@ -231,7 +231,7 @@
       end select
 
     ! rotate the chunk to the right location if we do not mesh the full Earth
-      if(NCHUNKS /= 6) then
+      if (NCHUNKS /= 6) then
 
     ! rotate bottom
         vector_ori(1) = x_bot
@@ -300,7 +300,7 @@
   ratio_y = (dble(iproc_eta) + dble(iy)/dble(2*ny_central_cube)) / dble(NPROC_ETA)
   ratio_z = dble(iz)/dble(2*nz_central_cube)
 
-  if(abs(ratio_x) > 1.001d0 .or. abs(ratio_y) > 1.001d0 .or. abs(ratio_z) > 1.001d0) stop 'wrong ratio in central cube'
+  if (abs(ratio_x) > 1.001d0 .or. abs(ratio_y) > 1.001d0 .or. abs(ratio_z) > 1.001d0) stop 'wrong ratio in central cube'
 
 ! use a "flat" cubed sphere to create the central cube
 
@@ -353,12 +353,12 @@
 ! reuse an existing observation surface created in another run and stored to disk,
 ! so that we are sure that they are exactly the same (for instance when comparing results for a reference ellipsoidal Earth
 ! and results for a 3D Earth with topography)
-  if(REUSE_EXISTING_OBSERVATION_SURF) then
+  if (REUSE_EXISTING_OBSERVATION_SURF) then
 
-    if(myrank == 0) then
+    if (myrank == 0) then
       open(unit=9965,file=trim(OUTPUT_FILES)//'/saved_observation_grid_real_x_y_z_used_by_the_code.txt',status='old', &
                                                                                                action='read',iostat=ier)
-      if( ier /= 0 ) call exit_mpi(myrank,'error opening file for REUSE_EXISTING_OBSERVATION_SURF')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error opening file for REUSE_EXISTING_OBSERVATION_SURF')
 
 !     loop on all the chunks and then on all the observation nodes in each chunk
       do ichunk = 1,NCHUNKS_MAX
@@ -391,7 +391,7 @@
           call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
 
           ! store the values obtained for future display with GMT
-          if( lon > 180.0d0 ) lon = lon - 360.0d0
+          if (lon > 180.0d0 ) lon = lon - 360.0d0
           lon_observation(ix,iy,ichunk) = lon
           lat_observation(ix,iy,ichunk) = lat
 
@@ -399,10 +399,10 @@
       enddo
     enddo
 
-  else ! of if(REUSE_EXISTING_OBSERVATION_SURF)
+  else ! of if (REUSE_EXISTING_OBSERVATION_SURF)
 
   ! for future GMT display
-  if(myrank == 0) then
+  if (myrank == 0) then
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/observation_grid_long_lat_topo_for_GMT.txt',status='unknown',action='write')
     open(unit=9965,file=trim(OUTPUT_FILES)//'/saved_observation_grid_real_x_y_z_used_by_the_code.txt',status='unknown', &
                                                                                                  action='write')
@@ -473,28 +473,28 @@
       end select
 
       ! add ellipticity
-      if(ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,espl,espl2)
+      if (ELLIPTICITY) call get_ellipticity_single_point(x_top,y_top,z_top,nspl,rspl,espl,espl2)
 
       ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
       call xyz_2_rlatlon_dble(x_top,y_top,z_top,r,lat,lon)
 
       ! compute elevation at current point
-      if(TOPOGRAPHY) then
+      if (TOPOGRAPHY) then
         call get_topo_bathy(lat,lon,elevation,ibathy_topo)
       else
         elevation = ZERO
       endif
 
       ! store the values obtained for future display with GMT
-      if(myrank == 0) then
-        if( lon > 180.0d0 ) lon = lon - 360.0d0
+      if (myrank == 0) then
+        if (lon > 180.0d0 ) lon = lon - 360.0d0
         write(IOUT,*) lon,lat,elevation
         lon_observation(ix,iy,ichunk) = lon
         lat_observation(ix,iy,ichunk) = lat
       endif
 
       ! add topography
-      if(TOPOGRAPHY) then
+      if (TOPOGRAPHY) then
         ! non-dimensionalize the elevation, which is in meters
         elevation = elevation / R_EARTH
 
@@ -509,19 +509,19 @@
       z_observation(ix,iy,ichunk) = z_top * observation_elevation_ratio
 
       ! store the values obtained so that they can be reused from other runs
-      if(myrank == 0) write(9965,*) x_observation(ix,iy,ichunk),y_observation(ix,iy,ichunk),z_observation(ix,iy,ichunk)
+      if (myrank == 0) write(9965,*) x_observation(ix,iy,ichunk),y_observation(ix,iy,ichunk),z_observation(ix,iy,ichunk)
 
       enddo
     enddo
   enddo
 
   ! for future GMT display
-  if(myrank == 0) then
+  if (myrank == 0) then
     close(unit=IOUT)
     close(unit=9965)
   endif
 
-  endif ! of if(REUSE_EXISTING_OBSERVATION_SURF)
+  endif ! of if (REUSE_EXISTING_OBSERVATION_SURF)
 
   end subroutine compute_observation_surface
 

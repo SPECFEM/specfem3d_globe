@@ -83,10 +83,10 @@ subroutine save_intermediate_forward_arrays_adios()
 
   ! Open an ADIOS handler to the restart file.
   call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", outputname, "w", comm, adios_err)
-  if( adios_err /= 0 ) stop 'error calling adios_open() routine failed for SPECFEM3D_GLOBE_FORWARD_ARRAYS'
+  if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed for SPECFEM3D_GLOBE_FORWARD_ARRAYS'
 
   call adios_group_size (adios_handle, group_size_inc, adios_totalsize, adios_err)
-  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
+  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
 
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios(adios_handle)
@@ -160,10 +160,10 @@ subroutine save_forward_arrays_adios()
 
   ! Open an ADIOS handler to the restart file.
   call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", outputname, "w", comm, adios_err)
-  if( adios_err /= 0 ) stop 'error calling adios_open() routine failed for SPECFEM3D_GLOBE_FORWARD_ARRAYS'
+  if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed for SPECFEM3D_GLOBE_FORWARD_ARRAYS'
 
   call adios_group_size (adios_handle, group_size_inc, adios_totalsize, adios_err)
-  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
+  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
 
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios(adios_handle)
@@ -649,10 +649,10 @@ subroutine save_forward_arrays_undoatt_adios()
 
   ! Open an ADIOS handler to the restart file.
   call adios_open (adios_handle, group_name, outputname, "w", comm, adios_err)
-  if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
+  if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
 
   call adios_group_size (adios_handle, group_size_inc, adios_totalsize, adios_err)
-  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
+  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
 
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios(adios_handle)

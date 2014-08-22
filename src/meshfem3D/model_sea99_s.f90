@@ -76,10 +76,10 @@
   allocate(sea99_vs(100,100,100), &
            sea99_depth(100), &
            stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating sea99 arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating sea99 arrays')
 
   ! master proc reads in values
-  if(myrank == 0) call read_sea99_s_model()
+  if (myrank == 0) call read_sea99_s_model()
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_singlei(sea99_ndep)
@@ -115,7 +115,7 @@
 
 
   open(1,file='DATA/Lebedev_sea99/sea99_dvsvs',status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file sea99_dvsvs')
+  if (ier /= 0 ) call exit_MPI(0,'Error opening file sea99_dvsvs')
 
 !----------------------- read input file:  ------------------
 
@@ -195,7 +195,7 @@
   ! -20.00   45.00 -- min, max latitude
   !  95.00  160.00 -- min, max longitude
   ! checks range
-  if( pla < alatmin .or. pla > alatmax &
+  if (pla < alatmin .or. pla > alatmax &
     .or. plo < alonmin .or. plo > alonmax ) return
 
   ! array indices
@@ -217,7 +217,7 @@
   dvs = ddd(1) + (ddd(2)-ddd(1)) * xd1
 
   ! checks perturbation
-  if(dvs > 1.d0) dvs = 0.0d0
+  if (dvs > 1.d0) dvs = 0.0d0
 
   end subroutine model_sea99_s
 

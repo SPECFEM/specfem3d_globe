@@ -61,16 +61,16 @@
 ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     allocate(buffer_send_scalar(max_nibool_interfaces,num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array buffer_send_scalar'
+    if (ier /= 0 ) stop 'Error allocating array buffer_send_scalar'
     allocate(buffer_recv_scalar(max_nibool_interfaces,num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array buffer_recv_scalar'
+    if (ier /= 0 ) stop 'Error allocating array buffer_recv_scalar'
     allocate(request_send_scalar(num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array request_send_scalar'
+    if (ier /= 0 ) stop 'Error allocating array request_send_scalar'
     allocate(request_recv_scalar(num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array request_recv_scalar'
+    if (ier /= 0 ) stop 'Error allocating array request_recv_scalar'
 
     ! partition border copy into the buffer
     do iinterface = 1, num_interfaces
@@ -153,7 +153,7 @@
   integer ipoin,iinterface
 
 ! sends only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! partition border copy into the buffer
     do iinterface = 1, num_interfaces
@@ -213,7 +213,7 @@
   integer ipoin,iinterface
 
 ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! wait for communications completion (recv)
     do iinterface = 1, num_interfaces
@@ -278,7 +278,7 @@
   !       transfers MPI buffers to CPU in already done in transfer_boun_pot_from_device() call
 
   ! sends only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! send messages
     do iinterface = 1, num_interfaces
@@ -328,7 +328,7 @@
   integer :: iinterface
 
 ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! wait for communications completion (recv)
     do iinterface = 1, num_interfaces
@@ -392,7 +392,7 @@
   ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! waits for communications completion (recv)
     do iinterface = 1, num_interfaces

@@ -51,10 +51,10 @@
 !
 
   ! checks
-  if( .not. UNDO_ATTENUATION ) return
+  if (.not. UNDO_ATTENUATION ) return
 
   ! allocates buffers
-  if( SIMULATION_TYPE == 3 ) then
+  if (SIMULATION_TYPE == 3) then
     !! DK DK to Daniel, July 2013: in the case of GPU_MODE it will be *crucial* to leave these arrays on the host
     !! i.e. on the CPU, in order to be able to use all the (unused) memory of the host for them, since they are
     !! (purposely) huge and designed to use almost all the memory available (by carefully optimizing the
@@ -65,19 +65,19 @@
     !! across the PCI-Express bus we could / should consider reading them 10 by 10 for instance (?) if that fits
     !! in the memory of the GPU
     allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_crust_mantle_store_buffer')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_crust_mantle_store_buffer')
     allocate(b_displ_outer_core_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_outer_core_store_buffer')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_outer_core_store_buffer')
     allocate(b_accel_outer_core_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_outer_core_store_buffer')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_outer_core_store_buffer')
     allocate(b_displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_displ_inner_core_store_buffer')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_inner_core_store_buffer')
   endif
 
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
 
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Starting time iteration loop in undoing attenuation...'
     write(IMAIN,*)
@@ -85,7 +85,7 @@
   endif
 
   ! create an empty file to monitor the start of the simulation
-  if(myrank == 0) then
+  if (myrank == 0) then
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop_undoatt.txt',status='unknown',action='write')
     write(IOUT,*) 'hello, starting time loop'
     close(IOUT)
@@ -106,18 +106,18 @@
   do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
 
     ! wavefield storage
-    if( SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
+    if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
       ! saves forward wavefields
       call save_forward_arrays_undoatt()
 
-    else if( SIMULATION_TYPE == 3 ) then
+    else if (SIMULATION_TYPE == 3) then
       ! reads in last stored forward wavefield
       call read_forward_arrays_undoatt()
 
       ! note: after reading the restart files of displacement back from disk, recompute the strain from displacement;
       !       this is better than storing the strain to disk as well, which would drastically increase I/O volume
       ! computes strain based on current backward/reconstructed wavefield
-      if(COMPUTE_AND_STORE_STRAIN) call itu_compute_strain_att_backward()
+      if (COMPUTE_AND_STORE_STRAIN) call itu_compute_strain_att_backward()
 
       ! intermediate storage of it and seismo_current positions
       it_temp = it
@@ -135,13 +135,13 @@
         it = it + 1
 
         ! simulation status output and stability check
-        if( mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end ) then
+        if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability()
         endif
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-          if(USE_LDDRK)then
+          if (USE_LDDRK)then
             ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk()
           else
@@ -159,7 +159,7 @@
         enddo ! istage
 
         ! write the seismograms with time shift
-        if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 )  .or. OUTPUT_SEISMOS_ASDF ) then
+        if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 )  .or. OUTPUT_SEISMOS_ASDF) then
           ! note: ASDF uses adios that defines the MPI communicator group that the solver is
           !       run with. this means every processor in the group is needed for write_seismograms
           call write_seismograms()
@@ -170,12 +170,12 @@
 
         ! first step of noise tomography, i.e., save a surface movie at every time step
         ! modified from the subroutine 'write_movie_surface'
-        if( NOISE_TOMOGRAPHY == 1 ) then
+        if (NOISE_TOMOGRAPHY == 1) then
           call noise_save_surface_movie()
         endif
 
         ! updates VTK window
-        if( VTK_MODE ) then
+        if (VTK_MODE) then
           call it_update_vtkwindow()
         endif
 
@@ -195,13 +195,13 @@
         it = it + 1
 
         ! simulation status output and stability check
-        if( mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end ) then
+        if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability_backward()
         endif
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-          if(USE_LDDRK)then
+          if (USE_LDDRK)then
             ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk_backward()
           else
@@ -230,7 +230,7 @@
       seismo_current = seismo_current_temp
 
       ! computes strain based on current adjoint wavefield
-      if(COMPUTE_AND_STORE_STRAIN) call itu_compute_strain_att()
+      if (COMPUTE_AND_STORE_STRAIN) call itu_compute_strain_att()
 
       ! adjoint wavefield simulation
       do it_of_this_subset = 1, NT_DUMP_ATTENUATION
@@ -239,18 +239,18 @@
         ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
         ! crust/mantle
         do i = 1, NDIM
-          do j =1,NGLOB_CRUST_MANTLE_ADJOINT
+          do j  = 1,NGLOB_CRUST_MANTLE_ADJOINT
             b_displ_crust_mantle(i,j) = b_displ_crust_mantle_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
           enddo
         enddo
         ! outer core
-        do j =1,NGLOB_OUTER_CORE_ADJOINT
+        do j  = 1,NGLOB_OUTER_CORE_ADJOINT
             b_displ_outer_core(j) = b_displ_outer_core_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
             b_accel_outer_core(j) = b_accel_outer_core_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
         enddo
         ! inner core
         do i = 1, NDIM
-          do j =1,NGLOB_INNER_CORE_ADJOINT
+          do j  = 1,NGLOB_INNER_CORE_ADJOINT
             b_displ_inner_core(i,j) = b_displ_inner_core_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
           enddo
         enddo
@@ -258,13 +258,13 @@
         it = it + 1
 
         ! simulation status output and stability check
-        if( mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end ) then
+        if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability()
         endif
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-          if(USE_LDDRK)then
+          if (USE_LDDRK)then
             ! update displacement using Runge-Kutta time scheme
             call update_displacement_lddrk()
           else
@@ -282,7 +282,7 @@
         enddo ! istage
 
         ! write the seismograms with time shift
-        if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 )  .or. OUTPUT_SEISMOS_ASDF ) then
+        if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 )  .or. OUTPUT_SEISMOS_ASDF) then
           ! note: ASDF uses adios that defines the MPI communicator group that the solver is
           !       run with. this means every processor in the group is needed for write_seismograms
           call write_seismograms()
@@ -303,7 +303,7 @@
   !
 
   ! frees undo_attenuation buffers
-  if( SIMULATION_TYPE == 3 ) then
+  if (SIMULATION_TYPE == 3) then
     deallocate(b_displ_crust_mantle_store_buffer, &
                b_displ_outer_core_store_buffer, &
                b_accel_outer_core_store_buffer, &
@@ -313,7 +313,7 @@
   call print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
-  if(GPU_MODE) call it_transfer_from_GPU()
+  if (GPU_MODE) call it_transfer_from_GPU()
 
   end subroutine iterate_time_undoatt
 
@@ -337,7 +337,7 @@
   integer :: ispec
 
   ! checks
-  if( USE_DEVILLE_PRODUCTS_VAL ) then
+  if (USE_DEVILLE_PRODUCTS_VAL) then
 
     ! inner core
     do ispec = 1, NSPEC_INNER_CORE
@@ -425,7 +425,7 @@
   integer :: ispec
 
   ! checks
-  if( USE_DEVILLE_PRODUCTS_VAL ) then
+  if (USE_DEVILLE_PRODUCTS_VAL) then
 
     ! inner core
     do ispec = 1, NSPEC_INNER_CORE

@@ -15,7 +15,7 @@ module BOAST
     ndim =                   Int("NDIM",                  :const => n_dim)
     ngllx =                  Int("NGLLX",                 :const => n_gllx)
     p = Procedure(function_name, [accel,ibool,sourcearrays,stf_pre_compute,myrank,islice_selected_source,ispec_selected_source,nsources])
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CUDA or get_lang == CL) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx, :double => true )
@@ -39,8 +39,8 @@ module BOAST
       print k === get_local_id(2)
       print isource === get_group_id(0) + get_num_groups(0)*get_group_id(1)
 
-      print If(isource < nsources) {
-        print If(myrank == islice_selected_source[isource]) {
+      print if (isource < nsources) {
+        print if (myrank == islice_selected_source[isource]) {
           print ispec === ispec_selected_source[isource] - 1
           print stf === stf_pre_compute[isource]
           print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] - 1

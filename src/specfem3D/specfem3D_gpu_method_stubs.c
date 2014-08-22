@@ -274,7 +274,7 @@ void FC_FUNC_ (pause_for_debug,
 
 void FC_FUNC_ (initialize_gpu_device,
                INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_filter, char *device_filter, int *myrank_f, int *nb_devices) {
- fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA/OpenCL Support. "
+ fprintf(stderr,"Error: GPU_MODE enabled without GPU/CUDA/OpenCL Support. "
                 "To enable GPU support, reconfigure with --with-gpu and/or --with-opencl flag.\n");
  exit(1);
 }

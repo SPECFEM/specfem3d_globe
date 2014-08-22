@@ -69,7 +69,7 @@
 ! loop added by Dimitri Komatitsch to fill array "year()" automatically
   year(:) = 0
   do iyr = 1981,MAX_YEAR
-    if(is_leap_year(iyr-1)) then
+    if (is_leap_year(iyr-1)) then
       year(iyr) = year(iyr-1) + 366*24*60 ! number of minutes in a year if leap year
     else
       year(iyr) = year(iyr-1) + 365*24*60 ! number of minutes in a year if not leap year
@@ -150,7 +150,7 @@
 ! loop added by Dimitri Komatitsch to fill array "year()" automatically
   year(:) = 0
   do iyr = 1981,MAX_YEAR
-    if(is_leap_year(iyr-1)) then
+    if (is_leap_year(iyr-1)) then
       year(iyr) = year(iyr-1) + 366*24*60 ! number of minutes in a year if leap year
     else
       year(iyr) = year(iyr-1) + 365*24*60 ! number of minutes in a year if not leap year
@@ -162,7 +162,7 @@
 ! iyr then gives the year that the time (in minutes) occurs
   if (timestamp >= year(MAX_YEAR)) stop 'year too high in invtime'
 
-  iyr=1979
+  iyr = 1979
   itime=timestamp
 
  10 iyr=iyr+1
@@ -180,7 +180,7 @@
 
 ! OK, the remaining time is less than one full year, so convert
 ! by the same method as above into months
-  imon=0
+  imon = 0
 
 ! if not leap year
   if (.not. is_leap_year(iyr)) then
@@ -200,9 +200,9 @@
          yr=yr+1
       endif
       mon=imon
-      day=1
-      hr=0
-      minvalue=0
+      day = 1
+      hr = 0
+      minvalue = 0
       return
    endif
 
@@ -223,9 +223,9 @@
          yr=yr+1
       endif
       mon=imon
-      day=1
-      hr=0
-      minvalue=0
+      day = 1
+      hr = 0
+      minvalue = 0
       return
    endif
   endif
@@ -235,7 +235,7 @@
 
 ! any remaining minutes will belong to day/hour/minutes
 ! OK, let us get the days
-  iday=0
+  iday = 0
  40 iday=iday+1
   ttime=itime-min_day
   if (ttime >= 0) then

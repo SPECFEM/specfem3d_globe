@@ -63,12 +63,12 @@
   ! allocates arrays only when called and needed
   allocate(dep(0:mr),dep1(0:mr1),vp1(0:mr1),vp3(ma,mo,mr), &
           stat=ier)
-  if( ier /= 0 ) then
-    call exit_mpi(myrank,'error allocation GAP model')
+  if (ier /= 0) then
+    call exit_mpi(myrank,'Error allocation GAP model')
   endif
 
   ! the variables read are declared in the module
-  if(myrank == 0) call read_mantle_gapmodel()
+  if (myrank == 0) call read_mantle_gapmodel()
 
   ! master process broadcasts data to all processes
   call bcast_all_r(dep,mr+1)
@@ -106,7 +106,7 @@
 
   ! reads in GAP-P2 model from Obayashi
   open(unit=10,file=GAPP2,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file for GAPP2 model')
+  if (ier /= 0 ) call exit_MPI(0,'Error opening file for GAPP2 model')
 
   read(10,*) no,na,nnr,dela,delo
 
@@ -119,42 +119,42 @@
   call flush_IMAIN()
 
   ! checks bounds
-  if( nnr /= mr .or. no /= mo .or. na /= ma ) then
-    print*,'error GAPP2 model bounds: '
+  if (nnr /= mr .or. no /= mo .or. na /= ma) then
+    print*,'Error GAPP2 model bounds: '
     print*,'  file dimensions: nnr,no,na = ',nnr,no,na
     print*,'  module dimensions: mr,mo,ma = ',mr,mo,ma
     close(10)
     call exit_MPI(0,'please check GAPP2 model dimensions, and update model_gapp2.f90')
   endif
 
-  read(10,*) (dep(i),i=0,nnr)
+  read(10,*) (dep(i),i = 0,nnr)
   read(10,*) nr1
 
   ! checks bounds
   write(IMAIN,*) "             nr1 = ",nr1
-  if( nr1 /= mr1 ) then
-    print*,'error GAPP2 model bounds: '
+  if (nr1 /= mr1) then
+    print*,'Error GAPP2 model bounds: '
     print*,'  file dimensions: nr1 = ',nr1
     print*,'  module dimensions: mr1 = ',mr1
     close(10)
     call exit_MPI(0,'please check GAPP2 model dimensions, and update model_gapp2.f90')
   endif
 
-  read(10,*) (dep1(i),i=0,nr1)
-  read(10,*) (vp1(i),i=0,nr1)
+  read(10,*) (dep1(i),i = 0,nr1)
+  read(10,*) (vp1(i),i = 0,nr1)
 
   ! reads vp
-  do ir=1,nnr
-    do ia=1,na
+  do ir = 1,nnr
+    do ia = 1,na
       ! reads file 2 lines for all no values
-      read(10,'(288f7.3)') (vp3(ia,io,ir),io=1,no)
+      read(10,'(288f7.3)') (vp3(ia,io,ir),io = 1,no)
 
-      !read(10,*,iostat=ier) (vp3(ia,io,ir),io=1,no/2)
+      !read(10,*,iostat=ier) (vp3(ia,io,ir),io = 1,no/2)
       !read(10,*,iostat=ier) (vp3(ia,io,ir),io=no/2,no)
 
-      if( ier /= 0 ) then
-        print*,'error GAPP2 read: ia,ir = ',ia,ir
-        call exit_MPI(0,'error GAPP2 read')
+      if (ier /= 0) then
+        print*,'Error GAPP2 read: ia,ir = ',ia,ir
+        call exit_MPI(0,'Error GAPP2 read')
       endif
     enddo
   enddo
@@ -205,21 +205,21 @@
   d=R_EARTH_-radius*R_EARTH_
 
   call d2id(d,nnr,dep,id,icon)
-  if(icon/=0) then
+  if (icon /= 0) then
      write(6,*)icon
      write(6,*) radius,theta,phi,dvp,dvs,drho
   endif
 
   ! latitude
-  if(theta>=PI) then
+  if (theta>=PI) then
      ia = na
   else
      ia = int(theta / dtheta) + 1
   endif
   ! longitude
-  if(phi < 0.0d0) phi = phi + 2.*PI
+  if (phi < 0.0d0) phi = phi + 2.*PI
   io=int(phi / dphi) + 1
-  if(io>no) io=io-no
+  if (io>no) io=io-no
 
   ! velocity and density perturbations
   dvp = vp3(ia,io,id)/100.d0
@@ -247,18 +247,18 @@
     integer i, mr, id, icon
     real d,dmax,dmin
     real di(0:mr)
-    icon=0
+    icon = 0
     dmax=di(mr)
     dmin=di(0)
-    if(d>dmax) then
+    if (d>dmax) then
        icon=99
-    else if(d<dmin) then
+    else if (d<dmin) then
        icon=-99
-    else if(d==dmax) then
+    else if (d==dmax) then
        id=mr+1
     else
        do i = 0, mr
-          if(d<di(i)) then
+          if (d<di(i)) then
              id=i
              goto 900
           endif

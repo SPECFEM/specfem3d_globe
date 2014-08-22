@@ -51,9 +51,9 @@
   npoin = ipoin
 
   ! checks
-  if( npoin /= nmovie_points ) then
-    print*,'error: movie points collected ',npoin,'not equal to calculated :',nmovie_points
-    call exit_mpi(myrank,'error confusing number of movie points')
+  if (npoin /= nmovie_points) then
+    print*,'Error: movie points collected ',npoin,'not equal to calculated :',nmovie_points
+    call exit_mpi(myrank,'Error confusing number of movie points')
   endif
 
   end subroutine movie_surface_count_points
@@ -82,21 +82,21 @@
   allocate(store_val_x(nmovie_points), &
            store_val_y(nmovie_points), &
            store_val_z(nmovie_points),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface location arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface location arrays')
 
   ! allocates arrays for gathering movie point locations
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     ! only master needs full arrays
     allocate(store_val_x_all(nmovie_points,0:NPROCTOT_VAL-1), &
              store_val_y_all(nmovie_points,0:NPROCTOT_VAL-1), &
              store_val_z_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
   else
     ! slave processes only need dummy arrays
     allocate(store_val_x_all(1,1), &
              store_val_y_all(1,1), &
              store_val_z_all(1,1),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
   endif
 
   ! gets coordinates of surface mesh
@@ -121,7 +121,7 @@
     enddo
   enddo
   npoin = ipoin
-  if( npoin /= nmovie_points ) call exit_mpi(myrank,'error number of movie points not equal to nmovie_points')
+  if (npoin /= nmovie_points ) call exit_mpi(myrank,'Error number of movie points not equal to nmovie_points')
 
   ! gather info on master proc
   call gather_all_cr(store_val_x,nmovie_points,store_val_x_all,nmovie_points,NPROCTOT_VAL)
@@ -129,13 +129,13 @@
   call gather_all_cr(store_val_z,nmovie_points,store_val_z_all,nmovie_points,NPROCTOT_VAL)
 
   ! save movie data locations to disk in home directory
-  if(myrank == 0) then
+  if (myrank == 0) then
 
     ! outputs movie point locations to moviedata_xyz.bin file
     outputname = "/moviedata_xyz.bin"
     open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening moviedata_xyz.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening moviedata_xyz.bin file')
 
     ! point coordinates
     ! (given as r theta phi for geocentric coordinate system)
@@ -186,7 +186,7 @@
         iglob = ibool_crust_mantle(i,j,k,ispec)
 
         ! wavefield values
-        if(MOVIE_VOLUME_TYPE == 5) then
+        if (MOVIE_VOLUME_TYPE == 5) then
           ! stores displacement
           store_val_ux(ipoin) = displ_crust_mantle(1,iglob)*scale_displ
           store_val_uy(ipoin) = displ_crust_mantle(2,iglob)*scale_displ
@@ -209,11 +209,11 @@
   call gather_all_cr(store_val_uz,nmovie_points,store_val_uz_all,nmovie_points,NPROCTOT_VAL)
 
   ! save movie data to disk in home directory
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(outputname,"('/moviedata',i6.6)") it
     open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname, &
          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening moviedata file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening moviedata file')
 
     ! -> find movie point locations stored in file moviedata_xyz.bin
 

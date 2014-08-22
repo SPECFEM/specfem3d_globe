@@ -146,7 +146,7 @@
 ! ****************************************************
 
 !  computed_elements = 0
-  if( .not. phase_is_inner ) then
+  if (.not. phase_is_inner) then
     iphase = 1
     num_elements = nspec_outer
   else
@@ -218,7 +218,7 @@
     !
     ! compute either isotropic, transverse isotropic or anisotropic elements
     !
-    if(ANISOTROPIC_3D_MANTLE_VAL) then
+    if (ANISOTROPIC_3D_MANTLE_VAL) then
        ! anisotropic element
        call compute_element_aniso(ispec, &
                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -236,7 +236,7 @@
                                   dummyx_loc,dummyy_loc,dummyz_loc, &
                                   epsilondev_loc,rho_s_H)
     else
-       if(.not. ispec_is_tiso(ispec)) then
+       if (.not. ispec_is_tiso(ispec)) then
           ! isotropic element
           call compute_element_iso(ispec, &
                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
@@ -294,16 +294,16 @@
     ENDDO_LOOP_IJK
 
     ! adds gravity terms
-    if(GRAVITY_VAL) then
+    if (GRAVITY_VAL) then
 
 #ifdef FORCE_VECTORIZATION
       do ijk = 1,NDIM*NGLLCUBE
         sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
       enddo
 #else
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             sum_terms(INDEX_IJK,1) = sum_terms(INDEX_IJK,1) + rho_s_H(INDEX_IJK,1)
             sum_terms(INDEX_IJK,2) = sum_terms(INDEX_IJK,2) + rho_s_H(INDEX_IJK,2)
             sum_terms(INDEX_IJK,3) = sum_terms(INDEX_IJK,3) + rho_s_H(INDEX_IJK,3)
@@ -330,9 +330,9 @@
 !DIR$ IVDEP
     do ijk = 1,NGLLCUBE
 #else
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 #endif
 
           iglob = ibool(INDEX_IJK,ispec)
@@ -377,9 +377,9 @@
     ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
     ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if( ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
       ! updates R_memory
-      if( USE_LDDRK ) then
+      if (USE_LDDRK) then
         call compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
@@ -398,7 +398,7 @@
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme
-    if(COMPUTE_AND_STORE_STRAIN) then
+    if (COMPUTE_AND_STORE_STRAIN) then
       epsilondev_xx(:,:,:,ispec) = epsilondev_loc(:,:,:,1)
       epsilondev_yy(:,:,:,ispec) = epsilondev_loc(:,:,:,2)
       epsilondev_xy(:,:,:,ispec) = epsilondev_loc(:,:,:,3)
@@ -444,8 +444,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
                + A(i,3) * B1(3,j) &
@@ -488,8 +488,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
                + A1(i,3) * B(3,j) &
@@ -532,10 +532,10 @@
   integer :: i,j,k
 
   ! matrix-matrix multiplication
-  do j=1,n2
-    do i=1,n1
+  do j = 1,n2
+    do i = 1,n1
       ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-      do k=1,n3
+      do k = 1,n3
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
                    + A1(i,3,k) * B(3,j) &

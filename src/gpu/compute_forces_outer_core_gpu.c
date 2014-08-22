@@ -66,8 +66,8 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
 #endif
 
   // safety check
-  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in outer_core() routine");
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in outer_core() routine");
   }
 
   // if the grid can handle the number of blocks, we let it be 1D
@@ -271,8 +271,8 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check
-  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_forces_outer_core_gpu() routine");
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_forces_outer_core_gpu() routine");
   }
 
   // determines number of elements to loop over (inner/outer elements)

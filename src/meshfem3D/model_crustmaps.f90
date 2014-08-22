@@ -78,7 +78,7 @@
           velocp(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
           velocs(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustmaps arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps arrays')
 
   allocate(thicknessnp(NLAYERS_CRUSTMAP), &
           densitynp(NLAYERS_CRUSTMAP), &
@@ -89,10 +89,10 @@
           velocpsp(NLAYERS_CRUSTMAP), &
           velocssp(NLAYERS_CRUSTMAP), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustmaps np/sp arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps np/sp arrays')
 
   ! master reads in crust maps
-  if(myrank == 0) call read_general_crustmap()
+  if (myrank == 0) call read_general_crustmap()
 
   ! broadcasts values to all processes
   call bcast_all_dp(thickness,180*360*CRUSTMAP_RESOLUTION*CRUSTMAP_RESOLUTION*NLAYERS_CRUSTMAP)
@@ -136,7 +136,7 @@
   write(IMAIN,*) 'incorporating crustal model: crustMap'
   write(IMAIN,*)
 
-  do l=1,NLAYERS_CRUSTMAP
+  do l = 1,NLAYERS_CRUSTMAP
     ! file index: from 3 to 7
     i = l + 2
 
@@ -157,7 +157,7 @@
   velocssp(:) = ZERO
 
   ! compute average values for North and South pole
-  do l=1,NLAYERS_CRUSTMAP
+  do l = 1,NLAYERS_CRUSTMAP
     do i=1,360*CRUSTMAP_RESOLUTION
       thicknessnp(l) =  thicknessnp(l)+thickness(1,i,l)
       thicknesssp(l) = thicknesssp(l)+thickness(180*CRUSTMAP_RESOLUTION,i,l)
@@ -203,12 +203,12 @@
 
   write(eucrust,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
 
-  open(unit=1,file=trim(eucrust),status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(eucrust), '": ', ier
+  open(unit = 1,file=trim(eucrust),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(eucrust), '": ', ier
     call flush_IMAIN()
     ! stop
-    call exit_MPI(0, 'error model crustmap')
+    call exit_MPI(0, 'Error model crustmap')
   endif
 
   do ila=1,180*CRUSTMAP_RESOLUTION
@@ -254,25 +254,25 @@
   x7 = (R_EARTH-(h_uc+thicks(4)+thicks(5))*1000.0d0)/R_EARTH
 
   found_crust = .true.
-! if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+! if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+  if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
    vp = vps(1)
    vs = vss(1)
    rho = rhos(1)
-! else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+! else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST .and. h_sed > MINIMUM_SEDIMENT_THICKNESS) then
+  else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
    vp = vps(2)
    vs = vss(2)
    rho = rhos(2)
-  else if(x > x5) then
+  else if (x > x5) then
    vp = vps(3)
    vs = vss(3)
    rho = rhos(3)
-  else if(x > x6) then
+  else if (x > x6) then
    vp = vps(4)
    vs = vss(4)
    rho = rhos(4)
-  else if(x > x7 .or. elem_in_crust) then
+  else if (x > x7 .or. elem_in_crust) then
    vp = vps(5)
    vs = vss(5)
    rho = rhos(5)
@@ -348,21 +348,21 @@
 
 ! get integer colatitude and longitude of crustal cap
 ! -90<lat<90 -180<lon<180
-  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
+  if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
     write(*,*) lat,' ',lon, ' error in latitude/longitude range in crust'
-  if(lat==90.0d0) lat=89.9999d0
-  if(lat==-90.0d0) lat=-89.9999d0
-  if(lon==180.0d0) lon=179.9999d0
-  if(lon==-180.0d0) lon=-179.9999d0
+  if (lat==90.0d0) lat=89.9999d0
+  if (lat==-90.0d0) lat=-89.9999d0
+  if (lon==180.0d0) lon=179.9999d0
+  if (lon==-180.0d0) lon=-179.9999d0
 
   ! by defaults uses only 1 point location
   num_points = 1
 
   ! checks if inside/outside of critical region for mesh stretching
-  if( SMOOTH_CRUST_EVEN_MORE ) then
+  if (SMOOTH_CRUST_EVEN_MORE) then
 
     dist = dsqrt( (lon-LON_CRITICAL_EUROPE)**2 + (lat-LAT_CRITICAL_EUROPE )**2 )
-    if( dist < CRITICAL_RANGE_EUROPE ) then
+    if (dist < CRITICAL_RANGE_EUROPE) then
       ! sets up smoothing points
       ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
       cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
@@ -381,7 +381,7 @@
     endif
 
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
-    if( dist < CRITICAL_RANGE_ANDES ) then
+    if (dist < CRITICAL_RANGE_ANDES) then
       ! sets up smoothing points
       ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
       cap_degree = 1.d0 / CRUSTMAP_RESOLUTION
@@ -408,9 +408,9 @@
   thicks(:) = 0.0d0
 
   ! loops over weight points
-  do ipoin=1,num_points
+  do ipoin = 1,num_points
     ! checks if more than one weighting points are taken
-    if( num_points > 1 ) then
+    if (num_points > 1) then
       lat = xlat(ipoin)
       lon = xlon(ipoin)
       ! weighting value
@@ -423,16 +423,16 @@
     call ibilinearmap(lat,lon,iupcolat,ileftlng,weightup,weightleft)
 
     ! interpolates location and crust values
-    if(iupcolat==0) then
+    if (iupcolat == 0) then
        weightup=weightup*2
-    else if(iupcolat==180*CRUSTMAP_RESOLUTION) then
+    else if (iupcolat==180*CRUSTMAP_RESOLUTION) then
        weightup=2*weightup-1
     endif
 
-    if(ileftlng==360*CRUSTMAP_RESOLUTION) then
-      irightlng=1
+    if (ileftlng==360*CRUSTMAP_RESOLUTION) then
+      irightlng = 1
     else
-      irightlng=ileftlng+1
+      irightlng = ileftlng+1
     endif
 
     weightul=weightup*weightleft
@@ -440,9 +440,9 @@
     weightll=(1.0-weightup)*weightleft
     weightlr=(1.0-weightup)*(1.0-weightleft)
 
-    if(iupcolat==0) then
+    if (iupcolat == 0) then
       ! North pole
-      do i=1,NLAYERS_CRUSTMAP
+      do i = 1,NLAYERS_CRUSTMAP
        thickl(i)=weightul*thicknessnp(i)+weightur*thicknessnp(i)+&
                  weightll*thickness(1,ileftlng,i)+weightlr*thickness(1,irightlng,i)
 
@@ -453,9 +453,9 @@
        velsl(i)=weightul*velocsnp(i)+weightur*velocsnp(i)+&
                weightll*velocs(1,ileftlng,i)+weightlr*velocs(1,irightlng,i)
       enddo
-    else if(iupcolat==180*CRUSTMAP_RESOLUTION) then
+    else if (iupcolat == 180*CRUSTMAP_RESOLUTION) then
       ! South pole
-      do i=1,NLAYERS_CRUSTMAP
+      do i = 1,NLAYERS_CRUSTMAP
        thickl(i)=weightul*thickness(iupcolat,ileftlng,i)+weightur*thickness(iupcolat,irightlng,i)+&
                  weightll*thicknesssp(i)+weightlr*thicknesssp(i)
        rhol(i)=weightul*density(iupcolat,ileftlng,i)+weightur*density(iupcolat,irightlng,i)+&
@@ -466,7 +466,7 @@
                weightll*velocssp(i)+weightlr*velocssp(i)
       enddo
     else
-      do i=1,NLAYERS_CRUSTMAP
+      do i = 1,NLAYERS_CRUSTMAP
        thickl(i)=weightul*thickness(iupcolat,ileftlng,i)+weightur*thickness(iupcolat,irightlng,i)+&
                  weightll*thickness(iupcolat+1,ileftlng,i)+weightlr*thickness(iupcolat+1,irightlng,i)
        rhol(i)=weightul*density(iupcolat,ileftlng,i)+weightur*density(iupcolat,irightlng,i)+&
@@ -486,7 +486,7 @@
     h_sed = thickl(1) + thickl(2)
 
     ! takes upper crust value if sediment too thin
-    if( h_sed < MINIMUM_SEDIMENT_THICKNESS ) then
+    if (h_sed < MINIMUM_SEDIMENT_THICKNESS) then
       velpl(1) = velpl(3)
       velpl(2) = velpl(3)
       velsl(1) = velsl(3)
@@ -520,11 +520,11 @@
   integer iupcolat
   integer ileftlng
 
-  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lng > 180.0d0 .or. lng < -180.0d0) &
-    stop 'error in latitude/longitude range in icolat_ilon'
+  if (lat > 90.0d0 .or. lat < -90.0d0 .or. lng > 180.0d0 .or. lng < -180.0d0) &
+    stop 'Error in latitude/longitude range in icolat_ilon'
 
 ! map longitudes to [0,360]
-  if(lng<0) then
+  if (lng<0) then
     xlng=lng+360.0
   else
     xlng=lng
@@ -534,16 +534,16 @@
   iupcolat=int(buffer)
   weightup=1.0-(buffer-dble(iupcolat))
 
-  if(iupcolat<0) iupcolat=0
-  if(iupcolat>180*CRUSTMAP_RESOLUTION)  iupcolat=180*CRUSTMAP_RESOLUTION
+  if (iupcolat<0) iupcolat = 0
+  if (iupcolat>180*CRUSTMAP_RESOLUTION)  iupcolat=180*CRUSTMAP_RESOLUTION
 
 
   buffer=0.5+(xlng*CRUSTMAP_RESOLUTION)
   ileftlng=int(buffer)
   weightleft=1.0-(buffer-dble(ileftlng))
 
-  if(ileftlng<1) ileftlng=360*CRUSTMAP_RESOLUTION
-  if(ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
+  if (ileftlng<1) ileftlng=360*CRUSTMAP_RESOLUTION
+  if (ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
 
   end subroutine ibilinearmap
 
@@ -576,17 +576,17 @@
   double precision :: xlat,xlon
   integer :: icolat,ilon
 
-  if(xlat > 90.0d0 .or. xlat < -90.0d0 .or. xlon > 180.0d0 .or. xlon < -180.0d0) &
-    stop 'error in latitude/longitude range in icolat_ilon'
+  if (xlat > 90.0d0 .or. xlat < -90.0d0 .or. xlon > 180.0d0 .or. xlon < -180.0d0) &
+    stop 'Error in latitude/longitude range in icolat_ilon'
 
   icolat = int(1+( (90.d0-xlat)*0.5d0 ))
-  if(icolat == 91) icolat = 90
+  if (icolat == 91) icolat = 90
 
   ilon = int(1+( (180.d0+xlon)*0.5d0 ))
-  if(ilon == 181) ilon = 1
+  if (ilon == 181) ilon = 1
 
-  if(icolat>90 .or. icolat<1) stop 'error in routine icolat_ilon'
-  if(ilon<1 .or. ilon>180) stop 'error in routine icolat_ilon'
+  if (icolat>90 .or. icolat<1) stop 'Error in routine icolat_ilon'
+  if (ilon<1 .or. ilon>180) stop 'Error in routine icolat_ilon'
 
   end subroutine icolat_ilon
 
@@ -632,11 +632,11 @@
   weight(:) = ZERO
 
   ! checks cap degree size
-  if( CAP_DEGREE < TINYVAL ) then
+  if (CAP_DEGREE < TINYVAL) then
     ! no cap smoothing
-    print*,'error cap:',CAP_DEGREE
+    print*,'Error cap:',CAP_DEGREE
     print*,'  lat/lon:',lat,lon
-    stop 'error cap_degree too small'
+    stop 'Error cap_degree too small'
   endif
 
   ! pre-compute parameters
@@ -708,14 +708,14 @@
       call reduce(theta_rot,phi_rot)
       xlat(i) = (PI_OVER_TWO - theta_rot) * RADIANS_TO_DEGREES
       xlon(i) = phi_rot * RADIANS_TO_DEGREES
-      if(xlon(i) > 180.0d0) xlon(i) = xlon(i) - 360.0d0
+      if (xlon(i) > 180.0d0) xlon(i) = xlon(i) - 360.0d0
 
     enddo
 
   enddo
-  if(abs(total - ONE) > 0.001d0) then
-    print*,'error cap:',total,CAP_DEGREE
-    stop 'error in cap integration for variable degree'
+  if (abs(total - ONE) > 0.001d0) then
+    print*,'Error cap:',total,CAP_DEGREE
+    stop 'Error in cap integration for variable degree'
   endif
 
   end subroutine CAP_vardegree

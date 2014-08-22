@@ -120,8 +120,8 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
 #endif
 
   // safety check
-  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in crust_mantle() routine");
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in crust_mantle() routine");
   }
 
   // if the grid can handle the number of blocks, we let it be 1D
@@ -405,8 +405,8 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check
-  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_forces_crust_mantle_gpu() routine");
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_forces_crust_mantle_gpu() routine");
   }
 
   // determines number of elements to loop over (inner/outer elements)
@@ -485,7 +485,7 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
       // checks
       if (nb_blocks_to_compute <= 0) {
-        printf ("error number of color blocks in crust_mantle: %d -- color = %d \n",
+        printf ("Error number of color blocks in crust_mantle: %d -- color = %d \n",
                 nb_blocks_to_compute, icolor);
         exit (EXIT_FAILURE);
       }

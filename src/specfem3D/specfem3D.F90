@@ -208,7 +208,7 @@
 ! journal={Geophys. J. Int.},
 ! volume=150,
 ! pages={303-318},
-! number=1,
+! number = 1,
 ! doi={10.1046/j.1365-246X.2002.01716.x}}
 !
 ! and/or another article from http://web.univ-pau.fr/~dkomati1/publications.html
@@ -467,7 +467,7 @@
   call prepare_timerun()
 
   ! steps through time iterations
-  if( UNDO_ATTENUATION ) then
+  if (UNDO_ATTENUATION) then
     call iterate_time_undoatt()
   else
     call iterate_time()

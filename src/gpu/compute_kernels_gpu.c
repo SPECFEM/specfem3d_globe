@@ -168,7 +168,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
 #ifdef USE_CUDA
     if (run_cuda) {
       // computes strain locally based on current backward/reconstructed (b_displ) wavefield
-      if(! mp->anisotropic_kl){
+      if (! mp->anisotropic_kl) {
         // isotropic kernels
         compute_iso_undo_att_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
                                                                            mp->d_epsilondev_yy_crust_mantle.cuda,
@@ -269,7 +269,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
 #ifdef USE_CUDA
     if (run_cuda) {
       // takes strain arrays computed from previous compute_forces call
-      if (! mp->anisotropic_kl){
+      if (! mp->anisotropic_kl) {
         // isotropic kernels
         compute_iso_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
                                                                   mp->d_epsilondev_yy_crust_mantle.cuda,
@@ -376,7 +376,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
   // checks if strain is available
   if (mp->undo_attenuation) {
     // checks strain array size
-    if(mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
       exit_on_error("compute_kernels_cm_cuda NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
     }
     // computes strain locally based on current backward/reconstructed (b_displ) wavefield

@@ -120,7 +120,7 @@
     NGLOB_INNER_CORE = NGLOB(IREGION_INNER_CORE)
 
   case default
-    stop 'error iregion_code value not recognized'
+    stop 'Error iregion_code value not recognized'
   end select
 
   ! allocates arrays
@@ -145,7 +145,7 @@
             ystore_crust_mantle(NGLOB_CRUST_MANTLE), &
             zstore_crust_mantle(NGLOB_CRUST_MANTLE), &
             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary crust mantle arrays')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary crust mantle arrays')
 
   case( IREGION_OUTER_CORE )
     ! outer core
@@ -161,7 +161,7 @@
             ystore_outer_core(NGLOB_OUTER_CORE), &
             zstore_outer_core(NGLOB_OUTER_CORE), &
             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary outer core arrays')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary outer core arrays')
 
   case( IREGION_INNER_CORE )
     ! inner core
@@ -177,7 +177,7 @@
             ystore_inner_core(NGLOB_INNER_CORE), &
             zstore_inner_core(NGLOB_INNER_CORE), &
             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating temporary inner core arrays')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary inner core arrays')
 
   end select
 
@@ -215,7 +215,7 @@
                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
 
     ! check that the number of points in this slice is correct
-    if(minval(ibool(:,:,:,:)) /= 1 .or. &
+    if (minval(ibool(:,:,:,:)) /= 1 .or. &
       maxval(ibool(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
         call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
 
@@ -226,7 +226,7 @@
                              xstore_outer_core,ystore_outer_core,zstore_outer_core)
 
     ! check that the number of points in this slice is correct
-    if(minval(ibool(:,:,:,:)) /= 1 .or. &
+    if (minval(ibool(:,:,:,:)) /= 1 .or. &
        maxval(ibool(:,:,:,:)) /= NGLOB_OUTER_CORE) &
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
 
@@ -237,7 +237,7 @@
                              xstore_inner_core,ystore_inner_core,zstore_inner_core)
 
     ! check that the number of points in this slice is correct
-    if(minval(ibool(:,:,:,:)) /= 1 .or. &
+    if (minval(ibool(:,:,:,:)) /= 1 .or. &
       maxval(ibool(:,:,:,:)) /= NGLOB_INNER_CORE) &
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
@@ -296,7 +296,7 @@
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
     ! mantle and crust
-    if(myrank == 0) then
+    if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'crust/mantle region:'
       call flush_IMAIN()
@@ -326,7 +326,7 @@
             NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB2DMAX_XMIN_XMAX_CM,NGLOB2DMAX_YMIN_YMAX_CM)
 
     ! debug: saves element flags
-    if( DEBUG ) then
+    if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_crust_mantle_proc',myrank
       call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                 xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -342,7 +342,7 @@
 
   case( IREGION_OUTER_CORE )
     ! outer core
-    if(myrank == 0) then
+    if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'outer core region:'
       call flush_IMAIN()
@@ -372,7 +372,7 @@
             NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB2DMAX_XMIN_XMAX_OC,NGLOB2DMAX_YMIN_YMAX_OC)
 
     ! debug: saves element flags
-    if( DEBUG ) then
+    if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_outer_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                 xstore_outer_core,ystore_outer_core,zstore_outer_core, &
@@ -386,7 +386,7 @@
 
   case( IREGION_INNER_CORE )
     ! inner core
-    if(myrank == 0) then
+    if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'inner core region:'
       call flush_IMAIN()
@@ -402,9 +402,9 @@
                             iboolcorner_inner_core)
 
     ! central cube buffers
-    if(INCLUDE_CENTRAL_CUBE) then
+    if (INCLUDE_CENTRAL_CUBE) then
 
-      if(myrank == 0) then
+      if (myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) 'including central cube'
         call flush_IMAIN()
@@ -419,7 +419,7 @@
               ibelm_top_inner_core(NSPEC2D_TOP_IC), &
               ibelm_bottom_inner_core(NSPEC2D_BOTTOM_IC), &
               stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating central cube index arrays')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating central cube index arrays')
 
       ! gets coupling arrays for inner core
       nspec2D_xmin_inner_core = nspec2D_xmin
@@ -440,7 +440,7 @@
                   nb_msgs_theor_in_cube,npoin2D_cube_from_slices)
 
       ! this value is used for dynamic memory allocation, therefore make sure it is never zero
-      if(nb_msgs_theor_in_cube > 0) then
+      if (nb_msgs_theor_in_cube > 0) then
         non_zero_nb_msgs_theor_in_cube = nb_msgs_theor_in_cube
       else
         non_zero_nb_msgs_theor_in_cube = 1
@@ -452,7 +452,7 @@
               buffer_slices(npoin2D_cube_from_slices,NDIM), &
               buffer_slices2(npoin2D_cube_from_slices,NDIM), &
               ibool_central_cube(non_zero_nb_msgs_theor_in_cube,npoin2D_cube_from_slices),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating cube buffers')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating cube buffers')
 
       ! handles the communications with the central cube if it was included in the mesh
       ! create buffers to assemble with the central cube
@@ -471,7 +471,7 @@
                  receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
                  buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
-      if(myrank == 0) write(IMAIN,*) ''
+      if (myrank == 0) write(IMAIN,*) ''
 
       ! frees memory
       deallocate(ibelm_xmin_inner_core,ibelm_xmax_inner_core)
@@ -487,7 +487,7 @@
               buffer_slices(1,1), &
               buffer_slices2(1,1), &
               ibool_central_cube(1,1),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating dummy buffers')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating dummy buffers')
 
     endif
 
@@ -505,7 +505,7 @@
             ibool, &
             NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB2DMAX_XMIN_XMAX_IC,NGLOB2DMAX_YMIN_YMAX_IC)
 
-    if(INCLUDE_CENTRAL_CUBE) then
+    if (INCLUDE_CENTRAL_CUBE) then
       ! updates flags for elements on slice boundaries
       call fix_non_blocking_central_cube(is_on_a_slice_edge, &
            ibool,NSPEC_INNER_CORE,NGLOB_INNER_CORE,nb_msgs_theor_in_cube,ibelm_bottom_inner_core, &
@@ -515,7 +515,7 @@
     endif
 
     ! debug: saves element flags
-    if( DEBUG ) then
+    if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_inner_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
@@ -632,16 +632,16 @@
   ! a given slice can belong to at most two faces
   icount_faces = 0
   do imsg = 1,NUMMSGS_FACES
-    if(myrank == iprocfrom_faces(imsg) .or. myrank == iprocto_faces(imsg)) then
+    if (myrank == iprocfrom_faces(imsg) .or. myrank == iprocto_faces(imsg)) then
       icount_faces = icount_faces + 1
 
-      if(icount_faces > NUMFACES_SHARED) then
-        print*,'error ',myrank,' icount_faces: ',icount_faces,'NUMFACES_SHARED:',NUMFACES_SHARED
+      if (icount_faces > NUMFACES_SHARED) then
+        print*,'Error ',myrank,' icount_faces: ',icount_faces,'NUMFACES_SHARED:',NUMFACES_SHARED
         print*,'iregion_code:',iregion_code
         call exit_MPI(myrank,'more than NUMFACES_SHARED faces for this slice')
       endif
-      if(icount_faces > 2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) then
-        print*,'error ',myrank,' icount_faces: ',icount_faces,'NPROC_XI:',NPROC_XI,'NPROC_ETA:',NPROC_ETA
+      if (icount_faces > 2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) then
+        print*,'Error ',myrank,' icount_faces: ',icount_faces,'NPROC_XI:',NPROC_XI,'NPROC_ETA:',NPROC_ETA
         print*,'iregion_code:',iregion_code
         call exit_MPI(myrank,'more than two faces for this slice')
       endif
@@ -649,7 +649,7 @@
   enddo
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*) '  #max of points in MPI buffers along xi npoin2D_xi = ', &
                                 maxval(npoin2D_xi_s(:))
     write(IMAIN,*) '  #max of array elements transferred npoin2D_xi*NDIM = ', &

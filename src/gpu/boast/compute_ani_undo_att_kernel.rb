@@ -47,7 +47,7 @@ module BOAST
     ngll3_padded = Int("NGLL3_PADDED", :const => n_gll3_padded)
 
     p = Procedure(function_name, v)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
@@ -83,11 +83,11 @@ module BOAST
       print ijk_ispec === get_local_id(0) + ngll3*ispec
       print tx === get_local_id(0)
 
-      print If(tx < ngll2) {
+      print if (tx < ngll2) {
         print sh_hprime_xx[tx] === d_hprime_xx[tx]
       }
 
-      print If(ispec < nspec) {
+      print if (ispec < nspec) {
         print iglob === d_ibool[ijk_ispec] - 1
         (0..2).each { |indx|
           print s_dummy_loc[indx][tx] === d_b_displ[indx,iglob]
@@ -95,7 +95,7 @@ module BOAST
       }
       print barrier(:local)
 
-      print If(ispec < nspec) {
+      print if (ispec < nspec) {
         (0..4).each { |indx|
           print epsdev[indx] === epsilondev[indx][ijk_ispec]
         }

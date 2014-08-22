@@ -49,14 +49,14 @@ module BOAST
     end
 
     p = Procedure(function_name, variables)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header
       decl p
       decl id = Int("id")
       print id === get_global_id(0) + get_group_id(1)*get_global_size(0)
-      print If( id < size ) {
+      print if (id < size ) {
         case type
         when :disp_veloc, :potential
           print quantity[id] === quantity[id] + deltat*first_deriv[id] + deltatsqover2*second_deriv[id]

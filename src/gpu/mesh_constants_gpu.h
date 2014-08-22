@@ -86,7 +86,7 @@ typedef float realw;
 #define PRINT10i(var) if (print_count<10) { printf ("var=%d\n", var); print_count++; }
 #else
 #define LOG(x)   // printf ("%s\n", x);
-#define PRINT5(var, offset)   // for (i=0;i<10;i++) printf ("var (%d)=%f\n", i, var[offset+i]);
+#define PRINT5(var, offset)   // for (i = 0;i<10;i++) printf ("var (%d)=%f\n", i, var[offset+i]);
 #endif
 
 // debug: run backward simulations with/without GPU routines and empty arrays for debugging
@@ -909,19 +909,19 @@ typedef struct mesh_ {
 #endif
 
   // streams
-#if USE_CUDA
+#ifdef USE_CUDA
   // overlapped memcpy streams
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
 #endif
 
-#if USE_OPENCL
+#ifdef USE_OPENCL
   cl_event last_copy_evt;
   int has_last_copy_evt;
 #endif
 
   // specific OpenCL texture arrays
-#if USE_OPENCL
+#ifdef USE_OPENCL
 // note: need to be defined as they are passed as function arguments
   // USE_TEXTURES_FIELDS
   // forward

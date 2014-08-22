@@ -52,7 +52,7 @@
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
 
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Starting time iteration loop...'
     write(IMAIN,*)
@@ -60,7 +60,7 @@
   endif
 
   ! create an empty file to monitor the start of the simulation
-  if(myrank == 0) then
+  if (myrank == 0) then
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown',action='write')
     write(IOUT,*) 'hello, starting time loop'
     close(IOUT)
@@ -77,17 +77,17 @@
   ! ************* MAIN LOOP OVER THE TIME STEPS *************
   ! *********************************************************
 
-  if(EXACT_UNDOING_TO_DISK) then
+  if (EXACT_UNDOING_TO_DISK) then
 
-    if(GPU_MODE) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK not supported for GPUs')
+    if (GPU_MODE) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK not supported for GPUs')
 
-    if(UNDO_ATTENUATION) &
+    if (UNDO_ATTENUATION) &
       call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK needs UNDO_ATTENUATION to be off because it computes the kernel directly instead')
 
-    if(SIMULATION_TYPE == 1 .and. .not. SAVE_FORWARD) &
+    if (SIMULATION_TYPE == 1 .and. .not. SAVE_FORWARD) &
       call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires SAVE_FORWARD if SIMULATION_TYPE == 1')
 
-    if(ANISOTROPIC_KL) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires ANISOTROPIC_KL to be turned off')
+    if (ANISOTROPIC_KL) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires ANISOTROPIC_KL to be turned off')
 
 !! DK DK determine the largest value of iglob that we need to save to disk,
 !! DK DK since we save the upper mantle only in the case of surface-wave kernels
@@ -104,9 +104,9 @@
             ! xstore ystore zstore have previously been converted to r theta phi, thus xstore now stores the radius
             radius = xstore_crust_mantle(iglob) ! <- radius r (normalized)
             ! save that element only if it is in the upper mantle
-            if(radius >= R670 / R_EARTH) then
+            if (radius >= R670 / R_EARTH) then
               ! if this point has not yet been found before
-              if(integer_mask_ibool_exact_undo(iglob) == -1) then
+              if (integer_mask_ibool_exact_undo(iglob) == -1) then
                 ! create a new unique point
                 counter = counter + 1
                 integer_mask_ibool_exact_undo(iglob) = counter
@@ -124,28 +124,28 @@
     write(outputname,"('huge_dumps/proc',i6.6,'_huge_dump_of_all_time_steps.bin')") myrank
     inquire(iolength=record_length) buffer_for_disk
     ! we write to or read from the file depending on the simulation type
-    if(SIMULATION_TYPE == 1) then
+    if (SIMULATION_TYPE == 1) then
       open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='write', status='unknown', &
                       form='unformatted', access='direct', recl=record_length)
-    else if(SIMULATION_TYPE == 3) then
+    else if (SIMULATION_TYPE == 3) then
       open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='read', status='old', &
                       form='unformatted', access='direct', recl=record_length)
     else
       call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK can only be used with SIMULATION_TYPE == 1 or SIMULATION_TYPE == 3')
     endif
 
-  endif ! of if(EXACT_UNDOING_TO_DISK)
+  endif ! of if (EXACT_UNDOING_TO_DISK)
 
   do it = it_begin,it_end
 
     ! simulation status output and stability check
-    if( mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end ) then
+    if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
       call check_stability()
     endif
 
     do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
-      if(USE_LDDRK)then
+      if (USE_LDDRK)then
         ! update displacement using Runge-Kutta time scheme
         call update_displacement_lddrk()
       else
@@ -163,13 +163,13 @@
     enddo ! end of very big external loop on istage for all the stages of the LDDRK time scheme (only one stage if Newmark)
 
     ! save the forward run to disk for the alpha kernel only
-    if(EXACT_UNDOING_TO_DISK .and. SIMULATION_TYPE == 1) then
+    if (EXACT_UNDOING_TO_DISK .and. SIMULATION_TYPE == 1) then
       do ispec = 1, NSPEC_CRUST_MANTLE
         do k = 1, NGLLZ
           do j = 1, NGLLY
             do i = 1, NGLLX
               iglob = ibool_crust_mantle(i,j,k,ispec)
-              if(integer_mask_ibool_exact_undo(iglob) /= -1) &
+              if (integer_mask_ibool_exact_undo(iglob) /= -1) &
                 buffer_for_disk(integer_mask_ibool_exact_undo(iglob)) = eps_trace_over_3_crust_mantle(i,j,k,ispec)
             enddo
           enddo
@@ -179,16 +179,16 @@
     endif
 
     ! kernel simulations (forward and adjoint wavefields)
-    if(SIMULATION_TYPE == 3) then
+    if (SIMULATION_TYPE == 3) then
 
-      if(.not. EXACT_UNDOING_TO_DISK) then
+      if (.not. EXACT_UNDOING_TO_DISK) then
       ! note: we step back in time (using time steps - DT ), i.e. wavefields b_displ_..() are time-reversed here
 
       ! reconstructs forward wavefields based on last stored wavefield data
       ! note: NSTAGE_TIME_SCHEME is equal to 1 if Newmark because only one stage then
       do istage = 1, NSTAGE_TIME_SCHEME
 
-        if(USE_LDDRK)then
+        if (USE_LDDRK)then
           ! update displacement using Runge-Kutta time scheme
           call update_displacement_lddrk_backward()
         else
@@ -209,11 +209,11 @@
       ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
       !          and adjoint sources will become more complicated
       !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
-      if( it == 1 ) then
+      if (it == 1) then
         call read_forward_arrays()
       endif
 
-      else ! of if(.not. EXACT_UNDOING_TO_DISK)
+      else ! of if (.not. EXACT_UNDOING_TO_DISK)
 
         ! read the forward run from disk for the alpha kernel only
         ! here we time revert the forward run by reading time step NSTEP - it + 1
@@ -223,14 +223,14 @@
             do j = 1, NGLLY
               do i = 1, NGLLX
                 iglob = ibool_crust_mantle(i,j,k,ispec)
-                if(integer_mask_ibool_exact_undo(iglob) /= -1) &
+                if (integer_mask_ibool_exact_undo(iglob) /= -1) &
                   b_eps_trace_over_3_crust_mantle(i,j,k,ispec) = buffer_for_disk(integer_mask_ibool_exact_undo(iglob))
               enddo
             enddo
           enddo
         enddo
 
-      endif ! of if(.not. EXACT_UNDOING_TO_DISK)
+      endif ! of if (.not. EXACT_UNDOING_TO_DISK)
 
       ! adjoint simulations: kernels
       call compute_kernels()
@@ -238,7 +238,7 @@
     endif ! kernel simulations
 
     ! write the seismograms with time shift
-    if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) .or. OUTPUT_SEISMOS_ASDF ) then
+    if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) .or. OUTPUT_SEISMOS_ASDF) then
       ! note: ASDF uses adios that defines the MPI communicator group that the solver is
       !       run with. this means every processor in the group is needed for write_seismograms
       call write_seismograms()
@@ -249,19 +249,19 @@
 
     ! first step of noise tomography, i.e., save a surface movie at every time step
     ! modified from the subroutine 'write_movie_surface'
-    if( NOISE_TOMOGRAPHY == 1 ) then
+    if (NOISE_TOMOGRAPHY == 1) then
       call noise_save_surface_movie()
     endif
 
     ! updates VTK window
-    if( VTK_MODE ) then
+    if (VTK_MODE) then
       call it_update_vtkwindow()
     endif
 
   enddo   ! end of main time loop
 
   ! close the huge file that contains a dump of all the time steps to disk
-  if(EXACT_UNDOING_TO_DISK) close(IFILE_FOR_EXACT_UNDOING)
+  if (EXACT_UNDOING_TO_DISK) close(IFILE_FOR_EXACT_UNDOING)
 
   !
   !---- end of time iteration loop
@@ -270,7 +270,7 @@
   call print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
-  if(GPU_MODE) call it_transfer_from_GPU()
+  if (GPU_MODE) call it_transfer_from_GPU()
 
   end subroutine iterate_time
 
@@ -340,17 +340,17 @@
                                      rho_kl_crust_mantle,alpha_kl_crust_mantle,beta_kl_crust_mantle, &
                                      NSPEC_CRUST_MANTLE)
     ! full anisotropic kernel
-    if( ANISOTROPIC_KL ) then
+    if (ANISOTROPIC_KL) then
       call transfer_kernels_ani_cm_to_host(Mesh_pointer,cijkl_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
 
     ! specific noise strength kernel
-    if( NOISE_TOMOGRAPHY == 3 ) then
+    if (NOISE_TOMOGRAPHY == 3) then
       call transfer_kernels_noise_to_host(Mesh_pointer,Sigma_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
 
     ! approximative hessian for preconditioning kernels
-    if ( APPROXIMATE_HESS_KL ) then
+    if (APPROXIMATE_HESS_KL) then
       call transfer_kernels_hess_cm_tohost(Mesh_pointer,hess_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
   endif
@@ -379,26 +379,26 @@
   real, dimension(1) :: dummy
 
   ! VTK rendering at frame interval
-  if( mod(it,NTSTEP_BETWEEN_FRAMES) == 0 ) then
+  if (mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
     ! user output
-    !if( myrank == 0 ) print*,"  VTK rendering..."
+    !if (myrank == 0 ) print*,"  VTK rendering..."
 
     ! updates time
     currenttime = sngl((it-1)*DT-t0)
 
     ! transfers fields from GPU to host
-    if( GPU_MODE ) then
-      !if( myrank == 0 ) print*,"  VTK: transferring velocity from GPU"
+    if (GPU_MODE) then
+      !if (myrank == 0 ) print*,"  VTK: transferring velocity from GPU"
       call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
     endif
 
     ! updates wavefield
-    !if( myrank == 0 ) print*,"  VTK: it = ",it," out of ",it_end," - norm of velocity field"
+    !if (myrank == 0 ) print*,"  VTK: it = ",it," out of ",it_end," - norm of velocity field"
     inum = 0
     vtkdata(:) = 0.0
     do iglob = 1,NGLOB_CRUST_MANTLE
-      if( vtkmask(iglob) .eqv. .true. ) then
+      if (vtkmask(iglob) .eqv. .true.) then
         inum = inum + 1
         ! stores norm of velocity vector
         vtkdata(inum) = sqrt(veloc_crust_mantle(1,iglob)**2 &
@@ -408,9 +408,9 @@
     enddo
 
     ! updates for multiple MPI process
-    if( NPROCTOT_VAL > 1 ) then
+    if (NPROCTOT_VAL > 1) then
       data_size = size(vtkdata)
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         ! gather data
         call gatherv_all_r(vtkdata,data_size,&
                             vtkdata_all,vtkdata_points_all,vtkdata_offset_all, &

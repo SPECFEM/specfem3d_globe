@@ -53,10 +53,10 @@
   double precision sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
 
 ! check that the parameter file is correct
-  if(NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
+  if (NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
 
 ! generate the 3D shape functions and their derivatives (27 nodes)
-  do i=1,NGLLX
+  do i = 1,NGLLX
 
   xi=xigll(i)
 
@@ -68,7 +68,7 @@
   l2pxi=-TWO*xi
   l3pxi=xi+HALF
 
-  do j=1,NGLLY
+  do j = 1,NGLLY
 
     eta=yigll(j)
 
@@ -80,7 +80,7 @@
     l2peta=-TWO*eta
     l3peta=eta+HALF
 
-    do k=1,NGLLZ
+    do k = 1,NGLLZ
 
       gamma=zigll(k)
 
@@ -227,9 +227,9 @@
   enddo
 
 ! check the shape functions
-  do i=1,NGLLX
-    do j=1,NGLLY
-      do k=1,NGLLZ
+  do i = 1,NGLLX
+    do j = 1,NGLLY
+      do k = 1,NGLLZ
 
       sumshape=ZERO
 
@@ -237,7 +237,7 @@
       sumdershapeeta=ZERO
       sumdershapegamma=ZERO
 
-      do ia=1,NGNOD
+      do ia = 1,NGNOD
 
         sumshape=sumshape+shape3D(ia,i,j,k)
 
@@ -248,17 +248,17 @@
       enddo
 
 !     the sum of the shape functions should be 1
-      if(abs(sumshape-ONE) > TINYVAL) call exit_MPI(myrank,'error in 3D shape functions')
+      if (abs(sumshape-ONE) > TINYVAL) call exit_MPI(myrank,'Error in 3D shape functions')
 
 !     the sum of the derivatives of the shape functions should be 0
-      if(abs(sumdershapexi) > TINYVAL) &
-        call exit_MPI(myrank,'error in xi derivatives of 3D shape function')
+      if (abs(sumdershapexi) > TINYVAL) &
+        call exit_MPI(myrank,'Error in xi derivatives of 3D shape function')
 
-      if(abs(sumdershapeeta) > TINYVAL) &
-        call exit_MPI(myrank,'error in eta derivatives of 3D shape function')
+      if (abs(sumdershapeeta) > TINYVAL) &
+        call exit_MPI(myrank,'Error in eta derivatives of 3D shape function')
 
-      if(abs(sumdershapegamma) > TINYVAL) &
-        call exit_MPI(myrank,'error in gamma derivatives of 3D shape function')
+      if (abs(sumdershapegamma) > TINYVAL) &
+        call exit_MPI(myrank,'Error in gamma derivatives of 3D shape function')
 
       enddo
     enddo

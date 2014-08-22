@@ -77,10 +77,10 @@
           vs_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
           rho_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating EPcrust arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating EPcrust arrays')
 
   ! read EPCRUST model on master
-  if(myrank == 0) call read_epcrust_model()
+  if (myrank == 0) call read_epcrust_model()
 
   ! broadcast EPCRUST model
   call bcast_all_dp(lon_ep,EPCRUST_NLON*EPCRUST_NLAT)
@@ -114,17 +114,17 @@
   write(IMAIN,*)
 
   open(unit=1001,file=trim(PATHNAME_EPCRUST),status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(PATHNAME_EPCRUST), '": ', ier
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(PATHNAME_EPCRUST), '": ', ier
     call flush_IMAIN()
     ! stop
-    call exit_MPI(0, 'error model epcrust')
+    call exit_MPI(0, 'Error model epcrust')
   endif
 
   read(1001,*) header
 
   do jlat = 1,EPCRUST_NLAT
-    do ilon=1,EPCRUST_NLON
+    do ilon = 1,EPCRUST_NLON
       read(1001,*) tmp
 
       lon_ep(ilon,jlat) = tmp(1)
@@ -165,8 +165,8 @@
   double precision:: weightl
   double precision:: cut, min_sed
 
-  !if ( lat < EPCRUST_LAT_MIN .or. lat > EPCRUST_LAT_MAX &
-  !        .or. lon < EPCRUST_LON_MIN .or. lon > EPCRUST_LON_MAX ) then
+  !if (lat < EPCRUST_LAT_MIN .or. lat > EPCRUST_LAT_MAX &
+  !        .or. lon < EPCRUST_LON_MIN .or. lon > EPCRUST_LON_MAX) then
   !        stop 'incorrect enter EPCRUST model, check lat and lon'
   !endif
 
@@ -174,7 +174,7 @@
   vs = ZERO
   rho = ZERO
 
-  if ( .not. flag_smooth_epcrust) then
+  if (.not. flag_smooth_epcrust) then
     call ilon_jlat(lon,lat,ilon,jlat)
     z0 = topo_ep(ilon,jlat)
     zsmooth(:) = thickness_ep(ilon,jlat,:)
@@ -214,16 +214,16 @@
 
   found_crust=.true.
 
-  if ( dep > basement .and. INCLUDE_SEDIMENTS_IN_CRUST &
-          .and. zsmooth(1) >= MINIMUM_SEDIMENT_THICKNESS ) then ! Hejun Zhu add minimum sediment thickness
+  if (dep > basement .and. INCLUDE_SEDIMENTS_IN_CRUST &
+          .and. zsmooth(1) >= MINIMUM_SEDIMENT_THICKNESS) then ! Hejun Zhu add minimum sediment thickness
     vp=vpsmooth(1)
     vs=vssmooth(1)
     rho=rhosmooth(1)
-  else if ( dep > conrad ) then
+  else if (dep > conrad) then
     vp=vpsmooth(2)
     vs=vssmooth(2)
     rho=rhosmooth(2)
-  else if ( dep > moho_top .or. elem_in_crust ) then
+  else if (dep > moho_top .or. elem_in_crust) then
     vp=vpsmooth(3)
     vs=vssmooth(3)
     rho=rhosmooth(3)
@@ -231,7 +231,7 @@
     found_crust=.false.
   endif
 
-  if (found_crust ) then
+  if (found_crust) then
     scaleval=dsqrt(PI*GRAV*RHOAV)
     vp=vp*1000.d0/(R_EARTH*scaleval)
     vs=vs*1000.d0/(R_EARTH*scaleval)
@@ -243,7 +243,7 @@
 
   ! Hejun Zhu, delete moho thickness less than 7 km
   cut=7.0/R_EARTH_KM
-  if ( moho < cut ) then
+  if (moho < cut) then
     moho = cut
   endif
 
@@ -276,10 +276,10 @@
   y1(:)=ZERO
   weight(:)=ZERO
 
-  if (cap_degree_EP < TINYVAL ) then
-          print*, 'error cap:', cap_degree_EP
+  if (cap_degree_EP < TINYVAL) then
+          print*, 'Error cap:', cap_degree_EP
           print*, 'lat/lon:', x,y
-          stop 'error cap_degree too small'
+          stop 'Error cap_degree too small'
   endif
 
   CAP=cap_degree_EP * DEGREES_TO_RADIANS
@@ -308,9 +308,9 @@
   rotation_matrix(3,2)=ZERO
   rotation_matrix(3,3)=cost
 
-  i=0
+  i = 0
   total=0.0d0
-  do itheta=1,NTHETA_EP
+  do itheta = 1,NTHETA_EP
     theta=dble(2*itheta-1)*dtheta
     cost=dcos(theta)
     sint=dsin(theta)
@@ -327,7 +327,7 @@
       xc(1)=sint*cosp
       xc(2)=sint*sinp
       xc(3)=cost
-      do j =1 ,3
+      do j = 1,3
               xx(j)=0.0d0
               do k = 1,3
                       xx(j)=xx(j)+rotation_matrix(j,k)*xc(k)
@@ -342,7 +342,7 @@
   enddo
 
   if (abs(total-1.0d0) > 0.001d0) then
-    print*,'error cap:',total,cap_degree_EP
+    print*,'Error cap:',total,cap_degree_EP
     stop
   endif
 

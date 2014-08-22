@@ -126,8 +126,8 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call check_adios_err(myrank,adios_err)
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
-  if( adios_err /= 0 ) then
-    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+  if (adios_err /= 0) then
+    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -167,13 +167,13 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call adios_schedule_read(adios_handle, sel, trim(region_name) // "kappavstore/array", 0, 1, &
       kappavstore, adios_err)
   call check_adios_err(myrank,adios_err)
-  if(READ_KAPPA_MU) then
+  if (READ_KAPPA_MU) then
     call adios_schedule_read(adios_handle, sel, trim(region_name) // "muvstore/array", 0, 1, &
         muvstore, adios_err)
     call check_adios_err(myrank,adios_err)
   endif
 
-  if(TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
+  if (TRANSVERSE_ISOTROPY_VAL .and. READ_TISO) then
     local_dim = NGLLX * NGLLY * NGLLZ * nspec_tiso
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1
@@ -240,7 +240,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
       gammaz, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  if(ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
+  if (ANISOTROPIC_INNER_CORE_VAL .and. iregion_code == IREGION_INNER_CORE) then
     local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1
@@ -264,7 +264,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
     call check_adios_err(myrank,adios_err)
   endif
 
-  if(ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
+  if (ANISOTROPIC_3D_MANTLE_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
     local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1
@@ -336,21 +336,21 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   endif
 
   ! Stacey
-  if(ABSORBING_CONDITIONS) then
+  if (ABSORBING_CONDITIONS) then
     local_dim = NGLLX * NGLLY * NGLLZ * nspec ! nspec_stacey in meshfem3D
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1
     sel => selections(sel_num)
     call adios_selection_boundingbox (sel , 1, start, count)
 
-    if(iregion_code == IREGION_CRUST_MANTLE) then
+    if (iregion_code == IREGION_CRUST_MANTLE) then
       call adios_schedule_read(adios_handle, sel, trim(region_name) // "rho_vp/array", 0, 1, &
           rho_vp, adios_err)
       call check_adios_err(myrank,adios_err)
       call adios_schedule_read(adios_handle, sel, trim(region_name) // "rho_vs/array", 0, 1, &
           rho_vs, adios_err)
       call check_adios_err(myrank,adios_err)
-    else if(iregion_code == IREGION_OUTER_CORE) then
+    else if (iregion_code == IREGION_OUTER_CORE) then
       call adios_schedule_read(adios_handle, sel, trim(region_name) // "rho_vp/array", 0, 1, &
           rho_vp, adios_err)
       call check_adios_err(myrank,adios_err)
@@ -368,7 +368,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix
   ! is needed for the sake of performance, only "rmassz" array will be filled
   ! and "rmassx" & "rmassy" will be obsolete
-  if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+  if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
 
@@ -397,7 +397,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call check_adios_err(myrank,adios_err)
 
 
-  if( (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+  if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE))then
     local_dim = nglob_xy
     start(1) = local_dim*myrank; count(1) = local_dim
@@ -414,7 +414,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   endif
 
   ! read additional ocean load mass matrix
-  if(OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
+  if (OCEANS_VAL .and. iregion_code == IREGION_CRUST_MANTLE) then
     local_dim = NGLOB_CRUST_MANTLE_OCEANS ! nglob_oceans
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1
@@ -442,17 +442,17 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call synchronize_all_comm(comm)
 
   ! checks dimensions
-  if( lnspec /= nspec ) then
-    print*,'error file dimension: nspec in file = ',lnspec, &
+  if (lnspec /= nspec) then
+    print*,'Error file dimension: nspec in file = ',lnspec, &
         ' but nspec desired:',nspec
     print*,'please check file ', file_name
-    call exit_mpi(myrank,'error dimensions in solver_data.bp')
+    call exit_mpi(myrank,'Error dimensions in solver_data.bp')
   endif
-  if( lnglob /= nglob ) then
-    print*,'error file dimension: nglob in file = ',lnglob, &
+  if (lnglob /= nglob) then
+    print*,'Error file dimension: nglob in file = ',lnglob, &
         ' but nglob desired:',nglob
     print*,'please check file ', file_name
-    call exit_mpi(myrank,'error dimensions in solver_data.bp')
+    call exit_mpi(myrank,'Error dimensions in solver_data.bp')
   endif
 
 end subroutine read_arrays_solver_adios

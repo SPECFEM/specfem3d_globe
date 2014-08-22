@@ -49,13 +49,13 @@
   OUTPUT_FILES = 'OUTPUT_FILES'
 
 ! open main output file, only written to by process 0
-  if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
+  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
     open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_mesher.txt',status='unknown')
 
 ! get MPI starting time
   time_start = wtime()
 
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '****************************'
     write(IMAIN,*) '*** Specfem3D MPI Mesher ***'
@@ -64,7 +64,7 @@
     call flush_IMAIN()
   endif
 
-  if (myrank==0) then
+  if (myrank == 0) then
     ! reads the parameter file and computes additional parameters
     call read_compute_parameters()
   endif
@@ -73,11 +73,11 @@
   call broadcast_computed_parameters(myrank)
 
   ! check that the code is running with the requested number of processes
-  if(sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
+  if (sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
 
 !! DK DK for Roland_Sylvain
   ! in the case of ROLAND_SYLVAIN we should always use double precision
-  if(ROLAND_SYLVAIN .and. CUSTOM_REAL /= SIZE_DOUBLE) &
+  if (ROLAND_SYLVAIN .and. CUSTOM_REAL /= SIZE_DOUBLE) &
     call exit_MPI(myrank,'for ROLAND_SYLVAIN use double precision i.e. configure the code with --enable-double-precision')
 
   ! synchronizes processes
@@ -87,7 +87,7 @@
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
   ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
 
-  if(NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
+  if (NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
   if (ADIOS_ENABLED) then
     call adios_setup()

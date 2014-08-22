@@ -202,7 +202,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // check if anything to do
-  if( mp->nadj_rec_local == 0 ) return;
+  if (mp->nadj_rec_local == 0 ) return;
 
   // total number of receivers/adjoint sources
   int nrec = *h_nrec;
@@ -213,7 +213,7 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
   // the irec_local variable needs to be precomputed (as
   // h_pre_comp..), because normally it is in the loop updating accel,
   // and due to how it's incremented, it cannot be parallelized
-#if USE_OPENCL
+#ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[3];
     size_t local_work_size[3];
@@ -402,7 +402,7 @@ please check mesh_constants_cuda.h");
   // passed as function argument here is pointer to slice at time iadj_vec(it)
   //    which has dimension (NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local)
 
-#if USE_OPENCL
+#ifdef USE_OPENCL
   if (run_opencl) {
     if (mp->has_last_copy_evt) {
       clCheck (clReleaseEvent (mp->last_copy_evt));
@@ -411,7 +411,7 @@ please check mesh_constants_cuda.h");
     clCheck (clFinish (mocl.copy_queue));
   }
 #endif
-#if USE_CUDA
+#ifdef USE_CUDA
   if (run_cuda) {
     // waits for previous copy_stream call to be finished
     cudaStreamSynchronize(mp->copy_stream);
@@ -421,11 +421,11 @@ please check mesh_constants_cuda.h");
   int i,j,k,irec,irec_local;
   irec_local = 0;
   for(irec = 0; irec < nrec; irec++) {
-    if(mp->myrank == h_islice_selected_rec[irec]) {
+    if (mp->myrank == h_islice_selected_rec[irec]) {
       // takes only local sources
-      for(k=0;k<NGLLX;k++) {
-        for(j=0;j<NGLLX;j++) {
-          for(i=0;i<NGLLX;i++) {
+      for(k = 0;k<NGLLX;k++) {
+        for(j = 0;j<NGLLX;j++) {
+          for(i = 0;i<NGLLX;i++) {
             mp->h_adj_sourcearrays_slice[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,0,i,j,k,irec_local)]
               = h_adj_sourcearrays[INDEX5(NDIM,NGLLX,NGLLX,NGLLX,0,i,j,k,irec_local)];
 
@@ -443,10 +443,10 @@ please check mesh_constants_cuda.h");
   }
 
   // check all local sources were added
-  if( irec_local != mp->nadj_rec_local) {
+  if (irec_local != mp->nadj_rec_local) {
     exit_on_error("irec_local not equal to nadj_rec_local\n");
   }
-#if USE_OPENCL
+#ifdef USE_OPENCL
   if (run_opencl) {
     cl_event *copy_evt = NULL;
     cl_uint num_evt = 0;
@@ -464,7 +464,7 @@ please check mesh_constants_cuda.h");
     mp->has_last_copy_evt = 1;
   }
 #endif
-#if USE_CUDA
+#ifdef USE_CUDA
   if (run_cuda) {
     // waits for previous compute_add_sources_adjoint_cuda_kernel() call to be finished
     cudaStreamSynchronize(mp->compute_stream);

@@ -150,7 +150,7 @@
             rho_kl = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho * hlagrange
 
             ! transverse isotropic kernel calculations
-            if( SAVE_TRANSVERSE_KL_ONLY ) then
+            if (SAVE_TRANSVERSE_KL_ONLY) then
               ! note: transverse isotropic kernels are calculated for all elements
               !
               !          however, the factors A,C,L,N,F are based only on transverse elements
@@ -163,7 +163,7 @@
 
               ! Get A,C,F,L,N,eta from kappa,mu
               ! element can have transverse isotropy if between d220 and Moho
-              if( .not. ispec_is_tiso_crust_mantle(ispec) ) then
+              if (.not. ispec_is_tiso_crust_mantle(ispec)) then
 
                 ! layer with no transverse isotropy
                 ! A,C,L,N,F from isotropic model
@@ -380,7 +380,7 @@
   enddo
 
   ! writes out kernels to file
-  if( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
     ! check implementation
     call exit_mpi(myrank,'saving regular kernels in ADIOS file format is not supported yet')
 

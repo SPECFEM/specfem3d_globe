@@ -48,17 +48,17 @@
   character(len=150) outputname
 
   ! checks if anything to do
-  if( UNDO_ATTENUATION ) return
+  if (UNDO_ATTENUATION ) return
 
   ! save files to local disk or tape system if restart file
-  if(NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
-    if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
+  if (NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
+    if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
       call save_intermediate_forward_arrays_adios()
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
       open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
           status='unknown',form='unformatted',action='write',iostat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error opening file dump_all_arrays*** for writing')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for writing')
 
       write(IOUT) displ_crust_mantle
       write(IOUT) veloc_crust_mantle
@@ -105,13 +105,13 @@
 
   ! save last frame of the forward simulation
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
+    if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
       call save_forward_arrays_adios()
     else
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
       open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='unknown', &
           form='unformatted',action='write',iostat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_forward_arrays** for writing')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_forward_arrays** for writing')
 
       write(IOUT) displ_crust_mantle
       write(IOUT) veloc_crust_mantle
@@ -181,7 +181,7 @@
   character(len=150) :: outputname
 
   ! transfers wavefields from GPU device to CPU host
-  if( GPU_MODE ) then
+  if (GPU_MODE) then
     call transfer_fields_cm_from_device(NDIM*NGLOB_CRUST_MANTLE, &
                                     displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                                     Mesh_pointer)
@@ -203,7 +203,7 @@
     endif
   endif
 
-  if( ADIOS_ENABLED .and. ADIOS_FOR_UNDO_ATTENUATION) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_UNDO_ATTENUATION) then
     call save_forward_arrays_undoatt_adios()
   else
     ! current subset iteration
@@ -214,10 +214,10 @@
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
 
     ! debug
-    !if(myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION
+    !if (myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION
     open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname, &
          status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for writing')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 
     write(IOUT) displ_crust_mantle
     write(IOUT) veloc_crust_mantle

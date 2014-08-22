@@ -100,10 +100,10 @@
 !----------------------------------------------------------------
 
 ! first create the main standard mass matrix with no corrections
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
     ! suppress fictitious elements in central cube
-    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -156,7 +156,7 @@
   enddo ! of loop on ispec
 
 ! copy the initial mass matrix if needed
-  if(nglob_xy == nglob) then
+  if (nglob_xy == nglob) then
     rmassx(:) = rmassz(:)
     rmassy(:) = rmassz(:)
 
@@ -165,41 +165,41 @@
   endif
 
   ! then make the corrections to the copied mass matrices if needed
-  if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+  if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     call create_mass_matrices_rotation(nspec,ibool,idoubling,iregion_code)
   endif
 
   ! absorbing boundaries
   ! add C*deltat/2 contribution to the mass matrices on the Stacey edges
-  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
+  if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
     call create_mass_matrices_Stacey(nspec,ibool,iregion_code,NSPEC2D_BOTTOM)
   endif
 
   ! check that mass matrix is positive
-  if( iregion_code == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then
+  if (iregion_code == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
     ! note: in fictitious elements mass matrix is still zero
-    if(minval(rmassz(:)) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
+    if (minval(rmassz(:)) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
     ! check that the additional mass matrices are positive, if they exist
-    if(nglob_xy == nglob) then
-      if(minval(rmassx) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassx matrix term')
-      if(minval(rmassy) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassy matrix term')
-      if(minval(b_rmassx) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassx matrix term')
-      if(minval(b_rmassy) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
+    if (nglob_xy == nglob) then
+      if (minval(rmassx) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassx matrix term')
+      if (minval(rmassy) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassy matrix term')
+      if (minval(b_rmassx) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassx matrix term')
+      if (minval(b_rmassy) < 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
     endif
   else
     ! no fictitious elements, mass matrix must be strictly positive
-    if(minval(rmassz(:)) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
+    if (minval(rmassz(:)) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassz matrix term')
     ! check that the additional mass matrices are strictly positive, if they exist
-    if(nglob_xy == nglob) then
-      if(minval(rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassx matrix term')
-      if(minval(rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassy matrix term')
-      if(minval(b_rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassx matrix term')
-      if(minval(b_rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
+    if (nglob_xy == nglob) then
+      if (minval(rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassx matrix term')
+      if (minval(rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative rmassy matrix term')
+      if (minval(b_rmassx) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassx matrix term')
+      if (minval(b_rmassy) <= 0._CUSTOM_REAL) call exit_MPI(myrank,'negative b_rmassy matrix term')
     endif
   endif
 
   ! save ocean load mass matrix as well if oceans
-  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
+  if (OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
     call create_mass_matrices_ocean_load(nspec,ibool,xstore,ystore,zstore,NSPEC2D_TOP)
   endif
 
@@ -247,7 +247,7 @@
   integer :: ispec,i,j,k,iglob
 
   ! user output
-  if( myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*) '    creates exact mass matrix for rotation'
     call flush_IMAIN()
   endif
@@ -269,10 +269,10 @@
 
   case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
 
-    do ispec=1,nspec
+    do ispec = 1,nspec
 
       ! suppress fictitious elements in central cube
-      if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+      if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
       do k = 1,NGLLZ
         do j = 1,NGLLY
@@ -371,31 +371,31 @@
   integer :: ispec2D
 
   ! user output
-  if( myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*) '    updates mass matrix with Stacey boundary corrections'
     call flush_IMAIN()
   endif
 
   ! checks if we have absorbing boundary arrays
-  if( .not. allocated(nimin) ) call exit_MPI(myrank,'error Stacey array not allocated')
+  if (.not. allocated(nimin) ) call exit_MPI(myrank,'Error Stacey array not allocated')
 
   ! use the non-dimensional time step to make the mass matrix correction
   deltat = real(DT*dsqrt(PI*GRAV*RHOAV), kind=CUSTOM_REAL)
   deltatover2 = real(0.5d0*deltat, kind=CUSTOM_REAL)
 
   ! weights on surfaces
-  do i=1,NGLLX
-    do j=1,NGLLY
+  do i = 1,NGLLX
+    do j = 1,NGLLY
        wgllwgll_xy(i,j) = wxgll(i)*wygll(j)
     enddo
   enddo
-  do i=1,NGLLX
-    do k=1,NGLLZ
+  do i = 1,NGLLX
+    do k = 1,NGLLZ
        wgllwgll_xz(i,k) = wxgll(i)*wzgll(k)
     enddo
   enddo
-  do j=1,NGLLY
-    do k=1,NGLLZ
+  do j = 1,NGLLY
+    do k = 1,NGLLZ
        wgllwgll_yz(j,k) = wygll(j)*wzgll(k)
     enddo
   enddo
@@ -409,18 +409,18 @@
 
     !   xmin
     ! if two chunks exclude this face for one of them
-    if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
+    if (NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
 
-       do ispec2D=1,nspec2D_xmin
+       do ispec2D = 1,nspec2D_xmin
 
           ispec=ibelm_xmin(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
+          if (nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
 
-          i=1
-          do k=nkmin_xi(1,ispec2D),NGLLZ
-             do j=njmin(1,ispec2D),njmax(1,ispec2D)
+          i = 1
+          do k = nkmin_xi(1,ispec2D),NGLLZ
+             do j = njmin(1,ispec2D),njmax(1,ispec2D)
                 iglob=ibool(i,j,k,ispec)
 
                 nx = normal_xmin(1,j,k,ispec2D)
@@ -450,14 +450,14 @@
 
     !   xmax
     ! if two chunks exclude this face for one of them
-    if(NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
+    if (NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
 
-       do ispec2D=1,nspec2D_xmax
+       do ispec2D = 1,nspec2D_xmax
 
           ispec=ibelm_xmax(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
+          if (nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
 
           i=NGLLX
           do k=nkmin_xi(2,ispec2D),NGLLZ
@@ -490,16 +490,16 @@
     endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AB
 
     !   ymin
-    do ispec2D=1,nspec2D_ymin
+    do ispec2D = 1,nspec2D_ymin
 
        ispec=ibelm_ymin(ispec2D)
 
        ! exclude elements that are not on absorbing edges
-       if(nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
+       if (nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
 
-       j=1
-       do k=nkmin_eta(1,ispec2D),NGLLZ
-          do i=nimin(1,ispec2D),nimax(1,ispec2D)
+       j = 1
+       do k = nkmin_eta(1,ispec2D),NGLLZ
+          do i = nimin(1,ispec2D),nimax(1,ispec2D)
             iglob=ibool(i,j,k,ispec)
 
              nx = normal_ymin(1,i,k,ispec2D)
@@ -526,12 +526,12 @@
     enddo
 
     !   ymax
-    do ispec2D=1,nspec2D_ymax
+    do ispec2D = 1,nspec2D_ymax
 
        ispec=ibelm_ymax(ispec2D)
 
        ! exclude elements that are not on absorbing edges
-       if(nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
+       if (nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
 
        j=NGLLY
        do k=nkmin_eta(2,ispec2D),NGLLZ
@@ -562,25 +562,25 @@
     enddo
 
     ! check that mass matrix is positive
-    if(minval(rmassx(:)) <= 0.) call exit_MPI(myrank,'negative rmassx matrix term')
-    if(minval(rmassy(:)) <= 0.) call exit_MPI(myrank,'negative rmassy matrix term')
+    if (minval(rmassx(:)) <= 0.) call exit_MPI(myrank,'negative rmassx matrix term')
+    if (minval(rmassy(:)) <= 0.) call exit_MPI(myrank,'negative rmassy matrix term')
 
   case(IREGION_OUTER_CORE)
 
     !   xmin
     ! if two chunks exclude this face for one of them
-    if(NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
+    if (NCHUNKS == 1 .or. ichunk == CHUNK_AC) then
 
-       do ispec2D=1,nspec2D_xmin
+       do ispec2D = 1,nspec2D_xmin
 
           ispec=ibelm_xmin(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
+          if (nkmin_xi(1,ispec2D) == 0 .or. njmin(1,ispec2D) == 0) cycle
 
-          i=1
-          do k=nkmin_xi(1,ispec2D),NGLLZ
-             do j=njmin(1,ispec2D),njmax(1,ispec2D)
+          i = 1
+          do k = nkmin_xi(1,ispec2D),NGLLZ
+             do j = njmin(1,ispec2D),njmax(1,ispec2D)
                 iglob=ibool(i,j,k,ispec)
 
                 sn = deltatover2/rho_vp(i,j,k,ispec)
@@ -596,14 +596,14 @@
 
     !   xmax
     ! if two chunks exclude this face for one of them
-    if(NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
+    if (NCHUNKS == 1 .or. ichunk == CHUNK_AB) then
 
-       do ispec2D=1,nspec2D_xmax
+       do ispec2D = 1,nspec2D_xmax
 
           ispec=ibelm_xmax(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
+          if (nkmin_xi(2,ispec2D) == 0 .or. njmin(2,ispec2D) == 0) cycle
 
           i=NGLLX
           do k=nkmin_xi(2,ispec2D),NGLLZ
@@ -622,16 +622,16 @@
     endif ! NCHUNKS == 1 .or. ichunk == CHUNK_AB
 
     !   ymin
-    do ispec2D=1,nspec2D_ymin
+    do ispec2D = 1,nspec2D_ymin
 
        ispec=ibelm_ymin(ispec2D)
 
        ! exclude elements that are not on absorbing edges
-       if(nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
+       if (nkmin_eta(1,ispec2D) == 0 .or. nimin(1,ispec2D) == 0) cycle
 
-       j=1
-       do k=nkmin_eta(1,ispec2D),NGLLZ
-          do i=nimin(1,ispec2D),nimax(1,ispec2D)
+       j = 1
+       do k = nkmin_eta(1,ispec2D),NGLLZ
+          do i = nimin(1,ispec2D),nimax(1,ispec2D)
              iglob=ibool(i,j,k,ispec)
 
              sn = deltatover2/rho_vp(i,j,k,ispec)
@@ -644,12 +644,12 @@
     enddo
 
     !   ymax
-    do ispec2D=1,nspec2D_ymax
+    do ispec2D = 1,nspec2D_ymax
 
        ispec=ibelm_ymax(ispec2D)
 
        ! exclude elements that are not on absorbing edges
-       if(nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
+       if (nkmin_eta(2,ispec2D) == 0 .or. nimin(2,ispec2D) == 0) cycle
 
        j=NGLLY
        do k=nkmin_eta(2,ispec2D),NGLLZ
@@ -666,13 +666,13 @@
     enddo
 
     !   bottom (zmin)
-    do ispec2D=1,NSPEC2D_BOTTOM
+    do ispec2D = 1,NSPEC2D_BOTTOM
 
        ispec=ibelm_bottom(ispec2D)
 
-       k=1
-       do j=1,NGLLY
-          do i=1,NGLLX
+       k = 1
+       do j = 1,NGLLY
+          do i = 1,NGLLX
              iglob=ibool(i,j,k,ispec)
 
              sn = deltatover2/rho_vp(i,j,k,ispec)
@@ -735,7 +735,7 @@
   logical :: do_ocean_load
 
   ! user output
-  if( myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*) '    updates mass matrix with ocean load'
     call flush_IMAIN()
   endif
@@ -745,14 +745,14 @@
 
   ! note: old version (5.1.5)
   ! only for models where 3D crustal stretching was used (even without topography?)
-  if( USE_OLD_VERSION_5_1_5_FORMAT ) then
-    if( CASE_3D ) then
+  if (USE_OLD_VERSION_5_1_5_FORMAT) then
+    if (CASE_3D) then
       do_ocean_load = .true.
     endif
   else
     ! note: new version:
     ! for 3D Earth with topography, compute local height of oceans
-    if( TOPOGRAPHY ) then
+    if (TOPOGRAPHY) then
       do_ocean_load = .true.
     endif
   endif
@@ -775,7 +775,7 @@
       do i = 1,NGLLX
 
         ! for 3D Earth with topography, compute local height of oceans
-        if( do_ocean_load ) then
+        if (do_ocean_load) then
 
           ! get coordinates of current point
           x = xstore(i,j,k,ispec)
@@ -786,10 +786,10 @@
           ! slightly move points to avoid roundoff problem when exactly on the polar axis
           call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
 
-          if( .not. USE_OLD_VERSION_5_1_5_FORMAT ) then
+          if (.not. USE_OLD_VERSION_5_1_5_FORMAT) then
             ! adds small margins
   !! DK DK: added a test to only do this if we are on the axis
-            if(abs(theta) > 89.99d0) then
+            if (abs(theta) > 89.99d0) then
               theta = theta + 0.0000001d0
               phi = phi + 0.0000001d0
             endif
@@ -801,7 +801,7 @@
           ! note: bathymetry is given in geographic lat/lon
           !       (i.e., latitude with respect to reference ellipsoid)
           !       we will need convert the geocentric positions here to geographic ones
-          if( USE_OLD_VERSION_5_1_5_FORMAT ) then
+          if (USE_OLD_VERSION_5_1_5_FORMAT) then
             ! always converts
             theta = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
           else
@@ -818,7 +818,7 @@
 
           ! non-dimensionalize the elevation, which is in meters
           ! and suppress positive elevation, which means no oceans
-          if(elevation >= - MINIMUM_THICKNESS_3D_OCEANS) then
+          if (elevation >= - MINIMUM_THICKNESS_3D_OCEANS) then
             height_oceans = 0.d0
           else
             height_oceans = dabs(elevation) / R_EARTH

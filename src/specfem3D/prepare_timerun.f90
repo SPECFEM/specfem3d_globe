@@ -51,12 +51,12 @@
 
   ! allocate files to save movies
   ! for noise tomography, number of movie points (nmovie_points) needed for 'surface movie'
-  if( MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0 ) then
+  if (MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0) then
     call prepare_timerun_movie_surface()
   endif
 
   ! output point and element information for 3D movies
-  if( MOVIE_VOLUME ) call prepare_timerun_movie_volume()
+  if (MOVIE_VOLUME ) call prepare_timerun_movie_volume()
 
   ! sets up time increments and rotation constants
   call prepare_timerun_constants()
@@ -77,22 +77,22 @@
   call read_forward_arrays_startrun()
 
   ! prepares Stacey boundary arrays for re-construction of wavefields
-  if( ABSORBING_CONDITIONS ) call prepare_timerun_stacey()
+  if (ABSORBING_CONDITIONS ) call prepare_timerun_stacey()
 
   ! prepares noise simulations
   call prepare_timerun_noise()
 
   ! prepares GPU arrays
-  if( GPU_MODE ) call prepare_timerun_GPU()
+  if (GPU_MODE ) call prepare_timerun_GPU()
 
   ! prepares VTK window visualization
-  if( VTK_MODE ) call prepare_vtk_window()
+  if (VTK_MODE ) call prepare_vtk_window()
 
   ! synchronize all the processes
   call synchronize_all()
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     ! elapsed time since beginning of mesh generation
     tCPU = wtime() - time_start
     write(IMAIN,*)
@@ -101,7 +101,7 @@
     write(IMAIN,*)
     write(IMAIN,*) 'time loop:'
     write(IMAIN,*)
-    if(USE_LDDRK) then
+    if (USE_LDDRK) then
       write(IMAIN,*) '              scheme:         LDDRK with',NSTAGE_TIME_SCHEME,'stages'
     else
       write(IMAIN,*) '              scheme:         Newmark'
@@ -119,7 +119,7 @@
     !       isotropic models              ~ dt = 3.1857107305545455e-05
     !       transverse isotropic models   ~ dt = 3.7492335549202518e-05
     !                                            4.2252082718299598e-05 w/ attenuation (Intel Xeon @ 2.67GHz)
-    !                                            1.0069202789238270e-04 w/ simulation_type==3 (Intel Xeon @ 2.67GHz)
+    !                                            1.0069202789238270e-04 w/ simulation_type == 3 (Intel Xeon @ 2.67GHz)
     !     regional simulations:
     !       transverse isotropic models   ~ dt = 4.3039939919998860e-05 w/ attenuation (Intel Xeon @ 2.67GHz)
     !                                            7.6099242919530619e-05 (Intel Xeon @ 2.27GHz)
@@ -146,55 +146,55 @@
   implicit none
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
 
     write(IMAIN,*)
     write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
     write(IMAIN,*)
 
     write(IMAIN,*)
-    if(OCEANS_VAL) then
+    if (OCEANS_VAL) then
       write(IMAIN,*) 'incorporating the oceans using equivalent load'
     else
       write(IMAIN,*) 'no oceans'
     endif
 
     write(IMAIN,*)
-    if(ELLIPTICITY_VAL) then
+    if (ELLIPTICITY_VAL) then
       write(IMAIN,*) 'incorporating ellipticity'
     else
       write(IMAIN,*) 'no ellipticity'
     endif
 
     write(IMAIN,*)
-    if(TOPOGRAPHY) then
+    if (TOPOGRAPHY) then
       write(IMAIN,*) 'incorporating surface topography'
     else
       write(IMAIN,*) 'no surface topography'
     endif
 
     write(IMAIN,*)
-    if(GRAVITY_VAL) then
+    if (GRAVITY_VAL) then
       write(IMAIN,*) 'incorporating self-gravitation (Cowling approximation)'
     else
       write(IMAIN,*) 'no self-gravitation'
     endif
 
     write(IMAIN,*)
-    if(ROTATION_VAL) then
+    if (ROTATION_VAL) then
       write(IMAIN,*) 'incorporating rotation'
-      if( EXACT_MASS_MATRIX_FOR_ROTATION ) &
+      if (EXACT_MASS_MATRIX_FOR_ROTATION ) &
         write(IMAIN,*) 'using exact mass matrix for rotation'
     else
       write(IMAIN,*) 'no rotation'
     endif
 
     write(IMAIN,*)
-    if(ATTENUATION_VAL) then
+    if (ATTENUATION_VAL) then
       write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
-      if(ATTENUATION_3D_VAL) &
+      if (ATTENUATION_3D_VAL) &
         write(IMAIN,*) 'using 3D attenuation model'
-      if(PARTIAL_PHYS_DISPERSION_ONLY_VAL ) &
+      if (PARTIAL_PHYS_DISPERSION_ONLY_VAL ) &
         write(IMAIN,*) 'mimicking effects on velocity only'
     else
       write(IMAIN,*) 'no attenuation'
@@ -220,7 +220,7 @@
   use specfem_par_outercore
   implicit none
 
-  if(myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "preparing mass matrices"
     call flush_IMAIN()
   endif
@@ -240,80 +240,80 @@
 
   ! checks that all the mass matrices are positive
   ! ocean load
-  if(OCEANS_VAL) then
-    if(minval(rmass_ocean_load) <= 0._CUSTOM_REAL) &
+  if (OCEANS_VAL) then
+    if (minval(rmass_ocean_load) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
 
   ! checks mass matrices
 
   ! crust/mantle
-  if(minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+  if (minval(rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
     call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassx')
-  if(minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+  if (minval(rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
     call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassy')
-  if(minval(rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
+  if (minval(rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
     call exit_MPI(myrank,'negative mass matrix term for the crust_mantle rmassz')
   ! kernel simulations
-  if( SIMULATION_TYPE == 3 ) then
-    if(minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
+  if (SIMULATION_TYPE == 3) then
+    if (minval(b_rmassx_crust_mantle) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassx')
-    if(minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
+    if (minval(b_rmassy_crust_mantle) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassy')
-    if(minval(b_rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
+    if (minval(b_rmassz_crust_mantle) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the b_crust_mantle b_rmassz')
   endif
 
   ! inner core
   ! checks mass matrices for rotation
-  if(minval(rmassx_inner_core) <= 0._CUSTOM_REAL) &
+  if (minval(rmassx_inner_core) <= 0._CUSTOM_REAL) &
     call exit_MPI(myrank,'negative mass matrix term for the inner core rmassx')
-  if(minval(rmassy_inner_core) <= 0._CUSTOM_REAL) &
+  if (minval(rmassy_inner_core) <= 0._CUSTOM_REAL) &
     call exit_MPI(myrank,'negative mass matrix term for the inner core rmassy')
-  if(minval(rmassz_inner_core) <= 0._CUSTOM_REAL) &
+  if (minval(rmassz_inner_core) <= 0._CUSTOM_REAL) &
     call exit_MPI(myrank,'negative mass matrix term for the inner core rmassz')
   ! kernel simulations
-  if( SIMULATION_TYPE == 3 ) then
-    if(minval(b_rmassx_inner_core) <= 0._CUSTOM_REAL) &
+  if (SIMULATION_TYPE == 3) then
+    if (minval(b_rmassx_inner_core) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the b_rmassx_inner_core')
-    if(minval(b_rmassy_inner_core) <= 0._CUSTOM_REAL) &
+    if (minval(b_rmassy_inner_core) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the b_rmassy_inner_core')
-    if(minval(b_rmassz_inner_core) <= 0._CUSTOM_REAL) &
+    if (minval(b_rmassz_inner_core) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the b_rmassz_inner_core')
   endif
 
   ! outer core
-  if(minval(rmass_outer_core) <= 0._CUSTOM_REAL) &
+  if (minval(rmass_outer_core) <= 0._CUSTOM_REAL) &
     call exit_MPI(myrank,'negative mass matrix term for the outer core')
-  if( SIMULATION_TYPE == 3 ) then
-    if(minval(b_rmass_outer_core) <= 0._CUSTOM_REAL) &
+  if (SIMULATION_TYPE == 3) then
+    if (minval(b_rmass_outer_core) <= 0._CUSTOM_REAL) &
       call exit_MPI(myrank,'negative mass matrix term for the outer core b_rmass')
   endif
 
   ! mass matrix inversions
   ! for efficiency, invert final mass matrix once and for all on each slice
   ! ocean load
-  if(OCEANS_VAL) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
+  if (OCEANS_VAL) rmass_ocean_load = 1._CUSTOM_REAL / rmass_ocean_load
 
   ! mass matrices on Stacey edges
   ! crust/mantle
-  if( ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) ) then
+  if (((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION))) then
      rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
      rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
   endif
-  if( SIMULATION_TYPE == 3 ) then
-    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+  if (SIMULATION_TYPE == 3) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
       b_rmassx_crust_mantle = 1._CUSTOM_REAL / b_rmassx_crust_mantle
       b_rmassy_crust_mantle = 1._CUSTOM_REAL / b_rmassy_crust_mantle
     endif
   endif
   rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
   ! inner core
-  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
      rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
      rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
-     if( SIMULATION_TYPE == 3 ) then
+     if (SIMULATION_TYPE == 3) then
        b_rmassx_inner_core = 1._CUSTOM_REAL / b_rmassx_inner_core
        b_rmassy_inner_core = 1._CUSTOM_REAL / b_rmassy_inner_core
      endif
@@ -354,8 +354,8 @@
                            nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
                            my_neighbours_crust_mantle)
 
-  if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+  if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -369,8 +369,8 @@
                            my_neighbours_crust_mantle)
   endif
 
-  if( SIMULATION_TYPE == 3 ) then
-    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+  if (SIMULATION_TYPE == 3) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -401,7 +401,7 @@
                            nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
                            my_neighbours_inner_core)
 
-  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                              rmassx_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
@@ -414,7 +414,7 @@
                              nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
                              my_neighbours_inner_core)
 
-    if( SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 3) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                                b_rmassx_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
@@ -430,12 +430,12 @@
   endif
 
   ! mass matrix including central cube
-  if(INCLUDE_CENTRAL_CUBE) then
+  if (INCLUDE_CENTRAL_CUBE) then
     ! suppress fictitious mass matrix elements in central cube
     ! because the slices do not compute all their spectral elements in the cube
     where(rmassz_inner_core(:) <= 0.0_CUSTOM_REAL) rmassz_inner_core = 1.0_CUSTOM_REAL
 
-    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION )then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
       where(rmassx_inner_core(:) <= 0.0_CUSTOM_REAL) rmassx_inner_core = 1.0_CUSTOM_REAL
       where(rmassy_inner_core(:) <= 0.0_CUSTOM_REAL) rmassy_inner_core = 1.0_CUSTOM_REAL
     endif
@@ -506,16 +506,16 @@
   integer :: ier
 
   ! user output
-  if(myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "preparing movie surface"
     call flush_IMAIN()
   endif
 
   ! only output corners
   ! note: for noise tomography, must NOT be coarse (have to be saved on all GLL points)
-  if( MOVIE_COARSE .and. NOISE_TOMOGRAPHY == 0 ) then
+  if (MOVIE_COARSE .and. NOISE_TOMOGRAPHY == 0) then
     ! checks setup
-    if(NGLLX /= NGLLY) &
+    if (NGLLX /= NGLLY) &
       call exit_MPI(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
     ! number of points
     nmovie_points = 2 * 2 * NSPEC2D_TOP(IREGION_CRUST_MANTLE)
@@ -530,7 +530,7 @@
   call movie_surface_count_points()
 
   ! those arrays are not necessary for noise tomography, so only allocate them in MOVIE_SURFACE case
-  if( MOVIE_SURFACE ) then
+  if (MOVIE_SURFACE) then
     ! writes out movie point locations to file
     call write_movie_surface_mesh()
 
@@ -538,30 +538,30 @@
     allocate(store_val_ux(nmovie_points), &
              store_val_uy(nmovie_points), &
              store_val_uz(nmovie_points),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface arrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface arrays')
 
     ! allocates arrays for gathering wavefield values
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       ! only master needs full arrays
       allocate(store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1), &
                store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1), &
                store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
     else
       ! slave processes only need dummy arrays
       allocate(store_val_ux_all(1,1), &
                store_val_uy_all(1,1), &
                store_val_uz_all(1,1),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating movie surface all arrays')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
     endif
   endif
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Movie surface:'
     write(IMAIN,*) '  Writing to moviedata*** files in output directory'
-    if(MOVIE_VOLUME_TYPE == 5) then
+    if (MOVIE_VOLUME_TYPE == 5) then
       write(IMAIN,*) '  movie output: displacement'
     else
       write(IMAIN,*) '  movie output: velocity'
@@ -588,7 +588,7 @@
   ! local parameters
   integer :: ier
 
-  if(myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "preparing movie volume"
     call flush_IMAIN()
   endif
@@ -605,12 +605,12 @@
   call movie_volume_count_points()
 
   allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating nu for 3D movie')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating nu for 3D movie')
 
   call write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool, &
                                           muvstore_crust_mantle_3dmovie,npoints_3dmovie)
 
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'Movie volume:'
     write(IMAIN,*) '  Writing to movie3D*** files on local disk databases directory'
@@ -644,7 +644,7 @@
     call flush_IMAIN()
   endif
 
-  if( MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
+  if (MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
       call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')
 
   call synchronize_all()
@@ -662,7 +662,7 @@
   use specfem_par
   implicit none
 
-  if(myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "preparing constants"
     call flush_IMAIN()
   endif
@@ -688,7 +688,7 @@
   endif
 
   ! non-dimensionalized rotation rate of the Earth times two
-  if(ROTATION_VAL) then
+  if (ROTATION_VAL) then
     ! distinguish between single and double precision for reals
     if (SIMULATION_TYPE == 1) then
       two_omega_earth = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv), kind=CUSTOM_REAL)
@@ -704,7 +704,7 @@
     if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
   endif
 
-  if(UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION) then
    b_deltat = deltat
    b_deltatover2 = deltatover2
    b_deltatsqover2 = deltatsqover2
@@ -733,7 +733,7 @@
   double precision :: rho,drhodr,vp,vs,Qkappa,Qmu
   integer :: int_radius,idoubling,nspl_gravity
 
-  if(myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "preparing gravity arrays"
     call flush_IMAIN()
   endif
@@ -743,7 +743,7 @@
   ! this assumes that the gravity perturbations are small and smooth
   ! and that we can neglect the 3D model and use PREM every 100 m in all cases
   ! this is probably a rather reasonable assumption
-  if(GRAVITY_VAL) then
+  if (GRAVITY_VAL) then
     call make_gravity(nspl_gravity,rspl_gravity,gspl,gspl2,ONE_CRUST)
     do int_radius = 1,NRAD_GRAVITY
       radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
@@ -767,9 +767,9 @@
     ! lookup table is defined every 100 m
     do int_radius = 1,NRAD_GRAVITY
       radius_km = dble(int_radius) / 10.d0
-      if(radius_km > RCMB/1000.d0 - 3.d0) &
+      if (radius_km > RCMB/1000.d0 - 3.d0) &
         minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(nint((RCMB/1000.d0 - 3.d0)*10.d0))
-      if(radius_km < RICB/1000.d0 + 3.d0) &
+      if (radius_km < RICB/1000.d0 + 3.d0) &
         minus_rho_g_over_kappa_fluid(int_radius) = minus_rho_g_over_kappa_fluid(nint((RICB/1000.d0 + 3.d0)*10.d0))
     enddo
 
@@ -827,10 +827,10 @@
   integer :: ispec,i,j,k
 
   ! checks if attenuation is on and anything to do
-  if( .not. ATTENUATION_VAL ) return
+  if (.not. ATTENUATION_VAL ) return
 
   ! get and store PREM attenuation model
-  if(myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "preparing attenuation"
     call flush_IMAIN()
   endif
@@ -866,17 +866,17 @@
   ! rescale in crust and mantle
 
   do ispec = 1,NSPEC_CRUST_MANTLE
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
-          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
             scale_factor = factor_scale_crust_mantle(i,j,k,ispec)
           else
             scale_factor = factor_scale_crust_mantle(1,1,1,ispec)
           endif
 
-          if(ANISOTROPIC_3D_MANTLE_VAL) then
+          if (ANISOTROPIC_3D_MANTLE_VAL) then
             scale_factor_minus_one = scale_factor - 1.d0
 
             mul = c44store_crust_mantle(i,j,k,ispec)
@@ -899,7 +899,7 @@
             c66store_crust_mantle(i,j,k,ispec) = c66store_crust_mantle(i,j,k,ispec) &
                     + scale_factor_minus_one * mul
           else
-            if(MOVIE_VOLUME .and. SIMULATION_TYPE==3) then
+            if (MOVIE_VOLUME .and. SIMULATION_TYPE == 3) then
               ! store the original value of \mu to compute \mu*\eps
               muvstore_crust_mantle_3dmovie(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec)
             endif
@@ -907,7 +907,7 @@
             muvstore_crust_mantle(i,j,k,ispec) = muvstore_crust_mantle(i,j,k,ispec) * scale_factor
 
             ! scales transverse isotropic values for mu_h
-            if( ispec_is_tiso_crust_mantle(ispec) ) then
+            if (ispec_is_tiso_crust_mantle(ispec)) then
               muhstore_crust_mantle(i,j,k,ispec) = muhstore_crust_mantle(i,j,k,ispec) * scale_factor
             endif
           endif
@@ -920,17 +920,17 @@
   ! rescale in inner core
 
   do ispec = 1,NSPEC_INNER_CORE
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
-          if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+          if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
             scale_factor = factor_scale_inner_core(i,j,k,ispec)
           else
             scale_factor = factor_scale_inner_core(1,1,1,ispec)
           endif
 
-          if(ANISOTROPIC_INNER_CORE_VAL) then
+          if (ANISOTROPIC_INNER_CORE_VAL) then
             scale_factor_minus_one = scale_factor - 1.d0
 
             mul = muvstore_inner_core(i,j,k,ispec)
@@ -966,11 +966,11 @@
    b_gammaval = real(gammaval_dble, kind=CUSTOM_REAL)
   endif
 
-  if( USE_LDDRK ) then
+  if (USE_LDDRK) then
     tau_sigma_CUSTOM_REAL(:) = real(tau_sigma_dble(:), kind=CUSTOM_REAL)
   endif
 
-  if(UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION) then
    b_alphaval = alphaval
    b_betaval = betaval
    b_gammaval = gammaval
@@ -1000,13 +1000,13 @@
   integer :: ier
   real(kind=CUSTOM_REAL) :: init_value
 
-  if(myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "preparing wavefields"
     call flush_IMAIN()
   endif
 
   ! put negligible initial value to avoid very slow underflow trapping
-  if(FIX_UNDERFLOW_PROBLEM) then
+  if (FIX_UNDERFLOW_PROBLEM) then
     init_value = VERYSMALLVAL
   else
     init_value = 0._CUSTOM_REAL
@@ -1050,21 +1050,21 @@
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
       allocate( Sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise sigma kernel')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise sigma kernel')
       Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
     ! approximate hessian
-    if( APPROXIMATE_HESS_KL ) then
+    if (APPROXIMATE_HESS_KL) then
       allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating hessian')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating hessian')
       hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
     ! For anisotropic kernels (in crust_mantle only)
-    if( ANISOTROPIC_KL ) then
+    if (ANISOTROPIC_KL) then
       allocate( cijkl_kl_crust_mantle(21,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating full cijkl kernel in crust_mantle')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating full cijkl kernel in crust_mantle')
       cijkl_kl_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
     endif
 
@@ -1078,17 +1078,17 @@
     div_displ_outer_core(:,:,:,:) = 0._CUSTOM_REAL
 
     ! deviatoric kernel check
-    if( deviatoric_outercore) then
+    if (deviatoric_outercore) then
       nspec_beta_kl_outer_core = NSPEC_OUTER_CORE_ADJOINT
     else
       nspec_beta_kl_outer_core = 1
     endif
     allocate(beta_kl_outer_core(NGLLX,NGLLY,NGLLZ,nspec_beta_kl_outer_core),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating beta outercore')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating beta outercore')
     beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
-  ! initialize to be on the save side for adjoint runs SIMULATION_TYPE==2
+  ! initialize to be on the save side for adjoint runs SIMULATION_TYPE == 2
   ! crust/mantle
   eps_trace_over_3_crust_mantle(:,:,:,:) = init_value
   epsilondev_xx_crust_mantle(:,:,:,:) = init_value
@@ -1098,8 +1098,8 @@
   epsilondev_yz_crust_mantle(:,:,:,:) = init_value
 
   ! backward/reconstructed strain fields
-  if( SIMULATION_TYPE == 3 ) then
-    if( UNDO_ATTENUATION ) then
+  if (SIMULATION_TYPE == 3) then
+    if (UNDO_ATTENUATION) then
       ! for undo_attenuation, whenever strain is needed it will be computed locally.
       ! pointers are using the allocated arrays for adjoint strain, however values stored in those arrays will be overwritten
       ! crust/mantle
@@ -1124,7 +1124,7 @@
                b_epsilondev_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
                b_epsilondev_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
                b_eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for crust/mantle')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_epsilondev*** arrays for crust/mantle')
 
       allocate(b_epsilondev_xx_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
                b_epsilondev_yy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
@@ -1132,7 +1132,7 @@
                b_epsilondev_xz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
                b_epsilondev_yz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
                b_eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating b_epsilondev*** arrays for inner core')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_epsilondev*** arrays for inner core')
     endif
   else
     ! initializes pointers
@@ -1153,18 +1153,18 @@
   epsilondev_yz_inner_core(:,:,:,:) = init_value
 
   if (COMPUTE_AND_STORE_STRAIN) then
-    if(MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
+    if (MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
       Iepsilondev_xx_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
       Iepsilondev_yy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
       Iepsilondev_xy_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
       Iepsilondev_xz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
       Iepsilondev_yz_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
-      Ieps_trace_over_3_crust_mantle(:,:,:,:)=0._CUSTOM_REAL
+      Ieps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
   endif
 
   ! clear memory variables if attenuation
-  if(ATTENUATION_VAL) then
+  if (ATTENUATION_VAL) then
     R_xx_crust_mantle(:,:,:,:,:) = init_value
     R_yy_crust_mantle(:,:,:,:,:) = init_value
     R_xy_crust_mantle(:,:,:,:,:) = init_value
@@ -1178,7 +1178,7 @@
     R_yz_inner_core(:,:,:,:,:) = init_value
   endif
 
-  if(ROTATION_VAL) then
+  if (ROTATION_VAL) then
     A_array_rotation = 0._CUSTOM_REAL
     B_array_rotation = 0._CUSTOM_REAL
   endif
@@ -1231,28 +1231,28 @@
   endif
 
   ! Runge-Kutta time scheme
-  if( USE_LDDRK )then
+  if (USE_LDDRK) then
 
     ! checks
-    if(SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
-        stop 'error: LDDRK is not implemented for adjoint tomography'
+    if (SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
+        stop 'Error: LDDRK is not implemented for adjoint tomography'
 
     ! number of stages for scheme
     NSTAGE_TIME_SCHEME = NSTAGE   ! 6 stages
 
     ! scheme wavefields
     allocate(displ_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array displ_crust_mantle_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array displ_crust_mantle_lddrk'
     allocate(veloc_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_crust_mantle_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array veloc_crust_mantle_lddrk'
     allocate(displ_outer_core_lddrk(NGLOB_OUTER_CORE),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array displ_outer_core_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array displ_outer_core_lddrk'
     allocate(veloc_outer_core_lddrk(NGLOB_OUTER_CORE),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_outer_core_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array veloc_outer_core_lddrk'
     allocate(displ_inner_core_lddrk(NDIM,NGLOB_INNER_CORE),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array displ_inner_core_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array displ_inner_core_lddrk'
     allocate(veloc_inner_core_lddrk(NDIM,NGLOB_INNER_CORE),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array veloc_inner_core_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array veloc_inner_core_lddrk'
 
     displ_crust_mantle_lddrk(:,:) = init_value
     veloc_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
@@ -1263,20 +1263,20 @@
     displ_inner_core_lddrk(:,:) = init_value
     veloc_inner_core_lddrk(:,:) = 0._CUSTOM_REAL
 
-    if( SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 3) then
       ! scheme adjoint wavefields
       allocate(b_displ_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_crust_mantle_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_displ_crust_mantle_lddrk'
       allocate(b_veloc_crust_mantle_lddrk(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_crust_mantle_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_veloc_crust_mantle_lddrk'
       allocate(b_displ_outer_core_lddrk(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_outer_core_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_displ_outer_core_lddrk'
       allocate(b_veloc_outer_core_lddrk(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_outer_core_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_veloc_outer_core_lddrk'
       allocate(b_displ_inner_core_lddrk(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_displ_inner_core_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_displ_inner_core_lddrk'
       allocate(b_veloc_inner_core_lddrk(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_veloc_inner_core_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_veloc_inner_core_lddrk'
       b_displ_crust_mantle_lddrk(:,:) = init_value
       b_veloc_crust_mantle_lddrk(:,:) = 0._CUSTOM_REAL
       b_displ_outer_core_lddrk(:) = init_value
@@ -1287,18 +1287,18 @@
 
     ! rotation in fluid outer core
     allocate(A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array A_array_rotation_lddrk'
     allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array B_array_rotation_lddrk'
     if (ROTATION_VAL) then
       A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
       B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
     endif
-    if( SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 3) then
       allocate(b_A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_A_array_rotation_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_A_array_rotation_lddrk'
       allocate(b_B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_B_array_rotation_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_B_array_rotation_lddrk'
       if (ROTATION_VAL) then
         b_A_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
         b_B_array_rotation_lddrk(:,:,:,:) = 0._CUSTOM_REAL
@@ -1313,7 +1313,7 @@
              R_xz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
              R_yz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
              stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
     ! inner core
     allocate(R_xx_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
              R_yy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
@@ -1321,8 +1321,8 @@
              R_xz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
              R_yz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
              stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
-    if(ATTENUATION_VAL) then
+    if (ier /= 0) stop 'Error: not enough memory to allocate array R_memory_inner_core_lddrk'
+    if (ATTENUATION_VAL) then
       R_xx_crust_mantle_lddrk(:,:,:,:,:) = init_value
       R_yy_crust_mantle_lddrk(:,:,:,:,:) = init_value
       R_xy_crust_mantle_lddrk(:,:,:,:,:) = init_value
@@ -1335,7 +1335,7 @@
       R_xz_inner_core_lddrk(:,:,:,:,:) = init_value
       R_yz_inner_core_lddrk(:,:,:,:,:) = init_value
     endif
-    if( SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 3) then
       ! crust/mantle
       allocate(b_R_xx_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
                b_R_yy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
@@ -1343,7 +1343,7 @@
                b_R_xz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
                b_R_yz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
                stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
       ! inner core
       allocate(b_R_xx_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
                b_R_yy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
@@ -1351,8 +1351,8 @@
                b_R_xz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
                b_R_yz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
                stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
-      if(ATTENUATION_VAL) then
+      if (ier /= 0) stop 'Error: not enough memory to allocate array R_memory_inner_core_lddrk'
+      if (ATTENUATION_VAL) then
         b_R_xx_crust_mantle_lddrk(:,:,:,:,:) = init_value
         b_R_yy_crust_mantle_lddrk(:,:,:,:,:) = init_value
         b_R_xy_crust_mantle_lddrk(:,:,:,:,:) = init_value
@@ -1376,42 +1376,42 @@
 
     ! dummy arrays needed for passing as function arguments
     allocate(A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array A_array_rotation_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array A_array_rotation_lddrk'
     allocate(B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array B_array_rotation_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array B_array_rotation_lddrk'
     allocate(R_xx_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              R_yy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              R_xy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              R_xz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              R_yz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
+    if (ier /= 0) stop 'Error: not enough memory to allocate array R_memory_crust_mantle_lddrk'
     allocate(R_xx_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              R_yy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              R_xy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              R_xz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              R_yz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
              stat=ier)
-    if(ier /= 0) stop 'error: not enough memory to allocate array R_memory_inner_core_lddrk'
-    if( SIMULATION_TYPE == 3 ) then
+    if (ier /= 0) stop 'Error: not enough memory to allocate array R_memory_inner_core_lddrk'
+    if (SIMULATION_TYPE == 3) then
       allocate(b_A_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_A_array_rotation_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_A_array_rotation_lddrk'
       allocate(b_B_array_rotation_lddrk(NGLLX,NGLLY,NGLLZ,1),stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_B_array_rotation_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_B_array_rotation_lddrk'
       allocate(b_R_xx_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                b_R_yy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                b_R_xy_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                b_R_xz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                b_R_yz_crust_mantle_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_R_memory_crust_mantle_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_R_memory_crust_mantle_lddrk'
       allocate(b_R_xx_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                b_R_yy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                b_R_xy_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                b_R_xz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                b_R_yz_inner_core_lddrk(NGLLX,NGLLY,NGLLZ,N_SLS,1), &
                stat=ier)
-      if(ier /= 0) stop 'error: not enough memory to allocate array b_R_memory_inner_core_lddrk'
+      if (ier /= 0) stop 'Error: not enough memory to allocate array b_R_memory_inner_core_lddrk'
     endif
 
   endif
@@ -1455,7 +1455,7 @@
     nabs_xmin_cm = 1
   endif
   allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmin_cm),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmin')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb xmin')
 
   if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1464,7 +1464,7 @@
     nabs_xmax_cm = 1
   endif
   allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmax_cm),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmax')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb xmax')
 
   if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1473,7 +1473,7 @@
     nabs_ymin_cm = 1
   endif
   allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymin_cm),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymin')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb ymin')
 
   if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
     .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1482,7 +1482,7 @@
     nabs_ymax_cm = 1
   endif
   allocate(absorb_ymax_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymax_cm),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb ymax')
 
   ! file I/O for re-construction of wavefields
   if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
@@ -1573,7 +1573,7 @@
     nabs_xmin_oc = 1
   endif
   allocate(absorb_xmin_outer_core(NGLLY,NGLLZ,nabs_xmin_oc),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmin')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb xmin')
 
   ! xmax
   if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1582,7 +1582,7 @@
     nabs_xmax_oc = 1
   endif
   allocate(absorb_xmax_outer_core(NGLLY,NGLLZ,nabs_xmax_oc),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb xmax')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb xmax')
 
   ! ymin
   if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1591,7 +1591,7 @@
     nabs_ymin_oc = 1
   endif
   allocate(absorb_ymin_outer_core(NGLLX,NGLLZ,nabs_ymin_oc),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymin')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb ymin')
 
   ! ymax
   if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1600,7 +1600,7 @@
     nabs_ymax_oc = 1
   endif
   allocate(absorb_ymax_outer_core(NGLLX,NGLLZ,nabs_ymax_oc),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb ymax')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb ymax')
 
   ! zmin
   if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -1609,7 +1609,7 @@
     nabs_zmin_oc = 1
   endif
   allocate(absorb_zmin_outer_core(NGLLX,NGLLY,nabs_zmin_oc),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating absorb zmin')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb zmin')
 
   ! file I/O for re-construction of wavefields
   ! xmin
@@ -1719,9 +1719,9 @@
   integer :: ier
 
   ! NOISE TOMOGRAPHY
-  if ( NOISE_TOMOGRAPHY /= 0 ) then
+  if (NOISE_TOMOGRAPHY /= 0) then
 
-    if(myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) "preparing noise arrays"
       call flush_IMAIN()
     endif
@@ -1732,7 +1732,7 @@
              normal_z_noise(nmovie_points), &
              mask_noise(nmovie_points), &
              noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating noise arrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise arrays')
 
     noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
     normal_x_noise(:)            = 0._CUSTOM_REAL
@@ -1779,12 +1779,12 @@
   real(kind=CUSTOM_REAL) :: dummy
 
   ! user output
-  if(myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "preparing fields and constants on GPU devices:"
     call flush_IMAIN()
   endif
 
-  if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+  if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
     USE_3D_ATTENUATION_ARRAYS = .true.
   else
     USE_3D_ATTENUATION_ARRAYS = .false.
@@ -1820,10 +1820,10 @@
                                 GPU_ASYNC_COPY)
 
   ! prepares rotation arrays
-  if( ROTATION_VAL ) then
-    if(myrank == 0 ) write(IMAIN,*) "  loading rotation arrays"
+  if (ROTATION_VAL) then
+    if (myrank == 0 ) write(IMAIN,*) "  loading rotation arrays"
 
-    if( SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 3) then
       call prepare_fields_rotation_device(Mesh_pointer, &
                                          two_omega_earth, &
                                          A_array_rotation,B_array_rotation, &
@@ -1844,7 +1844,7 @@
   ! note: GPU will use only single-precision (or double precision) for all calculations
   !          we convert to wgll_cube to custom real (by default single-precision),
   !          using implicit conversion
-  if(myrank == 0 ) write(IMAIN,*) "  loading non-gravity/gravity arrays"
+  if (myrank == 0 ) write(IMAIN,*) "  loading non-gravity/gravity arrays"
 
   allocate(cr_d_ln_density_dr_table(NRAD_GRAVITY), &
            cr_minus_rho_g_over_kappa_fluid(NRAD_GRAVITY), &
@@ -1852,10 +1852,10 @@
            cr_minus_deriv_gravity_table(NRAD_GRAVITY), &
            cr_density_table(NRAD_GRAVITY), &
            stat=ier)
-  if( ier /= 0 ) stop 'error allocating cr_minus_rho_g_over_kappa_fluid, etc...'
+  if (ier /= 0 ) stop 'Error allocating cr_minus_rho_g_over_kappa_fluid, etc...'
 
   allocate(cr_wgll_cube(NGLLX,NGLLY,NGLLZ),stat=ier)
-  if( ier /= 0 ) stop 'error allocating cr_wgll_cube'
+  if (ier /= 0 ) stop 'Error allocating cr_wgll_cube'
 
   ! d_ln_density_dr_table needed for no gravity case
   cr_d_ln_density_dr_table(:) = real(d_ln_density_dr_table(:), kind=CUSTOM_REAL)
@@ -1884,10 +1884,10 @@
   deallocate(cr_wgll_cube)
 
   ! prepares attenuation arrays
-  if( ATTENUATION_VAL ) then
-    if(myrank == 0 ) write(IMAIN,*) "  loading attenuation"
+  if (ATTENUATION_VAL) then
+    if (myrank == 0 ) write(IMAIN,*) "  loading attenuation"
 
-    if( SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 3) then
       call prepare_fields_attenuat_device(Mesh_pointer, &
                                           R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
                                           R_xz_crust_mantle,R_yz_crust_mantle, &
@@ -1925,10 +1925,10 @@
 
 
   ! prepares attenuation arrays
-  if( COMPUTE_AND_STORE_STRAIN ) then
-    if(myrank == 0 ) write(IMAIN,*) "  loading strain"
+  if (COMPUTE_AND_STORE_STRAIN) then
+    if (myrank == 0 ) write(IMAIN,*) "  loading strain"
 
-    if( SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 3) then
       call prepare_fields_strain_device(Mesh_pointer, &
                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
@@ -1961,8 +1961,8 @@
   endif
 
   ! prepares absorbing arrays
-  if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-    if(myrank == 0 ) write(IMAIN,*) "  loading absorbing boundaries"
+  if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+    if (myrank == 0 ) write(IMAIN,*) "  loading absorbing boundaries"
 
     call prepare_fields_absorb_device(Mesh_pointer, &
                                     nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
@@ -1977,7 +1977,7 @@
                                     normal_ymin_crust_mantle,normal_ymax_crust_mantle, &
                                     jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle, &
                                     jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle, &
-                                    rho_vp_crust_mantle,rho_vs_crust_mantle,  &
+                                    rho_vp_crust_mantle,rho_vs_crust_mantle, &
                                     nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
                                     nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
                                     nspec2D_zmin_outer_core, &
@@ -1994,7 +1994,7 @@
   endif
 
   ! prepares MPI interfaces
-  if(myrank == 0 ) write(IMAIN,*) "  loading MPI interfaces"
+  if (myrank == 0 ) write(IMAIN,*) "  loading MPI interfaces"
 
   call prepare_mpi_buffers_device(Mesh_pointer, &
                                   num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -2005,8 +2005,8 @@
                                   nibool_interfaces_outer_core,ibool_interfaces_outer_core)
 
   ! prepares fields on GPU for noise simulations
-  if ( NOISE_TOMOGRAPHY > 0 ) then
-    if(myrank == 0 ) write(IMAIN,*) "  loading noise arrays"
+  if (NOISE_TOMOGRAPHY > 0) then
+    if (myrank == 0 ) write(IMAIN,*) "  loading noise arrays"
 
     call prepare_fields_noise_device(Mesh_pointer,NSPEC_TOP, &
                                      NSTEP, &
@@ -2018,8 +2018,8 @@
   endif
 
   ! prepares oceans arrays
-  if ( OCEANS_VAL ) then
-    if(myrank == 0 ) write(IMAIN,*) "  loading oceans arrays"
+  if (OCEANS_VAL) then
+    if (myrank == 0 ) write(IMAIN,*) "  loading oceans arrays"
 
     ! prepares GPU arrays for coupling with oceans
     !
@@ -2038,7 +2038,7 @@
         do i = 1,NGLLX
           ! get global point number
           iglob = ibool_crust_mantle(i,j,k,ispec)
-          if(.not. updated_dof_ocean_load(iglob)) then
+          if (.not. updated_dof_ocean_load(iglob)) then
             ipoin = ipoin + 1
             updated_dof_ocean_load(iglob) = .true.
           endif
@@ -2052,7 +2052,7 @@
             normal_ocean_load(NDIM,npoin_oceans), &
             rmass_ocean_load_selected(npoin_oceans), &
             stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating oceans arrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating oceans arrays')
 
     ! fills arrays for coupling surface at oceans
     updated_dof_ocean_load(:) = .false.
@@ -2064,7 +2064,7 @@
         do i = 1,NGLLX
           ! get global point number
           iglob = ibool_crust_mantle(i,j,k,ispec)
-          if(.not. updated_dof_ocean_load(iglob)) then
+          if (.not. updated_dof_ocean_load(iglob)) then
             ipoin = ipoin + 1
             ! fills arrays
             ibool_ocean_load(ipoin) = iglob
@@ -2089,9 +2089,9 @@
   endif
 
   ! crust/mantle region
-  if(myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"
+  if (myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"
 
-  if( SIMULATION_TYPE == 3 ) then
+  if (SIMULATION_TYPE == 3) then
     call prepare_crust_mantle_device(Mesh_pointer, &
                                    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                    etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
@@ -2150,7 +2150,7 @@
   endif
 
   ! outer core region
-  if(myrank == 0 ) write(IMAIN,*) "  loading outer core region"
+  if (myrank == 0 ) write(IMAIN,*) "  loading outer core region"
 
   call prepare_outer_core_device(Mesh_pointer, &
                                 xix_outer_core,xiy_outer_core,xiz_outer_core, &
@@ -2175,9 +2175,9 @@
 
 
   ! inner core region
-  if(myrank == 0 ) write(IMAIN,*) "  loading inner core region"
+  if (myrank == 0 ) write(IMAIN,*) "  loading inner core region"
 
-  if( SIMULATION_TYPE == 3 ) then
+  if (SIMULATION_TYPE == 3) then
     call prepare_inner_core_device(Mesh_pointer, &
                                    xix_inner_core,xiy_inner_core,xiz_inner_core, &
                                    etax_inner_core,etay_inner_core,etaz_inner_core, &
@@ -2218,7 +2218,7 @@
   endif
 
   ! transfer forward and backward fields to device with initial values
-  if(myrank == 0 ) write(IMAIN,*) "  transferring initial wavefield"
+  if (myrank == 0 ) write(IMAIN,*) "  transferring initial wavefield"
 
   call transfer_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
                                    Mesh_pointer)
@@ -2229,7 +2229,7 @@
   call transfer_fields_oc_to_device(NGLOB_OUTER_CORE,displ_outer_core,veloc_outer_core,accel_outer_core, &
                                    Mesh_pointer)
 
-  if(SIMULATION_TYPE == 3) then
+  if (SIMULATION_TYPE == 3) then
     call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE, &
                                     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
                                     Mesh_pointer)
@@ -2247,7 +2247,7 @@
   call output_free_device_memory(myrank)
 
   ! outputs usage for main process
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     ! gets memory usage for main process
     call get_free_device_memory(free_mb,used_mb,total_mb)
 
@@ -2322,7 +2322,7 @@
   !-----------------------------------------------------------------------
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*
     print*,"VTK:"
   endif
@@ -2332,7 +2332,7 @@
   !NPROC = NPROCTOT_VAL
 
   ! adds source
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     ! user output
     print*,"  VTK source sphere:"
     call prepare_vtksource(vtkdata_source_x,vtkdata_source_y,vtkdata_source_z)
@@ -2341,18 +2341,18 @@
 
   ! mask
   allocate(vtkmask(NGLOB_CRUST_MANTLE),stat=ier)
-  if( ier /= 0 ) stop 'error allocating arrays'
+  if (ier /= 0 ) stop 'Error allocating arrays'
 
-  if( VTK_USE_HIRES ) then
+  if (VTK_USE_HIRES) then
     NIT_res = 1
   else
     NIT_res = NGLLX - 1
   endif
 
   ! free surface
-  if( VTK_SHOW_FREESURFACE ) then
+  if (VTK_SHOW_FREESURFACE) then
     ! user output
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       print*,"  VTK free surface:"
       print*,"    free surface elements    : ",NSPEC_TOP
     endif
@@ -2381,19 +2381,19 @@
     free_np = count(vtkmask(:))
 
     ! user output
-    if( myrank == 0 ) print*,"    loading surface points: ",free_np
+    if (myrank == 0 ) print*,"    loading surface points: ",free_np
 
     allocate(free_x(free_np),free_y(free_np),free_z(free_np),stat=ier)
-    if( ier /= 0 ) stop 'error allocating arrays'
+    if (ier /= 0 ) stop 'Error allocating arrays'
 
     ! permutation array
     allocate(free_perm(NGLOB_CRUST_MANTLE),stat=ier)
-    if( ier /= 0 ) stop 'error allocating arrays'
+    if (ier /= 0 ) stop 'Error allocating arrays'
 
     free_perm(:) = 0
     inum = 0
     do iglob = 1,NGLOB_CRUST_MANTLE
-      if( vtkmask(iglob) .eqv. .true. ) then
+      if (vtkmask(iglob) .eqv. .true.) then
         inum = inum + 1
         ! note: xstore/ystore/zstore have changed coordinates to r/theta/phi,
         !       converts back to x/y/z
@@ -2407,15 +2407,15 @@
         free_perm(iglob) = inum
       endif
     enddo
-    if( inum /= free_np) stop 'error free_np count in loading free surface points'
+    if (inum /= free_np) stop 'Error free_np count in loading free surface points'
 
     ! hi/low resolution
-    if( VTK_USE_HIRES ) then
+    if (VTK_USE_HIRES) then
       ! point connectivity
       free_nspec = NSPEC_TOP*(NGLLX-1)*(NGLLY-1)
 
       allocate(free_conn(4,free_nspec),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       inum = 0
       free_conn(:,:) = -1
@@ -2443,7 +2443,7 @@
       free_nspec = NSPEC_TOP
 
       allocate(free_conn(4,free_nspec),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       inum = 0
       free_conn(:,:) = -1
@@ -2462,29 +2462,29 @@
         free_conn(4,inum) = id4 - 1
       enddo
     endif
-    if( minval(free_conn(:,:)) < 0) stop 'error VTK free surface point connectivity'
+    if (minval(free_conn(:,:)) < 0) stop 'Error VTK free surface point connectivity'
 
     ! gathers data from all MPI processes
-    if( NPROC > 1 ) then
+    if (NPROC > 1) then
       ! multiple MPI processes
 
       ! user output
-      !if( myrank == 0 ) print*,"    gathering all MPI info... "
+      !if (myrank == 0 ) print*,"    gathering all MPI info... "
 
       ! number of volume points for all partitions together
       call sum_all_i(free_np,free_np_all)
-      if( myrank == 0 ) print*,"    all freesurface points: ",free_np_all
+      if (myrank == 0 ) print*,"    all freesurface points: ",free_np_all
 
       ! gathers point info
       allocate(free_points_all(NPROC),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       free_points_all(:) = 0
       call gather_all_singlei(free_np,free_points_all,NPROC)
 
       ! array offsets
       allocate(free_offset_all(NPROC),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       free_offset_all(1) = 0
       do i = 2, NPROC
@@ -2493,18 +2493,18 @@
 
       ! number of volume elements
       call sum_all_i(free_nspec,free_nspec_all)
-      if( myrank == 0 ) print*,"    all freesurface elements: ",free_nspec_all
+      if (myrank == 0 ) print*,"    all freesurface elements: ",free_nspec_all
 
       ! freesurface elements
       allocate(free_conn_nspec_all(NPROC),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       free_conn_nspec_all(:) = 0
       call gather_all_singlei(4*free_nspec,free_conn_nspec_all,NPROC)
 
       ! array offsets
       allocate(free_conn_offset_all(NPROC),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       free_conn_offset_all(1) = 0
       do i = 2, NPROC
@@ -2512,12 +2512,12 @@
       enddo
 
       ! global data arrays (only needed on master process)
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         ! gather locations
         allocate(free_x_all(free_np_all), &
                  free_y_all(free_np_all), &
                  free_z_all(free_np_all),stat=ier )
-        if(ier /= 0 ) stop 'error allocating free_x_all,... arrays'
+        if (ier /= 0 ) stop 'Error allocating free_x_all,... arrays'
 
         free_x_all(:) = 0.0
         free_y_all(:) = 0.0
@@ -2525,13 +2525,13 @@
 
         ! connectivity
         allocate(free_conn_all(4,free_nspec_all),stat=ier)
-        if(ier /= 0 ) stop 'error allocating free_conn_all array'
+        if (ier /= 0 ) stop 'Error allocating free_conn_all array'
         free_conn_all(:,:) = 0
       endif
 
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         ! locations
-        !if( myrank == 0 ) print*,"    locations..."
+        !if (myrank == 0 ) print*,"    locations..."
         call gatherv_all_r(free_x,free_np, &
                             free_x_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
@@ -2543,7 +2543,7 @@
                             free_np_all,NPROC)
 
         ! connectivity
-        !if( myrank == 0 ) print*,"    connectivity..."
+        !if (myrank == 0 ) print*,"    connectivity..."
         call gatherv_all_i(free_conn,4*free_nspec, &
                            free_conn_all,free_conn_nspec_all,free_conn_offset_all, &
                            free_nspec_all,NPROC)
@@ -2558,7 +2558,7 @@
           enddo
         enddo
 
-        !if( myrank == 0 ) print*,"    preparing VTK field..."
+        !if (myrank == 0 ) print*,"    preparing VTK field..."
 
         ! adds free surface to VTK window
         call prepare_vtkfreesurface(free_np_all,free_x_all,free_y_all,free_z_all, &
@@ -2592,18 +2592,18 @@
     ! frees memory
     deallocate(free_x,free_y,free_z)
     deallocate(free_conn,free_perm)
-    if( NPROC > 1 ) then
+    if (NPROC > 1) then
       deallocate(free_conn_nspec_all,free_conn_offset_all)
       deallocate(free_points_all,free_offset_all)
-      if(myrank == 0 ) deallocate(free_x_all,free_y_all,free_z_all,free_conn_all)
+      if (myrank == 0 ) deallocate(free_x_all,free_y_all,free_z_all,free_conn_all)
     endif
   endif ! VTK_SHOW_FREESURFACE
   call synchronize_all()
 
   ! volume data
-  if( VTK_SHOW_VOLUME ) then
+  if (VTK_SHOW_VOLUME) then
     ! user output
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       print*,"  VTK volume:"
       print*,"    spectral elements    : ",NSPEC_CRUST_MANTLE
     endif
@@ -2626,19 +2626,19 @@
     vol_np = count(vtkmask(:))
 
     ! loads volume data arrays
-    if( myrank == 0 ) print*,"    loading volume points: ",vol_np
+    if (myrank == 0 ) print*,"    loading volume points: ",vol_np
 
     allocate(vol_x(vol_np),vol_y(vol_np),vol_z(vol_np),stat=ier)
-    if( ier /= 0 ) stop 'error allocating arrays'
+    if (ier /= 0 ) stop 'Error allocating arrays'
 
     ! permutation array
     allocate(vol_perm(NGLOB_CRUST_MANTLE),stat=ier)
-    if( ier /= 0 ) stop 'error allocating arrays'
+    if (ier /= 0 ) stop 'Error allocating arrays'
 
     vol_perm(:) = 0
     inum = 0
     do iglob = 1,NGLOB_CRUST_MANTLE
-      if( vtkmask(iglob) .eqv. .true. ) then
+      if (vtkmask(iglob) .eqv. .true.) then
         inum = inum + 1
         ! note: xstore/ystore/zstore have changed coordinates to r/theta/phi,
         !       converts back to x/y/z
@@ -2651,15 +2651,15 @@
         vol_perm(iglob) = inum
       endif
     enddo
-    if( inum /= vol_np) stop 'error vol_np count in loading volume points'
+    if (inum /= vol_np) stop 'Error vol_np count in loading volume points'
 
     ! hi/low resolution
-    if( VTK_USE_HIRES ) then
+    if (VTK_USE_HIRES) then
       ! point connectivity
       vol_nspec = NSPEC_CRUST_MANTLE*(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)
 
       allocate(vol_conn(8,vol_nspec),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       inum = 0
       vol_conn(:,:) = -1
@@ -2697,7 +2697,7 @@
       vol_nspec = NSPEC_CRUST_MANTLE
 
       allocate(vol_conn(8,vol_nspec),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       vol_conn(:,:) = -1
       do ispec = 1,NSPEC_CRUST_MANTLE
@@ -2723,35 +2723,35 @@
         vol_conn(8,ispec) = id8 - 1
       enddo
     endif
-    if( minval(vol_conn(:,:)) < 0) stop 'error VTK volume point connectivity'
+    if (minval(vol_conn(:,:)) < 0) stop 'Error VTK volume point connectivity'
 
     ! allocates local data array
     allocate(vtkdata(vol_np),stat=ier)
-    if( ier /= 0 ) stop 'error allocating arrays'
+    if (ier /= 0 ) stop 'Error allocating arrays'
 
     vtkdata(:) = 0.0
 
     ! gathers data from all MPI processes
-    if( NPROC > 1 ) then
+    if (NPROC > 1) then
       ! multiple MPI processes
 
       ! user output
-      !if( myrank == 0 ) print*,"    gathering all MPI info... "
+      !if (myrank == 0 ) print*,"    gathering all MPI info... "
 
       ! number of volume points for all partitions together
       call sum_all_i(vol_np,vtkdata_numpoints_all)
-      if( myrank == 0 ) print*,"    all volume points: ",vtkdata_numpoints_all
+      if (myrank == 0 ) print*,"    all volume points: ",vtkdata_numpoints_all
 
       ! gathers point info
       allocate(vtkdata_points_all(NPROC),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       vtkdata_points_all(:) = 0
       call gather_all_singlei(vol_np,vtkdata_points_all,NPROC)
 
       ! array offsets
       allocate(vtkdata_offset_all(NPROC),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       vtkdata_offset_all(1) = 0
       do i = 2, NPROC
@@ -2760,18 +2760,18 @@
 
       ! number of volume elements
       call sum_all_i(vol_nspec,vol_nspec_all)
-      if( myrank == 0 ) print*,"    all volume elements: ",vol_nspec_all
+      if (myrank == 0 ) print*,"    all volume elements: ",vol_nspec_all
 
       ! volume elements
       allocate(vol_conn_nspec_all(NPROC),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       vol_conn_nspec_all(:) = 0
       call gather_all_singlei(8*vol_nspec,vol_conn_nspec_all,NPROC)
 
       ! array offsets
       allocate(vol_conn_offset_all(NPROC),stat=ier)
-      if( ier /= 0 ) stop 'error allocating arrays'
+      if (ier /= 0 ) stop 'Error allocating arrays'
 
       vol_conn_offset_all(1) = 0
       do i = 2, NPROC
@@ -2779,10 +2779,10 @@
       enddo
 
       ! global data arrays (only needed on master process)
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         ! point data
         allocate(vtkdata_all(vtkdata_numpoints_all),stat=ier)
-        if(ier /= 0 ) stop 'error allocating vtkdata_all array'
+        if (ier /= 0 ) stop 'Error allocating vtkdata_all array'
 
         vtkdata_all(:) = 0.0
 
@@ -2790,7 +2790,7 @@
         allocate(vol_x_all(vtkdata_numpoints_all), &
                  vol_y_all(vtkdata_numpoints_all), &
                  vol_z_all(vtkdata_numpoints_all),stat=ier )
-        if(ier /= 0 ) stop 'error allocating vol_x_all,... arrays'
+        if (ier /= 0 ) stop 'Error allocating vol_x_all,... arrays'
 
         vol_x_all(:) = 0.0
         vol_y_all(:) = 0.0
@@ -2798,15 +2798,15 @@
 
         ! connectivity
         allocate(vol_conn_all(8,vol_nspec_all),stat=ier)
-        if(ier /= 0 ) stop 'error allocating vol_conn_all array'
+        if (ier /= 0 ) stop 'Error allocating vol_conn_all array'
 
         vol_conn_all(:,:) = 0
 
       endif
 
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         ! locations
-        !if( myrank == 0 ) print*,"    locations..."
+        !if (myrank == 0 ) print*,"    locations..."
         call gatherv_all_r(vol_x,vol_np, &
                             vol_x_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
@@ -2818,7 +2818,7 @@
                             vtkdata_numpoints_all,NPROC)
 
         ! connectivity
-        !if( myrank == 0 ) print*,"    connectivity..."
+        !if (myrank == 0 ) print*,"    connectivity..."
         call gatherv_all_i(vol_conn,8*vol_nspec, &
                            vol_conn_all,vol_conn_nspec_all,vol_conn_offset_all, &
                            vol_nspec_all,NPROC)
@@ -2833,7 +2833,7 @@
           enddo
         enddo
 
-        !if( myrank == 0 ) print*,"    preparing VTK field..."
+        !if (myrank == 0 ) print*,"    preparing VTK field..."
 
         ! adds total volume wavefield to VTK window
         call prepare_vtkfield(vtkdata_numpoints_all,vol_x_all,vol_y_all,vol_z_all, &
@@ -2859,7 +2859,7 @@
 
     else
       ! serial run
-      !if( myrank == 0 ) print*,"    preparing VTK field..."
+      !if (myrank == 0 ) print*,"    preparing VTK field..."
 
       ! adds volume wavefield to VTK window
       call prepare_vtkfield(vol_np,vol_x,vol_y,vol_z,vol_nspec,vol_conn)
@@ -2868,15 +2868,15 @@
     ! frees memory
     deallocate(vol_x,vol_y,vol_z)
     deallocate(vol_conn,vol_perm)
-    if( NPROC > 1 ) then
+    if (NPROC > 1) then
       deallocate(vol_conn_nspec_all,vol_conn_offset_all)
-      if(myrank == 0 ) deallocate(vol_x_all,vol_y_all,vol_z_all,vol_conn_all)
+      if (myrank == 0 ) deallocate(vol_x_all,vol_y_all,vol_z_all,vol_conn_all)
     endif
   endif ! VTK_SHOW_VOLUME
   call synchronize_all()
 
   ! user output
-  !if( myrank == 0 ) then
+  !if (myrank == 0) then
   !  print*
   !  print*,"  VTK visualization preparation done"
   !  print*

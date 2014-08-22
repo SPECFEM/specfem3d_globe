@@ -58,7 +58,7 @@
     y = yelm(ia)
     z = zelm(ia)
 
-    if( USE_OLD_VERSION_5_1_5_FORMAT) then
+    if (USE_OLD_VERSION_5_1_5_FORMAT) then
       ! convert to r theta phi
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       call reduce(theta,phi)
@@ -78,7 +78,7 @@
     endif
 
     ! stretching occurs between 220 and 770
-    if(r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
+    if (r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
 
     ! compute topography on 410 and 650 at current point
     call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
@@ -92,26 +92,26 @@
     topo650 = -dble(topo650out) / R_EARTH_KM
 
     gamma = 0.d0
-    if(r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
+    if (r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
       ! stretching between R220 and R400
       gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
       xelm(ia) = x*(ONE + gamma * topo410 / r)
       yelm(ia) = y*(ONE + gamma * topo410 / r)
       zelm(ia) = z*(ONE + gamma * topo410 / r)
-    else if(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+    else if (r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
       ! stretching between R771 and R670
       gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
       xelm(ia) = x*(ONE + gamma * topo650 / r)
       yelm(ia) = y*(ONE + gamma * topo650 / r)
       zelm(ia) = z*(ONE + gamma * topo650 / r)
-    else if(r > R670/R_EARTH .and. r < R400/R_EARTH) then
+    else if (r > R670/R_EARTH .and. r < R400/R_EARTH) then
       ! stretching between R670 and R400
       gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
       xelm(ia) = x*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
       yelm(ia) = y*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
       zelm(ia) = z*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
     endif
-    if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
+    if (gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
 
   enddo
 
@@ -157,7 +157,7 @@
           y = ystore(i,j,k,ispec)
           z = zstore(i,j,k,ispec)
 
-          if( USE_OLD_VERSION_5_1_5_FORMAT) then
+          if (USE_OLD_VERSION_5_1_5_FORMAT) then
             ! convert to r theta phi
             call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
             call reduce(theta,phi)
@@ -174,7 +174,7 @@
           endif
 
           ! stretching occurs between 220 and 770
-          if(r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
+          if (r > R220/R_EARTH .or. r < R771/R_EARTH) cycle
 
           ! compute topography on 410 and 650 at current point
           call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
@@ -185,26 +185,26 @@
           topo650 = -dble(topo650out) / R_EARTH_KM
 
           gamma = 0.d0
-          if(r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
+          if (r >= R400/R_EARTH .and. r <= R220/R_EARTH) then
           ! stretching between R220 and R400
                   gamma = (R220/R_EARTH - r) / (R220/R_EARTH - R400/R_EARTH)
                   xstore(i,j,k,ispec) = x*(ONE + gamma * topo410 / r)
                   ystore(i,j,k,ispec) = y*(ONE + gamma * topo410 / r)
                   zstore(i,j,k,ispec) = z*(ONE + gamma * topo410 / r)
-          else if(r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+          else if (r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
           ! stretching between R771 and R670
                   gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
                   xstore(i,j,k,ispec) = x*(ONE + gamma * topo650 / r)
                   ystore(i,j,k,ispec) = y*(ONE + gamma * topo650 / r)
                   zstore(i,j,k,ispec) = z*(ONE + gamma * topo650 / r)
-          else if(r > R670/R_EARTH .and. r < R400/R_EARTH) then
+          else if (r > R670/R_EARTH .and. r < R400/R_EARTH) then
           ! stretching between R670 and R400
                   gamma = (R400/R_EARTH - r) / (R400/R_EARTH - R670/R_EARTH)
                   xstore(i,j,k,ispec) = x*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
                   ystore(i,j,k,ispec) = y*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
                   zstore(i,j,k,ispec) = z*(ONE + (topo410 + gamma * (topo650 - topo410)) / r)
           endif
-          if(gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
+          if (gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
 
         enddo
      enddo

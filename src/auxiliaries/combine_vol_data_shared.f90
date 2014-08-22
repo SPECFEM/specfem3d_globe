@@ -169,7 +169,7 @@
   enddo
 
 ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
-  do i=1,NR
+  do i = 1,NR
     call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
     radau(i)=rho(i)*r(i)*r(i)
@@ -202,17 +202,17 @@
 ! this is the equation right above (14.21) in Dahlen and Tromp (1998)
   epsilonval(NR) = (5.0d0/2.d0)*(bom**2.0d0)*R_UNIT_SPHERE / (g_a * (eta(NR)+2.0d0))
 
-  do i=1,NR-1
+  do i = 1,NR-1
     call intgrl(exponentval,r,i,NR,k,s1,s2,s3)
     epsilonval(i)=epsilonval(NR)*exp(-exponentval)
   enddo
 
 ! get ready to spline epsilonval
-  nspl=1
+  nspl = 1
   rspl(1)=r(1)
   espl(1)=epsilonval(1)
   do i=2,NR
-    if(r(i) /= r(i-1)) then
+    if (r(i) /= r(i-1)) then
       nspl=nspl+1
       rspl(nspl)=r(i)
       espl(nspl)=epsilonval(i)
@@ -250,36 +250,36 @@
   r = x * R_EARTH
 
   ! calculates density according to radius
-  if(r <= RICB) then
+  if (r <= RICB) then
     rho=13.0885d0-8.8381d0*x*x
-  else if(r > RICB .and. r <= RCMB) then
+  else if (r > RICB .and. r <= RCMB) then
     rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
-  else if(r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
+  else if (r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-  else if(r > RTOPDDOUBLEPRIME .and. r <= R771) then
+  else if (r > RTOPDDOUBLEPRIME .and. r <= R771) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-  else if(r > R771 .and. r <= R670) then
+  else if (r > R771 .and. r <= R670) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-  else if(r > R670 .and. r <= R600) then
+  else if (r > R670 .and. r <= R600) then
     rho=5.3197d0-1.4836d0*x
-  else if(r > R600 .and. r <= R400) then
+  else if (r > R600 .and. r <= R400) then
     rho=11.2494d0-8.0298d0*x
-  else if(r > R400 .and. r <= R220) then
+  else if (r > R400 .and. r <= R220) then
     rho=7.1089d0-3.8045d0*x
-  else if(r > R220 .and. r <= R80) then
+  else if (r > R220 .and. r <= R80) then
     rho=2.6910d0+0.6924d0*x
   else
-    if(r > R80 .and. r <= RMOHO) then
+    if (r > R80 .and. r <= RMOHO) then
       rho=2.6910d0+0.6924d0*x
-    else if(r > RMOHO .and. r <= RMIDDLE_CRUST) then
-      if(ONE_CRUST) then
+    else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
+      if (ONE_CRUST) then
         rho=2.6d0
       else
         rho=2.9d0
       endif
-    else if(r > RMIDDLE_CRUST .and. r <= ROCEAN) then
+    else if (r > RMIDDLE_CRUST .and. r <= ROCEAN) then
       rho=2.6d0
-    else if(r > ROCEAN) then
+    else if (r > ROCEAN) then
       rho=2.6d0
     endif
   endif
@@ -364,9 +364,9 @@
   yy(3) = 0.d0
 
   ndp=ndis+1
-  do 3 nd=1,ndp
-  if(nd == 1) goto 4
-  if(nd == ndp) goto 5
+  do 3 nd = 1,ndp
+  if (nd == 1) goto 4
+  if (nd == ndp) goto 5
   j1=kdis(nd-1)+1
   j2=kdis(nd)-2
   goto 6
@@ -375,7 +375,7 @@
   goto 6
     5 j1=kdis(ndis)+1
   j2=n-2
-    6 if((j2+1-j1)>0) goto 11
+    6 if ((j2+1-j1)>0) goto 11
   j2=j2+2
   yy(1)=(y(j2)-y(j1))/(r(j2)-r(j1))
   s1(j1)=yy(1)
@@ -386,7 +386,7 @@
   s3(j2)=yy(3)
   goto 3
    11 a0=0.0d0
-  if(j1 == 1) goto 7
+  if (j1 == 1) goto 7
   h=r(j1+1)-r(j1)
   h2=r(j1+2)-r(j1)
   yy(1)=h*h2*(h2-h)
@@ -397,7 +397,7 @@
  7 b0=0.0d0
  8 b1=b0
 
-  if(j2 > 1000) stop 'error in subroutine deriv for j2'
+  if (j2 > 1000) stop 'Error in subroutine deriv for j2'
 
   do i=j1,j2
     h=r(i+1)-r(i)
@@ -452,7 +452,7 @@
   s3(j2)=yy(3)
  3 continue
 
-  do i=1,n
+  do i = 1,n
     yprime(i)=s1(i)
   enddo
 
@@ -547,7 +547,7 @@
   do while (index_higher - index_lower > 1)
 ! compute the middle of the interval
     index_loop = (index_higher + index_lower) / 2
-    if(xpoint(index_loop) > x_evaluate_spline) then
+    if (xpoint(index_loop) > x_evaluate_spline) then
       index_higher = index_loop
     else
       index_lower = index_loop
@@ -556,7 +556,7 @@
 
 ! test that the interval obtained does not have a size of zero
 ! (this could happen for instance in the case of duplicates in the input list of points)
-  if(xpoint(index_higher) == xpoint(index_lower)) stop 'incorrect interval found in spline evaluation'
+  if (xpoint(index_higher) == xpoint(index_lower)) stop 'incorrect interval found in spline evaluation'
 
   coef1 = (xpoint(index_higher) - x_evaluate_spline) / (xpoint(index_higher) - xpoint(index_lower))
   coef2 = (x_evaluate_spline - xpoint(index_lower)) / (xpoint(index_higher) - xpoint(index_lower))

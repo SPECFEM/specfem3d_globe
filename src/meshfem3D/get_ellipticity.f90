@@ -45,7 +45,7 @@
   double precision :: x,y,z
   double precision :: cost,p20
 
-  do ia=1,NGNOD
+  do ia = 1,NGNOD
 
     x = xelm(ia)
     y = yelm(ia)

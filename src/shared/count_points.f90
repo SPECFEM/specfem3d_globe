@@ -109,7 +109,7 @@
   NGLOB(:) = 0
 
 ! in the inner core (no doubling region + eventually central cube)
-  if(INCLUDE_CENTRAL_CUBE) then
+  if (INCLUDE_CENTRAL_CUBE) then
     NGLOB(IREGION_INNER_CORE) = ((NEX_PER_PROC_XI/ratio_divide_central_cube) &
       *(NGLLX-1)+1)*((NEX_PER_PROC_ETA/ratio_divide_central_cube) &
       *(NGLLY-1)+1)*((NER_TOP_CENTRAL_CUBE_ICB + NEX_XI / ratio_divide_central_cube)*(NGLLZ-1)+1)
@@ -121,10 +121,10 @@
 
 ! in the crust-mantle and outercore
   do iter_region = IREGION_CRUST_MANTLE,IREGION_OUTER_CORE
-      if(iter_region == IREGION_CRUST_MANTLE) then
+      if (iter_region == IREGION_CRUST_MANTLE) then
             ifirst_region = 1
             ilast_region = 10 + layer_offset
-      else if(iter_region == IREGION_OUTER_CORE) then
+      else if (iter_region == IREGION_OUTER_CORE) then
             ifirst_region = 11 + layer_offset
             ilast_region = NUMBER_OF_MESH_LAYERS - 1
       else
@@ -132,8 +132,8 @@
       endif
       tmp_sum = 0;
       do iter_layer = ifirst_region, ilast_region
-        nglob_int_surf_eta=0
-        nglob_int_surf_xi=0
+        nglob_int_surf_eta = 0
+        nglob_int_surf_xi = 0
         nglob_ext_surf = 0
         nglob_center_edge = 0
         nglob_corner_edge = 0

@@ -132,14 +132,12 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
 
   use asdf_data
   use specfem_par,only: &
-          station_name,network_name,stlat,stlon,stele,stbur,                   &
-          DT,t0,                                                               &
-          seismo_offset,seismo_current,                                        &
-          NTSTEP_BETWEEN_OUTPUT_SEISMOS,                                       &
-          yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC,          &
-          tshift_cmt=>t_cmt_SAC,                                               &
-          cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,                           &
-          cmt_depth=>cmt_depth_SAC
+    station_name,network_name,stlat,stlon,stele,stbur, &
+    DT,t0, seismo_offset,seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+    yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC, &
+    tshift_cmt=>t_cmt_SAC, &
+    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC, &
+    cmt_depth=>cmt_depth_SAC
 
   use specfem_par, only: myrank
   use constants
@@ -178,19 +176,19 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%end_value(i) = -12345
 
   ! instrument orientation
-  if(iorientation == 1) then !N
+  if (iorientation == 1) then !N
     asdf_container%cmp_azimuth(i)  = 0.00
     asdf_container%cmp_incident_ang(i) =90.00
-  else if(iorientation == 2) then !E
+  else if (iorientation == 2) then !E
     asdf_container%cmp_azimuth(i)  =90.00
     asdf_container%cmp_incident_ang(i) =90.00
-  else if(iorientation == 3) then !Z
+  else if (iorientation == 3) then !Z
     asdf_container%cmp_azimuth(i)  = 0.00
     asdf_container%cmp_incident_ang(i) = 0.00
-  else if(iorientation == 4) then !R
+  else if (iorientation == 4) then !R
     asdf_container%cmp_azimuth(i) = sngl(modulo(phi,360.0d+0))
     asdf_container%cmp_incident_ang(i) =90.00
-  else if(iorientation == 5) then !T
+  else if (iorientation == 5) then !T
     asdf_container%cmp_azimuth(i) = sngl(modulo(phi+90.0,360.0d+0))
     asdf_container%cmp_incident_ang(i) =90.00
   endif
@@ -231,72 +229,41 @@ subroutine close_asdf_data(asdf_container, total_seismos_local)
   type(asdf_event),intent(inout) :: asdf_container
   integer,intent(in) :: total_seismos_local
   !Variables
-  integer :: i, ierr
+  integer :: i
 
-  deallocate (asdf_container%npoints, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%gmt_year, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%gmt_hour, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%gmt_day, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%gmt_min, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%gmt_sec, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%gmt_msec, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%event_lat, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%event_lo, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%event_dpt, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%receiver_lat, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%receiver_lo, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%receiver_el, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%receiver_dpt, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%begin_value, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%end_value, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%cmp_azimuth, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%cmp_incident_ang, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%sample_rate, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%scale_factor, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%ev_to_sta_AZ, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%sta_to_ev_AZ, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%great_circle_arc, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%dist, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%P_pick, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%S_pick, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
+  deallocate (asdf_container%npoints)
+  deallocate (asdf_container%gmt_year)
+  deallocate (asdf_container%gmt_hour)
+  deallocate (asdf_container%gmt_day)
+  deallocate (asdf_container%gmt_min)
+  deallocate (asdf_container%gmt_sec)
+  deallocate (asdf_container%gmt_msec)
+  deallocate (asdf_container%event_lat)
+  deallocate (asdf_container%event_lo)
+  deallocate (asdf_container%event_dpt)
+  deallocate (asdf_container%receiver_lat)
+  deallocate (asdf_container%receiver_lo)
+  deallocate (asdf_container%receiver_el)
+  deallocate (asdf_container%receiver_dpt)
+  deallocate (asdf_container%begin_value)
+  deallocate (asdf_container%end_value)
+  deallocate (asdf_container%cmp_azimuth)
+  deallocate (asdf_container%cmp_incident_ang)
+  deallocate (asdf_container%sample_rate)
+  deallocate (asdf_container%scale_factor)
+  deallocate (asdf_container%ev_to_sta_AZ)
+  deallocate (asdf_container%sta_to_ev_AZ)
+  deallocate (asdf_container%great_circle_arc)
+  deallocate (asdf_container%dist)
+  deallocate (asdf_container%P_pick)
+  deallocate (asdf_container%S_pick)
   do i = 1, total_seismos_local
-    deallocate(asdf_container%records(i)%record, STAT=ierr)
-    if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
+    deallocate(asdf_container%records(i)%record)
   enddo
-  deallocate (asdf_container%receiver_name_array, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%network_array, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%component_array, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
-  deallocate (asdf_container%receiver_id_array, STAT=ierr)
-  if (ierr /= 0) call exit_MPI_without_rank('Deallocate failed.')
+  deallocate (asdf_container%receiver_name_array)
+  deallocate (asdf_container%network_array)
+  deallocate (asdf_container%component_array)
+  deallocate (asdf_container%receiver_id_array)
 
 end subroutine close_asdf_data
 
@@ -372,13 +339,13 @@ subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, nproc, co
 
   ! Open the handle to file containing all the ADIOS variables
   call adios_open(adios_handle, "EVENTS", asdf_fn, "w", comm, adios_err)
-  if( adios_err /= 0 ) then
-    print*,'error: rank ',rank,' could not open adios file ',trim(asdf_fn)
-    stop 'error calling adios_open() routine failed for EVENTS'
+  if (adios_err /= 0) then
+    print*,'Error: rank ',rank,' could not open adios file ',trim(asdf_fn)
+    stop 'Error calling adios_open() routine failed for EVENTS'
   endif
 
   call adios_group_size(adios_handle, adios_groupsize, adios_totalsize,adios_err)
-  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
+  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
 
   !call the write sub
   call write_asdf_data_sub (asdf_container, adios_handle, rank, nproc)
@@ -490,8 +457,8 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, n
   do i = 1, nrecords
     write(i_string, '(I10)' ) i+offset
     str_record = trim(asdf_container%receiver_name_array(i))//"."// &
-                 trim(asdf_container%network_array(i))//"."//       &
-                 trim(asdf_container%component_array(i))//"."//     &
+                 trim(asdf_container%network_array(i))//"."// &
+                 trim(asdf_container%component_array(i))//"."// &
                  trim(asdf_container%receiver_id_array(i))
 
     call define_adios_global_real_1d_array (adios_group, my_group_size,&
@@ -604,9 +571,9 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
 !  allocate(character(len=6*asdf_container%nrecords) :: receiver_id, STAT=ierr)
 !  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   ! way 2: fortran 95
-  if( 6*asdf_container%nrecords > BUFFER_LENGTH ) then
-    print*,'error: buffer length too small - minimum length is ',6*asdf_container%nrecords
-    stop 'error in write_asdf_data_sub() routine, BUFFER_LENGTH too small'
+  if (6*asdf_container%nrecords > BUFFER_LENGTH) then
+    print*,'Error: buffer length too small - minimum length is ',6*asdf_container%nrecords
+    stop 'Error in write_asdf_data_sub() routine, BUFFER_LENGTH too small'
   endif
 
   ! initializes strings
@@ -616,7 +583,7 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
   receiver_id=''
 
   ! appends all strings
-  do i=1, asdf_container%nrecords
+  do i = 1, asdf_container%nrecords
     receiver_name = trim(receiver_name) // trim(asdf_container%receiver_name_array(i))  // '.'
     network       = trim(network)       // trim(asdf_container%network_array(i))        // '.'
     component     = trim(component)     // trim(asdf_container%component_array(i))      // '.'
@@ -650,10 +617,10 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
 !    if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
 
     ! way 2: fortran 95
-    if( rn_len_total > BUFFER_LENGTH_TOTAL .or. nw_len_total > BUFFER_LENGTH_TOTAL .or. &
-        rid_len_total > BUFFER_LENGTH_TOTAL .or. comp_len_total > BUFFER_LENGTH_TOTAL ) then
-      print*,'error: buffer length total too small - lengths are ',rn_len_total,nw_len_total,rid_len_total,comp_len_total
-      stop 'error in write_asdf_data_sub() routine, BUFFER_LENGTH_TOTAL too small'
+    if (rn_len_total > BUFFER_LENGTH_TOTAL .or. nw_len_total > BUFFER_LENGTH_TOTAL .or. &
+        rid_len_total > BUFFER_LENGTH_TOTAL .or. comp_len_total > BUFFER_LENGTH_TOTAL) then
+      print*,'Error: buffer length total too small - lengths are ',rn_len_total,nw_len_total,rid_len_total,comp_len_total
+      stop 'Error in write_asdf_data_sub() routine, BUFFER_LENGTH_TOTAL too small'
     endif
   else
     ! dummy allocation
@@ -680,7 +647,7 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
                                  rank, nproc)
   !==========================
   !write out the string info
-  if(rank==0)then
+  if (rank == 0)then
     call adios_write(adios_handle, "receiver_name", trim(receiver_name_total),adios_err)
     call adios_write(adios_handle, "network", trim(network_total), adios_err)
     call adios_write(adios_handle, "component",trim(component_total), adios_err)
@@ -702,14 +669,14 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
                trim(asdf_container%component_array(i))      // "." // &
                trim(asdf_container%receiver_id_array(i))
 
-    call write_adios_global_1d_array_offset(adios_handle, rank, nproc,  &
+    call write_adios_global_1d_array_offset(adios_handle, rank, nproc, &
                                             asdf_container%npoints(i), asdf_container%npoints(i), 0, &
                                             loc_string, asdf_container%records(i)%record)
   enddo
 
   !===========================
   !scalar
-  if(rank==0)then
+  if (rank == 0)then
     call adios_write(adios_handle, "nrecords", nrecords_total, adios_err)
     call adios_write(adios_handle, "receiver_name_len", rn_len_total, adios_err)
     call adios_write(adios_handle, "network_len", nw_len_total, adios_err)
@@ -806,7 +773,7 @@ subroutine gather_offset_info(local_dim, global_dim, offset, rank, nproc)
   integer, allocatable :: offset_proc(:)
   integer :: i,ierr
 
-  if( rank == 0 ) then
+  if (rank == 0) then
     allocate(dim_all_proc(nproc), STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(offset_proc(nproc), STAT=ierr)
@@ -819,8 +786,8 @@ subroutine gather_offset_info(local_dim, global_dim, offset, rank, nproc)
 
   call gather_all_singlei(local_dim,dim_all_proc,nproc)
 
-  if(rank==0)then
-    offset_proc(1)=0
+  if (rank == 0)then
+    offset_proc(1) = 0
     do i=2, nproc
       offset_proc(i)=sum(dim_all_proc(1:(i-1)))
     enddo
@@ -853,7 +820,7 @@ subroutine gather_string_total_length(local_dim, global_dim, rank, nproc)
   integer, allocatable :: local_dim_all_proc(:)
   integer :: ierr
 
-  if(rank==0)then
+  if (rank == 0)then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   else
@@ -863,7 +830,7 @@ subroutine gather_string_total_length(local_dim, global_dim, rank, nproc)
 
   call gather_all_singlei(local_dim,local_dim_all_proc,nproc)
 
-  if(rank==0)then
+  if (rank == 0)then
     global_dim=sum(local_dim_all_proc(1:nproc))
   endif
 
@@ -880,7 +847,7 @@ end subroutine gather_string_total_length
 !! \param string_total The combined string from all processors
 !! \param rank The rank of the processor
 !! \param nproc The number of processors
-subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
+subroutine gather_string_offset_info(local_dim, global_dim, offset, &
                                      string_piece, string_total, &
                                      rank, nproc)
 
@@ -902,10 +869,10 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
   integer :: i,ierr
 
   ! checks local string
-  if( len_trim(string_piece) /= local_dim ) stop 'error local string and local dim have different lengths'
+  if (len_trim(string_piece) /= local_dim ) stop 'Error local string and local dim have different lengths'
 
   ! temporary arrays
-  if(rank==0)then
+  if (rank == 0)then
     allocate(local_dim_all_proc(nproc),STAT=ierr)
     if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
     allocate(offset_all_proc(nproc),STAT=ierr)
@@ -920,8 +887,8 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
   ! master gets all local string lengths
   call gather_all_singlei(local_dim,local_dim_all_proc,nproc)
 
-  if(rank==0)then
-    offset_all_proc(1)=0
+  if (rank == 0)then
+    offset_all_proc(1) = 0
     do i=2, nproc
       offset_all_proc(i)=sum(local_dim_all_proc(1:(i-1)))
     enddo
@@ -930,11 +897,11 @@ subroutine gather_string_offset_info(local_dim, global_dim, offset,  &
     string_total=trim(string_total)//trim(string_piece(1:local_dim))
   endif
 
-  if(rank==0)then
-    do i=1,nproc-1
+  if (rank == 0)then
+    do i = 1,nproc-1
       ! checks if buffer length is sufficient
-      if( local_dim_all_proc(i+1) > BUFFER_LENGTH) &
-        stop 'error send/recv buffer length too small in gather_string_offset_info() routine'
+      if (local_dim_all_proc(i+1) > BUFFER_LENGTH) &
+        stop 'Error send/recv buffer length too small in gather_string_offset_info() routine'
 
       ! receives string
       buffer_string=''

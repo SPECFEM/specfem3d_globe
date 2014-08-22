@@ -42,12 +42,12 @@
   !----  case prem_onecrust by default
   !----
   if (SUPPRESS_CRUSTAL_MESH) then
-    multiplication_factor=2
+    multiplication_factor = 2
   else
-    multiplication_factor=1
+    multiplication_factor = 1
   endif
 
-  if(NEX_MAX*multiplication_factor <= 80) then
+  if (NEX_MAX*multiplication_factor <= 80) then
     ! time step
     DT                       = 0.252d0
 
@@ -71,7 +71,7 @@
     ! radius of central cube
     R_CENTRAL_CUBE = 950000.d0
 
-  else if(NEX_MAX*multiplication_factor <= 96) then
+  else if (NEX_MAX*multiplication_factor <= 96) then
     ! time step
 !! DK DK to handle a case that Zhinan Xie found to be unstable for NEX = 96 I reduce the time step to 90% of its value here
     DT                       = 0.252d0 * 0.90d0
@@ -97,7 +97,7 @@
     R_CENTRAL_CUBE = 950000.d0
 
   ! element width =   0.5625000      degrees =    62.54715      km
-  else if(NEX_MAX*multiplication_factor <= 160) then
+  else if (NEX_MAX*multiplication_factor <= 160) then
     ! time step
     DT                       = 0.252d0
 
@@ -122,7 +122,7 @@
     R_CENTRAL_CUBE = 950000.d0
 
   ! element width =   0.3515625      degrees =    39.09196      km
-  else if(NEX_MAX*multiplication_factor <= 256) then
+  else if (NEX_MAX*multiplication_factor <= 256) then
     DT                       = 0.225d0
 
     MIN_ATTENUATION_PERIOD   = 20
@@ -142,7 +142,7 @@
     R_CENTRAL_CUBE = 965000.d0
 
   ! element width =   0.2812500      degrees =    31.27357      km
-  else if(NEX_MAX*multiplication_factor <= 320) then
+  else if (NEX_MAX*multiplication_factor <= 320) then
     DT                       = 0.16d0
 
     MIN_ATTENUATION_PERIOD   = 15
@@ -162,7 +162,7 @@
     R_CENTRAL_CUBE = 940000.d0
 
   ! element width =   0.1875000      degrees =    20.84905      km
-  else if(NEX_MAX*multiplication_factor <= 480) then
+  else if (NEX_MAX*multiplication_factor <= 480) then
     DT                       = 0.11d0
 
     MIN_ATTENUATION_PERIOD   = 10
@@ -182,7 +182,7 @@
     R_CENTRAL_CUBE = 988000.d0
 
   ! element width =   0.1757812      degrees =    19.54598      km
-  else if(NEX_MAX*multiplication_factor <= 512) then
+  else if (NEX_MAX*multiplication_factor <= 512) then
     DT                       = 0.1125d0
 
     MIN_ATTENUATION_PERIOD   = 9
@@ -202,7 +202,7 @@
     R_CENTRAL_CUBE = 1010000.d0
 
   ! element width =   0.1406250      degrees =    15.63679      km
-  else if(NEX_MAX*multiplication_factor <= 640) then
+  else if (NEX_MAX*multiplication_factor <= 640) then
     DT                       = 0.09d0
 
     MIN_ATTENUATION_PERIOD   = 8
@@ -222,7 +222,7 @@
     R_CENTRAL_CUBE = 1020000.d0
 
   ! element width =   0.1041667      degrees =    11.58280      km
-  else if(NEX_MAX*multiplication_factor <= 864) then
+  else if (NEX_MAX*multiplication_factor <= 864) then
     DT                       = 0.0667d0
 
     MIN_ATTENUATION_PERIOD   = 6
@@ -242,7 +242,7 @@
     R_CENTRAL_CUBE = 990000.d0
 
   ! element width =   7.8125000E-02  degrees =    8.687103      km
-  else if(NEX_MAX*multiplication_factor <= 1152) then
+  else if (NEX_MAX*multiplication_factor <= 1152) then
     DT                       = 0.05d0
 
     MIN_ATTENUATION_PERIOD   = 4
@@ -262,7 +262,7 @@
     R_CENTRAL_CUBE = 985000.d0
 
   ! element width =   7.2115384E-02  degrees =    8.018865      km
-  else if(NEX_MAX*multiplication_factor <= 1248) then
+  else if (NEX_MAX*multiplication_factor <= 1248) then
     DT                       = 0.0462d0
 
     MIN_ATTENUATION_PERIOD   = 4
@@ -326,9 +326,9 @@
       ! case 1D + two crustal layers
       if (NER_CRUST < 2 ) NER_CRUST = 2
       ! makes time step smaller
-      if(NEX_MAX*multiplication_factor <= 160) then
+      if (NEX_MAX*multiplication_factor <= 160) then
         DT = 0.20d0
-      else if(NEX_MAX*multiplication_factor <= 256) then
+      else if (NEX_MAX*multiplication_factor <= 256) then
         DT = 0.20d0
       endif
     endif
@@ -336,23 +336,23 @@
     ! 3D models: must have two element layers for crust
     if (NER_CRUST < 2 ) NER_CRUST = 2
     ! makes time step smaller
-    if(NEX_MAX*multiplication_factor <= 80) then
+    if (NEX_MAX*multiplication_factor <= 80) then
         DT = 0.125d0
-    else if(NEX_MAX*multiplication_factor <= 160) then
+    else if (NEX_MAX*multiplication_factor <= 160) then
         DT = 0.15d0
-    else if(NEX_MAX*multiplication_factor <= 256) then
+    else if (NEX_MAX*multiplication_factor <= 256) then
         DT = 0.17d0
-    else if(NEX_MAX*multiplication_factor <= 320) then
+    else if (NEX_MAX*multiplication_factor <= 320) then
         DT = 0.155d0
     endif
   endif
 
-  if( .not. ATTENUATION_RANGE_PREDEFINED ) then
+  if (.not. ATTENUATION_RANGE_PREDEFINED) then
      call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
                           MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
   endif
 
-  if(ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. &
+  if (ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. &
      ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
      NEX_MAX > 1248) then
 
@@ -420,13 +420,13 @@
   ! time step reductions are based on empirical values (..somehow)
 
   ! following models need special attention, at least for global simulations:
-  if( NCHUNKS == 6 ) then
+  if (NCHUNKS == 6) then
     ! makes time step smaller for this ref model, otherwise becomes unstable in fluid
     if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) &
       DT = DT*(1.d0 - 0.3d0)
 
     ! using inner core anisotropy, simulations might become unstable in solid
-    if( ANISOTROPIC_INNER_CORE ) then
+    if (ANISOTROPIC_INNER_CORE) then
       ! DT = DT*(1.d0 - 0.1d0) not working yet...
       stop 'anisotropic inner core - unstable feature, uncomment this line in get_timestep_and_layers.f90'
     endif
@@ -442,12 +442,12 @@
     DT = DT*(1.d0 - 0.05d0)
 
   ! reduces time step size for crustmaps crustal model
-  if( ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS ) &
+  if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS ) &
     DT = DT*(1.d0 - 0.3d0)
 
   !  decreases time step as otherwise the solution might become unstable for rougher/unsmoothed models
-  if( .false. ) then
-    if( THREE_D_MODEL == THREE_D_MODEL_PPM ) DT = DT * (1.d0 - 0.2d0)
+  if (.false.) then
+    if (THREE_D_MODEL == THREE_D_MODEL_PPM ) DT = DT * (1.d0 - 0.2d0)
   endif
 
   ! takes a 5% safety margin on the maximum stable time step
@@ -455,12 +455,12 @@
   DT = DT * (1.d0 - 0.05d0)
 
   ! adapts number of element layers in crust and time step for regional simulations
-  if( REGIONAL_MOHO_MESH ) then
+  if (REGIONAL_MOHO_MESH) then
     ! hard coded number of crustal element layers and time step
 
     ! checks
-    if( NCHUNKS > 1 ) stop 'regional moho mesh: NCHUNKS error in rcp_set_timestep_and_layers'
-    if( HONOR_1D_SPHERICAL_MOHO ) return
+    if (NCHUNKS > 1 ) stop 'regional moho mesh: NCHUNKS error in rcp_set_timestep_and_layers'
+    if (HONOR_1D_SPHERICAL_MOHO ) return
 
     ! original values
     !print*,'NER:',NER_CRUST
@@ -472,8 +472,8 @@
     ! increased stability, empirical
     DT = DT*(1.d0 + 0.5d0)
 
-    if( REGIONAL_MOHO_MESH_EUROPE ) DT = 0.17 ! Europe
-    if( REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! Asia & Middle East
+    if (REGIONAL_MOHO_MESH_EUROPE ) DT = 0.17 ! Europe
+    if (REGIONAL_MOHO_MESH_ASIA ) DT = 0.15 ! Asia & Middle East
 
   endif
 
@@ -484,7 +484,7 @@
 ! (for instance for models with a large range of Poisson's ratio values).
 ! Since the code computes the time step using the Newmark scheme, for LDDRK we simply
 ! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
-  if(USE_LDDRK .and. INCREASE_CFL_FOR_LDDRK) DT = DT * RATIO_BY_WHICH_TO_INCREASE_IT
+  if (USE_LDDRK .and. INCREASE_CFL_FOR_LDDRK) DT = DT * RATIO_BY_WHICH_TO_INCREASE_IT
 
 
   end subroutine get_timestep_and_layers

@@ -264,7 +264,7 @@ subroutine define_adios_integer_scalar(adios_group, group_size_inc, path, name, 
   !full_name = trim(path) // trim(name)
 
   ! adios: 2 ~ integer(kind=4)
-  call adios_define_var (adios_group, trim(name), trim(path), adios_integer,  &
+  call adios_define_var (adios_group, trim(name), trim(path), adios_integer, &
                          "", "", "", varid)
 
   group_size_inc = group_size_inc + 4

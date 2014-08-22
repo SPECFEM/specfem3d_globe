@@ -74,8 +74,8 @@
       vsc=3.56454d0-3.45241d0*x*x
       rhoc=13.0885d0-8.8381d0*x*x
       ! checks with given values
-      if( abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
-        stop 'error isotropic IASP91 values in model_aniso_inner_core() '
+      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
+        stop 'Error isotropic IASP91 values in model_aniso_inner_core() '
       endif
 
       ! values at center
@@ -88,8 +88,8 @@
       vsc=3.6678d0-4.4475d0*x*x
       rhoc=13.0885d0-8.8381d0*x*x
       ! checks
-      if( abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
-        stop 'error isotropic PREM values in model_aniso_inner_core() '
+      if (abs(vpc-vp) > TINYVAL .or. abs(vsc-vs) > TINYVAL .or. abs(rhoc-rho) > TINYVAL) then
+        stop 'Error isotropic PREM values in model_aniso_inner_core() '
       endif
 
       ! values at center

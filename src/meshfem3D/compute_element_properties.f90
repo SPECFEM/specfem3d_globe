@@ -108,17 +108,17 @@
   elem_in_crust = .false.
   elem_in_mantle = .false.
   elem_is_tiso = .false.
-  if( iregion_code == IREGION_CRUST_MANTLE ) then
-    if( CRUSTAL .and. CASE_3D ) then
+  if (iregion_code == IREGION_CRUST_MANTLE) then
+    if (CRUSTAL .and. CASE_3D) then
       ! 3D crustal models
-      if( idoubling(ispec) == IFLAG_CRUST &
+      if (idoubling(ispec) == IFLAG_CRUST &
         .or. idoubling(ispec) == IFLAG_220_80 &
-        .or. idoubling(ispec) == IFLAG_80_MOHO ) then
+        .or. idoubling(ispec) == IFLAG_80_MOHO) then
         ! Stretch mesh to honor smoothed moho thickness from crust2.0
         ! mesh is stretched between surface and 220
         !
         ! differentiate between regional and global meshing
-        if( REGIONAL_MOHO_MESH ) then
+        if (REGIONAL_MOHO_MESH) then
           call moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
                                                elem_in_crust,elem_in_mantle)
         else
@@ -133,7 +133,7 @@
     else
       ! 1D crust, no stretching
       ! sets element flags
-      if( idoubling(ispec) == IFLAG_CRUST ) then
+      if (idoubling(ispec) == IFLAG_CRUST) then
         elem_in_crust = .true.
       else
         elem_in_mantle = .true.
@@ -141,16 +141,16 @@
     endif
 
     ! sets transverse isotropic flag for elements in mantle
-    if( TRANSVERSE_ISOTROPY ) then
+    if (TRANSVERSE_ISOTROPY) then
       ! modifies tiso to have it for all mantle elements
       ! preferred for example, when using 1Dref (STW model)
-      if( USE_FULL_TISO_MANTLE ) then
+      if (USE_FULL_TISO_MANTLE) then
         ! all elements below the actual moho will be used for transverse isotropy
         ! note: this will increase the computation time by ~ 45 %
-        if( elem_in_mantle ) then
+        if (elem_in_mantle) then
           elem_is_tiso = .true.
         endif
-      else if( REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF ) then
+      else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
         ! transverse isotropic mantle between fictitious moho to 670km depth
         ! preferred for Harvard (Kustowski's) models using STW 1D reference, i.e.
         ! THREE_D_MODEL_S362ANI
@@ -158,28 +158,28 @@
         ! THREE_D_MODEL_S29EA
         ! THREE_D_MODEL_GLL
         ! which show significant transverse isotropy also below 220km depth
-        if( USE_OLD_VERSION_5_1_5_FORMAT) then
+        if (USE_OLD_VERSION_5_1_5_FORMAT) then
           ! assigns TI only to elements below (2-layer) fictitious moho down to 670
-          if( idoubling(ispec)==IFLAG_220_80 &
+          if (idoubling(ispec)==IFLAG_220_80 &
             .or. idoubling(ispec)==IFLAG_80_MOHO &
-            .or. idoubling(ispec)==IFLAG_670_220 ) then
+            .or. idoubling(ispec)==IFLAG_670_220) then
             elem_is_tiso = .true.
           endif
         else
           ! assigns TI to elements in mantle elements just below actual moho down to 670
-          if( idoubling(ispec)==IFLAG_220_80 &
+          if (idoubling(ispec)==IFLAG_220_80 &
             .or. idoubling(ispec)==IFLAG_80_MOHO &
             .or. idoubling(ispec)==IFLAG_670_220 &
-            .or. (idoubling(ispec)==IFLAG_CRUST .and. elem_in_mantle ) ) then
+            .or. (idoubling(ispec)==IFLAG_CRUST .and. elem_in_mantle )) then
             elem_is_tiso = .true.
           endif
         endif
-      else if( idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO ) then
+      else if (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO) then
         ! default case for PREM reference models:
         ! models use only transverse isotropy between moho and 220 km depth
         elem_is_tiso = .true.
         ! checks mantle flag to be sure
-        !if( elem_in_mantle .eqv. .false. ) stop 'error mantle flag confused between moho and 220'
+        !if (elem_in_mantle .eqv. .false. ) stop 'Error mantle flag confused between moho and 220'
       endif
     endif
 
@@ -194,7 +194,7 @@
 
   ! computes velocity/density/... values for the chosen Earth model
   ! (only needed for second meshing phase)
-  if( ipass == 2 ) then
+  if (ipass == 2) then
     call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
                    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                    rhostore,dvpstore,nspec_ani, &
@@ -215,12 +215,12 @@
   !           problems with the Jacobian. using the anchors is therefore more robust.
 
   ! adds surface topography
-  if( TOPOGRAPHY ) then
-    if(idoubling(ispec) == IFLAG_CRUST .or. &
+  if (TOPOGRAPHY) then
+    if (idoubling(ispec) == IFLAG_CRUST .or. &
        idoubling(ispec) == IFLAG_220_80 .or. &
        idoubling(ispec) == IFLAG_80_MOHO) then
       ! stretches mesh between surface and R220 accordingly
-      if( USE_GLL ) then
+      if (USE_GLL) then
         ! stretches every GLL point accordingly
         call add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,ibathy_topo)
       else
@@ -231,12 +231,12 @@
   endif
 
   ! adds topography on 410 km and 650 km discontinuity in model S362ANI
-  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
+  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
     .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
     ! stretching between 220 and 770
-    if(idoubling(ispec) == IFLAG_670_220 .or. &
+    if (idoubling(ispec) == IFLAG_670_220 .or. &
        idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
-      if( USE_GLL ) then
+      if (USE_GLL) then
         ! stretches every GLL point accordingly
         call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
       else
@@ -250,21 +250,21 @@
   ! their corresponding subroutines subtopo_cmb() and subtopo_icb() are not implemented yet....
   ! must be done/supplied by the user; uncomment in case
   ! CMB topography
-  !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
+  !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
   !     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
   !           call add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
 
   ! ICB topography
-  !  if(THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
+  !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
   !     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
   !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
   !     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
   !           call add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)
 
   ! make the Earth elliptical
-  if(ELLIPTICITY) then
+  if (ELLIPTICITY) then
     ! note: after adding ellipticity, the mesh becomes elliptical and geocentric and geodetic/geographic colatitudes differ.
-    if( USE_GLL ) then
+    if (USE_GLL) then
       ! make the Earth's ellipticity, use GLL points
       call get_ellipticity_gll(xstore,ystore,zstore,ispec,nspec,nspl,rspl,espl,espl2)
     else
@@ -278,14 +278,14 @@
   ! note: velocity values associated for each GLL point will "move" along together with
   !          their associated points. however, we don't re-calculate the velocity model values since the
   !          models are/should be referenced with respect to a spherical Earth.
-  if( .not. USE_GLL) then
+  if (.not. USE_GLL) then
     call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
                                       xstore,ystore,zstore,shape3D)
   endif
 
   ! updates Jacobian
   ! (only needed for second meshing phase)
-  if( ipass == 2 ) then
+  if (ipass == 2) then
     call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
                                 ispec,nspec,&
                                 xixstore,xiystore,xizstore,&
@@ -318,16 +318,16 @@
   double precision :: xmesh,ymesh,zmesh
   integer :: i,j,k,ia
 
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
         xmesh = ZERO
         ymesh = ZERO
         zmesh = ZERO
 
         ! interpolates the location using 3D shape functions
-        do ia=1,NGNOD
+        do ia = 1,NGNOD
 
           xmesh = xmesh + shape3D(ia,i,j,k)*xelm(ia)
           ymesh = ymesh + shape3D(ia,i,j,k)*yelm(ia)

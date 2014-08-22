@@ -38,13 +38,13 @@
 
 // kernel for memset in OpenCL
 const char *memset_kern_code[] = { "\
-__kernel void memset_uint4(__global int *mem, const int size, __private int val){ \n\
+__kernel void memset_uint4(__global int *mem, const int size, __private int val) { \n\
 int tid = get_local_id(0); \n\
 int bx = (get_group_id(1)) * (get_num_groups(0)) + get_group_id(0); \n\
 int i = tid + (bx) * (get_local_size(0)); \n\
 //debug \n\
-//if( i == 0 ){ printf(\"memset size = %i value = %i buffer %i \\n\",size,val,mem[0]); } \n\
-if( i < size ){ mem[i]=val; } \n\
+//if (i == 0) { printf(\"memset size = %i value = %i buffer %i \\n\",size,val,mem[0]); } \n\
+if (i < size ) { mem[i]=val; } \n\
 }" };
 
 
@@ -56,8 +56,8 @@ cl_kernel *setup_ocl_memset (int do_setup) {
   static cl_kernel memset_kern;
   cl_int errcode;
 
-  if( do_setup ){
-    if (!inited ) {
+  if (do_setup) {
+    if (!inited) {
       // creates openCL kernel
       cl_program memset_program = clCreateProgramWithSource(mocl.context, 1,
                                                             memset_kern_code, 0,
@@ -68,7 +68,7 @@ cl_kernel *setup_ocl_memset (int do_setup) {
     }
   } else {
     // releases kernel
-    if (inited ){ clCheck(clReleaseKernel (memset_kern)); }
+    if (inited) { clCheck(clReleaseKernel (memset_kern)); }
   }
 
   return &memset_kern;
@@ -537,7 +537,7 @@ void print_CUDA_error_if_any(cudaError_t err, int num) {
 #endif
     sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
     fp = fopen(filename,"a+");
-    if (fp != NULL){
+    if (fp != NULL) {
       fprintf(fp,"\nCUDA error !!!!! <%s> !!!!! \nat CUDA call error code: # %d\n",cudaGetErrorString(err),num);
       fclose(fp);
     }
@@ -555,7 +555,7 @@ void print_CUDA_error_if_any(cudaError_t err, int num) {
 
 // Timing helper functions
 
-void start_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop){
+void start_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop) {
   // creates & starts event
   cudaEventCreate(start);
   cudaEventCreate(stop);
@@ -564,7 +564,7 @@ void start_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop){
 
 /* ----------------------------------------------------------------------------------------------- */
 
-void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop, char* info_str){
+void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop, char* info_str) {
   realw time;
   // stops events
   cudaEventRecord( *stop, 0 );
@@ -652,7 +652,7 @@ void exit_on_error (char *info) {
   sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
   fp = fopen (filename, "a+");
   if (fp != NULL) {
-    fprintf (fp, "ERROR: %s\n", info);
+    fprintf (fp, "Error: %s\n", info);
     fclose (fp);
   }
 
