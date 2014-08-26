@@ -271,18 +271,29 @@
         call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
       endif
 
+      write(prname,'(a,i6.6,a)') 'OUTPUT_FILES/snapshot_proc',myrank,'_'
+
       ! VTK file output
       ! displacement values
 
       ! crust mantle
       allocate(dummy_i(NSPEC_CRUST_MANTLE))
       dummy_i(:) = IFLAG_CRUST
+
       ! one file per process
-      write(prname,'(a,i6.6,a)') 'OUTPUT_FILES/snapshot_proc',myrank,'_'
       write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it
       call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
                           displ_crust_mantle,filename)
+
+      ! backward/reconstructed field
+      if( SIMULATION_TYPE == 3 ) then
+        write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_b_displ_',it
+        call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
+                            b_displ_crust_mantle,filename)
+      endif
+
       ! single file for all
       !write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
       !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it

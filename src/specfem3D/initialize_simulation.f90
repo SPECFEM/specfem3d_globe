@@ -251,7 +251,7 @@
     if(myrank == 0 ) call initialize_vtkwindow(GPU_MODE)
   endif
 
-  if (ADIOS_ENABLED) then
+  if (ADIOS_ENABLED .or. OUTPUT_SEISMOS_ASDF) then
     call adios_setup()
   endif
   !if (ADIOS_ENABLED) then
@@ -516,6 +516,9 @@
     if(myrank == 0 ) then
       write(IMAIN,*)
       write(IMAIN,*) "GPU_MODE Active."
+      write(IMAIN,*) "  runtime : ",GPU_RUNTIME
+      write(IMAIN,*) "  platform: ",trim(GPU_PLATFORM)
+      write(IMAIN,*) "  device  : ",trim(GPU_DEVICE)
       call flush_IMAIN()
     endif
 

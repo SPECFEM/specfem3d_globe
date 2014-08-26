@@ -183,11 +183,10 @@
 !$OMP sin_phi, cos_theta_sq, sin_theta_sq, cos_phi_sq, sin_phi_sq, int_radius, minus_g, rho, gxl, gyl, gzl, minus_dg, &
 !$OMP minus_g_over_radius, minus_dg_plus_g_over_radius, Hxxl, Hyyl, Hzzl, Hxyl, Hxzl, Hyzl, sx_l, sy_l, sz_l, &
 !$OMP factor, rho_s_H, newtempx2, newtempy2, newtempz2, fac1, fac2, fac3, sum_terms, newtempx1, newtempx3 , newtempy1, &
-!$OMP newtempy3, newtempz1, newtempz3
 #ifdef FORCE_VECTORIZATION
-!$OMP ,R_xx_val, R_yy_val &
+!$OMP R_xx_val, R_yy_val, &
 #endif
-!$OMP )
+!$OMP newtempy3, newtempz1, newtempz3)
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements

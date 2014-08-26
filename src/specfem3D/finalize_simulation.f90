@@ -116,7 +116,7 @@
   endif
 
   ! adios finalizes
-  if( ADIOS_ENABLED ) then
+  if( ADIOS_ENABLED .or. OUTPUT_SEISMOS_ASDF ) then
     call adios_cleanup()
   endif
 

@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 #ifndef INDEX2
 #define INDEX2(isize,i,j) i + isize*j
 #endif
@@ -10,6 +43,7 @@
 #ifndef INDEX5
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
 #endif
+
 #ifndef NDIM
 #define NDIM 3
 #endif
@@ -49,6 +83,7 @@
 #ifndef BLOCKSIZE_TRANSFER
 #define BLOCKSIZE_TRANSFER 256
 #endif
+
 #ifdef USE_TEXTURES_CONSTANTS
 #undef USE_TEXTURES_CONSTANTS
 #endif
@@ -64,12 +99,12 @@ static __device__ void compute_element_oc_rotation(const int tx, const int worki
   two_omega_deltat = (deltat) * (two_omega_earth);
   source_euler_A = (two_omega_deltat) * ((cos_two_omega_t) * (dpotentialdyl) + (sin_two_omega_t) * (dpotentialdxl));
   source_euler_B = (two_omega_deltat) * ((sin_two_omega_t) * (dpotentialdyl) - ((cos_two_omega_t) * (dpotentialdxl)));
-  A_rotation = d_A_array_rotation[tx + (working_element) * (NGLL3) - 0];
-  B_rotation = d_B_array_rotation[tx + (working_element) * (NGLL3) - 0];
-  dpotentialdx_with_rot[0 - 0] = dpotentialdxl + (A_rotation) * (cos_two_omega_t) + (B_rotation) * (sin_two_omega_t);
-  dpotentialdy_with_rot[0 - 0] = dpotentialdyl + ( -(A_rotation)) * (sin_two_omega_t) + (B_rotation) * (cos_two_omega_t);
-  d_A_array_rotation[tx + (working_element) * (NGLL3) - 0] = d_A_array_rotation[tx + (working_element) * (NGLL3) - 0] + source_euler_A;
-  d_B_array_rotation[tx + (working_element) * (NGLL3) - 0] = d_B_array_rotation[tx + (working_element) * (NGLL3) - 0] + source_euler_B;
+  A_rotation = d_A_array_rotation[tx + (working_element) * (NGLL3) - (0)];
+  B_rotation = d_B_array_rotation[tx + (working_element) * (NGLL3) - (0)];
+  dpotentialdx_with_rot[0 - (0)] = dpotentialdxl + (A_rotation) * (cos_two_omega_t) + (B_rotation) * (sin_two_omega_t);
+  dpotentialdy_with_rot[0 - (0)] = dpotentialdyl + ( -(A_rotation)) * (sin_two_omega_t) + (B_rotation) * (cos_two_omega_t);
+  d_A_array_rotation[tx + (working_element) * (NGLL3) - (0)] = d_A_array_rotation[tx + (working_element) * (NGLL3) - (0)] + source_euler_A;
+  d_B_array_rotation[tx + (working_element) * (NGLL3) - (0)] = d_B_array_rotation[tx + (working_element) * (NGLL3) - (0)] + source_euler_B;
 }
 __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const float * __restrict__ d_potential, float * d_potential_dot_dot, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ wgllwgll_xy, const float * __restrict__ wgllwgll_xz, const float * __restrict__ wgllwgll_yz, const int GRAVITY, const float * __restrict__ d_xstore, const float * __restrict__ d_ystore, const float * __restrict__ d_zstore, const float * __restrict__ d_d_ln_density_dr_table, const float * __restrict__ d_minus_rho_g_over_kappa_fluid, const float * __restrict__ wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, float * d_A_array_rotation, float * d_B_array_rotation, const int NSPEC_OUTER_CORE){
   int bx;
@@ -77,6 +112,9 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
   int K;
   int J;
   int I;
+#ifndef MANUALLY_UNROLLED_LOOPS
+  int l;
+#endif
   unsigned short active;
   int offset;
   int iglob;
@@ -134,23 +172,23 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
     if(use_mesh_coloring_gpu){
       working_element = bx;
     } else {
-      working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1)) - 0] - (1);
+      working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1)) - (0)] - (1);
     }
 #endif
-    iglob = d_ibool[(working_element) * (NGLL3) + tx - 0] - (1);
+    iglob = d_ibool[(working_element) * (NGLL3) + tx - (0)] - (1);
 #ifdef USE_TEXTURES_FIELDS
-    s_dummy_loc[tx - 0] = tex1Dfetch(d_b_displ_oc_tex,iglob);
+    s_dummy_loc[tx - (0)] = tex1Dfetch(d_b_displ_oc_tex,iglob);
 #else
-    s_dummy_loc[tx - 0] = d_potential[iglob - 0];
+    s_dummy_loc[tx - (0)] = d_potential[iglob - (0)];
 #endif
   }
   if(tx < NGLL2){
 #ifdef USE_TEXTURES_CONSTANTS
-    sh_hprime_xx[tx - 0] = tex1Dfetch(d_hprime_xx_oc_tex,tx);
-    sh_hprimewgll_xx[tx - 0] = tex1Dfetch(d_hprimewgll_xx_oc_tex,tx);
+    sh_hprime_xx[tx - (0)] = tex1Dfetch(d_hprime_xx_oc_tex,tx);
+    sh_hprimewgll_xx[tx - (0)] = tex1Dfetch(d_hprimewgll_xx_oc_tex,tx);
 #else
-    sh_hprime_xx[tx - 0] = d_hprime_xx[tx - 0];
-    sh_hprimewgll_xx[tx - 0] = d_hprimewgll_xx[tx - 0];
+    sh_hprime_xx[tx - (0)] = d_hprime_xx[tx - (0)];
+    sh_hprimewgll_xx[tx - (0)] = d_hprimewgll_xx[tx - (0)];
 #endif
   }
   __syncthreads();
@@ -159,39 +197,38 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
     temp2l = 0.0f;
     temp3l = 0.0f;
 #ifdef MANUALLY_UNROLLED_LOOPS
-    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - 0]) * (sh_hprime_xx[(0) * (NGLLX) + I - 0]);
-    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - 0]) * (sh_hprime_xx[(0) * (NGLLX) + J - 0]);
-    temp3l = temp3l + (s_dummy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprime_xx[(0) * (NGLLX) + K - 0]);
-    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - 0]) * (sh_hprime_xx[(1) * (NGLLX) + I - 0]);
-    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - 0]) * (sh_hprime_xx[(1) * (NGLLX) + J - 0]);
-    temp3l = temp3l + (s_dummy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprime_xx[(1) * (NGLLX) + K - 0]);
-    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - 0]) * (sh_hprime_xx[(2) * (NGLLX) + I - 0]);
-    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - 0]) * (sh_hprime_xx[(2) * (NGLLX) + J - 0]);
-    temp3l = temp3l + (s_dummy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprime_xx[(2) * (NGLLX) + K - 0]);
-    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - 0]) * (sh_hprime_xx[(3) * (NGLLX) + I - 0]);
-    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - 0]) * (sh_hprime_xx[(3) * (NGLLX) + J - 0]);
-    temp3l = temp3l + (s_dummy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprime_xx[(3) * (NGLLX) + K - 0]);
-    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - 0]) * (sh_hprime_xx[(4) * (NGLLX) + I - 0]);
-    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - 0]) * (sh_hprime_xx[(4) * (NGLLX) + J - 0]);
-    temp3l = temp3l + (s_dummy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprime_xx[(4) * (NGLLX) + K - 0]);
+    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - (0)]) * (sh_hprime_xx[(0) * (NGLLX) + I - (0)]);
+    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(0) * (NGLLX) + J - (0)]);
+    temp3l = temp3l + (s_dummy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(0) * (NGLLX) + K - (0)]);
+    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - (0)]) * (sh_hprime_xx[(1) * (NGLLX) + I - (0)]);
+    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(1) * (NGLLX) + J - (0)]);
+    temp3l = temp3l + (s_dummy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(1) * (NGLLX) + K - (0)]);
+    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - (0)]) * (sh_hprime_xx[(2) * (NGLLX) + I - (0)]);
+    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(2) * (NGLLX) + J - (0)]);
+    temp3l = temp3l + (s_dummy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(2) * (NGLLX) + K - (0)]);
+    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - (0)]) * (sh_hprime_xx[(3) * (NGLLX) + I - (0)]);
+    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(3) * (NGLLX) + J - (0)]);
+    temp3l = temp3l + (s_dummy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(3) * (NGLLX) + K - (0)]);
+    temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - (0)]) * (sh_hprime_xx[(4) * (NGLLX) + I - (0)]);
+    temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(4) * (NGLLX) + J - (0)]);
+    temp3l = temp3l + (s_dummy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(4) * (NGLLX) + K - (0)]);
 #else
-    int l;
     for(l=0; l<=NGLLX - (1); l+=1){
-      temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (sh_hprime_xx[(l) * (NGLLX) + I - 0]);
-      temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (sh_hprime_xx[(l) * (NGLLX) + J - 0]);
-      temp3l = temp3l + (s_dummy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprime_xx[(l) * (NGLLX) + K - 0]);
+      temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (sh_hprime_xx[(l) * (NGLLX) + I - (0)]);
+      temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(l) * (NGLLX) + J - (0)]);
+      temp3l = temp3l + (s_dummy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(l) * (NGLLX) + K - (0)]);
     }
 #endif
     offset = (working_element) * (NGLL3_PADDED) + tx;
-    xixl = d_xix[offset - 0];
-    etaxl = d_etax[offset - 0];
-    gammaxl = d_gammax[offset - 0];
-    xiyl = d_xiy[offset - 0];
-    etayl = d_etay[offset - 0];
-    gammayl = d_gammay[offset - 0];
-    xizl = d_xiz[offset - 0];
-    etazl = d_etaz[offset - 0];
-    gammazl = d_gammaz[offset - 0];
+    xixl = d_xix[offset - (0)];
+    etaxl = d_etax[offset - (0)];
+    gammaxl = d_gammax[offset - (0)];
+    xiyl = d_xiy[offset - (0)];
+    etayl = d_etay[offset - (0)];
+    gammayl = d_gammay[offset - (0)];
+    xizl = d_xiz[offset - (0)];
+    etazl = d_etaz[offset - (0)];
+    gammazl = d_gammaz[offset - (0)];
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));
     dpotentialdxl = (xixl) * (temp1l) + (etaxl) * (temp2l) + (gammaxl) * (temp3l);
     dpotentialdyl = (xiyl) * (temp1l) + (etayl) * (temp2l) + (gammayl) * (temp3l);
@@ -202,28 +239,28 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
       dpotentialdx_with_rot = dpotentialdxl;
       dpotentialdy_with_rot = dpotentialdyl;
     }
-    radius = d_xstore[iglob - 0];
-    theta = d_ystore[iglob - 0];
-    phi = d_zstore[iglob - 0];
+    radius = d_xstore[iglob - (0)];
+    theta = d_ystore[iglob - (0)];
+    phi = d_zstore[iglob - (0)];
     sincosf(theta,  &sin_theta,  &cos_theta);
     sincosf(phi,  &sin_phi,  &cos_phi);
     int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);
     if( ! GRAVITY){
-      grad_x_ln_rho = ((sin_theta) * (cos_phi)) * (d_d_ln_density_dr_table[int_radius - 0]);
-      grad_y_ln_rho = ((sin_theta) * (sin_phi)) * (d_d_ln_density_dr_table[int_radius - 0]);
-      grad_z_ln_rho = (cos_theta) * (d_d_ln_density_dr_table[int_radius - 0]);
-      dpotentialdx_with_rot = dpotentialdx_with_rot + (s_dummy_loc[tx - 0]) * (grad_x_ln_rho);
-      dpotentialdy_with_rot = dpotentialdy_with_rot + (s_dummy_loc[tx - 0]) * (grad_y_ln_rho);
-      dpotentialdzl = dpotentialdzl + (s_dummy_loc[tx - 0]) * (grad_z_ln_rho);
+      grad_x_ln_rho = ((sin_theta) * (cos_phi)) * (d_d_ln_density_dr_table[int_radius - (0)]);
+      grad_y_ln_rho = ((sin_theta) * (sin_phi)) * (d_d_ln_density_dr_table[int_radius - (0)]);
+      grad_z_ln_rho = (cos_theta) * (d_d_ln_density_dr_table[int_radius - (0)]);
+      dpotentialdx_with_rot = dpotentialdx_with_rot + (s_dummy_loc[tx - (0)]) * (grad_x_ln_rho);
+      dpotentialdy_with_rot = dpotentialdy_with_rot + (s_dummy_loc[tx - (0)]) * (grad_y_ln_rho);
+      dpotentialdzl = dpotentialdzl + (s_dummy_loc[tx - (0)]) * (grad_z_ln_rho);
     } else {
       gxl = (sin_theta) * (cos_phi);
       gyl = (sin_theta) * (sin_phi);
       gzl = cos_theta;
-      gravity_term = (((d_minus_rho_g_over_kappa_fluid[int_radius - 0]) * (jacobianl)) * (wgll_cube[tx - 0])) * ((dpotentialdx_with_rot) * (gxl) + (dpotentialdy_with_rot) * (gyl) + (dpotentialdzl) * (gzl));
+      gravity_term = (((d_minus_rho_g_over_kappa_fluid[int_radius - (0)]) * (jacobianl)) * (wgll_cube[tx - (0)])) * ((dpotentialdx_with_rot) * (gxl) + (dpotentialdy_with_rot) * (gyl) + (dpotentialdzl) * (gzl));
     }
-    s_temp1[tx - 0] = (jacobianl) * ((xixl) * (dpotentialdx_with_rot) + (xiyl) * (dpotentialdy_with_rot) + (xizl) * (dpotentialdzl));
-    s_temp2[tx - 0] = (jacobianl) * ((etaxl) * (dpotentialdx_with_rot) + (etayl) * (dpotentialdy_with_rot) + (etazl) * (dpotentialdzl));
-    s_temp3[tx - 0] = (jacobianl) * ((gammaxl) * (dpotentialdx_with_rot) + (gammayl) * (dpotentialdy_with_rot) + (gammazl) * (dpotentialdzl));
+    s_temp1[tx - (0)] = (jacobianl) * ((xixl) * (dpotentialdx_with_rot) + (xiyl) * (dpotentialdy_with_rot) + (xizl) * (dpotentialdzl));
+    s_temp2[tx - (0)] = (jacobianl) * ((etaxl) * (dpotentialdx_with_rot) + (etayl) * (dpotentialdy_with_rot) + (etazl) * (dpotentialdzl));
+    s_temp3[tx - (0)] = (jacobianl) * ((gammaxl) * (dpotentialdx_with_rot) + (gammayl) * (dpotentialdy_with_rot) + (gammazl) * (dpotentialdzl));
   }
   __syncthreads();
   if(active){
@@ -231,45 +268,45 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
     temp2l = 0.0f;
     temp3l = 0.0f;
 #ifdef MANUALLY_UNROLLED_LOOPS
-    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 0 - 0]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 0 - 0]);
-    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (0) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 0 - 0]);
-    temp3l = temp3l + (s_temp3[(0) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 0 - 0]);
-    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 1 - 0]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 1 - 0]);
-    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (1) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 1 - 0]);
-    temp3l = temp3l + (s_temp3[(1) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 1 - 0]);
-    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 2 - 0]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 2 - 0]);
-    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (2) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 2 - 0]);
-    temp3l = temp3l + (s_temp3[(2) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 2 - 0]);
-    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 3 - 0]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 3 - 0]);
-    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (3) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 3 - 0]);
-    temp3l = temp3l + (s_temp3[(3) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 3 - 0]);
-    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 4 - 0]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 4 - 0]);
-    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (4) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 4 - 0]);
-    temp3l = temp3l + (s_temp3[(4) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 4 - 0]);
+    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 0 - (0)]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 0 - (0)]);
+    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (0) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 0 - (0)]);
+    temp3l = temp3l + (s_temp3[(0) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 0 - (0)]);
+    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 1 - (0)]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 1 - (0)]);
+    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (1) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 1 - (0)]);
+    temp3l = temp3l + (s_temp3[(1) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 1 - (0)]);
+    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 2 - (0)]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 2 - (0)]);
+    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (2) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 2 - (0)]);
+    temp3l = temp3l + (s_temp3[(2) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 2 - (0)]);
+    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 3 - (0)]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 3 - (0)]);
+    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (3) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 3 - (0)]);
+    temp3l = temp3l + (s_temp3[(3) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 3 - (0)]);
+    temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + 4 - (0)]) * (sh_hprimewgll_xx[(I) * (NGLLX) + 4 - (0)]);
+    temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 4 - (0)]);
+    temp3l = temp3l + (s_temp3[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 4 - (0)]);
 #else
     for(l=0; l<=NGLLX - (1); l+=1){
-      temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (sh_hprimewgll_xx[(I) * (NGLLX) + l - 0]);
-      temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(J) * (NGLLX) + l - 0]);
-      temp3l = temp3l + (s_temp3[(l) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (sh_hprimewgll_xx[(K) * (NGLLX) + l - 0]);
+      temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (sh_hprimewgll_xx[(I) * (NGLLX) + l - (0)]);
+      temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(J) * (NGLLX) + l - (0)]);
+      temp3l = temp3l + (s_temp3[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(K) * (NGLLX) + l - (0)]);
     }
 #endif
-    sum_terms =  -((wgllwgll_yz[(K) * (NGLLX) + J - 0]) * (temp1l) + (wgllwgll_xz[(K) * (NGLLX) + I - 0]) * (temp2l) + (wgllwgll_xy[(J) * (NGLLX) + I - 0]) * (temp3l));
+    sum_terms =  -((wgllwgll_yz[(K) * (NGLLX) + J - (0)]) * (temp1l) + (wgllwgll_xz[(K) * (NGLLX) + I - (0)]) * (temp2l) + (wgllwgll_xy[(J) * (NGLLX) + I - (0)]) * (temp3l));
     if(GRAVITY){
       sum_terms = sum_terms + gravity_term;
     }
 #ifdef USE_MESH_COLORING_GPU
 #ifdef USE_TEXTURES_FIELDS
-    d_potential_dot_dot[iglob - 0] = tex1Dfetch(d_b_accel_oc_tex,iglob) + sum_terms;
+    d_potential_dot_dot[iglob - (0)] = tex1Dfetch(d_b_accel_oc_tex,iglob) + sum_terms;
 #else
-    d_potential_dot_dot[iglob - 0] = d_potential_dot_dot[iglob - 0] + sum_terms;
+    d_potential_dot_dot[iglob - (0)] = d_potential_dot_dot[iglob - (0)] + sum_terms;
 #endif
 #else
     if(use_mesh_coloring_gpu){
       if(NSPEC_OUTER_CORE > 1000){
 #ifdef USE_TEXTURES_FIELDS
-        d_potential_dot_dot[iglob - 0] = tex1Dfetch(d_b_accel_oc_tex,iglob) + sum_terms;
+        d_potential_dot_dot[iglob - (0)] = tex1Dfetch(d_b_accel_oc_tex,iglob) + sum_terms;
 #else
-        d_potential_dot_dot[iglob - 0] = d_potential_dot_dot[iglob - 0] + sum_terms;
+        d_potential_dot_dot[iglob - (0)] = d_potential_dot_dot[iglob - (0)] + sum_terms;
 #endif
       } else {
         atomicAdd(d_potential_dot_dot + iglob, sum_terms);

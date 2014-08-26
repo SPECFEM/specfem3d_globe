@@ -733,21 +733,32 @@
 !        longitude: 130-145 E
 !        depth    : 0  - 500 km
 ! The deepest Moho beneath Japan is 40 km
-  double precision,parameter :: LAT_MAX = 45.d0
-  double precision,parameter :: LAT_MIN = 32.d0
-  double precision,parameter :: LON_MAX = 145.d0
-  double precision,parameter :: LON_MIN = 130.d0
-  double precision,parameter :: DEP_MAX = 500.d0
+  double precision,parameter :: JP3D_LAT_MAX = 45.d0
+  double precision,parameter :: JP3D_LAT_MIN = 32.d0
+  double precision,parameter :: JP3D_LON_MAX = 145.d0
+  double precision,parameter :: JP3D_LON_MIN = 130.d0
+  double precision,parameter :: JP3D_DEP_MAX = 500.d0
+
+!!-----------------------------------------------------------
+!!
+!! GLL model constants
+!!
+!!-----------------------------------------------------------
 
 ! parameters for GLL model (used for iterative model inversions)
   character(len=*), parameter :: PATHNAME_GLL_modeldir = 'DATA/GLL/'
 
-  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
-  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
+! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
+  logical,parameter :: USE_1D_REFERENCE = .false.
 
-!!-- uncomment for using S362ANI as reference model  (Hejun Zhu)
+!!-- uncomment for using S362ANI as reference model
+  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI
+
+!!-- uncomment for using S29EA as reference model
 !  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
-!  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI
+!  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
+
 
 !!-----------------------------------------------------------
 !!
@@ -821,15 +832,15 @@
 !!-----------------------------------------------------------
   integer, parameter :: NSTAGE = 6
 
-  real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: ALPHA_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE) :: ALPHA_LDDRK = &
     (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
       -0.744739003780_CUSTOM_REAL,-1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/)
 
-  real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: BETA_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE) :: BETA_LDDRK = &
     (/0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,0.381530948900_CUSTOM_REAL,&
       0.200092213184_CUSTOM_REAL,1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/)
 
-  real(kind=CUSTOM_REAL), parameter, dimension(NSTAGE) :: C_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE) :: C_LDDRK = &
     (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL,&
       0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
 

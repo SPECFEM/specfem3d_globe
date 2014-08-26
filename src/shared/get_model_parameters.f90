@@ -384,7 +384,7 @@
     THREE_D_MODEL = THREE_D_MODEL_PPM
     TRANSVERSE_ISOTROPY = .true. ! to use transverse-isotropic prem
 
-  else if(MODEL_ROOT == 'GLL') then
+  else if(MODEL_ROOT == 'GLL' .or. MODEL_ROOT == 'gll') then
     ! model will be given on local basis, at all GLL points,
     ! as from meshfem3d output from routine save_arrays_solver()
     ! based on model S29EA

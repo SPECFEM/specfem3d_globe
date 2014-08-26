@@ -66,7 +66,8 @@ module asdf_data
     real, allocatable       :: P_pick(:), S_pick(:)
 
     character(len=20),allocatable :: receiver_name_array(:), network_array(:)
-    character(len=20),allocatable :: component_array(:), receiver_id_array(:)
+    character(len=20),allocatable :: component_array(:)
+    character(len=20),allocatable :: receiver_id_array(:)
 
     !seismograms
     type (asdf_record), allocatable :: records(:)

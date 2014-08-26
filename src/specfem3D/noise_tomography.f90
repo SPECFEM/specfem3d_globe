@@ -439,7 +439,7 @@
 !
 ! there are two subroutines --- noise_save_surface_movie_original & noise_save_surface_movie
 !    noise_save_surface_movie_original is implemented at first, which creates one file at each time step
-!    noise_save_surface_movie is implemented later, which utilizes 'src/shared/write_c_binary.c' for faster I/O,
+!    noise_save_surface_movie is implemented later, which utilizes 'src/shared/binary_c_io.c' for faster I/O,
 !                                                   which creates one file for the all time steps
 !
 ! by this modification, the efficiency is greatly improved
@@ -490,7 +490,7 @@
 !
 ! there are two subroutines --- noise_read_add_surface_movie_original & noise_read_add_surface_movie
 !    noise_read_add_surface_movie_original is implemented at first, which creates one file at each time step
-!    noise_read_add_surface_movie is implemented later, which utilizes 'src/shared/write_c_binary.c' for faster I/O,
+!    noise_read_add_surface_movie is implemented later, which utilizes 'src/shared/binary_c_io.c' for faster I/O,
 !                                                   which creates one file for the all time steps
 !
 ! by this modification, the efficiency is greatly improved
@@ -564,7 +564,7 @@
 !
 ! there are two subroutines --- compute_kernels_strength_noise_original & compute_kernels_strength_noise
 !    compute_kernels_strength_noise_original is implemented at first, which creates one file at each time step
-!    compute_kernels_strength_noise is implemented later, which utilizes 'src/shared/write_c_binary.c' for faster I/O,
+!    compute_kernels_strength_noise is implemented later, which utilizes 'src/shared/binary_c_io.c' for faster I/O,
 !                                                         which creates only one file for the all time steps
 !
 ! by this modification, the efficiency is greatly improved

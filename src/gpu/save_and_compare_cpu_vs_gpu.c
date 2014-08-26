@@ -231,7 +231,7 @@ void compare_surface_files_ (int *bytes_per_iteration, int *number_of_iterations
 
     if (it < 100) {
       for (i = 0; i < size; i++) {
-        if ((fabs (cpu_vector[i] - gpu_vector[i]) / (fabs (cpu_vector[i]) + 1e-31) > 0.01)) {
+        if ((fabs(cpu_vector[i] - gpu_vector[i]) / (fabs(cpu_vector[i]) + 1e-31) > 0.01)) {
           if (error_count < 30)
             printf ("ERROR[%d]: %g != %g\n", i, cpu_vector[i], gpu_vector[i]);
           if (cpu_vector[i] > 1e-30)
@@ -286,7 +286,7 @@ void compare_fvector_ (float *vector, int *size, int *id, int *cpu_or_gpu) {
   int i;
   int error_count=0;
   for (i=0;i<*size;i++) {
-    if ((fabs (vector[i] - compare_vector[i]) / vector[i] > 0.0001)) {
+    if ((fabs(vector[i] - compare_vector[i]) / vector[i] > 0.0001)) {
       if (error_count < 30) {
         printf ("ERROR[%d]: %f != %f\n", i, compare_vector[i], vector[i]);
       }
@@ -329,7 +329,7 @@ void compare_ivector_ (int *vector, int *size, int *id, int *cpu_or_gpu) {
   int i;
   int error_count=0;
   for (i = 0; i < *size; i++) {
-    if ((abs (vector[i] - compare_vector[i]) / vector[i] > 0.01) && error_count < 30) {
+    if ((fabs(vector[i] - compare_vector[i]) / vector[i] > 0.01) && error_count < 30) {
       printf ("ERROR[%d]: %d != %d\n", i, compare_vector[i], vector[i]);
       error_count++;
     }

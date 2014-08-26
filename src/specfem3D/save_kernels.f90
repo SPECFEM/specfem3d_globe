@@ -109,7 +109,7 @@
   real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k,iglob
-
+  integer :: ier
   ! transverse isotropic parameters
   real(kind=CUSTOM_REAL), dimension(21) :: an_kl
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
@@ -137,22 +137,37 @@
   if( SAVE_TRANSVERSE_KL_ONLY ) then
     ! transverse isotropic kernel arrays for file output
     allocate(alphav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            alphah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            eta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
+             alphah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             eta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if( ier /= 0 ) stop 'error allocating transverse kernels alphav_kl_crust_mantle,...'
 
     ! isotropic kernel arrays for file output
-    allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
+    allocate(bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+             bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if( ier /= 0 ) stop 'error allocating transverse kernels bulk_betav_kl_crust_mantle,...'
+  else
+    ! dummy allocation
+    allocate(alphav_kl_crust_mantle(1,1,1,1), &
+             alphah_kl_crust_mantle(1,1,1,1), &
+             betav_kl_crust_mantle(1,1,1,1), &
+             betah_kl_crust_mantle(1,1,1,1), &
+             eta_kl_crust_mantle(1,1,1,1))
+    ! isotropic kernel arrays for file output
+    allocate(bulk_betav_kl_crust_mantle(1,1,1,1), &
+             bulk_betah_kl_crust_mantle(1,1,1,1))
   endif
-
-  if( .not. ANISOTROPIC_KL ) then
-    ! allocates temporary isotropic kernel arrays for file output
+  ! bulk kernels
+  if( ANISOTROPIC_KL .and. (.not. SAVE_TRANSVERSE_KL_ONLY ) ) then
+    ! only dummy
+    allocate(bulk_c_kl_crust_mantle(1,1,1,1), &
+             bulk_beta_kl_crust_mantle(1,1,1,1))
+  else
+    ! bulk velocity kernels
     allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
-            bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT))
+             bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+    if( ier /= 0 ) stop 'error allocating transverse kernels bulk_c_kl_crust_mantle,...'
   endif
 
   ! crust_mantle
@@ -498,16 +513,12 @@
   endif ! ADIOS_FOR_KERNELS
 
   ! cleans up temporary kernel arrays
-  if( SAVE_TRANSVERSE_KL_ONLY ) then
-    deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-        betav_kl_crust_mantle,betah_kl_crust_mantle, &
-        eta_kl_crust_mantle)
-    deallocate(bulk_c_kl_crust_mantle,bulk_betah_kl_crust_mantle, &
-        bulk_betav_kl_crust_mantle,bulk_beta_kl_crust_mantle)
-  endif
-  if( .not. ANISOTROPIC_KL ) then
-    deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
-  endif
+  deallocate(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+             betav_kl_crust_mantle,betah_kl_crust_mantle, &
+             eta_kl_crust_mantle)
+  deallocate(bulk_betah_kl_crust_mantle, &
+             bulk_betav_kl_crust_mantle)
+  deallocate(bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
 
   end subroutine save_kernels_crust_mantle
 

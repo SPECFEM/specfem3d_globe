@@ -45,7 +45,7 @@ subroutine read_mesh_databases_coupling_adios()
 
   ! local parameters
   integer :: njunk1,njunk2,njunk3
-  integer :: comm, ierr
+  integer :: comm
   character(len=256) :: file_name
   integer :: local_dim
   ! ADIOS variables
@@ -60,11 +60,14 @@ subroutine read_mesh_databases_coupling_adios()
   file_name= trim(LOCAL_PATH) // "/boundary.bp"
 
   ! opens adios file
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   ! crust and mantle
 
@@ -500,11 +503,14 @@ subroutine read_mesh_databases_coupling_adios()
     file_name = LOCAL_PATH // "boundary_disc.bp"
 
     ! opens adios file
-    call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-        "verbose=1", adios_err)
+    call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
     call check_adios_err(myrank,adios_err)
-    call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-    call check_adios_err(myrank,adios_err)
+
+    call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+    if( adios_err /= 0 ) then
+      print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+      call check_adios_err(myrank,adios_err)
+    endif
 
     ! number of elements
     call adios_selection_writeblock(sel, myrank)
@@ -748,11 +754,14 @@ subroutine read_mesh_databases_MPI_CM_adios()
 
   call world_duplicate(comm)
 
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   ! MPI interfaces
   call adios_selection_writeblock(sel, myrank)
@@ -952,11 +961,14 @@ subroutine read_mesh_databases_MPI_OC_adios()
 
   call world_duplicate(comm)
 
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   ! MPI interfaces
   call adios_selection_writeblock(sel, myrank)
@@ -1154,11 +1166,14 @@ subroutine read_mesh_databases_MPI_IC_adios()
 
   call world_duplicate(comm)
 
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   ! MPI interfaces
   call adios_selection_writeblock(sel, myrank)
@@ -1341,7 +1356,7 @@ subroutine read_mesh_databases_stacey_adios()
   implicit none
 
   ! local parameters
-  integer :: ierr, comm, local_dim
+  integer :: comm, local_dim
   ! processor identification
   character(len=256) :: file_name
   ! ADIOS variables
@@ -1359,11 +1374,15 @@ subroutine read_mesh_databases_stacey_adios()
 
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if( adios_err /= 0 ) then
+    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
+
   ! read arrays for Stacey conditions
 
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX_CM

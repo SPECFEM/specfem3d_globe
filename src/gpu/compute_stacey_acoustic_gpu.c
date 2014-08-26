@@ -37,13 +37,16 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
                                              realw *absorb_potential,
                                              int *itype) {
   TRACE ("compute_stacey_acoustic_gpu");
-  int num_abs_boundary_faces;
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
+  int num_abs_boundary_faces = 0;
+
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_abs_boundary_jacobian2D;
   gpu_realw_mem *d_wgllwgll;
   gpu_realw_mem *d_b_absorb_potential;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -94,8 +97,7 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     break;
 
   default:
-    exit_on_gpu_error ("compute_stacey_acoustic_gpu: unknown interface type");
-    break;
+    exit_on_error ("compute_stacey_acoustic_gpu: unknown interface type");
   }
 
   // checks if anything to do
@@ -118,6 +120,14 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
+
+    //daniel debug
+    //clCheck (clFinish (mocl.command_queue));
+    //printf ("rank %d: stacey a %i, %i save %i num blocks x/y= %i %i nglob %i nspec2D %i nspec %i\n",
+    //          mp->myrank,interface_type,num_abs_boundary_faces,mp->save_forward,num_blocks_x,num_blocks_y,
+    //          mp->NGLOB_OUTER_CORE,mp->nspec2D_ymin_outer_core,mp->NSPEC_OUTER_CORE);
+    //fflush (stdout);
+    //synchronize_mpi ();
 
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
@@ -144,6 +154,12 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_acoustic_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
+
+    //daniel debug
+    //clCheck (clFinish (mocl.command_queue));
+    //printf ("rank %d: stacey b %i, %i \n", mp->myrank,interface_type,num_abs_boundary_faces);
+    //fflush (stdout);
+    //synchronize_mpi ();
   }
 #endif
 #ifdef USE_CUDA
@@ -173,31 +189,18 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
 
   //  adjoint simulations: stores absorbed wavefield part
   if (mp->save_forward) {
+    // explicitly waits until kernel is finished
+    gpuSynchronize();
     // copies array to CPU
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_b_absorb_potential->ocl, CL_TRUE, 0,
-                                    NGLL2 * num_abs_boundary_faces * sizeof (realw),
-                                    absorb_potential, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // explicitly waits until previous compute stream finishes
-      // (cudaMemcpy implicitly synchronizes all other cuda operations)
-      cudaStreamSynchronize(mp->compute_stream);
-      print_CUDA_error_if_any(cudaMemcpy(absorb_potential,d_b_absorb_potential,
-                                         NGLL2*num_abs_boundary_faces*sizeof(realw),
-                                         cudaMemcpyDeviceToHost),7701);
-    }
-
-#endif
+    gpuCopy_from_device_realw (d_b_absorb_potential, absorb_potential, NGLL2 * num_abs_boundary_faces);
   }
 
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("compute_stacey_acoustic_kernel");
 #endif
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
@@ -206,11 +209,12 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
                                                       int *itype) {
   TRACE ("compute_stacey_acoustic_backward_gpu");
 
-  int num_abs_boundary_faces;
+  int num_abs_boundary_faces = 0;
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_b_absorb_potential;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -251,8 +255,7 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     break;
 
   default:
-    exit_on_error ("compute_stacey_acoustic_gpu: unknown interface type");
-    break;
+    exit_on_error ("compute_stacey_acoustic_backward_gpu: unknown interface type");
   }
 
   // checks if anything to do
@@ -275,14 +278,14 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     // copies array to GPU
 #ifdef USE_OPENCL
     if (run_opencl) {
-      clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_b_absorb_potential->ocl, CL_FALSE, 0,
+      clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_b_absorb_potential->ocl, CL_TRUE, 0,
                                      NGLL2 * num_abs_boundary_faces * sizeof (realw),
                                      absorb_potential, 0, NULL, NULL));
     }
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_potential,absorb_potential,
+      print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_potential->cuda,absorb_potential,
                                          NGLL2*num_abs_boundary_faces*sizeof(realw),
                                          cudaMemcpyHostToDevice),7700);
     }
@@ -314,7 +317,8 @@ void FC_FUNC_ (compute_stacey_acoustic_backward_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_acoustic_backward_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_acoustic_backward_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -350,14 +354,16 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
                COMPUTE_STACEY_ACOUSTIC_UNDOATT_GPU) (long *Mesh_pointer_f,
                                                      int *itype) {
   TRACE ("compute_stacey_acoustic_undoatt_gpu");
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
-  int num_abs_boundary_faces;
+  int num_abs_boundary_faces = 0;
+
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_abs_boundary_jacobian2D;
   gpu_realw_mem *d_wgllwgll;
   gpu_realw_mem *d_b_absorb_potential = NULL;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
 
   // checks if anything to do
   if (mp->simulation_type /= 3 || mp->save_forward)
@@ -407,8 +413,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     break;
 
   default:
-    exit_on_error ("compute_stacey_acoustic_gpu: unknown interface type");
-    break;
+    exit_on_error ("compute_stacey_acoustic_undoatt_gpu: unknown interface type");
   }
 
   // checks if anything to do
@@ -455,7 +460,8 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_acoustic_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_acoustic_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA

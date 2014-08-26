@@ -144,7 +144,7 @@
 !$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation,   &
 !$OMP minus_rho_g_over_kappa_fluid, wgll_cube, MOVIE_VOLUME, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accelfluid, USE_LDDRK, A_array_rotation_lddrk, &
-!$OMP istage, B_array_rotation_lddrk, div_displfluid ) &
+!$OMP istage, B_array_rotation_lddrk, div_displfluid, ALPHA_LDDRK, BETA_LDDRK ) &
 !$OMP PRIVATE( &
 !$OMP ispec_p, ispec, iglob, dummyx_loc, radius, theta, phi, &
 !$OMP cos_theta, sin_theta, cos_phi, sin_phi, int_radius, &

@@ -61,7 +61,12 @@ module BOAST
         print mul === d_muv[tx + ngll3_padded*working_element]
       end
       print For( i_sls, 0, nsls - 1 ) {
-        print offset === i_sls + nsls*(tx + ngll3*working_element)
+        # indices
+        # note: index for R_xx,... here is (i,j,k,i_sls,ispec) and not (i,j,k,ispec,i_sls) as in local version
+        #
+        # index:
+        # (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
+        print offset === tx + ngll3*(i_sls + nsls*working_element)
         print If(use_3d_attenuation_arrays, lambda {
             print factor_loc  === mul * factor_common[offset]
         }, lambda {

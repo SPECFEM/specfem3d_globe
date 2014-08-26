@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 const char * compute_add_sources_adjoint_kernel_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
@@ -21,6 +54,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef INDEX5\n\
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
+\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
 #endif\n\
@@ -60,6 +94,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
 __kernel void compute_add_sources_adjoint_kernel(__global float * accel, const int nrec, const __global float * adj_sourcearrays, const __global int * ibool, const __global int * ispec_selected_rec, const __global int * pre_computed_irec, const int nadj_rec_local){\n\
   int ispec;\n\
   int iglob;\n\
@@ -70,15 +105,15 @@ __kernel void compute_add_sources_adjoint_kernel(__global float * accel, const i
   int k;\n\
   irec_local = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
   if(irec_local < nadj_rec_local){\n\
-    irec = pre_computed_irec[irec_local - 0];\n\
-    ispec = ispec_selected_rec[irec - 0] - (1);\n\
+    irec = pre_computed_irec[irec_local - (0)];\n\
+    ispec = ispec_selected_rec[irec - (0)] - (1);\n\
     i = get_local_id(0);\n\
     j = get_local_id(1);\n\
     k = get_local_id(2);\n\
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);\n\
-    atomicAdd(accel + (iglob) * (3) + 0, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, irec_local) - 0]);\n\
-    atomicAdd(accel + (iglob) * (3) + 1, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, irec_local) - 0]);\n\
-    atomicAdd(accel + (iglob) * (3) + 2, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, irec_local) - 0]);\n\
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
+    atomicAdd(accel + (iglob) * (3) + 0, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, irec_local) - (0)]);\n\
+    atomicAdd(accel + (iglob) * (3) + 1, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, irec_local) - (0)]);\n\
+    atomicAdd(accel + (iglob) * (3) + 2, adj_sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, irec_local) - (0)]);\n\
   }\n\
 }\n\
 ";

@@ -323,4 +323,8 @@
   if( UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &
     stop 'UNDO_ATTENUATION support not implemented yet for SIMULATION_TYPE == 3 and movie simulations'
 
+  ! ASDF
+  if( OUTPUT_SEISMOS_ASDF .and. WRITE_SEISMOGRAMS_BY_MASTER ) &
+    stop 'OUTPUT_SEISMOS_ASDF support not implemented yet for WRITE_SEISMOGRAMS_BY_MASTER set to .true.'
+
   end subroutine read_parameter_file

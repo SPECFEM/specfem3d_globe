@@ -30,7 +30,7 @@
 #######################################
 
 FC = @FC@
-FCFLAGS = #@FCFLAGS@
+FCFLAGS = @FCFLAGS@
 FC_DEFINE = @FC_DEFINE@
 MPIFC = @MPIFC@
 MPILIBS = @MPILIBS@
@@ -72,7 +72,7 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 
 MPI_INCLUDES = @MPI_INCLUDES@
 CUDA_FLAGS = @CUDA_FLAGS@
-CUDA_INC = @CUDA_CPPFLAGS@ -I${SETUP}
+CUDA_INC = @CUDA_CPPFLAGS@
 CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
 
 @COND_CUDA_TRUE@NVCC = nvcc
@@ -81,7 +81,7 @@ CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
 OCL_CPU_FLAGS = @OCL_CPU_FLAGS@
 OCL_GPU_FLAGS = @OCL_GPU_FLAGS@
 
-OCL_INC = @OCL_CFLAGS@ -I${SETUP}
+OCL_INC = @OCL_CFLAGS@
 OCL_LINK = @OCL_LDFLAGS@ @OCL_LIBS@
 
 ifeq ($(OCL), yes)
@@ -220,6 +220,13 @@ DEFAULT = \
 	xcreate_movie_GMT_global \
 	$(EMPTY_MACRO)
 
+ifeq ($(ADIOS), yes)
+DEFAULT += 	\
+	xcombine_vol_data_adios \
+	xcombine_vol_data_vtk_adios \
+	$(EMPTY_MACRO)
+endif
+
 all: default
 
 default: $(DEFAULT)
@@ -238,17 +245,21 @@ help:
 	@echo "usage: make [executable]"
 	@echo ""
 	@echo "supported executables:"
+	@echo "    xcreate_header_file"
 	@echo "    xmeshfem3D"
 	@echo "    xspecfem3D"
-	@echo "    xcreate_header_file"
 	@echo "    xcombine_vol_data"
 	@echo "    xcombine_vol_data_vtk"
+ifeq ($(ADIOS), yes)
 	@echo "    xcombine_vol_data_adios"
+	@echo "    xcombine_vol_data_vtk_adios"
+endif
 	@echo "    xcombine_surf_data"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"
 	@echo "    xcreate_movie_AVS_DX"
 	@echo "    xcreate_movie_GMT_global"
+	@echo "    xcombine_paraview_strain_data"
 	@echo ""
 
 .PHONY: all default clean help

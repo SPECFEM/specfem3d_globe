@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 const char * compute_acoustic_kernel_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
@@ -21,6 +54,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef INDEX5\n\
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
+\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
 #endif\n\
@@ -60,7 +94,8 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
-void compute_gradient_kernel(const int ijk, const int ispec, const __local float * scalar_field, float * vector_field_element, const __global float * hprime_xx, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz){\n\
+\n\
+static void compute_gradient_kernel(const int ijk, const int ispec, const __local float * scalar_field, float * vector_field_element, const __global float * hprime_xx, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz){\n\
   float temp1l;\n\
   float temp2l;\n\
   float temp3l;\n\
@@ -91,29 +126,29 @@ void compute_gradient_kernel(const int ijk, const int ispec, const __local float
   temp2l = 0.0f;\n\
   temp3l = 0.0f;\n\
   for(l=0; l<=NGLLX - (1); l+=1){\n\
-    hp1 = hprime_xx[(l) * (NGLLX) + I - 0];\n\
-    hp2 = hprime_xx[(l) * (NGLLX) + J - 0];\n\
-    hp3 = hprime_xx[(l) * (NGLLX) + K - 0];\n\
+    hp1 = hprime_xx[(l) * (NGLLX) + I - (0)];\n\
+    hp2 = hprime_xx[(l) * (NGLLX) + J - (0)];\n\
+    hp3 = hprime_xx[(l) * (NGLLX) + K - (0)];\n\
     offset1 = (K) * (NGLL2) + (J) * (NGLLX) + l;\n\
     offset2 = (K) * (NGLL2) + (l) * (NGLLX) + I;\n\
     offset3 = (l) * (NGLL2) + (J) * (NGLLX) + I;\n\
-    temp1l = temp1l + (scalar_field[offset1 - 0]) * (hp1);\n\
-    temp2l = temp2l + (scalar_field[offset2 - 0]) * (hp2);\n\
-    temp3l = temp3l + (scalar_field[offset3 - 0]) * (hp3);\n\
+    temp1l = temp1l + (scalar_field[offset1 - (0)]) * (hp1);\n\
+    temp2l = temp2l + (scalar_field[offset2 - (0)]) * (hp2);\n\
+    temp3l = temp3l + (scalar_field[offset3 - (0)]) * (hp3);\n\
   }\n\
   offset = (ispec) * (NGLL3_PADDED) + ijk;\n\
-  xixl = d_xix[offset - 0];\n\
-  xiyl = d_xiy[offset - 0];\n\
-  xizl = d_xiz[offset - 0];\n\
-  etaxl = d_etax[offset - 0];\n\
-  etayl = d_etay[offset - 0];\n\
-  etazl = d_etaz[offset - 0];\n\
-  gammaxl = d_gammax[offset - 0];\n\
-  gammayl = d_gammay[offset - 0];\n\
-  gammazl = d_gammaz[offset - 0];\n\
-  vector_field_element[0 - 0] = (temp1l) * (xixl) + (temp2l) * (etaxl) + (temp3l) * (gammaxl);\n\
-  vector_field_element[1 - 0] = (temp1l) * (xiyl) + (temp2l) * (etayl) + (temp3l) * (gammayl);\n\
-  vector_field_element[2 - 0] = (temp1l) * (xizl) + (temp2l) * (etazl) + (temp3l) * (gammazl);\n\
+  xixl = d_xix[offset - (0)];\n\
+  xiyl = d_xiy[offset - (0)];\n\
+  xizl = d_xiz[offset - (0)];\n\
+  etaxl = d_etax[offset - (0)];\n\
+  etayl = d_etay[offset - (0)];\n\
+  etazl = d_etaz[offset - (0)];\n\
+  gammaxl = d_gammax[offset - (0)];\n\
+  gammayl = d_gammay[offset - (0)];\n\
+  gammazl = d_gammaz[offset - (0)];\n\
+  vector_field_element[0 - (0)] = (temp1l) * (xixl) + (temp2l) * (etaxl) + (temp3l) * (gammaxl);\n\
+  vector_field_element[1 - (0)] = (temp1l) * (xiyl) + (temp2l) * (etayl) + (temp3l) * (gammayl);\n\
+  vector_field_element[2 - (0)] = (temp1l) * (xizl) + (temp2l) * (etazl) + (temp3l) * (gammazl);\n\
 }\n\
 __kernel void compute_acoustic_kernel(const __global int * ibool, const __global float * rhostore, const __global float * kappastore, const __global float * hprime_xx, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz, const __global float * potential_dot_dot_acoustic, const __global float * b_potential_acoustic, const __global float * b_potential_dot_dot_acoustic, __global float * rho_ac_kl, __global float * kappa_ac_kl, const float deltat, const int NSPEC){\n\
   int ispec;\n\
@@ -134,18 +169,18 @@ __kernel void compute_acoustic_kernel(const __global int * ibool, const __global
     ijk = get_local_id(0);\n\
     ijk_ispec = ijk + (NGLL3) * (ispec);\n\
     ijk_ispec_padded = ijk + (NGLL3_PADDED) * (ispec);\n\
-    iglob = ibool[ijk_ispec - 0] - (1);\n\
-    scalar_field_displ[ijk - 0] = b_potential_acoustic[iglob - 0];\n\
-    scalar_field_accel[ijk - 0] = potential_dot_dot_acoustic[iglob - 0];\n\
+    iglob = ibool[ijk_ispec - (0)] - (1);\n\
+    scalar_field_displ[ijk - (0)] = b_potential_acoustic[iglob - (0)];\n\
+    scalar_field_accel[ijk - (0)] = potential_dot_dot_acoustic[iglob - (0)];\n\
     barrier(CLK_LOCAL_MEM_FENCE);\n\
     compute_gradient_kernel(ijk, ispec, scalar_field_displ, b_displ_elm, hprime_xx, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz);\n\
     compute_gradient_kernel(ijk, ispec, scalar_field_accel, accel_elm, hprime_xx, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz);\n\
-    rhol = rhostore[ijk_ispec_padded - 0];\n\
-    rho_ac_kl[ijk_ispec - 0] = rho_ac_kl[ijk_ispec - 0] + ((deltat) * (rhol)) * ((accel_elm[0 - 0]) * (b_displ_elm[0 - 0]) + (accel_elm[1 - 0]) * (b_displ_elm[1 - 0]) + (accel_elm[2 - 0]) * (b_displ_elm[2 - 0]));\n\
-    kappal = (rhol) / (kappastore[ijk_ispec_padded - 0]);\n\
-    div_displ = (kappal) * (potential_dot_dot_acoustic[iglob - 0]);\n\
-    b_div_displ = (kappal) * (b_potential_dot_dot_acoustic[iglob - 0]);\n\
-    kappa_ac_kl[ijk_ispec - 0] = kappa_ac_kl[ijk_ispec - 0] + ((deltat) * (div_displ)) * (b_div_displ);\n\
+    rhol = rhostore[ijk_ispec_padded - (0)];\n\
+    rho_ac_kl[ijk_ispec - (0)] = rho_ac_kl[ijk_ispec - (0)] + ((deltat) * (rhol)) * ((accel_elm[0 - (0)]) * (b_displ_elm[0 - (0)]) + (accel_elm[1 - (0)]) * (b_displ_elm[1 - (0)]) + (accel_elm[2 - (0)]) * (b_displ_elm[2 - (0)]));\n\
+    kappal = (rhol) / (kappastore[ijk_ispec_padded - (0)]);\n\
+    div_displ = (kappal) * (potential_dot_dot_acoustic[iglob - (0)]);\n\
+    b_div_displ = (kappal) * (b_potential_dot_dot_acoustic[iglob - (0)]);\n\
+    kappa_ac_kl[ijk_ispec - (0)] = kappa_ac_kl[ijk_ispec - (0)] + ((deltat) * (div_displ)) * (b_div_displ);\n\
   }\n\
 }\n\
 ";

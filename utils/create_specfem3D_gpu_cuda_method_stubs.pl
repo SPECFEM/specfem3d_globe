@@ -4,11 +4,11 @@
 #  Script to extract the function declarations in cuda files
 #
 #
-# usage: ./ceate_specfem3D_gpu_cuda_method_stubs.pl 
+# usage: ./ceate_specfem3D_gpu_method_stubs.pl
 #             run in directory root SPECFEM3D/
 #
 
-$outfile = "src/cuda/specfem3D_gpu_cuda_method_stubs.c";
+$outfile = "src/specfem3D/specfem3D_gpu_method_stubs.c";
 
 
 open(IOUT,"> _____temp_tutu_____");
@@ -20,11 +20,11 @@ $header = <<END;
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
 !          --------------------------------------------------
 !
-!          Main authors: Dimitri Komatitsch and Jeroen Tromp
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
 !                        Princeton University, USA
-!             and University of Pau / CNRS / INRIA, France
-! (c) Princeton University / California Institute of Technology and University of Pau / CNRS / INRIA
-!                            August 2013
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -54,7 +54,8 @@ END
 
 
 $warning = <<END;
- fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA Support. To enable GPU support, reconfigure with --with-cuda flag.\\n");
+ fprintf(stderr,"ERROR: GPU_MODE enabled without GPU/CUDA/OpenCL Support. "
+                "To enable GPU support, reconfigure with --with-gpu and/or --with-opencl flag.\\n");
  exit(1);
 END
 
@@ -62,7 +63,7 @@ print IOUT "$header \n";
 
 $success = 0;
 
-@objects = `ls src/cuda/*.cu`;
+@objects = `ls src/gpu/*.c`;
 
 foreach $name (@objects) {  
   chop $name;
@@ -88,7 +89,7 @@ foreach $name (@objects) {
     #    $line =~ s#\(c\) California Institute of Technology and University of Pau, October 2007#\(c\) California Institute of Technology and University of Pau, November 2007#og;
     #    $line =~ s#rmass_sigma#rmass_time_integral_of_sigma#og;
     
-    if($line =~ /extern "C"/){
+    if($line =~ /extern EXTERN_LANG/){
       # new function declaration starts  
       #print "$line\n";
       if( $line =~/FC_FUNC/ ){ 
@@ -108,7 +109,7 @@ foreach $name (@objects) {
       # function declaration
       if($line =~ /{/){
         # function declaration ends
-        if( $line =~ /INITIALIZE_CUDA_DEVICE/ ){
+        if( $line =~ /INITIALIZE_GPU_DEVICE/ ){
           # adds warning
           print IOUT "$line \n$warning\} \n\n";
         }else{

@@ -125,9 +125,6 @@
   double precision,dimension(NR) :: rspl,espl,espl2
   integer :: nspl
 
-! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
-  logical,parameter :: USE_1D_REFERENCE = .false.
-
   end module meshfem3D_models_par
 
 

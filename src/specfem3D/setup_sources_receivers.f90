@@ -582,6 +582,8 @@
     write(system_command, &
   "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,' < ',a,' > ',a)")&
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
+
+    ! note: this system() routine is non-standard fortran
     call system(system_command)
 
     ! only extract receiver locations and remove temporary file
@@ -589,6 +591,8 @@
     write(system_command, &
   "('awk ',a1,'{if(NR<5) print $0;if(NR==6)print ',a1,'POINTS',i6,' float',a1,';if(NR>5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
+
+    ! note: this system() routine is non-standard fortran
     call system(system_command)
 
     ! only extract source locations and remove temporary file
@@ -596,6 +600,8 @@
     write(system_command, &
   "('awk ',a1,'{if(NR< 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
+
+    ! note: this system() routine is non-standard fortran
     call system(system_command)
 
   endif

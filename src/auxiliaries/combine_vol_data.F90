@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-program combine_vol_data_vtk
+program combine_vol_data
 
   ! outputs VTK files (ASCII format)
 
@@ -36,9 +36,6 @@ program combine_vol_data_vtk
 #ifdef ADIOS_INPUT
   use adios_read_mod
   use combine_vol_data_adios_mod
-!!!!!!!! DK DK removed because this breaks the build system
-!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
-!!!!!!!! DK DK   use mpi
 #endif
 
   implicit none
@@ -46,25 +43,25 @@ program combine_vol_data_vtk
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 2000
-  integer :: iregion, ir, irs, ire, ires
-  character(len=256) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
-  character(len=256) :: prname_topo, prname_file, dimension_file
+  integer :: ir, irs, ire, ires
+  character(len=256) :: arg(7), filename, outdir
   character(len=256) :: data_file, topo_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob, npoint, nelement
-  integer iproc, num_node, i,j,k,ispec, ios, it, di, dj, dk
-  integer np, ne,  njunk
+  integer :: iproc, num_node, i,j,k,ispec, it, di, dj, dk
+  integer :: np, ne
+  integer :: ier
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: data
   real(kind=CUSTOM_REAL),dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
-  integer ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
+  integer :: ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
 
-  integer num_ibool(NGLOB_CRUST_MANTLE)
-  logical mask_ibool(NGLOB_CRUST_MANTLE), HIGH_RESOLUTION_MESH
+  integer :: num_ibool(NGLOB_CRUST_MANTLE)
+  logical :: mask_ibool(NGLOB_CRUST_MANTLE), HIGH_RESOLUTION_MESH
 
-  real(kind=CUSTOM_REAL) x, y, z
-  real dat
-  integer numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
-  integer iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
+  real(kind=CUSTOM_REAL) :: x, y, z
+  real :: dat
+  integer :: numpoin, iglob, n1, n2, n3, n4, n5, n6, n7, n8
+  integer :: iglob1, iglob2, iglob3, iglob4, iglob5, iglob6, iglob7, iglob8
   ! instead of taking the first value which appears for a global point, average the values
   ! if there are more than one GLL points for a global point (points on element corners, edges, faces)
   logical,parameter:: AVERAGE_GLOBALPOINTS = .false.
@@ -88,15 +85,14 @@ program combine_vol_data_vtk
 
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core ! to get rid of fictitious elements in central cube
 
-!!! .mesh specific !!!!!!!!!!!
 #ifndef USE_VTK_INSTEAD_OF_MESH
+!!! .mesh specific !!!!!!!!!!!
   integer :: pfd, efd
   character(len=1038) :: command_name
   character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file
-!!! .vtk specific !!!!!!!!!!!
 #else
+!!! .vtk specific !!!!!!!!!!!
   character(len=256) :: mesh_file
-  integer ier
   ! global point data
   real,dimension(:),allocatable :: total_dat
   real,dimension(:,:),allocatable :: total_dat_xyz
@@ -104,34 +100,51 @@ program combine_vol_data_vtk
 #endif
 
 #if ADIOS_INPUT
-  integer :: sizeprocs, ierr, mpier
+  integer :: sizeprocs,myrank
   character(len=256) :: var_name, value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
-
+#else
+  integer :: iregion,njunk
+  character(len=256) :: prname_topo, prname_file, dimension_file
+  character(len=256) :: in_file_dir, in_topo_dir
+  character(len=256) :: sline
 #endif
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! starts here---------------------------------------------------------------
+
+  ! dummy initialization to avoid compiler warnings
+  ier = 0
+
+  ! ADIOS mpi initialization
 #ifdef ADIOS_INPUT
-!!!!!!!! DK DK removed because this breaks the build system
-!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
-!!!!!!!! DK DK added this
-  stop 'DK DK added this because this part of the code breaks the build system'
-!!!!!!!! DK DK removed because this breaks the build system  call MPI_Init(ierr)
-!!!!!!!! DK DK removed because this breaks the build system  call MPI_Comm_size(MPI_COMM_WORLD, sizeprocs, ierr)
-  print  *, sizeprocs, "procs"
+  ! starts mpi
+  call init_mpi()
+  call world_size(sizeprocs)
+  ! checks number of processes
+  ! note: must run as a single process with: mpirun -np 1 ..
   if (sizeprocs /= 1) then
-    print *, "sequential program. Only mpirun -np 1 ..."
-!!!!!!!! DK DK removed because this breaks the build system    call MPI_Abort(MPI_COMM_WORLD, mpier, ierr)
+    call world_rank(myrank)
+    ! usage info
+    if( myrank == 0 ) then
+      print *, "ADIOS requires MPI functionality. However, this program executes as sequential program."
+      print *, "Invalid number of processes used: ", sizeprocs, " procs"
+      print *
+      print *, "Please run: mpirun -np 1 ./bin/xcombine_vol_data_**_adios"
+    endif
+    call abort_mpi()
   endif
 #endif
 
+  ! checks array sizes
   if (NSPEC_CRUST_MANTLE < NSPEC_OUTER_CORE .or. NSPEC_CRUST_MANTLE < NSPEC_INNER_CORE) &
              stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
+  ! reads input arguments
 #ifndef ADIOS_INPUT
   do i = 1, 7
     call get_command_argument(i,arg(i))
+
+    ! usage info
     if (i < 7 .and. len_trim(arg(i)) == 0) then
       print *, ' '
       print *, ' Usage: xcombine_vol_data slice_list filename input_topo_dir input_file_dir '
@@ -163,21 +176,23 @@ program combine_vol_data_vtk
 
   ! get slices id
   num_node = 0
-  open(unit = 20, file = trim(arg(1)), status = 'old',iostat = ios)
-  if (ios /= 0) then
+  open(unit = 20, file = trim(arg(1)), status = 'old',iostat = ier)
+  if (ier /= 0) then
     print*,'no file: ',trim(arg(1))
     stop 'Error opening slices file'
   endif
 
   do while (1 == 1)
-    read(20,'(a)',iostat=ios) sline
-    if (ios /= 0) exit
-    read(sline,*,iostat=ios) njunk
-    if (ios /= 0) exit
+    read(20,'(a)',iostat=ier) sline
+    if (ier /= 0) exit
+    read(sline,*,iostat=ier) njunk
+    if (ier /= 0) exit
     num_node = num_node + 1
     node_list(num_node) = njunk
   enddo
   close(20)
+
+  ! output info
   print *, 'slice list: '
   print *, node_list(1:num_node)
   print *, ' '
@@ -193,6 +208,7 @@ program combine_vol_data_vtk
   ! resolution
   read(arg(6),*) ires
 #else
+  ! ADIOS input arguments
   do i = 1, 7
     call get_command_argument(i,arg(i))
   enddo
@@ -201,9 +217,11 @@ program combine_vol_data_vtk
                        outdir, ires, irs, ire)
   filename = var_name
 #endif
-print *, irs, ire
-!stop
 
+  ! output info
+  print *, 'regions: start =', irs, ' to end =', ire
+
+  ! sets up loop increments
   di = 0
   dj = 0
   dk = 0
@@ -223,10 +241,12 @@ print *, irs, ire
     dj = int((NGLLY-1)/2.0)
     dk = int((NGLLZ-1)/2.0)
   endif
+
+  ! output info
   if( HIGH_RESOLUTION_MESH ) then
-    print *, ' high resolution ', HIGH_RESOLUTION_MESH
+    print *, 'using mesh with: high resolution'
   else
-    print *, ' low resolution ', HIGH_RESOLUTION_MESH
+    print *, 'using mesh with: low resolution'
   endif
 
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
@@ -263,9 +283,9 @@ print *, irs, ire
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
       dimension_file = trim(prname_topo) //'solver_data.bin'
-      open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
-      if (ios /= 0) then
-       print*,'error ',ios
+      open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
+      if (ier /= 0) then
+       print*,'error ',ier
        print*,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
@@ -273,8 +293,8 @@ print *, irs, ire
       read(27) nglob(it)
       close(27)
 #else
-      call read_scalars_adios_mesh(mesh_handle, iproc, ir, &
-                                   nglob(it), nspec(it))
+      ! adios reading
+      call read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob(it), nspec(it))
 #endif
 
       ! check
@@ -330,48 +350,56 @@ print *, irs, ire
 
     ! write points information
     do it = 1, num_node
-
+      ! gets slice id (process id)
       iproc = node_list(it)
 
+      ! initializes data values
       data(:,:,:,:) = -1.e10
 
+      ! output info
       print *, ' '
       print *, 'Reading slice ', iproc
+
+      ! reads in kernel/data values
 #ifndef ADIOS_INPUT
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
       ! filename.bin
       data_file = trim(prname_file) // trim(filename) // '.bin'
-      open(unit = 27,file = trim(data_file),status='old',action='read', iostat = ios,form ='unformatted')
-      if (ios /= 0) then
-        print*,'error ',ios
+
+      open(unit = 27,file = trim(data_file),status='old',action='read', iostat = ier,form ='unformatted')
+      if (ier /= 0) then
+        print*,'error ',ier
         print*,'file:',trim(data_file)
         stop 'Error opening file'
       endif
-      read(27,iostat=ios) data(:,:,:,1:nspec(it))
-      if( ios /= 0 ) then
-        print*,'read error ',ios
+      read(27,iostat=ier) data(:,:,:,1:nspec(it))
+      if( ier /= 0 ) then
+        print*,'read error ',ier
         print*,'file:',trim(data_file)
         stop 'error reading data'
       endif
       close(27)
 #else
-    call read_values_adios(value_handle, var_name, iproc, ir, nspec(it), data)
+      ! adios reading
+      call read_values_adios(value_handle, var_name, iproc, ir, nspec(it), data)
+      data_file = trim(var_name)
 #endif
-
+      ! output info
       print *,trim(data_file)
       print *,'  min/max value: ',minval(data(:,:,:,1:nspec(it))),maxval(data(:,:,:,1:nspec(it)))
       print *
 
       ! topology file
+      ! reads in mesh coordinates and local-to-global mapping (ibool)
 #ifndef ADIOS_INPUT
       topo_file = trim(prname_topo) // 'solver_data.bin'
-      open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
-      if (ios /= 0) then
-       print*,'error ',ios
-       print*,'file:',trim(topo_file)
-       stop 'Error opening file'
+      open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ier, form='unformatted')
+      if (ier /= 0) then
+        print*,'error ',ier
+        print*,'file:',trim(topo_file)
+        stop 'Error opening file'
       endif
       xstore(:) = 0.0
       ystore(:) = 0.0
@@ -386,9 +414,8 @@ print *, irs, ire
       if (ir==3) read(28) idoubling_inner_core(1:nspec(it)) ! flag that can indicate fictitious elements
       close(28)
 #else
-      call read_coordinates_adios_mesh(mesh_handle, iproc, ir, &
-                                       nglob(it), nspec(it),   &
-                                       xstore, ystore, zstore, ibool)
+      ! adios reading
+      call read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob(it), nspec(it), xstore, ystore, zstore, ibool)
 #endif
 
       print *, trim(topo_file)
@@ -618,8 +645,8 @@ print *, irs, ire
     ! VTK
     ! opens unstructured grid file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
-    open(IOUT_VTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ios)
-    if( ios /= 0 ) stop 'error opening VTK output file'
+    open(IOUT_VTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ier)
+    if( ier /= 0 ) stop 'error opening VTK output file'
     write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
     write(IOUT_VTK,'(a)') 'material model VTK file'
     write(IOUT_VTK,'(a)') 'ASCII'
@@ -680,11 +707,8 @@ print *, irs, ire
 
 #ifdef ADIOS_INPUT
   call clean_adios(value_handle, mesh_handle)
-!!!!!!!! DK DK removed because this breaks the build system
-!!!!!!!! DK DK use calls to routines in src/shared/parallel.f90 instead
-!!!!!!!! DK DK added this
-  stop 'DK DK added this because this part of the code breaks the build system'
-!!!!!!!! DK DK removed because this breaks the build system  call MPI_Finalize(ierr)
+  ! shuts down mpi
+  call finalize_mpi()
 #endif
 
 
@@ -692,4 +716,4 @@ print *, irs, ire
   print *, ' '
 
 
-end program combine_vol_data_vtk
+end program combine_vol_data

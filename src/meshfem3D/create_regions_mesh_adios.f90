@@ -29,7 +29,9 @@
   subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
                                        num_ibool_AVS_DX, mask_ibool)
 
-  use adios_write_mod
+  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
+
+  use adios_helpers_mod
 
   use meshfem3d_par,only: &
     ibool,idoubling, &
@@ -37,7 +39,7 @@
     myrank,NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST,ROCEAN, &
-    LOCAL_PATH
+    LOCAL_PATH,IMAIN,ADIOS_TRANSPORT_METHOD
 
   use meshfem3D_models_par,only: &
     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
@@ -78,71 +80,73 @@
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
   call create_name_database_adios(reg_name,iregion_code,LOCAL_PATH)
-  outputname = trim(reg_name) // "AVS_DX.bp"
   write(group_name,"('SPECFEM3D_GLOBE_AVS_DX_reg',i1)") iregion_code
 
   ! Alias COMM_WORLD to use ADIOS
   call world_duplicate(comm)
 
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, &
-      "", 0, ier)
+
+  call adios_declare_group(adios_group, group_name, "", 0, ier)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,ier)
+
   ! We set the transport method to 'MPI'. This seems to be the correct choice
   ! for now. We might want to move this to the constant.h file later on.
-  call adios_select_method(adios_group, "MPI", "", "", ier)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", ier)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,ier)
 
   !--- Define ADIOS variables -----------------------------
   call define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
-      npointot, mask_ibool, group_size_inc, avs_dx_global_vars)
+                                       npointot, mask_ibool, group_size_inc, avs_dx_global_vars)
 
-  call define_AVS_DX_global_faces_data_adios (adios_group, &
-      myrank, prname, nspec, iMPIcut_xi,iMPIcut_eta, &
-      ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-      npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-      RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-      RMIDDLE_CRUST,ROCEAN,iregion_code, &
-      group_size_inc, avs_dx_global_faces_vars)
+  call define_AVS_DX_global_faces_data_adios(adios_group, &
+                                             myrank, nspec, iMPIcut_xi,iMPIcut_eta, &
+                                             ibool,mask_ibool,npointot, &
+                                             ISOTROPIC_3D_MANTLE, &
+                                             group_size_inc, avs_dx_global_faces_vars)
 
   call define_AVS_DX_global_chunks_data(adios_group, &
-      myrank,prname,nspec,iboun,ibool, &
-      idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-      npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-      RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-      RMIDDLE_CRUST,ROCEAN,iregion_code, &
-      group_size_inc, avs_dx_global_chunks_vars)
+                                        myrank,nspec,iboun,ibool, &
+                                        mask_ibool,npointot, &
+                                        ISOTROPIC_3D_MANTLE, &
+                                        group_size_inc, avs_dx_global_chunks_vars)
 
   call define_AVS_DX_surfaces_data_adios(adios_group, &
-      myrank,prname,nspec,iboun, &
-      ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
-      rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-      RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-      RMIDDLE_CRUST,ROCEAN,iregion_code, &
-      group_size_inc, avs_dx_surface_vars)
+                                         myrank,nspec,iboun,ibool, &
+                                         mask_ibool,npointot,&
+                                         ISOTROPIC_3D_MANTLE, &
+                                         group_size_inc, avs_dx_surface_vars)
 
   !--- Open an ADIOS handler to the AVS_DX file. ---------
-  call adios_open (adios_handle, group_name, &
-      outputname, "w", comm, ier);
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, ier)
+  outputname = trim(reg_name) // "AVS_DX.bp"
+  ! user output
+  if( myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
+
+  call adios_open (adios_handle, group_name, outputname, "w", comm, ier)
+  call check_adios_err(myrank,ier)
+
+  call adios_group_size (adios_handle, group_size_inc,adios_totalsize, ier)
+  call check_adios_err(myrank,ier)
 
   !--- Schedule writes for the previously defined ADIOS variables
-  call prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
-      nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
-      mask_ibool, npointot, avs_dx_global_vars)
+  call prepare_AVS_DX_global_data_adios(myrank, &
+                                        nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
+                                        mask_ibool, npointot, avs_dx_global_vars)
+
   call write_AVS_DX_global_data_adios(adios_handle, myrank, &
       sizeprocs, avs_dx_global_vars)
 
-  call prepare_AVS_DX_global_faces_data_adios (myrank, prname, nspec, &
-      iMPIcut_xi,iMPIcut_eta, &
-      ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-      npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-      RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-      RMIDDLE_CRUST,ROCEAN,iregion_code, &
-      avs_dx_global_faces_vars)
+  call prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
+                                              iMPIcut_xi,iMPIcut_eta, &
+                                              ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+                                              npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+                                              ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                              RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                              RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                              avs_dx_global_faces_vars)
+
   call write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
       sizeprocs, avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
 
@@ -153,16 +157,18 @@
       RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
       RMIDDLE_CRUST,ROCEAN,iregion_code, &
       avs_dx_global_chunks_vars)
+
   call write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
       sizeprocs, avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
 
-  call prepare_AVS_DX_surfaces_data_adios(myrank,prname,nspec,iboun, &
-      ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
-      rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-      RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-      RMIDDLE_CRUST,ROCEAN,iregion_code, &
-      avs_dx_surface_vars)
+  call prepare_AVS_DX_surfaces_data_adios(myrank,nspec,iboun, &
+                                          ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
+                                          rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+                                          ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                          RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                          RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                          avs_dx_surface_vars)
+
   call write_AVS_DX_surfaces_data_adios(adios_handle, myrank, &
       sizeprocs, avs_dx_surface_vars, ISOTROPIC_3D_MANTLE)
 

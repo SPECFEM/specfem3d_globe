@@ -29,15 +29,18 @@
 
 #include "mesh_constants_gpu.h"
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_cm_gpu,
-               COMPUTE_KERNELS_CM_GPU) (long *Mesh_pointer, realw *deltat_f) {
+               COMPUTE_KERNELS_CM_GPU) (long *Mesh_pointer_f, realw *deltat_f) {
 
   TRACE ("compute_cm_gpu");
   // debug
   DEBUG_BACKWARD_KERNEL ();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int blocksize = NGLL3;
   realw deltat = *deltat_f;
@@ -65,7 +68,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_rho_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_rho_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -123,7 +127,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
         global_work_size[0] = num_blocks_x * blocksize;
         global_work_size[1] = num_blocks_y;
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undo_att_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undo_att_kernel, 2, NULL,
+                                         global_work_size, local_work_size, 0, NULL, NULL));
 
       } else {
         // anisotropic kernels
@@ -155,7 +160,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
         global_work_size[0] = num_blocks_x * blocksize;
         global_work_size[1] = num_blocks_y;
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL,
+                                         global_work_size, local_work_size, 0, NULL, NULL));
       }
     }
 #endif
@@ -229,7 +235,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
         global_work_size[0] = num_blocks_x * blocksize;
         global_work_size[1] = num_blocks_y;
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_kernel, 2, NULL,
+                                         global_work_size, local_work_size, 0, NULL, NULL));
 
       } else {
         // anisotropic kernels
@@ -254,7 +261,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
         global_work_size[0] = num_blocks_x * blocksize;
         global_work_size[1] = num_blocks_y;
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_kernel, 2, NULL,
+                                         global_work_size, local_work_size, 0, NULL, NULL));
       }
     }
 #endif
@@ -312,13 +320,14 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_ic_gpu,
-               COMPUTE_KERNELS_IC_GPU) (long *Mesh_pointer, realw *deltat_f) {
+               COMPUTE_KERNELS_IC_GPU) (long *Mesh_pointer_f, realw *deltat_f) {
 
   TRACE("compute_kernels_ic_gpu");
   // debug
   DEBUG_BACKWARD_KERNEL();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int blocksize = NGLL3;
   realw deltat = *deltat_f;
@@ -346,7 +355,8 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_rho_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_rho_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -369,70 +379,150 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
     if(mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
       exit_on_error("compute_kernels_cm_cuda NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
     }
-  }
+    // computes strain locally based on current backward/reconstructed (b_displ) wavefield
 
-  // isotropic kernels (shear, bulk)
+    // isotropic kernels (shear, bulk)
 #ifdef USE_OPENCL
-  if (run_opencl) {
-    idx = 0;
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xx_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yy_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xy_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xz_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yz_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_eps_trace_over_3_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_inner_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
-    clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (realw), (void *) &deltat));
+    if (run_opencl) {
+      idx = 0;
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xx_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_eps_trace_over_3_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (realw), (void *) &deltat));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
 
-    local_work_size[0] = blocksize;
-    local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
-    global_work_size[1] = num_blocks_y;
+      local_work_size[0] = blocksize;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize;
+      global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_kernel, 2, NULL,
-                                     global_work_size, local_work_size, 0, NULL, NULL));
-  }
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
+
+    }
 #endif
 #ifdef USE_CUDA
-  if (run_cuda) {
-    compute_iso_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
-                                                              mp->d_epsilondev_yy_inner_core.cuda,
-                                                              mp->d_epsilondev_xy_inner_core.cuda,
-                                                              mp->d_epsilondev_xz_inner_core.cuda,
-                                                              mp->d_epsilondev_yz_inner_core.cuda,
-                                                              mp->d_eps_trace_over_3_inner_core.cuda,
-                                                              mp->d_b_epsilondev_xx_inner_core.cuda,
-                                                              mp->d_b_epsilondev_yy_inner_core.cuda,
-                                                              mp->d_b_epsilondev_xy_inner_core.cuda,
-                                                              mp->d_b_epsilondev_xz_inner_core.cuda,
-                                                              mp->d_b_epsilondev_yz_inner_core.cuda,
-                                                              mp->d_b_eps_trace_over_3_inner_core.cuda,
-                                                              mp->d_beta_kl_inner_core.cuda,
-                                                              mp->d_alpha_kl_inner_core.cuda,
-                                                              mp->NSPEC_INNER_CORE,
-                                                              deltat);
-  }
+    if (run_cuda) {
+      compute_iso_undo_att_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
+                                                               mp->d_epsilondev_yy_inner_core.cuda,
+                                                               mp->d_epsilondev_xy_inner_core.cuda,
+                                                               mp->d_epsilondev_xz_inner_core.cuda,
+                                                               mp->d_epsilondev_yz_inner_core.cuda,
+                                                               mp->d_eps_trace_over_3_inner_core.cuda,
+                                                               mp->d_beta_kl_inner_core.cuda,
+                                                               mp->d_alpha_kl_inner_core.cuda,
+                                                               mp->NSPEC_INNER_CORE,
+                                                               deltat,
+                                                               mp->d_ibool_inner_core.cuda,
+                                                               mp->d_b_displ_inner_core.cuda,
+                                                               mp->d_xix_inner_core.cuda,
+                                                               mp->d_xiy_inner_core.cuda,
+                                                               mp->d_xiz_inner_core.cuda,
+                                                               mp->d_etax_inner_core.cuda,
+                                                               mp->d_etay_inner_core.cuda,
+                                                               mp->d_etaz_inner_core.cuda,
+                                                               mp->d_gammax_inner_core.cuda,
+                                                               mp->d_gammay_inner_core.cuda,
+                                                               mp->d_gammaz_inner_core.cuda,
+                                                               mp->d_hprime_xx.cuda);
+    }
 #endif
+
+  }else{
+    // takes strain arrays computed from previous compute_forces call
+
+    // isotropic kernels (shear, bulk)
+#ifdef USE_OPENCL
+    if (run_opencl) {
+      idx = 0;
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xx_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_eps_trace_over_3_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_kernel, idx++, sizeof (realw), (void *) &deltat));
+
+      local_work_size[0] = blocksize;
+      local_work_size[1] = 1;
+      global_work_size[0] = num_blocks_x * blocksize;
+      global_work_size[1] = num_blocks_y;
+
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_kernel, 2, NULL,
+                                       global_work_size, local_work_size, 0, NULL, NULL));
+    }
+#endif
+#ifdef USE_CUDA
+    if (run_cuda) {
+      compute_iso_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
+                                                                mp->d_epsilondev_yy_inner_core.cuda,
+                                                                mp->d_epsilondev_xy_inner_core.cuda,
+                                                                mp->d_epsilondev_xz_inner_core.cuda,
+                                                                mp->d_epsilondev_yz_inner_core.cuda,
+                                                                mp->d_eps_trace_over_3_inner_core.cuda,
+                                                                mp->d_b_epsilondev_xx_inner_core.cuda,
+                                                                mp->d_b_epsilondev_yy_inner_core.cuda,
+                                                                mp->d_b_epsilondev_xy_inner_core.cuda,
+                                                                mp->d_b_epsilondev_xz_inner_core.cuda,
+                                                                mp->d_b_epsilondev_yz_inner_core.cuda,
+                                                                mp->d_b_eps_trace_over_3_inner_core.cuda,
+                                                                mp->d_beta_kl_inner_core.cuda,
+                                                                mp->d_alpha_kl_inner_core.cuda,
+                                                                mp->NSPEC_INNER_CORE,
+                                                                deltat);
+    }
+#endif
+  }
+
 #ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   exit_on_gpu_error ("compute_ic_gpu");
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_oc_gpu,
-               COMPUTE_KERNELS_OC_GPU) (long *Mesh_pointer, realw *deltat_f) {
+               COMPUTE_KERNELS_OC_GPU) (long *Mesh_pointer_f, realw *deltat_f) {
 
   TRACE ("compute_kernels_oc_gpu");
+  // debug
+  DEBUG_BACKWARD_KERNEL();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   int blocksize = NGLL3;   // NGLLX*NGLLY*NGLLZ
   realw deltat = *deltat_f;
@@ -473,7 +563,8 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_acoustic_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_acoustic_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -508,15 +599,20 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
-               COMPUTE_KERNELS_STRGTH_NOISE_GPU) (long *Mesh_pointer,
+               COMPUTE_KERNELS_STRGTH_NOISE_GPU) (long *Mesh_pointer_f,
                                                   realw *h_noise_surface_movie,
                                                   realw *deltat_f) {
 
   TRACE ("compute_kernels_strgth_noise_gpu");
+  // debug
+  DEBUG_BACKWARD_KERNEL();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   realw deltat = *deltat_f;
 
@@ -530,7 +626,7 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
     cl_uint idx = 0;
 
     // copies surface buffer to GPU
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_FALSE, 0,
+    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
                                    NDIM * NGLL2 * mp->nspec2D_top_crust_mantle * sizeof (realw),
                                    h_noise_surface_movie, 0, NULL, NULL));
 
@@ -551,8 +647,8 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
     global_work_size[0] = num_blocks_x * NGLL2;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_strength_noise_kernel,
-                                     2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_strength_noise_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -583,13 +679,18 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
 #endif
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_kernels_hess_gpu,
-               COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer,
+               COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer_f,
                                           realw *deltat_f) {
   TRACE ("compute_hess_kernel_gpu");
+  // debug
+  DEBUG_BACKWARD_KERNEL();
 
-  Mesh *mp = (Mesh *) *Mesh_pointer;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks
   if (! mp->approximate_hess_kl) {

@@ -104,6 +104,8 @@ __device__ void compute_element_strain_undo_att(int ispec,int ijk_ispec,
   *epsilon_trace_over_3 = templ;
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 __global__ void compute_iso_undo_att_kernel(realw* epsilondev_xx,
                                             realw* epsilondev_yy,
                                             realw* epsilondev_xy,

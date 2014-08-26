@@ -48,6 +48,8 @@ __constant__ size_t d_hprimewgll_xx_tex_offset;
 #endif
 #endif
 
+/* ----------------------------------------------------------------------------------------------- */
+
 void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                    int iphase,
                    gpu_int_mem d_ibool,
@@ -117,6 +119,11 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
   exit_on_gpu_error ("before kernel crust_mantle");
 #endif
 
+  // safety check
+  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
+    exit_on_error("error invalid FORWARD_OR_ADJOINT in crust_mantle() routine");
+  }
+
   // if the grid can handle the number of blocks, we let it be 1D
   // grid_2_x = nb_elem_color;
   // nb_elem_color is just how many blocks we are computing now
@@ -133,15 +140,11 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     cl_kernel *crust_mantle_kernel_p;
     cl_uint idx = 0;
 
-    if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
-      goto skipexec;
-    } else if (FORWARD_OR_ADJOINT == 3) {
-      DEBUG_BACKWARD_FORCES ();
-    }
-
     if (FORWARD_OR_ADJOINT == 1) {
       crust_mantle_kernel_p = &mocl.kernels.crust_mantle_impl_kernel_forward;
     } else {
+      // adjoint/kernel simulations
+      DEBUG_BACKWARD_FORCES ();
       crust_mantle_kernel_p = &mocl.kernels.crust_mantle_impl_kernel_adjoint;
     }
 
@@ -261,8 +264,13 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY));
 
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_cm_tex));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_cm_tex));
+    if (FORWARD_OR_ADJOINT == 1) {
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_cm_tex));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_cm_tex));
+    } else {
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_cm_tex));
+      clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_cm_tex));
+    }
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx_cm_tex));
 
     local_work_size[0] = blocksize;
@@ -270,9 +278,9 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *crust_mantle_kernel_p, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *crust_mantle_kernel_p, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
-skipexec: ;
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
@@ -325,7 +333,7 @@ skipexec: ;
                                                                               mp->d_density_table.cuda,
                                                                               mp->d_wgll_cube.cuda,
                                                                               mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY);
-    } else if (FORWARD_OR_ADJOINT == 3) {
+    } else {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
       // debug
       DEBUG_BACKWARD_FORCES();
@@ -394,10 +402,15 @@ void FC_FUNC_ (compute_forces_crust_mantle_gpu,
 
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
-
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
-  int num_elements;
 
+  // safety check
+  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
+    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_forces_crust_mantle_gpu() routine");
+  }
+
+  // determines number of elements to loop over (inner/outer elements)
+  int num_elements;
   if (*iphase == 1) {
     num_elements = mp->nspec_outer_crust_mantle;
   } else {

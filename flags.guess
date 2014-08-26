@@ -16,7 +16,18 @@
 ###########################################################################################################################
 ###########################################################################################################################
 ###########################################################################################################################
+
+# if you want to compile with OpenMP, add this to the flags listed below, depending on the compiler you use:
 #
+#   -fopenmp for GNU gfortran
+#   -openmp for Intel ifort
+#   -mp for Portland pgf90
+#   -qsmp=omp for IBM xlf
+
+###########################################################################################################################
+###########################################################################################################################
+###########################################################################################################################
+
 # If you run very large meshes on a relatively small number
 # of processors, the static memory size needed on each processor might become
 # greater than 2 gigabytes, which is the upper limit for 32-bit addressing
@@ -25,7 +36,7 @@
 # or -mcmodel=medium -shared-intel (if you use the Intel ifort / icc compiler)
 # to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
 # message (for instance 'relocation truncated to fit: R\_X86\_64\_PC32 against .bss' or something similar);
-#
+
 ###########################################################################################################################
 ###########################################################################################################################
 ###########################################################################################################################
@@ -68,7 +79,9 @@ case $my_FC in
         # Cray Fortran
         #
         DEF_FFLAGS="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2 -M 1193 -M 1438" # turn on optimization; -Oaggress -Oipa4 would make it even more aggressive
-        # -eC -eD -ec -en -eI -ea -g -G0 -M 1193 -M 1438  # turn on full debugging and range checking
+        # turn on full debugging and range checking, use:
+        # -eC -eD -ec -en -eI -ea -g -G0 -M 1193 -M 1438 
+        # you then need to run "configure" with option --disable-vectorization
         ;;
     pgf95|*/pgf95|pgf90|*/pgf90)
         #
@@ -90,6 +103,7 @@ case $my_FC in
         DEF_FFLAGS="-O3 -check nobounds -xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -diag-disable 6477 -implicitnone -gen-interfaces -warn all" # -mcmodel=medium -shared-intel
         # useful for debugging...
         # for debugging: change -O3 -check nobounds to      -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
+        # you then need to run "configure" with option --disable-vectorization
         #
         ;;
     gfortran|*/gfortran|f95|*/f95)
@@ -98,6 +112,7 @@ case $my_FC in
         #
         DEF_FFLAGS="-std=gnu -fimplicit-none -frange-check -O2 -fmax-errors=10 -pedantic -pedantic-errors -Waliasing -Wampersand -Wcharacter-truncation -Wline-truncation -Wsurprising -Wno-tabs -Wunderflow -ffpe-trap=invalid,zero,overflow" # -mcmodel=medium
         # useful for debugging: add   -ggdb -fbacktrace -fbounds-check
+        # you then need to run "configure" with option --disable-vectorization
         # useful to track loss of accuracy because of automatic double to single precision conversion:  -Wconversion  (this may generate many warnings...)
         ;;
     g95|*/g95)
@@ -177,6 +192,7 @@ case $my_FC in
         # -qtune=auto -qarch=450d -qsave     instead of -qtune=auto -qarch=auto
         #
         # to debug with IBM xlf, remove -Wl,-relax and add -g -O0 -C -qddim -qfullpath -qflttrap=overflow:zerodivide:invalid:enable -qfloat=nans -qinitauto=7FBFFFFF
+        # you then need to run "configure" with option --disable-vectorization
         #
         ;;
     pathf90|*/pathf90)

@@ -43,13 +43,10 @@ module AVS_DX_surface_mod
 contains
 
 subroutine define_AVS_DX_surfaces_data_adios(adios_group, &
-    myrank,prname,nspec,iboun, &
-    ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
-    rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-    RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-    RMIDDLE_CRUST,ROCEAN,iregion_code, &
-    group_size_inc, avs_dx_adios)
+                                             myrank,nspec,iboun, &
+                                             ibool,mask_ibool,npointot,&
+                                             ISOTROPIC_3D_MANTLE, &
+                                             group_size_inc, avs_dx_adios)
 
   use constants
   use adios_write_mod
@@ -58,55 +55,25 @@ subroutine define_AVS_DX_surfaces_data_adios(adios_group, &
   implicit none
 
   integer(kind=8), intent(in) :: adios_group
+
+  integer :: nspec,myrank
+
+  logical :: iboun(6,nspec)
+  integer :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
+
+  ! logical mask used to output global points only once
+  integer :: npointot
+  logical :: mask_ibool(npointot)
+
+  logical :: ISOTROPIC_3D_MANTLE
+
   integer(kind=8), intent(inout) :: group_size_inc
-
-  integer nspec,myrank
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
-
-  integer idoubling(nspec)
-
-  logical iboun(6,nspec)
-  logical ELLIPTICITY,ISOTROPIC_3D_MANTLE
-
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
-       R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
-
-  !double precision r,rho,vp,vs,Qkappa,Qmu
-  !double precision vpv,vph,vsv,vsh,eta_aniso
-  !double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
-  !real(kind=CUSTOM_REAL) dvp,dvs
-
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
-
-! logical mask used to output global points only once
-  integer npointot
-  logical mask_ibool(npointot)
-
-! numbering of global AVS or DX points
-  integer num_ibool_AVS_DX(npointot)
-
-  integer ispec
-  !integer i,j,k,np
-  integer, dimension(8) :: iglobval
-  integer npoin,nspecface !,ispecface,numpoin
-
-! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-! processor identification
-  character(len=150) prname
-
-  integer iregion_code
-
   type(avs_dx_surface_t), intent(inout) :: avs_dx_adios
 
+  ! local parameters
+  integer :: ispec
+  integer, dimension(8) :: iglobval
+  integer :: npoin,nspecface
   integer :: ierr
 
   ! Dummy arrays for type inference inside adios helpers
@@ -204,13 +171,13 @@ end subroutine define_AVS_DX_surfaces_data_adios
 
 !===============================================================================
 
-subroutine prepare_AVS_DX_surfaces_data_adios(myrank,prname,nspec,iboun, &
-    ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
-    rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-    RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-    RMIDDLE_CRUST,ROCEAN,iregion_code, &
-    avs_dx_adios)
+  subroutine prepare_AVS_DX_surfaces_data_adios(myrank,nspec,iboun, &
+                                                ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
+                                                rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+                                                ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                                RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                                RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                                avs_dx_adios)
 
   use constants
 
@@ -255,9 +222,6 @@ subroutine prepare_AVS_DX_surfaces_data_adios(myrank,prname,nspec,iboun, &
 ! for ellipticity
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
-
-! processor identification
-  character(len=150) prname
 
   integer iregion_code
 

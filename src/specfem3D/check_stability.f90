@@ -96,7 +96,6 @@
                     displ_inner_core(3,:)**2)))
 
     Ufluidnorm = maxval(abs(displ_outer_core))
-
   else
     ! on GPU
     ! way 2: just get maximum of fields from GPU

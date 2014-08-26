@@ -867,7 +867,7 @@
   endif
 
   ! checks
-  if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
+  if(.not. MOVIE_SURFACE) stop 'movie surface frames were not saved by the solver'
 
   end subroutine read_AVS_DX_parameters
 

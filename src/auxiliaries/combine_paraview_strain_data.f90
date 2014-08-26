@@ -55,9 +55,11 @@ program combine_paraview_movie_data
     if (i < 7 .and. len_trim(arg(i)) == 0) then
       print *, ' '
       print *, ' Usage: xcombine_data nnodes dt_movie itstart itstop comp MOVIE_COARSE'
+      print *, '   nnodes is the number of slices, dt_movie the time increment of movie snapshots'
+      print *, '   itstart and itstop the time increments where to start and stop movie data files'
       print *, '   component can be SEE, SNE,SEZ,SNN,SNZ,SZZ,I1 or I2'
       print *, '   stored in the local directory as real(kind=CUSTOM_REAL) filename(NGLLX,NGLLY,NGLLZ,nspec)  '
-      print *, 'MOVIE_COARSE = 0 or 1 '
+      print *, '   MOVIE_COARSE can be either .false. or .true. '
       stop ' Reenter command line options'
     endif
   enddo
@@ -79,19 +81,19 @@ program combine_paraview_movie_data
   ! figure out total number of points
   print *, 'Counting points'
   do iproc = 1, num_node
-
-
-   ! print *, 'Counting elements: slice ', iproc-1
+    ! print *, 'Counting elements: slice ', iproc-1
     write(prname,'(a,i6.6,a)') 'proc',iproc-1,'_'
 
-    dimension_file = trim(prname) //'movie3D_info.txt'
-!   print *, 'reading: ',trim(dimension_file)
-   open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
-    if (ios /= 0) stop 'Error opening file'
+    dimension_file = 'DATABASES_MPI/' // trim(prname) //'movie3D_info.txt'
 
+    !   print *, 'reading: ',trim(dimension_file)
+    open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
+    if (ios /= 0) then
+      print*, 'error opening file: ',trim(dimension_file)
+      stop 'Error opening file'
+    endif
     read(27,*) npoint(iproc),nelement(iproc)
     close(27)
-
   enddo
 
   npoint_all   = sum(npoint(1:num_node))
@@ -103,20 +105,20 @@ program combine_paraview_movie_data
   do it = itstart, itstop, dit_movie
     print *, '----------- Timeframe ', it, '----------------'
 
-  ! open Paraview output mesh file
-    write(mesh_file,'(a,a,a,i6.6,a)')  'movie3D_',trim(comp),'_it',it,'.mesh'
+    ! open Paraview output mesh file
+    write(mesh_file,'(a,a,a,i6.6,a)')  'DATABASES_MPI/' // 'movie3D_',trim(comp),'_it',it,'.mesh'
     call open_file_fd(trim(mesh_file)//char(0),fid)
 
-  np = 0
+    np = 0
 
-  ! write point and scalar information
-  print *,'writing point information'
-  do iproc = 1, num_node
+    ! write point and scalar information
+    print *,'writing point information'
+    do iproc = 1, num_node
 
 
-  !  print *, ' '
+    !print *, ' '
     !print *, 'Writing points: slice ', iproc-1,'npoints',npoint(iproc)
-    write(prname,'(a,i6.6,a)') 'proc',iproc-1,'_'
+    write(prname,'(a,i6.6,a)') 'DATABASES_MPI/' // 'proc',iproc-1,'_'
 
     numpoin = 0
 
@@ -148,73 +150,94 @@ program combine_paraview_movie_data
 
     if( (comp /= 'SI1') .and. (comp /= 'SI2')) then
 !comp == 'SEE' .or. comp == 'SNN' .or. comp == 'SZZ' .or. comp == 'SEZ' .or. comp == 'SNZ' .or. comp == 'SNE') then
-     write(local_data_file,'(a,a,i6.6,a)') 'movie3D_',comp,it,'.bin'
+      write(local_data_file,'(a,a,i6.6,a)') 'movie3D_',comp,it,'.bin'
 
-     !print *,'reading comp:',trim(prname)//trim(local_data_file)
+      !print *,'reading comp:',trim(prname)//trim(local_data_file)
 
-     open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file it.bin'
-     if (npoint(iproc)>0) then
-       read(27) datstore(1:npoint(iproc))
-     endif
-     close(27)
+      open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
+      if (ios /= 0) then
+        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        stop 'Error opening file it.bin'
+      endif
+      if (npoint(iproc)>0) then
+        read(27) datstore(1:npoint(iproc))
+      endif
+      close(27)
     else if(comp == 'SI1' .or. comp == 'SI2') then
-     write(local_data_file,'(a,i6.6,a)') 'movie3D_SEE',it,'.bin'
-     !print *, iproc,'reading from file:'//trim(prname)//trim(local_data_file)
-     !print *, 'reading from file:',local_data_file
-     open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file it.bin'
-     if (npoint(iproc)>0) then
-       read(27) SEEstore(1:npoint(iproc))
-     endif
-     close(27)
+      write(local_data_file,'(a,i6.6,a)') 'movie3D_SEE',it,'.bin'
+      !print *, iproc,'reading from file:'//trim(prname)//trim(local_data_file)
+      !print *, 'reading from file:',local_data_file
+      open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
+      if (ios /= 0) then
+        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        stop 'Error opening file it.bin'
+      endif
+      if (npoint(iproc)>0) then
+        read(27) SEEstore(1:npoint(iproc))
+      endif
+      close(27)
 
-     write(local_data_file,'(a,i6.6,a)') 'movie3D_SNE',it,'.bin'
-     !print *, 'reading from file:',local_data_file
-     open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file it.bin'
-     if (npoint(iproc)>0) then
+      write(local_data_file,'(a,i6.6,a)') 'movie3D_SNE',it,'.bin'
+      !print *, 'reading from file:',local_data_file
+      open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
+      if (ios /= 0) then
+        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        stop 'Error opening file it.bin'
+      endif
+      if (npoint(iproc)>0) then
        read(27) SNEstore(1:npoint(iproc))
-     endif
-     close(27)
+      endif
+      close(27)
 
-     write(local_data_file,'(a,i6.6,a)') 'movie3D_SEZ',it,'.bin'
-     !print *, 'reading from file:',local_data_file
-     open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file it.bin'
-     if (npoint(iproc)>0) then
-       read(27) SEZstore(1:npoint(iproc))
-     endif
-     close(27)
+      write(local_data_file,'(a,i6.6,a)') 'movie3D_SEZ',it,'.bin'
+      !print *, 'reading from file:',local_data_file
+      open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
+      if (ios /= 0) then
+        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        stop 'Error opening file it.bin'
+      endif
+      if (npoint(iproc)>0) then
+        read(27) SEZstore(1:npoint(iproc))
+      endif
+      close(27)
 
-     write(local_data_file,'(a,i6.6,a)') 'movie3D_SNN',it,'.bin'
-     !print *, 'reading from file:',local_data_file
-     open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file it.bin'
-     if (npoint(iproc)>0) then
-       read(27) SNNstore(1:npoint(iproc))
-     endif
-     close(27)
+      write(local_data_file,'(a,i6.6,a)') 'movie3D_SNN',it,'.bin'
+      !print *, 'reading from file:',local_data_file
+      open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
+      if (ios /= 0) then
+        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        stop 'Error opening file it.bin'
+      endif
+      if (npoint(iproc)>0) then
+        read(27) SNNstore(1:npoint(iproc))
+      endif
+      close(27)
 
-     write(local_data_file,'(a,i6.6,a)') 'movie3D_SNZ',it,'.bin'
-     !print *, 'reading from file:',local_data_file
-     open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file it.bin'
-     if (npoint(iproc)>0) then
-       read(27) SNZstore(1:npoint(iproc))
-     endif
-     close(27)
+      write(local_data_file,'(a,i6.6,a)') 'movie3D_SNZ',it,'.bin'
+      !print *, 'reading from file:',local_data_file
+      open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
+      if (ios /= 0) then
+        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        stop 'Error opening file it.bin'
+      endif
+      if (npoint(iproc)>0) then
+        read(27) SNZstore(1:npoint(iproc))
+      endif
+      close(27)
 
-     write(local_data_file,'(a,i6.6,a)') 'movie3D_SZZ',it,'.bin'
-     !print *, 'reading from file:',local_data_file
-     open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
-     if (ios /= 0) stop 'Error opening file it.bin'
-     if (npoint(iproc)>0) then
-       read(27) SZZstore(1:npoint(iproc))
-     endif
-     close(27)
+      write(local_data_file,'(a,i6.6,a)') 'movie3D_SZZ',it,'.bin'
+      !print *, 'reading from file:',local_data_file
+      open(unit = 27,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
+      if (ios /= 0) then
+        print*,'error opening file: ',trim(prname)//trim(local_data_file)
+        stop 'Error opening file it.bin'
+      endif
+      if (npoint(iproc)>0) then
+        read(27) SZZstore(1:npoint(iproc))
+      endif
+      close(27)
     else
-       stop 'unrecognized component'
+      stop 'unrecognized component'
     endif !strain or invariant
 
     datstore=datstore
@@ -228,25 +251,25 @@ program combine_paraview_movie_data
        call write_real_fd(fid,y)
        call write_real_fd(fid,z)
        call write_real_fd(fid,dat)
-    !   print *, 'point:',ipoint,x,y,z,dat
-    enddo !
+        !   print *, 'point:',ipoint,x,y,z,dat
+    enddo
 
     if (numpoin /= npoint(iproc)) stop 'different number of points'
     np = np + npoint(iproc)
 
   enddo  ! all slices for points
 
- if (np /=  npoint_all) stop 'Error: Number of total points are not consistent'
- print *, 'Total number of points: ', np
- print *, ' '
+  if (np /=  npoint_all) stop 'Error: Number of total points are not consistent'
+  print *, 'Total number of points: ', np
+  print *, ' '
 
   ne = 0
-! write element information
- print *, 'Writing element information'
- do iproc = 1, num_node
+  ! write element information
+  print *, 'Writing element information'
+  do iproc = 1, num_node
 
-  ! print *, 'Reading slice ', iproc-1
-    write(prname,'(a,i6.6,a)') 'proc',iproc-1,'_'
+    ! print *, 'Reading slice ', iproc-1
+    write(prname,'(a,i6.6,a)') 'DATABASES_MPI/' // 'proc',iproc-1,'_'
 
     if (iproc == 1) then
       np = 0
@@ -255,46 +278,50 @@ program combine_paraview_movie_data
     endif
 
 
-      local_element_file = trim(prname) // 'movie3D_elements.bin'
-      open(unit = 27, file = trim(local_element_file), status = 'old', action='read',iostat = ios,form='unformatted')
-      if (ios /= 0) stop 'Error opening file'
+    local_element_file = trim(prname) // 'movie3D_elements.bin'
+    open(unit = 27, file = trim(local_element_file), status = 'old', action='read',iostat = ios,form='unformatted')
+    if (ios /= 0) stop 'Error opening file'
 
     !  print *, trim(local_element_file)
 
-      if (iproc == 1) then
-        if(MOVIE_COARSE) then
-         call write_integer_fd(fid,nelement_all)
-        else
-         call write_integer_fd(fid,nelement_all*64)
-        endif
-      endif
-
+    if (iproc == 1) then
       if(MOVIE_COARSE) then
-        nelement_local = nelement(iproc)
+        call write_integer_fd(fid,nelement_all)
       else
-        nelement_local = nelement(iproc)*64
+        call write_integer_fd(fid,nelement_all*64)
       endif
-      do i = 1, nelement_local
-        read(27) n1, n2, n3, n4, n5, n6, n7, n8
-        n1 = n1+np
-        n2 = n2+np
-        n3 = n3+np
-        n4 = n4+np
-        n5 = n5+np
-        n6 = n6+np
-        n7 = n7+np
-        n8 = n8+np
-        call write_integer_fd(fid,n1)
-        call write_integer_fd(fid,n2)
-        call write_integer_fd(fid,n3)
-        call write_integer_fd(fid,n4)
-        call write_integer_fd(fid,n5)
-        call write_integer_fd(fid,n6)
-        call write_integer_fd(fid,n7)
-        call write_integer_fd(fid,n8)
-        !write(*,*) n1, n2, n3, n4, n5, n6, n7, n8
-      enddo
-      close(27)
+    endif
+
+    if(MOVIE_COARSE) then
+      nelement_local = nelement(iproc)
+    else
+      nelement_local = nelement(iproc)*64
+    endif
+    do i = 1, nelement_local
+      read(27,iostat=ios) n1, n2, n3, n4, n5, n6, n7, n8
+      if( ios /= 0 ) then
+        print*,'error reading file: ',trim(local_element_file)
+        stop 'Error reading file movie3D_elements.bin, please check if number of elements is correct (MOVIE_COARSE?)'
+      endif
+      n1 = n1+np
+      n2 = n2+np
+      n3 = n3+np
+      n4 = n4+np
+      n5 = n5+np
+      n6 = n6+np
+      n7 = n7+np
+      n8 = n8+np
+      call write_integer_fd(fid,n1)
+      call write_integer_fd(fid,n2)
+      call write_integer_fd(fid,n3)
+      call write_integer_fd(fid,n4)
+      call write_integer_fd(fid,n5)
+      call write_integer_fd(fid,n6)
+      call write_integer_fd(fid,n7)
+      call write_integer_fd(fid,n8)
+      !write(*,*) n1, n2, n3, n4, n5, n6, n7, n8
+    enddo
+    close(27)
 
     ne = ne + nelement(iproc)
 

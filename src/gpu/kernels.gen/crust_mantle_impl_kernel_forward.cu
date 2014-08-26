@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 #ifndef INDEX2
 #define INDEX2(isize,i,j) i + isize*j
 #endif
@@ -10,6 +43,7 @@
 #ifndef INDEX5
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
 #endif
+
 #ifndef NDIM
 #define NDIM 3
 #endif
@@ -49,21 +83,64 @@
 #ifndef BLOCKSIZE_TRANSFER
 #define BLOCKSIZE_TRANSFER 256
 #endif
+
 static __device__ void compute_element_cm_att_stress(const int tx, const int working_element, const float * R_xx, const float * R_yy, const float * R_xy, const float * R_xz, const float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   int offset;
   int i_sls;
   float R_xx_val;
   float R_yy_val;
   for(i_sls=0; i_sls<=N_SLS - (1); i_sls+=1){
-    offset = i_sls + (N_SLS) * (tx + (NGLL3) * (working_element));
-    R_xx_val = R_xx[offset - 0];
-    R_yy_val = R_yy[offset - 0];
-    sigma_xx[0 - 0] = sigma_xx[0 - 0] - (R_xx_val);
-    sigma_yy[0 - 0] = sigma_yy[0 - 0] - (R_yy_val);
-    sigma_zz[0 - 0] = sigma_zz[0 - 0] + R_xx_val + R_yy_val;
-    sigma_xy[0 - 0] = sigma_xy[0 - 0] - (R_xy[offset - 0]);
-    sigma_xz[0 - 0] = sigma_xz[0 - 0] - (R_xz[offset - 0]);
-    sigma_yz[0 - 0] = sigma_yz[0 - 0] - (R_yz[offset - 0]);
+    offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
+    R_xx_val = R_xx[offset - (0)];
+    R_yy_val = R_yy[offset - (0)];
+    sigma_xx[0 - (0)] = sigma_xx[0 - (0)] - (R_xx_val);
+    sigma_yy[0 - (0)] = sigma_yy[0 - (0)] - (R_yy_val);
+    sigma_zz[0 - (0)] = sigma_zz[0 - (0)] + R_xx_val + R_yy_val;
+    sigma_xy[0 - (0)] = sigma_xy[0 - (0)] - (R_xy[offset - (0)]);
+    sigma_xz[0 - (0)] = sigma_xz[0 - (0)] - (R_xz[offset - (0)]);
+    sigma_yz[0 - (0)] = sigma_yz[0 - (0)] - (R_yz[offset - (0)]);
+  }
+}
+static __device__ void compute_element_cm_att_memory(const int tx, const int working_element, const float * d_muv, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){
+  int offset;
+  int i_sls;
+  float mul;
+  float alphaval_loc;
+  float betaval_loc;
+  float gammaval_loc;
+  float factor_loc;
+  float sn;
+  float snp1;
+  if(ANISOTROPY){
+    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element) - (0)];
+  } else {
+    mul = d_muv[tx + (NGLL3_PADDED) * (working_element) - (0)];
+  }
+  for(i_sls=0; i_sls<=N_SLS - (1); i_sls+=1){
+    offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));
+    if(USE_3D_ATTENUATION_ARRAYS){
+      factor_loc = (mul) * (factor_common[offset - (0)]);
+    } else {
+      factor_loc = (mul) * (factor_common[i_sls + (N_SLS) * (working_element) - (0)]);
+    }
+    alphaval_loc = alphaval[i_sls - (0)];
+    betaval_loc = betaval[i_sls - (0)];
+    gammaval_loc = gammaval[i_sls - (0)];
+    sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element) - (0)]);
+    snp1 = (factor_loc) * (epsilondev_xx_loc);
+    R_xx[offset - (0)] = (alphaval_loc) * (R_xx[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+    sn = (factor_loc) * (epsilondev_yy[tx + (NGLL3) * (working_element) - (0)]);
+    snp1 = (factor_loc) * (epsilondev_yy_loc);
+    R_yy[offset - (0)] = (alphaval_loc) * (R_yy[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+    sn = (factor_loc) * (epsilondev_xy[tx + (NGLL3) * (working_element) - (0)]);
+    snp1 = (factor_loc) * (epsilondev_xy_loc);
+    R_xy[offset - (0)] = (alphaval_loc) * (R_xy[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+    sn = (factor_loc) * (epsilondev_xz[tx + (NGLL3) * (working_element) - (0)]);
+    snp1 = (factor_loc) * (epsilondev_xz_loc);
+    R_xz[offset - (0)] = (alphaval_loc) * (R_xz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
+    sn = (factor_loc) * (epsilondev_yz[tx + (NGLL3) * (working_element) - (0)]);
+    snp1 = (factor_loc) * (epsilondev_yz_loc);
+    R_yz[offset - (0)] = (alphaval_loc) * (R_yz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
   }
 }
 static __device__ void compute_element_cm_gravity(const int tx, const int iglob, const float * __restrict__ d_xstore, const float * __restrict__ d_ystore, const float * __restrict__ d_zstore, const float * __restrict__ d_minus_gravity_table, const float * __restrict__ d_minus_deriv_gravity_table, const float * __restrict__ d_density_table, const float * __restrict__ wgll_cube, const float jacobianl, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){
@@ -97,21 +174,21 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   float sz_l;
   float factor;
   int int_radius;
-  radius = d_xstore[iglob - 0];
+  radius = d_xstore[iglob - (0)];
   if(radius < 1.5696123057604773e-05f){
     radius = 1.5696123057604773e-05f;
   }
-  theta = d_ystore[iglob - 0];
-  phi = d_zstore[iglob - 0];
+  theta = d_ystore[iglob - (0)];
+  phi = d_zstore[iglob - (0)];
   sincosf(theta,  &sin_theta,  &cos_theta);
   sincosf(phi,  &sin_phi,  &cos_phi);
   int_radius = rint(((radius) * (6371.0f)) * (10.0f)) - (1);
   if(int_radius < 0){
     int_radius = 0;
   }
-  minus_g = d_minus_gravity_table[int_radius - 0];
-  minus_dg = d_minus_deriv_gravity_table[int_radius - 0];
-  rho = d_density_table[int_radius - 0];
+  minus_g = d_minus_gravity_table[int_radius - (0)];
+  minus_dg = d_minus_deriv_gravity_table[int_radius - (0)];
+  rho = d_density_table[int_radius - (0)];
   gxl = ((minus_g) * (sin_theta)) * (cos_phi);
   gyl = ((minus_g) * (sin_theta)) * (sin_phi);
   gzl = (minus_g) * (cos_theta);
@@ -127,9 +204,9 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   Hxyl = (((cos_phi) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta_sq);
   Hxzl = (((cos_phi) * (cos_theta)) * (minus_dg_plus_g_over_radius)) * (sin_theta);
   Hyzl = (((cos_theta) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta);
-  sx_l = (rho) * (s_dummyx_loc[tx - 0]);
-  sy_l = (rho) * (s_dummyy_loc[tx - 0]);
-  sz_l = (rho) * (s_dummyz_loc[tx - 0]);
+  sx_l = (rho) * (s_dummyx_loc[tx - (0)]);
+  sy_l = (rho) * (s_dummyy_loc[tx - (0)]);
+  sz_l = (rho) * (s_dummyz_loc[tx - (0)]);
   *(sigma_xx) = *(sigma_xx) + (sy_l) * (gyl) + (sz_l) * (gzl);
   *(sigma_yy) = *(sigma_yy) + (sx_l) * (gxl) + (sz_l) * (gzl);
   *(sigma_zz) = *(sigma_zz) + (sx_l) * (gxl) + (sy_l) * (gyl);
@@ -139,52 +216,10 @@ static __device__ void compute_element_cm_gravity(const int tx, const int iglob,
   *(sigma_zx) = *(sigma_zx) - ((sz_l) * (gxl));
   *(sigma_yz) = *(sigma_yz) - ((sy_l) * (gzl));
   *(sigma_zy) = *(sigma_zy) - ((sz_l) * (gyl));
-  factor = (jacobianl) * (wgll_cube[tx - 0]);
-  rho_s_H1[0 - 0] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));
-  rho_s_H2[0 - 0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));
-  rho_s_H3[0 - 0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));
-}
-static __device__ void compute_element_cm_att_memory(const int tx, const int working_element, const float * d_muv, const float * factor_common, const float * alphaval, const float * betaval, const float * gammaval, float * R_xx, float * R_yy, float * R_xy, float * R_xz, float * R_yz, const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){
-  int offset;
-  int i_sls;
-  float mul;
-  float alphaval_loc;
-  float betaval_loc;
-  float gammaval_loc;
-  float factor_loc;
-  float sn;
-  float snp1;
-  if(ANISOTROPY){
-    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element) - 0];
-  } else {
-    mul = d_muv[tx + (NGLL3_PADDED) * (working_element) - 0];
-  }
-  for(i_sls=0; i_sls<=N_SLS - (1); i_sls+=1){
-    offset = i_sls + (N_SLS) * (tx + (NGLL3) * (working_element));
-    if(USE_3D_ATTENUATION_ARRAYS){
-      factor_loc = (mul) * (factor_common[offset - 0]);
-    } else {
-      factor_loc = (mul) * (factor_common[i_sls + (N_SLS) * (working_element) - 0]);
-    }
-    alphaval_loc = alphaval[i_sls - 0];
-    betaval_loc = betaval[i_sls - 0];
-    gammaval_loc = gammaval[i_sls - 0];
-    sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element) - 0]);
-    snp1 = (factor_loc) * (epsilondev_xx_loc);
-    R_xx[offset - 0] = (alphaval_loc) * (R_xx[offset - 0]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
-    sn = (factor_loc) * (epsilondev_yy[tx + (NGLL3) * (working_element) - 0]);
-    snp1 = (factor_loc) * (epsilondev_yy_loc);
-    R_yy[offset - 0] = (alphaval_loc) * (R_yy[offset - 0]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
-    sn = (factor_loc) * (epsilondev_xy[tx + (NGLL3) * (working_element) - 0]);
-    snp1 = (factor_loc) * (epsilondev_xy_loc);
-    R_xy[offset - 0] = (alphaval_loc) * (R_xy[offset - 0]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
-    sn = (factor_loc) * (epsilondev_xz[tx + (NGLL3) * (working_element) - 0]);
-    snp1 = (factor_loc) * (epsilondev_xz_loc);
-    R_xz[offset - 0] = (alphaval_loc) * (R_xz[offset - 0]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
-    sn = (factor_loc) * (epsilondev_yz[tx + (NGLL3) * (working_element) - 0]);
-    snp1 = (factor_loc) * (epsilondev_yz_loc);
-    R_yz[offset - 0] = (alphaval_loc) * (R_yz[offset - 0]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);
-  }
+  factor = (jacobianl) * (wgll_cube[tx - (0)]);
+  rho_s_H1[0 - (0)] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));
+  rho_s_H2[0 - (0)] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));
+  rho_s_H3[0 - (0)] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));
 }
 static __device__ void compute_element_cm_aniso(const int offset, const float * d_c11store, const float * d_c12store, const float * d_c13store, const float * d_c14store, const float * d_c15store, const float * d_c16store, const float * d_c22store, const float * d_c23store, const float * d_c24store, const float * d_c25store, const float * d_c26store, const float * d_c33store, const float * d_c34store, const float * d_c35store, const float * d_c36store, const float * d_c44store, const float * d_c45store, const float * d_c46store, const float * d_c55store, const float * d_c56store, const float * d_c66store, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){
   float c11;
@@ -210,27 +245,27 @@ static __device__ void compute_element_cm_aniso(const int offset, const float * 
   float c66;
   float mul;
   float minus_sum_beta;
-  c11 = d_c11store[offset - 0];
-  c12 = d_c12store[offset - 0];
-  c13 = d_c13store[offset - 0];
-  c14 = d_c14store[offset - 0];
-  c15 = d_c15store[offset - 0];
-  c16 = d_c16store[offset - 0];
-  c22 = d_c22store[offset - 0];
-  c23 = d_c23store[offset - 0];
-  c24 = d_c24store[offset - 0];
-  c25 = d_c25store[offset - 0];
-  c26 = d_c26store[offset - 0];
-  c33 = d_c33store[offset - 0];
-  c34 = d_c34store[offset - 0];
-  c35 = d_c35store[offset - 0];
-  c36 = d_c36store[offset - 0];
-  c44 = d_c44store[offset - 0];
-  c45 = d_c45store[offset - 0];
-  c46 = d_c46store[offset - 0];
-  c55 = d_c55store[offset - 0];
-  c56 = d_c56store[offset - 0];
-  c66 = d_c66store[offset - 0];
+  c11 = d_c11store[offset - (0)];
+  c12 = d_c12store[offset - (0)];
+  c13 = d_c13store[offset - (0)];
+  c14 = d_c14store[offset - (0)];
+  c15 = d_c15store[offset - (0)];
+  c16 = d_c16store[offset - (0)];
+  c22 = d_c22store[offset - (0)];
+  c23 = d_c23store[offset - (0)];
+  c24 = d_c24store[offset - (0)];
+  c25 = d_c25store[offset - (0)];
+  c26 = d_c26store[offset - (0)];
+  c33 = d_c33store[offset - (0)];
+  c34 = d_c34store[offset - (0)];
+  c35 = d_c35store[offset - (0)];
+  c36 = d_c36store[offset - (0)];
+  c44 = d_c44store[offset - (0)];
+  c45 = d_c45store[offset - (0)];
+  c46 = d_c46store[offset - (0)];
+  c55 = d_c55store[offset - (0)];
+  c56 = d_c56store[offset - (0)];
+  c66 = d_c66store[offset - (0)];
   if(ATTENUATION){
     minus_sum_beta = one_minus_sum_beta_use - (1.0f);
     mul = (c44) * (minus_sum_beta);
@@ -256,8 +291,8 @@ static __device__ void compute_element_cm_iso(const int offset, const float * d_
   float mul;
   float lambdalplus2mul;
   float kappal;
-  kappal = d_kappavstore[offset - 0];
-  mul = d_muvstore[offset - 0];
+  kappal = d_kappavstore[offset - (0)];
+  mul = d_muvstore[offset - (0)];
   if(ATTENUATION){
     mul = (mul) * (one_minus_sum_beta_use);
   }
@@ -333,10 +368,10 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
   float c66;
   float theta;
   float phi;
-  kappavl = d_kappavstore[offset - 0];
-  muvl = d_muvstore[offset - 0];
-  kappahl = d_kappahstore[offset - 0];
-  muhl = d_muhstore[offset - 0];
+  kappavl = d_kappavstore[offset - (0)];
+  muvl = d_muvstore[offset - (0)];
+  kappahl = d_kappahstore[offset - (0)];
+  muhl = d_muhstore[offset - (0)];
   if(ATTENUATION){
     muvl = (muvl) * (one_minus_sum_beta_use);
     muhl = (muhl) * (one_minus_sum_beta_use);
@@ -345,9 +380,9 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
   rhovphsq = kappahl + (muhl) * (1.3333333333333333f);
   rhovsvsq = muvl;
   rhovshsq = muhl;
-  eta_aniso = d_eta_anisostore[offset - 0];
-  theta = d_ystore[iglob - 0];
-  phi = d_zstore[iglob - 0];
+  eta_aniso = d_eta_anisostore[offset - (0)];
+  theta = d_ystore[iglob - (0)];
+  phi = d_zstore[iglob - (0)];
   sincosf(theta,  &sintheta,  &costheta);
   sincosf(phi,  &sinphi,  &cosphi);
   sincosf((theta) * (2.0f),  &sintwotheta,  &costwotheta);
@@ -412,6 +447,9 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   int K;
   int J;
   int I;
+#ifndef MANUALLY_UNROLLED_LOOPS
+  int l;
+#endif
   unsigned short active;
   int offset;
   int iglob;
@@ -502,27 +540,27 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     if(use_mesh_coloring_gpu){
       working_element = bx;
     } else {
-      working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1)) - 0] - (1);
+      working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1)) - (0)] - (1);
     }
 #endif
-    iglob = d_ibool[(working_element) * (NGLL3) + tx - 0] - (1);
+    iglob = d_ibool[(working_element) * (NGLL3) + tx - (0)] - (1);
 #ifdef USE_TEXTURES_FIELDS
-    s_dummyx_loc[tx - 0] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 0);
-    s_dummyy_loc[tx - 0] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 1);
-    s_dummyz_loc[tx - 0] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 2);
+    s_dummyx_loc[tx - (0)] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 0);
+    s_dummyy_loc[tx - (0)] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 1);
+    s_dummyz_loc[tx - (0)] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 2);
 #else
-    s_dummyx_loc[tx - 0] = d_displ[0 - 0 + (iglob - (0)) * (3)];
-    s_dummyy_loc[tx - 0] = d_displ[1 - 0 + (iglob - (0)) * (3)];
-    s_dummyz_loc[tx - 0] = d_displ[2 - 0 + (iglob - (0)) * (3)];
+    s_dummyx_loc[tx - (0)] = d_displ[0 - (0) + (iglob - (0)) * (3)];
+    s_dummyy_loc[tx - (0)] = d_displ[1 - (0) + (iglob - (0)) * (3)];
+    s_dummyz_loc[tx - (0)] = d_displ[2 - (0) + (iglob - (0)) * (3)];
 #endif
   }
   if(tx < NGLL2){
 #ifdef USE_TEXTURES_CONSTANTS
-    sh_hprime_xx[tx - 0] = tex1Dfetch(d_hprime_xx_tex,tx);
-    sh_hprimewgll_xx[tx - 0] = tex1Dfetch(d_hprimewgll_xx_tex,tx);
+    sh_hprime_xx[tx - (0)] = tex1Dfetch(d_hprime_xx_tex,tx);
+    sh_hprimewgll_xx[tx - (0)] = tex1Dfetch(d_hprimewgll_xx_tex,tx);
 #else
-    sh_hprime_xx[tx - 0] = d_hprime_xx[tx - 0];
-    sh_hprimewgll_xx[tx - 0] = d_hprimewgll_xx[tx - 0];
+    sh_hprime_xx[tx - (0)] = d_hprime_xx[tx - (0)];
+    sh_hprimewgll_xx[tx - (0)] = d_hprimewgll_xx[tx - (0)];
 #endif
   }
   __syncthreads();
@@ -537,93 +575,92 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     tempz2l = 0.0f;
     tempz3l = 0.0f;
 #ifdef MANUALLY_UNROLLED_LOOPS
-    fac1 = sh_hprime_xx[(0) * (NGLLX) + I - 0];
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - 0]) * (fac1);
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - 0]) * (fac1);
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - 0]) * (fac1);
-    fac2 = sh_hprime_xx[(0) * (NGLLX) + J - 0];
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - 0]) * (fac2);
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - 0]) * (fac2);
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - 0]) * (fac2);
-    fac3 = sh_hprime_xx[(0) * (NGLLX) + K - 0];
-    tempx3l = tempx3l + (s_dummyx_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempy3l = tempy3l + (s_dummyy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempz3l = tempz3l + (s_dummyz_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    fac1 = sh_hprime_xx[(1) * (NGLLX) + I - 0];
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - 0]) * (fac1);
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - 0]) * (fac1);
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - 0]) * (fac1);
-    fac2 = sh_hprime_xx[(1) * (NGLLX) + J - 0];
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - 0]) * (fac2);
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - 0]) * (fac2);
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - 0]) * (fac2);
-    fac3 = sh_hprime_xx[(1) * (NGLLX) + K - 0];
-    tempx3l = tempx3l + (s_dummyx_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempy3l = tempy3l + (s_dummyy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempz3l = tempz3l + (s_dummyz_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    fac1 = sh_hprime_xx[(2) * (NGLLX) + I - 0];
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - 0]) * (fac1);
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - 0]) * (fac1);
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - 0]) * (fac1);
-    fac2 = sh_hprime_xx[(2) * (NGLLX) + J - 0];
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - 0]) * (fac2);
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - 0]) * (fac2);
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - 0]) * (fac2);
-    fac3 = sh_hprime_xx[(2) * (NGLLX) + K - 0];
-    tempx3l = tempx3l + (s_dummyx_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempy3l = tempy3l + (s_dummyy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempz3l = tempz3l + (s_dummyz_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    fac1 = sh_hprime_xx[(3) * (NGLLX) + I - 0];
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - 0]) * (fac1);
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - 0]) * (fac1);
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - 0]) * (fac1);
-    fac2 = sh_hprime_xx[(3) * (NGLLX) + J - 0];
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - 0]) * (fac2);
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - 0]) * (fac2);
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - 0]) * (fac2);
-    fac3 = sh_hprime_xx[(3) * (NGLLX) + K - 0];
-    tempx3l = tempx3l + (s_dummyx_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempy3l = tempy3l + (s_dummyy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempz3l = tempz3l + (s_dummyz_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    fac1 = sh_hprime_xx[(4) * (NGLLX) + I - 0];
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - 0]) * (fac1);
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - 0]) * (fac1);
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - 0]) * (fac1);
-    fac2 = sh_hprime_xx[(4) * (NGLLX) + J - 0];
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - 0]) * (fac2);
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - 0]) * (fac2);
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - 0]) * (fac2);
-    fac3 = sh_hprime_xx[(4) * (NGLLX) + K - 0];
-    tempx3l = tempx3l + (s_dummyx_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempy3l = tempy3l + (s_dummyy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-    tempz3l = tempz3l + (s_dummyz_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
+    fac1 = sh_hprime_xx[(0) * (NGLLX) + I - (0)];
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - (0)]) * (fac1);
+    fac2 = sh_hprime_xx[(0) * (NGLLX) + J - (0)];
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - (0)]) * (fac2);
+    fac3 = sh_hprime_xx[(0) * (NGLLX) + K - (0)];
+    tempx3l = tempx3l + (s_dummyx_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_dummyy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_dummyz_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    fac1 = sh_hprime_xx[(1) * (NGLLX) + I - (0)];
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - (0)]) * (fac1);
+    fac2 = sh_hprime_xx[(1) * (NGLLX) + J - (0)];
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - (0)]) * (fac2);
+    fac3 = sh_hprime_xx[(1) * (NGLLX) + K - (0)];
+    tempx3l = tempx3l + (s_dummyx_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_dummyy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_dummyz_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    fac1 = sh_hprime_xx[(2) * (NGLLX) + I - (0)];
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - (0)]) * (fac1);
+    fac2 = sh_hprime_xx[(2) * (NGLLX) + J - (0)];
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - (0)]) * (fac2);
+    fac3 = sh_hprime_xx[(2) * (NGLLX) + K - (0)];
+    tempx3l = tempx3l + (s_dummyx_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_dummyy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_dummyz_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    fac1 = sh_hprime_xx[(3) * (NGLLX) + I - (0)];
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - (0)]) * (fac1);
+    fac2 = sh_hprime_xx[(3) * (NGLLX) + J - (0)];
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - (0)]) * (fac2);
+    fac3 = sh_hprime_xx[(3) * (NGLLX) + K - (0)];
+    tempx3l = tempx3l + (s_dummyx_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_dummyy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_dummyz_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    fac1 = sh_hprime_xx[(4) * (NGLLX) + I - (0)];
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - (0)]) * (fac1);
+    fac2 = sh_hprime_xx[(4) * (NGLLX) + J - (0)];
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (fac2);
+    fac3 = sh_hprime_xx[(4) * (NGLLX) + K - (0)];
+    tempx3l = tempx3l + (s_dummyx_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_dummyy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_dummyz_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
 #else
-    int l;
     for(l=0; l<=NGLLX - (1); l+=1){
-      fac1 = sh_hprime_xx[(l) * (NGLLX) + I - 0];
-      tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (fac1);
-      tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (fac1);
-      tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - 0]) * (fac1);
-      fac2 = sh_hprime_xx[(l) * (NGLLX) + J - 0];
-      tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (fac2);
-      tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (fac2);
-      tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - 0]) * (fac2);
-      fac3 = sh_hprime_xx[(l) * (NGLLX) + K - 0];
-      tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-      tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
-      tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - 0]) * (fac3);
+      fac1 = sh_hprime_xx[(l) * (NGLLX) + I - (0)];
+      tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);
+      tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);
+      tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);
+      fac2 = sh_hprime_xx[(l) * (NGLLX) + J - (0)];
+      tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);
+      tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);
+      tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);
+      fac3 = sh_hprime_xx[(l) * (NGLLX) + K - (0)];
+      tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+      tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
+      tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);
     }
 #endif
     offset = (working_element) * (NGLL3_PADDED) + tx;
-    xixl = d_xix[offset - 0];
-    etaxl = d_etax[offset - 0];
-    gammaxl = d_gammax[offset - 0];
-    xiyl = d_xiy[offset - 0];
-    etayl = d_etay[offset - 0];
-    gammayl = d_gammay[offset - 0];
-    xizl = d_xiz[offset - 0];
-    etazl = d_etaz[offset - 0];
-    gammazl = d_gammaz[offset - 0];
+    xixl = d_xix[offset - (0)];
+    etaxl = d_etax[offset - (0)];
+    gammaxl = d_gammax[offset - (0)];
+    xiyl = d_xiy[offset - (0)];
+    etayl = d_etay[offset - (0)];
+    gammayl = d_gammay[offset - (0)];
+    xizl = d_xiz[offset - (0)];
+    etazl = d_etaz[offset - (0)];
+    gammazl = d_gammaz[offset - (0)];
     duxdxl = (xixl) * (tempx1l) + (etaxl) * (tempx2l) + (gammaxl) * (tempx3l);
     duxdyl = (xiyl) * (tempx1l) + (etayl) * (tempx2l) + (gammayl) * (tempx3l);
     duxdzl = (xizl) * (tempx1l) + (etazl) * (tempx2l) + (gammazl) * (tempx3l);
@@ -647,22 +684,22 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       epsilondev_xz_loc = (duzdxl_plus_duxdzl) * (0.5f);
       epsilondev_yz_loc = (duzdyl_plus_duydzl) * (0.5f);
       if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1){
-        epsilon_trace_over_3[tx - 0] = templ;
+        epsilon_trace_over_3[tx - (0)] = templ;
       } else {
-        epsilon_trace_over_3[tx + (working_element) * (NGLL3) - 0] = templ;
+        epsilon_trace_over_3[tx + (working_element) * (NGLL3) - (0)] = templ;
       }
     }
     if(ATTENUATION){
       if(USE_3D_ATTENUATION_ARRAYS){
-        one_minus_sum_beta_use = one_minus_sum_beta[tx + (working_element) * (NGLL3) - 0];
+        one_minus_sum_beta_use = one_minus_sum_beta[tx + (working_element) * (NGLL3) - (0)];
       } else {
-        one_minus_sum_beta_use = one_minus_sum_beta[working_element - 0];
+        one_minus_sum_beta_use = one_minus_sum_beta[working_element - (0)];
       }
     }
     if(ANISOTROPY){
       compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     } else {
-      if( ! d_ispec_is_tiso[working_element - 0]){
+      if( ! d_ispec_is_tiso[working_element - (0)]){
         compute_element_cm_iso(offset, d_kappavstore, d_muvstore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
       } else {
         compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob, d_ystore, d_zstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
@@ -678,15 +715,15 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     if(GRAVITY){
       compute_element_cm_gravity(tx, iglob, d_xstore, d_ystore, d_zstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H1,  &rho_s_H2,  &rho_s_H3);
     }
-    s_tempx1[tx - 0] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));
-    s_tempy1[tx - 0] = (jacobianl) * ((sigma_xy) * (xixl) + (sigma_yy) * (xiyl) + (sigma_zy) * (xizl));
-    s_tempz1[tx - 0] = (jacobianl) * ((sigma_xz) * (xixl) + (sigma_yz) * (xiyl) + (sigma_zz) * (xizl));
-    s_tempx2[tx - 0] = (jacobianl) * ((sigma_xx) * (etaxl) + (sigma_yx) * (etayl) + (sigma_zx) * (etazl));
-    s_tempy2[tx - 0] = (jacobianl) * ((sigma_xy) * (etaxl) + (sigma_yy) * (etayl) + (sigma_zy) * (etazl));
-    s_tempz2[tx - 0] = (jacobianl) * ((sigma_xz) * (etaxl) + (sigma_yz) * (etayl) + (sigma_zz) * (etazl));
-    s_tempx3[tx - 0] = (jacobianl) * ((sigma_xx) * (gammaxl) + (sigma_yx) * (gammayl) + (sigma_zx) * (gammazl));
-    s_tempy3[tx - 0] = (jacobianl) * ((sigma_xy) * (gammaxl) + (sigma_yy) * (gammayl) + (sigma_zy) * (gammazl));
-    s_tempz3[tx - 0] = (jacobianl) * ((sigma_xz) * (gammaxl) + (sigma_yz) * (gammayl) + (sigma_zz) * (gammazl));
+    s_tempx1[tx - (0)] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));
+    s_tempy1[tx - (0)] = (jacobianl) * ((sigma_xy) * (xixl) + (sigma_yy) * (xiyl) + (sigma_zy) * (xizl));
+    s_tempz1[tx - (0)] = (jacobianl) * ((sigma_xz) * (xixl) + (sigma_yz) * (xiyl) + (sigma_zz) * (xizl));
+    s_tempx2[tx - (0)] = (jacobianl) * ((sigma_xx) * (etaxl) + (sigma_yx) * (etayl) + (sigma_zx) * (etazl));
+    s_tempy2[tx - (0)] = (jacobianl) * ((sigma_xy) * (etaxl) + (sigma_yy) * (etayl) + (sigma_zy) * (etazl));
+    s_tempz2[tx - (0)] = (jacobianl) * ((sigma_xz) * (etaxl) + (sigma_yz) * (etayl) + (sigma_zz) * (etazl));
+    s_tempx3[tx - (0)] = (jacobianl) * ((sigma_xx) * (gammaxl) + (sigma_yx) * (gammayl) + (sigma_zx) * (gammazl));
+    s_tempy3[tx - (0)] = (jacobianl) * ((sigma_xy) * (gammaxl) + (sigma_yy) * (gammayl) + (sigma_zy) * (gammazl));
+    s_tempz3[tx - (0)] = (jacobianl) * ((sigma_xz) * (gammaxl) + (sigma_yz) * (gammayl) + (sigma_zz) * (gammazl));
   }
   __syncthreads();
   if(active){
@@ -700,103 +737,103 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     tempz2l = 0.0f;
     tempz3l = 0.0f;
 #ifdef MANUALLY_UNROLLED_LOOPS
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 0 - 0];
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 0 - (0)];
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 0;
-    tempx1l = tempx1l + (s_tempx1[offset - 0]) * (fac1);
-    tempy1l = tempy1l + (s_tempy1[offset - 0]) * (fac1);
-    tempz1l = tempz1l + (s_tempz1[offset - 0]) * (fac1);
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 0 - 0];
+    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 0 - (0)];
     offset = (K) * (NGLL2) + (0) * (NGLLX) + I;
-    tempx2l = tempx2l + (s_tempx2[offset - 0]) * (fac2);
-    tempy2l = tempy2l + (s_tempy2[offset - 0]) * (fac2);
-    tempz2l = tempz2l + (s_tempz2[offset - 0]) * (fac2);
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 0 - 0];
+    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 0 - (0)];
     offset = (0) * (NGLL2) + (J) * (NGLLX) + I;
-    tempx3l = tempx3l + (s_tempx3[offset - 0]) * (fac3);
-    tempy3l = tempy3l + (s_tempy3[offset - 0]) * (fac3);
-    tempz3l = tempz3l + (s_tempz3[offset - 0]) * (fac3);
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 1 - 0];
+    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 1 - (0)];
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 1;
-    tempx1l = tempx1l + (s_tempx1[offset - 0]) * (fac1);
-    tempy1l = tempy1l + (s_tempy1[offset - 0]) * (fac1);
-    tempz1l = tempz1l + (s_tempz1[offset - 0]) * (fac1);
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 1 - 0];
+    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 1 - (0)];
     offset = (K) * (NGLL2) + (1) * (NGLLX) + I;
-    tempx2l = tempx2l + (s_tempx2[offset - 0]) * (fac2);
-    tempy2l = tempy2l + (s_tempy2[offset - 0]) * (fac2);
-    tempz2l = tempz2l + (s_tempz2[offset - 0]) * (fac2);
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 1 - 0];
+    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 1 - (0)];
     offset = (1) * (NGLL2) + (J) * (NGLLX) + I;
-    tempx3l = tempx3l + (s_tempx3[offset - 0]) * (fac3);
-    tempy3l = tempy3l + (s_tempy3[offset - 0]) * (fac3);
-    tempz3l = tempz3l + (s_tempz3[offset - 0]) * (fac3);
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 2 - 0];
+    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 2 - (0)];
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 2;
-    tempx1l = tempx1l + (s_tempx1[offset - 0]) * (fac1);
-    tempy1l = tempy1l + (s_tempy1[offset - 0]) * (fac1);
-    tempz1l = tempz1l + (s_tempz1[offset - 0]) * (fac1);
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 2 - 0];
+    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 2 - (0)];
     offset = (K) * (NGLL2) + (2) * (NGLLX) + I;
-    tempx2l = tempx2l + (s_tempx2[offset - 0]) * (fac2);
-    tempy2l = tempy2l + (s_tempy2[offset - 0]) * (fac2);
-    tempz2l = tempz2l + (s_tempz2[offset - 0]) * (fac2);
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 2 - 0];
+    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 2 - (0)];
     offset = (2) * (NGLL2) + (J) * (NGLLX) + I;
-    tempx3l = tempx3l + (s_tempx3[offset - 0]) * (fac3);
-    tempy3l = tempy3l + (s_tempy3[offset - 0]) * (fac3);
-    tempz3l = tempz3l + (s_tempz3[offset - 0]) * (fac3);
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 3 - 0];
+    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 3 - (0)];
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 3;
-    tempx1l = tempx1l + (s_tempx1[offset - 0]) * (fac1);
-    tempy1l = tempy1l + (s_tempy1[offset - 0]) * (fac1);
-    tempz1l = tempz1l + (s_tempz1[offset - 0]) * (fac1);
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 3 - 0];
+    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 3 - (0)];
     offset = (K) * (NGLL2) + (3) * (NGLLX) + I;
-    tempx2l = tempx2l + (s_tempx2[offset - 0]) * (fac2);
-    tempy2l = tempy2l + (s_tempy2[offset - 0]) * (fac2);
-    tempz2l = tempz2l + (s_tempz2[offset - 0]) * (fac2);
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 3 - 0];
+    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 3 - (0)];
     offset = (3) * (NGLL2) + (J) * (NGLLX) + I;
-    tempx3l = tempx3l + (s_tempx3[offset - 0]) * (fac3);
-    tempy3l = tempy3l + (s_tempy3[offset - 0]) * (fac3);
-    tempz3l = tempz3l + (s_tempz3[offset - 0]) * (fac3);
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 4 - 0];
+    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 4 - (0)];
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 4;
-    tempx1l = tempx1l + (s_tempx1[offset - 0]) * (fac1);
-    tempy1l = tempy1l + (s_tempy1[offset - 0]) * (fac1);
-    tempz1l = tempz1l + (s_tempz1[offset - 0]) * (fac1);
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 4 - 0];
+    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);
+    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);
+    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 4 - (0)];
     offset = (K) * (NGLL2) + (4) * (NGLLX) + I;
-    tempx2l = tempx2l + (s_tempx2[offset - 0]) * (fac2);
-    tempy2l = tempy2l + (s_tempy2[offset - 0]) * (fac2);
-    tempz2l = tempz2l + (s_tempz2[offset - 0]) * (fac2);
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 4 - 0];
+    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);
+    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);
+    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 4 - (0)];
     offset = (4) * (NGLL2) + (J) * (NGLLX) + I;
-    tempx3l = tempx3l + (s_tempx3[offset - 0]) * (fac3);
-    tempy3l = tempy3l + (s_tempy3[offset - 0]) * (fac3);
-    tempz3l = tempz3l + (s_tempz3[offset - 0]) * (fac3);
+    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);
+    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);
+    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);
 #else
     for(l=0; l<=NGLLX - (1); l+=1){
-      fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + l - 0];
+      fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + l - (0)];
       offset = (K) * (NGLL2) + (J) * (NGLLX) + l;
-      tempx1l = tempx1l + (s_tempx1[offset - 0]) * (fac1);
-      tempy1l = tempy1l + (s_tempy1[offset - 0]) * (fac1);
-      tempz1l = tempz1l + (s_tempz1[offset - 0]) * (fac1);
-      fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + l - 0];
+      tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);
+      tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);
+      tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);
+      fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + l - (0)];
       offset = (K) * (NGLL2) + (l) * (NGLLX) + I;
-      tempx2l = tempx2l + (s_tempx2[offset - 0]) * (fac2);
-      tempy2l = tempy2l + (s_tempy2[offset - 0]) * (fac2);
-      tempz2l = tempz2l + (s_tempz2[offset - 0]) * (fac2);
-      fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + l - 0];
+      tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);
+      tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);
+      tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);
+      fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + l - (0)];
       offset = (l) * (NGLL2) + (J) * (NGLLX) + I;
-      tempx3l = tempx3l + (s_tempx3[offset - 0]) * (fac3);
-      tempy3l = tempy3l + (s_tempy3[offset - 0]) * (fac3);
-      tempz3l = tempz3l + (s_tempz3[offset - 0]) * (fac3);
+      tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);
+      tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);
+      tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);
     }
 #endif
-    fac1 = d_wgllwgll_yz[(K) * (NGLLX) + J - 0];
-    fac2 = d_wgllwgll_xz[(K) * (NGLLX) + I - 0];
-    fac3 = d_wgllwgll_xy[(J) * (NGLLX) + I - 0];
+    fac1 = d_wgllwgll_yz[(K) * (NGLLX) + J - (0)];
+    fac2 = d_wgllwgll_xz[(K) * (NGLLX) + I - (0)];
+    fac3 = d_wgllwgll_xy[(J) * (NGLLX) + I - (0)];
     sum_terms1 =  -((fac1) * (tempx1l) + (fac2) * (tempx2l) + (fac3) * (tempx3l));
     sum_terms2 =  -((fac1) * (tempy1l) + (fac2) * (tempy2l) + (fac3) * (tempy3l));
     sum_terms3 =  -((fac1) * (tempz1l) + (fac2) * (tempz2l) + (fac3) * (tempz3l));
@@ -807,24 +844,24 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     }
 #ifdef USE_MESH_COLORING_GPU
 #ifdef USE_TEXTURES_FIELDS
-    d_accel[0 - 0 + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 0) + sum_terms1;
-    d_accel[1 - 0 + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 1) + sum_terms2;
-    d_accel[2 - 0 + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 2) + sum_terms3;
+    d_accel[0 - (0) + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 0) + sum_terms1;
+    d_accel[1 - (0) + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 1) + sum_terms2;
+    d_accel[2 - (0) + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 2) + sum_terms3;
 #else
-    d_accel[0 - 0 + (iglob - (0)) * (3)] = d_accel[0 - 0 + (iglob - (0)) * (3)] + sum_terms1;
-    d_accel[1 - 0 + (iglob - (0)) * (3)] = d_accel[1 - 0 + (iglob - (0)) * (3)] + sum_terms2;
-    d_accel[2 - 0 + (iglob - (0)) * (3)] = d_accel[2 - 0 + (iglob - (0)) * (3)] + sum_terms3;
+    d_accel[0 - (0) + (iglob - (0)) * (3)] = d_accel[0 - (0) + (iglob - (0)) * (3)] + sum_terms1;
+    d_accel[1 - (0) + (iglob - (0)) * (3)] = d_accel[1 - (0) + (iglob - (0)) * (3)] + sum_terms2;
+    d_accel[2 - (0) + (iglob - (0)) * (3)] = d_accel[2 - (0) + (iglob - (0)) * (3)] + sum_terms3;
 #endif
 #else
     if(use_mesh_coloring_gpu){
 #ifdef USE_TEXTURES_FIELDS
-      d_accel[0 - 0 + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 0) + sum_terms1;
-      d_accel[1 - 0 + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 1) + sum_terms2;
-      d_accel[2 - 0 + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 2) + sum_terms3;
+      d_accel[0 - (0) + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 0) + sum_terms1;
+      d_accel[1 - (0) + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 1) + sum_terms2;
+      d_accel[2 - (0) + (iglob - (0)) * (3)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 2) + sum_terms3;
 #else
-      d_accel[0 - 0 + (iglob - (0)) * (3)] = d_accel[0 - 0 + (iglob - (0)) * (3)] + sum_terms1;
-      d_accel[1 - 0 + (iglob - (0)) * (3)] = d_accel[1 - 0 + (iglob - (0)) * (3)] + sum_terms2;
-      d_accel[2 - 0 + (iglob - (0)) * (3)] = d_accel[2 - 0 + (iglob - (0)) * (3)] + sum_terms3;
+      d_accel[0 - (0) + (iglob - (0)) * (3)] = d_accel[0 - (0) + (iglob - (0)) * (3)] + sum_terms1;
+      d_accel[1 - (0) + (iglob - (0)) * (3)] = d_accel[1 - (0) + (iglob - (0)) * (3)] + sum_terms2;
+      d_accel[2 - (0) + (iglob - (0)) * (3)] = d_accel[2 - (0) + (iglob - (0)) * (3)] + sum_terms3;
 #endif
     } else {
       atomicAdd(d_accel + (iglob) * (3) + 0, sum_terms1);
@@ -836,11 +873,11 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc, epsilondev_yy_loc, epsilondev_xy_loc, epsilondev_xz_loc, epsilondev_yz_loc, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);
     }
     if(COMPUTE_AND_STORE_STRAIN){
-      epsilondev_xx[tx + (working_element) * (NGLL3) - 0] = epsilondev_xx_loc;
-      epsilondev_yy[tx + (working_element) * (NGLL3) - 0] = epsilondev_yy_loc;
-      epsilondev_xy[tx + (working_element) * (NGLL3) - 0] = epsilondev_xy_loc;
-      epsilondev_xz[tx + (working_element) * (NGLL3) - 0] = epsilondev_xz_loc;
-      epsilondev_yz[tx + (working_element) * (NGLL3) - 0] = epsilondev_yz_loc;
+      epsilondev_xx[tx + (working_element) * (NGLL3) - (0)] = epsilondev_xx_loc;
+      epsilondev_yy[tx + (working_element) * (NGLL3) - (0)] = epsilondev_yy_loc;
+      epsilondev_xy[tx + (working_element) * (NGLL3) - (0)] = epsilondev_xy_loc;
+      epsilondev_xz[tx + (working_element) * (NGLL3) - (0)] = epsilondev_xz_loc;
+      epsilondev_yz[tx + (working_element) * (NGLL3) - (0)] = epsilondev_yz_loc;
     }
   }
 }

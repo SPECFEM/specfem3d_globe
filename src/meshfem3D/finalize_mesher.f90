@@ -47,7 +47,7 @@
   double precision, parameter :: scaling_factor_gi = GRAV * nondimensionalizing_factor_gi
   double precision, parameter :: scaling_factor_Gij_Eotvos = GRAV * nondimensionalizing_factor_Gij * SI_UNITS_TO_EOTVOS
 
-  double precision :: real_altitude_of_observ_point
+  double precision :: real_altitude_of_observ_point,distance_to_center_in_km
 
   integer :: ixval,iyval,ichunkval
 
@@ -125,8 +125,11 @@
       write(IMAIN,*) '   x = ',(Earth_center_of_mass_x_total / Earth_mass_total) / 1000.d0,' km'
       write(IMAIN,*) '   y = ',(Earth_center_of_mass_y_total / Earth_mass_total) / 1000.d0,' km'
       write(IMAIN,*) '   z = ',(Earth_center_of_mass_z_total / Earth_mass_total) / 1000.d0,' km'
-      write(IMAIN,*) '   distance to center = ',(sqrt(Earth_center_of_mass_x_total**2 + Earth_center_of_mass_y_total**2 + &
-                                                      Earth_center_of_mass_z_total**2) / Earth_mass_total) / 1000.d0,' km'
+      distance_to_center_in_km = (sqrt(Earth_center_of_mass_x_total**2 + Earth_center_of_mass_y_total**2 + &
+                                                      Earth_center_of_mass_z_total**2) / Earth_mass_total) / 1000.d0
+      write(IMAIN,*) '   distance to center = ',distance_to_center_in_km,' km'
+      if(ROLAND_SYLVAIN .and. .not. ONLY_COMPUTE_CENTER_OF_MASS .and. distance_to_center_in_km > 0.01d0) &
+        stop 'error: center of mass of the model is not located in zero for Roland_Sylvain integrals, aborting...'
       write(IMAIN,*)
     endif
 
@@ -336,10 +339,7 @@
     write(IMAIN,*)
 
     write(IMAIN,*)
-    write(IMAIN,*) 'the total number of time steps will be NSTEP = ',NSTEP
     write(IMAIN,*) 'the time step of the solver will be DT = ',sngl(DT)
-    write(IMAIN,*) 'the total duration will thus be ',sngl(DT*(NSTEP-1)),' seconds'
-    write(IMAIN,*) '                    i.e. ',sngl(DT*(NSTEP-1)/60.d0),' minutes'
     write(IMAIN,*)
 
     ! write information about precision used for floating-point operations

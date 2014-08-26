@@ -49,13 +49,11 @@ contains
 
 !===============================================================================
 subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
-    myrank, prname, nspec, iMPIcut_xi,iMPIcut_eta, &
-    ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-    npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-    ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-    RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-    RMIDDLE_CRUST,ROCEAN,iregion_code, &
-    group_size_inc, avs_dx_adios)
+                                                  myrank, nspec, iMPIcut_xi,iMPIcut_eta, &
+                                                  ibool,mask_ibool, &
+                                                  npointot, &
+                                                  ISOTROPIC_3D_MANTLE, &
+                                                  group_size_inc, avs_dx_adios)
 
   use constants
   use adios_helpers_mod
@@ -64,57 +62,26 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   implicit none
 
   integer(kind=8), intent(in) :: adios_group
-  integer(kind=8), intent(inout) :: group_size_inc
 
-  integer nspec,myrank
-  integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
+  integer :: nspec,myrank
+  integer :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
-  integer idoubling(nspec)
+  logical :: ISOTROPIC_3D_MANTLE
 
-  logical ELLIPTICITY,ISOTROPIC_3D_MANTLE
+  logical :: iMPIcut_xi(2,nspec)
+  logical :: iMPIcut_eta(2,nspec)
 
-  logical iMPIcut_xi(2,nspec)
-  logical iMPIcut_eta(2,nspec)
-
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771, &
-      R400,R120,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
-
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
-
-  real(kind=CUSTOM_REAL) kappavstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) muvstore(NGLLX,NGLLY,NGLLZ,nspec)
-  real(kind=CUSTOM_REAL) rhostore(NGLLX,NGLLY,NGLLZ,nspec)
-
-! logical mask used to output global points only once
+  ! logical mask used to output global points only once
   integer npointot
   logical mask_ibool(npointot)
 
-! numbering of global AVS or DX points
-  integer num_ibool_AVS_DX(npointot)
-
-  integer ispec
-  !integer i,j,k,np
-  integer iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
-  integer npoin,nspecface !,ispecface,numpoin
-
-  !double precision r,rho,vp,vs,Qkappa,Qmu
-  !double precision vpv,vph,vsv,vsh,eta_aniso
-  !double precision x,y,z,theta,phi_dummy,cost,p20,ell,factor
-  !real(kind=CUSTOM_REAL) dvp,dvs
-
-! for ellipticity
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-
-! processor identification
-  character(len=150) prname
-
-  integer iregion_code
-
+  integer(kind=8), intent(inout) :: group_size_inc
   type(avs_dx_global_faces_t), intent(inout) :: avs_dx_adios
 
+  ! local parameters
+  integer ispec
+  integer iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
+  integer npoin,nspecface
   integer :: ierr
 
   ! Dummy arrays for type inference inside adios helpers
@@ -240,14 +207,14 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
 end subroutine define_AVS_DX_global_faces_data_adios
 
 !===============================================================================
-subroutine prepare_AVS_DX_global_faces_data_adios (myrank, prname, nspec, &
-        iMPIcut_xi,iMPIcut_eta, &
-        ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
-        npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-        ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-        RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-        RMIDDLE_CRUST,ROCEAN,iregion_code, &
-        avs_dx_adios)
+subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
+                                                  iMPIcut_xi,iMPIcut_eta, &
+                                                  ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
+                                                  npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+                                                  ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                                  RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                                  RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                                  avs_dx_adios)
 
   use constants
 
@@ -294,9 +261,6 @@ subroutine prepare_AVS_DX_global_faces_data_adios (myrank, prname, nspec, &
 ! for ellipticity
   integer nspl
   double precision rspl(NR),espl(NR),espl2(NR)
-
-! processor identification
-  character(len=150) prname
 
   integer iregion_code
 

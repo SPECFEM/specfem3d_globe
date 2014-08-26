@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.999
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 #ifndef INDEX2
 #define INDEX2(isize,i,j) i + isize*j
 #endif
@@ -10,6 +43,7 @@
 #ifndef INDEX5
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
 #endif
+
 #ifndef NDIM
 #define NDIM 3
 #endif
@@ -49,6 +83,7 @@
 #ifndef BLOCKSIZE_TRANSFER
 #define BLOCKSIZE_TRANSFER 256
 #endif
+
 __global__ void noise_add_surface_movie_kernel(float * accel, const int * ibool, const int * ibelm_top, const int nspec_top, const float * noise_surface_movie, const float * normal_x_noise, const float * normal_y_noise, const float * normal_z_noise, const float * mask_noise, const float * jacobian2D, const float * wgllwgll){
   int igll;
   int iface;
@@ -66,22 +101,22 @@ __global__ void noise_add_surface_movie_kernel(float * accel, const int * ibool,
     float normal_x;
     float normal_y;
     float normal_z;
-    ispec = ibelm_top[iface - 0] - (1);
+    ispec = ibelm_top[iface - (0)] - (1);
     k = NGLLX - (1);
     j = (igll) / (NGLLX);
     i = igll - ((j) * (NGLLX));
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
     ipoin = (NGLL2) * (iface) + igll;
-    normal_x = normal_x_noise[ipoin - 0];
-    normal_y = normal_y_noise[ipoin - 0];
-    normal_z = normal_z_noise[ipoin - 0];
+    normal_x = normal_x_noise[ipoin - (0)];
+    normal_y = normal_y_noise[ipoin - (0)];
+    normal_z = normal_z_noise[ipoin - (0)];
     eta = 0.0f;
-    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - 0]) * (normal_x);
-    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - 0]) * (normal_y);
-    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - 0]) * (normal_z);
-    jacobianw = (wgllwgll[(k) * (NGLLX) + i - 0]) * (jacobian2D[igll + (NGLL2) * (iface) - 0]);
-    atomicAdd(accel + (iglob) * (3) + 0, (((eta) * (mask_noise[ipoin - 0])) * (normal_x)) * (jacobianw));
-    atomicAdd(accel + (iglob) * (3) + 1, (((eta) * (mask_noise[ipoin - 0])) * (normal_y)) * (jacobianw));
-    atomicAdd(accel + (iglob) * (3) + 2, (((eta) * (mask_noise[ipoin - 0])) * (normal_z)) * (jacobianw));
+    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface) - (0)]) * (normal_x);
+    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface) - (0)]) * (normal_y);
+    eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface) - (0)]) * (normal_z);
+    jacobianw = (wgllwgll[(k) * (NGLLX) + i - (0)]) * (jacobian2D[igll + (NGLL2) * (iface) - (0)]);
+    atomicAdd(accel + (iglob) * (3) + 0, (((eta) * (mask_noise[ipoin - (0)])) * (normal_x)) * (jacobianw));
+    atomicAdd(accel + (iglob) * (3) + 1, (((eta) * (mask_noise[ipoin - (0)])) * (normal_y)) * (jacobianw));
+    atomicAdd(accel + (iglob) * (3) + 2, (((eta) * (mask_noise[ipoin - (0)])) * (normal_z)) * (jacobianw));
   }
 }

@@ -153,6 +153,7 @@ meshfem3D_MODULES = \
 meshfem3D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
+	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
@@ -185,7 +186,6 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/save_header_file.shared.o \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
-	$O/write_c_binary.cc.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 

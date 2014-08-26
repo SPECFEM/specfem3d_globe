@@ -66,9 +66,14 @@ subroutine save_intermediate_forward_arrays_adios()
   call world_duplicate(comm)
 
   group_size_inc = 0
-  call adios_declare_group(adios_group, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", &
-      "", 1, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+
+  call adios_declare_group(adios_group, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", "", 1, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   ! Define ADIOS variables
   call define_common_forward_arrays_adios(adios_group, group_size_inc)
@@ -77,10 +82,11 @@ subroutine save_intermediate_forward_arrays_adios()
   call define_attenuation_forward_arrays_adios(adios_group, group_size_inc)
 
   ! Open an ADIOS handler to the restart file.
-  call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", &
-      outputname, "w", comm, adios_err);
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+  call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", outputname, "w", comm, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_open() routine failed for SPECFEM3D_GLOBE_FORWARD_ARRAYS'
+
+  call adios_group_size (adios_handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios(adios_handle)
@@ -131,9 +137,13 @@ subroutine save_forward_arrays_adios()
 
   group_size_inc = 0
 
-  call adios_declare_group(adios_group, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", &
-      "", 1, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  call adios_declare_group(adios_group, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", "", 1, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   ! Define ADIOS variables
   call define_common_forward_arrays_adios(adios_group, group_size_inc)
@@ -149,10 +159,11 @@ subroutine save_forward_arrays_adios()
 !  endif
 
   ! Open an ADIOS handler to the restart file.
-  call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", &
-      outputname, "w", comm, adios_err);
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+  call adios_open (adios_handle, "SPECFEM3D_GLOBE_FORWARD_ARRAYS", outputname, "w", comm, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_open() routine failed for SPECFEM3D_GLOBE_FORWARD_ARRAYS'
+
+  call adios_group_size (adios_handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios(adios_handle)
@@ -617,7 +628,12 @@ subroutine save_forward_arrays_undoatt_adios()
   group_size_inc = 0
 
   call adios_declare_group(adios_group, group_name, "iter", 1, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   ! Define ADIOS variables
   call define_common_forward_arrays_adios(adios_group, group_size_inc)
@@ -632,9 +648,11 @@ subroutine save_forward_arrays_undoatt_adios()
   !endif
 
   ! Open an ADIOS handler to the restart file.
-  call adios_open (adios_handle, group_name, & outputname, "w", comm, adios_err)
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+  call adios_open (adios_handle, group_name, outputname, "w", comm, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_open() routine failed'
+
+  call adios_group_size (adios_handle, group_size_inc, adios_totalsize, adios_err)
+  if( adios_err /= 0 ) stop 'error calling adios_group_size() routine failed'
 
   ! Issue the order to write the previously defined variable to the ADIOS file
   call write_common_forward_arrays_adios(adios_handle)
