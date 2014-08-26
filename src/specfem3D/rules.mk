@@ -35,7 +35,6 @@ specfem3D_OBJECTS = \
 	$O/assemble_MPI_scalar.solver.o \
 	$O/assemble_MPI_vector.solver.o \
 	$O/comp_source_spectrum.solver.o \
-	$O/comp_source_time_function.solver.o \
 	$O/compute_adj_source_frechet.solver.o \
 	$O/convert_time.solver.o \
 	$O/define_derivation_matrices.solver.o \
@@ -51,6 +50,7 @@ specfem3D_OBJECTS = \
 # values_from_mesher.h
 specfem3D_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
+	$O/comp_source_time_function.solverstatic.o \
 	$O/specfem3D_par.solverstatic_module.o \
 	$O/write_seismograms.solverstatic.o \
 	$O/check_stability.solverstatic.o \

@@ -262,6 +262,9 @@
 ! is located outside the mesh and therefore excluded from the station list
   double precision, parameter :: THRESHOLD_EXCLUDE_STATION = 50.d0
 
+! This parameter flags whether or not we will use an external source
+! time function. Set to false by default.
+  logical, parameter :: EXTERNAL_SOURCE_TIME_FUNCTION = .false. 
 
 !!-----------------------------------------------------------
 !!

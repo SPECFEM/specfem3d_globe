@@ -170,7 +170,7 @@ USE_BINARY_FOR_LARGE_FILE       = .false.
 RECEIVERS_CAN_BE_BURIED         = .true.
 
 # print source time function
-PRINT_SOURCE_TIME_FUNCTION      = .false.
+PRINT_SOURCE_TIME_FUNCTION      = .true.
 
 #-----------------------------------------------------------
 #
