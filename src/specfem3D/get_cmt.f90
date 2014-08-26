@@ -145,6 +145,11 @@
 
   enddo
 
+  ! If we're using external stf, don't worry about hdur.
+  if (EXTERNAL_SOURCE_TIME_FUNCTION) then
+    hdur(:) = 0.d0
+  end if
+
   close(1)
 
   ! Sets tshift_cmt to zero to initiate the simulation!
