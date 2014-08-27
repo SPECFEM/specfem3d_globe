@@ -148,6 +148,9 @@ module specfem_par
   double precision, dimension(:), allocatable :: theta_source,phi_source
   double precision :: t0
 
+  ! External source time function.
+  double precision, dimension(:), allocatable :: stfArray_external
+
   !-----------------------------------------------------------------
   ! receivers
   !-----------------------------------------------------------------

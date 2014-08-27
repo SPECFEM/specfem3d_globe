@@ -178,6 +178,11 @@
   ! define t0 as the earliest start time
   t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
 
+  if ( EXTERNAL_SOURCE_TIME_FUNCTION ) then
+    hdur(:) = 0._CUSTOM_REAL
+    t0      = 0.d0
+  end if
+
   ! point force sources will start depending on the frequency given by hdur
   if (USE_FORCE_POINT_SOURCE) then
     ! note: point force sources will give the dominant frequency in hdur,
