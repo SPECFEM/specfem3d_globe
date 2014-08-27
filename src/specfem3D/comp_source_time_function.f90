@@ -81,7 +81,7 @@
   if ( .not. allocated (stfArray_external) ) then
     call get_external_source_time_function ()
   end if
-  
+
   comp_source_time_function_external = stfArray_external (it)
 
   end function comp_source_time_function_external
@@ -106,17 +106,17 @@
   open (unit=10, file='DATA/stf', status='old', form='formatted')
 
   read_loop: do iterator=1,NSTEP
-    
+
     read (10, '(A)', iostat = RetCode) line
-    
+
     if ( RetCode /= 0 ) then
       print *, "ERROR IN SOURCE TIME FUNCTION."
       stop
     end if
-    
+
     ! Ignore lines with a hash (comments)
     if ( index (line, "#") /= 0 ) cycle read_loop
-    
+
     read (line, *) stfArray_external(iterator)
 
   end do read_loop

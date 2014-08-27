@@ -264,7 +264,7 @@
 
 ! This parameter flags whether or not we will use an external source
 ! time function. Set to false by default.
-  logical, parameter :: EXTERNAL_SOURCE_TIME_FUNCTION = .false. 
+  logical, parameter :: EXTERNAL_SOURCE_TIME_FUNCTION = .false.
 
 !!-----------------------------------------------------------
 !!
