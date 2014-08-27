@@ -176,15 +176,13 @@ static __device__ void compute_element_strain_undo_att(const int ispec, const in
   epsilondev_loc[4 - (0)] = (duzdyl + duydzl) * (0.5f);
   *(epsilon_trace_over_3) = templ;
 }
-__global__ void compute_iso_undo_att_kernel(const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float * epsilon_trace_over_3, float * mu_kl, float * kappa_kl, const int NSPEC, const float deltat, const int * d_ibool, const float * d_b_displ, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * d_hprime_xx){
+__global__ void compute_strain_kernel(const float * d_displ, const float * d_veloc, float * epsilondev_xx, float * epsilondev_yy, float * epsilondev_xy, float * epsilondev_xz, float * epsilondev_yz, float * epsilon_trace_over_3, const int NSPEC, const int NSPEC_STRAIN_ONLY, const float deltat, const int * d_ibool, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * d_hprime_xx){
   int ispec;
   int ijk_ispec;
   int tx;
   int iglob;
   float eps_trace_over_3;
-  float b_eps_trace_over_3;
   float epsdev[5];
-  float b_epsdev[5];
   __shared__ float s_dummyx_loc[NGLL3 + 0 - (1) - (0) + 1];
   __shared__ float s_dummyy_loc[NGLL3 + 0 - (1) - (0) + 1];
   __shared__ float s_dummyz_loc[NGLL3 + 0 - (1) - (0) + 1];
@@ -197,20 +195,22 @@ __global__ void compute_iso_undo_att_kernel(const float * epsilondev_xx, const f
   }
   if(ispec < NSPEC){
     iglob = d_ibool[ijk_ispec - (0)] - (1);
-    s_dummyx_loc[tx - (0)] = d_b_displ[0 - (0) + (iglob - (0)) * (3)];
-    s_dummyy_loc[tx - (0)] = d_b_displ[1 - (0) + (iglob - (0)) * (3)];
-    s_dummyz_loc[tx - (0)] = d_b_displ[2 - (0) + (iglob - (0)) * (3)];
+    s_dummyx_loc[tx - (0)] = d_displ[0 - (0) + (iglob - (0)) * (3)] + (deltat) * (d_veloc[0 - (0) + (iglob - (0)) * (3)]);
+    s_dummyy_loc[tx - (0)] = d_displ[1 - (0) + (iglob - (0)) * (3)] + (deltat) * (d_veloc[1 - (0) + (iglob - (0)) * (3)]);
+    s_dummyz_loc[tx - (0)] = d_displ[2 - (0) + (iglob - (0)) * (3)] + (deltat) * (d_veloc[2 - (0) + (iglob - (0)) * (3)]);
   }
   __syncthreads();
   if(ispec < NSPEC){
-    epsdev[0 - (0)] = epsilondev_xx[ijk_ispec - (0)];
-    epsdev[1 - (0)] = epsilondev_yy[ijk_ispec - (0)];
-    epsdev[2 - (0)] = epsilondev_xy[ijk_ispec - (0)];
-    epsdev[3 - (0)] = epsilondev_xz[ijk_ispec - (0)];
-    epsdev[4 - (0)] = epsilondev_yz[ijk_ispec - (0)];
-    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - (0)];
-    compute_element_strain_undo_att(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_epsdev,  &b_eps_trace_over_3);
-    mu_kl[ijk_ispec - (0)] = mu_kl[ijk_ispec - (0)] + (deltat) * ((epsdev[0 - (0)]) * (b_epsdev[0 - (0)]) + (epsdev[1 - (0)]) * (b_epsdev[1 - (0)]) + (epsdev[0 - (0)] + epsdev[1 - (0)]) * (b_epsdev[0 - (0)] + b_epsdev[1 - (0)]) + ((epsdev[2 - (0)]) * (b_epsdev[2 - (0)]) + (epsdev[3 - (0)]) * (b_epsdev[3 - (0)]) + (epsdev[4 - (0)]) * (b_epsdev[4 - (0)])) * (2.0f));
-    kappa_kl[ijk_ispec - (0)] = kappa_kl[ijk_ispec - (0)] + (deltat) * (((eps_trace_over_3) * (b_eps_trace_over_3)) * (9.0f));
+    compute_element_strain_undo_att(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, epsdev,  &eps_trace_over_3);
+    if(NSPEC_STRAIN_ONLY == 1){
+      epsilon_trace_over_3[tx - (0)] = eps_trace_over_3;
+    } else {
+      epsilon_trace_over_3[ijk_ispec - (0)] = eps_trace_over_3;
+    }
+    epsilondev_xx[ijk_ispec - (0)] = epsdev[0 - (0)];
+    epsilondev_yy[ijk_ispec - (0)] = epsdev[1 - (0)];
+    epsilondev_xy[ijk_ispec - (0)] = epsdev[2 - (0)];
+    epsilondev_xz[ijk_ispec - (0)] = epsdev[3 - (0)];
+    epsilondev_yz[ijk_ispec - (0)] = epsdev[4 - (0)];
   }
 }

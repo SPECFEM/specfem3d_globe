@@ -306,8 +306,6 @@
 !! DK DK July 2013: temporary, the time for Matthieu Lefebvre to merge his ADIOS implementation
   if (ADIOS_ENABLED .and. SAVE_REGULAR_KL ) &
     stop 'ADIOS_ENABLED support not implemented yet for SAVE_REGULAR_KL'
-  if (ADIOS_ENABLED .and. UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 ) &
-    stop 'ADIOS_ENABLED support not implemented yet for UNDO_ATTENUATION and SIMULATION_TYPE == 3'
 
   if (USE_LDDRK .and. SIMULATION_TYPE == 3 ) &
     stop 'USE_LDDRK support not implemented yet for SIMULATION_TYPE == 3'
@@ -318,8 +316,6 @@
     stop 'UNDO_ATTENUATION support not implemented yet for noise simulations'
   if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
-  if (UNDO_ATTENUATION .and. GPU_MODE ) &
-    stop 'UNDO_ATTENUATION support not implemented yet for GPU simulations'
   if (UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &
     stop 'UNDO_ATTENUATION support not implemented yet for SIMULATION_TYPE == 3 and movie simulations'
 

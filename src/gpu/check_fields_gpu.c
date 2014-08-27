@@ -180,9 +180,13 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
 
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
   realw max;
   gpu_realw_mem d_max;
   realw *h_max;
+
+  // initializes
+  *norm = 0.f;
 
   // safety check
   if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
@@ -261,8 +265,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   max = h_max[0];
   int i;
   for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
-    if (max < h_max[i])
-      max = h_max[i];
+    if (max < h_max[i]) max = h_max[i];
   }
 
   // frees arrays
@@ -294,6 +297,9 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   int size, size_padded;
   gpu_realw_mem d_max;
   realw *h_max;
+
+  // initializes
+  *norm = 0.f;
 
   // safety check
   if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {

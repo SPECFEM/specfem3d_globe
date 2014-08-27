@@ -39,8 +39,8 @@ module BOAST
       print k === get_local_id(2)
       print isource === get_group_id(0) + get_num_groups(0)*get_group_id(1)
 
-      print if (isource < nsources) {
-        print if (myrank == islice_selected_source[isource]) {
+      print If(isource < nsources) {
+        print If(myrank == islice_selected_source[isource]) {
           print ispec === ispec_selected_source[isource] - 1
           print stf === stf_pre_compute[isource]
           print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] - 1

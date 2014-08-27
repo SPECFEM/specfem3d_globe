@@ -79,7 +79,7 @@
 ! of the elements, checking their eight corners is sufficient
   do ispec = 1,nspec
     do k = 1,NGLLZ,NGLLZ-1
-      do j  = 1,NGLLY,NGLLY-1
+      do j = 1,NGLLY,NGLLY-1
         do i = 1,NGLLX,NGLLX-1
           if (mask_ibool(ibool(i,j,k,ispec))) then
             is_on_a_slice_edge(ispec) = .true.
@@ -166,7 +166,7 @@
     ! of the elements, checking their eight corners is sufficient
     do ispec = 1,nspec
       do k = 1,NGLLZ,NGLLZ-1
-        do j  = 1,NGLLY,NGLLY-1
+        do j = 1,NGLLY,NGLLY-1
           do i = 1,NGLLX,NGLLX-1
             if (mask_ibool(ibool(i,j,k,ispec))) then
               is_on_a_slice_edge(ispec) = .true.

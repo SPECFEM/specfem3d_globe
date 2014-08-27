@@ -41,7 +41,7 @@ module BOAST
       decl blockID
       print blockID === get_group_id(0)+get_group_id(1)*get_num_groups(0)
       print tx      === get_local_id(0)
-      print if (blockID<nrec_local) {
+      print If(blockID<nrec_local) {
         print irec === number_receiver_global[blockID] - 1
         print ispec === ispec_selected_rec[irec] - 1
         print iglob === ibool[tx + ngll3*ispec] - 1

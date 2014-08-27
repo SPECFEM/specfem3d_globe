@@ -313,7 +313,7 @@
 
       else
           ! get 25 GLL points for ymax
-          do k  = 1,NGLLZ
+          do k = 1,NGLLZ
              do i = 1,NGLLX
                 xelm2D(i,k) = xstore(i,NGLLY,k,ispec)
                 yelm2D(i,k) = ystore(i,NGLLY,k,ispec)

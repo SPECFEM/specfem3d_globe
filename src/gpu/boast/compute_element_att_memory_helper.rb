@@ -52,7 +52,7 @@ module BOAST
       decl sn = Real("sn")
       decl snp1 = Real("snp1")
       if type == :crust_mantle then
-        print if (anisotropy, lambda {
+        print If(anisotropy, lambda {
           print mul === d_c44store[tx + ngll3_padded*working_element]
         }, lambda {
           print mul === d_muv[tx + ngll3_padded*working_element]
@@ -67,7 +67,7 @@ module BOAST
         # index:
         # (i,j,k,i_sls,ispec) -> offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element)
         print offset === tx + ngll3*(i_sls + nsls*working_element)
-        print if (use_3d_attenuation_arrays, lambda {
+        print If(use_3d_attenuation_arrays, lambda {
             print factor_loc  === mul * factor_common[offset]
         }, lambda {
             print factor_loc  === mul * factor_common[i_sls + nsls*working_element ]

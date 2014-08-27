@@ -127,9 +127,7 @@
 
     else
       ! on GPU
-      if (nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer, &
-                                                                           absorb_xmin_crust_mantle, &
-                                                                           0) ! <= xmin
+      if (nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_xmin_crust_mantle,0) ! <= xmin
     endif
 
     ! writes absorbing boundary values
@@ -189,9 +187,7 @@
 
     else
       ! on GPU
-      if (nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer, &
-                                                                           absorb_xmax_crust_mantle, &
-                                                                           1) ! <= xmin
+      if (nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_xmax_crust_mantle,1) ! <= xmin
     endif
 
 
@@ -250,9 +246,7 @@
 
   else
     ! on GPU
-    if (nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer, &
-                                                                         absorb_ymin_crust_mantle, &
-                                                                         2) ! <= ymin
+    if (nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_ymin_crust_mantle,2) ! <= ymin
   endif
 
   ! writes absorbing boundary values
@@ -308,9 +302,7 @@
 
   else
     ! on GPU
-    if (nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer, &
-                                                                         absorb_ymax_crust_mantle, &
-                                                                         3) ! <= ymax
+    if (nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_ymax_crust_mantle,3) ! <= ymax
   endif
 
   ! writes absorbing boundary values

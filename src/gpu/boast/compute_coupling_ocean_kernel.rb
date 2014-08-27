@@ -30,7 +30,7 @@ module BOAST
       decl *(additional_term = [Real("additional_term_x"), Real("additional_term_y"), Real("additional_term_z")])
 
       print ipoin === get_global_id(0) + get_global_size(0)*get_global_id(1)
-      print if (ipoin < npoin_ocean_load ) {
+      print If(ipoin < npoin_ocean_load ) {
         print iglob === ibool_ocean_load[ipoin] - 1
         n.each_index { |indx| print n[indx] === normal_ocean_load[INDEX2(ndim,indx,ipoin)] }
 

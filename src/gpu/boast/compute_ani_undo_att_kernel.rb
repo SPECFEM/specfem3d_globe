@@ -83,11 +83,11 @@ module BOAST
       print ijk_ispec === get_local_id(0) + ngll3*ispec
       print tx === get_local_id(0)
 
-      print if (tx < ngll2) {
+      print If(tx < ngll2) {
         print sh_hprime_xx[tx] === d_hprime_xx[tx]
       }
 
-      print if (ispec < nspec) {
+      print If(ispec < nspec) {
         print iglob === d_ibool[ijk_ispec] - 1
         (0..2).each { |indx|
           print s_dummy_loc[indx][tx] === d_b_displ[indx,iglob]
@@ -95,7 +95,7 @@ module BOAST
       }
       print barrier(:local)
 
-      print if (ispec < nspec) {
+      print If(ispec < nspec) {
         (0..4).each { |indx|
           print epsdev[indx] === epsilondev[indx][ijk_ispec]
         }

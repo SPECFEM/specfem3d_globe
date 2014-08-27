@@ -198,11 +198,11 @@ module BOAST
         print i === tx - k*ngll2 - j*ngllx
   
         print active === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
-        print if (active ) {
+        print If(active) {
           @@output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
           @@output.puts "#else"
-            print if (use_mesh_coloring_gpu, lambda {
+            print If(use_mesh_coloring_gpu, lambda {
               print working_element === bx
             }, lambda {
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
@@ -217,7 +217,7 @@ module BOAST
             print s_dummy_loc[tx] === d_potential[iglob]
           @@output.puts "#endif"
         }
-        print if (tx < ngll2) {
+        print If(tx < ngll2) {
           @@output.puts "#ifdef #{use_textures_constants}"
             print sh_hprime_xx[tx] === d_hprime_xx_oc_tex[tx]
             print sh_hprimewgll_xx[tx] === d_hprimewgll_xx_oc_tex[tx]
@@ -229,7 +229,7 @@ module BOAST
         }
         print barrier(:local)
   
-        print if (active ) {
+        print If(active) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
              print templ[0] === templ[0] + s_dummy_loc[k*ngll2+j*ngllx+l]*sh_hprime_xx[l*ngllx+i]
@@ -253,7 +253,7 @@ module BOAST
             print dpotentialdl[indx] === xil[indx]*templ[0] + etal[indx]*templ[1] + gammal[indx]*templ[2]
           }
   
-          print if (rotation , lambda {
+          print If(rotation , lambda {
             print sub_kernel.call(tx,working_element,\
                                   time,two_omega_earth,deltat,\
                                   d_A_array_rotation,\
@@ -285,7 +285,7 @@ module BOAST
             end
           end
           print int_radius === rint(radius * rearth_km * 10.0) - 1
-          print if (!gravity , lambda {
+          print If(!gravity , lambda {
             print grad_ln_rho[0] === sin_theta * cos_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[1] === sin_theta * sin_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[2] ===           cos_theta * d_d_ln_density_dr_table[int_radius]
@@ -307,7 +307,7 @@ module BOAST
           print s_temp[2][tx] === jacobianl*(gammal[0]*dpotentialdx_with_rot + gammal[1]*dpotentialdy_with_rot + gammal[2]*dpotentialdl[2])
         }
         print barrier(:local)
-        print if (active) {
+        print If(active) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
              print templ[0] === templ[0] + s_temp[0][k*ngll2+j*ngllx+l]*sh_hprimewgll_xx[i*ngllx+l]
@@ -321,7 +321,7 @@ module BOAST
           @@output.puts "#endif"
           print sum_terms === -(wgllwgll_yz[k*ngllx+j]*templ[0] + wgllwgll_xz[k*ngllx+i]*templ[1] + wgllwgll_xy[j*ngllx+i]*templ[2])
   
-          print if (gravity ) {
+          print If(gravity) {
             print  sum_terms === sum_terms + gravity_term
           }
           @@output.puts "#ifdef #{use_mesh_coloring}"
@@ -331,8 +331,8 @@ module BOAST
               print d_potential_dot_dot[iglob] === d_potential_dot_dot[iglob] + sum_terms
             @@output.puts "#endif"
           @@output.puts "#else"
-            print if (use_mesh_coloring_gpu, lambda {
-              print if (nspec_outer_core > coloring_min_nspec_outer_core, lambda {
+            print If(use_mesh_coloring_gpu, lambda {
+              print If(nspec_outer_core > coloring_min_nspec_outer_core, lambda {
                 @@output.puts "#ifdef #{use_textures_fields}"
                   print d_potential_dot_dot[iglob] === d_accel_oc_tex[iglob] + sum_terms
                 @@output.puts "#else"

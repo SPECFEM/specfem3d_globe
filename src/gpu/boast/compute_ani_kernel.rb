@@ -47,7 +47,7 @@ module BOAST
 
 
         print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
-        print if (ispec < nspec ) {
+        print If(ispec < nspec ) {
           print ijk_ispec === get_local_id(0) + ngll3*ispec
           (0..4).each { |indx|
             print epsdev[indx] === epsilondev[indx][ijk_ispec]

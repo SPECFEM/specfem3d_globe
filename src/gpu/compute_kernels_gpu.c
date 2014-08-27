@@ -376,10 +376,10 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
   if (mp->undo_attenuation) {
     // checks strain array size
     if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-      exit_on_error("compute_kernels_cm_cuda NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
+      exit_on_error("compute_kernels_ic_gpu NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
     }
-    // computes strain locally based on current backward/reconstructed (b_displ) wavefield
 
+    // computes strain locally based on current backward/reconstructed (b_displ) wavefield
     // isotropic kernels (shear, bulk)
 #ifdef USE_OPENCL
     if (run_opencl) {
@@ -390,12 +390,6 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xx_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_eps_trace_over_3_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
@@ -418,7 +412,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
       global_work_size[0] = num_blocks_x * blocksize;
       global_work_size[1] = num_blocks_y;
 
-      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL,
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undo_att_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
 
     }
@@ -426,27 +420,27 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #ifdef USE_CUDA
     if (run_cuda) {
       compute_iso_undo_att_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
-                                                               mp->d_epsilondev_yy_inner_core.cuda,
-                                                               mp->d_epsilondev_xy_inner_core.cuda,
-                                                               mp->d_epsilondev_xz_inner_core.cuda,
-                                                               mp->d_epsilondev_yz_inner_core.cuda,
-                                                               mp->d_eps_trace_over_3_inner_core.cuda,
-                                                               mp->d_beta_kl_inner_core.cuda,
-                                                               mp->d_alpha_kl_inner_core.cuda,
-                                                               mp->NSPEC_INNER_CORE,
-                                                               deltat,
-                                                               mp->d_ibool_inner_core.cuda,
-                                                               mp->d_b_displ_inner_core.cuda,
-                                                               mp->d_xix_inner_core.cuda,
-                                                               mp->d_xiy_inner_core.cuda,
-                                                               mp->d_xiz_inner_core.cuda,
-                                                               mp->d_etax_inner_core.cuda,
-                                                               mp->d_etay_inner_core.cuda,
-                                                               mp->d_etaz_inner_core.cuda,
-                                                               mp->d_gammax_inner_core.cuda,
-                                                               mp->d_gammay_inner_core.cuda,
-                                                               mp->d_gammaz_inner_core.cuda,
-                                                               mp->d_hprime_xx.cuda);
+                                                                         mp->d_epsilondev_yy_inner_core.cuda,
+                                                                         mp->d_epsilondev_xy_inner_core.cuda,
+                                                                         mp->d_epsilondev_xz_inner_core.cuda,
+                                                                         mp->d_epsilondev_yz_inner_core.cuda,
+                                                                         mp->d_eps_trace_over_3_inner_core.cuda,
+                                                                         mp->d_beta_kl_inner_core.cuda,
+                                                                         mp->d_alpha_kl_inner_core.cuda,
+                                                                         mp->NSPEC_INNER_CORE,
+                                                                         deltat,
+                                                                         mp->d_ibool_inner_core.cuda,
+                                                                         mp->d_b_displ_inner_core.cuda,
+                                                                         mp->d_xix_inner_core.cuda,
+                                                                         mp->d_xiy_inner_core.cuda,
+                                                                         mp->d_xiz_inner_core.cuda,
+                                                                         mp->d_etax_inner_core.cuda,
+                                                                         mp->d_etay_inner_core.cuda,
+                                                                         mp->d_etaz_inner_core.cuda,
+                                                                         mp->d_gammax_inner_core.cuda,
+                                                                         mp->d_gammay_inner_core.cuda,
+                                                                         mp->d_gammaz_inner_core.cuda,
+                                                                         mp->d_hprime_xx.cuda);
     }
 #endif
 

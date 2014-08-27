@@ -47,15 +47,15 @@ module BOAST
       print barrier(:local)
       print s === get_local_size(0)/2
       print While(s > 0) {
-        print if (tid < s) {
-          print if (sdata[tid] < sdata[tid + s] ) {
+        print If(tid < s) {
+          print If(sdata[tid] < sdata[tid + s] ) {
             print sdata[tid] === sdata[tid + s]
           }
         }
         print s === Expression(">>",s,1)
         print barrier(:local)
       }
-      print if (tid == 0) {
+      print If(tid == 0) {
         print d_max[bx] === sdata[0]
       }
       close p

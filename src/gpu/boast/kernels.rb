@@ -73,7 +73,8 @@ kernels = [
 :crust_mantle_impl_kernel_forward,
 :crust_mantle_impl_kernel_adjoint,
 :compute_ani_undo_att_kernel,
-:compute_iso_undo_att_kernel
+:compute_iso_undo_att_kernel,
+:compute_strain_kernel
 ]
 
 langs = [ :CUDA, :CL]
@@ -90,9 +91,22 @@ end
 
 kerns = kernels
 kerns = kerns.select { |k,v| k.to_s.match($options[:kernel]) } if $options[:kernel]
+
+# debug
+#puts "kernels:"
+#puts kerns
+# output info
+v = BOAST::get_boast_version()
+puts ""
+puts "BOAST version #{v}"
+puts "-------------------------------"
+puts "building kernel files:"
+puts "-------------------------------"
+
 kerns.each { |kern|
-  require "./#{kern.to_s}.rb"
   puts kern.to_s
+  # imports kernel ruby file
+  require "./#{kern.to_s}.rb"
   langs.each { |lang|
     puts "  " + lang.to_s
     BOAST::set_lang( BOAST::const_get(lang))
@@ -159,7 +173,15 @@ kerns.each { |kern|
   }
 }
 
+# output info
+puts ""
+puts "-------------------------------"
+puts "building header & make files"
+puts "-------------------------------"
 langs.each { |lang|
+  puts "  " + lang.to_s
+
+  # opens output files
   if lang == :CUDA then
     suffix = ".cu"
     kern_proto_f = File::new("#{$options[:output_dir]}/kernel_proto.cu.h", "w+")
@@ -195,4 +217,5 @@ langs.each { |lang|
   elsif lang == :CL
     kern_inc_f.close
   end
+  puts "  Generated"
 }

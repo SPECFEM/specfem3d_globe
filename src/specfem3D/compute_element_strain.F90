@@ -524,11 +524,6 @@
     gammayl = gammay(INDEX_IJK,ispec)
     gammazl = gammaz(INDEX_IJK,ispec)
 
-    ! compute the Jacobian
-    !jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-    !              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-    !              + xizl*(etaxl*gammayl-etayl*gammaxl))
-
     duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
     duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
     duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)

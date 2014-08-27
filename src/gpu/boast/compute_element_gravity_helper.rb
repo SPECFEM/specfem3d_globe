@@ -48,7 +48,7 @@ module BOAST
       decl int_radius = Int("int_radius")
 
       print radius === d_xstore[iglob]
-      print if (radius < ( 100.0 / (r_earth_km*1000.0))) {
+      print If(radius < ( 100.0 / (r_earth_km*1000.0))) {
         print radius ===  100.0 / (r_earth_km*1000.0)
       }
       print theta === d_ystore[iglob]
@@ -68,7 +68,7 @@ module BOAST
         end
       end
       print int_radius === rint(radius * r_earth_km * 10.0 ) - 1
-      print if (int_radius < 0 ) {
+      print If(int_radius < 0 ) {
         print int_radius === 0
       }
       print minus_g  === d_minus_gravity_table[int_radius]

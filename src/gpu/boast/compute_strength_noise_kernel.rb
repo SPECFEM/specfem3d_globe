@@ -36,7 +36,7 @@ module BOAST
         decl eta   = Real("eta")
 
         print iface === get_group_id(0) + get_group_id(1)*get_num_groups(0)
-        print if (iface < nspec_top ) {
+        print If(iface < nspec_top ) {
           print ispec === ibelm_top[iface] - 1
           print igll  === get_local_id(0)
           print ipoin === igll + ngll2*iface

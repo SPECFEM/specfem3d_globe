@@ -41,7 +41,7 @@ module BOAST
       decl iinterface
       print id === get_global_id(0)+get_global_size(0)*get_global_id(1)
       print For(iinterface, 0, num_interfaces-1) {
-        print if (id<d_nibool_interfaces[iinterface]) {
+        print If(id<d_nibool_interfaces[iinterface]) {
           print iloc === id + max_nibool_interfaces*iinterface
           print iglob === d_ibool_interfaces[iloc] - 1
           if type == :accel then

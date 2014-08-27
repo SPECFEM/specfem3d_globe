@@ -105,7 +105,7 @@ module BOAST
       print i === get_local_id(0)
       print j === get_local_id(1)
       print iface === get_group_id(0) + get_num_groups(0)*get_group_id(1)
-      print if (iface < nspec2D ) {
+      print If(iface < nspec2D ) {
         print ispec === ibelm_2[iface] - 1
         print ispec_selected === ibelm_1[iface] - 1
         if type == :fluid_CMB or type == :ICB_fluid then
@@ -126,7 +126,7 @@ module BOAST
         elsif type == :fluid_ICB then
           print atomicAdd(accel_out+iglob_2, -weight*displ_n)
         else
-          print if (gravity, lambda {
+          print If(gravity, lambda {
             print pressure === rho_oc * ( minus_g * ( displ[iglob_2*3]*n[0] + displ[iglob_2*3+1]*n[1] + displ[iglob_2*3+2]*n[2] ) - accel_in[iglob_1] )
           } , nil, lambda {
             print pressure === -rho_oc * accel_in[iglob_1]

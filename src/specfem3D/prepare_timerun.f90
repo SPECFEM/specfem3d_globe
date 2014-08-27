@@ -2221,26 +2221,23 @@
   if (myrank == 0 ) write(IMAIN,*) "  transferring initial wavefield"
 
   call transfer_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                                   Mesh_pointer)
+                                    Mesh_pointer)
 
   call transfer_fields_ic_to_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
-                                   Mesh_pointer)
+                                    Mesh_pointer)
 
   call transfer_fields_oc_to_device(NGLOB_OUTER_CORE,displ_outer_core,veloc_outer_core,accel_outer_core, &
-                                   Mesh_pointer)
+                                    Mesh_pointer)
 
   if (SIMULATION_TYPE == 3) then
-    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                    Mesh_pointer)
+    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                        Mesh_pointer)
 
-    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE, &
-                                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                                    Mesh_pointer)
+    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                                        Mesh_pointer)
 
-    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE, &
-                                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                                    Mesh_pointer)
+    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                                        Mesh_pointer)
   endif
 
   ! outputs GPU usage to files for all processes

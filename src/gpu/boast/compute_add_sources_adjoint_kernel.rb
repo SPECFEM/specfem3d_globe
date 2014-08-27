@@ -35,7 +35,7 @@ module BOAST
       decl k
 
       print irec_local === get_group_id(0) + get_num_groups(0)*get_group_id(1)
-      print if (irec_local < nadj_rec_local) {
+      print If(irec_local < nadj_rec_local) {
         print irec === pre_computed_irec[irec_local]
         print ispec === ispec_selected_rec[irec] - 1
         print i === get_local_id(0)
