@@ -26,7 +26,7 @@ module BOAST
 
     variables += [ num_interfaces, max_nibool_interfaces, d_nibool_interfaces, d_ibool_interfaces]
     p = Procedure::new(function_name, variables)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CUDA or get_lang == CL) then
       make_specfem3d_header

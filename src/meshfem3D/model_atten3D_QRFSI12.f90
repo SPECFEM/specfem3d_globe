@@ -84,10 +84,10 @@
            QRFSI12_Q_refdepth(NDEPTHS_REFQ), &
            QRFSI12_Q_refqmu(NDEPTHS_REFQ), &
            stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating QRFSI12_Q model arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating QRFSI12_Q model arrays')
 
   ! master process reads in file values
-  if(myrank == 0) call read_atten_model_3D_QRFSI12()
+  if (myrank == 0) call read_atten_model_3D_QRFSI12()
 
   ! broadcasts to all processes
   call bcast_all_dp(QRFSI12_Q_dqmu,          NKQ*NSQ)
@@ -96,7 +96,7 @@
   call bcast_all_dp(QRFSI12_Q_refqmu,   NDEPTHS_REFQ)
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'read 3D attenuation model'
     write(IMAIN,*) '  model: QRFSI12'
@@ -131,17 +131,17 @@
 
 ! get the dq model coefficients
   open(unit=10,file=QRFSI12,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(QRFSI12), '": ', ier
-    call exit_MPI(0, 'error model QRFSI12')
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(QRFSI12), '": ', ier
+    call exit_MPI(0, 'Error model QRFSI12')
   endif
 
-  do k=1,NKQ
+  do k = 1,NKQ
     read(10,*) indexval
-    j=0
-    do l=0,MAXL_Q
-      do m=0,l
-        if(m==0)then
+    j = 0
+    do l = 0,MAXL_Q
+      do m = 0,l
+        if (m == 0) then
           j=j+1
           read(10,*)ll,mm,v1
           QRFSI12_Q_dqmu(k,j)=v1
@@ -169,12 +169,12 @@
 
 ! get the depths and 1/Q values of the reference model
   open(11,file=QRFSI12_ref,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(QRFSI12_ref), '": ', ier
-    call exit_MPI(0, 'error model QRFSI12')
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(QRFSI12_ref), '": ', ier
+    call exit_MPI(0, 'Error model QRFSI12')
   endif
 
-  do j=1,NDEPTHS_REFQ
+  do j = 1,NDEPTHS_REFQ
     read(11,*)QRFSI12_Q_refdepth(j),QRFSI12_Q_refqmu(j)
   enddo
   close(11)
@@ -221,11 +221,11 @@
   ! only checks radius for crust, idoubling is misleading for oceanic crust
   ! when we want to expand mantle up to surface...
 
-!  !if(idoubling == IFLAG_CRUST .or. radius >= rmoho) then
-  if( radius >= rmoho_prem ) then
+!  !if (idoubling == IFLAG_CRUST .or. radius >= rmoho) then
+  if (radius >= rmoho_prem) then
   !   print *,'QRFSI12: we are in the crust'
      Qmu = 600.0d0
-  else if(idoubling == IFLAG_INNER_CORE_NORMAL .or. idoubling == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+  else if (idoubling == IFLAG_INNER_CORE_NORMAL .or. idoubling == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
        idoubling == IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling == IFLAG_TOP_CENTRAL_CUBE .or. &
        idoubling == IFLAG_IN_FICTITIOUS_CUBE) then
     ! we are in the inner core
@@ -235,7 +235,7 @@
 
     Qmu = 84.6d0
 
-  else if(idoubling == IFLAG_OUTER_CORE_NORMAL) then
+  else if (idoubling == IFLAG_OUTER_CORE_NORMAL) then
 
     ! we are in the outer core
 
@@ -253,13 +253,13 @@
     !debug
     !   print *,'QRFSI12: we are in the mantle at depth',depth
 
-    ifnd=0
+    ifnd = 0
     do i=2,NDEPTHS_REFQ
-      if(depth >= QRFSI12_Q_refdepth(i-1) .and. depth < QRFSI12_Q_refdepth(i))then
+      if (depth >= QRFSI12_Q_refdepth(i-1) .and. depth < QRFSI12_Q_refdepth(i)) then
         ifnd=i
       endif
     enddo
-    if(ifnd == 0)then
+    if (ifnd == 0) then
       write(6,"('problem finding reference Q value at depth: ',f8.3)") depth
       stop
     endif
@@ -267,35 +267,35 @@
     smallq = smallq_ref
 
 ! Colleen's model is only defined between depths of 24.4 and 650km
-    if(depth < 650.d0) then
-      do j=1,NSQ
-        shdep(j)=0.
+    if (depth < 650.d0) then
+      do j = 1,NSQ
+        shdep(j) = 0.
       enddo
-      do n=1,NKQ
+      do n = 1,NKQ
         splpts(n)=QRFSI12_Q_spknt(n)
       enddo
       call vbspl(depth,NKQ,splpts,splcon,splcond)
-      do n=1,NKQ
-        do j=1,NSQ
+      do n = 1,NKQ
+        do j = 1,NSQ
           shdep(j)=shdep(j)+(splcon(n)*QRFSI12_Q_dqmu(n,j))
         enddo
       enddo
       call ylm(ylat,xlon,MAXL_Q,xlmvec,wk1,wk2,wk3)
-      dqmu=0.
-      do k=1,NSQ
+      dqmu = 0.
+      do k = 1,NSQ
         dqmu=dqmu+xlmvec(k)*shdep(k)
       enddo
       smallq = smallq_ref + dqmu
     endif
 
     ! if smallq is small and negative (due to numerical error), Qmu is very large:
-    if(smallq < 0.0d0) smallq = 1.0d0/ATTENUATION_COMP_MAXIMUM
+    if (smallq < 0.0d0) smallq = 1.0d0/ATTENUATION_COMP_MAXIMUM
 
     Qmu = 1/smallq
 
     ! if Qmu is larger than MAX_ATTENUATION_VALUE, set it to ATTENUATION_COMP_MAXIMUM.
     ! This assumes that this value is high enough that at this point there is almost no attenuation at all.
-    if(Qmu >= ATTENUATION_COMP_MAXIMUM) Qmu = 0.99d0*ATTENUATION_COMP_MAXIMUM
+    if (Qmu >= ATTENUATION_COMP_MAXIMUM) Qmu = 0.99d0*ATTENUATION_COMP_MAXIMUM
 
   endif
 

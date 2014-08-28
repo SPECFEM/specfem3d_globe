@@ -88,13 +88,11 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_b_R_yz,
                  int FORWARD_OR_ADJOINT) {
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("before kernel inner_core");
-#endif
+  GPU_ERROR_CHECKING ("before kernel inner_core");
 
   // safety check
-  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in inner_core() routine");
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in inner_core() routine");
   }
 
   // if the grid can handle the number of blocks, we let it be 1D
@@ -246,7 +244,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    if( FORWARD_OR_ADJOINT == 1 ){
+    if (FORWARD_OR_ADJOINT == 1) {
       inner_core_impl_kernel_forward<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                             d_ibool.cuda,
                                                                             d_idoubling.cuda,
@@ -338,9 +336,8 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("inner_core");
-#endif
+
+  GPU_ERROR_CHECKING ("inner_core");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -359,8 +356,8 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check
-  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_forces_inner_core_gpu() routine");
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_forces_inner_core_gpu() routine");
   }
 
   // determines number of elements to loop over (inner/outer elements
@@ -371,8 +368,7 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
     num_elements = mp->nspec_inner_inner_core;
   }
   // checks if anything to do
-  if (num_elements == 0)
-    return;
+  if (num_elements == 0) return;
 
   // mesh coloring
   if (mp->use_mesh_coloring_gpu) {
@@ -482,10 +478,10 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
         nb_blocks_to_compute = num_elements;
       }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
       // checks
       if (nb_blocks_to_compute <= 0) {
-        printf ("error number of color blocks in inner_core: %d -- color = %d \n",
+        printf ("Error number of color blocks in inner_core: %d -- color = %d \n",
                 nb_blocks_to_compute, icolor);
         exit (EXIT_FAILURE);
       }
@@ -695,7 +691,5 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
                 FORWARD_OR_ADJOINT);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_forces_inner_core_ocl");
-#endif
+  GPU_ERROR_CHECKING ("compute_forces_inner_core_ocl");
 }

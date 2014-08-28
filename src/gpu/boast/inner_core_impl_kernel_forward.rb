@@ -32,7 +32,7 @@ module BOAST
     v.push offset = Int( "offset", :dir => :in)
     d_cstore = (0..5).collect { |indx1|
                 (0..5).collect { |indx2|
-                  if(indx2 < indx1) then
+                  if (indx2 < indx1) then
                     nil
                   else
                     Real( "d_c#{indx1+1}#{indx2+1}store", :dir => :in, :dim => [Dim()] )
@@ -62,7 +62,7 @@ module BOAST
     p = Procedure( function_name, v, [], :local => true ) {
       c = (0..5).collect { |indx1|
             (0..5).collect { |indx2|
-              if(indx2 < indx1) then
+              if (indx2 < indx1) then
                 nil
               else
                 Real( "c#{indx1+1}#{indx2+1}" )
@@ -199,7 +199,7 @@ module BOAST
       decl four_rhovsvsq = Real("four_rhovsvsq"), four_rhovshsq = Real("four_rhovshsq")
       c = (0..5).collect { |indx1|
             (0..5).collect { |indx2|
-              if(indx2 < indx1) then
+              if (indx2 < indx1) then
                 nil
               else
                 Real( "c#{indx1+1}#{indx2+1}" )
@@ -231,7 +231,7 @@ module BOAST
       print theta === d_ystore[iglob]
       print phi === d_zstore[iglob]
 
-      if(get_lang == CL) then
+      if (get_lang == CL) then
         print sintheta     === sincos(theta,     costheta.address)
         print sinphi       === sincos(phi,       cosphi.address)
         print sintwotheta  === sincos(theta*2.0, costwotheta.address)
@@ -239,7 +239,7 @@ module BOAST
         print cosfourtheta ===    cos(theta*4.0)
         print cosfourphi   ===    cos(phi*4.0)
       else
-        if(get_default_real_size == 4) then
+        if (get_default_real_size == 4) then
           print sincosf(theta,     sintheta.address,    costheta.address)
           print sincosf(phi,       sinphi.address,      cosphi.address)
           print sincosf(theta*2.0, sintwotheta.address, costwotheta.address)
@@ -489,7 +489,7 @@ module BOAST
     elsif type == :crust_mantle then
       d_cstore = (0..5).collect { |indx1|
         (0..5).collect { |indx2|
-          if(indx2 < indx1) then
+          if (indx2 < indx1) then
             nil
           else
             Real( "d_c#{indx1+1}#{indx2+1}store", :dir => :in, :restrict => true, :dim => [Dim()] )
@@ -550,14 +550,14 @@ module BOAST
       v.push(d_hprime_xx_tex)
     end
 
-    if(get_lang == CUDA ) then
+    if (get_lang == CUDA) then
       qualifiers = "\n#ifdef #{use_launch_bounds}\n__launch_bounds__(#{ngll3_padded}, #{launch_min_blocks})\n#endif\n"
-    elsif(get_lang == CL ) then
+    elsif(get_lang == CL) then
       qualifiers = "" # "__attribute__((reqd_work_group_size(#{ngll3_padded},1,1))) " # (inefficient)
     end
 
     p = Procedure(function_name, v, constants, :qualifiers => qualifiers)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :n_sls => n_sls, :r_earth_km => r_earth_km, :coloring_min_nspec_inner_core => coloring_min_nspec_inner_core, :iflag_in_fictitious_cube => i_flag_in_fictitious_cube)
@@ -700,11 +700,11 @@ module BOAST
         print i === tx - k*ngll2 - j*ngllx
   
         print active === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
-        print If( active ) {
+        print If(active) {
           @@output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
           @@output.puts "#else"
-            print If( use_mesh_coloring_gpu, lambda {
+            print If(use_mesh_coloring_gpu, lambda {
               print working_element === bx
             }, lambda {
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
@@ -724,7 +724,7 @@ module BOAST
             @@output.puts "#endif"
           }
           if type == :inner_core then
-            print If( d_idoubling[working_element] == iflag_in_fictitious_cube, lambda {
+            print If(d_idoubling[working_element] == iflag_in_fictitious_cube, lambda {
               print active === 0
             }, __texture_fetch )
           elsif type == :crust_mantle then
@@ -743,7 +743,7 @@ module BOAST
         }
         print barrier(:local)
   
-        print If( active ) {
+        print If(active) {
           (0..2).each { |indx1|
             (0..2).each { |indx2|
               print tempanl[indx1][indx2] === 0.0
@@ -868,7 +868,7 @@ module BOAST
                                                       sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                       sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
             }, lambda {
-              print If(  ! d_ispec_is_tiso[working_element], lambda {
+              print If( ! d_ispec_is_tiso[working_element], lambda {
                 print sub_compute_element_cm_iso.call( offset,
                                                        d_kappavstore,d_muvstore,
                                                        attenuation,
@@ -909,7 +909,7 @@ module BOAST
           print jacobianl === Expression("/", 1.0, xil[0]*(etal[1]*gammal[2] - etal[2]*gammal[1])\
                                                  - xil[1]*(etal[0]*gammal[2] - etal[2]*gammal[0])\
                                                  + xil[2]*(etal[0]*gammal[1] - etal[1]*gammal[0]))
-          print If( gravity ) {
+          print If(gravity) {
             print sub_compute_element_gravity.call(tx, iglob,\
                                    d_store[0], d_store[1], d_store[2],\
                                    d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table,\
@@ -931,7 +931,7 @@ module BOAST
           }
         }
         print barrier(:local)
-        print If( active ){
+        print If(active) {
           (0..2).each { |indx1|
             (0..2).each { |indx2|
               print tempanl[indx1][indx2] === 0.0
@@ -966,7 +966,7 @@ module BOAST
             print sum_terms[indx] === -(fac[0]*tempanl[indx][0] + fac[1]*tempanl[indx][1] + fac[2]*tempanl[indx][2])
           }
   
-          print If( gravity ) {
+          print If(gravity) {
             (0..2).each { |indx|
               print sum_terms[indx] === sum_terms[indx] + rho_s_H[indx]
             }
@@ -984,7 +984,7 @@ module BOAST
           @@output.puts "#else"
             if type == :inner_core then
               __accel_update = lambda {
-                print If( nspec_inner_core > coloring_min_nspec_inner_core, lambda {
+                print If(nspec_inner_core > coloring_min_nspec_inner_core, lambda {
                   @@output.puts "#ifdef #{use_textures_fields}"
                     (0..2).each { |indx|
                       print d_accel[indx,iglob] === d_accel_tex[iglob*3+indx] + sum_terms[indx]
@@ -1013,13 +1013,13 @@ module BOAST
                 @@output.puts "#endif"
               }
             end
-            print If( use_mesh_coloring_gpu, __accel_update, lambda {
+            print If(use_mesh_coloring_gpu, __accel_update, lambda {
               (0..2).each { |indx|
                 print atomicAdd(d_accel + iglob*3 + indx, sum_terms[indx])
               }
             })
           @@output.puts "#endif"
-          print If( Expression("&&", attenuation, !partial_phys_dispersion_only ) ) {
+          print If(Expression("&&", attenuation, !partial_phys_dispersion_only ) ) {
             __params = [tx, working_element,\
                         d_muvstore, factor_common,\
                         alphaval, betaval, gammaval,\
@@ -1032,7 +1032,7 @@ module BOAST
             __params.push use_3d_attenuation_arrays
             print sub_compute_element_att_memory.call( *__params )
           }
-          print If( compute_and_store_strain ) {
+          print If(compute_and_store_strain ) {
             print epsilondev_xx[tx + working_element*ngll3] === epsilondev_xx_loc
             print epsilondev_yy[tx + working_element*ngll3] === epsilondev_yy_loc
             print epsilondev_xy[tx + working_element*ngll3] === epsilondev_xy_loc

@@ -146,7 +146,7 @@
         rmax = R_CENTRAL_CUBE / R_EARTH
 
         ! loop over the NGNOD nodes
-        do ia=1,NGNOD
+        do ia = 1,NGNOD
 
           ! flat cubed sphere with correct mapping
           call compute_coord_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia), &
@@ -154,32 +154,32 @@
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube,&
                         ny_central_cube,nz_central_cube,radius_cube)
 
-          if(ichunk == CHUNK_AB) then
+          if (ichunk == CHUNK_AB) then
             xelm(ia) = - ygrid_central_cube
             yelm(ia) = + xgrid_central_cube
             zelm(ia) = + zgrid_central_cube
 
-          else if(ichunk == CHUNK_AB_ANTIPODE) then
+          else if (ichunk == CHUNK_AB_ANTIPODE) then
             xelm(ia) = - ygrid_central_cube
             yelm(ia) = - xgrid_central_cube
             zelm(ia) = - zgrid_central_cube
 
-          else if(ichunk == CHUNK_AC) then
+          else if (ichunk == CHUNK_AC) then
             xelm(ia) = - ygrid_central_cube
             yelm(ia) = - zgrid_central_cube
             zelm(ia) = + xgrid_central_cube
 
-          else if(ichunk == CHUNK_AC_ANTIPODE) then
+          else if (ichunk == CHUNK_AC_ANTIPODE) then
             xelm(ia) = - ygrid_central_cube
             yelm(ia) = + zgrid_central_cube
             zelm(ia) = - xgrid_central_cube
 
-          else if(ichunk == CHUNK_BC) then
+          else if (ichunk == CHUNK_BC) then
             xelm(ia) = - zgrid_central_cube
             yelm(ia) = + ygrid_central_cube
             zelm(ia) = + xgrid_central_cube
 
-          else if(ichunk == CHUNK_BC_ANTIPODE) then
+          else if (ichunk == CHUNK_BC_ANTIPODE) then
             xelm(ia) = + zgrid_central_cube
             yelm(ia) = - ygrid_central_cube
             zelm(ia) = + xgrid_central_cube
@@ -192,7 +192,7 @@
 
         ! add one spectral element to the list
         ispec = ispec + 1
-        if(ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in central cube creation')
+        if (ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in central cube creation')
 
         ! new get_flag_boundaries
         ! xmin & xmax
@@ -218,9 +218,9 @@
         ! only two active central cubes, the four others are fictitious
 
         ! determine where we cut the central cube to share it between CHUNK_AB & CHUNK_AB_ANTIPODE
-        ! in the case of mod(NPROC_XI,2)/=0, the cut is asymmetric and the bigger part is for CHUNK_AB
+        ! in the case of mod(NPROC_XI,2) /= 0, the cut is asymmetric and the bigger part is for CHUNK_AB
         nz_inf_limit = nz_central_cube
-        if (mod(NPROC_XI,2)/=0 .and. NPROC_XI > 1) then
+        if (mod(NPROC_XI,2) /= 0 .and. NPROC_XI > 1) then
           if (ichunk == CHUNK_AB) then
             nz_inf_limit = ((nz_central_cube*2)/NPROC_XI)*floor(NPROC_XI/2.d0)
           else if (ichunk == CHUNK_AB_ANTIPODE) then
@@ -228,10 +228,10 @@
           endif
         endif
 
-        if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
-          if(iz == nz_inf_limit) then
+        if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+          if (iz == nz_inf_limit) then
             idoubling(ispec) = IFLAG_BOTTOM_CENTRAL_CUBE
-          else if(iz == 2*nz_central_cube-2) then
+          else if (iz == 2*nz_central_cube-2) then
             idoubling(ispec) = IFLAG_TOP_CENTRAL_CUBE
           else if (iz > nz_inf_limit .and. iz < 2*nz_central_cube-2) then
             idoubling(ispec) = IFLAG_MIDDLE_CENTRAL_CUBE

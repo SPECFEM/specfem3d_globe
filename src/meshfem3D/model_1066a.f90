@@ -72,7 +72,7 @@
           M1066a_V_Qkappa_1066a(NR_1066A), &
           M1066a_V_Qmu_1066a(NR_1066A), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating M1066a_V arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating M1066a_V arrays')
 
   ! all processes will define same parameters
   call define_model_1066a(CRUSTAL)
@@ -117,14 +117,14 @@
 ! and a point below the ICB or the CMB and interpolate between them,
 ! which would lead to a wrong value (keeping in mind that we interpolate
 ! between points i-1 and i below)
-  if(iregion_code == IREGION_INNER_CORE .and. i > 33) i = 33
+  if (iregion_code == IREGION_INNER_CORE .and. i > 33) i = 33
 
-  if(iregion_code == IREGION_OUTER_CORE .and. i < 35) i = 35
-  if(iregion_code == IREGION_OUTER_CORE .and. i > 66) i = 66
+  if (iregion_code == IREGION_OUTER_CORE .and. i < 35) i = 35
+  if (iregion_code == IREGION_OUTER_CORE .and. i > 66) i = 66
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 68) i = 68
+  if (iregion_code == IREGION_CRUST_MANTLE .and. i < 68) i = 68
 
-  if(i == 1) then
+  if (i == 1) then
     rho = M1066a_V_density_1066a(i)
     vp = M1066a_V_vp_1066a(i)
     vs = M1066a_V_vs_1066a(i)
@@ -145,7 +145,7 @@
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
 ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
-  if(iregion_code == IREGION_OUTER_CORE) then
+  if (iregion_code == IREGION_OUTER_CORE) then
     vs = 0.d0
     Qkappa = 3000.d0
     Qmu = 3000.d0

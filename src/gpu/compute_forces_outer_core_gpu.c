@@ -61,13 +61,11 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_b_B_array_rotation,
                  int FORWARD_OR_ADJOINT) {
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("before outer_core kernel Kernel_2");
-#endif
+  GPU_ERROR_CHECKING ("before outer_core kernel Kernel_2");
 
   // safety check
-  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in outer_core() routine");
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in outer_core() routine");
   }
 
   // if the grid can handle the number of blocks, we let it be 1D
@@ -96,7 +94,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
 
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &nb_blocks_to_compute));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_ibool.ocl));
-    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_phase_ispec_inner_outer_core));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_phase_ispec_inner_outer_core.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->num_phase_ispec_outer_core));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &iphase));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_mesh_coloring_gpu));
@@ -183,20 +181,12 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                             mp->use_mesh_coloring_gpu,
                                                                             mp->d_displ_outer_core.cuda,
                                                                             mp->d_accel_outer_core.cuda,
-                                                                            d_xix.cuda,
-                                                                            d_xiy.cuda,
-                                                                            d_xiz.cuda,
-                                                                            d_etax.cuda,
-                                                                            d_etay.cuda,
-                                                                            d_etaz.cuda,
-                                                                            d_gammax.cuda,
-                                                                            d_gammay.cuda,
-                                                                            d_gammaz.cuda,
+                                                                            d_xix.cuda,d_xiy.cuda,d_xiz.cuda,
+                                                                            d_etax.cuda,d_etay.cuda,d_etaz.cuda,
+                                                                            d_gammax.cuda,d_gammay.cuda,d_gammaz.cuda,
                                                                             mp->d_hprime_xx.cuda,
                                                                             mp->d_hprimewgll_xx.cuda,
-                                                                            mp->d_wgllwgll_xy.cuda,
-                                                                            mp->d_wgllwgll_xz.cuda,
-                                                                            mp->d_wgllwgll_yz.cuda,
+                                                                            mp->d_wgllwgll_xy.cuda,mp->d_wgllwgll_xz.cuda,mp->d_wgllwgll_yz.cuda,
                                                                             mp->gravity,
                                                                             mp->d_xstore_outer_core.cuda,
                                                                             mp->d_ystore_outer_core.cuda,
@@ -231,7 +221,9 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                             mp->d_hprimewgll_xx.cuda,
                                                                             mp->d_wgllwgll_xy.cuda, mp->d_wgllwgll_xz.cuda, mp->d_wgllwgll_yz.cuda,
                                                                             mp->gravity,
-                                                                            mp->d_xstore_outer_core.cuda,mp->d_ystore_outer_core.cuda,mp->d_zstore_outer_core.cuda,
+                                                                            mp->d_xstore_outer_core.cuda,
+                                                                            mp->d_ystore_outer_core.cuda,
+                                                                            mp->d_zstore_outer_core.cuda,
                                                                             mp->d_d_ln_density_dr_table.cuda,
                                                                             mp->d_minus_rho_g_over_kappa_fluid.cuda,
                                                                             mp->d_wgll_cube.cuda,
@@ -245,9 +237,8 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("kernel outer_core");
-#endif
+
+  GPU_ERROR_CHECKING ("kernel outer_core");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -271,8 +262,8 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check
-  if( FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in compute_forces_outer_core_gpu() routine");
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_forces_outer_core_gpu() routine");
   }
 
   // determines number of elements to loop over (inner/outer elements)
@@ -283,8 +274,8 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
     num_elements = mp->nspec_inner_outer_core;
   }
 
-  if (num_elements == 0)
-    return;
+  // checks if anything to do
+  if (num_elements == 0) return;
 
   // mesh coloring
   if (mp->use_mesh_coloring_gpu) {
@@ -432,9 +423,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                 FORWARD_OR_ADJOINT);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time_val ();
   //printf ("Elapsed time: %e\n", end_time-start_time);
-  exit_on_gpu_error ("compute_forces_outer_core_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_forces_outer_core_gpu");
 }

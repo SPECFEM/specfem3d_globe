@@ -62,9 +62,9 @@
   !print*,'read adjoint sources: it_sub_adj = ',it_sub_adj
 
   ! asynchronously reads in adjoint source files
-  if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) then
+  if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1) then
     ! handles file input/output thread
-    if( it == it_begin ) then
+    if (it == it_begin) then
       ! creates new io thread for reading in sources
       call read_adj_io_thread(it_sub_adj)
 
@@ -80,7 +80,7 @@
     endif
 
     ! checks if next chunk necessary
-    if( it_sub_adj < NSTEP_SUB_ADJ ) then
+    if (it_sub_adj < NSTEP_SUB_ADJ) then
       ! starts thread to read in next junk
       it_sub_adj = it_sub_adj + 1
 
@@ -132,14 +132,14 @@
   !       ' for local adjoint sources = ',nadj_rec_local
 
   ! checks chunk number
-  if( it_sub_adj < 1 .or. it_sub_adj > NSTEP_SUB_ADJ ) then
-    print*,'error reading adjoint sources: chunk number ',it_sub_adj,'is invalid'
-    call exit_MPI(myrank,'error reading adjoint sources with invalid chunk number')
+  if (it_sub_adj < 1 .or. it_sub_adj > NSTEP_SUB_ADJ) then
+    print*,'Error reading adjoint sources: chunk number ',it_sub_adj,'is invalid'
+    call exit_MPI(myrank,'Error reading adjoint sources with invalid chunk number')
   endif
 
   ! allocates temporary source array
   allocate(tmp_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating array tmp_sourcearray')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array tmp_sourcearray')
 
   ! initializes
   tmp_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
@@ -150,14 +150,14 @@
   ! loops over all adjoint sources
   do irec = 1, nrec
     ! checks that the source slice number is okay
-    if(islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) then
-      print*,'error rank ',myrank,': adjoint source slice index ',islice_selected_rec(irec),&
+    if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) then
+      print*,'Error rank ',myrank,': adjoint source slice index ',islice_selected_rec(irec),&
              ' is out of bounds ',NPROCTOT_VAL-1
-      call exit_MPI(myrank,'error adjoint source has wrong source slice number in adjoint simulation')
+      call exit_MPI(myrank,'Error adjoint source has wrong source slice number in adjoint simulation')
     endif
 
     ! compute source arrays for adjoint sources within this rank's slice
-    if( myrank == islice_selected_rec(irec) ) then
+    if (myrank == islice_selected_rec(irec)) then
       ! increases counter
       irec_local = irec_local + 1
 
@@ -183,7 +183,7 @@
   enddo
 
   ! checks that number of read sources is valid
-  if(irec_local /= nadj_rec_local) then
+  if (irec_local /= nadj_rec_local) then
     call exit_MPI(myrank,'irec_local /= nadj_rec_local in adjoint simulation')
   endif
 
@@ -233,7 +233,7 @@
     open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
 
     ! checks if file opens/exists
-    if( ier /= 0 ) then
+    if (ier /= 0) then
       ! adjoint source file not found
       ! stops simulation
       call exit_MPI(myrank,&
@@ -244,11 +244,11 @@
     itime = 0
     do while(ier == 0)
       read(IIN,*,iostat=ier) junk,junk
-      if( ier == 0 ) itime = itime + 1
+      if (ier == 0 ) itime = itime + 1
     enddo
 
     ! checks length
-    if( itime /= NSTEP) then
+    if (itime /= NSTEP) then
       print*,'adjoint source error: ',trim(filename),' has length',itime,' but should be',NSTEP
       call exit_MPI(myrank,&
         'file '//trim(filename)//' length is wrong, please check your adjoint sources and your simulation duration')

@@ -107,7 +107,7 @@
   endif
 
 !  computed_elements = 0
-  if( .not. phase_is_inner ) then
+  if (.not. phase_is_inner) then
     iphase = 1
     num_elements = nspec_outer
   else
@@ -121,15 +121,15 @@
 
     ! only compute element which belong to current phase (inner or outer elements)
 
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
           tempx3l = 0._CUSTOM_REAL
 
-          do l=1,NGLLX
+          do l = 1,NGLLX
             !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
             tempx1l = tempx1l + displfluid(ibool(l,j,k,ispec)) * hprime_xx(i,l)
             tempx2l = tempx2l + displfluid(ibool(i,l,k,ispec)) * hprime_yy(j,l)
@@ -158,7 +158,7 @@
 
           ! compute contribution of rotation and add to gradient of potential
           ! this term has no Z component
-          if(ROTATION_VAL) then
+          if (ROTATION_VAL) then
 
             ! store the source for the Euler scheme for A_rotation and B_rotation
             two_omega_deltat = deltat * two_omega_earth
@@ -189,7 +189,7 @@
           endif  ! end of section with rotation
 
           ! add (chi/rho)grad(rho) term in no gravity case
-          if(.not. GRAVITY_VAL) then
+          if (.not. GRAVITY_VAL) then
             ! With regards to the non-gravitating case: we cannot set N^2 = 0 *and* let g = 0.
             ! We can *either* assume N^2 = 0 but keep gravity g, *or* we can assume that gravity
             ! is negligible to begin with, as in our GJI 2002a, in which case N does not arise.
@@ -288,8 +288,8 @@
             ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
             !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
             !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-            if( MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 ) then
-              div_displfluid(i,j,k,ispec) =  &
+            if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1) then
+              div_displfluid(i,j,k,ispec) = &
                  minus_rho_g_over_kappa_fluid(int_radius) * (dpotentialdx_with_rot * gxl + &
                  dpotentialdy_with_rot * gyl + dpotentialdzl * gzl)
             endif
@@ -304,15 +304,15 @@
       enddo
     enddo
 
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
           tempx3l = 0._CUSTOM_REAL
 
-          do l=1,NGLLX
+          do l = 1,NGLLX
             !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
             tempx1l = tempx1l + tempx1(l,j,k) * hprimewgll_xx(l,i)
             tempx2l = tempx2l + tempx2(i,l,k) * hprimewgll_yy(l,j)
@@ -321,7 +321,7 @@
 
           ! sum contributions from each element to the global mesh and add gravity term
           sum_terms = - (wgllwgll_yz(j,k)*tempx1l + wgllwgll_xz(i,k)*tempx2l + wgllwgll_xy(i,j)*tempx3l)
-          if(GRAVITY_VAL) sum_terms = sum_terms + gravity_term(i,j,k)
+          if (GRAVITY_VAL) sum_terms = sum_terms + gravity_term(i,j,k)
 
           accelfluid(ibool(i,j,k,ispec)) = accelfluid(ibool(i,j,k,ispec)) + sum_terms
 
@@ -330,8 +330,8 @@
     enddo
 
     ! update rotation term with Euler scheme
-    if(ROTATION_VAL) then
-      if(USE_LDDRK)then
+    if (ROTATION_VAL) then
+      if (USE_LDDRK) then
         ! use the source saved above
         A_array_rotation_lddrk(:,:,:,ispec) = ALPHA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec) + source_euler_A(:,:,:)
         A_array_rotation(:,:,:,ispec) = A_array_rotation(:,:,:,ispec) + BETA_LDDRK(istage) * A_array_rotation_lddrk(:,:,:,ispec)

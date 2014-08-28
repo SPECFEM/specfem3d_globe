@@ -108,9 +108,9 @@
   do i_SLS = 1,N_SLS
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+    if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
 
-      if(ANISOTROPIC_3D_MANTLE_VAL) then
+      if (ANISOTROPIC_3D_MANTLE_VAL) then
 
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
@@ -126,7 +126,7 @@
 
     else
 
-      if(ANISOTROPIC_3D_MANTLE_VAL) then
+      if (ANISOTROPIC_3D_MANTLE_VAL) then
 
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
@@ -241,8 +241,8 @@
   do i_SLS = 1,N_SLS
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
-      if(ANISOTROPIC_3D_MANTLE_VAL) then
+    if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+      if (ANISOTROPIC_3D_MANTLE_VAL) then
 
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
@@ -255,7 +255,7 @@
 
     else
 
-      if(ANISOTROPIC_3D_MANTLE_VAL) then
+      if (ANISOTROPIC_3D_MANTLE_VAL) then
         DO_LOOP_IJK
           factor_common_c44_muv(INDEX_IJK) = factor_common(1,1,1,i_SLS,ispec) * c44store(INDEX_IJK,ispec)
         ENDDO_LOOP_IJK
@@ -380,7 +380,7 @@
   do i_SLS = 1,N_SLS
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+    if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
 
       DO_LOOP_IJK
         factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
@@ -494,7 +494,7 @@
   do i_SLS = 1,N_SLS
 
     ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+    if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
       DO_LOOP_IJK
         factor_common_use(INDEX_IJK) = factor_common(INDEX_IJK,i_SLS,ispec) * muvstore(INDEX_IJK,ispec)
       ENDDO_LOOP_IJK
@@ -588,7 +588,7 @@
 !  real(kind=CUSTOM_REAL) :: factor_common_c44_muv
 !  integer :: i_SLS
 !
-!  if( .not. is_backward_field ) then
+!  if (.not. is_backward_field) then
 !    dt = dble(deltat)
 !  else
 !    ! backward/reconstruction: reverse time
@@ -598,7 +598,7 @@
 !  do i_SLS = 1,N_SLS
 !
 !    ! Runge-Kutta scheme to update memory variables R(t)
-!    if( .false. ) then
+!    if (.false.) then
 !! classical RK 4:       R'(t) =  - 1/tau * R(t)
 !!
 !! Butcher RK4:
@@ -623,7 +623,7 @@
 !    endif
 !
 !    ! reformatted R_memory to handle large factor_common and reduced [alpha,beta,gamma]val
-!    if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+!    if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
 !      factor_common_c44_muv = factor_common(i,j,k,i_SLS,ispec) * c44_muv
 !    else
 !      factor_common_c44_muv = factor_common(1,1,1,i_SLS,ispec) * c44_muv

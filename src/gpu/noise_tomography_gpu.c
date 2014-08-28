@@ -83,9 +83,7 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
   // copies noise array to CPU
   gpuCopy_from_device_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("noise_transfer_surface_to_host");
-#endif
+  GPU_ERROR_CHECKING ("noise_transfer_surface_to_host");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -146,9 +144,7 @@ void FC_FUNC_ (noise_add_source_master_rec_gpu,
 #endif
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("noise_add_source_master_rec_kernel");
-#endif
+  GPU_ERROR_CHECKING ("noise_add_source_master_rec_kernel");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -177,20 +173,7 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
 #endif
 
   // copies surface movie to GPU
-#ifdef USE_OPENCL
-  if (run_opencl) {
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
-                                   NDIM*NGLL2 *(mp->nspec2D_top_crust_mantle)*sizeof (realw),
-                                   h_noise_surface_movie, 0, NULL, NULL));
-  }
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-    cudaMemcpy(mp->d_noise_surface_movie.cuda,h_noise_surface_movie,
-               NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),cudaMemcpyHostToDevice);
-  }
-#endif
-
+  gpuCopy_todevice_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM*NGLL2 *(mp->nspec2D_top_crust_mantle));
 
   switch (mp->noise_tomography) {
   case 2:
@@ -280,7 +263,5 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
     break;
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("noise_read_add_surface_movie_kernel");
-#endif
+  GPU_ERROR_CHECKING ("noise_read_add_surface_movie_kernel");
 }

@@ -85,10 +85,10 @@
           S40RTS_V_qq0(NK_20+1,NK_20+1), &
           S40RTS_V_qq(3,NK_20+1,NK_20+1), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating S40RTS_V arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating S40RTS_V arrays')
 
   ! the variables read are declared and stored in structure S40RTS_V
-  if(myrank == 0) call read_model_s40rts()
+  if (myrank == 0) call read_model_s40rts()
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(S40RTS_V_dvs_a,(NK_20+1)*(NS_40+1)*(NS_40+1))
@@ -118,33 +118,33 @@
 
   ! S40RTS degree 40 S model from Ritsema
   open(unit=10,file=trim(S40RTS),status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(S40RTS), '": ', ier
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(S40RTS), '": ', ier
     call flush_IMAIN()
     ! stop
-    call exit_MPI(0, 'error: opening model s40rts data file DATA/s40rts/S40RTS.dat failed, please check...')
+    call exit_MPI(0, 'Error: opening model s40rts data file DATA/s40rts/S40RTS.dat failed, please check...')
   endif
 
-  do k=0,NK_20
-    do l=0,NS_40
-      read(10,*) S40RTS_V_dvs_a(k,l,0),(S40RTS_V_dvs_a(k,l,m),S40RTS_V_dvs_b(k,l,m),m=1,l)
+  do k = 0,NK_20
+    do l = 0,NS_40
+      read(10,*) S40RTS_V_dvs_a(k,l,0),(S40RTS_V_dvs_a(k,l,m),S40RTS_V_dvs_b(k,l,m),m = 1,l)
     enddo
   enddo
   close(10)
 
   ! P12 degree 12 P model from Ritsema
   open(unit=10,file=trim(P12),status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(P12), '": ', ier
-    call exit_MPI(0, 'error : opening model s40rts data file DATA/s20rts/P12.dat failed, please check...')
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(P12), '": ', ier
+    call exit_MPI(0, 'Error : opening model s40rts data file DATA/s20rts/P12.dat failed, please check...')
   endif
-  do k=0,NK_20
+  do k = 0,NK_20
     do l=0,12
-      read(10,*) S40RTS_V_dvp_a(k,l,0),(S40RTS_V_dvp_a(k,l,m),S40RTS_V_dvp_b(k,l,m),m=1,l)
+      read(10,*) S40RTS_V_dvp_a(k,l,0),(S40RTS_V_dvp_a(k,l,m),S40RTS_V_dvp_b(k,l,m),m = 1,l)
     enddo
     do l=13,NS_40
       S40RTS_V_dvp_a(k,l,0) = 0.0d0
-      do m=1,l
+      do m = 1,l
         S40RTS_V_dvp_a(k,l,m) = 0.0d0
         S40RTS_V_dvp_b(k,l,m) = 0.0d0
       enddo
@@ -190,35 +190,35 @@
 
   r_moho = RMOHO_ / R_EARTH_
   r_cmb = RCMB_ / R_EARTH_
-  if(radius>=r_moho .or. radius <= r_cmb) return
+  if (radius>=r_moho .or. radius <= r_cmb) return
 
   xr=-1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
-  if(xr > 1.0) print *,'xr > 1.0'
-  if(xr < -1.0) print *,'xr < -1.0'
-  do k=0,NK_20
+  if (xr > 1.0) print *,'xr > 1.0'
+  if (xr < -1.0) print *,'xr < -1.0'
+  do k = 0,NK_20
     radial_basis(k)=s40rts_rsple(1,NK_20+1,S40RTS_V_spknt(1),S40RTS_V_qq0(1,NK_20+1-k),S40RTS_V_qq(1,1,NK_20+1-k),xr)
   enddo
 
-  do l=0,NS_40
+  do l = 0,NS_40
     sint=dsin(theta)
     cost=dcos(theta)
     call lgndr(l,cost,sint,x,dx)
 
     dvs_alm=0.0d0
     dvp_alm=0.0d0
-    do k=0,NK_20
+    do k = 0,NK_20
       dvs_alm=dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,0)
       dvp_alm=dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,0)
     enddo
     dvs=dvs+dvs_alm*x(1)
     dvp=dvp+dvp_alm*x(1)
 
-    do m=1,l
+    do m = 1,l
       dvs_alm=0.0d0
       dvp_alm=0.0d0
       dvs_blm=0.0d0
       dvp_blm=0.0d0
-      do k=0,NK_20
+      do k = 0,NK_20
         dvs_alm=dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,m)
         dvp_alm=dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,m)
         dvs_blm=dvs_blm+radial_basis(k)*S40RTS_V_dvs_b(k,l,m)
@@ -269,16 +269,16 @@
   S40RTS_V_spknt(20) = 0.96512d0
   S40RTS_V_spknt(21) = 1.00000d0
 
-  do i=1,NK_20+1
-    do j=1,NK_20+1
-      if(i == j) then
+  do i = 1,NK_20+1
+    do j = 1,NK_20+1
+      if (i == j) then
         S40RTS_V_qq0(j,i)=1.0d0
       else
         S40RTS_V_qq0(j,i)=0.0d0
       endif
     enddo
   enddo
-  do i=1,NK_20+1
+  do i = 1,NK_20+1
     call s40rts_rspln(1,NK_20+1,S40RTS_V_spknt(1),S40RTS_V_qq0(1,i),S40RTS_V_qq(1,1,i),qqwk(1,1))
   enddo
 
@@ -313,45 +313,45 @@
       I=MIN0(I,II)
 
 !   SEE IF X IS INCREASING OR DECREASING.
-      IF(X(I2)-X(I1) <  0) goto 1
-      IF(X(I2)-X(I1) >= 0) goto 2
+      if (X(I2)-X(I1) <  0) goto 1
+      if (X(I2)-X(I1) >= 0) goto 2
 
 !   X IS DECREASING.  CHANGE I AS NECESSARY.
- 1    IF(S-X(I) <= 0) goto 3
-      IF(S-X(I) >  0) goto 4
+ 1    if (S-X(I) <= 0) goto 3
+      if (S-X(I) >  0) goto 4
 
  4    I=I-1
 
-      IF(I-I1 <  0) goto 11
-      IF(I-I1 == 0) goto 6
-      IF(I-I1 >  0) goto 1
+      if (I-I1 <  0) goto 11
+      if (I-I1 == 0) goto 6
+      if (I-I1 >  0) goto 1
 
- 3    IF(S-X(I+1) <  0) goto 5
-      IF(S-X(I+1) >= 0) goto 6
+ 3    if (S-X(I+1) <  0) goto 5
+      if (S-X(I+1) >= 0) goto 6
 
  5    I=I+1
 
-      IF(I-II <  0) goto 3
-      IF(I-II == 0) goto 6
-      IF(I-II >  0) goto 7
+      if (I-II <  0) goto 3
+      if (I-II == 0) goto 6
+      if (I-II >  0) goto 7
 
 !   X IS INCREASING.  CHANGE I AS NECESSARY.
- 2    IF(S-X(I+1) <= 0) goto 8
-      IF(S-X(I+1) >  0) goto 9
+ 2    if (S-X(I+1) <= 0) goto 8
+      if (S-X(I+1) >  0) goto 9
 
  9    I=I+1
 
-      IF(I-II <  0) goto 2
-      IF(I-II == 0) goto 6
-      IF(I-II >  0) goto 7
+      if (I-II <  0) goto 2
+      if (I-II == 0) goto 6
+      if (I-II >  0) goto 7
 
- 8    IF(S-X(I) <  0) goto 10
-      IF(S-X(I) >= 0) goto 6
+ 8    if (S-X(I) <  0) goto 10
+      if (S-X(I) >= 0) goto 6
 
  10   I=I-1
-      IF(I-I1 <  0) goto 11
-      IF(I-I1 == 0) goto 6
-      IF(I-I1 >  0) goto 8
+      if (I-I1 <  0) goto 11
+      if (I-I1 == 0) goto 6
+      if (I-I1 >  0) goto 8
 
  7    I=II
       GOTO 6
@@ -393,16 +393,16 @@
       Y0=0.0d0
 
 !   BAIL OUT IF THERE ARE LESS THAN TWO POINTS TOTAL
-      IF(I2-I1  < 0) return
-      IF(I2-I1 == 0) goto 17
-      IF(I2-I1  > 0) goto 8
+      if (I2-I1  < 0) return
+      if (I2-I1 == 0) goto 17
+      if (I2-I1  > 0) goto 8
 
  8    A0=X(J1-1)
 !   SEARCH FOR DISCONTINUITIES.
       DO 3 I=J1,I2
       B0=A0
       A0=X(I)
-      IF(DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) GOTO 4
+      if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) GOTO 4
  3    CONTINUE
  17   J1=J1-1
       J2=I2-2
@@ -410,9 +410,9 @@
  4    J1=J1-1
       J2=I-3
 !   SEE IF THERE ARE ENOUGH POINTS TO INTERPOLATE (AT LEAST THREE).
- 5    IF(J2+1-J1 <  0) goto 9
-      IF(J2+1-J1 == 0) goto 10
-      IF(J2+1-J1 >  0) goto 11
+ 5    if (J2+1-J1 <  0) goto 9
+      if (J2+1-J1 == 0) goto 10
+      if (J2+1-J1 >  0) goto 11
 
 !   ONLY TWO POINTS.  USE LINEAR INTERPOLATION.
  10   J2=J2+2
@@ -424,7 +424,7 @@
       GOTO 12
 
 !   MORE THAN TWO POINTS.  DO SPLINE INTERPOLATION.
- 11   A0=0.
+ 11   A0 = 0.
       H=X(J1+1)-X(J1)
       H2=X(J1+2)-X(J1)
       Y0=H*H2*(H2-H)
@@ -488,7 +488,7 @@
       enddo
 
 !   SEE IF THIS DISCONTINUITY IS THE LAST.
- 12   IF(J2-I2 < 0) then
+ 12   if (J2-I2 < 0) then
         goto 6
       else
         return
@@ -496,8 +496,8 @@
 
 !   NO.  GO BACK FOR MORE.
  6    J1=J2+2
-      IF(J1-I2 <= 0) goto 8
-      IF(J1-I2 >  0) goto 7
+      if (J1-I2 <= 0) goto 8
+      if (J1-I2 >  0) goto 7
 
 !   THERE IS ONLY ONE POINT LEFT AFTER THE LATEST DISCONTINUITY.
  7    DO J=1,3

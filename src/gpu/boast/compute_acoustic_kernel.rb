@@ -88,7 +88,7 @@ module BOAST
     ngll3_padded = Int("NGLL3_PADDED", :const => n_gll3_padded)
 
     p = Procedure(function_name, v)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
@@ -110,7 +110,7 @@ module BOAST
         decl scalar_field_accel = Real("scalar_field_accel", :local => true, :dim => [Dim(ngll3)])
 
         print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
-        print If( ispec < nspec ) {
+        print If(ispec < nspec ) {
           print ijk === get_local_id(0)
           print ijk_ispec        === ijk + ngll3       *ispec
           print ijk_ispec_padded === ijk + ngll3_padded*ispec

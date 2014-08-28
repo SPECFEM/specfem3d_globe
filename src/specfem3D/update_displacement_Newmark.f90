@@ -70,7 +70,7 @@
   implicit none
 
   ! updates wavefields
-  if( .not. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
 
     ! Newmark time scheme update
@@ -111,10 +111,10 @@
   implicit none
 
   ! checks
-  if( SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3 ) return
 
   ! updates wavefields
-  if( .not. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! Newmark time scheme update for backward/reconstructed fields
     ! mantle
@@ -159,7 +159,7 @@
   integer :: i
 
   ! Newmark time scheme update
-  if(FORCE_VECTORIZATION_VAL) then
+  if (FORCE_VECTORIZATION_VAL) then
 
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( NGLOB, displ, veloc, accel, &
@@ -167,7 +167,7 @@
 !$OMP PRIVATE(i)
 
 !$OMP DO SCHEDULE(GUIDED)
-    do i=1,NGLOB * NDIM
+    do i = 1,NGLOB * NDIM
       displ(i,1) = displ(i,1) + deltat * veloc(i,1) + deltatsqover2 * accel(i,1)
       veloc(i,1) = veloc(i,1) + deltatover2 * accel(i,1)
       accel(i,1) = 0._CUSTOM_REAL
@@ -177,7 +177,7 @@
 
   else
 
-    do i=1,NGLOB
+    do i = 1,NGLOB
       displ(:,i) = displ(:,i) + deltat * veloc(:,i) + deltatsqover2 * accel(:,i)
       veloc(:,i) = veloc(:,i) + deltatover2 * accel(:,i)
       accel(:,i) = 0._CUSTOM_REAL
@@ -213,7 +213,7 @@
 
   ! Newmark time scheme update
 !$OMP DO SCHEDULE(GUIDED)
-  do i=1,NGLOB
+  do i = 1,NGLOB
     displ(i) = displ(i) + deltat * veloc(i) + deltatsqover2 * accel(i)
     veloc(i) = veloc(i) + deltatover2 * accel(i)
     accel(i) = 0._CUSTOM_REAL
@@ -240,7 +240,7 @@
   implicit none
 
   ! corrector terms for fluid parts to update velocity
-  if(.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     call update_veloc_acoustic(NGLOB_OUTER_CORE,veloc_outer_core,accel_outer_core, &
                                deltatover2) !!!!!! ,rmass_outer_core)
@@ -265,7 +265,7 @@
   implicit none
 
   ! corrector terms for fluid parts to update velocity
-  if(.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! adjoint / kernel runs
     call update_veloc_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_veloc_outer_core,b_accel_outer_core, &
@@ -304,7 +304,7 @@
   ! Newmark time scheme
 
   ! update velocity
-  do i=1,NGLOB
+  do i = 1,NGLOB
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2 * accel_outer_core(i)
   enddo
 
@@ -326,7 +326,7 @@
   implicit none
 
   ! corrector terms for elastic parts updates velocity
-  if(.NOT. GPU_MODE ) then
+  if (.not. GPU_MODE) then
     ! on CPU
     call update_veloc_elastic(NGLOB_CRUST_MANTLE,veloc_crust_mantle,accel_crust_mantle, &
                               NGLOB_INNER_CORE,veloc_inner_core,accel_inner_core, &
@@ -353,7 +353,7 @@
 
   ! corrector terms for elastic parts updates velocity
 
-  if(.NOT. GPU_MODE ) then
+  if (.not. GPU_MODE) then
     ! on CPU
     ! adjoint / kernel runs
     ! uses corrected mass matrices for update
@@ -411,18 +411,18 @@
 !$OMP accel_crust_mantle, NGLOB_IC, veloc_inner_core, accel_inner_core) &
 !$OMP PRIVATE(i)
 
-  if(FORCE_VECTORIZATION_VAL) then
+  if (FORCE_VECTORIZATION_VAL) then
 
     ! crust/mantle
 !$OMP DO SCHEDULE(GUIDED)
-    do i=1,NGLOB_CM * NDIM
+    do i = 1,NGLOB_CM * NDIM
       veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
     enddo
 !$OMP enddo
 
 !$OMP DO SCHEDULE(GUIDED)
     ! inner core
-    do i=1,NGLOB_IC * NDIM
+    do i = 1,NGLOB_IC * NDIM
       veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
     enddo
 !$OMP enddo
@@ -430,12 +430,12 @@
   else
 
     ! crust/mantle
-    do i=1,NGLOB_CM
+    do i = 1,NGLOB_CM
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
     enddo
 
     ! inner core
-    do i=1,NGLOB_IC
+    do i = 1,NGLOB_IC
       veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
     enddo
 

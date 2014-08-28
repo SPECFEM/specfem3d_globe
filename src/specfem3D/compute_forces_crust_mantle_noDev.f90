@@ -167,7 +167,7 @@
 ! ****************************************************
 
 !  computed_elements = 0
-  if( .not. phase_is_inner ) then
+  if (.not. phase_is_inner) then
     iphase = 1
     num_elements = nspec_outer
   else
@@ -181,9 +181,9 @@
 
     ! only compute element which belong to current phase (inner or outer elements)
 
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
           tempx1l = 0._CUSTOM_REAL
           tempx2l = 0._CUSTOM_REAL
@@ -197,7 +197,7 @@
           tempz2l = 0._CUSTOM_REAL
           tempz3l = 0._CUSTOM_REAL
 
-          do l=1,NGLLX
+          do l = 1,NGLLX
             hp1 = hprime_xx(i,l)
             iglob = ibool(l,j,k,ispec)
             tempx1l = tempx1l + displ_crust_mantle(1,iglob)*hp1
@@ -205,7 +205,7 @@
             tempz1l = tempz1l + displ_crust_mantle(3,iglob)*hp1
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l = 1,NGLLY
             hp2 = hprime_yy(j,l)
             iglob = ibool(i,l,k,ispec)
             tempx2l = tempx2l + displ_crust_mantle(1,iglob)*hp2
@@ -213,7 +213,7 @@
             tempz2l = tempz2l + displ_crust_mantle(3,iglob)*hp2
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l = 1,NGLLZ
             hp3 = hprime_zz(k,l)
             iglob = ibool(i,j,l,ispec)
             tempx3l = tempx3l + displ_crust_mantle(1,iglob)*hp3
@@ -261,8 +261,8 @@
           ! compute deviatoric strain
           if (COMPUTE_AND_STORE_STRAIN) then
             templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-            if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-              if( ispec == 1 ) then
+            if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+              if (ispec == 1) then
                 epsilon_trace_over_3(i,j,k,1) = templ
               endif
             else
@@ -276,8 +276,8 @@
           endif
 
           ! precompute terms for attenuation if needed
-          if( ATTENUATION_VAL ) then
-            if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+          if (ATTENUATION_VAL) then
+            if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
               one_minus_sum_beta_use = one_minus_sum_beta(i,j,k,ispec)
             else
               one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -289,7 +289,7 @@
           ! compute either isotropic or anisotropic elements
           !
 
-          if(ANISOTROPIC_3D_MANTLE_VAL) then
+          if (ANISOTROPIC_3D_MANTLE_VAL) then
 
             c11 = c11store(i,j,k,ispec)
             c12 = c12store(i,j,k,ispec)
@@ -313,7 +313,7 @@
             c56 = c56store(i,j,k,ispec)
             c66 = c66store(i,j,k,ispec)
 
-            if(ATTENUATION_VAL) then
+            if (ATTENUATION_VAL) then
               mul = c44
               c11 = c11 + FOUR_THIRDS * minus_sum_beta * mul
               c12 = c12 - TWO_THIRDS * minus_sum_beta * mul
@@ -347,7 +347,7 @@
           else
 
           ! do not use transverse isotropy except if element is between d220 and Moho
-            if( .not. ispec_is_tiso(ispec) ) then
+            if (.not. ispec_is_tiso(ispec)) then
 
               ! isotropic element
 
@@ -356,7 +356,7 @@
               mul = muvstore(i,j,k,ispec)
 
               ! use unrelaxed parameters if attenuation
-              if(ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
+              if (ATTENUATION_VAL) mul = mul * one_minus_sum_beta_use
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
               lambdal = lambdalplus2mul - 2.*mul
@@ -384,7 +384,7 @@
 
               ! use unrelaxed parameters if attenuation
               ! eta does not need to be shifted since it is a ratio
-              if(ATTENUATION_VAL) then
+              if (ATTENUATION_VAL) then
                 muvl = muvl * one_minus_sum_beta_use
                 muhl = muhl * one_minus_sum_beta_use
               endif
@@ -583,7 +583,7 @@
           endif   ! end of test whether isotropic or anisotropic element
 
           ! subtract memory variables if attenuation
-          if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+          if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
              do i_SLS = 1,N_SLS
                 R_xx_val = R_xx(i,j,k,i_SLS,ispec)
                 R_yy_val = R_yy(i,j,k,i_SLS,ispec)
@@ -602,7 +602,7 @@
           sigma_zy = sigma_yz
 
           ! compute non-symmetric terms for gravity
-          if(GRAVITY_VAL) then
+          if (GRAVITY_VAL) then
 
             ! use mesh coordinates to get theta and phi
             ! x y and z contain r theta and phi
@@ -694,9 +694,9 @@
       enddo ! NGLLY
     enddo ! NGLLZ
 
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 
           tempx1l = 0._CUSTOM_REAL
           tempy1l = 0._CUSTOM_REAL
@@ -710,21 +710,21 @@
           tempy3l = 0._CUSTOM_REAL
           tempz3l = 0._CUSTOM_REAL
 
-          do l=1,NGLLX
+          do l = 1,NGLLX
             fac1 = hprimewgll_xx(l,i)
             tempx1l = tempx1l + tempx1(l,j,k)*fac1
             tempy1l = tempy1l + tempy1(l,j,k)*fac1
             tempz1l = tempz1l + tempz1(l,j,k)*fac1
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l = 1,NGLLY
             fac2 = hprimewgll_yy(l,j)
             tempx2l = tempx2l + tempx2(i,l,k)*fac2
             tempy2l = tempy2l + tempy2(i,l,k)*fac2
             tempz2l = tempz2l + tempz2(i,l,k)*fac2
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l = 1,NGLLZ
             fac3 = hprimewgll_zz(l,k)
             tempx3l = tempx3l + tempx3(i,j,l)*fac3
             tempy3l = tempy3l + tempy3(i,j,l)*fac3
@@ -739,7 +739,7 @@
           sum_terms(i,j,k,2) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
           sum_terms(i,j,k,3) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
 
-          if(GRAVITY_VAL) then
+          if (GRAVITY_VAL) then
             sum_terms(i,j,k,1) = sum_terms(i,j,k,1) + rho_s_H(i,j,k,1)
             sum_terms(i,j,k,2) = sum_terms(i,j,k,2) + rho_s_H(i,j,k,2)
             sum_terms(i,j,k,3) = sum_terms(i,j,k,3) + rho_s_H(i,j,k,3)
@@ -750,9 +750,9 @@
     enddo ! NGLLZ
 
     ! sum contributions from each element to the global mesh and add gravity terms
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(i,j,k,1)
           accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(i,j,k,2)
@@ -776,9 +776,9 @@
 ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
-    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
       ! updates R_memory
-      if( USE_LDDRK ) then
+      if (USE_LDDRK) then
         call compute_element_att_memory_cm_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                  R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                  ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
@@ -797,11 +797,11 @@
     endif
 
     ! save deviatoric strain for Runge-Kutta scheme
-    if(COMPUTE_AND_STORE_STRAIN) then
+    if (COMPUTE_AND_STORE_STRAIN) then
       !epsilondev(:,:,:,:,ispec) = epsilondev_loc(:,:,:,:)
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
             epsilondev_xx(i,j,k,ispec) = epsilondev_loc(i,j,k,1)
             epsilondev_yy(i,j,k,ispec) = epsilondev_loc(i,j,k,2)
             epsilondev_xy(i,j,k,ispec) = epsilondev_loc(i,j,k,3)

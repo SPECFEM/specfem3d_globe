@@ -86,7 +86,7 @@ typedef float realw;
 #define PRINT10i(var) if (print_count<10) { printf ("var=%d\n", var); print_count++; }
 #else
 #define LOG(x)   // printf ("%s\n", x);
-#define PRINT5(var, offset)   // for (i=0;i<10;i++) printf ("var (%d)=%f\n", i, var[offset+i]);
+#define PRINT5(var, offset)   // for (i = 0;i<10;i++) printf ("var (%d)=%f\n", i, var[offset+i]);
 #endif
 
 // debug: run backward simulations with/without GPU routines and empty arrays for debugging
@@ -115,7 +115,12 @@ typedef float realw;
 
 // error checking after cuda function calls
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
-//#define ENABLE_VERY_SLOW_ERROR_CHECKING
+#define ENABLE_VERY_SLOW_ERROR_CHECKING 0
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
+#define GPU_ERROR_CHECKING(x) exit_on_gpu_error(x);
+#else
+#define GPU_ERROR_CHECKING(x)
+#endif
 
 // maximum function
 #define MAX(x, y)                  (((x) < (y)) ? (y) : (x))
@@ -909,19 +914,19 @@ typedef struct mesh_ {
 #endif
 
   // streams
-#if USE_CUDA
+#ifdef USE_CUDA
   // overlapped memcpy streams
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
 #endif
 
-#if USE_OPENCL
+#ifdef USE_OPENCL
   cl_event last_copy_evt;
   int has_last_copy_evt;
 #endif
 
   // specific OpenCL texture arrays
-#if USE_OPENCL
+#ifdef USE_OPENCL
 // note: need to be defined as they are passed as function arguments
   // USE_TEXTURES_FIELDS
   // forward
@@ -958,8 +963,13 @@ typedef struct mesh_ {
 /*----------------------------------------------------------------------------------------------- */
 
 // defined in helper_functions_gpu.c
-void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+
 void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array, int size);
+void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+
 void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
 
 void gpuMalloc_int (gpu_int_mem *buffer, int size);

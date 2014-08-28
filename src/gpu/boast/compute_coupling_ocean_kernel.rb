@@ -16,7 +16,7 @@ module BOAST
     ndim =               Int( "NDIM",              :const => n_dim)
 
     p = Procedure(function_name, [accel_crust_mantle, rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, rmass_ocean_load, npoin_ocean_load, ibool_ocean_load, normal_ocean_load])
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ndim => n_dim )
@@ -30,7 +30,7 @@ module BOAST
       decl *(additional_term = [Real("additional_term_x"), Real("additional_term_y"), Real("additional_term_z")])
 
       print ipoin === get_global_id(0) + get_global_size(0)*get_global_id(1)
-      print If( ipoin < npoin_ocean_load ) {
+      print If(ipoin < npoin_ocean_load ) {
         print iglob === ibool_ocean_load[ipoin] - 1
         n.each_index { |indx| print n[indx] === normal_ocean_load[INDEX2(ndim,indx,ipoin)] }
 

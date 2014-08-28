@@ -110,20 +110,20 @@
 !----
 
 ! assemble along xi only if more than one slice
-  if(NPROC_XI > 1) then
+  if (NPROC_XI > 1) then
 
     ! slices copy the right face into the buffer
-    do ipoin=1,npoin2D_xi(2)
+    do ipoin = 1,npoin2D_xi(2)
       buffer_send_faces_scalar(ipoin) = array_val(iboolright_xi(ipoin))
     enddo
 
     ! send messages forward along each row
-    if(iproc_xi == 0) then
+    if (iproc_xi == 0) then
       sender = null_process()
     else
       sender = addressing(ichunk,iproc_xi - 1,iproc_eta)
     endif
-    if(iproc_xi == NPROC_XI-1) then
+    if (iproc_xi == NPROC_XI-1) then
       receiver = null_process()
     else
       receiver = addressing(ichunk,iproc_xi + 1,iproc_eta)
@@ -132,8 +132,8 @@
                      buffer_received_faces_scalar,npoin2D_xi(1),sender,itag)
 
     ! all slices add the buffer received to the contributions on the left face
-    if(iproc_xi > 0) then
-      do ipoin=1,npoin2D_xi(1)
+    if (iproc_xi > 0) then
+      do ipoin = 1,npoin2D_xi(1)
         array_val(iboolleft_xi(ipoin)) = array_val(iboolleft_xi(ipoin)) + &
                                 buffer_received_faces_scalar(ipoin)
       enddo
@@ -142,17 +142,17 @@
     ! the contributions are correctly assembled on the left side of each slice
     ! now we have to send the result back to the sender
     ! all slices copy the left face into the buffer
-    do ipoin=1,npoin2D_xi(1)
+    do ipoin = 1,npoin2D_xi(1)
       buffer_send_faces_scalar(ipoin) = array_val(iboolleft_xi(ipoin))
     enddo
 
     ! send messages backward along each row
-    if(iproc_xi == NPROC_XI-1) then
+    if (iproc_xi == NPROC_XI-1) then
       sender = null_process()
     else
       sender = addressing(ichunk,iproc_xi + 1,iproc_eta)
     endif
-    if(iproc_xi == 0) then
+    if (iproc_xi == 0) then
       receiver = null_process()
     else
       receiver = addressing(ichunk,iproc_xi - 1,iproc_eta)
@@ -161,8 +161,8 @@
                      buffer_received_faces_scalar,npoin2D_xi(2),sender,itag)
 
     ! all slices copy the buffer received to the contributions on the right face
-    if(iproc_xi < NPROC_XI-1) then
-      do ipoin=1,npoin2D_xi(2)
+    if (iproc_xi < NPROC_XI-1) then
+      do ipoin = 1,npoin2D_xi(2)
         array_val(iboolright_xi(ipoin)) = buffer_received_faces_scalar(ipoin)
       enddo
     endif
@@ -174,20 +174,20 @@
 !----
 
 ! assemble along eta only if more than one slice
-  if(NPROC_ETA > 1) then
+  if (NPROC_ETA > 1) then
 
     ! slices copy the right face into the buffer
-    do ipoin=1,npoin2D_eta(2)
+    do ipoin = 1,npoin2D_eta(2)
       buffer_send_faces_scalar(ipoin) = array_val(iboolright_eta(ipoin))
     enddo
 
     ! send messages forward along each row
-    if(iproc_eta == 0) then
+    if (iproc_eta == 0) then
       sender = null_process()
     else
       sender = addressing(ichunk,iproc_xi,iproc_eta - 1)
     endif
-    if(iproc_eta == NPROC_ETA-1) then
+    if (iproc_eta == NPROC_ETA-1) then
       receiver = null_process()
     else
       receiver = addressing(ichunk,iproc_xi,iproc_eta + 1)
@@ -196,8 +196,8 @@
                      buffer_received_faces_scalar,npoin2D_eta(1),sender,itag)
 
     ! all slices add the buffer received to the contributions on the left face
-    if(iproc_eta > 0) then
-      do ipoin=1,npoin2D_eta(1)
+    if (iproc_eta > 0) then
+      do ipoin = 1,npoin2D_eta(1)
         array_val(iboolleft_eta(ipoin)) = array_val(iboolleft_eta(ipoin)) + &
                                 buffer_received_faces_scalar(ipoin)
       enddo
@@ -206,17 +206,17 @@
     ! the contributions are correctly assembled on the left side of each slice
     ! now we have to send the result back to the sender
     ! all slices copy the left face into the buffer
-    do ipoin=1,npoin2D_eta(1)
+    do ipoin = 1,npoin2D_eta(1)
       buffer_send_faces_scalar(ipoin) = array_val(iboolleft_eta(ipoin))
     enddo
 
     ! send messages backward along each row
-    if(iproc_eta == NPROC_ETA-1) then
+    if (iproc_eta == NPROC_ETA-1) then
       sender = null_process()
     else
       sender = addressing(ichunk,iproc_xi,iproc_eta + 1)
     endif
-    if(iproc_eta == 0) then
+    if (iproc_eta == 0) then
       receiver = null_process()
     else
       receiver = addressing(ichunk,iproc_xi,iproc_eta - 1)
@@ -225,8 +225,8 @@
                      buffer_received_faces_scalar,npoin2D_eta(2),sender,itag)
 
     ! all slices copy the buffer received to the contributions on the right face
-    if(iproc_eta < NPROC_ETA-1) then
-      do ipoin=1,npoin2D_eta(2)
+    if (iproc_eta < NPROC_ETA-1) then
+      do ipoin = 1,npoin2D_eta(2)
         array_val(iboolright_eta(ipoin)) = buffer_received_faces_scalar(ipoin)
       enddo
     endif
@@ -254,14 +254,14 @@
 
     icount_faces = 0
     do imsg = 1,NUMMSGS_FACES
-      if(myrank==iprocfrom_faces(imsg) .or. &
+      if (myrank==iprocfrom_faces(imsg) .or. &
            myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-      if(myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+      if (myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
         sender = iprocfrom_faces(imsg)
         npoin2D_chunks = npoin2D_faces(icount_faces)
         call recv_cr(buffer_received_faces_scalar,npoin2D_chunks,sender,itag)
 
-        do ipoin2D=1,npoin2D_chunks
+        do ipoin2D = 1,npoin2D_chunks
           array_val(iboolfaces(ipoin2D,icount_faces)) = &
              array_val(iboolfaces(ipoin2D,icount_faces)) + buffer_received_faces_scalar(ipoin2D)
         enddo
@@ -272,12 +272,12 @@
     !---- a given slice can belong to at most two faces
     icount_faces = 0
     do imsg = 1,NUMMSGS_FACES
-      if(myrank==iprocfrom_faces(imsg) .or. &
+      if (myrank==iprocfrom_faces(imsg) .or. &
            myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-      if(myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+      if (myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
         receiver = iprocto_faces(imsg)
         npoin2D_chunks = npoin2D_faces(icount_faces)
-        do ipoin2D=1,npoin2D_chunks
+        do ipoin2D = 1,npoin2D_chunks
           buffer_send_faces_scalar(ipoin2D) = array_val(iboolfaces(ipoin2D,icount_faces))
         enddo
         call send_cr(buffer_send_faces_scalar,npoin2D_chunks,receiver,itag)
@@ -293,14 +293,14 @@
 
     icount_faces = 0
     do imsg = 1,NUMMSGS_FACES
-      if(myrank==iprocfrom_faces(imsg) .or. &
+      if (myrank==iprocfrom_faces(imsg) .or. &
            myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-      if(myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+      if (myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
         sender = iprocto_faces(imsg)
         npoin2D_chunks = npoin2D_faces(icount_faces)
         call recv_cr(buffer_received_faces_scalar,npoin2D_chunks,sender,itag)
 
-        do ipoin2D=1,npoin2D_chunks
+        do ipoin2D = 1,npoin2D_chunks
           array_val(iboolfaces(ipoin2D,icount_faces)) = buffer_received_faces_scalar(ipoin2D)
         enddo
       endif
@@ -310,12 +310,12 @@
     !---- a given slice can belong to at most two faces
     icount_faces = 0
     do imsg = 1,NUMMSGS_FACES
-      if(myrank==iprocfrom_faces(imsg) .or. &
+      if (myrank==iprocfrom_faces(imsg) .or. &
            myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-      if(myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+      if (myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
         receiver = iprocfrom_faces(imsg)
         npoin2D_chunks = npoin2D_faces(icount_faces)
-        do ipoin2D=1,npoin2D_chunks
+        do ipoin2D = 1,npoin2D_chunks
           buffer_send_faces_scalar(ipoin2D) = array_val(iboolfaces(ipoin2D,icount_faces))
         enddo
         call send_cr(buffer_send_faces_scalar,npoin2D_chunks,receiver,itag)
@@ -339,28 +339,28 @@
 
   do imsg = 1,NCORNERSCHUNKS
 
-    if(myrank == iproc_master_corners(imsg) .or. &
+    if (myrank == iproc_master_corners(imsg) .or. &
        myrank == iproc_worker1_corners(imsg) .or. &
        (NCHUNKS /= 2 .and. myrank == iproc_worker2_corners(imsg))) icount_corners = icount_corners + 1
 
     !---- receive messages from the two workers on the master
-    if(myrank==iproc_master_corners(imsg)) then
+    if (myrank==iproc_master_corners(imsg)) then
 
       ! receive from worker #1 and add to local array
       sender = iproc_worker1_corners(imsg)
       call recv_cr(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL,sender,itag)
 
-      do ipoin1D=1,NGLOB1D_RADIAL
+      do ipoin1D = 1,NGLOB1D_RADIAL
         array_val(iboolcorner(ipoin1D,icount_corners)) = array_val(iboolcorner(ipoin1D,icount_corners)) + &
                  buffer_recv_chunkcorn_scalar(ipoin1D)
       enddo
 
       ! receive from worker #2 and add to local array
-      if(NCHUNKS /= 2) then
+      if (NCHUNKS /= 2) then
         sender = iproc_worker2_corners(imsg)
         call recv_cr(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL,sender,itag)
 
-        do ipoin1D=1,NGLOB1D_RADIAL
+        do ipoin1D = 1,NGLOB1D_RADIAL
           array_val(iboolcorner(ipoin1D,icount_corners)) = array_val(iboolcorner(ipoin1D,icount_corners)) + &
                    buffer_recv_chunkcorn_scalar(ipoin1D)
         enddo
@@ -369,11 +369,11 @@
     endif
 
     !---- send messages from the two workers to the master
-    if(myrank==iproc_worker1_corners(imsg) .or. &
+    if (myrank==iproc_worker1_corners(imsg) .or. &
                 (NCHUNKS /= 2 .and. myrank==iproc_worker2_corners(imsg))) then
 
       receiver = iproc_master_corners(imsg)
-      do ipoin1D=1,NGLOB1D_RADIAL
+      do ipoin1D = 1,NGLOB1D_RADIAL
         buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
       enddo
       call send_cr(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,receiver,itag)
@@ -385,23 +385,23 @@
     ! *********************************************************************
 
     !---- receive messages from the master on the two workers
-    if(myrank==iproc_worker1_corners(imsg) .or. &
+    if (myrank==iproc_worker1_corners(imsg) .or. &
                 (NCHUNKS /= 2 .and. myrank==iproc_worker2_corners(imsg))) then
 
       ! receive from master and copy to local array
       sender = iproc_master_corners(imsg)
       call recv_cr(buffer_recv_chunkcorn_scalar,NGLOB1D_RADIAL,sender,itag)
 
-      do ipoin1D=1,NGLOB1D_RADIAL
+      do ipoin1D = 1,NGLOB1D_RADIAL
         array_val(iboolcorner(ipoin1D,icount_corners)) = buffer_recv_chunkcorn_scalar(ipoin1D)
       enddo
 
     endif
 
     !---- send messages from the master to the two workers
-    if(myrank==iproc_master_corners(imsg)) then
+    if (myrank==iproc_master_corners(imsg)) then
 
-      do ipoin1D=1,NGLOB1D_RADIAL
+      do ipoin1D = 1,NGLOB1D_RADIAL
         buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))
       enddo
 
@@ -410,7 +410,7 @@
       call send_cr(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,receiver,itag)
 
       ! send to worker #2
-      if(NCHUNKS /= 2) then
+      if (NCHUNKS /= 2) then
         receiver = iproc_worker2_corners(imsg)
         call send_cr(buffer_send_chunkcorn_scalar,NGLOB1D_RADIAL,receiver,itag)
       endif
@@ -458,16 +458,16 @@
 ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     allocate(buffer_send_scalar(max_nibool_interfaces,num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array buffer_send_scalar'
+    if (ier /= 0 ) stop 'Error allocating array buffer_send_scalar'
     allocate(buffer_recv_scalar(max_nibool_interfaces,num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array buffer_recv_scalar'
+    if (ier /= 0 ) stop 'Error allocating array buffer_recv_scalar'
     allocate(request_send_scalar(num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array request_send_scalar'
+    if (ier /= 0 ) stop 'Error allocating array request_send_scalar'
     allocate(request_recv_scalar(num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array request_recv_scalar'
+    if (ier /= 0 ) stop 'Error allocating array request_recv_scalar'
 
     ! partition border copy into the buffer
     do iinterface = 1, num_interfaces

@@ -67,10 +67,10 @@
 !
 !---- read hypocenter info
 !
-  open(unit=1,file='DATA/CMTSOLUTION',status='old',action='read')
+  open(unit = 1,file='DATA/CMTSOLUTION',status='old',action='read')
 
 ! read source number isource
-  do isource=1,NSOURCES
+  do isource = 1,NSOURCES
 
     read(1,"(a256)") string
     ! skips empty lines
@@ -131,16 +131,16 @@
     read(string(5:len_trim(string)),*) moment_tensor(6,isource)
 
     ! checks half-duration
-    if( USE_FORCE_POINT_SOURCE ) then
+    if (USE_FORCE_POINT_SOURCE) then
       ! half-duration is the dominant frequency of the source
       ! point forces use a Ricker source time function
       ! null half-duration indicates a very low-frequency source
       ! (see constants.h: TINYVAL = 1.d-9 )
-      if( hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
+      if (hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
     else
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
-      if( hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
+      if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
     endif
 
   enddo
@@ -153,7 +153,7 @@
   close(1)
 
   ! Sets tshift_cmt to zero to initiate the simulation!
-  if(NSOURCES == 1)then
+  if (NSOURCES == 1) then
       tshift_cmt = 0.d0
       min_tshift_cmt_original = t_shift(1)
   else

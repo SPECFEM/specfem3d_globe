@@ -193,7 +193,7 @@
         endif
         ! add one spectral element to the list
         ispec = ispec + 1
-        if(ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
+        if (ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
 
         ! new get_flag_boundaries
         ! xmin & xmax
@@ -254,7 +254,7 @@
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
           is_superbrick=.false.
-          ispec_superbrick=0
+          ispec_superbrick = 0
           call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, &
                    r1,r2,r3,r4,r5,r6,r7,r8, &
                    xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &

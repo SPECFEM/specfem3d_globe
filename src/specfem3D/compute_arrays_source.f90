@@ -61,9 +61,9 @@
 
   ! calculate G_ij for general source location
   ! the source does not necessarily correspond to a Gauss-Lobatto point
-  do m=1,NGLLZ
-    do l=1,NGLLY
-      do k=1,NGLLX
+  do m = 1,NGLLZ
+    do l = 1,NGLLY
+      do k = 1,NGLLX
 
         xixd    = dble(xix(k,l,m))
         xiyd    = dble(xiy(k,l,m))
@@ -95,9 +95,9 @@
   call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
 
 ! calculate source array
-  do m=1,NGLLZ
-    do l=1,NGLLY
-      do k=1,NGLLX
+  do m = 1,NGLLZ
+    do l = 1,NGLLY
+      do k = 1,NGLLX
         call multiply_arrays_source(sourcearrayd,G11,G12,G13,G21,G22,G23, &
                   G31,G32,G33,hxis,hpxis,hetas,hpetas,hgammas,hpgammas,k,l,m)
       enddo
@@ -209,9 +209,9 @@
     !if (ios /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
 
     ! jumps over unused trace length
-    do itime =1,it_start-1
+    do itime  = 1,it_start-1
       read(IIN_ADJ,*,iostat=ios) junk,junk
-      if( ios /= 0) &
+      if (ios /= 0) &
         call exit_MPI(myrank,&
           'file '//trim(filename)//' has wrong length, please check with your simulation duration')
     enddo
@@ -223,7 +223,7 @@
       index_i = itime - it_start + 1
 
       ! would skip read and set source artificially to zero if out of bounds, see comments above
-      if( it_start == 0 .and. itime == 0 ) then
+      if (it_start == 0 .and. itime == 0) then
         adj_src(icomp,1) = 0._CUSTOM_REAL
         cycle
       endif
@@ -232,7 +232,7 @@
       !read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,itime-it_start+1)
       read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,index_i)
 
-      if( ios /= 0) &
+      if (ios /= 0) &
         call exit_MPI(myrank, &
           'file '//trim(filename)//' has wrong length, please check with your simulation duration')
     enddo

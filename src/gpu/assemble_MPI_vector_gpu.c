@@ -64,8 +64,8 @@ void FC_FUNC_(transfer_boun_from_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in transfer_boun_from_device() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in transfer_boun_from_device() routine");
   }
 
   // crust/mantle region
@@ -74,7 +74,7 @@ void FC_FUNC_(transfer_boun_from_device,
     size_mpi_buffer = NDIM*mp->max_nibool_interfaces_cm*mp->num_interfaces_crust_mantle;
 
     // checks if anything to do
-    if( size_mpi_buffer == 0 ) return;
+    if (size_mpi_buffer == 0 ) return;
 
     blocksize = BLOCKSIZE_TRANSFER;
     size_padded = ((int) ceil (((double) mp->max_nibool_interfaces_cm) / ((double) blocksize))) * blocksize;
@@ -155,7 +155,7 @@ void FC_FUNC_(transfer_boun_from_device,
       grid = dim3(num_blocks_x,num_blocks_y);
       threads = dim3(blocksize,1,1);
 
-      if(*FORWARD_OR_ADJOINT == 1) {
+      if (*FORWARD_OR_ADJOINT == 1) {
         prepare_boundary_accel_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
                                                            mp->d_send_accel_buffer_crust_mantle.cuda,
                                                            mp->num_interfaces_crust_mantle,
@@ -209,7 +209,7 @@ void FC_FUNC_(transfer_boun_from_device,
     size_mpi_buffer = NDIM*mp->max_nibool_interfaces_ic*mp->num_interfaces_inner_core;
 
     // checks if anything to do
-    if( size_mpi_buffer == 0 ) return;
+    if (size_mpi_buffer == 0 ) return;
 
     blocksize = BLOCKSIZE_TRANSFER;
     size_padded = ((int) ceil (((double) mp->max_nibool_interfaces_ic) / ((double) blocksize))) * blocksize;
@@ -292,7 +292,7 @@ void FC_FUNC_(transfer_boun_from_device,
       grid = dim3(num_blocks_x,num_blocks_y);
       threads = dim3(blocksize,1,1);
 
-      if(*FORWARD_OR_ADJOINT == 1) {
+      if (*FORWARD_OR_ADJOINT == 1) {
         prepare_boundary_accel_on_device<<<grid,threads,0,mp->compute_stream>>>(mp->d_accel_inner_core.cuda,
                                                                                 mp->d_send_accel_buffer_inner_core.cuda,
                                                                                 mp->num_interfaces_inner_core,
@@ -342,12 +342,10 @@ void FC_FUNC_(transfer_boun_from_device,
     break; // IREGION_INNER_CORE
 
   default:
-    exit_on_error("error invalid IREGION in transfer_boun_from_device() routine");
+    exit_on_error("Error invalid IREGION in transfer_boun_from_device() routine");
   } // switch (*IREGION)
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_boun_from_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_boun_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -381,8 +379,8 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in transfer_asmbl_accel_to_device() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in transfer_asmbl_accel_to_device() routine");
   }
 
   // crust/mantle region
@@ -391,7 +389,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
     size_mpi_buffer = NDIM*(mp->max_nibool_interfaces_cm)*(mp->num_interfaces_crust_mantle);
 
     // checks if anything to do
-    if( size_mpi_buffer == 0 ) return;
+    if (size_mpi_buffer == 0 ) return;
 
     // assembles values
     blocksize = BLOCKSIZE_TRANSFER;
@@ -408,7 +406,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
       // gets last copy event
       if (GPU_ASYNC_COPY) {
-        if ( mp->has_last_copy_evt) {
+        if (mp->has_last_copy_evt) {
           copy_evt = &mp->last_copy_evt;
           num_evt = 1;
         }
@@ -462,7 +460,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
       // releases copy event
       if (GPU_ASYNC_COPY) {
-        if( mp->has_last_copy_evt) {
+        if (mp->has_last_copy_evt) {
           clCheck (clReleaseEvent (mp->last_copy_evt));
           mp->has_last_copy_evt = 0;
         }
@@ -474,7 +472,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
       grid = dim3(num_blocks_x,num_blocks_y);
       threads = dim3(blocksize,1,1);
 
-      if(*FORWARD_OR_ADJOINT == 1) {
+      if (*FORWARD_OR_ADJOINT == 1) {
         // asynchronous copy
         if (GPU_ASYNC_COPY) {
           // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
@@ -520,9 +518,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
       }
     }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_asmbl_accel_to_device in crust_mantle");
-#endif
+    GPU_ERROR_CHECKING ("transfer_asmbl_accel_to_device in crust_mantle");
     break; // IREGION_CRUST_MANTLE
 
   // inner core region
@@ -547,7 +543,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
       // gets last copy event
       if (GPU_ASYNC_COPY) {
-        if ( mp->has_last_copy_evt) {
+        if (mp->has_last_copy_evt) {
           copy_evt = &mp->last_copy_evt;
           num_evt = 1;
         }
@@ -600,7 +596,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
       // releases copy event
       if (GPU_ASYNC_COPY) {
-        if( mp->has_last_copy_evt) {
+        if (mp->has_last_copy_evt) {
           clCheck (clReleaseEvent (mp->last_copy_evt));
           mp->has_last_copy_evt = 0;
         }
@@ -612,7 +608,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
       grid = dim3(num_blocks_x,num_blocks_y);
       threads = dim3(blocksize,1,1);
 
-      if(*FORWARD_OR_ADJOINT == 1) {
+      if (*FORWARD_OR_ADJOINT == 1) {
         if (GPU_ASYNC_COPY) {
           // Wait until previous copy stream finishes. We assemble while other compute kernels execute.
           cudaStreamSynchronize(mp->copy_stream);
@@ -655,18 +651,14 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
       }
     }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_asmbl_accel_to_device in inner_core");
-#endif
+    GPU_ERROR_CHECKING ("transfer_asmbl_accel_to_device in inner_core");
     break; // IREGION_INNER_CORE
 
   default:
-    exit_on_error("error invalid IREGION in transfer_asmbl_accel_to_device() routine");
+    exit_on_error("Error invalid IREGION in transfer_asmbl_accel_to_device() routine");
   } // switch (*IREGION)
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_asmbl_accel_to_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_asmbl_accel_to_device");
 }
 
 
@@ -689,13 +681,13 @@ void FC_FUNC_(transfer_buffer_to_device_async,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks async-memcpy
-  if ( ! GPU_ASYNC_COPY ) {
+  if (! GPU_ASYNC_COPY ) {
     exit_on_error("transfer_buffer_to_device_async must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_cuda.h");
   }
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in transfer_buffer_to_device_async() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in transfer_buffer_to_device_async() routine");
   }
 
   // regions
@@ -848,12 +840,10 @@ void FC_FUNC_(transfer_buffer_to_device_async,
     break;
 
   default:
-    exit_on_error("error invalid IREGION in transfer_buffer_to_device_async() routine");
+    exit_on_error("Error invalid IREGION in transfer_buffer_to_device_async() routine");
   } // switch (*IREGION)
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_buffer_to_device_async");
-#endif
+  GPU_ERROR_CHECKING ("transfer_buffer_to_device_async");
 }
 
 
@@ -875,7 +865,7 @@ void FC_FUNC_(sync_copy_from_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks async-memcpy
-  if ( ! GPU_ASYNC_COPY ) {
+  if (! GPU_ASYNC_COPY ) {
     exit_on_error("sync_copy_from_device must be called with GPU_ASYNC_COPY == 1, please check mesh_constants_gpu.h");
   }
 
@@ -885,8 +875,8 @@ void FC_FUNC_(sync_copy_from_device,
   }
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in sync_copy_from_device() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in sync_copy_from_device() routine");
   }
 
   // regions
@@ -997,13 +987,11 @@ void FC_FUNC_(sync_copy_from_device,
     break;
 
   default:
-    exit_on_error("error invalid IREGION in sync_copy_from_device() routine");
+    exit_on_error("Error invalid IREGION in sync_copy_from_device() routine");
   } // switch (*IREGION)
 
   // memory copy is now finished, so non-blocking MPI send can proceed
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("sync_copy_from_device");
-#endif
+  GPU_ERROR_CHECKING ("sync_copy_from_device");
 }
 

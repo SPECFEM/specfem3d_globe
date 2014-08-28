@@ -168,7 +168,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
 #ifdef USE_CUDA
     if (run_cuda) {
       // computes strain locally based on current backward/reconstructed (b_displ) wavefield
-      if(! mp->anisotropic_kl){
+      if (! mp->anisotropic_kl) {
         // isotropic kernels
         compute_iso_undo_att_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
                                                                            mp->d_epsilondev_yy_crust_mantle.cuda,
@@ -269,7 +269,7 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
 #ifdef USE_CUDA
     if (run_cuda) {
       // takes strain arrays computed from previous compute_forces call
-      if (! mp->anisotropic_kl){
+      if (! mp->anisotropic_kl) {
         // isotropic kernels
         compute_iso_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
                                                                   mp->d_epsilondev_yy_crust_mantle.cuda,
@@ -308,9 +308,8 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
     }
 #endif
   }
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_cm_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_cm_gpu");
 }
 
 
@@ -376,11 +375,11 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
   // checks if strain is available
   if (mp->undo_attenuation) {
     // checks strain array size
-    if(mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
-      exit_on_error("compute_kernels_cm_cuda NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
+    if (mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
+      exit_on_error("compute_kernels_ic_gpu NSPEC_CRUST_MANTLE_STRAIN_ONLY invalid with undo_att");
     }
-    // computes strain locally based on current backward/reconstructed (b_displ) wavefield
 
+    // computes strain locally based on current backward/reconstructed (b_displ) wavefield
     // isotropic kernels (shear, bulk)
 #ifdef USE_OPENCL
     if (run_opencl) {
@@ -391,12 +390,6 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xx_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_xz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_epsilondev_yz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_eps_trace_over_3_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_inner_core.ocl));
       clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
@@ -419,7 +412,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
       global_work_size[0] = num_blocks_x * blocksize;
       global_work_size[1] = num_blocks_y;
 
-      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL,
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undo_att_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
 
     }
@@ -427,27 +420,27 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #ifdef USE_CUDA
     if (run_cuda) {
       compute_iso_undo_att_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
-                                                               mp->d_epsilondev_yy_inner_core.cuda,
-                                                               mp->d_epsilondev_xy_inner_core.cuda,
-                                                               mp->d_epsilondev_xz_inner_core.cuda,
-                                                               mp->d_epsilondev_yz_inner_core.cuda,
-                                                               mp->d_eps_trace_over_3_inner_core.cuda,
-                                                               mp->d_beta_kl_inner_core.cuda,
-                                                               mp->d_alpha_kl_inner_core.cuda,
-                                                               mp->NSPEC_INNER_CORE,
-                                                               deltat,
-                                                               mp->d_ibool_inner_core.cuda,
-                                                               mp->d_b_displ_inner_core.cuda,
-                                                               mp->d_xix_inner_core.cuda,
-                                                               mp->d_xiy_inner_core.cuda,
-                                                               mp->d_xiz_inner_core.cuda,
-                                                               mp->d_etax_inner_core.cuda,
-                                                               mp->d_etay_inner_core.cuda,
-                                                               mp->d_etaz_inner_core.cuda,
-                                                               mp->d_gammax_inner_core.cuda,
-                                                               mp->d_gammay_inner_core.cuda,
-                                                               mp->d_gammaz_inner_core.cuda,
-                                                               mp->d_hprime_xx.cuda);
+                                                                         mp->d_epsilondev_yy_inner_core.cuda,
+                                                                         mp->d_epsilondev_xy_inner_core.cuda,
+                                                                         mp->d_epsilondev_xz_inner_core.cuda,
+                                                                         mp->d_epsilondev_yz_inner_core.cuda,
+                                                                         mp->d_eps_trace_over_3_inner_core.cuda,
+                                                                         mp->d_beta_kl_inner_core.cuda,
+                                                                         mp->d_alpha_kl_inner_core.cuda,
+                                                                         mp->NSPEC_INNER_CORE,
+                                                                         deltat,
+                                                                         mp->d_ibool_inner_core.cuda,
+                                                                         mp->d_b_displ_inner_core.cuda,
+                                                                         mp->d_xix_inner_core.cuda,
+                                                                         mp->d_xiy_inner_core.cuda,
+                                                                         mp->d_xiz_inner_core.cuda,
+                                                                         mp->d_etax_inner_core.cuda,
+                                                                         mp->d_etay_inner_core.cuda,
+                                                                         mp->d_etaz_inner_core.cuda,
+                                                                         mp->d_gammax_inner_core.cuda,
+                                                                         mp->d_gammay_inner_core.cuda,
+                                                                         mp->d_gammaz_inner_core.cuda,
+                                                                         mp->d_hprime_xx.cuda);
     }
 #endif
 
@@ -506,9 +499,7 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #endif
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_ic_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_ic_gpu");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -594,9 +585,8 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
                                                                    mp->NSPEC_OUTER_CORE);
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_kernels_oc_kernel");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_kernels_oc_kernel");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -619,16 +609,14 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (mp->nspec2D_top_crust_mantle, &num_blocks_x, &num_blocks_y);
 
+  // copies surface buffer to GPU
+  gpuCopy_todevice_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle);
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-
-    // copies surface buffer to GPU
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_noise_surface_movie.ocl, CL_TRUE, 0,
-                                   NDIM * NGLL2 * mp->nspec2D_top_crust_mantle * sizeof (realw),
-                                   h_noise_surface_movie, 0, NULL, NULL));
 
     // calculates noise strength kernel
     clCheck (clSetKernelArg (mocl.kernels.compute_strength_noise_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
@@ -656,11 +644,6 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(NGLL2,1,1);
 
-    // copies surface buffer to GPU
-    print_CUDA_error_if_any(cudaMemcpy(mp->d_noise_surface_movie.cuda,h_noise_surface_movie,
-                                       NDIM*NGLL2*(mp->nspec2D_top_crust_mantle)*sizeof(realw),
-                                       cudaMemcpyHostToDevice),90900);
-
     // calculates noise strength kernel
     compute_strength_noise_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,
                                                                          mp->d_ibelm_top_crust_mantle.cuda,
@@ -674,9 +657,8 @@ void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
                                                                          mp->nspec2D_top_crust_mantle);
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_strength_noise_kernel_kernel");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_strength_noise_kernel_kernel");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -738,7 +720,6 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
                                                                mp->NSPEC_CRUST_MANTLE);
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_hess_kernel_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_hess_kernel_gpu");
 }

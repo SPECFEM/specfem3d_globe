@@ -40,7 +40,7 @@
   real(kind=custom_real) :: rval,thetaval,phival
   integer :: ier
 
-  if(MOVIE_COARSE) then
+  if (MOVIE_COARSE) then
     iNIT = NGLLX-1
   else
     iNIT = 1
@@ -57,7 +57,7 @@
   write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
   open(unit=IOUT,file=trim(prname)//'movie3D_info.txt', &
         status='unknown',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file movie3D_info.txt')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file movie3D_info.txt')
 
   !find and count points within given region for storing movie
   do ispec = 1,NSPEC_CRUST_MANTLE
@@ -68,18 +68,18 @@
     phival   = zstore_crust_mantle(iglob)
 
     ! we already changed xyz back to rthetaphi
-    if( (rval < MOVIE_TOP .and. rval > MOVIE_BOTTOM) .and. &
+    if ((rval < MOVIE_TOP .and. rval > MOVIE_BOTTOM) .and. &
        (thetaval > MOVIE_NORTH .and. thetaval < MOVIE_SOUTH) .and. &
        ( (phival < MOVIE_EAST .and. phival > MOVIE_WEST) .or. &
-       ( (MOVIE_EAST < MOVIE_WEST) .and. (phival >MOVIE_EAST .or. phival < MOVIE_WEST) ) ) ) then
+       ( (MOVIE_EAST < MOVIE_WEST) .and. (phival >MOVIE_EAST .or. phival < MOVIE_WEST) ) )) then
       ispecel_3dmovie=ispecel_3dmovie+1
 
-      do k=1,NGLLZ,iNIT
-        do j=1,NGLLY,iNIT
-          do i=1,NGLLX,iNIT
+      do k = 1,NGLLZ,iNIT
+        do j = 1,NGLLY,iNIT
+          do i = 1,NGLLX,iNIT
             iglob    = ibool_crust_mantle(i,j,k,ispec)
 
-            if(.not. mask_ibool(iglob)) then
+            if (.not. mask_ibool(iglob)) then
               ipoints_3dmovie = ipoints_3dmovie + 1
 
               mask_ibool(iglob)=.true.
@@ -178,10 +178,10 @@
   real(kind=CUSTOM_REAL), dimension(npoints_3dmovie) :: store_val3D_mu
   integer :: ier
 
-  if(NDIM /= 3) stop 'movie volume output requires NDIM = 3'
+  if (NDIM /= 3) stop 'movie volume output requires NDIM = 3'
 
   ! stepping
-  if(MOVIE_COARSE) then
+  if (MOVIE_COARSE) then
     iNIT = NGLLX-1
   else
     iNIT = 1
@@ -197,7 +197,7 @@
         do i = 1,NGLLX,iNIT
 
           ! only store points once
-          if( mask_3dmovie(i,j,k,ispec) ) then
+          if (mask_3dmovie(i,j,k,ispec)) then
             ! point increment
             ipoints_3dmovie = ipoints_3dmovie + 1
 
@@ -239,51 +239,51 @@
   write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
 
   open(unit=IOUT,file=trim(prname)//'movie3D_x.bin',status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file movie3D_x.bin')
-  if( npoints_3dmovie > 0 ) then
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file movie3D_x.bin')
+  if (npoints_3dmovie > 0) then
     write(IOUT) store_val3D_x(1:npoints_3dmovie)
   endif
   close(IOUT)
 
   open(unit=IOUT,file=trim(prname)//'movie3D_y.bin',status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file movie3D_y.bin')
-  if( npoints_3dmovie > 0 ) then
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file movie3D_y.bin')
+  if (npoints_3dmovie > 0) then
     write(IOUT) store_val3D_y(1:npoints_3dmovie)
    endif
   close(IOUT)
 
   open(unit=IOUT,file=trim(prname)//'movie3D_z.bin',status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file movie3D_z.bin')
-  if( npoints_3dmovie > 0 ) then
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file movie3D_z.bin')
+  if (npoints_3dmovie > 0) then
     write(IOUT) store_val3D_z(1:npoints_3dmovie)
   endif
   close(IOUT)
 
   open(unit=IOUT,file=trim(prname)//'ascii_output.txt',status='unknown',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file ascii_output.txt')
-  if( npoints_3dmovie > 0 ) then
-    do i=1,npoints_3dmovie
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file ascii_output.txt')
+  if (npoints_3dmovie > 0) then
+    do i = 1,npoints_3dmovie
       write(IOUT,*) store_val3D_x(i),store_val3D_y(i),store_val3D_z(i),store_val3D_mu(i)
     enddo
   endif
   close(IOUT)
 
   open(unit=IOUT,file=trim(prname)//'movie3D_elements.bin',status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file movie3D_elements.bin')
-  ispecele=0
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file movie3D_elements.bin')
+  ispecele = 0
  !  open(unit=57,file=trim(prname)//'movie3D_elements.txt',status='unknown')
-  do ispec=1,NSPEC_CRUST_MANTLE
-    if(MOVIE_COARSE) then
+  do ispec = 1,NSPEC_CRUST_MANTLE
+    if (MOVIE_COARSE) then
       iglob=ibool_crust_mantle(1,1,1,ispec)
     else
       iglob=ibool_crust_mantle(3,3,3,ispec)
     endif
-    if(mask_ibool(iglob)) then  !this element is in the region
+    if (mask_ibool(iglob)) then  !this element is in the region
       ispecele  = ispecele+1
-      do k=1,NGLLZ-1,iNIT
-        do j=1,NGLLY-1,iNIT
-          do i=1,NGLLX-1,iNIT
-            ! if(mask_3dmovie(i,j,k,ispec)) then
+      do k = 1,NGLLZ-1,iNIT
+        do j = 1,NGLLY-1,iNIT
+          do i = 1,NGLLX-1,iNIT
+            ! if (mask_3dmovie(i,j,k,ispec)) then
             iglob1 = ibool_crust_mantle(i,j,k,ispec)
             iglob2 = ibool_crust_mantle(i+iNIT,j,k,ispec)
             iglob3 = ibool_crust_mantle(i+iNIT,j+iNIT,k,ispec)
@@ -360,7 +360,7 @@
   character(len=1) movie_prefix
 
   ! check
-  if(NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
+  if (NDIM /= 3) call exit_MPI(myrank, 'write_movie_volume requires NDIM = 3')
 
   ! allocates arrays
   allocate(store_val3d_NN(npoints_3dmovie), &
@@ -370,17 +370,17 @@
           store_val3d_NZ(npoints_3dmovie), &
           store_val3d_EZ(npoints_3dmovie), &
           stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating store_val3d_ .. arrays')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating store_val3d_ .. arrays')
 
-  if(MOVIE_VOLUME_TYPE == 1) then
+  if (MOVIE_VOLUME_TYPE == 1) then
     movie_prefix='E' ! strain
-  else if(MOVIE_VOLUME_TYPE == 2) then
+  else if (MOVIE_VOLUME_TYPE == 2) then
     movie_prefix='S' ! time integral of strain
-  else if(MOVIE_VOLUME_TYPE == 3) then
+  else if (MOVIE_VOLUME_TYPE == 3) then
     movie_prefix='P' ! potency, or integral of strain x \mu
   endif
 
-  if(MOVIE_COARSE) then
+  if (MOVIE_COARSE) then
    iNIT = NGLLX-1
   else
    iNIT = 1
@@ -388,12 +388,12 @@
 
   ! write(prname,"('proc',i6.6)") myrank
 
-  ipoints_3dmovie=0
-  do ispec=1,NSPEC_CRUST_MANTLE
-   do k=1,NGLLZ,iNIT
-    do j=1,NGLLY,iNIT
-     do i=1,NGLLX,iNIT
-      if(mask_3dmovie(i,j,k,ispec)) then
+  ipoints_3dmovie = 0
+  do ispec = 1,NSPEC_CRUST_MANTLE
+   do k = 1,NGLLZ,iNIT
+    do j = 1,NGLLY,iNIT
+     do i = 1,NGLLX,iNIT
+      if (mask_3dmovie(i,j,k,ispec)) then
        ipoints_3dmovie=ipoints_3dmovie+1
        muv_3dmovie=muvstore_crust_mantle_3dmovie(i,j,k,ispec)
 
@@ -416,7 +416,7 @@
        ! rotate eps_loc to spherical coordinates
        eps_loc_new(:,:) = matmul(matmul(nu_3dmovie(:,:,ipoints_3dmovie),eps_loc(:,:)), &
                                   transpose(nu_3dmovie(:,:,ipoints_3dmovie)))
-       if(MOVIE_VOLUME_TYPE == 3) eps_loc_new(:,:) = eps_loc(:,:)*muv_3dmovie
+       if (MOVIE_VOLUME_TYPE == 3) eps_loc_new(:,:) = eps_loc(:,:)*muv_3dmovie
 
        store_val3d_NN(ipoints_3dmovie)=eps_loc_new(1,1)
        store_val3d_EE(ipoints_3dmovie)=eps_loc_new(2,2)
@@ -429,41 +429,41 @@
     enddo
    enddo
   enddo
-  if(ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
+  if (ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'NN',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_NN(1:npoints_3dmovie)
   close(IOUT)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'EE',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_EE(1:npoints_3dmovie)
   close(IOUT)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'ZZ',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_ZZ(1:npoints_3dmovie)
   close(IOUT)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'NE',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_NE(1:npoints_3dmovie)
   close(IOUT)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'NZ',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_NZ(1:npoints_3dmovie)
   close(IOUT)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'EZ',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_EZ(1:npoints_3dmovie)
   close(IOUT)
 
@@ -513,22 +513,22 @@
   character(len=2) :: movie_prefix
 
   ! check
-  if(NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
+  if (NDIM /= 3) call exit_MPI(myrank,'write_movie_volume requires NDIM = 3')
 
   ! allocates arrays
   allocate(store_val3d_N(npoints_3dmovie), &
           store_val3d_E(npoints_3dmovie), &
           store_val3d_Z(npoints_3dmovie), &
           stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating store_val3d_N,.. movie arrays')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating store_val3d_N,.. movie arrays')
 
-  if(MOVIE_VOLUME_TYPE == 5) then
+  if (MOVIE_VOLUME_TYPE == 5) then
     movie_prefix='DI' ! displacement
-  else if(MOVIE_VOLUME_TYPE == 6) then
+  else if (MOVIE_VOLUME_TYPE == 6) then
     movie_prefix='VE' ! velocity
   endif
 
-  if(MOVIE_COARSE) then
+  if (MOVIE_COARSE) then
    iNIT = NGLLX-1
   else
    iNIT = 1
@@ -538,10 +538,10 @@
 
   ! stores field in crust/mantle region
   do ispec = 1,NSPEC_CRUST_MANTLE
-    do k=1,NGLLZ,iNIT
-      do j=1,NGLLY,iNIT
-        do i=1,NGLLX,iNIT
-          if(mask_3dmovie(i,j,k,ispec)) then
+    do k = 1,NGLLZ,iNIT
+      do j = 1,NGLLY,iNIT
+        do i = 1,NGLLX,iNIT
+          if (mask_3dmovie(i,j,k,ispec)) then
             ipoints_3dmovie = ipoints_3dmovie + 1
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
@@ -563,24 +563,24 @@
   close(IOUT)
 
   ! checks number of processed points
-  if(ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
+  if (ipoints_3dmovie /= npoints_3dmovie) stop 'did not find the right number of points for 3D movie'
 
   ! file output
   write(outputname,"('proc',i6.6,'_movie3D_',a,'N',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_N(1:npoints_3dmovie)
   close(IOUT)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'E',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_E(1:npoints_3dmovie)
   close(IOUT)
 
   write(outputname,"('proc',i6.6,'_movie3D_',a,'Z',i6.6,'.bin')") myrank,movie_prefix,it
   open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
   write(IOUT) store_val3d_Z(1:npoints_3dmovie)
   close(IOUT)
 
@@ -641,27 +641,27 @@
   logical,parameter :: MOVIE_OUTPUT_CURLNORM = .true.     ! Frobenius norm of curl
 
   ! outputs divergence
-  if( MOVIE_OUTPUT_DIV ) then
+  if (MOVIE_OUTPUT_DIV) then
     ! crust_mantle region
     ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     ! old name format:     write(outputname,"('proc',i6.6,'_crust_mantle_div_displ_it',i6.6,'.bin')") myrank,it
     write(outputname,"('proc',i6.6,'_reg1_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) eps_trace_over_3_crust_mantle
     close(IOUT)
 
     ! outer core
-    if (NSPEC_OUTER_CORE_3DMOVIE /= 1 ) then
+    if (NSPEC_OUTER_CORE_3DMOVIE /= 1) then
       write(outputname,"('proc',i6.6,'_reg2_div_displ_it',i6.6,'.bin')") myrank,it
       open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
       write(IOUT)  ONE_THIRD * div_displ_outer_core
       close(IOUT)
     else
       ! we use div s = - p / kappa = rhostore_outer_core * accel_outer_core / kappavstore_outer_core
       allocate(div_s_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array div_s_outer_core')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array div_s_outer_core')
 
       do ispec = 1, NSPEC_OUTER_CORE
         do k = 1, NGLLZ
@@ -679,7 +679,7 @@
       ! old name format: write(outputname,"('proc',i6.6,'_outer_core_div_displ_it',i6.6,'.bin')") myrank,it
       write(outputname,"('proc',i6.6,'_reg2_div_displ_it',i6.6,'.bin')") myrank,it
       open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
       write(IOUT)  div_s_outer_core
       close(IOUT)
 
@@ -690,20 +690,20 @@
     ! old name format: write(outputname,"('proc',i6.6,'_inner_core_div_displ_proc_it',i6.6,'.bin')") myrank,it
     write(outputname,"('proc',i6.6,'_reg3_div_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) eps_trace_over_3_inner_core
     close(IOUT)
 
   endif
 
   ! outputs epsilondev
-  if( MOVIE_OUTPUT_CURL ) then
+  if (MOVIE_OUTPUT_CURL) then
     ! epsilondev
     ! these binary files must be handled by the user, no further utilities available for this format
     ! crust mantle
     write(outputname,"('proc',i6.6,'_crust_mantle_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
     write(IOUT) epsilondev_xx_crust_mantle
     write(IOUT) epsilondev_yy_crust_mantle
     write(IOUT) epsilondev_xy_crust_mantle
@@ -713,7 +713,7 @@
     ! inner core
     write(outputname,"('proc',i6.6,'inner_core_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file '//trim(outputname))
     write(IOUT) epsilondev_xx_inner_core
     write(IOUT) epsilondev_yy_inner_core
     write(IOUT) epsilondev_xy_inner_core
@@ -723,15 +723,15 @@
   endif
 
   ! outputs norm of epsilondev
-  if( MOVIE_OUTPUT_CURLNORM ) then
+  if (MOVIE_OUTPUT_CURLNORM) then
     ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     ! crust_mantle region
     write(outputname,"('proc',i6.6,'_reg1_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     ! Frobenius norm
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -753,10 +753,10 @@
     ! inner core
     write(outputname,"('proc',i6.6,'_reg3_epsdev_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     ! Frobenius norm
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_INNER_CORE
       do k = 1, NGLLZ
@@ -818,11 +818,11 @@
   scale_displ = R_EARTH
 
   ! outputs norm of displacement
-  if( OUTPUT_CRUST_MANTLE ) then
+  if (OUTPUT_CRUST_MANTLE) then
     ! crust mantle
     ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -839,16 +839,16 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg1_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)
   endif
 
-  if( OUTPUT_OUTER_CORE ) then
+  if (OUTPUT_OUTER_CORE) then
     ! outer core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_OUTER_CORE
       do k = 1, NGLLZ
@@ -865,16 +865,16 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg2_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)
   endif
 
-  if( OUTPUT_INNER_CORE ) then
+  if (OUTPUT_INNER_CORE) then
     ! inner core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_INNER_CORE
       do k = 1, NGLLZ
@@ -891,7 +891,7 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg3_displ_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)
@@ -941,11 +941,11 @@
   scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
 
   ! outputs norm of velocity
-  if( OUTPUT_CRUST_MANTLE ) then
+  if (OUTPUT_CRUST_MANTLE) then
     ! crust mantle
     ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -962,16 +962,16 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg1_veloc_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)
   endif
 
-  if( OUTPUT_OUTER_CORE ) then
+  if (OUTPUT_OUTER_CORE) then
     ! outer core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_OUTER_CORE
       do k = 1, NGLLZ
@@ -988,16 +988,16 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg2_veloc_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)
   endif
 
-  if( OUTPUT_INNER_CORE ) then
+  if (OUTPUT_INNER_CORE) then
     ! inner core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_INNER_CORE
       do k = 1, NGLLZ
@@ -1014,7 +1014,7 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg3_veloc_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)
@@ -1064,11 +1064,11 @@
   scale_accel = scale_veloc * dsqrt(PI*GRAV*RHOAV)
 
   ! outputs norm of acceleration
-  if( OUTPUT_CRUST_MANTLE ) then
+  if (OUTPUT_CRUST_MANTLE) then
     ! acceleration
     ! these binary arrays can be converted into mesh format using the utility ./bin/xcombine_vol_data
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_CRUST_MANTLE
       do k = 1, NGLLZ
@@ -1085,16 +1085,16 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg1_accel_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)
   endif
 
-  if( OUTPUT_OUTER_CORE ) then
+  if (OUTPUT_OUTER_CORE) then
     ! outer core acceleration
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_OUTER_CORE
       do k = 1, NGLLZ
@@ -1111,16 +1111,16 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg2_accel_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)
   endif
 
-  if( OUTPUT_INNER_CORE ) then
+  if (OUTPUT_INNER_CORE) then
     ! inner core
     allocate(tmp_data(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary array tmp_data')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_data')
 
     do ispec = 1, NSPEC_INNER_CORE
       do k = 1, NGLLZ
@@ -1137,7 +1137,7 @@
     enddo
     write(outputname,"('proc',i6.6,'_reg3_accel_it',i6.6,'.bin')") myrank,it
     open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file '//trim(outputname))
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(outputname))
     write(IOUT) tmp_data
     close(IOUT)
     deallocate(tmp_data)

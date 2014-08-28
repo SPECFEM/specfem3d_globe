@@ -91,7 +91,7 @@
           Mak135_V_Qkappa_ak135(NR_AK135F_NO_MUD), &
           Mak135_V_Qmu_ak135(NR_AK135F_NO_MUD), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating Mak135_V arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Mak135_V arrays')
 
   ! all processes will define same parameters
   call define_model_ak135(CRUSTAL)
@@ -136,14 +136,14 @@
 ! and a point below the ICB or the CMB and interpolate between them,
 ! which would lead to a wrong value (keeping in mind that we interpolate
 ! between points i-1 and i below)
-  if(iregion_code == IREGION_INNER_CORE .and. i > 24) i = 24
+  if (iregion_code == IREGION_INNER_CORE .and. i > 24) i = 24
 
-  if(iregion_code == IREGION_OUTER_CORE .and. i < 26) i = 26
-  if(iregion_code == IREGION_OUTER_CORE .and. i > 69) i = 69
+  if (iregion_code == IREGION_OUTER_CORE .and. i < 26) i = 26
+  if (iregion_code == IREGION_OUTER_CORE .and. i > 69) i = 69
 
-  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 71) i = 71
+  if (iregion_code == IREGION_CRUST_MANTLE .and. i < 71) i = 71
 
-  if(i == 1) then
+  if (i == 1) then
     rho = Mak135_V_density_ak135(i)
     vp = Mak135_V_vp_ak135(i)
     vs = Mak135_V_vs_ak135(i)
@@ -164,7 +164,7 @@
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
 ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
-  if(iregion_code == IREGION_OUTER_CORE) then
+  if (iregion_code == IREGION_OUTER_CORE) then
     vs = 0.d0
     Qkappa = 3000.d0
     Qmu = 3000.d0

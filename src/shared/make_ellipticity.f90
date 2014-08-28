@@ -131,7 +131,7 @@
 
 
 ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
-  do i=1,NR
+  do i = 1,NR
     call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
     radau(i)=rho(i)*r(i)*r(i)
@@ -164,17 +164,17 @@
 ! this is the equation right above (14.21) in Dahlen and Tromp (1998)
   epsilonval(NR) = (5.0d0/2.d0)*(bom**2.0d0)*R_UNIT_SPHERE / (g_a * (eta(NR)+2.0d0))
 
-  do i=1,NR-1
+  do i = 1,NR-1
     call intgrl(exponentval,r,i,NR,k,s1,s2,s3)
     epsilonval(i)=epsilonval(NR)*exp(-exponentval)
   enddo
 
 ! get ready to spline epsilonval
-  nspl=1
+  nspl = 1
   rspl(1)=r(1)
   espl(1)=epsilonval(1)
   do i=2,NR
-    if(r(i) /= r(i-1)) then
+    if (r(i) /= r(i-1)) then
       nspl=nspl+1
       rspl(nspl)=r(i)
       espl(nspl)=epsilonval(i)

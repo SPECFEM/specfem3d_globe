@@ -14,7 +14,7 @@ module BOAST
     ndim =               Int( "NDIM",              :const => n_dim)
     ngllx =              Int( "NGLLX",             :const => n_gllx)
     p = Procedure(function_name, [accel,nrec,adj_sourcearrays,ibool,ispec_selected_rec,pre_computed_irec,nadj_rec_local])
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CUDA or get_lang == CL) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx )

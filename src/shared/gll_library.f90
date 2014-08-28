@@ -40,7 +40,7 @@
   integer n
   double precision alpha,beta
 
-  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0,three=3.d0,four=4.d0
+  double precision, parameter :: zero = 0.d0,one=1.d0,two=2.d0,three=3.d0,four=4.d0
   double precision apb,f1,fint1,fint2,f2,di,abn,abnn,a1,a2,a3,f3
   double precision, external :: gammaf
   integer i
@@ -92,7 +92,7 @@
   integer n
   double precision alpha,beta
 
-  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0,three=3.d0,four=4.d0
+  double precision, parameter :: zero = 0.d0,one=1.d0,two=2.d0,three=3.d0,four=4.d0
   double precision apb,f1,fint1,fint2,f2,di,abn,abnn,a1,a2,a3,f3
   double precision, external :: gammaf
   integer i
@@ -203,38 +203,38 @@
   p = 0.d0
   pd = 0.d0
   jmin = 0
-  do j=1,np
-   if(j == 1) then
+  do j = 1,np
+   if (j == 1) then
       x = dcos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
    else
       x1 = dcos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
       x2 = xlast
       x  = (x1+x2)/2.d0
    endif
-   do k=1,K_MAX_ITER
+   do k = 1,K_MAX_ITER
       call jacobf (p,pd,pm1,pdm1,pm2,pdm2,np,alpha,beta,x)
       recsum = 0.d0
       jm = j-1
-      do i=1,jm
+      do i = 1,jm
          recsum = recsum+1.d0/(x-xjac(np-i+1))
       enddo
       delx = -p/(pd-recsum*p)
       x    = x+delx
-      if(abs(delx) < eps) goto 31
+      if (abs(delx) < eps) goto 31
    enddo
  31      continue
    xjac(np-j+1) = x
    xlast        = x
   enddo
-  do i=1,np
+  do i = 1,np
    xmin = 2.d0
    do j=i,np
-      if(xjac(j) < xmin) then
+      if (xjac(j) < xmin) then
          xmin = xjac(j)
          jmin = j
       endif
    enddo
-   if(jmin /= i) then
+   if (jmin /= i) then
       swap = xjac(i)
       xjac(i) = xjac(jmin)
       xjac(jmin) = swap
@@ -435,7 +435,7 @@
 
   implicit none
 
-  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
+  double precision, parameter :: zero = 0.d0,one=1.d0,two=2.d0
 
   integer np
   double precision z(np),w(np)
@@ -478,7 +478,7 @@
   fac3  = fac2+one
   fnorm = pnormj(np1,alpha,beta)
   rcoef = (fnorm*fac2*fac3)/(two*fac1*dnp2)
-  do i=1,np
+  do i = 1,np
     call jacobf(p,pd,pm1,pdm1,pm2,pdm2,np2,alpha,beta,z(i))
     w(i) = -rcoef/(p*pdm1)
   enddo
@@ -505,7 +505,7 @@
 
   implicit none
 
-  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
+  double precision, parameter :: zero = 0.d0,one=1.d0,two=2.d0
 
   integer np
   double precision alpha,beta
@@ -544,7 +544,7 @@
   z(np) =  one
 
 ! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(np,2) /= 0) z((np-1)/2+1) = zero
+  if (mod(np,2) /= 0) z((np-1)/2+1) = zero
 
 ! weights
   do i=2,np-1

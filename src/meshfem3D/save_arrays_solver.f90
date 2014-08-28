@@ -81,7 +81,7 @@
   ! mesh databases
   open(unit=IOUT,file=prname(1:len_trim(prname))//'solver_data.bin', &
        status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data.bin file')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening solver_data.bin file')
 
   ! save nspec and nglob, to be used in combine_paraview_data
   write(IOUT) nspec
@@ -93,7 +93,7 @@
   ! and for anisotropy and gravity, save in single precision
   ! use tmp_array for temporary storage to perform conversion
   allocate(tmp_array(nglob),stat=ier)
-  if( ier /=0 ) call exit_MPI(myrank,'error allocating temporary array for mesh topology')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array for mesh topology')
 
   !--- x coordinate
   tmp_array(:) = 0._CUSTOM_REAL
@@ -162,16 +162,16 @@
   write(IOUT) kappavstore
 
   ! other terms needed in the solid regions only
-  if(iregion_code /= IREGION_OUTER_CORE) then
+  if (iregion_code /= IREGION_OUTER_CORE) then
 
     ! note: muvstore needed for Q_mu shear attenuation in inner core
-    if(.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
+    if (.not. (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE)) then
       write(IOUT) muvstore
     endif
 
     !   save anisotropy in the mantle only
-    if(TRANSVERSE_ISOTROPY) then
-      if(iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
+    if (TRANSVERSE_ISOTROPY) then
+      if (iregion_code == IREGION_CRUST_MANTLE .and. .not. ANISOTROPIC_3D_MANTLE) then
         write(IOUT) kappahstore
         write(IOUT) muhstore
         write(IOUT) eta_anisostore
@@ -179,7 +179,7 @@
     endif
 
     !   save anisotropy in the inner core only
-    if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+    if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
       write(IOUT) c11store
       write(IOUT) c33store
       write(IOUT) c12store
@@ -187,7 +187,7 @@
       write(IOUT) c44store
     endif
 
-    if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+    if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
         write(IOUT) c11store
         write(IOUT) c12store
         write(IOUT) c13store
@@ -214,11 +214,11 @@
   endif
 
   ! Stacey
-  if(ABSORBING_CONDITIONS) then
-    if(iregion_code == IREGION_CRUST_MANTLE) then
+  if (ABSORBING_CONDITIONS) then
+    if (iregion_code == IREGION_CRUST_MANTLE) then
       write(IOUT) rho_vp
       write(IOUT) rho_vs
-    else if(iregion_code == IREGION_OUTER_CORE) then
+    else if (iregion_code == IREGION_OUTER_CORE) then
       write(IOUT) rho_vp
     endif
   endif
@@ -231,7 +231,7 @@
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  if( ((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+  if (((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       ((ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
       ((ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
      write(IOUT) rmassx
@@ -241,23 +241,23 @@
   write(IOUT) rmassz
 
   ! mass matrices for backward simulation when ROTATION is .true.
-  if(EXACT_MASS_MATRIX_FOR_ROTATION)then
-    if((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION .and. iregion_code == IREGION_INNER_CORE))then
+  if (EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if ((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+       (ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
        write(IOUT) b_rmassx
        write(IOUT) b_rmassy
     endif
   endif
 
   ! additional ocean load mass matrix if oceans and if we are in the crust
-  if(OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(IOUT) rmass_ocean_load
+  if (OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) write(IOUT) rmass_ocean_load
 
   close(IOUT) ! solver_data.bin
 
   ! absorbing boundary parameters
   open(unit=IOUT,file=prname(1:len_trim(prname))//'boundary.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary.bin file')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening boundary.bin file')
 
   write(IOUT) nspec2D_xmin
   write(IOUT) nspec2D_xmax
@@ -289,10 +289,10 @@
 
   close(IOUT)
 
-  if(ATTENUATION) then
+  if (ATTENUATION) then
     open(unit=IOUT, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='unknown', form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening attenuation.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening attenuation.bin file')
     write(IOUT) tau_s
     write(IOUT) tau_e_store
     write(IOUT) Qmu_store
@@ -300,17 +300,17 @@
     close(IOUT)
   endif
 
-  if(HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+  if (HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     open(unit=IOUT,file=prname(1:len_trim(prname))//'dvp.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening dvp.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening dvp.bin file')
 
     write(IOUT) dvpstore
     close(IOUT)
   endif
 
   ! uncomment for vp & vs model storage
-  if( SAVE_MESH_FILES ) then
+  if (SAVE_MESH_FILES) then
     ! outputs model files in binary format
     call save_arrays_solver_meshfiles(myrank,nspec)
   endif
@@ -353,77 +353,77 @@
   ! vp
   open(unit=IOUT,file=prname(1:len_trim(prname))//'vp.bin', &
        status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening vp.bin file')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening vp.bin file')
 
   write(IOUT) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
   close(IOUT)
   ! vs
   open(unit=IOUT,file=prname(1:len_trim(prname))//'vs.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening vs.bin file')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening vs.bin file')
 
   write(IOUT) sqrt( muvstore/rhostore )*scaleval1
   close(IOUT)
   ! rho
   open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening rho.bin file')
 
   write(IOUT) rhostore*scaleval2
   close(IOUT)
 
   ! transverse isotropic model
-  if( TRANSVERSE_ISOTROPY ) then
+  if (TRANSVERSE_ISOTROPY) then
     ! vpv
     open(unit=IOUT,file=prname(1:len_trim(prname))//'vpv.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vpv.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vpv.bin file')
 
     write(IOUT) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
     close(IOUT)
     ! vph
     open(unit=IOUT,file=prname(1:len_trim(prname))//'vph.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vph.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vph.bin file')
 
     write(IOUT) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
     close(IOUT)
     ! vsv
     open(unit=IOUT,file=prname(1:len_trim(prname))//'vsv.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vsv.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vsv.bin file')
 
     write(IOUT) sqrt( muvstore/rhostore )*scaleval1
     close(IOUT)
     ! vsh
     open(unit=IOUT,file=prname(1:len_trim(prname))//'vsh.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening vsh.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening vsh.bin file')
 
     write(IOUT) sqrt( muhstore/rhostore )*scaleval1
     close(IOUT)
     ! rho
     open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening rho.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening rho.bin file')
 
     write(IOUT) rhostore*scaleval2
     close(IOUT)
     ! eta
     open(unit=IOUT,file=prname(1:len_trim(prname))//'eta.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening eta.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening eta.bin file')
 
     write(IOUT) eta_anisostore
     close(IOUT)
   endif ! TRANSVERSE_ISOTROPY
 
   ! shear attenuation
-  if( ATTENUATION ) then
+  if (ATTENUATION) then
     ! saves Qmu_store to full custom_real array
     ! uses temporary array
     allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
-    if( ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE ) then
+    if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
       ! attenuation arrays are fully 3D
       temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
     else
@@ -442,7 +442,7 @@
     ! Qmu
     open(unit=IOUT,file=prname(1:len_trim(prname))//'qmu.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening qmu.bin file')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening qmu.bin file')
 
     write(IOUT) temp_store
     close(IOUT)
@@ -477,7 +477,7 @@
   select case( iregion_code )
   case( IREGION_CRUST_MANTLE )
     ! crust mantle
-    if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
+    if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
                                   num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                                   my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
@@ -499,7 +499,7 @@
 
   case( IREGION_OUTER_CORE )
     ! outer core
-    if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
+    if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
                                   num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                   my_neighbours_outer_core,nibool_interfaces_outer_core, &
@@ -521,7 +521,7 @@
 
   case( IREGION_INNER_CORE )
     ! inner core
-    if( ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS ) then
+    if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
                                   num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                   my_neighbours_inner_core,nibool_interfaces_inner_core, &
@@ -591,11 +591,11 @@
 
   open(unit=IOUT,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
        status='unknown',action='write',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening solver_data_mpi.bin')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening solver_data_mpi.bin')
 
   ! MPI interfaces
   write(IOUT) num_interfaces
-  if( num_interfaces > 0 ) then
+  if (num_interfaces > 0) then
     write(IOUT) max_nibool_interfaces
     write(IOUT) my_neighbours
     write(IOUT) nibool_interfaces
@@ -605,10 +605,10 @@
   ! inner/outer elements
   write(IOUT) nspec_inner,nspec_outer
   write(IOUT) num_phase_ispec
-  if(num_phase_ispec > 0 ) write(IOUT) phase_ispec_inner
+  if (num_phase_ispec > 0 ) write(IOUT) phase_ispec_inner
 
   ! mesh coloring
-  if( USE_MESH_COLORING_GPU ) then
+  if (USE_MESH_COLORING_GPU) then
     write(IOUT) num_colors_outer,num_colors_inner
     write(IOUT) num_elem_colors
   endif
@@ -660,7 +660,7 @@
   ! writing surface topology databases
   open(unit=IOUT,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
        status='unknown',form='unformatted',iostat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error opening boundary_disc.bin file')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error opening boundary_disc.bin file')
 
   write(IOUT) NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670
 

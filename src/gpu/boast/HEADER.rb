@@ -1,8 +1,22 @@
 module BOAST
 
+  # gets version number
+  def BOAST::get_boast_version
+    # note: function latest_spec_for() only works if internet connection available
+    #       spec = Gem.latest_spec_for('BOAST')
+    # looks for actually installed version
+    spec = Gem.loaded_specs['BOAST']
+    if spec.nil? then
+      v = ""
+    else
+      v = spec.version.to_s
+    end
+    return v
+  end
+  
   # automatic generation notice
   def BOAST::automatic_notice()
-    v = Gem.latest_spec_for('BOAST').version.to_s
+    v = get_boast_version()
     var = "//note: please do not modify this file manually!\n"
     var += "//      this file has been generated automatically by BOAST version #{v}\n"
     var += "//      by: make boast_kernels\n"

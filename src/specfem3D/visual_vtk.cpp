@@ -203,7 +203,7 @@ static VTKState fs;
 
 /* ----------------------------------------------------------------------------------------------- */
 
-void interactor_usage(){
+void interactor_usage() {
   cout << endl;
   cout << "interactor usage, press: " << endl;
   cout << "  a            - adjust color scale value (toggle on/off) " << endl;
@@ -218,7 +218,7 @@ void interactor_usage(){
   cout << endl;
 }
 
-void save_snapshot_vtu(){
+void save_snapshot_vtu() {
   // Write vtu file
   printf("writing unstructured grid data...\n");
 
@@ -238,14 +238,14 @@ void save_snapshot_vtu(){
 }
 
 
-void save_snapshot_jpg(int it){
+void save_snapshot_jpg(int it) {
   // Write vtu file
   printf("writing jpg image...\n");
   
   //std::string filename = "test_snapshot.jpg";
   
   char filename[180];
-  if( it > 0 ){
+  if (it > 0 ) {
     sprintf(filename,"test_snapshot.%6.6d.jpg",it);
   }else{
     sprintf(filename,"test_snapshot.jpg");
@@ -271,8 +271,8 @@ void save_snapshot_jpg(int it){
 }
 
 
-void set_color_scale(int icolor){
-  if( icolor == 0 ){
+void set_color_scale(int icolor) {
+  if (icolor == 0 ) {
     // sets (default) rainbow color scale
     //# Set the hue range: from low to high the
     //# table passes through blue, green, yellow,
@@ -284,7 +284,7 @@ void set_color_scale(int icolor){
     fs.vtk.lut->SetValueRange( 0.6, 1.0 );
     fs.vtk.lut->SetHueRange( 0.66667, 0.0 );
     fs.vtk.lut->SetSaturationRange( 1.0, 1.0 );
-  }else if( icolor == 1 ){
+  }else if (icolor == 1 ) {
     // red-blue color scale
     // Since the default lut is
     // a rainbow lut, we only have
@@ -296,7 +296,7 @@ void set_color_scale(int icolor){
     fs.vtk.lut->SetValueRange( 0.6, 1.0 );
     fs.vtk.lut->SetHueRange( 0.0, 0.667 );
     fs.vtk.lut->SetSaturationRange( 1.0, 1.0 );
-  }else if( icolor == 2 ){
+  }else if (icolor == 2 ) {
     // red color scale
     gcolor_min = 1.e-3*gcolor_max;
     fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
@@ -305,7 +305,7 @@ void set_color_scale(int icolor){
     fs.vtk.lut->SetValueRange( 0.4, 1.0 );
     fs.vtk.lut->SetHueRange( 0.0, 0.4 );
     fs.vtk.lut->SetSaturationRange( 0.5, 0.0 );
-  }else if( icolor == 3 ){
+  }else if (icolor == 3 ) {
     // blue color scale
     gcolor_min = 1.e-3*gcolor_max;
     fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
@@ -314,7 +314,7 @@ void set_color_scale(int icolor){
     fs.vtk.lut->SetValueRange( 0.4, 1.0 );
     fs.vtk.lut->SetHueRange( 0.6, 0.6 );
     fs.vtk.lut->SetSaturationRange( 0.5, 0.0 );
-  }else if( icolor == 4 ){
+  }else if (icolor == 4 ) {
     // black color scale
     gcolor_min = 1.e-3*gcolor_max;
     fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
@@ -344,13 +344,13 @@ void set_color_scale(int icolor){
 // A class not derived from vtkObjectBase
 class MyInteractor{
   public:
-    void KeypressCallbackFunction(vtkObject* caller,long unsigned int eventId,void* callData ){
+    void KeypressCallbackFunction(vtkObject* caller,long unsigned int eventId,void* callData) {
       //cout << "Pressed: " << fs.vtk.iren->GetKeySym() << endl;
       // usage
-      if( string(fs.vtk.iren->GetKeySym()) == "h"){
+      if (string(fs.vtk.iren->GetKeySym()) == "h") {
         interactor_usage();
         // displays help text
-        if( fs.vtk.helpOn == 0 ){
+        if (fs.vtk.helpOn == 0 ) {
           fs.vtk.help = vtkTextActor::New();
           fs.vtk.help->GetTextProperty()->SetFontSize ( 16 );
           fs.vtk.help->SetPosition( 10, 80 );
@@ -368,16 +368,16 @@ class MyInteractor{
         }                
       }
       // changes color scales
-      if( string(fs.vtk.iren->GetKeySym()) == "c"){
+      if (string(fs.vtk.iren->GetKeySym()) == "c") {
         fs.vtk.icolor++;
         set_color_scale(fs.vtk.icolor);
         fs.vtk.renWin->Render();
       }
       // adjust color scaling
-      if( string(fs.vtk.iren->GetKeySym()) == "a"){
+      if (string(fs.vtk.iren->GetKeySym()) == "a") {
         fs.vtk.colorAdjustOn++;
         fs.vtk.colorAdjustOn = fs.vtk.colorAdjustOn % 2 ;
-        if( fs.vtk.colorAdjustOn ){
+        if (fs.vtk.colorAdjustOn) {
           printf("\ntoggle on: color adjusting\n");
         }else{
           printf("\ntoggle off: color adjusting off\n");
@@ -386,13 +386,13 @@ class MyInteractor{
         fs.vtk.renWin->Render();
       }      
       // saves vtu snapshot
-      if( string(fs.vtk.iren->GetKeySym()) == "s"){
+      if (string(fs.vtk.iren->GetKeySym()) == "s") {
         save_snapshot_vtu();
       }
       // saves jpg snapshot
-      if( string(fs.vtk.iren->GetKeySym()) == "i"){
+      if (string(fs.vtk.iren->GetKeySym()) == "i") {
         // toggles jpeg output flag
-        if( fs.vtk.jpegImageOn == 0 ){
+        if (fs.vtk.jpegImageOn == 0) {
           printf("\ntoggle on: save snapshot as jpeg-image\n");
           fs.vtk.jpegImageOn = 1;
         }else{
@@ -401,7 +401,7 @@ class MyInteractor{
         }
       }
       // stops interaction, continues running simulation
-      if( string(fs.vtk.iren->GetKeySym()) == "space" || string(fs.vtk.iren->GetKeySym()) == "q" ){
+      if (string(fs.vtk.iren->GetKeySym()) == "space" || string(fs.vtk.iren->GetKeySym()) == "q") {
         // updates text
         fs.vtk.text->SetInput( "...continue simulation " );
         fs.vtk.renWin->Render();        
@@ -410,7 +410,7 @@ class MyInteractor{
         fs.vtk.iren->TerminateApp();
       }
       // stops interaction, continues running simulation
-      if( string(fs.vtk.iren->GetKeySym()) == "r"){
+      if (string(fs.vtk.iren->GetKeySym()) == "r") {
         // reposition the camera, so that actor can be fully seen
         //fs.vtk.ren->ResetCamera(); // only resets zoom effect
 
@@ -428,25 +428,25 @@ class MyInteractor{
         fs.vtk.renWin->Render();        
       }
       // changes color scale maximum values
-      if(string(fs.vtk.iren->GetKeySym()) == "Up") {
+      if (string(fs.vtk.iren->GetKeySym()) == "Up") {
         // increases color max by 10%
         gcolor_max = gcolor_max + gcolor_incr;
         fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
         fs.vtk.lut->Build();
         fs.vtk.renWin->Render();
       }
-      if(string(fs.vtk.iren->GetKeySym()) == "Down") {
+      if (string(fs.vtk.iren->GetKeySym()) == "Down") {
         // decreases color max by 10%
         gcolor_max = gcolor_max - gcolor_incr;
-        if(gcolor_max < gcolor_min ) gcolor_max = gcolor_min;
+        if (gcolor_max < gcolor_min ) gcolor_max = gcolor_min;
         fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
         fs.vtk.lut->Build();
         fs.vtk.renWin->Render();
       }
       // changes background
-      if( string(fs.vtk.iren->GetKeySym()) == "b"){
+      if (string(fs.vtk.iren->GetKeySym()) == "b") {
         // toggles background
-        if( fs.vtk.bgBlackOn == 0 ){
+        if (fs.vtk.bgBlackOn == 0) {
           printf("\ntoggle on: background black/white\n");
           fs.vtk.bgBlackOn = 1;
           fs.vtk.ren->SetBackground(0,0,0); // Background color black
@@ -459,9 +459,9 @@ class MyInteractor{
         }
       }
       // toggles freesurface visibility
-      if( string(fs.vtk.iren->GetKeySym()) == "1" ){
-        if( SHOW_FREESURFACE == 1 ){
-          if( fs.vtk.actor2D->GetVisibility() == 1){
+      if (string(fs.vtk.iren->GetKeySym()) == "1") {
+        if (SHOW_FREESURFACE == 1) {
+          if (fs.vtk.actor2D->GetVisibility() == 1) {
             fs.vtk.contourActor->SetVisibility( 0 );
             fs.vtk.actor2D->SetVisibility( 0 );
           }else{
@@ -522,7 +522,7 @@ void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
   fs.vtk.textGPU = vtkTextActor::New();
   fs.vtk.textGPU->GetTextProperty()->SetFontSize ( 32 );
   fs.vtk.textGPU->SetPosition( 10, 560 );
-  if( *GPU_MODE ){
+  if (*GPU_MODE) {
     fs.vtk.textGPU->SetInput( "GPU" );
     fs.vtk.textGPU->GetTextProperty()->SetColor( 0.2,0.8,0.2 );
   }else{
@@ -630,8 +630,8 @@ void FC_FUNC_(prepare_vtkfreesurface,PREPARE_VTKFREESURFACE)(int* free_np,
   printf("     free surface points: %d\n", fs.freesurface.np);
 
   // checks
-  if( fs.freesurface.np == 0 ){
-    fprintf(stderr,"ERROR: VTK_MODE without 2D freesurface points \n");
+  if (fs.freesurface.np == 0) {
+    fprintf(stderr,"Error: VTK_MODE without 2D freesurface points \n");
     exit(1);
   }
 
@@ -644,7 +644,7 @@ void FC_FUNC_(prepare_vtkfreesurface,PREPARE_VTKFREESURFACE)(int* free_np,
   fs.vtk.data_array2D->SetNumberOfValues(fs.freesurface.np);
   fs.vtk.data_array2D->SetName("topo");
 
-  for(int i=0;i<fs.freesurface.np;i++) {
+  for(int i = 0;i<fs.freesurface.np;i++) {
     xyz[0] = free_x[i];
     xyz[1] = free_y[i];
     xyz[2] = free_z[i];
@@ -674,7 +674,7 @@ void FC_FUNC_(prepare_vtkfreesurface,PREPARE_VTKFREESURFACE)(int* free_np,
   // cells
   fs.vtk.cells2D = vtkCellArray::New();
   vtkQuad* quad = vtkQuad::New();
-  for(int ispec=0;ispec<fs.freesurface.nspec;ispec++){
+  for(int ispec = 0;ispec<fs.freesurface.nspec;ispec++) {
     id1 = free_conn[0+ispec*4];
     id2 = free_conn[1+ispec*4];
     id3 = free_conn[2+ispec*4];
@@ -779,8 +779,8 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   printf("     volume points: %d\n", fs.volume.np);
 
   // checks
-  if( fs.volume.np == 0 ){
-    fprintf(stderr,"ERROR: VTK_MODE without 3D volume points \n");
+  if (fs.volume.np == 0) {
+    fprintf(stderr,"Error: VTK_MODE without 3D volume points \n");
     exit(1);
   }
       
@@ -795,7 +795,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   fs.vtk.data_array3D->SetName("vnorm");
   fs.vtk.data_array3D->SetNumberOfValues(fs.volume.np);    
 
-  for(int i=0;i<fs.volume.np;i++) {
+  for(int i = 0;i<fs.volume.np;i++) {
     xyz[0] = vol_x[i];
     xyz[1] = vol_y[i];
     xyz[2] = vol_z[i];
@@ -848,7 +848,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   // cells
   fs.vtk.cells = vtkCellArray::New();
   vtkHexahedron* hex = vtkHexahedron::New();
-  for(int ispec=0;ispec<fs.volume.nspec;ispec++){
+  for(int ispec = 0;ispec<fs.volume.nspec;ispec++) {
     id1 = vol_conn[0+ispec*8];
     id2 = vol_conn[1+ispec*8];
     id3 = vol_conn[2+ispec*8];
@@ -888,7 +888,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
                    + fs.vtk.pos_source[2]*fs.vtk.pos_source[2]);
   // normalized vector to source
   double v[3];
-  if( norm > 0.0 ){
+  if (norm > 0.0) {
     v[0] = fs.vtk.pos_source[0]/norm;
     v[1] = fs.vtk.pos_source[1]/norm;
     v[2] = fs.vtk.pos_source[2]/norm;
@@ -906,7 +906,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   //    product(2) = - vector1(1)*vector2(3) + vector1(3)*vector2(1)
   //    product(3) = vector1(1)*vector2(2) - vector1(2)*vector2(1)
   double p1[3],p2[3];
-  if( norm > 0 ){
+  if (norm > 0) {
     p1[0] = 0.0;
     p1[1] = 0.0;
     p1[2] = 1.0;
@@ -933,12 +933,12 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   pn2[2] = v[0]*p2[1] - v[1]*p2[0];
   
   // flips normal depending on location of source
-  if( fabs(v[0]-xmin) < fabs(v[0]-xmax) ){
+  if (fabs(v[0]-xmin) < fabs(v[0]-xmax) ) {
     pn1[0] *= -1.0;
     pn1[1] *= -1.0;
     pn1[2] *= -1.0;
   }
-  if( fabs(v[1]-ymin) < fabs(v[1]-ymax) ){
+  if (fabs(v[1]-ymin) < fabs(v[1]-ymax) ) {
     pn2[0] *= -1.0;
     pn2[1] *= -1.0;
     pn2[2] *= -1.0;
@@ -978,7 +978,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   fs.vtk.merger->Update();
   
   // test file
-  if( debug_file == 1){
+  if (debug_file == 1) {
     vtkUnstructuredGrid* data = fs.vtk.merger->GetOutput();
     cout << "    merger: cells  = " << data->GetNumberOfCells() << endl;
     cout << "    merger: points = " << data->GetNumberOfPoints() << endl;
@@ -1062,7 +1062,7 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
   int it = *it_h;
   float time = *time_h;
   
-  if( VERBOSE) printf("     visual: it = %d time = %f \n",it,time);
+  if (VERBOSE) printf("     visual: it = %d time = %f \n",it,time);
 
   // time for calculating new wavefield
   fs.timer->StopTimer();
@@ -1077,8 +1077,8 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
   fs.vtk.text->SetInput(inputString);
 
   // updates data
-  if(SHOW_VOLUMEDATA == 1 ){
-    for(int i=0;i<fs.volume.np;i++) {
+  if (SHOW_VOLUMEDATA == 1) {
+    for(int i = 0;i<fs.volume.np;i++) {
       fs.vtk.data_array3D->SetValue(i,data[i]);
     }
     // mark as modified to update rendering
@@ -1090,11 +1090,11 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
     max = bounds[1];
     
     // adjusts color maximum
-    if( fs.vtk.colorAdjustOn ){
-      if( gcolor_max < 0.0 ) gcolor_max = 1.e-10;
+    if (fs.vtk.colorAdjustOn) {
+      if (gcolor_max < 0.0 ) gcolor_max = 1.e-10;
       gcolor_max = max;
       gcolor_incr = 0.1 * max;
-      if( fs.vtk.icolor >= 2 ) gcolor_min = 1.e-3*gcolor_max;
+      if (fs.vtk.icolor >= 2 ) gcolor_min = 1.e-3*gcolor_max;
       fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
       fs.vtk.lut->Build();
     }
@@ -1104,7 +1104,7 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
   fs.vtk.renWin->Render();
 
   // saves snapshot image
-  if( fs.vtk.jpegImageOn ){
+  if (fs.vtk.jpegImageOn) {
     save_snapshot_jpg( it );
   }
 
@@ -1113,7 +1113,7 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
   double time_renderer = fs.timer->GetElapsedTime();
   fs.timer->StartTimer();
 
-  if( VERBOSE ){
+  if (VERBOSE) {
     printf("     visual: %s \n",inputString);
     printf("     timer : time for rendering = %f (s) \n", time_renderer);
     printf("     data  : min = %e max = %e \n\n",min,max);
@@ -1141,7 +1141,7 @@ void FC_FUNC_(finish_vtkwindow,FINISH_VTKWINDOW)() {
   fs.timer->Delete();
   
   // free arrays
-  if(SHOW_FREESURFACE == 1 ){
+  if (SHOW_FREESURFACE == 1) {
     fs.vtk.points2D->Delete();
     fs.vtk.data_array2D->Delete();
     fs.vtk.cells2D->Delete();
@@ -1157,7 +1157,7 @@ void FC_FUNC_(finish_vtkwindow,FINISH_VTKWINDOW)() {
     fs.vtk.mapMesh2D->Delete();    
   }
 
-  if(SHOW_VOLUMEDATA == 1 ){
+  if (SHOW_VOLUMEDATA == 1) {
     fs.vtk.points3D->Delete();
     fs.vtk.data_array3D->Delete();
     fs.vtk.cells->Delete();

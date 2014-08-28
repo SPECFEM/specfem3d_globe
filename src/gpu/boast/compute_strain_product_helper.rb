@@ -36,7 +36,7 @@ module BOAST
           print prod[p] === eps[i]*b_eps[j]
           print If(j>i) {
             print prod[p] === prod[p] + eps[j]*b_eps[i]
-            print If( Expression("&&", j>2, i<3) ) {
+            print If(Expression("&&", j>2, i<3) ) {
               print prod[p] === prod[p]*2.0
             }
             print If(i>2) {

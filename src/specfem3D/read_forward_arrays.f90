@@ -41,9 +41,9 @@
   character(len=150) outputname
 
   ! checks run/checkpoint number
-  if(NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
+  if (NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
     stop 'number of restart runs can not be less than 1 or greater than NSTEP'
-  if(NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
+  if (NUMBER_OF_THIS_RUN < 1 .or. NUMBER_OF_THIS_RUN > NUMBER_OF_RUNS) &
     stop 'incorrect run number'
   if (SIMULATION_TYPE /= 1 .and. NUMBER_OF_RUNS /= 1) &
     stop 'Only 1 run for SIMULATION_TYPE = 2/3'
@@ -60,16 +60,16 @@
 
   ! checks if anything to do
   ! undoing attenuation doesn't support the following checkpointing
-  if( UNDO_ATTENUATION ) return
+  if (UNDO_ATTENUATION ) return
 
   ! read files back from local disk or MT tape system if restart file
-  if(NUMBER_OF_THIS_RUN > 1) then
-    if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
+  if (NUMBER_OF_THIS_RUN > 1) then
+    if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
       call read_intermediate_forward_arrays_adios()
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
       open(unit=IIN,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error opening file dump_all_arrays*** for reading')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for reading')
 
       read(IIN) displ_crust_mantle
       read(IIN) veloc_crust_mantle
@@ -136,19 +136,19 @@
   character(len=150) outputname
 
   ! checks if anything to do
-  if( UNDO_ATTENUATION ) return
+  if (UNDO_ATTENUATION ) return
 
   ! reads in file data
-  if( ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
     call read_forward_arrays_adios()
   else
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
     open(unit=IIN,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
           status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) then
-      print*,'error: opening proc_****_save_forward_arrays.bin'
+    if (ier /= 0) then
+      print*,'Error: opening proc_****_save_forward_arrays.bin'
       print*,'path: ',trim(LOCAL_TMP_PATH)//'/'//outputname
-      call exit_mpi(myrank,'error open file save_forward_arrays.bin')
+      call exit_mpi(myrank,'Error open file save_forward_arrays.bin')
     endif
 
     read(IIN) b_displ_crust_mantle
@@ -197,21 +197,18 @@
   endif ! ADIOS_FOR_FORWARD_ARRAYS
 
   ! transfers fields onto GPU
-  if( GPU_MODE ) then
+  if (GPU_MODE) then
     ! transfers initialized wavefields to GPU device
-    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                    Mesh_pointer)
+    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                        Mesh_pointer)
 
-    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE, &
-                                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                                    Mesh_pointer)
+    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                                        Mesh_pointer)
 
-    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE, &
-                                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                                    Mesh_pointer)
+    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                                        Mesh_pointer)
     ! strain
-    if( .not. UNDO_ATTENUATION ) then
+    if (.not. UNDO_ATTENUATION) then
       call transfer_b_strain_cm_to_device(Mesh_pointer, &
                                     b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle, &
                                     b_epsilondev_xy_crust_mantle,b_epsilondev_xz_crust_mantle, &
@@ -271,12 +268,12 @@
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
 
     ! debug
-    !if(myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
+    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
 
     ! opens corresponding snapshot file for reading
     open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname, &
          status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file proc***_save_frame_at** for reading')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 
     read(IIN) b_displ_crust_mantle
     read(IIN) b_veloc_crust_mantle
@@ -313,19 +310,16 @@
   endif
 
   ! transfers fields onto GPU
-  if( GPU_MODE ) then
+  if (GPU_MODE) then
     ! transfers initialized wavefields to GPU device
-    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE, &
-                                    b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                                    Mesh_pointer)
+    call transfer_b_fields_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                        Mesh_pointer)
 
-    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE, &
-                                    b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                                    Mesh_pointer)
+    call transfer_b_fields_ic_to_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                                        Mesh_pointer)
 
-    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE, &
-                                    b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                                    Mesh_pointer)
+    call transfer_b_fields_oc_to_device(NGLOB_OUTER_CORE,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                                        Mesh_pointer)
     ! rotation
     if (ROTATION_VAL) then
       call transfer_b_rotation_to_device(Mesh_pointer,b_A_array_rotation,b_B_array_rotation)

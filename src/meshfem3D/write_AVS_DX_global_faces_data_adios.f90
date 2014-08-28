@@ -94,9 +94,9 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   nspecface = 0
 
   ! mark global AVS or DX points
-  do ispec=1,nspec
+  do ispec = 1,nspec
     ! only if on face
-    if(iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+    if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
         iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
       iglob1=ibool(1,1,1,ispec)
       iglob2=ibool(NGLLX,1,1,ispec)
@@ -108,7 +108,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
       iglob8=ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
-      if(iMPIcut_xi(1,ispec)) then
+      if (iMPIcut_xi(1,ispec)) then
         nspecface = nspecface + 1
         mask_ibool(iglob1) = .true.
         mask_ibool(iglob4) = .true.
@@ -117,7 +117,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
       endif
 
     ! face xi = xi_max
-      if(iMPIcut_xi(2,ispec)) then
+      if (iMPIcut_xi(2,ispec)) then
         nspecface = nspecface + 1
         mask_ibool(iglob2) = .true.
         mask_ibool(iglob3) = .true.
@@ -126,7 +126,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
       endif
 
     ! face eta = eta_min
-      if(iMPIcut_eta(1,ispec)) then
+      if (iMPIcut_eta(1,ispec)) then
         nspecface = nspecface + 1
         mask_ibool(iglob1) = .true.
         mask_ibool(iglob2) = .true.
@@ -135,7 +135,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
       endif
 
     ! face eta = eta_max
-      if(iMPIcut_eta(2,ispec)) then
+      if (iMPIcut_eta(2,ispec)) then
         nspecface = nspecface + 1
         mask_ibool(iglob4) = .true.
         mask_ibool(iglob3) = .true.
@@ -180,20 +180,16 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
                                   "", "elements_faces/idoubling", dummy_int1d)
 
-  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
-                                 "", "elements_faces/num_ibool_AVS_DX_iglob1", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
-                                 "", "elements_faces/num_ibool_AVS_DX_iglob2", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc,nspecface,      &
-                                 "", "elements_faces/num_ibool_AVS_DX_iglob3", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspecface,     &
-                                 "", "elements_faces/num_ibool_AVS_DX_iglob4", &
-                                   dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
+                                 "", "elements_faces/num_ibool_AVS_DX_iglob1", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
+                                 "", "elements_faces/num_ibool_AVS_DX_iglob2", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc,nspecface, &
+                                 "", "elements_faces/num_ibool_AVS_DX_iglob3", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
+                                 "", "elements_faces/num_ibool_AVS_DX_iglob4", dummy_int1d)
 
-  if(ISOTROPIC_3D_MANTLE) then
+  if (ISOTROPIC_3D_MANTLE) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvp.")
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
@@ -207,6 +203,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
 end subroutine define_AVS_DX_global_faces_data_adios
 
 !===============================================================================
+
 subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
                                                   iMPIcut_xi,iMPIcut_eta, &
                                                   ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
@@ -272,9 +269,9 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
   nspecface = 0
 
 ! mark global AVS or DX points
-  do ispec=1,nspec
+  do ispec = 1,nspec
   ! only if on face
-    if(iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+    if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
       iglob1=ibool(1,1,1,ispec)
       iglob2=ibool(NGLLX,1,1,ispec)
@@ -286,7 +283,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       iglob8=ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
-      if(iMPIcut_xi(1,ispec)) then
+      if (iMPIcut_xi(1,ispec)) then
         nspecface = nspecface + 1
         mask_ibool(iglob1) = .true.
         mask_ibool(iglob4) = .true.
@@ -295,7 +292,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       endif
 
       ! face xi = xi_max
-      if(iMPIcut_xi(2,ispec)) then
+      if (iMPIcut_xi(2,ispec)) then
         nspecface = nspecface + 1
         mask_ibool(iglob2) = .true.
         mask_ibool(iglob3) = .true.
@@ -304,7 +301,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       endif
 
       ! face eta = eta_min
-      if(iMPIcut_eta(1,ispec)) then
+      if (iMPIcut_eta(1,ispec)) then
         nspecface = nspecface + 1
         mask_ibool(iglob1) = .true.
         mask_ibool(iglob2) = .true.
@@ -313,7 +310,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       endif
 
       ! face eta = eta_max
-      if(iMPIcut_eta(2,ispec)) then
+      if (iMPIcut_eta(2,ispec)) then
         nspecface = nspecface + 1
         mask_ibool(iglob4) = .true.
         mask_ibool(iglob3) = .true.
@@ -332,9 +329,9 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
 
   ! output global AVS or DX points
   numpoin = 0
-  do ispec=1,nspec
+  do ispec = 1,nspec
     ! only if on face
-    if(iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+    if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
       iglob1=ibool(1,1,1,ispec)
       iglob2=ibool(NGLLX,1,1,ispec)
@@ -346,29 +343,29 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       iglob8=ibool(1,NGLLY,NGLLZ,ispec)
 
       ! face xi = xi_min
-      if(iMPIcut_xi(1,ispec)) then
-        if(.not. mask_ibool(iglob1)) then
+      if (iMPIcut_xi(1,ispec)) then
+        if (.not. mask_ibool(iglob1)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob1) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,1,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,1,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,1,1,ispec))
         endif
-        if(.not. mask_ibool(iglob4)) then
+        if (.not. mask_ibool(iglob4)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob4) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,NGLLY,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,NGLLY,1,ispec))
         endif
-        if(.not. mask_ibool(iglob8)) then
+        if (.not. mask_ibool(iglob8)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob8) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,NGLLZ,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,NGLLY,NGLLZ,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,NGLLY,NGLLZ,ispec))
         endif
-        if(.not. mask_ibool(iglob5)) then
+        if (.not. mask_ibool(iglob5)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob5) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,1,NGLLZ,ispec))
@@ -382,29 +379,29 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       endif
 
       ! face xi = xi_max
-      if(iMPIcut_xi(2,ispec)) then
-        if(.not. mask_ibool(iglob2)) then
+      if (iMPIcut_xi(2,ispec)) then
+        if (.not. mask_ibool(iglob2)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob2) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,1,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,1,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,1,1,ispec))
         endif
-        if(.not. mask_ibool(iglob3)) then
+        if (.not. mask_ibool(iglob3)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob3) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,1,ispec))
         endif
-        if(.not. mask_ibool(iglob7)) then
+        if (.not. mask_ibool(iglob7)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob7) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
         endif
-        if(.not. mask_ibool(iglob6)) then
+        if (.not. mask_ibool(iglob6)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob6) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,1,NGLLZ,ispec))
@@ -418,29 +415,29 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       endif
 
       ! face eta = eta_min
-      if(iMPIcut_eta(1,ispec)) then
-        if(.not. mask_ibool(iglob1)) then
+      if (iMPIcut_eta(1,ispec)) then
+        if (.not. mask_ibool(iglob1)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob1) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,1,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,1,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,1,1,ispec))
         endif
-        if(.not. mask_ibool(iglob2)) then
+        if (.not. mask_ibool(iglob2)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob2) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,1,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,1,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,1,1,ispec))
         endif
-        if(.not. mask_ibool(iglob6)) then
+        if (.not. mask_ibool(iglob6)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob6) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,1,NGLLZ,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,1,NGLLZ,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,1,NGLLZ,ispec))
         endif
-        if(.not. mask_ibool(iglob5)) then
+        if (.not. mask_ibool(iglob5)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob5) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,1,NGLLZ,ispec))
@@ -454,29 +451,29 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       endif
 
       ! face eta = eta_max
-      if(iMPIcut_eta(2,ispec)) then
-        if(.not. mask_ibool(iglob4)) then
+      if (iMPIcut_eta(2,ispec)) then
+        if (.not. mask_ibool(iglob4)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob4) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,NGLLY,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,NGLLY,1,ispec))
         endif
-        if(.not. mask_ibool(iglob3)) then
+        if (.not. mask_ibool(iglob3)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob3) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,1,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,1,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,1,ispec))
         endif
-        if(.not. mask_ibool(iglob7)) then
+        if (.not. mask_ibool(iglob7)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob7) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec))
           avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec))
           avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
         endif
-        if(.not. mask_ibool(iglob8)) then
+        if (.not. mask_ibool(iglob8)) then
           numpoin = numpoin + 1
           num_ibool_AVS_DX(iglob8) = numpoin
           avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,NGLLZ,ispec))
@@ -493,17 +490,17 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
   enddo
 
   ! check that number of global points output is okay
-  if(numpoin /= npoin) &
+  if (numpoin /= npoin) &
     call exit_MPI(myrank, &
         'incorrect number of global points in AVS or DX file creation')
 
   ! output global AVS or DX elements
 
   ispecface = 0
-  do ispec=1,nspec
+  do ispec = 1,nspec
 !    print *, ispecface, nspecface
     ! only if on face
-    if(iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
+    if (iMPIcut_xi(1,ispec) .or. iMPIcut_xi(2,ispec) .or. &
                 iMPIcut_eta(1,ispec) .or. iMPIcut_eta(2,ispec)) then
       iglob1=ibool(1,1,1,ispec)
       iglob2=ibool(NGLLX,1,1,ispec)
@@ -515,17 +512,17 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       iglob8=ibool(1,NGLLY,NGLLZ,ispec)
 
       ! include lateral variations if needed
-      if(ISOTROPIC_3D_MANTLE) then
+      if (ISOTROPIC_3D_MANTLE) then
         ! pick a point within the element and get its radius
         r = dsqrt(xstore(2,2,2,ispec)**2 &
             + ystore(2,2,2,ispec)**2 &
             + zstore(2,2,2,ispec)**2)
 
-        if(r > RCMB/R_EARTH .and. r < R_UNIT_SPHERE) then
+        if (r > RCMB/R_EARTH .and. r < R_UNIT_SPHERE) then
           ! average over the element
           dvp = 0.0
           dvs = 0.0
-          np =0
+          np  = 0
           do k=2,NGLLZ-1
             do j=2,NGLLY-1
               do i=2,NGLLX-1
@@ -535,7 +532,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
                 z=zstore(i,j,k,ispec)
                 r=dsqrt(x*x+y*y+z*z)
                 ! take out ellipticity
-                if(ELLIPTICITY) then
+                if (ELLIPTICITY) then
                   call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi_dummy)
                   cost=dcos(theta)
                   p20=0.5d0*(3.0d0*cost*cost-1.0d0)
@@ -546,9 +543,9 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
 
                 ! gets reference model values:rho,vpv,vph,vsv,vsh and eta_aniso
                 call meshfem3D_models_get1D_val(myrank, iregion_code, &
-                    idoubling(ispec), r, rho, vpv, vph, vsv, vsh, eta_aniso, &
-                    Qkappa, Qmu, RICB, RCMB, RTOPDDOUBLEPRIME, R80, R120, &
-                    R220, R400, R600, R670, R771, RMOHO, RMIDDLE_CRUST, ROCEAN)
+                                                idoubling(ispec), r, rho, vpv, vph, vsv, vsh, eta_aniso, &
+                                                Qkappa, Qmu, RICB, RCMB, RTOPDDOUBLEPRIME, R80, R120, &
+                                                R220, R400, R600, R670, R771, RMOHO, RMIDDLE_CRUST, ROCEAN)
 
                  ! calculates isotropic values
                 vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
@@ -556,15 +553,15 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
                 vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                         + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
 
-                if( abs(rhostore(i,j,k,ispec))< 1.e-20 ) then
+                if (abs(rhostore(i,j,k,ispec))< 1.e-20) then
                   print*,'attention: rhostore close to zero', &
                       rhostore(i,j,k,ispec),r,i,j,k,ispec
                   dvp = 0.0
                   dvs = 0.0
-                else if( abs(sngl(vp))< 1.e-20 ) then
+                else if (abs(sngl(vp))< 1.e-20) then
                   print*,' attention: vp close to zero',sngl(vp),r,i,j,k,ispec
                   dvp = 0.0
-                else if( abs(sngl(vs))< 1.e-20 ) then
+                else if (abs(sngl(vs))< 1.e-20) then
                   print*,' attention: vs close to zero',sngl(vs),r,i,j,k,ispec
                   dvs = 0.0
                 else
@@ -588,56 +585,56 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
       endif
 
       ! face xi = xi_min
-      if(iMPIcut_xi(1,ispec)) then
+      if (iMPIcut_xi(1,ispec)) then
         ispecface = ispecface + 1
         avs_dx_adios%idoubling(ispecface) = idoubling(ispec)
         avs_dx_adios%iglob1(ispecface) = num_ibool_AVS_DX(iglob1)
         avs_dx_adios%iglob2(ispecface) = num_ibool_AVS_DX(iglob4)
         avs_dx_adios%iglob3(ispecface) = num_ibool_AVS_DX(iglob8)
         avs_dx_adios%iglob4(ispecface) = num_ibool_AVS_DX(iglob5)
-        if(ISOTROPIC_3D_MANTLE)  then
+        if (ISOTROPIC_3D_MANTLE) then
           avs_dx_adios%dvp(ispecface) = dvp
           avs_dx_adios%dvs(ispecface) = dvs
         endif
       endif
 
       ! face xi = xi_max
-      if(iMPIcut_xi(2,ispec)) then
+      if (iMPIcut_xi(2,ispec)) then
         ispecface = ispecface + 1
         avs_dx_adios%idoubling(ispecface) = idoubling(ispec)
         avs_dx_adios%iglob1(ispecface)= num_ibool_AVS_DX(iglob2)
         avs_dx_adios%iglob2(ispecface) = num_ibool_AVS_DX(iglob3)
         avs_dx_adios%iglob3(ispecface) = num_ibool_AVS_DX(iglob7)
         avs_dx_adios%iglob4(ispecface) = num_ibool_AVS_DX(iglob6)
-        if(ISOTROPIC_3D_MANTLE) then
+        if (ISOTROPIC_3D_MANTLE) then
           avs_dx_adios%dvp(ispecface) = dvp
           avs_dx_adios%dvs(ispecface) = dvs
         endif
       endif
 
       ! face eta = eta_min
-      if(iMPIcut_eta(1,ispec)) then
+      if (iMPIcut_eta(1,ispec)) then
         ispecface = ispecface + 1
         avs_dx_adios%idoubling(ispecface) = idoubling(ispec)
         avs_dx_adios%iglob1(ispecface) = num_ibool_AVS_DX(iglob1)
         avs_dx_adios%iglob2(ispecface) = num_ibool_AVS_DX(iglob2)
         avs_dx_adios%iglob3(ispecface) = num_ibool_AVS_DX(iglob6)
         avs_dx_adios%iglob4(ispecface) = num_ibool_AVS_DX(iglob5)
-        if(ISOTROPIC_3D_MANTLE) then
+        if (ISOTROPIC_3D_MANTLE) then
           avs_dx_adios%dvp(ispecface) = dvp
           avs_dx_adios%dvs(ispecface) = dvs
         endif
       endif
 
       ! face eta = eta_max
-      if(iMPIcut_eta(2,ispec)) then
+      if (iMPIcut_eta(2,ispec)) then
         ispecface = ispecface + 1
         avs_dx_adios%idoubling(ispecface) = idoubling(ispec)
         avs_dx_adios%iglob1(ispecface) = num_ibool_AVS_DX(iglob4)
         avs_dx_adios%iglob2(ispecface) = num_ibool_AVS_DX(iglob3)
         avs_dx_adios%iglob3(ispecface) = num_ibool_AVS_DX(iglob7)
         avs_dx_adios%iglob4(ispecface) = num_ibool_AVS_DX(iglob8)
-        if(ISOTROPIC_3D_MANTLE) then
+        if (ISOTROPIC_3D_MANTLE) then
           avs_dx_adios%dvp(ispecface) = dvp
           avs_dx_adios%dvs(ispecface) = dvs
         endif
@@ -647,18 +644,20 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
   enddo
 
   ! check that number of surface elements output is okay
-  if(ispecface /= nspecface) &
+  if (ispecface /= nspecface) &
     call exit_MPI(myrank,&
         'incorrect number of surface elements in AVS or DX file creation')
 
 end subroutine prepare_AVS_DX_global_faces_data_adios
 
 !===============================================================================
+
 subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
-    sizeprocs, avs_dx_adios, ISOTROPIC_3D_MANTLE)
+                                                sizeprocs, avs_dx_adios, ISOTROPIC_3D_MANTLE)
 
   use adios_write_mod
   use adios_helpers_mod
+
   implicit none
   !--- Arguments
   integer(kind=8), intent(in) :: adios_handle
@@ -680,24 +679,19 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
 
 
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                 "elements_faces/idoubling",               &
-                                   avs_dx_adios%idoubling)
+                                   "elements_faces/idoubling", avs_dx_adios%idoubling)
 
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                 "elements_faces/num_ibool_AVS_DX_iglob1", &
-                                   avs_dx_adios%iglob1)
+                                   "elements_faces/num_ibool_AVS_DX_iglob1", avs_dx_adios%iglob1)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                 "elements_faces/num_ibool_AVS_DX_iglob2", &
-                                   avs_dx_adios%iglob2)
+                                   "elements_faces/num_ibool_AVS_DX_iglob2", avs_dx_adios%iglob2)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                 "elements_faces/num_ibool_AVS_DX_iglob3", &
-                                   avs_dx_adios%iglob3)
+                                   "elements_faces/num_ibool_AVS_DX_iglob3", avs_dx_adios%iglob3)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                 "elements_faces/num_ibool_AVS_DX_iglob4", &
-                                   avs_dx_adios%iglob4)
+                                   "elements_faces/num_ibool_AVS_DX_iglob4", avs_dx_adios%iglob4)
 
 
-  if(ISOTROPIC_3D_MANTLE) then
+  if (ISOTROPIC_3D_MANTLE) then
     call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
                                      "elements_faces/dvp", avs_dx_adios%dvp)
     call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
@@ -707,51 +701,32 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
 end subroutine write_AVS_DX_global_faces_data_adios
 
 !===============================================================================
-subroutine free_AVS_DX_global_faces_data_adios(myrank, avs_dx_adios, &
-    ISOTROPIC_3D_MANTLE)
+
+subroutine free_AVS_DX_global_faces_data_adios(avs_dx_adios, ISOTROPIC_3D_MANTLE)
+
   implicit none
   !--- Arguments
-  integer, intent(in) :: myrank
   type(avs_dx_global_faces_t), intent(inout) :: avs_dx_adios
   logical ISOTROPIC_3D_MANTLE
-  !--- Variables
-  !--- Variables
-  integer :: ierr
 
-  deallocate(avs_dx_adios%x_adios, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, "Error deallocating x_adios.")
-  deallocate(avs_dx_adios%y_adios, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, "Error deallocating y_adios.")
-  deallocate(avs_dx_adios%z_adios, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, "Error deallocating z_adios.")
+  deallocate(avs_dx_adios%x_adios)
+  deallocate(avs_dx_adios%y_adios)
+  deallocate(avs_dx_adios%z_adios)
 
-  deallocate(avs_dx_adios%idoubling, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob1.")
-  deallocate(avs_dx_adios%iglob1, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob1.")
-  deallocate(avs_dx_adios%iglob2, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob2.")
-  deallocate(avs_dx_adios%iglob3, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob3.")
-  deallocate(avs_dx_adios%iglob4, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob4.")
+  deallocate(avs_dx_adios%idoubling)
+  deallocate(avs_dx_adios%iglob1)
+  deallocate(avs_dx_adios%iglob2)
+  deallocate(avs_dx_adios%iglob3)
+  deallocate(avs_dx_adios%iglob4)
 
-  if(ISOTROPIC_3D_MANTLE) then
-    deallocate(avs_dx_adios%dvp, stat=ierr)
-    if (ierr /= 0) call exit_MPI(myrank, &
-        "Error deallocating dvp.")
-    deallocate(avs_dx_adios%dvs, stat=ierr)
-    if (ierr /= 0) call exit_MPI(myrank, &
-        "Error deallocating dvs.")
+  if (ISOTROPIC_3D_MANTLE) then
+    deallocate(avs_dx_adios%dvp)
+    deallocate(avs_dx_adios%dvs)
   endif
 
   avs_dx_adios%npoin = 0
   avs_dx_adios%nspecface = 0
+
 end subroutine free_AVS_DX_global_faces_data_adios
 
 end module

@@ -45,24 +45,14 @@ const char* clewErrorString (cl_int error);
 
 #define INIT_OFFSET_OCL(_buffer_, _offset_)                             \
   if (run_opencl) {                                                     \
-    clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_FLAGS,        \
-                                 sizeof(cl_uint),                       \
-                                 &buffer_create_type,                   \
-                                 NULL));                                \
-    clCheck (clGetMemObjectInfo (mp->_buffer_.ocl,                      \
-                                 CL_MEM_SIZE ,                          \
-                                 sizeof(size_t),                        \
-                                 &size,                                 \
-                                 NULL));                                \
+    clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_FLAGS, sizeof(cl_uint), &buffer_create_type, NULL)); \
+    clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_SIZE , sizeof(size_t), &size, NULL)); \
                                                                         \
     region_type.origin = _offset_ * sizeof(CL_FLOAT);                   \
     region_type.size = size;                                            \
                                                                         \
-    _buffer_##_##_offset_.ocl = clCreateSubBuffer (mp->_buffer_.ocl,    \
-                                                   buffer_create_type,  \
-                                                   CL_BUFFER_CREATE_TYPE_REGION, \
-                                                   (void *) &region_type, \
-                                                   clck_(&mocl_errcode)); \
+    _buffer_##_##_offset_.ocl = clCreateSubBuffer (mp->_buffer_.ocl, buffer_create_type, CL_BUFFER_CREATE_TYPE_REGION, \
+                                                   (void *) &region_type, clck_(&mocl_errcode)); \
   }
 
 
@@ -72,21 +62,15 @@ const char* clewErrorString (cl_int error);
   }
 
 #define ALLOC_PINNED_BUFFER_OCL(_buffer_, _size_)                       \
-  mp->h_pinned_##_buffer_ = clCreateBuffer(mocl.context,                \
-                                           CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, \
-                                           _size_, NULL,                \
-                                           clck_(&mocl_errcode));       \
-  mp->h_##_buffer_ = (realw *) clEnqueueMapBuffer(mocl.command_queue,   \
-                                                  mp->h_pinned_##_buffer_, \
-                                                  CL_TRUE,              \
-                                                  CL_MAP_READ | CL_MAP_WRITE, \
-                                                  0, _size_, 0,         \
+  mp->h_pinned_##_buffer_ = clCreateBuffer(mocl.context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, \
+                                           _size_, NULL, clck_(&mocl_errcode)); \
+  mp->h_##_buffer_ = (realw *) clEnqueueMapBuffer(mocl.command_queue, mp->h_pinned_##_buffer_, CL_TRUE, \
+                                                  CL_MAP_READ | CL_MAP_WRITE, 0, _size_, 0, \
                                                   NULL, NULL, clck_(&mocl_errcode))
 
 #define RELEASE_PINNED_BUFFER_OCL(_buffer_)                             \
   clCheck(clEnqueueUnmapMemObject(mocl.command_queue, mp->h_pinned_##_buffer_, \
-                                  mp->h_##_buffer_,                     \
-                                  0, NULL, NULL));                      \
+                                  mp->h_##_buffer_, 0, NULL, NULL));                      \
   clCheck(clReleaseMemObject (mp->h_pinned_##_buffer_))
 
 

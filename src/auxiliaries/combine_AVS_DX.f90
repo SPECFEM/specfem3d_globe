@@ -142,7 +142,7 @@
 ! read the parameter file and compute additional parameters
   call read_compute_parameters()
 !
-  if(.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
+  if (.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
 
 ! get the base pathname for output files
   OUTPUT_FILES = 'OUTPUT_FILES'
@@ -153,8 +153,8 @@
   print *
   print *,'enter value:'
   read(5,*) iformat
-  if(iformat<1 .or. iformat>2) stop 'exiting...'
-  if(iformat == 1) then
+  if (iformat<1 .or. iformat>2) stop 'exiting...'
+  if (iformat == 1) then
     USE_OPENDX = .true.
   else
     USE_OPENDX = .false.
@@ -168,10 +168,10 @@
   print *
   print *,'enter value:'
   read(5,*) ivalue
-  if(ivalue<1 .or. ivalue>3) stop 'exiting...'
+  if (ivalue<1 .or. ivalue>3) stop 'exiting...'
 
 ! warning if surface elevation
-  if(ivalue == 3) then
+  if (ivalue == 3) then
     print *,'******************************************'
     print *,'*** option 7 to color using topography ***'
     print *,'******************************************'
@@ -191,11 +191,11 @@
   print *
   print *,'enter value:'
   read(5,*) icolor
-  if(icolor<1 .or. icolor >9) stop 'exiting...'
-  if((icolor == 3 .or. icolor == 4) .and. ivalue /= 2) &
+  if (icolor<1 .or. icolor >9) stop 'exiting...'
+  if ((icolor == 3 .or. icolor == 4) .and. ivalue /= 2) &
     stop 'need chunks only to represent stability or gridpoints per wavelength'
 
-  if(icolor == 9) then
+  if (icolor == 9) then
     print *
     print *,'enter value of target doubling flag:'
     read(5,*) itarget_doubling
@@ -203,15 +203,15 @@
 
 ! for oceans only
   OCEANS_ONLY = .false.
-  if(ivalue == 3 .and. icolor == 7) then
+  if (ivalue == 3 .and. icolor == 7) then
     print *
     print *,'1 = represent full topography (topo + oceans)'
     print *,'2 = represent oceans only'
     print *
     read(5,*) ioceans
-    if(ioceans == 1) then
+    if (ioceans == 1) then
       OCEANS_ONLY = .false.
-    else if(ioceans == 2) then
+    else if (ioceans == 2) then
       OCEANS_ONLY = .true.
     else
       stop 'incorrect option for the oceans'
@@ -227,24 +227,24 @@
   print *
   print *,'enter value:'
   read(5,*) imaterial
-  if(imaterial < 1 .or. imaterial > 4) stop 'exiting...'
+  if (imaterial < 1 .or. imaterial > 4) stop 'exiting...'
 
 ! user can specify a range of processors here
   print *
   print *,'enter first proc (proc numbers start at 0) = '
   read(5,*) proc_p1
-  if(proc_p1 < 0) proc_p1 = 0
-  if(proc_p1 > NPROCTOT-1) proc_p1 = NPROCTOT-1
+  if (proc_p1 < 0) proc_p1 = 0
+  if (proc_p1 > NPROCTOT-1) proc_p1 = NPROCTOT-1
 
   print *,'enter last proc (enter -1 for all procs) = '
   read(5,*) proc_p2
-  if(proc_p2 == -1) proc_p2 = NPROCTOT-1
-  if(proc_p2 < 0) proc_p2 = 0
-  if(proc_p2 > NPROCTOT-1) proc_p2 = NPROCTOT-1
+  if (proc_p2 == -1) proc_p2 = NPROCTOT-1
+  if (proc_p2 < 0) proc_p2 = 0
+  if (proc_p2 > NPROCTOT-1) proc_p2 = NPROCTOT-1
 
 ! set interval to maximum if user input is not correct
-  if(proc_p1 <= 0) proc_p1 = 0
-  if(proc_p2 < 0) proc_p2 = NPROCTOT - 1
+  if (proc_p1 <= 0) proc_p1 = 0
+  if (proc_p2 < 0) proc_p2 = NPROCTOT - 1
 
   print *
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
@@ -258,7 +258,7 @@
   open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
   do iproc = 0,NPROCTOT-1
     read(IIN,*) iproc_read,ichunk,idummy1,idummy2
-    if(iproc_read /= iproc) stop 'incorrect slice number read'
+    if (iproc_read /= iproc) stop 'incorrect slice number read'
     ichunk_slice(iproc) = ichunk
   enddo
   close(IIN)
@@ -298,7 +298,7 @@
   region_max = MAX_NUM_REGIONS
 
 ! if representing surface elements, only one region
-  if(ivalue == 3) then
+  if (ivalue == 3) then
     region_min = IREGION_CRUST_MANTLE
     region_max = IREGION_CRUST_MANTLE
   endif
@@ -314,11 +314,11 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  if(ivalue == 1) then
+  if (ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
-  else if(ivalue == 2) then
+  else if (ivalue == 2) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old',action='read')
-  else if(ivalue == 3) then
+  else if (ivalue == 3) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
   endif
 
@@ -327,11 +327,11 @@
   ntotpoin = ntotpoin + npoin
   close(10)
 
-  if(ivalue == 1) then
+  if (ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
-  else if(ivalue == 2) then
+  else if (ivalue == 2) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
-  else if(ivalue == 3) then
+  else if (ivalue == 3) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
   endif
 
@@ -352,7 +352,7 @@
   ntotspecAVS_DX = ntotspec
 
 ! write AVS or DX header with element data
-  if(USE_OPENDX) then
+  if (USE_OPENDX) then
     open(unit=11,file=trim(OUTPUT_FILES)//'/DX_fullmesh.dx',status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ntotpoinAVS_DX,' data follows'
   else
@@ -388,12 +388,12 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  if(ivalue == 1) then
+  if (ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
-  else if(ivalue == 2) then
+  else if (ivalue == 2) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old',action='read')
     open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointschunks_stability.txt',status='old',action='read')
-  else if(ivalue == 3) then
+  else if (ivalue == 3) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
   endif
 
@@ -401,19 +401,19 @@
   print *,'There are ',npoin,' global AVS or DX points in the slice'
 
 ! read local points in this slice and output global AVS or DX points
-  do ipoin=1,npoin
+  do ipoin = 1,npoin
       read(10,*) numpoin,xval,yval,zval
-      if(ivalue == 2) then
+      if (ivalue == 2) then
         read(12,*) numpoin2,vmin,vmax
       else
         numpoin2 = 0
         vmin = 0.
         vmax = 0.
       endif
-      if(numpoin /= ipoin) stop 'incorrect point number'
-      if(ivalue == 2 .and. numpoin2 /= ipoin) stop 'incorrect point number'
+      if (numpoin /= ipoin) stop 'incorrect point number'
+      if (ivalue == 2 .and. numpoin2 /= ipoin) stop 'incorrect point number'
 ! write to AVS or DX global file with correct offset
-      if(USE_OPENDX) then
+      if (USE_OPENDX) then
         write(11,"(f10.7,1x,f10.7,1x,f10.7)") xval,yval,zval
       else
         write(11,"(i6,1x,f10.7,1x,f10.7,1x,f10.7)") numpoin + iglobpointoffset,xval,yval,zval
@@ -431,7 +431,7 @@
   iglobpointoffset = iglobpointoffset + npoin
 
   close(10)
-  if(ivalue == 2) close(12)
+  if (ivalue == 2) close(12)
 
   enddo
   enddo
@@ -450,7 +450,7 @@
   above_zero = 0
   below_zero = 0
 
-  if(USE_OPENDX) write(11,*) 'object 2 class array type int rank 1 shape 4 items ',ntotspecAVS_DX,' data follows'
+  if (USE_OPENDX) write(11,*) 'object 2 class array type int rank 1 shape 4 items ',ntotspecAVS_DX,' data follows'
 
   do iregion_code = region_min,region_max
 
@@ -463,20 +463,20 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  if(ivalue == 1) then
+  if (ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
     open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
-    if(icolor == 5 .or. icolor == 6) &
+    if (icolor == 5 .or. icolor == 6) &
       open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces_dvp_dvs.txt',status='old',action='read')
- else if(ivalue == 2) then
+ else if (ivalue == 2) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
-    if(icolor == 5 .or. icolor == 6) &
+    if (icolor == 5 .or. icolor == 6) &
       open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementschunks_dvp_dvs.txt',status='old',action='read')
     open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old',action='read')
-  else if(ivalue == 3) then
+  else if (ivalue == 3) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
     open(unit=12,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
-    if(icolor == 5 .or. icolor == 6) &
+    if (icolor == 5 .or. icolor == 6) &
       open(unit=13,file=prname(1:len_trim(prname))//'AVS_DXelementssurface_dvp_dvs.txt',status='old',action='read')
 
   endif
@@ -487,28 +487,28 @@
   print *,'There are ',nspec_ab,' AVS or DX elements in the slice'
 
 ! read local elements in this slice and output global AVS or DX elements
-  do ispec=1,nspec_ab
+  do ispec = 1,nspec_ab
       read(10,*) numelem,idoubling,iglob1,iglob2,iglob3,iglob4
-      if(icolor == 5 .or. icolor == 6) then
+      if (icolor == 5 .or. icolor == 6) then
         read(13,*) numelem2,deltavp,deltavs
         dvp(numelem + iglobelemoffset) = deltavp
         dvs(numelem + iglobelemoffset) = deltavs
       else
         numelem2 = 0
       endif
-  if(numelem /= ispec) stop 'incorrect element number'
-  if((icolor == 5 .or. icolor == 6) .and. numelem2 /= ispec) stop 'incorrect element number'
+  if (numelem /= ispec) stop 'incorrect element number'
+  if ((icolor == 5 .or. icolor == 6) .and. numelem2 /= ispec) stop 'incorrect element number'
 ! compute max of the doubling flag
   maxdoubling = max(maxdoubling,idoubling)
 
 ! assign material property (which can be filtered later in AVS_DX)
-  if(imaterial == 1) then
+  if (imaterial == 1) then
     imatprop = idoubling
-  else if(imaterial == 2) then
+  else if (imaterial == 2) then
     imatprop = iproc
-  else if(imaterial == 3) then
+  else if (imaterial == 3) then
     imatprop = iregion_code
-  else if(imaterial == 4) then
+  else if (imaterial == 4) then
     imatprop = ichunk_slice(iproc)
   else
     stop 'invalid code for material property'
@@ -524,7 +524,7 @@
 
 ! in the case of OpenDX, node numbers start at zero
 ! in the case of AVS, node numbers start at one
-      if(USE_OPENDX) then
+      if (USE_OPENDX) then
 ! point order in OpenDX is 1,4,2,3 *not* 1,2,3,4 as in AVS
         write(11,"(i6,1x,i6,1x,i6,1x,i6)") iglob1-1,iglob4-1,iglob2-1,iglob3-1
       else
@@ -536,7 +536,7 @@
       NGLL_current_vert = NGLLZ
 
 ! check that the degree is not above the threshold for list of percentages
-      if(NGLL_current_horiz > NGLL_MAX_STABILITY .or. &
+      if (NGLL_current_horiz > NGLL_MAX_STABILITY .or. &
          NGLL_current_vert > NGLL_MAX_STABILITY) &
            stop 'degree too high to compute stability value'
 
@@ -547,7 +547,7 @@
     stabmax = -1.d0
     gridmin = HUGEVAL
 
-    if(idoubling == IFLAG_CRUST) then
+    if (idoubling == IFLAG_CRUST) then
 
 ! distinguish between horizontal and vertical directions in crust
 ! because we have a different polynomial degree in each direction
@@ -556,21 +556,19 @@
     do iloop_corners = 1,2
 
     select case(iloop_corners)
+    case(1)
+      ipointnumber1_horiz = iglob1
+      ipointnumber2_horiz = iglob2
 
-      case(1)
-        ipointnumber1_horiz = iglob1
-        ipointnumber2_horiz = iglob2
+      ipointnumber1_vert = iglob1
+      ipointnumber2_vert = iglob4
 
-        ipointnumber1_vert = iglob1
-        ipointnumber2_vert = iglob4
+    case(2)
+      ipointnumber1_horiz = iglob4
+      ipointnumber2_horiz = iglob3
 
-      case(2)
-        ipointnumber1_horiz = iglob4
-        ipointnumber2_horiz = iglob3
-
-        ipointnumber1_vert = iglob2
-        ipointnumber2_vert = iglob3
-
+      ipointnumber1_vert = iglob2
+      ipointnumber2_vert = iglob3
     end select
 
     distance_horiz = &
@@ -599,25 +597,25 @@
 
     do istab = 1,4
       do jstab = 1,4
-        if(jstab /= istab) then
+        if (jstab /= istab) then
 
-          if(istab == 1) then
+          if (istab == 1) then
             ipointnumber1_vert = iglob1
-          else if(istab == 2) then
+          else if (istab == 2) then
             ipointnumber1_vert = iglob2
-          else if(istab == 3) then
+          else if (istab == 3) then
             ipointnumber1_vert = iglob3
-          else if(istab == 4) then
+          else if (istab == 4) then
             ipointnumber1_vert = iglob4
           endif
 
-          if(jstab == 1) then
+          if (jstab == 1) then
             ipointnumber2_vert = iglob1
-          else if(jstab == 2) then
+          else if (jstab == 2) then
             ipointnumber2_vert = iglob2
-          else if(jstab == 3) then
+          else if (jstab == 3) then
             ipointnumber2_vert = iglob3
-          else if(jstab == 4) then
+          else if (jstab == 4) then
             ipointnumber2_vert = iglob4
           endif
 
@@ -655,13 +653,13 @@
 !   if topography then subtract reference ellipsoid or sphere for color code
 !   if ellipticity then subtract reference sphere for color code
 !   otherwise subtract nothing
-    if(TOPOGRAPHY .or. CRUSTAL) then
-      if(ELLIPTICITY) then
+    if (TOPOGRAPHY .or. CRUSTAL) then
+      if (ELLIPTICITY) then
         reference = 1.d0 - (3.d0*dcos(theta_s)**2 - 1.d0)/3.d0/299.8d0
       else
         reference = R_UNIT_SPHERE
       endif
-    else if(ELLIPTICITY) then
+    else if (ELLIPTICITY) then
       reference = R_UNIT_SPHERE
     else
       reference = 0.
@@ -678,7 +676,7 @@
 
   close(10)
   close(12)
-  if(icolor == 5 .or. icolor == 6) close(13)
+  if (icolor == 5 .or. icolor == 6) close(13)
 
   enddo
   enddo
@@ -686,7 +684,7 @@
 ! saturate color scale for elevation since small values
 ! apply non linear scaling if topography to enhance regions around sea level
 
-  if(TOPOGRAPHY .or. CRUSTAL) then
+  if (TOPOGRAPHY .or. CRUSTAL) then
 
 ! compute absolute maximum
     rnorm_factor = maxval(dabs(elevation_sphere(:)))
@@ -702,15 +700,15 @@
 ! compute total area consisting of oceans
 ! and suppress areas that are not considered oceans if needed
 ! use arbitrary threshold to suppress artifacts in ETOPO5 model
-      if(xval >= -0.018) then
-        if(OCEANS_ONLY) xval = 0.
+      if (xval >= -0.018) then
+        if (OCEANS_ONLY) xval = 0.
         above_zero = above_zero + 1
       else
         below_zero = below_zero + 1
       endif
 
-      if(xval >= 0.) then
-        if(.not. OCEANS_ONLY) then
+      if (xval >= 0.) then
+        if (.not. OCEANS_ONLY) then
           elevation_sphere(ispec_scale_AVS_DX) = xval ** SCALE_NON_LINEAR
         else
           elevation_sphere(ispec_scale_AVS_DX) = 0.
@@ -728,9 +726,9 @@
 
   endif
 
-  if(icolor == 5 .or. icolor == 6) then
+  if (icolor == 5 .or. icolor == 6) then
 
-   if(ISOTROPIC_3D_MANTLE) then
+   if (ISOTROPIC_3D_MANTLE) then
 
 ! compute absolute maximum for dvp
     rnorm_factor = maxval(dabs(dvp(:)))
@@ -741,7 +739,7 @@
 ! apply non-linear scaling
     do ispec_scale_AVS_DX = 1,ntotspecAVS_DX
       xval = dvp(ispec_scale_AVS_DX)
-      if(xval >= 0.) then
+      if (xval >= 0.) then
         dvp(ispec_scale_AVS_DX) = xval ** SCALE_NON_LINEAR
       else
         dvp(ispec_scale_AVS_DX) = - dabs(xval) ** SCALE_NON_LINEAR
@@ -757,7 +755,7 @@
 ! apply non-linear scaling
     do ispec_scale_AVS_DX = 1,ntotspecAVS_DX
       xval = dvs(ispec_scale_AVS_DX)
-      if(xval >= 0.) then
+      if (xval >= 0.) then
         dvs(ispec_scale_AVS_DX) = xval ** SCALE_NON_LINEAR
       else
         dvs(ispec_scale_AVS_DX) = - dabs(xval) ** SCALE_NON_LINEAR
@@ -770,7 +768,7 @@
 ! ************* generate element data values ******************
 
 ! output AVS or DX header for data
-  if(USE_OPENDX) then
+  if (USE_OPENDX) then
     write(11,*) 'attribute "element type" string "quads"'
     write(11,*) 'attribute "ref" string "positions"'
     write(11,*) 'object 3 class array type float rank 0 items ',ntotspecAVS_DX,' data follows'
@@ -793,11 +791,11 @@
   call create_serial_name_database(prname,iproc,iregion_code, &
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
-  if(ivalue == 1) then
+  if (ivalue == 1) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
-  else if(ivalue == 2) then
+  else if (ivalue == 2) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
-  else if(ivalue == 3) then
+  else if (ivalue == 3) then
     open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
   endif
 
@@ -805,38 +803,38 @@
   print *,'There are ',nspec_ab,' AVS or DX elements in the slice'
 
 ! read local elements in this slice and output global AVS or DX elements
-  do ispec=1,nspec_ab
+  do ispec = 1,nspec_ab
       read(10,*) numelem,idoubling,iglob1,iglob2,iglob3,iglob4
-      if(numelem /= ispec) stop 'incorrect element number'
+      if (numelem /= ispec) stop 'incorrect element number'
 
 ! data is either the slice number or the mesh doubling region flag
-      if(icolor == 1) then
+      if (icolor == 1) then
         val_color = dble(idoubling)
-      else if(icolor == 2) then
+      else if (icolor == 2) then
         val_color = dble(iproc)
-      else if(icolor == 3) then
+      else if (icolor == 3) then
         val_color = stability_value(numelem + iglobelemoffset)
-      else if(icolor == 4) then
+      else if (icolor == 4) then
         val_color = gridpoints_per_wavelength(numelem + iglobelemoffset)
 !       put a threshold for number of points per wavelength displayed
 !       otherwise the scale is too large and we cannot see the small values
-        if(val_color > THRESHOLD_GRIDPOINTS) then
+        if (val_color > THRESHOLD_GRIDPOINTS) then
           val_color = THRESHOLD_GRIDPOINTS
           threshold_used = .true.
         endif
-      else if(icolor == 5) then
+      else if (icolor == 5) then
 !     minus sign to get the color scheme right: blue is fast (+) and red is slow (-)
         val_color = -dvp(numelem + iglobelemoffset)
-      else if(icolor == 6) then
+      else if (icolor == 6) then
 !     minus sign to get the color scheme right: blue is fast (+) and red is slow (-)
         val_color = -dvs(numelem + iglobelemoffset)
-      else if(icolor == 7) then
+      else if (icolor == 7) then
         val_color = elevation_sphere(numelem + iglobelemoffset)
 
-      else if(icolor == 8) then
+      else if (icolor == 8) then
         val_color = iregion_code
-      else if(icolor == 9) then
-        if(idoubling == itarget_doubling) then
+      else if (icolor == 9) then
+        if (idoubling == itarget_doubling) then
           val_color = dble(iregion_code)
         else
           val_color = dble(IFLAG_DUMMY)
@@ -846,7 +844,7 @@
       endif
 
 ! write to AVS or DX global file with correct offset
-      if(USE_OPENDX) then
+      if (USE_OPENDX) then
         write(11,*) sngl(val_color)
       else
         write(11,*) numelem + iglobelemoffset,' ',sngl(val_color)
@@ -861,7 +859,7 @@
   enddo
 
 ! define OpenDX field
-  if(USE_OPENDX) then
+  if (USE_OPENDX) then
     write(11,*) 'attribute "dep" string "connections"'
     write(11,*) 'object "irregular positions irregular connections" class field'
     write(11,*) 'component "positions" value 1'
@@ -878,7 +876,7 @@
 
 ! print min and max of stability and points per lambda
 
-  if(ivalue == 2) then
+  if (ivalue == 2) then
 
 ! compute minimum and maximum of stability value and points per wavelength
 
@@ -901,14 +899,14 @@
     print *,'half duration of ',sngl(hdur(1)),' s used for points per wavelength'
     print *
 
-    if(hdur(1) < 5.*DT) then
+    if (hdur(1) < 5.*DT) then
       print *,'***************************************************************'
       print *,'Source time function is a Heaviside, points per wavelength meaningless'
       print *,'***************************************************************'
       print *
     endif
 
-    if(icolor == 4 .and. threshold_used) then
+    if (icolor == 4 .and. threshold_used) then
       print *,'***************************************************************'
       print *,'the number of points per wavelength have been cut above a threshold'
       print *,'of ',THRESHOLD_GRIDPOINTS,' to avoid saturation of color scale'
@@ -919,10 +917,10 @@
 
 ! if we have the surface for the Earth, print min and max of elevation
 
-  if(ivalue == 3) then
+  if (ivalue == 3) then
     print *
     print *,'elevation min, max = ',minval(elevation_sphere),maxval(elevation_sphere)
-    if(TOPOGRAPHY .or. CRUSTAL) then
+    if (TOPOGRAPHY .or. CRUSTAL) then
       print *,'elevation has been normalized for topography'
       print *
 
@@ -982,13 +980,13 @@
     nrec = 0
     do while(ios == 0)
       read(11,"(a)",iostat=ios) dummystring
-      if(ios == 0) nrec = nrec + 1
+      if (ios == 0) nrec = nrec + 1
     enddo
     close(11)
 
     print *,'There are ',nrec,' three-component stations'
     print *
-    if(nrec < 1) stop 'incorrect number of stations read - need at least one'
+    if (nrec < 1) stop 'incorrect number of stations read - need at least one'
 
     allocate(station_name(nrec))
     allocate(network_name(nrec))
@@ -1003,7 +1001,7 @@
 
 ! loop on all the stations
     open(unit=11,file='DATA/STATIONS',status='old',action='read')
-    do irec=1,nrec
+    do irec = 1,nrec
       read(11,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
 
 ! convert geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
@@ -1029,7 +1027,7 @@
 ! write AVS or DX header with element data
 ! add source and receivers (small AVS or DX lines)
 ! duplicate source to have right color normalization in AVS_DX
-  if(USE_OPENDX) then
+  if (USE_OPENDX) then
     open(unit=11,file=trim(OUTPUT_FILES)//'/DX_source_receivers.dx',status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items ',ntotpoinAVS_DX,' data follows'
     write(11,*) sngl(x_target_source),' ',sngl(y_target_source),' ',sngl(z_target_source)
@@ -1037,14 +1035,14 @@
       sngl(y_target_source+0.1*small_offset_source),' ',sngl(z_target_source+0.1*small_offset_source)
     write(11,*) sngl(x_target_source+1.3*small_offset_source),' ', &
       sngl(y_target_source+1.3*small_offset_source),' ',sngl(z_target_source+1.3*small_offset_source)
-    do ir=1,nrec
+    do ir = 1,nrec
       write(11,*) sngl(x_target(ir)),' ',sngl(y_target(ir)),' ',sngl(z_target(ir))
       write(11,*) sngl(x_target(ir)+small_offset_receiver),' ', &
         sngl(y_target(ir)+small_offset_receiver),' ',sngl(z_target(ir)+small_offset_receiver)
     enddo
     write(11,*) 'object 2 class array type int rank 1 shape 2 items ',ntotspecAVS_DX,' data follows'
     write(11,*) '0 1'
-    do ir=1,nrec
+    do ir = 1,nrec
       write(11,*) 4+2*(ir-1)-1,' ',4+2*(ir-1)
     enddo
     write(11,*) '0 2'
@@ -1052,7 +1050,7 @@
     write(11,*) 'attribute "ref" string "positions"'
     write(11,*) 'object 3 class array type float rank 0 items ',ntotspecAVS_DX,' data follows'
     write(11,*) '1.'
-    do ir=1,nrec
+    do ir = 1,nrec
       write(11,*) ' 255.'
     enddo
     write(11,*) ' 120.'
@@ -1071,20 +1069,20 @@
       sngl(y_target_source+0.1*small_offset_source),' ',sngl(z_target_source+0.1*small_offset_source)
     write(11,*) '3 ',sngl(x_target_source+1.3*small_offset_source),' ', &
       sngl(y_target_source+1.3*small_offset_source),' ',sngl(z_target_source+1.3*small_offset_source)
-    do ir=1,nrec
+    do ir = 1,nrec
       write(11,*) 4+2*(ir-1),' ',sngl(x_target(ir)),' ',sngl(y_target(ir)),' ',sngl(z_target(ir))
       write(11,*) 4+2*(ir-1)+1,' ',sngl(x_target(ir)+small_offset_receiver),' ', &
         sngl(y_target(ir)+small_offset_receiver),' ',sngl(z_target(ir)+small_offset_receiver)
     enddo
     write(11,*) '1 1 line 1 2'
-    do ir=1,nrec
+    do ir = 1,nrec
       write(11,*) ir+1,' 1 line ',4+2*(ir-1),' ',4+2*(ir-1)+1
     enddo
     write(11,*) ir+1,' 1 line 1 3'
     write(11,*) '1 1'
     write(11,*) 'Zcoord, meters'
     write(11,*) '1 1.'
-    do ir=1,nrec
+    do ir = 1,nrec
       write(11,*) ir+1,' 255.'
     enddo
     write(11,*) ir+1,' 120.'
@@ -1094,7 +1092,7 @@
 ! create a file with the epicenter only, represented as a triangle
 
 ! write AVS or DX header with element data
-  if(USE_OPENDX) then
+  if (USE_OPENDX) then
     open(unit=11,file=trim(OUTPUT_FILES)//'/DX_epicenter.dx',status='unknown')
     write(11,*) 'object 1 class array type float rank 1 shape 3 items 3 data follows'
     write(11,*) sngl(x_source_trgl1),' ',sngl(y_source_trgl1),' ',sngl(z_source_trgl1)

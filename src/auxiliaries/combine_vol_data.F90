@@ -99,7 +99,7 @@ program combine_vol_data
   integer,dimension(:,:),allocatable :: total_dat_con
 #endif
 
-#if ADIOS_INPUT
+#ifdef ADIOS_INPUT
   integer :: sizeprocs,myrank
   character(len=256) :: var_name, value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
@@ -125,7 +125,7 @@ program combine_vol_data
   if (sizeprocs /= 1) then
     call world_rank(myrank)
     ! usage info
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       print *, "ADIOS requires MPI functionality. However, this program executes as sequential program."
       print *, "Invalid number of processes used: ", sizeprocs, " procs"
       print *
@@ -212,7 +212,7 @@ program combine_vol_data
   do i = 1, 7
     call get_command_argument(i,arg(i))
   enddo
-  call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node,   &
+  call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
                        var_name, value_file_name, mesh_file_name, &
                        outdir, ires, irs, ire)
   filename = var_name
@@ -230,12 +230,12 @@ program combine_vol_data
     di = NGLLX-1
     dj = NGLLY-1
     dk = NGLLZ-1
-  else if( ires == 1 ) then
+  else if (ires == 1) then
     HIGH_RESOLUTION_MESH = .true.
     di = 1
     dj = 1
     dk = 1
-  else if( ires == 2 ) then
+  else if (ires == 2) then
     HIGH_RESOLUTION_MESH = .false.
     di = int((NGLLX-1)/2.0)
     dj = int((NGLLY-1)/2.0)
@@ -243,14 +243,14 @@ program combine_vol_data
   endif
 
   ! output info
-  if( HIGH_RESOLUTION_MESH ) then
+  if (HIGH_RESOLUTION_MESH) then
     print *, 'using mesh with: high resolution'
   else
     print *, 'using mesh with: low resolution'
   endif
 
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
-  if( CORRECT_ELLIPTICITY ) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  if (CORRECT_ELLIPTICITY ) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
 #ifdef ADIOS_INPUT
   call init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle)
@@ -285,7 +285,7 @@ program combine_vol_data
       dimension_file = trim(prname_topo) //'solver_data.bin'
       open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
-       print*,'error ',ier
+       print*,'Error ',ier
        print*,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
@@ -298,19 +298,19 @@ program combine_vol_data
 #endif
 
       ! check
-      if( nspec(it) > NSPEC_CRUST_MANTLE ) stop 'error file nspec too big, please check compilation'
-      if( nglob(it) > NGLOB_CRUST_MANTLE ) stop 'error file nglob too big, please check compilation'
+      if (nspec(it) > NSPEC_CRUST_MANTLE ) stop 'Error file nspec too big, please check compilation'
+      if (nglob(it) > NGLOB_CRUST_MANTLE ) stop 'Error file nglob too big, please check compilation'
 
       if (HIGH_RESOLUTION_MESH) then
         npoint(it) = nglob(it)
         nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1)
-      else if( ires == 0 ) then
+      else if (ires == 0) then
 !!! .vtk specific !!!!!!!!!!!
-#if USE_VTK_INSTEAD_OF_MESH
+#ifdef USE_VTK_INSTEAD_OF_MESH
         npoint(it) = nglob(it)
 #endif
         nelement(it) = nspec(it)
-      else if (ires == 2 ) then
+      else if (ires == 2) then
 !!! .vtk specific !!!!!!!!!!!
 #ifdef USE_VTK_INSTEAD_OF_MESH
         npoint(it) = nglob(it)
@@ -335,13 +335,13 @@ program combine_vol_data
 
     ! creates array to hold point data
     allocate(total_dat(sum(npoint(1:num_node))),stat=ier)
-    if( ier /= 0 ) stop 'error allocating total_dat array'
+    if (ier /= 0 ) stop 'Error allocating total_dat array'
     total_dat(:) = 0.0
     allocate(total_dat_xyz(3,sum(npoint(1:num_node))),stat=ier)
-    if( ier /= 0 ) stop 'error allocating total_dat_xyz array'
+    if (ier /= 0 ) stop 'Error allocating total_dat_xyz array'
     total_dat_xyz(:,:) = 0.0
     allocate(total_dat_con(8,sum(nelement(1:num_node))),stat=ier)
-    if( ier /= 0 ) stop 'error allocating total_dat_con array'
+    if (ier /= 0 ) stop 'Error allocating total_dat_con array'
     total_dat_con(:,:) = 0
 #endif
 
@@ -370,15 +370,15 @@ program combine_vol_data
 
       open(unit = 27,file = trim(data_file),status='old',action='read', iostat = ier,form ='unformatted')
       if (ier /= 0) then
-        print*,'error ',ier
+        print*,'Error ',ier
         print*,'file:',trim(data_file)
         stop 'Error opening file'
       endif
       read(27,iostat=ier) data(:,:,:,1:nspec(it))
-      if( ier /= 0 ) then
+      if (ier /= 0) then
         print*,'read error ',ier
         print*,'file:',trim(data_file)
-        stop 'error reading data'
+        stop 'Error reading data'
       endif
       close(27)
 #else
@@ -397,7 +397,7 @@ program combine_vol_data
       topo_file = trim(prname_topo) // 'solver_data.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
-        print*,'error ',ier
+        print*,'Error ',ier
         print*,'file:',trim(topo_file)
         stop 'Error opening file'
       endif
@@ -411,7 +411,7 @@ program combine_vol_data
       read(28) ystore(1:nglob(it))
       read(28) zstore(1:nglob(it))
       read(28) ibool(:,:,:,1:nspec(it))
-      if (ir==3) read(28) idoubling_inner_core(1:nspec(it)) ! flag that can indicate fictitious elements
+      if (ir == 3) read(28) idoubling_inner_core(1:nspec(it)) ! flag that can indicate fictitious elements
       close(28)
 #else
       ! adios reading
@@ -423,13 +423,13 @@ program combine_vol_data
       !average data on global points
       ibool_count(:) = 0
       ibool_dat(:) = 0.0
-      if( AVERAGE_GLOBALPOINTS ) then
-        do ispec=1,nspec(it)
+      if (AVERAGE_GLOBALPOINTS) then
+        do ispec = 1,nspec(it)
           ! checks if element counts
-          if (ir==3 ) then
+          if (ir == 3) then
             ! inner core
             ! nothing to do for fictitious elements in central cube
-            if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+            if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
           endif
           ! counts and sums global point data
           do k = 1, NGLLZ, dk
@@ -445,8 +445,8 @@ program combine_vol_data
             enddo
           enddo
         enddo
-        do iglob=1,nglob(it)
-          if( ibool_count(iglob) > 0 ) then
+        do iglob = 1,nglob(it)
+          if (ibool_count(iglob) > 0) then
             ibool_dat(iglob) = ibool_dat(iglob)/ibool_count(iglob)
           endif
         enddo
@@ -457,12 +457,12 @@ program combine_vol_data
       numpoin = 0
 
       ! write point file
-      do ispec=1,nspec(it)
+      do ispec = 1,nspec(it)
         ! checks if element counts
-        if (ir==3 ) then
+        if (ir == 3) then
           ! inner core
           ! nothing to do for fictitious elements in central cube
-          if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+          if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
         endif
 
         ! writes out global point data
@@ -470,18 +470,18 @@ program combine_vol_data
           do j = 1, NGLLY, dj
             do i = 1, NGLLX, di
               iglob = ibool(i,j,k,ispec)
-              if( iglob == -1 ) cycle
+              if (iglob == -1 ) cycle
 
               ! takes the averaged data value for mesh
-              if( AVERAGE_GLOBALPOINTS ) then
-                if(.not. mask_ibool(iglob)) then
+              if (AVERAGE_GLOBALPOINTS) then
+                if (.not. mask_ibool(iglob)) then
                   numpoin = numpoin + 1
                   x = xstore(iglob)
                   y = ystore(iglob)
                   z = zstore(iglob)
 
                   ! remove ellipticity
-                  if( CORRECT_ELLIPTICITY ) call reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
+                  if (CORRECT_ELLIPTICITY ) call reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
 
                   !dat = data(i,j,k,ispec)
                   dat = ibool_dat(iglob)
@@ -501,14 +501,14 @@ program combine_vol_data
                   num_ibool(iglob) = numpoin
                 endif
               else
-                if(.not. mask_ibool(iglob)) then
+                if (.not. mask_ibool(iglob)) then
                   numpoin = numpoin + 1
                   x = xstore(iglob)
                   y = ystore(iglob)
                   z = zstore(iglob)
 
                   ! remove ellipticity
-                  if( CORRECT_ELLIPTICITY ) call reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
+                  if (CORRECT_ELLIPTICITY ) call reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
 
                   dat = data(i,j,k,ispec)
 
@@ -534,13 +534,13 @@ program combine_vol_data
       enddo !ispec
 
       ! no way to check the number of points for low-res
-      if (HIGH_RESOLUTION_MESH ) then
-        if( ir==3 ) then
+      if (HIGH_RESOLUTION_MESH) then
+        if (ir == 3) then
           npoint(it) = numpoin
-        else if( numpoin /= npoint(it)) then
+        else if (numpoin /= npoint(it)) then
           print*,'region:',ir
-          print*,'error number of points:',numpoin,npoint(it)
-          stop 'different number of points (high-res)'
+          print*,'Error number of points:',numpoin,npoint(it)
+          stop 'Error different number of points (high-res)'
         endif
       else if (.not. HIGH_RESOLUTION_MESH) then
         npoint(it) = numpoin
@@ -550,10 +550,10 @@ program combine_vol_data
       numpoin = 0
       do ispec = 1, nspec(it)
         ! checks if element counts
-        if (ir==3 ) then
+        if (ir == 3) then
           ! inner core
           ! fictitious elements in central cube
-          if( idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) then
+          if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) then
             ! connectivity must be given, otherwise element count would be wrong
             ! maps "fictitious" connectivity, element is all with iglob = 1
 #ifndef USE_VTK_INSTEAD_OF_MESH
@@ -646,7 +646,7 @@ program combine_vol_data
     ! opens unstructured grid file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
     open(IOUT_VTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ier)
-    if( ier /= 0 ) stop 'error opening VTK output file'
+    if (ier /= 0 ) stop 'Error opening VTK output file'
     write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
     write(IOUT_VTK,'(a)') 'material model VTK file'
     write(IOUT_VTK,'(a)') 'ASCII'
@@ -670,7 +670,7 @@ program combine_vol_data
     ! VTK
     ! type: hexahedrons
     write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",ne
-    write(IOUT_VTK,'(6i12)') (12,it=1,ne)
+    write(IOUT_VTK,'(6i12)') (12,it = 1,ne)
     write(IOUT_VTK,*) ""
 
     write(IOUT_VTK,'(a,i12)') "POINT_DATA ",np

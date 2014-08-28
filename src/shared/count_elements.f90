@@ -90,13 +90,13 @@
 
   ! theoretical number of spectral elements in radial direction
   do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
-    if(iter_region == IREGION_CRUST_MANTLE) then
+    if (iter_region == IREGION_CRUST_MANTLE) then
       ifirst_region = 1
       ilast_region = 10 + layer_offset
-    else if(iter_region == IREGION_OUTER_CORE) then
+    else if (iter_region == IREGION_OUTER_CORE) then
       ifirst_region = 11 + layer_offset
       ilast_region = NUMBER_OF_MESH_LAYERS - 1
-    else if(iter_region == IREGION_INNER_CORE) then
+    else if (iter_region == IREGION_INNER_CORE) then
       ifirst_region = NUMBER_OF_MESH_LAYERS
       ilast_region = NUMBER_OF_MESH_LAYERS
     else
@@ -150,13 +150,13 @@
   ! exact number of surface elements for faces along XI and ETA
 
   do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
-    if(iter_region == IREGION_CRUST_MANTLE) then
+    if (iter_region == IREGION_CRUST_MANTLE) then
       ifirst_region = 1
       ilast_region = 10 + layer_offset
-    else if(iter_region == IREGION_OUTER_CORE) then
+    else if (iter_region == IREGION_OUTER_CORE) then
       ifirst_region = 11 + layer_offset
       ilast_region = NUMBER_OF_MESH_LAYERS - 1
-    else if(iter_region == IREGION_INNER_CORE) then
+    else if (iter_region == IREGION_INNER_CORE) then
       ifirst_region = NUMBER_OF_MESH_LAYERS
       ilast_region = NUMBER_OF_MESH_LAYERS
     else
@@ -327,13 +327,13 @@
   ! exact number of spectral elements in each region
 
   do iter_region = IREGION_CRUST_MANTLE,IREGION_INNER_CORE
-    if(iter_region == IREGION_CRUST_MANTLE) then
+    if (iter_region == IREGION_CRUST_MANTLE) then
         ifirst_region = 1
         ilast_region = 10 + layer_offset
-    else if(iter_region == IREGION_OUTER_CORE) then
+    else if (iter_region == IREGION_OUTER_CORE) then
         ifirst_region = 11 + layer_offset
         ilast_region = NUMBER_OF_MESH_LAYERS - 1
-    else if(iter_region == IREGION_INNER_CORE) then
+    else if (iter_region == IREGION_INNER_CORE) then
         ifirst_region = NUMBER_OF_MESH_LAYERS
         ilast_region = NUMBER_OF_MESH_LAYERS
     else
@@ -363,11 +363,11 @@
     NSPEC(iter_region) = tmp_sum
   enddo
 
-  if(INCLUDE_CENTRAL_CUBE) NSPEC(IREGION_INNER_CORE) = NSPEC(IREGION_INNER_CORE) + &
+  if (INCLUDE_CENTRAL_CUBE) NSPEC(IREGION_INNER_CORE) = NSPEC(IREGION_INNER_CORE) + &
          (NEX_PER_PROC_XI / ratio_divide_central_cube) * &
          (NEX_PER_PROC_ETA / ratio_divide_central_cube) * &
          (NEX_XI / ratio_divide_central_cube)
 
-  if(minval(NSPEC) <= 0) stop 'negative NSPEC, there is a problem somewhere, try to recompile :) '
+  if (minval(NSPEC) <= 0) stop 'negative NSPEC, there is a problem somewhere, try to recompile :) '
 
   end subroutine count_elements

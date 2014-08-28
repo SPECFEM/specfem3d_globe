@@ -147,7 +147,7 @@
                    NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
                    NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
 
-  if(PRINT_INFO_TO_SCREEN) then
+  if (PRINT_INFO_TO_SCREEN) then
 
   print *
   print *,'edit file OUTPUT_FILES/values_from_mesher.h to see'
@@ -163,7 +163,7 @@
   print *
   print *,'the time step of the solver will be DT = ',sngl(DT)
   print *
-  if(MOVIE_SURFACE .or. MOVIE_VOLUME) then
+  if (MOVIE_SURFACE .or. MOVIE_VOLUME) then
     print *,'MOVIE_VOLUME :',MOVIE_VOLUME
     print *,'MOVIE_SURFACE:',MOVIE_SURFACE
     print *,'Saving movie frames every',NTSTEP_BETWEEN_FRAMES
@@ -200,7 +200,7 @@
   print *,'   (but that can be perfectly acceptable if you can afford it and'
   print *,'    want faster results by using more cores)'
   print *
-  if(static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
+  if (static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
     print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
     print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
     print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
@@ -212,11 +212,11 @@
   print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
   print *
 
-  endif ! of if(PRINT_INFO_TO_SCREEN)
+  endif ! of if (PRINT_INFO_TO_SCREEN)
 
-  if(UNDO_ATTENUATION) then
+  if (UNDO_ATTENUATION) then
 
-    if(PRINT_INFO_TO_SCREEN) then
+    if (PRINT_INFO_TO_SCREEN) then
       print *,'*******************************************************************************'
       print *,'Estimating optimal disk dumping interval for UNDO_ATTENUATION:'
       print *,'*******************************************************************************'
@@ -254,7 +254,7 @@
 ! restore the simulation type that we have temporarily erased
     SIMULATION_TYPE = saved_SIMULATION_TYPE
 
-    if(PRINT_INFO_TO_SCREEN) then
+    if (PRINT_INFO_TO_SCREEN) then
 
     print *,'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
     print *,'  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
@@ -298,7 +298,7 @@
 
   ! copy number of elements and points in an include file for the solver
   open(unit=IOUT,file='OUTPUT_FILES/values_from_mesher.h',status='unknown',iostat=ier)
-  if( ier /= 0 ) stop 'error opening OUTPUT_FILES/values_from_mesher.h'
+  if (ier /= 0 ) stop 'Error opening OUTPUT_FILES/values_from_mesher.h'
 
   write(IOUT,*)
 
@@ -313,7 +313,7 @@
   write(IOUT,*) '!'
 
 ! the central cube is counted 6 times, therefore remove 5 times
-  if(INCLUDE_CENTRAL_CUBE) then
+  if (INCLUDE_CENTRAL_CUBE) then
     write(IOUT,*) '! these statistics include the central cube'
     subtract_central_cube_elems = 5.d0 * dble((NEX_XI/8))**3
     subtract_central_cube_points = 5.d0 * (dble(NEX_XI/8)*dble(NGLLX-1)+1.d0)**3
@@ -354,7 +354,7 @@
   write(IOUT,*) '!'
 
 ! display location of chunk if regional run
-  if(NCHUNKS /= 6) then
+  if (NCHUNKS /= 6) then
 
   write(IOUT,*) '! position of the mesh chunk at the surface:'
   write(IOUT,*) '! -----------------------------------------'
@@ -416,7 +416,7 @@
     ! convert geocentric to geographic colatitude
     call geocentric_2_geographic_dble(theta_corner,colat_corner)
 
-    if(phi_corner>PI) phi_corner=phi_corner-TWO_PI
+    if (phi_corner>PI) phi_corner=phi_corner-TWO_PI
 
     ! compute real position of the source
     lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
@@ -471,7 +471,7 @@
   write(IOUT,*) '! (but that can be perfectly acceptable if you can afford it and'
   write(IOUT,*) '!  want faster results by using more cores)'
   write(IOUT,*) '!'
-  if(static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
+  if (static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
     write(IOUT,*) '! size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
     write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
     write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
@@ -525,21 +525,21 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = ',NSPEC_INNER_CORE_ADJOINT
 
   ! unused... (dynamic allocation used)
-  !if(ANISOTROPIC_KL) then
+  !if (ANISOTROPIC_KL) then
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',NSPEC_CRUST_MANTLE_ADJOINT
   !else
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',1
   !endif
 
   ! unused... (dynamic allocation used)
-  !if(APPROXIMATE_HESS_KL) then
+  !if (APPROXIMATE_HESS_KL) then
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',NSPEC_CRUST_MANTLE_ADJOINT
   !else
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',1
   !endif
 
   ! unused... (dynamic allocation used)
-  !if(NOISE_TOMOGRAPHY > 0) then
+  !if (NOISE_TOMOGRAPHY > 0) then
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',NSPEC_CRUST_MANTLE_ADJOINT
   !else
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',1
@@ -561,63 +561,63 @@
 
 ! this to allow for code elimination by the compiler in the solver for performance
 
-  if(TRANSVERSE_ISOTROPY) then
+  if (TRANSVERSE_ISOTROPY) then
     write(IOUT,*) 'logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ANISOTROPIC_3D_MANTLE) then
+  if (ANISOTROPIC_3D_MANTLE) then
     write(IOUT,*) 'logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ANISOTROPIC_INNER_CORE) then
+  if (ANISOTROPIC_INNER_CORE) then
     write(IOUT,*) 'logical, parameter :: ANISOTROPIC_INNER_CORE_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ANISOTROPIC_INNER_CORE_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ATTENUATION) then
+  if (ATTENUATION) then
     write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ATTENUATION_3D) then
+  if (ATTENUATION_3D) then
     write(IOUT,*) 'logical, parameter :: ATTENUATION_3D_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ATTENUATION_3D_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ELLIPTICITY) then
+  if (ELLIPTICITY) then
     write(IOUT,*) 'logical, parameter :: ELLIPTICITY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ELLIPTICITY_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(GRAVITY) then
+  if (GRAVITY) then
     write(IOUT,*) 'logical, parameter :: GRAVITY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: GRAVITY_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(OCEANS) then
+  if (OCEANS) then
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(TOPOGRAPHY .or. OCEANS) then
+  if (TOPOGRAPHY .or. OCEANS) then
     write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = NX_BATHY'
     write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = NY_BATHY'
   else
@@ -626,7 +626,7 @@
   endif
   write(IOUT,*)
 
-  if(ROTATION) then
+  if (ROTATION) then
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .false.'
@@ -634,7 +634,7 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = ',NSPEC_OUTER_CORE_ROTATION
   write(IOUT,*)
 
-  if(PARTIAL_PHYS_DISPERSION_ONLY) then
+  if (PARTIAL_PHYS_DISPERSION_ONLY) then
     write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .false.'
@@ -693,7 +693,7 @@
   write(IOUT,*)
 
   ! Deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
-  if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
+  if (NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5) then
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .false.'
@@ -708,7 +708,7 @@
   endif
   write(IOUT,*)
 
-  if( MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) then
+  if (MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4) then
     write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = NSPEC_OUTER_CORE'
   else
     write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 1'
@@ -731,13 +731,13 @@
   NGLOB_XY_CM = 1
   NGLOB_XY_IC = 1
 
-  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
+  if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
   else
      NGLOB_XY_CM = 1
   endif
 
-  if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+  if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
     NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
   endif

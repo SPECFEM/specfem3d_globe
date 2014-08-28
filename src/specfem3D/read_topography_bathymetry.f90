@@ -44,23 +44,23 @@
   time_start = wtime()
 
   ! make ellipticity
-  if( ELLIPTICITY_VAL ) then
+  if (ELLIPTICITY_VAL) then
     ! splines used for locating exact source/receivers positions
     ! in locate_sources() and locate_receivers() routines
     call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
   endif
 
   ! read topography and bathymetry file
-  if( TOPOGRAPHY ) then
+  if (TOPOGRAPHY) then
     ! allocates topography array
     allocate(ibathy_topo(NX_BATHY,NY_BATHY),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating ibathy_topo array')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating ibathy_topo array')
 
     ! initializes
     ibathy_topo(:,:) = 0
 
     ! master reads file
-    if(myrank == 0 ) then
+    if (myrank == 0) then
       ! user output
       write(IMAIN,*) 'topography:'
       call flush_IMAIN()
@@ -75,7 +75,7 @@
 
   ! user output
   call synchronize_all()
-  if( myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL .or. ELLIPTICITY_VAL)) then
+  if (myrank == 0 .and. (TOPOGRAPHY .or. OCEANS_VAL .or. ELLIPTICITY_VAL)) then
     ! elapsed time since beginning of mesh generation
     tCPU = wtime() - time_start
     write(IMAIN,*)

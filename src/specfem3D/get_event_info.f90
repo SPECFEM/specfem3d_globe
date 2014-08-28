@@ -56,7 +56,7 @@
   character(len=20), intent(out) :: event_name
 
   ! get event information for SAC header on the master
-  if(myrank == 0) then
+  if (myrank == 0) then
 
     ! note: mb as (body wave) moment magnitude is not used any further,
     !       see comment in write_output_SAC() routine
@@ -69,7 +69,7 @@
     !write(ename(1:12),'(a12)') region(1:12)
 
     ! replace white spaces with underscores in event name
-    !do i=1,len_trim(ename)
+    !do i = 1,len_trim(ename)
     !  if (ename(i:i) == ' ') ename(i:i) = '_'
     !enddo
 
@@ -145,14 +145,14 @@
 !---- read hypocenter info
 !
   open(unit=IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ios)
-  if(ios /= 0) stop 'error opening DATA/CMTSOLUTION file (in get_event_info_serial)'
+  if (ios /= 0) stop 'Error opening DATA/CMTSOLUTION file (in get_event_info_serial)'
 
   ! example header line of CMTSOLUTION file
   !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
   ! which is: event_id, date,origin time,latitude,longitude,depth, mb, MS, region
 
   ! read source number isource
-  do isource=1,NSOURCES
+  do isource = 1,NSOURCES
 
     ! read header with event information
     read(IIN,*) datasource,yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms

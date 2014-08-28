@@ -77,10 +77,10 @@
            eucrust_lon(num_eucrust),&
            eucrust_lat(num_eucrust), &
            stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating EUcrust arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating EUcrust arrays')
 
   ! EUcrust07 Vp crustal structure
-  if( myrank == 0 ) call read_EuCrust()
+  if (myrank == 0 ) call read_EuCrust()
 
   ! broadcasts arrays from master to all others
   call bcast_all_dp(eucrust_lat,num_eucrust)
@@ -123,21 +123,21 @@
 
   ! opens data file
   open(unit=11,file=filename,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(filename), '": ', ier
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(filename), '": ', ier
     call flush_IMAIN()
     ! stop
-    call exit_MPI(0, 'error model eucrust')
+    call exit_MPI(0, 'Error model eucrust')
   endif
 
   ! skip first line
   read(11,*)
 
   ! data
-  do i=1,num_eucrust
+  do i = 1,num_eucrust
 
     read(11,'(a80)',iostat=ier) line
-    if( ier /= 0 ) stop 'error reading EUcrust file'
+    if (ier /= 0 ) stop 'Error reading EUcrust file'
 
     read(line,*)lon,lat,vp_uppercrust,vp_lowercrust,vp_avg,topo,basement,upper_lower_depth,moho_depth
 
@@ -173,8 +173,8 @@
 
   ! checks region range
   found_crust = .false.
-  if( lon < longitude_min .or. lon > longitude_max ) return
-  if( lat < latitude_min .or. lat > latitude_max ) return
+  if (lon < longitude_min .or. lon > longitude_max ) return
+  if (lat < latitude_min .or. lat > latitude_max ) return
 
   ! smoothing over 1.0 degrees
   call eu_cap_smoothing(lat,lon,x,vp,found_crust)
@@ -210,14 +210,14 @@
   ! checks region range
   found_crust = .false.
   crust_eu = 0.0
-  if( lon < longitude_min .or. lon > longitude_max ) return
-  if( lat < latitude_min .or. lat > latitude_max ) return
+  if (lon < longitude_min .or. lon > longitude_max ) return
+  if (lat < latitude_min .or. lat > latitude_max ) return
 
   ! search
-  do i=1,ilons-1
-    if( lon >= eucrust_lon(i) .and. lon < eucrust_lon(i+1) ) then
-          do j=0,ilats-1
-            if(lat>=eucrust_lat(i+j*ilons) .and. lat<eucrust_lat(i+(j+1)*ilons)) then
+  do i = 1,ilons-1
+    if (lon >= eucrust_lon(i) .and. lon < eucrust_lon(i+1)) then
+          do j = 0,ilats-1
+            if (lat>=eucrust_lat(i+j*ilons) .and. lat<eucrust_lat(i+(j+1)*ilons)) then
 
               h_basement = eucrust_basement(i+j*ilons)
               h_uc = eucrust_ucdepth(i+j*ilons)
@@ -229,7 +229,7 @@
 
               scaleval = dsqrt(PI*GRAV*RHOAV)
 
-              if( x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST &
+              if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST &
                 .and. h_basement > MINIMUM_SEDIMENT_THICKNESS) then
                 ! above sediment basement, returns average upper crust value
                 ! since no special sediment values are given
@@ -237,12 +237,12 @@
                 vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
                 crust_eu = vp
                 return
-              else if( x > x4 ) then
+              else if (x > x4) then
                 found_crust = .true.
                 vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
                 crust_eu = vp
                 return
-              else if( x > x5 ) then
+              else if (x > x5) then
                 found_crust = .true.
                 vp = eucrust_vp_lowercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
                 crust_eu = vp
@@ -292,12 +292,12 @@
 
   ! get integer colatitude and longitude of crustal cap
   ! -90<lat<90 -180<lon<180
-  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
-    stop 'error in latitude/longitude range in crust'
-  if(lat==90.0d0) lat=89.9999d0
-  if(lat==-90.0d0) lat=-89.9999d0
-  if(lon==180.0d0) lon=179.9999d0
-  if(lon==-180.0d0) lon=-179.9999d0
+  if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
+    stop 'Error in latitude/longitude range in crust'
+  if (lat==90.0d0) lat=89.9999d0
+  if (lat==-90.0d0) lat=-89.9999d0
+  if (lon==180.0d0) lon=179.9999d0
+  if (lon==-180.0d0) lon=-179.9999d0
 
   !call icolat_ilon(lat,lon,icolat,ilon)
   !crustaltype=abbreviation(icolat,ilon)
@@ -366,13 +366,13 @@
       call reduce(theta_rot,phi_rot)
       xlat(i) = (PI_OVER_TWO-theta_rot)*RADIANS_TO_DEGREES
       xlon(i) = phi_rot*RADIANS_TO_DEGREES
-      if(xlon(i) > 180.0) xlon(i) = xlon(i)-360.0
+      if (xlon(i) > 180.0) xlon(i) = xlon(i)-360.0
 
     enddo
 
   enddo
 
-  if(abs(total-1.0) > 0.001) stop 'error in cap integration for crust2.0'
+  if (abs(total-1.0) > 0.001) stop 'Error in cap integration for crust2.0'
 
   npoints = i
 
@@ -383,12 +383,12 @@
 
   ! integrates value
   value = 0.0d0
-  do i=1,npoints
+  do i = 1,npoints
     valuel = crust_eu(xlat(i),xlon(i),radius,value,found)
     value = value + weight(i)*valuel
   enddo
 
-  if( abs(value) < TINYVAL) found = .false.
+  if (abs(value) < TINYVAL) found = .false.
 
   end subroutine eu_cap_smoothing
 

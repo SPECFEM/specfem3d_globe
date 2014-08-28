@@ -48,7 +48,7 @@ void get_free_memory (double *free_db, double *used_db, double *total_db) {
     size_t free_byte ;
     size_t total_byte ;
     cudaError_t cuda_status = cudaMemGetInfo( &free_byte, &total_byte ) ;
-    if ( cudaSuccess != cuda_status ){
+    if (cudaSuccess != cuda_status) {
       printf("Error: cudaMemGetInfo fails, %s \n", cudaGetErrorString(cuda_status) );
       exit(EXIT_FAILURE);
     }
@@ -71,18 +71,18 @@ void output_free_memory (int myrank, char *info_str) {
 
   // by default, only master process outputs device info to avoid file cluttering
   do_output_info = 0;
-  if( myrank == 0 ){
+  if (myrank == 0) {
     do_output_info = 1;
     sprintf(filename,"OUTPUT_FILES/gpu_device_mem_usage.txt");
   }
   // debugging
-  if( DEBUG ){
+  if (DEBUG) {
     do_output_info = 1;
     sprintf(filename,"OUTPUT_FILES/gpu_device_mem_usage_proc_%06d.txt",myrank);
   }
 
   // outputs to file
-  if( do_output_info ){
+  if (do_output_info) {
 
     // gets memory usage
     get_free_memory (&free_db, &used_db, &total_db);
@@ -147,7 +147,7 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size) {
     gpuSynchronize();
 
     h_array = (realw *) calloc (size, sizeof (realw));
-    if( h_array == NULL ){ exit_on_error("error allocating h_array array in get_device_array_maximum_value() routine"); }
+    if (h_array == NULL) { exit_on_error("Error allocating h_array array in get_device_array_maximum_value() routine"); }
 
     // copies values from gpu to cpu array
     gpuCopy_from_device_realw (&d_array, h_array, size);
@@ -180,13 +180,17 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
 
   // get Mesh from Fortran integer wrapper
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
   realw max;
   gpu_realw_mem d_max;
   realw *h_max;
 
+  // initializes
+  *norm = 0.f;
+
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in check_norm_acoustic_from_device() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in check_norm_acoustic_from_device() routine");
   }
 
   // launch simple reduction kernel
@@ -201,7 +205,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
-  if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_acoustic_from_device() routine"); }
+  if (h_max == NULL) { exit_on_error("Error allocating h_max array in check_norm_acoustic_from_device() routine"); }
 
   // creates array on GPU
   gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
@@ -235,7 +239,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    if(*FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_outer_core.cuda,size,d_max.cuda);
     } else {
       get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_outer_core.cuda,size,d_max.cuda);
@@ -247,7 +251,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
 
   //debug
-  if( DEBUG_FIELDS ){
+  if (DEBUG_FIELDS) {
     realw max_d, max_v, max_a;
     max_d = get_device_array_maximum_value(mp->d_displ_outer_core, mp->NGLOB_OUTER_CORE);
     max_v = get_device_array_maximum_value(mp->d_veloc_outer_core, mp->NGLOB_OUTER_CORE);
@@ -261,8 +265,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   max = h_max[0];
   int i;
   for (i = 1; i < num_blocks_x * num_blocks_y; i++) {
-    if (max < h_max[i])
-      max = h_max[i];
+    if (max < h_max[i]) max = h_max[i];
   }
 
   // frees arrays
@@ -272,9 +275,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   // return result
   *norm = max;
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after check_norm_acoustic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after check_norm_acoustic_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -297,9 +298,12 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   gpu_realw_mem d_max;
   realw *h_max;
 
+  // initializes
+  *norm = 0.f;
+
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in check_norm_elastic_from_device() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in check_norm_elastic_from_device() routine");
   }
 
   // launch simple reduction kernel
@@ -314,7 +318,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
-  if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_elastic_from_device() routine"); }
+  if (h_max == NULL) { exit_on_error("Error allocating h_max array in check_norm_elastic_from_device() routine"); }
 
   // creates array on GPU
   gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
@@ -348,7 +352,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    if(*FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,size,d_max.cuda);
     } else {
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle.cuda,size,d_max.cuda);
@@ -360,7 +364,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
 
   //debug
-  if( DEBUG_FIELDS){
+  if (DEBUG_FIELDS) {
     max_d = get_device_array_maximum_value(mp->d_displ_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
     max_v = get_device_array_maximum_value(mp->d_veloc_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
     max_a = get_device_array_maximum_value(mp->d_accel_crust_mantle, NDIM * mp->NGLOB_CRUST_MANTLE);
@@ -391,7 +395,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
-  if( h_max == NULL ){ exit_on_error("error allocating h_max array for inner core in check_norm_elastic_from_device() routine"); }
+  if (h_max == NULL) { exit_on_error("Error allocating h_max array for inner core in check_norm_elastic_from_device() routine"); }
 
   // creates array on GPU
   gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
@@ -422,7 +426,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    if(*FORWARD_OR_ADJOINT == 1 ){
+    if (*FORWARD_OR_ADJOINT == 1) {
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,size,d_max.cuda);
     } else {
       get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core.cuda,size,d_max.cuda);
@@ -434,7 +438,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
 
   //debug
-  if( DEBUG_FIELDS){
+  if (DEBUG_FIELDS) {
     max_d = get_device_array_maximum_value(mp->d_displ_inner_core, NDIM * mp->NGLOB_INNER_CORE);
     max_v = get_device_array_maximum_value(mp->d_veloc_inner_core, NDIM * mp->NGLOB_INNER_CORE);
     max_a = get_device_array_maximum_value(mp->d_accel_inner_core, NDIM * mp->NGLOB_INNER_CORE);
@@ -455,7 +459,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   free (h_max);
 
   //debug
-  if( DEBUG_FIELDS ){
+  if (DEBUG_FIELDS) {
     printf ("rank %d - norm elastic: crust_mantle = %e inner_core = %e \n",mp->myrank,max_crust_mantle,max_inner_core);
     fflush (stdout);
     synchronize_mpi ();
@@ -465,9 +469,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   max = MAX (max_inner_core, max_crust_mantle);
   *norm = max;
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after check_norm_elastic_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after check_norm_elastic_from_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -501,7 +503,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
-  if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_strain_from_device() routine"); }
+  if (h_max == NULL) { exit_on_error("Error allocating h_max array in check_norm_strain_from_device() routine"); }
 
   // creates array on GPU
   gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
@@ -564,7 +566,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
 
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
-  if( h_max == NULL ){ exit_on_error("error allocating h_max array in check_norm_strain_from_device() routine"); }
+  if (h_max == NULL) { exit_on_error("Error allocating h_max array in check_norm_strain_from_device() routine"); }
 
   max_eps = 0.0f;
 
@@ -626,7 +628,5 @@ void FC_FUNC_ (check_norm_strain_from_device,
   gpuFree (&d_max);
   free (h_max);
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("after check_norm_strain_from_device");
-#endif
+  GPU_ERROR_CHECKING ("after check_norm_strain_from_device");
 }

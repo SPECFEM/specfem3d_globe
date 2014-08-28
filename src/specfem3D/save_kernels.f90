@@ -73,7 +73,7 @@
     endif
 
     ! approximate hessian
-    if( APPROXIMATE_HESS_KL ) then
+    if (APPROXIMATE_HESS_KL) then
       call save_kernels_hessian()
     endif
   endif
@@ -134,19 +134,19 @@
   scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
 
   ! allocates temporary arrays
-  if( SAVE_TRANSVERSE_KL_ONLY ) then
+  if (SAVE_TRANSVERSE_KL_ONLY) then
     ! transverse isotropic kernel arrays for file output
     allocate(alphav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              alphah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              eta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-    if( ier /= 0 ) stop 'error allocating transverse kernels alphav_kl_crust_mantle,...'
+    if (ier /= 0 ) stop 'Error allocating transverse kernels alphav_kl_crust_mantle,...'
 
     ! isotropic kernel arrays for file output
     allocate(bulk_betav_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              bulk_betah_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-    if( ier /= 0 ) stop 'error allocating transverse kernels bulk_betav_kl_crust_mantle,...'
+    if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_betav_kl_crust_mantle,...'
   else
     ! dummy allocation
     allocate(alphav_kl_crust_mantle(1,1,1,1), &
@@ -159,7 +159,7 @@
              bulk_betah_kl_crust_mantle(1,1,1,1))
   endif
   ! bulk kernels
-  if( ANISOTROPIC_KL .and. (.not. SAVE_TRANSVERSE_KL_ONLY ) ) then
+  if (ANISOTROPIC_KL .and. (.not. SAVE_TRANSVERSE_KL_ONLY )) then
     ! only dummy
     allocate(bulk_c_kl_crust_mantle(1,1,1,1), &
              bulk_beta_kl_crust_mantle(1,1,1,1))
@@ -167,7 +167,7 @@
     ! bulk velocity kernels
     allocate(bulk_c_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
              bulk_beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-    if( ier /= 0 ) stop 'error allocating transverse kernels bulk_c_kl_crust_mantle,...'
+    if (ier /= 0 ) stop 'Error allocating transverse kernels bulk_c_kl_crust_mantle,...'
   endif
 
   ! crust_mantle
@@ -190,7 +190,7 @@
             rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
 
             ! transverse isotropic kernel calculations
-            if( SAVE_TRANSVERSE_KL_ONLY ) then
+            if (SAVE_TRANSVERSE_KL_ONLY) then
               ! note: transverse isotropic kernels are calculated for all elements
               !
               !          however, the factors A,C,L,N,F are based only on transverse elements
@@ -203,7 +203,7 @@
 
               ! Get A,C,F,L,N,eta from kappa,mu
               ! element can have transverse isotropy if between d220 and Moho
-              if( .not. ispec_is_tiso_crust_mantle(ispec) ) then
+              if (.not. ispec_is_tiso_crust_mantle(ispec)) then
 
                 ! layer with no transverse isotropy
                 ! A,C,L,N,F from isotropic model
@@ -399,7 +399,7 @@
   enddo
 
   ! writes out kernels to files
-  if( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
     call write_kernels_crust_mantle_adios(current_adios_handle, &
                                           mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
                                           alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
@@ -415,7 +415,7 @@
     if (ANISOTROPIC_KL) then
 
       ! outputs transverse isotropic kernels only
-      if( SAVE_TRANSVERSE_KL_ONLY ) then
+      if (SAVE_TRANSVERSE_KL_ONLY) then
         ! transverse isotropic kernels
         ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
         open(unit=IOUT,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
@@ -564,7 +564,7 @@
   enddo
 
   ! writes out kernels to file
-  if( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
     call write_kernels_outer_core_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
@@ -631,7 +631,7 @@
   enddo
 
   ! writes out kernels to file
-  if( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
     call write_kernels_inner_core_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
@@ -675,7 +675,7 @@
   icb_kl = icb_kl * scale_kl * 1.d3
 
   ! writes out kernels to file
-  if( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
     call write_kernels_boundary_kl_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -767,7 +767,7 @@
   enddo
 
   ! writes out kernels to file
-  if( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
     call write_kernels_source_derivatives_adios(current_adios_handle)
   endif
 
@@ -794,7 +794,7 @@
   hess_kl_crust_mantle(:,:,:,:) = 2._CUSTOM_REAL * hess_kl_crust_mantle(:,:,:,:) * scale_kl
 
   ! writes out kernels to file
-  if( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
     call write_kernels_hessian_adios(current_adios_handle)
   else
     ! stores into file

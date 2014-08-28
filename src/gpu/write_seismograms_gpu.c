@@ -43,9 +43,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
   int ispec, iglob, i;
 
   //checks if anything to do
-
-  if (mp->nrec_local == 0)
-    return;
+  if (mp->nrec_local == 0) return;
 
   int blocksize = NGLL3;
 
@@ -161,9 +159,7 @@ void write_seismograms_transfer_from_device (Mesh *mp,
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("write_seismograms_transfer_from_device");
-#endif
+  GPU_ERROR_CHECKING ("write_seismograms_transfer_from_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -182,8 +178,7 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
   int ispec, iglob, i;
 
   //checks if anything to do
-  if (mp->nrec_local == 0)
-    return;
+  if (mp->nrec_local == 0) return;
 
   int blocksize = NGLL3;
 
@@ -241,9 +236,7 @@ void write_seismograms_transfer_strain_from_device (Mesh *mp,
     }
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("write_seismograms_transfer_strain_from_device");
-#endif
+  GPU_ERROR_CHECKING ("write_seismograms_transfer_strain_from_device");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -274,79 +267,45 @@ void FC_FUNC_ (write_seismograms_transfer_gpu,
   // transfers displacement values in receiver elements from GPU to CPU
   switch (mp->simulation_type) {
   case 1:
-    write_seismograms_transfer_from_device (mp,
-                                            &mp->d_displ_crust_mantle,
-                                            displ,
-                                            number_receiver_global,
-                                            &mp->d_ispec_selected_rec,
-                                            ispec_selected_rec,
-                                            ibool);
+    write_seismograms_transfer_from_device (mp, &mp->d_displ_crust_mantle, displ,
+                                            number_receiver_global, &mp->d_ispec_selected_rec,
+                                            ispec_selected_rec, ibool);
     break;
 
   case 2:
-    write_seismograms_transfer_from_device (mp,
-                                            &mp->d_displ_crust_mantle,
-                                            displ,
-                                            number_receiver_global,
-                                            &mp->d_ispec_selected_source,
-                                            ispec_selected_source,
-                                            ibool);
+    write_seismograms_transfer_from_device (mp, &mp->d_displ_crust_mantle, displ,
+                                            number_receiver_global, &mp->d_ispec_selected_source,
+                                            ispec_selected_source, ibool);
 
-    write_seismograms_transfer_strain_from_device (mp,
-                                                   &mp->d_eps_trace_over_3_crust_mantle,
-                                                   eps_trace_over_3,
-                                                   number_receiver_global,
-                                                   &mp->d_ispec_selected_source,
-                                                   ispec_selected_source,
-                                                   ibool);
-    write_seismograms_transfer_strain_from_device (mp,
-                                                   &mp->d_epsilondev_xx_crust_mantle,
-                                                   epsilondev_xx,
-                                                   number_receiver_global,
-                                                   &mp->d_ispec_selected_source,
-                                                   ispec_selected_source,
-                                                   ibool);
-    write_seismograms_transfer_strain_from_device (mp,
-                                                   &mp->d_epsilondev_yy_crust_mantle,
-                                                   epsilondev_yy,
-                                                   number_receiver_global,
-                                                   &mp->d_ispec_selected_source,
-                                                   ispec_selected_source,
-                                                   ibool);
-    write_seismograms_transfer_strain_from_device (mp,
-                                                   &mp->d_epsilondev_xy_crust_mantle,
-                                                   epsilondev_xy,
-                                                   number_receiver_global,
-                                                   &mp->d_ispec_selected_source,
-                                                   ispec_selected_source,
-                                                   ibool);
-    write_seismograms_transfer_strain_from_device (mp,
-                                                   &mp->d_epsilondev_xz_crust_mantle,
-                                                   epsilondev_xz,
-                                                   number_receiver_global,
-                                                   &mp->d_ispec_selected_source,
-                                                   ispec_selected_source,
-                                                   ibool);
-    write_seismograms_transfer_strain_from_device (mp,
-                                                   &mp->d_epsilondev_yz_crust_mantle,
-                                                   epsilondev_yz,
-                                                   number_receiver_global,
-                                                   &mp->d_ispec_selected_source,
-                                                   ispec_selected_source,
-                                                   ibool);
+    if (! mp->undo_attenuation) {
+      write_seismograms_transfer_strain_from_device (mp, &mp->d_eps_trace_over_3_crust_mantle, eps_trace_over_3,
+                                                     number_receiver_global, &mp->d_ispec_selected_source,
+                                                     ispec_selected_source, ibool);
+      write_seismograms_transfer_strain_from_device (mp, &mp->d_epsilondev_xx_crust_mantle, epsilondev_xx,
+                                                     number_receiver_global, &mp->d_ispec_selected_source,
+                                                     ispec_selected_source, ibool);
+      write_seismograms_transfer_strain_from_device (mp, &mp->d_epsilondev_yy_crust_mantle, epsilondev_yy,
+                                                     number_receiver_global, &mp->d_ispec_selected_source,
+                                                     ispec_selected_source, ibool);
+      write_seismograms_transfer_strain_from_device (mp, &mp->d_epsilondev_xy_crust_mantle, epsilondev_xy,
+                                                     number_receiver_global, &mp->d_ispec_selected_source,
+                                                     ispec_selected_source, ibool);
+      write_seismograms_transfer_strain_from_device (mp, &mp->d_epsilondev_xz_crust_mantle, epsilondev_xz,
+                                                     number_receiver_global, &mp->d_ispec_selected_source,
+                                                     ispec_selected_source, ibool);
+      write_seismograms_transfer_strain_from_device (mp, &mp->d_epsilondev_yz_crust_mantle, epsilondev_yz,
+                                                     number_receiver_global, &mp->d_ispec_selected_source,
+                                                     ispec_selected_source, ibool);
+    }
     break;
 
   case 3:
-    write_seismograms_transfer_from_device (mp,
-                                            &mp->d_b_displ_crust_mantle,
-                                            b_displ,
-                                            number_receiver_global,
-                                            &mp->d_ispec_selected_rec,
-                                            ispec_selected_rec,
-                                            ibool);
+    write_seismograms_transfer_from_device (mp, &mp->d_b_displ_crust_mantle, b_displ,
+                                            number_receiver_global, &mp->d_ispec_selected_rec,
+                                            ispec_selected_rec, ibool);
     break;
   default:
-    exit_on_error("error invalid simulation_type in write_seismograms_transfer_gpu() routine");
+    exit_on_error("Error invalid simulation_type in write_seismograms_transfer_gpu() routine");
   }
 
 }
@@ -375,9 +334,7 @@ void FC_FUNC_(transfer_seismo_from_device_async,
   int* h_ispec_selected;
 
   // checks if anything to do
-  if (mp->nrec_local == 0) {
-    return;
-  }
+  if (mp->nrec_local == 0) return;
 
   // checks async-memcpy
   if (! GPU_ASYNC_COPY) {
@@ -422,7 +379,7 @@ void FC_FUNC_(transfer_seismo_from_device_async,
     break;
 
   default:
-    exit_on_error("error invalid simulation_type in transfer_seismo_from_device_async() routine");
+    exit_on_error("Error invalid simulation_type in transfer_seismo_from_device_async() routine");
   }
 
   // updates corresponding array on CPU

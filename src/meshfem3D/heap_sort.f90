@@ -40,7 +40,7 @@
   integer :: i
 
   ! checks if anything to do
-  if( N < 2 ) return
+  if (N < 2 ) return
 
   ! builds heap
   do i = N/2, 1, -1
@@ -79,12 +79,12 @@
   j = 2*i
   do while( j <= bottom )
     ! chooses larger value first in this section
-    if( j < bottom ) then
-      if( array(j) <= array(j+1) ) j = j + 1
+    if (j < bottom) then
+      if (array(j) <= array(j+1) ) j = j + 1
     endif
 
     ! checks if section already smaller than initial value
-    if( array(j) < tmp ) exit
+    if (array(j) < tmp ) exit
 
     array(i) = array(j)
     i = j

@@ -51,7 +51,7 @@
   bcast_double_precision(:) = 0.d0
 
   ! master process prepares broadcasting arrays
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     ! funny way to pass parameters in arrays from master to all other processes
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
@@ -158,7 +158,7 @@
   !print*
 
   ! non-master processes set their parameters
-  if( myrank /= 0 ) then
+  if (myrank /= 0) then
 
     ! please, be careful with ordering and counting here
     ! integers

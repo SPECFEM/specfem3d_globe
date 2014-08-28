@@ -256,6 +256,14 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 
 
 //
+// src/gpu/compute_strain_gpu.c
+//
+
+void FC_FUNC_ (compute_strain_gpu,
+               COMPUTE_STRAIN_GPU) (long *Mesh_pointer_f, realw *deltat_f, int *FORWARD_OR_ADJOINT_f) {}
+
+
+//
 // src/gpu/gpu_buffer_list.c
 //
 
@@ -613,17 +621,26 @@ void FC_FUNC_(transfer_displ_cm_from_device,
 void FC_FUNC_(transfer_b_displ_cm_from_device,
               TRANSFER_B_DISPL_CM_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
 
+void FC_FUNC_(transfer_b_displ_cm_to_device,
+              TRANSFER_B_DISPL_CM_TO_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
+
 void FC_FUNC_(transfer_displ_ic_from_device,
               TRANSFER_DISPL_IC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_b_displ_ic_from_device,
               TRANSFER_B_DISPL_IC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
 
+void FC_FUNC_(transfer_b_displ_ic_to_device,
+              TRANSFER_B_DISPL_IC_TO_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
+
 void FC_FUNC_(transfer_displ_oc_from_device,
               TRANSFER_DISPL_OC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_b_displ_oc_from_device,
               TRANSFER_B_DISPL_OC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
+
+void FC_FUNC_(transfer_b_displ_oc_to_device,
+              TRANSFER_B_DISPL_OC_TO_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_veloc_cm_from_device,
               TRANSFER_VELOC_CM_FROM_DEVICE)(int *size, realw *veloc, long *Mesh_pointer_f) {}
@@ -648,6 +665,12 @@ void FC_FUNC_(transfer_accel_ic_from_device,
 
 void FC_FUNC_(transfer_accel_oc_from_device,
               TRANSFER_ACCEL_OC_FROM_DEVICE)(int *size, realw *accel, long *Mesh_pointer_f) {}
+
+void FC_FUNC_(transfer_b_accel_oc_from_device,
+              TRANSFER_B_ACCEL_OC_FROM_DEVICE)(int *size, realw *b_accel, long *Mesh_pointer_f) {}
+
+void FC_FUNC_(transfer_b_accel_oc_to_device,
+              TRANSFER_B_ACCEL_OC_TO_DEVICE)(int *size, realw *b_accel, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_strain_cm_from_device,
               TRANSFER_STRAIN_CM_FROM_DEVICE)(long *Mesh_pointer_f,

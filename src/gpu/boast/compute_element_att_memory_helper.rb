@@ -52,7 +52,7 @@ module BOAST
       decl sn = Real("sn")
       decl snp1 = Real("snp1")
       if type == :crust_mantle then
-        print If( anisotropy, lambda {
+        print If(anisotropy, lambda {
           print mul === d_c44store[tx + ngll3_padded*working_element]
         }, lambda {
           print mul === d_muv[tx + ngll3_padded*working_element]

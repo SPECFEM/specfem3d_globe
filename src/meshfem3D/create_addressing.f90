@@ -51,32 +51,32 @@
   iproc_eta_slice(:) = 0
 
   ! loop on all the chunks to create global slice addressing for solver
-  if(myrank == 0) then
+  if (myrank == 0) then
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/addressing.txt',status='unknown',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening addressing.txt')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening addressing.txt')
     write(IMAIN,*) 'creating global slice addressing'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
   do ichunk = 1,NCHUNKS
-    do iproc_eta=0,NPROC_ETA-1
-      do iproc_xi=0,NPROC_XI-1
+    do iproc_eta = 0,NPROC_ETA-1
+      do iproc_xi = 0,NPROC_XI-1
         iprocnum = (ichunk-1)*NPROC + iproc_eta * NPROC_XI + iproc_xi
         addressing(ichunk,iproc_xi,iproc_eta) = iprocnum
         ichunk_slice(iprocnum) = ichunk
         iproc_xi_slice(iprocnum) = iproc_xi
         iproc_eta_slice(iprocnum) = iproc_eta
-        if(myrank == 0) write(IOUT,*) iprocnum,ichunk,iproc_xi,iproc_eta
+        if (myrank == 0) write(IOUT,*) iprocnum,ichunk,iproc_xi,iproc_eta
       enddo
     enddo
   enddo
 
-  if(myrank == 0) close(IOUT)
+  if (myrank == 0) close(IOUT)
 
   ! output a topology map of slices - fix 20x by nproc
-  if (myrank == 0 ) then
-    if( NCHUNKS == 6 .and. NPROCTOT < 1000 ) then
+  if (myrank == 0) then
+    if (NCHUNKS == 6 .and. NPROCTOT < 1000) then
       write(IMAIN,*) 'Spatial distribution of the slices'
       do iproc_xi = NPROC_XI-1, 0, -1
         write(IMAIN,'(20x)',advance='no')

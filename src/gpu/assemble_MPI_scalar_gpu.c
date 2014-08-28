@@ -52,8 +52,8 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in transfer_boun_pot_from_device() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in transfer_boun_pot_from_device() routine");
   }
 
   // MPI buffer size
@@ -151,7 +151,7 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    if( *FORWARD_OR_ADJOINT == 1) {
+    if (*FORWARD_OR_ADJOINT == 1) {
       prepare_boundary_potential_on_device<<<grid,threads, 0, mp->compute_stream>>>(mp->d_accel_outer_core.cuda,
                                                                                     mp->d_send_accel_buffer_outer_core.cuda,
                                                                                     mp->num_interfaces_outer_core,
@@ -201,9 +201,8 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("transfer_boun_pot_from_device");
-#endif
+
+  GPU_ERROR_CHECKING ("transfer_boun_pot_from_device");
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -223,15 +222,15 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // safety check
-  if( *FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3){
-    exit_on_error("error invalid FORWARD_OR_ADJOINT in transfer_asmbl_pot_to_device() routine");
+  if (*FORWARD_OR_ADJOINT != 1 && *FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in transfer_asmbl_pot_to_device() routine");
   }
 
   // buffer size
   size_mpi_buffer = (mp->max_nibool_interfaces_oc)*(mp->num_interfaces_outer_core);
 
   // checks if anything to do
-  if( size_mpi_buffer <= 0 ) return;
+  if (size_mpi_buffer <= 0 ) return;
 
   // assembles on GPU
   int blocksize = BLOCKSIZE_TRANSFER;
@@ -249,7 +248,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
     cl_uint num_evt = 0;
 
     if (GPU_ASYNC_COPY) {
-      if ( mp->has_last_copy_evt) {
+      if (mp->has_last_copy_evt) {
         copy_evt = &mp->last_copy_evt;
         num_evt = 1;
       }
@@ -312,7 +311,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
                                        global_work_size, local_work_size, num_evt, copy_evt, NULL));
     }
     if (GPU_ASYNC_COPY) {
-      if ( mp->has_last_copy_evt) {
+      if (mp->has_last_copy_evt) {
         clCheck (clReleaseEvent (mp->last_copy_evt));
         mp->has_last_copy_evt = 0;
       }
@@ -369,9 +368,7 @@ void FC_FUNC_ (transfer_asmbl_pot_to_device,
   }
 #endif
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
   //double end_time = get_time_val ();
   //printf ("Elapsed time: %e\n", end_time-start_time);
-  exit_on_gpu_error ("transfer_asmbl_pot_to_device");
-#endif
+  GPU_ERROR_CHECKING ("transfer_asmbl_pot_to_device");
 }

@@ -121,7 +121,7 @@
 !!!       as STRINGIFY_VAR(x) expand as:
 !!!       "x", x
 !!!       x being the variable name inside the code.
-!subroutine define_adios_double_scalar (adios_group, group_size_inc,  &
+!subroutine define_adios_double_scalar (adios_group, group_size_inc, &
 !    path, name, var)
 !  use adios_write_mod
 !  implicit none
@@ -158,7 +158,7 @@
 !!             ignored.
 !!!
 !!! \note See define_adios_double_scalar()
-!subroutine define_adios_float_scalar(adios_group, group_size_inc,  &
+!subroutine define_adios_float_scalar(adios_group, group_size_inc, &
 !    path, name, var)
 !  use adios_write_mod
 !  implicit none
@@ -209,7 +209,7 @@
 !
 !  ! adios: 2 ~ integer(kind=4)
 !  !write (*,'("--- adios_define_var scalar path=",a20," name=",a20)') path, name
-!  call adios_define_var (adios_group, trim(name), trim(path), adios_integer,  &
+!  call adios_define_var (adios_group, trim(name), trim(path), adios_integer, &
 !                         "", "", "", varid)
 !
 !  group_size_inc = group_size_inc + 4

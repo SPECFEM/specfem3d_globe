@@ -158,7 +158,7 @@
 
 !  computed_elements = 0
 
-  if( .not. phase_is_inner ) then
+  if (.not. phase_is_inner) then
     iphase = 1
     num_elements = nspec_outer
   else
@@ -196,7 +196,7 @@
     ! only compute element which belong to current phase (inner or outer elements)
 
     ! exclude fictitious elements in central cube
-    if(idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
+    if (idoubling(ispec) /= IFLAG_IN_FICTITIOUS_CUBE) then
 
       DO_LOOP_IJK
 
@@ -218,8 +218,8 @@
       ! computes 3. matrix multiplication for tempx1,..
       call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
 
-!      do j=1,m2
-!         do i=1,m1
+!      do j = 1,m2
+!         do i = 1,m1
 !            C1_m1_m2_5points(i,j) = hprime_xx(i,1)*B1_m1_m2_5points(1,j) + &
 !                 hprime_xx(i,2)*B1_m1_m2_5points(2,j) + &
 !                 hprime_xx(i,3)*B1_m1_m2_5points(3,j) + &
@@ -240,8 +240,8 @@
 !         enddo
 !      enddo
 !
-!      do j=1,m1
-!         do i=1,m1
+!      do j = 1,m1
+!         do i = 1,m1
 !            ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
 !            do k = 1,NGLLX
 !               tempx2(i,j,k) = dummyx_loc(i,1,k)*hprime_xxT(1,j) + &
@@ -265,8 +265,8 @@
 !         enddo
 !      enddo
 !
-!      do j=1,m1
-!         do i=1,m2
+!      do j = 1,m1
+!         do i = 1,m2
 !            C1_mxm_m2_m1_5points(i,j) = A1_mxm_m2_m1_5points(i,1)*hprime_xxT(1,j) + &
 !                 A1_mxm_m2_m1_5points(i,2)*hprime_xxT(2,j) + &
 !                 A1_mxm_m2_m1_5points(i,3)*hprime_xxT(3,j) + &
@@ -328,8 +328,8 @@
         ! compute deviatoric strain
         if (COMPUTE_AND_STORE_STRAIN) then
           templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-          if(NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
-            if( ispec == 1) then
+          if (NSPEC_INNER_CORE_STRAIN_ONLY == 1) then
+            if (ispec == 1) then
               epsilon_trace_over_3(INDEX_IJK,1) = templ
             endif
           else
@@ -342,7 +342,7 @@
           epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
         endif
 
-        if(ANISOTROPIC_INNER_CORE_VAL) then
+        if (ANISOTROPIC_INNER_CORE_VAL) then
           ! elastic tensor for hexagonal symmetry in reduced notation:
           !
           !      c11 c12 c13  0   0        0
@@ -366,8 +366,8 @@
           c44l = c44store(INDEX_IJK,ispec)
 
           ! use unrelaxed parameters if attenuation
-          if(ATTENUATION_VAL) then
-            if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+          if (ATTENUATION_VAL) then
+            if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
               minus_sum_beta =  one_minus_sum_beta(INDEX_IJK,ispec) - 1.0_CUSTOM_REAL
             else
               minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
@@ -394,8 +394,8 @@
           mul = muvstore(INDEX_IJK,ispec)
 
           ! use unrelaxed parameters if attenuation
-          if(ATTENUATION_VAL ) then
-            if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+          if (ATTENUATION_VAL) then
+            if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
               mul = mul * one_minus_sum_beta(INDEX_IJK,ispec)
             else
               mul = mul * one_minus_sum_beta(1,1,1,ispec)
@@ -417,7 +417,7 @@
         endif
 
         ! subtract memory variables if attenuation
-        if( ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+        if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 #ifdef FORCE_VECTORIZATION
           ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers
           !from vectorizing the outer loop
@@ -464,7 +464,7 @@
         sigma_zy = sigma_yz
 
         ! compute non-symmetric terms for gravity
-        if(GRAVITY_VAL) then
+        if (GRAVITY_VAL) then
 
           ! use mesh coordinates to get theta and phi
           ! x y and z contain r theta and phi
@@ -475,7 +475,7 @@
 
           ! make sure radius is never zero even for points at center of cube
           ! because we later divide by radius
-          if(radius < 100.d0 / R_EARTH) radius = 100.d0 / R_EARTH
+          if (radius < 100.d0 / R_EARTH) radius = 100.d0 / R_EARTH
 
           cos_theta = dcos(theta)
           sin_theta = dsin(theta)
@@ -569,8 +569,8 @@
       ! computes 3. matrix multiplication for newtempx3,..
       call mxm5_3comp_singleB(tempx3,tempy3,tempz3,m2,hprimewgll_xx,newtempx3,newtempy3,newtempz3,m1)
 
-!      do j=1,m2
-!        do i=1,m1
+!      do j = 1,m2
+!        do i = 1,m1
 !          E1_m1_m2_5points(i,j) = hprimewgll_xxT(i,1)*C1_m1_m2_5points(1,j) + &
 !                                hprimewgll_xxT(i,2)*C1_m1_m2_5points(2,j) + &
 !                                hprimewgll_xxT(i,3)*C1_m1_m2_5points(3,j) + &
@@ -591,8 +591,8 @@
 !        enddo
 !      enddo
 !
-!      do i=1,m1
-!        do j=1,m1
+!      do i = 1,m1
+!        do j = 1,m1
 !          ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
 !          do k = 1,NGLLX
 !            newtempx2(i,j,k) = tempx2(i,1,k)*hprimewgll_xx(1,j) + &
@@ -616,8 +616,8 @@
 !        enddo
 !      enddo
 !
-!      do j=1,m1
-!        do i=1,m2
+!      do j = 1,m1
+!        do i = 1,m2
 !          E1_mxm_m2_m1_5points(i,j) = C1_mxm_m2_m1_5points(i,1)*hprimewgll_xx(1,j) + &
 !                                    C1_mxm_m2_m1_5points(i,2)*hprimewgll_xx(2,j) + &
 !                                    C1_mxm_m2_m1_5points(i,3)*hprimewgll_xx(3,j) + &
@@ -652,16 +652,16 @@
       ENDDO_LOOP_IJK
 
       ! adds gravity
-      if(GRAVITY_VAL) then
+      if (GRAVITY_VAL) then
 
 #ifdef FORCE_VECTORIZATION
         do ijk = 1,NDIM*NGLLCUBE
           sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
         enddo
 #else
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
               sum_terms(INDEX_IJK,1) = sum_terms(INDEX_IJK,1) + rho_s_H(INDEX_IJK,1)
               sum_terms(INDEX_IJK,2) = sum_terms(INDEX_IJK,2) + rho_s_H(INDEX_IJK,2)
               sum_terms(INDEX_IJK,3) = sum_terms(INDEX_IJK,3) + rho_s_H(INDEX_IJK,3)
@@ -687,9 +687,9 @@
 !DIR$ IVDEP
       do ijk = 1,NGLLCUBE
 #else
-      do k=1,NGLLZ
-        do j=1,NGLLY
-          do i=1,NGLLX
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
 #endif
 
             iglob = ibool(INDEX_IJK,ispec)
@@ -733,9 +733,9 @@
       ! equation (9.59) page 350): Q_\alpha = Q_\mu * 3 * (V_p/V_s)^2 / 4
       ! therefore Q_\alpha is not zero; for instance for V_p / V_s = sqrt(3)
       ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
-      if( ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+      if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
         ! updates R_memory
-        if( USE_LDDRK ) then
+        if (USE_LDDRK) then
           call compute_element_att_memory_ic_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                    ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
@@ -754,7 +754,7 @@
       endif
 
       ! save deviatoric strain for Runge-Kutta scheme
-      if(COMPUTE_AND_STORE_STRAIN) then
+      if (COMPUTE_AND_STORE_STRAIN) then
         epsilondev_xx(:,:,:,ispec) = epsilondev_loc(:,:,:,1)
         epsilondev_yy(:,:,:,ispec) = epsilondev_loc(:,:,:,2)
         epsilondev_xy(:,:,:,ispec) = epsilondev_loc(:,:,:,3)
@@ -802,8 +802,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
                + A(i,3) * B1(3,j) &
@@ -846,8 +846,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
                + A1(i,3) * B(3,j) &
@@ -890,10 +890,10 @@
   integer :: i,j,k
 
   ! matrix-matrix multiplication
-  do j=1,n2
-    do i=1,n1
+  do j = 1,n2
+    do i = 1,n1
       ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-      do k=1,n3
+      do k = 1,n3
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
                    + A1(i,3,k) * B(3,j) &

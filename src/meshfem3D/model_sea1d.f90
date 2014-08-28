@@ -69,7 +69,7 @@
           SEA1DM_V_Qkappa_sea1d(NR_SEA1D), &
           SEA1DM_V_Qmu_sea1d(NR_SEA1D), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating SEA1DM_V arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating SEA1DM_V arrays')
 
   ! all processes will define same parameters
   call define_model_sea1d(CRUSTAL)
@@ -114,12 +114,12 @@
   enddo
 
 ! make sure we stay in the right region
-  if(iregion_code == IREGION_INNER_CORE .and. i > 13) i = 13
-  if(iregion_code == IREGION_OUTER_CORE .and. i < 15) i = 15
-  if(iregion_code == IREGION_OUTER_CORE .and. i > 37) i = 37
-  if(iregion_code == IREGION_CRUST_MANTLE .and. i < 39) i = 39
+  if (iregion_code == IREGION_INNER_CORE .and. i > 13) i = 13
+  if (iregion_code == IREGION_OUTER_CORE .and. i < 15) i = 15
+  if (iregion_code == IREGION_OUTER_CORE .and. i > 37) i = 37
+  if (iregion_code == IREGION_CRUST_MANTLE .and. i < 39) i = 39
 
-  if(i == 1) then
+  if (i == 1) then
     rho = SEA1DM_V_density_sea1d(i)
     vp = SEA1DM_V_vp_sea1d(i)
     vs = SEA1DM_V_vs_sea1d(i)
@@ -140,7 +140,7 @@
 
 ! make sure Vs is zero in the outer core even if roundoff errors on depth
 ! also set fictitious attenuation to a very high value (attenuation is not used in the fluid)
-  if(iregion_code == IREGION_OUTER_CORE) then
+  if (iregion_code == IREGION_OUTER_CORE) then
     vs = 0.d0
     Qkappa = 3000.d0
     Qmu = 3000.d0

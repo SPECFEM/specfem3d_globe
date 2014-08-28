@@ -80,7 +80,7 @@
   !---
 
   ! on chunks AB and AB_ANTIPODE, receive all the messages from slices
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+  if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     do imsg = 1,nb_msgs_theor_in_cube-1
 
@@ -95,7 +95,7 @@
   endif
 
   ! send info to central cube from all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
-  if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
+  if (ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
     ! for bottom elements in contact with central cube from the slices side
     ipoin = 0
     do ispec2D = 1,NSPEC2D_BOTTOM_INNER_CORE
@@ -118,7 +118,7 @@
 
     ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
-    if(NPROC_XI==1) then
+    if (NPROC_XI == 1) then
       call send_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,addressing(CHUNK_AB_ANTIPODE,0,iproc_eta),itag)
     endif
 
@@ -126,7 +126,7 @@
 
 
   ! exchange of their bottom faces between chunks AB and AB_ANTIPODE
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+  if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     ipoin = 0
     do ispec = NSPEC_INNER_CORE, 1, -1
@@ -152,7 +152,7 @@
 
   !--- now we need to assemble the contributions
 
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+  if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
     do idimension = 1,ndim_assemble
   ! erase contributions to central cube array
@@ -162,8 +162,8 @@
   ! distinguish between single and double precision for reals
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
-          if(NPROC_XI==1) then
-            if(ibool_central_cube(imsg,ipoin) > 0 ) then
+          if (NPROC_XI == 1) then
+            if (ibool_central_cube(imsg,ipoin) > 0) then
               array_central_cube(ibool_central_cube(imsg,ipoin)) = real(buffer_all_cube_from_slices(imsg,ipoin,idimension), &
                                                                         kind=CUSTOM_REAL)
             endif
@@ -177,8 +177,8 @@
   ! use a mask to avoid taking the same point into account several times.
       mask(:) = .false.
       do ipoin = 1,npoin2D_cube_from_slices
-        if(NPROC_XI==1) then
-          if( ibool_central_cube(nb_msgs_theor_in_cube,ipoin) > 0 ) then
+        if (NPROC_XI == 1) then
+          if (ibool_central_cube(nb_msgs_theor_in_cube,ipoin) > 0) then
             if (.not. mask(ibool_central_cube(nb_msgs_theor_in_cube,ipoin))) then
               array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) = &
                 array_central_cube(ibool_central_cube(nb_msgs_theor_in_cube,ipoin)) + &
@@ -198,7 +198,7 @@
 
   ! suppress degrees of freedom already assembled at top of cube on edges
       do ispec = 1,NSPEC_INNER_CORE
-        if(idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) then
+        if (idoubling_inner_core(ispec) == IFLAG_TOP_CENTRAL_CUBE) then
           k = NGLLZ
           do j = 1,NGLLY
             do i = 1,NGLLX
@@ -214,8 +214,8 @@
   ! copy sum back
       do imsg = 1,nb_msgs_theor_in_cube-1
         do ipoin = 1,npoin2D_cube_from_slices
-          if(NPROC_XI==1) then
-            if( ibool_central_cube(imsg,ipoin) > 0 ) then
+          if (NPROC_XI == 1) then
+            if (ibool_central_cube(imsg,ipoin) > 0) then
               buffer_all_cube_from_slices(imsg,ipoin,idimension) = &
                       vector_assemble(idimension,ibool_central_cube(imsg,ipoin))
             else
@@ -235,14 +235,14 @@
   !----------
 
   ! receive info from central cube on all the slices except those in CHUNK_AB & CHUNK_AB_ANTIPODE
-  if(ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
+  if (ichunk /= CHUNK_AB .and. ichunk /= CHUNK_AB_ANTIPODE) then
     ! receive buffers from slices
     sender = receiver_cube_from_slices
     call recv_dp(buffer_slices,ndim_assemble*npoin2D_cube_from_slices,sender,itag)
 
     ! in case NPROC_XI == 1, the other chunks exchange all bottom points with
     ! CHUNK_AB **and** CHUNK_AB_ANTIPODE
-    if(NPROC_XI==1) then
+    if (NPROC_XI == 1) then
       call recv_dp(buffer_slices2,ndim_assemble*npoin2D_cube_from_slices,addressing(CHUNK_AB_ANTIPODE,0,iproc_eta),itag)
 
       buffer_slices = buffer_slices + buffer_slices2
@@ -273,7 +273,7 @@
   !------- send info back from central cube to slices
 
   ! on chunk AB & CHUNK_AB_ANTIPODE, send all the messages to slices
-  if(ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
+  if (ichunk == CHUNK_AB .or. ichunk == CHUNK_AB_ANTIPODE) then
 
    do imsg = 1,nb_msgs_theor_in_cube-1
 

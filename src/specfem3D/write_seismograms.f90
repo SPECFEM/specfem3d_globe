@@ -36,7 +36,7 @@ contains
 
   implicit none
 
-  ! note: this routine gets called if( nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) )
+  ! note: this routine gets called if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) )
 
   ! update position in seismograms
   seismo_current = seismo_current + 1
@@ -45,17 +45,17 @@ contains
   if (nrec_local > 0) then
 
     ! gets resulting array values onto CPU
-    if( GPU_MODE ) then
+    if (GPU_MODE) then
       ! gets field values from GPU
       ! this transfers fields only in elements with stations for efficiency
       call write_seismograms_transfer_gpu(Mesh_pointer, &
-                                displ_crust_mantle,b_displ_crust_mantle, &
-                                eps_trace_over_3_crust_mantle, &
-                                epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                                epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                number_receiver_global, &
-                                ispec_selected_rec,ispec_selected_source, &
-                                ibool_crust_mantle)
+                                          displ_crust_mantle,b_displ_crust_mantle, &
+                                          eps_trace_over_3_crust_mantle, &
+                                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                          epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                          number_receiver_global, &
+                                          ispec_selected_rec,ispec_selected_source, &
+                                          ibool_crust_mantle)
 
       ! synchronizes field values from GPU
       if (GPU_ASYNC_COPY) then
@@ -88,7 +88,7 @@ contains
   endif ! nrec_local
 
   ! write the current or final seismograms
-  if(seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+  if (seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
 
     ! writes out seismogram files
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
@@ -96,14 +96,14 @@ contains
       call write_seismograms_to_file()
 
       ! user output
-      if(myrank==0) then
+      if (myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
         write(IMAIN,*)
         call flush_IMAIN()
       endif
-    else if( SIMULATION_TYPE == 2 ) then
-      if( nrec_local > 0 ) &
+    else if (SIMULATION_TYPE == 2) then
+      if (nrec_local > 0 ) &
         call write_adj_seismograms(nit_written)
       nit_written = it
     endif
@@ -156,30 +156,30 @@ contains
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
-  if(ier /= 0) call exit_mpi(myrank,'error while allocating one temporary seismogram')
+  if (ier /= 0) call exit_mpi(myrank,'Error while allocating one temporary seismogram')
 
   ! set the base pathname for output files
   OUTPUT_FILES = 'OUTPUT_FILES'
 
   ! writes out seismograms
-  if(.not. WRITE_SEISMOGRAMS_BY_MASTER) then
+  if (.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
     ! all the processes write their local seismograms themselves
 
     write_time_begin = wtime()
 
-    if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+    if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
       write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
 
-      if(USE_BINARY_FOR_LARGE_FILE) then
-        if (seismo_offset==0) then
+      if (USE_BINARY_FOR_LARGE_FILE) then
+        if (seismo_offset == 0) then
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
         else
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
                form='unformatted',position='append',action='write')
         endif
       else
-        if (seismo_offset==0) then
+        if (seismo_offset == 0) then
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
         else
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
@@ -226,10 +226,10 @@ contains
     endif
 
     ! create one large file instead of one small file per station to avoid file system overload
-    if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
+    if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
     ! user output
-    if(myrank == 0) then
+    if (myrank == 0) then
       write_time = wtime() - write_time_begin
       write(IMAIN,*)
       write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
@@ -244,21 +244,21 @@ contains
 
     write_time_begin = wtime()
 
-    if(myrank == 0) then ! on the master, gather all the seismograms
+    if (myrank == 0) then ! on the master, gather all the seismograms
 
       ! create one large file instead of one small file per station to avoid file system overload
-      if(OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+      if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
          write(sisname,'(A)') '/all_seismograms'
 
-       if(USE_BINARY_FOR_LARGE_FILE) then
-         if (seismo_offset==0) then
+       if (USE_BINARY_FOR_LARGE_FILE) then
+         if (seismo_offset == 0) then
            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
          else
            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
                 form='unformatted',position='append',action='write')
          endif
        else
-         if (seismo_offset==0) then
+         if (seismo_offset == 0) then
            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
          else
            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
@@ -270,15 +270,15 @@ contains
 
       ! counts number of local receivers for each slice
       allocate(islice_num_rec_local(0:NPROCTOT_VAL-1),stat=ier)
-      if( ier /= 0 ) call exit_mpi(myrank,'error allocating islice_num_rec_local')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating islice_num_rec_local')
 
       islice_num_rec_local(:) = 0
       do irec = 1,nrec
         iproc = islice_selected_rec(irec)
         ! checks iproc value
-        if( iproc < 0 .or. iproc >= NPROCTOT_VAL ) then
-          print*,'error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
-          call exit_mpi(myrank,'error iproc in islice_selected_rec')
+        if (iproc < 0 .or. iproc >= NPROCTOT_VAL) then
+          print*,'Error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
+          call exit_mpi(myrank,'Error iproc in islice_selected_rec')
         endif
         ! sums number of receivers for each slice
         islice_num_rec_local(iproc) = islice_num_rec_local(iproc) + 1
@@ -290,29 +290,29 @@ contains
       do iproc = 0,NPROCTOT_VAL-1
 
        ! communicates only with processes which contain local receivers (to minimize MPI chatter)
-       if( islice_num_rec_local(iproc) == 0 ) cycle
+       if (islice_num_rec_local(iproc) == 0 ) cycle
 
        ! receive except from proc 0, which is me and therefore I already have this value
        sender = iproc
-       if(iproc == 0) then
+       if (iproc == 0) then
          ! master is current slice
          nrec_local_received = nrec_local
        else
          ! receives info from slave processes
          call recv_singlei(nrec_local_received,sender,itag)
-         if(nrec_local_received <= 0) call exit_MPI(myrank,'error while receiving local number of receivers')
+         if (nrec_local_received <= 0) call exit_MPI(myrank,'Error while receiving local number of receivers')
        endif
        if (nrec_local_received > 0) then
          do irec_local = 1,nrec_local_received
            ! receive except from proc 0, which is myself and therefore I already have these values
-           if(iproc == 0) then
+           if (iproc == 0) then
              ! get global number of that receiver
              irec = number_receiver_global(irec_local)
              one_seismogram(:,:) = seismograms(:,irec_local,:)
            else
              ! receives info from slave processes
              call recv_singlei(irec,sender,itag)
-             if(irec < 1 .or. irec > nrec) call exit_MPI(myrank,'error while receiving global receiver number')
+             if (irec < 1 .or. irec > nrec) call exit_MPI(myrank,'Error while receiving global receiver number')
              call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
            endif
 
@@ -329,10 +329,10 @@ contains
       write(IMAIN,*) 'Total number of receivers saved is ',total_seismos,' out of ',nrec
       write(IMAIN,*)
 
-      if(total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
+      if (total_seismos /= nrec) call exit_MPI(myrank,'incorrect total number of receivers saved')
 
       ! create one large file instead of one small file per station to avoid file system overload
-      if(SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
+      if (SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
     else  ! on the nodes, send the seismograms to the master
       receiver = 0
@@ -351,7 +351,7 @@ contains
     endif
 
 
-    if(myrank == 0) then
+    if (myrank == 0) then
       write_time  = wtime() - write_time_begin
       write(IMAIN,*)
       write(IMAIN,*) 'Writing the seismograms by master proc alone took ',write_time,' seconds'
@@ -489,10 +489,10 @@ contains
     length_network_name = len_trim(network_name(irec))
 
     ! check that length conforms to standard
-    if(length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) &
+    if (length_station_name < 1 .or. length_station_name > MAX_LENGTH_STATION_NAME) &
            call exit_MPI(myrank,'wrong length of station name')
 
-    if(length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) &
+    if (length_network_name < 1 .or. length_network_name > MAX_LENGTH_NETWORK_NAME) &
            call exit_MPI(myrank,'wrong length of network name')
 
     ! create the name of the seismogram file using the station name and network name
@@ -504,15 +504,15 @@ contains
                    network_name(irec)(1:length_network_name),chn
 
     ! SAC output format
-    if( OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) &
+    if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) &
       call write_output_SAC(seismogram_tmp,irec,iorientation,sisname,chn,phi)
 
     ! ASCII output format
-    if(OUTPUT_SEISMOS_ASCII_TEXT) &
+    if (OUTPUT_SEISMOS_ASCII_TEXT) &
       call write_output_ASCII(seismogram_tmp,iorientation,sisname,sisname_big_file)
 
     ! ASDF output format
-    if(OUTPUT_SEISMOS_ASDF) &
+    if (OUTPUT_SEISMOS_ASDF) &
       call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation,phi)
 
   enddo ! do iorientation
@@ -553,24 +553,24 @@ contains
     irec = number_receiver_global(irec_local)
 
     do iorientation = 1,9
-      if(iorientation == 1) then
+      if (iorientation == 1) then
        chn = 'SNN'
-      else if(iorientation == 2) then
+      else if (iorientation == 2) then
        chn = 'SEE'
-      else if(iorientation == 3) then
+      else if (iorientation == 3) then
        chn = 'SZZ'
-      else if(iorientation == 4) then
+      else if (iorientation == 4) then
        chn = 'SNE'
-      else if(iorientation == 5) then
+      else if (iorientation == 5) then
        chn = 'SNZ'
-      else if(iorientation == 6) then
+      else if (iorientation == 6) then
        chn = 'SEZ'
-      else if(iorientation == 7) then
+      else if (iorientation == 7) then
        !chn = 'LHN'
        chn = bic(1:2)//'N'
-      else if(iorientation == 8) then
+      else if (iorientation == 8) then
        chn = bic(1:2)//'E'
-      else if(iorientation == 9) then
+      else if (iorientation == 9) then
        chn = bic(1:2)//'Z'
       endif
 
@@ -584,11 +584,11 @@ contains
       ! if the simulation uses many time steps. However, subsampling the output
       ! here would result in a loss of accuracy when one later convolves
       ! the results with the source time function
-      if(it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
+      if (it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
         !open new file
         open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)),&
               status='unknown',action='write')
-      else if(it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
+      else if (it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
         !append to existing file
         open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)),&
               status='old',position='append',action='write')

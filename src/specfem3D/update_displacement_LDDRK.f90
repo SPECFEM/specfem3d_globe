@@ -61,7 +61,7 @@
   implicit none
 
   ! checks
-  if( SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3 ) return
 
   ! mantle
   b_accel_crust_mantle(:,:) = 0._CUSTOM_REAL
@@ -159,12 +159,12 @@
   ! note: splitting the do-loops seems to be slightly more effective
 
   ! low-memory Runge-Kutta: intermediate storage wavefields
-  do i=1,NGLOB
+  do i = 1,NGLOB
     veloc_lddrk(i) =  alpha * veloc_lddrk(i) + deltat * accel(i)
     displ_lddrk(i) =  alpha * displ_lddrk(i) + deltat * veloc(i)
   enddo
   ! updates wavefields
-  do i=1,NGLOB
+  do i = 1,NGLOB
     veloc(i) = veloc(i) + beta * veloc_lddrk(i)
     displ(i) = displ(i) + beta * displ_lddrk(i)
   enddo
@@ -271,17 +271,17 @@
 
   ! low-memory Runge-Kutta scheme
 
-  if(FORCE_VECTORIZATION_VAL) then
+  if (FORCE_VECTORIZATION_VAL) then
 
     ! note: splitting the do-loops seems to be slightly more effective
 
     ! low-memory Runge-Kutta: intermediate storage wavefields
-    do i=1,NGLOB * NDIM
+    do i = 1,NGLOB * NDIM
       veloc_lddrk(i,1) = alpha * veloc_lddrk(i,1) + deltat * accel(i,1)
       displ_lddrk(i,1) = alpha * displ_lddrk(i,1) + deltat * veloc(i,1)
     enddo
     ! updates wavefields
-    do i=1,NGLOB * NDIM
+    do i = 1,NGLOB * NDIM
       veloc(i,1) = veloc(i,1) + beta * veloc_lddrk(i,1)
       displ(i,1) = displ(i,1) + beta * displ_lddrk(i,1)
     enddo
@@ -290,7 +290,7 @@
 
     ! non-vectorized loops
 
-    do i=1,NGLOB
+    do i = 1,NGLOB
       ! low-memory Runge-Kutta: intermediate storage wavefields
       veloc_lddrk(:,i) = alpha * veloc_lddrk(:,i) + deltat * accel(:,i)
       displ_lddrk(:,i) = alpha * displ_lddrk(:,i) + deltat * veloc(:,i)

@@ -38,7 +38,7 @@
   call synchronize_all()
 
   ! closes Stacey absorbing boundary snapshots
-  if( ABSORBING_CONDITIONS ) then
+  if (ABSORBING_CONDITIONS) then
     ! crust mantle
     if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
       .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
@@ -99,7 +99,7 @@
   endif
 
   ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
-  if( NOISE_TOMOGRAPHY /= 0 ) then
+  if (NOISE_TOMOGRAPHY /= 0) then
     call close_file_abs(9)
   endif
 
@@ -110,13 +110,13 @@
   call save_kernels()
 
   ! VTK visualization
-  if( VTK_MODE ) then
+  if (VTK_MODE) then
     ! closes VTK window
-    if(myrank == 0 ) call finish_vtkwindow()
+    if (myrank == 0 ) call finish_vtkwindow()
   endif
 
   ! adios finalizes
-  if( ADIOS_ENABLED .or. OUTPUT_SEISMOS_ASDF ) then
+  if (ADIOS_ENABLED .or. OUTPUT_SEISMOS_ASDF) then
     call adios_cleanup()
   endif
 
@@ -124,7 +124,7 @@
   call finalize_simulation_cleanup()
 
   ! closes the main output file
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) 'End of the simulation'
     write(IMAIN,*)
@@ -152,14 +152,14 @@
 
   ! mass matrices
   ! crust/mantle
-  if( (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) ) then
+  if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
     deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
   else
     nullify(rmassx_crust_mantle,rmassy_crust_mantle)
   endif
-  if(SIMULATION_TYPE == 3 ) then
-    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+  if (SIMULATION_TYPE == 3) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
       deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     else
       nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
@@ -168,16 +168,16 @@
   endif
 
   ! outer core
-  if(SIMULATION_TYPE == 3 ) nullify(b_rmass_outer_core)
+  if (SIMULATION_TYPE == 3 ) nullify(b_rmass_outer_core)
 
   ! inner core
-  if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     deallocate(rmassx_inner_core,rmassy_inner_core)
   else
     nullify(rmassx_inner_core,rmassy_inner_core)
   endif
-  if(SIMULATION_TYPE == 3 ) then
-    if( ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+  if (SIMULATION_TYPE == 3) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
       deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
     else
       nullify(b_rmassx_inner_core,b_rmassy_inner_core)
@@ -193,7 +193,7 @@
   deallocate(buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
             request_send_vector_ic,request_recv_vector_ic)
 
-  if( SIMULATION_TYPE == 3 ) then
+  if (SIMULATION_TYPE == 3) then
     deallocate(b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
               b_request_send_vector_cm,b_request_recv_vector_cm)
     deallocate(b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
@@ -230,9 +230,9 @@
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     deallocate(iadj_vec)
-    if(nadj_rec_local > 0) then
+    if (nadj_rec_local > 0) then
       deallocate(adj_sourcearrays)
-      if( IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) deallocate(buffer_sourcearrays)
+      if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) deallocate(buffer_sourcearrays)
       deallocate(iadjsrc,iadjsrc_len)
     endif
   endif
@@ -243,11 +243,11 @@
   deallocate(station_name,network_name, &
             stlat,stlon,stele,stbur)
   deallocate(nu,number_receiver_global)
-  if( nrec_local > 0 ) then
+  if (nrec_local > 0) then
     deallocate(hxir_store, &
               hetar_store, &
               hgammar_store)
-    if( SIMULATION_TYPE == 2 ) then
+    if (SIMULATION_TYPE == 2) then
       deallocate(moment_der,stshift_der)
     endif
   endif
@@ -255,7 +255,7 @@
 
   ! kernels
   if (SIMULATION_TYPE == 3) then
-    if( APPROXIMATE_HESS_KL ) then
+    if (APPROXIMATE_HESS_KL) then
       deallocate(hess_kl_crust_mantle)
     endif
     deallocate(beta_kl_outer_core)
@@ -266,24 +266,24 @@
     deallocate(store_val_ux,store_val_uy,store_val_uz)
     deallocate(store_val_ux_all,store_val_uy_all,store_val_uz_all)
   endif
-  if(MOVIE_VOLUME) then
+  if (MOVIE_VOLUME) then
     deallocate(nu_3dmovie)
   endif
 
   ! noise simulations
-  if ( NOISE_TOMOGRAPHY /= 0 ) then
+  if (NOISE_TOMOGRAPHY /= 0) then
     deallocate(noise_sourcearray, &
               normal_x_noise,normal_y_noise,normal_z_noise, &
               mask_noise,noise_surface_movie)
   endif
 
   ! VTK visualization
-  if( VTK_MODE ) then
+  if (VTK_MODE) then
     ! frees memory
     deallocate(vtkdata,vtkmask)
-    if( NPROCTOT_VAL > 1 ) then
+    if (NPROCTOT_VAL > 1) then
       deallocate(vtkdata_points_all,vtkdata_offset_all)
-      if( myrank == 0 ) deallocate(vtkdata_all)
+      if (myrank == 0 ) deallocate(vtkdata_all)
     endif
   endif
 

@@ -76,7 +76,7 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
   write(file_name,'(a)') trim(PATHNAME_GLL_modeldir) // 'model_gll.bp'
 
   ! user output
-  if( myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
     write(IMAIN,*)'ADIOS file: ',trim(file_name)
@@ -90,8 +90,8 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
   call check_adios_err(myrank,adios_err)
 
   call adios_read_open_file (adios_handle, trim(file_name), 0, comm, adios_err)
-  if( adios_err /= 0 ) then
-    print*,'error rank ',myrank,' opening adios file: ',trim(file_name)
+  if (adios_err /= 0) then
+    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -100,7 +100,7 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
   call adios_selection_boundingbox (sel , 1, start, count)
 
   ! reads in model for each partition
-  if( .not. TRANSVERSE_ISOTROPY ) then
+  if (.not. TRANSVERSE_ISOTROPY) then
     ! isotropic model
     ! vp mesh
     call adios_schedule_read(adios_handle, sel, "reg1/vp/array", 0, 1, &

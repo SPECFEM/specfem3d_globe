@@ -79,7 +79,7 @@
 !$OMP SHARED(NGLOB, accel, rmassx, rmassy, rmassz, two_omega_earth, veloc) &
 !$OMP PRIVATE(i)
 !$OMP DO SCHEDULE(GUIDED)
-  do i=1,NGLOB
+  do i = 1,NGLOB
     accel(1,i) = accel(1,i)*rmassx(i) + two_omega_earth*veloc(2,i)
     accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
     accel(3,i) = accel(3,i)*rmassz(i)
@@ -121,7 +121,7 @@
   ! note: mass matrices for fluid region has no Stacey or rotation correction
   !       it is also the same for forward and backward/reconstructed wavefields
 
-  do i=1,NGLOB
+  do i = 1,NGLOB
     accel(i) = accel(i)*rmass(i)
   enddo
 
@@ -157,9 +157,9 @@
   ! initializes
   sourcearrayd(:,k,l,m) = ZERO
 
-  do iv=1,NGLLZ
-    do it=1,NGLLY
-      do ir=1,NGLLX
+  do iv = 1,NGLLZ
+    do it = 1,NGLLY
+      do ir = 1,NGLLX
 
         sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
                            *(G11(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &

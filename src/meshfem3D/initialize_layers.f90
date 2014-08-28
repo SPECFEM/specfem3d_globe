@@ -116,15 +116,15 @@
   if (.not. ADD_4TH_DOUBLING) NUMBER_OF_MESH_LAYERS = NUMBER_OF_MESH_LAYERS - 1
 
 ! define the first and last layers that define this region
-  if(iregion_code == IREGION_CRUST_MANTLE) then
+  if (iregion_code == IREGION_CRUST_MANTLE) then
     ifirst_region = 1
     ilast_region = 10 + layer_shift
 
-  else if(iregion_code == IREGION_OUTER_CORE) then
+  else if (iregion_code == IREGION_OUTER_CORE) then
     ifirst_region = 11 + layer_shift
     ilast_region = NUMBER_OF_MESH_LAYERS - 1
 
-  else if(iregion_code == IREGION_INNER_CORE) then
+  else if (iregion_code == IREGION_INNER_CORE) then
     ifirst_region = NUMBER_OF_MESH_LAYERS
     ilast_region = NUMBER_OF_MESH_LAYERS
 
@@ -134,12 +134,12 @@
 
 ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   if (ONE_CRUST) then
-    first_layer_aniso=2
-    last_layer_aniso=3
+    first_layer_aniso = 2
+    last_layer_aniso = 3
     nb_layer_above_aniso = 1
   else
-    first_layer_aniso=3
-    last_layer_aniso=4
+    first_layer_aniso = 3
+    last_layer_aniso = 4
     nb_layer_above_aniso = 2
   endif
 
@@ -150,7 +150,7 @@
   ystore(:,:,:,:) = 0.d0
   zstore(:,:,:,:) = 0.d0
 
-  if(ipass == 1) ibool(:,:,:,:) = 0
+  if (ipass == 1) ibool(:,:,:,:) = 0
 
   ! initialize boundary arrays
   iboun(:,:) = .false.

@@ -42,11 +42,11 @@
   ymesh = dble(y)
   zmesh = dble(z)
 
-  if(zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
-  if(zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
+  if (zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
+  if (zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
   theta = real(datan2(dsqrt(xmesh*xmesh+ymesh*ymesh),zmesh), kind=CUSTOM_REAL)
-  if(xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
-  if(xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
+  if (xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
+  if (xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
   phi = real(datan2(ymesh,xmesh), kind=CUSTOM_REAL)
 
   r = real(dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh), kind=CUSTOM_REAL)
@@ -72,13 +72,13 @@
   ymesh = y
   zmesh = z
 
-  if(zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
-  if(zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
+  if (zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
+  if (zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
 
   theta = datan2(dsqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
 
-  if(xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
-  if(xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
+  if (xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
+  if (xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
 
   phi = datan2(ymesh,xmesh)
 
@@ -317,9 +317,9 @@
 
   ! note: instead of 1/tan(theta) we take cos(theta)/sin(theta) and avoid division by zero
 
-  if(.not. ASSUME_PERFECT_SPHERE) then
+  if (.not. ASSUME_PERFECT_SPHERE) then
     ! mesh is elliptical
-    if( USE_OLD_VERSION_5_1_5_FORMAT ) then
+    if (USE_OLD_VERSION_5_1_5_FORMAT) then
       theta_prime = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
     else
       ! converts geocentric colatitude theta to geographic colatitude theta_prime
@@ -376,7 +376,7 @@
   ! co-latitude (in radians)
   double precision,intent(out) :: theta
 
-  if( .not. ASSUME_PERFECT_SPHERE ) then
+  if (.not. ASSUME_PERFECT_SPHERE) then
     ! converts geographic (lat_prime) to geocentric latitude and converts to co-latitude (theta)
     theta = PI_OVER_TWO - atan( ONE_MINUS_F_SQUARED*dtan(lat_prime * DEGREES_TO_RADIANS) )
   else
@@ -423,12 +423,12 @@
   !r_max = -HUGEVAL
 
   ! loops over all elements
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
     ! loops only over corners
-    do k=1,NGLLZ,NGLLZ-1
-      do j=1,NGLLY,NGLLY-1
-        do i=1,NGLLX,NGLLX-1
+    do k = 1,NGLLZ,NGLLZ-1
+      do j = 1,NGLLY,NGLLY-1
+        do i = 1,NGLLX,NGLLX-1
 
           ! gets x/y/z coordinates
           iglob = ibool(i,j,k,ispec)
@@ -440,28 +440,28 @@
           call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
 
           ! stores min/max
-          if( lat < lat_min ) lat_min = lat
-          if( lat > lat_max ) lat_max = lat
+          if (lat < lat_min ) lat_min = lat
+          if (lat > lat_max ) lat_max = lat
 
-          if( lon < lon_min ) lon_min = lon
-          if( lon > lon_max ) lon_max = lon
+          if (lon < lon_min ) lon_min = lon
+          if (lon > lon_max ) lon_max = lon
 
-          !if( r < r_min ) r_min = r
-          !if( r > r_max ) r_max = r
+          !if (r < r_min ) r_min = r
+          !if (r > r_max ) r_max = r
         enddo
       enddo
     enddo
   enddo
 
   ! limits latitude to [-90.0,90.0]
-  if( lat_min < -90.d0 ) lat_min = -90.d0
-  if( lat_max > 90.d0 ) lat_max = 90.d0
+  if (lat_min < -90.d0 ) lat_min = -90.d0
+  if (lat_max > 90.d0 ) lat_max = 90.d0
 
   ! limits longitude to [0.0,360.0]
-  if( lon_min < 0.d0 ) lon_min = lon_min + 360.d0
-  if( lon_min > 360.d0 ) lon_min = lon_min - 360.d0
-  if( lon_max < 0.d0 ) lon_max = lon_max + 360.d0
-  if( lon_max > 360.d0 ) lon_max = lon_max - 360.d0
+  if (lon_min < 0.d0 ) lon_min = lon_min + 360.d0
+  if (lon_min > 360.d0 ) lon_min = lon_min - 360.d0
+  if (lon_max < 0.d0 ) lon_max = lon_max + 360.d0
+  if (lon_max > 360.d0 ) lon_max = lon_max - 360.d0
 
   end subroutine xyz_2_latlon_minmax
 

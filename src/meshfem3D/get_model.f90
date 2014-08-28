@@ -87,9 +87,9 @@
   moho = 0.d0
 
   ! loops over all GLL points for this spectral element
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
         ! initializes values
         rho = 0.d0
@@ -135,8 +135,8 @@
         ! make sure we are within the right shell in PREM to honor discontinuities
         ! use small geometrical tolerance
         r_prem = r
-        if(r <= rmin*1.000001d0) r_prem = rmin*1.000001d0
-        if(r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
+        if (r <= rmin*1.000001d0) r_prem = rmin*1.000001d0
+        if (r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
         ! checks r_prem,rmin/rmax and assigned idoubling
         call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
                             RICB,RCMB,RTOPDDOUBLEPRIME, &
@@ -158,8 +158,8 @@
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
         ! gets the 3-D crustal model
-        if( CRUSTAL ) then
-          if( .not. elem_in_mantle) &
+        if (CRUSTAL) then
+          if (.not. elem_in_mantle) &
             call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
                               vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25, &
@@ -172,10 +172,10 @@
                                         myrank,iregion_code,ispec,i,j,k)
 
         ! checks vpv: if close to zero then there is probably an error
-        if( vpv < TINYVAL ) then
-          print*,'error vpv: ',vpv,vph,vsv,vsh,rho
+        if (vpv < TINYVAL) then
+          print*,'Error vpv: ',vpv,vph,vsv,vsh,rho
           print*,'radius:',r*R_EARTH_KM
-          call exit_mpi(myrank,'error get_model values')
+          call exit_mpi(myrank,'Error get_model values')
         endif
 
         !> Hejun, New attenuation assignment
@@ -183,7 +183,7 @@
         ! and before TOPOGRAPHY / ELLIPTICITY
         !
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
-        if( ATTENUATION ) &
+        if (ATTENUATION ) &
           call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
                                              tau_e,tau_s,T_c_source, &
                                              moho,Qmu,Qkappa,elem_in_crust)
@@ -201,8 +201,8 @@
           dvpstore(i,j,k,ispec) = real(dvp, kind=CUSTOM_REAL)
         endif
 
-        if(ABSORBING_CONDITIONS) then
-          if(iregion_code == IREGION_OUTER_CORE) then
+        if (ABSORBING_CONDITIONS) then
+          if (iregion_code == IREGION_OUTER_CORE) then
             ! we need just vp in the outer core for Stacey conditions
             rho_vp(i,j,k,ispec) = real(vph, kind=CUSTOM_REAL)
             rho_vs(i,j,k,ispec) = real(0.d0, kind=CUSTOM_REAL)
@@ -212,7 +212,7 @@
           endif
         endif
 
-        if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+        if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
           c11store(i,j,k,ispec) = real(c11, kind=CUSTOM_REAL)
           c33store(i,j,k,ispec) = real(c33, kind=CUSTOM_REAL)
           c12store(i,j,k,ispec) = real(c12, kind=CUSTOM_REAL)
@@ -220,7 +220,7 @@
           c44store(i,j,k,ispec) = real(c44, kind=CUSTOM_REAL)
         endif
 
-        if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+        if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
           c11store(i,j,k,ispec) = real(c11, kind=CUSTOM_REAL)
           c12store(i,j,k,ispec) = real(c12, kind=CUSTOM_REAL)
           c13store(i,j,k,ispec) = real(c13, kind=CUSTOM_REAL)
@@ -244,8 +244,8 @@
           c66store(i,j,k,ispec) = real(c66, kind=CUSTOM_REAL)
         endif
 
-        if(ATTENUATION) then
-          if(ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
+        if (ATTENUATION) then
+          if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
 
             ! distinguish between single and double precision for reals
             do i_sls = 1,N_SLS
@@ -257,7 +257,7 @@
 
             ! distinguish between single and double precision for reals
             ! store values from mid-point for whole element
-            if( i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2 ) then
+            if (i == NGLLX/2 .and. j == NGLLY/2 .and. k == NGLLZ/2) then
               do i_sls = 1,N_SLS
                 tau_e_store(1,1,1,i_sls,ispec) = real(tau_e(i_sls), kind=CUSTOM_REAL)
               enddo
@@ -298,11 +298,11 @@
   r_m = r_prem * R_EARTH
 
   ! checks layers
-  if( abs(rmax - rmin ) < TINYVAL ) then
+  if (abs(rmax - rmin ) < TINYVAL) then
     ! there's probably an error
-    print*,'error layer radius min/max:',rmin,rmax
+    print*,'Error layer radius min/max:',rmin,rmax
     print*,'  point radius: ',r_prem
-    call exit_mpi(myrank,'error  in get_model_check_idoubling() layer radius')
+    call exit_mpi(myrank,'Error  in get_model_check_idoubling() layer radius')
   endif
 
 
@@ -312,69 +312,69 @@
   !
   !--- inner core
   !
-  if(r_m >= 0.d0 .and. r_m < RICB) then
-    if(idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
+  if (r_m >= 0.d0 .and. r_m < RICB) then
+    if (idoubling /= IFLAG_INNER_CORE_NORMAL .and. &
        idoubling /= IFLAG_MIDDLE_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_BOTTOM_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_IN_FICTITIOUS_CUBE) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print*,'  idoubling/IFLAG: ',idoubling,IFLAG_INNER_CORE_NORMAL,'-to-',IFLAG_IN_FICTITIOUS_CUBE
-      call exit_MPI(myrank,'error  in get_model_check_idoubling() wrong doubling flag for inner core point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for inner core point')
     endif
   !
   !--- outer core
   !
-  else if(r_m > RICB .and. r_m < RCMB) then
-    if(idoubling /= IFLAG_OUTER_CORE_NORMAL)  then
+  else if (r_m > RICB .and. r_m < RCMB) then
+    if (idoubling /= IFLAG_OUTER_CORE_NORMAL) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print*,'  idoubling/IFLAG: ',idoubling,IFLAG_OUTER_CORE_NORMAL
-      call exit_MPI(myrank,'error  in get_model_check_idoubling() wrong doubling flag for outer core point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for outer core point')
     endif
   !
   !--- D" at the base of the mantle
   !
-  else if(r_m > RCMB .and. r_m < RTOPDDOUBLEPRIME) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL) then
+  else if (r_m > RCMB .and. r_m < RTOPDDOUBLEPRIME) then
+    if (idoubling /= IFLAG_MANTLE_NORMAL) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print*,'  dprime radius/RCMB/RTOPDDOUBLEPRIME:',r_m, RCMB,RTOPDDOUBLEPRIME
       print*,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
-      call exit_MPI(myrank,'error  in get_model_check_idoubling() wrong doubling flag for D" point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for D" point')
     endif
   !
   !--- mantle: from top of D" to d670
   !
-  else if(r_m > RTOPDDOUBLEPRIME .and. r_m < R670) then
-    if(idoubling /= IFLAG_MANTLE_NORMAL)  then
+  else if (r_m > RTOPDDOUBLEPRIME .and. r_m < R670) then
+    if (idoubling /= IFLAG_MANTLE_NORMAL) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print*,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
-      call exit_MPI(myrank,'error  in get_model_check_idoubling() wrong doubling flag for top D" -> d670 point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for top D" -> d670 point')
     endif
 
   !
   !--- mantle: from d670 to d220
   !
-  else if(r_m > R670 .and. r_m < R220) then
-    if(idoubling /= IFLAG_670_220)  then
+  else if (r_m > R670 .and. r_m < R220) then
+    if (idoubling /= IFLAG_670_220) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print*,'  idoubling/IFLAG: ',idoubling,IFLAG_670_220
-      call exit_MPI(myrank,'error  in get_model_check_idoubling() wrong doubling flag for d670 -> d220 point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d670 -> d220 point')
     endif
 
   !
   !--- mantle and crust: from d220 to MOHO and then to surface
   !
-  else if(r_m > R220) then
-    if(idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST)  then
+  else if (r_m > R220) then
+    if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print*,'  idoubling/IFLAG: ',idoubling,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST
-      call exit_MPI(myrank,'error  in get_model_check_idoubling() wrong doubling flag for d220 -> Moho -> surface point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d220 -> Moho -> surface point')
     endif
 
   endif
