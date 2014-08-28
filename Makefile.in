@@ -169,6 +169,20 @@ MPILIBS += @ADIOS_LIBS@
 
 #######################################
 ####
+#### CEM
+#### with configure: ./configure --with-cem CEM_LIBS=.. CEM_FCFLAGS=..
+####
+#######################################
+
+@COND_CEM_TRUE@CEM = yes
+@COND_CEM_FALSE@CEM = no
+
+FCFLAGS += @CEM_FCFLAGS@
+MPILIBS += @CEM_LIBS@
+
+
+#######################################
+####
 #### directories
 ####
 #######################################

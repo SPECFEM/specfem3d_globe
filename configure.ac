@@ -94,6 +94,17 @@ AC_ARG_ENABLE([vectorization],
     [want_vec=yes])
 AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 
+###
+### CEM
+###
+
+AC_ARG_WITH([cem],
+    [AC_HELP_STRING([--with-cem],
+        [build CEM enabled version @<:@default=no@:>@])],
+    [want_cem="$withval"],
+    [want_cem=no])
+AM_CONDITIONAL([COND_CEM], [test x"$want_cem" != xno])
+
 ############################################################
 
 # Checks for programs.
@@ -236,6 +247,40 @@ AS_IF([test x"$want_vtk" != xno], [
 AS_IF([test x"$want_cuda" != xno -o x"$want_vtk" != xno], [
     CIT_MPI_INCDIR([$MPIFC])
 ])
+
+
+###
+### CEM
+###
+
+AS_IF([test x"$want_cem" != xno], [
+    AS_BOX([Comprehensive Earth Model (CEM)])
+    AC_MSG_NOTICE([CEM is enabled])
+
+    AC_ARG_VAR(CEM_FCFLAGS, [CEM Fortran compiler flags])
+    AC_ARG_VAR(CEM_LIBS, [CEM extra libraries for linking programs])
+
+    # adds compiler flag
+    FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}CEM"
+
+    # daniel: todo add NetCDF checking for Fortran, something like:
+    # netcdf checking
+    #AC_LANG_PUSH(Fortran)
+    #AC_MSG_CHECKING([for NetCDF modules])
+    #FCFLAGS="$CEM_FCFLAGS $FCFLAGS"
+    #AC_COMPILE_IFELSE([
+    #  AC_LANG_PROGRAM([], [[
+    #  use netcdf
+    #  ]])
+    #], [
+    #  AC_MSG_RESULT(yes)
+    #], [
+    #  AC_MSG_RESULT(no)
+    #  AC_MSG_ERROR([NetCDF modules not found; is NetCDF built with Fortran support for this compiler?])
+    #])
+    #AC_LANG_POP([Fortran])
+])
+
 
 ############################################################
 

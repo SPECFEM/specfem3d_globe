@@ -227,6 +227,14 @@ meshfem3D_OBJECTS += $(adios_meshfem3D_STUBS)
 meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_STUBS)
 endif
 
+# conditional CEM model
+ifeq ($(CEM),yes)
+meshfem3D_OBJECTS += $O/model_cem.checknetcdf.o
+NETCDF_INCLUDE     = -I$(netcdf_specfem_dir)/include -I$(hdf5_specfem_dir)/include -I$(zlib_specfem_dir)/include
+LDFLAGS           += -L$(netcdf_specfem_dir)/lib -lnetcdff -lnetcdf -L$(hdf5_specfem_dir)/lib -lhdf5_hl -lhdf5 -L$(zlib_specfem_dir)/lib -lz
+endif
+
+
 #######################################
 
 ####
@@ -292,3 +300,7 @@ $O/%.check_adios.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.chec
 $O/%.check_adios.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
+## CEM
+
+$O/%.checknetcdf.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} $(NETCDF_INCLUDE) -c -o $@ $<

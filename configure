@@ -623,6 +623,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+CEM_LIBS
+CEM_FCFLAGS
 MPI_INCLUDES
 MPI_INC
 VTK_LIBS
@@ -678,6 +680,8 @@ ac_ct_FC
 LDFLAGS
 FCFLAGS
 FC
+COND_CEM_FALSE
+COND_CEM_TRUE
 COND_VECTORIZATION_FALSE
 COND_VECTORIZATION_TRUE
 COND_ADIOS_FALSE
@@ -747,6 +751,7 @@ with_opencl
 enable_vtk
 with_adios
 enable_vectorization
+with_cem
 with_vtk
 with_vtk_suffix
 with_vtk_version
@@ -778,7 +783,9 @@ OCL_CPU_FLAGS
 OCL_GPU_FLAGS
 OCL_INC
 OCL_LIB
-MPI_INC'
+MPI_INC
+CEM_FCFLAGS
+CEM_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1404,6 +1411,7 @@ Optional Packages:
   --with-cuda             build cuda GPU enabled version [default=no]
   --with-opencl           build OpenCL GPU enabled version [default=no]
   --with-adios            build ADIOS enabled version [default=no]
+  --with-cem              build CEM enabled version [default=no]
   --with-vtk              The prefix where VTK is installed [default=/usr]
   --with-vtk-suffix       Suffix to append to VTK's include directory, e.g.,
                           for vtk-5.2/ the suffix is "-5.2"
@@ -1443,6 +1451,8 @@ Some influential environment variables:
   OCL_LIB     Location of OpenCL library libOpenCL
   MPI_INC     Location of MPI include mpi.h, needed by CUDA/VTK (default:
               auto-detect)
+  CEM_FCFLAGS CEM Fortran compiler flags
+  CEM_LIBS    CEM extra libraries for linking programs
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2830,6 +2840,27 @@ fi
 else
   COND_VECTORIZATION_TRUE='#'
   COND_VECTORIZATION_FALSE=
+fi
+
+
+###
+### CEM
+###
+
+
+# Check whether --with-cem was given.
+if test "${with_cem+set}" = set; then :
+  withval=$with_cem; want_cem="$withval"
+else
+  want_cem=no
+fi
+
+ if test x"$want_cem" != xno; then
+  COND_CEM_TRUE=
+  COND_CEM_FALSE='#'
+else
+  COND_CEM_TRUE='#'
+  COND_CEM_FALSE=
 fi
 
 
@@ -7456,6 +7487,45 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 fi
 
+
+###
+### CEM
+###
+
+if test x"$want_cem" != xno; then :
+
+    $as_echo "## ------------------------------- ##
+## Comprehensive Earth Model (CEM) ##
+## ------------------------------- ##"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: CEM is enabled" >&5
+$as_echo "$as_me: CEM is enabled" >&6;}
+
+
+
+
+    # adds compiler flag
+    FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}CEM"
+
+    # daniel: todo add NetCDF checking for Fortran, something like:
+    # netcdf checking
+    #AC_LANG_PUSH(Fortran)
+    #AC_MSG_CHECKING([for NetCDF modules])
+    #FCFLAGS="$CEM_FCFLAGS $FCFLAGS"
+    #AC_COMPILE_IFELSE([
+    #  AC_LANG_PROGRAM([], [[
+    #  use netcdf
+    #  ]])
+    #], [
+    #  AC_MSG_RESULT(yes)
+    #], [
+    #  AC_MSG_RESULT(no)
+    #  AC_MSG_ERROR([NetCDF modules not found; is NetCDF built with Fortran support for this compiler?])
+    #])
+    #AC_LANG_POP([Fortran])
+
+fi
+
+
 ############################################################
 
 $as_echo "## ----------------------------------- ##
@@ -7607,6 +7677,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_VECTORIZATION_TRUE}" && test -z "${COND_VECTORIZATION_FALSE}"; then
   as_fn_error $? "conditional \"COND_VECTORIZATION\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CEM_TRUE}" && test -z "${COND_CEM_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CEM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 case $FC_MODINC in #(
