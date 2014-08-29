@@ -138,6 +138,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     cl_kernel *crust_mantle_kernel_p;
     cl_uint idx = 0;
 
+    // sets function pointer
     if (FORWARD_OR_ADJOINT == 1) {
       crust_mantle_kernel_p = &mocl.kernels.crust_mantle_impl_kernel_forward;
     } else {

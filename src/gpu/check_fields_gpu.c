@@ -210,6 +210,14 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   // creates array on GPU
   gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
+  // sets gpu arrays
+  gpu_realw_mem displ;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    displ = mp->d_displ_outer_core;
+  } else {
+    displ = mp->d_b_displ_outer_core;
+  }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -221,12 +229,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_outer_core.ocl));
-    } else {
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_outer_core.ocl));
-    }
-
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
@@ -239,11 +242,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_outer_core.cuda,size,d_max.cuda);
-    } else {
-      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_outer_core.cuda,size,d_max.cuda);
-    }
+    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,d_max.cuda);
   }
 #endif
 
@@ -323,6 +322,14 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   // creates array on GPU
   gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
+  // sets gpu arrays
+  gpu_realw_mem displ;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    displ = mp->d_displ_crust_mantle;
+  } else {
+    displ = mp->d_b_displ_crust_mantle;
+  }
+
 #ifdef USE_OPENCL
   size_t global_work_size[2];
   size_t local_work_size[2];
@@ -334,11 +341,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
-    } else {
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_crust_mantle.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
@@ -352,11 +355,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,size,d_max.cuda);
-    } else {
-      get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle.cuda,size,d_max.cuda);
-    }
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,d_max.cuda);
   }
 #endif
 
@@ -400,6 +399,13 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   // creates array on GPU
   gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
+  // sets gpu arrays
+  if (*FORWARD_OR_ADJOINT == 1) {
+    displ = mp->d_displ_inner_core;
+  } else {
+    displ = mp->d_b_displ_inner_core;
+  }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     local_work_size[0] = blocksize;
@@ -409,11 +415,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
     idx = 0;
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_inner_core.ocl));
-    } else {
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_inner_core.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
 
@@ -426,11 +428,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,size,d_max.cuda);
-    } else {
-      get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core.cuda,size,d_max.cuda);
-    }
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,d_max.cuda);
   }
 #endif
 

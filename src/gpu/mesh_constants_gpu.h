@@ -955,6 +955,12 @@ typedef struct mesh_ {
   cl_mem d_hprimewgll_xx_cm_tex;
 #endif
 
+  // ------------------------------------------------------------------ //
+  // LDDRK
+  // ------------------------------------------------------------------ //
+  int use_lddrk;
+  // daniel debug: todo - add lddrk arrays here and in gpu_buffer_list.c for initialization
+
 } Mesh;
 
 

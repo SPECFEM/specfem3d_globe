@@ -71,6 +71,21 @@ void FC_FUNC_ (update_displacement_ic_gpu,
   realw deltatsqover2 = *deltatsqover2_f;
   realw deltatover2 = *deltatover2_f;
 
+  // sets gpu arrays
+  gpu_realw_mem displ,veloc,accel;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    displ = mp->d_displ_inner_core;
+    veloc = mp->d_veloc_inner_core;
+    accel = mp->d_accel_inner_core;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    displ = mp->d_b_displ_inner_core;
+    veloc = mp->d_b_veloc_inner_core;
+    accel = mp->d_b_accel_inner_core;
+  }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -78,18 +93,9 @@ void FC_FUNC_ (update_displacement_ic_gpu,
     cl_uint idx = 0;
 
     //launch kernel
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_inner_core.ocl));
-    } else {
-      // backward fields
-      //debug
-      DEBUG_BACKWARD_UPDATE ();
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_inner_core.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
     clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (realw), (void *) &deltat));
     clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (realw), (void *) &deltatsqover2));
@@ -109,23 +115,11 @@ void FC_FUNC_ (update_displacement_ic_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      //launch kernel
-      update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_inner_core.cuda,
-                                                                      mp->d_veloc_inner_core.cuda,
-                                                                      mp->d_accel_inner_core.cuda,
-                                                                      size,deltat,deltatsqover2,deltatover2);
-    } else {
-      // adjoint/kernel simulations
-      // debug
-      DEBUG_BACKWARD_UPDATE();
-
-      // kernel for backward fields
-      update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_inner_core.cuda,
-                                                                      mp->d_b_veloc_inner_core.cuda,
-                                                                      mp->d_b_accel_inner_core.cuda,
-                                                                      size,deltat,deltatsqover2,deltatover2);
-    }
+    //launch kernel
+    update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+                                                                    veloc.cuda,
+                                                                    accel.cuda,
+                                                                    size,deltat,deltatsqover2,deltatover2);
   }
 #endif
 
@@ -179,6 +173,21 @@ void FC_FUNC_ (update_displacement_cm_gpu,
   realw deltatsqover2 = *deltatsqover2_f;
   realw deltatover2 = *deltatover2_f;
 
+  // sets gpu arrays
+  gpu_realw_mem displ,veloc,accel;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    displ = mp->d_displ_crust_mantle;
+    veloc = mp->d_veloc_crust_mantle;
+    accel = mp->d_accel_crust_mantle;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    displ = mp->d_b_displ_crust_mantle;
+    veloc = mp->d_b_veloc_crust_mantle;
+    accel = mp->d_b_accel_crust_mantle;
+  }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -186,18 +195,9 @@ void FC_FUNC_ (update_displacement_cm_gpu,
     cl_uint idx = 0;
 
     //launch kernel
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
-    } else {
-      // backward fields
-      //debug
-      DEBUG_BACKWARD_UPDATE ();
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
     clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (realw), (void *) &deltat));
     clCheck (clSetKernelArg (mocl.kernels.update_disp_veloc_kernel, idx++, sizeof (realw), (void *) &deltatsqover2));
@@ -216,22 +216,12 @@ void FC_FUNC_ (update_displacement_cm_gpu,
   if (run_cuda) {
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
-    if (*FORWARD_OR_ADJOINT == 1) {
-      //launch kernel
-      update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_crust_mantle.cuda,
-                                                                      mp->d_veloc_crust_mantle.cuda,
-                                                                      mp->d_accel_crust_mantle.cuda,
-                                                                      size,deltat,deltatsqover2,deltatover2);
-    } else {
-      // debug
-      DEBUG_BACKWARD_UPDATE();
 
-      // kernel for backward fields
-      update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_crust_mantle.cuda,
-                                                                      mp->d_b_veloc_crust_mantle.cuda,
-                                                                      mp->d_b_accel_crust_mantle.cuda,
-                                                                      size,deltat,deltatsqover2,deltatover2);
-    }
+    //launch kernel
+    update_disp_veloc_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+                                                                    veloc.cuda,
+                                                                    accel.cuda,
+                                                                    size,deltat,deltatsqover2,deltatover2);
   }
 #endif
 
@@ -282,6 +272,21 @@ void FC_FUNC_ (update_displacement_oc_gpu,
   realw deltatsqover2 = *deltatsqover2_f;
   realw deltatover2 = *deltatover2_f;
 
+  // sets gpu arrays
+  gpu_realw_mem displ,veloc,accel;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    displ = mp->d_displ_outer_core;
+    veloc = mp->d_veloc_outer_core;
+    accel = mp->d_accel_outer_core;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    displ = mp->d_b_displ_outer_core;
+    veloc = mp->d_b_veloc_outer_core;
+    accel = mp->d_b_accel_outer_core;
+  }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -289,18 +294,9 @@ void FC_FUNC_ (update_displacement_oc_gpu,
     cl_uint idx = 0;
 
     //launch kernel
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_displ_outer_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_outer_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
-    } else {
-      // backward fields
-      //debug
-      DEBUG_BACKWARD_UPDATE ();
-      clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_outer_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_outer_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
     clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (int), (void *) &size));
     clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (realw), (void *) &deltat));
     clCheck (clSetKernelArg (mocl.kernels.update_potential_kernel, idx++, sizeof (realw), (void *) &deltatsqover2));
@@ -320,21 +316,11 @@ void FC_FUNC_ (update_displacement_oc_gpu,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      //launch kernel
-      update_potential_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_displ_outer_core.cuda,
-                                                                     mp->d_veloc_outer_core.cuda,
-                                                                     mp->d_accel_outer_core.cuda,
-                                                                     size,deltat,deltatsqover2,deltatover2);
-    } else {
-      // debug
-      DEBUG_BACKWARD_UPDATE();
-
-      update_potential_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_displ_outer_core.cuda,
-                                                                     mp->d_b_veloc_outer_core.cuda,
-                                                                     mp->d_b_accel_outer_core.cuda,
-                                                                     size,deltat,deltatsqover2,deltatover2);
-    }
+    //launch kernel
+    update_potential_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,
+                                                                   veloc.cuda,
+                                                                   accel.cuda,
+                                                                   size,deltat,deltatsqover2,deltatover2);
   }
 #endif
 
@@ -369,6 +355,29 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
 
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
+  // sets gpu arrays
+  gpu_realw_mem veloc,accel;
+  gpu_realw_mem rmassx,rmassy,rmassz;
+  realw two_omega_earth;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    veloc = mp->d_veloc_crust_mantle;
+    accel = mp->d_accel_crust_mantle;
+    rmassx = mp->d_rmassx_crust_mantle;
+    rmassy = mp->d_rmassy_crust_mantle;
+    rmassz = mp->d_rmassz_crust_mantle;
+    two_omega_earth = mp->two_omega_earth;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    veloc = mp->d_b_veloc_crust_mantle;
+    accel = mp->d_b_accel_crust_mantle;
+    rmassx = mp->d_b_rmassx_crust_mantle;
+    rmassy = mp->d_b_rmassy_crust_mantle;
+    rmassz = mp->d_b_rmassz_crust_mantle;
+    two_omega_earth = mp->b_two_omega_earth;
+  }
+
 #ifdef USE_OPENCL
   size_t global_work_size[2];
   size_t local_work_size[2];
@@ -380,25 +389,13 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_CRUST_MANTLE));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (realw), (void *) &mp->two_omega_earth));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rmassx_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rmassy_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rmassz_crust_mantle.ocl));
-    } else {
-      //debug
-      DEBUG_BACKWARD_UPDATE ();
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_CRUST_MANTLE));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (realw), (void *) &mp->b_two_omega_earth));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_rmassx_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_rmassy_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_rmassz_crust_mantle.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_CRUST_MANTLE));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (realw), (void *) &two_omega_earth));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassx.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassy.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassz.ocl));
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.update_accel_elastic_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
   }
@@ -410,27 +407,14 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_accel_crust_mantle.cuda,
-                                                                           mp->d_veloc_crust_mantle.cuda,
-                                                                           mp->NGLOB_CRUST_MANTLE,
-                                                                           mp->two_omega_earth,
-                                                                           mp->d_rmassx_crust_mantle.cuda,
-                                                                           mp->d_rmassy_crust_mantle.cuda,
-                                                                           mp->d_rmassz_crust_mantle.cuda);
-    } else {
-      // backward fields
-      // debug
-      DEBUG_BACKWARD_UPDATE();
-
-      update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle.cuda,
-                                                                           mp->d_b_veloc_crust_mantle.cuda,
-                                                                           mp->NGLOB_CRUST_MANTLE,
-                                                                           mp->b_two_omega_earth,
-                                                                           mp->d_b_rmassx_crust_mantle.cuda,
-                                                                           mp->d_b_rmassy_crust_mantle.cuda,
-                                                                           mp->d_b_rmassz_crust_mantle.cuda);
-    }
+    // launches kernel
+    update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
+                                                                         veloc.cuda,
+                                                                         mp->NGLOB_CRUST_MANTLE,
+                                                                         two_omega_earth,
+                                                                         rmassx.cuda,
+                                                                         rmassy.cuda,
+                                                                         rmassz.cuda);
   }
 #endif
 
@@ -438,6 +422,24 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
   size_padded = ( (int)ceil ( ( (double)mp->NGLOB_INNER_CORE)/ ( (double)blocksize)))*blocksize;
 
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
+
+  // sets gpu arrays
+  if (*FORWARD_OR_ADJOINT == 1) {
+    veloc = mp->d_veloc_inner_core;
+    accel = mp->d_accel_inner_core;
+    rmassx = mp->d_rmassx_inner_core;
+    rmassy = mp->d_rmassy_inner_core;
+    rmassz = mp->d_rmassz_inner_core;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    veloc = mp->d_b_veloc_inner_core;
+    accel = mp->d_b_accel_inner_core;
+    rmassx = mp->d_b_rmassx_inner_core;
+    rmassy = mp->d_b_rmassy_inner_core;
+    rmassz = mp->d_b_rmassz_inner_core;
+  }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -447,26 +449,13 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     global_work_size[1] = num_blocks_y;
     idx = 0;
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_INNER_CORE));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (realw), (void *) &mp->two_omega_earth));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rmassx_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rmassy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rmassz_inner_core.ocl));
-    } else {
-      // backward fields
-      //debug
-      DEBUG_BACKWARD_UPDATE ();
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_INNER_CORE));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (realw), (void *) &mp->b_two_omega_earth));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_rmassx_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_rmassy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_rmassz_inner_core.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_INNER_CORE));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (realw), (void *) &two_omega_earth));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassx.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassy.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_elastic_kernel, idx++, sizeof (cl_mem), (void *) &rmassz.ocl));
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.update_accel_elastic_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
   }
@@ -476,27 +465,14 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_accel_inner_core.cuda,
-                                                                           mp->d_veloc_inner_core.cuda,
-                                                                           mp->NGLOB_INNER_CORE,
-                                                                           mp->two_omega_earth,
-                                                                           mp->d_rmassx_inner_core.cuda,
-                                                                           mp->d_rmassy_inner_core.cuda,
-                                                                           mp->d_rmassz_inner_core.cuda);
-    } else {
-      // backward fields
-      // debug
-      DEBUG_BACKWARD_UPDATE();
-
-      update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_accel_inner_core.cuda,
-                                                                           mp->d_b_veloc_inner_core.cuda,
-                                                                           mp->NGLOB_INNER_CORE,
-                                                                           mp->b_two_omega_earth,
-                                                                           mp->d_b_rmassx_inner_core.cuda,
-                                                                           mp->d_b_rmassy_inner_core.cuda,
-                                                                           mp->d_b_rmassz_inner_core.cuda);
-    }
+    // launches kernel
+    update_accel_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
+                                                                         veloc.cuda,
+                                                                         mp->NGLOB_INNER_CORE,
+                                                                         two_omega_earth,
+                                                                         rmassx.cuda,
+                                                                         rmassy.cuda,
+                                                                         rmassz.cuda);
   }
 #endif
 
@@ -535,6 +511,19 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
 
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
+  // sets gpu arrays
+  gpu_realw_mem veloc,accel;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    veloc = mp->d_veloc_crust_mantle;
+    accel = mp->d_accel_crust_mantle;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    veloc = mp->d_b_veloc_crust_mantle;
+    accel = mp->d_b_accel_crust_mantle;
+  }
+
 #ifdef USE_OPENCL
   size_t global_work_size[2];
   size_t local_work_size[2];
@@ -546,14 +535,8 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
-    } else {
-      // backward fields
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
     clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_CRUST_MANTLE));
     clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (realw), (void *) &deltatover2));
 
@@ -568,18 +551,11 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_veloc_crust_mantle.cuda,
-                                                                           mp->d_accel_crust_mantle.cuda,
-                                                                           mp->NGLOB_CRUST_MANTLE,
-                                                                           deltatover2);
-    } else {
-      // backward fields
-      update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc_crust_mantle.cuda,
-                                                                           mp->d_b_accel_crust_mantle.cuda,
-                                                                           mp->NGLOB_CRUST_MANTLE,
-                                                                           deltatover2);
-    }
+    // launches kernel
+    update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
+                                                                         accel.cuda,
+                                                                         mp->NGLOB_CRUST_MANTLE,
+                                                                         deltatover2);
   }
 #endif
 
@@ -587,6 +563,18 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
   size_padded = ((int) ceil (((double) mp->NGLOB_INNER_CORE) / ((double) blocksize))) * blocksize;
 
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
+
+  // sets gpu arrays
+  if (*FORWARD_OR_ADJOINT == 1) {
+    veloc = mp->d_veloc_inner_core;
+    accel = mp->d_accel_inner_core;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    veloc = mp->d_b_veloc_inner_core;
+    accel = mp->d_b_accel_inner_core;
+  }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -596,14 +584,8 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     global_work_size[1] = num_blocks_y;
     idx = 0;
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_inner_core.ocl));
-    } else {
-      // backward fields
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_inner_core.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
     clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_INNER_CORE));
     clCheck (clSetKernelArg (mocl.kernels.update_veloc_elastic_kernel, idx++, sizeof (realw), (void *) &deltatover2));
 
@@ -616,18 +598,11 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    if (*FORWARD_OR_ADJOINT == 1) {
-      update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_veloc_inner_core.cuda,
-                                                                           mp->d_accel_inner_core.cuda,
-                                                                           mp->NGLOB_INNER_CORE,
-                                                                           deltatover2);
-    } else {
-      // backward fields
-      update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc_inner_core.cuda,
-                                                                           mp->d_b_accel_inner_core.cuda,
-                                                                           mp->NGLOB_INNER_CORE,
-                                                                           deltatover2);
-    }
+    // launches kernel
+    update_veloc_elastic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
+                                                                         accel.cuda,
+                                                                         mp->NGLOB_INNER_CORE,
+                                                                         deltatover2);
   }
 #endif
 
@@ -659,6 +634,19 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
+  // sets gpu arrays
+  gpu_realw_mem accel,rmass;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    accel = mp->d_accel_outer_core;
+    rmass = mp->d_rmass_outer_core;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    accel = mp->d_b_accel_outer_core;
+    rmass = mp->d_b_rmass_outer_core;
+  }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -671,18 +659,9 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     global_work_size[1] = num_blocks_y;
 
     //multiplies accel with inverse of mass matrix
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_OUTER_CORE));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rmass_outer_core.ocl));
-    } else {
-      // backward fields
-      //debug
-      DEBUG_BACKWARD_UPDATE ();
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_OUTER_CORE));
-      clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_rmass_outer_core.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_OUTER_CORE));
+    clCheck (clSetKernelArg (mocl.kernels.update_accel_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &rmass.ocl));
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.update_accel_acoustic_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
   }
@@ -693,19 +672,9 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
     dim3 threads(blocksize,1,1);
 
     // multiplies accel with inverse of mass matrix
-    if (*FORWARD_OR_ADJOINT == 1) {
-      update_accel_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_accel_outer_core.cuda,
-                                                                            mp->NGLOB_OUTER_CORE,
-                                                                            mp->d_rmass_outer_core.cuda);
-    } else {
-      // backward fields
-      // debug
-      DEBUG_BACKWARD_UPDATE();
-
-      update_accel_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_accel_outer_core.cuda,
-                                                                            mp->NGLOB_OUTER_CORE,
-                                                                            mp->d_b_rmass_outer_core.cuda);
-    }
+    update_accel_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(accel.cuda,
+                                                                          mp->NGLOB_OUTER_CORE,
+                                                                          rmass.cuda);
   }
 #endif
 
@@ -741,6 +710,19 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
+  // sets gpu arrays
+  gpu_realw_mem veloc,accel;
+  if (*FORWARD_OR_ADJOINT == 1) {
+    veloc = mp->d_veloc_outer_core;
+    accel = mp->d_accel_outer_core;
+  } else {
+    //debug
+    DEBUG_BACKWARD_UPDATE ();
+    // for backward/reconstructed fields
+    veloc = mp->d_b_veloc_outer_core;
+    accel = mp->d_b_accel_outer_core;
+  }
+
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
@@ -753,16 +735,8 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     global_work_size[1] = num_blocks_y;
 
     //updates velocity
-    if (*FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_veloc_outer_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
-    } else {
-      // backward fields
-      //debug
-      DEBUG_BACKWARD_UPDATE ();
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_veloc_outer_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.update_veloc_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
-    }
+    clCheck (clSetKernelArg (mocl.kernels.update_veloc_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &veloc.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.update_veloc_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &accel.ocl));
     clCheck (clSetKernelArg (mocl.kernels.update_veloc_acoustic_kernel, idx++, sizeof (int), (void *) &mp->NGLOB_OUTER_CORE));
     clCheck (clSetKernelArg (mocl.kernels.update_veloc_acoustic_kernel, idx++, sizeof (realw), (void *) &deltatover2));
 
@@ -776,21 +750,10 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
     dim3 threads(blocksize,1,1);
 
     // updates velocity
-    if (*FORWARD_OR_ADJOINT == 1) {
-      update_veloc_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_veloc_outer_core.cuda,
-                                                                            mp->d_accel_outer_core.cuda,
-                                                                            mp->NGLOB_OUTER_CORE,
-                                                                            deltatover2);
-    } else {
-      // backward fields
-      // debug
-      DEBUG_BACKWARD_UPDATE();
-
-      update_veloc_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(mp->d_b_veloc_outer_core.cuda,
-                                                                            mp->d_b_accel_outer_core.cuda,
-                                                                            mp->NGLOB_OUTER_CORE,
-                                                                            deltatover2);
-    }
+    update_veloc_acoustic_kernel<<< grid, threads,0,mp->compute_stream>>>(veloc.cuda,
+                                                                          accel.cuda,
+                                                                          mp->NGLOB_OUTER_CORE,
+                                                                          deltatover2);
   }
 #endif
 

@@ -1194,6 +1194,26 @@ void FC_FUNC_ (prepare_oceans_device,
   GPU_ERROR_CHECKING ("prepare_oceans_device");
 }
 
+/*----------------------------------------------------------------------------------------------- */
+// LDDRK
+/*----------------------------------------------------------------------------------------------- */
+
+extern EXTERN_LANG
+void FC_FUNC_ (prepare_lddrk_device,
+               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f) {
+
+  // prepares LDDRK time scheme arrays on GPU
+  TRACE ("prepare_lddrk_device");
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
+  // sets flag
+  mp->use_lddrk = 1;
+
+  exit_on_error ("prepare_lddrk_device not implemented yet");
+
+  GPU_ERROR_CHECKING ("prepare_lddrk_device");
+}
+
 
 
 /*----------------------------------------------------------------------------------------------- */

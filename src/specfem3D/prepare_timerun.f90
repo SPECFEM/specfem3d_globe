@@ -2088,6 +2088,13 @@
 
   endif
 
+  ! prepares LDDRK arrays
+  if (USE_LDDRK) then
+    if (myrank == 0 ) write(IMAIN,*) "  loading LDDRK arrays"
+    stop 'prepare_lddrk_device not implemented yet'
+    call prepare_lddrk_device(Mesh_pointer)
+  endif
+
   ! crust/mantle region
   if (myrank == 0 ) write(IMAIN,*) "  loading crust/mantle region"
 
