@@ -825,9 +825,14 @@
        write(outputname,"('/bin_movie_',i6.6,'.E')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown', &
-            form='unformatted',action='write')
-      if (iframe == 1) open(unit=12,file=trim(OUTPUT_FILES)//'/bin_movie.xy', &
-                          status='unknown',form='unformatted',action='write')
+            form='unformatted',action='write',iostat=ierror)
+      if (ierror /= 0) stop 'Error opening bin_movie file'
+
+      if (iframe == 1) then
+        open(unit=12,file=trim(OUTPUT_FILES)//'/bin_movie.xy',status='unknown', &
+            form='unformatted',action='write',iostat=ierror)
+        if (ierror /= 0) stop 'Error opening bin_movie.xy file'
+      endif
     else
       if (USE_COMPONENT == 1) then
        write(outputname,"('/ascii_movie_',i6.6,'.d')") it
@@ -837,9 +842,14 @@
        write(outputname,"('/ascii_movie_',i6.6,'.E')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown', &
-            action='write')
-      if (iframe == 1) open(unit=12,file=trim(OUTPUT_FILES)//'/ascii_movie.xy', &
-                            status='unknown',action='write')
+            action='write',iostat=ierror)
+      if (ierror /= 0) stop 'Error opening ascii_movie file'
+
+      if (iframe == 1) then
+        open(unit=12,file=trim(OUTPUT_FILES)//'/ascii_movie.xy',status='unknown', &
+            action='write',iostat=ierror)
+        if (ierror /= 0) stop 'Error opening ascii_movie.xy file'
+      endif
     endif
     ! clear number of elements kept
     ispec = 0
@@ -889,13 +899,13 @@
             ! displacement
             disp = sngl(field_display(ieoff))
 
-            ! writes displacement and latitude/longitude to corresponding files
+            ! writes displacement and longitude/latitude to corresponding files
             if (OUTPUT_BINARY) then
               write(11) disp
               if (iframe == 1) write(12) long,lat
             else
               write(11,*) disp
-              if (iframe == 1) write(12,*) long,lat
+              if (iframe == 1) write(12,'(2f18.6)') long,lat
             endif
 
           enddo !i

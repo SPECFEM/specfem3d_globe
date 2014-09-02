@@ -91,8 +91,9 @@ contains
   if (seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
 
     ! writes out seismogram files
-    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-
+    select case( SIMULATION_TYPE )
+    case( 1,3 )
+      ! forward/reconstructed wavefields
       call write_seismograms_to_file()
 
       ! user output
@@ -102,11 +103,11 @@ contains
         write(IMAIN,*)
         call flush_IMAIN()
       endif
-    else if (SIMULATION_TYPE == 2) then
-      if (nrec_local > 0 ) &
-        call write_adj_seismograms(nit_written)
+    case( 2 )
+      ! adjoint wavefield
+      if (nrec_local > 0 ) call write_adj_seismograms(nit_written)
       nit_written = it
-    endif
+    end select
 
     ! resets current seismogram position
     seismo_offset = seismo_offset + seismo_current
