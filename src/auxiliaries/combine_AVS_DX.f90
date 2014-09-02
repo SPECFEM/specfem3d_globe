@@ -441,7 +441,7 @@
 ! get source information for frequency for number of points per lambda
   print *,'reading source duration from the CMTSOLUTION file'
   call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
-              DT,1,min_tshift_cmt_original)
+               DT,1,min_tshift_cmt_original)
 
 ! set global element and point offsets to zero
   iglobpointoffset = 0
@@ -939,7 +939,7 @@
 !   get source information
     print *,'reading position of the source from the CMTSOLUTION file'
     call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
-                DT,1,min_tshift_cmt_original)
+                 DT,1,min_tshift_cmt_original)
 
 !   convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
     call lat_2_geocentric_colat_dble(lat(1),theta)

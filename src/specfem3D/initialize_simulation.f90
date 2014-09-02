@@ -34,7 +34,7 @@
 
   ! local parameters
   integer :: sizeprocs
-  integer :: ios
+  integer :: ier
   character(len=150) :: dummystring
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
@@ -78,8 +78,8 @@
 
   ! open main output file, only written to by process 0
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
-    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write',iostat=ios)
-    if (ios /= 0 ) call exit_MPI(myrank,'Error opening file output_solver.txt for writing output info')
+    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_solver.txt for writing output info')
   endif
 
   if (myrank == 0) then
@@ -228,11 +228,14 @@
 
   ! get total number of receivers
   if (myrank == 0) then
-    open(unit=IIN,file=STATIONS,iostat=ios,status='old',action='read')
+    open(unit=IIN,file=STATIONS,iostat=ier,status='old',action='read')
     nrec = 0
-    do while(ios == 0)
-      read(IIN,"(a)",iostat=ios) dummystring
-      if (ios == 0) nrec = nrec + 1
+    do while(ier == 0)
+      read(IIN,"(a)",iostat=ier) dummystring
+      if (ier == 0) then
+        ! excludes empty lines
+        if (len_trim(dummystring) > 0 ) nrec = nrec + 1
+      endif
     enddo
     close(IIN)
   endif

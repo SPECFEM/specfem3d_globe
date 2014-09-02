@@ -143,8 +143,11 @@
   final_distance_source(:) = HUGEVAL
 
   ! read all the sources
-  if (myrank == 0) call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
-                               DT,NSOURCES,min_tshift_cmt_original)
+  if (myrank == 0) then
+    ! only master process reads in CMTSOLUTION file
+    call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
+                 DT,NSOURCES,min_tshift_cmt_original)
+  endif
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(tshift_cmt,NSOURCES)

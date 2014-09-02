@@ -139,6 +139,7 @@
   logical :: located_target
 
   character(len=2) :: bic
+  character(len=256) :: string
 
   integer :: nrec_SUBSET_current_size,irec_in_this_subset,irec_already_done
   double precision, allocatable, dimension(:) :: x_found_subset,y_found_subset,z_found_subset
@@ -186,27 +187,18 @@
   ! use 10 times the distance as a criterion for source detection
   typical_size = 10. * typical_size
 
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) '****************************'
-    write(IMAIN,*) 'reading receiver information'
-    write(IMAIN,*) '****************************'
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
-
   ! allocate memory for arrays using number of stations
   allocate(epidist(nrec), &
-          ix_initial_guess(nrec), &
-          iy_initial_guess(nrec), &
-          iz_initial_guess(nrec), &
-          x_target(nrec), &
-          y_target(nrec), &
-          z_target(nrec), &
-          x_found(nrec), &
-          y_found(nrec), &
-          z_found(nrec), &
-          final_distance(nrec),stat=ier)
+           ix_initial_guess(nrec), &
+           iy_initial_guess(nrec), &
+           iz_initial_guess(nrec), &
+           x_target(nrec), &
+           y_target(nrec), &
+           z_target(nrec), &
+           x_found(nrec), &
+           y_found(nrec), &
+           z_found(nrec), &
+           final_distance(nrec),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
 
   ! initializes search distances
@@ -214,12 +206,40 @@
 
   ! read that STATIONS file on the master
   if (myrank == 0) then
+    ! user output
+    write(IMAIN,*) 'reading receiver information...'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
+    ! opens station file STATIONS or STATIONS_ADJOINT
     open(unit=IIN,file=trim(rec_filename),status='old',action='read',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening STATIONS file')
 
     ! loop on all the stations to read station information
     do irec = 1,nrec
-      read(IIN,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+
+      ! old line:
+      !read(IIN,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+
+      ! reads in line as string
+      read(IIN,"(a256)",iostat=ier) string
+      if (ier /= 0) then
+        write(IMAIN,*) 'Error reading in station ',irec
+        call exit_MPI(myrank,'Error reading in station in STATIONS file')
+      endif
+
+      ! skips empty lines
+      do while( len_trim(string) == 0 )
+        read(IIN,"(a256)",iostat=ier) string
+        if (ier /= 0) then
+          write(IMAIN,*) 'Error reading in station ',irec
+          call exit_MPI(myrank,'Error reading in station in STATIONS file')
+        endif
+      enddo
+
+      ! reads in station information
+      read(string(1:len_trim(string)),*,iostat=ier) station_name(irec),network_name(irec), &
+                                                    stlat(irec),stlon(irec),stele(irec),stbur(irec)
       if (ier /= 0) then
         write(IMAIN,*) 'Error reading in station ',irec
         call exit_MPI(myrank,'Error reading in station in STATIONS file')
@@ -227,8 +247,8 @@
 
       ! checks latitude
       if (stlat(irec) < -90.d0 .or. stlat(irec) > 90.d0) then
-        print*,'Error station ',trim(station_name(irec)),': latitude ',stlat(irec),' is invalid, please check STATIONS record'
-        close(IIN)
+        write(IMAIN,*) 'Error station ',trim(station_name(irec)),': latitude ',stlat(irec), &
+                       ' is invalid, please check STATIONS record'
         call exit_MPI(myrank,'Error station latitude invalid')
       endif
 
@@ -502,9 +522,8 @@
     write(IMAIN,*) 'Stations sorted by epicentral distance:'
     do i = 1,nrec
       irec = irec_dist_ordered(i)
-      write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
-                       '.',network_name(irec)(1:len_trim(network_name(irec))), &
-                       '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
+      write(IMAIN,'(a,i6,a,a24,a,f12.6,a)') ' Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec)), &
+                                          '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
     enddo
 
     deallocate(irec_dist_ordered)
@@ -823,8 +842,7 @@
   if (myrank == 0) then
 
     ! appends receiver locations to sr.vtk file
-    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk', &
-          position='append',status='old',iostat=ier)
+    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk',position='append',status='old',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
     ! chooses best receivers locations
