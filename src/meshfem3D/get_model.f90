@@ -155,7 +155,8 @@
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
-                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                              ispec,i,j,k)
 
         ! gets the 3-D crustal model
         ! M.A. don't overwrite crust if using CEM.
