@@ -8,7 +8,6 @@ module cem_par
   double precision, parameter :: scale_GPa = (RHOAV / 1000.d0) * &
     ((R_EARTH * scaleval / 1000.d0) ** 2)  
   
-            
   integer, dimension (:), allocatable :: regCode
   integer, parameter                  :: shuOn=1
   integer, parameter                  :: comLvl=9
@@ -67,7 +66,6 @@ subroutine model_cem_broadcast ( myrank )
     call return_populated_arrays (reg3Bc, "vpp", 3)
 
     call synchronize_all ()
-    if (myrank == 0 ) print *, "Finished reading in netcdf."
     
   end if
     
@@ -185,7 +183,7 @@ subroutine write_cem_request ( iregion_code )
   write (fileName,formatString) "DATA/cemRequest/xyz_reg", iregion_code, &
     "_proc", rank
   fileNameTrim = trim(fileName)
-    
+  
   status = nf90_create  (path = fileNameTrim, cmode = NF90_CLOBBER, ncid = ncid)
   
   status = nf90_def_dim (ncid, "x", size (xyzOut(:,1)), x_dimind )

@@ -60,7 +60,7 @@
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
-    OCEANS
+    OCEANS,CEM_REQUEST
 
   use create_MPI_interfaces_par, only: &
     NGLOB1D_RADIAL_MAX,iboolcorner,iboolfaces, &
@@ -184,6 +184,25 @@
     if (NCHUNKS /= 6) call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax,&
                                      njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
                                      NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
+
+    ! Only go into here if we're requesting xyz files for CEM
+#if defined (CEM)
+    if (CEM_REQUEST) then
+
+      call build_global_coordinates (nspec, nglob_theor, iregion_code)
+      call write_cem_request        (iregion_code)
+      call synchronize_all          ( )
+
+      deallocate(ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
+                 ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
+                 xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
+                 xyz1D_leftxi_righteta,xyz1D_rightxi_righteta,iboolleft_xi, &
+                 iboolright_xi,iboolleft_eta,iboolright_eta,nimin,nimax, &
+                 njmin, njmax,nkmin_xi,nkmin_eta,iboolfaces,iboolcorner)
+
+    end if
+#endif
+                                                                                           
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   case( 2 ) !!!!!!!!!!! second pass of the mesher

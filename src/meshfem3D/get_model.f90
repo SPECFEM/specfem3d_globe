@@ -158,7 +158,8 @@
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
         ! gets the 3-D crustal model
-        if (CRUSTAL) then
+        ! M.A. don't overwrite crust if using CEM.
+        if (CRUSTAL .and. .not. CEM_ACCEPT) then
           if (.not. elem_in_mantle) &
             call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
                               vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
