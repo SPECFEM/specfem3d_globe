@@ -38,7 +38,7 @@ NPROC_ETA                       = 2
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = 1D_transversely_isotropic_prem
+MODEL                           = 1D_isotropic_prem
 
 # parameters describing the Earth model
 OCEANS                          = .true.

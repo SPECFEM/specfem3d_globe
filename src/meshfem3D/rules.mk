@@ -230,8 +230,6 @@ endif
 # conditional CEM model
 ifeq ($(CEM),yes)
 meshfem3D_OBJECTS += $O/model_cem.checknetcdf.o
-NETCDF_INCLUDE     = -I$(netcdf_specfem_dir)/include -I$(hdf5_specfem_dir)/include -I$(zlib_specfem_dir)/include
-LDFLAGS           += -L$(netcdf_specfem_dir)/lib -lnetcdff -lnetcdf -L$(hdf5_specfem_dir)/lib -lhdf5_hl -lhdf5 -L$(zlib_specfem_dir)/lib -lz
 endif
 
 

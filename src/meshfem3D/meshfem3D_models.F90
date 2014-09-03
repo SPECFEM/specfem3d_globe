@@ -142,6 +142,13 @@
   if (ANISOTROPIC_3D_MANTLE) &
     call model_aniso_mantle_broadcast(myrank)
 
+  ! Enclose this in an ifdef so we don't link to netcdf
+  ! if we don't need it.
+#if defined (CEM)
+  if (CEM_REQUEST .or. CEM_ACCEPT) &
+    call model_cem_broadcast(myrank)
+#endif
+
   ! crustal model
   if (CRUSTAL) &
     call meshfem3D_crust_broadcast(myrank)
@@ -343,12 +350,15 @@
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
-                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
+                              ispec,i,j,k)
 
   use meshfem3D_models_par
 
+
   implicit none
 
+  intent (in) :: ispec, i, j, k
   integer iregion_code
   double precision r_prem
   double precision rho,dvp
@@ -366,6 +376,9 @@
   double precision :: dvs,drho,vp,vs
   real(kind=4) :: xcolat,xlon,xrad,dvpv,dvph,dvsv,dvsh
   logical :: found_crust,suppress_mantle_extension
+
+  ! CEM needs these to determine iglob
+  integer :: ispec, i, j, k
 
   ! initializes perturbation values
   dvs = ZERO
@@ -594,6 +607,12 @@
       c66 = c44
     endif
   endif ! ANISOTROPIC_3D_MANTLE
+
+#if defined (CEM)
+  if (CEM_ACCEPT) then
+    call request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
+  end if
+#endif
 
 !> Hejun
 ! Assign Attenuation after get 3-D crustal model
