@@ -95,11 +95,15 @@
     ! debug
     !print*,'line ----',string,'----'
 
-    ! read header line with event information
+    ! reads header line with event information (assumes fixed format)
     ! old line: read(string,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource,yr,mo,da,ho,mi,sec
 
-    ! reads in chunks of the first line (which contain numbers)
-    ! to get rid of the first datasource qualifyer string like PDE,PDEQ,.. which can have variable length)
+    ! reads header line with event information (free format)
+    ! gets rid of the first datasource qualifyer string which can have variable length, like:
+    ! "PDE 2014 9 3 .."
+    ! " PDEQ2014 9 3 .."
+    ! " MLI   1971   1   1 .."
+    ! note: globalcmt.org solutions might have missing spaces after datasource qualifier
     !
     ! reads in year,month,day,hour,minutes,seconds
     istart = 1
@@ -167,7 +171,7 @@
 
 
     ! checks time information
-    if (yr <= 0 .or. yr > 10000) then
+    if (yr <= 0 .or. yr > 3000) then
       write(IMAIN,*) 'Error reading year: ',yr,' in source ',isource,'is invalid'
       stop 'Error reading year out of header line in CMTSOLUTION file'
     endif
@@ -243,6 +247,8 @@
     endif
     read(string(7:len_trim(string)),*) depth(isource)
 
+    ! seismic moment tensor
+    ! CMTSOLUTION: components given in dyne-cm
     ! read Mrr
     read(IIN,"(a)",iostat=ier) string
     if (ier /= 0) then
@@ -370,3 +376,96 @@
   end function
 
   end subroutine get_cmt
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function get_cmt_scalar_moment(Mxx,Myy,Mzz,Mxy,Mxz,Myz)
+
+  ! calculates scalar moment (M0)
+
+  use constants,only: RHOAV,R_EARTH,PI,GRAV
+
+  implicit none
+
+  double precision, intent(in) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+  ! local parameters
+  double precision :: scalar_moment,scaleM
+
+  ! scalar moment: 
+  ! see equation (1.4) in P.G. Silver and T.H. Jordan, 1982,
+  ! "Optimal estiamtion of scalar seismic moment", 
+  ! Geophys. J.R. astr. Soc., 70, 755 - 787
+  !
+  ! or see equation (5.91) in Dahlen & Tromp (1998)
+  !
+  ! moment tensor M is a symmetric 3x3 tensor, and has six independent components
+  !
+  ! the euclidean matrix norm is invariant under rotation.
+  ! thus, input can be:
+  !   Mxx,Myy,Mzz,Mxy,Mxz,Myz
+  ! or
+  !   Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
+  !
+  ! euclidean (or Frobenius) norm of a matrix: M0**2 = sum( Mij**2 )
+  scalar_moment = Mxx**2 + Myy**2 + Mzz**2 + 2.d0 * Mxy**2 + 2.d0 * Mxz**2 + 2.d0 * Myz**2
+
+  ! adds 1/2 to be coherent with double couple or point sources
+  scalar_moment = dsqrt(scalar_moment/2.0d0)
+
+  ! note: moment tensor is non-dimensionalized
+  ! 
+  ! re-adds scale factor for the moment tensor
+  ! CMTSOLUTION file values are in dyne.cm
+  ! 1 dyne is 1 gram * 1 cm / (1 second)^2
+  ! 1 Newton is 1 kg * 1 m / (1 second)^2
+  ! thus 1 Newton = 100,000 dynes
+  ! therefore 1 dyne.cm = 1e-7 Newton.m
+  scaleM = 1.d7 * RHOAV * (R_EARTH**5) * PI * GRAV * RHOAV
+
+  ! return value (in dyne-cm)
+  get_cmt_scalar_moment = scalar_moment * scaleM
+
+  end function
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function get_cmt_moment_magnitude(Mxx,Myy,Mzz,Mxy,Mxz,Myz)
+
+  ! calculates scalar moment (M0)
+
+  implicit none
+
+  double precision, intent(in) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
+  ! local parameters
+  double precision :: M0,Mw
+  double precision,external :: get_cmt_scalar_moment
+
+  ! scalar moment
+  M0 = get_cmt_scalar_moment(Mxx,Myy,Mzz,Mxy,Mxz,Myz)
+
+  ! moment magnitude by Hanks & Kanamori, 1979
+  ! Mw = 2/3 log( M0 ) - 10.7       (dyne-cm)
+  !
+  ! alternative forms:
+  ! Mw = 2/3 ( log( M0 ) - 16.1 )   (N-m) "moment magnitude" by Hanks & Kanamori(1979) or "energy magnitude" by Kanamori (1977)
+  !
+  ! Aki & Richards ("Quantitative Seismology",2002):
+  ! Mw = 2/3 ( log( M0 ) - 9.1 )    (N-m)
+  !
+  ! conversion: dyne-cm = 10**-7 N-m
+  !
+  ! we follow here the USGS magnitude policy:
+  ! "All USGS statements of moment magnitude should use M = (log M0)/1.5-10.7
+  !  for converting from scalar moment M0 to moment magnitude. (..)"
+  ! see: http://earthquake.usgs.gov/aboutus/docs/020204mag_policy.php
+
+  Mw = 2.d0/3.d0 * log10( M0 ) - 10.7
+
+  ! return value
+  get_cmt_moment_magnitude = Mw
+
+  end function

@@ -124,6 +124,9 @@
   integer :: imin,imax,jmin,jmax,kmin,kmax
   double precision :: f0,t0_ricker
 
+  double precision, external :: get_cmt_scalar_moment
+  double precision, external :: get_cmt_moment_magnitude
+
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
 
@@ -665,6 +668,13 @@
           write(IMAIN,*) ' half duration: ',hdur(isource),' seconds'
         endif
         write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
+        write(IMAIN,*)
+        write(IMAIN,*) 'magnitude of the source:'
+        write(IMAIN,*) '     scalar moment M0 = ', &
+          get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource)),' dyne-cm'
+        write(IMAIN,*) '  moment magnitude Mw = ', &
+          get_cmt_moment_magnitude(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
+        write(IMAIN,*)
 
         ! writes out actual source position to VTK file
         write(IOUT_VTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
@@ -896,6 +906,7 @@
 
   double precision, external :: comp_source_time_function,comp_source_spectrum
   double precision, external :: comp_source_time_function_rickr
+  double precision, external :: get_cmt_scalar_moment
 
   character(len=150) :: plot_file
 
@@ -925,9 +936,8 @@
         status='unknown',iostat=ier)
   if (ier /= 0 ) call exit_mpi(0,'Error opening plot_source_time_function file')
 
-  scalar_moment = Mxx(isource)**2 + Myy(isource)**2 + Mzz(isource)**2 &
-                + Mxy(isource)**2 + Mxz(isource)**2 + Myz(isource)**2
-  scalar_moment = dsqrt(scalar_moment/2.0d0)
+  ! calculates scalar moment M0
+  scalar_moment = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
 
   ! define t0 as the earliest start time
   ! note: this calculation here is only used for outputting the plot_source_time_function file
