@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -107,7 +107,7 @@ __kernel void compute_coupling_ocean_kernel(__global float * accel_crust_mantle,
   float additional_term_y;\n\
   float additional_term_z;\n\
   ipoin = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
-  if(ipoin < npoin_ocean_load){\n\
+  if (ipoin < npoin_ocean_load) {\n\
     iglob = ibool_ocean_load[ipoin - (0)] - (1);\n\
     nx = normal_ocean_load[INDEX2(NDIM, 0, ipoin) - (0)];\n\
     ny = normal_ocean_load[INDEX2(NDIM, 1, ipoin) - (0)];\n\

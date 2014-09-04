@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -184,11 +184,11 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
   J = (tx - ((K) * (NGLL2))) / (NGLLX);\n\
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));\n\
   active = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);\n\
-  if(active){\n\
+  if (active) {\n\
 #ifdef USE_MESH_COLORING_GPU\n\
     working_element = bx;\n\
 #else\n\
-    if(use_mesh_coloring_gpu){\n\
+    if (use_mesh_coloring_gpu) {\n\
       working_element = bx;\n\
     } else {\n\
       working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1)) - (0)] - (1);\n\
@@ -201,7 +201,7 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
     s_dummy_loc[tx - (0)] = d_potential[iglob - (0)];\n\
 #endif\n\
   }\n\
-  if(tx < NGLL2){\n\
+  if (tx < NGLL2) {\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
     sh_hprime_xx[tx - (0)] = as_float(read_imageui(d_hprime_xx_oc_tex, sampler_d_hprime_xx_oc_tex, int2(tx,0)).x);\n\
     sh_hprimewgll_xx[tx - (0)] = as_float(read_imageui(d_hprimewgll_xx_oc_tex, sampler_d_hprimewgll_xx_oc_tex, int2(tx,0)).x);\n\
@@ -211,7 +211,7 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
 #endif\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
-  if(active){\n\
+  if (active) {\n\
     temp1l = 0.0f;\n\
     temp2l = 0.0f;\n\
     temp3l = 0.0f;\n\
@@ -232,7 +232,7 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
     temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(4) * (NGLLX) + J - (0)]);\n\
     temp3l = temp3l + (s_dummy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(4) * (NGLLX) + K - (0)]);\n\
 #else\n\
-    for(l=0; l<=NGLLX - (1); l+=1){\n\
+    for (l = 0; l <= NGLLX - (1); l += 1) {\n\
       temp1l = temp1l + (s_dummy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (sh_hprime_xx[(l) * (NGLLX) + I - (0)]);\n\
       temp2l = temp2l + (s_dummy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(l) * (NGLLX) + J - (0)]);\n\
       temp3l = temp3l + (s_dummy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprime_xx[(l) * (NGLLX) + K - (0)]);\n\
@@ -252,7 +252,7 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
     dpotentialdxl = (xixl) * (temp1l) + (etaxl) * (temp2l) + (gammaxl) * (temp3l);\n\
     dpotentialdyl = (xiyl) * (temp1l) + (etayl) * (temp2l) + (gammayl) * (temp3l);\n\
     dpotentialdzl = (xizl) * (temp1l) + (etazl) * (temp2l) + (gammazl) * (temp3l);\n\
-    if(ROTATION){\n\
+    if (ROTATION) {\n\
       compute_element_oc_rotation(tx, working_element, time, two_omega_earth, deltat, d_A_array_rotation, d_B_array_rotation, dpotentialdxl, dpotentialdyl,  &dpotentialdx_with_rot,  &dpotentialdy_with_rot);\n\
     } else {\n\
       dpotentialdx_with_rot = dpotentialdxl;\n\
@@ -264,7 +264,7 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
     sin_theta = sincos(theta,  &cos_theta);\n\
     sin_phi = sincos(phi,  &cos_phi);\n\
     int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);\n\
-    if( ! GRAVITY){\n\
+    if ( ! GRAVITY) {\n\
       grad_x_ln_rho = ((sin_theta) * (cos_phi)) * (d_d_ln_density_dr_table[int_radius - (0)]);\n\
       grad_y_ln_rho = ((sin_theta) * (sin_phi)) * (d_d_ln_density_dr_table[int_radius - (0)]);\n\
       grad_z_ln_rho = (cos_theta) * (d_d_ln_density_dr_table[int_radius - (0)]);\n\
@@ -282,7 +282,7 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
     s_temp3[tx - (0)] = (jacobianl) * ((gammaxl) * (dpotentialdx_with_rot) + (gammayl) * (dpotentialdy_with_rot) + (gammazl) * (dpotentialdzl));\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
-  if(active){\n\
+  if (active) {\n\
     temp1l = 0.0f;\n\
     temp2l = 0.0f;\n\
     temp3l = 0.0f;\n\
@@ -303,14 +303,14 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
     temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(J) * (NGLLX) + 4 - (0)]);\n\
     temp3l = temp3l + (s_temp3[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(K) * (NGLLX) + 4 - (0)]);\n\
 #else\n\
-    for(l=0; l<=NGLLX - (1); l+=1){\n\
+    for (l = 0; l <= NGLLX - (1); l += 1) {\n\
       temp1l = temp1l + (s_temp1[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (sh_hprimewgll_xx[(I) * (NGLLX) + l - (0)]);\n\
       temp2l = temp2l + (s_temp2[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(J) * (NGLLX) + l - (0)]);\n\
       temp3l = temp3l + (s_temp3[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (sh_hprimewgll_xx[(K) * (NGLLX) + l - (0)]);\n\
     }\n\
 #endif\n\
     sum_terms =  -((wgllwgll_yz[(K) * (NGLLX) + J - (0)]) * (temp1l) + (wgllwgll_xz[(K) * (NGLLX) + I - (0)]) * (temp2l) + (wgllwgll_xy[(J) * (NGLLX) + I - (0)]) * (temp3l));\n\
-    if(GRAVITY){\n\
+    if (GRAVITY) {\n\
       sum_terms = sum_terms + gravity_term;\n\
     }\n\
 #ifdef USE_MESH_COLORING_GPU\n\
@@ -320,8 +320,8 @@ __kernel void outer_core_impl_kernel_forward(const int nb_blocks_to_compute, con
     d_potential_dot_dot[iglob - (0)] = d_potential_dot_dot[iglob - (0)] + sum_terms;\n\
 #endif\n\
 #else\n\
-    if(use_mesh_coloring_gpu){\n\
-      if(NSPEC_OUTER_CORE > 1000){\n\
+    if (use_mesh_coloring_gpu) {\n\
+      if (NSPEC_OUTER_CORE > 1000) {\n\
 #ifdef USE_TEXTURES_FIELDS\n\
         d_potential_dot_dot[iglob - (0)] = as_float(read_imageui(d_accel_oc_tex, sampler_d_accel_oc_tex, int2(iglob,0)).x) + sum_terms;\n\
 #else\n\

@@ -94,7 +94,7 @@ module BOAST
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
       sub_compute_gradient_kernel = compute_gradient_kernel(n_gllx, n_gll2, n_gll3, n_gll3_padded)
       print sub_compute_gradient_kernel
-      decl p
+      open p
         decl ispec            = Int("ispec")
         decl ijk              = Int("ijk")
         decl ijk_ispec        = Int("ijk_ispec")

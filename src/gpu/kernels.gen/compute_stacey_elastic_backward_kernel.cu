@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -94,62 +94,62 @@ __global__ void compute_stacey_elastic_backward_kernel(float * b_accel, const fl
   int ispec;
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
-  if(iface < num_abs_boundary_faces){
+  if (iface < num_abs_boundary_faces) {
     ispec = abs_boundary_ispec[iface - (0)] - (1);
-    switch(interface_type){
+    switch (interface_type) {
       case 0 :
-        if(nkmin_xi[INDEX2(2, 0, iface) - (0)] == 0 || njmin[INDEX2(2, 0, iface) - (0)] == 0){
+        if (nkmin_xi[INDEX2(2, 0, iface) - (0)] == 0 || njmin[INDEX2(2, 0, iface) - (0)] == 0) {
            return ;
         }
         i = 0;
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if(k < nkmin_xi[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){
+        if (k < nkmin_xi[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)) {
            return ;
         }
-        if(j < njmin[INDEX2(2, 0, iface) - (0)] - (1) || j > NGLLX - (1)){
+        if (j < njmin[INDEX2(2, 0, iface) - (0)] - (1) || j > NGLLX - (1)) {
            return ;
         }
         break;
       case 1 :
-        if(nkmin_xi[INDEX2(2, 1, iface) - (0)] == 0 || njmin[INDEX2(2, 1, iface) - (0)] == 0){
+        if (nkmin_xi[INDEX2(2, 1, iface) - (0)] == 0 || njmin[INDEX2(2, 1, iface) - (0)] == 0) {
            return ;
         }
         i = NGLLX - (1);
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if(k < nkmin_xi[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){
+        if (k < nkmin_xi[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)) {
            return ;
         }
-        if(j < njmin[INDEX2(2, 1, iface) - (0)] - (1) || j > njmax[INDEX2(2, 1, iface) - (0)] - (1)){
+        if (j < njmin[INDEX2(2, 1, iface) - (0)] - (1) || j > njmax[INDEX2(2, 1, iface) - (0)] - (1)) {
            return ;
         }
         break;
       case 2 :
-        if(nkmin_eta[INDEX2(2, 0, iface) - (0)] == 0 || nimin[INDEX2(2, 0, iface) - (0)] == 0){
+        if (nkmin_eta[INDEX2(2, 0, iface) - (0)] == 0 || nimin[INDEX2(2, 0, iface) - (0)] == 0) {
            return ;
         }
         j = 0;
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if(k < nkmin_eta[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)){
+        if (k < nkmin_eta[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)) {
            return ;
         }
-        if(i < nimin[INDEX2(2, 0, iface) - (0)] - (1) || i > nimax[INDEX2(2, 0, iface) - (0)] - (1)){
+        if (i < nimin[INDEX2(2, 0, iface) - (0)] - (1) || i > nimax[INDEX2(2, 0, iface) - (0)] - (1)) {
            return ;
         }
         break;
       case 3 :
-        if(nkmin_eta[INDEX2(2, 1, iface) - (0)] == 0 || nimin[INDEX2(2, 1, iface) - (0)] == 0){
+        if (nkmin_eta[INDEX2(2, 1, iface) - (0)] == 0 || nimin[INDEX2(2, 1, iface) - (0)] == 0) {
            return ;
         }
         j = NGLLX - (1);
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if(k < nkmin_eta[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)){
+        if (k < nkmin_eta[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)) {
            return ;
         }
-        if(i < nimin[INDEX2(2, 1, iface) - (0)] - (1) || i > nimax[INDEX2(2, 1, iface) - (0)] - (1)){
+        if (i < nimin[INDEX2(2, 1, iface) - (0)] - (1) || i > nimax[INDEX2(2, 1, iface) - (0)] - (1)) {
            return ;
         }
         break;

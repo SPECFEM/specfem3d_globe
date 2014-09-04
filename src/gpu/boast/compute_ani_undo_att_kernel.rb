@@ -58,7 +58,7 @@ module BOAST
         print sub_compute_strain_product
       end
 
-      decl p
+      open p
 
       decl ispec = Int("ispec")
       decl ijk_ispec = Int("ijk_ispec")

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -93,7 +93,7 @@ __global__ void compute_add_sources_adjoint_kernel(float * accel, const int nrec
   int j;
   int k;
   irec_local = blockIdx.x + (gridDim.x) * (blockIdx.y);
-  if(irec_local < nadj_rec_local){
+  if (irec_local < nadj_rec_local) {
     irec = pre_computed_irec[irec_local - (0)];
     ispec = ispec_selected_rec[irec - (0)] - (1);
     i = threadIdx.x;

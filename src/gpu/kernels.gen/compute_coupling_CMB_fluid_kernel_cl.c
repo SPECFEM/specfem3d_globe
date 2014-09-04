@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -113,7 +113,7 @@ __kernel void compute_coupling_CMB_fluid_kernel(const __global float * displ_cru
   i = get_local_id(0);\n\
   j = get_local_id(1);\n\
   iface = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
-  if(iface < NSPEC2D_BOTTOM_CM){\n\
+  if (iface < NSPEC2D_BOTTOM_CM) {\n\
     ispec = ibelm_bottom_crust_mantle[iface - (0)] - (1);\n\
     ispec_selected = ibelm_top_outer_core[iface - (0)] - (1);\n\
     k = 0;\n\
@@ -124,7 +124,7 @@ __kernel void compute_coupling_CMB_fluid_kernel(const __global float * displ_cru
     nz = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - (0)];\n\
     weight = (jacobian2D_top_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - (0)]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - (0)]);\n\
     iglob_cm = ibool_crust_mantle[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);\n\
-    if(GRAVITY){\n\
+    if (GRAVITY) {\n\
       pressure = (RHO_TOP_OC) * ((minus_g_cmb) * ((displ_crust_mantle[(iglob_cm) * (3) - (0)]) * (nx) + (displ_crust_mantle[(iglob_cm) * (3) + 1 - (0)]) * (ny) + (displ_crust_mantle[(iglob_cm) * (3) + 2 - (0)]) * (nz)) - (accel_outer_core[iglob_oc - (0)]));\n\
     } else {\n\
       pressure = ( -(RHO_TOP_OC)) * (accel_outer_core[iglob_oc - (0)]);\n\
