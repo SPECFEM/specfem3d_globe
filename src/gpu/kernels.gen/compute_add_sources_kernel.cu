@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -96,8 +96,8 @@ __global__ void compute_add_sources_kernel(float * accel, const int * ibool, con
   j = threadIdx.y;
   k = threadIdx.z;
   isource = blockIdx.x + (gridDim.x) * (blockIdx.y);
-  if(isource < NSOURCES){
-    if(myrank == islice_selected_source[isource - (0)]){
+  if (isource < NSOURCES) {
+    if (myrank == islice_selected_source[isource - (0)]) {
       ispec = ispec_selected_source[isource - (0)] - (1);
       stf = stf_pre_compute[isource - (0)];
       iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);

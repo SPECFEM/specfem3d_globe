@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -89,7 +89,7 @@ __global__ void noise_transfer_surface_to_host_kernel(const int * ibelm_top, con
   int iface;
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
-  if(iface < nspec_top){
+  if (iface < nspec_top) {
     int i;
     int j;
     int k;

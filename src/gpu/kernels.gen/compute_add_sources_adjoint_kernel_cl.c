@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -104,7 +104,7 @@ __kernel void compute_add_sources_adjoint_kernel(__global float * accel, const i
   int j;\n\
   int k;\n\
   irec_local = get_group_id(0) + (get_num_groups(0)) * (get_group_id(1));\n\
-  if(irec_local < nadj_rec_local){\n\
+  if (irec_local < nadj_rec_local) {\n\
     irec = pre_computed_irec[irec_local - (0)];\n\
     ispec = ispec_selected_rec[irec - (0)] - (1);\n\
     i = get_local_id(0);\n\

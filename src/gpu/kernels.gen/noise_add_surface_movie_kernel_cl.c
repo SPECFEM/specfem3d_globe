@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -100,7 +100,7 @@ __kernel void noise_add_surface_movie_kernel(__global float * accel, const __glo
   int iface;\n\
   igll = get_local_id(0);\n\
   iface = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
-  if(iface < nspec_top){\n\
+  if (iface < nspec_top) {\n\
     int i;\n\
     int j;\n\
     int k;\n\

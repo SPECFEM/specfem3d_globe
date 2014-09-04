@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -114,15 +114,15 @@ static void compute_strain_product(float * prod, const float eps_trace_over_3, c
   b_eps[4 - (0)] = b_epsdev[3 - (0)];\n\
   b_eps[5 - (0)] = b_epsdev[2 - (0)];\n\
   p = 0;\n\
-  for(i=0; i<=5; i+=1){\n\
-    for(j=0; j<=5; j+=1){\n\
+  for (i = 0; i <= 5; i += 1) {\n\
+    for (j = 0; j <= 5; j += 1) {\n\
       prod[p - (0)] = (eps[i - (0)]) * (b_eps[j - (0)]);\n\
-      if(j > i){\n\
+      if (j > i) {\n\
         prod[p - (0)] = prod[p - (0)] + (eps[j - (0)]) * (b_eps[i - (0)]);\n\
-        if(j > 2 && i < 3){\n\
+        if (j > 2 && i < 3) {\n\
           prod[p - (0)] = (prod[p - (0)]) * (2.0f);\n\
         }\n\
-        if(i > 2){\n\
+        if (i > 2) {\n\
           prod[p - (0)] = (prod[p - (0)]) * (4.0f);\n\
         }\n\
         p = p + 1;\n\
@@ -140,7 +140,7 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
   float epsdev[5];\n\
   float b_epsdev[5];\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
-  if(ispec < NSPEC){\n\
+  if (ispec < NSPEC) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
     epsdev[0 - (0)] = epsilondev_xx[ijk_ispec - (0)];\n\
     epsdev[1 - (0)] = epsilondev_yy[ijk_ispec - (0)];\n\
@@ -155,7 +155,7 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - (0)];\n\
     b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec - (0)];\n\
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);\n\
-    for(i=0; i<=20; i+=1){\n\
+    for (i = 0; i <= 20; i += 1) {\n\
       cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] = cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] + (deltat) * (prod[i - (0)]);\n\
     }\n\
   }\n\

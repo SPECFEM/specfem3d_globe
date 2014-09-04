@@ -20,7 +20,7 @@ module BOAST
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ndim => n_dim )
-      decl p
+      open p
       decl ipoin = Int("ipoin")
       decl iglob = Int("iglob")
 

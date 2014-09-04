@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -96,16 +96,16 @@ __global__ void get_maximum_vector_kernel(const float * array, const int size, f
   sdata[tid - (0)] = (i < size ? sqrt((array[(i) * (3) + 0 - (0)]) * (array[(i) * (3) + 0 - (0)]) + (array[(i) * (3) + 1 - (0)]) * (array[(i) * (3) + 1 - (0)]) + (array[(i) * (3) + 2 - (0)]) * (array[(i) * (3) + 2 - (0)])) : 0.0f);
   __syncthreads();
   s = (blockDim.x) / (2);
-  while(s > 0){
-    if(tid < s){
-      if(sdata[tid - (0)] < sdata[tid + s - (0)]){
+  while (s > 0) {
+    if (tid < s) {
+      if (sdata[tid - (0)] < sdata[tid + s - (0)]) {
         sdata[tid - (0)] = sdata[tid + s - (0)];
       }
     }
     s = s >> 1;
     __syncthreads();
   }
-  if(tid == 0){
+  if (tid == 0) {
     d_max[bx - (0)] = sdata[0 - (0)];
   }
 }

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -105,7 +105,7 @@ __global__ void compute_coupling_fluid_ICB_kernel(const float * displ_inner_core
   i = threadIdx.x;
   j = threadIdx.y;
   iface = blockIdx.x + (gridDim.x) * (blockIdx.y);
-  if(iface < NSPEC2D_BOTTOM_OC){
+  if (iface < NSPEC2D_BOTTOM_OC) {
     ispec = ibelm_bottom_outer_core[iface - (0)] - (1);
     ispec_selected = ibelm_top_inner_core[iface - (0)] - (1);
     k = 0;

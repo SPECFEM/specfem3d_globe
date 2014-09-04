@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -89,7 +89,7 @@ __global__ void compute_hess_kernel(const int * ibool, const float * accel, cons
   int ijk_ispec;
   int iglob;
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
-  if(ispec < NSPEC_AB){
+  if (ispec < NSPEC_AB) {
     ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
     iglob = ibool[ijk_ispec - (0)] - (1);
     hess_kl[ijk_ispec - (0)] = hess_kl[ijk_ispec - (0)] + (deltat) * ((accel[0 - (0) + (iglob - (0)) * (3)]) * (b_accel[0 - (0) + (iglob - (0)) * (3)]) + (accel[1 - (0) + (iglob - (0)) * (3)]) * (b_accel[1 - (0) + (iglob - (0)) * (3)]) + (accel[2 - (0) + (iglob - (0)) * (3)]) * (b_accel[2 - (0) + (iglob - (0)) * (3)]));

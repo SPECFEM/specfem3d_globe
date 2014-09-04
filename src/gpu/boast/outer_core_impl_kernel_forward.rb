@@ -142,7 +142,7 @@ module BOAST
 #      end
       sub_kernel =  compute_element_oc_rotation(n_gll3)
       print sub_kernel
-      decl p
+      open p
         if get_lang == CL then
           @@output.puts "#ifdef #{use_textures_fields}"
             decl d_displ_oc_tex.sampler

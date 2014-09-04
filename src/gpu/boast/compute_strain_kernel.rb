@@ -40,7 +40,7 @@ module BOAST
       sub_compute_element_strain_undo_att = compute_element_strain_undo_att(n_gllx, n_gll2, n_gll3, n_gll3_padded )
       print sub_compute_element_strain_undo_att
 
-      decl p
+      open p
 
       decl ispec = Int("ispec")
       decl ijk_ispec = Int("ijk_ispec")
