@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -114,7 +114,7 @@ static __device__ void compute_gradient_kernel(const int ijk, const int ispec, c
   temp1l = 0.0f;
   temp2l = 0.0f;
   temp3l = 0.0f;
-  for(l=0; l<=NGLLX - (1); l+=1){
+  for (l = 0; l <= NGLLX - (1); l += 1) {
     hp1 = hprime_xx[(l) * (NGLLX) + I - (0)];
     hp2 = hprime_xx[(l) * (NGLLX) + J - (0)];
     hp3 = hprime_xx[(l) * (NGLLX) + K - (0)];
@@ -154,7 +154,7 @@ __global__ void compute_acoustic_kernel(const int * ibool, const float * rhostor
   __shared__ float scalar_field_displ[NGLL3 + 0 - (1) - (0) + 1];
   __shared__ float scalar_field_accel[NGLL3 + 0 - (1) - (0) + 1];
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
-  if(ispec < NSPEC){
+  if (ispec < NSPEC) {
     ijk = threadIdx.x;
     ijk_ispec = ijk + (NGLL3) * (ispec);
     ijk_ispec_padded = ijk + (NGLL3_PADDED) * (ispec);

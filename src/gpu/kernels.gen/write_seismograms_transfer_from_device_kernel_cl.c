@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -103,7 +103,7 @@ __kernel void write_seismograms_transfer_from_device_kernel(const __global int *
   int blockID;\n\
   blockID = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   tx = get_local_id(0);\n\
-  if(blockID < nrec_local){\n\
+  if (blockID < nrec_local) {\n\
     irec = number_receiver_global[blockID - (0)] - (1);\n\
     ispec = ispec_selected_rec[irec - (0)] - (1);\n\
     iglob = ibool[tx + (NGLL3) * (ispec) - (0)] - (1);\n\

@@ -30,7 +30,7 @@ module BOAST
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CUDA or get_lang == CL) then
       make_specfem3d_header
-      decl p
+      open p
       id =         Int("id")
       iglob =      Int("iglob")
       iloc =       Int("iloc")

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -135,7 +135,7 @@ static __device__ void compute_element_strain_undo_att(const int ispec, const in
   tempz1l = 0.0f;
   tempz2l = 0.0f;
   tempz3l = 0.0f;
-  for(l=0; l<=NGLLX - (1); l+=1){
+  for (l = 0; l <= NGLLX - (1); l += 1) {
     fac1 = sh_hprime_xx[(l) * (NGLLX) + I - (0)];
     tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);
     tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);
@@ -190,19 +190,19 @@ __global__ void compute_strain_kernel(const float * d_displ, const float * d_vel
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
   ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
   tx = threadIdx.x;
-  if(tx < NGLL2){
+  if (tx < NGLL2) {
     sh_hprime_xx[tx - (0)] = d_hprime_xx[tx - (0)];
   }
-  if(ispec < NSPEC){
+  if (ispec < NSPEC) {
     iglob = d_ibool[ijk_ispec - (0)] - (1);
     s_dummyx_loc[tx - (0)] = d_displ[0 - (0) + (iglob - (0)) * (3)] + (deltat) * (d_veloc[0 - (0) + (iglob - (0)) * (3)]);
     s_dummyy_loc[tx - (0)] = d_displ[1 - (0) + (iglob - (0)) * (3)] + (deltat) * (d_veloc[1 - (0) + (iglob - (0)) * (3)]);
     s_dummyz_loc[tx - (0)] = d_displ[2 - (0) + (iglob - (0)) * (3)] + (deltat) * (d_veloc[2 - (0) + (iglob - (0)) * (3)]);
   }
   __syncthreads();
-  if(ispec < NSPEC){
+  if (ispec < NSPEC) {
     compute_element_strain_undo_att(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, epsdev,  &eps_trace_over_3);
-    if(NSPEC_STRAIN_ONLY == 1){
+    if (NSPEC_STRAIN_ONLY == 1) {
       epsilon_trace_over_3[tx - (0)] = eps_trace_over_3;
     } else {
       epsilon_trace_over_3[ijk_ispec - (0)] = eps_trace_over_3;

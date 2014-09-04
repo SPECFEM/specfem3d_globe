@@ -597,7 +597,7 @@ module BOAST
         sub_compute_element_cm_tiso = compute_element_cm_tiso
         print sub_compute_element_cm_tiso
       end
-      decl p
+      open p
         if get_lang == CL then
           @@output.puts "#ifdef #{use_textures_fields}"
             decl d_displ_tex.sampler
