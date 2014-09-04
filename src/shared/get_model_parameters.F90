@@ -381,6 +381,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
+#if defined (CEM)
   else if (MODEL_ROOT == 'CEM_REQUEST') then
     CEM_REQUEST         = .true.
     TRANSVERSE_ISOTROPY = .true.
@@ -388,6 +389,7 @@
   else if (MODEL_ROOT == 'CEM_ACCEPT') then
     CEM_ACCEPT          = .true.
     TRANSVERSE_ISOTROPY = .true.
+#endif
 
   else if (MODEL_ROOT == 'PPM') then
     ! superimposed based on isotropic-prem
@@ -428,7 +430,7 @@
   else
     print*
     print*,'Error model: ',trim(MODEL)
-    stop 'model not implemented yet, edit get_model_parameters.f90 and recompile'
+    stop 'model not implemented yet, edit get_model_parameters.f90, or ensure you have run ./configure correctly, and recompile'
   endif
 
   ! suppress the crustal layers
