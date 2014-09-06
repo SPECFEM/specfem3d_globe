@@ -552,7 +552,7 @@
 !
 !  call define_adios_global_1d_double_generic(adios_group, group_size_inc,full_name, local_dim)
 !
-!  ! to avoid compilation warnings
+!  ! to avoid compiler warnings
 !  idummy = size(var)
 !
 !end subroutine define_adios_global_1d_double_1d

@@ -181,7 +181,7 @@
   if ( EXTERNAL_SOURCE_TIME_FUNCTION ) then
     hdur(:) = 0._CUSTOM_REAL
     t0      = 0.d0
-  end if
+  endif
 
   ! point force sources will start depending on the frequency given by hdur
   if (USE_FORCE_POINT_SOURCE) then

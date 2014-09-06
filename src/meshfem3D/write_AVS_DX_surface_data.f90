@@ -219,8 +219,11 @@
                        if (ELLIPTICITY) then
                           call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi_dummy)
                           cost=dcos(theta)
+! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
                           p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+! get ellipticity using spline evaluation
                           call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+! this is eq (14.4) in Dahlen and Tromp (1998)
                           factor=ONE-(TWO/3.0d0)*ell*p20
                           r=r/factor
                        endif

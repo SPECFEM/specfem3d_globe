@@ -393,8 +393,11 @@
     ! ellipticity
     if (ELLIPTICITY_VAL) then
       cost=cos(theta)
+! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
       p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+! get ellipticity using spline evaluation
       call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
+! this is eq (14.4) in Dahlen and Tromp (1998)
       r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
     endif
 
