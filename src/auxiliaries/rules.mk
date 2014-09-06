@@ -101,18 +101,17 @@ ${E}/xcombine_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combi
 ${E}/xcombine_paraview_strain_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_paraview_strain_data.auxsolver.o $O/binary_c_io.cc.o
 	${FCCOMPILE_CHECK} -o $@ $+
 
-## DK DK comments out all the ${E}/xcombine_vol_data* for now because they depend on $O/combine_vol_data_shared.aux.o, which contained duplicated code and which I have thus removed
-#${E}/xcombine_vol_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/binary_c_io.cc.o $O/combine_vol_data_shared.aux.o
-#	${FCCOMPILE_CHECK} -o $@ $+
+${E}/xcombine_vol_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/binary_c_io.cc.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
-#${E}/xcombine_vol_data_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios.o $O/binary_c_io.cc.o $O/combine_vol_data_shared.aux.o $O/parallel.sharedmpi.o
-#	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+${E}/xcombine_vol_data_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios.o $O/binary_c_io.cc.o $O/parallel.sharedmpi.o
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
-#${E}/xcombine_vol_data_vtk_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios_vtk.o $O/binary_c_io.cc.o $O/combine_vol_data_shared.aux.o $O/parallel.sharedmpi.o
-#	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+${E}/xcombine_vol_data_vtk_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios_vtk.o $O/binary_c_io.cc.o $O/parallel.sharedmpi.o
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
-#${E}/xcombine_vol_data_vtk: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver_vtk.o $O/binary_c_io.cc.o $O/combine_vol_data_shared.aux.o
-#	${FCCOMPILE_CHECK} -o $@ $+
+${E}/xcombine_vol_data_vtk: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver_vtk.o $O/binary_c_io.cc.o
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ${E}/xcombine_surf_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_surf_data.auxsolver.o $O/binary_c_io.cc.o
 	${FCCOMPILE_CHECK} -o $@ $+

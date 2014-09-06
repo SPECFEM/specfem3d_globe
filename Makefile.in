@@ -225,25 +225,21 @@ DEFAULT = \
 	xcreate_header_file \
 	xmeshfem3D \
 	xspecfem3D \
-	xcombine_surf_data \
 	xcombine_AVS_DX \
+	xcombine_surf_data \
+	xcombine_vol_data \
+	xcombine_vol_data_vtk \
 	xconvolve_source_timefunction \
 	xcreate_movie_AVS_DX \
 	xcreate_movie_GMT_global \
 	$(EMPTY_MACRO)
-## DK DK comments out all the xcombine_vol_data* for now because they depend on $O/combine_vol_data_shared.aux.o, which contained duplicated code and which I have thus removed
-## DK DK put this back in the above list of default targets if you want to compile them again,
-## DK DK when adding comments I need to move them outside of the list to avoid getting an error from "make"
-#	xcombine_vol_data \
-#	xcombine_vol_data_vtk \
 
-## DK DK comments out all the xcombine_vol_data* for now because they depend on $O/combine_vol_data_shared.aux.o, which contained duplicated code and which I have thus removed
-#ifeq ($(ADIOS), yes)
-#DEFAULT += 	\
-#	xcombine_vol_data_adios \
-#	xcombine_vol_data_vtk_adios \
-#	$(EMPTY_MACRO)
-#endif
+ifeq ($(ADIOS), yes)
+DEFAULT += 	\
+	xcombine_vol_data_adios \
+	xcombine_vol_data_vtk_adios \
+	$(EMPTY_MACRO)
+endif
 
 all: default
 
