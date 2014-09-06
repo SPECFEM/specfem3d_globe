@@ -200,9 +200,9 @@
                  iboolright_xi,iboolleft_eta,iboolright_eta,nimin,nimax, &
                  njmin, njmax,nkmin_xi,nkmin_eta,iboolfaces,iboolcorner)
 
-    end if
+    endif
 #endif
-                                                                                           
+
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   case( 2 ) !!!!!!!!!!! second pass of the mesher

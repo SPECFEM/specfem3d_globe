@@ -148,7 +148,7 @@
   ! If we're using external stf, don't worry about hdur.
   if (EXTERNAL_SOURCE_TIME_FUNCTION) then
     hdur(:) = 0.d0
-  end if
+  endif
 
   close(1)
 

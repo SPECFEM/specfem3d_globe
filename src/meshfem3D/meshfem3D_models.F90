@@ -344,21 +344,26 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp,&
                               vpv,vph,vsv,vsh,eta_aniso, &
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
-                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
-                              ispec,i,j,k)
+                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
+#if defined (CEM)
+                              ,ispec,i,j,k
+#endif
+                              )
 
   use meshfem3D_models_par
 
 
   implicit none
 
-  intent (in) :: ispec, i, j, k
+#if defined (CEM)
+  ! CEM needs these to determine iglob
+  integer, intent (in) :: ispec, i, j, k
+#endif
   integer iregion_code
   double precision r_prem
   double precision rho,dvp
@@ -376,9 +381,6 @@
   double precision :: dvs,drho,vp,vs
   real(kind=4) :: xcolat,xlon,xrad,dvpv,dvph,dvsv,dvsh
   logical :: found_crust,suppress_mantle_extension
-
-  ! CEM needs these to determine iglob
-  integer :: ispec, i, j, k
 
   ! initializes perturbation values
   dvs = ZERO
@@ -611,7 +613,7 @@
 #if defined (CEM)
   if (CEM_ACCEPT) then
     call request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
-  end if
+  endif
 #endif
 
 !> Hejun

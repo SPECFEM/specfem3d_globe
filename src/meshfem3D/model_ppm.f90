@@ -1080,7 +1080,7 @@
 
   ! >>>>>
   ! uniform sigma
-  ! just to avoid compiler warning
+  ! to avoid compiler warnings
   ii = ispec2
   !exp_val(:,:,:) = exp( -((xx(:,:,:,ispec2)-x0)**2+(yy(:,:,:,ispec2)-y0)**2 &
   !          +(zz(:,:,:,ispec2)-z0)**2 )/(2*sigma2) )*factor(:,:,:)
