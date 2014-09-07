@@ -165,10 +165,18 @@ xcombine_vol_data_OBJECTS = \
 
 xcombine_vol_data_SHARED_OBJECTS = \
 	$O/binary_c_io.cc.o \
+	$O/exit_mpi.shared.o \
+	$O/intgrl.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_prem.shared.o \
+	$O/parallel.sharedmpi.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_vol_data: $(xcombine_vol_data_OBJECTS) $(xcombine_vol_data_SHARED_OBJECTS)
-	${FCCOMPILE_CHECK} -o $@ $+
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 #######################################
 
@@ -179,7 +187,14 @@ xcombine_vol_data_adios_OBJECTS = \
 
 xcombine_vol_data_adios_SHARED_OBJECTS = \
 	$O/binary_c_io.cc.o \
+	$O/exit_mpi.shared.o \
+	$O/intgrl.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
 	$(EMPTY_MACRO)
 
 $O/combine_vol_data.auxadios.o: $O/combine_vol_data_adios_impl.auxmpi.o
@@ -195,10 +210,18 @@ xcombine_vol_data_vtk_OBJECTS = \
 
 xcombine_vol_data_vtk_SHARED_OBJECTS = \
 	$O/binary_c_io.cc.o \
+	$O/exit_mpi.shared.o \
+	$O/intgrl.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_prem.shared.o \
+	$O/parallel.sharedmpi.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_vol_data_vtk: $(xcombine_vol_data_vtk_OBJECTS) $(xcombine_vol_data_vtk_SHARED_OBJECTS)
-	${FCCOMPILE_CHECK} -o $@ $+
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 #######################################
 
@@ -209,7 +232,14 @@ xcombine_vol_data_vtk_adios_OBJECTS = \
 
 xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/binary_c_io.cc.o \
+	$O/exit_mpi.shared.o \
+	$O/intgrl.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
 	$(EMPTY_MACRO)
 
 $O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxmpi.o
