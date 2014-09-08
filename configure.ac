@@ -57,6 +57,28 @@ export COND_DEBUG_FALSE
 export COND_DEBUG_TRUE
 
 ###
+### FORCE_VECTORIZATION
+###
+
+AC_ARG_ENABLE([vectorization],
+    [AC_HELP_STRING([--enable-vectorization],
+        [build FORCE_VECTORIZATION enabled version @<:@default=auto@:>@])],
+    [want_vec="$enableval"],
+    [want_vec=auto])
+if test x"$want_vec" == xauto; then
+    if test x"$want_debug" != xno; then
+        want_vec=no
+    else
+        want_vec=yes
+    fi
+else
+    if test x"$want_vec" != xno && test x"$want_debug" != xno; then
+        AC_MSG_ERROR([--enable-debug and --enable-vectorization cannot be specified simultaneously.])
+    fi
+fi
+AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
+
+###
 ### GPU
 ###
 
@@ -95,17 +117,6 @@ AC_ARG_WITH([adios],
     [want_adios="$withval"],
     [want_adios=no])
 AM_CONDITIONAL([COND_ADIOS], [test x"$want_adios" != xno])
-
-###
-### FORCE_VECTORIZATION
-###
-
-AC_ARG_ENABLE([vectorization],
-    [AC_HELP_STRING([--enable-vectorization],
-        [build FORCE_VECTORIZATION enabled version @<:@default=yes@:>@])],
-    [want_vec="$enableval"],
-    [want_vec=yes])
-AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 
 ###
 ### CEM
