@@ -231,7 +231,11 @@ esac
 #DEF_CFLAGS="-g -O3"
 
 if test "x$FLAGS_CHECK" = "x"; then
-    FLAGS_CHECK="$DEF_FFLAGS $OPT_FFLAGS"
+    if test "x$COND_DEBUG_TRUE" = "x"; then
+        FLAGS_CHECK="$DEF_FFLAGS $DEBUG_FFLAGS"
+    else
+        FLAGS_CHECK="$DEF_FFLAGS $OPT_FFLAGS"
+    fi
 fi
 if test "x$MPIFC" = "x"; then
     MPIFC="$DEF_MPIFC"

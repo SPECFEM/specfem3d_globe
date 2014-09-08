@@ -44,6 +44,19 @@ AC_SUBST([CUSTOM_REAL])
 AC_SUBST([CUSTOM_MPI_TYPE])
 
 ###
+### debugging
+###
+
+AC_ARG_ENABLE([debug],
+    [AC_HELP_STRING([--enable-debug],
+        [build with debugging options enabled @<:@default=no@:>@])],
+    [want_debug="$enableval"],
+    [want_debug=no])
+AM_CONDITIONAL([COND_DEBUG], [test x"$want_debug" != xno])
+export COND_DEBUG_FALSE
+export COND_DEBUG_TRUE
+
+###
 ### GPU
 ###
 

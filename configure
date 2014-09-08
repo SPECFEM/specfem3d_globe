@@ -694,6 +694,8 @@ COND_CUDA5_FALSE
 COND_CUDA5_TRUE
 COND_CUDA_FALSE
 COND_CUDA_TRUE
+COND_DEBUG_FALSE
+COND_DEBUG_TRUE
 CUSTOM_MPI_TYPE
 CUSTOM_REAL
 host_os
@@ -746,6 +748,7 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_double_precision
+enable_debug
 with_cuda
 with_opencl
 enable_vtk
@@ -1401,6 +1404,7 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-double-precision
                           solver in double precision [default=no]
+  --enable-debug          build with debugging options enabled [default=no]
   --enable-vtk            build VTK enabled version [default=no]
   --enable-vectorization  build FORCE_VECTORIZATION enabled version
                           [default=yes]
@@ -2735,6 +2739,28 @@ else
 fi
 
 
+
+###
+### debugging
+###
+
+# Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then :
+  enableval=$enable_debug; want_debug="$enableval"
+else
+  want_debug=no
+fi
+
+ if test x"$want_debug" != xno; then
+  COND_DEBUG_TRUE=
+  COND_DEBUG_FALSE='#'
+else
+  COND_DEBUG_TRUE='#'
+  COND_DEBUG_FALSE=
+fi
+
+export COND_DEBUG_FALSE
+export COND_DEBUG_TRUE
 
 ###
 ### GPU
@@ -7655,6 +7681,10 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
+if test -z "${COND_DEBUG_TRUE}" && test -z "${COND_DEBUG_FALSE}"; then
+  as_fn_error $? "conditional \"COND_DEBUG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${COND_CUDA_TRUE}" && test -z "${COND_CUDA_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
