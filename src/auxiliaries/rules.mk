@@ -97,6 +97,7 @@ xconvolve_source_timefunction_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xconvolve_source_timefunction_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xconvolve_source_timefunction: $(xconvolve_source_timefunction_OBJECTS) $(xconvolve_source_timefunction_SHARED_OBJECTS)
@@ -138,6 +139,7 @@ xcombine_paraview_strain_data_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcombine_paraview_strain_data_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$(EMPTY_MACRO)
 
@@ -151,6 +153,7 @@ xcombine_surf_data_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcombine_surf_data_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$(EMPTY_MACRO)
 
@@ -164,6 +167,7 @@ xcombine_vol_data_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcombine_vol_data_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
 	$O/intgrl.shared.o \
@@ -186,6 +190,7 @@ xcombine_vol_data_adios_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcombine_vol_data_adios_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
 	$O/intgrl.shared.o \
@@ -209,6 +214,7 @@ xcombine_vol_data_vtk_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcombine_vol_data_vtk_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
 	$O/intgrl.shared.o \
@@ -231,6 +237,7 @@ xcombine_vol_data_vtk_adios_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
 	$O/intgrl.shared.o \
