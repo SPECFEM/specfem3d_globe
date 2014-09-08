@@ -62,13 +62,13 @@
     num_phase_ispec_crust_mantle = max(nspec_inner_crust_mantle,nspec_outer_crust_mantle)
 
     allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array phase_ispec_inner_crust_mantle')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
 
     phase_ispec_inner_crust_mantle(:,:) = 0
     iinner = 0
     iouter = 0
-    do ispec=1,NSPEC_CRUST_MANTLE
-      if( is_on_a_slice_edge(ispec) ) then
+    do ispec = 1,NSPEC_CRUST_MANTLE
+      if (is_on_a_slice_edge(ispec)) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_crust_mantle(iouter,1) = ispec
@@ -80,7 +80,7 @@
     enddo
 
     ! user output
-    if(myrank == 0) then
+    if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) 'for overlapping of communications with calculations:'
       write(IMAIN,*)
@@ -92,7 +92,7 @@
     endif
 
     ! debug: saves element flags
-    if( DEBUG ) then
+    if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_crust_mantle_proc',myrank
       call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                 xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
@@ -108,13 +108,13 @@
     num_phase_ispec_outer_core = max(nspec_inner_outer_core,nspec_outer_outer_core)
 
     allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array phase_ispec_inner_outer_core')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
 
     phase_ispec_inner_outer_core(:,:) = 0
     iinner = 0
     iouter = 0
-    do ispec=1,NSPEC_OUTER_CORE
-      if( is_on_a_slice_edge(ispec) ) then
+    do ispec = 1,NSPEC_OUTER_CORE
+      if (is_on_a_slice_edge(ispec)) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_outer_core(iouter,1) = ispec
@@ -126,7 +126,7 @@
     enddo
 
     ! user output
-    if(myrank == 0) then
+    if (myrank == 0) then
       percentage_edge = 100.* nspec_outer_outer_core / real(NSPEC_OUTER_CORE)
       write(IMAIN,*) 'percentage of edge elements in outer core ',percentage_edge,'%'
       write(IMAIN,*) 'percentage of volume elements in outer core ',100. - percentage_edge,'%'
@@ -134,7 +134,7 @@
     endif
 
     ! debug: saves element flags
-    if( DEBUG ) then
+    if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_outer_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                 xstore_outer_core,ystore_outer_core,zstore_outer_core, &
@@ -150,13 +150,13 @@
     num_phase_ispec_inner_core = max(nspec_inner_inner_core,nspec_outer_inner_core)
 
     allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating array phase_ispec_inner_inner_core')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
 
     phase_ispec_inner_inner_core(:,:) = 0
     iinner = 0
     iouter = 0
-    do ispec=1,NSPEC_INNER_CORE
-      if( is_on_a_slice_edge(ispec) ) then
+    do ispec = 1,NSPEC_INNER_CORE
+      if (is_on_a_slice_edge(ispec)) then
         ! outer element
         iouter = iouter + 1
         phase_ispec_inner_inner_core(iouter,1) = ispec
@@ -168,7 +168,7 @@
     enddo
 
     ! user output
-    if(myrank == 0) then
+    if (myrank == 0) then
       percentage_edge = 100. * nspec_outer_inner_core / real(NSPEC_INNER_CORE)
       write(IMAIN,*) 'percentage of edge elements in inner core ',percentage_edge,'%'
       write(IMAIN,*) 'percentage of volume elements in inner core ',100. - percentage_edge,'%'
@@ -177,7 +177,7 @@
     endif
 
     ! debug: saves element flags
-    if( DEBUG ) then
+    if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &

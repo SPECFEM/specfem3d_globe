@@ -53,11 +53,11 @@
   double precision sumshape,sumdershapexi,sumdershapeeta
 
 ! check that the parameter file is correct
-  if(NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
-  if(NGNOD2D /= 9) call exit_MPI(myrank,'surface elements should have 9 control nodes')
+  if (NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
+  if (NGNOD2D /= 9) call exit_MPI(myrank,'surface elements should have 9 control nodes')
 
 ! generate the 2D shape functions and their derivatives (9 nodes)
-  do i=1,NGLLA
+  do i = 1,NGLLA
 
   xi=xigll(i)
 
@@ -69,7 +69,7 @@
   l2pxi=-TWO*xi
   l3pxi=xi+HALF
 
-  do j=1,NGLLB
+  do j = 1,NGLLB
 
     eta=yigll(j)
 
@@ -126,15 +126,15 @@
   enddo
 
 ! check the 2D shape functions
-  do i=1,NGLLA
-    do j=1,NGLLB
+  do i = 1,NGLLA
+    do j = 1,NGLLB
 
     sumshape=ZERO
 
     sumdershapexi=ZERO
     sumdershapeeta=ZERO
 
-    do ia=1,NGNOD2D
+    do ia = 1,NGNOD2D
 
       sumshape=sumshape+shape2D(ia,i,j)
 
@@ -144,14 +144,14 @@
     enddo
 
 !   the sum of the shape functions should be 1
-    if(abs(sumshape-ONE)>TINYVAL) call exit_MPI(myrank,'error in 2D shape functions')
+    if (abs(sumshape-ONE)>TINYVAL) call exit_MPI(myrank,'Error in 2D shape functions')
 
 !   the sum of the derivatives of the shape functions should be 0
-    if(abs(sumdershapexi)>TINYVAL) &
-      call exit_MPI(myrank,'error in xi derivatives of 2D shape function')
+    if (abs(sumdershapexi)>TINYVAL) &
+      call exit_MPI(myrank,'Error in xi derivatives of 2D shape function')
 
-    if(abs(sumdershapeeta)>TINYVAL) &
-      call exit_MPI(myrank,'error in eta derivatives of 2D shape function')
+    if (abs(sumdershapeeta)>TINYVAL) &
+      call exit_MPI(myrank,'Error in eta derivatives of 2D shape function')
 
     enddo
   enddo

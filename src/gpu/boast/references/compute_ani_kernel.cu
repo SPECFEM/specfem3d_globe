@@ -50,6 +50,8 @@ __device__ void compute_strain_product(realw* prod,
   }
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 __global__ void compute_ani_kernel(realw* epsilondev_xx,
                                    realw* epsilondev_yy,
                                    realw* epsilondev_xy,

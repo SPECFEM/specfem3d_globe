@@ -40,6 +40,8 @@ realw_texture d_b_accel_ic_tex;
 #endif
 #endif
 
+/* ----------------------------------------------------------------------------------------------- */
+
 void inner_core (int nb_blocks_to_compute, Mesh *mp,
                  int iphase,
                  gpu_int_mem d_ibool,
@@ -86,9 +88,12 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_b_R_yz,
                  int FORWARD_OR_ADJOINT) {
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("before kernel inner_core");
-#endif
+  GPU_ERROR_CHECKING ("before kernel inner_core");
+
+  // safety check
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in inner_core() routine");
+  }
 
   // if the grid can handle the number of blocks, we let it be 1D
   // grid_2_x = nb_elem_color;
@@ -107,15 +112,11 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     cl_kernel *inner_core_kernel_p;
     cl_uint idx = 0;
 
-    if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
-      goto skipexec;
-    } else if (FORWARD_OR_ADJOINT == 3) {
-      DEBUG_BACKWARD_FORCES ();
-    }
-
     if (FORWARD_OR_ADJOINT == 1) {
       inner_core_kernel_p = &mocl.kernels.inner_core_impl_kernel_forward;
     } else {
+      // adjoint/kernel simulations
+      DEBUG_BACKWARD_FORCES ();
       inner_core_kernel_p = &mocl.kernels.inner_core_impl_kernel_adjoint;
     }
 
@@ -185,7 +186,6 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_factor_common.ocl));
 
     if (FORWARD_OR_ADJOINT == 1) {
-
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_R_xx.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_R_yy.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_R_xy.ocl));
@@ -195,7 +195,6 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_betaval.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_gammaval.ocl));
     } else {
-
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_R_xx.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_R_yy.ocl));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_R_xy.ocl));
@@ -223,24 +222,29 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE_STRAIN_ONLY));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
 
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_ic_tex));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_ic_tex));
+    if (FORWARD_OR_ADJOINT == 1) {
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_ic_tex));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_ic_tex));
+    } else {
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_ic_tex));
+      clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_ic_tex));
+    }
 
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *inner_core_kernel_p, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *inner_core_kernel_p, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
-skipexec: ;
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    if( FORWARD_OR_ADJOINT == 1 ){
+    if (FORWARD_OR_ADJOINT == 1) {
       inner_core_impl_kernel_forward<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
                                                                             d_ibool.cuda,
                                                                             d_idoubling.cuda,
@@ -283,7 +287,7 @@ skipexec: ;
                                                                             mp->d_wgll_cube.cuda,
                                                                             mp->NSPEC_INNER_CORE_STRAIN_ONLY,
                                                                             mp->NSPEC_INNER_CORE);
-    }else if( FORWARD_OR_ADJOINT == 3 ){
+    } else {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
       // debug
       DEBUG_BACKWARD_FORCES();
@@ -332,9 +336,8 @@ skipexec: ;
     }
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("inner_core");
-#endif
+
+  GPU_ERROR_CHECKING ("inner_core");
 }
 
 /*----------------------------------------------------------------------------------------------- */
@@ -348,18 +351,24 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
 
   TRACE ("compute_forces_inner_core_gpu");
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   // get Mesh from Fortran integer wrapper
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
-  int num_elements;
 
+  // safety check
+  if (FORWARD_OR_ADJOINT != 1 && FORWARD_OR_ADJOINT != 3) {
+    exit_on_error("Error invalid FORWARD_OR_ADJOINT in compute_forces_inner_core_gpu() routine");
+  }
+
+  // determines number of elements to loop over (inner/outer elements
+  int num_elements;
   if (*iphase == 1) {
     num_elements = mp->nspec_outer_inner_core;
   } else {
     num_elements = mp->nspec_inner_inner_core;
   }
   // checks if anything to do
-  if (num_elements == 0)
-    return;
+  if (num_elements == 0) return;
 
   // mesh coloring
   if (mp->use_mesh_coloring_gpu) {
@@ -469,10 +478,10 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
         nb_blocks_to_compute = num_elements;
       }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
       // checks
       if (nb_blocks_to_compute <= 0) {
-        printf ("error number of color blocks in inner_core: %d -- color = %d \n",
+        printf ("Error number of color blocks in inner_core: %d -- color = %d \n",
                 nb_blocks_to_compute, icolor);
         exit (EXIT_FAILURE);
       }
@@ -682,7 +691,5 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
                 FORWARD_OR_ADJOINT);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_forces_inner_core_ocl");
-#endif
+  GPU_ERROR_CHECKING ("compute_forces_inner_core_ocl");
 }

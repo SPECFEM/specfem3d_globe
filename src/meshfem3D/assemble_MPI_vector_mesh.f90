@@ -61,16 +61,16 @@
 ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     allocate(buffer_send_vector(NDIM,max_nibool_interfaces,num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array buffer_send_vector'
+    if (ier /= 0 ) stop 'Error allocating array buffer_send_vector'
     allocate(buffer_recv_vector(NDIM,max_nibool_interfaces,num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array buffer_recv_vector'
+    if (ier /= 0 ) stop 'Error allocating array buffer_recv_vector'
     allocate(request_send_vector(num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array request_send_vector'
+    if (ier /= 0 ) stop 'Error allocating array request_send_vector'
     allocate(request_recv_vector(num_interfaces),stat=ier)
-    if( ier /= 0 ) stop 'error allocating array request_recv_vector'
+    if (ier /= 0 ) stop 'Error allocating array request_recv_vector'
 
     ! partition border copy into the buffer
     do iinterface = 1, num_interfaces

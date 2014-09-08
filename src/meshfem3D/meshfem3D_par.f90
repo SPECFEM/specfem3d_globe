@@ -50,7 +50,8 @@
     HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
     ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
     ATTENUATION_3D, &
-    ANISOTROPIC_INNER_CORE
+    ANISOTROPIC_INNER_CORE, &
+    CEM_REQUEST, CEM_ACCEPT
 
   implicit none
 
@@ -124,9 +125,6 @@
 ! for ellipticity
   double precision,dimension(NR) :: rspl,espl,espl2
   integer :: nspl
-
-! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
-  logical,parameter :: USE_1D_REFERENCE = .false.
 
   end module meshfem3D_models_par
 

@@ -68,7 +68,7 @@
   ! number of regions in full Earth
   do iregion_code = 1,MAX_NUM_REGIONS
 
-    if(myrank == 0) then
+    if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) '*******************************************'
       write(IMAIN,*) 'creating mesh in region ',iregion_code
@@ -97,12 +97,12 @@
             ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
             zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating memory for arrays')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
 
     ! this for non blocking MPI
     allocate(is_on_a_slice_edge(NSPEC(iregion_code)), &
             stat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error allocating is_on_a_slice_edge array')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating is_on_a_slice_edge array')
 
 
     ! create all the regions of the mesh
@@ -115,6 +115,10 @@
                           NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
                           mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
                           ipass)
+
+      ! If we're in the request stage of CEM, exit.
+      if (CEM_REQUEST) exit
+
     enddo
 
     ! deallocate arrays used for that region

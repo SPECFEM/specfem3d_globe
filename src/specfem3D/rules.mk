@@ -35,7 +35,6 @@ specfem3D_OBJECTS = \
 	$O/assemble_MPI_scalar.solver.o \
 	$O/assemble_MPI_vector.solver.o \
 	$O/comp_source_spectrum.solver.o \
-	$O/comp_source_time_function.solver.o \
 	$O/compute_adj_source_frechet.solver.o \
 	$O/convert_time.solver.o \
 	$O/define_derivation_matrices.solver.o \
@@ -51,6 +50,7 @@ specfem3D_OBJECTS = \
 # values_from_mesher.h
 specfem3D_OBJECTS += \
 	$O/asdf_data.solverstatic_module.o \
+	$O/comp_source_time_function.solverstatic.o \
 	$O/specfem3D_par.solverstatic_module.o \
 	$O/write_seismograms.solverstatic.o \
 	$O/check_stability.solverstatic.o \
@@ -119,6 +119,7 @@ specfem3D_MODULES = \
 specfem3D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
+	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
@@ -148,7 +149,6 @@ specfem3D_SHARED_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
-	$O/write_c_binary.cc.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
@@ -294,10 +294,10 @@ $O/%.solverstatic_openmp.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_pa
 
 
 $O/%.solverstatic_adios.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.solverstatic_adios.o: $S/%.F90 ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o $O/adios_helpers.shared_adios.o
-	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 ###
 ### no dependence on values from mesher here

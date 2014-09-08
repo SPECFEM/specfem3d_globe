@@ -41,7 +41,7 @@ module BOAST
       ibelm_1               = Int( "ibelm_top_outer_core",      :dir => :in,    :dim => [ Dim() ])
       rho_oc                = Real("RHO_TOP_OC",                :dir => :in)
       minus_g               = Real("minus_g_cmb",               :dir => :in)
-      gravity               = Int( "GRAVITY")
+      gravity               = Int( "GRAVITY",                   :dir => :in)
       nspec2D               = Int( "NSPEC2D_BOTTOM_CM",         :dir => :in)
     elsif type == :ICB_fluid then
       function_name = "compute_coupling_ICB_fluid_kernel"
@@ -56,7 +56,7 @@ module BOAST
       ibelm_1               = Int( "ibelm_bottom_outer_core",   :dir => :in,    :dim => [ Dim() ])
       rho_oc                = Real("RHO_BOTTOM_OC",             :dir => :in)
       minus_g               = Real("minus_g_icb",               :dir => :in)
-      gravity               = Int( "GRAVITY")
+      gravity               = Int( "GRAVITY",                   :dir => :in)
       nspec2D               = Int( "NSPEC2D_TOP_IC",            :dir => :in)
     else
      raise "Unsupported coupling_fluid_type!"
@@ -71,11 +71,11 @@ module BOAST
       variables = [displ, accel_out, accel_in, ibool_2, ibelm_2, normal_outer_core, jacobian2D_outer_core, wgllwgll_xy, ibool_1, ibelm_1, rho_oc, minus_g, gravity, nspec2D]
     end
     p = Procedure(function_name, variables)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ndim => n_dim, :ngllx => n_gllx )
-      decl p
+      open p
       decl i = Int("i"), j = Int("j"), k = Int("k")
       decl iface =      Int("iface")
       decl k_corresp =  Int("k_corresp")
@@ -105,7 +105,7 @@ module BOAST
       print i === get_local_id(0)
       print j === get_local_id(1)
       print iface === get_group_id(0) + get_num_groups(0)*get_group_id(1)
-      print If( iface < nspec2D ) {
+      print If(iface < nspec2D ) {
         print ispec === ibelm_2[iface] - 1
         print ispec_selected === ibelm_1[iface] - 1
         if type == :fluid_CMB or type == :ICB_fluid then
@@ -126,7 +126,7 @@ module BOAST
         elsif type == :fluid_ICB then
           print atomicAdd(accel_out+iglob_2, -weight*displ_n)
         else
-          print If( gravity, lambda {
+          print If(gravity, lambda {
             print pressure === rho_oc * ( minus_g * ( displ[iglob_2*3]*n[0] + displ[iglob_2*3+1]*n[1] + displ[iglob_2*3+2]*n[2] ) - accel_in[iglob_1] )
           } , nil, lambda {
             print pressure === -rho_oc * accel_in[iglob_1]

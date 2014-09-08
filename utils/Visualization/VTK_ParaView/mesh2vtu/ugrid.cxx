@@ -10,13 +10,14 @@
 
 #include <stdio.h>
 #include <unistd.h>
-#include <vtk/vtkHexahedron.h>
-#include <vtk/vtkCellArray.h>
-#include <vtk/vtkFloatArray.h>
-#include <vtk/vtkPoints.h>
-#include <vtk/vtkPointData.h>
-#include <vtk/vtkUnstructuredGrid.h>
-#include <vtk/vtkXMLUnstructuredGridWriter.h>
+
+#include <vtkHexahedron.h>
+#include <vtkCellArray.h>
+#include <vtkFloatArray.h>
+#include <vtkPoints.h>
+#include <vtkPointData.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkXMLUnstructuredGridWriter.h>
 
 void usage(char *progname)
 {

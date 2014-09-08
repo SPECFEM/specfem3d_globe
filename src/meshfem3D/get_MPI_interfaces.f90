@@ -74,7 +74,7 @@
   integer,parameter :: MID = (NGLLX+1)/2
 
   ! initializes
-  if( add_central_cube) then
+  if (add_central_cube) then
     ! adds points to existing inner_core interfaces
     iinterface = num_interfaces
     work_ispec_is_outer(:) = is_on_a_slice_edge(:)
@@ -96,11 +96,11 @@
   do ispec = 1,NSPEC
 
     ! exclude elements in inner part of slice
-    !if( .not. is_on_a_slice_edge(ispec) ) cycle
+    !if (.not. is_on_a_slice_edge(ispec) ) cycle
 
     ! exclude elements in fictitious core
-    if( IREGION == IREGION_INNER_CORE) then
-      if( idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) cycle
+    if (IREGION == IREGION_INNER_CORE) then
+      if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE ) cycle
     endif
 
     ! sets flag if element has global points shared with other processes
@@ -135,25 +135,25 @@
       end select
 
       ! checks assembled flag on global point
-      if( work_test_flag(iglob) > 0 ) then
+      if (work_test_flag(iglob) > 0) then
         ispec_is_outer = .true.
 
         ! rank of neighbor process
         rank = work_test_flag(iglob) - 1
 
         ! checks ranks range
-        if( rank < 0 .or. rank >= NPROCTOT ) then
-          print*,'error face rank: ',myrank,'ispec=',ispec
+        if (rank < 0 .or. rank >= NPROCTOT) then
+          print*,'Error face rank: ',myrank,'ispec=',ispec
           print*,'  neighbor rank = ',rank,'exceeds total nproc:',NPROCTOT
           print*,'  face ',iface
-          call exit_mpi(myrank,'error face neighbor MPI rank')
+          call exit_mpi(myrank,'Error face neighbor MPI rank')
         endif
 
         ! checks if already stored
         icurrent = 0
         is_done = .false.
         do ii = 1,iinterface
-          if( rank == my_neighbours(ii) ) then
+          if (rank == my_neighbours(ii)) then
             icurrent = ii
             is_done = .true.
             exit
@@ -161,23 +161,23 @@
         enddo
 
         ! updates interfaces array
-        if( .not. is_done ) then
+        if (.not. is_done) then
           iinterface = iinterface + 1
-          if( iinterface > MAX_NEIGHBOURS ) then
-            print*,'error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
+          if (iinterface > MAX_NEIGHBOURS) then
+            print*,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
             call exit_mpi(myrank,'interface face exceeds MAX_NEIGHBOURS range')
           endif
           ! adds as neighbor new interface
           my_neighbours(iinterface) = rank
           icurrent = iinterface
         endif
-        if( icurrent == 0 ) &
+        if (icurrent == 0 ) &
           call exit_mpi(myrank,'could not find current interface for this neighbor, please check my_neighbours')
 
         ! adds interface points and removes neighbor flag from face
         ! assumes NGLLX == NGLLY == NGLLZ
-        do k=1,NGLLX
-          do j=1,NGLLX
+        do k = 1,NGLLX
+          do j = 1,NGLLX
             select case( iface )
             case( 1 )
               ! face I == 1
@@ -206,16 +206,16 @@
                                         work_test_flag,NGLOB,myrank, &
                                         .true.,add_central_cube)
             ! debug
-            if( work_test_flag(iglob) < 0 ) then
-              if( IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then
+            if (work_test_flag(iglob) < 0) then
+              if (IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
                 ! we might have missed an interface point on an edge, just re-set to missing value
                 print*,'warning face flag:',myrank,'ispec=',ispec,'rank=',rank
                 print*,'  flag=',work_test_flag(iglob),'iface jk=',iface,j,k,'missed iglob=',iglob
                 !work_test_flag(iglob) = 0
               else
-                print*,'error face flag:',myrank,'ispec=',ispec,'rank=',rank
+                print*,'Error face flag:',myrank,'ispec=',ispec,'rank=',rank
                 print*,'  flag=',work_test_flag(iglob),'iface jk=',iface,j,k,'iglob=',iglob
-                call exit_mpi(myrank,'error face flag')
+                call exit_mpi(myrank,'Error face flag')
               endif
             endif
 
@@ -271,25 +271,25 @@
       end select
 
       ! checks assembled flag on global point
-      if( work_test_flag(iglob) > 0 ) then
+      if (work_test_flag(iglob) > 0) then
         ispec_is_outer = .true.
 
         ! rank of neighbor process
         rank = work_test_flag(iglob) - 1
 
         ! checks ranks range
-        if( rank < 0 .or. rank >= NPROCTOT ) then
-          print*,'error egde rank: ',myrank
+        if (rank < 0 .or. rank >= NPROCTOT) then
+          print*,'Error egde rank: ',myrank
           print*,'  neighbor rank = ',rank,'exceeds total nproc:',NPROCTOT
           print*,'  edge ',iedge
-          call exit_mpi(myrank,'error edge neighbor MPI rank')
+          call exit_mpi(myrank,'Error edge neighbor MPI rank')
         endif
 
         ! checks if already stored
         icurrent = 0
         is_done = .false.
         do ii = 1,iinterface
-          if( rank == my_neighbours(ii) ) then
+          if (rank == my_neighbours(ii)) then
             icurrent = ii
             is_done = .true.
             exit
@@ -297,17 +297,17 @@
         enddo
 
         ! updates interfaces array
-        if( .not. is_done ) then
+        if (.not. is_done) then
           iinterface = iinterface + 1
-          if( iinterface > MAX_NEIGHBOURS ) then
-            print*,'error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
+          if (iinterface > MAX_NEIGHBOURS) then
+            print*,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
             call exit_mpi(myrank,'interface edge exceeds MAX_NEIGHBOURS range')
           endif
           ! adds as neighbor new interface
           my_neighbours(iinterface) = rank
           icurrent = iinterface
         endif
-        if( icurrent == 0 ) &
+        if (icurrent == 0 ) &
           call exit_mpi(myrank,'could not find current interface for this neighbor, please check my_neighbours')
 
         ! adds interface points and removes neighbor flag from edge
@@ -360,16 +360,16 @@
                                         .true.,add_central_cube)
 
           ! debug
-          if( work_test_flag(iglob) < 0 ) then
-            if( IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then
+          if (work_test_flag(iglob) < 0) then
+            if (IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
               ! we might have missed an interface point on an edge, just re-set to missing value
               print*,'warning edge flag:',myrank,'ispec=',ispec,'rank=',rank
               print*,'  flag=',work_test_flag(iglob),'iedge jk=',iedge,k,'missed iglob=',iglob
               !work_test_flag(iglob) = 0
             else
-              print*,'error edge flag:',myrank,'ispec=',ispec,'rank=',rank
+              print*,'Error edge flag:',myrank,'ispec=',ispec,'rank=',rank
               print*,'  flag=',work_test_flag(iglob),'iedge jk=',iedge,k,'iglob=',iglob
-              call exit_mpi(myrank,'error edge flag')
+              call exit_mpi(myrank,'Error edge flag')
             endif
           endif
 
@@ -419,30 +419,30 @@
       !          since the iglob point was found before.
       !          also, this check here would suffice to determine the outer flag, but we also include the
       !          check everywhere we encounter it too
-      if( test_flag(iglob) > 0.5 ) then
+      if (test_flag(iglob) > 0.5) then
         ispec_is_outer = .true.
       endif
 
       ! checks assembled flag on global point
-      if( work_test_flag(iglob) > 0 ) then
+      if (work_test_flag(iglob) > 0) then
         ispec_is_outer = .true.
 
         ! rank of neighbor process
         rank = work_test_flag(iglob) - 1
 
         ! checks ranks range
-        if( rank < 0 .or. rank >= NPROCTOT ) then
-          print*,'error corner: ',myrank
+        if (rank < 0 .or. rank >= NPROCTOT) then
+          print*,'Error corner: ',myrank
           print*,'  neighbor rank = ',rank,'exceeds total nproc:',NPROCTOT
           print*,'  corner ',icorner
-          call exit_mpi(myrank,'error corner neighbor MPI rank')
+          call exit_mpi(myrank,'Error corner neighbor MPI rank')
         endif
 
         ! checks if already stored
         icurrent = 0
         is_done = .false.
         do ii = 1,iinterface
-          if( rank == my_neighbours(ii) ) then
+          if (rank == my_neighbours(ii)) then
             icurrent = ii
             is_done = .true.
             exit
@@ -450,17 +450,17 @@
         enddo
 
         ! updates interfaces array
-        if( .not. is_done ) then
+        if (.not. is_done) then
           iinterface = iinterface + 1
-          if( iinterface > MAX_NEIGHBOURS ) then
-            print*,'error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
+          if (iinterface > MAX_NEIGHBOURS) then
+            print*,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBOURS
             call exit_mpi(myrank,'interface corner exceed MAX_NEIGHBOURS range')
           endif
           ! adds as neighbor new interface
           my_neighbours(iinterface) = rank
           icurrent = iinterface
         endif
-        if( icurrent == 0 ) &
+        if (icurrent == 0 ) &
           call exit_mpi(myrank,'could not find current interface for this neighbor, please check my_neighbours')
 
         ! adds this corner as interface point and removes neighbor flag from face,
@@ -472,7 +472,7 @@
                                     .false.,add_central_cube)
 
         ! debug
-        if( work_test_flag(iglob) < 0 ) call exit_mpi(myrank,'error corner flag')
+        if (work_test_flag(iglob) < 0 ) call exit_mpi(myrank,'Error corner flag')
 
       endif
 
@@ -480,7 +480,7 @@
 
     ! stores flags for outer elements when recognized as such
     ! (inner/outer elements separated for non-blocking MPI communications)
-    if( ispec_is_outer ) then
+    if (ispec_is_outer) then
       work_ispec_is_outer(ispec) = .true.
     endif
 
@@ -490,9 +490,9 @@
   npoin = count( work_ispec_is_outer )
 
   ! debug: user output
-  if( add_central_cube ) then
+  if (add_central_cube) then
     print*, 'rank',myrank,'interfaces : ',iinterface
-    do j=1,iinterface
+    do j = 1,iinterface
       print*, '  my_neighbours: ',my_neighbours(j),nibool_neighbours(j)
     enddo
     print*, '  test flag min/max: ',minval(work_test_flag),maxval(work_test_flag)
@@ -501,10 +501,10 @@
   endif
 
   ! checks if all points were recognized
-  if( minval(work_test_flag) < 0 .or. maxval(work_test_flag) > 0 ) then
-    print*,'error MPI interface rank: ',myrank
+  if (minval(work_test_flag) < 0 .or. maxval(work_test_flag) > 0) then
+    print*,'Error MPI interface rank: ',myrank
     print*,'  work_test_flag min/max :',minval(work_test_flag),maxval(work_test_flag)
-    call exit_mpi(myrank,'error: MPI points remain unrecognized, please check mesh interfaces')
+    call exit_mpi(myrank,'Error: MPI points remain unrecognized, please check mesh interfaces')
   endif
 
   ! sets interfaces info
@@ -515,9 +515,9 @@
   do ii = 1,num_interfaces-1
     rank = my_neighbours(ii)
     do j = ii+1,num_interfaces
-      if( rank == my_neighbours(j) ) then
+      if (rank == my_neighbours(j)) then
         print*,'test MPI: rank ',myrank,'my_neighbours:',rank,my_neighbours(j),'interfaces:',ii,j
-        call exit_mpi(myrank,'error test my_neighbours not unique')
+        call exit_mpi(myrank,'Error test my_neighbours not unique')
       endif
     enddo
   enddo
@@ -530,18 +530,18 @@
     call heap_sort( npoin, ibool_neighbours(1:npoin,iinterface) )
 
     ! checks if unique set of iglob values
-    do j=1,npoin-1
-      if( ibool_neighbours(j,iinterface) == ibool_neighbours(j+1,iinterface) ) then
-        if( IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE ) then
+    do j = 1,npoin-1
+      if (ibool_neighbours(j,iinterface) == ibool_neighbours(j+1,iinterface)) then
+        if (IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
           ! missing points might have been counted more than once
-          if( ibool_neighbours(j,iinterface) > 0 ) then
+          if (ibool_neighbours(j,iinterface) > 0) then
             print*,'warning MPI interface rank:',myrank
             print*,'  interface: ',my_neighbours(iinterface),'point: ',j,'of',npoin,'iglob=',ibool_neighbours(j,iinterface)
             ! decrease number of points
             nibool_neighbours(iinterface) = nibool_neighbours(iinterface) - 1
-            if( nibool_neighbours(iinterface) <= 0 ) then
-              print*,'error zero MPI interface rank:',myrank,'interface=',my_neighbours(iinterface)
-              call exit_mpi(myrank,'error: zero MPI points on interface')
+            if (nibool_neighbours(iinterface) <= 0) then
+              print*,'Error zero MPI interface rank:',myrank,'interface=',my_neighbours(iinterface)
+              call exit_mpi(myrank,'Error: zero MPI points on interface')
             endif
             ! shift values
             do k = j+1,npoin-1
@@ -554,9 +554,9 @@
             max_nibool_interfaces = maxval( nibool_neighbours(1:num_interfaces) )
           endif
         else
-          print*,'error MPI interface rank:',myrank
+          print*,'Error MPI interface rank:',myrank
           print*,'  interface: ',my_neighbours(iinterface),'point: ',j,'of',npoin,'iglob=',ibool_neighbours(j,iinterface)
-          call exit_mpi(myrank,'error: MPI points not unique on interface')
+          call exit_mpi(myrank,'Error: MPI points not unique on interface')
         endif
       endif
     enddo
@@ -607,10 +607,10 @@
           iglob(npoin), &
           locval(npoin), &
           ifseg(npoin),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error sort MPI interface: allocating temporary sorting arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error sort MPI interface: allocating temporary sorting arrays')
 
   ! sets up working arrays
-  do i=1,npoin
+  do i = 1,npoin
     ipoin = ibool_n(i)
 
     ibool_selected(i) = ipoin
@@ -626,7 +626,7 @@
                               ibool_selected,iglob,locval,ifseg,nglob_selected,ninseg)
 
   ! check that no duplicate has been detected
-  if(nglob_selected /= npoin) call exit_MPI(myrank,'error sort MPI interface: duplicates detected in buffer')
+  if (nglob_selected /= npoin) call exit_MPI(myrank,'Error sort MPI interface: duplicates detected in buffer')
 
   ! stores new ibool ordering
   ibool_n(1:npoin) = ibool_selected(1:npoin)
@@ -668,45 +668,45 @@
   logical :: is_done
 
   ! let's check and be sure for central cube
-  !if( work_test_flag(iglob) <= 0 ) cycle ! continues to next point
+  !if (work_test_flag(iglob) <= 0 ) cycle ! continues to next point
 
   ! checks that we take each global point (on edges and corners) only once
   is_done = .false.
-  do i=1,nibool_neighbours(icurrent)
-    if( ibool_neighbours(i,icurrent) == iglob ) then
+  do i = 1,nibool_neighbours(icurrent)
+    if (ibool_neighbours(i,icurrent) == iglob) then
       is_done = .true.
       exit
     endif
   enddo
 
   ! checks if anything to do
-  if( is_done ) then
+  if (is_done) then
     ! special handling for central cube: removes rank if already added in inner core
-    if( add_central_cube ) then
-      if( is_face_edge .and. work_test_flag(iglob) < (rank + 1) ) then
+    if (add_central_cube) then
+      if (is_face_edge .and. work_test_flag(iglob) < (rank + 1)) then
         ! re-sets if we missed this rank number
         work_test_flag(iglob) = work_test_flag(iglob) + (rank + 1)
       endif
       ! re-sets flag
       work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
-      if( is_face_edge .and. work_test_flag(iglob) < 0 ) then
+      if (is_face_edge .and. work_test_flag(iglob) < 0) then
         ! re-sets to zero if we missed this rank number
-        if( work_test_flag(iglob) == - (rank + 1 ) ) work_test_flag(iglob) = 0
+        if (work_test_flag(iglob) == - (rank + 1 ) ) work_test_flag(iglob) = 0
       endif
     endif
     return
   endif
 
   ! checks if flag was set correctly
-  if( work_test_flag(iglob) <= 0 ) then
+  if (work_test_flag(iglob) <= 0) then
     ! we might have missed an interface point on an edge, just re-set to missing value
     print*,'warning ',myrank,' flag: missed rank=',rank
     print*,'  flag=',work_test_flag(iglob),'missed iglob=',iglob,'interface=',icurrent
     print*
   endif
   ! we might have missed an interface point on an edge, just re-set to missing value
-  if( is_face_edge ) then
-    if( work_test_flag(iglob) < (rank + 1) ) then
+  if (is_face_edge) then
+    if (work_test_flag(iglob) < (rank + 1)) then
       ! re-sets if we missed this rank number
       work_test_flag(iglob) = work_test_flag(iglob) + (rank + 1)
     endif
@@ -715,7 +715,7 @@
   ! adds point
   ! increases number of total points on this interface
   nibool_neighbours(icurrent) = nibool_neighbours(icurrent) + 1
-  if( nibool_neighbours(icurrent) > max_nibool) &
+  if (nibool_neighbours(icurrent) > max_nibool) &
       call exit_mpi(myrank,'interface face exceeds max_nibool range')
 
   ! stores interface iglob index
@@ -725,9 +725,9 @@
   work_test_flag(iglob) = work_test_flag(iglob) - ( rank + 1 )
 
   ! checks
-  if( is_face_edge .and. work_test_flag(iglob) < 0 ) then
+  if (is_face_edge .and. work_test_flag(iglob) < 0) then
     ! re-sets to zero if we missed this rank number
-    if( work_test_flag(iglob) == - (rank + 1 ) ) work_test_flag(iglob) = 0
+    if (work_test_flag(iglob) == - (rank + 1 ) ) work_test_flag(iglob) = 0
   endif
 
   end subroutine add_interface_point

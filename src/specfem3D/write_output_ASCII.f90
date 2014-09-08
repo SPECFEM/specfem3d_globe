@@ -33,7 +33,7 @@
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
 
-  use constants,only: CUSTOM_REAL,SIZE_REAL,IOUT,C_LDDRK
+  use constants,only: CUSTOM_REAL,SIZE_REAL,IOUT
 
   use specfem_par,only: &
     DT,t0,NSTEP, &
@@ -63,21 +63,21 @@
   ! to avoid overloading shared non-local file systems such as GPFS for instance
 
   ! create one large file instead of one small file per station to avoid file system overload
-  if(SAVE_ALL_SEISMOS_IN_ONE_FILE) then
-    if(USE_BINARY_FOR_LARGE_FILE) then
+  if (SAVE_ALL_SEISMOS_IN_ONE_FILE) then
+    if (USE_BINARY_FOR_LARGE_FILE) then
       write(IOUT) sisname_big_file
     else
       write(IOUT,*) sisname_big_file(1:len_trim(sisname_big_file))
     endif
   else
-    if (seismo_offset==0) then
+    if (seismo_offset == 0) then
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2), &
             status='unknown',action='write',iostat=ier)
     else
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2), &
             status='old',position='append',action='write',iostat=ier)
     endif
-    if( ier /= 0 ) call exit_mpi(myrank,'error opening file:'//trim(OUTPUT_FILES)//trim(sisname_2))
+    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file:'//trim(OUTPUT_FILES)//trim(sisname_2))
   endif
 
   ! subtract half duration of the source to make sure travel time is correct
@@ -90,14 +90,14 @@
     it = seismo_offset + isample
 
     ! current time
-    if( SIMULATION_TYPE == 3 ) then
+    if (SIMULATION_TYPE == 3) then
       timeval = dble(NSTEP-it)*DT - t0
     else
       timeval = dble(it-1)*DT - t0
     endif
 
     ! writes out to file
-    if(SAVE_ALL_SEISMOS_IN_ONE_FILE .and. USE_BINARY_FOR_LARGE_FILE) then
+    if (SAVE_ALL_SEISMOS_IN_ONE_FILE .and. USE_BINARY_FOR_LARGE_FILE) then
       ! distinguish between single and double precision for reals
       write(IOUT) real(timeval, kind=CUSTOM_REAL), real(value, kind=CUSTOM_REAL)
     else
@@ -106,6 +106,6 @@
     endif
   enddo
 
-  if(.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
+  if (.not. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
   end subroutine write_output_ASCII

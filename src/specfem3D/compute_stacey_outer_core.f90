@@ -70,27 +70,27 @@
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   ! checks
-  if( SIMULATION_TYPE == 3 ) return
+  if (SIMULATION_TYPE == 3 ) return
 
   ! outer core
 
   !   xmin
   ! if two chunks exclude this face for one of them
-  if( NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC ) then
-    if( nspec2D_xmin_outer_core > 0 ) then
+  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+    if (nspec2D_xmin_outer_core > 0) then
       ! adds boundary contributions
-      if( .NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
-        do ispec2D=1,nspec2D_xmin_outer_core
+        do ispec2D = 1,nspec2D_xmin_outer_core
 
           ispec=ibelm_xmin_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
+          if (nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
 
-          i=1
-          do k=nkmin_xi_outer_core(1,ispec2D),NGLLZ
-            do j=njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
+          i = 1
+          do k = nkmin_xi_outer_core(1,ispec2D),NGLLZ
+            do j = njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
               iglob=ibool_outer_core(i,j,k,ispec)
 
               sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
@@ -99,7 +99,7 @@
 
               accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-              if( SAVE_FORWARD ) then
+              if (SAVE_FORWARD) then
                 absorb_xmin_outer_core(j,k,ispec2D) = weight*sn
               endif
             enddo
@@ -112,7 +112,7 @@
       endif
 
       ! writes absorbing boundary values to file
-      if( SAVE_FORWARD ) then
+      if (SAVE_FORWARD) then
         call write_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,it)
       endif
     endif
@@ -120,17 +120,17 @@
 
   !   xmax
   ! if two chunks exclude this face for one of them
-  if( NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB ) then
-    if( nspec2D_xmax_outer_core > 0 ) then
+  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+    if (nspec2D_xmax_outer_core > 0) then
       ! adds boundary contributions
-      if( .NOT. GPU_MODE ) then
+      if (.not. GPU_MODE) then
         ! on CPU
-        do ispec2D=1,nspec2D_xmax_outer_core
+        do ispec2D = 1,nspec2D_xmax_outer_core
 
           ispec=ibelm_xmax_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
+          if (nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
 
           i=NGLLX
           do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
@@ -143,7 +143,7 @@
 
               accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-              if( SAVE_FORWARD ) then
+              if (SAVE_FORWARD) then
                 absorb_xmax_outer_core(j,k,ispec2D) = weight*sn
               endif
 
@@ -156,7 +156,7 @@
         call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_xmax_outer_core,5) ! <= xmax
       endif
 
-      if( SAVE_FORWARD ) then
+      if (SAVE_FORWARD) then
         call write_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,it)
       endif
     endif
@@ -164,20 +164,20 @@
   endif
 
   !   ymin
-  if( nspec2D_ymin_outer_core > 0 ) then
+  if (nspec2D_ymin_outer_core > 0) then
     ! adds boundary contributions
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
-      do ispec2D=1,nspec2D_ymin_outer_core
+      do ispec2D = 1,nspec2D_ymin_outer_core
 
         ispec=ibelm_ymin_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
-        if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
+        if (nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
 
-        j=1
-        do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
-          do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
+        j = 1
+        do k = nkmin_eta_outer_core(1,ispec2D),NGLLZ
+          do i = nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
             iglob=ibool_outer_core(i,j,k,ispec)
 
             sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
@@ -186,7 +186,7 @@
 
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-            if( SAVE_FORWARD ) then
+            if (SAVE_FORWARD) then
               absorb_ymin_outer_core(i,k,ispec2D) = weight*sn
             endif
 
@@ -198,22 +198,22 @@
       call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymin_outer_core,6) ! <= ymin
     endif
 
-    if( SAVE_FORWARD ) then
+    if (SAVE_FORWARD) then
       call write_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,it)
     endif
   endif
 
   !   ymax
-  if( nspec2D_ymax_outer_core > 0 ) then
+  if (nspec2D_ymax_outer_core > 0) then
     ! adds boundary contributions
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
-      do ispec2D=1,nspec2D_ymax_outer_core
+      do ispec2D = 1,nspec2D_ymax_outer_core
 
         ispec=ibelm_ymax_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
-        if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
+        if (nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
 
         j=NGLLY
         do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
@@ -226,7 +226,7 @@
 
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-            if( SAVE_FORWARD ) then
+            if (SAVE_FORWARD) then
               absorb_ymax_outer_core(i,k,ispec2D) = weight*sn
             endif
 
@@ -238,7 +238,7 @@
       call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymax_outer_core,7) ! <= ymax
     endif
 
-    if( SAVE_FORWARD ) then
+    if (SAVE_FORWARD) then
       call write_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,it)
     endif
   endif
@@ -246,9 +246,9 @@
   ! zmin
 
   ! for surface elements exactly on the ICB
-  if( nspec2D_zmin_outer_core > 0 ) then
+  if (nspec2D_zmin_outer_core > 0) then
     ! adds boundary contributions
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_zmin_outer_core
 
@@ -265,7 +265,7 @@
 
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-            if( SAVE_FORWARD ) then
+            if (SAVE_FORWARD) then
               absorb_zmin_outer_core(i,j,ispec2D) = weight*sn
             endif
 
@@ -277,7 +277,7 @@
       call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_zmin_outer_core,8) ! <= zmin
     endif
 
-    if( SAVE_FORWARD ) then
+    if (SAVE_FORWARD) then
       call write_abs(8,absorb_zmin_outer_core,reclen_zmin,it)
     endif
   endif
@@ -329,32 +329,32 @@
   !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
 
   ! checks
-  if( SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3 ) return
 
   ! outer core
 
   !   xmin
   ! if two chunks exclude this face for one of them
-  if( NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC ) then
+  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
     ! reads absorbing boundary values
-    if( nspec2D_xmin_outer_core > 0 ) then
+    if (nspec2D_xmin_outer_core > 0) then
       ! note: backward/reconstructed wavefields are read in after the Newmark time scheme in the first time loop
       !          this leads to a corresponding boundary condition at time index NSTEP - (it-1) = NSTEP - it + 1
       call read_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,NSTEP-it+1)
 
       ! adds boundary contributions
-      if( .NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
-        do ispec2D=1,nspec2D_xmin_outer_core
+        do ispec2D = 1,nspec2D_xmin_outer_core
 
           ispec=ibelm_xmin_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
+          if (nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
 
-          i=1
-          do k=nkmin_xi_outer_core(1,ispec2D),NGLLZ
-            do j=njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
+          i = 1
+          do k = nkmin_xi_outer_core(1,ispec2D),NGLLZ
+            do j = njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
               iglob=ibool_outer_core(i,j,k,ispec)
 
               b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_xmin_outer_core(j,k,ispec2D)
@@ -370,20 +370,20 @@
 
   !   xmax
   ! if two chunks exclude this face for one of them
-  if( NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB ) then
-    if( nspec2D_xmax_outer_core > 0 ) then
+  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+    if (nspec2D_xmax_outer_core > 0) then
       ! reads in boundary contributions from file
       call read_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,NSTEP-it+1)
 
       ! adds boundary contributions
-      if( .NOT. GPU_MODE ) then
+      if (.not. GPU_MODE) then
         ! on CPU
-        do ispec2D=1,nspec2D_xmax_outer_core
+        do ispec2D = 1,nspec2D_xmax_outer_core
 
           ispec=ibelm_xmax_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
+          if (nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
 
           i=NGLLX
           do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
@@ -402,23 +402,23 @@
   endif
 
   !   ymin
-  if( nspec2D_ymin_outer_core > 0 ) then
+  if (nspec2D_ymin_outer_core > 0) then
     ! reads in boundary contributions from file
     call read_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,NSTEP-it+1)
 
     ! adds boundary contributions
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
-      do ispec2D=1,nspec2D_ymin_outer_core
+      do ispec2D = 1,nspec2D_ymin_outer_core
 
         ispec=ibelm_ymin_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
-        if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
+        if (nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
 
-        j=1
-        do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
-          do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
+        j = 1
+        do k = nkmin_eta_outer_core(1,ispec2D),NGLLZ
+          do i = nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
             iglob=ibool_outer_core(i,j,k,ispec)
 
             b_accel_outer_core(iglob) = b_accel_outer_core(iglob) - absorb_ymin_outer_core(i,k,ispec2D)
@@ -432,19 +432,19 @@
   endif
 
   !   ymax
-  if(  nspec2D_ymax_outer_core > 0 ) then
+  if ( nspec2D_ymax_outer_core > 0) then
     ! reads in boundary contributions from file
     call read_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,NSTEP-it+1)
 
     ! adds boundary contributions
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
-      do ispec2D=1,nspec2D_ymax_outer_core
+      do ispec2D = 1,nspec2D_ymax_outer_core
 
         ispec=ibelm_ymax_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
-        if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
+        if (nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
 
         j=NGLLY
         do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
@@ -464,12 +464,12 @@
   ! zmin
 
   ! for surface elements exactly on the ICB
-  if( nspec2D_zmin_outer_core > 0 ) then
+  if (nspec2D_zmin_outer_core > 0) then
     ! reads in boundary contributions from file
     call read_abs(8,absorb_zmin_outer_core,reclen_zmin,NSTEP-it+1)
 
     ! adds boundary contributions
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_zmin_outer_core
 
@@ -501,7 +501,7 @@
   use constants_solver
 
   use specfem_par,only: &
-    ichunk,SIMULATION_TYPE,SAVE_FORWARD, &
+    ichunk,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION, &
     wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
 
   use specfem_par,only: GPU_MODE,Mesh_pointer
@@ -527,28 +527,29 @@
   integer :: i,j,k,ispec2D,ispec,iglob
 
   ! checks
-  if( SIMULATION_TYPE /= 3 ) return
-  if( SAVE_FORWARD ) return
+  if (SIMULATION_TYPE /= 3 ) return
+  if (SAVE_FORWARD) return
+  if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_outer_core_backward_undoatt()'
 
   ! outer core
 
   !   xmin
   ! if two chunks exclude this face for one of them
-  if( NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC ) then
-    if( nspec2D_xmin_outer_core > 0 ) then
+  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+    if (nspec2D_xmin_outer_core > 0) then
       ! adds boundary contribution
-      if( .NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
-        do ispec2D=1,nspec2D_xmin_outer_core
+        do ispec2D = 1,nspec2D_xmin_outer_core
 
           ispec=ibelm_xmin_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
+          if (nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
 
-          i=1
-          do k=nkmin_xi_outer_core(1,ispec2D),NGLLZ
-            do j=njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
+          i = 1
+          do k = nkmin_xi_outer_core(1,ispec2D),NGLLZ
+            do j = njmin_outer_core(1,ispec2D),njmax_outer_core(1,ispec2D)
               iglob=ibool_outer_core(i,j,k,ispec)
 
               sn = b_veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
@@ -569,17 +570,17 @@
 
   !   xmax
   ! if two chunks exclude this face for one of them
-  if( NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB ) then
-    if( nspec2D_xmax_outer_core > 0 ) then
+  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+    if (nspec2D_xmax_outer_core > 0) then
       ! adds boundary contribution
-      if( .NOT. GPU_MODE ) then
+      if (.not. GPU_MODE) then
         ! on CPU
-        do ispec2D=1,nspec2D_xmax_outer_core
+        do ispec2D = 1,nspec2D_xmax_outer_core
 
           ispec=ibelm_xmax_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
-          if(nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
+          if (nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
 
           i=NGLLX
           do k=nkmin_xi_outer_core(2,ispec2D),NGLLZ
@@ -603,20 +604,20 @@
   endif
 
   !   ymin
-  if( nspec2D_ymin_outer_core > 0 ) then
+  if (nspec2D_ymin_outer_core > 0) then
     ! adds boundary contribution
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
-      do ispec2D=1,nspec2D_ymin_outer_core
+      do ispec2D = 1,nspec2D_ymin_outer_core
 
         ispec=ibelm_ymin_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
-        if(nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
+        if (nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
 
-        j=1
-        do k=nkmin_eta_outer_core(1,ispec2D),NGLLZ
-          do i=nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
+        j = 1
+        do k = nkmin_eta_outer_core(1,ispec2D),NGLLZ
+          do i = nimin_outer_core(1,ispec2D),nimax_outer_core(1,ispec2D)
             iglob=ibool_outer_core(i,j,k,ispec)
 
             sn = b_veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
@@ -635,16 +636,16 @@
   endif
 
   !   ymax
-  if( nspec2D_ymax_outer_core > 0 ) then
+  if (nspec2D_ymax_outer_core > 0) then
     ! adds boundary contribution
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
-      do ispec2D=1,nspec2D_ymax_outer_core
+      do ispec2D = 1,nspec2D_ymax_outer_core
 
         ispec=ibelm_ymax_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
-        if(nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
+        if (nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
 
         j=NGLLY
         do k=nkmin_eta_outer_core(2,ispec2D),NGLLZ
@@ -669,9 +670,9 @@
   ! zmin
 
   ! for surface elements exactly on the ICB
-  if( nspec2D_zmin_outer_core > 0 ) then
+  if (nspec2D_zmin_outer_core > 0) then
     ! adds boundary contribution
-    if( .NOT. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
       do ispec2D = 1,nspec2D_zmin_outer_core
 

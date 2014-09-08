@@ -68,11 +68,11 @@
 
   ! allocates arrays
   ! differs for isotropic model or transverse isotropic models
-  if( .not. TRANSVERSE_ISOTROPY ) then
+  if (.not. TRANSVERSE_ISOTROPY) then
     ! isotropic model
     allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
               MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating vp_new,.. arrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vp_new,.. arrays')
   else
     ! transverse isotropic model
     allocate( MGLL_V%vpv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
@@ -80,24 +80,24 @@
               MGLL_V%vsv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
               MGLL_V%vsh_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
               MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating vpv_new,.. arrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vpv_new,.. arrays')
 
   endif
   allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating rho_new,.. arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating rho_new,.. arrays')
 
   ! reads in model files for each process
-  if( ADIOS_ENABLED .and. ADIOS_FOR_MODELS ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_MODELS) then
     call read_gll_model_adios(myrank,MGLL_V,NSPEC)
   else
     call read_gll_model(myrank,MGLL_V,NSPEC)
   endif
 
   ! checks velocity range
-  if( .not. TRANSVERSE_ISOTROPY ) then
+  if (.not. TRANSVERSE_ISOTROPY) then
 
     ! isotropic model
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*)'model GLL: isotropic'
       call flush_IMAIN()
     endif
@@ -107,7 +107,7 @@
     minvalue = minval( MGLL_V%vs_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  vs new min/max: ',min_all,max_all
     endif
     ! Vp
@@ -115,7 +115,7 @@
     minvalue = minval( MGLL_V%vp_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  vp new min/max: ',min_all,max_all
     endif
     ! density
@@ -123,7 +123,7 @@
     minvalue = minval( MGLL_V%rho_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
       write(IMAIN,*)
       call flush_IMAIN()
@@ -132,7 +132,7 @@
   else
 
     ! transverse isotropic model
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*)'model GLL: transverse isotropic'
     endif
 
@@ -141,7 +141,7 @@
     minvalue = minval( MGLL_V%vsv_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  vsv new min/max: ',min_all,max_all
     endif
     ! Vsh
@@ -149,7 +149,7 @@
     minvalue = minval( MGLL_V%vsh_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  vsh new min/max: ',min_all,max_all
     endif
     ! Vpv
@@ -157,7 +157,7 @@
     minvalue = minval( MGLL_V%vpv_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  vpv new min/max: ',min_all,max_all
     endif
     ! Vph
@@ -165,7 +165,7 @@
     minvalue = minval( MGLL_V%vph_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  vph new min/max: ',min_all,max_all
     endif
     ! density
@@ -173,7 +173,7 @@
     minvalue = minval( MGLL_V%rho_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  rho new min/max: ',min_all,max_all
     endif
     ! eta
@@ -181,7 +181,7 @@
     minvalue = minval( MGLL_V%eta_new )
     call max_all_cr(maxvalue, max_all)
     call min_all_cr(minvalue, min_all)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) '  eta new min/max: ',min_all,max_all
       write(IMAIN,*)
       call flush_IMAIN()
@@ -196,7 +196,7 @@
   scaleval = dsqrt(PI*GRAV*RHOAV)
   MGLL_V%scale_velocity = 1000.0d0/(R_EARTH*scaleval)
   MGLL_V%scale_density =  1000.0d0/RHOAV
-  if( .not. TRANSVERSE_ISOTROPY ) then
+  if (.not. TRANSVERSE_ISOTROPY) then
       ! non-dimensionalize isotropic values
       MGLL_V%vp_new = MGLL_V%vp_new * MGLL_V%scale_velocity
       MGLL_V%vs_new = MGLL_V%vs_new * MGLL_V%scale_velocity
@@ -248,7 +248,7 @@
   integer :: ier
   character(len=150) :: prname
 
-  if( myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*)'reading in model from ',trim(PATHNAME_GLL_modeldir)
     call flush_IMAIN()
@@ -258,14 +258,14 @@
   write(prname,'(a,i6.6,a)') PATHNAME_GLL_modeldir(1:len_trim(PATHNAME_GLL_modeldir))//'proc',myrank,'_reg1_'
 
   ! reads in model for each partition
-  if( .not. TRANSVERSE_ISOTROPY ) then
+  if (.not. TRANSVERSE_ISOTROPY) then
     ! isotropic model
     ! vp mesh
     open(unit=27,file=prname(1:len_trim(prname))//'vp_new.bin',&
           status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) then
-      write(IMAIN,*) 'error opening: ',prname(1:len_trim(prname))//'vp_new.bin'
-      call exit_MPI(myrank,'error model GLL')
+    if (ier /= 0) then
+      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vp_new.bin'
+      call exit_MPI(myrank,'Error model GLL')
     endif
     read(27) MGLL_V%vp_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -273,9 +273,9 @@
     ! vs mesh
     open(unit=27,file=prname(1:len_trim(prname))//'vs_new.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) then
-      print*,'error opening: ',prname(1:len_trim(prname))//'vs_new.bin'
-      call exit_MPI(myrank,'error model GLL')
+    if (ier /= 0) then
+      print*,'Error opening: ',prname(1:len_trim(prname))//'vs_new.bin'
+      call exit_MPI(myrank,'Error model GLL')
     endif
     read(27) MGLL_V%vs_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -286,18 +286,18 @@
     ! vp mesh
     open(unit=27,file=prname(1:len_trim(prname))//'vpv_new.bin',&
           status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) then
-      write(IMAIN,*) 'error opening: ',prname(1:len_trim(prname))//'vpv_new.bin'
-      call exit_MPI(myrank,'error model GLL')
+    if (ier /= 0) then
+      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv_new.bin'
+      call exit_MPI(myrank,'Error model GLL')
     endif
     read(27) MGLL_V%vpv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
 
     open(unit=27,file=prname(1:len_trim(prname))//'vph_new.bin',&
           status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) then
-      write(IMAIN,*) 'error opening: ',prname(1:len_trim(prname))//'vph_new.bin'
-      call exit_MPI(myrank,'error model GLL')
+    if (ier /= 0) then
+      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph_new.bin'
+      call exit_MPI(myrank,'Error model GLL')
     endif
     read(27) MGLL_V%vph_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -305,18 +305,18 @@
     ! vs mesh
     open(unit=27,file=prname(1:len_trim(prname))//'vsv_new.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) then
-      print*,'error opening: ',prname(1:len_trim(prname))//'vsv_new.bin'
-      call exit_MPI(myrank,'error model GLL')
+    if (ier /= 0) then
+      print*,'Error opening: ',prname(1:len_trim(prname))//'vsv_new.bin'
+      call exit_MPI(myrank,'Error model GLL')
     endif
     read(27) MGLL_V%vsv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
 
     open(unit=27,file=prname(1:len_trim(prname))//'vsh_new.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) then
-      print*,'error opening: ',prname(1:len_trim(prname))//'vsh_new.bin'
-      call exit_MPI(myrank,'error model GLL')
+    if (ier /= 0) then
+      print*,'Error opening: ',prname(1:len_trim(prname))//'vsh_new.bin'
+      call exit_MPI(myrank,'Error model GLL')
     endif
     read(27) MGLL_V%vsh_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -324,9 +324,9 @@
     ! eta mesh
     open(unit=27,file=prname(1:len_trim(prname))//'eta_new.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
-    if( ier /= 0 ) then
-      print*,'error opening: ',prname(1:len_trim(prname))//'eta_new.bin'
-      call exit_MPI(myrank,'error model GLL')
+    if (ier /= 0) then
+      print*,'Error opening: ',prname(1:len_trim(prname))//'eta_new.bin'
+      call exit_MPI(myrank,'Error model GLL')
     endif
     read(27) MGLL_V%eta_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(27)
@@ -336,9 +336,9 @@
   ! rho mesh
   open(unit=27,file=prname(1:len_trim(prname))//'rho_new.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
-  if( ier /= 0 ) then
-    print*,'error opening: ',prname(1:len_trim(prname))//'rho_new.bin'
-    call exit_MPI(myrank,'error model GLL')
+  if (ier /= 0) then
+    print*,'Error opening: ',prname(1:len_trim(prname))//'rho_new.bin'
+    call exit_MPI(myrank,'Error model GLL')
   endif
   read(27) MGLL_V%rho_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
   close(27)

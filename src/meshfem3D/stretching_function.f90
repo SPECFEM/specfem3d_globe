@@ -46,7 +46,7 @@
   ! initializes array
   ! for example: 2 element layers (ner=2)  for most probable resolutions (NEX < 1000) in the crust
   !                      then stretch_tab(2,1) = 0.5 = stretch_tab(2,2)
-  do i=1,ner
+  do i = 1,ner
     stretch_tab(2,i)=(1.d0/ner)
   enddo
 
@@ -57,7 +57,7 @@
     else
       value = (0.5d0-floor(ner/2.d0))*step
     endif
-    do i=1,ner
+    do i = 1,ner
       stretch_tab(2,i) = stretch_tab(2,i) + value
       value = value + step
     enddo
@@ -72,7 +72,7 @@
 
   ! r_bottom
   stretch_tab(2,ner) = r_bottom
-  do i=1,ner-1
+  do i = 1,ner-1
     stretch_tab(2,i) = stretch_tab(1,i+1)
   enddo
 
@@ -104,7 +104,7 @@
 !  ! initializes array
 !  ! for example: 2 element layers (ner=2)  for most probable resolutions (NEX < 1000) in the crust
 !  !                      then stretch_tab(2,1) = 0.5 = stretch_tab(2,2)
-!  do i=1,ner
+!  do i = 1,ner
 !    stretch_tab(2,i)=(1.d0/ner)
 !  enddo
 !
@@ -115,7 +115,7 @@
 !    else
 !      value = (0.5d0-floor(ner/2.d0))*step
 !    endif
-!    do i=1,ner
+!    do i = 1,ner
 !      stretch_tab(2,i) = stretch_tab(2,i) + value
 !      value = value + step
 !    enddo
@@ -130,11 +130,11 @@
 !
 !  ! r_bottom
 !  stretch_tab(2,ner) = r_bottom
-!  do i=1,ner-1
+!  do i = 1,ner-1
 !    stretch_tab(2,i) = stretch_tab(1,i+1)
 !  enddo
 
-  if( ner /= 3 ) stop 'error regional stretching function: ner value'
+  if (ner /= 3 ) stop 'Error regional stretching function: ner value'
 
   stretch_tab(1,1) = r_top
   stretch_tab(1,2) = 6356000.d0  ! 15km second layer top

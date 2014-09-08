@@ -55,7 +55,7 @@ contains
 !! \param group_size_inc The size of the ADIOS group to increment
 !! \param avs_dx_adios The structure holding the data to be allocated
 subroutine define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
-    npointot, mask_ibool, group_size_inc, avs_dx_adios)
+                                           npointot, mask_ibool, group_size_inc, avs_dx_adios)
 
   use constants
   use adios_write_mod
@@ -81,7 +81,7 @@ subroutine define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
   mask_ibool(:) = .false.
 
   ! mark global AVS or DX points
-  do ispec=1,nspec
+  do ispec = 1,nspec
     iglob1=ibool(1,1,1,ispec)
     iglob2=ibool(NGLLX,1,1,ispec)
     iglob3=ibool(NGLLX,NGLLY,1,ispec)
@@ -142,33 +142,26 @@ subroutine define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
                                    "", "points/z_value", dummy_real1d)
 
   !--- Variables for AVS_DXelements.txt
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
                                    "", "elements/idoubling", dummy_int1d)
 
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
-                                   "", "elements/num_ibool_AVS_DX_iglob1", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
-                                   "", "elements/num_ibool_AVS_DX_iglob2", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
-                                   "", "elements/num_ibool_AVS_DX_iglob3", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
-                                   "", "elements/num_ibool_AVS_DX_iglob4", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
-                                   "", "elements/num_ibool_AVS_DX_iglob5", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
-                                   "", "elements/num_ibool_AVS_DX_iglob6", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
-                                   "", "elements/num_ibool_AVS_DX_iglob7", &
-                                   dummy_int1d)
-  call define_adios_global_array1D(adios_group, group_size_inc, nspec,     &
-                                   "", "elements/num_ibool_AVS_DX_iglob8", &
-                                   dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements/num_ibool_AVS_DX_iglob1", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements/num_ibool_AVS_DX_iglob2", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements/num_ibool_AVS_DX_iglob3", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements/num_ibool_AVS_DX_iglob4", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements/num_ibool_AVS_DX_iglob5", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements/num_ibool_AVS_DX_iglob6", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements/num_ibool_AVS_DX_iglob7", dummy_int1d)
+  call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
+                                   "", "elements/num_ibool_AVS_DX_iglob8", dummy_int1d)
+
 end subroutine define_AVS_DX_global_data_adios
 
 
@@ -179,16 +172,15 @@ end subroutine define_AVS_DX_global_data_adios
 !! \param avs_dx_adios The structure to be filled.
 !!
 !! Create AVS or DX 3D data for the slice, to be recombined in postprocessing.
-subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
-    nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
-    mask_ibool, npointot, avs_dx_adios)
+  subroutine prepare_AVS_DX_global_data_adios(myrank, &
+                                              nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
+                                              mask_ibool, npointot, avs_dx_adios)
 
   use constants
   use adios_write_mod
 
   implicit none
 
-  integer(kind=8), intent(in)    :: adios_handle
   integer nspec,myrank
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
@@ -215,7 +207,7 @@ subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
   mask_ibool(:) = .false.
 
 ! mark global AVS or DX points
-  do ispec=1,nspec
+  do ispec = 1,nspec
     iglob1=ibool(1,1,1,ispec)
     iglob2=ibool(NGLLX,1,1,ispec)
     iglob3=ibool(NGLLX,NGLLY,1,ispec)
@@ -242,7 +234,7 @@ subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
 
   ! fill the structure with global AVS or DX points
   numpoin = 0
-  do ispec=1,nspec
+  do ispec = 1,nspec
     iglob1=ibool(1,1,1,ispec)
     iglob2=ibool(NGLLX,1,1,ispec)
     iglob3=ibool(NGLLX,NGLLY,1,ispec)
@@ -251,56 +243,56 @@ subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
     iglob6=ibool(NGLLX,1,NGLLZ,ispec)
     iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
     iglob8=ibool(1,NGLLY,NGLLZ,ispec)
-    if(.not. mask_ibool(iglob1)) then
+    if (.not. mask_ibool(iglob1)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob1) = numpoin
       avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,1,1,ispec))
       avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,1,1,ispec))
       avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,1,1,ispec))
     endif
-    if(.not. mask_ibool(iglob2)) then
+    if (.not. mask_ibool(iglob2)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob2) = numpoin
       avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,1,1,ispec))
       avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,1,1,ispec))
       avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,1,1,ispec))
     endif
-    if(.not. mask_ibool(iglob3)) then
+    if (.not. mask_ibool(iglob3)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob3) = numpoin
       avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,1,ispec))
       avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,1,ispec))
       avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,1,ispec))
     endif
-    if(.not. mask_ibool(iglob4)) then
+    if (.not. mask_ibool(iglob4)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob4) = numpoin
       avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,1,ispec))
       avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,NGLLY,1,ispec))
       avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,NGLLY,1,ispec))
     endif
-    if(.not. mask_ibool(iglob5)) then
+    if (.not. mask_ibool(iglob5)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob5) = numpoin
       avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,1,NGLLZ,ispec))
       avs_dx_adios%y_adios(numpoin) = sngl(ystore(1,1,NGLLZ,ispec))
       avs_dx_adios%z_adios(numpoin) = sngl(zstore(1,1,NGLLZ,ispec))
     endif
-    if(.not. mask_ibool(iglob6)) then
+    if (.not. mask_ibool(iglob6)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob6) = numpoin
       avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,1,NGLLZ,ispec))
       avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,1,NGLLZ,ispec))
       avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,1,NGLLZ,ispec))
     endif
-    if(.not. mask_ibool(iglob7)) then
+    if (.not. mask_ibool(iglob7)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob7) = numpoin
       avs_dx_adios%x_adios(numpoin) = sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec))
       avs_dx_adios%y_adios(numpoin) = sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec))
       avs_dx_adios%z_adios(numpoin) = sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
     endif
-    if(.not. mask_ibool(iglob8)) then
+    if (.not. mask_ibool(iglob8)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob8) = numpoin
       avs_dx_adios%x_adios(numpoin) = sngl(xstore(1,NGLLY,NGLLZ,ispec))
@@ -318,12 +310,12 @@ subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
   enddo
 
   ! check that number of global points output is okay
-  if(numpoin /= npoin) &
+  if (numpoin /= npoin) &
     call exit_MPI(myrank, &
         'incorrect number of global points in AVS or DX file creation')
 
   ! AVS or DX elements
-  do ispec=1,nspec
+  do ispec = 1,nspec
     iglob1=ibool(1,1,1,ispec)
     iglob2=ibool(NGLLX,1,1,ispec)
     iglob3=ibool(NGLLX,NGLLY,1,ispec)
@@ -343,18 +335,19 @@ subroutine prepare_AVS_DX_global_data_adios(adios_handle, myrank, &
     avs_dx_adios%iglob8 = num_ibool_AVS_DX(iglob8)
   enddo
   avs_dx_adios%idoubling = idoubling
-end subroutine prepare_AVS_DX_global_data_adios
+
+  end subroutine prepare_AVS_DX_global_data_adios
 
 !===============================================================================
 !> Schedule write to ADIOS file for global AVS/DX data
 !! \param adios_handle The handle to the ADIOS file we want to write into
 !! \param nspec Number of spectral elements
 !! \avs_dx_adios Structure with the data that have to be written
-subroutine write_AVS_DX_global_data_adios(adios_handle, myrank, &
-    sizeprocs, avs_dx_adios)
+subroutine write_AVS_DX_global_data_adios(adios_handle, myrank, sizeprocs, avs_dx_adios)
 
   use adios_write_mod
   use adios_helpers_mod
+
   implicit none
   !--- Arguments
   integer(kind=8), intent(in) :: adios_handle
@@ -375,84 +368,54 @@ subroutine write_AVS_DX_global_data_adios(adios_handle, myrank, &
 
 
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/idoubling",                   &
-                                   avs_dx_adios%idoubling)
+                                   "elements/idoubling", avs_dx_adios%idoubling)
 
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/num_ibool_AVS_DX_iglob1",     &
-                                   avs_dx_adios%iglob1)
+                                   "elements/num_ibool_AVS_DX_iglob1", avs_dx_adios%iglob1)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/num_ibool_AVS_DX_iglob2",     &
-                                   avs_dx_adios%iglob2)
+                                   "elements/num_ibool_AVS_DX_iglob2", avs_dx_adios%iglob2)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/num_ibool_AVS_DX_iglob3",     &
-                                   avs_dx_adios%iglob3)
+                                   "elements/num_ibool_AVS_DX_iglob3", avs_dx_adios%iglob3)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/num_ibool_AVS_DX_iglob4",     &
-                                   avs_dx_adios%iglob4)
+                                   "elements/num_ibool_AVS_DX_iglob4", avs_dx_adios%iglob4)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/num_ibool_AVS_DX_iglob5",     &
-                                   avs_dx_adios%iglob5)
+                                   "elements/num_ibool_AVS_DX_iglob5", avs_dx_adios%iglob5)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/num_ibool_AVS_DX_iglob6",     &
-                                   avs_dx_adios%iglob6)
+                                   "elements/num_ibool_AVS_DX_iglob6", avs_dx_adios%iglob6)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/num_ibool_AVS_DX_iglob7",     &
-                                   avs_dx_adios%iglob7)
+                                   "elements/num_ibool_AVS_DX_iglob7", avs_dx_adios%iglob7)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
-                                   "elements/num_ibool_AVS_DX_iglob8",     &
-                                   avs_dx_adios%iglob8)
+                                   "elements/num_ibool_AVS_DX_iglob8", avs_dx_adios%iglob8)
+
 end subroutine write_AVS_DX_global_data_adios
 
 !===============================================================================
 !> Free temporary structure filled to write AVS/DX global variable to file.
 !! \param myrank The MPI rank of the process
 !! \param avs_dx_adios The structure holding AVS/DX information
-subroutine free_AVS_DX_global_data_adios(myrank, avs_dx_adios)
+subroutine free_AVS_DX_global_data_adios(avs_dx_adios)
+
   implicit none
   !--- Arguments
-  integer, intent(in) :: myrank
   type(avs_dx_global_t), intent(inout) :: avs_dx_adios
-  !--- Variables
-  integer :: ierr
 
-  deallocate(avs_dx_adios%x_adios, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, "Error deallocating x_adios.")
-  deallocate(avs_dx_adios%y_adios, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, "Error deallocating y_adios.")
-  deallocate(avs_dx_adios%z_adios, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, "Error deallocating z_adios.")
+  deallocate(avs_dx_adios%x_adios)
+  deallocate(avs_dx_adios%y_adios)
+  deallocate(avs_dx_adios%z_adios)
 
-  deallocate(avs_dx_adios%idoubling, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob1.")
-  deallocate(avs_dx_adios%iglob1, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob1.")
-  deallocate(avs_dx_adios%iglob2, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob2.")
-  deallocate(avs_dx_adios%iglob3, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob3.")
-  deallocate(avs_dx_adios%iglob4, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob4.")
-  deallocate(avs_dx_adios%iglob5, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob5.")
-  deallocate(avs_dx_adios%iglob6, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob6.")
-  deallocate(avs_dx_adios%iglob7, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob7.")
-  deallocate(avs_dx_adios%iglob8, stat=ierr)
-  if (ierr /= 0) call exit_MPI(myrank, &
-      "Error deallocating num_ibool_AVS_DX_iglob8.")
+  deallocate(avs_dx_adios%idoubling)
+  deallocate(avs_dx_adios%iglob1)
+  deallocate(avs_dx_adios%iglob2)
+  deallocate(avs_dx_adios%iglob3)
+  deallocate(avs_dx_adios%iglob4)
+  deallocate(avs_dx_adios%iglob5)
+  deallocate(avs_dx_adios%iglob6)
+  deallocate(avs_dx_adios%iglob7)
+  deallocate(avs_dx_adios%iglob8)
 
   avs_dx_adios%npoin = 0
   avs_dx_adios%nspec = 0
+
 end subroutine free_AVS_DX_global_data_adios
 
 end module AVS_DX_global_mod

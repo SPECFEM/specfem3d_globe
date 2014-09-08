@@ -83,7 +83,7 @@
   do ielem = 2,NER_TOPDDOUBLEPRIME_771
     zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
     distance = abs(zval - (R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL))
-    if(distance < distance_min) then
+    if (distance < distance_min) then
       elem_doubling_mantle = ielem
       distance_min = distance
       DEPTH_SECOND_DOUBLING_REAL = R_EARTH - zval
@@ -98,7 +98,7 @@
   do ielem = 4,NER_OUTER_CORE
     zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
     distance = abs(zval - (R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL))
-    if(distance < distance_min) then
+    if (distance < distance_min) then
       elem_doubling_middle_outer_core = ielem
       distance_min = distance
       DEPTH_THIRD_DOUBLING_REAL = R_EARTH - zval
@@ -114,15 +114,15 @@
     do ielem = 2,NER_OUTER_CORE-2
       zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
       distance = abs(zval - (R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL))
-      if(distance < distance_min) then
+      if (distance < distance_min) then
         elem_doubling_bottom_outer_core = ielem
         distance_min = distance
         DEPTH_FOURTH_DOUBLING_REAL = R_EARTH - zval
       endif
     enddo
 ! make sure that the two doublings in the outer core are found in the right order
-    if(elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
-                    stop 'error in location of the two doublings in the outer core'
+    if (elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
+                    stop 'Error in location of the two doublings in the outer core'
   endif
 
   ratio_sampling_array(15) = 0

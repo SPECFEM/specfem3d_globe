@@ -57,7 +57,7 @@
   close(IERROR)
 
   ! close output file
-  if(myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
+  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
 
   ! stop all the MPI processes, and exit
   call abort_mpi()
@@ -68,7 +68,7 @@
   stop 30
 
   ! or just exit with message:
-  !stop 'error, program ended in exit_MPI'
+  !stop 'Error, program ended in exit_MPI'
 
   end subroutine exit_MPI
 
@@ -92,7 +92,7 @@
   ! stop all the MPI processes, and exit
   call abort_mpi()
 
-  stop 'error, program ended in exit_MPI'
+  stop 'Error, program ended in exit_MPI'
 
   end subroutine exit_MPI_without_rank
 

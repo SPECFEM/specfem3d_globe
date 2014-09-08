@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.9995
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 const char * compute_coupling_ocean_kernel_program = "\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
@@ -21,6 +54,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef INDEX5\n\
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))\n\
 #endif\n\
+\n\
 #ifndef NDIM\n\
 #define NDIM 3\n\
 #endif\n\
@@ -60,6 +94,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifndef BLOCKSIZE_TRANSFER\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
+\n\
 __kernel void compute_coupling_ocean_kernel(__global float * accel_crust_mantle, const __global float * rmassx_crust_mantle, const __global float * rmassy_crust_mantle, const __global float * rmassz_crust_mantle, const __global float * rmass_ocean_load, const int npoin_ocean_load, const __global int * ibool_ocean_load, const __global float * normal_ocean_load){\n\
   int ipoin;\n\
   int iglob;\n\
@@ -72,19 +107,19 @@ __kernel void compute_coupling_ocean_kernel(__global float * accel_crust_mantle,
   float additional_term_y;\n\
   float additional_term_z;\n\
   ipoin = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
-  if(ipoin < npoin_ocean_load){\n\
-    iglob = ibool_ocean_load[ipoin - 0] - (1);\n\
-    nx = normal_ocean_load[INDEX2(NDIM, 0, ipoin) - 0];\n\
-    ny = normal_ocean_load[INDEX2(NDIM, 1, ipoin) - 0];\n\
-    nz = normal_ocean_load[INDEX2(NDIM, 2, ipoin) - 0];\n\
-    force_normal_comp = ((accel_crust_mantle[0 - 0 + (iglob - (0)) * (3)]) * (nx)) / (rmassx_crust_mantle[iglob - 0]) + ((accel_crust_mantle[1 - 0 + (iglob - (0)) * (3)]) * (ny)) / (rmassy_crust_mantle[iglob - 0]) + ((accel_crust_mantle[2 - 0 + (iglob - (0)) * (3)]) * (nz)) / (rmassz_crust_mantle[iglob - 0]);\n\
-    rmass = rmass_ocean_load[ipoin - 0];\n\
-    additional_term_x = (rmass - (rmassx_crust_mantle[iglob - 0])) * (force_normal_comp);\n\
-    additional_term_y = (rmass - (rmassy_crust_mantle[iglob - 0])) * (force_normal_comp);\n\
-    additional_term_z = (rmass - (rmassz_crust_mantle[iglob - 0])) * (force_normal_comp);\n\
-    accel_crust_mantle[0 - 0 + (iglob - (0)) * (3)] = accel_crust_mantle[0 - 0 + (iglob - (0)) * (3)] + (additional_term_x) * (nx);\n\
-    accel_crust_mantle[1 - 0 + (iglob - (0)) * (3)] = accel_crust_mantle[1 - 0 + (iglob - (0)) * (3)] + (additional_term_y) * (ny);\n\
-    accel_crust_mantle[2 - 0 + (iglob - (0)) * (3)] = accel_crust_mantle[2 - 0 + (iglob - (0)) * (3)] + (additional_term_z) * (nz);\n\
+  if (ipoin < npoin_ocean_load) {\n\
+    iglob = ibool_ocean_load[ipoin - (0)] - (1);\n\
+    nx = normal_ocean_load[INDEX2(NDIM, 0, ipoin) - (0)];\n\
+    ny = normal_ocean_load[INDEX2(NDIM, 1, ipoin) - (0)];\n\
+    nz = normal_ocean_load[INDEX2(NDIM, 2, ipoin) - (0)];\n\
+    force_normal_comp = ((accel_crust_mantle[0 - (0) + (iglob - (0)) * (3)]) * (nx)) / (rmassx_crust_mantle[iglob - (0)]) + ((accel_crust_mantle[1 - (0) + (iglob - (0)) * (3)]) * (ny)) / (rmassy_crust_mantle[iglob - (0)]) + ((accel_crust_mantle[2 - (0) + (iglob - (0)) * (3)]) * (nz)) / (rmassz_crust_mantle[iglob - (0)]);\n\
+    rmass = rmass_ocean_load[ipoin - (0)];\n\
+    additional_term_x = (rmass - (rmassx_crust_mantle[iglob - (0)])) * (force_normal_comp);\n\
+    additional_term_y = (rmass - (rmassy_crust_mantle[iglob - (0)])) * (force_normal_comp);\n\
+    additional_term_z = (rmass - (rmassz_crust_mantle[iglob - (0)])) * (force_normal_comp);\n\
+    accel_crust_mantle[0 - (0) + (iglob - (0)) * (3)] = accel_crust_mantle[0 - (0) + (iglob - (0)) * (3)] + (additional_term_x) * (nx);\n\
+    accel_crust_mantle[1 - (0) + (iglob - (0)) * (3)] = accel_crust_mantle[1 - (0) + (iglob - (0)) * (3)] + (additional_term_y) * (ny);\n\
+    accel_crust_mantle[2 - (0) + (iglob - (0)) * (3)] = accel_crust_mantle[2 - (0) + (iglob - (0)) * (3)] + (additional_term_z) * (nz);\n\
   }\n\
 }\n\
 ";

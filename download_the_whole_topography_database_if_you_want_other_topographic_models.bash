@@ -24,4 +24,5 @@ wget http://data.geodynamics.org/specfem/specfem3d_globe/topo_bathy/topo_bathy_e
 
 echo " "
 echo "You can now uncompress the topography file you want using the bunzip2 command."
+echo "You will also need to uncomment it in file setup/constants.h.in before configuring and compiling the code."
 echo " "

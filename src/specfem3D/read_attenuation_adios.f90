@@ -50,7 +50,7 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
 
   ! local parameters
   double precision :: T_c_source
-  integer :: comm, ierr
+  integer :: comm
   character(len=256) :: file_name
   integer :: local_dim
   ! ADIOS variables
@@ -64,7 +64,7 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   write(region_name_scalar,"('reg',i1)") iregion_code
 
   ! checks if attenuation is on and anything to do
-  if( .not. ATTENUATION_VAL) return
+  if (.not. ATTENUATION_VAL) return
 
   call world_duplicate(comm)
 
@@ -72,11 +72,14 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   ! use the filename to determine the actual contents of the read
   file_name= trim(LOCAL_PATH) // "/attenuation.bp"
 
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, &
-      "verbose=1", adios_err)
+  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_read_open_file (adios_handle, file_name, 0, comm, ierr)
-  call check_adios_err(myrank,adios_err)
+
+  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
+  if (adios_err /= 0) then
+    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    call check_adios_err(myrank,adios_err)
+  endif
 
   call adios_selection_writeblock(sel, myrank)
   call adios_schedule_read(adios_handle, sel, trim(region_name) // "t_c_source", 0, 1, &

@@ -183,8 +183,8 @@
     ! compute deviatoric strain
     if (COMPUTE_AND_STORE_STRAIN) then
       templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-      if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-        if( ispec == 1) then
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+        if (ispec == 1) then
           epsilon_trace_over_3(INDEX_IJK,1) = templ
         endif
       else
@@ -206,9 +206,9 @@
     mul = muvstore(INDEX_IJK,ispec)
 
     ! use unrelaxed parameters if attenuation
-    if(ATTENUATION_VAL ) then
+    if (ATTENUATION_VAL) then
       ! precompute terms for attenuation if needed
-      if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
         one_minus_sum_beta_use = one_minus_sum_beta(INDEX_IJK,ispec)
       else
         one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -229,7 +229,7 @@
     sigma_yz = mul*duzdyl_plus_duydzl
 
     ! subtract memory variables if attenuation
-    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 
 #ifdef FORCE_VECTORIZATION
       ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers
@@ -289,7 +289,7 @@
     sigma_zy = sigma_yz
 
     ! compute non-symmetric terms for gravity
-    if(GRAVITY_VAL) then
+    if (GRAVITY_VAL) then
       ! use mesh coordinates to get theta and phi
       ! x y and z contain r theta and phi
       iglob = ibool(INDEX_IJK,ispec)
@@ -549,8 +549,8 @@
     ! compute deviatoric strain
     if (COMPUTE_AND_STORE_STRAIN) then
       templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-      if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-        if( ispec == 1) then
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+        if (ispec == 1) then
           epsilon_trace_over_3(INDEX_IJK,1) = templ
         endif
       else
@@ -580,9 +580,9 @@
 
     ! use unrelaxed parameters if attenuation
     ! eta does not need to be shifted since it is a ratio
-    if( ATTENUATION_VAL ) then
+    if (ATTENUATION_VAL) then
       ! precompute terms for attenuation if needed
-      if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
         one_minus_sum_beta_use = one_minus_sum_beta(INDEX_IJK,ispec)
       else
         one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
@@ -695,7 +695,7 @@
     c22 = rhovphsq*cosphifour + 2.0_CUSTOM_REAL*cosphisq*sinphisq* &
           (rhovphsq*costhetasq + sinthetasq*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)) &
           + sinphifour* &
-          (rhovphsq*costhetafour + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq  &
+          (rhovphsq*costhetafour + 2.0_CUSTOM_REAL*costhetasq*sinthetasq*(eta_aniso*rhovphsq &
                 + two_rhovsvsq - two_eta_aniso*rhovsvsq) + rhovpvsq*sinthetafour)
 
     ! uses temporary templ1 from c13
@@ -780,7 +780,7 @@
              c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
     ! subtract memory variables if attenuation
-    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 #ifdef FORCE_VECTORIZATION
       ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers
       ! from vectorizing the outer loop
@@ -830,7 +830,7 @@
     sigma_zy = sigma_yz
 
     ! compute non-symmetric terms for gravity
-    if(GRAVITY_VAL) then
+    if (GRAVITY_VAL) then
       ! use mesh coordinates to get theta and phi
       ! x y and z contain r theta and phi
       iglob = ibool(INDEX_IJK,ispec)
@@ -1077,8 +1077,8 @@
     ! compute deviatoric strain
     if (COMPUTE_AND_STORE_STRAIN) then
       templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-      if(NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-        if( ispec == 1) then
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+        if (ispec == 1) then
           epsilon_trace_over_3(INDEX_IJK,1) = templ
         endif
       else
@@ -1117,9 +1117,9 @@
     c56 = c56store(INDEX_IJK,ispec)
     c66 = c66store(INDEX_IJK,ispec)
 
-    if( ATTENUATION_VAL ) then
+    if (ATTENUATION_VAL) then
       ! precompute terms for attenuation if needed
-      if( ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL ) then
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
         minus_sum_beta =  one_minus_sum_beta(INDEX_IJK,ispec) - 1.0_CUSTOM_REAL
       else
         minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
@@ -1155,7 +1155,7 @@
              c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
     ! subtract memory variables if attenuation
-    if(ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL ) then
+    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
 #ifdef FORCE_VECTORIZATION
       ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers
       ! from vectorizing the outer loop
@@ -1205,7 +1205,7 @@
     sigma_zy = sigma_yz
 
     ! compute non-symmetric terms for gravity
-    if(GRAVITY_VAL) then
+    if (GRAVITY_VAL) then
       ! use mesh coordinates to get theta and phi
       ! x y and z contain r theta and phi
       iglob = ibool(INDEX_IJK,ispec)
@@ -1414,8 +1414,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C(i,j) =  A(i,1) * B(1,j) &
 !              + A(i,2) * B(2,j) &
 !              + A(i,3) * B(3,j) &
@@ -1442,8 +1442,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C(i,j) =  A(i,1) * B(1,j) &
 !              + A(i,2) * B(2,j) &
 !              + A(i,3) * B(3,j) &
@@ -1471,8 +1471,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C(i,j) =  A(i,1) * B(1,j) &
 !              + A(i,2) * B(2,j) &
 !              + A(i,3) * B(3,j) &
@@ -1501,8 +1501,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C(i,j) =  A(i,1) * B(1,j) &
 !              + A(i,2) * B(2,j) &
 !              + A(i,3) * B(3,j) &
@@ -1533,8 +1533,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C(i,j) =  A(i,1) * B(1,j) &
 !              + A(i,2) * B(2,j) &
 !              + A(i,3) * B(3,j) &
@@ -1567,10 +1567,10 @@
 !  real(kind=CUSTOM_REAL) :: tmp
 !
 !  ! general matrix-matrix multiplication
-!  do j=1,n3
-!    do k=1,n2
+!  do j = 1,n3
+!    do k = 1,n2
 !      tmp = B(k,j)
-!      do i=1,n1
+!      do i = 1,n1
 !        C(i,j) = C(i,j) + A(i,k) * tmp
 !      enddo
 !    enddo
@@ -1638,8 +1638,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C1(i,j) =  A1(i,1) * B1(1,j) &
 !               + A1(i,2) * B1(2,j) &
 !               + A1(i,3) * B1(3,j) &
@@ -1676,8 +1676,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C1(i,j) =  A1(i,1) * B1(1,j) &
 !               + A1(i,2) * B1(2,j) &
 !               + A1(i,3) * B1(3,j) &
@@ -1719,8 +1719,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C1(i,j) =  A1(i,1) * B1(1,j) &
 !               + A1(i,2) * B1(2,j) &
 !               + A1(i,3) * B1(3,j) &
@@ -1763,8 +1763,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C1(i,j) =  A1(i,1) * B1(1,j) &
 !               + A1(i,2) * B1(2,j) &
 !               + A1(i,3) * B1(3,j) &
@@ -1811,8 +1811,8 @@
 !  integer :: i,j
 !
 !  ! matrix-matrix multiplication
-!  do j=1,n3
-!    do i=1,n1
+!  do j = 1,n3
+!    do i = 1,n1
 !      C1(i,j) =  A1(i,1) * B1(1,j) &
 !               + A1(i,2) * B1(2,j) &
 !               + A1(i,3) * B1(3,j) &
@@ -1863,12 +1863,12 @@
 !  real(kind=CUSTOM_REAL) :: tmp1,tmp2,tmp3
 !
 !  ! general matrix-matrix multiplication
-!  do j=1,n3
-!    do k=1,n2
+!  do j = 1,n3
+!    do k = 1,n2
 !      tmp1 = B1(k,j)
 !      tmp2 = B2(k,j)
 !      tmp3 = B3(k,j)
-!      do i=1,n1
+!      do i = 1,n1
 !        C1(i,j) = C1(i,j) + A1(i,k) * tmp1
 !        C2(i,j) = C2(i,j) + A2(i,k) * tmp2
 !        C3(i,j) = C3(i,j) + A3(i,k) * tmp3

@@ -83,7 +83,7 @@
 
 ! determine if the element falls on the left MPI cut plane
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! global point number and coordinates left MPI 1D buffer
     open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='unknown')
   endif
@@ -96,24 +96,24 @@
   ibool1D_leftxi_lefteta(:) = 0
 
   ! nb of elements in this 1D buffer
-  ispeccount=0
+  ispeccount = 0
 
-  do ispec=1,nspec
+  do ispec = 1,nspec
     ! remove central cube for chunk buffers
-    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+    if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! corner detection here
-    if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(1,ispec)) then
+    if (iMPIcut_xi(1,ispec) .and. iMPIcut_eta(1,ispec)) then
       ispeccount=ispeccount+1
       ! loop on all the points
       ix = 1
       iy = 1
-      do iz=1,NGLLZ
+      do iz = 1,NGLLZ
         ! select point, if not already selected
-        if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+        if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
           ! adds this point
           mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
           npoin1D = npoin1D + 1
@@ -125,7 +125,7 @@
           xyz1D_leftxi_lefteta(npoin1D,3) = zstore(ix,iy,iz,ispec)
 
           ! debug file output
-          if( DEBUG ) then
+          if (DEBUG) then
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                         ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
@@ -134,7 +134,7 @@
     endif
   enddo
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! put flag to indicate end of the list of points
     write(10,*) '0  0  0.  0.  0.'
     ! write total number of points
@@ -143,12 +143,12 @@
   endif
 
   ! compare number of edge elements detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,1) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,1)) &
-    call exit_MPI(myrank,'error MPI 1D buffer detection in xi=left')
+  if (ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,1) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,1)) &
+    call exit_MPI(myrank,'Error MPI 1D buffer detection in xi=left')
 
 ! determine if the element falls on the right MPI cut plane
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! global point number and coordinates right MPI 1D buffer
     open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='unknown')
   endif
@@ -161,23 +161,23 @@
   ibool1D_rightxi_lefteta(:) = 0
 
   ! nb of elements in this 1D buffer
-  ispeccount=0
-  do ispec=1,nspec
+  ispeccount = 0
+  do ispec = 1,nspec
     ! remove central cube for chunk buffers
-    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+    if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! corner detection here
-    if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(1,ispec)) then
+    if (iMPIcut_xi(2,ispec) .and. iMPIcut_eta(1,ispec)) then
       ispeccount=ispeccount+1
       ! loop on all the points
       ix = NGLLX
       iy = 1
-      do iz=1,NGLLZ
+      do iz = 1,NGLLZ
         ! select point, if not already selected
-        if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+        if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
           mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
           npoin1D = npoin1D + 1
 
@@ -188,7 +188,7 @@
           xyz1D_rightxi_lefteta(npoin1D,3) = zstore(ix,iy,iz,ispec)
 
           ! debug file output
-          if( DEBUG ) then
+          if (DEBUG) then
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                         ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
@@ -197,7 +197,7 @@
     endif
   enddo
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! put flag to indicate end of the list of points
     write(10,*) '0  0  0.  0.  0.'
     ! write total number of points
@@ -206,8 +206,8 @@
   endif
 
   ! compare number of edge elements and points detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,2) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,2)) &
-    call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
+  if (ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,2) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,2)) &
+    call exit_MPI(myrank,'Error MPI 1D buffer detection in xi=right')
 
 ! *****************************************************************
 ! ****************** generate for eta = eta_max *******************
@@ -215,7 +215,7 @@
 
 ! determine if the element falls on the left MPI cut plane
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! global point number and coordinates left MPI 1D buffer
     open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='unknown')
   endif
@@ -228,27 +228,27 @@
   ibool1D_leftxi_righteta(:) = 0
 
   ! nb of elements in this 1D buffer
-  ispeccount=0
+  ispeccount = 0
 
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
     ! remove central cube for chunk buffers
-    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+    if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! corner detection here
-    if(iMPIcut_xi(1,ispec) .and. iMPIcut_eta(2,ispec)) then
+    if (iMPIcut_xi(1,ispec) .and. iMPIcut_eta(2,ispec)) then
 
       ispeccount=ispeccount+1
 
       ! loop on all the points
       ix = 1
       iy = NGLLY
-      do iz=1,NGLLZ
+      do iz = 1,NGLLZ
         ! select point, if not already selected
-        if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+        if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
           mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
           npoin1D = npoin1D + 1
 
@@ -259,7 +259,7 @@
           xyz1D_leftxi_righteta(npoin1D,3) = zstore(ix,iy,iz,ispec)
 
           ! debug file output
-          if( DEBUG ) then
+          if (DEBUG) then
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                         ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
@@ -268,7 +268,7 @@
     endif
   enddo
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! put flag to indicate end of the list of points
     write(10,*) '0  0  0.  0.  0.'
     ! write total number of points
@@ -277,12 +277,12 @@
   endif
 
   ! compare number of edge elements detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,4) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,4)) &
-    call exit_MPI(myrank,'error MPI 1D buffer detection in xi=left')
+  if (ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,4) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,4)) &
+    call exit_MPI(myrank,'Error MPI 1D buffer detection in xi=left')
 
 ! determine if the element falls on the right MPI cut plane
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! global point number and coordinates right MPI 1D buffer
     open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='unknown')
   endif
@@ -295,28 +295,28 @@
   ibool1D_rightxi_righteta(:) = 0
 
   ! nb of elements in this 1D buffer
-  ispeccount=0
+  ispeccount = 0
 
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
     ! remove central cube for chunk buffers
-    if(idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
+    if (idoubling(ispec) == IFLAG_MIDDLE_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_BOTTOM_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_TOP_CENTRAL_CUBE .or. &
       idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! corner detection here
-    if(iMPIcut_xi(2,ispec) .and. iMPIcut_eta(2,ispec)) then
+    if (iMPIcut_xi(2,ispec) .and. iMPIcut_eta(2,ispec)) then
 
       ispeccount=ispeccount+1
 
       ! loop on all the points
       ix = NGLLX
       iy = NGLLY
-      do iz=1,NGLLZ
+      do iz = 1,NGLLZ
 
         ! select point, if not already selected
-        if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+        if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
           mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
           npoin1D = npoin1D + 1
 
@@ -327,7 +327,7 @@
           xyz1D_rightxi_righteta(npoin1D,3) = zstore(ix,iy,iz,ispec)
 
           ! debug file output
-          if( DEBUG ) then
+          if (DEBUG) then
             write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                         ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
@@ -336,7 +336,7 @@
     endif
   enddo
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! put flag to indicate end of the list of points
     write(10,*) '0  0  0.  0.  0.'
     ! write total number of points
@@ -345,8 +345,8 @@
   endif
 
   ! compare number of edge elements and points detected to analytical value
-  if(ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,3) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,3)) &
-    call exit_MPI(myrank,'error MPI 1D buffer detection in xi=right')
+  if (ispeccount /= NSPEC1D_RADIAL_CORNER(iregion,3) .or. npoin1D /= NGLOB1D_RADIAL_CORNER(iregion,3)) &
+    call exit_MPI(myrank,'Error MPI 1D buffer detection in xi=right')
 
   end subroutine get_MPI_1D_buffers
 

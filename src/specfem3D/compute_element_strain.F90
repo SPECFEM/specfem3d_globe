@@ -171,8 +171,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
                + A(i,3) * B1(3,j) &
@@ -215,8 +215,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
                + A1(i,3) * B(3,j) &
@@ -259,10 +259,10 @@
   integer :: i,j,k
 
   ! matrix-matrix multiplication
-  do j=1,n2
-    do i=1,n1
+  do j = 1,n2
+    do i = 1,n1
       ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-      do k=1,n3
+      do k = 1,n3
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
                    + A1(i,3,k) * B(3,j) &
@@ -341,9 +341,9 @@
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
         tempx1l = 0._CUSTOM_REAL
         tempx2l = 0._CUSTOM_REAL
@@ -357,7 +357,7 @@
         tempz2l = 0._CUSTOM_REAL
         tempz3l = 0._CUSTOM_REAL
 
-        do l=1,NGLLX
+        do l = 1,NGLLX
           hp1 = hprime_xx(i,l)
           iglob = ibool(l,j,k,ispec)
           tempx1l = tempx1l + displ(1,iglob)*hp1
@@ -365,7 +365,7 @@
           tempz1l = tempz1l + displ(3,iglob)*hp1
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l = 1,NGLLY
           hp2 = hprime_yy(j,l)
           iglob = ibool(i,l,k,ispec)
           tempx2l = tempx2l + displ(1,iglob)*hp2
@@ -373,7 +373,7 @@
           tempz2l = tempz2l + displ(3,iglob)*hp2
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l = 1,NGLLZ
           hp3 = hprime_zz(k,l)
           iglob = ibool(i,j,l,ispec)
           tempx3l = tempx3l + displ(1,iglob)*hp3
@@ -524,11 +524,6 @@
     gammayl = gammay(INDEX_IJK,ispec)
     gammazl = gammaz(INDEX_IJK,ispec)
 
-    ! compute the Jacobian
-    !jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-    !              - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-    !              + xizl*(etaxl*gammayl-etayl*gammaxl))
-
     duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
     duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
     duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
@@ -550,8 +545,8 @@
     duzdyl_plus_duydzl = duzdyl + duydzl
 
     templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-    if( nspec_strain_only == 1 ) then
-      if( ispec == 1 ) then
+    if (nspec_strain_only == 1) then
+      if (ispec == 1) then
         eps_trace_over_3_loc_nplus1(INDEX_IJK,1) = templ
       endif
     else
@@ -599,8 +594,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
                + A(i,3) * B1(3,j) &
@@ -643,8 +638,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
                + A1(i,3) * B(3,j) &
@@ -687,10 +682,10 @@
   integer :: i,j,k
 
   ! matrix-matrix multiplication
-  do j=1,n2
-    do i=1,n1
+  do j = 1,n2
+    do i = 1,n1
       ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-      do k=1,n3
+      do k = 1,n3
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
                    + A1(i,3,k) * B(3,j) &
@@ -777,9 +772,9 @@
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
           dummyx_loc(i,j,k) = displ(1,iglob) + deltat * veloc(1,iglob)
           dummyy_loc(i,j,k) = displ(2,iglob) + deltat * veloc(2,iglob)
@@ -788,9 +783,9 @@
     enddo
   enddo
 
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
         tempx1l = 0._CUSTOM_REAL
         tempx2l = 0._CUSTOM_REAL
@@ -804,21 +799,21 @@
         tempz2l = 0._CUSTOM_REAL
         tempz3l = 0._CUSTOM_REAL
 
-        do l=1,NGLLX
+        do l = 1,NGLLX
           hp1 = hprime_xx(i,l)
           tempx1l = tempx1l + dummyx_loc(l,j,k)*hp1
           tempy1l = tempy1l + dummyy_loc(l,j,k)*hp1
           tempz1l = tempz1l + dummyz_loc(l,j,k)*hp1
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLY
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l = 1,NGLLY
           hp2 = hprime_yy(j,l)
           tempx2l = tempx2l + dummyx_loc(i,l,k)*hp2
           tempy2l = tempy2l + dummyy_loc(i,l,k)*hp2
           tempz2l = tempz2l + dummyz_loc(i,l,k)*hp2
 !!! can merge these loops because NGLLX = NGLLY = NGLLZ          enddo
 
-!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l=1,NGLLZ
+!!! can merge these loops because NGLLX = NGLLY = NGLLZ          do l = 1,NGLLZ
           hp3 = hprime_zz(k,l)
           tempx3l = tempx3l + dummyx_loc(i,j,l)*hp3
           tempy3l = tempy3l + dummyy_loc(i,j,l)*hp3
@@ -857,8 +852,8 @@
         duzdyl_plus_duydzl = duzdyl + duydzl
 
         templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-        if( nspec_strain_only == 1 ) then
-          if( ispec == 1 ) then
+        if (nspec_strain_only == 1) then
+          if (ispec == 1) then
             eps_trace_over_3_loc_nplus1(i,j,k,1) = templ
           endif
         else

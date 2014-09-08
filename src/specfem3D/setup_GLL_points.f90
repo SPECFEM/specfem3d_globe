@@ -51,9 +51,9 @@
     enddo
   enddo
 
-  if( USE_DEVILLE_PRODUCTS_VAL ) then
+  if (USE_DEVILLE_PRODUCTS_VAL) then
     ! check that optimized routines from Deville et al. (2002) can be used
-    if(NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5) &
+    if (NGLLX /= 5 .or. NGLLY /= 5 .or. NGLLZ /= 5) &
       stop 'Deville et al. (2002) routines can only be used if NGLLX = NGLLY = NGLLZ = 5'
 
     ! define transpose of derivation matrix

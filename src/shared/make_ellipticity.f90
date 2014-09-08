@@ -131,7 +131,7 @@
 
 
 ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
-  do i=1,NR
+  do i = 1,NR
     call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
     radau(i)=rho(i)*r(i)*r(i)
@@ -164,17 +164,17 @@
 ! this is the equation right above (14.21) in Dahlen and Tromp (1998)
   epsilonval(NR) = (5.0d0/2.d0)*(bom**2.0d0)*R_UNIT_SPHERE / (g_a * (eta(NR)+2.0d0))
 
-  do i=1,NR-1
+  do i = 1,NR-1
     call intgrl(exponentval,r,i,NR,k,s1,s2,s3)
     epsilonval(i)=epsilonval(NR)*exp(-exponentval)
   enddo
 
 ! get ready to spline epsilonval
-  nspl=1
+  nspl = 1
   rspl(1)=r(1)
   espl(1)=epsilonval(1)
   do i=2,NR
-    if(r(i) /= r(i-1)) then
+    if (r(i) /= r(i-1)) then
       nspl=nspl+1
       rspl(nspl)=r(i)
       espl(nspl)=epsilonval(i)
@@ -187,4 +187,49 @@
   call spline_construction(rspl,espl,nspl,yp1,ypn,espl2)
 
   end subroutine make_ellipticity
+
+!
+!-----------------------------------------------------------------
+!
+
+  subroutine revert_ellipticity(x,y,z,nspl,rspl,espl,espl2)
+
+! this routine to revert ellipticity and go back to a spherical Earth
+! is currently used by src/auxiliaries/combine_vol_data.F90 only
+
+  use constants
+
+  implicit none
+
+  real(kind=CUSTOM_REAL) :: x,y,z
+  integer nspl
+  double precision rspl(NR),espl(NR),espl2(NR)
+  double precision x1,y1,z1
+
+  double precision ell
+  double precision r,theta,phi,factor
+  double precision cost,p20
+
+  ! gets spherical coordinates
+  x1 = x
+  y1 = y
+  z1 = z
+  call xyz_2_rthetaphi_dble(x1,y1,z1,r,theta,phi)
+
+  cost=dcos(theta)
+! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
+  p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+
+  ! get ellipticity using spline evaluation
+  call spline_evaluation(rspl,espl,espl2,nspl,r,ell)
+
+! this is eq (14.4) in Dahlen and Tromp (1998)
+  factor=ONE-(TWO/3.0d0)*ell*p20
+
+  ! removes ellipticity factor
+  x = x / factor
+  y = y / factor
+  z = z / factor
+
+  end subroutine revert_ellipticity
 

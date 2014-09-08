@@ -623,6 +623,8 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+CEM_LIBS
+CEM_FCFLAGS
 MPI_INCLUDES
 MPI_INC
 VTK_LIBS
@@ -678,8 +680,8 @@ ac_ct_FC
 LDFLAGS
 FCFLAGS
 FC
-COND_VECTORIZATION_FALSE
-COND_VECTORIZATION_TRUE
+COND_CEM_FALSE
+COND_CEM_TRUE
 COND_ADIOS_FALSE
 COND_ADIOS_TRUE
 COND_VTK_FALSE
@@ -690,6 +692,10 @@ COND_CUDA5_FALSE
 COND_CUDA5_TRUE
 COND_CUDA_FALSE
 COND_CUDA_TRUE
+COND_VECTORIZATION_FALSE
+COND_VECTORIZATION_TRUE
+COND_DEBUG_FALSE
+COND_DEBUG_TRUE
 CUSTOM_MPI_TYPE
 CUSTOM_REAL
 host_os
@@ -742,11 +748,13 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_double_precision
+enable_debug
+enable_vectorization
 with_cuda
 with_opencl
 enable_vtk
 with_adios
-enable_vectorization
+with_cem
 with_vtk
 with_vtk_suffix
 with_vtk_version
@@ -778,7 +786,9 @@ OCL_CPU_FLAGS
 OCL_GPU_FLAGS
 OCL_INC
 OCL_LIB
-MPI_INC'
+MPI_INC
+CEM_FCFLAGS
+CEM_LIBS'
 
 
 # Initialize some variables set by options.
@@ -1394,9 +1404,10 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-double-precision
                           solver in double precision [default=no]
-  --enable-vtk            build VTK enabled version [default=no]
+  --enable-debug          build with debugging options enabled [default=no]
   --enable-vectorization  build FORCE_VECTORIZATION enabled version
-                          [default=yes]
+                          [default=auto]
+  --enable-vtk            build VTK enabled version [default=no]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -1404,6 +1415,7 @@ Optional Packages:
   --with-cuda             build cuda GPU enabled version [default=no]
   --with-opencl           build OpenCL GPU enabled version [default=no]
   --with-adios            build ADIOS enabled version [default=no]
+  --with-cem              build CEM enabled version [default=no]
   --with-vtk              The prefix where VTK is installed [default=/usr]
   --with-vtk-suffix       Suffix to append to VTK's include directory, e.g.,
                           for vtk-5.2/ the suffix is "-5.2"
@@ -1443,6 +1455,8 @@ Some influential environment variables:
   OCL_LIB     Location of OpenCL library libOpenCL
   MPI_INC     Location of MPI include mpi.h, needed by CUDA/VTK (default:
               auto-detect)
+  CEM_FCFLAGS CEM Fortran compiler flags
+  CEM_LIBS    CEM extra libraries for linking programs
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -2727,6 +2741,59 @@ fi
 
 
 ###
+### debugging
+###
+
+# Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then :
+  enableval=$enable_debug; want_debug="$enableval"
+else
+  want_debug=no
+fi
+
+ if test x"$want_debug" != xno; then
+  COND_DEBUG_TRUE=
+  COND_DEBUG_FALSE='#'
+else
+  COND_DEBUG_TRUE='#'
+  COND_DEBUG_FALSE=
+fi
+
+export COND_DEBUG_FALSE
+export COND_DEBUG_TRUE
+
+###
+### FORCE_VECTORIZATION
+###
+
+# Check whether --enable-vectorization was given.
+if test "${enable_vectorization+set}" = set; then :
+  enableval=$enable_vectorization; want_vec="$enableval"
+else
+  want_vec=auto
+fi
+
+if test x"$want_vec" == xauto; then
+    if test x"$want_debug" != xno; then
+        want_vec=no
+    else
+        want_vec=yes
+    fi
+else
+    if test x"$want_vec" != xno && test x"$want_debug" != xno; then
+        as_fn_error $? "--enable-debug and --enable-vectorization cannot be specified simultaneously." "$LINENO" 5
+    fi
+fi
+ if test x"$want_vec" != xno; then
+  COND_VECTORIZATION_TRUE=
+  COND_VECTORIZATION_FALSE='#'
+else
+  COND_VECTORIZATION_TRUE='#'
+  COND_VECTORIZATION_FALSE=
+fi
+
+
+###
 ### GPU
 ###
 
@@ -2814,22 +2881,23 @@ fi
 
 
 ###
-### FORCE_VECTORIZATION
+### CEM
 ###
 
-# Check whether --enable-vectorization was given.
-if test "${enable_vectorization+set}" = set; then :
-  enableval=$enable_vectorization; want_vec="$enableval"
+
+# Check whether --with-cem was given.
+if test "${with_cem+set}" = set; then :
+  withval=$with_cem; want_cem="$withval"
 else
-  want_vec=yes
+  want_cem=no
 fi
 
- if test x"$want_vec" != xno; then
-  COND_VECTORIZATION_TRUE=
-  COND_VECTORIZATION_FALSE='#'
+ if test x"$want_cem" != xno; then
+  COND_CEM_TRUE=
+  COND_CEM_FALSE='#'
 else
-  COND_VECTORIZATION_TRUE='#'
-  COND_VECTORIZATION_FALSE=
+  COND_CEM_TRUE='#'
+  COND_CEM_FALSE=
 fi
 
 
@@ -6824,9 +6892,9 @@ fi
 
 if test x"$want_opencl" != xno; then :
 
-    $as_echo "## --- ##
-## OCL ##
-## --- ##"
+    $as_echo "## ------ ##
+## OpenCL ##
+## ------ ##"
 
 
 
@@ -6848,8 +6916,14 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
     OCL_CFLAGS="-I$OCL_INC"
     CFLAGS="$OCL_CFLAGS $CFLAGS"
   fi
-  ac_fn_c_check_header_mongrel "$LINENO" "CL/cl.h" "ac_cv_header_CL_cl_h" "$ac_includes_default"
-if test "x$ac_cv_header_CL_cl_h" = xyes; then :
+  # tests for Apple Mac OsX OpenCL header file
+  case $host in
+  *apple*) HEADER_H="OpenCL/cl.h";;
+  *) HEADER_H="CL/cl.h";;
+  esac
+  as_ac_Header=`$as_echo "ac_cv_header_${HEADER_H}" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "${HEADER_H}" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
 
 else
 
@@ -6860,16 +6934,32 @@ fi
 
 
   if test "x$OCL_LIB" != "x"; then
-    OCL_LDFLAGS="-L$OCL_LIB"
+    # tests for Apple Mac OsX which could add "-framework OpenCL"
+    case $host in
+    *apple*) OCL_LDFLAGS="$OCL_LIB";;
+    *) OCL_LDFLAGS="-L$OCL_LIB";;
+    esac
     LDFLAGS="$OCL_LDFLAGS $LDFLAGS"
+  else
+    # adds default OpenCL library
+    case $host in
+    *apple*) OCL_LIBS="-framework OpenCL";;
+    *) OCL_LIBS="-lOpenCL";;
+    esac
   fi
-  OCL_LIBS="-lOpenCL"
+
   LIBS="$OCL_LIBS $LIBS"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clCreateBuffer in -lOpenCL" >&5
-$as_echo_n "checking for clCreateBuffer in -lOpenCL... " >&6; }
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for clGetPlatformIDs in OpenCL" >&5
+$as_echo_n "checking for clGetPlatformIDs in OpenCL... " >&6; }
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
+
 #ifdef FC_DUMMY_MAIN
 #ifndef FC_DUMMY_MAIN_EQ_F77
 #  ifdef __cplusplus
@@ -7434,6 +7524,45 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 fi
 
+
+###
+### CEM
+###
+
+if test x"$want_cem" != xno; then :
+
+    $as_echo "## ------------------------------- ##
+## Comprehensive Earth Model (CEM) ##
+## ------------------------------- ##"
+    { $as_echo "$as_me:${as_lineno-$LINENO}: CEM is enabled" >&5
+$as_echo "$as_me: CEM is enabled" >&6;}
+
+
+
+
+    # adds compiler flag
+    FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}CEM"
+
+    # daniel: todo add NetCDF checking for Fortran, something like:
+    # netcdf checking
+    #AC_LANG_PUSH(Fortran)
+    #AC_MSG_CHECKING([for NetCDF modules])
+    #FCFLAGS="$CEM_FCFLAGS $FCFLAGS"
+    #AC_COMPILE_IFELSE([
+    #  AC_LANG_PROGRAM([], [[
+    #  use netcdf
+    #  ]])
+    #], [
+    #  AC_MSG_RESULT(yes)
+    #], [
+    #  AC_MSG_RESULT(no)
+    #  AC_MSG_ERROR([NetCDF modules not found; is NetCDF built with Fortran support for this compiler?])
+    #])
+    #AC_LANG_POP([Fortran])
+
+fi
+
+
 ############################################################
 
 $as_echo "## ----------------------------------- ##
@@ -7563,6 +7692,14 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
+if test -z "${COND_DEBUG_TRUE}" && test -z "${COND_DEBUG_FALSE}"; then
+  as_fn_error $? "conditional \"COND_DEBUG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_VECTORIZATION_TRUE}" && test -z "${COND_VECTORIZATION_FALSE}"; then
+  as_fn_error $? "conditional \"COND_VECTORIZATION\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${COND_CUDA_TRUE}" && test -z "${COND_CUDA_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -7583,8 +7720,8 @@ if test -z "${COND_ADIOS_TRUE}" && test -z "${COND_ADIOS_FALSE}"; then
   as_fn_error $? "conditional \"COND_ADIOS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${COND_VECTORIZATION_TRUE}" && test -z "${COND_VECTORIZATION_FALSE}"; then
-  as_fn_error $? "conditional \"COND_VECTORIZATION\" was never defined.
+if test -z "${COND_CEM_TRUE}" && test -z "${COND_CEM_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CEM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 case $FC_MODINC in #(

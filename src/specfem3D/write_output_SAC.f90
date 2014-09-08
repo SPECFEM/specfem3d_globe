@@ -187,7 +187,7 @@
 
   ! by Ebru
   ! SAC headers will have new format
-  USER0  = sngl(cmt_hdur) !half duration from CMT file if not changed to t0=0.d0 (point source)
+  USER0  = sngl(cmt_hdur) !half duration from CMT file if not changed to t0 = 0.d0 (point source)
 
   ! USER1 and USER2 slots are used for the shortest and longest periods at which
   ! simulations are accurate, respectively.
@@ -211,9 +211,9 @@
   !USER0  = sngl(elat)
   !USER1  = sngl(elon)
   !USER2  = sngl(depth)
-  !USER3  = sngl(cmt_hdur) !half duration from CMT if not changed to t0=0.d0 (point source)
+  !USER3  = sngl(cmt_hdur) !half duration from CMT if not changed to t0 = 0.d0 (point source)
 
-  ! just to avoid compiler warning
+  ! to avoid compiler warnings
   value1 = elat
   value1 = elon
   value1 = depth
@@ -238,19 +238,19 @@
   GCARC  = BYSAC ! TRUE
 
   ! instrument orientation
-  if(iorientation == 1) then !N
+  if (iorientation == 1) then !N
     CMPAZ  = 0.00
     CMPINC =90.00
-  else if(iorientation == 2) then !E
+  else if (iorientation == 2) then !E
     CMPAZ  =90.00
     CMPINC =90.00
-  else if(iorientation == 3) then !Z
+  else if (iorientation == 3) then !Z
     CMPAZ  = 0.00
     CMPINC = 0.00
-  else if(iorientation == 4) then !R
+  else if (iorientation == 4) then !R
     CMPAZ = sngl(modulo(phi,360.d0)) ! phi is calculated above (see call distaz())
     CMPINC =90.00
-  else if(iorientation == 5) then !T
+  else if (iorientation == 5) then !T
     CMPAZ = sngl(modulo(phi+90.d0,360.d0)) ! phi is calculated above (see call distaz())
     CMPINC =90.00
   endif
@@ -337,7 +337,7 @@
   ! Ebru, December 1, 2011
 
   KHOLE = 'S3'
-  if(trim(MODEL(1:2)) == "1D") KHOLE = 'S1'
+  if (trim(MODEL(1:2)) == "1D") KHOLE = 'S1'
 
   ! indicates SEM synthetics
   ! by Ebru

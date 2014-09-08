@@ -49,7 +49,7 @@
   ! compute internal forces in the fluid region
 
   ! current simulated time
-  if(USE_LDDRK)then
+  if (USE_LDDRK) then
     timeval = real((dble(it-1)*DT+dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
     timeval = real((dble(it-1)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
@@ -67,15 +67,15 @@
     !
     ! compute all the outer elements first, then sends out non blocking MPI communication
     ! and continues computing inner elements (overlapping)
-    if( iphase == 1 ) then
+    if (iphase == 1) then
       phase_is_inner = .false.
     else
       phase_is_inner = .true.
     endif
 
-    if( .not. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
-      if( USE_DEVILLE_PRODUCTS_VAL ) then
+      if (USE_DEVILLE_PRODUCTS_VAL) then
         ! uses Deville et al. (2002) routine
         call compute_forces_outer_core_Dev(timeval,deltat,two_omega_earth, &
                                            NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
@@ -98,7 +98,7 @@
       call compute_forces_outer_core_gpu(Mesh_pointer,iphase,timeval,1)
 
       ! initiates asynchronous MPI transfer
-      if( GPU_ASYNC_COPY .and. iphase == 2 ) then
+      if (GPU_ASYNC_COPY .and. iphase == 2) then
         ! crust/mantle region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,buffer_send_scalar_outer_core,IREGION_OUTER_CORE,1)
@@ -114,23 +114,23 @@
 
 
     ! computes additional contributions to acceleration field
-    if( iphase == 1 ) then
+    if (iphase == 1) then
 
        ! Stacey absorbing boundaries
-       if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_outer_core_forward()
+       if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_outer_core_forward()
 
        ! ****************************************************
        ! **********  add matching with solid part  **********
        ! ****************************************************
        ! only for elements in first matching layer in the fluid
-       if( .not. GPU_MODE ) then
+       if (.not. GPU_MODE) then
           ! on CPU
           !---
           !--- couple with mantle at the top of the outer core
           !---
-          if(ACTUALLY_COUPLE_FLUID_CMB) &
+          if (ACTUALLY_COUPLE_FLUID_CMB) &
                call compute_coupling_fluid_CMB(NGLOB_CRUST_MANTLE,displ_crust_mantle, &
-                                               ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                               ibool_crust_mantle,ibelm_bottom_crust_mantle, &
                                                NGLOB_OUTER_CORE,accel_outer_core, &
                                                normal_top_outer_core,jacobian2D_top_outer_core, &
                                                wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
@@ -139,9 +139,9 @@
           !---
           !--- couple with inner core at the bottom of the outer core
           !---
-          if(ACTUALLY_COUPLE_FLUID_ICB) &
+          if (ACTUALLY_COUPLE_FLUID_ICB) &
                call compute_coupling_fluid_ICB(NGLOB_INNER_CORE,displ_inner_core, &
-                                               ibool_inner_core,ibelm_top_inner_core,  &
+                                               ibool_inner_core,ibelm_top_inner_core, &
                                                NGLOB_OUTER_CORE,accel_outer_core, &
                                                normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                                wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
@@ -152,12 +152,12 @@
           !---
           !--- couple with mantle at the top of the outer core
           !---
-          if( ACTUALLY_COUPLE_FLUID_CMB ) &
+          if (ACTUALLY_COUPLE_FLUID_CMB ) &
                call compute_coupling_fluid_cmb_gpu(Mesh_pointer,1)
           !---
           !--- couple with inner core at the bottom of the outer core
           !---
-          if( ACTUALLY_COUPLE_FLUID_ICB ) &
+          if (ACTUALLY_COUPLE_FLUID_ICB ) &
                call compute_coupling_fluid_icb_gpu(Mesh_pointer,1)
 
        endif
@@ -165,9 +165,9 @@
 
     ! assemble all the contributions between slices using MPI
     ! in outer core
-    if( iphase == 1 ) then
+    if (iphase == 1) then
       ! sends out MPI interface data (non-blocking)
-      if(.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                 accel_outer_core, &
@@ -187,7 +187,7 @@
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_pot_from_device(Mesh_pointer,buffer_send_scalar_outer_core,1)
 
-        if( .not. GPU_ASYNC_COPY ) then
+        if (.not. GPU_ASYNC_COPY) then
           ! for synchronous transfers, sending over MPI can directly proceed
           ! outer core
           call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
@@ -201,7 +201,7 @@
     else
       ! make sure the last communications are finished and processed
       ! waits for send/receive requests to be completed and assembles values
-      if(.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                    accel_outer_core, &
@@ -211,7 +211,7 @@
                                    request_send_scalar_oc,request_recv_scalar_oc)
       else
         ! on GPU
-        if( GPU_ASYNC_COPY ) then
+        if (GPU_ASYNC_COPY) then
           ! while inner elements compute "Kernel_2", we wait for MPI to
           ! finish and transfer the boundary terms to the device asynchronously
           !
@@ -235,7 +235,7 @@
 
   ! multiply by the inverse of the mass matrix
 
-  if(.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     call multiply_accel_acoustic(NGLOB_OUTER_CORE,accel_outer_core,rmass_outer_core)
   else
@@ -246,7 +246,7 @@
 
 
   ! time schemes
-  if( USE_LDDRK ) then
+  if (USE_LDDRK) then
     ! Runge-Kutta scheme
     call update_veloc_acoustic_lddrk()
   else
@@ -283,7 +283,7 @@
   logical :: phase_is_inner
 
   ! checks
-  if( SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3 ) return
 
   ! compute internal forces in the fluid region
 
@@ -294,13 +294,13 @@
   !       for reconstructing the rotational contributions
 
   ! current simulated time
-  if(USE_LDDRK)then
+  if (USE_LDDRK) then
     b_time = real((dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
     b_time = real((dble(NSTEP-it)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
-  if(UNDO_ATTENUATION)then
+  if (UNDO_ATTENUATION) then
     b_time = real((dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv, &
                   kind=CUSTOM_REAL)
   endif
@@ -317,16 +317,16 @@
     !
     ! compute all the outer elements first, then sends out non blocking MPI communication
     ! and continues computing inner elements (overlapping)
-    if( iphase == 1 ) then
+    if (iphase == 1) then
       phase_is_inner = .false.
     else
       phase_is_inner = .true.
     endif
 
-    if( .not. GPU_MODE ) then
+    if (.not. GPU_MODE) then
       ! on CPU
       ! adjoint / kernel runs
-      if( USE_DEVILLE_PRODUCTS_VAL ) then
+      if (USE_DEVILLE_PRODUCTS_VAL) then
         ! uses Deville et al. (2002) routine
         call compute_forces_outer_core_Dev(b_time,b_deltat,b_two_omega_earth, &
                                            NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
@@ -348,7 +348,7 @@
       call compute_forces_outer_core_gpu(Mesh_pointer,iphase,b_time,3)
 
       ! initiates asynchronous MPI transfer
-      if( GPU_ASYNC_COPY .and. iphase == 2 ) then
+      if (GPU_ASYNC_COPY .and. iphase == 2) then
         ! crust/mantle region
         ! wait for asynchronous copy to finish
         call sync_copy_from_device(Mesh_pointer,iphase,b_buffer_send_scalar_outer_core,IREGION_OUTER_CORE,3)
@@ -365,11 +365,11 @@
 
 
     ! computes additional contributions to acceleration field
-    if( iphase == 1 ) then
+    if (iphase == 1) then
 
       ! Stacey absorbing boundaries
-      if(NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
-        if(UNDO_ATTENUATION)then
+      if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
+        if (UNDO_ATTENUATION) then
           call compute_stacey_outer_core_backward_undoatt()
         else
           call compute_stacey_outer_core_backward()
@@ -380,14 +380,14 @@
       ! **********  add matching with solid part  **********
       ! ****************************************************
       ! only for elements in first matching layer in the fluid
-      if( .not. GPU_MODE ) then
+      if (.not. GPU_MODE) then
         ! on CPU
         !---
         !--- couple with mantle at the top of the outer core
         !---
-        if(ACTUALLY_COUPLE_FLUID_CMB) &
+        if (ACTUALLY_COUPLE_FLUID_CMB) &
           call compute_coupling_fluid_CMB(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
-                                          ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                          ibool_crust_mantle,ibelm_bottom_crust_mantle, &
                                           NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core, &
                                           normal_top_outer_core,jacobian2D_top_outer_core, &
                                           wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
@@ -396,9 +396,9 @@
         !---
         !--- couple with inner core at the bottom of the outer core
         !---
-        if(ACTUALLY_COUPLE_FLUID_ICB) &
+        if (ACTUALLY_COUPLE_FLUID_ICB) &
           call compute_coupling_fluid_ICB(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core, &
-                                          ibool_inner_core,ibelm_top_inner_core,  &
+                                          ibool_inner_core,ibelm_top_inner_core, &
                                           NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core, &
                                           normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                           wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
@@ -408,12 +408,12 @@
         !---
         !--- couple with mantle at the top of the outer core
         !---
-        if( ACTUALLY_COUPLE_FLUID_CMB ) &
+        if (ACTUALLY_COUPLE_FLUID_CMB ) &
           call compute_coupling_fluid_cmb_gpu(Mesh_pointer,3)
         !---
         !--- couple with inner core at the bottom of the outer core
         !---
-        if( ACTUALLY_COUPLE_FLUID_ICB ) &
+        if (ACTUALLY_COUPLE_FLUID_ICB ) &
           call compute_coupling_fluid_icb_gpu(Mesh_pointer,3)
 
       endif
@@ -421,10 +421,10 @@
 
     ! assemble all the contributions between slices using MPI
     ! in outer core
-    if( iphase == 1 ) then
+    if (iphase == 1) then
       ! sends out MPI interface data (non-blocking)
       ! adjoint simulations
-      if(.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                               b_accel_outer_core, &
@@ -444,7 +444,7 @@
         !       once the inner element kernels are launched, and the memcpy has finished.
         call transfer_boun_pot_from_device(Mesh_pointer,b_buffer_send_scalar_outer_core,3)
 
-        if( .not. GPU_ASYNC_COPY ) then
+        if (.not. GPU_ASYNC_COPY) then
           ! for synchronous transfers, sending over MPI can directly proceed
           ! outer core
           call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
@@ -459,7 +459,7 @@
       ! make sure the last communications are finished and processed
       ! waits for send/receive requests to be completed and assembles values
       ! adjoint simulations
-      if(.NOT. GPU_MODE) then
+      if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                    b_accel_outer_core, &
@@ -469,7 +469,7 @@
                                    b_request_send_scalar_oc,b_request_recv_scalar_oc)
       else
         ! on GPU
-        if( GPU_ASYNC_COPY ) then
+        if (GPU_ASYNC_COPY) then
           ! while inner elements compute "Kernel_2", we wait for MPI to
           ! finish and transfer the boundary terms to the device asynchronously
           !
@@ -492,7 +492,7 @@
   enddo ! iphase
 
   ! multiply by the inverse of the mass matrix
-  if(.NOT. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     call multiply_accel_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_accel_outer_core,b_rmass_outer_core)
   else
@@ -502,7 +502,7 @@
   endif
 
   ! time schemes
-  if( USE_LDDRK ) then
+  if (USE_LDDRK) then
     ! Runge-Kutta scheme
     call update_veloc_acoustic_lddrk_backward()
   else

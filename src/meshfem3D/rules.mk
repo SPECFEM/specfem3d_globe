@@ -153,6 +153,7 @@ meshfem3D_MODULES = \
 meshfem3D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
+	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
 	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
@@ -185,7 +186,6 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/save_header_file.shared.o \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
-	$O/write_c_binary.cc.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
@@ -226,6 +226,12 @@ else
 meshfem3D_OBJECTS += $(adios_meshfem3D_STUBS)
 meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_STUBS)
 endif
+
+# conditional CEM model
+ifeq ($(CEM),yes)
+meshfem3D_OBJECTS += $O/model_cem.checknetcdf.o
+endif
+
 
 #######################################
 
@@ -292,3 +298,7 @@ $O/%.check_adios.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.chec
 $O/%.check_adios.o: $S/%.F90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
+## CEM
+
+$O/%.checknetcdf.o: $S/%.f90 $O/shared_par.shared_module.o $O/meshfem3D_par.check_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} $(NETCDF_INCLUDE) -c -o $@ $<

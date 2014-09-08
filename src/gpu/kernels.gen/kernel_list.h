@@ -40,3 +40,4 @@ BOAST_KERNEL(crust_mantle_impl_kernel_forward);
 BOAST_KERNEL(crust_mantle_impl_kernel_adjoint);
 BOAST_KERNEL(compute_ani_undo_att_kernel);
 BOAST_KERNEL(compute_iso_undo_att_kernel);
+BOAST_KERNEL(compute_strain_kernel);

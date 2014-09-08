@@ -27,13 +27,13 @@ module BOAST
       raise "Unsupported type : #{type}!"
     end
     variables += [num_interfaces,max_nibool_interfaces,d_nibool_interfaces,d_ibool_interfaces]
-
+    
     p = Procedure(function_name, variables)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header
-      decl p
+      open p
       id         = Int("id")
       iglob      = Int("iglob")
       iloc       = Int("iloc")

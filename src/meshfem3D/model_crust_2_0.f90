@@ -87,7 +87,7 @@
            crust_vs(CRUST_NP,CRUST_NLO), &
            crust_rho(CRUST_NP,CRUST_NLO), &
            stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustal arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustal arrays')
 
   ! initializes
   crust_vp(:,:) = ZERO
@@ -96,7 +96,7 @@
   crust_thickness(:,:) = ZERO
 
   ! the variables read are declared and stored in structure model_crust_2_0_par
-  if(myrank == 0) call read_crust_2_0_model()
+  if (myrank == 0) call read_crust_2_0_model()
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(crust_thickness,CRUST_NLO*CRUST_NP)
@@ -144,7 +144,7 @@
 
   ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
   ! note: but for Roland_Sylvain gravity calculations we include the ice
-  if( INCLUDE_ICE_IN_CRUST ) then
+  if (INCLUDE_ICE_IN_CRUST) then
     thicks_1 = thicks(1)
   else
     thicks_1 = ZERO
@@ -181,27 +181,27 @@
   found_crust = .true.
 
   ! gets corresponding crustal velocities and density
-  if(x > x1 .and. INCLUDE_ICE_IN_CRUST ) then
+  if (x > x1 .and. INCLUDE_ICE_IN_CRUST) then
     vp = vps(1)
     vs = vss(1)
     rho = rhos(1)
-  else if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+  else if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
     vp = vps(3)
     vs = vss(3)
     rho = rhos(3)
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+  else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
     vp = vps(4)
     vs = vss(4)
     rho = rhos(4)
-  else if(x > x5) then
+  else if (x > x5) then
     vp = vps(5)
     vs = vss(5)
     rho = rhos(5)
-  else if(x > x6) then
+  else if (x > x6) then
     vp = vps(6)
     vs = vss(6)
     rho = rhos(6)
-  else if(x > x7 .or. elem_in_crust) then
+  else if (x > x7 .or. elem_in_crust) then
     ! takes lower crustal values only if x is slightly above moho depth or
     ! if elem_in_crust is set
     !
@@ -250,42 +250,42 @@
   write(IMAIN,*) 'incorporating crustal model: CRUST2.0'
   write(IMAIN,*)
 
-  open(unit=1,file=CNtype2,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(CNtype2), '": ', ier
+  open(unit = 1,file=CNtype2,status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(CNtype2), '": ', ier
     call flush_IMAIN()
     ! stop
-    call exit_MPI(0,'error model crust2.0')
+    call exit_MPI(0,'Error model crust2.0')
   endif
 
-  do ila=1,CRUST_NLA/2
-    read(1,*) icolat,(abbreviation(ila,i),i=1,CRUST_NLA)
+  do ila = 1,CRUST_NLA/2
+    read(1,*) icolat,(abbreviation(ila,i),i = 1,CRUST_NLA)
   enddo
   close(1)
 
-  open(unit=1,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "', trim(CNtype2_key_modif), '": ', ier
-    call exit_MPI(0,'error model crust2.0')
+  open(unit = 1,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "', trim(CNtype2_key_modif), '": ', ier
+    call exit_MPI(0,'Error model crust2.0')
   endif
 
   h_moho_min = HUGEVAL
   h_moho_max = -HUGEVAL
 
-  do ikey=1,CRUST_NLO
+  do ikey = 1,CRUST_NLO
     read (1,"(a2)") code(ikey)
-    read (1,*) (crust_vp(i,ikey),i=1,CRUST_NP)
-    read (1,*) (crust_vs(i,ikey),i=1,CRUST_NP)
-    read (1,*) (crust_rho(i,ikey),i=1,CRUST_NP)
-    read (1,*) (crust_thickness(i,ikey),i=1,CRUST_NP-1),crust_thickness(CRUST_NP,ikey)
+    read (1,*) (crust_vp(i,ikey),i = 1,CRUST_NP)
+    read (1,*) (crust_vs(i,ikey),i = 1,CRUST_NP)
+    read (1,*) (crust_rho(i,ikey),i = 1,CRUST_NP)
+    read (1,*) (crust_thickness(i,ikey),i = 1,CRUST_NP-1),crust_thickness(CRUST_NP,ikey)
 
     ! limit moho thickness
-    if(crust_thickness(CRUST_NP,ikey) > h_moho_max) h_moho_max = crust_thickness(CRUST_NP,ikey)
-    if(crust_thickness(CRUST_NP,ikey) < h_moho_min) h_moho_min = crust_thickness(CRUST_NP,ikey)
+    if (crust_thickness(CRUST_NP,ikey) > h_moho_max) h_moho_max = crust_thickness(CRUST_NP,ikey)
+    if (crust_thickness(CRUST_NP,ikey) < h_moho_min) h_moho_min = crust_thickness(CRUST_NP,ikey)
   enddo
   close(1)
 
-  if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_2_0_model'
+  if (h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_2_0_model'
 
   end subroutine read_crust_2_0_model
 
@@ -345,31 +345,31 @@
 
   ! fill in the hash table
   crustalhash_to_key = -1
-  do i=1,CRUST_NLO
+  do i = 1,CRUST_NLO
     call hash_crustal_type(code(i), ihash)
-    if (crustalhash_to_key(ihash) /= -1) stop 'error in crust_2_0_CAPsmoothed: hash table collision'
+    if (crustalhash_to_key(ihash) /= -1) stop 'Error in crust_2_0_CAPsmoothed: hash table collision'
     crustalhash_to_key(ihash) = i
   enddo
 
   ! checks latitude/longitude
-  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
-    print*,'error in lat/lon:',lat,lon
-    stop 'error in latitude/longitude range in crust2.0'
+  if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
+    print*,'Error in lat/lon:',lat,lon
+    stop 'Error in latitude/longitude range in crust2.0'
   endif
 
   ! makes sure lat/lon are within crust2.0 range
-  if(lat==90.0d0) lat=89.9999d0
-  if(lat==-90.0d0) lat=-89.9999d0
-  if(lon==180.0d0) lon=179.9999d0
-  if(lon==-180.0d0) lon=-179.9999d0
+  if (lat==90.0d0) lat=89.9999d0
+  if (lat==-90.0d0) lat=-89.9999d0
+  if (lon==180.0d0) lon=179.9999d0
+  if (lon==-180.0d0) lon=-179.9999d0
 
   ! sets up smoothing points based on cap smoothing
   cap_degree = CAP_SMOOTHING_DEGREE_DEFAULT
 
   ! checks if inside/outside of critical region for mesh stretching
-  if( SMOOTH_CRUST_EVEN_MORE ) then
+  if (SMOOTH_CRUST_EVEN_MORE) then
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
-    if( dist < CRITICAL_RANGE ) then
+    if (dist < CRITICAL_RANGE) then
       ! increases cap smoothing degree
       ! scales between -1 at center and 0 at border
       dist = dist / CRITICAL_RANGE - ONE
@@ -390,7 +390,7 @@
   thick(:) = ZERO
 
   ! loops over weight points
-  do i=1,NTHETA*NPHI
+  do i = 1,NTHETA*NPHI
     ! gets lat/lon indices
     call icolat_ilon(xlat(i),xlon(i),icolat,ilon)
 
@@ -398,7 +398,7 @@
 
     call hash_crustal_type(crustaltype, ihash)
     crustalkey = crustalhash_to_key(ihash)
-    if(crustalkey == -1) stop 'error in retrieving crust type key'
+    if (crustalkey == -1) stop 'Error in retrieving crust type key'
 
     ! gets crust values
     call get_crust_2_0_structure(crustalkey,velpl,velsl,rhol,thickl, &
@@ -408,7 +408,7 @@
     h_sed = thickl(3) + thickl(4)
 
     ! takes upper crust value if sediment too thin
-    if( h_sed < MINIMUM_SEDIMENT_THICKNESS ) then
+    if (h_sed < MINIMUM_SEDIMENT_THICKNESS) then
       velpl(3) = velpl(5)
       velpl(4) = velpl(5)
 
@@ -452,7 +452,7 @@
   integer :: i
 
   ! set vp,vs and rho for all layers
-  do i=1,CRUST_NP
+  do i = 1,CRUST_NP
     vptyp(i)=crust_vp(i,ikey)
     vstyp(i)=crust_vs(i,ikey)
     rhtyp(i)=crust_rho(i,ikey)

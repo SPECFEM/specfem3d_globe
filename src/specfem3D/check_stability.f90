@@ -85,7 +85,7 @@
   double precision,parameter :: scale_displ = R_EARTH
 
   ! compute maximum of norm of displacement in each slice
-  if( .not. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     Usolidnorm = max( &
         maxval(sqrt(displ_crust_mantle(1,:)**2 + &
@@ -96,7 +96,6 @@
                     displ_inner_core(3,:)**2)))
 
     Ufluidnorm = maxval(abs(displ_outer_core))
-
   else
     ! on GPU
     ! way 2: just get maximum of fields from GPU
@@ -107,9 +106,9 @@
   ! check stability of the code, exit if unstable
   ! negative values can occur with some compilers when the unstable value is greater
   ! than the greatest possible floating-point number of the machine
-  if(Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) &
+  if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) &
     call exit_MPI(myrank,'forward simulation became unstable in solid and blew up')
-  if(Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0) &
+  if (Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0) &
     call exit_MPI(myrank,'forward simulation became unstable in fluid and blew up')
 
   ! compute the maximum of the maxima for all the slices using an MPI reduction
@@ -117,12 +116,12 @@
   call max_all_cr(Ufluidnorm,Ufluidnorm_all)
 
   if (SIMULATION_TYPE == 3) then
-    if( .not. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       b_Usolidnorm = max( &
              maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
                           b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
-             maxval(sqrt(b_displ_inner_core(1,:)**2  &
+             maxval(sqrt(b_displ_inner_core(1,:)**2 &
                         + b_displ_inner_core(2,:)**2 &
                         + b_displ_inner_core(3,:)**2)))
 
@@ -133,9 +132,9 @@
       call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
     endif
 
-    if(b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0) &
+    if (b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up  in the solid')
-    if(b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0) &
+    if (b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up  in the fluid')
 
     ! compute the maximum of the maxima for all the slices using an MPI reduction
@@ -144,7 +143,7 @@
   endif
 
   if (COMPUTE_AND_STORE_STRAIN) then
-    if( .not. GPU_MODE) then
+    if (.not. GPU_MODE) then
       ! on CPU
       Strain_norm = maxval(abs(eps_trace_over_3_crust_mantle))
       Strain2_norm= max( maxval(abs(epsilondev_xx_crust_mantle)), &
@@ -161,7 +160,7 @@
     call max_all_cr(Strain2_norm,Strain2_norm_all)
   endif
 
-  if(myrank == 0) then
+  if (myrank == 0) then
 
     ! this is in the case of restart files, when a given run consists of several partial runs
     ! information about the current run only
@@ -213,19 +212,19 @@
 
     if (SIMULATION_TYPE == 3) then
       b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
-      if(.not. UNDO_ATTENUATION)then
+      if (.not. UNDO_ATTENUATION) then
         write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
         write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
       endif
     endif
 
-    if(COMPUTE_AND_STORE_STRAIN) then
+    if (COMPUTE_AND_STORE_STRAIN) then
       write(IMAIN,*) 'Max of strain, eps_trace_over_3_crust_mantle =',Strain_norm_all
       write(IMAIN,*) 'Max of strain, epsilondev_crust_mantle  =',Strain2_norm_all
     endif
 
     write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
-    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
     if (SHOW_SEPARATE_RUN_INFORMATION) then
@@ -239,16 +238,16 @@
     endif
 
     write(IMAIN,*) 'Estimated remaining time in seconds = ',t_remain
-    write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+    write(IMAIN,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_remain,iminutes_remain,iseconds_remain
 
     write(IMAIN,*) 'Estimated total run time in seconds = ',t_total
-    write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+    write(IMAIN,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
              ihours_total,iminutes_total,iseconds_total
     write(IMAIN,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
 
 
-    if(it < NSTEP) then
+    if (it < NSTEP) then
 
       ! get current date
       call date_and_time(datein,timein,zone,time_values)
@@ -286,7 +285,7 @@
       ! print date and time estimate of end of run in another country.
       ! For instance: the code runs at Caltech in California but the person
       ! running the code is connected remotely from France, which has 9 hours more
-      if(ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
+      if (ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
 
         ! add time difference with that remote location (can be negative)
         timestamp_remote = timestamp + HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE
@@ -298,7 +297,7 @@
         call calndr(day_remote,mon_remote,year_remote,julian_day_number)
         day_of_week_remote = idaywk(julian_day_number)
 
-        if(HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
+        if (HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
           write(IMAIN,*) 'Adding positive time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
         else
           write(IMAIN,*) 'Adding negative time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
@@ -334,23 +333,23 @@
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0) &
+    if (Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0) &
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
-    if(Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) &
+    if (Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) &
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
 
-    if(SIMULATION_TYPE == 3 .and. .not. UNDO_ATTENUATION) then
-      if(b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
+    if (SIMULATION_TYPE == 3 .and. .not. UNDO_ATTENUATION) then
+      if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
-      if(b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
+      if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
     endif
 
   endif
 
   ! debug output
-  !if( maxval(displ_crust_mantle(1,:)**2 + &
-  !                displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2) > 1.e4 ) then
+  !if (maxval(displ_crust_mantle(1,:)**2 + &
+  !                displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2) > 1.e4) then
   !  print*,'slice',myrank
   !  print*,'  crust_mantle displ:', maxval(displ_crust_mantle(1,:)), &
   !           maxval(displ_crust_mantle(2,:)),maxval(displ_crust_mantle(3,:))
@@ -365,7 +364,7 @@
   !  call rthetaphi_2_xyz(rval,thetaval,phival,xstore_crust_mantle(indx(1)),&
   !                     ystore_crust_mantle(indx(1)),zstore_crust_mantle(indx(1)))
   !  print*,'x/y/z:',rval,thetaval,phival
-  !  call exit_MPI(myrank,'error stability')
+  !  call exit_MPI(myrank,'Error stability')
   !endif
 
   end subroutine check_stability
@@ -409,15 +408,15 @@
   double precision,parameter :: scale_displ = R_EARTH
 
   ! checks if anything to do
-  if( SIMULATION_TYPE /= 3 ) return
+  if (SIMULATION_TYPE /= 3 ) return
 
   ! compute maximum of norm of displacement in each slice
-  if( .not. GPU_MODE) then
+  if (.not. GPU_MODE) then
     ! on CPU
     b_Usolidnorm = max( &
            maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
                         b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
-           maxval(sqrt(b_displ_inner_core(1,:)**2  &
+           maxval(sqrt(b_displ_inner_core(1,:)**2 &
                       + b_displ_inner_core(2,:)**2 &
                       + b_displ_inner_core(3,:)**2)))
 
@@ -428,16 +427,16 @@
     call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
   endif
 
-  if(b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0) &
+  if (b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0) &
     call exit_MPI(myrank,'backward simulation became unstable and blew up  in the solid')
-  if(b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0) &
+  if (b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0) &
     call exit_MPI(myrank,'backward simulation became unstable and blew up  in the fluid')
 
   ! compute the maximum of the maxima for all the slices using an MPI reduction
   call max_all_cr(b_Usolidnorm,b_Usolidnorm_all)
   call max_all_cr(b_Ufluidnorm,b_Ufluidnorm_all)
 
-  if(myrank == 0) then
+  if (myrank == 0) then
 
     ! this is in the case of restart files, when a given run consists of several partial runs
     ! information about the current run only
@@ -468,7 +467,7 @@
     write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
 
     write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
-    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
     if (SHOW_SEPARATE_RUN_INFORMATION) then
@@ -488,9 +487,9 @@
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if(b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
+    if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
-    if(b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
+    if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
 
   endif
@@ -546,7 +545,7 @@
   nstep_run = it_end - it_begin + 1
 
   ! write time stamp file to give information about progression of simulation
-  if(SIMULATION_TYPE == 1) then
+  if (SIMULATION_TYPE == 1) then
     write(outputname,"('/timestamp_forward',i6.6)") it
   else
     write(outputname,"('/timestamp_backward_and_adjoint',i6.6)") it
@@ -574,11 +573,11 @@
   endif
 
   write(IOUT,*) 'Elapsed time in seconds = ',tCPU
-  write(IOUT,"(' Elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+  write(IOUT,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
   write(IOUT,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
   write(IOUT,*)
 
-  if( NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS ) then
+  if (NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
     ! this is in the case of restart files, when a given run consists of several partial runs
     write(IOUT,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run
     write(IOUT,*) 'Time steps done in total = ',it,' out of ',NSTEP
@@ -590,17 +589,17 @@
   endif
 
   write(IOUT,*) 'Estimated remaining time in seconds = ',t_remain
-  write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+  write(IOUT,"(' Estimated remaining time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
            ihours_remain,iminutes_remain,iseconds_remain
   write(IOUT,*)
 
   write(IOUT,*) 'Estimated total run time in seconds = ',t_total
-  write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") &
+  write(IOUT,"(' Estimated total run time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") &
            ihours_total,iminutes_total,iseconds_total
   write(IOUT,*) 'We have done ',sngl(100.d0*dble(it)/dble(NSTEP)),'% of that'
   write(IOUT,*)
 
-  if(it < it_end) then
+  if (it < it_end) then
 
     write(IOUT,"(' The run will finish approximately on (in local time): ',a3,' ',a3,' ',i2.2,', ',i4.4,' ',i2.2,':',i2.2)") &
         weekday_name(day_of_week),month_name(mon),day,year,hr,minutes
@@ -608,8 +607,8 @@
     ! print date and time estimate of end of run in another country.
     ! For instance: the code runs at Caltech in California but the person
     ! running the code is connected remotely from France, which has 9 hours more
-    if(ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
-      if(HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
+    if (ADD_TIME_ESTIMATE_ELSEWHERE .and. HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE /= 0) then
+      if (HOURS_TIME_DIFFERENCE * 60 + MINUTES_TIME_DIFFERENCE > 0) then
         write(IOUT,*) 'Adding positive time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
       else
         write(IOUT,*) 'Adding negative time difference of ',abs(HOURS_TIME_DIFFERENCE),' hours'
@@ -621,7 +620,7 @@
           day_remote,year_remote,hr_remote,minutes_remote
     endif
 
-    if(it_run < 100) then
+    if (it_run < 100) then
       write(IOUT,*)
       write(IOUT,*) '************************************************************'
       write(IOUT,*) '**** BEWARE: the above time estimates are not reliable'
@@ -652,7 +651,7 @@
   double precision :: tCPU
   double precision, external :: wtime
 
-  if(myrank == 0) then
+  if (myrank == 0) then
     ! elapsed time since beginning of the simulation
     tCPU = wtime() - time_start
 
@@ -662,7 +661,7 @@
     iseconds = int_tCPU - 3600*ihours - 60*iminutes
     write(IMAIN,*) 'Time-Loop Complete. Timing info:'
     write(IMAIN,*) 'Total elapsed time in seconds = ',tCPU
-    write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i4,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     call flush_IMAIN()
   endif
 

@@ -89,22 +89,22 @@
 ! determine if the element falls on the left MPI cut plane
 !
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! global point number and coordinates left MPI cut-plane
     open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_xi.txt', &
          status='unknown',iostat=ier)
 
-    if( ier /= 0 ) then
-      if( myrank == 0 ) then
+    if (ier /= 0) then
+      if (myrank == 0) then
         write(IMAIN,*)
-        write(IMAIN,*) 'error creating file: '
+        write(IMAIN,*) 'Error creating file: '
         write(IMAIN,*) prname(1:len_trim(prname))//'iboolleft_xi.txt'
         write(IMAIN,*)
         write(IMAIN,*) 'please make sure that the directory specified in Par_file as LOCAL_PATH exists'
         write(IMAIN,*)
         call flush_IMAIN()
       endif
-      call exit_mpi(myrank,'error creating iboolleft_xi.txt, please check your Par_file LOCAL_PATH setting')
+      call exit_mpi(myrank,'Error creating iboolleft_xi.txt, please check your Par_file LOCAL_PATH setting')
     endif
   endif
 
@@ -117,16 +117,16 @@
   npoin2D_xi_all(1) = 1
 
   ! nb of elements in this cut-plane
-  ispecc1=0
-  do ispec=1,nspec
-    if(iMPIcut_xi(1,ispec)) then
+  ispecc1 = 0
+  do ispec = 1,nspec
+    if (iMPIcut_xi(1,ispec)) then
       ispecc1=ispecc1+1
       ! loop on all the points in that 2-D element, including edges
       ix = 1
-      do iy=1,NGLLY
-          do iz=1,NGLLZ
+      do iy = 1,NGLLY
+          do iz = 1,NGLLZ
             ! select point, if not already selected
-            if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+            if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
               mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
               npoin2D_xi = npoin2D_xi + 1
 
@@ -136,7 +136,7 @@
               npoin2D_xi_all(1) = npoin2D_xi_all(1) + 1
 
               ! debug file output
-              if( DEBUG ) then
+              if (DEBUG) then
                 write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                             ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
               endif
@@ -146,7 +146,7 @@
     endif
   enddo
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! put flag to indicate end of the list of points
     write(10,*) '0 0  0.  0.  0.'
     ! write total number of points
@@ -155,14 +155,14 @@
   endif
 
   ! compare number of surface elements detected to analytical value
-  if(ispecc1 /= nspec2Dtheor) then
-    write(errmsg,*) 'error MPI cut-planes detection in xi=left T=',nspec2Dtheor,' C=',ispecc1
+  if (ispecc1 /= nspec2Dtheor) then
+    write(errmsg,*) 'Error MPI cut-planes detection in xi=left T=',nspec2Dtheor,' C=',ispecc1
     call exit_MPI(myrank,errmsg)
   endif
 
   ! subtract the line that contains the flag after the last point
   npoin2D_xi_all(1) = npoin2D_xi_all(1) - 1
-  if(npoin2D_xi_all(1) > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi_all(1) /= npoin2D_xi) &
+  if (npoin2D_xi_all(1) > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi_all(1) /= npoin2D_xi) &
     call exit_MPI(myrank,'incorrect iboolleft_xi read')
 
 
@@ -171,11 +171,11 @@
 !
   nspec2Dtheor = NSPEC2D_ETA_FACE(iregion,2)
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! global point number and coordinates right MPI cut-plane
     open(unit=10,file=prname(1:len_trim(prname))//'iboolright_xi.txt', &
           status='unknown',iostat=ier)
-    if( ier /= 0 ) call exit_mpi(myrank,'error creating iboolright_xi.txt for this process')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error creating iboolright_xi.txt for this process')
   endif
 
   ! erase the logical mask used to mark points already found
@@ -187,16 +187,16 @@
   npoin2D_xi_all(2) = 1
 
   ! nb of elements in this cut-plane
-  ispecc2=0
-  do ispec=1,nspec
-    if(iMPIcut_xi(2,ispec)) then
+  ispecc2 = 0
+  do ispec = 1,nspec
+    if (iMPIcut_xi(2,ispec)) then
       ispecc2=ispecc2+1
       ! loop on all the points in that 2-D element, including edges
       ix = NGLLX
-      do iy=1,NGLLY
-        do iz=1,NGLLZ
+      do iy = 1,NGLLY
+        do iz = 1,NGLLZ
           ! select point, if not already selected
-          if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+          if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin2D_xi = npoin2D_xi + 1
 
@@ -206,7 +206,7 @@
             npoin2D_xi_all(2) = npoin2D_xi_all(2) + 1
 
             ! debug file output
-            if( DEBUG ) then
+            if (DEBUG) then
               write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                           ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
             endif
@@ -216,7 +216,7 @@
     endif
   enddo
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! put flag to indicate end of the list of points
     write(10,*) '0 0  0.  0.  0.'
     ! write total number of points
@@ -225,14 +225,14 @@
   endif
 
   ! compare number of surface elements detected to analytical value
-  if(ispecc2 /= nspec2Dtheor) then
-    write(errmsg,*) 'error MPI cut-planes detection in xi=right T=',nspec2Dtheor,' C=',ispecc2
+  if (ispecc2 /= nspec2Dtheor) then
+    write(errmsg,*) 'Error MPI cut-planes detection in xi=right T=',nspec2Dtheor,' C=',ispecc2
     call exit_MPI(myrank,errmsg)
   endif
 
   ! subtract the line that contains the flag after the last point
   npoin2D_xi_all(2) = npoin2D_xi_all(2) - 1
-  if(npoin2D_xi_all(2) > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi_all(2) /= npoin2D_xi) &
+  if (npoin2D_xi_all(2) > NGLOB2DMAX_XMIN_XMAX .or. npoin2D_xi_all(2) /= npoin2D_xi) &
       call exit_MPI(myrank,'incorrect iboolright_xi read')
 
   end subroutine get_MPI_cutplanes_xi

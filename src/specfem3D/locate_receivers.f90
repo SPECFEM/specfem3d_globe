@@ -166,7 +166,7 @@
   ispec_selected_rec(:) = 0
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '********************'
     write(IMAIN,*) ' locating receivers'
@@ -184,7 +184,7 @@
   ! use 10 times the distance as a criterion for source detection
   typical_size = 10. * typical_size
 
-  if(myrank == 0) then
+  if (myrank == 0) then
     write(IMAIN,*)
     write(IMAIN,*) '****************************'
     write(IMAIN,*) 'reading receiver information'
@@ -205,29 +205,29 @@
           y_found(nrec), &
           z_found(nrec), &
           final_distance(nrec),stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
 
   ! initializes search distances
   final_distance(:) = HUGEVAL
 
   ! read that STATIONS file on the master
-  if(myrank == 0) then
+  if (myrank == 0) then
     open(unit=IIN,file=trim(rec_filename),status='old',action='read',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening STATIONS file')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening STATIONS file')
 
     ! loop on all the stations to read station information
     do irec = 1,nrec
       read(IIN,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
-      if( ier /= 0 ) then
-        write(IMAIN,*) 'error reading in station ',irec
-        call exit_MPI(myrank,'error reading in station in STATIONS file')
+      if (ier /= 0) then
+        write(IMAIN,*) 'Error reading in station ',irec
+        call exit_MPI(myrank,'Error reading in station in STATIONS file')
       endif
 
       ! checks latitude
-      if( stlat(irec) < -90.d0 .or. stlat(irec) > 90.d0 ) then
-        print*,'error station ',trim(station_name(irec)),': latitude ',stlat(irec),' is invalid, please check STATIONS record'
+      if (stlat(irec) < -90.d0 .or. stlat(irec) > 90.d0) then
+        print*,'Error station ',trim(station_name(irec)),': latitude ',stlat(irec),' is invalid, please check STATIONS record'
         close(IIN)
-        call exit_MPI(myrank,'error station latitude invalid')
+        call exit_MPI(myrank,'Error station latitude invalid')
       endif
 
     enddo
@@ -240,11 +240,11 @@
 ! "append") to a file with same name. The philosophy here is to accept multiple
 ! appearances and to just add a count to the station name in this case.
     allocate(station_duplet(nrec),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating station_duplet array')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating station_duplet array')
 
     station_duplet(:) = 0
     do irec = 1,nrec
-      do i=1,irec-1
+      do i = 1,irec-1
         if ((station_name(irec)==station_name(i)) .and. &
             (network_name(irec)==network_name(i))) then
 
@@ -262,7 +262,7 @@
 ! BS BS end
 
     ! if receivers can not be buried, sets depth to zero
-    if( .not. RECEIVERS_CAN_BE_BURIED ) stbur(:) = 0.d0
+    if (.not. RECEIVERS_CAN_BE_BURIED ) stbur(:) = 0.d0
 
   endif
 
@@ -275,7 +275,7 @@
   call bcast_all_dp(stbur,nrec)
 
   ! limits receiver search
-  if( USE_DISTANCE_CRITERION ) then
+  if (USE_DISTANCE_CRITERION) then
     ! retrieves latitude/longitude range of this slice
     call xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore,lat_min,lat_max,lon_min,lon_max)
 
@@ -287,20 +287,20 @@
     lon_max = lon_max + LAT_LON_MARGIN
 
     ! limits latitude to [-90.0,90.0]
-    if( lat_min < -90.d0 ) lat_min = -90.d0
-    if( lat_max > 90.d0 ) lat_max = 90.d0
+    if (lat_min < -90.d0 ) lat_min = -90.d0
+    if (lat_max > 90.d0 ) lat_max = 90.d0
 
     ! limits longitude to [0.0,360.0]
-    if( lon_min < 0.d0 ) lon_min = 0.d0
-    if( lon_min > 360.d0 ) lon_min = 360.d0
-    if( lon_max < 0.d0 ) lon_max = 0.d0
-    if( lon_max > 360.d0 ) lon_max = 360.d0
+    if (lon_min < 0.d0 ) lon_min = 0.d0
+    if (lon_min > 360.d0 ) lon_min = 360.d0
+    if (lon_max < 0.d0 ) lon_max = 0.d0
+    if (lon_max > 360.d0 ) lon_max = 360.d0
 
     ! prepares midpoints coordinates
     allocate(xyz_midpoints(NDIM,nspec),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating array xyz_midpoints')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array xyz_midpoints')
     ! store x/y/z coordinates of center point
-    do ispec=1,nspec
+    do ispec = 1,nspec
       iglob = ibool(MIDX,MIDY,MIDZ,ispec)
       xyz_midpoints(1,ispec) =  dble(xstore(iglob))
       xyz_midpoints(2,ispec) =  dble(ystore(iglob))
@@ -309,7 +309,7 @@
   endif
 
   ! loop on all the stations to locate them in the mesh
-  do irec=1,nrec
+  do irec = 1,nrec
 
     ! set distance to huge initial value
     distmin = HUGEVAL
@@ -319,8 +319,8 @@
     lon = stlon(irec)
 
     ! limits longitude to [0.0,360.0]
-    if( lon < 0.d0 ) lon = lon + 360.d0
-    if( lon > 360.d0 ) lon = lon - 360.d0
+    if (lon < 0.d0 ) lon = lon + 360.d0
+    if (lon > 360.d0 ) lon = lon - 360.d0
 
     ! converts geographic latitude stlat (degrees) to geocentric colatitude theta (radians)
     call lat_2_geocentric_colat_dble(lat,theta)
@@ -333,7 +333,7 @@
                          sin(theta)*sin(theta_source)*cos(phi-phi_source))*RADIANS_TO_DEGREES
 
     ! print some information about stations
-    if(myrank == 0) then
+    if (myrank == 0) then
       write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
                        '.',network_name(irec)(1:len_trim(network_name(irec))), &
                        '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
@@ -343,15 +343,15 @@
     do iorientation = 1,3
 
       !     North
-      if(iorientation == 1) then
+      if (iorientation == 1) then
         stazi = 0.d0
         stdip = 0.d0
       !     East
-      else if(iorientation == 2) then
+      else if (iorientation == 2) then
         stazi = 90.d0
         stdip = 0.d0
       !     Vertical
-      else if(iorientation == 3) then
+      else if (iorientation == 3) then
         stazi = 0.d0
         stdip = - 90.d0
       else
@@ -386,15 +386,18 @@
     r0 = R_UNIT_SPHERE
 
     ! finds elevation of receiver
-    if( TOPOGRAPHY ) then
+    if (TOPOGRAPHY) then
        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
        r0 = r0 + elevation/R_EARTH
     endif
     ! ellipticity
-    if( ELLIPTICITY_VAL ) then
+    if (ELLIPTICITY_VAL) then
       cost=cos(theta)
+! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
       p20=0.5d0*(3.0d0*cost*cost-1.0d0)
+! get ellipticity using spline evaluation
       call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
+! this is eq (14.4) in Dahlen and Tromp (1998)
       r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
     endif
 
@@ -417,17 +420,17 @@
     located_target = .false.
 
     ! searches closest GLL point
-    if( USE_DISTANCE_CRITERION ) then
+    if (USE_DISTANCE_CRITERION) then
       ! checks if receiver in this slice
-      if( lat >= lat_min .and. lat <= lat_max .and. &
-          lon >= lon_min .and. lon <= lon_max ) then
+      if (lat >= lat_min .and. lat <= lat_max .and. &
+          lon >= lon_min .and. lon <= lon_max) then
         ! loops over all elements
-        do ispec=1,nspec
+        do ispec = 1,nspec
           ! exclude elements that are too far from target
           dist = (x_target_rec - xyz_midpoints(1,ispec))*(x_target_rec - xyz_midpoints(1,ispec)) &
                + (y_target_rec - xyz_midpoints(2,ispec))*(y_target_rec - xyz_midpoints(2,ispec)) &
                + (z_target_rec - xyz_midpoints(3,ispec))*(z_target_rec - xyz_midpoints(3,ispec))
-          if(dist > typical_size*typical_size) cycle
+          if (dist > typical_size*typical_size) cycle
           ! loop only on points inside the element
           ! exclude edges to ensure this point is not shared with other elements
           do k=2,NGLLZ-1
@@ -438,7 +441,7 @@
                      + (y_target_rec - dble(ystore(iglob)))*(y_target_rec - dble(ystore(iglob))) &
                      + (z_target_rec - dble(zstore(iglob)))*(z_target_rec - dble(zstore(iglob)))
                 !  keep this point if it is closer to the receiver
-                if(dist < distmin*distmin) then
+                if (dist < distmin*distmin) then
                   distmin = dsqrt(dist)
                   ispec_selected_rec(irec) = ispec
                   ix_initial_guess(irec) = i
@@ -454,7 +457,7 @@
       endif
     else
       ! searches through all elements
-      do ispec=1,nspec
+      do ispec = 1,nspec
         ! loop only on points inside the element
         ! exclude edges to ensure this point is not shared with other elements
         do k=2,NGLLZ-1
@@ -465,7 +468,7 @@
                    + (y_target_rec - dble(ystore(iglob)))*(y_target_rec - dble(ystore(iglob))) &
                    + (z_target_rec - dble(zstore(iglob)))*(z_target_rec - dble(zstore(iglob)))
               !  keep this point if it is closer to the receiver
-              if(dist < distmin*distmin) then
+              if (dist < distmin*distmin) then
                 distmin = dsqrt(dist)
                 ispec_selected_rec(irec) = ispec
                 ix_initial_guess(irec) = i
@@ -482,8 +485,8 @@
 
     ! if we have not located a target element, the receiver is not in this slice
     ! therefore use first element only for fictitious iterative search
-    if(.not. located_target) then
-      ispec_selected_rec(irec)=1
+    if (.not. located_target) then
+      ispec_selected_rec(irec) = 1
       ix_initial_guess(irec) = MIDX
       iy_initial_guess(irec) = MIDY
       iz_initial_guess(irec) = MIDZ
@@ -492,10 +495,10 @@
   ! end of loop on all the stations
   enddo
 
-  if( USE_DISTANCE_CRITERION ) deallocate(xyz_midpoints)
+  if (USE_DISTANCE_CRITERION ) deallocate(xyz_midpoints)
 
   ! create RECORDHEADERS file with usual format for normal-mode codes
-  if(myrank == 0) then
+  if (myrank == 0) then
 
     ! get the base pathname for output files
     call band_instrument_code(DT,bic)
@@ -506,13 +509,13 @@
     ! compute total number of samples for normal modes with 1 sample per second
     open(unit=IOUT,file='OUTPUT_FILES/RECORDHEADERS', &
           status='unknown',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file RECORDHEADERS')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file RECORDHEADERS')
 
     nsamp = nint(dble(NSTEP-1)*DT)
 
     do irec = 1,nrec
 
-      if(stele(irec) >= -999.9999) then
+      if (stele(irec) >= -999.9999) then
         write(IOUT,500) station_name(irec),bic(1:2)//'N', &
                      stlat(irec),stlon(irec),stele(irec),stbur(irec), &
                      0.,0.,1.,nsamp,yr,jda,ho,mi,sec
@@ -569,10 +572,10 @@
              y_found_subset(nrec_SUBSET_current_size), &
              z_found_subset(nrec_SUBSET_current_size), &
              final_distance_subset(nrec_SUBSET_current_size),stat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary receiver arrays')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
 
     ! gather arrays
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       ! only master process needs full arrays allocated
       allocate(ispec_selected_rec_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
                xi_receiver_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
@@ -582,7 +585,7 @@
                y_found_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
                z_found_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1), &
                final_distance_all(nrec_SUBSET_current_size,0:NPROCTOT_VAL-1),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary gather receiver arrays')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary gather receiver arrays')
     else
       ! dummy arrays
       allocate(ispec_selected_rec_all(1,1), &
@@ -593,7 +596,7 @@
                y_found_all(1,1), &
                z_found_all(1,1), &
                final_distance_all(1,1),stat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error allocating temporary dummy receiver arrays')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary dummy receiver arrays')
     endif
 
     ! initializes search results
@@ -610,36 +613,36 @@
       ispec_selected_rec_subset(irec_in_this_subset) = ispec_iterate
 
       ! define coordinates of the control points of the element
-      do ia=1,NGNOD
+      do ia = 1,NGNOD
 
         iax = 0
-        if(iaddx(ia) == 0) then
+        if (iaddx(ia) == 0) then
           iax = 1
-        else if(iaddx(ia) == 1) then
+        else if (iaddx(ia) == 1) then
           iax = MIDX
-        else if(iaddx(ia) == 2) then
+        else if (iaddx(ia) == 2) then
           iax = NGLLX
         else
           call exit_MPI(myrank,'incorrect value of iaddx')
         endif
 
         iay = 0
-        if(iaddy(ia) == 0) then
+        if (iaddy(ia) == 0) then
           iay = 1
-        else if(iaddy(ia) == 1) then
+        else if (iaddy(ia) == 1) then
           iay = MIDY
-        else if(iaddy(ia) == 2) then
+        else if (iaddy(ia) == 2) then
           iay = NGLLY
         else
           call exit_MPI(myrank,'incorrect value of iaddy')
         endif
 
         iaz = 0
-        if(iaddr(ia) == 0) then
+        if (iaddr(ia) == 0) then
           iaz = 1
-        else if(iaddr(ia) == 1) then
+        else if (iaddr(ia) == 1) then
           iaz = MIDZ
-        else if(iaddr(ia) == 2) then
+        else if (iaddr(ia) == 2) then
           iaz = NGLLZ
         else
           call exit_MPI(myrank,'incorrect value of iaddr')
@@ -665,7 +668,7 @@
       do iter_loop = 1,NUM_ITER
 
         ! impose receiver exactly at the surface
-        if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
+        if (.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
         ! recompute Jacobian for the new point
         call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
@@ -686,7 +689,7 @@
         eta = eta + deta
 
         ! buried receivers vary in z depth
-        if(RECEIVERS_CAN_BE_BURIED) then
+        if (RECEIVERS_CAN_BE_BURIED) then
           dgamma = gammax*dx + gammay*dy + gammaz*dz
           gamma = gamma + dgamma
         endif
@@ -707,7 +710,7 @@
       enddo
 
       ! impose receiver exactly at the surface after final iteration
-      if(.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
+      if (.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
       ! compute final coordinates of point found
       call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
@@ -742,9 +745,9 @@
                       ispec_selected_rec_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
 
     ! this is executed by main process only
-    if(myrank == 0) then
+    if (myrank == 0) then
       ! check that the gather operation went well
-      if(any(ispec_selected_rec_all(:,:) == -1)) call exit_MPI(myrank,'gather operation failed for receivers')
+      if (any(ispec_selected_rec_all(:,:) == -1)) call exit_MPI(myrank,'gather operation failed for receivers')
     endif
 
     call gather_all_dp(xi_receiver_subset,nrec_SUBSET_current_size,xi_receiver_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
@@ -756,7 +759,7 @@
     call gather_all_dp(z_found_subset,nrec_SUBSET_current_size,z_found_all,nrec_SUBSET_current_size,NPROCTOT_VAL)
 
     ! this is executed by main process only
-    if(myrank == 0) then
+    if (myrank == 0) then
 
       ! MPI loop on all the results to determine the best slice
       do irec_in_this_subset = 1,nrec_SUBSET_current_size
@@ -766,7 +769,7 @@
 
         distmin = HUGEVAL
         do iprocloop = 0,NPROCTOT_VAL-1
-          if(final_distance_all(irec_in_this_subset,iprocloop) < distmin) then
+          if (final_distance_all(irec_in_this_subset,iprocloop) < distmin) then
             distmin = final_distance_all(irec_in_this_subset,iprocloop)
 
             islice_selected_rec(irec) = iprocloop
@@ -803,21 +806,21 @@
   enddo ! end of loop over all station subsets
 
   ! this is executed by the main process only
-  if(myrank == 0) then
+  if (myrank == 0) then
 
     ! appends receiver locations to sr.vtk file
     open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
     ! chooses best receivers locations
     islice_selected_rec_found(:) = -1
     nrec_found = 0
-    do irec=1,nrec
+    do irec = 1,nrec
 
-      if(final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'error locating receiver')
+      if (final_distance(irec) == HUGEVAL) call exit_MPI(myrank,'Error locating receiver')
 
-      if(DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0 ) then
+      if (DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0) then
         write(IMAIN,*)
         write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
         write(IMAIN,*) '     original latitude: ',sngl(stlat(irec))
@@ -830,10 +833,10 @@
 
       ! add warning if estimate is poor
       ! (usually means receiver outside the mesh given by the user)
-      if(final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
+      if (final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
         write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
         write(IMAIN,*) '*****************************************************************'
-        if(NCHUNKS_VAL == 6) then
+        if (NCHUNKS_VAL == 6) then
           write(IMAIN,*) '***** WARNING: receiver location estimate is poor, therefore receiver excluded *****'
         else
           write(IMAIN,*) '***** WARNING: receiver is located outside the mesh, therefore excluded *****'
@@ -874,7 +877,7 @@
 
     ! add warning if estimate is poor
     ! (usually means receiver outside the mesh given by the user)
-    if(final_distance_max > THRESHOLD_EXCLUDE_STATION) then
+    if (final_distance_max > THRESHOLD_EXCLUDE_STATION) then
       write(IMAIN,*)
       write(IMAIN,*) '************************************************************'
       write(IMAIN,*) '************************************************************'
@@ -902,11 +905,11 @@
     ! write the list of stations and associated epicentral distance
     open(unit=IOUT,file='OUTPUT_FILES/output_list_stations.txt', &
           status='unknown',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening file output_list_stations.txt')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_list_stations.txt')
     write(IOUT,*)
     write(IOUT,*) 'total number of stations: ',nrec
     write(IOUT,*)
-    do irec=1,nrec
+    do irec = 1,nrec
       write(IOUT,*) station_name(irec)(1:len_trim(station_name(irec))), &
                   '.',network_name(irec)(1:len_trim(network_name(irec))), &
                   ' epicentral distance ',sngl(epidist(irec)),' deg'
@@ -914,10 +917,10 @@
     close(IOUT)
 
     ! write out a filtered station list
-    if( NCHUNKS_VAL /= 6 ) then
+    if (NCHUNKS_VAL /= 6) then
       open(unit=IOUT,file='OUTPUT_FILES/STATIONS_FILTERED', &
             status='unknown',iostat=ier)
-      if( ier /= 0 ) call exit_MPI(myrank,'error opening file STATIONS_FILTERED')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information
       do irec = 1,nrec
         write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),&
@@ -959,7 +962,7 @@
   call bcast_all_dp(nu,nrec*3*3)
 
   ! elapsed time since beginning of mesh generation
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     tCPU = wtime() - time_start
     write(IMAIN,*)
     write(IMAIN,*) 'Elapsed time for receiver detection in seconds = ',tCPU

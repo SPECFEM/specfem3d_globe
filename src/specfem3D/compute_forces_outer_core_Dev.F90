@@ -124,12 +124,12 @@
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if( MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. (.not. phase_is_inner) ) then
+  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. (.not. phase_is_inner)) then
     div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
 ! computed_elements = 0
-  if( .not. phase_is_inner ) then
+  if (.not. phase_is_inner) then
     iphase = 1
     num_elements = nspec_outer
   else
@@ -141,10 +141,10 @@
 !$OMP SHARED( &
 !$OMP num_elements, phase_ispec_inner, iphase, ibool, displfluid, xstore, ystore, zstore, &
 !$OMP d_ln_density_dr_table, hprime_xx, hprime_xxT, xix, xiy, xiz,  etax, etay, etaz, &
-!$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation,   &
+!$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation, &
 !$OMP minus_rho_g_over_kappa_fluid, wgll_cube, MOVIE_VOLUME, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accelfluid, USE_LDDRK, A_array_rotation_lddrk, &
-!$OMP istage, B_array_rotation_lddrk, div_displfluid ) &
+!$OMP istage, B_array_rotation_lddrk, div_displfluid, ALPHA_LDDRK, BETA_LDDRK ) &
 !$OMP PRIVATE( &
 !$OMP ispec_p, ispec, iglob, dummyx_loc, radius, theta, phi, &
 !$OMP cos_theta, sin_theta, cos_phi, sin_phi, int_radius, &
@@ -184,7 +184,7 @@
 
       int_radius = nint(radius * R_EARTH_KM * 10.d0)
 
-      if( .not. GRAVITY_VAL ) then
+      if (.not. GRAVITY_VAL) then
         ! grad(rho)/rho in Cartesian components
         displ_times_grad_x_ln_rho(INDEX_IJK) = dummyx_loc(INDEX_IJK) &
               * sngl(sin_theta * cos_phi * d_ln_density_dr_table(int_radius))
@@ -237,7 +237,7 @@
 
       ! compute contribution of rotation and add to gradient of potential
       ! this term has no Z component
-      if(ROTATION_VAL) then
+      if (ROTATION_VAL) then
 
         ! store the source for the Euler scheme for A_rotation and B_rotation
         two_omega_deltat = deltat * two_omega_earth
@@ -268,7 +268,7 @@
       endif  ! end of section with rotation
 
       ! add (chi/rho)grad(rho) term in no gravity case
-      if(.not. GRAVITY_VAL) then
+      if (.not. GRAVITY_VAL) then
 
         ! With regards to the non-gravitating case: we cannot set N^2 = 0 *and* let g = 0.
         ! We can *either* assume N^2 = 0 but keep gravity g, *or* we can assume that gravity
@@ -318,7 +318,7 @@
         gravity_term(INDEX_IJK) = &
                 real(minus_rho_g_over_kappa_fluid(int_radius) &
                    * dble(jacobianl) * wgll_cube(INDEX_IJK) &
-                   * (dble(dpotentialdx_with_rot) * gxl  &
+                   * (dble(dpotentialdx_with_rot) * gxl &
                     + dble(dpotentialdy_with_rot) * gyl &
                     + dble(dpotentialdzl)         * gzl), kind=CUSTOM_REAL)
 
@@ -326,8 +326,8 @@
         ! note: these calculations are only considered for SIMULATION_TYPE == 1 .and. SAVE_FORWARD
         !          and one has set MOVIE_VOLUME_TYPE == 4 when MOVIE_VOLUME is .true.;
         !         in case of SIMULATION_TYPE == 3, it gets overwritten by compute_kernels_outer_core()
-        if( MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 ) then
-          div_displfluid(INDEX_IJK,ispec) =  &
+        if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1) then
+          div_displfluid(INDEX_IJK,ispec) = &
                     real(minus_rho_g_over_kappa_fluid(int_radius) &
                        * (dpotentialdx_with_rot * gxl &
                         + dpotentialdy_with_rot * gyl &
@@ -367,7 +367,7 @@
     ENDDO_LOOP_IJK
 
     ! adds gravity
-    if(GRAVITY_VAL) then
+    if (GRAVITY_VAL) then
 
       DO_LOOP_IJK
 
@@ -392,9 +392,9 @@
 !DIR$ IVDEP
     do ijk = 1,NGLLCUBE
 #else
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
 #endif
           iglob = ibool(INDEX_IJK,ispec)
 #ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
@@ -415,9 +415,9 @@
 
     ! update rotation term with Euler scheme
 
-    if(ROTATION_VAL) then
+    if (ROTATION_VAL) then
 
-      if(USE_LDDRK) then
+      if (USE_LDDRK) then
 
         ! use the source saved above
         DO_LOOP_IJK
@@ -484,8 +484,8 @@
   integer :: i,j
 
   ! matrix-matrix multiplication
-  do j=1,n3
-    do i=1,n1
+  do j = 1,n3
+    do i = 1,n1
       C(i,j) =  A(i,1) * B(1,j) &
               + A(i,2) * B(2,j) &
               + A(i,3) * B(3,j) &
@@ -516,10 +516,10 @@
   integer :: i,j,k
 
   ! matrix-matrix multiplication
-  do j=1,n2
-    do i=1,n1
+  do j = 1,n2
+    do i = 1,n1
       ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-      do k=1,n3
+      do k = 1,n3
         C(i,j,k) =  A(i,1,k) * B(1,j) &
                   + A(i,2,k) * B(2,j) &
                   + A(i,3,k) * B(3,j) &

@@ -41,4 +41,5 @@ cuda_kernels_OBJS := \
 	$O/crust_mantle_impl_kernel_adjoint.cuda-kernel.o \
 	$O/compute_ani_undo_att_kernel.cuda-kernel.o \
 	$O/compute_iso_undo_att_kernel.cuda-kernel.o \
+	$O/compute_strain_kernel.cuda-kernel.o \
 	$(EMPTY_MACRO)

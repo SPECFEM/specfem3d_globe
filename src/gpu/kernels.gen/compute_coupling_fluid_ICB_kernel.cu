@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.9995
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 #ifndef INDEX2
 #define INDEX2(isize,i,j) i + isize*j
 #endif
@@ -10,6 +43,7 @@
 #ifndef INDEX5
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
 #endif
+
 #ifndef NDIM
 #define NDIM 3
 #endif
@@ -49,6 +83,7 @@
 #ifndef BLOCKSIZE_TRANSFER
 #define BLOCKSIZE_TRANSFER 256
 #endif
+
 __global__ void compute_coupling_fluid_ICB_kernel(const float * displ_inner_core, float * accel_outer_core, const int * ibool_inner_core, const int * ibelm_top_inner_core, const float * normal_bottom_outer_core, const float * jacobian2D_bottom_outer_core, const float * wgllwgll_xy, const int * ibool_outer_core, const int * ibelm_bottom_outer_core, const int NSPEC2D_BOTTOM_OC){
   int i;
   int j;
@@ -70,21 +105,21 @@ __global__ void compute_coupling_fluid_ICB_kernel(const float * displ_inner_core
   i = threadIdx.x;
   j = threadIdx.y;
   iface = blockIdx.x + (gridDim.x) * (blockIdx.y);
-  if(iface < NSPEC2D_BOTTOM_OC){
-    ispec = ibelm_bottom_outer_core[iface - 0] - (1);
-    ispec_selected = ibelm_top_inner_core[iface - 0] - (1);
+  if (iface < NSPEC2D_BOTTOM_OC) {
+    ispec = ibelm_bottom_outer_core[iface - (0)] - (1);
+    ispec_selected = ibelm_top_inner_core[iface - (0)] - (1);
     k = 0;
     k_corresp = NGLLX - (1);
-    iglob_ic = ibool_inner_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - 0] - (1);
-    displ_x = displ_inner_core[(iglob_ic) * (3) + 0 - 0];
-    displ_y = displ_inner_core[(iglob_ic) * (3) + 1 - 0];
-    displ_z = displ_inner_core[(iglob_ic) * (3) + 2 - 0];
-    nx = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - 0];
-    ny = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - 0];
-    nz = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - 0];
+    iglob_ic = ibool_inner_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - (0)] - (1);
+    displ_x = displ_inner_core[(iglob_ic) * (3) + 0 - (0)];
+    displ_y = displ_inner_core[(iglob_ic) * (3) + 1 - (0)];
+    displ_z = displ_inner_core[(iglob_ic) * (3) + 2 - (0)];
+    nx = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - (0)];
+    ny = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - (0)];
+    nz = normal_bottom_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - (0)];
     displ_n = (displ_x) * (nx) + (displ_y) * (ny) + (displ_z) * (nz);
-    weight = (jacobian2D_bottom_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - 0]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - 0]);
-    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - 0] - (1);
+    weight = (jacobian2D_bottom_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - (0)]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - (0)]);
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
     atomicAdd(accel_outer_core + iglob_oc, ( -(weight)) * (displ_n));
   }
 }

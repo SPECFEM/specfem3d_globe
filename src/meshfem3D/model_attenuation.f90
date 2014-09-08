@@ -96,10 +96,10 @@
   integer :: ier
 
   allocate(AM_V%Qtau_s(N_SLS),stat=ier)
-  if( ier /= 0 ) call exit_mpi(myrank,'error allocating Qtau_s array')
+  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating Qtau_s array')
 
   ! master process determines period ranges
-  if(myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
+  if (myrank == 0) call read_attenuation_model(MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD, AM_V)
 
   ! broadcasts to all others
   call bcast_all_singledp(AM_V%min_period)
@@ -250,25 +250,25 @@
 
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)
-  if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
     AM_V%Qn = 12
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
     AM_V%Qn = 12
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
     ! redefines "pure" 1D model without crustal modification
     call define_model_ak135(.FALSE.)
     AM_V%Qn = NR_AK135F_NO_MUD
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
     ! redefines "pure" 1D model without crustal modification
     call define_model_1066a(.FALSE.)
     AM_V%Qn = NR_1066A
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     ! redefines "pure" 1D model without crustal modification
     call define_model_1dref(.FALSE.)
     AM_V%Qn = NR_REF
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
     AM_V%Qn = 12
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
     ! redefines "pure" 1D model without crustal modification
     call define_model_sea1d(.FALSE.)
     AM_V%Qn = NR_SEA1D
@@ -282,27 +282,27 @@
           AM_V%interval_Q(AM_V%Qn), &
           AM_V%Qtau_e(N_SLS,AM_V%Qn), &
           stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating AM_V arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating AM_V arrays')
 
-  if(REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
      AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
      AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
      AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
      AM_V%Qmu(:)    = M1066a_V_Qmu_1066a(:)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
      AM_V%Qr(:)     = Mref_V_radius_ref(:)
      AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
      AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
      AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
      AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
      AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
   endif
@@ -313,17 +313,17 @@
   enddo
 
   ! re-defines 1D models with crustal modification if necessary
-  if( CRUSTAL ) then
-    if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
+  if (CRUSTAL) then
+    if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
       ! redefines 1D model with crustal modification
       call define_model_ak135(CRUSTAL)
-    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+    else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
       ! redefines 1D model with crustal modification
       call define_model_1066a(CRUSTAL)
-    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+    else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
       ! redefines 1D model with crustal modification
       call define_model_1dref(CRUSTAL)
-    else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+    else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
       ! redefines 1D model with crustal modification
       call define_model_sea1d(CRUSTAL)
     endif
@@ -404,7 +404,7 @@
   ! READ
   rw = 1
   call model_attenuation_storage(Qmu_in, tau_e, rw, AM_S)
-  if(rw > 0) return
+  if (rw > 0) return
 
   call attenuation_invert_by_simplex(AM_V%min_period, AM_V%max_period, N_SLS, Qmu_in, T_c_source, tau_s, tau_e, AS_V)
 
@@ -446,7 +446,7 @@
   integer :: Qtmp
   integer, save :: first_time_called = 1
 
-  if(first_time_called == 1) then
+  if (first_time_called == 1) then
      first_time_called       = 0
      AM_S%Q_resolution = 10**ATTENUATION_COMP_RESOLUTION
      AM_S%Q_max        = ATTENUATION_COMP_MAXIMUM
@@ -456,7 +456,7 @@
      AM_S%Qmu_storage(:) = -1
   endif
 
-  if(Qmu < 0.0d0 .OR. Qmu > AM_S%Q_max) then
+  if (Qmu < 0.0d0 .OR. Qmu > AM_S%Q_max) then
     write(IMAIN,*) 'Error attenuation_storage()'
     write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
     write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
@@ -466,7 +466,7 @@
     call exit_MPI(myrank, 'Attenuation Value out of Range')
   endif
 
-  if(rw > 0 .AND. Qmu == 0.0d0) then
+  if (rw > 0 .AND. Qmu == 0.0d0) then
      Qmu = 0.0d0;
      tau_e(:) = 0.0d0;
      return
@@ -484,9 +484,9 @@
   ! but Qmu_new is not used any further...
   Qmu_new = dble(Qtmp) / dble(AM_S%Q_resolution)
 
-  if(rw > 0) then
+  if (rw > 0) then
      ! READ
-     if(AM_S%Qmu_storage(Qtmp) > 0) then
+     if (AM_S%Qmu_storage(Qtmp) > 0) then
         ! READ SUCCESSFUL
         tau_e(:)   = AM_S%tau_e_storage(:, Qtmp)
         Qmu        = AM_S%Qmu_storage(Qtmp)
@@ -614,7 +614,7 @@
   exp1 = log10(f1)
   exp2 = log10(f2)
 
-  if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
+  if (f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
     call world_rank(myrank)
     call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
@@ -647,7 +647,7 @@
 
   ! Run a simplex search to determine the optimum values of tau_e
   call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err,AS_V)
-  if(err > 0) then
+  if (err > 0) then
      write(*,*)'Search did not converge for an attenuation of ', Q_real
      write(*,*)'    Iterations: ', iterations
      write(*,*)'    Min Value:  ', min_value
@@ -952,7 +952,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
   sigma = 0.5d0
 
 
-  if(itercount > 0) then
+  if (itercount > 0) then
      maxiter = itercount
   else
      maxiter = 200 * n
@@ -960,7 +960,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
   itercount = 0
   maxfun  = 200 * n
 
-  if(tolf > 0.0d0) then
+  if (tolf > 0.0d0) then
      tolx = 1.0e-4
   else
      tolx = 1.0e-4
@@ -983,7 +983,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   do j = 1,n
      y = xin
-     if(y(j) /= 0.0d0) then
+     if (y(j) /= 0.0d0) then
         y(j) = (1.0d0 + usual_delta) * y(j)
      else
         y(j) = zero_term_delta
@@ -1003,11 +1003,11 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
   how = initial
   itercount = 1
   func_evals = n+1
-  if(prnt == 3) then
+  if (prnt == 3) then
      write(*,*)'Iterations   Funk Evals   Value How'
      write(*,*)itercount, func_evals, fv(1), how
   endif
-  if(prnt == 4) then
+  if (prnt == 4) then
      write(*,*)'How: ',how
      write(*,*)'V: ', v
      write(*,*)'fv: ',fv
@@ -1016,7 +1016,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   do while (func_evals < maxfun .AND. itercount < maxiter)
 
-     if(max_size_simplex(v,n) <= tolx .AND. &
+     if (max_size_simplex(v,n) <= tolx .AND. &
           max_value(fv,n+1) <= tolf) then
         goto 666
      endif
@@ -1118,11 +1118,11 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
      endif
   enddo
 
-  if(func_evals > maxfun) then
+  if (func_evals > maxfun) then
      write(*,*)'function evaluations exceeded prescribed limit', maxfun
      err = 1
   endif
-  if(itercount > maxiter) then
+  if (itercount > maxiter) then
      write(*,*)'iterations exceeded prescribed limit', maxiter
      err = 2
   endif
@@ -1160,7 +1160,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
   m = 0.0d0
   do i = 2,n
      z = abs(fv(1) - fv(i))
-     if(z > m) then
+     if (z > m) then
         m = z
      endif
   enddo
@@ -1195,7 +1195,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
   do i = 1,n
      do j = 2,n+1
         z = abs(v(i,j) - v(i,1))
-        if(z > m) then
+        if (z > m) then
            m = z
         endif
      enddo

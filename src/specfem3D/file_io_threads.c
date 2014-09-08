@@ -99,7 +99,7 @@ pthread_t adj_io_thread;
 extern void FC_FUNC_(read_adjoint_sources_local,READ_ADJOINT_SOURCES_LOCAL)(char*, const int* , const int*);
 
 // Thread that does actual read in adjoint sources. dummy argument is needed to avoid compiler warning.
-void *fread_adj_thread(void* dummy){
+void *fread_adj_thread(void* dummy) {
 
   // note: having it_sub_adj as function argument and using int it_sub = (* (int*) it_sub_adj); did not work...
   TRACE("fread_adj_thread");
@@ -125,12 +125,12 @@ void wait_adj_io_thread() {
 
   int rc;
   // checks if thread still runs
-  if( ptDataAdj.started ) {
+  if (ptDataAdj.started ) {
     void* status;
     rc = pthread_join(adj_io_thread, &status);
-    if( rc ) {
-      printf("ERROR; return code from pthread_join() is %d\n", rc);
-      exit_error("error in wait_adj_io_thread: thread_join failed");
+    if (rc ) {
+      printf("Error; return code from pthread_join() is %d\n", rc);
+      exit_error("Error in wait_adj_io_thread: thread_join failed");
     }
     // checks finished flag
     assert(ptDataAdj.finished == true); // Adjoint thread has completed, but somehow it isn't finished?
@@ -142,7 +142,7 @@ void wait_adj_io_thread() {
 
 // initializes adjoint thread
 void
-FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,int* nadj_rec_local){
+FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,int* nadj_rec_local) {
 
   TRACE("prepare_adj_io_thread");
 
@@ -150,7 +150,7 @@ FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,
 
   // checks if buffer valid
   assert(buffer != NULL); // "Adjoint thread: associated buffer is invalid"
-  if( bytes_to_read <= 0 ) exit_error("Adjoint thread: associated buffer length is invalid");
+  if (bytes_to_read <= 0 ) exit_error("Adjoint thread: associated buffer length is invalid");
 
   // initializes thread info
   ptDataAdj.started = false;
@@ -163,7 +163,7 @@ FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,
 
 // creates thread for reading adjoint sources
 void
-FC_FUNC_(read_adj_io_thread,CREATE_IO_ADJ_THREAD)(int* it_sub_adj){
+FC_FUNC_(read_adj_io_thread,CREATE_IO_ADJ_THREAD)(int* it_sub_adj) {
 
   TRACE("read_adj_io_thread");
   // debug
@@ -181,10 +181,10 @@ FC_FUNC_(read_adj_io_thread,CREATE_IO_ADJ_THREAD)(int* it_sub_adj){
   pthread_attr_t attr;
 
   rc = pthread_attr_init(&attr);
-  if( rc != 0 ) exit_error("Adjoint thread: initialization of thread failed");
+  if (rc != 0 ) exit_error("Adjoint thread: initialization of thread failed");
 
   rc = pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
-  if( rc != 0 ) exit_error("Adjoint thread: setting thread state failed");
+  if (rc != 0 ) exit_error("Adjoint thread: setting thread state failed");
 
   // sets new thread info
   ptDataAdj.started = true;
@@ -194,7 +194,7 @@ FC_FUNC_(read_adj_io_thread,CREATE_IO_ADJ_THREAD)(int* it_sub_adj){
   // create and launch the thread.
   // note: using it_sub_adj as argument (void*) it_sub_adj did not work...
   rc = pthread_create(&adj_io_thread,&attr,fread_adj_thread,NULL);
-  if( rc != 0 ) exit_error("Adjoint thread: creating thread failed");
+  if (rc != 0 ) exit_error("Adjoint thread: creating thread failed");
 
 }
 
@@ -269,7 +269,7 @@ void write_abs_ptio(int *fid, char *buffer, int *length, int *index) {
 
   // allocates buffer if not done so yet
   size_t bytes_to_write = *length;
-  if(ptData[*fid].buffer == NULL) {
+  if (ptData[*fid].buffer == NULL) {
     ptData[*fid].buffer = (char*)malloc(bytes_to_write);
   }
 
@@ -301,7 +301,7 @@ void read_abs_ptio(int *fid, char *buffer, int *length, int *index) {
 
   // allocates buffer if not done so yet
   size_t bytes_to_read = *length;
-  if(ptData[*fid].buffer == NULL) {
+  if (ptData[*fid].buffer == NULL) {
     ptData[*fid].buffer = (char*)malloc(bytes_to_read);
   }
 
@@ -327,11 +327,11 @@ void read_abs_ptio(int *fid, char *buffer, int *length, int *index) {
 void wait_io_thread(int *fid) {
   int rc;
   // checks if thread still runs
-  if( ptData[*fid].started ) {
+  if (ptData[*fid].started ) {
     void* status;
     rc = pthread_join(io_thread[*fid], &status);
     if (rc) {
-      printf("ERROR; return code from pthread_join() is %d\n", rc);
+      printf("Error; return code from pthread_join() is %d\n", rc);
       exit(-1);
     }
     // checks finished flag
@@ -347,7 +347,7 @@ void sync_buffer_io_thread(int *fid, char *buffer, int *length) {
 
   // checks buffer length
   size_t bytes_to_read = *length;
-  if(ptData[*fid].buffer == NULL) {
+  if (ptData[*fid].buffer == NULL) {
     assert("Associated thread has no buffer");
   }
   assert(ptData[*fid].bytes_to_rw != bytes_to_read && "Associated thread has different buffer length");

@@ -40,7 +40,7 @@
   integer :: ier
 
   call MPI_INIT(ier)
-  if( ier /= 0 ) stop 'error initializing MPI'
+  if (ier /= 0 ) stop 'Error initializing MPI'
 
   end subroutine init_mpi
 
@@ -57,7 +57,7 @@
   integer :: ier
 
   call MPI_FINALIZE(ier)
-  if( ier /= 0 ) stop 'error finalizing MPI'
+  if (ier /= 0 ) stop 'Error finalizing MPI'
 
   end subroutine finalize_mpi
 
@@ -93,7 +93,7 @@
 
   ! synchronizes MPI processes
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
-  if( ier /= 0 ) stop 'error synchronize MPI processes'
+  if (ier /= 0 ) stop 'Error synchronize MPI processes'
 
   end subroutine synchronize_all
 
@@ -114,7 +114,7 @@
 
   ! synchronizes MPI processes
   call MPI_BARRIER(comm,ier)
-  if( ier /= 0 ) stop 'error synchronize MPI processes for specified communicator'
+  if (ier /= 0 ) stop 'Error synchronize MPI processes for specified communicator'
 
   end subroutine synchronize_all_comm
 
@@ -349,7 +349,7 @@
   send(:) = buffer(:)
 
   call MPI_ALLREDUCE(send, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
-  if( ier /= 0 ) stop 'Allreduce to get max values failed.'
+  if (ier /= 0 ) stop 'Allreduce to get max values failed.'
 
   end subroutine max_allreduce_i
 
@@ -759,6 +759,47 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine recv_ch(recvbuf, recvcount, dest, recvtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  integer :: recvcount
+  character(len=recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,recvcount,MPI_CHARACTER,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_ch
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine send_ch(sendbuf, sendcount, dest, sendtag)
+
+  use mpi
+
+  implicit none
+
+  integer :: dest,sendtag
+  integer :: sendcount
+  character(len=sendcount) :: sendbuf
+
+  integer :: ier
+
+  call MPI_SEND(sendbuf,sendcount,MPI_CHARACTER,dest,sendtag,MPI_COMM_WORLD,ier)
+
+  end subroutine send_ch
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine send_i(sendbuf, sendcount, dest, sendtag)
 
   use mpi
@@ -1074,6 +1115,28 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine scatter_all_singlei(sendbuf, recvbuf, NPROC)
+
+  use mpi
+
+  implicit none
+
+  integer :: NPROC
+  integer, dimension(0:NPROC-1) :: sendbuf
+  integer :: recvbuf
+
+  integer :: ier
+
+  call MPI_Scatter(sendbuf, 1, MPI_INTEGER, &
+                   recvbuf, 1, MPI_INTEGER, &
+                   0, MPI_COMM_WORLD, ier)
+
+  end subroutine scatter_all_singlei
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine world_size(sizeval)
 
   use mpi
@@ -1086,7 +1149,7 @@
   integer :: ier
 
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeval,ier)
-  if( ier /= 0 ) stop 'error getting MPI world size'
+  if (ier /= 0 ) stop 'Error getting MPI world size'
 
   end subroutine world_size
 
@@ -1106,7 +1169,7 @@
   integer :: ier
 
   call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
-  if( ier /= 0 ) stop 'error getting MPI rank'
+  if (ier /= 0 ) stop 'Error getting MPI rank'
 
   end subroutine world_rank
 
@@ -1124,7 +1187,7 @@
   integer :: ier
 
   call MPI_COMM_DUP(MPI_COMM_WORLD,comm,ier)
-  if( ier /= 0 ) stop 'error duplicating MPI_COMM_WORLD communicator'
+  if (ier /= 0 ) stop 'Error duplicating MPI_COMM_WORLD communicator'
 
   end subroutine world_duplicate
 

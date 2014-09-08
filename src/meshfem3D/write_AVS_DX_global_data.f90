@@ -63,7 +63,7 @@
   mask_ibool(:) = .false.
 
 ! mark global AVS or DX points
-  do ispec=1,nspec
+  do ispec = 1,nspec
     iglob1=ibool(1,1,1,ispec)
     iglob2=ibool(NGLLX,1,1,ispec)
     iglob3=ibool(NGLLX,NGLLY,1,ispec)
@@ -93,7 +93,7 @@
 
 ! output global AVS or DX points
   numpoin = 0
-  do ispec=1,nspec
+  do ispec = 1,nspec
     iglob1=ibool(1,1,1,ispec)
     iglob2=ibool(NGLLX,1,1,ispec)
     iglob3=ibool(NGLLX,NGLLY,1,ispec)
@@ -102,49 +102,49 @@
     iglob6=ibool(NGLLX,1,NGLLZ,ispec)
     iglob7=ibool(NGLLX,NGLLY,NGLLZ,ispec)
     iglob8=ibool(1,NGLLY,NGLLZ,ispec)
-    if(.not. mask_ibool(iglob1)) then
+    if (.not. mask_ibool(iglob1)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob1) = numpoin
       write(10,*) numpoin,sngl(xstore(1,1,1,ispec)), &
               sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
     endif
-    if(.not. mask_ibool(iglob2)) then
+    if (.not. mask_ibool(iglob2)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob2) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
               sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
     endif
-    if(.not. mask_ibool(iglob3)) then
+    if (.not. mask_ibool(iglob3)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob3) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
               sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
     endif
-    if(.not. mask_ibool(iglob4)) then
+    if (.not. mask_ibool(iglob4)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob4) = numpoin
       write(10,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
               sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
     endif
-    if(.not. mask_ibool(iglob5)) then
+    if (.not. mask_ibool(iglob5)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob5) = numpoin
       write(10,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
               sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
     endif
-    if(.not. mask_ibool(iglob6)) then
+    if (.not. mask_ibool(iglob6)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob6) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
               sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
     endif
-    if(.not. mask_ibool(iglob7)) then
+    if (.not. mask_ibool(iglob7)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob7) = numpoin
       write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
               sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
     endif
-    if(.not. mask_ibool(iglob8)) then
+    if (.not. mask_ibool(iglob8)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob8) = numpoin
       write(10,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
@@ -161,7 +161,7 @@
   enddo
 
 ! check that number of global points output is okay
-  if(numpoin /= npoin) &
+  if (numpoin /= npoin) &
     call exit_MPI(myrank,'incorrect number of global points in AVS or DX file creation')
 
   close(10)
@@ -173,7 +173,7 @@
   write(10,*) nspec
 
 ! output global AVS or DX elements
-  do ispec=1,nspec
+  do ispec = 1,nspec
     iglob1=ibool(1,1,1,ispec)
     iglob2=ibool(NGLLX,1,1,ispec)
     iglob3=ibool(NGLLX,NGLLY,1,ispec)
@@ -241,7 +241,7 @@
 
 ! output global AVS or DX points
   numpoin = 0
-  do ispec=1,nspec
+  do ispec = 1,nspec
         do k = 1,NGLLZ
         do j = 1,NGLLY
         do i = 1,NGLLX
@@ -265,7 +265,7 @@
 
   nelem = 0
 ! output global AVS or DX elements
-  do ispec=1,nspec
+  do ispec = 1,nspec
         do k = 1,NGLLZ-1
         do j = 1,NGLLY-1
         do i = 1,NGLLX-1
@@ -297,7 +297,7 @@
 
   nelem = 0
 ! output global AVS or DX elements
-  do ispec=1,nspec
+  do ispec = 1,nspec
         do k = 1,NGLLZ-1
         do j = 1,NGLLY-1
         do i = 1,NGLLX-1

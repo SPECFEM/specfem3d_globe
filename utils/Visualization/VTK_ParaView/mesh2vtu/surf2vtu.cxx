@@ -40,18 +40,18 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#include <vtk/vtkFloatArray.h>
-#include <vtk/vtkPoints.h>
-#include <vtk/vtkPointData.h>
-#include <vtk/vtkUnstructuredGrid.h>
-#include <vtk/vtkXMLUnstructuredGridWriter.h>
-#include <vtk/vtkUnstructuredGridToPolyDataFilter.h>
-#include <vtk/vtkXMLPolyDataWriter.h>
-#include <vtk/vtkUnstructuredGridToPolyDataFilter.h>
-#include <vtk/vtkDelaunay3D.h>
-#include <vtk/vtkCellArray.h>
-#include <vtk/vtkPointSet.h>
-#include <vtk/vtkQuad.h>
+#include <vtkFloatArray.h>
+#include <vtkPoints.h>
+#include <vtkPointData.h>
+#include <vtkUnstructuredGrid.h>
+#include <vtkXMLUnstructuredGridWriter.h>
+#include <vtkUnstructuredGridToPolyDataFilter.h>
+#include <vtkXMLPolyDataWriter.h>
+#include <vtkUnstructuredGridToPolyDataFilter.h>
+#include <vtkDelaunay3D.h>
+#include <vtkCellArray.h>
+#include <vtkPointSet.h>
+#include <vtkQuad.h>
 
 void usage(char *progname)
 {

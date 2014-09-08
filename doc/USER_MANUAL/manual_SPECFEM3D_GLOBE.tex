@@ -1,7 +1,9 @@
 
 \documentclass[oneside,english]{book}
 \usepackage[T1]{fontenc}
-\usepackage[latin1]{inputenc}
+%% DK DK we do not accept accented letters, use the old LaTeX syntax
+%% DK DK for them instead: \'e \`e  \"e \^e and so on.
+%% DK DK \usepackage[latin1]{inputenc}
 \usepackage{geometry}
 \geometry{letterpaper,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
 \setcounter{secnumdepth}{3}
@@ -105,7 +107,7 @@ Version 6.0}
 \section*{Authors}
 The SPECFEM3D\_GLOBE package was first developed by Dimitri Komatitsch and Jean-Pierre Vilotte at Institut de Physique du Globe (IPGP) in Paris, France
 from 1995 to 1997 and then by Dimitri Komatitsch and Jeroen Tromp at Harvard University and Caltech, USA, starting in 1998.
-The story started on March 28, 1995, when Prof. Yvon Maday from CNRS and University of Paris, France, gave a lecture to
+The story started on April 4, 1995, when Prof. Yvon Maday from CNRS and University of Paris, France, gave a lecture to
 Dimitri Komatitsch and Jean-Pierre Vilotte at IPG about the nice properties of the Legendre spectral-element method with diagonal mass matrix that he had used for
 other equations. We are deeply indebted and thankful to him for that.
 That followed a visit by Dimitri Komatitsch to OGS (Istituto Nazionale di Oceanografia e di Geofisica Sperimentale) in Trieste, Italy, in February 1995
@@ -305,7 +307,7 @@ or your .cshrc file):
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
 \begin{description}
-\item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine.
+\item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine. \textbf{In the case of that compiler, we have noticed that versions dot zero sometimes have bugs or issues that can lead to wrong results when running the code, thus we \emph{strongly} recommend using versions dot one or above (for instance version 13.1 instead of 13.0, version 14.1 instead of 14.0 and so on)}.
 \item [{\texttt{IBM compiler}}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
 \item [{\texttt{Mac OS}}] You will probably need to install \texttt{XCODE}.
 \end{description}
@@ -1662,14 +1664,17 @@ the simulation.
 
 \chapter{\label{cha:Regional-Simulations}Regional Simulations}
 
-The code has the option of running in 1-, 2-, 3- or 6-chunk mode.
-The 1- or 2-chunk options may be used for higher resolution regional
+%% DK DK got rid of the 2-chunk and 3-chunk options here in the manual (but not in the code) because they are now untested and to my knowledge nobody uses them
+
+The code has the option of running in one-chunk or six-chunk mode.
+The one-chunk options may be used for higher resolution regional
 simulations. A one-chunk mesh may have lateral dimensions other than
 the customary $90^{\circ}$ per chunk, which can further increase
 the resolution of the mesh, and thus reduce the shortest period in
 the synthetic seismograms (but of course then also reducing the time
-step in order for the simulation to remain stable). A disadvantage
-of regional simulations is that one needs to use approximate absorbing
+step in order for the simulation to remain stable).
+
+A disadvantage of regional simulations is that one needs to use approximate absorbing
 boundary conditions on the side and bottom edges of the model (e.g.,
 see \citet{KoTr99} for a description of the paraxial boundary conditions
 used). Figure~\vref{fig:3D-spectral-element-mesh} and Figure~\vref{fig:Close-up-view-of}
@@ -1685,9 +1690,9 @@ to be set in the \texttt{Par\_file}:
 \begin{description}
 \item [{$\nchunks$}] Must be set to 1.
 \item [{\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}}] Denotes the width of
-one side of the chunk ($90^{\circ}$or less).
+one side of the chunk ($90^{\circ}$ is a classical value, but you can make it more or less if you want).
 \item [{\texttt{ANGULAR\_WIDTH\_ETA\_IN\_DEGREES}}] Denotes the width of
-the second side of the chunk ($90^{\circ}$or less). Note that this
+the second side of the chunk ($90^{\circ}$ is a classical value, but you can make it more or less if you want). Note that this
 value may be different from \texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}.
 \item [{\texttt{CENTER\_LATITUDE\_IN\_DEGREES}}] Defines the latitude of
 the center of the chunk (degrees).
@@ -1812,36 +1817,36 @@ accurate may be determined based upon the relation \begin{equation}
 
 
 
-\section{Two-Chunk Simulations}
-
-For a two-chunk regional simulation the following parameters need
-to be set in the \texttt{Par\_file}:
-
-\begin{description}
-\item [{$\nchunks$}] Must be set to 2
-\item [{\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}}] Denotes the width of
-one side of the chunk, and it has to be 90 degrees.
-\item [{\texttt{ANGULAR\_WIDTH\_ETA\_IN\_DEGREES}}] Denotes the width of
-the second side of the chunk, and it also has to be 90 degrees.
-\end{description}
-\texttt{NEX\_XI} and \texttt{NEX\_ETA} follow the same description
-in Section \ref{sec:One-Chunk-Simulations}, however, they need to
-be the same in this case. All other parameters are similar to the
-one-chunk simulations, refer to Section \ref{sec:One-Chunk-Simulations}
-for details.
-
-%
-\begin{figure}[H]
-\noindent \begin{centering}
-\includegraphics[width=0.6\textwidth]{figures/2-chunk-surface}
-\par\end{centering}
-
-\caption{Geometry of a 2-chunk simulation, where the first chunk (\texttt{CHUNK\_AB})
-centers at $40^{\circ}$ latitude, $10^{\circ}$ longitude, and has
-been rotated by $20^{\circ}$ counter clockwise, and the second chunk
-(\texttt{CHUNK\_AC}) connects to the first chunk through one face.}
-
-\end{figure}
+% \section{Two-Chunk Simulations}
+% 
+% For a two-chunk regional simulation the following parameters need
+% to be set in the \texttt{Par\_file}:
+% 
+% \begin{description}
+% \item [{$\nchunks$}] Must be set to 2
+% \item [{\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}}] Denotes the width of
+% one side of the chunk, and it has to be 90 degrees.
+% \item [{\texttt{ANGULAR\_WIDTH\_ETA\_IN\_DEGREES}}] Denotes the width of
+% the second side of the chunk, and it also has to be 90 degrees.
+% \end{description}
+% \texttt{NEX\_XI} and \texttt{NEX\_ETA} follow the same description
+% in Section \ref{sec:One-Chunk-Simulations}, however, they need to
+% be the same in this case. All other parameters are similar to the
+% one-chunk simulations, refer to Section \ref{sec:One-Chunk-Simulations}
+% for details.
+% 
+% %
+% \begin{figure}[H]
+% \noindent \begin{centering}
+% \includegraphics[width=0.6\textwidth]{figures/2-chunk-surface}
+% \par\end{centering}
+% 
+% \caption{Geometry of a 2-chunk simulation, where the first chunk (\texttt{CHUNK\_AB})
+% centers at $40^{\circ}$ latitude, $10^{\circ}$ longitude, and has
+% been rotated by $20^{\circ}$ counter clockwise, and the second chunk
+% (\texttt{CHUNK\_AC}) connects to the first chunk through one face.}
+% 
+% \end{figure}
 
 
 
@@ -2013,6 +2018,22 @@ for traveltime measurements
 xcreate\_adjsrc\_amplitude~t1~t2~ifile{[}0-5]~E/N/Z-ascii-files~{[}baz].
 \end{lyxcode}
 \end{itemize}
+
+For adjoint runs (SIMULATION\_TYPE = 3), the adjoint sources need to be put in the "SEM" sub-directory in the root directory of the code.
+
+If your adjoint source have names of the following form for instance:
+
+STA00.NET.MXZ.sem.ascii.adj
+STA00.NET.MXZ.sem.ascii.adj
+
+you will need to rename them to:
+
+STA00.NET.MXZ.adj
+STA00.NET.MXZ.adj
+
+i.e. suppress ".sem.ascii".
+
+You will also need to create a file called STATIONS\_ADJOINT in the "DATA" directory in the root directory of the code. That file can be identical to the DATA/STATIONS file if you had a single station in STATIONS.
 
 \item \textbf{Run the kernel simulation}
 
@@ -2534,8 +2555,7 @@ globe\_slice\_number2.pl~CMTSOLUTION~STATIONS\_ADJOINT~
 A typical value for \texttt{belt\_width\_in\_degrees} can be 20.
 
 \item For a full 6-chunk simulation, this script will generate the \texttt{slice\_minor},
-\texttt{slice\_major}, \texttt{slice\_ic} files, but for a one- or
-two-chunk simulation, this script only generates the \texttt{slice\_minor}
+\texttt{slice\_major}, \texttt{slice\_ic} files, but for a one-chunk simulation, this script only generates the \texttt{slice\_minor}
 file.
 \item For cases with multiple sources and multiple receivers, you need to
 provide a slice file before proceeding to the next step.

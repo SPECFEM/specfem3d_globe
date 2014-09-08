@@ -27,7 +27,10 @@
 
   subroutine read_kl_regular_grid(GRID)
 
-  use constants
+  use constants,only: IIN, &
+    NM_KL_REG_LAYER,PATHNAME_KL_REG, &
+    KL_REG_MIN_LAT,KL_REG_MAX_LAT,KL_REG_MIN_LON,KL_REG_MAX_LON
+
   use specfem_par, only: myrank
 
   implicit none
@@ -51,14 +54,15 @@
   real :: r
 
   ! improvements to make: read-in by master and broadcast to all slaves
-  open(10,file=PATHNAME_KL_REG,iostat=ios,status='old',action='read')
+  open(IIN,file=trim(PATHNAME_KL_REG),status='old',action='read',iostat=ios)
+  if (ios /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(PATHNAME_KL_REG)//'in read_kl_regular_grid() routine')
 
-  read(10,*) GRID%dlat, GRID%dlon
+  read(IIN,*) GRID%dlat, GRID%dlon
 
   nlayer = 0
   do
-    read(10,*,iostat=ios) r, i
-    if (ios/=0) exit
+    read(IIN,*,iostat=ios) r, i
+    if (ios /= 0) exit
 
     if (nlayer >= NM_KL_REG_LAYER) then
       call exit_MPI(myrank, 'Increase NM_KL_REG_LAYER limit')
@@ -68,7 +72,7 @@
     GRID%rlayer(nlayer) = r
     GRID%ndoubling(nlayer) = i
   enddo
-  close(10)
+  close(IIN)
 
   GRID%nlayer = nlayer
 
@@ -93,9 +97,11 @@
 
   subroutine find_regular_grid_slice_number(slice_number, GRID)
 
-  use constants
+  use constants,only: CUSTOM_REAL,PI,DEGREES_TO_RADIANS, &
+    NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
+
   use specfem_par, only: myrank, addressing, &
-                         NCHUNKS_VAL, NPROC_XI_VAL, NPROC_ETA_VAL
+    NCHUNKS_VAL, NPROC_XI_VAL, NPROC_ETA_VAL
 
   implicit none
 
@@ -126,7 +132,7 @@
   endif
 
   xi_width=PI/2; eta_width=PI/2; nproc=NPROC_XI_VAL
-  ilayer=0
+  ilayer = 0
 
   do isp = 1,GRID%npts_total
     if (isp == GRID%npts_before_layer(ilayer+1)+1) ilayer=ilayer+1
@@ -164,7 +170,10 @@
                                    xigll,yigll,zigll,ispec_reg, &
                                    hxir_reg,hetar_reg,hgammar_reg)
 
-  use constants_solver
+  use constants_solver,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NUM_ITER, &
+    DEGREES_TO_RADIANS,HUGEVAL,TWO_PI,R_UNIT_SPHERE,R_EARTH, &
+    NM_KL_REG_PTS_VAL,NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
+
   use specfem_par, only: myrank, NEX_XI
 
   implicit none
@@ -293,7 +302,7 @@
     if (.not. locate_target) then
       print *, 'Looking for point', isp, ilayer, ilat, ilon, lat, lon, &
                x_target, y_target, z_target, myrank
-      call exit_MPI(myrank, 'error in point_source() array')
+      call exit_MPI(myrank, 'Error in point_source() array')
     endif
 
     xi = xigll(ix_in)
@@ -383,7 +392,7 @@
   call hex_nodes(iaddx,iaddy,iaddz)
 
   ! define coordinates of the control points of the element
-  do ia=1,NGNOD
+  do ia = 1,NGNOD
 
      if (iaddx(ia) == 0) then
         iaddx(ia) = 1
@@ -436,11 +445,11 @@
   integer :: dgr,i
   double precision :: prod1,prod2
 
-  do dgr=1,NGLL
+  do dgr = 1,NGLL
      prod1 = 1.0d0
      prod2 = 1.0d0
 
-     do i=1,NGLL
+     do i = 1,NGLL
         if (i /= dgr) then
            prod1 = prod1 * (xi         - xigll(i))
            prod2 = prod2 * (xigll(dgr) - xigll(i))

@@ -44,6 +44,41 @@ AC_SUBST([CUSTOM_REAL])
 AC_SUBST([CUSTOM_MPI_TYPE])
 
 ###
+### debugging
+###
+
+AC_ARG_ENABLE([debug],
+    [AC_HELP_STRING([--enable-debug],
+        [build with debugging options enabled @<:@default=no@:>@])],
+    [want_debug="$enableval"],
+    [want_debug=no])
+AM_CONDITIONAL([COND_DEBUG], [test x"$want_debug" != xno])
+export COND_DEBUG_FALSE
+export COND_DEBUG_TRUE
+
+###
+### FORCE_VECTORIZATION
+###
+
+AC_ARG_ENABLE([vectorization],
+    [AC_HELP_STRING([--enable-vectorization],
+        [build FORCE_VECTORIZATION enabled version @<:@default=auto@:>@])],
+    [want_vec="$enableval"],
+    [want_vec=auto])
+if test x"$want_vec" == xauto; then
+    if test x"$want_debug" != xno; then
+        want_vec=no
+    else
+        want_vec=yes
+    fi
+else
+    if test x"$want_vec" != xno && test x"$want_debug" != xno; then
+        AC_MSG_ERROR([--enable-debug and --enable-vectorization cannot be specified simultaneously.])
+    fi
+fi
+AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
+
+###
 ### GPU
 ###
 
@@ -84,15 +119,15 @@ AC_ARG_WITH([adios],
 AM_CONDITIONAL([COND_ADIOS], [test x"$want_adios" != xno])
 
 ###
-### FORCE_VECTORIZATION
+### CEM
 ###
 
-AC_ARG_ENABLE([vectorization],
-    [AC_HELP_STRING([--enable-vectorization],
-        [build FORCE_VECTORIZATION enabled version @<:@default=yes@:>@])],
-    [want_vec="$enableval"],
-    [want_vec=yes])
-AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
+AC_ARG_WITH([cem],
+    [AC_HELP_STRING([--with-cem],
+        [build CEM enabled version @<:@default=no@:>@])],
+    [want_cem="$withval"],
+    [want_cem=no])
+AM_CONDITIONAL([COND_CEM], [test x"$want_cem" != xno])
 
 ############################################################
 
@@ -203,7 +238,7 @@ AS_IF([test x"$want_cuda" != xno], [
 ])
 
 AS_IF([test x"$want_opencl" != xno], [
-    AS_BOX([OCL])
+    AS_BOX([OpenCL])
     AC_ARG_VAR(OCL_CPU_FLAGS, [OpenCL CPU compiler flags])
     AC_ARG_VAR(OCL_GPU_FLAGS, [OpenCL GPU compiler flags])
     CIT_OPENCL_CONFIG
@@ -236,6 +271,40 @@ AS_IF([test x"$want_vtk" != xno], [
 AS_IF([test x"$want_cuda" != xno -o x"$want_vtk" != xno], [
     CIT_MPI_INCDIR([$MPIFC])
 ])
+
+
+###
+### CEM
+###
+
+AS_IF([test x"$want_cem" != xno], [
+    AS_BOX([Comprehensive Earth Model (CEM)])
+    AC_MSG_NOTICE([CEM is enabled])
+
+    AC_ARG_VAR(CEM_FCFLAGS, [CEM Fortran compiler flags])
+    AC_ARG_VAR(CEM_LIBS, [CEM extra libraries for linking programs])
+
+    # adds compiler flag
+    FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}CEM"
+
+    # daniel: todo add NetCDF checking for Fortran, something like:
+    # netcdf checking
+    #AC_LANG_PUSH(Fortran)
+    #AC_MSG_CHECKING([for NetCDF modules])
+    #FCFLAGS="$CEM_FCFLAGS $FCFLAGS"
+    #AC_COMPILE_IFELSE([
+    #  AC_LANG_PROGRAM([], [[
+    #  use netcdf
+    #  ]])
+    #], [
+    #  AC_MSG_RESULT(yes)
+    #], [
+    #  AC_MSG_RESULT(no)
+    #  AC_MSG_ERROR([NetCDF modules not found; is NetCDF built with Fortran support for this compiler?])
+    #])
+    #AC_LANG_POP([Fortran])
+])
+
 
 ############################################################
 

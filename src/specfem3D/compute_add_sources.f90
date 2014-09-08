@@ -42,14 +42,14 @@
   double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
 
-  if( .not. GPU_MODE ) then
+  if (.not. GPU_MODE) then
     ! on CPU
     do isource = 1,NSOURCES
 
       ! add only if this proc carries the source
-      if(myrank == islice_selected_source(isource)) then
+      if (myrank == islice_selected_source(isource)) then
 
-        if(USE_FORCE_POINT_SOURCE) then
+        if (USE_FORCE_POINT_SOURCE) then
 
           ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
           iglob = ibool_crust_mantle(nint(xi_source(isource)), &
@@ -57,10 +57,11 @@
                          nint(gamma_source(isource)), &
                          ispec_selected_source(isource))
 
+          !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-          if(USE_LDDRK)then
+          if (USE_LDDRK) then
             stf_used = FACTOR_FORCE_SOURCE * &
                      comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
           else
@@ -70,11 +71,11 @@
           ! we use a force in a single direction along one of the components:
           !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
           ! e.g. nu_source(3,:) here would be a source normal to the surface (z-direction).
-          accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob)  &
+          accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
         else
-          if(USE_LDDRK)then
+          if (USE_LDDRK) then
             stf = comp_source_time_function(dble(it-1)*DT + &
                                             dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
           else
@@ -86,9 +87,9 @@
 
           !     add source array
           ispec = ispec_selected_source(isource)
-          do k=1,NGLLZ
-            do j=1,NGLLY
-              do i=1,NGLLX
+          do k = 1,NGLLZ
+            do j = 1,NGLLY
+              do i = 1,NGLLX
                 iglob = ibool_crust_mantle(i,j,k,ispec)
 
                 accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
@@ -107,9 +108,9 @@
   else
     ! on GPU
     ! prepares buffer with source time function values, to be copied onto GPU
-    if(USE_FORCE_POINT_SOURCE) then
+    if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
-        if(USE_LDDRK)then
+        if (USE_LDDRK) then
           stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * &
                      comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
         else
@@ -119,7 +120,7 @@
       enddo
     else
       do isource = 1,NSOURCES
-        if(USE_LDDRK)then
+        if (USE_LDDRK) then
           stf_pre_compute(isource) = comp_source_time_function(dble(it-1)*DT + &
                                             dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
         else
@@ -128,7 +129,7 @@
         endif
       enddo
     endif
-    ! adds sources: only implements SIMTYPE=1 and NOISE_TOM=0
+    ! adds sources: only implements SIMTYPE=1 and NOISE_TOM = 0
     call compute_add_sources_gpu(Mesh_pointer,NSOURCES,stf_pre_compute)
   endif
 
@@ -152,33 +153,33 @@
   logical :: ibool_read_adj_arrays
 
   ! note: we check if nadj_rec_local > 0 before calling this routine, but better be safe...
-  if( nadj_rec_local == 0 ) return
+  if (nadj_rec_local == 0 ) return
 
   ! figure out if we need to read in a chunk of the adjoint source at this timestep
   ibool_read_adj_arrays = ( (it == it_begin) .or. (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) )
 
   ! needs to read in a new chunk/block of the adjoint source
-  if(ibool_read_adj_arrays) then
+  if (ibool_read_adj_arrays) then
     call read_adjoint_sources()
   endif
 
   ! adds adjoint sources
-  if( .not. GPU_MODE ) then
+  if (.not. GPU_MODE) then
     ! on CPU
     irec_local = 0
     do irec = 1,nrec
 
       ! adds source (only if this proc carries the source)
-      if(myrank == islice_selected_rec(irec)) then
+      if (myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
 
         ! adjoint source array index
         ivec_index = iadj_vec(it)
 
         ! adds source contributions
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
+        do k = 1,NGLLZ
+          do j = 1,NGLLY
+            do i = 1,NGLLX
               iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
 
               ! adds adjoint source acting at this time step (it):
@@ -189,7 +190,7 @@
               ! see routine: setup_sources_receivers_adjindx() how this adjoint index array is set up
               !
               !           e.g. total length NSTEP = 3000, chunk length NTSTEP_BETWEEN_READ_ADJSRC= 1000
-              !           then for it=1,..1000, first block has iadjsrc(1,1) with start = 2001 and end = 3000;
+              !           then for it = 1,..1000, first block has iadjsrc(1,1) with start = 2001 and end = 3000;
               !           corresponding iadj_vec(it) goes from
               !           iadj_vec(1) = 1000, iadj_vec(2) = 999 to iadj_vec(1000) = 1,
               !           that is, originally the idea was
@@ -257,9 +258,9 @@
     ! current time index
     ivec_index = iadj_vec(it)
 
-    if( GPU_ASYNC_COPY ) then
+    if (GPU_ASYNC_COPY) then
       ! only synchronously transfers array at beginning or whenever new arrays were read in
-      if( ibool_read_adj_arrays ) then
+      if (ibool_read_adj_arrays) then
         ! transfers adjoint arrays to GPU device memory
         ! note: function call passes pointer to array adj_sourcearrays at corresponding time slice
         call transfer_adj_to_device(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
@@ -274,20 +275,20 @@
     ! adds adjoint source contributions
     call compute_add_sources_adjoint_gpu(Mesh_pointer,nrec)
 
-    if( GPU_ASYNC_COPY ) then
+    if (GPU_ASYNC_COPY) then
       ! starts asynchronously transfer of next adjoint arrays to GPU device memory
       ! (making sure the next adj_sourcearrays values were already read in)
-      if( (.not. ibool_read_adj_arrays) .and. &
+      if ((.not. ibool_read_adj_arrays) .and. &
           (.not. mod(it,NTSTEP_BETWEEN_READ_ADJSRC) == 0) .and. &
-          (.not. it == it_end) ) then
+          (.not. it == it_end)) then
         ! next time index
         ivec_index = iadj_vec(it+1)
 
         ! checks next index
-        if( ivec_index < 1 .or. ivec_index > NTSTEP_BETWEEN_READ_ADJSRC ) then
-          print*,'error iadj_vec bounds: rank',myrank,' it = ',it,' index = ',ivec_index, &
+        if (ivec_index < 1 .or. ivec_index > NTSTEP_BETWEEN_READ_ADJSRC) then
+          print*,'Error iadj_vec bounds: rank',myrank,' it = ',it,' index = ',ivec_index, &
                  'out of bounds ',1,'to',NTSTEP_BETWEEN_READ_ADJSRC
-          call exit_MPI(myrank,'error iadj_vec index bounds')
+          call exit_MPI(myrank,'Error iadj_vec index bounds')
         endif
 
         ! asynchronously transfers next time slice
@@ -323,18 +324,18 @@
   integer :: it_tmp
 
   ! iteration step
-  if( UNDO_ATTENUATION ) then
+  if (UNDO_ATTENUATION) then
     it_tmp = iteration_on_subset * NT_DUMP_ATTENUATION - it_of_this_subset + 1
   else
     it_tmp = it
   endif
 
-  if( .not. GPU_MODE ) then
+  if (.not. GPU_MODE) then
     ! on CPU
     do isource = 1,NSOURCES
 
       !   add the source (only if this proc carries the source)
-      if(myrank == islice_selected_source(isource)) then
+      if (myrank == islice_selected_source(isource)) then
 
         ! note on backward/reconstructed wavefields:
         !       time for b_displ( it ) corresponds to (NSTEP - (it-1) - 1 )*DT - t0  ...
@@ -348,7 +349,7 @@
         !       in the first (it=1) time loop.
         !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
 
-        if(USE_FORCE_POINT_SOURCE) then
+        if (USE_FORCE_POINT_SOURCE) then
 
            ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
            iglob = ibool_crust_mantle(nint(xi_source(isource)), &
@@ -356,6 +357,7 @@
                          nint(gamma_source(isource)), &
                          ispec_selected_source(isource))
 
+           !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
            f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
            !if (it == 1 .and. myrank == 0) then
@@ -369,7 +371,7 @@
 
            ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
            ! note: time step is now at NSTEP-it
-           b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob)  &
+           b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
                               + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
         else
@@ -382,9 +384,9 @@
 
           !     add source array
           ispec = ispec_selected_source(isource)
-          do k=1,NGLLZ
-            do j=1,NGLLY
-              do i=1,NGLLX
+          do k = 1,NGLLZ
+            do j = 1,NGLLY
+              do i = 1,NGLLX
                 iglob = ibool_crust_mantle(i,j,k,ispec)
 
                 b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
@@ -403,7 +405,7 @@
   else
     ! on GPU
     ! prepares buffer with source time function values, to be copied onto GPU
-    if(USE_FORCE_POINT_SOURCE) then
+    if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
         stf_pre_compute(isource) = &
           FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),f0)
@@ -414,7 +416,7 @@
           comp_source_time_function(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
       enddo
     endif
-    ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM=0)
+    ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM = 0)
     call compute_add_sources_backward_gpu(Mesh_pointer,NSOURCES,stf_pre_compute)
   endif
 

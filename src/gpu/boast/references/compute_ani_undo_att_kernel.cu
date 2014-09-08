@@ -104,6 +104,8 @@ __device__ void compute_element_strain_undo_att(int ispec,int ijk_ispec,
   *epsilon_trace_over_3 = templ;
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 __device__ void compute_strain_product_cuda(realw* prod,
                                             realw eps_trace_over_3,
                                             realw* epsdev,
@@ -150,6 +152,8 @@ __device__ void compute_strain_product_cuda(realw* prod,
     }
   }
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 __global__ void compute_ani_undo_att_kernel(realw* epsilondev_xx,
                                             realw* epsilondev_yy,

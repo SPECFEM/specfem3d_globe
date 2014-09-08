@@ -180,7 +180,7 @@ program combine_surf_data
     close(27)
   enddo
 
-  if ( .not. FILE_ARRAY_IS_3D)  then
+  if (.not. FILE_ARRAY_IS_3D) then
     allocate(data_2D(NGLLX,NGLLY,nspec_surf))
   else
     allocate(data_3D(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
@@ -273,12 +273,12 @@ program combine_surf_data
     num_ibool(:) = 0
     numpoin = 0
     k = 1
-    do ispec_surf=1,nspec_surf
+    do ispec_surf = 1,nspec_surf
       ispec = ibelm_surf(ispec_surf)
       do j = 1, NGLLY, iny
         do i = 1, NGLLX, inx
           iglob = ibool(i,j,k,ispec)
-          if(.not. mask_ibool(iglob)) then
+          if (.not. mask_ibool(iglob)) then
             numpoin = numpoin + 1
             x = xstore(iglob)
             y = ystore(iglob)

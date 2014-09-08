@@ -34,9 +34,14 @@
   double precision t,hdur
 
   double precision, external :: netlib_specfun_erf
+  double precision, external :: comp_source_time_function_external
 
-! quasi Heaviside
-  comp_source_time_function = 0.5d0*(1.0d0 + netlib_specfun_erf(t/hdur))
+  if ( EXTERNAL_SOURCE_TIME_FUNCTION ) then
+    comp_source_time_function = comp_source_time_function_external ()
+  else
+    ! quasi Heaviside
+    comp_source_time_function = 0.5d0*(1.0d0 + netlib_specfun_erf(t/hdur))
+  endif
 
   end function comp_source_time_function
 
@@ -62,3 +67,60 @@
   ! comp_source_time_function_rickr = -2.d0*PI*PI*f0*f0*f0*t * exp(-PI*PI*f0*f0*t*t)
 
   end function comp_source_time_function_rickr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  double precision function comp_source_time_function_external ( )
+
+  use specfem_par, only: it, stfArray_external
+  implicit none
+
+  ! On the first iteration, go get the ASCII file.
+  if ( .not. allocated (stfArray_external) ) then
+    call get_external_source_time_function ()
+  endif
+
+  comp_source_time_function_external = stfArray_external (it)
+
+  end function comp_source_time_function_external
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine get_external_source_time_function()
+
+  use specfem_par, only: NSTEP, stfArray_external
+  implicit none
+
+  integer :: RetCode, iterator
+  character (len=200) :: line
+
+  ! Allocate the source time function array to the number of time steps.
+  allocate ( stfArray_external (NSTEP) )
+  print *, NSTEP
+
+  ! Read in source time function.
+  open (unit=10, file='DATA/stf', status='old', form='formatted')
+
+  read_loop: do iterator=1,NSTEP
+
+    read (10, '(A)', iostat = RetCode) line
+
+    if ( RetCode /= 0 ) then
+      print *, "ERROR IN SOURCE TIME FUNCTION."
+      stop
+    endif
+
+    ! Ignore lines with a hash (comments)
+    if ( index (line, "#") /= 0 ) cycle read_loop
+
+    read (line, *) stfArray_external(iterator)
+
+  enddo read_loop
+
+  close (10)
+
+  end subroutine get_external_source_time_function

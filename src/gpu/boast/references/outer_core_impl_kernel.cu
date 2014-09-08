@@ -11,10 +11,12 @@ typedef float * realw_p;
 typedef const float* __restrict__ realw_const_p;
 
 #ifdef USE_TEXTURES_FIELDS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_displ_oc_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_accel_oc_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_b_displ_oc_tex;
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_b_accel_oc_tex;
+//forward
+realw_texture d_displ_oc_tex;
+realw_texture d_accel_oc_tex;
+//backward/reconstructed
+realw_texture d_b_displ_oc_tex;
+realw_texture d_b_accel_oc_tex;
 // templates definitions
 template<int FORWARD_OR_ADJOINT> __device__ float texfetch_displ_oc(int x);
 template<int FORWARD_OR_ADJOINT> __device__ float texfetch_accel_oc(int x);
@@ -27,9 +29,14 @@ template<> __device__ float texfetch_displ_oc<3>(int x) { return tex1Dfetch(d_b_
 template<> __device__ float texfetch_accel_oc<3>(int x) { return tex1Dfetch(d_b_accel_oc_tex, x); }
 #endif
 
-#ifdef USE_TEXTURES_CONSTANTS
-texture<realw, cudaTextureType1D, cudaReadModeElementType> d_hprime_xx_oc_tex;
-#endif
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// elemental routines
+
+/* ----------------------------------------------------------------------------------------------- */
+
+// fluid rotation
 
 __device__ void compute_element_oc_rotation(int tx,int working_element,
                                             realw time,
@@ -73,6 +80,12 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
   d_B_array_rotation[tx + working_element*NGLL3] += source_euler_B;
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
+// KERNEL 2
+//
+// for outer core ( acoustic domain )
+/* ----------------------------------------------------------------------------------------------- */
 
 
 template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_blocks_to_compute,
@@ -189,17 +202,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
 
   if (active) {
 
-#ifndef MANUALLY_UNROLLED_LOOPS
-    temp1l = 0.f;
-    temp2l = 0.f;
-    temp3l = 0.f;
-    for (l=0;l<NGLLX;l++) {
-      temp1l += s_dummy_loc[K*NGLL2+J*NGLLX+l]*sh_hprime_xx[l*NGLLX+I];
-      //assumes that hprime_xx = hprime_yy = hprime_zz
-      temp2l += s_dummy_loc[K*NGLL2+l*NGLLX+I]*sh_hprime_xx[l*NGLLX+J];
-      temp3l += s_dummy_loc[l*NGLL2+J*NGLLX+I]*sh_hprime_xx[l*NGLLX+K];
-    }
-#else
+#ifdef MANUALLY_UNROLLED_LOOPS
     temp1l = s_dummy_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
             + s_dummy_loc[K*NGLL2+J*NGLLX+1]*sh_hprime_xx[NGLLX+I]
             + s_dummy_loc[K*NGLL2+J*NGLLX+2]*sh_hprime_xx[2*NGLLX+I]
@@ -217,6 +220,16 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
             + s_dummy_loc[2*NGLL2+J*NGLLX+I]*sh_hprime_xx[2*NGLLX+K]
             + s_dummy_loc[3*NGLL2+J*NGLLX+I]*sh_hprime_xx[3*NGLLX+K]
             + s_dummy_loc[4*NGLL2+J*NGLLX+I]*sh_hprime_xx[4*NGLLX+K];
+#else
+    temp1l = 0.f;
+    temp2l = 0.f;
+    temp3l = 0.f;
+    for (l=0;l<NGLLX;l++) {
+      temp1l += s_dummy_loc[K*NGLL2+J*NGLLX+l]*sh_hprime_xx[l*NGLLX+I];
+      //assumes that hprime_xx = hprime_yy = hprime_zz
+      temp2l += s_dummy_loc[K*NGLL2+l*NGLLX+I]*sh_hprime_xx[l*NGLLX+J];
+      temp3l += s_dummy_loc[l*NGLL2+J*NGLLX+I]*sh_hprime_xx[l*NGLLX+K];
+    }
 #endif
 
     // compute derivatives of ux, uy and uz with respect to x, y and z
@@ -344,17 +357,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
 
   if (active) {
 
-#ifndef MANUALLY_UNROLLED_LOOPS
-    temp1l = 0.f;
-    temp2l = 0.f;
-    temp3l = 0.f;
-    for (l=0;l<NGLLX;l++) {
-        temp1l += s_temp1[K*NGLL2+J*NGLLX+l]*sh_hprimewgll_xx[I*NGLLX+l];
-        //assumes hprimewgll_xx = hprimewgll_yy = hprimewgll_zz
-        temp2l += s_temp2[K*NGLL2+l*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+l];
-        temp3l += s_temp3[l*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+l];
-    }
-#else
+#ifdef MANUALLY_UNROLLED_LOOPS
     temp1l = s_temp1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
             + s_temp1[K*NGLL2+J*NGLLX+1]*sh_hprimewgll_xx[I*NGLLX+1]
             + s_temp1[K*NGLL2+J*NGLLX+2]*sh_hprimewgll_xx[I*NGLLX+2]
@@ -372,6 +375,16 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
             + s_temp3[2*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+2]
             + s_temp3[3*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+3]
             + s_temp3[4*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+4];
+#else
+    temp1l = 0.f;
+    temp2l = 0.f;
+    temp3l = 0.f;
+    for (l=0;l<NGLLX;l++) {
+        temp1l += s_temp1[K*NGLL2+J*NGLLX+l]*sh_hprimewgll_xx[I*NGLLX+l];
+        //assumes hprimewgll_xx = hprimewgll_yy = hprimewgll_zz
+        temp2l += s_temp2[K*NGLL2+l*NGLLX+I]*sh_hprimewgll_xx[J*NGLLX+l];
+        temp3l += s_temp3[l*NGLL2+J*NGLLX+I]*sh_hprimewgll_xx[K*NGLLX+l];
+    }
 #endif
 
     sum_terms = - ( wgllwgll_yz[K*NGLLX+J]*temp1l

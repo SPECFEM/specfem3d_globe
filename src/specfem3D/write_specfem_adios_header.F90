@@ -52,7 +52,7 @@ subroutine write_specfem_header_adios()
   use adios_helpers_mod
   use adios_write_mod
 
-  use specfem_par, only : myrank, NSOURCES
+  use specfem_par, only : myrank, NSOURCES,ADIOS_TRANSPORT_METHOD
 
   implicit none
 
@@ -79,7 +79,7 @@ subroutine write_specfem_header_adios()
 
   ! Adios variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, adios_handle !, varid
+  integer(kind=8)         :: adios_group, adios_handle
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   ! TODO: find a better name once the use of ADIOS is more completely
   !       implemented
@@ -90,10 +90,14 @@ subroutine write_specfem_header_adios()
   integer :: comm
 
   ! only the master needs to read the values to be written
-  if(myrank == 0) then
-    call adios_declare_group (adios_group, "SPECFEM3D_GLOBE_HEADER",           &
-                              "", 0, adios_err)
-    call adios_select_method (adios_group, "MPI", "", "", adios_err)
+  if (myrank == 0) then
+    call adios_declare_group (adios_group, "SPECFEM3D_GLOBE_HEADER","", 0, adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(myrank,adios_err)
+
+    call adios_select_method (adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+    !call check_adios_err(myrank,adios_err)
 
     group_size_inc = 0 ! Adios group size. Incremented by adios_helpers
 
@@ -109,58 +113,59 @@ subroutine write_specfem_header_adios()
     call define_par_file_variables (adios_group, group_size_inc, model_length)
 
     !--*** Values read from DATA/CMTSOLUTION ***--
-    call read_raw_cmtsolution (yr, mo, da, ho, mi, sec, t_shift, hdur, lat,    &
-        long, depth, mrr, mtt, mpp, mrt, mrp, mtp, event_name_length,          &
+    call read_raw_cmtsolution (yr, mo, da, ho, mi, sec, t_shift, hdur, lat, &
+        long, depth, mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, &
         event_name, datasource_length,  datasource)
-    call define_cmtsolution_variables (adios_group, group_size_inc, NSOURCES,  &
+    call define_cmtsolution_variables (adios_group, group_size_inc, NSOURCES, &
         event_name_length, datasource_length)
 
     !--*** Values read from DATA/STATIONS
-    call read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur,             &
+    call read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur, &
         station_name_length, station_name, network_name_length, network_name)
-    call define_stations_variables (adios_group, group_size_inc, NSTATIONS,    &
+    call define_stations_variables (adios_group, group_size_inc, NSTATIONS, &
         station_name_length, network_name_length)
 
     call world_get_comm_self(comm)
     ! open the file where the headers have to be written
-    call adios_open (adios_handle, "SPECFEM3D_GLOBE_HEADER", filename, "w",    &
-                     comm, adios_err);
+    call adios_open (adios_handle, "SPECFEM3D_GLOBE_HEADER", filename, "w",comm, adios_err)
+    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed for SPECFEM3D_GLOBE_HEADER'
+
     ! The group size have been auto-incremented
     adios_groupsize = group_size_inc
-    call adios_group_size (adios_handle, adios_groupsize,                      &
-                           adios_totalsize, adios_err)
+    call adios_group_size (adios_handle, adios_groupsize,adios_totalsize, adios_err)
+    if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
 
     ! Write variables from 'config.h'
     call write_adios_solver_info_variables (adios_handle)
 
     ! Write variables from 'Par_file'
-    call write_adios_par_file_variables (adios_handle,                         &
-        ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES,             &
-        CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES,               &
-        GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM,     &
-        MOVIE_EAST_DEG, MOVIE_WEST_DEG, MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG,      &
-        RECORD_LENGTH_IN_MINUTES, NTSTEP_BETWEEN_OUTPUT_SEISMOS,               &
-        NTSTEP_BETWEEN_READ_ADJSRC, NTSTEP_BETWEEN_FRAMES,                     &
+    call write_adios_par_file_variables (adios_handle, &
+        ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES, &
+        CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES, &
+        GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM, &
+        MOVIE_EAST_DEG, MOVIE_WEST_DEG, MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG, &
+        RECORD_LENGTH_IN_MINUTES, NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+        NTSTEP_BETWEEN_READ_ADJSRC, NTSTEP_BETWEEN_FRAMES, &
         NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,NCHUNKS,&
-        SIMULATION_TYPE, MOVIE_VOLUME_TYPE, MOVIE_START, MOVIE_STOP, NEX_XI,   &
-        NEX_ETA, NPROC_XI, NPROC_ETA, NOISE_TOMOGRAPHY, ELLIPTICITY, GRAVITY,  &
+        SIMULATION_TYPE, MOVIE_VOLUME_TYPE, MOVIE_START, MOVIE_STOP, NEX_XI, &
+        NEX_ETA, NPROC_XI, NPROC_ETA, NOISE_TOMOGRAPHY, ELLIPTICITY, GRAVITY, &
         ROTATION, TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME,MOVIE_COARSE,&
-        RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,  &
-        ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD,      &
-        OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM,                &
-        OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT,                      &
-        WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE,             &
+        RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES, &
+        ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD, &
+        OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
+        OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT, &
+        WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE, &
         USE_BINARY_FOR_LARGE_FILE, model_length, MODEL)
 
     ! Write variables from 'CMTSOLUTION'
-    call write_adios_cmtsolution_variables (adios_handle,                      &
-        NSOURCES, yr, mo, da, ho, mi, sec, t_shift, hdur, lat, long, depth,    &
-        mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name,           &
+    call write_adios_cmtsolution_variables (adios_handle, &
+        NSOURCES, yr, mo, da, ho, mi, sec, t_shift, hdur, lat, long, depth, &
+        mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name, &
         datasource_length, datasource)
 
     ! Write variables from 'STATIONS'
-    call write_adios_stations_variables (adios_handle,                         &
-       NSTATIONS, stlat, stlon, stele, stbur, station_name_length,             &
+    call write_adios_stations_variables (adios_handle, &
+       NSTATIONS, stlat, stlon, stele, stbur, station_name_length, &
        station_name, network_name_length, network_name)
 
     call adios_close (adios_handle, adios_err)
@@ -395,8 +400,8 @@ end subroutine define_stations_variables
 !!                   concatenated
 !> \note This subroutine and get_cmt.f90 are redundant. Might be factorized in
 !!       the future. For now we do not want the value modification from get_cmt
-subroutine read_raw_cmtsolution (yr, mo, da, ho, mi, sec, t_shift, hdur, lat,  &
-    long, depth, mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name,  &
+subroutine read_raw_cmtsolution (yr, mo, da, ho, mi, sec, t_shift, hdur, lat, &
+    long, depth, mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name, &
     datasource_length, datasource)
   implicit none
   ! Parameters
@@ -413,17 +418,17 @@ subroutine read_raw_cmtsolution (yr, mo, da, ho, mi, sec, t_shift, hdur, lat,  &
   ! get_cmt() routine modify the read values
   ! TODO factorize what follows and get_cmt.f90 and probably one or two other
   !      routines
-  open(unit=1,file='DATA/CMTSOLUTION',status='old',action='read')
+  open(unit = 1,file='DATA/CMTSOLUTION',status='old',action='read')
   datasource_length = 4*NSOURCES ! a datasource is 4 character, by convention
   allocate(character(len=(datasource_length)) :: datasource, stat=ier)
-  if (ier /=0) &
+  if (ier /= 0) &
       call exit_MPI (myrank, &
-          "error allocating datasource string for adios header")
+          "Error allocating datasource string for adios header")
   datasource = ""
   ! ADIOS only  (1) byte for a string. This may cause data overwriting.
   ! => increase the generate by the string size -1
   adios_groupsize = adios_groupsize + 4*NSOURCES - 1
-  do isource=1,NSOURCES
+  do isource = 1,NSOURCES
 
     read(1,"(a256)") string
     ! skips empty lines
@@ -489,7 +494,7 @@ end subroutine read_raw_cmtsolution
 !!                            string
 !! \param network_name String in which the different network names are
 !!                     concatenated
-subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur,           &
+subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur, &
     station_name_length, station_name, network_name_length, network_name)
 
   use constants,only: MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,IMAIN
@@ -506,11 +511,11 @@ subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur,           &
   character(len=256) :: string
 
   ! Extract values from STATIONS File
-  open(unit=1,file='DATA/STATIONS',iostat=ier,status='old',action='read')
+  open(unit = 1,file='DATA/STATIONS',iostat=ier,status='old',action='read')
   NSTATIONS = 0
   do while(ier == 0)
   read(1,"(a)",iostat=ier) string
-  if(ier == 0) NSTATIONS = NSTATIONS + 1
+  if (ier == 0) NSTATIONS = NSTATIONS + 1
   enddo
   allocate (character (len=(MAX_LENGTH_STATION_NAME*NSTATIONS)) :: station_name)
   allocate (character (len=(MAX_LENGTH_NETWORK_NAME*NSTATIONS)) :: network_name)
@@ -523,11 +528,11 @@ subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur,           &
   rewind(1)
   do irec = 1,NSTATIONS
   read(1,*,iostat=ier) station_name_tmp, network_name_tmp, &
-  stlat(irec),      stlon(irec),      &
+  stlat(irec),      stlon(irec), &
   stele(irec),      stbur(irec)
-  if( ier /= 0 ) then
-    write(IMAIN,*) 'error reading in station ',irec
-    call exit_MPI(myrank,'error reading in station in DATA/STATIONS file')
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error reading in station ',irec
+    call exit_MPI(myrank,'Error reading in station in DATA/STATIONS file')
   endif
   station_name = station_name // trim(station_name_tmp) // " "
   network_name = network_name // trim(network_name_tmp) // " "
@@ -548,14 +553,15 @@ subroutine write_adios_solver_info_variables (adios_handle)
   integer(kind=8), intent(in)    :: adios_handle
   ! Variables
   integer :: pkg_str_len, conf_flags_len, adios_err
-  character(len=:), allocatable :: pkg_str
-  character(len=:), allocatable :: conf_flags
+  character(len=len_trim(PACKAGE_STRING)) :: pkg_str
+  character(len=len_trim(CONFIGURE_FLAGS)) :: conf_flags
 
   pkg_str    = trim(PACKAGE_STRING)
   conf_flags = trim(CONFIGURE_FLAGS)
 
   pkg_str_len    = len_trim(PACKAGE_STRING)
   conf_flags_len = len_trim(CONFIGURE_FLAGS)
+
   call adios_write (adios_handle, "package_string_length", pkg_str_len, adios_err)
   call adios_write (adios_handle, "package_name", pkg_str, adios_err)
   call adios_write (adios_handle, "conf_flags_len", conf_flags_len, adios_err)
@@ -565,42 +571,42 @@ end subroutine write_adios_solver_info_variables
 !> \brief Wrapper to write the 'Par_file' variables into the adios header
 !! \param adios_handle The handle to the file where the variable should be
 !!                     written
-subroutine write_adios_par_file_variables (adios_handle,                       &
-    ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES,                 &
-    CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES,                   &
-    GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM,         &
-    MOVIE_EAST_DEG, MOVIE_WEST_DEG, MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG,          &
-    RECORD_LENGTH_IN_MINUTES, NTSTEP_BETWEEN_OUTPUT_SEISMOS,                   &
-    NTSTEP_BETWEEN_READ_ADJSRC, NTSTEP_BETWEEN_FRAMES,                         &
-    NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN, NCHUNKS,   &
-    SIMULATION_TYPE, MOVIE_VOLUME_TYPE, MOVIE_START, MOVIE_STOP, NEX_XI,       &
-    NEX_ETA, NPROC_XI, NPROC_ETA, NOISE_TOMOGRAPHY, ELLIPTICITY, GRAVITY,      &
-    ROTATION, TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE,   &
-    RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,      &
-    ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD,          &
-    OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM,                    &
-    OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT,                          &
-    WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE,                 &
+subroutine write_adios_par_file_variables (adios_handle, &
+    ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES, &
+    CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES, &
+    GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM, &
+    MOVIE_EAST_DEG, MOVIE_WEST_DEG, MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG, &
+    RECORD_LENGTH_IN_MINUTES, NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+    NTSTEP_BETWEEN_READ_ADJSRC, NTSTEP_BETWEEN_FRAMES, &
+    NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN, NCHUNKS, &
+    SIMULATION_TYPE, MOVIE_VOLUME_TYPE, MOVIE_START, MOVIE_STOP, NEX_XI, &
+    NEX_ETA, NPROC_XI, NPROC_ETA, NOISE_TOMOGRAPHY, ELLIPTICITY, GRAVITY, &
+    ROTATION, TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE, &
+    RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES, &
+    ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD, &
+    OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
+    OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT, &
+    WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE, &
     USE_BINARY_FOR_LARGE_FILE, model_length, MODEL)
  implicit none
  ! Parameters
   integer(kind=8), intent(in) :: adios_handle
-  integer, intent(in)  :: NTSTEP_BETWEEN_OUTPUT_SEISMOS,                       &
-      NTSTEP_BETWEEN_READ_ADJSRC, NTSTEP_BETWEEN_FRAMES,                       &
-      NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,NCHUNKS,   &
-      SIMULATION_TYPE, MOVIE_VOLUME_TYPE, MOVIE_START,MOVIE_STOP, NEX_XI,      &
+  integer, intent(in)  :: NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+      NTSTEP_BETWEEN_READ_ADJSRC, NTSTEP_BETWEEN_FRAMES, &
+      NTSTEP_BETWEEN_OUTPUT_INFO,NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN,NCHUNKS, &
+      SIMULATION_TYPE, MOVIE_VOLUME_TYPE, MOVIE_START,MOVIE_STOP, NEX_XI, &
       NEX_ETA,NPROC_XI,NPROC_ETA, NOISE_TOMOGRAPHY
-  double precision, intent(in) :: ANGULAR_WIDTH_XI_IN_DEGREES,                 &
-      ANGULAR_WIDTH_ETA_IN_DEGREES, CENTER_LONGITUDE_IN_DEGREES,               &
-      CENTER_LATITUDE_IN_DEGREES, GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE,          &
-      MOVIE_TOP_KM,MOVIE_BOTTOM_KM, MOVIE_EAST_DEG,MOVIE_WEST_DEG,             &
+  double precision, intent(in) :: ANGULAR_WIDTH_XI_IN_DEGREES, &
+      ANGULAR_WIDTH_ETA_IN_DEGREES, CENTER_LONGITUDE_IN_DEGREES, &
+      CENTER_LATITUDE_IN_DEGREES, GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, &
+      MOVIE_TOP_KM,MOVIE_BOTTOM_KM, MOVIE_EAST_DEG,MOVIE_WEST_DEG, &
       MOVIE_NORTH_DEG,MOVIE_SOUTH_DEG, RECORD_LENGTH_IN_MINUTES
-  logical, intent(in) :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS,       &
-      MOVIE_SURFACE, MOVIE_VOLUME,MOVIE_COARSE, RECEIVERS_CAN_BE_BURIED,       &
-      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION,                 &
-      ABSORBING_CONDITIONS,SAVE_FORWARD, OUTPUT_SEISMOS_ASCII_TEXT,            &
-      OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,                   &
-      ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,                       &
+  logical, intent(in) :: ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
+      MOVIE_SURFACE, MOVIE_VOLUME,MOVIE_COARSE, RECEIVERS_CAN_BE_BURIED, &
+      PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES,ATTENUATION, &
+      ABSORBING_CONDITIONS,SAVE_FORWARD, OUTPUT_SEISMOS_ASCII_TEXT, &
+      OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
+      ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
       SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE
   integer, intent(in) :: model_length
   character(len=*), intent(in) :: MODEL
@@ -664,18 +670,18 @@ end subroutine write_adios_par_file_variables
 !> \brief Wrapper to write the 'CMTSOLUTION' variables into the adios header
 !! \param adios_handle The handle to the file where the variable should be
 !!                     written
-subroutine write_adios_cmtsolution_variables (adios_handle,                    &
-    NSOURCES, yr, mo, da, ho, mi, sec, t_shift, hdur, lat, long, depth,        &
-    mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name,               &
+subroutine write_adios_cmtsolution_variables (adios_handle, &
+    NSOURCES, yr, mo, da, ho, mi, sec, t_shift, hdur, lat, long, depth, &
+    mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name, &
     datasource_length, datasource)
   implicit none
   ! Parameters
   integer(kind=8), intent(in) :: adios_handle
   integer, intent(in) :: NSOURCES
   integer,          dimension(NSOURCES), intent(in) :: yr, mo, da, ho, mi
-  double precision, dimension(NSOURCES), intent(in) :: sec, t_shift, hdur,     &
+  double precision, dimension(NSOURCES), intent(in) :: sec, t_shift, hdur, &
                                                        lat, long, depth
-  double precision, dimension(NSOURCES), intent(in) :: mrr, mtt, mpp,          &
+  double precision, dimension(NSOURCES), intent(in) :: mrr, mtt, mpp, &
                                                        mrt, mrp, mtp
   integer, intent(in) :: event_name_length, datasource_length
   character(len=16), intent(in) :: event_name
@@ -710,8 +716,8 @@ end subroutine write_adios_cmtsolution_variables
 !> \brief Wrapper to write the 'STATIONS' variables into the adios header
 !! \param adios_handle The handle to the file where the variable should be
 !!                     written
-subroutine write_adios_stations_variables (adios_handle,                       &
-    NSTATIONS, stlat, stlon, stele, stbur, station_name_length, station_name,  &
+subroutine write_adios_stations_variables (adios_handle, &
+    NSTATIONS, stlat, stlon, stele, stbur, station_name_length, station_name, &
     network_name_length, network_name)
   implicit none
   ! Parameters
@@ -719,7 +725,7 @@ subroutine write_adios_stations_variables (adios_handle,                       &
   integer, intent(in):: NSTATIONS
   integer, intent(in):: station_name_length, network_name_length ! for later reading
   character(len=:), allocatable, intent(in) :: station_name, network_name
-  double precision, allocatable, dimension(:), intent(in) :: stlat, stlon,     &
+  double precision, allocatable, dimension(:), intent(in) :: stlat, stlon, &
                                                              stele, stbur
   ! Local variables
   integer :: adios_err

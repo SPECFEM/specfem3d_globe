@@ -87,7 +87,7 @@
 ! determine if the element falls on the left MPI cut plane
 !
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! global point number and coordinates left MPI cut-plane
     open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_eta.txt', &
           status='unknown')
@@ -102,17 +102,17 @@
   npoin2D_eta_all(1) = 1
 
   ! nb of elements in this cut-plane
-  ispecc1=0
+  ispecc1 = 0
 
-  do ispec=1,nspec
-    if(iMPIcut_eta(1,ispec)) then
+  do ispec = 1,nspec
+    if (iMPIcut_eta(1,ispec)) then
       ispecc1=ispecc1+1
       ! loop on all the points in that 2-D element, including edges
       iy = 1
-      do ix=1,NGLLX
-          do iz=1,NGLLZ
+      do ix = 1,NGLLX
+          do iz = 1,NGLLZ
             ! select point, if not already selected
-            if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+            if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
               mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
               npoin2D_eta = npoin2D_eta + 1
 
@@ -122,7 +122,7 @@
               npoin2D_eta_all(1) = npoin2D_eta_all(1) + 1
 
               ! debug file output
-              if( DEBUG ) then
+              if (DEBUG) then
                 write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                             ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
               endif
@@ -132,7 +132,7 @@
     endif
   enddo
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! put flag to indicate end of the list of points
     write(10,*) '0 0  0.  0.  0.'
     ! write total number of points
@@ -141,11 +141,11 @@
   endif
 
 ! compare number of surface elements detected to analytical value
-  if(ispecc1 /= nspec2Dtheor) call exit_MPI(myrank,'error MPI cut-planes detection in eta=left')
+  if (ispecc1 /= nspec2Dtheor) call exit_MPI(myrank,'Error MPI cut-planes detection in eta=left')
 
   ! subtract the line that contains the flag after the last point
   npoin2D_eta_all(1) = npoin2D_eta_all(1) - 1
-  if(npoin2D_eta_all(1) > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta_all(1) /= npoin2D_eta) &
+  if (npoin2D_eta_all(1) > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta_all(1) /= npoin2D_eta) &
     call exit_MPI(myrank,'incorrect iboolleft_eta read')
 
 
@@ -154,7 +154,7 @@
 !
   nspec2Dtheor = NSPEC2D_XI_FACE(iregion,2)
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! global point number and coordinates right MPI cut-plane
     open(unit=10,file=prname(1:len_trim(prname))//'iboolright_eta.txt', &
           status='unknown')
@@ -169,17 +169,17 @@
   npoin2D_eta_all(2) = 1
 
   ! nb of elements in this cut-plane
-  ispecc2=0
+  ispecc2 = 0
 
-  do ispec=1,nspec
-    if(iMPIcut_eta(2,ispec)) then
+  do ispec = 1,nspec
+    if (iMPIcut_eta(2,ispec)) then
       ispecc2=ispecc2+1
       ! loop on all the points in that 2-D element, including edges
       iy = NGLLY
-      do ix=1,NGLLX
-          do iz=1,NGLLZ
+      do ix = 1,NGLLX
+          do iz = 1,NGLLZ
           ! select point, if not already selected
-          if(.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
+          if (.not. mask_ibool(ibool(ix,iy,iz,ispec))) then
             mask_ibool(ibool(ix,iy,iz,ispec)) = .true.
             npoin2D_eta = npoin2D_eta + 1
 
@@ -189,7 +189,7 @@
             npoin2D_eta_all(2) = npoin2D_eta_all(2) + 1
 
             ! debug file output
-            if( DEBUG ) then
+            if (DEBUG) then
               write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
                           ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
             endif
@@ -199,7 +199,7 @@
     endif
   enddo
 
-  if( DEBUG ) then
+  if (DEBUG) then
     ! put flag to indicate end of the list of points
     write(10,*) '0 0  0.  0.  0.'
     ! write total number of points
@@ -208,11 +208,11 @@
   endif
 
   ! compare number of surface elements detected to analytical value
-  if(ispecc2 /= nspec2Dtheor) call exit_MPI(myrank,'error MPI cut-planes detection in eta=right')
+  if (ispecc2 /= nspec2Dtheor) call exit_MPI(myrank,'Error MPI cut-planes detection in eta=right')
 
   ! subtract the line that contains the flag after the last point
   npoin2D_eta_all(2) = npoin2D_eta_all(2) - 1
-  if(npoin2D_eta_all(2) > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta_all(2) /= npoin2D_eta) &
+  if (npoin2D_eta_all(2) > NGLOB2DMAX_YMIN_YMAX .or. npoin2D_eta_all(2) /= npoin2D_eta) &
       call exit_MPI(myrank,'incorrect iboolright_eta read')
 
   end subroutine get_MPI_cutplanes_eta

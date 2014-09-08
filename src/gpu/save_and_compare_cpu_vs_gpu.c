@@ -51,7 +51,7 @@ void save_to_max_surface_file_ (float *maxval) {
   sprintf (filename, "maxval_surface_proc_%03d.dat", rank);
   fp = fopen (filename, "a+");
   if (fp == NULL) {
-    printf ("FILE ERROR:%s\n", (char *) strerror (errno));
+    printf ("FILE Error:%s\n", (char *) strerror (errno));
     perror ("file error\n");
     exit (1);
   }
@@ -71,7 +71,7 @@ void save_fvector_ (float *vector, int *size, int *id, int *cpu_or_gpu) {
 
   fp = fopen (filename, "wb");
   if (fp == NULL) {
-    printf ("FILE ERROR:%s\n", (char *) strerror (errno));
+    printf ("FILE Error:%s\n", (char *) strerror (errno));
     perror ("file error\n");
     exit (1);
   }
@@ -92,7 +92,7 @@ void save_ivector_ (int *vector, int *size, int *id, int *cpu_or_gpu) {
 
   fp = fopen (filename, "wb");
   if (fp == NULL) {
-    printf ("FILE ERROR:%s\n", (char *) strerror (errno));
+    printf ("FILE Error:%s\n", (char *) strerror (errno));
     perror ("file error\n");
     exit (1);
   }
@@ -120,7 +120,7 @@ void get_max_from_surface_file_ (int *nodes_per_iterationf, int *NSTEP) {
   printf ("Opening %s for analysis\n", filename);
   fp = fopen (filename, "rb");
   if (fp == NULL) {
-    printf ("FILE ERROR:%s\n", (char *) strerror (errno));
+    printf ("FILE Error:%s\n", (char *) strerror (errno));
     perror ("file error\n");
     exit (1);
   }
@@ -190,20 +190,20 @@ void compare_surface_files_ (int *bytes_per_iteration, int *number_of_iterations
 
   fp_cpu = fopen (cpu_file, "rb");
   if (fp_cpu == NULL) {
-    printf ("CPU FILE ERROR:%s\n", (char *) strerror (errno));
+    printf ("CPU FILE Error:%s\n", (char *) strerror (errno));
     perror ("CPU file error\n");
   }
 
   FILE *fp_gpu;
   fp_gpu = fopen (gpu_file, "rb");
   if (fp_gpu == NULL) {
-    printf ("GPU FILE ERROR:%s\n", (char *) strerror (errno));
+    printf ("GPU FILE Error:%s\n", (char *) strerror (errno));
     perror ("GPU file error\n");
   }
 
   float *gpu_vector = (float *)malloc (*bytes_per_iteration);
   float *cpu_vector = (float *)malloc (*bytes_per_iteration);
-  int i, it, error_count=0;
+  int i, it, error_count = 0;
   for (it = 0; it < *number_of_iterations; it++) {
     int pos = (*bytes_per_iteration) *(it);
 
@@ -225,15 +225,15 @@ void compare_surface_files_ (int *bytes_per_iteration, int *number_of_iterations
 
     int size = number_of_nodes;
     float gpu_min_val=10;
-    float gpu_max_val=0;
+    float gpu_max_val = 0;
     float cpu_min_val=10;
-    float cpu_max_val=0;
+    float cpu_max_val = 0;
 
     if (it < 100) {
       for (i = 0; i < size; i++) {
-        if ((fabs (cpu_vector[i] - gpu_vector[i]) / (fabs (cpu_vector[i]) + 1e-31) > 0.01)) {
+        if ((fabs(cpu_vector[i] - gpu_vector[i]) / (fabs(cpu_vector[i]) + 1e-31) > 0.01)) {
           if (error_count < 30)
-            printf ("ERROR[%d]: %g != %g\n", i, cpu_vector[i], gpu_vector[i]);
+            printf ("Error[%d]: %g != %g\n", i, cpu_vector[i], gpu_vector[i]);
           if (cpu_vector[i] > 1e-30)
             error_count++;
         }
@@ -284,11 +284,11 @@ void compare_fvector_ (float *vector, int *size, int *id, int *cpu_or_gpu) {
   fclose (fp);
 
   int i;
-  int error_count=0;
-  for (i=0;i<*size;i++) {
-    if ((fabs (vector[i] - compare_vector[i]) / vector[i] > 0.0001)) {
+  int error_count = 0;
+  for (i = 0;i<*size;i++) {
+    if ((fabs(vector[i] - compare_vector[i]) / vector[i] > 0.0001)) {
       if (error_count < 30) {
-        printf ("ERROR[%d]: %f != %f\n", i, compare_vector[i], vector[i]);
+        printf ("Error[%d]: %f != %f\n", i, compare_vector[i], vector[i]);
       }
       error_count++;
     }
@@ -327,10 +327,10 @@ void compare_ivector_ (int *vector, int *size, int *id, int *cpu_or_gpu) {
   fclose (fp);
 
   int i;
-  int error_count=0;
+  int error_count = 0;
   for (i = 0; i < *size; i++) {
-    if ((abs (vector[i] - compare_vector[i]) / vector[i] > 0.01) && error_count < 30) {
-      printf ("ERROR[%d]: %d != %d\n", i, compare_vector[i], vector[i]);
+    if ((fabs(vector[i] - compare_vector[i]) / vector[i] > 0.01) && error_count < 30) {
+      printf ("Error[%d]: %d != %d\n", i, compare_vector[i], vector[i]);
       error_count++;
     }
   }

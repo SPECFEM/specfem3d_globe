@@ -129,13 +129,13 @@
 !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
 !! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
 !! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
-  if(UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
     NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
     ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-    if(NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
+    if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
   endif
 
-  if(.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
+  if (.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 
   ! user input
   print *,'movie frames have been saved every ',NTSTEP_BETWEEN_FRAMES,' time steps'
@@ -149,7 +149,7 @@
 
   print *,'enter component (e.g. 1=Z, 2=N, 3=E)'
   read(5,*) USE_COMPONENT
-  if( USE_COMPONENT < 1 .or. USE_COMPONENT > 3 ) stop 'component must be 1, 2 or 3'
+  if (USE_COMPONENT < 1 .or. USE_COMPONENT > 3 ) stop 'component must be 1, 2 or 3'
 
   print *,'enter output ASCII (F) or binary (T)'
   read(5,*) OUTPUT_BINARY
@@ -159,15 +159,15 @@
   print *
 
   ! checks options
-  if( it1 < 1 ) stop 'the first time step must be >= 1'
-  if( it2 == -1 ) it2 = NSTEP
+  if (it1 < 1 ) stop 'the first time step must be >= 1'
+  if (it2 == -1 ) it2 = NSTEP
 
 
   print *
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
 
-  if(MOVIE_COARSE) then
+  if (MOVIE_COARSE) then
     ! note:
     ! nex_per_proc_xi*nex_per_proc_eta = nex_xi*nex_eta/nproc = nspec2d_top(iregion_crust_mantle)
     ! used in specfem3D.f90
@@ -186,34 +186,34 @@
 
   ! allocates movie arrays
   allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_x'
+  if (ierror /= 0) stop 'Error while allocating store_val_x'
 
   allocate(store_val_y(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_y'
+  if (ierror /= 0) stop 'Error while allocating store_val_y'
 
   allocate(store_val_z(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_z'
+  if (ierror /= 0) stop 'Error while allocating store_val_z'
 
   allocate(store_val_ux(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_ux'
+  if (ierror /= 0) stop 'Error while allocating store_val_ux'
 
   allocate(store_val_uy(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_uy'
+  if (ierror /= 0) stop 'Error while allocating store_val_uy'
 
   allocate(store_val_uz(ilocnum,0:NPROCTOT-1),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating store_val_uz'
+  if (ierror /= 0) stop 'Error while allocating store_val_uz'
 
   allocate(x(NGLLX,NGLLY),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating x'
+  if (ierror /= 0) stop 'Error while allocating x'
 
   allocate(y(NGLLX,NGLLY),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating y'
+  if (ierror /= 0) stop 'Error while allocating y'
 
   allocate(z(NGLLX,NGLLY),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating z'
+  if (ierror /= 0) stop 'Error while allocating z'
 
   allocate(displn(NGLLX,NGLLY),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating displn'
+  if (ierror /= 0) stop 'Error while allocating displn'
 
 
   print *
@@ -222,14 +222,14 @@
   ! counts number of movie frames
   nframes = 0
   do it = it1,it2
-    if(mod(it,NTSTEP_BETWEEN_FRAMES) == 0) nframes = nframes + 1
+    if (mod(it,NTSTEP_BETWEEN_FRAMES) == 0) nframes = nframes + 1
   enddo
   print *
   print *,'total number of frames will be ',nframes
-  if(nframes == 0) stop 'null number of frames'
+  if (nframes == 0) stop 'null number of frames'
 
   ! maximum theoretical number of points at the surface
-  if(MOVIE_COARSE) then
+  if (MOVIE_COARSE) then
     npointot = NCHUNKS * NEX_XI * NEX_ETA
   else
     npointot = NCHUNKS * NEX_XI * NEX_ETA * (NGLLX-1) * (NGLLY-1)
@@ -246,20 +246,20 @@
   print *
 
   allocate(xp(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating xp'
+  if (ierror /= 0) stop 'Error while allocating xp'
 
   allocate(yp(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating yp'
+  if (ierror /= 0) stop 'Error while allocating yp'
 
   allocate(zp(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating zp'
+  if (ierror /= 0) stop 'Error while allocating zp'
 
   allocate(field_display(npointot),stat=ierror)
-  if(ierror /= 0) stop 'error while allocating field_display'
+  if (ierror /= 0) stop 'Error while allocating field_display'
 
 
   ! initializes maxima history
-  if( USE_AVERAGED_MAXIMUM ) then
+  if (USE_AVERAGED_MAXIMUM) then
     ! determines length of history
     nmax_history = AVERAGE_MINIMUM + int( HDUR_MOVIE / (DT*NTSTEP_BETWEEN_FRAMES) * 1.5 )
 
@@ -276,7 +276,7 @@
     print *
   endif
 
-  if( MUTE_SOURCE ) then
+  if (MUTE_SOURCE) then
     ! initializes
     LAT_SOURCE = -1000.0
     LON_SOURCE = -1000.0
@@ -286,25 +286,25 @@
 
     ! reads in source lat/lon
     open(IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ierror )
-    if( ierror == 0 ) then
+    if (ierror == 0) then
       ! skip first line, event name,timeshift,half duration
       read(IIN,*,iostat=ierror ) line ! PDE line
       read(IIN,*,iostat=ierror ) line ! event name
       ! timeshift
       read(IIN,'(a256)',iostat=ierror ) line
-      if( ierror == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
+      if (ierror == 0 ) read(line(12:len_trim(line)),*) cmt_t_shift
       ! halfduration
       read(IIN,'(a256)',iostat=ierror ) line
-      if( ierror == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
+      if (ierror == 0 ) read(line(15:len_trim(line)),*) cmt_hdur
       ! latitude
       read(IIN,'(a256)',iostat=ierror ) line
-      if( ierror == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
+      if (ierror == 0 ) read(line(10:len_trim(line)),*) LAT_SOURCE
       ! longitude
       read(IIN,'(a256)',iostat=ierror ) line
-      if( ierror == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
+      if (ierror == 0 ) read(line(11:len_trim(line)),*) LON_SOURCE
       ! depth
       read(IIN,'(a256)',iostat=ierror ) line
-      if( ierror == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
+      if (ierror == 0 ) read(line(7:len_trim(line)),*) DEP_SOURCE
       close(IIN)
     endif
     ! effective half duration in movie runs
@@ -321,7 +321,7 @@
     !          can be observed;
     !          it helps to mute out numerical noise before the source effects actually start showing up
     STARTTIME_TO_MUTE = STARTTIME_TO_MUTE + DEP_SOURCE
-    if( STARTTIME_TO_MUTE < 0.0 ) STARTTIME_TO_MUTE = 0.0
+    if (STARTTIME_TO_MUTE < 0.0 ) STARTTIME_TO_MUTE = 0.0
 
     print *,'mutes source area'
     print *
@@ -336,8 +336,8 @@
     LAT_SOURCE = (90.0 - LAT_SOURCE)*DEGREES_TO_RADIANS
 
     ! longitude [-PI, PI]
-    if( LON_SOURCE < -180.0 ) LON_SOURCE = LON_SOURCE + 360.0
-    if( LON_SOURCE > 180.0 ) LON_SOURCE = LON_SOURCE - 360.0
+    if (LON_SOURCE < -180.0 ) LON_SOURCE = LON_SOURCE + 360.0
+    if (LON_SOURCE > 180.0 ) LON_SOURCE = LON_SOURCE - 360.0
     LON_SOURCE = LON_SOURCE * DEGREES_TO_RADIANS
 
     ! mute radius in rad
@@ -352,9 +352,9 @@
   outputname = "/moviedata_xyz.bin"
   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
        status='old',action='read',form='unformatted',iostat=ierror)
-  if(ierror /= 0 ) then
-    print*,'error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
-    stop 'error opening moviedata file'
+  if (ierror /= 0) then
+    print*,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
+    stop 'Error opening moviedata file'
   endif
 
   ! reads in point locations
@@ -374,7 +374,7 @@
   do it = it1,it2
 
     ! check if time step corresponds to a movie frame
-    if(mod(it,NTSTEP_BETWEEN_FRAMES) /= 0) cycle
+    if (mod(it,NTSTEP_BETWEEN_FRAMES) /= 0) cycle
 
     iframe = iframe + 1
 
@@ -386,9 +386,9 @@
     write(outputname,"('/moviedata',i6.6)") it
     open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
         status='old',action='read',form='unformatted',iostat=ierror)
-    if(ierror /= 0 ) then
-      print*,'error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
-      stop 'error opening moviedata file'
+    if (ierror /= 0) then
+      print*,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
+      stop 'Error opening moviedata file'
     endif
 
     ! reads in associated values (displacement or velocity..)
@@ -407,14 +407,14 @@
     print *
 
     ! mutes source region
-    if( MUTE_SOURCE ) then
+    if (MUTE_SOURCE) then
       ! initialize factor
       mute_factor = 1.0
 
       print*,'simulation time: ',(it-1)*DT - t0,'(s)'
 
       ! muting radius grows/shrinks with time
-      if( (it-1)*DT - t0 > STARTTIME_TO_MUTE  ) then
+      if ((it-1)*DT - t0 > STARTTIME_TO_MUTE ) then
 
         ! approximate wavefront travel distance in degrees
         ! (~3.5 km/s wave speed for surface waves)
@@ -426,15 +426,15 @@
         !  distance = distance - 360.
         !enddo
         ! waves are back at origin, no source tapering anymore
-        if( distance > 360.0 ) distance = 0.0
+        if (distance > 360.0 ) distance = 0.0
         ! shrinks when waves reached antipode
-        !if( distance > 180. ) distance = 360. - distance
+        !if (distance > 180. ) distance = 360. - distance
         ! shrinks when waves reached half-way to antipode
-        if( distance > 90.0 ) distance = 90.0 - distance
+        if (distance > 90.0 ) distance = 90.0 - distance
 
         ! limit size around source (in degrees)
-        if( distance < 0.0 ) distance = 0.0
-        if( distance > 80.0 ) distance = 80.0
+        if (distance < 0.0 ) distance = 0.0
+        if (distance > 80.0 ) distance = 80.0
 
         print*,'muting radius: ',0.7 * distance,'(degrees)'
 
@@ -442,7 +442,7 @@
         RADIUS_TO_MUTE = 0.7 * distance * DEGREES_TO_RADIANS
       else
         ! mute_factor used at the beginning for scaling displacement values
-        if( STARTTIME_TO_MUTE > TINYVAL ) then
+        if (STARTTIME_TO_MUTE > TINYVAL) then
           ! mute factor 1: no masking out
           !                     0: masks out values (within mute radius)
           ! linear scaling between [0,1]:
@@ -450,8 +450,8 @@
           ! to 1 (simulation time equals starttime_to_mute)
           mute_factor = 1.0 - ( STARTTIME_TO_MUTE - ((it-1)*DT-t0) ) / (STARTTIME_TO_MUTE+t0)
           ! threshold value for mute_factor
-          if( mute_factor < TINYVAL ) mute_factor = TINYVAL
-          if( mute_factor > 1.0 ) mute_factor = 1.0
+          if (mute_factor < TINYVAL ) mute_factor = TINYVAL
+          if (mute_factor > 1.0 ) mute_factor = 1.0
         endif
       endif
     endif
@@ -495,23 +495,23 @@
                 z(i,j) = zcoord
 
                 ! saves the desired component
-                if(USE_COMPONENT == 1) then
+                if (USE_COMPONENT == 1) then
                    ! compute unit normal vector to the surface
                    RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
-                   if( RRval < 1.e-10 ) stop 'error unit normal vector'
+                   if (RRval < 1.e-10 ) stop 'Error unit normal vector'
                    normal_x = xcoord / RRval
                    normal_y = ycoord / RRval
                    normal_z = zcoord / RRval
 
                    displn(i,j) = displx*normal_x + disply*normal_y + displz*normal_z
 
-                else if(USE_COMPONENT == 2) then
+                else if (USE_COMPONENT == 2) then
 
                    ! compute unit tangent vector to the surface (N-S)
                    RRval = sqrt(xcoord**2 + ycoord**2 + zcoord**2)
-                   if( RRval < 1.e-10 ) stop 'error unit normal vector'
+                   if (RRval < 1.e-10 ) stop 'Error unit normal vector'
                    rhoval = sqrt(xcoord**2 + ycoord**2)
-                   if( rhoval < 1.e-10 ) then
+                   if (rhoval < 1.e-10) then
                     ! location at pole
                     thetahat_x = 0.0
                     thetahat_y = 0.0
@@ -523,11 +523,11 @@
 
                    displn(i,j) = - (displx*thetahat_x + disply*thetahat_y + displz*thetahat_z)
 
-                else if(USE_COMPONENT == 3) then
+                else if (USE_COMPONENT == 3) then
 
                    ! compute unit tangent to the surface (E-W)
                    rhoval = sqrt(xcoord**2 + ycoord**2)
-                   if( rhoval < 1.e-10 ) then
+                   if (rhoval < 1.e-10) then
                     ! location at pole
                     phihat_x = 0.0
                     phihat_y = 0.0
@@ -540,7 +540,7 @@
                 endif
 
                 ! mute values
-                if( MUTE_SOURCE ) then
+                if (MUTE_SOURCE) then
 
                   ! distance in colatitude (in rad)
                   ! note: this mixes geocentric (point location) and geographic (source location) coordinates;
@@ -550,10 +550,10 @@
 
                   ! distance in longitude (in rad)
                   ! checks source longitude range
-                  if( LON_SOURCE - RADIUS_TO_MUTE < -PI .or. LON_SOURCE + RADIUS_TO_MUTE > PI ) then
+                  if (LON_SOURCE - RADIUS_TO_MUTE < -PI .or. LON_SOURCE + RADIUS_TO_MUTE > PI) then
                     ! source close to 180. longitudes, shifts range to [0, 2PI]
-                    if( phival < 0.0 ) phival = phival + TWO_PI
-                    if( LON_SOURCE < 0.0 ) then
+                    if (phival < 0.0 ) phival = phival + TWO_PI
+                    if (LON_SOURCE < 0.0) then
                       dist_lon = phival - (LON_SOURCE + TWO_PI)
                     else
                       dist_lon = phival - LON_SOURCE
@@ -561,8 +561,8 @@
                   else
                     ! source well between range to [-PI, PI]
                     ! shifts phival to be like LON_SOURCE between [-PI,PI]
-                    if( phival > PI ) phival = phival - TWO_PI
-                    if( phival < -PI ) phival = phival + TWO_PI
+                    if (phival > PI ) phival = phival - TWO_PI
+                    if (phival < -PI ) phival = phival + TWO_PI
 
                     dist_lon = phival - LON_SOURCE
                   endif
@@ -570,9 +570,9 @@
                   distance = sqrt(dist_lat**2 + dist_lon**2)
 
                   ! mutes source region values
-                  if ( distance < RADIUS_TO_MUTE ) then
+                  if (distance < RADIUS_TO_MUTE) then
                     ! muting takes account of the event time
-                    if( (it-1)*DT-t0 > STARTTIME_TO_MUTE  ) then
+                    if ((it-1)*DT-t0 > STARTTIME_TO_MUTE ) then
                       ! wavefield will be tapered to mask out noise in source area
                       ! factor from 0 to 1
                       mute_factor = ( 0.5*(1.0 - cos(distance/RADIUS_TO_MUTE*PI)) )**6
@@ -591,7 +591,7 @@
           enddo  !j
 
           ispec = ispec + 1
-          if(MOVIE_COARSE) then
+          if (MOVIE_COARSE) then
             ielm = ispec-1
           else
             ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
@@ -600,7 +600,7 @@
           do j = 1,NGLLY-NIT
              do i = 1,NGLLX-NIT
                 ! offset (starts at 1)
-                if(MOVIE_COARSE) then
+                if (MOVIE_COARSE) then
                   ieoff = ielm+1
                 else
                   ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))+1
@@ -609,10 +609,10 @@
                 ! for movie_coarse e.g. x(i,j) is defined at x(1,1), x(1,NGLLY), x(NGLLX,1) and x(NGLLX,NGLLY)
                 ! be aware that for the cubed sphere, the mapping changes for different chunks,
                 ! i.e. e.g. x(1,1) and x(5,5) flip left and right sides of the elements in geographical coordinates
-                if(MOVIE_COARSE) then
-                  if(NCHUNKS == 6) then
+                if (MOVIE_COARSE) then
+                  if (NCHUNKS == 6) then
                     ! chunks mapped such that element corners increase in long/lat
-                    select case (iproc/NPROC+1)
+                    select case(iproc/NPROC+1)
                       case(CHUNK_AB)
                         xp(ieoff) = dble(x(1,NGLLY))
                         yp(ieoff) = dble(y(1,NGLLY))
@@ -661,19 +661,19 @@
                 endif ! MOVIE_COARSE
 
                 ! determines North / South pole index for stamping maximum values
-                if( USE_AVERAGED_MAXIMUM .and. NORMALIZE_VALUES ) then
+                if (USE_AVERAGED_MAXIMUM .and. NORMALIZE_VALUES) then
                   xmesh = xp(ieoff)
                   ymesh = yp(ieoff)
                   zmesh = zp(ieoff)
-                  if(zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
-                  if(zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
+                  if (zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
+                  if (zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
                   thetaval = atan2(sqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
                   ! thetaval between 0 and PI / 2
                   !print*,'thetaval:',thetaval * 180. / PI
                   ! close to north pole
-                  if( thetaval >= 0.495 * PI ) istamp1 = ieoff
+                  if (thetaval >= 0.495 * PI ) istamp1 = ieoff
                   ! close to south pole
-                  if( thetaval <= 0.01 ) istamp2 = ieoff
+                  if (thetaval <= 0.01 ) istamp2 = ieoff
                 endif
 
              enddo !i
@@ -695,7 +695,7 @@
 
     ! takes average over last few snapshots available and uses it
     ! to normalize field values
-    if( USE_AVERAGED_MAXIMUM ) then
+    if (USE_AVERAGED_MAXIMUM) then
 
       ! (average) maximum between positive and negative values
       max_absol = (abs(min_field_current)+abs(max_field_current))/2.0
@@ -707,7 +707,7 @@
 
       ! average over history
       max_average = sum( max_history )
-      if( iframe < nmax_history ) then
+      if (iframe < nmax_history) then
         ! history not filled yet, only average over available entries
         max_average = max_average / iframe
       else
@@ -724,21 +724,21 @@
 
       ! sets new maxima for decaying wavefield
       ! this should avoid flickering when normalizing wavefields
-      if( NORMALIZE_VALUES ) then
+      if (NORMALIZE_VALUES) then
         ! checks stamp indices for maximum values
-        if( istamp1 == 0 ) istamp1 = ieoff
-        if( istamp2 == 0 ) istamp2 = ieoff-1
+        if (istamp1 == 0 ) istamp1 = ieoff
+        if (istamp2 == 0 ) istamp2 = ieoff-1
         !print *, 'stamp: ',istamp1,istamp2
 
-        if( max_absol < max_average ) then
+        if (max_absol < max_average) then
           ! distance (in degree) of surface waves travelled
           distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * RADIANS_TO_DEGREES
-          if( distance > 10.0 .and. distance <= 20.0 ) then
+          if (distance > 10.0 .and. distance <= 20.0) then
             ! smooth transition between 10 and 20 degrees
             ! sets positive and negative maximum
             field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.0)/10.0
             field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.0)/10.0 )
-          else if( distance > 20.0 ) then
+          else if (distance > 20.0) then
             ! sets positive and negative maximum
             field_display(istamp1) = + max_average
             field_display(istamp2) = - max_average
@@ -758,7 +758,7 @@
       endif
 
       ! scales field values up to match average
-      if( abs(max_absol) > TINYVAL) &
+      if (abs(max_absol) > TINYVAL) &
         field_display = field_display * max_average / max_absol
 
       ! thresholds after scaling positive & negative maximum values
@@ -766,13 +766,13 @@
       where( field_display(:) < - max_average ) field_display = -max_average
 
       ! normalizes field values
-      if( NORMALIZE_VALUES ) then
-        if( MUTE_SOURCE ) then
+      if (NORMALIZE_VALUES) then
+        if (MUTE_SOURCE) then
           ! checks if source wavefield kicked in
-          if( (it-1)*DT - t0 > STARTTIME_TO_MUTE ) then
+          if ((it-1)*DT - t0 > STARTTIME_TO_MUTE) then
             ! wavefield should be visible at surface now
             ! normalizes wavefield
-            if( abs(max_average) > TINYVAL ) field_display = field_display / max_average
+            if (abs(max_average) > TINYVAL ) field_display = field_display / max_average
           else
             ! no wavefield yet assumed
 
@@ -781,7 +781,7 @@
             ! to avoid further amplifying when
             ! a normalization routine is used for rendering images
             ! (which for example is the case for shakemovies)
-            if( STARTTIME_TO_MUTE > TINYVAL ) then
+            if (STARTTIME_TO_MUTE > TINYVAL) then
               ! with additional scale factor:
               ! linear scaling between [0,1]:
               ! from 0 (simulation time equal to -t0 )
@@ -799,12 +799,12 @@
             ! positive and negative maximum
             field_display(istamp1) = + val
             field_display(istamp2) = - val
-            if( abs(max_average) > TINYVAL ) field_display = field_display / val
+            if (abs(max_average) > TINYVAL ) field_display = field_display / val
           endif
         else
           ! no source to mute
           ! normalizes wavefield
-          if( abs(max_average) > TINYVAL ) field_display = field_display / max_average
+          if (abs(max_average) > TINYVAL ) field_display = field_display / max_average
         endif
       endif
     endif
@@ -816,29 +816,29 @@
     !--- ****** create GMT file ******
 
     ! create file name and open file
-    if(OUTPUT_BINARY) then
-      if(USE_COMPONENT == 1) then
+    if (OUTPUT_BINARY) then
+      if (USE_COMPONENT == 1) then
        write(outputname,"('/bin_movie_',i6.6,'.d')") it
-      else if(USE_COMPONENT == 2) then
+      else if (USE_COMPONENT == 2) then
        write(outputname,"('/bin_movie_',i6.6,'.N')") it
-      else if(USE_COMPONENT == 3) then
+      else if (USE_COMPONENT == 3) then
        write(outputname,"('/bin_movie_',i6.6,'.E')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown', &
             form='unformatted',action='write')
-      if(iframe == 1) open(unit=12,file=trim(OUTPUT_FILES)//'/bin_movie.xy', &
+      if (iframe == 1) open(unit=12,file=trim(OUTPUT_FILES)//'/bin_movie.xy', &
                           status='unknown',form='unformatted',action='write')
     else
-      if(USE_COMPONENT == 1) then
+      if (USE_COMPONENT == 1) then
        write(outputname,"('/ascii_movie_',i6.6,'.d')") it
-      else if(USE_COMPONENT == 2) then
+      else if (USE_COMPONENT == 2) then
        write(outputname,"('/ascii_movie_',i6.6,'.N')") it
-      else if(USE_COMPONENT == 3) then
+      else if (USE_COMPONENT == 3) then
        write(outputname,"('/ascii_movie_',i6.6,'.E')") it
       endif
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown', &
             action='write')
-      if(iframe == 1) open(unit=12,file=trim(OUTPUT_FILES)//'/ascii_movie.xy', &
+      if (iframe == 1) open(unit=12,file=trim(OUTPUT_FILES)//'/ascii_movie.xy', &
                             status='unknown',action='write')
     endif
     ! clear number of elements kept
@@ -853,7 +853,7 @@
 
       do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
         ispec = ispec + 1
-        if(MOVIE_COARSE) then
+        if (MOVIE_COARSE) then
           ielm = ispec - 1
         else
           ielm = (NGLLX-1)*(NGLLY-1)*(ispec-1)
@@ -861,14 +861,14 @@
 
         do j = 1,NGLLY-NIT
           do i = 1,NGLLX-NIT
-            if(MOVIE_COARSE) then
+            if (MOVIE_COARSE) then
               ieoff = ielm + 1
             else
               ieoff = (ielm+(i-1)+(j-1)*(NGLLX-1))+1
             endif
 
             ! point position
-            if(iframe == 1) then
+            if (iframe == 1) then
               ! gets Cartesian coordinates
               xcoord = sngl(xp(ieoff))
               ycoord = sngl(yp(ieoff))
@@ -883,19 +883,19 @@
               ! gets geographic latitude and longitude in degrees
               lat = sngl(90.d0 - thetaval*RADIANS_TO_DEGREES)
               long = sngl(phival*RADIANS_TO_DEGREES)
-              if(long > 180.0) long = long-360.0
+              if (long > 180.0) long = long-360.0
             endif
 
             ! displacement
             disp = sngl(field_display(ieoff))
 
             ! writes displacement and latitude/longitude to corresponding files
-            if(OUTPUT_BINARY) then
+            if (OUTPUT_BINARY) then
               write(11) disp
-              if(iframe == 1) write(12) long,lat
+              if (iframe == 1) write(12) long,lat
             else
               write(11,*) disp
-              if(iframe == 1) write(12,*) long,lat
+              if (iframe == 1) write(12,*) long,lat
             endif
 
           enddo !i
@@ -903,7 +903,7 @@
       enddo !ispecloc
     enddo !iproc
     close(11)
-    if(iframe == 1) close(12)
+    if (iframe == 1) close(12)
 
   ! end of loop and test on all the time steps for all the movie images
   enddo

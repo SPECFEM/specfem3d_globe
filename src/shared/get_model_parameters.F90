@@ -32,7 +32,8 @@
                         OCEANS,TOPOGRAPHY, &
                         ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R120,R220,R400,R600,R670,R771, &
                         RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO_FICTITIOUS_IN_MESHER, &
-                        R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS)
+                        R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+                        CEM_REQUEST, CEM_ACCEPT)
 
   use constants
 
@@ -44,7 +45,7 @@
 
   logical ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
     CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO,&
-    ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY
+    ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY,CEM_REQUEST,CEM_ACCEPT
 
   logical OCEANS,TOPOGRAPHY
 
@@ -59,7 +60,7 @@
                         ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
                         CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
                         ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
-                        OCEANS,TOPOGRAPHY)
+                        OCEANS,TOPOGRAPHY,CEM_REQUEST,CEM_ACCEPT)
 
   ! sets radius for each discontinuity and ocean density values
   call get_model_parameters_radii(REFERENCE_1D_MODEL,ROCEAN,RMIDDLE_CRUST, &
@@ -83,7 +84,7 @@
                         ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
                         CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
                         ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
-                        OCEANS,TOPOGRAPHY)
+                        OCEANS,TOPOGRAPHY,CEM_REQUEST,CEM_ACCEPT)
 
   use constants
 
@@ -95,7 +96,8 @@
 
   logical ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
          CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO,&
-         ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY
+         ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY,&
+         CEM_REQUEST,CEM_ACCEPT
   logical OCEANS,TOPOGRAPHY
 
   ! local parameters
@@ -125,10 +127,10 @@
 
   ! extract ending of model name
   ending = ' '
-  if( len_trim(MODEL) > 4 ) ending = MODEL(len_trim(MODEL)-3:len_trim(MODEL))
+  if (len_trim(MODEL) > 4 ) ending = MODEL(len_trim(MODEL)-3:len_trim(MODEL))
 
   ! determines if the anisotropic inner core option should be turned on
-  if( ending == '_AIC' ) then
+  if (ending == '_AIC') then
     ANISOTROPIC_INNER_CORE = .true.
     ! in case it has an ending for the inner core, remove it from the name
     MODEL_ROOT = MODEL(1: len_trim(MODEL)-4)
@@ -141,9 +143,9 @@
   ! checks with '_1Dcrust' option
   impose_1Dcrust = .false.
   ending_1Dcrust = ' '
-  if( len_trim(MODEL_ROOT) > 8 ) &
+  if (len_trim(MODEL_ROOT) > 8 ) &
     ending_1Dcrust = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
-  if( ending_1Dcrust == '_1Dcrust' ) then
+  if (ending_1Dcrust == '_1Dcrust') then
     impose_1Dcrust = .true.
     ! in case it has an ending for the inner core, remove it from the name
     MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL)-8)
@@ -177,6 +179,10 @@
   ISOTROPIC_3D_MANTLE = .false.
   HONOR_1D_SPHERICAL_MOHO = .false.
 
+  ! no CEM by default
+  CEM_REQUEST = .false.
+  CEM_ACCEPT  = .false.
+
   ! no 3D model by default
   THREE_D_MODEL = 0
   TRANSVERSE_ISOTROPY = .false.
@@ -184,71 +190,71 @@
   ! model specifics
 
   ! 1-D models
-  if(MODEL_ROOT == '1D_isotropic_prem') then
+  if (MODEL_ROOT == '1D_isotropic_prem') then
     HONOR_1D_SPHERICAL_MOHO = .true.
 
-  else if(MODEL_ROOT == '1D_transversely_isotropic_prem') then
+  else if (MODEL_ROOT == '1D_transversely_isotropic_prem') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == '1D_iasp91' .or. MODEL_ROOT == '1D_1066a' .or. &
+  else if (MODEL_ROOT == '1D_iasp91' .or. MODEL_ROOT == '1D_1066a' .or. &
           MODEL_ROOT == '1D_ak135f_no_mud' .or. MODEL_ROOT == '1D_jp3d' .or. &
           MODEL_ROOT == '1D_sea99') then
     HONOR_1D_SPHERICAL_MOHO = .true.
-    if(MODEL_ROOT == '1D_iasp91') then
+    if (MODEL_ROOT == '1D_iasp91') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
-    else if(MODEL_ROOT == '1D_1066a') then
+    else if (MODEL_ROOT == '1D_1066a') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if(MODEL_ROOT == '1D_ak135f_no_mud') then
+    else if (MODEL_ROOT == '1D_ak135f_no_mud') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
-    else if(MODEL_ROOT == '1D_jp3d') then
+    else if (MODEL_ROOT == '1D_jp3d') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
-    else if(MODEL_ROOT == '1D_sea99') then
+    else if (MODEL_ROOT == '1D_sea99') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     else
       stop 'reference 1D Earth model unknown'
     endif
 
-  else if(MODEL_ROOT == '1D_ref') then
+  else if (MODEL_ROOT == '1D_ref') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == '1D_ref_iso') then
+  else if (MODEL_ROOT == '1D_ref_iso') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
 
-  else if(MODEL_ROOT == '1D_isotropic_prem_onecrust') then
+  else if (MODEL_ROOT == '1D_isotropic_prem_onecrust') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     ONE_CRUST = .true.
 
-  else if(MODEL_ROOT == '1D_transversely_isotropic_prem_onecrust') then
+  else if (MODEL_ROOT == '1D_transversely_isotropic_prem_onecrust') then
     TRANSVERSE_ISOTROPY = .true.
     HONOR_1D_SPHERICAL_MOHO = .true.
     ONE_CRUST = .true.
 
-  else if(MODEL_ROOT == '1D_iasp91_onecrust' .or. MODEL_ROOT == '1D_1066a_onecrust' &
+  else if (MODEL_ROOT == '1D_iasp91_onecrust' .or. MODEL_ROOT == '1D_1066a_onecrust' &
         .or. MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     ONE_CRUST = .true.
-    if(MODEL_ROOT == '1D_iasp91_onecrust') then
+    if (MODEL_ROOT == '1D_iasp91_onecrust') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
-    else if(MODEL_ROOT == '1D_1066a_onecrust') then
+    else if (MODEL_ROOT == '1D_1066a_onecrust') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if(MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
+    else if (MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     else
       stop 'reference 1D Earth model unknown'
     endif
 
   ! 3-D models
-  else if(MODEL_ROOT == 'transversely_isotropic_prem_plus_3D_crust_2.0') then
+  else if (MODEL_ROOT == 'transversely_isotropic_prem_plus_3D_crust_2.0') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ONE_CRUST = .true.
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == 's20rts') then
+  else if (MODEL_ROOT == 's20rts') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -256,7 +262,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S20RTS
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == 's40rts') then
+  else if (MODEL_ROOT == 's40rts') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -264,7 +270,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S40RTS
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == 'sea99_jp3d1994') then
+  else if (MODEL_ROOT == 'sea99_jp3d1994') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -272,7 +278,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     THREE_D_MODEL = THREE_D_MODEL_SEA99_JP3D
 
-  else if(MODEL_ROOT == 'sea99') then
+  else if (MODEL_ROOT == 'sea99') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -280,7 +286,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     THREE_D_MODEL = THREE_D_MODEL_SEA99
 
-  else if(MODEL_ROOT == 'jp3d1994') then
+  else if (MODEL_ROOT == 'jp3d1994') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -288,7 +294,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
     THREE_D_MODEL = THREE_D_MODEL_JP3D
 
-  else if(MODEL_ROOT == 's362ani') then
+  else if (MODEL_ROOT == 's362ani') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -297,7 +303,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == 's362iso') then
+  else if (MODEL_ROOT == 's362iso') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -305,7 +311,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
 
-  else if(MODEL_ROOT == 's362wmani') then
+  else if (MODEL_ROOT == 's362wmani') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -314,7 +320,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362WMANI
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == 's362ani_prem') then
+  else if (MODEL_ROOT == 's362ani_prem') then
     CASE_3D = .true.
     CRUSTAL = .true.
     TRANSVERSE_ISOTROPY = .true.
@@ -322,7 +328,7 @@
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_S362ANI_PREM
 
-  else if(MODEL_ROOT == 's362ani_3DQ') then
+  else if (MODEL_ROOT == 's362ani_3DQ') then
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -332,7 +338,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
- else if(MODEL_ROOT == 's362iso_3DQ') then
+ else if (MODEL_ROOT == 's362iso_3DQ') then
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -341,7 +347,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
 
-  else if(MODEL_ROOT == 's29ea') then
+  else if (MODEL_ROOT == 's29ea') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -350,12 +356,12 @@
     THREE_D_MODEL = THREE_D_MODEL_S29EA
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == '3D_attenuation') then
+  else if (MODEL_ROOT == '3D_attenuation') then
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     ONE_CRUST = .true.
 
-  else if(MODEL_ROOT == '3D_anisotropic') then
+  else if (MODEL_ROOT == '3D_anisotropic') then
     ANISOTROPIC_3D_MANTLE = .true.
     CASE_3D = .true. ! crustal moho stretching
     ONE_CRUST = .true. ! 1 element layer in top crust region
@@ -365,7 +371,7 @@
     ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     ! TRANSVERSE_ISOTROPY = .false. ! for AK135 ref model
 
-  else if(MODEL_ROOT == 'heterogen') then
+  else if (MODEL_ROOT == 'heterogen') then
     CASE_3D = .true.
     CRUSTAL = .true.
     HETEROGEN_3D_MANTLE = .true.
@@ -375,7 +381,17 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == 'PPM') then
+#if defined (CEM)
+  else if (MODEL_ROOT == 'CEM_REQUEST') then
+    CEM_REQUEST         = .true.
+    TRANSVERSE_ISOTROPY = .true.
+
+  else if (MODEL_ROOT == 'CEM_ACCEPT') then
+    CEM_ACCEPT          = .true.
+    TRANSVERSE_ISOTROPY = .true.
+#endif
+
+  else if (MODEL_ROOT == 'PPM') then
     ! superimposed based on isotropic-prem
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -384,7 +400,7 @@
     THREE_D_MODEL = THREE_D_MODEL_PPM
     TRANSVERSE_ISOTROPY = .true. ! to use transverse-isotropic prem
 
-  else if(MODEL_ROOT == 'GLL') then
+  else if (MODEL_ROOT == 'GLL' .or. MODEL_ROOT == 'gll') then
     ! model will be given on local basis, at all GLL points,
     ! as from meshfem3d output from routine save_arrays_solver()
     ! based on model S29EA
@@ -402,7 +418,7 @@
     !  model, based upon the S29EA model, but putting mgll_v as parameter to this
     !  routine involves too many changes. )
 
-  else if(MODEL == 'gapp2') then
+  else if (MODEL == 'gapp2') then
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -413,12 +429,12 @@
 
   else
     print*
-    print*,'error model: ',trim(MODEL)
-    stop 'model not implemented yet, edit get_model_parameters.f90 and recompile'
+    print*,'Error model: ',trim(MODEL)
+    stop 'model not implemented yet, edit get_model_parameters.f90, or ensure you have run ./configure correctly, and recompile'
   endif
 
   ! suppress the crustal layers
-  if( SUPPRESS_CRUSTAL_MESH ) then
+  if (SUPPRESS_CRUSTAL_MESH) then
     CRUSTAL = .false.
     OCEANS = .false.
     ONE_CRUST = .false.
@@ -427,7 +443,7 @@
 
   ! additional option for 3D mantle models:
   ! this takes crust from reference 1D model rather than a 3D crust;
-  if( impose_1Dcrust ) then
+  if (impose_1Dcrust) then
     ! no 3D crust
     CRUSTAL = .false.
     ! no crustal moho stretching
@@ -439,11 +455,11 @@
   endif
 
   ! checks flag consistency for crust
-  if( HONOR_1D_SPHERICAL_MOHO .and. CRUSTAL ) &
+  if (HONOR_1D_SPHERICAL_MOHO .and. CRUSTAL ) &
     stop 'honor 1D spherical moho excludes having 3D crustal structure'
 
   ! checks that IASP91, AK135, 1066A, JP1D or SEA1D is isotropic
-  if((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
+  if ((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A .or. &
       REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D .or. &
@@ -527,7 +543,7 @@
   RHO_BOTTOM_OC = 12166.5885 / RHOAV
 
   ! differing 1-D model radii
-  if(REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
+  if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
     ! IASP91
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6351000.d0
@@ -548,7 +564,7 @@
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
 
 !! DK DK values below entirely checked and fixed by Dimitri Komatitsch in December 2012.
 
@@ -570,7 +586,7 @@
     RHO_TOP_OC = 9914.5000 / RHOAV
     RHO_BOTTOM_OC = 12139.1000 / RHOAV
 
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
     ! values below corrected by Ying Zhou <yingz@gps.caltech.edu>
     ! 1066A
     RMOHO = 6360000.d0
@@ -595,7 +611,7 @@
     RHO_TOP_OC = 9917.4500 / RHOAV
     RHO_BOTTOM_OC = 12160.6500 / RHOAV
 
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     ! REF
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6356000.d0
@@ -613,7 +629,7 @@
     RHO_TOP_OC = 9903.48 / RHOAV
     RHO_BOTTOM_OC = 12166.35 / RHOAV
 
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
     ! values below corrected by Min Chen <mchen@gps.caltech.edu>
     ! jp1d
     ROCEAN = 6371000.d0
@@ -631,7 +647,7 @@
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
-  else if(REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
     ! SEA1D without the 2 km of mud layer or the 3km water layer
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6361000.d0
@@ -656,7 +672,7 @@
 
   ! honor the PREM Moho or define a fictitious Moho in order to have even radial sampling
   ! from the d220 to the Earth surface
-  if(HONOR_1D_SPHERICAL_MOHO) then
+  if (HONOR_1D_SPHERICAL_MOHO) then
     ! 1D models: all honor their spherical moho
     RMOHO_FICTITIOUS_IN_MESHER = RMOHO
     R80_FICTITIOUS_IN_MESHER = R80
@@ -665,7 +681,7 @@
     ! either to make simulation cheaper or to have a 3D crustal structure
     RMOHO_FICTITIOUS_IN_MESHER = (R80 + R_EARTH) / 2.0d0
     R80_FICTITIOUS_IN_MESHER = R80
-    if( CRUSTAL .and. CASE_3D ) then
+    if (CRUSTAL .and. CASE_3D) then
       !> Hejun
       ! mesh will honor 3D crustal moho topography
       ! moves MOHO up 5km to honor moho topography deeper than 35 km

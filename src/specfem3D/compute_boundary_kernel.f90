@@ -46,7 +46,7 @@
   logical,dimension(NGLOB_OUTER_CORE) :: mask_ibool
 
   ! transfers wavefields onto CPU
-  if( GPU_MODE ) then
+  if (GPU_MODE) then
 
     ! crust/mantle
     call transfer_accel_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,accel_crust_mantle,Mesh_pointer)
@@ -75,7 +75,7 @@
             iglob = ibool_outer_core(i,j,k,ispec)
 
             ! only calculates gradients once for shared nodes
-            if( .not. mask_ibool(iglob) ) then
+            if (.not. mask_ibool(iglob)) then
 
               ! masks this global point
               mask_ibool(iglob) = .true.
@@ -94,13 +94,13 @@
               tempx1l = 0._CUSTOM_REAL
               tempx2l = 0._CUSTOM_REAL
               tempx3l = 0._CUSTOM_REAL
-              do l=1,NGLLX
+              do l = 1,NGLLX
                 tempx1l = tempx1l + b_displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
               enddo
-              do l=1,NGLLY
+              do l = 1,NGLLY
                 tempx2l = tempx2l + b_displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
               enddo
-              do l=1,NGLLZ
+              do l = 1,NGLLZ
                 tempx3l = tempx3l + b_displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
               enddo
               gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
@@ -116,13 +116,13 @@
               tempx1l = 0._CUSTOM_REAL
               tempx2l = 0._CUSTOM_REAL
               tempx3l = 0._CUSTOM_REAL
-              do l=1,NGLLX
+              do l = 1,NGLLX
                 tempx1l = tempx1l + accel_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
               enddo
-              do l=1,NGLLY
+              do l = 1,NGLLY
                 tempx2l = tempx2l + accel_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
               enddo
-              do l=1,NGLLZ
+              do l = 1,NGLLZ
                 tempx3l = tempx3l + accel_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
               enddo
               gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
@@ -137,13 +137,13 @@
               tempx1l = 0._CUSTOM_REAL
               tempx2l = 0._CUSTOM_REAL
               tempx3l = 0._CUSTOM_REAL
-              do l=1,NGLLX
+              do l = 1,NGLLX
                 tempx1l = tempx1l + displ_outer_core(ibool_outer_core(l,j,k,ispec)) * hprime_xx(i,l)
               enddo
-              do l=1,NGLLY
+              do l = 1,NGLLY
                 tempx2l = tempx2l + displ_outer_core(ibool_outer_core(i,l,k,ispec)) * hprime_yy(j,l)
               enddo
-              do l=1,NGLLZ
+              do l = 1,NGLLZ
                 tempx3l = tempx3l + displ_outer_core(ibool_outer_core(i,j,l,ispec)) * hprime_zz(k,l)
               enddo
               gradx = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l
@@ -447,9 +447,9 @@
     enddo
 
     ! strain and stress
-    do k=1,NGLLZ
-      do j=1,NGLLY
-        do i=1,NGLLX
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
           normal(:) = normal_disc(:,i,j,ispec2D)
           xixl = xix(i,j,k,ispec)
           xiyl = xiy(i,j,k,ispec)
@@ -642,7 +642,7 @@
 
   if (iregion_code == IREGION_CRUST_MANTLE) then
 
-    if(ANISOTROPIC_3D_MANTLE_VAL) then
+    if (ANISOTROPIC_3D_MANTLE_VAL) then
 
       c11 = c11store(i,j,k,ispec)
       c12 = c12store(i,j,k,ispec)
@@ -684,7 +684,7 @@
      sigma(2,3) = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
                c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
 
-   else if( .not. ispec_is_tiso(ispec) ) then
+   else if (.not. ispec_is_tiso(ispec)) then
 
      ! isotropic elements
 
@@ -922,7 +922,7 @@
 
  else if (iregion_code == IREGION_INNER_CORE) then
 
-   if(ANISOTROPIC_INNER_CORE_VAL) then
+   if (ANISOTROPIC_INNER_CORE_VAL) then
 
 ! elastic tensor for hexagonal symmetry in reduced notation:
 !

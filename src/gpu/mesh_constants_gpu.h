@@ -69,10 +69,13 @@ typedef float realw;
 // debug: outputs traces
 #define DEBUG 0
 #if DEBUG == 1
-#define TRACE(x) printf ("%s\n", x);
+#define TRACE(x) printf ("%s\n", x); fflush(stdout);
 #else
 #define TRACE(x)
 #endif
+
+// debug: outputs maximum values of wavefields
+#define DEBUG_FIELDS 0
 
 // more outputs
 #define MAXDEBUG 0
@@ -83,21 +86,25 @@ typedef float realw;
 #define PRINT10i(var) if (print_count<10) { printf ("var=%d\n", var); print_count++; }
 #else
 #define LOG(x)   // printf ("%s\n", x);
-#define PRINT5(var, offset)   // for (i=0;i<10;i++) printf ("var (%d)=%f\n", i, var[offset+i]);
+#define PRINT5(var, offset)   // for (i = 0;i<10;i++) printf ("var (%d)=%f\n", i, var[offset+i]);
 #endif
 
-// daniel debug: run backward simulations with/without GPU routines and empty arrays for debugging
+// debug: run backward simulations with/without GPU routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
-#define DEBUG_BACKWARD_ASSEMBLY() return;
-#define DEBUG_BACKWARD_COUPLING() return;
-#define DEBUG_BACKWARD_FORCES() return;
-#define DEBUG_BACKWARD_KERNEL() return;
-#define DEBUG_BACKWARD_SOURCES() return;
-#define DEBUG_BACKWARD_TRANSFER() return;
-#define DEBUG_BACKWARD_UPDATE() return;
+#define DEBUG_BACKWARD_ASSEMBLY_OC()  return;
+#define DEBUG_BACKWARD_ASSEMBLY_IC()  return;
+#define DEBUG_BACKWARD_ASSEMBLY_CM()  return;
+#define DEBUG_BACKWARD_COUPLING()     return;
+#define DEBUG_BACKWARD_FORCES()       return;
+#define DEBUG_BACKWARD_KERNEL()       return;
+#define DEBUG_BACKWARD_SOURCES()      return;
+#define DEBUG_BACKWARD_TRANSFER()     return;
+#define DEBUG_BACKWARD_UPDATE()       return;
 #else
-#define DEBUG_BACKWARD_ASSEMBLY()
+#define DEBUG_BACKWARD_ASSEMBLY_OC()
+#define DEBUG_BACKWARD_ASSEMBLY_IC()
+#define DEBUG_BACKWARD_ASSEMBLY_CM()
 #define DEBUG_BACKWARD_COUPLING()
 #define DEBUG_BACKWARD_FORCES()
 #define DEBUG_BACKWARD_KERNEL()
@@ -106,15 +113,17 @@ typedef float realw;
 #define DEBUG_BACKWARD_UPDATE()
 #endif
 
-
 // error checking after cuda function calls
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
-//#define ENABLE_VERY_SLOW_ERROR_CHECKING
+#define ENABLE_VERY_SLOW_ERROR_CHECKING 0
+#if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
+#define GPU_ERROR_CHECKING(x) exit_on_gpu_error(x);
+#else
+#define GPU_ERROR_CHECKING(x)
+#endif
 
 // maximum function
 #define MAX(x, y)                  (((x) < (y)) ? (y) : (x))
-
-/*----------------------------------------------------------------------------------------------- */
 
 /*----------------------------------------------------------------------------------------------- */
 // GPU constant arrays
@@ -152,9 +161,9 @@ typedef float realw;
 //#define R_EARTH_KM 6368.0f
 
 // Asynchronous memory copies between GPU and CPU
-#ifndef GPU_ASYNC_COPY
+// (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
 #define GPU_ASYNC_COPY 1
-#endif
+
 /*----------------------------------------------------------------------------------------------- */
 
 // (optional) pre-processing directive used in kernels: if defined check that it is also set in src/shared/constants.h:
@@ -282,6 +291,16 @@ typedef union {
   double *cuda;
 #endif
 } gpu_double_mem;
+
+typedef union {
+#ifdef USE_OPENCL
+  cl_mem ocl;
+#endif
+#ifdef USE_CUDA
+  void *cuda;
+#endif
+} gpu_mem;
+
 
 #ifdef __cplusplus
 #define EXTERN_LANG "C"
@@ -845,32 +864,6 @@ typedef struct mesh_ {
   // noise sensitivity kernel
   gpu_realw_mem d_Sigma_kl;
 
-#ifdef USE_OPENCL
-  // forward
-  cl_mem d_displ_cm_tex;
-  cl_mem d_accel_cm_tex;
-
-  cl_mem d_displ_oc_tex;
-  cl_mem d_accel_oc_tex;
-
-  cl_mem d_displ_ic_tex;
-  cl_mem d_accel_ic_tex;
-
-  // backward/reconstructed
-  cl_mem d_b_displ_cm_tex;
-  cl_mem d_b_accel_cm_tex;
-
-  cl_mem d_b_displ_oc_tex;
-  cl_mem d_b_accel_oc_tex;
-
-  cl_mem d_b_displ_ic_tex;
-  cl_mem d_b_accel_ic_tex;
-
-  // hprime
-  cl_mem d_hprime_xx_cm_tex;
-  // weighted hprime
-  cl_mem d_hprimewgll_xx_cm_tex;
-#endif
   // ------------------------------------------------------------------ //
   // optimizations
   // ------------------------------------------------------------------ //
@@ -897,6 +890,7 @@ typedef struct mesh_ {
   float* h_b_recv_accel_buffer_oc;
 
 #ifdef USE_OPENCL
+  // pinned memory allocated by ALLOC_PINNED_BUFFER_OCL
   cl_mem h_pinned_station_seismo_field;
   cl_mem h_pinned_adj_sourcearrays_slice;
 
@@ -919,32 +913,87 @@ typedef struct mesh_ {
   cl_mem h_pinned_b_recv_accel_buffer_oc;
 #endif
 
-#if USE_CUDA
+  // streams
+#ifdef USE_CUDA
   // overlapped memcpy streams
   cudaStream_t compute_stream;
   cudaStream_t copy_stream;
 #endif
-#if USE_OPENCL
+
+#ifdef USE_OPENCL
   cl_event last_copy_evt;
   int has_last_copy_evt;
+#endif
+
+  // specific OpenCL texture arrays
+#ifdef USE_OPENCL
+// note: need to be defined as they are passed as function arguments
+  // USE_TEXTURES_FIELDS
+  // forward
+  cl_mem d_displ_cm_tex;
+  cl_mem d_accel_cm_tex;
+
+  cl_mem d_displ_oc_tex;
+  cl_mem d_accel_oc_tex;
+
+  cl_mem d_displ_ic_tex;
+  cl_mem d_accel_ic_tex;
+
+  // backward/reconstructed
+  cl_mem d_b_displ_cm_tex;
+  cl_mem d_b_accel_cm_tex;
+
+  cl_mem d_b_displ_oc_tex;
+  cl_mem d_b_accel_oc_tex;
+
+  cl_mem d_b_displ_ic_tex;
+  cl_mem d_b_accel_ic_tex;
+  // USE_TEXTURES_CONSTANTS
+  // hprime
+  cl_mem d_hprime_xx_cm_tex;
+  // weighted hprime
+  cl_mem d_hprimewgll_xx_cm_tex;
 #endif
 
 } Mesh;
 
 
 /*----------------------------------------------------------------------------------------------- */
-// utility functions: defined in check_fields_ocl.cu
+// utility functions
 /*----------------------------------------------------------------------------------------------- */
 
-double get_time ();
-void get_free_memory (double *free_db, double *used_db, double *total_db);
-void pause_for_debugger (int pause);
+// defined in helper_functions_gpu.c
+void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+
+void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array, int size);
+void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+
+void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+
+void gpuMalloc_int (gpu_int_mem *buffer, int size);
+void gpuMalloc_realw (gpu_realw_mem *buffer, int size);
+void gpuMalloc_double (gpu_double_mem *buffer, int size);
+
+void gpuMemset_realw (gpu_realw_mem *buffer, int size, int value);
+
+void gpuSetConst (gpu_realw_mem *buffer, size_t size, realw *array);
+void gpuFree (void *d_array_addr_ptr);
+void gpuInitialize_buffers (Mesh *mp);
+void gpuSynchronize ();
+
 void exit_on_gpu_error (char *kernel_name);
 void exit_on_error (char *info);
 void synchronize_mpi ();
+double get_time_val ();
 void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
-realw get_device_array_maximum_value (Mesh *mp, gpu_realw_mem *d_array, int size);
 
+// defined in check_fields_gpu.c
+void get_free_memory (double *free_db, double *used_db, double *total_db);
+realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
+
+/* ----------------------------------------------------------------------------------------------- */
 
 #ifndef TAKE_REF_OCL
 #define TAKE_REF_OCL(_buffer_)
@@ -992,4 +1041,5 @@ realw get_device_array_maximum_value (Mesh *mp, gpu_realw_mem *d_array, int size
 #define RELEASE_OFFSET(_buffer_, _offset_)      \
   RELEASE_OFFSET_OCL(_buffer_, _offset_)        \
   RELEASE_OFFSET_CUDA(_buffer_, _offset_)
+
 #endif   // MESH_CONSTANTS_GPU_H

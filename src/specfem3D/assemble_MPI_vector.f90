@@ -65,7 +65,7 @@
   ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
      ! partition border copy into the buffer
      do iinterface = 1, num_interfaces
@@ -131,7 +131,7 @@
 ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! wait for communications completion (recv)
     do iinterface = 1, num_interfaces
@@ -200,7 +200,7 @@
   !          already done in transfer_boun_from_device() routines
 
   ! send only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! send messages
     do iinterface = 1, num_interfaces
@@ -256,7 +256,7 @@
 ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! wait for communications completion (recv)
     do iinterface = 1, num_interfaces
@@ -323,7 +323,7 @@
   ! here we have to assemble all the contributions between partitions using MPI
 
   ! assemble only if more than one partition
-  if(NPROC > 1) then
+  if (NPROC > 1) then
 
     ! waits for communications completion (recv)
     do iinterface = 1, num_interfaces

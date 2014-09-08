@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.9995
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 #ifndef INDEX2
 #define INDEX2(isize,i,j) i + isize*j
 #endif
@@ -10,6 +43,7 @@
 #ifndef INDEX5
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
 #endif
+
 #ifndef NDIM
 #define NDIM 3
 #endif
@@ -49,6 +83,7 @@
 #ifndef BLOCKSIZE_TRANSFER
 #define BLOCKSIZE_TRANSFER 256
 #endif
+
 __global__ void write_seismograms_transfer_strain_from_device_kernel(const int * number_receiver_global, const int * ispec_selected_rec, const int * ibool, float * station_strain_field, const float * d_field, const int nrec_local){
   int tx;
   int irec;
@@ -57,10 +92,10 @@ __global__ void write_seismograms_transfer_strain_from_device_kernel(const int *
   int blockID;
   blockID = blockIdx.x + (blockIdx.y) * (gridDim.x);
   tx = threadIdx.x;
-  if(blockID < nrec_local){
-    irec = number_receiver_global[blockID - 0] - (1);
-    ispec = ispec_selected_rec[irec - 0] - (1);
-    iglob = ibool[tx + (NGLL3) * (ispec) - 0] - (1);
-    station_strain_field[(NGLL3) * (blockID) + tx - 0] = d_field[iglob - 0];
+  if (blockID < nrec_local) {
+    irec = number_receiver_global[blockID - (0)] - (1);
+    ispec = ispec_selected_rec[irec - (0)] - (1);
+    iglob = ibool[tx + (NGLL3) * (ispec) - (0)] - (1);
+    station_strain_field[(NGLL3) * (blockID) + tx - (0)] = d_field[iglob - (0)];
   }
 }

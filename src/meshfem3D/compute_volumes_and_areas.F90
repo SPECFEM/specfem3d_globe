@@ -69,7 +69,7 @@
   do ispec = 1,nspec
 
     ! suppress fictitious elements in central cube
-    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -101,8 +101,8 @@
 
   ! area of bottom surface
   do ispec = 1,NSPEC2D_BOTTOM
-    do i=1,NGLLX
-      do j=1,NGLLY
+    do i = 1,NGLLX
+      do j = 1,NGLLY
         weight=wxgll(i)*wygll(j)
         area_local_bottom = area_local_bottom + dble(jacobian2D_bottom(i,j,ispec))*weight
       enddo
@@ -111,8 +111,8 @@
 
   ! area of top surface
   do ispec = 1,NSPEC2D_TOP
-    do i=1,NGLLX
-      do j=1,NGLLY
+    do i = 1,NGLLX
+      do j = 1,NGLLY
         weight=wxgll(i)*wygll(j)
         area_local_top = area_local_top + dble(jacobian2D_top(i,j,ispec))*weight
       enddo
@@ -128,7 +128,7 @@
   call sum_all_dp(area_local_top,area_total_top)
   call sum_all_dp(volume_local,volume_total_region)
 
-  if(myrank == 0) then
+  if (myrank == 0) then
     !   sum volume over all the regions
     volume_total = volume_total + volume_total_region
 
@@ -137,7 +137,7 @@
     write(IMAIN,*) '   calculated top area: ',area_total_top
 
     ! compare to exact theoretical value
-    if(NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
+    if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case(iregion_code)
         case(IREGION_CRUST_MANTLE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
@@ -153,7 +153,7 @@
     write(IMAIN,*) 'calculated bottom area: ',area_total_bottom
 
     ! compare to exact theoretical value
-    if(NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
+    if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
       select case(iregion_code)
         case(IREGION_CRUST_MANTLE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
@@ -227,7 +227,7 @@
   do ispec = 1,nspec
 
     ! suppress fictitious elements in central cube
-    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -259,7 +259,7 @@
           z_meshpoint = zstore(i,j,k,ispec)
 
 !! DK DK for Roland_Sylvain gravity calculations we may want to shift the reference frame to a pre-computed center of mass
-          if(SHIFT_TO_THIS_CENTER_OF_MASS) then
+          if (SHIFT_TO_THIS_CENTER_OF_MASS) then
             x_meshpoint = x_meshpoint - x_shift
             y_meshpoint = y_meshpoint - y_shift
             z_meshpoint = z_meshpoint - z_shift
@@ -292,7 +292,7 @@
   call sum_all_dp(Earth_center_of_mass_z_local,Earth_center_of_mass_z_tot_reg)
 
   ! sum volume over all the regions
-  if(myrank == 0) then
+  if (myrank == 0) then
     Earth_mass_total = Earth_mass_total + Earth_mass_total_region
     Earth_center_of_mass_x_total = Earth_center_of_mass_x_total + Earth_center_of_mass_x_tot_reg
     Earth_center_of_mass_y_total = Earth_center_of_mass_y_total + Earth_center_of_mass_y_tot_reg
@@ -353,13 +353,13 @@
 #endif
 
   ! if we do not want to compute the gravity integrals, only the center of mass (computed before)
-  if(ONLY_COMPUTE_CENTER_OF_MASS) return
+  if (ONLY_COMPUTE_CENTER_OF_MASS) return
 
   ! calculates volume of all elements in mesh
   do ispec = 1,nspec
 
     ! print information about number of elements done so far
-    if(myrank == 0 .and. (mod(ispec,NSPEC_DISPLAY_INTERVAL) == 0 .or. ispec == 1 .or. ispec == nspec)) then
+    if (myrank == 0 .and. (mod(ispec,NSPEC_DISPLAY_INTERVAL) == 0 .or. ispec == 1 .or. ispec == nspec)) then
        write(IMAIN,*) 'for Roland_Sylvain integrals ',ispec,' elements computed out of ',nspec
        ! write time stamp file to give information about progression of simulation
        write(outputname,"('/timestamp_reg',i1.1,'_ispec',i7.7,'_out_of_',i7.7)") iregion_code,ispec,nspec
@@ -370,10 +370,10 @@
     endif
 
     ! suppress fictitious elements in central cube
-    if(idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     ! see if we compute the contribution of the crust only
-    if(COMPUTE_CRUST_CONTRIB_ONLY .and. idoubling(ispec) /= IFLAG_CRUST) cycle
+    if (COMPUTE_CRUST_CONTRIB_ONLY .and. idoubling(ispec) /= IFLAG_CRUST) cycle
 
     do k = 1,NGLLZ
       do j = 1,NGLLY
@@ -397,14 +397,14 @@
                         - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
 
-          if(CHECK_FOR_NEGATIVE_JACOBIANS .and. jacobianl <= ZERO) stop 'error: negative Jacobian found in integral calculation'
+          if (CHECK_FOR_NEGATIVE_JACOBIANS .and. jacobianl <= ZERO) stop 'Error: negative Jacobian found in integral calculation'
 
           x_meshpoint = xstore(i,j,k,ispec)
           y_meshpoint = ystore(i,j,k,ispec)
           z_meshpoint = zstore(i,j,k,ispec)
 
 !! DK DK for Roland_Sylvain gravity calculations we may want to shift the reference frame to a pre-computed center of mass
-          if(SHIFT_TO_THIS_CENTER_OF_MASS) then
+          if (SHIFT_TO_THIS_CENTER_OF_MASS) then
             x_meshpoint = x_meshpoint - x_shift
             y_meshpoint = y_meshpoint - y_shift
             z_meshpoint = z_meshpoint - z_shift

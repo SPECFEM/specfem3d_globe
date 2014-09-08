@@ -39,7 +39,7 @@
   integer, parameter :: nparam_i = 44
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 57
+  integer, parameter :: nparam_l = 59
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 34
@@ -51,7 +51,7 @@
   bcast_double_precision(:) = 0.d0
 
   ! master process prepares broadcasting arrays
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     ! funny way to pass parameters in arrays from master to all other processes
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
@@ -99,7 +99,8 @@
             ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
             ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX,&
-            ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS, ADIOS_FOR_UNDO_ATTENUATION &
+            ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS, ADIOS_FOR_UNDO_ATTENUATION, &
+            CEM_REQUEST, CEM_ACCEPT &
             /)
 
     bcast_double_precision = (/ &
@@ -158,7 +159,7 @@
   !print*
 
   ! non-master processes set their parameters
-  if( myrank /= 0 ) then
+  if (myrank /= 0) then
 
     ! please, be careful with ordering and counting here
     ! integers
@@ -265,6 +266,8 @@
     ADIOS_FOR_KERNELS = bcast_logical(55)
     ADIOS_FOR_MODELS = bcast_logical(56)
     ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(57)
+    CEM_REQUEST = bcast_logical(58)
+    CEM_ACCEPT = bcast_logical(59)
 
     ! double precisions
     DT = bcast_double_precision(1)

@@ -97,7 +97,12 @@ subroutine define_kernel_adios_variables(adios_handle)
 
   group_size_inc = 0
   call adios_declare_group(adios_group, group_name, "", 0, adios_err)
-  call adios_select_method(adios_group, "MPI", "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
+
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !call check_adios_err(myrank,adios_err)
 
   if (SIMULATION_TYPE == 3) then
     ! crust mantle
@@ -107,203 +112,110 @@ subroutine define_kernel_adios_variables(adios_handle)
       local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
 
       ! outputs transverse isotropic kernels only
-      if( SAVE_TRANSVERSE_KL_ONLY ) then
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "alphav_kl_crust_mantle",    &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "alphah_kl_crust_mantle",    &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "betav_kl_crust_mantle",     &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "betah_kl_crust_mantle",     &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "eta_kl_crust_mantle",       &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "rho_kl_crust_mantle",       &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "bulk_c_kl_crust_mantle",    &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc,  &
-                                         local_dim, "",                &
-                                         "bulk_betav_kl_crust_mantle", &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc,  &
-                                         local_dim, "",                &
-                                         "bulk_betah_kl_crust_mantle", &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "alpha_kl_crust_mantle",     &
-                                         dummy_real4d)
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         STRINGIFY_VAR(beta_kl_crust_mantle))
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         "bulk_beta_kl_crust_mantle", &
-                                         dummy_real4d)
+      if (SAVE_TRANSVERSE_KL_ONLY) then
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "alphav_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "alphah_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "betav_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "betah_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "eta_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "rho_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "bulk_c_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "bulk_betav_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "bulk_betah_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "alpha_kl_crust_mantle", dummy_real4d)
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(beta_kl_crust_mantle))
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "bulk_beta_kl_crust_mantle", dummy_real4d)
 
       else
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         STRINGIFY_VAR(rho_kl_crust_mantle))
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(rho_kl_crust_mantle))
         local_dim = 21 * NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         STRINGIFY_VAR(cijkl_kl_crust_mantle))
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(cijkl_kl_crust_mantle))
       endif
 
     else
 
       ! isotropic kernels
       local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
-      call define_adios_global_array1D(adios_group, group_size_inc,   &
-                                       local_dim, "",                 &
-                                       "rhonotprime_kl_crust_mantle", &
-                                        dummy_real4d)
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       "kappa_kl_crust_mantle",     &
-                                       dummy_real4d)
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       "mu_kl_crust_mantle",        &
-                                        dummy_real4d)
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(rho_kl_crust_mantle))
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(alpha_kl_crust_mantle))
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(beta_kl_crust_mantle))
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       "bulk_c_kl_crust_mantle",    &
-                                       dummy_real4d)
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       "bulk_beta_kl_crust_mantle", &
-                                       dummy_real4d)
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "rhonotprime_kl_crust_mantle", dummy_real4d)
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "kappa_kl_crust_mantle", dummy_real4d)
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "mu_kl_crust_mantle", dummy_real4d)
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(rho_kl_crust_mantle))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(alpha_kl_crust_mantle))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(beta_kl_crust_mantle))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "bulk_c_kl_crust_mantle", dummy_real4d)
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", "bulk_beta_kl_crust_mantle", dummy_real4d)
     endif
 
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
       local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(sigma_kl_crust_mantle))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(sigma_kl_crust_mantle))
     endif
 
     ! outer core
     local_dim = NSPEC_OUTER_CORE * NGLLX * NGLLY * NGLLZ
-    call define_adios_global_array1D(adios_group, group_size_inc, &
-                                     local_dim, "",               &
-                                     STRINGIFY_VAR(rho_kl_outer_core))
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(alpha_kl_outer_core))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(rho_kl_outer_core))
+      call define_adios_global_array1D(adios_group, group_size_inc,local_dim, "", STRINGIFY_VAR(alpha_kl_outer_core))
     if (deviatoric_outercore) then
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(beta_kl_outer_core))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(beta_kl_outer_core))
     endif
 
     ! inner core
     local_dim = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
-    call define_adios_global_array1D(adios_group, group_size_inc, &
-                                     local_dim, "",               &
-                                     STRINGIFY_VAR(rho_kl_inner_core))
-    call define_adios_global_array1D(adios_group, group_size_inc, &
-                                     local_dim, "",               &
-                                     STRINGIFY_VAR(alpha_kl_inner_core))
-    call define_adios_global_array1D(adios_group, group_size_inc, &
-                                     local_dim, "",               &
-                                     STRINGIFY_VAR(beta_kl_inner_core))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(rho_kl_inner_core))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(alpha_kl_inner_core))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(beta_kl_inner_core))
 
     ! boundary kernel
     if (SAVE_BOUNDARY_MESH) then
       !call save_kernels_boundary_kl()
       if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
         local_dim = NSPEC2D_MOHO * NGLLX * NGLLY * NDIM
-        call define_adios_global_array1D(adios_group, group_size_inc, &
-                                         local_dim, "",               &
-                                         STRINGIFY_VAR(moho_kl))
+        call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(moho_kl))
       endif
       local_dim = NSPEC2D_400 * NGLLX * NGLLY
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(d400_kl))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(d400_kl))
 
       local_dim = NSPEC2D_670 * NGLLX * NGLLY
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(d670_kl))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(d670_kl))
 
       local_dim = NSPEC2D_CMB * NGLLX * NGLLY
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(cmb_kl))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(cmb_kl))
 
       local_dim = NSPEC2D_ICB * NGLLX * NGLLY
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(icb_kl))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(icb_kl))
     endif
 
     ! approximate hessian
-    if( APPROXIMATE_HESS_KL ) then
+    if (APPROXIMATE_HESS_KL) then
       !call save_kernels_hessian()
       local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY * NGLLZ
-      call define_adios_global_array1D(adios_group, group_size_inc, &
-                                       local_dim, "",               &
-                                       STRINGIFY_VAR(hess_kl_crust_mantle))
+      call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(hess_kl_crust_mantle))
     endif
   endif
 
   ! save source derivatives for adjoint simulations
   if (SIMULATION_TYPE == 2 .and. nrec_local > 0) then
     local_dim = 3 * 3 * nrec_local
-    call define_adios_global_array1D(adios_group, group_size_inc, &
-                                     local_dim, "",               &
-                                     STRINGIFY_VAR(moment_der))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(moment_der))
 
     local_dim = 3 * nrec_local
-    call define_adios_global_array1D(adios_group, group_size_inc, &
-                                     local_dim, "",               &
-                                     STRINGIFY_VAR(sloc_der))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(sloc_der))
 
     local_dim = nrec_local
-    call define_adios_global_array1D(adios_group, group_size_inc, &
-                                     local_dim, "",               &
-                                     STRINGIFY_VAR(stshift_der))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(stshift_der))
 
     local_dim = nrec_local
-    call define_adios_global_array1D(adios_group, group_size_inc, &
-                                     local_dim, "",               &
-                                     STRINGIFY_VAR(shdur_der))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(shdur_der))
   endif
 
   ! Open the handle to file containing all the ADIOS variables
   ! previously defined
-  call adios_open (adios_handle, group_name, &
-      outputname, "w", comm, adios_err);
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+  call adios_open (adios_handle, group_name, outputname, "w", comm, adios_err);
+  if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+
+  call adios_group_size (adios_handle, group_size_inc, adios_totalsize, adios_err)
+  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
 
 end subroutine define_kernel_adios_variables
 
@@ -352,97 +264,64 @@ subroutine write_kernels_crust_mantle_adios(adios_handle, &
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
 
     ! outputs transverse isotropic kernels only
-    if( SAVE_TRANSVERSE_KL_ONLY ) then
+    if (SAVE_TRANSVERSE_KL_ONLY) then
       ! transverse isotropic kernels
       ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(alphav_kl_crust_mantle))
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(alphah_kl_crust_mantle))
-
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(betav_kl_crust_mantle))
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(betah_kl_crust_mantle))
-
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(eta_kl_crust_mantle))
-
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(rho_kl_crust_mantle))
-
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(bulk_c_kl_crust_mantle))
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
-                                      STRINGIFY_VAR(bulk_betav_kl_crust_mantle))
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
-                                      STRINGIFY_VAR(bulk_betah_kl_crust_mantle))
-
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
+                                       STRINGIFY_VAR(bulk_betav_kl_crust_mantle))
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
+                                       STRINGIFY_VAR(bulk_betah_kl_crust_mantle))
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(alpha_kl_crust_mantle))
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(beta_kl_crust_mantle))
-
-      call write_adios_global_1d_array(adios_handle, myrank, &
-                                       sizeprocs, local_dim, &
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                        STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
     else
       ! note: the C_ij and density kernels are not for relative perturbations
       !       (delta ln( m_i) = delta m_i / m_i),
       !       but absolute perturbations (delta m_i = m_i - m_0)
-      call write_adios_global_1d_array(adios_handle, myrank,  &
-                                       sizeprocs, local_dim,  &
-                                       "rho_kl_crust_mantle", &
-                                       -rho_kl_crust_mantle)
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
+                                       "rho_kl_crust_mantle", -rho_kl_crust_mantle)
 
       local_dim = 21 * NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
-      call write_adios_global_1d_array(adios_handle, myrank,    &
-                                       sizeprocs, local_dim,    &
-                                       "cijkl_kl_crust_mantle", &
-                                       -cijkl_kl_crust_mantle)
+      call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
+                                       "cijkl_kl_crust_mantle",-cijkl_kl_crust_mantle)
     endif
   else
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
 
     ! primary kernels: (rho,kappa,mu) parameterization
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                      STRINGIFY_VAR(rhonotprime_kl_crust_mantle))
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                      STRINGIFY_VAR(kappa_kl_crust_mantle))
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                      STRINGIFY_VAR(mu_kl_crust_mantle))
 
     ! (rho, alpha, beta ) parameterization
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(rho_kl_crust_mantle))
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(alpha_kl_crust_mantle))
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(beta_kl_crust_mantle))
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(rho_kl_crust_mantle))
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(alpha_kl_crust_mantle))
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(beta_kl_crust_mantle))
 
     ! (rho, bulk, beta ) parameterization, K_rho same as above
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                      STRINGIFY_VAR(bulk_c_kl_crust_mantle))
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                      STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
   endif
 
@@ -475,18 +354,12 @@ subroutine write_kernels_outer_core_adios(adios_handle)
 
   local_dim = NSPEC_OUTER_CORE * NGLLX* NGLLY * NGLLZ
 
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(rho_kl_outer_core))
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(alpha_kl_outer_core))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(rho_kl_outer_core))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(alpha_kl_outer_core))
 
   !deviatoric kernel check
-  if( deviatoric_outercore ) then
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(beta_kl_outer_core))
+  if (deviatoric_outercore) then
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(beta_kl_outer_core))
   endif
 
 end subroutine write_kernels_outer_core_adios
@@ -518,16 +391,11 @@ subroutine write_kernels_inner_core_adios(adios_handle)
 
   local_dim = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
 
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(rho_kl_inner_core))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(rho_kl_inner_core))
 
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(alpha_kl_inner_core))
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(beta_kl_inner_core))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(alpha_kl_inner_core))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(beta_kl_inner_core))
+
 end subroutine write_kernels_inner_core_adios
 
 
@@ -559,30 +427,20 @@ subroutine write_kernels_boundary_kl_adios(adios_handle)
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
     local_dim = NSPEC2D_MOHO * NGLLX * NGLLY * NDIM
 
-    call write_adios_global_1d_array(adios_handle, myrank, &
-                                     sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(moho_kl))
+    call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(moho_kl))
   endif
 
   local_dim = NSPEC2D_400 * NGLLX * NGLLY
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(d400_kl))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(d400_kl))
 
   local_dim = NSPEC2D_670 * NGLLX * NGLLY
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(d670_kl))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(d670_kl))
 
   local_dim = NSPEC2D_CMB * NGLLX * NGLLY
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(cmb_kl))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(cmb_kl))
 
   local_dim = NSPEC2D_ICB * NGLLX * NGLLY
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(icb_kl))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(icb_kl))
 
 end subroutine write_kernels_boundary_kl_adios
 
@@ -635,22 +493,14 @@ subroutine write_kernels_source_derivatives_adios(adios_handle)
 
 
   local_dim = 3 * 3 * nrec_local
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(moment_der))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(moment_der))
 
   local_dim = 3 * nrec_local
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(sloc_der))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(sloc_der))
 
   local_dim = nrec_local
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(stshift_der))
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(shdur_der))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(stshift_der))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(shdur_der))
 
 end subroutine write_kernels_source_derivatives_adios
 
@@ -681,8 +531,6 @@ subroutine write_kernels_hessian_adios(adios_handle)
 
   local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY * NGLLZ
   ! stores into file
-  call write_adios_global_1d_array(adios_handle, myrank, &
-                                   sizeprocs, local_dim, &
-                                   STRINGIFY_VAR(hess_kl_crust_mantle))
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(hess_kl_crust_mantle))
 
 end subroutine write_kernels_hessian_adios

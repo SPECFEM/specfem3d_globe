@@ -42,9 +42,10 @@
                               NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                               NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
                               NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
-                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal )
+                              NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION,NT_DUMP_ATTENUATION_optimal, &
+                              PRINT_INFO_TO_SCREEN)
 
-! daniel note: the comment below is wrong, since e.g. NSPEC_CRUST_MANTLE_ADJOINT is either 1 (dummy value)
+! Daniel note: the comment below is wrong, since e.g. NSPEC_CRUST_MANTLE_ADJOINT is either 1 (dummy value)
 !              for SIMULATION_TYPE == 1 or equal to NSPEC_CRUST_MANTLE for SIMULATION_TYPE == 3 or SAVE_FORWARD set to .true.
 !              the value is determined in routine memory_eval() and passed here as argument.
 !
@@ -60,7 +61,6 @@
 ! by this routine would become wrong in the case of a run with SIMULATION_TYPE == 3 if the code
 ! was compiled with SIMULATION_TYPE == 1
 ! ****************************************************************************************************
-!
 
   use constants
 
@@ -71,20 +71,21 @@
     ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,NCHUNKS, &
     INCLUDE_CENTRAL_CUBE,CENTER_LONGITUDE_IN_DEGREES, &
     CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH, &
-    NSTEP,NEX_XI,NEX_ETA, &
+    DT,NEX_XI,NEX_ETA, &
     NPROC_XI,NPROC_ETA, &
     SAVE_REGULAR_KL, &
     PARTIAL_PHYS_DISPERSION_ONLY, &
     ABSORBING_CONDITIONS,EXACT_MASS_MATRIX_FOR_ROTATION, &
     ATT1,ATT2,ATT3,ATT4,ATT5, &
-    MOVIE_VOLUME,MOVIE_VOLUME_TYPE
+    MOVIE_VOLUME,MOVIE_VOLUME_TYPE,NTSTEP_BETWEEN_FRAMES,SIMULATION_TYPE,MOVIE_SURFACE, &
+    UNDO_ATTENUATION,MEMORY_INSTALLED_PER_CORE_IN_GB,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+    this_region_has_a_doubling,doubling_index,ner,ratio_sampling_array
 
   implicit none
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC,NGLOB
 
   integer :: NPROC,NPROCTOT,NT_DUMP_ATTENUATION_optimal
-
 
   ! static memory size needed by the solver
   double precision :: static_memory_size
@@ -121,9 +122,183 @@
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
   integer :: ier
 
+!! DK DK for UNDO_ATTENUATION
+  integer :: saved_SIMULATION_TYPE
+  integer :: number_of_dumpings_to_do
+  double precision :: static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping
+
+  logical :: PRINT_INFO_TO_SCREEN
+
+! evaluate the amount of static memory needed by the solver
+  call memory_eval(doubling_index,this_region_has_a_doubling, &
+                   ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                   ratio_sampling_array,NPROCTOT,NSPEC,NGLOB, &
+                   NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                   NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                   NSPEC_INNER_CORE_ATTENUATION, &
+                   NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                   NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                   NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                   NSPEC_CRUST_MANTLE_ADJOINT, &
+                   NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                   NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                   NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                   NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                   NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
+                   NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
+
+  if (PRINT_INFO_TO_SCREEN) then
+
+  print *
+  print *,'edit file OUTPUT_FILES/values_from_mesher.h to see'
+  print *,'some statistics about the mesh'
+  print *
+
+  print *,'number of processors = ',NPROCTOT
+  print *
+  print *,'maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
+  print *
+  print *,'total elements per slice = ',sum(NSPEC)
+  print *,'total points per slice = ',sum(nglob)
+  print *
+  print *,'the time step of the solver will be DT = ',sngl(DT)
+  print *
+  if (MOVIE_SURFACE .or. MOVIE_VOLUME) then
+    print *,'MOVIE_VOLUME :',MOVIE_VOLUME
+    print *,'MOVIE_SURFACE:',MOVIE_SURFACE
+    print *,'Saving movie frames every',NTSTEP_BETWEEN_FRAMES
+    print *
+  endif
+  print *,'on NEC SX, make sure "loopcnt=" parameter'
+! use fused loops on NEC SX
+  print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
+  print *
+
+  print *,'approximate static memory needed by the solver:'
+  print *,'----------------------------------------------'
+  print *
+  print *,'(lower bound, usually the real amount used is 5% to 10% higher)'
+  print *
+  print *,'(you can get a more precise estimate of the size used per MPI process'
+  print *,' by typing "size -d bin/xspecfem3D"'
+  print *,' after compiling the code with the DATA/Par_file you plan to use)'
+  print *
+  print *,'size of static arrays per slice = ',static_memory_size/1.d6,' MB'
+  print *,'                                = ',static_memory_size/1048576.d0,' MiB'
+  print *,'                                = ',static_memory_size/1.d9,' GB'
+  print *,'                                = ',static_memory_size/1073741824.d0,' GiB'
+  print *
+
+! note: using less memory becomes an issue only if the strong scaling of the code is poor.
+!          Some users will run simulations with an executable using far less than 80% RAM per core
+!          if they prefer having a faster computational time (and use a higher number of cores).
+
+  print *,'   (should be below 80% or 90% of the memory installed per core)'
+  print *,'   (if significantly more, the job will not run by lack of memory)'
+  print *,'   (note that if significantly less, you waste a significant amount'
+  print *,'    of memory per processor core)'
+  print *,'   (but that can be perfectly acceptable if you can afford it and'
+  print *,'    want faster results by using more cores)'
+  print *
+  if (static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
+    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  else
+    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+  endif
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
+  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
+  print *
+
+  endif ! of if (PRINT_INFO_TO_SCREEN)
+
+  if (UNDO_ATTENUATION) then
+
+    if (PRINT_INFO_TO_SCREEN) then
+      print *,'*******************************************************************************'
+      print *,'Estimating optimal disk dumping interval for UNDO_ATTENUATION:'
+      print *,'*******************************************************************************'
+      print *
+    endif
+
+! optimal dumping interval calculation can only be done when SIMULATION_TYPE == 3 in the Par_file,
+! thus set it to that value here in this serial code even if it has a different value in the Par_file
+    saved_SIMULATION_TYPE = SIMULATION_TYPE
+    SIMULATION_TYPE = 3
+
+! evaluate the amount of static memory needed by the solver, but imposing that SIMULATION_TYPE = 3
+! because that is by far the most expensive setup for runs in terms of memory usage, thus that is
+! the type of run for which we need to make sure that everything fits in memory
+    call memory_eval(doubling_index,this_region_has_a_doubling, &
+                     ner,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                     ratio_sampling_array,NPROCTOT,NSPEC,NGLOB, &
+                     NSPECMAX_ANISO_IC,NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
+                     NSPECMAX_ANISO_MANTLE,NSPEC_CRUST_MANTLE_ATTENUATION, &
+                     NSPEC_INNER_CORE_ATTENUATION, &
+                     NSPEC_CRUST_MANTLE_STR_OR_ATT,NSPEC_INNER_CORE_STR_OR_ATT, &
+                     NSPEC_CRUST_MANTLE_STR_AND_ATT,NSPEC_INNER_CORE_STR_AND_ATT, &
+                     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_INNER_CORE_STRAIN_ONLY, &
+                     NSPEC_CRUST_MANTLE_ADJOINT, &
+                     NSPEC_OUTER_CORE_ADJOINT,NSPEC_INNER_CORE_ADJOINT, &
+                     NGLOB_CRUST_MANTLE_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                     NGLOB_INNER_CORE_ADJOINT,NSPEC_OUTER_CORE_ROT_ADJOINT, &
+                     NSPEC_CRUST_MANTLE_STACEY,NSPEC_OUTER_CORE_STACEY, &
+                     NGLOB_CRUST_MANTLE_OCEANS,NSPEC_OUTER_CORE_ROTATION, &
+                     NSPEC2D_BOTTOM,NSPEC2D_TOP,static_memory_size)
+
+    call compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
+                     static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
+
+! restore the simulation type that we have temporarily erased
+    SIMULATION_TYPE = saved_SIMULATION_TYPE
+
+    if (PRINT_INFO_TO_SCREEN) then
+
+    print *,'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
+    print *,'  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
+
+    print *
+    print *,'each time step to store in memory to undo attenuation will require storing ', &
+                  size_to_store_at_each_time_step,' GB per core'
+    print *
+    print *,'*******************************************************************************'
+    print *,'the optimal value is thus NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
+    print *,'*******************************************************************************'
+
+    print *
+    print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
+
+    print *
+    print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
+
+    print *
+    print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT,' GB for all cores'
+
+    print *
+    print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
+
+    print *
+    print *,'*******************************************************************************'
+    print *,'ALL dumpings on the disk will require storing ', &
+                   disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
+    print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
+    print *,'*******************************************************************************'
+    print *
+
+    endif
+
+  else
+
+    ! set to a dummy very large value
+    NT_DUMP_ATTENUATION_optimal = 100000000
+
+  endif
+
   ! copy number of elements and points in an include file for the solver
   open(unit=IOUT,file='OUTPUT_FILES/values_from_mesher.h',status='unknown',iostat=ier)
-  if( ier /= 0 ) stop 'error opening OUTPUT_FILES/values_from_mesher.h'
+  if (ier /= 0 ) stop 'Error opening OUTPUT_FILES/values_from_mesher.h'
 
   write(IOUT,*)
 
@@ -138,7 +313,7 @@
   write(IOUT,*) '!'
 
 ! the central cube is counted 6 times, therefore remove 5 times
-  if(INCLUDE_CENTRAL_CUBE) then
+  if (INCLUDE_CENTRAL_CUBE) then
     write(IOUT,*) '! these statistics include the central cube'
     subtract_central_cube_elems = 5.d0 * dble((NEX_XI/8))**3
     subtract_central_cube_points = 5.d0 * (dble(NEX_XI/8)*dble(NGLLX-1)+1.d0)**3
@@ -161,6 +336,8 @@
   write(IOUT,*) '! total elements per slice = ',sum(NSPEC)
   write(IOUT,*) '! total points per slice = ',sum(NGLOB)
   write(IOUT,*) '!'
+  write(IOUT,*) '! the time step of the solver will be DT = ',sngl(DT)
+  write(IOUT,*) '!'
 
   write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'
   write(IOUT,*) '! ---------------------------'
@@ -177,7 +354,7 @@
   write(IOUT,*) '!'
 
 ! display location of chunk if regional run
-  if(NCHUNKS /= 6) then
+  if (NCHUNKS /= 6) then
 
   write(IOUT,*) '! position of the mesh chunk at the surface:'
   write(IOUT,*) '! -----------------------------------------'
@@ -239,7 +416,7 @@
     ! convert geocentric to geographic colatitude
     call geocentric_2_geographic_dble(theta_corner,colat_corner)
 
-    if(phi_corner>PI) phi_corner=phi_corner-TWO_PI
+    if (phi_corner>PI) phi_corner=phi_corner-TWO_PI
 
     ! compute real position of the source
     lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
@@ -294,7 +471,7 @@
   write(IOUT,*) '! (but that can be perfectly acceptable if you can afford it and'
   write(IOUT,*) '!  want faster results by using more cores)'
   write(IOUT,*) '!'
-  if(static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
+  if (static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
     write(IOUT,*) '! size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
     write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
     write(IOUT,*) '!                                      = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
@@ -348,21 +525,21 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_INNER_CORE_ADJOINT = ',NSPEC_INNER_CORE_ADJOINT
 
   ! unused... (dynamic allocation used)
-  !if(ANISOTROPIC_KL) then
+  !if (ANISOTROPIC_KL) then
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',NSPEC_CRUST_MANTLE_ADJOINT
   !else
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_ANISO_KL = ',1
   !endif
 
   ! unused... (dynamic allocation used)
-  !if(APPROXIMATE_HESS_KL) then
+  !if (APPROXIMATE_HESS_KL) then
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',NSPEC_CRUST_MANTLE_ADJOINT
   !else
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_HESS = ',1
   !endif
 
   ! unused... (dynamic allocation used)
-  !if(NOISE_TOMOGRAPHY > 0) then
+  !if (NOISE_TOMOGRAPHY > 0) then
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',NSPEC_CRUST_MANTLE_ADJOINT
   !else
   !  write(IOUT,*) 'integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT_NOISE = ',1
@@ -384,63 +561,63 @@
 
 ! this to allow for code elimination by the compiler in the solver for performance
 
-  if(TRANSVERSE_ISOTROPY) then
+  if (TRANSVERSE_ISOTROPY) then
     write(IOUT,*) 'logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ANISOTROPIC_3D_MANTLE) then
+  if (ANISOTROPIC_3D_MANTLE) then
     write(IOUT,*) 'logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ANISOTROPIC_INNER_CORE) then
+  if (ANISOTROPIC_INNER_CORE) then
     write(IOUT,*) 'logical, parameter :: ANISOTROPIC_INNER_CORE_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ANISOTROPIC_INNER_CORE_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ATTENUATION) then
+  if (ATTENUATION) then
     write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ATTENUATION_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ATTENUATION_3D) then
+  if (ATTENUATION_3D) then
     write(IOUT,*) 'logical, parameter :: ATTENUATION_3D_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ATTENUATION_3D_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(ELLIPTICITY) then
+  if (ELLIPTICITY) then
     write(IOUT,*) 'logical, parameter :: ELLIPTICITY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ELLIPTICITY_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(GRAVITY) then
+  if (GRAVITY) then
     write(IOUT,*) 'logical, parameter :: GRAVITY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: GRAVITY_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(OCEANS) then
+  if (OCEANS) then
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: OCEANS_VAL = .false.'
   endif
   write(IOUT,*)
 
-  if(TOPOGRAPHY .or. OCEANS) then
+  if (TOPOGRAPHY .or. OCEANS) then
     write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = NX_BATHY'
     write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = NY_BATHY'
   else
@@ -449,7 +626,7 @@
   endif
   write(IOUT,*)
 
-  if(ROTATION) then
+  if (ROTATION) then
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .false.'
@@ -457,7 +634,7 @@
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = ',NSPEC_OUTER_CORE_ROTATION
   write(IOUT,*)
 
-  if(PARTIAL_PHYS_DISPERSION_ONLY) then
+  if (PARTIAL_PHYS_DISPERSION_ONLY) then
     write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .false.'
@@ -516,7 +693,7 @@
   write(IOUT,*)
 
   ! Deville routines only implemented for NGLLX = NGLLY = NGLLZ = 5
-  if( NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5 ) then
+  if (NGLLX == 5 .and. NGLLY == 5 .and. NGLLZ == 5) then
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.'
   else
     write(IOUT,*) 'logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .false.'
@@ -531,7 +708,7 @@
   endif
   write(IOUT,*)
 
-  if( MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) then
+  if (MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4) then
     write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = NSPEC_OUTER_CORE'
   else
     write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 1'
@@ -554,13 +731,13 @@
   NGLOB_XY_CM = 1
   NGLOB_XY_IC = 1
 
-  if( NCHUNKS /= 6 .and. ABSORBING_CONDITIONS ) then
+  if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
      NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
   else
      NGLOB_XY_CM = 1
   endif
 
-  if( ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION ) then
+  if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
     NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
   endif

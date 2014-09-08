@@ -29,6 +29,8 @@
 
 #include "mesh_constants_gpu.h"
 
+/* ----------------------------------------------------------------------------------------------- */
+
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_elastic_gpu,
                COMPUTE_STACEY_ELASTIC_GPU) (long *Mesh_pointer_f,
@@ -37,14 +39,15 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
 
   TRACE ("compute_stacey_elastic_gpu");
 
-  int num_abs_boundary_faces;
+  int num_abs_boundary_faces = 0;
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_abs_boundary_normal;
   gpu_realw_mem *d_abs_boundary_jacobian2D;
   gpu_realw_mem *d_wgllwgll;
   gpu_realw_mem *d_b_absorb_field;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -91,12 +94,10 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
 
   default:
     exit_on_error ("compute_stacey_elastic_gpu: unknown interface type");
-    break;
   }
 
   // checks if anything to do
-  if (num_abs_boundary_faces == 0)
-    return;
+  if (num_abs_boundary_faces == 0) return;
 
   // way 1
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -174,29 +175,16 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
 #endif
   // adjoint simulations: stores absorbed wavefield part
   if (mp->save_forward) {
+    // explicitly waits until kernel is finished
+    gpuSynchronize();
     // copies array to CPU
-#ifdef USE_OPENCL
-    if (run_opencl) {
-      clCheck (clEnqueueReadBuffer (mocl.command_queue, d_b_absorb_field->ocl, CL_TRUE, 0,
-                                    NDIM * NGLL2 * num_abs_boundary_faces * sizeof (realw),
-                                    absorb_field, 0, NULL, NULL));
-    }
-#endif
-#ifdef USE_CUDA
-    if (run_cuda) {
-      // explicitly waits until previous compute stream finishes
-      // (cudaMemcpy implicitly synchronizes all other cuda operations)
-      cudaStreamSynchronize(mp->compute_stream);
-      print_CUDA_error_if_any(cudaMemcpy(absorb_field,d_b_absorb_field,
-                                         NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyDeviceToHost),7701);
-    }
-#endif
+    gpuCopy_from_device_realw (d_b_absorb_field, absorb_field, NDIM * NGLL2 * num_abs_boundary_faces);
   }
 
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_elastic_gpu");
-#endif
+  GPU_ERROR_CHECKING ("compute_stacey_elastic_gpu");
 }
+
+/* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
 void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
@@ -206,11 +194,12 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
 
   TRACE ("compute_stacey_elastic_backward_gpu");
 
-  int num_abs_boundary_faces;
+  int num_abs_boundary_faces = 0;
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_b_absorb_field;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -244,13 +233,11 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
     break;
 
   default:
-    exit_on_error ("compute_stacey_elastic_gpu: unknown interface type");
-    break;
+    exit_on_error ("compute_stacey_elastic_backward_gpu: unknown interface type");
   }
 
   // checks if anything to do
-  if (num_abs_boundary_faces == 0)
-    return;
+  if (num_abs_boundary_faces == 0) return;
 
   // way 1
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -263,19 +250,15 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (num_abs_boundary_faces, &num_blocks_x, &num_blocks_y);
 
+  // adjoint simulations: needs absorbing boundary buffer
+  // copies array to GPU
+  gpuCopy_todevice_realw (d_b_absorb_field, absorb_field, NDIM * NGLL2 * num_abs_boundary_faces);
 
 #ifdef USE_OPENCL
   if (run_opencl) {
     size_t global_work_size[2];
     size_t local_work_size[2];
     cl_uint idx = 0;
-
-    // adjoint simulations: needs absorbing boundary buffer
-    // copies array to GPU
-
-    clCheck (clEnqueueWriteBuffer (mocl.command_queue, d_b_absorb_field->ocl, CL_FALSE, 0,
-                                   NDIM * NGLL2 * num_abs_boundary_faces * sizeof (realw),
-                                   absorb_field, 0, NULL, NULL));
 
     // absorbing boundary contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
@@ -296,18 +279,14 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_elastic_backward_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_elastic_backward_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
   if (run_cuda) {
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
-
-    // adjoint simulations: needs absorbing boundary buffer
-    // copies array to GPU
-    print_CUDA_error_if_any(cudaMemcpy(d_b_absorb_field,absorb_field,
-                                       NDIM*NGLL2*num_abs_boundary_faces*sizeof(realw),cudaMemcpyHostToDevice),7700);
 
     // absorbing boundary contributions
     compute_stacey_elastic_backward_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle.cuda,
@@ -321,9 +300,8 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
                                                              mp->d_ibool_crust_mantle.cuda);
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_elastic_backward_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_stacey_elastic_backward_gpu");
 }
 
 
@@ -338,18 +316,19 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 
   TRACE ("compute_stacey_elastic_undoatt_gpu");
 
-  int num_abs_boundary_faces;
+  int num_abs_boundary_faces = 0;
+
   gpu_int_mem *d_abs_boundary_ispec;
   gpu_realw_mem *d_abs_boundary_normal;
   gpu_realw_mem *d_abs_boundary_jacobian2D;
   gpu_realw_mem *d_wgllwgll;
   gpu_realw_mem *d_b_absorb_field = NULL;
 
-  Mesh *mp = (Mesh *) *Mesh_pointer_f;   //get mesh pointer out of Fortran integer container
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // checks if anything to do
-  if (mp->simulation_type /= 3 || mp->save_forward)
-    return;
+  if (mp->simulation_type /= 3 || mp->save_forward) return;
 
   // absorbing boundary type
   int interface_type = *itype;
@@ -392,12 +371,10 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 
   default:
     exit_on_error ("compute_stacey_elastic_undoatt_gpu: unknown interface type");
-    break;
   }
 
   // checks if anything to do
-  if (num_abs_boundary_faces == 0)
-    return;
+  if (num_abs_boundary_faces == 0) return;
 
   // way 1
   // > NGLLSQUARE==NGLL2==25, but we handle this inside kernel
@@ -442,7 +419,8 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
     global_work_size[0] = num_blocks_x * blocksize;
     global_work_size[1] = num_blocks_y;
 
-    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_elastic_kernel, 2, NULL, global_work_size, local_work_size, 0, NULL, NULL));
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_stacey_elastic_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
   }
 #endif
 #ifdef USE_CUDA
@@ -452,27 +430,26 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 
     // absorbing boundary contributions
     compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_veloc_crust_mantle.cuda,
-                                                    mp->d_b_accel_crust_mantle.cuda,
-                                                    interface_type,
-                                                    num_abs_boundary_faces,
-                                                    d_abs_boundary_ispec->cuda,
-                                                    mp->d_nkmin_xi_crust_mantle.cuda,
-                                                    mp->d_nkmin_eta_crust_mantle.cuda,
-                                                    mp->d_njmin_crust_mantle.cuda,
-                                                    mp->d_njmax_crust_mantle.cuda,
-                                                    mp->d_nimin_crust_mantle.cuda,
-                                                    mp->d_nimax_crust_mantle.cuda,
-                                                    d_abs_boundary_normal->cuda,
-                                                    d_abs_boundary_jacobian2D->cuda,
-                                                    d_wgllwgll->cuda,
-                                                    mp->d_ibool_crust_mantle.cuda,
-                                                    mp->d_rho_vp_crust_mantle.cuda,
-                                                    mp->d_rho_vs_crust_mantle.cuda,
-                                                    mp->save_forward,
-                                                    d_b_absorb_field->cuda);
+                                                                         mp->d_b_accel_crust_mantle.cuda,
+                                                                         interface_type,
+                                                                         num_abs_boundary_faces,
+                                                                         d_abs_boundary_ispec->cuda,
+                                                                         mp->d_nkmin_xi_crust_mantle.cuda,
+                                                                         mp->d_nkmin_eta_crust_mantle.cuda,
+                                                                         mp->d_njmin_crust_mantle.cuda,
+                                                                         mp->d_njmax_crust_mantle.cuda,
+                                                                         mp->d_nimin_crust_mantle.cuda,
+                                                                         mp->d_nimax_crust_mantle.cuda,
+                                                                         d_abs_boundary_normal->cuda,
+                                                                         d_abs_boundary_jacobian2D->cuda,
+                                                                         d_wgllwgll->cuda,
+                                                                         mp->d_ibool_crust_mantle.cuda,
+                                                                         mp->d_rho_vp_crust_mantle.cuda,
+                                                                         mp->d_rho_vs_crust_mantle.cuda,
+                                                                         mp->save_forward,
+                                                                         d_b_absorb_field->cuda);
   }
 #endif
-#ifdef ENABLE_VERY_SLOW_ERROR_CHECKING
-  exit_on_gpu_error ("compute_stacey_elastic_undoatt_gpu");
-#endif
+
+  GPU_ERROR_CHECKING ("compute_stacey_elastic_undoatt_gpu");
 }

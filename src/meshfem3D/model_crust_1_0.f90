@@ -92,7 +92,7 @@
            crust_vs(CRUST_NP,CRUST_NLA,CRUST_NLO), &
            crust_rho(CRUST_NP,CRUST_NLA,CRUST_NLO), &
            stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating crustal arrays')
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustal arrays')
 
   ! initializes
   crust_vp(:,:,:) = ZERO
@@ -101,7 +101,7 @@
   crust_thickness(:,:,:) = ZERO
 
   ! the variables read are declared and stored in structure model_crust_1_0_par
-  if(myrank == 0) call read_crust_1_0_model()
+  if (myrank == 0) call read_crust_1_0_model()
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(crust_thickness,CRUST_NP*CRUST_NLA*CRUST_NLO)
@@ -145,7 +145,7 @@
 
   ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
   ! note: but for Roland_Sylvain gravity calculations we include the ice
-  if( INCLUDE_ICE_IN_CRUST ) then
+  if (INCLUDE_ICE_IN_CRUST) then
     thicks_2 = thicks(2)
   else
     thicks_2 = ZERO
@@ -184,31 +184,31 @@
   found_crust = .true.
 
   ! gets corresponding crustal velocities and density
-  if(x > x2 .and. INCLUDE_ICE_IN_CRUST ) then
+  if (x > x2 .and. INCLUDE_ICE_IN_CRUST) then
     vp = vps(2)
     vs = vss(2)
     rho = rhos(2)
-  else if(x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+  else if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
     vp = vps(3)
     vs = vss(3)
     rho = rhos(3)
-  else if(x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+  else if (x > x4 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
     vp = vps(4)
     vs = vss(4)
     rho = rhos(4)
-  else if(x > x5 .and. INCLUDE_SEDIMENTS_IN_CRUST ) then
+  else if (x > x5 .and. INCLUDE_SEDIMENTS_IN_CRUST) then
     vp = vps(5)
     vs = vss(5)
     rho = rhos(5)
-  else if(x > x6) then
+  else if (x > x6) then
     vp = vps(6)
     vs = vss(6)
     rho = rhos(6)
-  else if(x > x7) then
+  else if (x > x7) then
     vp = vps(7)
     vs = vss(7)
     rho = rhos(7)
-  else if(x > x8 .or. elem_in_crust) then
+  else if (x > x8 .or. elem_in_crust) then
     ! takes lower crustal values only if x is slightly above moho depth or
     ! if elem_in_crust is set
     !
@@ -269,43 +269,43 @@
 
   ! allocates temporary array
   allocate(bnd(CRUST_NP,CRUST_NLA,CRUST_NLO),stat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error allocating crustal arrays in read routine')
+  if (ier /= 0 ) call exit_MPI(0,'Error allocating crustal arrays in read routine')
 
   ! initializes
   bnd(:,:,:) = ZERO
 
   ! opens crust1.0 data files
   open(51,file='DATA/crust1.0/crust1.vp',action='read',status='old',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "DATA/crust1.0/crust1.vp": ', ier
-    call exit_MPI(0,'error model crust1.0: file not found DATA/crust1.0/crust1.vp')
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "DATA/crust1.0/crust1.vp": ', ier
+    call exit_MPI(0,'Error model crust1.0: file not found DATA/crust1.0/crust1.vp')
   endif
 
   open(52,file='DATA/crust1.0/crust1.vs',action='read',status='old',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "DATA/crust1.0/crust1.vs": ', ier
-    call exit_MPI(0,'error model crust1.0: file not found DATA/crust1.0/crust1.vs')
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "DATA/crust1.0/crust1.vs": ', ier
+    call exit_MPI(0,'Error model crust1.0: file not found DATA/crust1.0/crust1.vs')
   endif
 
   open(53,file='DATA/crust1.0/crust1.rho',action='read',status='old',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "DATA/crust1.0/crust1.rho": ', ier
-    call exit_MPI(0,'error model crust1.0: file not found DATA/crust1.0/crust1.rho')
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "DATA/crust1.0/crust1.rho": ', ier
+    call exit_MPI(0,'Error model crust1.0: file not found DATA/crust1.0/crust1.rho')
   endif
 
   open(54,file='DATA/crust1.0/crust1.bnds',action='read',status='old',iostat=ier)
-  if ( ier /= 0 ) then
-    write(IMAIN,*) 'error opening "DATA/crust1.0/crust1.bnds": ', ier
-    call exit_MPI(0,'error model crust1.0: file not found DATA/crust1.0/crust1.bnds')
+  if (ier /= 0) then
+    write(IMAIN,*) 'Error opening "DATA/crust1.0/crust1.bnds": ', ier
+    call exit_MPI(0,'Error model crust1.0: file not found DATA/crust1.0/crust1.bnds')
   endif
 
   ! reads in data values
   do j = 1,CRUST_NLA
     do i = 1,CRUST_NLO
-      read(51,*)(crust_vp(k,j,i),k=1,CRUST_NP)
-      read(52,*)(crust_vs(k,j,i),k=1,CRUST_NP)
-      read(53,*)(crust_rho(k,j,i),k=1,CRUST_NP)
-      read(54,*)(bnd(k,j,i),k=1,CRUST_NP)
+      read(51,*)(crust_vp(k,j,i),k = 1,CRUST_NP)
+      read(52,*)(crust_vs(k,j,i),k = 1,CRUST_NP)
+      read(53,*)(crust_rho(k,j,i),k = 1,CRUST_NP)
+      read(54,*)(bnd(k,j,i),k = 1,CRUST_NP)
     enddo
   enddo
 
@@ -328,13 +328,13 @@
   deallocate(bnd)
 
   ! output debug info if needed
-  if( DEBUG_FILE_OUTPUT ) then
+  if (DEBUG_FILE_OUTPUT) then
 
     ! allocate temporary arrays
     allocate(thc(CRUST_NLA,CRUST_NLO), &
              ths(CRUST_NLA,CRUST_NLO), &
              stat=ier)
-    if( ier /= 0 ) call exit_MPI(0,'error allocating crustal arrays in read routine')
+    if (ier /= 0 ) call exit_MPI(0,'Error allocating crustal arrays in read routine')
 
     thc(:,:) = ZERO
     ths(:,:) = ZERO
@@ -353,7 +353,7 @@
 
         ! crustal thickness with ice
         !thc(j,i) = crust_thickness(2,j,i) &
-        !         + crust_thickness(3,j,i) + crust_thickness(4,j,i) + crust_thickness(5,j,i)  &
+        !         + crust_thickness(3,j,i) + crust_thickness(4,j,i) + crust_thickness(5,j,i) &
         !         + crust_thickness(6,j,i) + crust_thickness(7,j,i) + crust_thickness(8,j,i)
 
         ! sediment thickness
@@ -363,12 +363,12 @@
         ! crustal thickness without ice
         ! note: etopo1 has topography including ice ("ice surface" version) and at base of ice sheets ("bedrock" version)
         !       see: http://www.ngdc.noaa.gov/mgg/global/global.html
-        thc(j,i) = crust_thickness(3,j,i) + crust_thickness(4,j,i) + crust_thickness(5,j,i)  &
+        thc(j,i) = crust_thickness(3,j,i) + crust_thickness(4,j,i) + crust_thickness(5,j,i) &
                  + crust_thickness(6,j,i) + crust_thickness(7,j,i) + crust_thickness(8,j,i)
 
         ! limit moho thickness
-        if(thc(j,i) > h_moho_max) h_moho_max = thc(j,i)
-        if(thc(j,i) < h_moho_min) h_moho_min = thc(j,i)
+        if (thc(j,i) > h_moho_max) h_moho_max = thc(j,i)
+        if (thc(j,i) < h_moho_min) h_moho_min = thc(j,i)
 
         write(77,*)(90.0-j+0.5),(-180.0+i-0.5),thc(j,i)+crust_thickness(2,j,i),thc(j,i),ths(j,i),crust_thickness(2,j,i)
       enddo
@@ -376,7 +376,7 @@
     close(77)
 
     ! checks min/max
-    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
+    if (h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
 
     ! debug: file output for smoothed data
     open(77,file='tmp-crust1.0-smooth.dat',status='unknown')
@@ -394,8 +394,8 @@
         call model_crust_1_0(lat,lon,x,vp,vs,rho,moho,found_crust,.false.)
 
         ! limit moho thickness
-        if(moho > h_moho_max) h_moho_max = moho
-        if(moho < h_moho_min) h_moho_min = moho
+        if (moho > h_moho_max) h_moho_max = moho
+        if (moho < h_moho_min) h_moho_min = moho
 
         write(77,*)lat,lon,moho*R_EARTH_KM, &
          vp*(R_EARTH_KM*dsqrt(PI*GRAV*RHOAV)),vs*(R_EARTH_KM*dsqrt(PI*GRAV*RHOAV)),rho*(RHOAV/1000.0d0)
@@ -404,12 +404,12 @@
     close(77)
 
     ! checks min/max
-    if(h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
+    if (h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
 
     ! frees memory
     deallocate(ths,thc)
 
-  endif ! of if( DEBUG_FILE_OUTPUT )
+  endif ! of if (DEBUG_FILE_OUTPUT )
 
   end subroutine read_crust_1_0_model
 
@@ -458,24 +458,24 @@
   integer :: i,icolat,ilon
 
   ! checks latitude/longitude
-  if(lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
-    print*,'error in lat/lon:',lat,lon
-    stop 'error in latitude/longitude range in crust1.0'
+  if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
+    print*,'Error in lat/lon:',lat,lon
+    stop 'Error in latitude/longitude range in crust1.0'
   endif
 
   ! makes sure lat/lon are within crust1.0 range
-  if(lat==90.0d0) lat=89.9999d0
-  if(lat==-90.0d0) lat=-89.9999d0
-  if(lon==180.0d0) lon=179.9999d0
-  if(lon==-180.0d0) lon=-179.9999d0
+  if (lat==90.0d0) lat=89.9999d0
+  if (lat==-90.0d0) lat=-89.9999d0
+  if (lon==180.0d0) lon=179.9999d0
+  if (lon==-180.0d0) lon=-179.9999d0
 
   ! sets up smoothing points based on cap smoothing
   cap_degree = CAP_SMOOTHING_DEGREE_DEFAULT
 
   ! checks if inside/outside of critical region for mesh stretching
-  if( SMOOTH_CRUST_EVEN_MORE ) then
+  if (SMOOTH_CRUST_EVEN_MORE) then
     dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
-    if( dist < CRITICAL_RANGE ) then
+    if (dist < CRITICAL_RANGE) then
       ! increases cap smoothing degree
       ! scales between -1 at center and 0 at border
       dist = dist / CRITICAL_RANGE - ONE
@@ -496,29 +496,29 @@
   thick(:) = ZERO
 
   ! loops over weight points
-  do i=1,NTHETA*NPHI
+  do i = 1,NTHETA*NPHI
     ! gets lat/lon indices
 
     ! checks latitude/longitude value
-    if(xlat(i) > 90.0d0 .or. xlat(i) < -90.0d0 .or. xlon(i) > 180.0d0 .or. xlon(i) < -180.0d0) then
-      print*,'error in lat/lon range:',xlat(i),xlon(i)
-      stop 'error in latitude/longitude range in crust1.0'
+    if (xlat(i) > 90.0d0 .or. xlat(i) < -90.0d0 .or. xlon(i) > 180.0d0 .or. xlon(i) < -180.0d0) then
+      print*,'Error in lat/lon range:',xlat(i),xlon(i)
+      stop 'Error in latitude/longitude range in crust1.0'
     endif
 
     icolat = int(1 + (90.d0-xlat(i)) )
-    if(icolat == 181) icolat = 180
+    if (icolat == 181) icolat = 180
     ! checks
-    if(icolat>180 .or. icolat<1) then
-      print*,'error in lat/lon range: icolat = ',icolat
-      stop 'error in routine icolat/ilon crust1.0'
+    if (icolat>180 .or. icolat<1) then
+      print*,'Error in lat/lon range: icolat = ',icolat
+      stop 'Error in routine icolat/ilon crust1.0'
     endif
 
     ilon = int(1 + (180.d0+xlon(i)) )
-    if(ilon == 361) ilon = 1
+    if (ilon == 361) ilon = 1
     ! checks
-    if(ilon<1 .or. ilon>360) then
-      print*,'error in lat/lon range: ilon = ',ilon
-      stop 'error in routine icolat/ilon crust1.0'
+    if (ilon<1 .or. ilon>360) then
+      print*,'Error in lat/lon range: ilon = ',ilon
+      stop 'Error in routine icolat/ilon crust1.0'
     endif
 
     ! gets crust values
@@ -528,7 +528,7 @@
     h_sed = thickl(3) + thickl(4) + thickl(5)
 
     ! takes upper crust value if sediment too thin
-    if( h_sed < MINIMUM_SEDIMENT_THICKNESS ) then
+    if (h_sed < MINIMUM_SEDIMENT_THICKNESS) then
       velpl(3) = velpl(6)
       velpl(4) = velpl(6)
       velpl(5) = velpl(6)

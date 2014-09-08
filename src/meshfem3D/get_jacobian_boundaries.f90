@@ -90,8 +90,8 @@
   double precision,dimension(NGLLZ):: zigll
 
 ! check that the parameter file is correct
-  if(NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
-  if(NGNOD2D /= 9) call exit_MPI(myrank,'surface elements should have 9 control nodes')
+  if (NGNOD /= 27) call exit_MPI(myrank,'elements should have 27 control nodes')
+  if (NGNOD2D /= 9) call exit_MPI(myrank,'surface elements should have 9 control nodes')
 
   ispecb1 = 0
   ispecb2 = 0
@@ -100,18 +100,18 @@
   ispecb5 = 0
   ispecb6 = 0
 
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
   ! determine if the element falls on a boundary
 
   ! on boundary: xmin
 
-    if(iboun(1,ispec)) then
+    if (iboun(1,ispec)) then
 
       ispecb1=ispecb1+1
       ibelm_xmin(ispecb1)=ispec
 
-      if ( .not. USE_GLL) then
+      if (.not. USE_GLL) then
           !   specify the 9 nodes for the 2-D boundary element
           xelm(1)=xstore(1,1,1,ispec)
           yelm(1)=ystore(1,1,1,ispec)
@@ -161,12 +161,12 @@
 
   ! on boundary: xmax
 
-    if(iboun(2,ispec)) then
+    if (iboun(2,ispec)) then
 
       ispecb2=ispecb2+1
       ibelm_xmax(ispecb2)=ispec
 
-      if ( .not. USE_GLL) then
+      if (.not. USE_GLL) then
           !   specify the 9 nodes for the 2-D boundary element
           xelm(1)=xstore(NGLLX,1,1,ispec)
           yelm(1)=ystore(NGLLX,1,1,ispec)
@@ -217,12 +217,12 @@
 
   ! on boundary: ymin
 
-    if(iboun(3,ispec)) then
+    if (iboun(3,ispec)) then
 
       ispecb3=ispecb3+1
       ibelm_ymin(ispecb3)=ispec
 
-      if ( .not. USE_GLL) then
+      if (.not. USE_GLL) then
           !   specify the 9 nodes for the 2-D boundary element
           xelm(1)=xstore(1,1,1,ispec)
           yelm(1)=ystore(1,1,1,ispec)
@@ -257,7 +257,7 @@
 
      else
           ! get 25 GLL points for ymin
-          do k =1 ,NGLLZ
+          do k = 1 ,NGLLZ
              do i = 1,NGLLX
                 xelm2D(i,k) = xstore(i,1,k,ispec)
                 yelm2D(i,k) = ystore(i,1,k,ispec)
@@ -273,12 +273,12 @@
 
   ! on boundary: ymax
 
-    if(iboun(4,ispec)) then
+    if (iboun(4,ispec)) then
 
       ispecb4=ispecb4+1
       ibelm_ymax(ispecb4)=ispec
 
-      if ( .not. USE_GLL) then
+      if (.not. USE_GLL) then
           !   specify the 9 nodes for the 2-D boundary element
           xelm(1)=xstore(1,NGLLY,1,ispec)
           yelm(1)=ystore(1,NGLLY,1,ispec)
@@ -313,7 +313,7 @@
 
       else
           ! get 25 GLL points for ymax
-          do k =1,NGLLZ
+          do k = 1,NGLLZ
              do i = 1,NGLLX
                 xelm2D(i,k) = xstore(i,NGLLY,k,ispec)
                 yelm2D(i,k) = ystore(i,NGLLY,k,ispec)
@@ -329,12 +329,12 @@
 
   ! on boundary: bottom
 
-    if(iboun(5,ispec)) then
+    if (iboun(5,ispec)) then
 
       ispecb5=ispecb5+1
       ibelm_bottom(ispecb5)=ispec
 
-      if ( .not. USE_GLL) then
+      if (.not. USE_GLL) then
           xelm(1)=xstore(1,1,1,ispec)
           yelm(1)=ystore(1,1,1,ispec)
           zelm(1)=zstore(1,1,1,ispec)
@@ -385,12 +385,12 @@
 
   ! on boundary: top
 
-    if(iboun(6,ispec)) then
+    if (iboun(6,ispec)) then
 
       ispecb6=ispecb6+1
       ibelm_top(ispecb6)=ispec
 
-      if ( .not. USE_GLL) then
+      if (.not. USE_GLL) then
           xelm(1)=xstore(1,1,NGLLZ,ispec)
           yelm(1)=ystore(1,1,NGLLZ,ispec)
           zelm(1)=zstore(1,1,NGLLZ,ispec)
@@ -443,13 +443,13 @@
 
 
 ! check theoretical value of elements at the bottom
-  if(ispecb5 /= NSPEC2D_BOTTOM) then
-    print*,'error ispecb5:',ispecb5,NSPEC2D_BOTTOM
+  if (ispecb5 /= NSPEC2D_BOTTOM) then
+    print*,'Error ispecb5:',ispecb5,NSPEC2D_BOTTOM
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM')
   endif
 
 ! check theoretical value of elements at the top
-  if(ispecb6 /= NSPEC2D_TOP) call exit_MPI(myrank,'ispecb6 should equal NSPEC2D_TOP')
+  if (ispecb6 /= NSPEC2D_TOP) call exit_MPI(myrank,'ispecb6 should equal NSPEC2D_TOP')
 
   nspec2D_xmin = ispecb1
   nspec2D_xmax = ispecb2
@@ -481,8 +481,8 @@
   double precision xxi,xeta,yxi,yeta,zxi,zeta
   double precision unx,uny,unz,jacobian
 
-  do j=1,NGLLB
-    do i=1,NGLLA
+  do j = 1,NGLLB
+    do i = 1,NGLLA
 
     xxi=ZERO
     xeta=ZERO
@@ -491,7 +491,7 @@
     zxi=ZERO
     zeta=ZERO
 
-    do ia=1,NGNOD2D
+    do ia = 1,NGNOD2D
       xxi=xxi+dershape2D(1,ia,i,j)*xelm(ia)
       xeta=xeta+dershape2D(2,ia,i,j)*xelm(ia)
       yxi=yxi+dershape2D(1,ia,i,j)*yelm(ia)
@@ -506,7 +506,7 @@
     unz=xxi*yeta-xeta*yxi
     jacobian=dsqrt(unx**2+uny**2+unz**2)
 
-    if(jacobian <= ZERO) call exit_MPI(myrank,'2D Jacobian undefined')
+    if (jacobian <= ZERO) call exit_MPI(myrank,'2D Jacobian undefined')
 
     !   normalize normal vector and store surface Jacobian
 

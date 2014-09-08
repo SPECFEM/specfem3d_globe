@@ -26,9 +26,9 @@
 !=====================================================================
 
   subroutine meshfem3D_models_broadcast(myrank,NSPEC, &
-                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
-                        R80,R220,R670,RCMB,RICB, &
-                        LOCAL_PATH)
+                                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
+                                        R80,R220,R670,RCMB,RICB, &
+                                        LOCAL_PATH)
 
 ! preparing model parameter coefficients on all processes
 
@@ -36,12 +36,12 @@
 
   implicit none
 
-  integer myrank
+  integer :: myrank
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
 
-  integer MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+  integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
-  double precision R80,R220,R670,RCMB,RICB
+  double precision :: R80,R220,R670,RCMB,RICB
 
   character(len=150) :: LOCAL_PATH
 
@@ -52,7 +52,7 @@
 !---
 
   ! GLL model uses S29EA as reference 3D model
-  if( THREE_D_MODEL == THREE_D_MODEL_GLL ) then
+  if (THREE_D_MODEL == THREE_D_MODEL_GLL) then
     ! sets to initial reference model from which iterations started
     THREE_D_MODEL = GLL_REFERENCE_MODEL
     ! sets flag to use GLL model
@@ -62,10 +62,10 @@
   endif
 
   ! sets up spline coefficients for ellipticity
-  if(ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  if (ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   ! read topography and bathymetry file
-  if(TOPOGRAPHY) call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
+  if (TOPOGRAPHY) call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
 
   ! reads 1D reference models
   ! re-defines/initializes models 1066a and ak135 and ref
@@ -87,7 +87,7 @@
 
 
   ! reads in 3D mantle models
-  if(ISOTROPIC_3D_MANTLE) then
+  if (ISOTROPIC_3D_MANTLE) then
 
     select case( THREE_D_MODEL )
 
@@ -135,27 +135,34 @@
   endif
 
   ! arbitrary mantle models
-  if(HETEROGEN_3D_MANTLE) &
+  if (HETEROGEN_3D_MANTLE) &
     call model_heterogen_mntl_broadcast(myrank)
 
   ! anisotropic mantle
-  if(ANISOTROPIC_3D_MANTLE) &
+  if (ANISOTROPIC_3D_MANTLE) &
     call model_aniso_mantle_broadcast(myrank)
 
+  ! Enclose this in an ifdef so we don't link to netcdf
+  ! if we don't need it.
+#if defined (CEM)
+  if (CEM_REQUEST .or. CEM_ACCEPT) &
+    call model_cem_broadcast(myrank)
+#endif
+
   ! crustal model
-  if(CRUSTAL) &
+  if (CRUSTAL) &
     call meshfem3D_crust_broadcast(myrank)
 
   ! GLL model
-  if( MGLL_V%MODEL_GLL ) &
+  if (MGLL_V%MODEL_GLL ) &
     call model_gll_broadcast(myrank,MGLL_V,NSPEC)
 
   ! attenuation
-  if(ATTENUATION ) then
+  if (ATTENUATION) then
     call model_attenuation_broadcast(myrank,AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 
     ! 3D attenuation
-    if( ATTENUATION_3D) then
+    if (ATTENUATION_3D) then
       ! Colleen's model defined originally between 24.4km and 650km
       call model_atten3D_QRFSI12_broadcast(myrank)
     else
@@ -191,22 +198,22 @@
 !
 !---
 
-  select case (ITYPE_CRUSTAL_MODEL )
+  select case(ITYPE_CRUSTAL_MODEL )
 
-    case (ICRUST_CRUST1)
+    case(ICRUST_CRUST1)
       ! crust 1.0
       call model_crust_1_0_broadcast(myrank)
 
-    case (ICRUST_CRUST2)
+    case(ICRUST_CRUST2)
       ! default
       ! crust 2.0
       call model_crust_2_0_broadcast(myrank)
 
-    case (ICRUST_CRUSTMAPS)
+    case(ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps_broadcast(myrank)
 
-    case (ICRUST_EPCRUST)
+    case(ICRUST_EPCRUST)
       ! EPcrust
       call model_epcrust_broadcast(myrank)
 
@@ -259,11 +266,11 @@
 !---
 
   ! gets 1-D reference model parameters
-  select case ( REFERENCE_1D_MODEL )
+  select case( REFERENCE_1D_MODEL )
 
     case(REFERENCE_MODEL_PREM)
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
-      if(TRANSVERSE_ISOTROPY) then
+      if (TRANSVERSE_ISOTROPY) then
         ! get the anisotropic PREM parameters
         call model_prem_aniso(myrank,r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
                   Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
@@ -278,8 +285,8 @@
     case(REFERENCE_MODEL_1DREF)
       ! 1D-REF also known as STW105 (by Kustowski et al.) - used also as background for 3D models
       call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
-      if(.not. TRANSVERSE_ISOTROPY) then
-        if(.not. ISOTROPIC_3D_MANTLE) then
+      if (.not. TRANSVERSE_ISOTROPY) then
+        if (.not. ISOTROPIC_3D_MANTLE) then
           ! this case here is only executed for 1D_ref_iso
           ! calculates isotropic values
           vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
@@ -319,9 +326,9 @@
   end select
 
   ! needs to set vpv,vph,vsv,vsh and eta_aniso for isotropic models
-  if( .not. TRANSVERSE_ISOTROPY ) then
+  if (.not. TRANSVERSE_ISOTROPY) then
      ! in the case of s362iso we want to save the anisotropic constants for the Voight average
-     if(.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF .and. ISOTROPIC_3D_MANTLE)) then
+     if (.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF .and. ISOTROPIC_3D_MANTLE)) then
       vpv = vp
       vph = vp
       vsv = vs
@@ -337,18 +344,26 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp,&
                               vpv,vph,vsv,vsh,eta_aniso, &
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
-                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+                              c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
+#if defined (CEM)
+                              ,ispec,i,j,k
+#endif
+                              )
 
   use meshfem3D_models_par
 
+
   implicit none
 
+#if defined (CEM)
+  ! CEM needs these to determine iglob
+  integer, intent (in) :: ispec, i, j, k
+#endif
   integer iregion_code
   double precision r_prem
   double precision rho,dvp
@@ -389,7 +404,7 @@
 !---
 
   ! sets flag when mantle should not be extended to surface
-  if(r_prem >= RMOHO/R_EARTH .and. .not. CRUSTAL) then
+  if (r_prem >= RMOHO/R_EARTH .and. .not. CRUSTAL) then
     suppress_mantle_extension = .true.
   endif
 
@@ -400,14 +415,14 @@
   !
   ! note: in general, models here make use of perturbation values with respect to their
   !          corresponding 1-D reference models
-  if( ISOTROPIC_3D_MANTLE .and. r_prem > RCMB/R_EARTH .and. .not. suppress_mantle_extension) then
+  if (ISOTROPIC_3D_MANTLE .and. r_prem > RCMB/R_EARTH .and. .not. suppress_mantle_extension) then
 
     ! extend 3-D mantle model above the Moho to the surface before adding the crust
-    if(r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
+    if (r_prem > RCMB/R_EARTH .and. r_prem < RMOHO/R_EARTH) then
       ! GLL point is in mantle region, takes exact location
       r_used = r
-    else ! else if(r_prem >= RMOHO/R_EARTH) then
-      if( CRUSTAL ) then
+    else ! else if (r_prem >= RMOHO/R_EARTH) then
+      if (CRUSTAL) then
         ! GLL point is above moho
         ! takes radius slightly below moho radius, this will then "extend the mantle up to the surface";
         ! crustal values will be superimposed later on
@@ -442,9 +457,10 @@
         vsv=vsv*(1.0d0+dvs)
         vsh=vsh*(1.0d0+dvs)
         ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
-        if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
-            .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
-          if(r_used > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
+        if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+          .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
+        ! makes sure radius is fine
+        if (r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
             call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
             vpv=vpv*(1.0d0+dvp)
             vph=vph*(1.0d0+dvp)
@@ -461,9 +477,9 @@
 
       case(THREE_D_MODEL_JP3D)
         ! jp3d1994
-        if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
-            .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
-          if(r_used > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
+        if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+            .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
+          if (r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
             call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
             vpv=vpv*(1.0d0+dvp)
             vph=vph*(1.0d0+dvp)
@@ -481,7 +497,7 @@
         call model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
 
         ! to use speed values from the 1D reference model but with 3D mesh variations
-        if( USE_1D_REFERENCE ) then
+        if (USE_1D_REFERENCE) then
           ! sets all 3D variations in the mantle to zero
           dvpv = 0.d0
           dvph = 0.d0
@@ -489,7 +505,7 @@
           dvsh = 0.d0
         endif
 
-        if(TRANSVERSE_ISOTROPY) then
+        if (TRANSVERSE_ISOTROPY) then
           vpv=vpv*(1.0d0+dble(dvpv))
           vph=vph*(1.0d0+dble(dvph))
           vsv=vsv*(1.0d0+dble(dvsv))
@@ -536,7 +552,7 @@
   endif ! ISOTROPIC_3D_MANTLE
 
   ! heterogen model
-  if( HETEROGEN_3D_MANTLE .and. .not. suppress_mantle_extension ) then
+  if (HETEROGEN_3D_MANTLE .and. .not. suppress_mantle_extension) then
     call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
     call reduce(theta,phi)
     call model_heterogen_mantle(r_used,theta,phi,dvs,dvp,drho)
@@ -547,20 +563,20 @@
     rho=rho*(1.0d0+drho)
   endif ! HETEROGEN_3D_MANTLE
 
-  if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
+  if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
     call model_aniso_inner_core(r_prem,c11,c33,c12,c13,c44,REFERENCE_1D_MODEL, &
                                 vpv,vph,vsv,vsh,rho,eta_aniso)
 
-  if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+  if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
 
     ! anisotropic model between the Moho and 670 km (change to CMB if desired)
-    if( r_prem > R670/R_EARTH .and. .not. suppress_mantle_extension ) then
+    if (r_prem > R670/R_EARTH .and. .not. suppress_mantle_extension) then
 
       ! extend 3-D mantle model above the Moho to the surface before adding the crust
-      if( r_prem < RMOHO/R_EARTH) then
+      if (r_prem < RMOHO/R_EARTH) then
         r_used = r_prem
       else
-        if( CRUSTAL ) then
+        if (CRUSTAL) then
           ! fills 3-D mantle model above the Moho with the values at moho depth
           r_used = RMOHO/R_EARTH
         endif
@@ -594,10 +610,16 @@
     endif
   endif ! ANISOTROPIC_3D_MANTLE
 
+#if defined (CEM)
+  if (CEM_ACCEPT) then
+    call request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
+  endif
+#endif
+
 !> Hejun
 ! Assign Attenuation after get 3-D crustal model
 ! This is here to identify how and where to include 3D attenuation
-!       if(ATTENUATION .and. ATTENUATION_3D) then
+!       if (ATTENUATION .and. ATTENUATION_3D) then
 !         call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
 !         call reduce(theta,phi)
 !         theta_degrees = theta / DEGREES_TO_RADIANS
@@ -650,7 +672,7 @@
 
   ! checks if anything to do, that is, there is nothing to do
   ! for point radius smaller than deepest possible crust radius (~80 km depth)
-  if( r < R_DEEPEST_CRUST ) return
+  if (r < R_DEEPEST_CRUST ) return
 
   ! gets point's position theta/phi, lat/lon
   call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
@@ -658,7 +680,7 @@
 
   lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
   lon = phi * RADIANS_TO_DEGREES
-  if( lon > 180.0d0 ) lon = lon - 360.0d0
+  if (lon > 180.0d0 ) lon = lon - 360.0d0
 
 !---
 !
@@ -668,28 +690,28 @@
   found_crust = .false.
 
   ! crustal model can vary for different 3-D models
-  select case (THREE_D_MODEL )
+  select case(THREE_D_MODEL )
 
     case(THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
       ! tries to use Zhao's model of the crust
-      if(theta>=(PI/2.d0 - LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - LAT_MIN*DEGREES_TO_RADIANS) &
-        .and. phi>=LON_MIN*DEGREES_TO_RADIANS .and. phi<=LON_MAX*DEGREES_TO_RADIANS) then
+      if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+        .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
         ! makes sure radius is fine
-        if(r > (R_EARTH - DEP_MAX*1000.d0)/R_EARTH) then
-          call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust)
+        if (r > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
+                  call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust)
         endif
       else
         ! default crust
         call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
       endif
 
-    case ( THREE_D_MODEL_PPM )
+    case( THREE_D_MODEL_PPM )
       ! takes vs,rho from default crust
       call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
       ! takes vp from eucrust07
       !call model_eucrust(lat,lon,r,vpc_eu,found_eucrust)
-      !if( found_eucrust) then
+      !if (found_eucrust) then
       !  vpc=vpc_eu
       !endif
 
@@ -700,7 +722,7 @@
   end select
 
   ! sets crustal values
-  if( found_crust ) then
+  if (found_crust) then
     vpv=vpc
     vph=vpc
     vsv=vsc
@@ -709,7 +731,7 @@
     eta_aniso=1.0d0
 
     ! sets anisotropy in crustal region as well
-    if( ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+    if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
       c11 = rho*vpv*vpv
       c12 = rho*(vpv*vpv-2.*vsv*vsv)
       c13 = c12
@@ -768,22 +790,22 @@
 !
 !---
 
-  select case (ITYPE_CRUSTAL_MODEL )
+  select case(ITYPE_CRUSTAL_MODEL )
 
-    case (ICRUST_CRUST1)
+    case(ICRUST_CRUST1)
       ! crust 1.0
       call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case (ICRUST_CRUST2)
+    case(ICRUST_CRUST2)
       ! default
       ! crust 2.0
       call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case (ICRUST_CRUSTMAPS)
+    case(ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case (ICRUST_EPCRUST)
+    case(ICRUST_EPCRUST)
       call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case default
@@ -852,11 +874,11 @@
     ! in case models incorporate a 3D crust, attenuation values for mantle
     ! get expanded up to surface, and for the crustal points Qmu for PREM crust is imposed
     r_used = r_prem*R_EARTH_KM
-    if( CRUSTAL ) then
-      if ( r_prem > (ONE-moho) .or. elem_in_crust) then
+    if (CRUSTAL) then
+      if (r_prem > (ONE-moho) .or. elem_in_crust) then
         ! points in actual crust: puts point radius into prem crust
         r_used = rmoho_prem*1.0001
-      else if( r_prem*R_EARTH_KM >= rmoho_prem ) then
+      else if (r_prem*R_EARTH_KM >= rmoho_prem) then
         ! points below actual crust (e.g. oceanic crust case), but above prem moho:
         ! puts point slightly below prem moho to expand mantle values at that depth
         r_used = rmoho_prem*0.99999
@@ -868,7 +890,7 @@
 
   else
 
-    select case (REFERENCE_1D_MODEL)
+    select case(REFERENCE_1D_MODEL)
 
       ! case(REFERENCE_MODEL_PREM)
       ! this case is probably not needed since Qmu is 600. between R80 and surface
@@ -879,9 +901,9 @@
         ! we take the crustal value and assign it to points only inside actual crust,
         ! otherwise the mantle values is taken
         ! makes sense especially for points below thin oceanic and thick continental crust
-        if ( CRUSTAL ) then
+        if (CRUSTAL) then
           ! takes crustal Q value only if point is in actual crust
-          if ( r_prem > (ONE-moho) .or. elem_in_crust) then
+          if (r_prem > (ONE-moho) .or. elem_in_crust) then
             ! reference from 1D-REF aka STW105
             Qmu=300.0d0
             Qkappa=57822.5d0 !  not used so far...
@@ -891,9 +913,9 @@
       case(REFERENCE_MODEL_SEA1D)
         ! SEA1D changes Qmu at 25km (moho) depth. we take the crustal value
         ! for points only inside actual crust
-        if ( CRUSTAL ) then
+        if (CRUSTAL) then
           ! takes crustal Q value only if point is in actual crust
-          if ( r_prem > (ONE-moho) .or. elem_in_crust) then
+          if (r_prem > (ONE-moho) .or. elem_in_crust) then
             ! reference from Sea1D
             Qmu = 300.0d0
             Qkappa = 57822.5d0  ! not used so far...
@@ -931,13 +953,13 @@
   double precision :: vp,vs
 
   ! model GLL
-  if( MGLL_V%MODEL_GLL .and. iregion_code == IREGION_CRUST_MANTLE ) then
+  if (MGLL_V%MODEL_GLL .and. iregion_code == IREGION_CRUST_MANTLE) then
 
     ! isotropic model
-    if( .not. TRANSVERSE_ISOTROPY ) then
+    if (.not. TRANSVERSE_ISOTROPY) then
 
       !check
-      if( ispec > size(MGLL_V%vp_new(1,1,1,:)) ) then
+      if (ispec > size(MGLL_V%vp_new(1,1,1,:))) then
         call exit_MPI(myrank,'model GLL: ispec too big')
       endif
 
@@ -958,7 +980,7 @@
     else
 
       !check
-      if( ispec > size(MGLL_V%vpv_new(1,1,1,:)) ) then
+      if (ispec > size(MGLL_V%vpv_new(1,1,1,:))) then
         call exit_MPI(myrank,'model GLL: ispec too big')
       endif
 

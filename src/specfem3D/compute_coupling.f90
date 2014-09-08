@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine compute_coupling_fluid_CMB(NGLOB_CM,displ_crust_mantle, &
-                                        ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                        ibool_crust_mantle,ibelm_bottom_crust_mantle, &
                                         NGLOB_OC,accel_outer_core, &
                                         normal_top_outer_core,jacobian2D_top_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
@@ -106,7 +106,7 @@
 !
 
   subroutine compute_coupling_fluid_ICB(NGLOB_IC,displ_inner_core, &
-                                        ibool_inner_core,ibelm_top_inner_core,  &
+                                        ibool_inner_core,ibelm_top_inner_core, &
                                         NGLOB_OC,accel_outer_core, &
                                         normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
@@ -187,7 +187,7 @@
 !
 
   subroutine compute_coupling_CMB_fluid(NGLOB_CM,displ_crust_mantle,accel_crust_mantle, &
-                                        ibool_crust_mantle,ibelm_bottom_crust_mantle,  &
+                                        ibool_crust_mantle,ibelm_bottom_crust_mantle, &
                                         NGLOB_OC,accel_outer_core, &
                                         normal_top_outer_core,jacobian2D_top_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_top_outer_core, &
@@ -247,7 +247,7 @@
         iglob_mantle = ibool_crust_mantle(i,j,k,ispec)
 
         ! compute pressure, taking gravity into account
-        if(GRAVITY_VAL) then
+        if (GRAVITY_VAL) then
           pressure = RHO_TOP_OC * (- accel_outer_core(iglob_oc) &
              + minus_g_cmb *(displ_crust_mantle(1,iglob_mantle)*nx &
                             + displ_crust_mantle(2,iglob_mantle)*ny &
@@ -274,7 +274,7 @@
 !
 
   subroutine compute_coupling_ICB_fluid(NGLOB_IC,displ_inner_core,accel_inner_core, &
-                                        ibool_inner_core,ibelm_top_inner_core,  &
+                                        ibool_inner_core,ibelm_top_inner_core, &
                                         NGLOB_OC,accel_outer_core, &
                                         normal_bottom_outer_core,jacobian2D_bottom_outer_core, &
                                         wgllwgll_xy,ibool_outer_core,ibelm_bottom_outer_core, &
@@ -334,7 +334,7 @@
         iglob_inner_core = ibool_inner_core(i,j,k,ispec)
 
         ! compute pressure, taking gravity into account
-        if(GRAVITY_VAL) then
+        if (GRAVITY_VAL) then
           pressure = RHO_BOTTOM_OC * (- accel_outer_core(iglob) &
              + minus_g_icb *(displ_inner_core(1,iglob_inner_core)*nx &
                              + displ_inner_core(2,iglob_inner_core)*ny &
@@ -420,7 +420,7 @@
         iglob = ibool_crust_mantle(i,j,k,ispec)
 
         ! only update once
-        if(.not. updated_dof_ocean_load(iglob)) then
+        if (.not. updated_dof_ocean_load(iglob)) then
 
           ! get normal
           nx = normal_top_crust_mantle(1,i,j,ispec2D)

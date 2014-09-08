@@ -59,92 +59,92 @@
   character(len=150) :: prname
 
   ! initializes
-  ispecb1=0
-  ispecb2=0
-  ispecb3=0
-  ispecb4=0
-  ispecb5=0
+  ispecb1 = 0
+  ispecb2 = 0
+  ispecb3 = 0
+  ispecb4 = 0
+  ispecb5 = 0
 
-  do ispec=1,nspec
+  do ispec = 1,nspec
 
     ! determine if the element falls on an absorbing boundary
 
-    if(iboun(1,ispec)) then
+    if (iboun(1,ispec)) then
 
       !   on boundary 1: xmin
       ispecb1=ispecb1+1
 
       ! this is useful even if it is constant because it can be zero inside the slices
-      njmin(1,ispecb1)=1
+      njmin(1,ispecb1) = 1
       njmax(1,ispecb1)=NGLLY
 
       !   check for overlap with other boundaries
-      nkmin_xi(1,ispecb1)=1
-      if(iboun(5,ispec)) nkmin_xi(1,ispecb1)=2
+      nkmin_xi(1,ispecb1) = 1
+      if (iboun(5,ispec)) nkmin_xi(1,ispecb1) = 2
     endif
 
-    if(iboun(2,ispec)) then
+    if (iboun(2,ispec)) then
 
       !   on boundary 2: xmax
       ispecb2=ispecb2+1
 
       ! this is useful even if it is constant because it can be zero inside the slices
-      njmin(2,ispecb2)=1
+      njmin(2,ispecb2) = 1
       njmax(2,ispecb2)=NGLLY
 
       !   check for overlap with other boundaries
-      nkmin_xi(2,ispecb2)=1
-      if(iboun(5,ispec)) nkmin_xi(2,ispecb2)=2
+      nkmin_xi(2,ispecb2) = 1
+      if (iboun(5,ispec)) nkmin_xi(2,ispecb2) = 2
     endif
 
-    if(iboun(3,ispec)) then
+    if (iboun(3,ispec)) then
 
       !   on boundary 3: ymin
       ispecb3=ispecb3+1
 
       !   check for overlap with other boundaries
-      nimin(1,ispecb3)=1
-      if(iboun(1,ispec)) nimin(1,ispecb3)=2
+      nimin(1,ispecb3) = 1
+      if (iboun(1,ispec)) nimin(1,ispecb3) = 2
       nimax(1,ispecb3)=NGLLX
-      if(iboun(2,ispec)) nimax(1,ispecb3)=NGLLX-1
-      nkmin_eta(1,ispecb3)=1
-      if(iboun(5,ispec)) nkmin_eta(1,ispecb3)=2
+      if (iboun(2,ispec)) nimax(1,ispecb3)=NGLLX-1
+      nkmin_eta(1,ispecb3) = 1
+      if (iboun(5,ispec)) nkmin_eta(1,ispecb3) = 2
     endif
 
-    if(iboun(4,ispec)) then
+    if (iboun(4,ispec)) then
 
       !   on boundary 4: ymax
       ispecb4=ispecb4+1
 
       !   check for overlap with other boundaries
-      nimin(2,ispecb4)=1
-      if(iboun(1,ispec)) nimin(2,ispecb4)=2
+      nimin(2,ispecb4) = 1
+      if (iboun(1,ispec)) nimin(2,ispecb4) = 2
       nimax(2,ispecb4)=NGLLX
-      if(iboun(2,ispec)) nimax(2,ispecb4)=NGLLX-1
-      nkmin_eta(2,ispecb4)=1
-      if(iboun(5,ispec)) nkmin_eta(2,ispecb4)=2
+      if (iboun(2,ispec)) nimax(2,ispecb4)=NGLLX-1
+      nkmin_eta(2,ispecb4) = 1
+      if (iboun(5,ispec)) nkmin_eta(2,ispecb4) = 2
     endif
 
     ! on boundary 5: bottom
-    if(iboun(5,ispec)) ispecb5=ispecb5+1
+    if (iboun(5,ispec)) ispecb5=ispecb5+1
 
   enddo
 
   ! check theoretical value of elements at the bottom
-  if(ispecb5 /= NSPEC2D_BOTTOM) &
+  if (ispecb5 /= NSPEC2D_BOTTOM) &
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM in absorbing boundary detection')
 
   ! save these temporary arrays for the solver for Stacey conditions
   ! This files will be saved with the help of ADIOS if the
   ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
-  if( ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER ) then
+  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
     call get_absorb_adios(myrank, iregion, &
                           nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
                           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
   else
     open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
-    if( ier /= 0 ) call exit_MPI(myrank,'error opening stacey.bin file')
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file')
     write(27) nimin
     write(27) nimax
     write(27) njmin

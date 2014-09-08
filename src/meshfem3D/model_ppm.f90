@@ -104,14 +104,14 @@
   integer :: myrank
 
   ! upper mantle structure
-  if(myrank == 0) call read_model_ppm()
+  if (myrank == 0) call read_model_ppm()
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_singlei(PPM_num_v)
   call bcast_all_singlei(PPM_num_latperlon)
   call bcast_all_singlei(PPM_num_lonperdepth)
 
-  if( myrank /= 0 ) then
+  if (myrank /= 0) then
     allocate(PPM_lat(PPM_num_v),PPM_lon(PPM_num_v),PPM_depth(PPM_num_v),PPM_dvs(PPM_num_v))
   endif
 
@@ -150,13 +150,13 @@
 
   !e.g. Mediterranean model
   ! counts entries
-  counter=0
+  counter = 0
   open(unit=10,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
     call flush_IMAIN()
     ! stop
-    call exit_mpi(0,"error opening model ppm")
+    call exit_mpi(0,"Error opening model ppm")
   endif
 
   ! first line is text and will be ignored
@@ -166,14 +166,14 @@
   ier = 0
   do while (ier == 0 )
     read(10,*,iostat=ier) lon,lat,depth,dvs,vs
-    if( ier == 0 ) then
+    if (ier == 0) then
       counter = counter + 1
     endif
   enddo
   close(10)
 
   PPM_num_v = counter
-  if( counter < 1 ) then
+  if (counter < 1) then
     write(IMAIN,*)
     write(IMAIN,*) '  model PPM:',PPM_file_path
     write(IMAIN,*) '     no values read in!!!!!!'
@@ -197,16 +197,16 @@
 
   ! vs values
   open(unit=10,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
-    call exit_mpi(0,"error opening model ppm")
+    call exit_mpi(0,"Error opening model ppm")
   endif
   read(10,'(a150)') line   ! first line is text
-  counter=0
+  counter = 0
   ier = 0
   do while (ier == 0 )
     read(10,*,iostat=ier) lon,lat,depth,dvs,vs
-    if( ier == 0 ) then
+    if (ier == 0) then
       counter = counter + 1
       PPM_lat(counter) = lat
       PPM_lon(counter) = lon
@@ -214,11 +214,11 @@
       PPM_dvs(counter) = dvs/100.0
 
       !debug
-      !if( abs(depth - 100.0) < 1.e-3) write(IMAIN,*) '  lon/lat/depth : ',lon,lat,depth,' dvs:',dvs
+      !if (abs(depth - 100.0) < 1.e-3) write(IMAIN,*) '  lon/lat/depth : ',lon,lat,depth,' dvs:',dvs
     endif
   enddo
   close(10)
-  if( counter /= PPM_num_v ) then
+  if (counter /= PPM_num_v) then
     write(IMAIN,*)
     write(IMAIN,*) '  model PPM:',PPM_file_path
     write(IMAIN,*) '     error values read in!!!!!!'
@@ -247,13 +247,13 @@
   write(IMAIN,*)
   write(IMAIN,*) '  dvs min/max : ',PPM_min_dvs,PPM_max_dvs
   write(IMAIN,*)
-  if( SCALE_MODEL ) then
+  if (SCALE_MODEL) then
     write(IMAIN,*) '  scaling: '
     write(IMAIN,*) '    rho: ',SCALE_RHO
     write(IMAIN,*) '    vp : ',SCALE_VP
     write(IMAIN,*)
   endif
-  if( GAUSS_SMOOTHING ) then
+  if (GAUSS_SMOOTHING) then
     write(IMAIN,*) '  smoothing: '
     write(IMAIN,*) '    sigma horizontal : ',sigma_h
     write(IMAIN,*) '    sigma vertical   : ',sigma_v
@@ -264,8 +264,8 @@
   ! steps lengths
   PPM_dlat = 0.0d0
   lat = PPM_lat(1)
-  do i=1,PPM_num_v
-    if( abs(lat - PPM_lat(i)) > 1.e-15 ) then
+  do i = 1,PPM_num_v
+    if (abs(lat - PPM_lat(i)) > 1.e-15) then
       PPM_dlat = PPM_lat(i) - lat
       exit
     endif
@@ -273,8 +273,8 @@
 
   PPM_dlon = 0.0d0
   lon = PPM_lon(1)
-  do i=1,PPM_num_v
-    if( abs(lon - PPM_lon(i)) > 1.e-15 ) then
+  do i = 1,PPM_num_v
+    if (abs(lon - PPM_lon(i)) > 1.e-15) then
       PPM_dlon = PPM_lon(i) - lon
       exit
     endif
@@ -282,14 +282,14 @@
 
   PPM_ddepth = 0.0d0
   depth = PPM_depth(1)
-  do i=1,PPM_num_v
-    if( abs(depth - PPM_depth(i)) > 1.e-15 ) then
+  do i = 1,PPM_num_v
+    if (abs(depth - PPM_depth(i)) > 1.e-15) then
       PPM_ddepth = PPM_depth(i) - depth
       exit
     endif
   enddo
 
-  if( abs(PPM_dlat) < 1.e-15 .or. abs(PPM_dlon) < 1.e-15 .or. abs(PPM_ddepth) < 1.e-15) then
+  if (abs(PPM_dlat) < 1.e-15 .or. abs(PPM_dlon) < 1.e-15 .or. abs(PPM_ddepth) < 1.e-15) then
     write(IMAIN,*) '  model PPM:',PPM_file_path
     write(IMAIN,*) '     error in delta values:'
     write(IMAIN,*) '     dlat : ',PPM_dlat,' dlon: ',PPM_dlon,' ddepth: ',PPM_ddepth
@@ -341,17 +341,17 @@
 
   ! depth of given radius (in km)
   r_depth = R_EARTH_KM*(1.0 - radius)  ! radius is normalized between [0,1]
-  if(r_depth>PPM_maxdepth .or. r_depth < PPM_mindepth) return
+  if (r_depth>PPM_maxdepth .or. r_depth < PPM_mindepth) return
 
   lat=(PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
-  if( lat < PPM_minlat .or. lat > PPM_maxlat ) return
+  if (lat < PPM_minlat .or. lat > PPM_maxlat ) return
 
   lon=phi*RADIANS_TO_DEGREES
-  if(lon>180.0d0) lon=lon-360.0d0
-  if( lon < PPM_minlon .or. lon > PPM_maxlon ) return
+  if (lon>180.0d0) lon=lon-360.0d0
+  if (lon < PPM_minlon .or. lon > PPM_maxlon ) return
 
   ! search location value
-  if( .not. GAUSS_SMOOTHING ) then
+  if (.not. GAUSS_SMOOTHING) then
     call get_PPMmodel_value(lat,lon,r_depth,dvs)
     return
   endif
@@ -392,19 +392,19 @@
     enddo
   enddo
 
-  if( weight_sum > 1.e-15) dvs = dvs / weight_sum
+  if (weight_sum > 1.e-15) dvs = dvs / weight_sum
 
   ! store min/max
   max_dvs = PPM_max_dvs
   min_dvs = PPM_min_dvs
 
-  if( dvs > max_dvs ) max_dvs = dvs
-  if( dvs < min_dvs ) min_dvs = dvs
+  if (dvs > max_dvs ) max_dvs = dvs
+  if (dvs < min_dvs ) min_dvs = dvs
 
   PPM_max_dvs = max_dvs
   PPM_min_dvs = min_dvs
 
-  if( SCALE_MODEL ) then
+  if (SCALE_MODEL) then
     ! scale density and shear velocity
     drho = SCALE_RHO*dvs
     ! scale vp and shear velocity
@@ -433,34 +433,34 @@
 
   dvs = 0.0
 
-  if( lat > PPM_maxlat ) return
-  if( lat < PPM_minlat ) return
-  if( lon > PPM_maxlon ) return
-  if( lon < PPM_minlon ) return
-  if( depth > PPM_maxdepth ) return
-  if( depth < PPM_mindepth ) return
+  if (lat > PPM_maxlat ) return
+  if (lat < PPM_minlat ) return
+  if (lon > PPM_maxlon ) return
+  if (lon < PPM_minlon ) return
+  if (depth > PPM_maxdepth ) return
+  if (depth < PPM_mindepth ) return
 
   ! direct access: assumes having a regular interval spacing
   num_latperlon = PPM_num_latperlon ! int( (PPM_maxlat - PPM_minlat) / PPM_dlat) + 1
   num_lonperdepth = PPM_num_lonperdepth ! int( (PPM_maxlon - PPM_minlon) / PPM_dlon ) + 1
 
-  indexval = int( (depth-PPM_mindepth)/PPM_ddepth )*num_lonperdepth*num_latperlon  &
+  indexval = int( (depth-PPM_mindepth)/PPM_ddepth )*num_lonperdepth*num_latperlon &
            + int( (lon-PPM_minlon)/PPM_dlon )*num_latperlon &
            + int( (lat-PPM_minlat)/PPM_dlat ) + 1
   dvs = PPM_dvs(indexval)
 
   !  ! loop-wise: slower performance
-  !  do i=1,PPM_num_v
+  !  do i = 1,PPM_num_v
   !    ! depth
   !    r_top = PPM_depth(i)
   !    r_bottom = PPM_depth(i) + PPM_ddepth
-  !    if( depth > r_top .and. depth <= r_bottom ) then
+  !    if (depth > r_top .and. depth <= r_bottom) then
   !      ! longitude
   !      do j=i,PPM_num_v
-  !        if( lon >= PPM_lon(j) .and. lon < PPM_lon(j)+PPM_dlon ) then
+  !        if (lon >= PPM_lon(j) .and. lon < PPM_lon(j)+PPM_dlon) then
   !          ! latitude
   !          do k=j,PPM_num_v
-  !            if( lat >= PPM_lat(k) .and. lat < PPM_lat(k)+PPM_dlat ) then
+  !            if (lat >= PPM_lat(k) .and. lat < PPM_lat(k)+PPM_dlat) then
   !              dvs = PPM_dvs(k)
   !              return
   !            endif
@@ -604,11 +604,11 @@
   sigma_v = 100.0   ! km, vertical
 
   ! check if smoothing applies
-  if( .not. GAUSS_SMOOTHING ) return
+  if (.not. GAUSS_SMOOTHING ) return
 !----------------------------------------------------------------------------------------------------
 
   ! check region: only smooth in mantle & crust
-  if( iregion_code /= IREGION_CRUST_MANTLE ) return
+  if (iregion_code /= IREGION_CRUST_MANTLE ) return
 
 
   sizeprocs = NCHUNKS*NPROC_XI*NPROC_ETA
@@ -656,9 +656,9 @@
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
   call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
       enddo
     enddo
@@ -685,7 +685,7 @@
   enddo
   nums = j
 
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN, *) 'slices:',nums
     write(IMAIN, *) '  ',islice(1:nums)
     write(IMAIN, *)
@@ -735,7 +735,7 @@
           jacobianl = xixl*(etayl*gammazl-etazl*gammayl) - xiyl*(etaxl*gammazl-etazl*gammaxl) &
                         + xizl*(etaxl*gammayl-etayl*gammaxl)
 
-          if( abs(jacobianl) > 1.e-25 ) then
+          if (abs(jacobianl) > 1.e-25) then
             jacobianl = 1.0_CUSTOM_REAL / jacobianl
           else
             jacobianl = ZERO_
@@ -761,8 +761,8 @@
   allocate( slice_y(NGLLX,NGLLY,NGLLZ,NSPEC,nums))
   allocate( slice_z(NGLLX,NGLLY,NGLLZ,NSPEC,nums))
   allocate( slice_jacobian(NGLLX,NGLLY,NGLLZ,NSPEC,nums))
-  do rank=0,sizeprocs-1
-    if( rank == myrank) then
+  do rank = 0,sizeprocs-1
+    if (rank == myrank) then
       jacobian(:,:,:,:) = jacobian0(:,:,:,:)
       x(:,:,:,:) = xstore(:,:,:,:)
       y(:,:,:,:) = ystore(:,:,:,:)
@@ -775,8 +775,8 @@
     call bcast_all_cr(jacobian,NGLLX*NGLLY*NGLLZ*NSPEC)
 
     ! only relevant process info gets stored
-    do ii=1,nums
-      if( islice(ii) == rank ) then
+    do ii = 1,nums
+      if (islice(ii) == rank) then
         slice_x(:,:,:,:,ii) = x(:,:,:,:)
         slice_y(:,:,:,:,ii) = y(:,:,:,:)
         slice_z(:,:,:,:,ii) = z(:,:,:,:)
@@ -787,29 +787,29 @@
 
   ! arrays to smooth
   allocate( slice_kernels(NGLLX,NGLLY,NGLLZ,NSPEC,nums,9))
-  do rank=0,sizeprocs-1
-    if( rank == myrank) then
+  do rank = 0,sizeprocs-1
+    if (rank == myrank) then
       ks_rho(:,:,:,:) = rhostore(:,:,:,:)
       ks_kv(:,:,:,:) = kappavstore(:,:,:,:)
       ks_kh(:,:,:,:) = kappahstore(:,:,:,:)
       ks_muv(:,:,:,:) = muvstore(:,:,:,:)
       ks_muh(:,:,:,:) = muhstore(:,:,:,:)
       ks_eta(:,:,:,:) = eta_anisostore(:,:,:,:)
-      if( HETEROGEN_3D_MANTLE ) then
+      if (HETEROGEN_3D_MANTLE) then
         ks_dvp(:,:,:,:) = dvpstore(:,:,:,:)
       endif
-      if( ABSORBING_CONDITIONS ) then
-        if( iregion_code == IREGION_CRUST_MANTLE) then
+      if (ABSORBING_CONDITIONS) then
+        if (iregion_code == IREGION_CRUST_MANTLE) then
           ks_rhovp(:,:,:,1:nspec_stacey) = rho_vp(:,:,:,1:nspec_stacey)
           ks_rhovs(:,:,:,1:nspec_stacey) = rho_vs(:,:,:,1:nspec_stacey)
         endif
       endif
       ! in case of
-      !if(ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
+      !if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
       ! or
-      !if(ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
+      !if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
       ! or
-      !if(ATTENUATION .and. ATTENUATION_3D) then
+      !if (ATTENUATION .and. ATTENUATION_3D) then
       ! one should add the c**store and tau_* arrays here as well
     endif
     ! every process broadcasts its info
@@ -824,8 +824,8 @@
     call bcast_all_cr(ks_rhovs,NGLLX*NGLLY*NGLLZ*NSPEC)
 
     ! only relevant process info gets stored
-    do ii=1,nums
-      if( islice(ii) == rank ) then
+    do ii = 1,nums
+      if (islice(ii) == rank) then
         slice_kernels(:,:,:,:,ii,1) = ks_rho(:,:,:,:)
         slice_kernels(:,:,:,:,ii,2) = ks_kv(:,:,:,:)
         slice_kernels(:,:,:,:,ii,3) = ks_kh(:,:,:,:)
@@ -906,7 +906,7 @@
         ! note: distances and sigmah, sigmav are normalized by R_EARTH
 
         ! checks distance between centers of elements
-        if ( dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+        if (dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
 
 
 
@@ -972,24 +972,24 @@
     ! depth of given radius (in km)
     call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
     r_depth = R_EARTH_KM - radius*R_EARTH_KM  ! radius is normalized between [0,1]
-    if(r_depth>=maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
+    if (r_depth>=maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
     lat=(PI/2.0d0-theta)*180.0d0/PI
-    if( lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
+    if (lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
 
     lon=phi*180.0d0/PI
-    if(lon>180.0d0) lon=lon-360.0d0
-    if( lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
+    if (lon>180.0d0) lon=lon-360.0d0
+    if (lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
 
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
 
           ! check if bk value has an entry
-          if (abs(bk(i,j,k,ispec) ) > 1.e-25 ) then
+          if (abs(bk(i,j,k,ispec) ) > 1.e-25) then
 
             ! check if (integrated) normalization value is close to theoretically one
-            if (abs(bk(i,j,k,ispec) - norm) > 1.e-3*norm ) then ! check the normalization criterion
+            if (abs(bk(i,j,k,ispec) - norm) > 1.e-3*norm) then ! check the normalization criterion
               print *, 'Problem here --- ', myrank, ispec, i, j, k, bk(i,j,k,ispec), norm
               call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
             endif
@@ -1000,7 +1000,7 @@
             muvstore(i,j,k,ispec) = tk_muv(i,j,k,ispec) / bk(i,j,k,ispec)
             muhstore(i,j,k,ispec) = tk_muh(i,j,k,ispec) / bk(i,j,k,ispec)
             eta_anisostore(i,j,k,ispec) = tk_eta(i,j,k,ispec) / bk(i,j,k,ispec)
-            if( HETEROGEN_3D_MANTLE ) then
+            if (HETEROGEN_3D_MANTLE) then
               dvpstore(i,j,k,ispec) = tk_dvp(i,j,k,ispec) / bk(i,j,k,ispec)
             endif
           endif
@@ -1010,28 +1010,28 @@
     enddo
   enddo
 
-  if( ABSORBING_CONDITIONS ) then
-    if( iregion_code == IREGION_CRUST_MANTLE) then
+  if (ABSORBING_CONDITIONS) then
+    if (iregion_code == IREGION_CRUST_MANTLE) then
       do ispec = 1, nspec_stacey
 
         ! depth of given radius (in km)
         call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
         r_depth = R_EARTH_KM - radius*R_EARTH_KM  ! radius is normalized between [0,1]
-        if(r_depth>=maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
+        if (r_depth>=maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
         lat=(PI/2.0d0-theta)*180.0d0/PI
-        if( lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
+        if (lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
 
         lon=phi*180.0d0/PI
-        if(lon>180.0d0) lon=lon-360.0d0
-        if( lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
+        if (lon>180.0d0) lon=lon-360.0d0
+        if (lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
 
         do k = 1, NGLLZ
           do j = 1, NGLLY
             do i = 1, NGLLX
 
               ! check if bk value has an entry
-              if (abs(bk(i,j,k,ispec) ) > 1.e-25 ) then
+              if (abs(bk(i,j,k,ispec) ) > 1.e-25) then
                 rho_vp(i,j,k,ispec) = tk_rhovp(i,j,k,ispec)/bk(i,j,k,ispec)
                 rho_vs(i,j,k,ispec) = tk_rhovs(i,j,k,ispec)/bk(i,j,k,ispec)
               endif
@@ -1080,7 +1080,7 @@
 
   ! >>>>>
   ! uniform sigma
-  ! just to avoid compiler warning
+  ! to avoid compiler warnings
   ii = ispec2
   !exp_val(:,:,:) = exp( -((xx(:,:,:,ispec2)-x0)**2+(yy(:,:,:,ispec2)-y0)**2 &
   !          +(zz(:,:,:,ispec2)-z0)**2 )/(2*sigma2) )*factor(:,:,:)
@@ -1198,7 +1198,7 @@
   irb = get_slice_number(ichunk,ixi+1,ieta-1,nproc_xi,nproc_eta)
   irt = get_slice_number(ichunk,ixi+1,ieta+1,nproc_xi,nproc_eta)
 
-  if (ixi==0) then
+  if (ixi == 0) then
     call get_lrbt_slices(ichunk_left,islice_xi_left,islice_eta_left, &
                ileft0, ichunk_left0, islice_xi_left0, islice_eta_left0, &
                iright0, ichunk_right0, islice_xi_right0, islice_eta_right0, &
@@ -1237,7 +1237,7 @@
     endif
   endif
 
-  if (ieta==0) then
+  if (ieta == 0) then
     call get_lrbt_slices(ichunk_bot,islice_xi_bot,islice_eta_bot, &
                ileft0, ichunk_left0, islice_xi_left0, islice_eta_left0, &
                iright0, ichunk_right0, islice_xi_right0, islice_eta_right0, &

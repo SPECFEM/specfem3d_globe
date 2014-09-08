@@ -25,10 +25,10 @@ module BOAST
       decl source_euler_A = Real("source_euler_A")
       decl source_euler_B = Real("source_euler_B")
 
-      if(get_lang == CL) then
+      if (get_lang == CL) then
         print sin_two_omega_t === sincos(two_omega_earth*time, cos_two_omega_t.address)
       else
-        if(get_default_real_size == 4) then
+        if (get_default_real_size == 4) then
           print sincosf(two_omega_earth*time, sin_two_omega_t.address, cos_two_omega_t.address)
         else
           print cos_two_omega_t === cos(two_omega_earth*time)
@@ -122,7 +122,7 @@ module BOAST
     end
 
     p = Procedure(function_name, v, constants)
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :r_earth_km => r_earth_km, :coloring_min_nspec_outer_core => coloring_min_nspec_outer_core)
@@ -142,7 +142,7 @@ module BOAST
 #      end
       sub_kernel =  compute_element_oc_rotation(n_gll3)
       print sub_kernel
-      decl p
+      open p
         if get_lang == CL then
           @@output.puts "#ifdef #{use_textures_fields}"
             decl d_displ_oc_tex.sampler
@@ -156,7 +156,9 @@ module BOAST
         decl bx = Int("bx")
         decl tx = Int("tx")
         decl k  = Int("K"), j = Int("J"), i = Int("I")
-        l = Int("l")
+        @@output.puts "#ifndef #{manually_unrolled_loops}"
+          decl l = Int("l")
+        @@output.puts "#endif"
         decl active = Int("active", :size => 2, :signed => false)
         decl offset = Int("offset"), iglob = Int("iglob")
         decl working_element = Int("working_element")
@@ -196,11 +198,11 @@ module BOAST
         print i === tx - k*ngll2 - j*ngllx
   
         print active === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
-        print If( active ) {
+        print If(active) {
           @@output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
           @@output.puts "#else"
-            print If( use_mesh_coloring_gpu, lambda {
+            print If(use_mesh_coloring_gpu, lambda {
               print working_element === bx
             }, lambda {
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
@@ -227,7 +229,7 @@ module BOAST
         }
         print barrier(:local)
   
-        print If( active ) {
+        print If(active) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
              print templ[0] === templ[0] + s_dummy_loc[k*ngll2+j*ngllx+l]*sh_hprime_xx[l*ngllx+i]
@@ -237,7 +239,6 @@ module BOAST
           @@output.puts "#ifdef #{manually_unrolled_loops}"
             for_loop.unroll
           @@output.puts "#else"
-            decl l
             print for_loop
           @@output.puts "#endif"
           print offset === working_element*ngll3_padded + tx
@@ -252,7 +253,7 @@ module BOAST
             print dpotentialdl[indx] === xil[indx]*templ[0] + etal[indx]*templ[1] + gammal[indx]*templ[2]
           }
   
-          print If( rotation , lambda {
+          print If(rotation , lambda {
             print sub_kernel.call(tx,working_element,\
                                   time,two_omega_earth,deltat,\
                                   d_A_array_rotation,\
@@ -269,11 +270,11 @@ module BOAST
           print radius === d_store[0][iglob]
           print theta  === d_store[1][iglob]
           print phi    === d_store[2][iglob]
-          if(get_lang == CL) then
+          if (get_lang == CL) then
             print sin_theta === sincos(theta, cos_theta.address)
             print sin_phi   === sincos(phi,   cos_phi.address)
           else
-            if(get_default_real_size == 4) then
+            if (get_default_real_size == 4) then
               print sincosf(theta, sin_theta.address, cos_theta.address)
               print sincosf(phi,   sin_phi.address,   cos_phi.address)
             else
@@ -284,7 +285,7 @@ module BOAST
             end
           end
           print int_radius === rint(radius * rearth_km * 10.0) - 1
-          print If( !gravity , lambda {
+          print If(!gravity , lambda {
             print grad_ln_rho[0] === sin_theta * cos_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[1] === sin_theta * sin_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[2] ===           cos_theta * d_d_ln_density_dr_table[int_radius]
@@ -306,7 +307,7 @@ module BOAST
           print s_temp[2][tx] === jacobianl*(gammal[0]*dpotentialdx_with_rot + gammal[1]*dpotentialdy_with_rot + gammal[2]*dpotentialdl[2])
         }
         print barrier(:local)
-        print If( active ){
+        print If(active) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
              print templ[0] === templ[0] + s_temp[0][k*ngll2+j*ngllx+l]*sh_hprimewgll_xx[i*ngllx+l]
@@ -320,7 +321,7 @@ module BOAST
           @@output.puts "#endif"
           print sum_terms === -(wgllwgll_yz[k*ngllx+j]*templ[0] + wgllwgll_xz[k*ngllx+i]*templ[1] + wgllwgll_xy[j*ngllx+i]*templ[2])
   
-          print If( gravity ) {
+          print If(gravity) {
             print  sum_terms === sum_terms + gravity_term
           }
           @@output.puts "#ifdef #{use_mesh_coloring}"
@@ -330,8 +331,8 @@ module BOAST
               print d_potential_dot_dot[iglob] === d_potential_dot_dot[iglob] + sum_terms
             @@output.puts "#endif"
           @@output.puts "#else"
-            print If( use_mesh_coloring_gpu, lambda {
-              print If( nspec_outer_core > coloring_min_nspec_outer_core, lambda {
+            print If(use_mesh_coloring_gpu, lambda {
+              print If(nspec_outer_core > coloring_min_nspec_outer_core, lambda {
                 @@output.puts "#ifdef #{use_textures_fields}"
                   print d_potential_dot_dot[iglob] === d_accel_oc_tex[iglob] + sum_terms
                 @@output.puts "#else"

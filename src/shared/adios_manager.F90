@@ -42,16 +42,24 @@ subroutine adios_setup()
 
   implicit none
 
+  ! local parameters
   integer :: adios_err
   integer :: comm
 
   call world_get_comm(comm)
 
-  call adios_init_noxml (comm, adios_err);
+  call adios_init_noxml (comm, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !       e.g., version 1.5.0 returns 1 here
+  !print*,'adios init return: ',adios_err
+  !if (adios_err /= 0 ) stop 'Error setting up ADIOS: calling adios_init_noxml() routine failed'
 
-  !sizeMB = 200 ! TODO 200MB is surely not the right size for the adios buffer
-  !call adios_allocate_buffer (sizeMB , adios_err)
+
   call adios_allocate_buffer (ADIOS_BUFFER_SIZE_IN_MB, adios_err)
+  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
+  !       e.g., version 1.5.0 returns 1 if called first time, 0 if already called
+  !print*,'adios allocate buffer return: ',adios_err
+  !call check_adios_err(myrank,adios_err)
 
 end subroutine adios_setup
 
@@ -62,6 +70,8 @@ subroutine adios_cleanup()
   use adios_write_mod, only: adios_finalize
 
   implicit none
+
+  ! local parameters
   integer :: myrank
   integer :: adios_err
 
@@ -69,6 +79,7 @@ subroutine adios_cleanup()
   call synchronize_all()
 
   call adios_finalize (myrank, adios_err)
+  if (adios_err /= 0 ) stop 'Error cleaning up ADIOS: calling adios_finalize() routine failed'
 
 end subroutine adios_cleanup
 

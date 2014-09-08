@@ -53,11 +53,11 @@ module BOAST
       }
       print theta === d_ystore[iglob]
       print phi === d_zstore[iglob]
-      if(get_lang == CL) then
+      if (get_lang == CL) then
         print sin_theta === sincos(theta, cos_theta.address)
         print sin_phi   === sincos(phi,   cos_phi.address)
       else
-        if(get_default_real_size == 4) then
+        if (get_default_real_size == 4) then
           print sincosf(theta, sin_theta.address, cos_theta.address)
           print sincosf(phi,   sin_phi.address,   cos_phi.address)
         else
@@ -68,7 +68,7 @@ module BOAST
         end
       end
       print int_radius === rint(radius * r_earth_km * 10.0 ) - 1
-      print If( int_radius < 0 ) {
+      print If(int_radius < 0 ) {
         print int_radius === 0
       }
       print minus_g  === d_minus_gravity_table[int_radius]

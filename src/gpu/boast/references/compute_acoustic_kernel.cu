@@ -78,6 +78,8 @@ __device__ void compute_gradient_kernel(int ijk,
 
 }
 
+/* ----------------------------------------------------------------------------------------------- */
+
 __global__ void compute_acoustic_kernel(int* ibool,
                                         realw* rhostore,
                                         realw* kappastore,

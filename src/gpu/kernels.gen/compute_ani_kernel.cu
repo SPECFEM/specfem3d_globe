@@ -1,3 +1,36 @@
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 0.9995
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
 #ifndef INDEX2
 #define INDEX2(isize,i,j) i + isize*j
 #endif
@@ -10,6 +43,7 @@
 #ifndef INDEX5
 #define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
 #endif
+
 #ifndef NDIM
 #define NDIM 3
 #endif
@@ -49,35 +83,36 @@
 #ifndef BLOCKSIZE_TRANSFER
 #define BLOCKSIZE_TRANSFER 256
 #endif
+
 static __device__ void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){
   float eps[6];
   float b_eps[6];
   int p;
   int i;
   int j;
-  eps[0 - 0] = epsdev[0 - 0] + eps_trace_over_3;
-  eps[1 - 0] = epsdev[1 - 0] + eps_trace_over_3;
-  eps[2 - 0] =  -(eps[0 - 0] + eps[1 - 0]) + (eps_trace_over_3) * (3.0f);
-  eps[3 - 0] = epsdev[4 - 0];
-  eps[4 - 0] = epsdev[3 - 0];
-  eps[5 - 0] = epsdev[2 - 0];
-  b_eps[0 - 0] = b_epsdev[0 - 0] + b_eps_trace_over_3;
-  b_eps[1 - 0] = b_epsdev[1 - 0] + b_eps_trace_over_3;
-  b_eps[2 - 0] =  -(b_eps[0 - 0] + b_eps[1 - 0]) + (b_eps_trace_over_3) * (3.0f);
-  b_eps[3 - 0] = b_epsdev[4 - 0];
-  b_eps[4 - 0] = b_epsdev[3 - 0];
-  b_eps[5 - 0] = b_epsdev[2 - 0];
+  eps[0 - (0)] = epsdev[0 - (0)] + eps_trace_over_3;
+  eps[1 - (0)] = epsdev[1 - (0)] + eps_trace_over_3;
+  eps[2 - (0)] =  -(eps[0 - (0)] + eps[1 - (0)]) + (eps_trace_over_3) * (3.0f);
+  eps[3 - (0)] = epsdev[4 - (0)];
+  eps[4 - (0)] = epsdev[3 - (0)];
+  eps[5 - (0)] = epsdev[2 - (0)];
+  b_eps[0 - (0)] = b_epsdev[0 - (0)] + b_eps_trace_over_3;
+  b_eps[1 - (0)] = b_epsdev[1 - (0)] + b_eps_trace_over_3;
+  b_eps[2 - (0)] =  -(b_eps[0 - (0)] + b_eps[1 - (0)]) + (b_eps_trace_over_3) * (3.0f);
+  b_eps[3 - (0)] = b_epsdev[4 - (0)];
+  b_eps[4 - (0)] = b_epsdev[3 - (0)];
+  b_eps[5 - (0)] = b_epsdev[2 - (0)];
   p = 0;
-  for(i=0; i<=5; i+=1){
-    for(j=0; j<=5; j+=1){
-      prod[p - 0] = (eps[i - 0]) * (b_eps[j - 0]);
-      if(j > i){
-        prod[p - 0] = prod[p - 0] + (eps[j - 0]) * (b_eps[i - 0]);
-        if(j > 2 && i < 3){
-          prod[p - 0] = (prod[p - 0]) * (2.0f);
+  for (i = 0; i <= 5; i += 1) {
+    for (j = 0; j <= 5; j += 1) {
+      prod[p - (0)] = (eps[i - (0)]) * (b_eps[j - (0)]);
+      if (j > i) {
+        prod[p - (0)] = prod[p - (0)] + (eps[j - (0)]) * (b_eps[i - (0)]);
+        if (j > 2 && i < 3) {
+          prod[p - (0)] = (prod[p - (0)]) * (2.0f);
         }
-        if(i > 2){
-          prod[p - 0] = (prod[p - 0]) * (4.0f);
+        if (i > 2) {
+          prod[p - (0)] = (prod[p - (0)]) * (4.0f);
         }
         p = p + 1;
       }
@@ -94,23 +129,23 @@ __global__ void compute_ani_kernel(const float * epsilondev_xx, const float * ep
   float epsdev[5];
   float b_epsdev[5];
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
-  if(ispec < NSPEC){
+  if (ispec < NSPEC) {
     ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
-    epsdev[0 - 0] = epsilondev_xx[ijk_ispec - 0];
-    epsdev[1 - 0] = epsilondev_yy[ijk_ispec - 0];
-    epsdev[2 - 0] = epsilondev_xy[ijk_ispec - 0];
-    epsdev[3 - 0] = epsilondev_xz[ijk_ispec - 0];
-    epsdev[4 - 0] = epsilondev_yz[ijk_ispec - 0];
-    epsdev[0 - 0] = b_epsilondev_xx[ijk_ispec - 0];
-    epsdev[1 - 0] = b_epsilondev_yy[ijk_ispec - 0];
-    epsdev[2 - 0] = b_epsilondev_xy[ijk_ispec - 0];
-    epsdev[3 - 0] = b_epsilondev_xz[ijk_ispec - 0];
-    epsdev[4 - 0] = b_epsilondev_yz[ijk_ispec - 0];
-    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - 0];
-    b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec - 0];
+    epsdev[0 - (0)] = epsilondev_xx[ijk_ispec - (0)];
+    epsdev[1 - (0)] = epsilondev_yy[ijk_ispec - (0)];
+    epsdev[2 - (0)] = epsilondev_xy[ijk_ispec - (0)];
+    epsdev[3 - (0)] = epsilondev_xz[ijk_ispec - (0)];
+    epsdev[4 - (0)] = epsilondev_yz[ijk_ispec - (0)];
+    epsdev[0 - (0)] = b_epsilondev_xx[ijk_ispec - (0)];
+    epsdev[1 - (0)] = b_epsilondev_yy[ijk_ispec - (0)];
+    epsdev[2 - (0)] = b_epsilondev_xy[ijk_ispec - (0)];
+    epsdev[3 - (0)] = b_epsilondev_xz[ijk_ispec - (0)];
+    epsdev[4 - (0)] = b_epsilondev_yz[ijk_ispec - (0)];
+    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - (0)];
+    b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec - (0)];
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);
-    for(i=0; i<=20; i+=1){
-      cijkl_kl[i - 0 + (ijk_ispec - (0)) * (21)] = cijkl_kl[i - 0 + (ijk_ispec - (0)) * (21)] + (deltat) * (prod[i - 0]);
+    for (i = 0; i <= 20; i += 1) {
+      cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] = cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] + (deltat) * (prod[i - (0)]);
     }
   }
 }

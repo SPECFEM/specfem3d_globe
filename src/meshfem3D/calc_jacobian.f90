@@ -86,9 +86,9 @@
   double precision:: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
 
   ! first go over all 125 GLL points
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
+  do k = 1,NGLLZ
+    do j = 1,NGLLY
+      do i = 1,NGLLX
 
         xxi = ZERO
         xeta = ZERO
@@ -161,20 +161,20 @@
         ! Check the Lagrange polynomial and its derivative
         if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
           .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
-          .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL ) then
-          call exit_MPI(myrank,'new mesh is wrong in recalc_jacobian_gll3D.f90')
+          .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL) then
+          call exit_MPI(myrank,'Error new mesh is wrong in recalc_jacobian_gll3D.f90')
         endif
-        if(abs(sumshape-one) >  TINYVAL) then
-          call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll3D.f90')
+        if (abs(sumshape-one) >  TINYVAL) then
+          call exit_MPI(myrank,'Error shape functions in recalc_jacobian_gll3D.f90')
         endif
-        if(abs(sumdershapexi) >  TINYVAL) then
-          call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll3D.f90')
+        if (abs(sumdershapexi) >  TINYVAL) then
+          call exit_MPI(myrank,'Error derivative xi in recalc_jacobian_gll3D.f90')
         endif
-        if(abs(sumdershapeeta) >  TINYVAL) then
-          call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll3D.f90')
+        if (abs(sumdershapeeta) >  TINYVAL) then
+          call exit_MPI(myrank,'Error derivative eta in recalc_jacobian_gll3D.f90')
         endif
-        if(abs(sumdershapegamma) >  TINYVAL) then
-          call exit_MPI(myrank,'error derivative gamma in recalc_jacobian_gll3D.f90')
+        if (abs(sumdershapegamma) >  TINYVAL) then
+          call exit_MPI(myrank,'Error derivative gamma in recalc_jacobian_gll3D.f90')
         endif
 
         ! Jacobian calculation
@@ -185,12 +185,12 @@
         ! Check the Jacobian
         ! note: when honoring the moho, we squeeze and stretch elements
         !          thus, it can happen that with a coarse mesh resolution, the Jacobian encounters problems
-        if(jacobian <= VERYSMALLVAL) then
+        if (jacobian <= VERYSMALLVAL) then
           ! note: the mesh can have ellipticity, thus the geocentric colatitude might differ from the geographic one
           !
           ! converts position to geocentric coordinates
           call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r,theta,phi)
-          print*,'error Jacobian rank:',myrank
+          print*,'Error Jacobian rank:',myrank
           print*,'  location r/lat/lon: ',r*R_EARTH_KM, &
             90.0-(theta*RADIANS_TO_DEGREES),phi*RADIANS_TO_DEGREES
           print*,'  Jacobian: ',jacobian
@@ -318,20 +318,20 @@
 
 
         ! Check the Lagrange polynomial
-        if ( abs(xmesh - xelm2D(i,j)) > TINYVAL &
+        if (abs(xmesh - xelm2D(i,j)) > TINYVAL &
             .or. abs(ymesh - yelm2D(i,j)) > TINYVAL &
-            .or. abs(zmesh - zelm2D(i,j)) > TINYVAL ) then
+            .or. abs(zmesh - zelm2D(i,j)) > TINYVAL) then
            call exit_MPI(myrank,'new boundary mesh is wrong in recalc_jacobian_gll2D')
         endif
 
         if (abs(sumshape-one) >  TINYVAL) then
-           call exit_MPI(myrank,'error shape functions in recalc_jacobian_gll2D')
+           call exit_MPI(myrank,'Error shape functions in recalc_jacobian_gll2D')
         endif
         if (abs(sumdershapexi) >  TINYVAL) then
-           call exit_MPI(myrank,'error derivative xi in recalc_jacobian_gll2D')
+           call exit_MPI(myrank,'Error derivative xi in recalc_jacobian_gll2D')
         endif
         if (abs(sumdershapeeta) >  TINYVAL) then
-           call exit_MPI(myrank,'error derivative eta in recalc_jacobian_gll2D')
+           call exit_MPI(myrank,'Error derivative eta in recalc_jacobian_gll2D')
         endif
 
         ! calculates 2D Jacobian

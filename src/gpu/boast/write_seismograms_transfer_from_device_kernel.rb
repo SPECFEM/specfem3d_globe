@@ -27,11 +27,11 @@ module BOAST
     ngll3 =                  Int("NGLL3",                   :const => n_gll3)
 
     p = Procedure(function_name, [number_receiver_global,ispec_selected_rec,ibool,station_field,d_field,nrec_local])
-    if(get_lang == CUDA and ref) then
+    if (get_lang == CUDA and ref) then
       @@output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngll3 => n_gll3 )
-      decl p
+      open p
       blockID    = Int("blockID")
       tx         = Int("tx")
       iglob      = Int("iglob")
