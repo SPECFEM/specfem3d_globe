@@ -60,7 +60,10 @@
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
-    OCEANS,CEM_REQUEST
+    OCEANS
+#if defined (CEM)
+  use meshfem3D_models_par,only: CEM_REQUEST
+#endif
 
   use create_MPI_interfaces_par, only: &
     NGLOB1D_RADIAL_MAX,iboolcorner,iboolfaces, &
