@@ -48,7 +48,7 @@ module BOAST
 
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
-      @@output.print File::read("references/#{function_name}.cu")
+      get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
       sub_compute_element_strain_undo_att = compute_element_strain_undo_att(n_gllx, n_gll2, n_gll3, n_gll3_padded )
