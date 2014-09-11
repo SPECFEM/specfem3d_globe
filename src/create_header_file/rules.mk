@@ -45,7 +45,6 @@ create_header_file_SHARED_OBJECTS = \
 	$O/count_points.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
-	$O/force_ftz.cc.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/memory_eval.shared.o \

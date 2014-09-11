@@ -39,6 +39,7 @@ specfem3D_OBJECTS = \
 	$O/convert_time.solver.o \
 	$O/define_derivation_matrices.solver.o \
 	$O/file_io_threads.cc.o \
+	$O/force_ftz.cc.o \
 	$O/get_backazimuth.solver.o \
 	$O/get_cmt.solver.o \
 	$O/get_event_info.solver.o \
@@ -129,7 +130,6 @@ specfem3D_SHARED_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
-	$O/force_ftz.cc.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
