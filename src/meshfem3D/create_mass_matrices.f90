@@ -253,9 +253,9 @@
   endif
 
   ! use the non-dimensional time step to make the mass matrix correction
-  deltat = DT*dsqrt(PI*GRAV*RHOAV)
+  deltat = real(DT*dsqrt(PI*GRAV*RHOAV), kind=CUSTOM_REAL)
 
-  scale_t_inv = dsqrt(PI*GRAV*RHOAV)
+  scale_t_inv = real(dsqrt(PI*GRAV*RHOAV), kind=CUSTOM_REAL)
   two_omega_earth_dt = 0._CUSTOM_REAL
   b_two_omega_earth_dt = 0._CUSTOM_REAL
 
