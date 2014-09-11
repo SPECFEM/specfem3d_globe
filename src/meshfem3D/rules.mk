@@ -155,7 +155,6 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
-	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
 	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
