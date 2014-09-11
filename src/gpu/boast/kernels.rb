@@ -2,6 +2,7 @@ require 'rubygems'
 require 'BOAST'
 require 'narray'
 require './HEADER.rb'
+require './FUNCTIONS.rb'
 
 def rndup( val, div)
   return (val%div) == 0 ? val : val + div - (val%div)
