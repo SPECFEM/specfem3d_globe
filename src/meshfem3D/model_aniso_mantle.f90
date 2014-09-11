@@ -173,9 +173,6 @@
 ! dimensionalize
   depth = R_EARTH_KM*(R_UNIT_SPHERE - r)
   if (depth <= pro(nz0) .or. depth >= pro(1)) call exit_MPI_without_rank('r out of range in build_cij')
-!! DK DK  itheta = int(theta + pxy0)/pxy0
-!! DK DK  ilon = int(phi + pxy0)/pxy0
-!! DK DK fixed that because the above contained an automatic conversion from real to int
   itheta = int(int(theta + pxy0)/pxy0)
   ilon = int(int(phi + pxy0)/pxy0)
   tet = theta
@@ -547,7 +544,7 @@
 ! array par(i,nlayer)
 ! output: array pari(ipar, nlayer): rho, A, L, xi-1, phi-1, eta-1
 
-  integer i,j,k,ip,ifanis,idum1,idum2,idum3,nlayer,nout,neff,&
+  integer i,j,k,ip,idum1,idum2,idum3,nlayer,nout,neff,&
           nband,nri,minlay,moho,kiti
   double precision pari(14,47),qkappa(47),qshear(47),par(6,47)
   double precision epa(14,47),ra(47),dcori(47),ri(47)
@@ -556,7 +553,6 @@
   character(len=80) nullval
   character(len=150), parameter :: Adrem119 = 'DATA/Montagner_model/Adrem119'
 
-     ifanis = 1
      nri = 47
 
      open(unit=13,file=Adrem119,status='old',action='read')

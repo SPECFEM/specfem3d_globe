@@ -256,12 +256,9 @@
   deltat = real(DT*dsqrt(PI*GRAV*RHOAV), kind=CUSTOM_REAL)
 
   scale_t_inv = real(dsqrt(PI*GRAV*RHOAV), kind=CUSTOM_REAL)
-  two_omega_earth_dt = 0._CUSTOM_REAL
-  b_two_omega_earth_dt = 0._CUSTOM_REAL
 
   ! distinguish between single and double precision for reals
   two_omega_earth_dt = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat, kind=CUSTOM_REAL)
-
   b_two_omega_earth_dt = - real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat, kind=CUSTOM_REAL)
 
   ! definition depends if region is fluid or solid

@@ -112,9 +112,6 @@ program combine_vol_data
 
   ! starts here---------------------------------------------------------------
 
-  ! dummy initialization to avoid compiler warnings
-  ier = 0
-
   ! ADIOS mpi initialization
 #ifdef ADIOS_INPUT
   ! starts mpi

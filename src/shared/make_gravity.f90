@@ -55,7 +55,7 @@
   double precision yp1,ypn
 
 ! PREM
-  ROCEAN = 6368000.d0
+  ROCEAN = ROCEAN_GRAVITY ! PREM defines this as 6368000.d0
   RMIDDLE_CRUST = 6356000.d0
   RMOHO = 6346600.d0 ! PREM moho depth at 24.4 km
   R80  = 6291000.d0
@@ -80,7 +80,7 @@
   r_80 = R80/R_EARTH_GRAVITY
   r_moho = RMOHO/R_EARTH_GRAVITY
   r_middle_crust = RMIDDLE_CRUST/R_EARTH_GRAVITY
-  r_ocean = ROCEAN_GRAVITY/R_EARTH_GRAVITY
+  r_ocean = ROCEAN/R_EARTH_GRAVITY
   r_0 = 1.d0
 
   do i=1,163
@@ -126,7 +126,7 @@
 ! use PREM to get the density profile for ellipticity (fine for other 1D reference models)
   do i = 1,NR
     call prem_density(r(i),rho(i),ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN_GRAVITY)
+      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
   enddo
 
   g(1)=0.0d0

@@ -247,8 +247,8 @@
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: test_flag_vector
   integer :: i,j,iglob,ier
-  integer :: inum,icount,ival
-  integer :: num_unique,num_max_valence
+  integer :: inum,icount
+  integer :: num_unique,max_valence
   integer,dimension(:),allocatable :: valence
 
   ! crust mantle
@@ -280,14 +280,13 @@
 
   ! maximum valence
   i = maxval( valence(:) )
-  num_max_valence = i
-  call max_all_i(i,ival)
+  call max_all_i(i,max_valence)
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
-    write(IMAIN,*) '  maximum valence            : ',ival
+    write(IMAIN,*) '  maximum valence            : ',max_valence
     call flush_IMAIN()
   endif
 
@@ -364,8 +363,8 @@
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer :: i,j,iglob,ier
-  integer :: inum,icount,ival
-  integer :: num_max_valence,num_unique
+  integer :: inum,icount
+  integer :: max_valence,num_unique
   integer,dimension(:),allocatable :: valence
 
   ! outer core
@@ -394,13 +393,12 @@
 
   ! maximum valence
   i = maxval( valence(:) )
-  num_max_valence = i
-  call max_all_i(i,ival)
+  call max_all_i(i,max_valence)
 
   if (myrank == 0) then
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
-    write(IMAIN,*) '  maximum valence            : ',ival
+    write(IMAIN,*) '  maximum valence            : ',max_valence
   endif
 
   ! initialized for assembly
@@ -474,8 +472,8 @@
   ! local parameters
   real(kind=CUSTOM_REAL),dimension(:,:),allocatable :: test_flag_vector
   integer :: i,j,iglob,ier
-  integer :: inum,icount,ival
-  integer :: num_unique,num_max_valence
+  integer :: inum,icount
+  integer :: num_unique,max_valence
   integer,dimension(:),allocatable :: valence
 
   ! inner core
@@ -505,13 +503,12 @@
 
   ! maximum valence
   i = maxval( valence(:) )
-  num_max_valence = i
-  call max_all_i(i,ival)
+  call max_all_i(i,max_valence)
 
   if (myrank == 0) then
     write(IMAIN,*) '  total MPI interface points : ',inum
     write(IMAIN,*) '  unique MPI interface points: ',icount
-    write(IMAIN,*) '  maximum valence            : ',ival
+    write(IMAIN,*) '  maximum valence            : ',max_valence
   endif
 
   ! initializes for assembly

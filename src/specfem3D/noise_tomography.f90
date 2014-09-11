@@ -99,6 +99,8 @@
   if (ios /= 0) &
     call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file contains the ID of the master receiver')
   read(IIN_NOISE,*,iostat=ios) irec_master_noise
+  if (ios /= 0) &
+    call exit_MPI(myrank, 'Unable to read the ID of the master receiver from '//trim(filename))
   close(IIN_NOISE)
 
   if (myrank == 0) then

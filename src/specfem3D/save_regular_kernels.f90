@@ -172,8 +172,6 @@
                 kappal = kappavstore_crust_mantle(i,j,k,ispec)
                 muvl = mul
                 muhl = mul
-                kappavl = kappal
-                kappahl = kappal
 
                 A = kappal + FOUR_THIRDS * mul
                 C = A

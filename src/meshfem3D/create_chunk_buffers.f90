@@ -273,7 +273,6 @@
   iproc_edge_send = 0
   iproc_edge_receive = 0
 
-  iedge = 0
   ichunk_receive = 0
   ichunk_send = 0
 

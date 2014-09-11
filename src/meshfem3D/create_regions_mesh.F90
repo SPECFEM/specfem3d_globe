@@ -956,14 +956,14 @@
   integer :: ner_without_doubling,ilayer,ilayer_loop
   ! timing
   double precision, external :: wtime
-  double precision :: time_start,tCPU
+  !double precision :: time_start,tCPU
   integer,dimension(8) :: tval
 
   ! initializes flags for transverse isotropic elements
   ispec_is_tiso(:) = .false.
 
   ! get MPI starting time
-  time_start = wtime()
+  !time_start = wtime()
 
   ! loop on all the layers in this region of the mesh
   ispec = 0 ! counts all the elements in this region of the mesh
@@ -1065,7 +1065,7 @@
     ! user output
     if (myrank == 0) then
       ! time estimate
-      tCPU = wtime() - time_start
+      !tCPU = wtime() - time_start
 
       ! outputs current time on system
       call date_and_time(VALUES=tval)

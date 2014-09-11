@@ -261,7 +261,6 @@ void write_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 
   donelen = 0;
   remlen = *length;
-  ret = 0;
 
   // writes items of maximum MAX_B to the file
   while (remlen > 0) {
@@ -300,7 +299,6 @@ void read_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 
   donelen = 0;
   remlen = *length;
-  ret = 0;
 
   // reads items of maximum MAX_B to the file
   while (remlen > 0) {

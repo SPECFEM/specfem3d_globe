@@ -847,10 +847,6 @@
     ! read points for all the slices
     print *,'Writing output',outputname
     do iproc = 0,NPROCTOT-1
-
-      ! reset point number
-      ipoin = 0
-
       do ispecloc = 1,NEX_PER_PROC_XI*NEX_PER_PROC_ETA
         ispec = ispec + 1
         if (MOVIE_COARSE) then

@@ -509,8 +509,6 @@
   end select
 
   ! sets up elements for loops in simulations
-  ispec_inner = 0
-  ispec_outer = 0
   do ispec = 1, nspec
     ! only elements in this domain
     if (ispec_is_d(ispec)) then
@@ -523,7 +521,7 @@
         ! checks
         if (ispec_outer < 1 .or. ispec_outer > num_phase_ispec_d) then
           print*,'Error outer permutation:',idomain
-          print*,'rank:',myrank,'  ispec_inner = ',ispec_outer
+          print*,'rank:',myrank,'  ispec_outer = ',ispec_outer
           print*,'num_phase_ispec_d = ',num_phase_ispec_d
           call exit_MPI(myrank,'Error outer permutation')
         endif
