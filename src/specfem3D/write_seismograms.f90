@@ -625,11 +625,11 @@ contains
   double precision :: DT
   character(len=2) :: bic
 
-  if (DT >= 1.0d0)  bic = 'LX'
-  if (DT < 1.0d0 .and. DT > 0.1d0) bic = 'MX'
-  if (DT <= 0.1d0 .and. DT > 0.0125d0) bic = 'BX'
-  if (DT <= 0.0125d0 .and. DT > 0.004d0) bic = 'HX'
-  if (DT <= 0.004d0 .and. DT > 0.001d0) bic = 'CX'
+  if (1.0d0 <= DT)  bic = 'LX'
+  if (0.1d0 < DT .and. DT < 1.0d0) bic = 'MX'
+  if (0.0125d0 < DT .and. DT <= 0.1d0) bic = 'BX'
+  if (0.004d0 < DT .and. DT <= 0.0125d0) bic = 'HX'
+  if (0.001d0 < DT .and. DT <= 0.004d0) bic = 'CX'
   if (DT <= 0.001d0) bic = 'FX'
 
  end subroutine band_instrument_code
