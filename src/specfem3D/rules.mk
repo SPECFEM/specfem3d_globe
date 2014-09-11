@@ -43,6 +43,7 @@ specfem3D_OBJECTS = \
 	$O/get_backazimuth.solver.o \
 	$O/get_cmt.solver.o \
 	$O/get_event_info.solver.o \
+	$O/make_gravity.solver.o \
 	$O/netlib_specfun_erf.solver.o \
 	$O/recompute_jacobian.solver.o \
 	$(EMPTY_MACRO)
@@ -137,7 +138,6 @@ specfem3D_SHARED_OBJECTS = \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
-	$O/make_gravity.shared.o \
 	$O/memory_eval.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_topo_bathy.shared.o \
