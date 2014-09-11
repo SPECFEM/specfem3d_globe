@@ -180,10 +180,10 @@ program combine_surf_data
     close(27)
   enddo
 
-  if (.not. FILE_ARRAY_IS_3D) then
-    allocate(data_2D(NGLLX,NGLLY,nspec_surf))
-  else
+  if (FILE_ARRAY_IS_3D) then
     allocate(data_3D(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
+  else
+    allocate(data_2D(NGLLX,NGLLY,nspec_surf))
   endif
 
   ! open Paraview output mesh file
