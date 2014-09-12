@@ -137,7 +137,6 @@ specfem3D_SHARED_OBJECTS = \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
-	$O/memory_eval.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_topo_bathy.shared.o \
 	$O/parallel.sharedmpi.o \
