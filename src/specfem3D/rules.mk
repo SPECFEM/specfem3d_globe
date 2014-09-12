@@ -129,7 +129,6 @@ specfem3D_SHARED_OBJECTS = \
 	$O/count_points.shared.o \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
-	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
