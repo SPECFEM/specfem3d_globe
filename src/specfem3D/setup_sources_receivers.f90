@@ -802,12 +802,6 @@
   it_sub_adj = 0
   iadj_block = 1
   do it = 1,NSTEP
-
-    ! block number
-    ! e.g. increases from 1 (case it=1-1000), 2 (case it=1001-2000) to 3 (case it=2001-3000)
-    ! beware: the call below might return a wrong integer number due to machine precision, i.e. 1000./1000. -> 2
-    !it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
-
     ! we are at the edge of a block
     if (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then
       ! sets it_sub_adj subset number
@@ -831,14 +825,6 @@
 
       ! increases block number
       iadj_block = iadj_block + 1
-    endif
-
-    ! checks that ceiling function above returns correct integer values
-    if (it_sub_adj /= iadj_block-1) then
-      print*,'Error: confusing block number for reverse adjoint source indexing'
-      print*,'  it_sub_adj = ',it_sub_adj,'should be equal to ',iadj_block-1
-      print*,'  it = ',it,' istart/iend = ',istart,iend,' NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
-      stop 'Error reverse adjoint source indexing'
     endif
 
     ! time stepping for adjoint sources:
