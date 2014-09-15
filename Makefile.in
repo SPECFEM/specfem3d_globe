@@ -247,11 +247,11 @@ default: $(DEFAULT)
 
 ifdef CLEAN
 clean:
-	@echo "cleaning by CLEAN defined"
+	@echo "cleaning by CLEAN"
 	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
 else
 clean:
-	@echo "cleaning by CLEAN not defined"
+	@echo "cleaning all"
 	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS)) $O/*
 endif
 
