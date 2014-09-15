@@ -228,7 +228,7 @@
       ! notifies user
       if (myrank == 0) then
         write(IMAIN,*) 'Error: USER_T0 is too small'
-        write(IMAIN,*) '       must make one of three adjustements:'
+        write(IMAIN,*) '       must make one of three adjustments:'
         write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-min_tshift_cmt_original
         write(IMAIN,*) '       - decrease time shift in CMTSOLUTION file'
         write(IMAIN,*) '       - decrease hdur in CMTSOLUTION file'
