@@ -225,10 +225,10 @@ DEFAULT = \
 	xcreate_header_file \
 	xmeshfem3D \
 	xspecfem3D \
+	xcombine_AVS_DX \
+	xcombine_surf_data \
 	xcombine_vol_data \
 	xcombine_vol_data_vtk \
-	xcombine_surf_data \
-	xcombine_AVS_DX \
 	xconvolve_source_timefunction \
 	xcreate_movie_AVS_DX \
 	xcreate_movie_GMT_global \
@@ -254,6 +254,9 @@ clean:
 	@echo "cleaning all"
 	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS)) $O/*
 endif
+
+realclean: clean
+mrproper: clean
 
 help:
 	@echo "usage: make [executable]"

@@ -17,10 +17,10 @@ module BOAST
 
     p = Procedure(function_name, [accel_crust_mantle, rmassx_crust_mantle, rmassy_crust_mantle, rmassz_crust_mantle, rmass_ocean_load, npoin_ocean_load, ibool_ocean_load, normal_ocean_load])
     if (get_lang == CUDA and ref) then
-      @@output.print File::read("references/#{function_name}.cu")
+      get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ndim => n_dim )
-      decl p
+      open p
       decl ipoin = Int("ipoin")
       decl iglob = Int("iglob")
 

@@ -77,7 +77,7 @@ program combine_vol_data
   !
   ! puts point locations back into a perfectly spherical shape by removing the ellipticity factor;
   ! useful for plotting spherical cuts at certain depths
-  logical,parameter:: CORRECT_ELLIPTICITY = .false.
+  logical, parameter :: CORRECT_ELLIPTICITY = .false.
 
   integer :: nspl
   double precision :: rspl(NR),espl(NR),espl2(NR)
@@ -250,7 +250,7 @@ program combine_vol_data
   endif
 
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
-  if (CORRECT_ELLIPTICITY ) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
+  if (CORRECT_ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
 #ifdef ADIOS_INPUT
   call init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle)
@@ -481,7 +481,7 @@ program combine_vol_data
                   z = zstore(iglob)
 
                   ! remove ellipticity
-                  if (CORRECT_ELLIPTICITY ) call reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
+                  if (CORRECT_ELLIPTICITY) call revert_ellipticity(x,y,z,nspl,rspl,espl,espl2)
 
                   !dat = data(i,j,k,ispec)
                   dat = ibool_dat(iglob)
@@ -508,7 +508,7 @@ program combine_vol_data
                   z = zstore(iglob)
 
                   ! remove ellipticity
-                  if (CORRECT_ELLIPTICITY ) call reverse_ellipticity(x,y,z,nspl,rspl,espl,espl2)
+                  if (CORRECT_ELLIPTICITY) call revert_ellipticity(x,y,z,nspl,rspl,espl,espl2)
 
                   dat = data(i,j,k,ispec)
 

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -105,7 +105,7 @@ __global__ void compute_coupling_fluid_CMB_kernel(const float * displ_crust_mant
   i = threadIdx.x;
   j = threadIdx.y;
   iface = blockIdx.x + (gridDim.x) * (blockIdx.y);
-  if(iface < NSPEC2D_TOP_OC){
+  if (iface < NSPEC2D_TOP_OC) {
     ispec = ibelm_top_outer_core[iface - (0)] - (1);
     ispec_selected = ibelm_bottom_crust_mantle[iface - (0)] - (1);
     k = NGLLX - (1);

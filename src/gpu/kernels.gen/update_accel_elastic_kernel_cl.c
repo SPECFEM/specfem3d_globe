@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -98,7 +98,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 __kernel void update_accel_elastic_kernel(__global float * accel, const __global float * veloc, const int size, const float two_omega_earth, const __global float * rmassx, const __global float * rmassy, const __global float * rmassz){\n\
   int id;\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
-  if(id < size){\n\
+  if (id < size) {\n\
     accel[(id) * (3) - (0)] = (accel[(id) * (3) - (0)]) * (rmassx[id - (0)]) + (two_omega_earth) * (veloc[(id) * (3) + 1 - (0)]);\n\
     accel[(id) * (3) + 1 - (0)] = (accel[(id) * (3) + 1 - (0)]) * (rmassy[id - (0)]) - ((two_omega_earth) * (veloc[(id) * (3) - (0)]));\n\
     accel[(id) * (3) + 2 - (0)] = (accel[(id) * (3) + 2 - (0)]) * (rmassz[id - (0)]);\n\

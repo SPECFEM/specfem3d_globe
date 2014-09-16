@@ -181,7 +181,7 @@
   if ( EXTERNAL_SOURCE_TIME_FUNCTION ) then
     hdur(:) = 0._CUSTOM_REAL
     t0      = 0.d0
-  end if
+  endif
 
   ! point force sources will start depending on the frequency given by hdur
   if (USE_FORCE_POINT_SOURCE) then
@@ -228,7 +228,7 @@
       ! notifies user
       if (myrank == 0) then
         write(IMAIN,*) 'Error: USER_T0 is too small'
-        write(IMAIN,*) '       must make one of three adjustements:'
+        write(IMAIN,*) '       must make one of three adjustments:'
         write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-min_tshift_cmt_original
         write(IMAIN,*) '       - decrease time shift in CMTSOLUTION file'
         write(IMAIN,*) '       - decrease hdur in CMTSOLUTION file'

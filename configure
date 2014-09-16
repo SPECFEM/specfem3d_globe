@@ -682,8 +682,6 @@ FCFLAGS
 FC
 COND_CEM_FALSE
 COND_CEM_TRUE
-COND_VECTORIZATION_FALSE
-COND_VECTORIZATION_TRUE
 COND_ADIOS_FALSE
 COND_ADIOS_TRUE
 COND_VTK_FALSE
@@ -694,6 +692,10 @@ COND_CUDA5_FALSE
 COND_CUDA5_TRUE
 COND_CUDA_FALSE
 COND_CUDA_TRUE
+COND_VECTORIZATION_FALSE
+COND_VECTORIZATION_TRUE
+COND_DEBUG_FALSE
+COND_DEBUG_TRUE
 CUSTOM_MPI_TYPE
 CUSTOM_REAL
 host_os
@@ -746,11 +748,12 @@ ac_subst_files=''
 ac_user_opts='
 enable_option_checking
 enable_double_precision
+enable_debug
+enable_vectorization
 with_cuda
 with_opencl
 enable_vtk
 with_adios
-enable_vectorization
 with_cem
 with_vtk
 with_vtk_suffix
@@ -1401,9 +1404,10 @@ Optional Features:
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
   --enable-double-precision
                           solver in double precision [default=no]
-  --enable-vtk            build VTK enabled version [default=no]
+  --enable-debug          build with debugging options enabled [default=no]
   --enable-vectorization  build FORCE_VECTORIZATION enabled version
-                          [default=yes]
+                          [default=auto]
+  --enable-vtk            build VTK enabled version [default=no]
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -2691,6 +2695,59 @@ fi
 
 
 ###
+### debugging
+###
+
+# Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then :
+  enableval=$enable_debug; want_debug="$enableval"
+else
+  want_debug=no
+fi
+
+ if test x"$want_debug" != xno; then
+  COND_DEBUG_TRUE=
+  COND_DEBUG_FALSE='#'
+else
+  COND_DEBUG_TRUE='#'
+  COND_DEBUG_FALSE=
+fi
+
+export COND_DEBUG_FALSE
+export COND_DEBUG_TRUE
+
+###
+### FORCE_VECTORIZATION
+###
+
+# Check whether --enable-vectorization was given.
+if test "${enable_vectorization+set}" = set; then :
+  enableval=$enable_vectorization; want_vec="$enableval"
+else
+  want_vec=auto
+fi
+
+if test x"$want_vec" == xauto; then
+    if test x"$want_debug" != xno; then
+        want_vec=no
+    else
+        want_vec=yes
+    fi
+else
+    if test x"$want_vec" != xno && test x"$want_debug" != xno; then
+        as_fn_error $? "--enable-debug and --enable-vectorization cannot be specified simultaneously." "$LINENO" 5
+    fi
+fi
+ if test x"$want_vec" != xno; then
+  COND_VECTORIZATION_TRUE=
+  COND_VECTORIZATION_FALSE='#'
+else
+  COND_VECTORIZATION_TRUE='#'
+  COND_VECTORIZATION_FALSE=
+fi
+
+
+###
 ### GPU
 ###
 
@@ -2774,26 +2831,6 @@ fi
 else
   COND_ADIOS_TRUE='#'
   COND_ADIOS_FALSE=
-fi
-
-
-###
-### FORCE_VECTORIZATION
-###
-
-# Check whether --enable-vectorization was given.
-if test "${enable_vectorization+set}" = set; then :
-  enableval=$enable_vectorization; want_vec="$enableval"
-else
-  want_vec=yes
-fi
-
- if test x"$want_vec" != xno; then
-  COND_VECTORIZATION_TRUE=
-  COND_VECTORIZATION_FALSE='#'
-else
-  COND_VECTORIZATION_TRUE='#'
-  COND_VECTORIZATION_FALSE=
 fi
 
 
@@ -7609,6 +7646,14 @@ LIBOBJS=$ac_libobjs
 LTLIBOBJS=$ac_ltlibobjs
 
 
+if test -z "${COND_DEBUG_TRUE}" && test -z "${COND_DEBUG_FALSE}"; then
+  as_fn_error $? "conditional \"COND_DEBUG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_VECTORIZATION_TRUE}" && test -z "${COND_VECTORIZATION_FALSE}"; then
+  as_fn_error $? "conditional \"COND_VECTORIZATION\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${COND_CUDA_TRUE}" && test -z "${COND_CUDA_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -7627,10 +7672,6 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_ADIOS_TRUE}" && test -z "${COND_ADIOS_FALSE}"; then
   as_fn_error $? "conditional \"COND_ADIOS\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
-if test -z "${COND_VECTORIZATION_TRUE}" && test -z "${COND_VECTORIZATION_FALSE}"; then
-  as_fn_error $? "conditional \"COND_VECTORIZATION\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CEM_TRUE}" && test -z "${COND_CEM_FALSE}"; then

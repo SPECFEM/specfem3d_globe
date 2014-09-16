@@ -213,7 +213,7 @@
   !USER2  = sngl(depth)
   !USER3  = sngl(cmt_hdur) !half duration from CMT if not changed to t0 = 0.d0 (point source)
 
-  ! just to avoid compiler warning
+  ! to avoid compiler warnings
   value1 = elat
   value1 = elon
   value1 = depth

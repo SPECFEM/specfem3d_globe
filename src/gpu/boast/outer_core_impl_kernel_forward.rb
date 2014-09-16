@@ -123,42 +123,42 @@ module BOAST
 
     p = Procedure(function_name, v, constants)
     if (get_lang == CUDA and ref) then
-      @@output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
+      get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :r_earth_km => r_earth_km, :coloring_min_nspec_outer_core => coloring_min_nspec_outer_core)
       #DEACTIVATE USE TEXTURES CONSTANTS
-      @@output.puts "#ifdef #{use_textures_constants}"
-      @@output.puts "#undef #{use_textures_constants}"
-      @@output.puts "#endif"
+      get_output.puts "#ifdef #{use_textures_constants}"
+      get_output.puts "#undef #{use_textures_constants}"
+      get_output.puts "#endif"
 
 #      if get_lang == CUDA
-#        @@output.puts "#ifdef #{use_textures_fields}"
+#        get_output.puts "#ifdef #{use_textures_fields}"
 #          decl d_displ_oc_tex
 #          decl d_accel_oc_tex
-#        @@output.puts "#endif"
-#        @@output.puts "#ifdef #{use_textures_constants}"
+#        get_output.puts "#endif"
+#        get_output.puts "#ifdef #{use_textures_constants}"
 #          decl d_hprime_xx_oc_tex
-#        @@output.puts "#endif"
+#        get_output.puts "#endif"
 #      end
       sub_kernel =  compute_element_oc_rotation(n_gll3)
       print sub_kernel
-      decl p
+      open p
         if get_lang == CL then
-          @@output.puts "#ifdef #{use_textures_fields}"
+          get_output.puts "#ifdef #{use_textures_fields}"
             decl d_displ_oc_tex.sampler
             decl d_accel_oc_tex.sampler
-          @@output.puts "#endif"
-          @@output.puts "#ifdef #{use_textures_constants}"
+          get_output.puts "#endif"
+          get_output.puts "#ifdef #{use_textures_constants}"
             decl d_hprime_xx_oc_tex.sampler
             decl d_hprimewgll_xx_oc_tex.sampler
-          @@output.puts "#endif"
+          get_output.puts "#endif"
         end
         decl bx = Int("bx")
         decl tx = Int("tx")
         decl k  = Int("K"), j = Int("J"), i = Int("I")
-        @@output.puts "#ifndef #{manually_unrolled_loops}"
+        get_output.puts "#ifndef #{manually_unrolled_loops}"
           decl l = Int("l")
-        @@output.puts "#endif"
+        get_output.puts "#endif"
         decl active = Int("active", :size => 2, :signed => false)
         decl offset = Int("offset"), iglob = Int("iglob")
         decl working_element = Int("working_element")
@@ -199,32 +199,32 @@ module BOAST
   
         print active === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
         print If(active) {
-          @@output.puts "#ifdef #{use_mesh_coloring}"
+          get_output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
-          @@output.puts "#else"
+          get_output.puts "#else"
             print If(use_mesh_coloring_gpu, lambda {
               print working_element === bx
             }, lambda {
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
             })
-          @@output.puts "#endif"
+          get_output.puts "#endif"
   
           print iglob === d_ibool[working_element*ngll3 + tx]-1
   
-          @@output.puts "#ifdef #{use_textures_fields}"
+          get_output.puts "#ifdef #{use_textures_fields}"
             print s_dummy_loc[tx] === d_displ_oc_tex[iglob]
-          @@output.puts "#else"
+          get_output.puts "#else"
             print s_dummy_loc[tx] === d_potential[iglob]
-          @@output.puts "#endif"
+          get_output.puts "#endif"
         }
         print If(tx < ngll2) {
-          @@output.puts "#ifdef #{use_textures_constants}"
+          get_output.puts "#ifdef #{use_textures_constants}"
             print sh_hprime_xx[tx] === d_hprime_xx_oc_tex[tx]
             print sh_hprimewgll_xx[tx] === d_hprimewgll_xx_oc_tex[tx]
-          @@output.puts "#else"
+          get_output.puts "#else"
             print sh_hprime_xx[tx] === d_hprime_xx[tx]
             print sh_hprimewgll_xx[tx] === d_hprimewgll_xx[tx]
-          @@output.puts "#endif"
+          get_output.puts "#endif"
   
         }
         print barrier(:local)
@@ -236,11 +236,11 @@ module BOAST
              print templ[1] === templ[1] + s_dummy_loc[k*ngll2+l*ngllx+i]*sh_hprime_xx[l*ngllx+j]
              print templ[2] === templ[2] + s_dummy_loc[l*ngll2+j*ngllx+i]*sh_hprime_xx[l*ngllx+k]
           }
-          @@output.puts "#ifdef #{manually_unrolled_loops}"
+          get_output.puts "#ifdef #{manually_unrolled_loops}"
             for_loop.unroll
-          @@output.puts "#else"
+          get_output.puts "#else"
             print for_loop
-          @@output.puts "#endif"
+          get_output.puts "#endif"
           print offset === working_element*ngll3_padded + tx
           (0..2).each { |indx|
             print xil[indx]    === d_xi[indx][offset]
@@ -314,37 +314,37 @@ module BOAST
              print templ[1] === templ[1] + s_temp[1][k*ngll2+l*ngllx+i]*sh_hprimewgll_xx[j*ngllx+l]
              print templ[2] === templ[2] + s_temp[2][l*ngll2+j*ngllx+i]*sh_hprimewgll_xx[k*ngllx+l]
           }
-          @@output.puts "#ifdef #{manually_unrolled_loops}"
+          get_output.puts "#ifdef #{manually_unrolled_loops}"
             for_loop.unroll
-          @@output.puts "#else"
+          get_output.puts "#else"
             print for_loop
-          @@output.puts "#endif"
+          get_output.puts "#endif"
           print sum_terms === -(wgllwgll_yz[k*ngllx+j]*templ[0] + wgllwgll_xz[k*ngllx+i]*templ[1] + wgllwgll_xy[j*ngllx+i]*templ[2])
   
           print If(gravity) {
             print  sum_terms === sum_terms + gravity_term
           }
-          @@output.puts "#ifdef #{use_mesh_coloring}"
-            @@output.puts "#ifdef #{use_textures_fields}"
+          get_output.puts "#ifdef #{use_mesh_coloring}"
+            get_output.puts "#ifdef #{use_textures_fields}"
               print d_potential_dot_dot[iglob] === d_accel_oc_tex[iglob] + sum_terms
-            @@output.puts "#else"
+            get_output.puts "#else"
               print d_potential_dot_dot[iglob] === d_potential_dot_dot[iglob] + sum_terms
-            @@output.puts "#endif"
-          @@output.puts "#else"
+            get_output.puts "#endif"
+          get_output.puts "#else"
             print If(use_mesh_coloring_gpu, lambda {
               print If(nspec_outer_core > coloring_min_nspec_outer_core, lambda {
-                @@output.puts "#ifdef #{use_textures_fields}"
+                get_output.puts "#ifdef #{use_textures_fields}"
                   print d_potential_dot_dot[iglob] === d_accel_oc_tex[iglob] + sum_terms
-                @@output.puts "#else"
+                get_output.puts "#else"
                   print d_potential_dot_dot[iglob] === d_potential_dot_dot[iglob] + sum_terms
-                @@output.puts "#endif"
+                get_output.puts "#endif"
               }, lambda{
                 print atomicAdd(d_potential_dot_dot+iglob,sum_terms)
               })
             }, lambda {
               print atomicAdd(d_potential_dot_dot+iglob,sum_terms)
             })
-          @@output.puts "#endif"
+          get_output.puts "#endif"
         }
       close p
     else

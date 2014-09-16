@@ -115,6 +115,10 @@
                           NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
                           mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
                           ipass)
+
+      ! If we're in the request stage of CEM, exit.
+      if (CEM_REQUEST) exit
+
     enddo
 
     ! deallocate arrays used for that region

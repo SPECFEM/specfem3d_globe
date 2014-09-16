@@ -41,7 +41,7 @@
   else
     ! quasi Heaviside
     comp_source_time_function = 0.5d0*(1.0d0 + netlib_specfun_erf(t/hdur))
-  end if
+  endif
 
   end function comp_source_time_function
 
@@ -80,7 +80,7 @@
   ! On the first iteration, go get the ASCII file.
   if ( .not. allocated (stfArray_external) ) then
     call get_external_source_time_function ()
-  end if
+  endif
 
   comp_source_time_function_external = stfArray_external (it)
 
@@ -112,14 +112,14 @@
     if ( RetCode /= 0 ) then
       print *, "ERROR IN SOURCE TIME FUNCTION."
       stop
-    end if
+    endif
 
     ! Ignore lines with a hash (comments)
     if ( index (line, "#") /= 0 ) cycle read_loop
 
     read (line, *) stfArray_external(iterator)
 
-  end do read_loop
+  enddo read_loop
 
   close (10)
 

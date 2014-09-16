@@ -47,18 +47,70 @@ auxiliaries_TARGETS += \
 endif
 
 auxiliaries_OBJECTS = \
-	$O/combine_AVS_DX.aux.o \
-	$O/combine_paraview_strain_data.auxsolver.o \
-	$O/combine_surf_data.auxsolver.o \
-	$O/combine_vol_data.auxsolver.o \
-	$O/combine_vol_data_vtk.auxsolver.o \
-	$O/convolve_source_timefunction.aux.o \
-	$O/create_movie_AVS_DX.aux.o \
-	$O/create_movie_GMT_global.aux.o \
+	$(xconvolve_source_timefunction_OBJECTS) \
+	$(xcombine_AVS_DX_OBJECTS) \
+	$(xcombine_paraview_strain_data_OBJECTS) \
+	$(xcombine_surf_data_OBJECTS) \
+	$(xcombine_vol_data_OBJECTS) \
+	$(xcombine_vol_data_adios_OBJECTS) \
+	$(xcombine_vol_data_vtk_OBJECTS) \
+	$(xcombine_vol_data_vtk_adios_OBJECTS) \
+	$(xcreate_movie_AVS_DX_OBJECTS) \
+	$(xcreate_movie_GMT_global_OBJECTS) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
 auxiliaries_SHARED_OBJECTS = \
+	$(xconvolve_source_timefunction_SHARED_OBJECTS) \
+	$(xcombine_AVS_DX_SHARED_OBJECTS) \
+	$(xcombine_paraview_strain_data_SHARED_OBJECTS) \
+	$(xcombine_surf_data_SHARED_OBJECTS) \
+	$(xcombine_vol_data_SHARED_OBJECTS) \
+	$(xcombine_vol_data_adios_SHARED_OBJECTS) \
+	$(xcombine_vol_data_vtk_SHARED_OBJECTS) \
+	$(xcombine_vol_data_vtk_adios_SHARED_OBJECTS) \
+	$(xcreate_movie_AVS_DX_SHARED_OBJECTS) \
+	$(xcreate_movie_GMT_global_SHARED_OBJECTS) \
+	$(xextract_database_SHARED_OBJECTS) \
+	$(EMPTY_MACRO)
+
+####
+#### rules for executables
+####
+
+.PHONY: all_aux aux
+
+all_aux: $(auxiliaries_TARGETS)
+
+aux: $(auxiliaries_TARGETS)
+
+#######################################
+
+####
+#### rules for each program follow
+####
+
+#######################################
+
+xconvolve_source_timefunction_OBJECTS = \
+	$O/convolve_source_timefunction.aux.o \
+	$(EMPTY_MACRO)
+
+xconvolve_source_timefunction_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$(EMPTY_MACRO)
+
+${E}/xconvolve_source_timefunction: $(xconvolve_source_timefunction_OBJECTS) $(xconvolve_source_timefunction_SHARED_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
+
+#######################################
+
+xcombine_AVS_DX_OBJECTS = \
+	$O/combine_AVS_DX.aux.o \
+	$O/get_cmt.solver.o \
+	$(EMPTY_MACRO)
+
+xcombine_AVS_DX_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/auto_ner.shared.o \
 	$O/calendar.shared.o \
@@ -66,6 +118,154 @@ auxiliaries_SHARED_OBJECTS = \
 	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
 	$O/create_serial_name_database.shared.o \
+	$O/define_all_layers.shared.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$(EMPTY_MACRO)
+
+${E}/xcombine_AVS_DX: $(xcombine_AVS_DX_OBJECTS) $(xcombine_AVS_DX_SHARED_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
+
+#######################################
+
+xcombine_paraview_strain_data_OBJECTS = \
+	$O/combine_paraview_strain_data.auxsolver.o \
+	$(EMPTY_MACRO)
+
+xcombine_paraview_strain_data_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/binary_c_io.cc.o \
+	$(EMPTY_MACRO)
+
+${E}/xcombine_paraview_strain_data: $(xcombine_paraview_strain_data_OBJECTS) $(xcombine_paraview_strain_data_SHARED_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
+
+#######################################
+
+xcombine_surf_data_OBJECTS = \
+	$O/combine_surf_data.auxsolver.o \
+	$(EMPTY_MACRO)
+
+xcombine_surf_data_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/binary_c_io.cc.o \
+	$(EMPTY_MACRO)
+
+${E}/xcombine_surf_data: $(xcombine_surf_data_OBJECTS) $(xcombine_surf_data_SHARED_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
+
+#######################################
+
+xcombine_vol_data_OBJECTS = \
+	$O/combine_vol_data.auxsolver.o \
+	$(EMPTY_MACRO)
+
+xcombine_vol_data_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/binary_c_io.cc.o \
+	$O/exit_mpi.shared.o \
+	$O/intgrl.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_prem.shared.o \
+	$O/parallel.sharedmpi.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
+	$(EMPTY_MACRO)
+
+${E}/xcombine_vol_data: $(xcombine_vol_data_OBJECTS) $(xcombine_vol_data_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+#######################################
+
+xcombine_vol_data_adios_OBJECTS = \
+	$O/combine_vol_data.auxadios.o \
+	$O/combine_vol_data_adios_impl.auxmpi.o \
+	$(EMPTY_MACRO)
+
+xcombine_vol_data_adios_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/binary_c_io.cc.o \
+	$O/exit_mpi.shared.o \
+	$O/intgrl.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_prem.shared.o \
+	$O/parallel.sharedmpi.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
+	$(EMPTY_MACRO)
+
+$O/combine_vol_data.auxadios.o: $O/combine_vol_data_adios_impl.auxmpi.o
+
+${E}/xcombine_vol_data_adios: $(xcombine_vol_data_adios_OBJECTS) $(xcombine_vol_data_adios_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+#######################################
+
+xcombine_vol_data_vtk_OBJECTS = \
+	$O/combine_vol_data.auxsolver_vtk.o \
+	$(EMPTY_MACRO)
+
+xcombine_vol_data_vtk_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/binary_c_io.cc.o \
+	$O/exit_mpi.shared.o \
+	$O/intgrl.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_prem.shared.o \
+	$O/parallel.sharedmpi.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
+	$(EMPTY_MACRO)
+
+${E}/xcombine_vol_data_vtk: $(xcombine_vol_data_vtk_OBJECTS) $(xcombine_vol_data_vtk_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+#######################################
+
+xcombine_vol_data_vtk_adios_OBJECTS = \
+	$O/combine_vol_data.auxadios_vtk.o \
+	$O/combine_vol_data_adios_impl.auxmpi.o \
+	$(EMPTY_MACRO)
+
+xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/binary_c_io.cc.o \
+	$O/exit_mpi.shared.o \
+	$O/intgrl.shared.o \
+	$O/make_ellipticity.shared.o \
+	$O/model_prem.shared.o \
+	$O/parallel.sharedmpi.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$O/spline_routines.shared.o \
+	$(EMPTY_MACRO)
+
+$O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxmpi.o
+
+${E}/xcombine_vol_data_vtk_adios: $(xcombine_vol_data_vtk_adios_OBJECTS) $(xcombine_vol_data_vtk_adios_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+#######################################
+
+xcreate_movie_AVS_DX_OBJECTS = \
+	$O/create_movie_AVS_DX.aux.o \
+	$(EMPTY_MACRO)
+
+xcreate_movie_AVS_DX_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/auto_ner.shared.o \
+	$O/count_elements.shared.o \
+	$O/count_number_of_sources.shared.o \
+	$O/count_points.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
@@ -79,48 +279,36 @@ auxiliaries_SHARED_OBJECTS = \
 	$O/sort_array_coordinates.shared.o \
 	$(EMPTY_MACRO)
 
+${E}/xcreate_movie_AVS_DX: $(xcreate_movie_AVS_DX_OBJECTS) $(xcreate_movie_AVS_DX_SHARED_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
 
 #######################################
 
-####
-#### rules for executables
-####
+xcreate_movie_GMT_global_OBJECTS = \
+	$O/create_movie_GMT_global.aux.o \
+	$(EMPTY_MACRO)
 
-.PHONY: all_aux aux
+xcreate_movie_GMT_global_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/auto_ner.shared.o \
+	$O/count_elements.shared.o \
+	$O/count_number_of_sources.shared.o \
+	$O/count_points.shared.o \
+	$O/define_all_layers.shared.o \
+	$O/get_model_parameters.shared.o \
+	$O/get_timestep_and_layers.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_compute_parameters.shared.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
+	$(EMPTY_MACRO)
 
-all_aux: $(auxiliaries_TARGETS)
-
-aux: $(auxiliaries_TARGETS)
-
-${E}/xconvolve_source_timefunction: $(auxiliaries_SHARED_OBJECTS) $O/convolve_source_timefunction.aux.o
+${E}/xcreate_movie_GMT_global: $(xcreate_movie_GMT_global_OBJECTS) $(xcreate_movie_GMT_global_SHARED_OBJECTS)
 	${FCCOMPILE_CHECK} -o $@ $+
 
-${E}/xcombine_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/get_cmt.solver.o $O/combine_AVS_DX.aux.o
-	${FCCOMPILE_CHECK} -o $@ $+
-
-${E}/xcombine_paraview_strain_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_paraview_strain_data.auxsolver.o $O/binary_c_io.cc.o
-	${FCCOMPILE_CHECK} -o $@ $+
-
-${E}/xcombine_vol_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver.o $O/binary_c_io.cc.o $O/combine_vol_data_shared.aux.o
-	${FCCOMPILE_CHECK} -o $@ $+
-
-${E}/xcombine_vol_data_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios.o $O/binary_c_io.cc.o $O/combine_vol_data_shared.aux.o $O/parallel.sharedmpi.o
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
-
-${E}/xcombine_vol_data_vtk_adios: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data_adios_impl.auxmpi.o $O/combine_vol_data.auxadios_vtk.o $O/binary_c_io.cc.o $O/combine_vol_data_shared.aux.o $O/parallel.sharedmpi.o
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
-
-${E}/xcombine_vol_data_vtk: $(auxiliaries_SHARED_OBJECTS) $O/combine_vol_data.auxsolver_vtk.o $O/binary_c_io.cc.o $O/combine_vol_data_shared.aux.o
-	${FCCOMPILE_CHECK} -o $@ $+
-
-${E}/xcombine_surf_data: $(auxiliaries_SHARED_OBJECTS) $O/combine_surf_data.auxsolver.o $O/binary_c_io.cc.o
-	${FCCOMPILE_CHECK} -o $@ $+
-
-${E}/xcreate_movie_AVS_DX: $(auxiliaries_SHARED_OBJECTS) $O/create_movie_AVS_DX.aux.o
-	${FCCOMPILE_CHECK} -o $@ $+
-
-${E}/xcreate_movie_GMT_global: $(auxiliaries_SHARED_OBJECTS) $O/create_movie_GMT_global.aux.o
-	${FCCOMPILE_CHECK} -o $@ $+
+#######################################
 
 ${E}/xextract_database: $(S_TOP)/utils/extract_database/extract_database.f90 ${OUTPUT}/values_from_mesher.h
 	${FCCOMPILE_CHECK} -o ${E}/xextract_database ${FCFLAGS_f90} $(S_TOP)/utils/extract_database/extract_database.f90
@@ -134,13 +322,6 @@ $(auxiliaries_OBJECTS): S := ${S_TOP}/src/auxiliaries
 ####
 #### rule for each .o file below
 ####
-
-##
-## additional rules
-##
-
-$O/combine_vol_data.auxadios.o: $O/combine_vol_data_adios_impl.auxmpi.o
-$O/combine_vol_data.auxadios_vtk.o: $O/combine_vol_data_adios_impl.auxmpi.o
 
 ##
 ## auxiliaries

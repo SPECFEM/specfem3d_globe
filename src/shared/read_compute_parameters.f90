@@ -100,7 +100,8 @@
                             OCEANS,TOPOGRAPHY, &
                             ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R120,R220,R400,R600,R670,R771, &
                             RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO_FICTITIOUS_IN_MESHER, &
-                            R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS)
+                            R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+                            CEM_REQUEST,CEM_ACCEPT)
 
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -107,16 +107,16 @@ __kernel void get_maximum_scalar_kernel(const __global float * array, const int 
   sdata[tid - (0)] = (i < size ? fabs(array[i - (0)]) : 0.0f);\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
   s = (get_local_size(0)) / (2);\n\
-  while(s > 0){\n\
-    if(tid < s){\n\
-      if(sdata[tid - (0)] < sdata[tid + s - (0)]){\n\
+  while (s > 0) {\n\
+    if (tid < s) {\n\
+      if (sdata[tid - (0)] < sdata[tid + s - (0)]) {\n\
         sdata[tid - (0)] = sdata[tid + s - (0)];\n\
       }\n\
     }\n\
     s = s >> 1;\n\
     barrier(CLK_LOCAL_MEM_FENCE);\n\
   }\n\
-  if(tid == 0){\n\
+  if (tid == 0) {\n\
     d_max[bx - (0)] = sdata[0 - (0)];\n\
   }\n\
 }\n\

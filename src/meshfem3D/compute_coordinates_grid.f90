@@ -59,7 +59,7 @@
 
   double precision :: ratio_xi, ratio_eta, fact_xi, fact_eta, fact_xi_,fact_eta_
 
-! this to avoid compilation warnings
+! to avoid compiler warnings
   x_ = 0
   y_ = 0
 

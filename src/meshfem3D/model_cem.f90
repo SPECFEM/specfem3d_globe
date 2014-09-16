@@ -8,7 +8,6 @@ module cem_par
   double precision, parameter :: scale_GPa = (RHOAV / 1000.d0) * &
     ((R_EARTH * scaleval / 1000.d0) ** 2)
 
-
   integer, dimension (:), allocatable :: regCode
   integer, parameter                  :: shuOn=1
   integer, parameter                  :: comLvl=9
@@ -67,9 +66,7 @@ subroutine model_cem_broadcast ( myrank )
     call return_populated_arrays (reg3Bc, "vpp", 3)
 
     call synchronize_all ()
-    if (myrank == 0 ) print *, "Finished reading in netcdf."
-
-  end if
+  endif
 
 end subroutine model_cem_broadcast
 
@@ -114,7 +111,7 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
     vsv = reg3Bc%vsv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vsh = reg3Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
 
-  end if
+  endif
 
   vph = vpv
 
@@ -318,15 +315,15 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
               region = 2
             else if ( rad >= R_020_KM ) then
               region = 1
-            end if
+            endif
 
             iglob          = ibool(i,j,k,ispec)
             regCode(iglob) = region
 
-          end do
-        end do
-      end do
-    end do
+          enddo
+        enddo
+      enddo
+    enddo
 
   else if (iregion_code == 2) then
 
@@ -336,6 +333,6 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
     regCode(:) = 9
 
-  end if
+  endif
 
 end subroutine build_global_coordinates

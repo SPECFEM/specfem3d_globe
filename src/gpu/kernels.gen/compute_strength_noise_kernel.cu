@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9992
+//      this file has been generated automatically by BOAST version 0.9995
 //      by: make boast_kernels
 
 /*
@@ -95,7 +95,7 @@ __global__ void compute_strength_noise_kernel(const float * displ, const int * i
   int iglob;
   float eta;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
-  if(iface < nspec_top){
+  if (iface < nspec_top) {
     ispec = ibelm_top[iface - (0)] - (1);
     igll = threadIdx.x;
     ipoin = igll + (NGLL2) * (iface);

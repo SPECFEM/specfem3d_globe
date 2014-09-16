@@ -16,10 +16,10 @@ module BOAST
 
     p = Procedure(function_name, [ibool, accel, b_displ, rho_kl, nspec, deltat])
     if (get_lang == CUDA and ref) then
-      @@output.print File::read("references/#{function_name}.cu")
+      get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngll3 => n_gll3 )
-      decl p
+      open p
         decl ispec = Int("ispec")
         decl ijk_ispec = Int("ijk_ispec")
         decl iglob = Int("iglob")

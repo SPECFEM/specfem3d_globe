@@ -57,6 +57,7 @@
                          nint(gamma_source(isource)), &
                          ispec_selected_source(isource))
 
+          !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
@@ -356,6 +357,7 @@
                          nint(gamma_source(isource)), &
                          ispec_selected_source(isource))
 
+           !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
            f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
            !if (it == 1 .and. myrank == 0) then
