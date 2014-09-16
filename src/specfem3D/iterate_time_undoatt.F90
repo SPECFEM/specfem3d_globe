@@ -42,7 +42,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_crust_mantle_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_inner_core_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_outer_core_store_buffer,b_accel_outer_core_store_buffer
-
+  double precision :: sizeval
   ! timing
   double precision, external :: wtime
 
@@ -53,8 +53,34 @@
   ! checks
   if (.not. UNDO_ATTENUATION) return
 
+  ! user output
+  if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
+    if (myrank == 0 ) then
+      write(IMAIN,*) 'undoing attenuation:'
+      write(IMAIN,*) '  wavefield snapshots at every NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION
+      call flush_IMAIN()
+    endif
+  endif
+
   ! allocates buffers
   if (SIMULATION_TYPE == 3) then
+    ! user output
+    if (myrank == 0) then
+      ! crust/mantle
+      ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
+      sizeval = dble(NDIM) * dble(NGLOB_CRUST_MANTLE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  size of crust/mantle wavefield buffer per slice = ', sngl(sizeval),'MB'
+      ! outer core
+      ! buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION) in MB
+      sizeval = dble(2) * dble(NGLOB_OUTER_CORE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  size of   outer core wavefield buffer per slice = ', sngl(sizeval),'MB'
+      ! inner core
+      ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
+      sizeval = dble(NDIM) * dble(NGLOB_INNER_CORE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  size of   inner core wavefield buffer per slice = ', sngl(sizeval),'MB'
+      call flush_IMAIN()
+    endif
+
     !! DK DK to Daniel, July 2013: in the case of GPU_MODE it will be *crucial* to leave these arrays on the host
     !! i.e. on the CPU, in order to be able to use all the (unused) memory of the host for them, since they are
     !! (purposely) huge and designed to use almost all the memory available (by carefully optimizing the
