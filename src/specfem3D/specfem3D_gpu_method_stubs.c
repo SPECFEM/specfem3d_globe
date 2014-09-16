@@ -69,7 +69,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
 void FC_FUNC_(transfer_buffer_to_device_async,
               TRANSFER_BUFFER_TO_DEVICE_ASYNC)(long* Mesh_pointer_f,
-                                               realw* buffer,
+                                               realw* buffer_f,
                                                int* IREGION,
                                                int* FORWARD_OR_ADJOINT) {}
 
@@ -260,7 +260,7 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 //
 
 void FC_FUNC_ (compute_strain_gpu,
-               COMPUTE_STRAIN_GPU) (long *Mesh_pointer_f, realw *deltat_f, int *FORWARD_OR_ADJOINT_f) {}
+               COMPUTE_STRAIN_GPU) (long *Mesh_pointer_f, realw *deltat_f, int *FORWARD_OR_ADJOINT) {}
 
 
 //
@@ -484,6 +484,9 @@ void FC_FUNC_ (prepare_oceans_device,
                                        int *h_iglob_ocean_load,
                                        realw *h_rmass_ocean_load_selected,
                                        realw *h_normal_ocean_load) {}
+
+void FC_FUNC_ (prepare_lddrk_device,
+               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f) {}
 
 void FC_FUNC_ (prepare_crust_mantle_device,
                PREPARE_CRUST_MANTLE_DEVICE) (long *Mesh_pointer_f,

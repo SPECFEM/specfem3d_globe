@@ -393,9 +393,9 @@
   ! local parameters
   double precision :: scalar_moment,scaleM
 
-  ! scalar moment: 
+  ! scalar moment:
   ! see equation (1.4) in P.G. Silver and T.H. Jordan, 1982,
-  ! "Optimal estiamtion of scalar seismic moment", 
+  ! "Optimal estiamtion of scalar seismic moment",
   ! Geophys. J.R. astr. Soc., 70, 755 - 787
   !
   ! or see equation (5.91) in Dahlen & Tromp (1998)
@@ -415,7 +415,7 @@
   scalar_moment = dsqrt(scalar_moment/2.0d0)
 
   ! note: moment tensor is non-dimensionalized
-  ! 
+  !
   ! re-adds scale factor for the moment tensor
   ! CMTSOLUTION file values are in dyne.cm
   ! 1 dyne is 1 gram * 1 cm / (1 second)^2
