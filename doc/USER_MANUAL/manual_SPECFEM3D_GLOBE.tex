@@ -425,7 +425,7 @@ If your compiler has problems with the \texttt{use mpi} statements that are used
 We recommend that you ask for exclusive use of the compute nodes when running on a cluster or a supercomputer, i.e., make sure that no other users
 are running on the same nodes at the same time. Otherwise your run could run out of memory if the memory of some nodes is used by other users, in particular
 when undoing attenuation using the UNDO\_ATTENUATION option in DATA/Par\_file.
-To do so, ask your system administrator for the option to add to your batch submission script; it is for instance 
+To do so, ask your system administrator for the option to add to your batch submission script; it is for instance
 \texttt{\#BSUB -x} with SLURM and \texttt{\#\$ -l exclusive=TRUE} with Sun Grid Engine (SGE).
 
 \section{Using the GPU version of the code}
@@ -439,7 +439,7 @@ compilation can be controlled through three variables: \texttt{OCL\_LIB=},
 \noindent
 \texttt{./configure --with-opencl OCL\_LIB= OCL\_INC= OCL\_GPU\_FLAGS=
 ..}\\
-    
+
 
 Cuda configuration can be enabled with \texttt{--with-cuda} flag and
 \texttt{CUDA\_FLAGS=}, \texttt{CUDA\_LIB=}, \texttt{CUDA\_INC=}
@@ -494,7 +494,7 @@ Note about the OpenCL version: the OpenCL calculation kernels were
 created by Brice Videau and Kevin Pouget from Grenoble, France, using
 their software package called BOAST; see:
 
-Title:	BOAST: Bringing Optimization through Automatic Source-to-Source Tranformations,
+Title:  BOAST: Bringing Optimization through Automatic Source-to-Source Tranformations,
 2013,
 Videau, B, Marangozova-Martin, V, Cronsioe, J,
 Tokyo, Japan,
@@ -712,7 +712,8 @@ than~$90^{\circ}$, thereby accommodating smaller-scale simulations. }
 
 
 To run the mesher for a global simulation, the following parameters
-need to be set in the \texttt{Par\_file}:
+need to be set in the \texttt{Par\_file} (the list below might be slightly obsolete or incomplete; for an up-to-date
+version, see comments in the default \texttt{Par\_file} located in directory \texttt{DATA}:
 
 \begin{description}
 \item [{\texttt{SIMULATION\_TYPE}}] is set to 1 for forward simulations,
@@ -867,7 +868,7 @@ After adding ellipticity, the mesh becomes elliptical and thus geocentric and ge
 %
 From \cite{DaTr98}: "Spherically-symmetric Earth models all have the same hydrostatic surface ellipticity 1/299.8. This is 0.5 percent smaller than observed flattening of best-fitting ellipsoid 1/298.3. The discrepancy is referred to as the "excess equatorial bulge of the Earth", an early discovery of artificial satellite geodesy."
 %
-From Paul Melchior, IUGG General Assembly, Vienna, Austria, August 1991 Union lecture, available at www.agu.org/books: "It turns out that the spheroidal models constructed on the basis of the spherically-symmetric models (PREM, 1066A) by using the Clairaut differential equation to calculate the flattening 
+From Paul Melchior, IUGG General Assembly, Vienna, Austria, August 1991 Union lecture, available at www.agu.org/books: "It turns out that the spheroidal models constructed on the basis of the spherically-symmetric models (PREM, 1066A) by using the Clairaut differential equation to calculate the flattening
 in function of the radius vector imply hydrostaticity. These have surface ellipticity 1/299.8 and
 a corresponding dynamical flattening of .0033 (PREM). The actual ellipticty of the Earth for a best-fitting ellipsoid is 1/298.3 with a corresponding dynamical flattening of .0034."
 %
@@ -901,6 +902,17 @@ length of the numerical simulation, i.e., twice the record length
 requires twice as much CPU time. This feature is not used at the time
 of meshing but is required for the solver, i.e., you may change this
 parameter after running the mesher.
+\item [{\texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY or UNDO\_ATTENUATION}}] To undo attenuation for sensitivity kernel calculations or forward runs with \texttt{SAVE\_FORWARD}
+use one (and only one) of the two flags below. \texttt{UNDO\_ATTENUATION} is much better (it is exact)
+but requires a significant amount of disk space for temporary storage.
+When using \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY}, to make the approximation reasonably OK you need to take the following steps:
+%
+1/ To calculate synthetic seismograms, do a forward simulation with full attenuation for the model of interest. The goal is to get synthetics that match the data as closely as possible.\\
+2/ Make measurements and produce adjoint sources by comparing the resulting synthetics with the data. In the simplest case of a cross-correlation traveltime measurement, use the time-reversed synthetic in the window of interest as the adjoint source.\\
+2/ Do a second forward calculation with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and save the last snapshot.\\
+3/ Do an adjoint calculation using the adjoint source calculated in 1/, the forward wavefield reconstructed based on 2/, use \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for the adjoint wavefield, and save the kernel.\\
+Thus the kernel calculation uses \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for both the forward and the adjoint wavefields. This is in the spirit of the banana-donut kernels. But the data that are assimilated are based on the full 3D synthetic with attenuation.
+%
 \item [{\texttt{MOVIE\_SURFACE}}] Set to \texttt{.false.}, unless you want
 to create a movie of seismic wave propagation on the Earth's surface.
 Turning this option on generates large output files. See Section \ref{sec:Movies}
@@ -1818,10 +1830,10 @@ accurate may be determined based upon the relation \begin{equation}
 
 
 % \section{Two-Chunk Simulations}
-% 
+%
 % For a two-chunk regional simulation the following parameters need
 % to be set in the \texttt{Par\_file}:
-% 
+%
 % \begin{description}
 % \item [{$\nchunks$}] Must be set to 2
 % \item [{\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}}] Denotes the width of
@@ -1834,18 +1846,18 @@ accurate may be determined based upon the relation \begin{equation}
 % be the same in this case. All other parameters are similar to the
 % one-chunk simulations, refer to Section \ref{sec:One-Chunk-Simulations}
 % for details.
-% 
+%
 % %
 % \begin{figure}[H]
 % \noindent \begin{centering}
 % \includegraphics[width=0.6\textwidth]{figures/2-chunk-surface}
 % \par\end{centering}
-% 
+%
 % \caption{Geometry of a 2-chunk simulation, where the first chunk (\texttt{CHUNK\_AB})
 % centers at $40^{\circ}$ latitude, $10^{\circ}$ longitude, and has
 % been rotated by $20^{\circ}$ counter clockwise, and the second chunk
 % (\texttt{CHUNK\_AC}) connects to the first chunk through one face.}
-% 
+%
 % \end{figure}
 
 
@@ -2615,7 +2627,7 @@ kernel files are stored, and \texttt{output\_dir} is where the mesh
 file will be written. Give 0 for low resolution and 1 for high resolution.
 If region is not specified, all three regions (crust and mantle, outer core, inner core)
 will be collected, otherwise, only the specified region will be.
-Here is an example: 
+Here is an example:
 \texttt{./xcombine\_vol\_data slices\_major alpha\_kernel input\_topo\_dir}
 \texttt{~~~~~~~~~~~~~~~~~~~~~~~~~~~~~input\_file\_dir output\_dir 1}
 
@@ -3799,7 +3811,7 @@ Accordingly, when you run a simulation the band code will be chosen depending on
 {\footnotesize       vsv=vsv*(1.0d0+dvs) }{\footnotesize \par}
 {\footnotesize       vsh=vsh*(1.0d0+dvs) }{\footnotesize \par}
 {\footnotesize       rho=rho*(1.0d0+drho) }{\footnotesize \par}
-{\footnotesize	... }{\footnotesize \par}
+{\footnotesize  ... }{\footnotesize \par}
   \end{lyxcode}
  You could modify this to add different perturbations for vph and vpv, resp. vsh and vsv.
  This would basically mean that you add transverse isotropic perturbations.
