@@ -38,7 +38,7 @@
 
   double precision a, a1, b, b1, c, c1
   double precision d, d1, e, e1
-  double precision ec2, eps, f, f1, g, g1, h, h1, onemec2, pherad
+  double precision ec2, f, f1, g, g1, h, h1, onemec2, pherad
   double precision phsrad, sc, sd, ss
   double precision temp, therad, thg, thsrad
 
@@ -98,7 +98,6 @@
 
   ec2 = 2.*fl - fl*fl
   onemec2 = 1. - ec2
-  eps = 1. + ec2/onemec2
 
   ! - Convert event location to radians.
   !   (Equations are unstable for latitudes of exactly 0 degrees.)

@@ -40,7 +40,6 @@
 
   ! local parameters
   integer :: NEX_MAX
-  double precision :: ELEMENT_WIDTH
   integer :: nblocks_xi,nblocks_eta
   ! doubling layers
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
@@ -159,8 +158,6 @@
     if (mod(NEX_XI/32,NPROC_XI) /= 0) CUT_SUPERBRICK_XI = .true.
     if (mod(NEX_ETA/32,NPROC_ETA) /= 0) CUT_SUPERBRICK_ETA = .true.
   endif
-
-  ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
 
 !
 !--- compute additional parameters

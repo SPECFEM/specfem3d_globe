@@ -45,7 +45,6 @@ shared_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
-	$O/force_ftz.cc.o \
 	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
@@ -54,7 +53,6 @@ shared_OBJECTS = \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
-	$O/make_gravity.shared.o \
 	$O/memory_eval.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_topo_bathy.shared.o \

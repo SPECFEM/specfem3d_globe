@@ -178,6 +178,9 @@
 !        c13 = c12 - gamma*A0
 !        and c12 = c11 - 2*c66
 !
+! Note: The value vs0, while set above, is unnecessary for the
+! calculation below.
+!
 ! Steinle-Neumann (2002):
 !
 !  r    T    rho    c11   c12  c13  c33  c44 KS   mu

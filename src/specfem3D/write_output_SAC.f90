@@ -570,7 +570,7 @@
       call write_integer(int(undef))     !(91)ISTREG
       call write_integer(int(undef))     !(92)IEVREG
       call write_integer(IEVTYP)        !(93)
-      call write_integer(int(undef))     !(94)IQUAL
+      call write_integer(IQUAL)         !(94)
       call write_integer(ISYNTH)        !(95)
       call write_integer(IMAGTYP)       !(96)
       call write_integer(int(undef))     !(97)IMAGSRC

@@ -1076,7 +1076,6 @@
   ! local parameters
   integer :: ii,jj,kk
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
-  !real(kind=CUSTOM_REAL) :: r0,r1,theta1
 
   ! >>>>>
   ! uniform sigma

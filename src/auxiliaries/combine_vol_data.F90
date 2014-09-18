@@ -112,9 +112,6 @@ program combine_vol_data
 
   ! starts here---------------------------------------------------------------
 
-  ! dummy initialization to avoid compiler warnings
-  ier = 0
-
   ! ADIOS mpi initialization
 #ifdef ADIOS_INPUT
   ! starts mpi
@@ -240,6 +237,8 @@ program combine_vol_data
     di = int((NGLLX-1)/2.0)
     dj = int((NGLLY-1)/2.0)
     dk = int((NGLLZ-1)/2.0)
+  else
+    stop 'resolution setting must be 0, 1, or 2'
   endif
 
   ! output info
