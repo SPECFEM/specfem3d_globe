@@ -140,6 +140,10 @@ fi
 if test x"$MPIFC" = x && test x"$MPIF90" != x; then
     MPIFC="$MPIF90"
 fi
+# note: if not set, default FCFLAGS (and CFLAGS) will be set by autoconf/configure script (mostly -g -O2)
+if test x"$FCFLAGS" = x && test x"$FLAGS_CHECK" != x ; then
+    FCFLAGS=""
+fi
 
 AC_PROG_FC
 export FC
@@ -233,7 +237,6 @@ AC_SUBST([CONFIGURE_FLAGS])
 
 AS_IF([test x"$want_cuda" != xno], [
     AS_BOX([CUDA])
-    AC_ARG_VAR(CUDA_FLAGS, [Cuda compiler flags])
     CIT_CUDA_CONFIG
 ])
 
@@ -268,7 +271,13 @@ AS_IF([test x"$want_vtk" != xno], [
     VTK_LIBS="-lvtkRendering -lvtkGraphics $VTK_LIBS"
 ])
 
+###
+### MPI
+###
+
 AS_IF([test x"$want_cuda" != xno -o x"$want_vtk" != xno], [
+    AS_BOX([MPI])
+    # checks MPI include directory
     CIT_MPI_INCDIR([$MPIFC])
 ])
 
