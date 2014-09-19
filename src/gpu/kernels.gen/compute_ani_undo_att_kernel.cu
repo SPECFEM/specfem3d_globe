@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.9996
 //      by: make boast_kernels
 
 /*
@@ -196,18 +196,18 @@ static __device__ void compute_strain_product(float * prod, const float eps_trac
   b_eps[5 - (0)] = b_epsdev[2 - (0)];
   p = 0;
   for (i = 0; i <= 5; i += 1) {
-    for (j = 0; j <= 5; j += 1) {
+    for (j = i; j <= 5; j += 1) {
       prod[p - (0)] = (eps[i - (0)]) * (b_eps[j - (0)]);
       if (j > i) {
         prod[p - (0)] = prod[p - (0)] + (eps[j - (0)]) * (b_eps[i - (0)]);
         if (j > 2 && i < 3) {
           prod[p - (0)] = (prod[p - (0)]) * (2.0f);
         }
-        if (i > 2) {
-          prod[p - (0)] = (prod[p - (0)]) * (4.0f);
-        }
-        p = p + 1;
       }
+      if (i > 2) {
+        prod[p - (0)] = (prod[p - (0)]) * (4.0f);
+      }
+      p = p + 1;
     }
   }
 }

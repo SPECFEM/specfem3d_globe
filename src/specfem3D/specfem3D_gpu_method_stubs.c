@@ -640,10 +640,10 @@ void FC_FUNC_(transfer_displ_oc_from_device,
               TRANSFER_DISPL_OC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_b_displ_oc_from_device,
-              TRANSFER_B_DISPL_OC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
+              TRANSFER_B_DISPL_OC_FROM_DEVICE)(int *size, realw *b_displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_b_displ_oc_to_device,
-              TRANSFER_B_DISPL_OC_TO_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
+              TRANSFER_B_DISPL_OC_TO_DEVICE)(int *size, realw *b_displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_veloc_cm_from_device,
               TRANSFER_VELOC_CM_FROM_DEVICE)(int *size, realw *veloc, long *Mesh_pointer_f) {}

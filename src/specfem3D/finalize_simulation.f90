@@ -187,19 +187,19 @@
 
   ! MPI buffers
   deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
-            request_send_vector_cm,request_recv_vector_cm)
+             request_send_vector_cm,request_recv_vector_cm)
   deallocate(buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-            request_send_scalar_oc,request_recv_scalar_oc)
+             request_send_scalar_oc,request_recv_scalar_oc)
   deallocate(buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
-            request_send_vector_ic,request_recv_vector_ic)
+             request_send_vector_ic,request_recv_vector_ic)
 
   if (SIMULATION_TYPE == 3) then
     deallocate(b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
-              b_request_send_vector_cm,b_request_recv_vector_cm)
+               b_request_send_vector_cm,b_request_recv_vector_cm)
     deallocate(b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
-              b_request_send_scalar_oc,b_request_recv_scalar_oc)
+               b_request_send_scalar_oc,b_request_recv_scalar_oc)
     deallocate(b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
-              b_request_send_vector_ic,b_request_recv_vector_ic)
+               b_request_send_vector_ic,b_request_recv_vector_ic)
   endif
 
   deallocate(my_neighbours_crust_mantle,nibool_interfaces_crust_mantle)

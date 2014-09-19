@@ -167,7 +167,7 @@
               b_epsilondev_loc(5) = b_epsilondev_loc_matrix(i,j,k,5)
 
               call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_loc, &
-                                         b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
+                                          b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
 
               cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
 
@@ -726,17 +726,17 @@
 
   ! Building of the local matrix of the strain tensor
   ! for the adjoint field and the regular backward field
-  eps(1:2)=epsdev(1:2)+eps_trace_over_3           !eps11 et eps22
-  eps(3)=-(eps(1)+eps(2))+3*eps_trace_over_3     !eps33
-  eps(4)=epsdev(5)                                !eps23
-  eps(5)=epsdev(4)                                !eps13
-  eps(6)=epsdev(3)                                !eps12
+  eps(1:2) = epsdev(1:2)+eps_trace_over_3           !eps11 et eps22
+  eps(3) = -(eps(1)+eps(2))+3*eps_trace_over_3     !eps33
+  eps(4) = epsdev(5)                                !eps23
+  eps(5) = epsdev(4)                                !eps13
+  eps(6) = epsdev(3)                                !eps12
 
-  b_eps(1:2)=b_epsdev(1:2)+b_eps_trace_over_3
-  b_eps(3)=-(b_eps(1)+b_eps(2))+3*b_eps_trace_over_3
-  b_eps(4)=b_epsdev(5)
-  b_eps(5)=b_epsdev(4)
-  b_eps(6)=b_epsdev(3)
+  b_eps(1:2) = b_epsdev(1:2)+b_eps_trace_over_3
+  b_eps(3) = -(b_eps(1)+b_eps(2))+3*b_eps_trace_over_3
+  b_eps(4) = b_epsdev(5)
+  b_eps(5) = b_epsdev(4)
+  b_eps(6) = b_epsdev(3)
 
   ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
   p = 1

@@ -413,7 +413,7 @@ void FC_FUNC_(transfer_displ_oc_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_displ_oc_from_device,
-              TRANSFER_B_DISPL_OC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {
+              TRANSFER_B_DISPL_OC_FROM_DEVICE)(int *size, realw *b_displ, long *Mesh_pointer_f) {
 
   TRACE("transfer_b_displ_oc_from_device");
 
@@ -421,7 +421,7 @@ void FC_FUNC_(transfer_b_displ_oc_from_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // copies array to CPU
-  gpuCopy_from_device_realw (&mp->d_b_displ_outer_core, displ, *size);
+  gpuCopy_from_device_realw (&mp->d_b_displ_outer_core, b_displ, *size);
 
   GPU_ERROR_CHECKING ("after transfer_b_displ_oc_from_device");
 }
@@ -430,7 +430,7 @@ void FC_FUNC_(transfer_b_displ_oc_from_device,
 
 extern EXTERN_LANG
 void FC_FUNC_(transfer_b_displ_oc_to_device,
-              TRANSFER_B_DISPL_OC_TO_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {
+              TRANSFER_B_DISPL_OC_TO_DEVICE)(int *size, realw *b_displ, long *Mesh_pointer_f) {
 
   TRACE("transfer_b_displ_oc_to_device");
 
@@ -438,7 +438,7 @@ void FC_FUNC_(transfer_b_displ_oc_to_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   // copies array to CPU
-  gpuCopy_todevice_realw (&mp->d_b_displ_outer_core, displ, *size);
+  gpuCopy_todevice_realw (&mp->d_b_displ_outer_core, b_displ, *size);
 
   GPU_ERROR_CHECKING ("after transfer_b_displ_oc_to_device");
 }

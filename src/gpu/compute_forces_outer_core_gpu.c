@@ -83,6 +83,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     cl_kernel *outer_core_kernel_p;
     cl_uint idx = 0;
 
+    // sets kernel function
     if (FORWARD_OR_ADJOINT == 1) {
       outer_core_kernel_p = &mocl.kernels.outer_core_impl_kernel_forward;
     } else {
@@ -92,22 +93,20 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
       outer_core_kernel_p = &mocl.kernels.outer_core_impl_kernel_adjoint;
     }
 
+    // adds arguments
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &nb_blocks_to_compute));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_ibool.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_phase_ispec_inner_outer_core.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->num_phase_ispec_outer_core));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &iphase));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_mesh_coloring_gpu));
-
     if (FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_outer_core.ocl));
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
-
     } else {
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_outer_core.ocl));
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
     }
-
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xix.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiy.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiz.ocl));
@@ -134,21 +133,15 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     if (FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->two_omega_earth));
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->deltat));
-
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_A_array_rotation.ocl));
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_B_array_rotation.ocl));
-
     } else {
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->b_two_omega_earth));
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->b_deltat));
-
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_A_array_rotation.ocl));
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_B_array_rotation.ocl));
     }
-
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_OUTER_CORE));
-
-
     if (FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_oc_tex));
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_oc_tex));

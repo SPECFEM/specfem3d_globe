@@ -45,21 +45,26 @@ module BOAST
         decl epsdev = Real("epsdev", :dim => [Dim(5)], :allocate => true)
         decl b_epsdev = Real("b_epsdev", :dim => [Dim(5)], :allocate => true)
 
-
         print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
+
+        # handles case when there is 1 extra block (due to rectangular grid)
         print If(ispec < nspec ) {
           print ijk_ispec === get_local_id(0) + ngll3*ispec
+
+          # fully anisotropic kernel contributions
           (0..4).each { |indx|
             print epsdev[indx] === epsilondev[indx][ijk_ispec]
           }
           (0..4).each { |indx|
-            print epsdev[indx] === b_epsilondev[indx][ijk_ispec]
+            print b_epsdev[indx] === b_epsilondev[indx][ijk_ispec]
           }
           print eps_trace_over_3 === epsilon_trace_over_3[ijk_ispec]
           print b_eps_trace_over_3 === b_epsilon_trace_over_3[ijk_ispec]
+
           print sub_compute_strain_product.call(prod,eps_trace_over_3,epsdev,b_eps_trace_over_3,b_epsdev)
 
-          print For(i,0,20) {
+          # updates full anisotropic kernel
+          print For(i, 0, 21-1) {
             print cijkl_kl[i, ijk_ispec] === cijkl_kl[i, ijk_ispec] + deltat * prod[i]
           }
         }

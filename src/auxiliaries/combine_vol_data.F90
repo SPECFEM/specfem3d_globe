@@ -111,6 +111,7 @@ program combine_vol_data
 #endif
 
   ! starts here---------------------------------------------------------------
+  ier = 0 ! avoids compiler warning in case of ADIOS and VTK output
 
   ! ADIOS mpi initialization
 #ifdef ADIOS_INPUT

@@ -275,7 +275,7 @@
   implicit none
 
   ! local parameters
-  real(kind=CUSTOM_REAL) :: b_time
+  real(kind=CUSTOM_REAL) :: b_timeval
   ! non blocking MPI
   ! iphase: iphase = 1 is for computing outer elements in the outer_core,
   !              iphase = 2 is for computing inner elements in the outer core (former icall parameter)
@@ -288,21 +288,21 @@
   ! compute internal forces in the fluid region
 
   ! note on backward/reconstructed wavefields:
-  !       b_time for b_displ( it=1 ) corresponds to (NSTEP - 1)*DT - t0  (after Newmark scheme...)
+  !       b_timeval for b_displ( it=1 ) corresponds to (NSTEP - 1)*DT - t0  (after Newmark scheme...)
   !       as we start with saved wavefields b_displ( 1 ) <-> displ( NSTEP ) which correspond
   !       to a time (NSTEP - (it-1) - 1)*DT - t0
   !       for reconstructing the rotational contributions
 
   ! current simulated time
   if (USE_LDDRK) then
-    b_time = real((dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    b_timeval = real((dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
-    b_time = real((dble(NSTEP-it)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    b_timeval = real((dble(NSTEP-it)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
   if (UNDO_ATTENUATION) then
-    b_time = real((dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv, &
-                  kind=CUSTOM_REAL)
+    b_timeval = real((dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv, &
+                     kind=CUSTOM_REAL)
   endif
 
   ! ****************************************************
@@ -328,14 +328,14 @@
       ! adjoint / kernel runs
       if (USE_DEVILLE_PRODUCTS_VAL) then
         ! uses Deville et al. (2002) routine
-        call compute_forces_outer_core_Dev(b_time,b_deltat,b_two_omega_earth, &
+        call compute_forces_outer_core_Dev(b_timeval,b_deltat,b_two_omega_earth, &
                                            NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                                            b_A_array_rotation,b_B_array_rotation, &
                                            b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
                                            b_displ_outer_core,b_accel_outer_core, &
                                            div_displ_outer_core,phase_is_inner)
       else
-        call compute_forces_outer_core(b_time,b_deltat,b_two_omega_earth, &
+        call compute_forces_outer_core(b_timeval,b_deltat,b_two_omega_earth, &
                                        NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
                                        b_A_array_rotation,b_B_array_rotation, &
                                        b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
@@ -345,7 +345,7 @@
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 3
-      call compute_forces_outer_core_gpu(Mesh_pointer,iphase,b_time,3)
+      call compute_forces_outer_core_gpu(Mesh_pointer,iphase,b_timeval,3)
 
       ! initiates asynchronous MPI transfer
       if (GPU_ASYNC_COPY .and. iphase == 2) then
