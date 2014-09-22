@@ -434,6 +434,12 @@
         open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) rho_kl_crust_mantle
         close(IOUT)
+        
+#if defined (CEM)
+
+        call write_kernel_netcdf ('alphav_kernel.nc', alphav_kl_crust_mantle)
+        
+#endif
 
         ! in case one is interested in primary kernel K_rho
         !open(unit=IOUT,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
