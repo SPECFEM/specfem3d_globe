@@ -184,9 +184,6 @@ adios_specfem3D_SHARED_OBJECTS = \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios.o \
-	$O/asdf_helpers_definitions.shared_adios_module.o \
-	$O/asdf_helpers_writers.shared_adios_module.o \
-	$O/asdf_helpers.shared_adios.o \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_STUBS = \
@@ -266,7 +263,7 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 ### additional dependencies
 ###
 
-$O/write_output_ASDF.solverstatic_adios.o: $O/asdf_helpers.shared_adios.o $O/asdf_helpers_writers.shared_adios.o $O/asdf_data.solverstatic_module.o
+$O/write_output_ASDF.solverstatic_adios.o: $O/asdf_data.solverstatic_module.o
 
 $O/write_seismograms.solverstatic.o: $O/asdf_data.solverstatic_module.o
 

@@ -78,11 +78,17 @@ auxiliaries_SHARED_OBJECTS = \
 #### rules for executables
 ####
 
-.PHONY: all_aux aux
+.PHONY: all_aux aux movies
 
 all_aux: $(auxiliaries_TARGETS)
 
 aux: $(auxiliaries_TARGETS)
+
+movies: \
+	$E/xcombine_paraview_strain_data \
+	$E/xcreate_movie_AVS_DX \
+	$E/xcreate_movie_GMT_global \
+	$(EMPTY_MACRO)
 
 #######################################
 

@@ -199,7 +199,7 @@
       print *
 
       ! topology file
-      topo_file = trim(prname_topo) // 'solver_data_2' // '.bin'
+      topo_file = trim(prname_topo) // 'solver_data' // '.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
        print*,'error ',ios
@@ -210,12 +210,19 @@
       ystore(:) = 0.0
       zstore(:) = 0.0
       ibool(:,:,:,:) = -1
+      ! skipps nspec 
+      read(28) njunk
+      if (njunk /= nspec(it)) stop 'Error invalid nspec in solver_data.bin'
+      ! skipps nglob
+      read(28) njunk
+      if (njunk /= nglob(it)) stop 'Error invalid nglob in solver_data.bin'
+
+      ! mesh node locations
       read(28) xstore(1:nglob(it))
       read(28) ystore(1:nglob(it))
       read(28) zstore(1:nglob(it))
       read(28) ibool(:,:,:,1:nspec(it))
       close(28)
-
 
       write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)
       print *, trim(mesh_file)
