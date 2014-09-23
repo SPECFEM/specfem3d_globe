@@ -903,15 +903,23 @@ requires twice as much CPU time. This feature is not used at the time
 of meshing but is required for the solver, i.e., you may change this
 parameter after running the mesher.
 \item [{\texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY or UNDO\_ATTENUATION}}] To undo attenuation for sensitivity kernel calculations or forward runs with \texttt{SAVE\_FORWARD}
-use one (and only one) of the two flags below. \texttt{UNDO\_ATTENUATION} is much better (it is exact)
-but requires a significant amount of disk space for temporary storage.
-When using \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY}, to make the approximation reasonably OK you need to take the following steps:
-%
+use one (and only one) of the two flags below. \texttt{UNDO\_ATTENUATION} is much better (it is exact) and is simpler to use
+but it requires a significant amount of disk space for temporary storage. It has the advantage of requiring only two simulations for adjoint tomography instead
+of three in the case of \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY}, i.e. for adjoint tomography it is globally significantly less expensive (each run is slightly more
+expensive, but only two runs are needed instead of three).\\
+When using \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY}, to make the approximation reasonably OK you need to take the following steps:\\
 1/ To calculate synthetic seismograms, do a forward simulation with full attenuation for the model of interest. The goal is to get synthetics that match the data as closely as possible.\\
-2/ Make measurements and produce adjoint sources by comparing the resulting synthetics with the data. In the simplest case of a cross-correlation traveltime measurement, use the time-reversed synthetic in the window of interest as the adjoint source.\\
-2/ Do a second forward calculation with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and save the last snapshot.\\
-3/ Do an adjoint calculation using the adjoint source calculated in 1/, the forward wavefield reconstructed based on 2/, use \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for the adjoint wavefield, and save the kernel.\\
-Thus the kernel calculation uses \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for both the forward and the adjoint wavefields. This is in the spirit of the banana-donut kernels. But the data that are assimilated are based on the full 3D synthetic with attenuation.
+2a/ Make measurements and produce adjoint sources by comparing the resulting synthetics with the data. In the simplest case of a cross-correlation traveltime measurement, use the time-reversed synthetic in the window of interest as the adjoint source.\\
+2b/ Do a second forward calculation with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and save the last snapshot.\\
+3/ Do an adjoint calculation using the adjoint source calculated in 1/, the forward wavefield reconstructed based on 2b/, use \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for the adjoint wavefield, and save the kernel.\\
+Thus the kernel calculation uses \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} for both the forward and the adjoint wavefields. This is in the spirit of the banana-donut kernels. But the data that are assimilated are based on the full 3D synthetic with attenuation.\\
+%
+Another, equivalent way of explaining it is:\\
+1/ Calculate synthetics with full attenuation for the current model. Compare these to the data and measure frequency-dependent traveltime anomalies $\Delta \tau(\omega)$, e.g.. based upon multi-tapering.\\
+2/ Calculate synthetics with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and construct adjoint sources by combining the seismograms from this run with the measurements from 1/. So in the expressions for the multi-taper adjoint source you use the measurements from 1/, but synthetics calculated with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}.\\
+3/ Construct a kernel by calculating an adjoint wavefield based on the sources constructed in 2/ and convolving it with a forward wavefield with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}. Again, both the forward and adjoint calculations use \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}.\\
+Note that if you replace multi-taper measurements with cross-correlation measurements you will measure a cross-correlation traveltime anomaly in 1/, i.e., some delay time $\Delta T$. Then you would calculate an adjoint wavefield with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.} and use the resulting time-reversed seismograms weighted by $\Delta T$ as the adjoint source. This wavefield interacts with a forward wavefield calculated with \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY = .true.}.
+If $\Delta T=1$ one gets a banana-donut kernel, i.e., a kernel for the case in which there are no observed seismograms (no data), as explained for instance on page 5 of \cite{ZhLiTr11}.
 %
 \item [{\texttt{MOVIE\_SURFACE}}] Set to \texttt{.false.}, unless you want
 to create a movie of seismic wave propagation on the Earth's surface.
