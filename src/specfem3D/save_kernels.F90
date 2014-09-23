@@ -434,11 +434,17 @@
         open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) rho_kl_crust_mantle
         close(IOUT)
-        
+
+        ! Output these kernels as netcdf files -- one per processor.
 #if defined (CEM)
 
-        call write_kernel_netcdf ('alphav_kernel.nc', alphav_kl_crust_mantle)
-        
+        call write_kernel_netcdf ('alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
+        call write_kernel_netcdf ('alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
+        call write_kernel_netcdf ('betavKernelCrustMantle.nc',  betav_kl_crust_mantle)
+        call write_kernel_netcdf ('betahKernelCrustMantle.nc',  betah_kl_crust_mantle)
+        call write_kernel_netcdf ('etaKernelCrustMantle.nc',    eta_kl_crust_mantle)
+        call write_kernel_netcdf ('rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
+                
 #endif
 
         ! in case one is interested in primary kernel K_rho
