@@ -57,11 +57,13 @@ tomography_MODULES = \
 #### rules for executables
 ####
 
-.PHONY: all_tomo tomo
+.PHONY: all_tomo tomo tomography
 
-all_tomo: $(tomo_TARGETS)
+all_tomo: $(tomography_TARGETS)
 
-tomo: $(tomo_TARGETS)
+tomo: $(tomography_TARGETS)
+
+tomography: $(tomography_TARGETS)
 
 #######################################
 
@@ -71,9 +73,9 @@ tomo: $(tomo_TARGETS)
 
 #######################################
 
-
+##
 ## xinterpolate_model
-
+##
 xinterpolate_model_OBJECTS = \
 	$O/interpolate_model.tomo.o \
 	$O/interpolate_model_kdtree.tomo.o \
@@ -93,10 +95,9 @@ $O/interpolate_model.tomo.o: $O/interpolate_model_kdtree.tomo.o
 ${E}/xinterpolate_model: $(xinterpolate_model_OBJECTS) $(xinterpolate_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
-
-
+##
 ## xconvert_model_file_adios
-
+##
 xconvert_model_file_adios_OBJECTS = \
 	$O/convert_model_file_adios.tomoadios.o \
 	$(EMPTY_MACRO)
@@ -108,9 +109,6 @@ xconvert_model_file_adios_SHARED_OBJECTS = \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios.o \
 	$(EMPTY_MACRO)
-
-# extra dependencies
-#$O/convert_model_file_adios.tomoadios.o: $O/adios_helpers.shared_adios.o
 
 ${E}/xconvert_model_file_adios: $(xconvert_model_file_adios_OBJECTS) $(xconvert_model_file_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)

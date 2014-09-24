@@ -93,27 +93,6 @@ program convert_model_file_adios
   integer :: comm
   integer :: ier
 
-  ! defines model parameters
-  if (USE_TRANSVERSE_ISOTROPY) then
-    ! transversly isotropic (TI) model
-    nparams = 6
-    model_name(1:6) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho"/)
-    fname(1:6) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho"/)
-  else
-    ! isotropic model
-    nparams = 3
-    ! note: adds space at endings to equal number of characters 
-    !       to avoid compiler error: "Different shape for array assignment.."
-    model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
-    fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
-  endif
-  ! adds shear attenuation
-  if (USE_ATTENUATION_Q) then
-    nparams = nparams + 1
-    model_name(nparams) = "reg1/qmu"
-    fname(nparams) = "qmu"
-  endif
-
   ! starts mpi
   call init_mpi()
   call world_size(sizeprocs)
@@ -138,7 +117,7 @@ program convert_model_file_adios
     call get_command_argument(i,arg)
 
     ! usage info
-    if (i <= 3 .and. len_trim(arg) == 0) then
+    if (len_trim(arg) == 0) then
       if( myrank == 0 ) then
         print *, ' '
         print *, ' Usage: xconvert_model_file_adios type MODEL_INPUT_DIR/ MODEL_OUTPUT_DIR/ '
@@ -176,6 +155,27 @@ program convert_model_file_adios
   else
     ! from old binaries to adios
     m_adios_file = trim(output_model_dir) // '/' // trim(model_adios_file)
+  endif
+
+  ! defines model parameters
+  if (USE_TRANSVERSE_ISOTROPY) then
+    ! transversly isotropic (TI) model
+    nparams = 6
+    model_name(1:6) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho"/)
+    fname(1:6) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho"/)
+  else
+    ! isotropic model
+    nparams = 3
+    ! note: adds space at endings to equal number of characters 
+    !       to avoid compiler error: "Different shape for array assignment.."
+    model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
+    fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
+  endif
+  ! adds shear attenuation
+  if (USE_ATTENUATION_Q) then
+    nparams = nparams + 1
+    model_name(nparams) = "reg1/qmu"
+    fname(nparams) = "qmu"
   endif
 
   ! user output

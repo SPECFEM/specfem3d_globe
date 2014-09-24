@@ -509,7 +509,7 @@
 
           ! recompute Jacobian for the new point
           call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                                  xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
           ! compute distance to target location
           dx = - (x - x_target_source)
@@ -547,7 +547,7 @@
 
         ! compute final coordinates of point found
         call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
         ! store xi,eta,gamma and x,y,z of point found
         xi_source_subset(isource_in_this_subset) = xi

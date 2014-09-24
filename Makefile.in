@@ -296,7 +296,8 @@ endif
 	@echo "    xcreate_movie_GMT_global"
 	@echo "    xcombine_paraview_strain_data"
 	@echo ""
-	@echo "- tomography tools: [make tomo]"
+	@echo "- tomography tools: [make tomography]"
+	@echo "    xinterpolate_model"
 ifeq ($(ADIOS), yes)
 	@echo "    xconvert_model_file_adios"
 endif

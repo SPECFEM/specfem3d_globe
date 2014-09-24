@@ -647,8 +647,8 @@ CUDA_CPPFLAGS
 NVCC_PROG
 CUDA_LIB
 CUDA_INC
-NVCC
 CUDA_FLAGS
+NVCC
 CONFIGURE_FLAGS
 ADIOS_LIBS
 ADIOS_FCFLAGS
@@ -776,8 +776,8 @@ FLAGS_CHECK
 LOCAL_PATH_IS_ALSO_GLOBAL
 CPP
 ADIOS_CONFIG
-CUDA_FLAGS
 NVCC
+CUDA_FLAGS
 CUDA_INC
 CUDA_LIB
 OCL_CPU_FLAGS
@@ -1443,8 +1443,8 @@ Some influential environment variables:
   ADIOS_CONFIG
               Path to adios_config program that indicates how to compile with
               it.
-  CUDA_FLAGS  Cuda compiler flags
   NVCC        NVIDIA CUDA compiler command
+  CUDA_FLAGS  CUDA compiler flags
   CUDA_INC    Location of CUDA include files
   CUDA_LIB    Location of CUDA library libcudart
   OCL_CPU_FLAGS
@@ -2868,6 +2868,10 @@ if test x"$FC" = x && test x"$F90" != x; then
 fi
 if test x"$MPIFC" = x && test x"$MPIF90" != x; then
     MPIFC="$MPIF90"
+fi
+# note: if not set, default FCFLAGS (and CFLAGS) will be set by autoconf/configure script (mostly -g -O2)
+if test x"$FCFLAGS" = x && test x"$FLAGS_CHECK" != x ; then
+    FCFLAGS=""
 fi
 
 ac_ext=${ac_fc_srcext-f}
@@ -6294,7 +6298,6 @@ if test x"$want_cuda" != xno; then :
 ## ---- ##"
 
 
-
   # influential environment variables
 
 
@@ -7148,6 +7151,10 @@ $as_echo "#define HAVE_VTK /**/" >>confdefs.h
 
 fi
 
+###
+### MPI
+###
+
 ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -7574,6 +7581,10 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 if test x"$want_cuda" != xno -o x"$want_vtk" != xno; then :
 
+    $as_echo "## --- ##
+## MPI ##
+## --- ##"
+    # checks MPI include directory
 
 
   ac_ext=cpp
