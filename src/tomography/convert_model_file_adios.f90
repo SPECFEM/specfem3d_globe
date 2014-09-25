@@ -118,7 +118,7 @@ program convert_model_file_adios
 
     ! usage info
     if (len_trim(arg) == 0) then
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         print *, ' '
         print *, ' Usage: xconvert_model_file_adios type MODEL_INPUT_DIR/ MODEL_OUTPUT_DIR/ '
         print *, ' '
@@ -238,7 +238,7 @@ program convert_model_file_adios
     call adios_read_open_file (model_handle, trim(m_adios_file), 0, comm, ier)
     if (ier /= 0) then
       print *, 'Error opening adios model file: ',trim(m_adios_file)
-      stop 'error opening adios model file'
+      stop 'Error opening adios model file'
     endif
 
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC
@@ -319,7 +319,7 @@ program convert_model_file_adios
       open(IOUT,file=trim(m_file),form='unformatted',action='write',iostat=ier)
       if (ier /= 0) then
         print *, 'Error opening binary parameter file: ',trim(m_file)
-        stop 'error opening binary parameter file'
+        stop 'Error opening binary parameter file'
       endif
 
       ! selects output
@@ -394,7 +394,7 @@ program convert_model_file_adios
       open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
       if (ier /= 0) then
         print *, 'Error opening binary parameter file: ',trim(m_file)
-        stop 'error opening binary parameter file'
+        stop 'Error opening binary parameter file'
       endif
 
       ! selects output
@@ -472,7 +472,7 @@ program convert_model_file_adios
     call adios_open(model_handle, group_name, trim(m_adios_file), "w", comm, ier);
     if (ier /= 0) then
       print *, 'Error opening adios model file: ',trim(m_adios_file)
-      stop 'error opening adios model file'
+      stop 'Error opening adios model file'
     endif
 
     call adios_group_size (model_handle, group_size_inc, totalsize, ier)

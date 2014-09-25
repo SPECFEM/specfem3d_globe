@@ -192,7 +192,7 @@
       call get_command_argument(i,arg)
       ! usage info
       if (len_trim(arg) == 0) then
-        if( myrank == 0 ) then
+        if (myrank == 0) then
           print *,' '
           print *,' Usage: xinterpolate_model old-topo-dir/ old-model-dir/ new-topo-dir/ model-output-dir/ (midpoint-search)'
           print *,' '
@@ -231,7 +231,7 @@
       if (i == 5 .and. len_trim(arg) > 0 ) then
         read(arg(1:len_trim(arg)),*,iostat=ier) want_midpoint
         if (ier /= 0) then
-          if(myrank == 0 ) print*,'Error reading in midpoint-search value, please check your arguments...'
+          if (myrank == 0) print*,'Error reading in midpoint-search value, please check your arguments...'
           stop ' Reenter command line options'
         endif
       endif
@@ -251,7 +251,7 @@
   endif
 
   ! console output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*
     print*,'model interpolation:'
     print*
@@ -300,7 +300,7 @@
     ! gets nspec/nglob
     write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',myrank,'_reg1_'//'solver_data.bin'
     open(IIN,file=trim(solver_file),status='old',form='unformatted',iostat=ier)
-    if( ier /= 0) then
+    if (ier /= 0) then
       print*,'Error opening file: ',trim(solver_file)
       stop 'Error opening old solver_data.bin file, please check arguments...'
     endif
@@ -332,7 +332,7 @@
   nproc_xi_old = nproc_eta_old
 
   ! console output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*,'source mesh:  '
     print*,'  processors = ',nproc_eta_old * nproc_xi_old * NCHUNKS_VAL
     print*,'  nproc_eta / nproc_xi = ',nproc_eta_old,nproc_xi_old
@@ -385,7 +385,7 @@
   if (myrank == 0 ) then
     write(m_file,'(a,i6.6,a)') trim(output_model_dir)// '/proc',myrank,'_reg1_'//trim(fname(1))//'.tmp'
     open(IOUT,file=trim(m_file),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0) then
+    if (ier /= 0) then
       print*,'Error opening file: ',trim(m_file)
       stop 'Error opening new output model file, please check if output directory exists...'
     endif
@@ -400,22 +400,22 @@
   allocate( x1(nglob_max_old,0:nproc_chunk1-1), &
             y1(nglob_max_old,0:nproc_chunk1-1), &
             z1(nglob_max_old,0:nproc_chunk1-1),stat=ier )
-  if( ier /= 0 ) stop 'Error allocating locations'
+  if (ier /= 0) stop 'Error allocating locations'
   allocate( ibool1(NGLLX,NGLLY,NGLLZ,nspec_max_old,0:nproc_chunk1-1),stat=ier )
-  if( ier /= 0 ) stop 'Error allocating ibool1'
+  if (ier /= 0) stop 'Error allocating ibool1'
   allocate( idoubling1(nspec_max_old,0:nproc_chunk1-1),stat=ier )
-  if( ier /= 0 ) stop 'Error allocating idoubling1'
+  if (ier /= 0) stop 'Error allocating idoubling1'
   allocate( addressing1(NCHUNKS_VAL,0:nproc_xi_old-1,0:nproc_eta_old-1),stat=ier )
-  if( ier /= 0 ) stop 'Error allocating addressing1'
+  if (ier /= 0) stop 'Error allocating addressing1'
 
   ! model files
   allocate( model1(NGLLX,NGLLY,NGLLZ,nspec_max_old,nparams,0:nproc_chunk1-1),stat=ier )
-  if( ier /= 0 ) stop 'Error allocating model1'
+  if (ier /= 0) stop 'Error allocating model1'
   allocate( model2(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE,nparams),stat=ier )
-  if( ier /= 0 ) stop 'Error allocating model2'
+  if (ier /= 0) stop 'Error allocating model2'
   ! statistics
   allocate( model_maxdiff(nparams),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating model_maxdiff'
+  if (ier /= 0) stop 'Error allocating model_maxdiff'
 
   ! GLL points
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
@@ -463,7 +463,7 @@
         rank = addressing2(ichunk,iproc_xi,iproc_eta)
 
         ! only associated mpi process continues
-        if( myrank == rank ) then
+        if (myrank == rank) then
           ichunk_selected = ichunk
           iproc_eta_selected = iproc_eta
           iproc_xi_selected = iproc_xi
@@ -472,12 +472,12 @@
       enddo
     enddo
   enddo
-  if( ichunk_selected < 1 .or. ichunk_selected > NCHUNKS_VAL ) stop 'Error selecting ichunk'
+  if (ichunk_selected < 1 .or. ichunk_selected > NCHUNKS_VAL ) stop 'Error selecting ichunk'
   ! debug
   !print*, 'selected chunk: ',ichunk_selected,' - eta/xi : ',iproc_eta_selected,iproc_xi_selected
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*
     print*, 'loading source mesh ... '
   endif
@@ -499,14 +499,14 @@
       iprocnum = iprocnum + 1
       
       ! user output
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         print*,'  slice number: ',iprocnum,' out of ',nproc_chunk1
       endif
       
       ! old, source mesh locations
       write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',rank,'_reg1_'//'solver_data.bin'
       open(IIN,file=solver_file,status='old',form='unformatted',iostat=ier)
-      if( ier /= 0) then
+      if (ier /= 0) then
         print*,'Error opening file: ',trim(solver_file)
         stop 'Error opening old solver_data.bin file'
       endif
@@ -514,7 +514,7 @@
       read(IIN) nglob
 
       ! checks dimensions
-      if( nspec /= nspec_max_old .or. nglob /= nglob_max_old ) then
+      if (nspec /= nspec_max_old .or. nglob /= nglob_max_old ) then
         print*,'Error dimension of old, source mesh: solver_data nspec/nglob = ',nspec,nglob
         stop 'Error new mesh dimensions'
       endif
@@ -528,7 +528,7 @@
     enddo
   enddo
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*
     print*,'  source mesh chunk read successfully'
     print*
@@ -536,7 +536,7 @@
   call synchronize_all()
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*, 'loading source model ... '
   endif
 
@@ -552,7 +552,7 @@
       iprocnum = iprocnum + 1
 
       ! user output
-      if( myrank == 0 ) then
+      if (myrank == 0) then
         print*,'  slice number: ',iprocnum,' out of ',nproc_chunk1
       endif
 
@@ -565,7 +565,7 @@
         ! opens model file
         write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
         open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-        if( ier /= 0) then
+        if (ier /= 0) then
           print*,'Error opening file: ',trim(m_file)
           stop 'Error opening old model file'
         endif
@@ -575,7 +575,7 @@
     enddo
   enddo
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*
     print*,'  source model chunk read successfully'
     print*
@@ -587,10 +587,10 @@
   rank = addressing2(ichunk_selected,iproc_xi_selected,iproc_eta_selected)
 
   ! only associated mpi process continues
-  if( myrank /= rank ) stop 'Error selected addressing rank'
+  if (myrank /= rank) stop 'Error selected addressing rank'
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*
     print*,'reading new mesh slice ... '
     print*
@@ -599,7 +599,7 @@
   ! checks new mesh locations
   write(solver_file,'(a,i6.6,a)') trim(dir_topo2)//'proc',rank,'_reg1_'//'solver_data.bin'
   open(IIN,file=solver_file,status='old',form='unformatted',iostat=ier)
-  if( ier /= 0) then
+  if (ier /= 0) then
     print*,'Error opening file: ',trim(solver_file)
     stop 'Error opening new solver_data.bin file'
   endif
@@ -607,7 +607,7 @@
   read(IIN) nglob
 
   ! checks dimensions
-  if( nspec /= NSPEC_CRUST_MANTLE .or. nglob /= NGLOB_CRUST_MANTLE ) then
+  if (nspec /= NSPEC_CRUST_MANTLE .or. nglob /= NGLOB_CRUST_MANTLE ) then
     print*,'Error dimension of new mesh: solver_data nspec/nglob = ',nspec,nglob
     stop 'Error new mesh dimensions'
   endif
@@ -621,7 +621,7 @@
   close(IIN)
 
   ! checks that layers match
-  if( minval(idoubling1) /= minval(idoubling2) .or. maxval(idoubling1) /= maxval(idoubling2) ) then
+  if (minval(idoubling1) /= minval(idoubling2) .or. maxval(idoubling1) /= maxval(idoubling2) ) then
     print*,'Error idoubling range:'
     print*,'idoubling 1:',minval(idoubling1),maxval(idoubling1)
     print*,'idoubling 2:',minval(idoubling2),maxval(idoubling2)
@@ -630,7 +630,7 @@
   call synchronize_all()
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*,'Earth layers: ',minval(idoubling2),' to ',maxval(idoubling2)
     print*
   endif
@@ -643,7 +643,7 @@
   do ilayer = minval(idoubling2),maxval(idoubling2)
 
     ! user output
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       print*,'layer: ',ilayer,' out of ',maxval(idoubling2)
       select case (ilayer)
       case (IFLAG_CRUST)
@@ -663,7 +663,7 @@
     model_maxdiff(:) = 0.0_CUSTOM_REAL
 
     ! builds search tree
-    if( .not. DO_BRUTE_FORCE_SEARCH ) then
+    if (.not. DO_BRUTE_FORCE_SEARCH) then
 
       ! allocates search tree for source chunk
       ! (only single midpoint per element)
@@ -679,13 +679,13 @@
           ! all elements
           do ispec = 1, nspec_max_old
             ! all internal gll points ( 2 to NGLLX-1 )
-            if( idoubling1(ispec,iprocnum-1) == ilayer ) inodes = inodes + (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+            if (idoubling1(ispec,iprocnum-1) == ilayer ) inodes = inodes + (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
           enddo
         enddo
       enddo
       ! checks
-      if( inodes < 1 ) stop 'Error no elements in source mesh for this layer'
-      if( inodes > nspec_max_old * nproc_chunk1 * (NGLLX-2)*(NGLLY-2)*(NGLLZ-2) ) &
+      if (inodes < 1 ) stop 'Error no elements in source mesh for this layer'
+      if (inodes > nspec_max_old * nproc_chunk1 * (NGLLX-2)*(NGLLY-2)*(NGLLZ-2) ) &
         stop 'Error invalid number of elements in this layer'
       ! set number of tree nodes
       kdtree_nnodes_local = inodes
@@ -695,12 +695,12 @@
 
       ! allocates tree arrays
       allocate(kdtree_nodes_local(3,kdtree_nnodes_local),stat=ier)
-      if( ier /= 0 ) stop 'Error allocating kdtree_nodes_local arrays'
+      if (ier /= 0) stop 'Error allocating kdtree_nodes_local arrays'
       allocate(kdtree_index_local(kdtree_nnodes_local),stat=ier)
-      if( ier /= 0 ) stop 'Error allocating kdtree_index_local arrays'
+      if (ier /= 0) stop 'Error allocating kdtree_index_local arrays'
 
       ! tree verbosity
-      if( myrank == 0 ) call kdtree_set_verbose()
+      if (myrank == 0) call kdtree_set_verbose()
 
       ! prepares search arrays, each element takes its internal GLL points for tree search
       kdtree_index_local(:) = 0
@@ -719,7 +719,7 @@
           do ispec = 1,nspec_max_old
 
             ! skips elements outside of this layer
-            if( idoubling1(ispec,iprocnum-1) /= ilayer ) cycle
+            if (idoubling1(ispec,iprocnum-1) /= ilayer ) cycle
 
             ! all internal gll points
             do k = 2,NGLLZ-1
@@ -729,7 +729,7 @@
 
                   ! counts nodes
                   inodes = inodes + 1
-                  if( inodes > kdtree_nnodes_local ) stop 'Error index inodes bigger than kdtree_nnodes_local'
+                  if (inodes > kdtree_nnodes_local ) stop 'Error index inodes bigger than kdtree_nnodes_local'
 
                   ! adds node index ( index points to same ispec for all internal gll points)
                   kdtree_index_local(inodes) = ispec + (iprocnum - 1) * nspec_max_old
@@ -744,11 +744,11 @@
           enddo
         enddo
       enddo
-      if( inodes /= kdtree_nnodes_local ) stop 'Error index inodes does not match nnodes_local'
+      if (inodes /= kdtree_nnodes_local ) stop 'Error index inodes does not match nnodes_local'
 
       ! creates kd-tree for searching
       do i = 0,NPROCTOT_VAL-1
-        if( myrank == i ) then
+        if (myrank == i) then
           !print*,'kd-tree setup for process: ',myrank
           call kdtree_setup()
         endif
@@ -760,20 +760,20 @@
     ! loop over all elements (mainly those in this layer)
     do ispec = 1, nspec
       ! user output
-      if( myrank == 0 ) then
-        if( ispec == 1 .or. mod(ispec,int(0.1*nspec)) == 0 .or. ispec == nspec ) then
+      if (myrank == 0) then
+        if (ispec == 1 .or. mod(ispec,int(0.1*nspec)) == 0 .or. ispec == nspec ) then
           print*,'  ispec',ispec,' out of ',nspec
         endif
       endif
 
       ! skip elements out of this layer
-      if( idoubling2(ispec) /= ilayer ) cycle
+      if (idoubling2(ispec) /= ilayer ) cycle
 
       ! increases element counter
       total_nspec = total_nspec + 1
 
       ! gets model values
-      if( DO_BRUTE_FORCE_SEARCH ) then
+      if (DO_BRUTE_FORCE_SEARCH) then
         ! brute-force search over all gll points
         call get_model_values_bruteforce(ispec,nspec,nglob,ibool2,x2,y2,z2,nparams,model2, &
                                          nspec_max_old,nglob_max_old,nproc_chunk1,ibool1,x1,y1,z1,model1, &
@@ -788,7 +788,7 @@
     enddo ! ispec
 
     ! frees tree memory
-    if( .not. DO_BRUTE_FORCE_SEARCH ) then
+    if (.not. DO_BRUTE_FORCE_SEARCH) then
       ! deletes tree arrays
       deallocate(kdtree_nodes_local)
       deallocate(kdtree_index_local)
@@ -805,7 +805,7 @@
     enddo
 
     ! user output
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       print*
     endif
   enddo ! ilayer
@@ -818,7 +818,7 @@
   deallocate(model_maxdiff)
 
   ! checks
-  if( total_nspec /= nspec) stop 'Error invalid total number of elements after loop'
+  if (total_nspec /= nspec) stop 'Error invalid total number of elements after loop'
 
   ! user output
   if (myrank == 0) then
@@ -834,7 +834,7 @@
 
     write(m_file,'(a,i6.6,a)') trim(output_model_dir) // '/proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
     open(IOUT,file=trim(m_file),status='unknown',form='unformatted',iostat=ier)
-    if( ier /= 0) then
+    if (ier /= 0) then
       print*,'Error opening file: ',trim(m_file)
       stop 'Error opening output model file'
     endif
@@ -849,7 +849,7 @@
   call synchronize_all()
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print *
     print *, 'check new model files in directory: ',trim(output_model_dir)
     print *, 'done successfully'
@@ -960,7 +960,7 @@
           val = model2(i,j,k,ispec,iker)
 
           ! statistics
-          if( abs(val - val_initial ) > abs(model_maxdiff(iker))) model_maxdiff(iker) = val - val_initial
+          if (abs(val - val_initial ) > abs(model_maxdiff(iker))) model_maxdiff(iker) = val - val_initial
         enddo
 
       enddo
@@ -1063,19 +1063,19 @@
 
     ! checks if mid-point was found properly
     ! checks valid iglob
-    if( iglob_min < 1 .or. iglob_min > nspec_max_old * nproc_chunk1 ) then
+    if (iglob_min < 1 .or. iglob_min > nspec_max_old * nproc_chunk1 ) then
       print*,'Error iglob_min :',iglob_min
       print*,'nspec / nproc :',nspec_max_old,nproc_chunk1
       stop 'Error invalid iglob_min index'
     endif
     ! checks valid rank
-    if(rank_selected < 0 .or. rank_selected >= nproc_chunk1 ) then
+    if (rank_selected < 0 .or. rank_selected >= nproc_chunk1 ) then
       print*,'Error rank:',myrank,'invalid selected rank ',rank_selected,'for element',ispec
       print*,'target location:',xyz_target(:)
       stop 'Error locate_single: specifying closest rank for element'
     endif
     ! checks valid ispec
-    if( ispec_selected < 1 .or. ispec_selected > nspec_max_old ) then
+    if (ispec_selected < 1 .or. ispec_selected > nspec_max_old ) then
       print*,'Error rank:',myrank,'invalid selected ispec ',ispec_selected,'for element',ispec
       print*,'rank_selected:',rank_selected,'iglob_min:',iglob_min,'nspec_max_old:',nspec_max_old
       print*,'target location:',xyz_target(:)
@@ -1083,7 +1083,7 @@
       stop 'Error locate_single: specifying closest ispec element'
     endif
     ! checks minimum distance within a typical element size
-    if( dist_min > typical_size ) then
+    if (dist_min > typical_size ) then
       print*,'Error rank ',myrank,' - invalid dist_min: ',dist_min * R_EARTH_KM,'(km)'
       print*,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
       print*,'typical element size:',typical_size * 0.5 * R_EARTH_KM
@@ -1096,7 +1096,7 @@
       stop 'Error dist_min too large'
     endif
     ! debug
-    !if(myrank == 0 .and. iglob < 100) &
+    !if (myrank == 0 .and. iglob < 100) &
     !  print*,'dist_min kdtree midpoint: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
   endif
 
@@ -1127,13 +1127,13 @@
           ispec_selected = iglob_min - rank_selected * nspec_max_old
 
           ! checks valid rank
-          if(rank_selected < 0 .or. rank_selected >= nproc_chunk1 ) then
+          if (rank_selected < 0 .or. rank_selected >= nproc_chunk1 ) then
             print*,'Error rank:',myrank,'invalid selected rank ',rank_selected,'for element',ispec
             print*,'target location:',xyz_target(:)
             stop 'Error locate_single: specifying closest rank for element'
           endif
           ! checks valid ispec
-          if( ispec_selected < 1 .or. ispec_selected > nspec_max_old ) then
+          if (ispec_selected < 1 .or. ispec_selected > nspec_max_old ) then
             print*,'Error rank:',myrank,'invalid selected ispec ',ispec_selected,'for element',ispec
             print*,'rank_selected:',rank_selected,'iglob_min:',iglob_min,'nspec_max_old:',nspec_max_old
             print*,'target location:',xyz_target(:)
@@ -1141,7 +1141,7 @@
             stop 'Error locate_single: specifying closest ispec element'
           endif
           ! checks minimum distance within a typical element size
-          if( dist_min > typical_size ) then
+          if (dist_min > typical_size ) then
             print*,'Error rank ',myrank,' - invalid dist_min: ',dist_min * R_EARTH_KM,'(km)'
             print*,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
             print*,'typical element size:',typical_size * 0.5 * R_EARTH_KM
@@ -1154,7 +1154,7 @@
             stop 'Error dist_min too large'
           endif
           ! debug
-          !if(myrank == 0 .and. iglob < 100) &
+          !if (myrank == 0 .and. iglob < 100) &
           !  print*,'dist_min kdtree: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
         endif
 
@@ -1175,7 +1175,7 @@
 
         ! checks distance
         dist_min = sqrt((x_found-x_target)**2 + (y_found-y_target)**2 + (z_found-z_target)**2)
-        if( dist_min > typical_size ) then
+        if (dist_min > typical_size ) then
           print*,'Error selected gll point: rank ',myrank,' - invalid dist_min: ',dist_min * R_EARTH_KM,'(km)'
           print*,'target location:',xyz_target(:)
           print*,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
@@ -1185,7 +1185,7 @@
           stop 'Error model value invalid'
         endif
         ! debug
-        !if(myrank == 0 .and. iglob < 100) &
+        !if (myrank == 0 .and. iglob < 100) &
         !  print*,'dist_min gll point: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
 
         ! interpolate model values
@@ -1205,12 +1205,12 @@
           val = model2(i,j,k,ispec,iker)
 
           ! statistics
-          if( abs(val - val_initial ) > abs(model_maxdiff(iker))) model_maxdiff(iker) = val - val_initial
+          if (abs(val - val_initial ) > abs(model_maxdiff(iker))) model_maxdiff(iker) = val - val_initial
 
           ! checks model difference
           if (DO_WARNING) then
             ! note: warns for top elements, probably due to crustal structure
-            if( abs(val - val_initial ) > abs( 0.2 * val_initial ) ) then
+            if (abs(val - val_initial ) > abs( 0.2 * val_initial ) ) then
               print*,'Warning: model ',iker,' value:',val,'is very different from initial value ',val_initial
               print*,'  rank ',myrank,' - dist_min: ',dist_min * R_EARTH_KM,'(km)'
               print*,'  element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
@@ -1226,7 +1226,7 @@
             endif
           endif
           ! debug
-          !if( myrank == 0 .and. iglob < 100) &
+          !if (myrank == 0 .and. iglob < 100) &
           !  print*,'new model ',iker,': value ',val,'initial ',val_initial,'diff ',(val - val_initial)/val_initial*100.0,'(%)'
         enddo
 
@@ -1304,7 +1304,7 @@
               +(y_target - dble(ystore(iglob,rank)))**2 &
               +(z_target - dble(zstore(iglob,rank)))**2
                   
-      if(dist > dist_typical_sq) cycle
+      if (dist > dist_typical_sq) cycle
     
       ! loop only on points inside the element
       ! exclude edges to ensure this point is not shared with other elements
@@ -1317,7 +1317,7 @@
                   +(z_target - dble(zstore(iglob,rank)))**2
 
             ! keep this point if it is closer to the receiver
-            if(dist < distmin) then
+            if (dist < distmin) then
               distmin = dist
               rank_selected = rank
               ispec_selected = ispec
@@ -1329,8 +1329,8 @@
   enddo ! rank
 
   ! checks if closest point found
-  if(ispec_selected < 1 ) stop 'Error locating closest ispec element'
-  if(rank_selected < 0 ) stop 'Error locating closest rank for element'
+  if (ispec_selected < 1 ) stop 'Error locating closest ispec element'
+  if (rank_selected < 0 ) stop 'Error locating closest rank for element'
 
   ! find the best (xi,eta,gamma)
   call locate_single(x_target,y_target,z_target, &
@@ -1420,8 +1420,8 @@
   !------------------------------------------------------
 
   ! checks
-  if(ispec_selected < 1 ) stop 'Error locate_single: specifying closest ispec element'
-  if(rank_selected < 0 ) stop 'Error locate_single: specifying closest rank for element'
+  if (ispec_selected < 1 ) stop 'Error locate_single: specifying closest ispec element'
+  if (rank_selected < 0 ) stop 'Error locate_single: specifying closest rank for element'
 
   ! set distance to huge initial value
   distmin = HUGEVAL
@@ -1440,7 +1440,7 @@
               +(z_target - zstore(iglob,rank_selected))**2
 
         ! keep this point if it is closer to the receiver
-        if(dist < distmin) then
+        if (dist < distmin) then
           distmin = dist
           ix_initial_guess = i
           iy_initial_guess = j
@@ -1451,7 +1451,7 @@
   enddo
 
   ! checks
-  if( ix_initial_guess == 0 .or. iy_initial_guess == 0 .or. iz_initial_guess == 0 ) &
+  if (ix_initial_guess == 0 .or. iy_initial_guess == 0 .or. iz_initial_guess == 0 ) &
     stop 'Error locate_single: no initial guess'
 
   ! initial minimum distance in km
@@ -1467,33 +1467,33 @@
   gamma = zigll(iz_initial_guess)
 
   ! iterate to solve the non linear system to find the exact position within the element
-  if( DO_REFINE_LOCATION ) then
+  if (DO_REFINE_LOCATION) then
 
     ! define coordinates of the control points of the element
     do ia=1,NGNOD
-      if(iaddx(ia) == 0) then
+      if (iaddx(ia) == 0) then
         iax = 1
-      else if(iaddx(ia) == 1) then
+      else if (iaddx(ia) == 1) then
         iax = (NGLLX+1)/2
-      else if(iaddx(ia) == 2) then
+      else if (iaddx(ia) == 2) then
         iax = NGLLX
       else
         stop 'incorrect value of iaddx'
       endif
-      if(iaddy(ia) == 0) then
+      if (iaddy(ia) == 0) then
         iay = 1
-      else if(iaddy(ia) == 1) then
+      else if (iaddy(ia) == 1) then
         iay = (NGLLY+1)/2
-      else if(iaddy(ia) == 2) then
+      else if (iaddy(ia) == 2) then
         iay = NGLLY
       else
         stop 'incorrect value of iaddy'
       endif
-      if(iaddr(ia) == 0) then
+      if (iaddr(ia) == 0) then
         iaz = 1
-      else if(iaddr(ia) == 1) then
+      else if (iaddr(ia) == 1) then
         iaz = (NGLLZ+1)/2
-      else if(iaddr(ia) == 2) then
+      else if (iaddr(ia) == 2) then
         iaz = NGLLZ
       else
         stop 'incorrect value of iaddr'
@@ -1518,9 +1518,9 @@
                               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
 ! debug
-!      if( ier /= 0 ) then
+!      if (ier /= 0) then
 !        ! debug
-!        if( .true. ) then
+!        if ( .true. ) then
 !          print*,'jacobian error in locate_single(): '
 !          print*,'jacobian error i,j,k,ispec :',ix_initial_guess,iy_initial_guess,iz_initial_guess,ispec_selected
 !          print*,'jacobian error iter_loop   :',iter_loop
@@ -1556,9 +1556,9 @@
       dgamma = gammax*dx + gammay*dy + gammaz*dz
 
       ! impose limit on increments
-      if( abs(dxi) > 0.1d0 ) dxi = sign(1.0d0,dxi)*0.1d0
-      if( abs(deta) > 0.1d0 ) deta = sign(1.0d0,deta)*0.1d0
-      if( abs(dgamma) > 0.1d0 ) dgamma = sign(1.0d0,dgamma)*0.1d0
+      if (abs(dxi) > 0.1d0 ) dxi = sign(1.0d0,dxi)*0.1d0
+      if (abs(deta) > 0.1d0 ) deta = sign(1.0d0,deta)*0.1d0
+      if (abs(dgamma) > 0.1d0 ) dgamma = sign(1.0d0,dgamma)*0.1d0
 
       ! update values
       xi = xi + dxi
@@ -1578,7 +1578,7 @@
       !if (gamma < -1.10d0) gamma = -1.10d0
 
       ! point leaves element, stay to closest guess
-      if( xi > 1.10d0 .or. xi < -1.10d0 .or. eta > 1.10d0 .or. eta < -1.10d0 .or. gamma > 1.10d0 .or. gamma < -1.10d0 ) then
+      if (xi > 1.10d0 .or. xi < -1.10d0 .or. eta > 1.10d0 .or. eta < -1.10d0 .or. gamma > 1.10d0 .or. gamma < -1.10d0 ) then
         ! uses previous guess
         xi = xi - dxi
         eta = eta - deta
@@ -1602,7 +1602,7 @@
     !  print*,'final distance = ',sngl(final_distance),'(km)',distmin,xi,eta,gamma
 
     ! checks if location improved
-    if( distmin <= final_distance ) then
+    if (distmin <= final_distance ) then
       ! uses initial guess
       xi = xigll(ix_initial_guess)
       eta = yigll(iy_initial_guess)
@@ -1614,8 +1614,8 @@
 
     ! add warning if estimate is poor
     ! (usually means receiver outside the mesh given by the user)
-    if( DO_WARNING ) then
-      if(final_distance > typical_size / NGLLX * R_EARTH_KM ) then
+    if (DO_WARNING) then
+      if (final_distance > typical_size / NGLLX * R_EARTH_KM ) then
         print*, '*****************************************************************'
         print*, '***** WARNING: location estimate is poor                    *****'
         print*, '*****************************************************************'
@@ -1628,7 +1628,7 @@
     endif
 
     ! checks valid distance
-    if(final_distance == HUGEVAL) stop 'Error locating location'
+    if (final_distance == HUGEVAL) stop 'Error locating location'
   endif
 
   ! return xi,eta and gamma of point found

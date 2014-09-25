@@ -162,6 +162,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
+	$O/get_all_eight_slices.shared.o \
 	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
@@ -181,6 +182,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
+	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \

@@ -298,6 +298,9 @@ endif
 	@echo ""
 	@echo "- tomography tools: [make tomography]"
 	@echo "    xinterpolate_model"
+	@echo "    xsmooth_sem"
+	@echo "    xsum_kernels"
+	@echo "    xsum_preconditioned_kernels"
 ifeq ($(ADIOS), yes)
 	@echo "    xconvert_model_file_adios"
 endif

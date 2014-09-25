@@ -142,8 +142,8 @@ contains
   !------------------------------------------------------
 
   ! checks
-  if( kdtree_nnodes_local <= 0 ) stop 'error creating kdtree with zero nodes is invalid'
-  if( .not. allocated(kdtree_nodes_local) ) stop 'error array kdtree_nodes_local not allocated yet'
+  if (kdtree_nnodes_local <= 0 ) stop 'Error creating kdtree with zero nodes is invalid'
+  if (.not. allocated(kdtree_nodes_local) ) stop 'Error array kdtree_nodes_local not allocated yet'
 
   ! timing
   call cpu_time(ct_start)
@@ -154,7 +154,7 @@ contains
   ! 3D point coordinates
   points_data => kdtree_nodes_local(:,:)
 
-  if( be_verbose ) then
+  if (be_verbose) then
     print*,'kd-tree:'
     print*,'  total data points: ',npoints
     !print*,'  box boundaries   : x min/max = ',minval(points_data(1,:)),maxval(points_data(1,:))
@@ -169,15 +169,15 @@ contains
     i = i / 2
     numnodes = numnodes + i
     ! integer 32-bit limitation
-    if( numnodes > 2147483646 - i ) stop 'error number of nodes might exceed integer limit'
+    if (numnodes > 2147483646 - i ) stop 'Error number of nodes might exceed integer limit'
   enddo
-  if( be_verbose ) then
+  if (be_verbose) then
     print*,'  theoretical number of nodes: ',numnodes
   endif
 
   ! local ordering
   allocate(points_index(kdtree_nnodes_local),stat=ier)
-  if( ier /= 0 ) stop 'error allocating array points_index'
+  if (ier /= 0) stop 'Error allocating array points_index'
 
   ! initial point ordering
   do i = 1,npoints
@@ -194,9 +194,9 @@ contains
                      depth,1,npoints,numnodes,maxdepth)
 
   ! checks root tree node
-  if ( .not. associated(kdtree) ) stop 'error creation of kd-tree failed'
+  if (.not. associated(kdtree) ) stop 'Error creation of kd-tree failed'
 
-  if( be_verbose ) then
+  if (be_verbose) then
     print*,'  actual      number of nodes: ',numnodes
     ! tree node size: 4 (idim) + 8 (cut_value) + 4 (ipoint) + 2*4 (ibound_**) + 2*4 (left,right) = 32 bytes
     print*,'  tree memory size: ', ( numnodes * 32 )/1024./1024.,'MB'
@@ -210,9 +210,9 @@ contains
 
 
   ! debugging
-  if( DEBUG ) then
+  if (DEBUG) then
     ! outputs tree
-    if( be_verbose ) then
+    if (be_verbose) then
       numnodes = 0
       call print_kdtree(npoints,points_data,points_index,kdtree,numnodes)
     endif
@@ -234,7 +234,7 @@ contains
     dist_min = sqrt(dist_min)
     print*,'found : ',ipoint_min,'distance:',dist_min
 
-    if( ipoint_min < 1 ) stop 'error search kd-tree found no point'
+    if (ipoint_min < 1 ) stop 'Error search kd-tree found no point'
 
     print*,'target  : ',xyz_target(:)
     print*,'nearest : ',points_data(:,ipoint_min)
@@ -278,19 +278,19 @@ contains
   call find_nearest_kdtree_node(kdtree_nnodes_local,kdtree_nodes_local,kdtree, &
                                 xyz_target,ipoint_min,dist_min)
 
-  if( ipoint_min < 1 .or. ipoint_min > kdtree_nnodes_local ) stop 'error search kd-tree found no point'
+  if (ipoint_min < 1 .or. ipoint_min > kdtree_nnodes_local ) stop 'Error search kd-tree found no point'
 
   ! gets global index
   iglob_min = kdtree_index_local(ipoint_min)
 
   ! checks global index
-  if( iglob_min < 1 ) stop 'error minimum location has wrong global index in kdtree_find_nearest_neighbor'
+  if (iglob_min < 1 ) stop 'Error minimum location has wrong global index in kdtree_find_nearest_neighbor'
 
   ! returns distance (non-squared)
   dist_min = sqrt( dist_min )
 
   ! debug
-  !if( be_verbose ) then
+  !if (be_verbose) then
   !  print*,'target  : ',xyz_target(:)
   !  print*,'nearest : ',kdtree_nodes_local(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
   !endif
@@ -326,14 +326,14 @@ contains
   integer,dimension(:),allocatable :: workindex
 
   ! checks if anything to sort
-  if( ibound_lower > ibound_upper ) then
+  if (ibound_lower > ibound_upper ) then
     nullify(node)
     return
   endif
 
   ! creates new node
   allocate(node,stat=ier)
-  if( ier /= 0 ) stop 'error allocating kd-tree node'
+  if (ier /= 0) stop 'Error allocating kd-tree node'
 
   ! initializes new node
   node%idim = -1
@@ -345,12 +345,12 @@ contains
 
   ! tree statistics
   numnodes = numnodes + 1
-  if( maxdepth < depth) maxdepth = depth
+  if (maxdepth < depth) maxdepth = depth
 
   !node%id = numnodes
 
   ! checks if final node
-  if( ibound_lower == ibound_upper ) then
+  if (ibound_lower == ibound_upper ) then
     node%idim = 0
     node%ipoint = points_index(ibound_lower)
     ! done with this node
@@ -369,8 +369,8 @@ contains
   !do i = ibound_lower,ibound_upper
   !  iloc = points_index(i)
   !  val = points_data(idim,iloc)
-  !  if( val < min ) min = val
-  !  if( val > max ) max = val
+  !  if (val < min ) min = val
+  !  if (val > max ) max = val
   !enddo
   !min = minval(points_data(idim,points_index(ibound_lower:ibound_upper)))
   !max = maxval(points_data(idim,points_index(ibound_lower:ibound_upper)))
@@ -386,7 +386,7 @@ contains
     max = maxval(points_data(i,points_index(ibound_lower:ibound_upper)))
     range = max - min
     ! sets cut dimension where data has maximum range
-    if( range > range_max ) then
+    if (range > range_max ) then
       range_max = range
       idim = i
       cut_value = 0.5d0 * ( min + max )
@@ -405,7 +405,7 @@ contains
 
   ! temporary index array for sorting
   allocate(workindex(ibound_upper - ibound_lower + 1),stat=ier)
-  if( ier /= 0 ) stop 'error allocating workindex array'
+  if (ier /= 0) stop 'Error allocating workindex array'
 
   ! sorts point indices
   ! to have all points with value < cut_value on left side, all others to the right
@@ -413,7 +413,7 @@ contains
   iupper = 0
   do i = ibound_lower,ibound_upper
     iloc = points_index(i)
-    if( points_data(idim,iloc) < cut_value ) then
+    if (points_data(idim,iloc) < cut_value ) then
       ilower = ilower + 1
       workindex(ilower) = iloc
     else
@@ -425,8 +425,8 @@ contains
   !print*,'  ilower/iupper:',ilower,iupper
 
   ! checks if we catched all
-  if( ilower + iupper /= ibound_upper - ibound_lower + 1 ) stop 'error sorting data points invalid'
-  if( ilower == 0 .and. iupper == 0 .and. npoints > 1 ) stop 'error confusing node counts, please check kdtree...'
+  if (ilower + iupper /= ibound_upper - ibound_lower + 1 ) stop 'Error sorting data points invalid'
+  if (ilower == 0 .and. iupper == 0 .and. npoints > 1 ) stop 'Error confusing node counts, please check kdtree...'
 
   ! replaces index range with new sorting order
   points_index(ibound_lower:ibound_upper) = workindex(:)
@@ -435,21 +435,21 @@ contains
   deallocate(workindex)
 
   ! lower hemisphere
-  if( ilower > 0 ) then
+  if (ilower > 0) then
     ! lower/upper bounds
     l = ibound_lower
     u = ibound_lower + (ilower - 1)
-    if( l < 1 .or. u > npoints ) stop 'error lower hemisphere tree bounds'
+    if (l < 1 .or. u > npoints ) stop 'Error lower hemisphere tree bounds'
     ! adds new node
     call create_kdtree(npoints,points_data,points_index,node%left,depth+1,l,u,numnodes,maxdepth)
   endif
 
   ! upper hemisphere points
-  if( iupper > 0 ) then
+  if (iupper > 0) then
     ! lower/upper bounds
     l = ibound_upper - (iupper - 1)
     u = ibound_upper
-    if( l < 1 .or. u > npoints ) stop 'error upper hemisphere tree bounds'
+    if (l < 1 .or. u > npoints ) stop 'Error upper hemisphere tree bounds'
     ! adds new node
     call create_kdtree(npoints,points_data,points_index,node%right,depth+1,l,u,numnodes,maxdepth)
   endif
@@ -477,38 +477,38 @@ contains
   integer,parameter :: OUTPUT_LENGTH = 50
 
   ! checks if valid pointer (must have been nullified initially to be able to check with associated())
-  if( .not. associated(node) ) return
+  if (.not. associated(node) ) return
 
   ! statistics
   numnodes = numnodes + 1
-  if( numnodes == 1 ) then
+  if (numnodes == 1) then
     print*,'printing kd-tree: total number of points      = ',npoints
     !print*,'         index array = ',points_index(:)
   endif
 
   ! outputs infos for a final node
-  if( .not. associated(node%left) .and. .not. associated(node%right) ) then
+  if (.not. associated(node%left) .and. .not. associated(node%right) ) then
     ! checks info
-    if( node%idim /= 0 ) then
+    if (node%idim /= 0 ) then
       print*,'problem kd-tree node:',node%idim,node%ipoint,numnodes
       print*,'point x/y/z: ',points_data(:,node%ipoint)
-      stop 'error kd-tree node not correct'
+      stop 'Error kd-tree node not correct'
     endif
 
     ! outputs infos
-    if( numnodes < OUTPUT_LENGTH) &
+    if (numnodes < OUTPUT_LENGTH) &
       print*,'node:',numnodes,'index:',node%ipoint,' x/y/z = ',points_data(:,node%ipoint)
   else
     ! outputs infos
-    if( numnodes < OUTPUT_LENGTH) &
+    if (numnodes < OUTPUT_LENGTH) &
       print*,'node:',numnodes,'dim:',node%idim,'cut = ',node%cut_value
   endif
 
   ! checks child nodes
-  if( associated(node%left) ) then
+  if (associated(node%left) ) then
     call print_kdtree(npoints,points_data,points_index,node%left,numnodes)
   endif
-  if( associated(node%right) ) then
+  if (associated(node%right) ) then
     call print_kdtree(npoints,points_data,points_index,node%right,numnodes)
   endif
 
@@ -577,26 +577,26 @@ contains
   double precision,dimension(3) :: xyz
 
   ! debug
-  !if( node%idim == 0 ) then
+  !if (node%idim == 0) then
   !  print*,'node',node%id,points_data(:,node%ipoint)
   !else
   !  print*,'node',node%id,node%idim,node%cut_value
   !endif
-  !if( ipoint_min > 0 ) &
+  !if (ipoint_min > 0) &
   !  print*,'node distance',node%id,ipoint_min,dist_min
 
   ! in case this is a final node
   if ( .not. associated(node%left) .and. .not. associated(node%right) ) then
     ! checks node
-    if( node%idim /= 0 ) stop 'error searched node is not final node'
-    if( node%ipoint < 1 ) stop 'error searched node has wrong point index'
+    if (node%idim /= 0 ) stop 'Error searched node is not final node'
+    if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
 
     ! squared distance to associated data point
     xyz(:) = xyz_target(:) - points_data(:,node%ipoint)
     dist = xyz(1) * xyz(1) + xyz(2)*xyz(2) + xyz(3)*xyz(3)
-    if( dist < dist_min) then
+    if (dist < dist_min) then
       ! debug
-      !if( ipoint_min < 1 ) then
+      !if (ipoint_min < 1 ) then
       !  print*,'new node distance',node%id,node%ipoint,dist
       !else
       !  print*,'     new distance',node%id,node%ipoint,dist
@@ -611,18 +611,18 @@ contains
   endif
 
   ! checks cut dimension
-  if( node%idim < 1 .or. node%idim > 3 ) stop 'error searched node has invalid cut dimension'
+  if (node%idim < 1 .or. node%idim > 3 ) stop 'Error searched node has invalid cut dimension'
 
   ! compares cut value
-  if( xyz_target(node%idim) < node%cut_value ) then
+  if (xyz_target(node%idim) < node%cut_value ) then
     ! finds closer node in lower hemisphere
-    if( associated(node%left) ) then
+    if (associated(node%left) ) then
       call find_nearest_kdtree_node(npoints,points_data,node%left, &
                                     xyz_target,ipoint_min,dist_min)
     endif
   else
     ! finds closer node in upper hemisphere
-    if( associated(node%right) ) then
+    if (associated(node%right) ) then
       call find_nearest_kdtree_node(npoints,points_data,node%right, &
                                     xyz_target,ipoint_min,dist_min)
     endif
@@ -634,12 +634,12 @@ contains
   ! squared distance to cut plane
   dist = ( xyz_target(node%idim) - node%cut_value )**2
 
-  if( xyz_target(node%idim) < node%cut_value ) then
-    if( associated(node%right) ) then
+  if (xyz_target(node%idim) < node%cut_value ) then
+    if (associated(node%right) ) then
       ! checks right node as a final node
-      if(node%right%idim == 0 ) then
+      if (node%right%idim == 0 ) then
         dist = sum((xyz_target(:) - points_data(:,node%right%ipoint))**2)
-        if( dist <= dist_min) then
+        if (dist <= dist_min) then
           ! stores minimum point
           dist_min = dist
           ipoint_min = node%right%ipoint
@@ -647,17 +647,17 @@ contains
         endif
       endif
       ! checks if points beyond cut plane could be closer
-      if( dist < dist_min) then
+      if (dist < dist_min) then
         call find_nearest_kdtree_node(npoints,points_data,node%right, &
                                         xyz_target,ipoint_min,dist_min)
       endif
     endif
   else
-    if( associated(node%left) ) then
+    if (associated(node%left) ) then
       ! checks left node as a final node
-      if(node%left%idim == 0 ) then
+      if (node%left%idim == 0 ) then
         dist = sum((xyz_target(:) - points_data(:,node%left%ipoint))**2)
-        if( dist <= dist_min) then
+        if (dist <= dist_min) then
           ! stores minimum point
           dist_min = dist
           ipoint_min = node%left%ipoint
@@ -665,7 +665,7 @@ contains
         endif
       endif
       ! checks if points beyond cut plane could be closer
-      if( dist < dist_min) then
+      if (dist < dist_min) then
         call find_nearest_kdtree_node(npoints,points_data,node%left, &
                                     xyz_target,ipoint_min,dist_min)
       endif

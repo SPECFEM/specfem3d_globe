@@ -28,7 +28,14 @@
 #######################################
 
 tomography_TARGETS = \
+	$E/xadd_model_iso \
+	$E/xadd_model_tiso \
+	$E/xadd_model_tiso_cg \
+	$E/xadd_model_tiso_iso \
 	$E/xinterpolate_model \
+	$E/xsmooth_sem \
+	$E/xsum_kernels \
+	$E/xsum_preconditioned_kernels \
 	$(EMPTY_MACRO)
 
 ifeq ($(ADIOS),yes)
@@ -38,19 +45,34 @@ tomography_TARGETS += \
 endif
 
 tomography_OBJECTS = \
+	$(xadd_model_iso_OBJECTS) \
+	$(xadd_model_tiso_OBJECTS) \
+	$(xadd_model_tiso_cg_OBJECTS) \
+	$(xadd_model_tiso_iso_OBJECTS) \
 	$(xinterpolate_model_OBJECTS) \
+	$(xsmooth_sem_OBJECTS) \
+	$(xsum_kernels_OBJECTS) \
+	$(xsum_preconditioned_kernels_OBJECTS) \
 	$(xconvert_model_file_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
 tomography_SHARED_OBJECTS = \
+	$(xadd_model_SHARED_OBJECTS) \
 	$(xinterpolate_model_SHARED_OBJECTS) \
+	$(xsmooth_sem_SHARED_OBJECTS) \
+	$(xsum_kernels_SHARED_OBJECTS) \
+	$(xsum_preconditioned_kernels_SHARED_OBJECTS) \
 	$(xconvert_model_file_adios_SHARED_OBJECTS) \
 	$(EMPTY_MACRO)
 
 
 tomography_MODULES = \
 	$(FC_MODDIR)/kdtree_search.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_update_cg.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_update_iso.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_update_tiso.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_update_tiso_iso.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 ####
@@ -72,6 +94,74 @@ tomography: $(tomography_TARGETS)
 ####
 
 #######################################
+
+xadd_model_SHARED_OBJECTS = \
+	$O/parallel.sharedmpi.o \
+	$O/exit_mpi.shared.o \
+	$O/gll_library.shared.o \
+	$(EMPTY_MACRO)
+
+##
+## xadd_model_iso
+##
+xadd_model_iso_OBJECTS = \
+	$O/add_model_iso.tomo.o \
+	$(EMPTY_MACRO)
+
+${E}/xadd_model_iso: $(xadd_model_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+
+##
+## xadd_model_tiso
+##
+xadd_model_tiso_OBJECTS = \
+	$O/add_model_tiso.tomo.o \
+	$(EMPTY_MACRO)
+
+${E}/xadd_model_tiso: $(xadd_model_tiso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+##
+## xadd_model_tiso_cg
+##
+xadd_model_tiso_cg_OBJECTS = \
+	$O/add_model_tiso_cg.tomo.o \
+	$(EMPTY_MACRO)
+
+${E}/xadd_model_tiso_cg: $(xadd_model_tiso_cg_OBJECTS) $(xadd_model_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+
+##
+## xadd_model_tiso_iso
+##
+xadd_model_tiso_iso_OBJECTS = \
+	$O/add_model_tiso_iso.tomo.o \
+	$(EMPTY_MACRO)
+
+${E}/xadd_model_tiso_iso: $(xadd_model_tiso_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+
+##
+## xconvert_model_file_adios
+##
+xconvert_model_file_adios_OBJECTS = \
+	$O/convert_model_file_adios.tomoadios.o \
+	$(EMPTY_MACRO)
+
+xconvert_model_file_adios_SHARED_OBJECTS = \
+	$O/parallel.sharedmpi.o \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios.o \
+	$(EMPTY_MACRO)
+
+${E}/xconvert_model_file_adios: $(xconvert_model_file_adios_OBJECTS) $(xconvert_model_file_adios_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
 
 ##
 ## xinterpolate_model
@@ -96,23 +186,52 @@ ${E}/xinterpolate_model: $(xinterpolate_model_OBJECTS) $(xinterpolate_model_SHAR
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 ##
-## xconvert_model_file_adios
+## xsmooth_sem
 ##
-xconvert_model_file_adios_OBJECTS = \
-	$O/convert_model_file_adios.tomoadios.o \
+xsmooth_sem_OBJECTS = \
+	$O/smooth_sem.tomo.o \
 	$(EMPTY_MACRO)
 
-xconvert_model_file_adios_SHARED_OBJECTS = \
+xsmooth_sem_SHARED_OBJECTS = \
 	$O/parallel.sharedmpi.o \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
-	$O/adios_helpers.shared_adios.o \
-	$O/adios_manager.shared_adios.o \
+	$O/exit_mpi.shared.o \
+	$O/get_all_eight_slices.shared.o \
+	$O/gll_library.shared.o \
+	$O/smooth_weights_vec.shared.o \
 	$(EMPTY_MACRO)
 
-${E}/xconvert_model_file_adios: $(xconvert_model_file_adios_OBJECTS) $(xconvert_model_file_adios_SHARED_OBJECTS)
+${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
+
+##
+## xsum_kernels
+##
+xsum_kernels_OBJECTS = \
+	$O/sum_kernels.tomo.o \
+	$(EMPTY_MACRO)
+
+xsum_kernels_SHARED_OBJECTS = \
+	$O/parallel.sharedmpi.o \
+	$(EMPTY_MACRO)
+
+${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
+
+##
+## xsum_preconditioned_kernels
+##
+xsum_preconditioned_kernels_OBJECTS = \
+	$O/sum_preconditioned_kernels.tomo.o \
+	$(EMPTY_MACRO)
+
+xsum_preconditioned_kernels_SHARED_OBJECTS = \
+	$O/parallel.sharedmpi.o \
+	$(EMPTY_MACRO)
+
+${E}/xsum_preconditioned_kernels: $(xsum_preconditioned_kernels_OBJECTS) $(xsum_preconditioned_kernels_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 #######################################
 
