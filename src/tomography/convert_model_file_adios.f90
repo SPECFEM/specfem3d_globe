@@ -166,7 +166,7 @@ program convert_model_file_adios
   else
     ! isotropic model
     nparams = 3
-    ! note: adds space at endings to equal number of characters 
+    ! note: adds space at endings to equal number of characters
     !       to avoid compiler error: "Different shape for array assignment.."
     model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
     fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
@@ -373,7 +373,7 @@ program convert_model_file_adios
     if (myrank==0) print *, 'done writing the model in binary format'
 
 !--------------------------------------------
-  elseif (convert_format == 2) then ! from binaries to adios
+  else if (convert_format == 2) then ! from binaries to adios
 !--------------------------------------------
 
 ! READ THE MODEL IN OLD BINARY FORMAT

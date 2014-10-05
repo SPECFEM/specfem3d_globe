@@ -29,9 +29,9 @@ static void init_helper(void) {
   } else {
     initialized = 1;
   }
-  
+
   PyObject *pDict, *pModule;
-  
+
   Py_Initialize();
 
   PyObject *sys_path;
@@ -40,17 +40,17 @@ static void init_helper(void) {
   sys_path = PySys_GetObject("path");
   path = PyUnicode_FromWideChar(LSTR(PYTHON_MOD_PATH), -1);
   PyList_Append(sys_path, path);
-  
+
   pModule = PyImport_ImportModule(PYTHON_MOD_NAME);
   PyErr_Print();
-  
+
   pDict = PyModule_GetDict(pModule);
-  
+
   ocl_pf_parse = PyDict_GetItemString(pDict, "ocl_parse");
   ocl_pf_prep_progr = PyDict_GetItemString(pDict, "ocl_prepare_program");
 
   cuda_pf_get_lookup_table = PyDict_GetItemString(pDict, "cuda_get_raw_lookup_table");
-  
+
   Py_DECREF(pDict);
   Py_DECREF(pModule);
 }
@@ -63,10 +63,10 @@ void ocl_handle_program(void *program,
   PyObject *p_program_lines = PyTuple_New(count);
   PyObject *p_params;
   int i;
-  
+
   for (i = 0; i < count; i++) {
     PyObject *line;
-    
+
     if (!lengths || !lengths[i]) {
       line = PyUnicode_FromString(strings[i]);
     } else {
@@ -79,8 +79,8 @@ void ocl_handle_program(void *program,
 
   PyObject_Call(ocl_pf_prep_progr, p_params, NULL);
   PyErr_Print();
-  
-  
+
+
   Py_DECREF(p_params);
   Py_DECREF(p_program_lines);
   Py_DECREF(p_progr_uid);
@@ -95,10 +95,10 @@ char **ocl_handle_create_kernel(void *program, void *kernel, const char *name) {
   int result_size;
   char **param_types_names;
   int i;
-  
+
   p_result = PyObject_Call(ocl_pf_parse, p_params, NULL);
   PyErr_Print();
-  
+
   if (!p_result) {
     printf("ERROR, no result ...\n");
     perror("help...");
@@ -106,16 +106,16 @@ char **ocl_handle_create_kernel(void *program, void *kernel, const char *name) {
   }
   py_result_size = PyList_Size(p_result);
   result_size = Py_SAFE_DOWNCAST(py_result_size, Py_ssize_t, int);
-  
+
   param_types_names = malloc(sizeof(char *)*(result_size + 1));
-  
+
   for (i = 0; i < result_size; i++) {
     PyObject *p_ascii_str = PyUnicode_AsASCIIString(PyList_GetItem(p_result, i));
-   
+
     param_types_names[i] = PyBytes_AsString(p_ascii_str);
   }
   param_types_names[result_size] = NULL;
-  
+
   Py_DECREF(p_result);
   Py_DECREF(p_params);
   Py_DECREF(p_progr_uid);
@@ -131,10 +131,10 @@ struct kernel_lookup_s *cuda_get_lookup_table(void) {
   Py_ssize_t py_result_size;
   PyObject *p_result_items;
   struct kernel_lookup_s *lookup_table;
-  
+
   int i, j;
   int nb_kernels;
-  
+
   PyErr_Print();
   if (!p_result) {
     printf("ERROR, no result ...\n");
@@ -156,7 +156,7 @@ struct kernel_lookup_s *cuda_get_lookup_table(void) {
     PyObject *py_name = PyUnicode_AsASCIIString(PyTuple_GetItem(py_info_tpl, 0));
     PyObject *py_params_lst = PyTuple_GetItem(py_info_tpl, 1);
     Py_ssize_t py_nb_params = PyList_Size(py_params_lst);
-    
+
     lookup_table[i].address = PyLong_AsVoidPtr(py_addr);
     lookup_table[i].name = PyBytes_AsString(py_name);
     lookup_table[i].nb_params = Py_SAFE_DOWNCAST(py_nb_params, Py_ssize_t, int);
@@ -171,7 +171,7 @@ struct kernel_lookup_s *cuda_get_lookup_table(void) {
       lookup_table[i].params[j].type = PyBytes_AsString(py_param_type);
     }
   }
-  
+
   Py_DECREF(p_result);
   Py_DECREF(p_result_items);
   Py_DECREF(p_params);

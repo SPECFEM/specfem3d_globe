@@ -218,7 +218,7 @@ program add_model
             alphah1 = alphah0 * exp( dbulk )
           else
             ! new vp values use bulk model update:
-            ! this is based on vp_new = sqrt( bulk_new**2 + 4/3 vs_new**2 )          
+            ! this is based on vp_new = sqrt( bulk_new**2 + 4/3 vs_new**2 )
             alphav1 = sqrt( alphav0**2 * exp(2.0*dbulk) + FOUR_THIRDS * betav0**2 * ( &
                               exp(2.0*dbetaiso) - exp(2.0*dbulk) ) )
             alphah1 = sqrt( alphah0**2 * exp(2.0*dbulk) + FOUR_THIRDS * betah0**2 * ( &
@@ -324,7 +324,7 @@ subroutine read_parameters()
 
   ! read in parameter information
   read(s_step_fac,*) step_fac
-  
+
   !if (abs(step_fac) < 1.e-10) then
   !  print*,'Error: step factor ',step_fac
   !  call exit_MPI(myrank,'Error step factor')
@@ -667,7 +667,7 @@ subroutine get_gradient()
       print*,'  using depth maximum between 50km and 100km: ',max
       print*,'  approximate depth maximum: ',depth_max
       print*
-    else  
+    else
       ! maximum gradient values
       minmax(1) = abs(min_beta)
       minmax(2) = abs(max_beta)
@@ -679,7 +679,7 @@ subroutine get_gradient()
       print*,'  using maximum: ',max
       print*
     endif
-    
+
     ! chooses step length such that it becomes the desired, given step factor as inputted
     step_length = step_fac/max
 
@@ -1062,7 +1062,7 @@ subroutine compute_volume()
   rms_vsh = 0._CUSTOM_REAL
   rms_eta = 0._CUSTOM_REAL
   rms_rho = 0._CUSTOM_REAL
-  
+
   do ispec = 1, NSPEC
     do k = 1, NGLLZ
       do j = 1, NGLLY

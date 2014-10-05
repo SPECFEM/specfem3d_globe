@@ -38,7 +38,7 @@
 !
 ! needs:
 !   - topo files from first mesh            e.g. topo_1/proc000001_reg1_solver_data.bin
-!                                
+!
 !   - topo files from target mesh           e.g. topo_2/proc000001_reg1_solver_data.bin
 !
 !
@@ -279,7 +279,7 @@
   else
     ! isotropic model
     nparams = 3
-    ! note: adds space at endings to equal number of characters 
+    ! note: adds space at endings to equal number of characters
     !       to avoid compiler error: "Different shape for array assignment.."
 #ifdef ADIOS_INPUT
     model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
@@ -494,15 +494,15 @@
     do iproc_xi = 0, nproc_xi_old - 1
       ! gets slice number
       rank = addressing1(ichunk_selected,iproc_xi,iproc_eta)
-      
+
       ! counter
       iprocnum = iprocnum + 1
-      
+
       ! user output
       if (myrank == 0) then
         print*,'  slice number: ',iprocnum,' out of ',nproc_chunk1
       endif
-      
+
       ! old, source mesh locations
       write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',rank,'_reg1_'//'solver_data.bin'
       open(IIN,file=solver_file,status='old',form='unformatted',iostat=ier)
@@ -547,7 +547,7 @@
     do iproc_xi = 0, nproc_xi_old - 1
       ! gets slice number
       rank = addressing1(ichunk_selected,iproc_xi,iproc_eta)
-      
+
       ! counter
       iprocnum = iprocnum + 1
 
@@ -595,7 +595,7 @@
     print*,'reading new mesh slice ... '
     print*
   endif
-      
+
   ! checks new mesh locations
   write(solver_file,'(a,i6.6,a)') trim(dir_topo2)//'proc',rank,'_reg1_'//'solver_data.bin'
   open(IIN,file=solver_file,status='old',form='unformatted',iostat=ier)
@@ -887,7 +887,7 @@
   real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: x2,y2,z2
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec,nparams),intent(inout) :: model2
 
-  ! for old, first mesh we interpolate on 
+  ! for old, first mesh we interpolate on
   integer,intent(in) :: nspec_max_old,nglob_max_old,nproc_chunk1
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec_max_old,0:nproc_chunk1-1),intent(in) :: ibool1
   real(kind=CUSTOM_REAL),dimension(nglob_max_old,0:nproc_chunk1-1),intent(in) :: x1,y1,z1
@@ -995,7 +995,7 @@
   real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: x2,y2,z2
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec,nparams),intent(inout) :: model2
 
-  ! for old, first mesh we interpolate on 
+  ! for old, first mesh we interpolate on
   integer,intent(in) :: nspec_max_old,nglob_max_old,nproc_chunk1
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec_max_old,0:nproc_chunk1-1),intent(in) :: ibool1
   real(kind=CUSTOM_REAL),dimension(nglob_max_old,0:nproc_chunk1-1),intent(in) :: x1,y1,z1
@@ -1260,8 +1260,8 @@
   ! interpolated point location
   integer,intent(out) :: ispec_selected,rank_selected
   double precision,intent(out) :: xi_target,eta_target,gamma_target
-  
-  ! for old, first mesh we interpolate on 
+
+  ! for old, first mesh we interpolate on
   integer,intent(in) :: nspec,nglob,nproc
 
   ! arrays containing coordinates of the points
@@ -1292,7 +1292,7 @@
 
   ispec_selected = 0
   rank_selected = -1
-  
+
   ! finds closest point
   do rank=0,nproc-1
     do ispec=1,nspec
@@ -1303,9 +1303,9 @@
       dist =   (x_target - dble(xstore(iglob,rank)))**2 &
               +(y_target - dble(ystore(iglob,rank)))**2 &
               +(z_target - dble(zstore(iglob,rank)))**2
-                  
+
       if (dist > dist_typical_sq) cycle
-    
+
       ! loop only on points inside the element
       ! exclude edges to ensure this point is not shared with other elements
       do k=2,NGLLZ-1
@@ -1369,8 +1369,8 @@
 
   ! interpolated point location
   double precision,intent(out) :: xi_target,eta_target,gamma_target
-  
-  ! for old, first mesh we interpolate on 
+
+  ! for old, first mesh we interpolate on
   integer,intent(in) :: nspec,nglob,nproc
 
   ! arrays containing coordinates of the points
@@ -1428,13 +1428,13 @@
   ix_initial_guess = 0
   iy_initial_guess = 0
   iz_initial_guess = 0
-  
+
   ! finds closest interior gll point
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
         iglob = ibool(i,j,k,ispec_selected,rank_selected)
-        
+
         dist = (x_target - xstore(iglob,rank_selected))**2 &
               +(y_target - ystore(iglob,rank_selected))**2 &
               +(z_target - zstore(iglob,rank_selected))**2
@@ -1460,7 +1460,7 @@
   ! debug
   !print*,'distmin = ',sngl(distmin),'(km)'
 
-  ! find the best (xi,eta) 
+  ! find the best (xi,eta)
   ! use initial guess in xi, eta and gamma from closest point found
   xi = xigll(ix_initial_guess)
   eta = yigll(iy_initial_guess)
@@ -1500,7 +1500,7 @@
       endif
 
       iglob = ibool(iax,iay,iaz,ispec_selected,rank_selected)
-      
+
       xelm(ia) = dble(xstore(iglob,rank_selected))
       yelm(ia) = dble(ystore(iglob,rank_selected))
       zelm(ia) = dble(zstore(iglob,rank_selected))
@@ -1652,7 +1652,7 @@
                          nspec,model, &
                          val, &
                          xigll,yigll,zigll)
-  
+
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
@@ -1685,11 +1685,11 @@
   val = 0.0
   do k = 1, NGLLZ
     do j = 1, NGLLY
-      do i = 1, NGLLX  
+      do i = 1, NGLLX
           val = val +  hxir(i) * hetar(j) * hgammar(k) * model(i,j,k,ielem)
       enddo
     enddo
   enddo
-  
+
   end subroutine interpolate
 

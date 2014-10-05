@@ -210,7 +210,7 @@
       ystore(:) = 0.0
       zstore(:) = 0.0
       ibool(:,:,:,:) = -1
-      ! skipps nspec 
+      ! skipps nspec
       read(28) njunk
       if (njunk /= nspec(it)) stop 'Error invalid nspec in solver_data.bin'
       ! skipps nglob

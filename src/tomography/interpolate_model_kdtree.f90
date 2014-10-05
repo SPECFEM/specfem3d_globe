@@ -543,13 +543,13 @@ contains
   if (associated(node%left)) then
      call delete_node(node%left)
      nullify (node%left)
-  end if
+  endif
 
   ! deletes right hemisphere
   if (associated(node%right)) then
      call delete_node(node%right)
      nullify (node%right)
-  end if
+  endif
 
   deallocate(node)
 

@@ -826,7 +826,7 @@ subroutine get_gradient_cg()
   real(kind=CUSTOM_REAL) :: minmax(4),depthmax(2),depthmax_radius(2),max
   real(kind=CUSTOM_REAL) :: r,rmax_vsv,rmax_vsh,depthmax_depth
   integer :: maxindex(1)
-  real(kind=CUSTOM_REAL) :: ratio_bulk,ratio_betav,ratio_betah,ratio_eta  
+  real(kind=CUSTOM_REAL) :: ratio_bulk,ratio_betav,ratio_betah,ratio_eta
 
   ! ------------------------------------------------------------------------
 

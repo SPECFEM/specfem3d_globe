@@ -130,7 +130,7 @@ module model_update_iso
 
   integer :: nfile, myrank, sizeprocs,  ier
   integer :: i, j, k,ispec, iglob, ishell, n, it, j1, ib, npts_sem, ios
-  character(len=150) :: sline, m_file, fname    
+  character(len=150) :: sline, m_file, fname
 
 end module model_update_iso
 
@@ -212,7 +212,7 @@ program add_model
       enddo
     enddo
   enddo
-  
+
   ! stores new model in files
   call store_new_model()
 
@@ -253,11 +253,11 @@ subroutine initialize()
   model_vp = 0.0_CUSTOM_REAL
   model_vs = 0.0_CUSTOM_REAL
   model_rho = 0.0_CUSTOM_REAL
-  
+
   model_dA = 0.0_CUSTOM_REAL
   model_dB = 0.0_CUSTOM_REAL
   model_dR = 0.0_CUSTOM_REAL
-  
+
   kernel_a = 0.0_CUSTOM_REAL
   kernel_b = 0.0_CUSTOM_REAL
   kernel_rho = 0.0_CUSTOM_REAL
@@ -290,7 +290,7 @@ subroutine read_parameters()
 
   ! read in parameter information
   read(s_step_fac,*) step_fac
-  
+
   !if (abs(step_fac) < 1.e-10) then
   !  print*,'Error: step factor ',step_fac
   !  call exit_MPI(myrank,'Error step factor')
@@ -585,13 +585,13 @@ subroutine get_gradient()
 
   ! master determines step length based on maximum gradient value (either vp or vs)
   if (myrank == 0) then
-  
+
       ! determines maximum kernel betav value within given radius
     if (use_depth_maximum) then
       print*,'  using depth maximum between 50km and 100km: ',max
       print*,'  approximate depth maximum: ',depth_max
       print*
-    else  
+    else
       ! maximum gradient values
       minmax(1) = abs(min_vs)
       minmax(2) = abs(max_vs)
@@ -603,7 +603,7 @@ subroutine get_gradient()
       print*,'  using maximum: ',max
       print*
     endif
-    
+
     ! chooses step length such that it becomes the desired, given step factor as inputted
     step_length = step_fac/max
 
@@ -627,7 +627,7 @@ subroutine get_gradient()
   max_rho = sqrt(rho_sum)
 
   if (myrank == 0) then
-    print*,'norm model updates:'  
+    print*,'norm model updates:'
     print*,'  initial a length: ',max_vp
     print*,'  initial beta length : ',max_vs
     print*,'  initial rho length: ',max_rho
@@ -790,7 +790,7 @@ subroutine compute_volume()
   ! integration values
   real(kind=CUSTOM_REAL) :: kernel_integral_alpha,kernel_integral_beta,kernel_integral_rho
   real(kind=CUSTOM_REAL) :: integral_alpha_sum,integral_beta_sum,integral_rho_sum
-  
+
   real(kind=CUSTOM_REAL) :: volume_glob,volume_glob_sum
   ! root-mean square values
   real(kind=CUSTOM_REAL) :: rms_vp,rms_vs,rms_rho
@@ -888,7 +888,7 @@ subroutine compute_volume()
   rms_vp = 0._CUSTOM_REAL
   rms_vs = 0._CUSTOM_REAL
   rms_rho = 0._CUSTOM_REAL
-  
+
   do ispec = 1, NSPEC
     do k = 1, NGLLZ
       do j = 1, NGLLY
