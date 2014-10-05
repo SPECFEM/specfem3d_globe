@@ -444,9 +444,9 @@
         call write_kernel_netcdf ('./OUTPUT_FILES/betahKernelCrustMantle.nc',  betah_kl_crust_mantle)
         call write_kernel_netcdf ('./OUTPUT_FILES/etaKernelCrustMantle.nc',    eta_kl_crust_mantle)
         call write_kernel_netcdf ('./OUTPUT_FILES/rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
-        
+
         call write_coordinates_netcdf ('./OUTPUT_FILES/xyzCrustMantle.nc')
-                
+
 #endif
 
         ! in case one is interested in primary kernel K_rho

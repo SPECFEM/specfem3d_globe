@@ -46,13 +46,13 @@ X=-1+REAL(j)/1000.*2
 !CALL VALEPO(N,X,Y,DY,D2Y)
 CALL ZELEGL(N,ET,VN)
 !WRITE(5,*)X,Y,DY,D2Y
-ENDDO
+enddo
 DO j=0,N
 
   xi(j)=ET(j)
 
 !WRITE(6,*)ET(j),VN(j)
-ENDDO
+enddo
 !CLOSE(5)
 !CLOSE(6)
 
@@ -105,7 +105,7 @@ END SUBROUTINE main_pol
          D2YM = D2Y
          D2Y  = (C2*X*D2Y-C4*D2YP+2.D0*C2*DYP)/C1
          D2YP = D2YM
-       ENDDO
+       enddo
 
       RETURN
 
@@ -153,12 +153,12 @@ END SUBROUTINE VALEPO
         DO IT=1,8
          CALL VALEPO(N,ETX,Y,DY,D2Y)
          ETX = ETX-DY/D2Y
-        ENDDO
+        enddo
         ET(I) = -ETX
         ET(N-I) = ETX
         VN(I) = Y*SN
         VN(N-I) = Y
-      ENDDO
+      enddo
 
       RETURN
       END SUBROUTINE ZELEGL

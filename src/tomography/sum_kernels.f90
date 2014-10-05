@@ -35,7 +35,7 @@
 !   - proc***_reg1_bulk_betah_kernel.bin
 !   - proc***_reg1_eta_kernel.bin
 !
-! input file: kernels_run.globe       
+! input file: kernels_run.globe
 !   lists all event kernel directories which should be summed together
 !
 ! input directory:  INPUT_KERNELS/
@@ -60,10 +60,10 @@ program sum_kernels_globe
 
   ! if you prefer using isotropic kernels (bulk,bulk_beta,rho) kernels, set this flag to true
   logical, parameter :: USE_ISO_KERNELS = .false.
-  
+
   ! if you prefer isotropic  (alpha,beta,rho) kernels, set this flag to true
   logical, parameter :: USE_ALPHA_BETA_RHO = .false.
-  
+
 
 ! ======================================================
 
@@ -96,14 +96,14 @@ program sum_kernels_globe
      kernel_list(nker) = sline
   enddo
   close(IIN)
-  if( myrank == 0 ) then 
+  if( myrank == 0 ) then
     write(*,*) '  ',nker,' events'
     write(*,*)
   endif
-  
+
   ! sums up kernels
   if( USE_ISO_KERNELS ) then
-  
+
     !  isotropic kernels
     kernel_name = 'reg1_bulk_c_kernel'
     call sum_kernel(kernel_name,kernel_list,nker,myrank)
@@ -113,11 +113,11 @@ program sum_kernels_globe
 
     kernel_name = 'reg1_rho_kernel'
     call sum_kernel(kernel_name,kernel_list,nker,myrank)
-    
+
   else if( USE_ALPHA_BETA_RHO ) then
 
     ! isotropic kernels
-  
+
     kernel_name = 'reg1_alpha_kernel'
     call sum_kernel(kernel_name,kernel_list,nker,myrank)
 
@@ -128,9 +128,9 @@ program sum_kernels_globe
     call sum_kernel(kernel_name,kernel_list,nker,myrank)
 
   else
-  
+
     ! transverse isotropic kernels
-    
+
     kernel_name = 'reg1_bulk_c_kernel'
     call sum_kernel(kernel_name,kernel_list,nker,myrank)
 
@@ -142,9 +142,9 @@ program sum_kernels_globe
 
     kernel_name = 'reg1_eta_kernel'
     call sum_kernel(kernel_name,kernel_list,nker,myrank)
-  
+
   endif
-  
+
   if(myrank==0) write(*,*) 'done writing all kernels'
 
   ! stop all the MPI processes, and exit
@@ -177,7 +177,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker,myrank)
   total_kernel = 0._CUSTOM_REAL
   do iker = 1, nker
     ! user output
-    if(myrank==0) then 
+    if(myrank==0) then
     write(*,*) 'reading in event kernel for: ',trim(kernel_name)
     write(*,*) '    ',iker, ' out of ', nker
     endif
@@ -195,7 +195,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker,myrank)
     read(IIN) kernel_crust_mantle
     close(IIN)
 
-    ! outputs norm of kernel 
+    ! outputs norm of kernel
     norm = sum( kernel_crust_mantle * kernel_crust_mantle )
     call sum_all_dp(norm,norm_sum)
     if( myrank == 0 ) then

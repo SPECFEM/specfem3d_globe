@@ -4,7 +4,7 @@ int inited = 0;
 
 void init(void) {
   int i = 0;
-  
+
   if (inited) {
     return;
   }

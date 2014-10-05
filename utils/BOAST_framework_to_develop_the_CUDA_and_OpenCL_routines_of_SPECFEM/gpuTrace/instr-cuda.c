@@ -6,8 +6,8 @@
 #include "ldChecker.h"
 
 cudaError_t (*real_cudaGetDeviceCount)(int *count);
-cudaError_t (*real_cudaMalloc) 	(void **devPtr, size_t size);
-cudaError_t (*real_cudaMemcpy) 	(void *dst, const void *src,
+cudaError_t (*real_cudaMalloc)  (void **devPtr, size_t size);
+cudaError_t (*real_cudaMemcpy)  (void *dst, const void *src,
                                  size_t count, enum cudaMemcpyKind kind);
 cudaError_t (*real_cudaMemcpyToSymbol)(const void *symbol, const void *src,
                                        size_t count, size_t offset,
@@ -60,14 +60,14 @@ static void init_cuda_ldchecker(void) {
   static int inited = 0;
   struct callback_s callbacks = {cuda_getBufferContent};
   int i, j;
-  
+
   if (inited) {
     return;
   }
 
   init_ldchecker(callbacks, cuda_bindings);
   cuda_init_helper();
-  
+
   inited = 1;
 
   cuda_lookup_table = cuda_get_lookup_table();
@@ -85,10 +85,10 @@ static void init_cuda_ldchecker(void) {
       ldKernel->params[j].type = kernel->params[j].type;
       ldKernel->params[i].index = j;
     }
-    
+
     kernel_created_event(ldKernel);
   }
-  
+
   create_cuda_buffer(NULL, 0);
 }
 
@@ -96,7 +96,7 @@ static void init_cuda_ldchecker(void) {
 struct ld_mem_s *find_off_mem_entry(const void *handle, size_t *offset) {
   struct ld_mem_s *ldBuffer = find_mem_entry((void *) handle);
   int i;
-  
+
   if (ldBuffer) {
     return ldBuffer;
   }
@@ -124,7 +124,7 @@ struct ld_mem_s *find_off_mem_entry(const void *handle, size_t *offset) {
 
 cudaError_t cudaGetDeviceCount (int *count) {
   init_cuda_ldchecker();
-  
+
   return real_cudaGetDeviceCount (count);
 }
 
@@ -132,13 +132,13 @@ int cuda_getBufferContent (struct ld_mem_s *ldBuffer, void *buffer,
                            size_t offset, size_t size)
 {
   cudaError_t err = cudaSuccess;
-  
+
   if (offset != 0) {
     /* need to use the type to multiply correctly the buffer handle.  */
     warning("offset == %zu != 0, not handled yet in Cuda's ldChecker\n",
             offset);
   }
-  
+
   err = real_cudaMemcpy (buffer,
                          ldBuffer->handle,
                          size,
@@ -175,11 +175,11 @@ cudaError_t cudaLaunch (const void *entry) {
   assert(ldKernel);
 
   dbg_notify_event();
-  
+
   for (i = 0; i < ldKernel->nb_params; i++) {
     struct ld_kern_param_s *ldParam = &ldKernel->params[i];
     const void **current_arg = (const void **) temp_arguments[i].arg;
-      
+
     if (ldParam->is_pointer) {
       size_t offset = 0;
       struct ld_mem_s *ldBuffer = find_off_mem_entry(*current_arg, &offset);
@@ -193,13 +193,13 @@ cudaError_t cudaLaunch (const void *entry) {
       kernel_set_scalar_arg_event (ldKernel, ldParam, i, current_arg);
     }
   }
-  
+
   kernel_executed_event(ldKernel, configure_get_worksizes(NULL, NULL), 3);
   err = real_cudaLaunch(entry);
   kernel_finished_event(ldKernel, configure_get_worksizes(NULL, NULL), 3);
-  
+
   return err;
-  
+
 error:
   return real_cudaLaunch(entry);
 }
@@ -209,23 +209,23 @@ cudaError_t cudaSetupArgument (const void *arg, size_t size, size_t offset) {
   temp_arguments[temp_argument_cnt].size = size;
   temp_arguments[temp_argument_cnt].offset = offset;
   temp_argument_cnt++;
-  
+
   return real_cudaSetupArgument(arg, size, offset);
 }
 
 struct ld_mem_s *create_cuda_buffer(const void *devPtr, size_t size) {
   static int uid = 0;
   struct ld_mem_s *ldBuffer = get_next_mem_spot();
-  
+
   assert(ldBuffer);
   ldBuffer->handle = (void *) devPtr;
   ldBuffer->uid = uid++;
   ldBuffer->size = size;
   ldBuffer->flags = 0;
-  
+
   ldBuffer->has_values = 0;
   ldBuffer->values_outdated = 0;
-  
+
   buffer_created_event(ldBuffer);
 
   return ldBuffer;
@@ -246,11 +246,11 @@ cudaError_t cudaStreamDestroy (cudaStream_t stream) {
 
 cudaError_t cudaMalloc (void **devPtr, size_t size) {
   cudaError_t retcode;
-    
+
   retcode = real_cudaMalloc(devPtr, size);
-  
+
   create_cuda_buffer(*devPtr, size);
-  
+
   return retcode;
 }
 
@@ -265,14 +265,14 @@ cudaError_t cudaMemcpyToSymbol(const void *symbol, const void *src, size_t count
       warning("cudaMemcpyToSymbol failed ...\n");
       goto finish;
     }
-    
+
     ldBuffer = find_mem_entry(devPtr);
 
     if (!ldBuffer) {
       ldBuffer = create_cuda_buffer(devPtr, count + offset);
     }
     buffer_copy_event(ldBuffer, LD_WRITE, (void **) src, count, offset);
-    
+
   } else {
     warning("cudaMemcpyToSymbol kind=%d not handled\n", kind);
   }
@@ -285,7 +285,7 @@ cudaError_t cudaGetSymbolAddress (void **devPtr, const void *symbol) {
   cudaError_t err;
 
   err = real_cudaGetSymbolAddress(devPtr, symbol);
-  
+
   return err;
 }
 
@@ -293,9 +293,9 @@ cudaError_t cudaMemset ( void *devPtr, int  value, size_t  count) {
   cudaError_t retcode = real_cudaMemset(devPtr, value, count);
   size_t offset;
   struct ld_mem_s *ldBuffer = find_off_mem_entry(devPtr, &offset);
-  
+
   warning("cudaMemset %d (unhandled)\n", ldBuffer->uid);
-  
+
   return retcode;
 }
 
@@ -306,7 +306,7 @@ void handle_cudaMemcpy(void *dst, const void * src, size_t count,
   void *pointer;
   int direction;
   size_t offset = 0;
-  
+
   if (kind == cudaMemcpyHostToDevice) /* write */ {
     ldBuffer = find_off_mem_entry(dst, &offset);
 
@@ -339,7 +339,7 @@ cudaError_t cudaMemcpyAsync(void *dst, const void * src, size_t count,
   cudaError_t retcode = real_cudaMemcpyAsync(dst, src, count, kind, stream);
 
   handle_cudaMemcpy(dst, src, count, kind, stream);
-  
+
   return retcode;
 }
 
@@ -349,7 +349,7 @@ cudaError_t cudaMemcpy (void *dst, const void *src,
   cudaError_t retcode = real_cudaMemcpy(dst, src, count, kind);
 
   handle_cudaMemcpy(dst, src, count, kind, (void *) -1);
-  
+
   return retcode;
 }
 
@@ -374,10 +374,10 @@ static struct work_size_s *configure_get_worksizes(dim3 *gridDim, dim3 *blockDim
     work_sizes.local[1] = blockDim->y;
     work_sizes.local[2] = blockDim->z;
   }
-  
+
   return &work_sizes;
 }
-  
+
 
 cudaError_t cudaConfigureCall (dim3 gridDim, dim3 blockDim,
                                size_t sharedMem, cudaStream_t stream)
@@ -387,7 +387,7 @@ cudaError_t cudaConfigureCall (dim3 gridDim, dim3 blockDim,
   configure_get_worksizes(&gridDim, &blockDim);
 
   temp_argument_cnt = 0;
-  
+
   errcode = real_cudaConfigureCall(gridDim, blockDim, sharedMem, stream);
 
   return errcode;

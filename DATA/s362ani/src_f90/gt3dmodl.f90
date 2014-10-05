@@ -56,7 +56,7 @@
   dskker(i)=desckern(i)
   do j=1,ncoefhor(ihpakern(i))
     coe(j,i)=coef(j,i)
-!          if(j.eq.1) then
+!          if(j==1) then
 !            write(6,"(e12.4)") coe(j,i)
 !          endif
   enddo

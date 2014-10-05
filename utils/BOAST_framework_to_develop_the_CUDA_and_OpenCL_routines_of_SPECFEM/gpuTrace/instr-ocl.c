@@ -18,7 +18,7 @@
 
 #define NS_TO_MS(_ns_) ((_ns_)/1000000)
 const char* clewErrorString (cl_int error);
-  
+
 static int mocl_errcode;
 static inline cl_int _clCheck(cl_int errcode, const char *file, int line, const char *func) {
   mocl_errcode = errcode;
@@ -163,13 +163,13 @@ struct ld_mem_s *create_ocl_buffer (cl_mem handle);
 
 void init_ocl_ldchecker(void) {
   struct callback_s callbacks = {ocl_getBufferContent, ocl_setParameterValue, ocl_getAndReleaseParameterValue, ocl_triggerKernelExecution};
-  
+
 #if ENABLE_KERNEL_PROFILING == 1
   pthread_mutex_init(&stats_lock, NULL);
-  
+
   signal(SIGUSR1, sig_handler);
 #endif
-  
+
   init_ldchecker(callbacks, ocl_bindings);
   create_ocl_buffer(NULL);
   ocl_init_helper();
@@ -195,11 +195,11 @@ cl_command_queue clCreateCommandQueue(cl_context context,
 #if ENABLE_KERNEL_PROFILING == 1
   properties |=  CL_QUEUE_PROFILING_ENABLE;
 #endif
-  
+
   ldOclEnv.command_queue = real_clCreateCommandQueue(context, device,
                                                      properties, errcode_ret);
   ldOclEnv.context = context;
-  
+
   return ldOclEnv.command_queue;
 }
 
@@ -213,17 +213,17 @@ static void print_statistics(int force) {
     int i;
 
     pthread_mutex_lock(&stats_lock);
-    
+
     for (i = 0; i < kernel_elt_count; i++) {
       struct ld_kernel_s *ldKernel = &kernel_map[i];
 
       if (ldKernel->exec_counter == 0) {
         continue;
       }
-      
+
       info("Kernel %s:\n", ldKernel->name);
       info("\t- was executed %d times\n", ldKernel->exec_counter);
-      
+
       unsigned long avg_ns = ldKernel->exec_span_ns / ldKernel->exec_counter;
       info("\t- it took %"PRId64"ms (%"PRId64"ns).\n", NS_TO_MS(ldKernel->exec_span_ns), ldKernel->exec_span_ns);
       info("\t- average time was %"PRId64"ms (%"PRId64"ns).\n", NS_TO_MS(avg_ns), avg_ns);
@@ -247,7 +247,7 @@ cl_int clReleaseCommandQueue (cl_command_queue command_queue) {
     struct ld_kernel_s *ldkernel;
     struct ld_mem_s *ldmem;
     //struct ld_mem_offset_s *ldmem_offset;
-    
+
 #define CHECK_ALL_RELEASED(_NAME)                               \
     FOR_ALL_MAP_ELTS(i, ld##_NAME, _NAME) {                     \
       if (!ld##_NAME->released) {                               \
@@ -256,7 +256,7 @@ cl_int clReleaseCommandQueue (cl_command_queue command_queue) {
                 ld##_NAME->handle, ld##_NAME->uid, ld##_NAME->released);     \
       }                                                         \
     }                                                           \
-    
+
     CHECK_ALL_RELEASED(program);
     CHECK_ALL_RELEASED(kernel);
     CHECK_ALL_RELEASED(mem);
@@ -282,9 +282,9 @@ cl_program clCreateProgramWithSource (cl_context context,
     program_elt_count--;
     return program->handle;
   }
-  
+
   ocl_handle_program(program->handle, count, strings, lengths);
-  
+
   return program->handle;
 }
 
@@ -302,7 +302,7 @@ cl_int clReleaseProgram (cl_program program) {
 
 static inline ld_flags ocl_buffer_flags_to_ld (cl_mem_flags flags) {
   ld_flags ldFlags = 0;
-  
+
   if (flags & CL_MEM_WRITE_ONLY) ldFlags |= LD_FLAG_WRITE_ONLY;
   if (flags & CL_MEM_READ_ONLY) ldFlags |= LD_FLAG_READ_ONLY;
   if (flags & CL_MEM_READ_WRITE) ldFlags |= LD_FLAG_READ_WRITE;
@@ -316,7 +316,7 @@ struct ld_mem_s *create_ocl_buffer(cl_mem handle) {
 
   ldBuffer->handle = handle;
   ldBuffer->uid = buffer_uid++;
-  
+
   return ldBuffer;
 }
 
@@ -328,14 +328,14 @@ cl_mem clCreateBuffer (cl_context context, cl_mem_flags flags, size_t size,
   if (flags & CL_MEM_ALLOC_HOST_PTR) {
     goto unhandled;
   }
-  
+
   buffer = create_ocl_buffer(real_clCreateBuffer(context, flags, size, host_ptr, errcode_ret));
-  
+
   buffer->size = size;
   buffer->flags = ocl_buffer_flags_to_ld(flags);
-  
+
   buffer_created_event(buffer);
-  
+
   return buffer->handle;
 
 unhandled:
@@ -354,9 +354,9 @@ cl_mem clCreateSubBuffer (cl_mem buffer,
   struct ld_mem_offset_s *ldSubBuffer = NULL;
   cl_mem subbuffer;
   int i;
-  
+
   assert(ldBuffer);
-  
+
   subbuffer = real_clCreateSubBuffer(buffer, flags, buffer_create_type,
                                      buffer_create_info, errcode_ret);
 
@@ -366,13 +366,13 @@ cl_mem clCreateSubBuffer (cl_mem buffer,
   for (i = 0; i < mem_offset_elt_count; i++) {
     if (mem_offset_map[i].released) {
       ldSubBuffer = &mem_offset_map[i];
-    }                                                                 
+    }
   }
 
   if (!ldSubBuffer) {
     ldSubBuffer = get_next_mem_offset_spot();
   }
-  
+
   assert(ldSubBuffer);
 
   ldSubBuffer->handle = subbuffer;
@@ -381,9 +381,9 @@ cl_mem clCreateSubBuffer (cl_mem buffer,
   ldSubBuffer->size = ((cl_buffer_region*) buffer_create_info)->size;
   ldSubBuffer->parent = ldBuffer;
   ldSubBuffer->released = 0;
-  
+
   subbuffer_created_event(ldBuffer, ldSubBuffer->offset);
-  
+
   return subbuffer;
 }
 
@@ -400,9 +400,9 @@ cl_int clReleaseMemObject (cl_mem memobj) {
   if (ldBuffer) {
     buffer_released(ldBuffer);
   }
-  
+
   //ignore other buffer types
-  
+
   return real_clReleaseMemObject (memobj);
 }
 
@@ -416,15 +416,15 @@ cl_kernel clCreateKernel (cl_program  program,
   char **types_and_names;
 
   struct ld_kernel_s *ldKernel = get_next_kernel_spot();
- 
+
   ldKernel->handle = real_clCreateKernel(program, kernel_name, errcode_ret);
   ldKernel->name = kernel_name;
-  
+
   if (!IS_MPI_MASTER()) {
     kernel_elt_count--;
     return ldKernel->handle;
   }
-    
+
   types_and_names = ocl_handle_create_kernel(program, ldKernel->handle, kernel_name);
   for (nb_params = 0; types_and_names[nb_params]; nb_params++);
   nb_params /= 2;
@@ -432,14 +432,14 @@ cl_kernel clCreateKernel (cl_program  program,
   ldKernel->nb_params = nb_params;
   ldKernel->params = malloc(sizeof(struct ld_kern_param_s) * nb_params);
 
-  for (i = 0; i < nb_params; i++) {    
+  for (i = 0; i < nb_params; i++) {
     ldKernel->params[i].name = types_and_names[i*2 + 1];
     ldKernel->params[i].type = types_and_names[i*2];
     ldKernel->params[i].index = i;
   }
 
   kernel_created_event(ldKernel);
-  
+
   return ldKernel->handle;
 }
 
@@ -463,14 +463,14 @@ int ocl_getBufferContent (struct ld_mem_s *ldBuffer, void *buffer,
   if (size == 0) {
     return 1;
   }
-  
+
   //debug("*** Read %zub from buffer #%d at +%zub *** \n", size, ldBuffer->uid, offset);
   cl_int err = real_clEnqueueReadBuffer(ldOclEnv.command_queue,
                                         ldBuffer->handle, CL_TRUE,
                                         offset, size, buffer,
                                         0, NULL, NULL);
   assert(err == CL_SUCCESS);
-    
+
   return err == CL_SUCCESS;
 }
 
@@ -483,7 +483,7 @@ void *ocl_setParameterValue (struct ld_kernel_s *ldKernel,
 
   if (ldParam->is_pointer) {
     DEFAULT_SIZE(size)
-    
+
     mem_obj = real_clCreateBuffer(ldOclEnv.context, CL_MEM_READ_WRITE, size, NULL, clck_(&errcode_ret));
 
     clCheck(real_clEnqueueWriteBuffer(ldOclEnv.command_queue,
@@ -504,12 +504,12 @@ void *ocl_setParameterValue (struct ld_kernel_s *ldKernel,
     buffer = &mem_obj;
     size = sizeof(cl_mem);
   }
-  
+
   clCheck(real_clSetKernelArg ((cl_kernel) ldKernel->handle, ldParam->index,
                                size, buffer));
 
   return mem_obj;
-    
+
 }
 
 int ocl_triggerKernelExecution (struct ld_kernel_s *ldKernel,
@@ -518,12 +518,12 @@ int ocl_triggerKernelExecution (struct ld_kernel_s *ldKernel,
 {
   static size_t global_work_size[MAX_WORK_DIM], local_work_size[MAX_WORK_DIM];
   unsigned int i;
-  
+
   for (i = 0; i < work_dim; i++) {
     local_work_size[i] = work_sizes->local[i];
     global_work_size[i] = work_sizes->global[i] * work_sizes->local[i];
   }
-  
+
   clCheck(real_clEnqueueNDRangeKernel(ldOclEnv.command_queue, (cl_kernel) ldKernel->handle,
                                       work_dim, NULL,
                                       global_work_size,
@@ -540,11 +540,11 @@ int ocl_getAndReleaseParameterValue (struct ld_kernel_s *ldKernel,
   if (buffer_handle == (void *) -1) {
     return 1;
   }
-  
+
   if (size == 0) {
     goto do_release;
   }
-  
+
   clCheck(real_clEnqueueReadBuffer(ldOclEnv.command_queue,
                                    (cl_mem) buffer_handle,
                                    CL_TRUE,
@@ -552,7 +552,7 @@ int ocl_getAndReleaseParameterValue (struct ld_kernel_s *ldKernel,
                                    0, NULL, NULL));
 do_release:
   clCheck(real_clReleaseMemObject((cl_mem) buffer_handle));
-  
+
   return 1;
 }
 
@@ -565,11 +565,11 @@ cl_int clSetKernelArg (cl_kernel kernel,
 
   assert(ldKernel);
   ldParam = &ldKernel->params[arg_index];
-  
+
   if (ldParam->is_pointer) {
     struct ld_mem_s *ldBuffer = find_mem_entry(arg_value == NULL ? NULL : *(cl_mem *) arg_value);
     size_t offset = 0;
-    
+
     if (!ldBuffer) {
       struct ld_mem_offset_s *ldSubBuffer = find_mem_offset_entry(*(cl_mem *) arg_value);
 
@@ -577,13 +577,13 @@ cl_int clSetKernelArg (cl_kernel kernel,
       ldBuffer = ldSubBuffer->parent;
       offset = ldSubBuffer->offset;
     }
-    
+
     assert(ldBuffer);
     kernel_set_buffer_arg_event (ldKernel, ldParam, arg_index, ldBuffer, offset);
   } else {
     kernel_set_scalar_arg_event (ldKernel, ldParam, arg_index, (const void **) arg_value);
   }
-  
+
   return real_clSetKernelArg(kernel, arg_index, arg_size, arg_value);
 }
 
@@ -597,14 +597,14 @@ static void CL_CALLBACK  kernel_profiler_cb (cl_event event,
   static cl_ulong tstart, tstop, len;
   cl_int refcnt;
   struct ld_kernel_s *ldKernel = (struct ld_kernel_s *) user_data;
-  
+
   pthread_mutex_lock(&stats_lock);
   clReleaseEvent(event);
   clCheck(clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(tstop), &tstop, NULL));
   clCheck(clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(tstart), &tstart, NULL));
 
   clCheck(clGetEventInfo(event,  CL_EVENT_REFERENCE_COUNT, sizeof(refcnt), &refcnt, NULL));
-  
+
   len = tstop - tstart;
   if (tstart > tstop) {
     len = tstart - tstop;
@@ -631,7 +631,7 @@ cl_int clEnqueueNDRangeKernel (cl_command_queue command_queue,
                                cl_event *event)
 {
   static struct work_size_s work_sizes;
-  
+
   struct ld_kernel_s *ldKernel = find_kernel_entry(kernel);
   int i;
   cl_int errcode;
@@ -639,7 +639,7 @@ cl_int clEnqueueNDRangeKernel (cl_command_queue command_queue,
   if (num_events_in_wait_list) {
     clCheck(clWaitForEvents(num_events_in_wait_list, event_wait_list));
   }
-  
+
   assert(ldKernel);
   for (i = 0; i < work_dim; i++) {
     work_sizes.local[i] = local_work_size[i];
@@ -648,21 +648,21 @@ cl_int clEnqueueNDRangeKernel (cl_command_queue command_queue,
 
 #if ENABLE_KERNEL_PROFILING == 1
   static cl_event kern_event;
-  
+
   if (!event) {
     event = &kern_event; // scope of the event is limited to this function.
   }
 #endif
-  
+
   kernel_executed_event(ldKernel, &work_sizes, work_dim);
-  
+
   errcode = real_clEnqueueNDRangeKernel(command_queue, kernel, work_dim,
                                         global_work_offset, global_work_size,
                                         local_work_size, num_events_in_wait_list,
                                         event_wait_list, event);
 #if ENABLE_KERNEL_PROFILING == 1
   clCheck(errcode);
-  
+
   clRetainEvent(*event);
   clSetEventCallback(*event, CL_COMPLETE, kernel_profiler_cb, ldKernel);
 #endif
@@ -670,9 +670,9 @@ cl_int clEnqueueNDRangeKernel (cl_command_queue command_queue,
 #if FORCE_FINISH_KERNEL
   real_clFinish(command_queue);
 #endif
-  
+
   kernel_finished_event(ldKernel, &work_sizes, work_dim);
-  
+
   return errcode;
 }
 
@@ -710,7 +710,7 @@ cl_int clEnqueueWriteBuffer (cl_command_queue command_queue,
                              cl_event *event)
 {
   readWriteMemory(buffer, (void **) ptr, LD_WRITE, size, offset);
-  
+
   return real_clEnqueueWriteBuffer(command_queue, buffer, blocking_write,
                                    offset, size, ptr, num_events_in_wait_list,
                                    event_wait_list, event);
@@ -729,14 +729,14 @@ cl_int clEnqueueReadBuffer (cl_command_queue command_queue,
                             cl_event *event)
 {
   cl_int errcode;
-  
+
   errcode = real_clEnqueueReadBuffer(command_queue, buffer, CL_TRUE /* blocking_read */,
                                      offset, size, ptr, num_events_in_wait_list,
                                      event_wait_list, event);
 
   readWriteMemory(buffer, ptr, LD_READ, size, offset);
-  
-  
+
+
   return errcode;
 }
 

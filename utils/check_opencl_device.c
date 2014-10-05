@@ -1,4 +1,4 @@
-/* 
+/*
 **************************
 
 check_opencl_device utility
@@ -163,7 +163,7 @@ int main(int argc, char* const argv[]) {
   cl_uint units;
   char name[BUFFER_LENGTH];
   size_t image2d_max_size[2];
-  
+
   // gets platform info
 
   // first OpenCL call
@@ -186,7 +186,7 @@ int main(int argc, char* const argv[]) {
     fprintf (stdout, "-----------\n");
     fprintf (stdout, "Platform %i:\n",j);
     fprintf (stdout, "-----------\n");
-  
+
     // checks vendor and platform names
     // gets property info length
     clCheck( clGetPlatformInfo(platform_ids[j], CL_PLATFORM_NAME, 0, NULL, &info_length));
@@ -208,7 +208,7 @@ int main(int argc, char* const argv[]) {
 
     // only gets number of devices for this platform
     clCheck( clGetDeviceIDs(platform_ids[j], CL_DEVICE_TYPE_ALL, 0, NULL, &num_devices));
-    
+
     // checks
     if (num_devices > 0) {
       // fills device infos

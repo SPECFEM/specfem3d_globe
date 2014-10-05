@@ -168,7 +168,7 @@ subroutine rgb_to_hsv ( r, g, b, h, s, v )
     s = ( rgbmax - rgbmin ) / rgbmax
   else
     s = 0.0E+00
-  end if
+  endif
 !
 !  Compute the hue.
 !
@@ -188,7 +188,7 @@ subroutine rgb_to_hsv ( r, g, b, h, s, v )
       h = 2.0E+00 + rc - bc
     else
       h = 4.0E+00 + gc - rc
-    end if
+    endif
 
     h = h * 60.0E+00
 !
@@ -196,7 +196,7 @@ subroutine rgb_to_hsv ( r, g, b, h, s, v )
 !
     h = r_modp ( h, 360.0E+00 )
 
-  end if
+  endif
 
 end
 
@@ -264,13 +264,13 @@ function r_modp ( x, y )
     write ( *, '(a)' ) 'R_MODP - Fatal error!'
     write ( *, '(a,g14.6)' ) '  R_MODP ( X, Y ) called with Y = ', y
     stop
-  end if
+  endif
 
   r_modp = mod ( x, y )
 
   if ( r_modp < 0.0E+00 ) then
     r_modp = r_modp + abs ( y )
-  end if
+  endif
 
 end
 

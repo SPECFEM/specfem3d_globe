@@ -184,7 +184,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
   logical, parameter :: USE_HESS_SUM = .true.
   ! uses source mask to blend out source elements
   logical, parameter :: USE_SOURCE_MASK = .false.
-  
+
   !----------------------------------------------------------------------------------------
   double precision :: norm,norm_sum
   character(len=150) :: kernel_name,kernel_list(1000)
@@ -199,19 +199,19 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
 
   ! initializes arrays
   if( USE_HESS_SUM ) then
-  
+
     allocate( total_hess(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
     total_hess(:,:,:,:) = 0.0_CUSTOM_REAL
-    
+
   endif
-  
+
   if( USE_SOURCE_MASK ) then
-  
+
     allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
-    mask_source(:,:,:,:) = 1.0_CUSTOM_REAL  
-    
+    mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
+
   endif
-  
+
   ! loops over all event kernels
   total_kernel = 0._CUSTOM_REAL
   do iker = 1, nker
@@ -235,7 +235,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
     read(IIN) kernel_crust_mantle
     close(IIN)
 
-    ! outputs norm of kernel 
+    ! outputs norm of kernel
     norm = sum( kernel_crust_mantle * kernel_crust_mantle )
     call sum_all_dp(norm,norm_sum)
     if( myrank == 0 ) then
@@ -266,7 +266,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
 
     ! note: we take absolute values for hessian (as proposed by Yang)
     hess_crust_mantle = abs(hess_crust_mantle)
-    
+
     ! source mask
     if( USE_SOURCE_MASK ) then
       ! reads in mask
@@ -279,10 +279,10 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
       endif
       read(IIN) mask_source
       close(IIN)
-      
+
       ! masks source elements
       kernel_crust_mantle = kernel_crust_mantle * mask_source
-      
+
     endif
 
     ! precondition
@@ -295,26 +295,26 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
 
       ! inverts hessian
       call invert_hess( myrank,hess_crust_mantle,THRESHOLD_HESS )
-      
+
       ! preconditions each event kernel with its hessian
       kernel_crust_mantle = kernel_crust_mantle * hess_crust_mantle
 
     endif
-    
+
     ! sums all kernels from each event
     total_kernel = total_kernel + kernel_crust_mantle
-      
+
   enddo
 
   ! preconditions summed kernels with summed hessians
   if( USE_HESS_SUM ) then
-  
+
       ! inverts hessian matrix
       call invert_hess( myrank,total_hess,THRESHOLD_HESS )
-      
+
       ! preconditions kernel
       total_kernel = total_kernel * total_hess
-  
+
   endif
 
   ! stores summed kernels
@@ -371,17 +371,17 @@ subroutine invert_hess( myrank,hess_matrix,THRESHOLD_HESS )
     print*,'hessian maximum: ',maxh_all
     print*
   endif
-  
-  ! normalizes hessian 
+
+  ! normalizes hessian
   if( maxh_all < 1.e-18 ) then
-    ! hessian is zero, re-initializes 
+    ! hessian is zero, re-initializes
     hess_matrix = 1.0_CUSTOM_REAL
     !call exit_mpi(myrank,'Error hessian too small')
   else
     ! since hessian has absolute values, this scales between [0,1]
-    hess_matrix = hess_matrix / maxh_all  
+    hess_matrix = hess_matrix / maxh_all
   endif
-  
+
 
   ! inverts hessian values
   where( abs(hess_matrix(:,:,:,:)) > THRESHOLD_HESS )
@@ -392,5 +392,5 @@ subroutine invert_hess( myrank,hess_matrix,THRESHOLD_HESS )
 
   ! rescales hessian
   !hess_matrix = hess_matrix * maxh_all
-  
+
 end subroutine invert_hess
