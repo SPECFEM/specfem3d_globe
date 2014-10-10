@@ -68,6 +68,11 @@ tomography_SHARED_OBJECTS = \
 
 
 tomography_MODULES = \
+	$(FC_MODDIR)/tomography_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/tomography_kernels_iso.$(FC_MODEXT) \
+	$(FC_MODDIR)/tomography_kernels_tiso.$(FC_MODEXT) \
+	$(FC_MODDIR)/tomography_model_tiso.$(FC_MODEXT) \
+	$(FC_MODDIR)/tomography_model_iso.$(FC_MODEXT) \
 	$(FC_MODDIR)/kdtree_search.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_update_cg.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_update_iso.$(FC_MODEXT) \
@@ -96,10 +101,33 @@ tomography: $(tomography_TARGETS)
 #######################################
 
 xadd_model_SHARED_OBJECTS = \
+	$O/tomography_par.tomo.o \
+	$O/compute_kernel_integral.tomo.o \
+	$O/get_gradient_cg.tomo.o \
+	$O/get_gradient_steepest.tomo.o \
+	$O/read_kernels.tomo.o \
+	$O/read_kernels_cg.tomo.o \
+	$O/read_model.tomo.o \
+	$O/read_parameters_tomo.tomo.o \
+	$O/write_gradients.tomo.o \
+	$O/write_new_model.tomo.o \
+	$O/write_new_model_perturbations.tomo.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
 	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/compute_kernel_integral.tomo.o: $O/tomography_par.tomo.o
+$O/get_gradient_cg.tomo.o: $O/tomography_par.tomo.o
+$O/get_gradient_steepest.tomo.o: $O/tomography_par.tomo.o
+$O/read_kernels.tomo.o: $O/tomography_par.tomo.o
+$O/read_kernels_cg.tomo.o: $O/tomography_par.tomo.o
+$O/read_model.tomo.o: $O/tomography_par.tomo.o
+$O/read_parameters_tomo.tomo.o: $O/tomography_par.tomo.o
+$O/write_gradients.tomo.o: $O/tomography_par.tomo.o
+$O/write_new_model.tomo.o: $O/tomography_par.tomo.o
+$O/write_new_model_perturbations.tomo.o: $O/tomography_par.tomo.o
 
 ##
 ## xadd_model_iso
@@ -107,6 +135,9 @@ xadd_model_SHARED_OBJECTS = \
 xadd_model_iso_OBJECTS = \
 	$O/add_model_iso.tomo.o \
 	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/add_model_iso.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xadd_model_iso: $(xadd_model_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -119,6 +150,9 @@ xadd_model_tiso_OBJECTS = \
 	$O/add_model_tiso.tomo.o \
 	$(EMPTY_MACRO)
 
+# extra dependencies
+$O/add_model_tiso.tomo.o: $O/tomography_par.tomo.o
+
 ${E}/xadd_model_tiso: $(xadd_model_tiso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
@@ -128,6 +162,9 @@ ${E}/xadd_model_tiso: $(xadd_model_tiso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 xadd_model_tiso_cg_OBJECTS = \
 	$O/add_model_tiso_cg.tomo.o \
 	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/add_model_tiso_cg.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xadd_model_tiso_cg: $(xadd_model_tiso_cg_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -139,6 +176,9 @@ ${E}/xadd_model_tiso_cg: $(xadd_model_tiso_cg_OBJECTS) $(xadd_model_SHARED_OBJEC
 xadd_model_tiso_iso_OBJECTS = \
 	$O/add_model_tiso_iso.tomo.o \
 	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/add_model_tiso_iso.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xadd_model_tiso_iso: $(xadd_model_tiso_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -208,12 +248,16 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 ## xsum_kernels
 ##
 xsum_kernels_OBJECTS = \
+	$O/tomography_par.tomo.o \
 	$O/sum_kernels.tomo.o \
 	$(EMPTY_MACRO)
 
 xsum_kernels_SHARED_OBJECTS = \
 	$O/parallel.sharedmpi.o \
 	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/sum_kernels.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -223,12 +267,16 @@ ${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS)
 ## xsum_preconditioned_kernels
 ##
 xsum_preconditioned_kernels_OBJECTS = \
+	$O/tomography_par.tomo.o \
 	$O/sum_preconditioned_kernels.tomo.o \
 	$(EMPTY_MACRO)
 
 xsum_preconditioned_kernels_SHARED_OBJECTS = \
 	$O/parallel.sharedmpi.o \
 	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/sum_preconditioned_kernels.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xsum_preconditioned_kernels: $(xsum_preconditioned_kernels_OBJECTS) $(xsum_preconditioned_kernels_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)

@@ -48,31 +48,15 @@
 ! output directory: OUTPUT_SUM/
 !    the resulting kernel files will be stored in this directory
 
+
 program sum_preconditioned_kernels_globe
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN
+  use tomography_par
 
   implicit none
 
-  include 'OUTPUT_FILES/values_from_mesher.h'
-
-! ======================================================
-  ! USER PARAMETERS
-
-  ! by default, this algorithm uses transverse isotropic (bulk,bulk_betav,bulk_betah,eta) kernels to sum up
-  ! if you prefer using isotropic kernels, set flags below accordingly
-
-  ! if you prefer using isotropic kernels (bulk,bulk_beta,rho) kernels, set this flag to true
-  logical, parameter :: USE_ISO_KERNELS = .false.
-
-  ! if you prefer isotropic  (alpha,beta,rho) kernels, set this flag to true
-  logical, parameter :: USE_ALPHA_BETA_RHO = .false.
-
-
-! ======================================================
-
-  character(len=150) :: kernel_file_list, kernel_list(1000), sline, kernel_name
-  integer :: nker, myrank, sizeprocs,  ier
+  character(len=150) :: kernel_list(MAX_NUM_NODES), sline, kernel_name
+  integer :: nker, sizeprocs
   integer :: ios
 
   ! ============ program starts here =====================
@@ -87,9 +71,6 @@ program sum_preconditioned_kernels_globe
     write(*,*) 'reading kernel list: '
   endif
 
-  ! default values
-  kernel_file_list='kernels_run.globe'
-
   ! reads in event list
   nker=0
   open(unit = IIN, file = trim(kernel_file_list), status = 'old',iostat = ios)
@@ -101,6 +82,7 @@ program sum_preconditioned_kernels_globe
      read(IIN,'(a)',iostat=ios) sline
      if (ios /= 0) exit
      nker = nker+1
+     if (nker > MAX_NUM_NODES) stop 'Error number of kernels exceeds MAX_NUM_NODES'
      kernel_list(nker) = sline
   enddo
   close(IIN)
@@ -109,20 +91,23 @@ program sum_preconditioned_kernels_globe
     write(*,*)
   endif
 
+  ! synchronizes
+  call synchronize_all()
+
   ! sums up kernels
   if( USE_ISO_KERNELS ) then
 
+    !  isotropic kernels
     if( myrank == 0 ) write(*,*) 'isotropic kernels: bulk_c, bulk_beta, rho'
 
-    !  isotropic kernels
     kernel_name = 'reg1_bulk_c_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
     kernel_name = 'reg1_bulk_beta_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
     kernel_name = 'reg1_rho_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
   else if( USE_ALPHA_BETA_RHO ) then
 
@@ -130,13 +115,13 @@ program sum_preconditioned_kernels_globe
     if( myrank == 0 ) write(*,*) 'isotropic kernels: alpha, beta, rho'
 
     kernel_name = 'reg1_alpha_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
     kernel_name = 'reg1_beta_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
     kernel_name = 'reg1_rho_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
   else
 
@@ -144,23 +129,23 @@ program sum_preconditioned_kernels_globe
     if( myrank == 0 ) write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah,eta'
 
     kernel_name = 'reg1_bulk_c_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
     kernel_name = 'reg1_bulk_betav_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
     kernel_name = 'reg1_bulk_betah_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
     kernel_name = 'reg1_eta_kernel'
-    call sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+    call sum_kernel_pre(kernel_name,kernel_list,nker)
 
   endif
 
   if(myrank==0) write(*,*) 'done writing all kernels'
 
   ! stop all the MPI processes, and exit
-  call MPI_FINALIZE(ier)
+  call finalize_mpi()
 
 end program sum_preconditioned_kernels_globe
 
@@ -168,48 +153,31 @@ end program sum_preconditioned_kernels_globe
 !-------------------------------------------------------------------------------------------------
 !
 
-subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
+subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT
+  use tomography_par
 
   implicit none
 
-  include 'OUTPUT_FILES/values_from_mesher.h'
-
-  !----------------------------------------------------------------------------------------
-  ! USER PARAMETER
-  ! 1 permille of maximum for inverting hessian
-  real(kind=CUSTOM_REAL),parameter :: THRESHOLD_HESS = 1.e-3
-  ! sums all hessians before inverting and preconditioning
-  logical, parameter :: USE_HESS_SUM = .true.
-  ! uses source mask to blend out source elements
-  logical, parameter :: USE_SOURCE_MASK = .false.
-
-  !----------------------------------------------------------------------------------------
-  double precision :: norm,norm_sum
-  character(len=150) :: kernel_name,kernel_list(1000)
-  integer :: nker,myrank
+  character(len=150) :: kernel_name,kernel_list(MAX_NUM_NODES)
+  integer :: nker
 
   ! local parameters
   character(len=150) :: k_file
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-    kernel_crust_mantle,hess_crust_mantle,total_kernel
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: kernel,hess,total_kernel
+  double precision :: norm,norm_sum
   integer :: iker,ios
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: total_hess,mask_source
 
   ! initializes arrays
   if( USE_HESS_SUM ) then
-
     allocate( total_hess(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
     total_hess(:,:,:,:) = 0.0_CUSTOM_REAL
-
   endif
 
   if( USE_SOURCE_MASK ) then
-
     allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
-
   endif
 
   ! loops over all event kernels
@@ -223,7 +191,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
     endif
 
     ! sensitivity kernel / frechet derivative
-    kernel_crust_mantle = 0._CUSTOM_REAL
+    kernel = 0._CUSTOM_REAL
     write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
                           //'/proc',myrank,'_'//trim(kernel_name)//'.bin'
 
@@ -232,32 +200,32 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
       write(*,*) '  kernel not found:',trim(k_file)
       cycle
     endif
-    read(IIN) kernel_crust_mantle
+    read(IIN) kernel
     close(IIN)
 
     ! outputs norm of kernel
-    norm = sum( kernel_crust_mantle * kernel_crust_mantle )
+    norm = sum( kernel * kernel )
     call sum_all_dp(norm,norm_sum)
     if( myrank == 0 ) then
       print*,'  norm kernel: ',sqrt(norm_sum)
     endif
 
-
     ! approximate Hessian
-    hess_crust_mantle = 0._CUSTOM_REAL
+    hess = 0._CUSTOM_REAL
     write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
                           //'/proc',myrank,'_reg1_hess_kernel.bin'
 
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ios)
     if( ios /= 0 ) then
-      write(*,*) '  hess not found:',trim(k_file)
-    else
-      read(IIN) hess_crust_mantle
-      close(IIN)
+      write(*,*) '  hessian kernel not found: ',trim(k_file)
+      stop 'Error hess_kernel.bin files not found'
     endif
 
+    read(IIN) hess
+    close(IIN)
+
     ! outputs norm of preconditioner
-    norm = sum( hess_crust_mantle * hess_crust_mantle )
+    norm = sum( hess * hess )
     call sum_all_dp(norm,norm_sum)
     if( myrank == 0 ) then
       print*,'  norm preconditioner: ',sqrt(norm_sum)
@@ -265,7 +233,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
     endif
 
     ! note: we take absolute values for hessian (as proposed by Yang)
-    hess_crust_mantle = abs(hess_crust_mantle)
+    hess = abs(hess)
 
     ! source mask
     if( USE_SOURCE_MASK ) then
@@ -281,28 +249,27 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
       close(IIN)
 
       ! masks source elements
-      kernel_crust_mantle = kernel_crust_mantle * mask_source
-
+      kernel = kernel * mask_source
     endif
 
     ! precondition
     if( USE_HESS_SUM ) then
 
       ! sums up hessians first
-      total_hess = total_hess + hess_crust_mantle
+      total_hess = total_hess + hess
 
     else
 
       ! inverts hessian
-      call invert_hess( myrank,hess_crust_mantle,THRESHOLD_HESS )
+      call invert_hess( hess )
 
       ! preconditions each event kernel with its hessian
-      kernel_crust_mantle = kernel_crust_mantle * hess_crust_mantle
+      kernel = kernel * hess
 
     endif
 
     ! sums all kernels from each event
-    total_kernel = total_kernel + kernel_crust_mantle
+    total_kernel = total_kernel + kernel
 
   enddo
 
@@ -310,7 +277,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
   if( USE_HESS_SUM ) then
 
       ! inverts hessian matrix
-      call invert_hess( myrank,total_hess,THRESHOLD_HESS )
+      call invert_hess( total_hess )
 
       ! preconditions kernel
       total_kernel = total_kernel * total_hess
@@ -332,29 +299,28 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker,myrank)
 
   if(myrank==0) write(*,*)
 
+  ! frees memory
+  if( USE_HESS_SUM ) deallocate(total_hess)
+  if( USE_SOURCE_MASK ) deallocate(mask_source)
+
 end subroutine sum_kernel_pre
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-subroutine invert_hess( myrank,hess_matrix,THRESHOLD_HESS )
+subroutine invert_hess( hess_matrix )
 
 ! inverts the hessian matrix
 ! the approximate hessian is only defined for diagonal elements: like
 ! H_nn = \frac{ \partial^2 \chi }{ \partial \rho_n \partial \rho_n }
 ! on all GLL points, which are indexed (i,j,k,ispec)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY
+  use tomography_par
 
   implicit none
 
-  include 'OUTPUT_FILES/values_from_mesher.h'
-
-  integer :: myrank
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-    hess_matrix
-  real(kind=CUSTOM_REAL) :: THRESHOLD_HESS
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: hess_matrix
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: maxh,maxh_all

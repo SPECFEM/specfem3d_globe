@@ -64,85 +64,16 @@
 !
 ! USAGE: e.g. ./add_model_globe_iso 0.3
 
-module model_update_iso
-
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT, &
-    FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
-
-  implicit none
-
-  include 'OUTPUT_FILES/values_from_mesher.h'
-
-  ! ======================================================
-
-  ! USER PARAMETERS
-
-  ! by default, this algorithm uses (bulk,bulk_beta,rho) kernels to update vp,vs,rho
-  ! if you prefer using (alpha,beta,rho) kernels, set this flag to true
-  logical, parameter :: USE_ALPHA_BETA_RHO = .false.
-
-  ! ignore rho kernel, but use density perturbations as a scaling of Vs perturbations
-  logical, parameter :: USE_RHO_SCALING = .false.
-
-  ! in case of rho scaling, specifies density scaling factor with shear perturbations
-  ! see e.g. Montagner & Anderson (1989), Panning & Romanowicz (2006)
-  real(kind=CUSTOM_REAL),parameter :: RHO_SCALING = 0.33_CUSTOM_REAL
-
-  ! ======================================================
-
-  integer, parameter :: NSPEC = NSPEC_CRUST_MANTLE
-  integer, parameter :: NGLOB = NGLOB_CRUST_MANTLE
-
-  ! isotropic model files
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
-        model_vp,model_vs,model_rho
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
-        model_vp_new,model_vs_new,model_rho_new
-
-  ! model updates
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
-        model_dA,model_dB,model_dR
-
-  ! kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
-        kernel_a,kernel_b,kernel_rho
-
-  ! volume
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: x, y, z
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: ibool
-  integer, dimension(NSPEC) :: idoubling
-  logical, dimension(NSPEC) :: ispec_is_tiso
-
-  ! gradient vector norm ( v^T * v )
-  real(kind=CUSTOM_REAL) :: norm_bulk,norm_beta,norm_rho
-  real(kind=CUSTOM_REAL) :: norm_bulk_sum,norm_beta_sum,norm_rho_sum
-
-  ! steepest descent lengths
-  real(kind=CUSTOM_REAL) :: step_fac,step_length
-
-  ! statistics
-  real(kind=CUSTOM_REAL) :: min_vp,min_vs,max_vp,max_vs, &
-    min_rho,max_rho,minmax(4),vs_sum,vp_sum,rho_sum
-
-  real(kind=CUSTOM_REAL) :: beta1,beta0,rho1,rho0,alpha1,alpha0
-  real(kind=CUSTOM_REAL) :: dbetaiso,dA
-
-  integer :: nfile, myrank, sizeprocs,  ier
-  integer :: i, j, k,ispec, iglob, ishell, n, it, j1, ib, npts_sem, ios
-  character(len=150) :: sline, m_file, fname
-
-end module model_update_iso
-
-!
-!-------------------------------------------------------------------------------------------------
-!
 
 program add_model
 
-  use model_update_iso
+  use tomography_model_iso
+  use tomography_kernels_iso
 
   implicit none
+  integer :: i,j,k,ispec
+  real(kind=CUSTOM_REAL) :: beta1,beta0,rho1,rho0,alpha1,alpha0
+  real(kind=CUSTOM_REAL) :: dbetaiso,dbulk
 
   ! ============ program starts here =====================
 
@@ -150,18 +81,38 @@ program add_model
   call initialize()
 
   ! reads in parameters needed
-  call read_parameters()
+  call read_parameters_tomo()
+
+  ! user output
+  if (myrank == 0) then
+    print*,'program add_model_iso: '
+    print*,'  NPROC_XI , NPROC_ETA: ',nproc_xi_val,nproc_eta_val
+    print*,'  NCHUNKS: ',nchunks_val
+    print*
+    print*,'model update for vs & vp & rho'
+    print*,'  step_fac = ',step_fac
+    print*
+    if (USE_ALPHA_BETA_RHO) then
+      print*,'kernel parameterization: (alpha,beta,rho)'
+    else
+      print*,'kernel parameterization: (bulk,beta,rho)'
+    endif
+    print*
+    if (USE_RHO_SCALING) then
+      print*,'scaling rho perturbations'
+      print*
+    endif
+  endif
 
   ! reads in current transverse isotropic model files: vpv.. & vsv.. & eta & rho
-  call read_model()
+  call read_model_iso()
 
   ! reads in smoothed kernels: bulk, beta, rho
-  call read_kernels()
+  call read_kernels_iso()
 
   ! calculates gradient
   ! steepest descent method
-  call get_gradient()
-
+  call get_gradient_steepest_iso()
 
   ! computes new model values for alpha, beta and rho
   ! and stores new model files
@@ -185,22 +136,22 @@ program add_model
           ! isotropic model update
 
           ! shear values
-          dbetaiso = model_dB(i,j,k,ispec)
+          dbetaiso = model_dbeta(i,j,k,ispec)
           beta1 = beta0 * exp( dbetaiso )
 
           ! density
-          rho1 = rho0 * exp( model_dR(i,j,k,ispec) )
+          rho1 = rho0 * exp( model_drho(i,j,k,ispec) )
 
           ! alpha values
-          dA = model_dA(i,j,k,ispec)
+          dbulk = model_dbulk(i,j,k,ispec)
           if (USE_ALPHA_BETA_RHO) then
             ! new vp values use alpha model update
-            alpha1 = alpha0 * exp( dA )
+            alpha1 = alpha0 * exp( dbulk )
           else
             ! new vp values use bulk model update:
             ! this is based on vp_new = sqrt( bulk_new**2 + 4/3 vs_new**2 )
-            alpha1 = sqrt( alpha0**2 * exp(2.0*dA) + FOUR_THIRDS * beta0**2 * ( &
-                              exp(2.0*dbetaiso) - exp(2.0*dA) ) )
+            alpha1 = sqrt( alpha0**2 * exp(2.0*dbulk) + FOUR_THIRDS * beta0**2 * ( &
+                              exp(2.0*dbetaiso) - exp(2.0*dbulk) ) )
           endif
 
           ! stores new model values
@@ -214,13 +165,13 @@ program add_model
   enddo
 
   ! stores new model in files
-  call store_new_model()
+  call write_new_model_iso()
 
   ! stores relative model perturbations
-  call store_perturbations()
+  call write_new_model_perturbations_iso()
 
   ! computes volume element associated with points, calculates kernel integral for statistics
-  call compute_volume()
+  call compute_kernel_integral_iso()
 
   ! stop all the MPI processes, and exit
   call finalize_mpi()
@@ -236,9 +187,11 @@ subroutine initialize()
 
 ! initializes arrays
 
-  use model_update_iso
+  use tomography_model_iso
+  use tomography_kernels_iso
 
   implicit none
+  integer :: sizeprocs
 
   ! initialize the MPI communicator and start the NPROCTOT MPI processes
   call init_mpi()
@@ -254,747 +207,13 @@ subroutine initialize()
   model_vs = 0.0_CUSTOM_REAL
   model_rho = 0.0_CUSTOM_REAL
 
-  model_dA = 0.0_CUSTOM_REAL
-  model_dB = 0.0_CUSTOM_REAL
-  model_dR = 0.0_CUSTOM_REAL
+  model_dbulk = 0.0_CUSTOM_REAL
+  model_dbeta = 0.0_CUSTOM_REAL
+  model_drho = 0.0_CUSTOM_REAL
 
-  kernel_a = 0.0_CUSTOM_REAL
-  kernel_b = 0.0_CUSTOM_REAL
+  kernel_bulk = 0.0_CUSTOM_REAL
+  kernel_beta = 0.0_CUSTOM_REAL
   kernel_rho = 0.0_CUSTOM_REAL
 
 end subroutine initialize
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-subroutine read_parameters()
-
-! reads in parameters needed
-
-  use model_update_iso
-
-  implicit none
-  character(len=150) :: s_step_fac
-
-  !--------------------------------------------------------
-
-  ! subjective step length to multiply to the gradient
-  ! e.g. step_fac = 0.03
-
-  call getarg(1,s_step_fac)
-
-  if (trim(s_step_fac) == '') then
-    call exit_MPI(myrank,'Usage: add_model_globe_iso step_factor')
-  endif
-
-  ! read in parameter information
-  read(s_step_fac,*) step_fac
-
-  !if (abs(step_fac) < 1.e-10) then
-  !  print*,'Error: step factor ',step_fac
-  !  call exit_MPI(myrank,'Error step factor')
-  !endif
-
-  if (myrank == 0) then
-    print*,'defaults'
-    print*,'  NPROC_XI , NPROC_ETA: ',nproc_xi_val,nproc_eta_val
-    print*,'  NCHUNKS: ',nchunks_val
-    print*
-    print*,'model update for vs & vp & rho'
-    print*,'  step_fac = ',step_fac
-    print*
-    if (USE_ALPHA_BETA_RHO) then
-      print*,'kernel parameterization: (alpha,beta,rho)'
-    else
-      print*,'kernel parameterization: (bulk,beta,rho)'
-    endif
-    print*
-    if (USE_RHO_SCALING) then
-      print*,'scaling rho perturbations'
-      print*
-    endif
-
-    !open(20,file='step_fac',status='unknown',action='write')
-    !write(20,'(1e24.12)') step_fac
-    !close(20)
-  endif
-
-end subroutine read_parameters
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-subroutine read_model()
-
-! reads in current transverse isotropic model: vpv.. & vsv.. & eta & rho
-
-  use model_update_iso
-
-  implicit none
-  integer :: ival
-
-  ! reads in current vp & vs & rho model
-  ! vp model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_vp.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print*,'Error opening: ',trim(m_file)
-    call exit_mpi(myrank,'file not found')
-  endif
-  read(IIN) model_vp(:,:,:,1:nspec)
-  close(IIN)
-
-  ! vs model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_vs.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print*,'Error opening: ',trim(m_file)
-    call exit_mpi(myrank,'file not found')
-  endif
-  read(IIN) model_vs(:,:,:,1:nspec)
-  close(IIN)
-
-  ! rho model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_rho.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print*,'Error opening: ',trim(m_file)
-    call exit_mpi(myrank,'file not found')
-  endif
-  read(IIN) model_rho(:,:,:,1:nspec)
-  close(IIN)
-
-  ! statistics
-  call min_all_cr(minval(model_vp),min_vp)
-  call max_all_cr(maxval(model_vp),max_vp)
-
-  call min_all_cr(minval(model_vs),min_vs)
-  call max_all_cr(maxval(model_vs),max_vs)
-
-  call min_all_cr(minval(model_rho),min_rho)
-  call max_all_cr(maxval(model_rho),max_rho)
-
-  if (myrank == 0) then
-    print*,'initial models:'
-    print*,'  vs min/max: ',min_vs,max_vs
-    print*,'  vp min/max: ',min_vp,max_vp
-    print*,'  rho min/max: ',min_rho,max_rho
-    print*
-  endif
-
-  ! global addressing
-  write(m_file,'(a,i6.6,a)') 'topo/proc',myrank,'_reg1_solver_data.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print*,'Error opening: ',trim(m_file)
-    call exit_mpi(myrank,'file not found')
-  endif
-
-  read(IIN) ival !nspec
-  if (ival /= nspec) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bin')
-  read(IIN) ival !nglob
-  if (ival /= nglob) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bin')
-
-  read(IIN) x(1:nglob)
-  read(IIN) y(1:nglob)
-  read(IIN) z(1:nglob)
-  read(IIN) ibool(:,:,:,1:nspec)
-  close(IIN)
-
-end subroutine read_model
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-subroutine read_kernels()
-
-! reads in smoothed kernels: bulk, betav, betah, eta
-
-  use model_update_iso
-
-  implicit none
-
-  ! reads in smoothed (& summed) event kernel
-  if (USE_ALPHA_BETA_RHO) then
-    ! reads in alpha kernel
-    fname = 'alpha_kernel_smooth'
-  else
-    ! reads in bulk_c kernel
-    fname = 'bulk_c_kernel_smooth'
-  endif
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print*,'Error opening: ',trim(m_file)
-    call exit_mpi(myrank,'file not found')
-  endif
-  read(IIN) kernel_a(:,:,:,1:nspec)
-  close(IIN)
-
-  ! beta kernel
-  if (USE_ALPHA_BETA_RHO) then
-    ! reads in beta kernel
-    fname = 'beta_kernel_smooth'
-  else
-    ! reads in bulk_beta kernel
-    fname = 'bulk_beta_kernel_smooth'
-  endif
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print*,'Error opening: ',trim(m_file)
-    call exit_mpi(myrank,'file not found')
-  endif
-  read(IIN) kernel_b(:,:,:,1:nspec)
-  close(IIN)
-
-  ! rho kernel
-  if (USE_RHO_SCALING) then
-
-    ! uses scaling relation with shear perturbations
-    kernel_rho(:,:,:,:) = RHO_SCALING * kernel_b(:,:,:,:)
-
-  else
-
-    ! uses rho kernel
-    write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_rho_kernel_smooth.bin'
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-    if (ier /= 0) then
-      print*,'Error opening: ',trim(m_file)
-      call exit_mpi(myrank,'file not found')
-    endif
-    read(IIN) kernel_rho(:,:,:,1:nspec)
-    close(IIN)
-  endif
-
-  ! statistics
-  call min_all_cr(minval(kernel_a),min_vp)
-  call max_all_cr(maxval(kernel_a),max_vp)
-
-  call min_all_cr(minval(kernel_b),min_vs)
-  call max_all_cr(maxval(kernel_b),max_vs)
-
-  call min_all_cr(minval(kernel_rho),min_rho)
-  call max_all_cr(maxval(kernel_rho),max_rho)
-
-  if (myrank == 0) then
-    print*,'initial kernels:'
-    print*,'  beta min/max: ',min_vs,max_vs
-    print*,'  alpha min/max: ',min_vp,max_vp
-    print*,'  rho min/max: ',min_rho,max_rho
-    print*
-  endif
-
-end subroutine read_kernels
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-subroutine get_gradient()
-
-! calculates gradient by steepest descent method
-
-  use model_update_iso
-
-  implicit none
-
-  ! local parameters
-  real(kind=CUSTOM_REAL):: r,max,depth_max
-
-  ! ------------------------------------------------------------------------
-
-  ! sets maximum update in this depth range
-  logical,parameter :: use_depth_maximum = .true.
-  ! normalized radii
-  real(kind=CUSTOM_REAL),parameter :: R_top = (6371.0 - 50.0 ) / R_EARTH_KM ! shallow depth
-  real(kind=CUSTOM_REAL),parameter :: R_bottom = (6371.0 - 100.0 ) / R_EARTH_KM ! deep depth
-
-  ! ------------------------------------------------------------------------
-
-  ! initializes kernel maximum
-  max = 0._CUSTOM_REAL
-
-  ! calculates gradient
-  do ispec = 1, NSPEC
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-
-            ! gradient in direction of steepest descent
-
-            ! for vp
-            model_dA(i,j,k,ispec) = - kernel_a(i,j,k,ispec)
-
-            ! for shear
-            model_dB(i,j,k,ispec) = - kernel_b(i,j,k,ispec)
-
-            ! for rho
-            model_dR(i,j,k,ispec) = - kernel_rho(i,j,k,ispec)
-
-            ! determines maximum kernel beta value within given radius
-            if (use_depth_maximum) then
-              ! get radius of point
-              iglob = ibool(i,j,k,ispec)
-              r = sqrt( x(iglob)*x(iglob) + y(iglob)*y(iglob) + z(iglob)*z(iglob) )
-
-              ! stores maximum kernel betav value in this depth slice, since betav is most likely dominating
-              if (r < R_top .and. r > R_bottom) then
-                ! shear kernel value
-                max_vs = abs( kernel_b(i,j,k,ispec) )
-                if (max < max_vs) then
-                  max = max_vs
-                  depth_max = r
-                endif
-              endif
-            endif
-
-        enddo
-      enddo
-    enddo
-  enddo
-
-  ! statistics
-  call min_all_cr(minval(model_dA),min_vp)
-  call max_all_cr(maxval(model_dA),max_vp)
-
-  call min_all_cr(minval(model_dB),min_vs)
-  call max_all_cr(maxval(model_dB),max_vs)
-
-  call min_all_cr(minval(model_dR),min_rho)
-  call max_all_cr(maxval(model_dR),max_rho)
-
-  if (myrank == 0) then
-    print*,'initial gradients:'
-    print*,'  a min/max: ',min_vp,max_vp
-    print*,'  beta min/max : ',min_vs,max_vs
-    print*,'  rho min/max: ',min_rho,max_rho
-    print*
-  endif
-
-  ! determines maximum kernel betav value within given radius
-  if (use_depth_maximum) then
-    ! maximum of all processes stored in max_vsv
-    call max_all_cr(max,max_vs)
-    max = max_vs
-    depth_max = 6371.0 *( 1.0 - depth_max )
-  endif
-
-  ! master determines step length based on maximum gradient value (either vp or vs)
-  if (myrank == 0) then
-
-      ! determines maximum kernel betav value within given radius
-    if (use_depth_maximum) then
-      print*,'  using depth maximum between 50km and 100km: ',max
-      print*,'  approximate depth maximum: ',depth_max
-      print*
-    else
-      ! maximum gradient values
-      minmax(1) = abs(min_vs)
-      minmax(2) = abs(max_vs)
-      minmax(3) = abs(min_vp)
-      minmax(4) = abs(max_vp)
-
-      ! maximum value of all kernel maxima
-      max = maxval(minmax)
-      print*,'  using maximum: ',max
-      print*
-    endif
-
-    ! chooses step length such that it becomes the desired, given step factor as inputted
-    step_length = step_fac/max
-
-    print*,'  step length : ',step_length,max
-    print*
-  endif
-  call bcast_all_singlecr(step_length)
-
-
-  ! gradient length
-  max_vp = sum( model_dA * model_dA )
-  max_vs = sum( model_dB * model_dB )
-  max_rho = sum( model_dR * model_dR )
-
-  call sum_all_cr(max_vp,vp_sum)
-  call sum_all_cr(max_vs,vs_sum)
-  call sum_all_cr(max_rho,rho_sum)
-
-  max_vp = sqrt(vp_sum)
-  max_vs = sqrt(vs_sum)
-  max_rho = sqrt(rho_sum)
-
-  if (myrank == 0) then
-    print*,'norm model updates:'
-    print*,'  initial a length: ',max_vp
-    print*,'  initial beta length : ',max_vs
-    print*,'  initial rho length: ',max_rho
-    print*
-  endif
-
-  ! multiply model updates by a subjective factor that will change the step
-  model_dA(:,:,:,:) = step_length * model_dA(:,:,:,:)
-  model_dB(:,:,:,:) = step_length * model_dB(:,:,:,:)
-  model_dR(:,:,:,:) = step_length * model_dR(:,:,:,:)
-
-
-  ! statistics
-  call min_all_cr(minval(model_dA),min_vp)
-  call max_all_cr(maxval(model_dA),max_vp)
-
-  call min_all_cr(minval(model_dB),min_vs)
-  call max_all_cr(maxval(model_dB),max_vs)
-
-  call min_all_cr(minval(model_dR),min_rho)
-  call max_all_cr(maxval(model_dR),max_rho)
-
-  if (myrank == 0) then
-    print*,'scaled gradients:'
-    print*,'  a min/max: ',min_vp,max_vp
-    print*,'  beta min/max : ',min_vs,max_vs
-    print*,'  rho min/max: ',min_rho,max_rho
-    print*
-  endif
-
-end subroutine get_gradient
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-subroutine store_new_model()
-
-! file output for new model
-
-  use model_update_iso
-
-  implicit none
-
-  ! vp model
-  call max_all_cr(maxval(model_vp_new),max_vp)
-  call min_all_cr(minval(model_vp_new),min_vp)
-  fname = 'vp_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
-  open(IOUT,file=trim(m_file),form='unformatted',action='write')
-  write(IOUT) model_vp_new
-  close(IOUT)
-
-  ! vs model
-  call max_all_cr(maxval(model_vs_new),max_vs)
-  call min_all_cr(minval(model_vs_new),min_vs)
-  fname = 'vs_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
-  open(IOUT,file=trim(m_file),form='unformatted',action='write')
-  write(IOUT) model_vs_new
-  close(IOUT)
-
-  ! rho model
-  call max_all_cr(maxval(model_rho_new),max_rho)
-  call min_all_cr(minval(model_rho_new),min_rho)
-  fname = 'rho_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
-  open(IOUT,file=trim(m_file),form='unformatted',action='write')
-  write(IOUT) model_rho_new
-  close(IOUT)
-
-  if (myrank == 0) then
-    print*,'new models:'
-    print*,'  vp min/max: ',min_vp,max_vp
-    print*,'  vs min/max: ',min_vs,max_vs
-    print*,'  rho min/max: ',min_rho,max_rho
-    print*
-  endif
-
-end subroutine store_new_model
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-subroutine store_perturbations()
-
-! file output for new model
-
-  use model_update_iso
-
-  implicit none
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: total_model
-
-  ! vp relative perturbations
-  ! logarithmic perturbation: log( v_new) - log( v_old) = log( v_new / v_old )
-  total_model = 0.0_CUSTOM_REAL
-  where( model_vp /= 0.0 ) total_model = log( model_vp_new / model_vp)
-  ! or
-  ! linear approximation: (v_new - v_old) / v_old
-  !where( model_vp /= 0.0 ) total_model = ( model_vp_new - model_vp) / model_vp
-
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_dvpvp.bin'
-  open(IOUT,file=trim(m_file),form='unformatted',action='write')
-  write(IOUT) total_model
-  close(IOUT)
-  call max_all_cr(maxval(total_model),max_vp)
-  call min_all_cr(minval(total_model),min_vp)
-
-  ! vs relative perturbations
-  total_model = 0.0_CUSTOM_REAL
-  where( model_vs /= 0.0 ) total_model = log( model_vs_new / model_vs)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_dvsvs.bin'
-  open(IOUT,file=trim(m_file),form='unformatted',action='write')
-  write(IOUT) total_model
-  close(IOUT)
-  call max_all_cr(maxval(total_model),max_vs)
-  call min_all_cr(minval(total_model),min_vs)
-
-  ! rho relative model perturbations
-  total_model = 0.0_CUSTOM_REAL
-  where( model_rho /= 0.0 ) total_model = log( model_rho_new / model_rho)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_drhorho.bin'
-  open(IOUT,file=trim(m_file),form='unformatted',action='write')
-  write(IOUT) total_model
-  close(IOUT)
-  call max_all_cr(maxval(total_model),max_rho)
-  call min_all_cr(minval(total_model),min_rho)
-
-  if (myrank == 0) then
-    print*,'relative update:'
-    print*,'  dvp/vp min/max: ',min_vp,max_vp
-    print*,'  dvs/vs min/max: ',min_vs,max_vs
-    print*,'  drho/rho min/max: ',min_rho,max_rho
-    print*
-  endif
-
-end subroutine store_perturbations
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-subroutine compute_volume()
-
-! computes volume element associated with points
-
-  use model_update_iso
-
-  implicit none
-
-  ! jacobian
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: jacobian
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
-    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl, &
-    jacobianl,volumel
-
-  ! integration values
-  real(kind=CUSTOM_REAL) :: kernel_integral_alpha,kernel_integral_beta,kernel_integral_rho
-  real(kind=CUSTOM_REAL) :: integral_alpha_sum,integral_beta_sum,integral_rho_sum
-
-  real(kind=CUSTOM_REAL) :: volume_glob,volume_glob_sum
-  ! root-mean square values
-  real(kind=CUSTOM_REAL) :: rms_vp,rms_vs,rms_rho
-  real(kind=CUSTOM_REAL) :: rms_vp_sum,rms_vs_sum,rms_rho_sum
-  real(kind=CUSTOM_REAL) :: dvp,dvs,drho
-
-  ! dummy
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: dummy
-  integer :: ival
-
-  ! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX) :: xigll, wxgll
-  double precision, dimension(NGLLY) :: yigll, wygll
-  double precision, dimension(NGLLZ) :: zigll, wzgll
-  ! array with all the weights in the cube
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
-
-  ! GLL points
-  wgll_cube = 0.0
-  call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
-  call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
-  do k=1,NGLLZ
-    do j=1,NGLLY
-      do i=1,NGLLX
-        wgll_cube(i,j,k) = wxgll(i)*wygll(j)*wzgll(k)
-      enddo
-    enddo
-  enddo
-
-  ! builds jacobian
-  write(m_file,'(a,i6.6,a)') 'topo/proc',myrank,'_reg1_solver_data.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print*,'Error opening: ',trim(m_file)
-    call exit_mpi(myrank,'file not found')
-  endif
-
-  read(IIN) ival ! nspec
-  read(IIN) ival ! nglob
-
-  read(IIN) dummy ! x
-  read(IIN) dummy ! y
-  read(IIN) dummy ! z
-
-  read(IIN) ibool(:,:,:,1:nspec)
-  read(IIN) idoubling(1:nspec)
-  read(IIN) ispec_is_tiso(1:nspec)
-
-  read(IIN) xix
-  read(IIN) xiy
-  read(IIN) xiz
-  read(IIN) etax
-  read(IIN) etay
-  read(IIN) etaz
-  read(IIN) gammax
-  read(IIN) gammay
-  read(IIN) gammaz
-  close(IIN)
-
-  jacobian = 0.0
-  do ispec = 1, NSPEC
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          ! gets derivatives of ux, uy and uz with respect to x, y and z
-          xixl = xix(i,j,k,ispec)
-          xiyl = xiy(i,j,k,ispec)
-          xizl = xiz(i,j,k,ispec)
-          etaxl = etax(i,j,k,ispec)
-          etayl = etay(i,j,k,ispec)
-          etazl = etaz(i,j,k,ispec)
-          gammaxl = gammax(i,j,k,ispec)
-          gammayl = gammay(i,j,k,ispec)
-          gammazl = gammaz(i,j,k,ispec)
-          ! computes the jacobian
-          jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                        - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                        + xizl*(etaxl*gammayl-etayl*gammaxl))
-          jacobian(i,j,k,ispec) = jacobianl
-
-        enddo
-      enddo
-    enddo
-  enddo
-
-  ! volume associated with global point
-  volume_glob = 0._CUSTOM_REAL
-  kernel_integral_alpha = 0._CUSTOM_REAL
-  kernel_integral_beta = 0._CUSTOM_REAL
-  kernel_integral_rho = 0._CUSTOM_REAL
-  norm_bulk = 0._CUSTOM_REAL
-  norm_beta = 0._CUSTOM_REAL
-  norm_rho = 0._CUSTOM_REAL
-  rms_vp = 0._CUSTOM_REAL
-  rms_vs = 0._CUSTOM_REAL
-  rms_rho = 0._CUSTOM_REAL
-
-  do ispec = 1, NSPEC
-    do k = 1, NGLLZ
-      do j = 1, NGLLY
-        do i = 1, NGLLX
-          iglob = ibool(i,j,k,ispec)
-          if (iglob == 0) then
-            print*,'iglob zero',i,j,k,ispec
-            print*
-            print*,'ibool:',ispec
-            print*,ibool(:,:,:,ispec)
-            print*
-            call exit_MPI(myrank,'Error ibool')
-          endif
-
-          ! volume associated with GLL point
-          volumel = jacobian(i,j,k,ispec)*wgll_cube(i,j,k)
-          volume_glob = volume_glob + volumel
-
-          ! kernel integration: for each element
-          kernel_integral_alpha = kernel_integral_alpha &
-                                 + volumel * kernel_a(i,j,k,ispec)
-
-          kernel_integral_beta = kernel_integral_beta &
-                                 + volumel * kernel_b(i,j,k,ispec)
-
-          kernel_integral_rho = kernel_integral_rho &
-                                 + volumel * kernel_rho(i,j,k,ispec)
-
-          ! gradient vector norm sqrt(  v^T * v )
-          norm_bulk = norm_bulk + kernel_a(i,j,k,ispec)**2
-          norm_beta = norm_beta + kernel_b(i,j,k,ispec)**2
-          norm_rho = norm_rho + kernel_rho(i,j,k,ispec)**2
-
-          ! checks number
-          if (isNaN(kernel_integral_alpha)) then
-            print*,'Error NaN: ',kernel_integral_alpha
-            print*,'rank:',myrank
-            print*,'i,j,k,ispec:',i,j,k,ispec
-            print*,'volumel: ',volumel,'kernel_bulk:',kernel_a(i,j,k,ispec)
-            call exit_MPI(myrank,'Error NaN')
-          endif
-
-          ! root-mean square
-          ! integrates relative perturbations ( dv / v  using logarithm ) squared
-          dvp = log( model_vp_new(i,j,k,ispec) / model_vp(i,j,k,ispec) ) ! alphav
-          rms_vp = rms_vp + volumel * dvp*dvp
-
-          dvs = log( model_vs_new(i,j,k,ispec) / model_vs(i,j,k,ispec) ) ! betav
-          rms_vs = rms_vs + volumel * dvs*dvs
-
-          drho = log( model_rho_new(i,j,k,ispec) / model_rho(i,j,k,ispec) ) ! rho
-          rms_rho = rms_rho + volumel * drho*drho
-
-        enddo
-      enddo
-    enddo
-  enddo
-
-  ! statistics
-  ! kernel integration: for whole volume
-  call sum_all_cr(kernel_integral_alpha,integral_alpha_sum)
-  call sum_all_cr(kernel_integral_beta,integral_beta_sum)
-  call sum_all_cr(kernel_integral_rho,integral_rho_sum)
-  call sum_all_cr(volume_glob,volume_glob_sum)
-
-  if (myrank == 0) then
-    print*,'integral kernels:'
-    print*,'  a : ',integral_alpha_sum
-    print*,'  beta : ',integral_beta_sum
-    print*,'  rho : ',integral_rho_sum
-    print*
-    print*,'  total volume:',volume_glob_sum
-    print*
-  endif
-
-  ! norms: for whole volume
-  call sum_all_cr(norm_bulk,norm_bulk_sum)
-  call sum_all_cr(norm_beta,norm_beta_sum)
-  call sum_all_cr(norm_rho,norm_rho_sum)
-
-  norm_bulk = sqrt(norm_bulk_sum)
-  norm_beta = sqrt(norm_beta_sum)
-  norm_rho = sqrt(norm_rho_sum)
-
-  if (myrank == 0) then
-    print*,'norm kernels:'
-    print*,'  a : ',norm_bulk
-    print*,'  beta : ',norm_beta
-    print*,'  rho : ',norm_rho
-    print*
-  endif
-
-  ! root-mean square
-  call sum_all_cr(rms_vp,rms_vp_sum)
-  call sum_all_cr(rms_vs,rms_vs_sum)
-  call sum_all_cr(rms_rho,rms_rho_sum)
-  rms_vp  = sqrt( rms_vp_sum / volume_glob_sum )
-  rms_vs  = sqrt( rms_vs_sum / volume_glob_sum )
-  rms_rho = sqrt( rms_rho_sum / volume_glob_sum )
-
-  if (myrank == 0) then
-    print*,'root-mean square of perturbations:'
-    print*,'  vp : ',rms_vp
-    print*,'  vs : ',rms_vs
-    print*,'  rho : ',rms_rho
-    print*
-  endif
-
-end subroutine compute_volume
