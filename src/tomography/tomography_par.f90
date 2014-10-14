@@ -35,10 +35,10 @@ module tomography_par
   implicit none
 
   ! array dimensions for static compilation
-  include 'OUTPUT_FILES/values_from_mesher.h'
+  include "OUTPUT_FILES/values_from_mesher.h"
 
   ! tomography parameter settings
-  include 'constants_tomography.h'
+  include "constants_tomography.h"
 
   integer, parameter :: NSPEC = NSPEC_CRUST_MANTLE
   integer, parameter :: NGLOB = NGLOB_CRUST_MANTLE

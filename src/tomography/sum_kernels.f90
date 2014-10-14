@@ -35,11 +35,11 @@
 !   - proc***_reg1_bulk_betah_kernel.bin
 !   - proc***_reg1_eta_kernel.bin
 !
-! input file: kernels_run.globe
+! input file: kernels_list.txt
 !   lists all event kernel directories which should be summed together
 !
 ! input directory:  INPUT_KERNELS/
-!    contains links to all event kernel directories (listed in "kernel_list.globe")
+!    contains links to all event kernel directories (listed in "kernels_list.txt")
 !
 ! output directory: OUTPUT_SUM/
 !    the resulting kernel files will be stored in this directory
@@ -87,6 +87,13 @@ program sum_kernels_globe
     write(*,*)
   endif
 
+  ! user output
+  if(myrank == 0) then
+    print*,'summing kernels in INPUT_KERNELS/ directories:'
+    print*,kernel_list(1:nker)
+    print*
+  endif
+
   ! synchronizes
   call synchronize_all()
 
@@ -96,13 +103,13 @@ program sum_kernels_globe
     !  isotropic kernels
     if( myrank == 0 ) write(*,*) 'isotropic kernels: bulk_c, bulk_beta, rho'
 
-    kernel_name = 'reg1_bulk_c_kernel'
+    kernel_name = 'reg1_' // 'bulk_c_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_bulk_beta_kernel'
+    kernel_name = 'reg1_' // 'bulk_beta_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_rho_kernel'
+    kernel_name = 'reg1_' // 'rho_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
   else if( USE_ALPHA_BETA_RHO ) then
@@ -110,13 +117,13 @@ program sum_kernels_globe
     ! isotropic kernels
     if( myrank == 0 ) write(*,*) 'isotropic kernels: alpha, beta, rho'
 
-    kernel_name = 'reg1_alpha_kernel'
+    kernel_name = 'reg1_' // 'alpha_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_beta_kernel'
+    kernel_name = 'reg1_' // 'beta_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_rho_kernel'
+    kernel_name = 'reg1_' // 'rho_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
   else
@@ -124,21 +131,21 @@ program sum_kernels_globe
     ! transverse isotropic kernels
     if( myrank == 0 ) write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah,eta'
 
-    kernel_name = 'reg1_bulk_c_kernel'
+    kernel_name = 'reg1_' // 'bulk_c_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_bulk_betav_kernel'
+    kernel_name = 'reg1_' // 'bulk_betav_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_bulk_betah_kernel'
+    kernel_name = 'reg1_' // 'bulk_betah_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_eta_kernel'
+    kernel_name = 'reg1_' // 'eta_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
   endif
 
-  if(myrank==0) write(*,*) 'done writing all kernels'
+  if(myrank==0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
 
   ! stop all the MPI processes, and exit
   call finalize_mpi()
@@ -186,8 +193,8 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
 
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ios)
     if( ios /= 0 ) then
-     write(*,*) '  kernel not found:',trim(k_file)
-     cycle
+     write(*,*) '  kernel not found: ',trim(k_file)
+     stop 'Error kernel file not found'
     endif
     read(IIN) kernel
     close(IIN)
@@ -207,8 +214,8 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
                             //'/proc',myrank,'_reg1_mask_source.bin'
       open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ios)
       if( ios /= 0 ) then
-        write(*,*) '  file not found:',trim(k_file)
-        cycle
+        write(*,*) '  file not found: ',trim(k_file)
+        stop 'Error source mask file not found'
       endif
       read(IIN) mask_source
       close(IIN)
@@ -228,7 +235,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
 
   open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ios)
   if( ios /= 0 ) then
-    write(*,*) 'Error kernel not written:',trim(k_file)
+    write(*,*) 'Error kernel not written: ',trim(k_file)
     stop 'Error kernel write'
   endif
   write(IOUT) total_kernel

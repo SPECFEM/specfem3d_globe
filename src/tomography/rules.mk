@@ -101,7 +101,7 @@ tomography: $(tomography_TARGETS)
 #######################################
 
 xadd_model_SHARED_OBJECTS = \
-	$O/tomography_par.tomo.o \
+	$O/tomography_par.tomo_module.o \
 	$O/compute_kernel_integral.tomo.o \
 	$O/get_gradient_cg.tomo.o \
 	$O/get_gradient_steepest.tomo.o \
@@ -117,27 +117,12 @@ xadd_model_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$(EMPTY_MACRO)
 
-# extra dependencies
-$O/compute_kernel_integral.tomo.o: $O/tomography_par.tomo.o
-$O/get_gradient_cg.tomo.o: $O/tomography_par.tomo.o
-$O/get_gradient_steepest.tomo.o: $O/tomography_par.tomo.o
-$O/read_kernels.tomo.o: $O/tomography_par.tomo.o
-$O/read_kernels_cg.tomo.o: $O/tomography_par.tomo.o
-$O/read_model.tomo.o: $O/tomography_par.tomo.o
-$O/read_parameters_tomo.tomo.o: $O/tomography_par.tomo.o
-$O/write_gradients.tomo.o: $O/tomography_par.tomo.o
-$O/write_new_model.tomo.o: $O/tomography_par.tomo.o
-$O/write_new_model_perturbations.tomo.o: $O/tomography_par.tomo.o
-
 ##
 ## xadd_model_iso
 ##
 xadd_model_iso_OBJECTS = \
 	$O/add_model_iso.tomo.o \
 	$(EMPTY_MACRO)
-
-# extra dependencies
-$O/add_model_iso.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xadd_model_iso: $(xadd_model_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -150,9 +135,6 @@ xadd_model_tiso_OBJECTS = \
 	$O/add_model_tiso.tomo.o \
 	$(EMPTY_MACRO)
 
-# extra dependencies
-$O/add_model_tiso.tomo.o: $O/tomography_par.tomo.o
-
 ${E}/xadd_model_tiso: $(xadd_model_tiso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
@@ -162,9 +144,6 @@ ${E}/xadd_model_tiso: $(xadd_model_tiso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 xadd_model_tiso_cg_OBJECTS = \
 	$O/add_model_tiso_cg.tomo.o \
 	$(EMPTY_MACRO)
-
-# extra dependencies
-$O/add_model_tiso_cg.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xadd_model_tiso_cg: $(xadd_model_tiso_cg_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -176,9 +155,6 @@ ${E}/xadd_model_tiso_cg: $(xadd_model_tiso_cg_OBJECTS) $(xadd_model_SHARED_OBJEC
 xadd_model_tiso_iso_OBJECTS = \
 	$O/add_model_tiso_iso.tomo.o \
 	$(EMPTY_MACRO)
-
-# extra dependencies
-$O/add_model_tiso_iso.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xadd_model_tiso_iso: $(xadd_model_tiso_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -248,16 +224,13 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 ## xsum_kernels
 ##
 xsum_kernels_OBJECTS = \
-	$O/tomography_par.tomo.o \
+	$O/tomography_par.tomo_module.o \
 	$O/sum_kernels.tomo.o \
 	$(EMPTY_MACRO)
 
 xsum_kernels_SHARED_OBJECTS = \
 	$O/parallel.sharedmpi.o \
 	$(EMPTY_MACRO)
-
-# extra dependencies
-$O/sum_kernels.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -267,16 +240,13 @@ ${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS)
 ## xsum_preconditioned_kernels
 ##
 xsum_preconditioned_kernels_OBJECTS = \
-	$O/tomography_par.tomo.o \
+	$O/tomography_par.tomo_module.o \
 	$O/sum_preconditioned_kernels.tomo.o \
 	$(EMPTY_MACRO)
 
 xsum_preconditioned_kernels_SHARED_OBJECTS = \
 	$O/parallel.sharedmpi.o \
 	$(EMPTY_MACRO)
-
-# extra dependencies
-$O/sum_preconditioned_kernels.tomo.o: $O/tomography_par.tomo.o
 
 ${E}/xsum_preconditioned_kernels: $(xsum_preconditioned_kernels_OBJECTS) $(xsum_preconditioned_kernels_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -287,6 +257,12 @@ ${E}/xsum_preconditioned_kernels: $(xsum_preconditioned_kernels_OBJECTS) $(xsum_
 S := ${S_TOP}/src/tomography
 $(tomography_OBJECTS): S := ${S_TOP}/src/tomography
 
+###
+### Model dependencies
+###
+$O/tomography_par.tomo_module.o: $O/shared_par.shared_module.o
+
+
 ####
 #### rule for each .o file below
 ####
@@ -294,15 +270,21 @@ $(tomography_OBJECTS): S := ${S_TOP}/src/tomography
 ##
 ## tomography
 ##
-$O/%.tomo.o: $S/%.f90 $O/shared_par.shared_module.o ${OUTPUT}/values_from_mesher.h $O/parallel.sharedmpi.o
+
+$O/%.tomo_module.o: $S/%.f90 ${SETUP}/constants_tomography.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.tomo.o: $S/%.F90 $O/shared_par.shared_module.o ${OUTPUT}/values_from_mesher.h $O/parallel.sharedmpi.o
+
+$O/%.tomo.o: $S/%.f90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.tomoadios.o: $S/%.F90 $O/shared_par.shared_module.o ${OUTPUT}/values_from_mesher.h $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
+$O/%.tomo.o: $S/%.F90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+
+$O/%.tomoadios.o: $S/%.F90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)ADIOS_INPUT
 
-$O/%.tomoadios.o: $S/%.f90 $O/shared_par.shared_module.o ${OUTPUT}/values_from_mesher.h $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
+$O/%.tomoadios.o: $S/%.f90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

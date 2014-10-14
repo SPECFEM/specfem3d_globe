@@ -7675,7 +7675,7 @@ $as_echo "## ----------------------------------- ##
 ## ----------------------------------- ##"
 
 # Output results.
-ac_config_files="$ac_config_files Makefile setup/constants.h setup/precision.h setup/config.fh"
+ac_config_files="$ac_config_files Makefile setup/constants.h setup/constants_tomography.h setup/precision.h setup/config.fh"
 
 ac_config_files="$ac_config_files DATA/Par_file:DATA/Par_file DATA/CMTSOLUTION:DATA/CMTSOLUTION DATA/STATIONS:DATA/STATIONS"
 
@@ -8426,6 +8426,7 @@ do
     "setup/config.h") CONFIG_HEADERS="$CONFIG_HEADERS setup/config.h" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "setup/constants.h") CONFIG_FILES="$CONFIG_FILES setup/constants.h" ;;
+    "setup/constants_tomography.h") CONFIG_FILES="$CONFIG_FILES setup/constants_tomography.h" ;;
     "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
     "setup/config.fh") CONFIG_FILES="$CONFIG_FILES setup/config.fh" ;;
     "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file:DATA/Par_file" ;;

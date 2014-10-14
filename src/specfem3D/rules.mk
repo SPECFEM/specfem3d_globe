@@ -322,7 +322,8 @@ $O/%.visualcc.o: $S/%.cpp ${SETUP}/config.h
 $O/%.visualc.o: $S/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(MPI_INCLUDES) -o $@ $<
 
-## CEM
-
+###
+### CEM
+###
 $O/%.checknetcdf.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} $(NETCDF_INCLUDE) -c -o $@ $<
