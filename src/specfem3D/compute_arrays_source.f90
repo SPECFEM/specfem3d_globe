@@ -116,7 +116,7 @@
                                            xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
-  use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH
+  use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
   use write_seismograms_mod, only: band_instrument_code
 
   implicit none
@@ -158,7 +158,7 @@
   integer it_start,it_end,index_i
   real(kind=CUSTOM_REAL) :: junk
   character(len=3),dimension(NDIM) :: comp
-  character(len=150) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   character(len=2) :: bic
 
 ! by Ebru

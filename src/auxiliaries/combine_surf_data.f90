@@ -38,13 +38,13 @@ program combine_surf_data
   integer,parameter :: MAX_NUM_NODES = 400
 
   integer i,j,k,ispec_surf,ios,it,num_node,njunk,ires,idimval,iproc,njunk1,njunk2,njunk3,inx,iny
-  character(len=150) :: arg(20),sline,filename,surfname,reg_name,belm_name, indir, outdir
-  character(len=150) :: mesh_file, pt_mesh_file, em_mesh_file, command_name
+  character(len=MAX_STRING_LEN) :: arg(20),sline,filename,surfname,reg_name,belm_name, indir, outdir
+  character(len=MAX_STRING_LEN) :: mesh_file, pt_mesh_file, em_mesh_file, command_name
   logical :: HIGH_RESOLUTION_MESH,FILE_ARRAY_IS_3D
   integer :: node_list(MAX_NUM_NODES),nspec(MAX_NUM_NODES),nglob(MAX_NUM_NODES)
 
-  character(len=150) :: prname,dimen_name,prname2,nspec2D_file,dimension_file
-  character(len=150) :: ibelm_surf_file,data_file,ibool_file
+  character(len=MAX_STRING_LEN) :: prname,dimen_name,prname2,nspec2D_file,dimension_file
+  character(len=MAX_STRING_LEN) :: ibelm_surf_file,data_file,ibool_file
   integer :: nspec2D_moho_val, nspec2D_400_val, nspec2D_670_val, nspec_surf
   integer :: npoint,nelement, npoint_total,nelement_total, pfd,efd, np, ne, numpoin
   integer, allocatable :: ibelm_surf(:)

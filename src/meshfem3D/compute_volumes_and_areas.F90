@@ -344,7 +344,7 @@
   double precision :: common_multiplying_factor,common_mult_times_one_over,common_mult_times_three_over
 
   ! name of the timestamp files
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
 #ifdef FORCE_VECTORIZATION
   integer :: ix_iy_ichunk

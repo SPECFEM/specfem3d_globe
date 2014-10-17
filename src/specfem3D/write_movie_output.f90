@@ -36,7 +36,7 @@
 
   ! local parameters
   ! debugging
-  character(len=256) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   integer,dimension(:),allocatable :: dummy_i
 
   !-----------------------------------------------------------------------------
@@ -45,7 +45,7 @@
   logical, parameter :: DEBUG_SNAPSHOT = .false.
   !-----------------------------------------------------------------------------
 
-  character(len=256) :: system_command
+  character(len=MAX_STRING_LEN) :: system_command
 
   ! save movie on surface
   if (MOVIE_SURFACE) then

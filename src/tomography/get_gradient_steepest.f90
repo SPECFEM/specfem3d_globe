@@ -41,7 +41,19 @@ subroutine get_gradient_steepest_iso()
   real(kind=CUSTOM_REAL) :: minmax(4)
   real(kind=CUSTOM_REAL) :: min_beta,min_rho,max_beta,max_rho,min_bulk,max_bulk
   integer :: iglob
-  integer :: i,j,k,ispec
+  integer :: i,j,k,ispec,ier
+
+  ! allocate arrays for storing gradients
+  ! isotropic arrays
+  allocate(model_dbulk(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_dbeta(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_drho(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'error allocating gradient arrays'
+
+  ! initializes arrays
+  model_dbulk = 0.0_CUSTOM_REAL
+  model_dbeta = 0.0_CUSTOM_REAL
+  model_drho = 0.0_CUSTOM_REAL
 
   ! initializes kernel maximum
   max = 0._CUSTOM_REAL
@@ -104,6 +116,14 @@ subroutine get_gradient_steepest_iso()
     print*
   endif
 
+  ! statistics output
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_gradients_minmax',status='unknown')
+    write(IOUT,*) '#min_beta #max_beta #min_bulk #max_bulk #min_rho #max_rho'
+    write(IOUT,'(6e24.12)') min_beta, max_beta, min_bulk, max_bulk, min_rho, max_rho
+    close(IOUT)
+  endif
+
   ! determines maximum kernel betav value within given radius
   if (USE_DEPTH_RANGE_MAXIMUM) then
     ! maximum of all processes stored in max_vsv
@@ -117,8 +137,10 @@ subroutine get_gradient_steepest_iso()
 
     ! determines maximum kernel betav value within given radius
     if (USE_DEPTH_RANGE_MAXIMUM) then
-      print*,'  using depth maximum between 50km and 100km: ',max
-      print*,'  approximate depth maximum: ',depth_max
+      print*,'  using depth maximum: '
+      print*,'  between depths (top/bottom)   : ',R_top,R_bottom
+      print*,'  maximum kernel value          : ',max
+      print*,'  depth of maximum kernel value : ',depth_max
       print*
     else
       ! maximum gradient values
@@ -129,14 +151,17 @@ subroutine get_gradient_steepest_iso()
 
       ! maximum value of all kernel maxima
       max = maxval(minmax)
-      print*,'  using maximum: ',max
-      print*
     endif
+    print*,'step length:'
+    print*,'  using kernel maximum: ',max
+
+    ! checks maximum value
+    if (max < 1.e-25) stop 'Error maximum kernel value too small for update'
 
     ! chooses step length such that it becomes the desired, given step factor as inputted
     step_length = step_fac/max
 
-    print*,'  step length : ',step_length,max
+    print*,'  step length value   : ',step_length
     print*
   endif
   call bcast_all_singlecr(step_length)
@@ -151,16 +176,24 @@ subroutine get_gradient_steepest_iso()
   call sum_all_cr(norm_beta,norm_beta_sum)
   call sum_all_cr(norm_rho,norm_rho_sum)
 
-  norm_bulk = sqrt(norm_bulk_sum)
-  norm_beta = sqrt(norm_beta_sum)
-  norm_rho = sqrt(norm_rho_sum)
-
   if (myrank == 0) then
+    norm_bulk = sqrt(norm_bulk_sum)
+    norm_beta = sqrt(norm_beta_sum)
+    norm_rho = sqrt(norm_rho_sum)
+
     print*,'norm model updates:'
     print*,'  a   : ',norm_bulk
     print*,'  beta: ',norm_beta
     print*,'  rho : ',norm_rho
     print*
+  endif
+
+  ! statistics output
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_sum',status='unknown')
+    write(IOUT,*) '#norm_beta #norm_bulk #norm_rho'
+    write(IOUT,'(3e24.12)') norm_beta, norm_bulk, norm_rho
+    close(IOUT)
   endif
 
   ! multiply model updates by a subjective factor that will change the step
@@ -184,6 +217,15 @@ subroutine get_gradient_steepest_iso()
     print*,'  beta min/max: ',min_beta,max_beta
     print*,'  rho min/max : ',min_rho,max_rho
     print*
+  endif
+  call synchronize_all()
+
+  ! statistics output
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_scaled_gradients',status='unknown')
+    write(IOUT,*) '#min_beta #max_beta #min_bulk #max_bulk #min_rho #max_rho'
+    write(IOUT,'(6e24.12)') min_beta,max_beta,min_bulk,max_bulk,min_rho,max_rho
+    close(IOUT)
   endif
 
 end subroutine get_gradient_steepest_iso
@@ -209,7 +251,21 @@ subroutine get_gradient_steepest_tiso()
   real(kind=CUSTOM_REAL) :: min_vsv,min_vsh,max_vsv,max_vsh,min_eta,max_eta,min_bulk,max_bulk
   real(kind=CUSTOM_REAL) :: minmax(4)
   integer :: iglob
-  integer :: i,j,k,ispec
+  integer :: i,j,k,ispec,ier
+
+  ! allocate arrays for storing gradients
+  ! transversely isotropic arrays
+  allocate(model_dbulk(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_dbetav(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_dbetah(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_deta(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'error allocating gradient arrays'
+
+  ! initializes arrays
+  model_dbulk = 0.0_CUSTOM_REAL
+  model_dbetav = 0.0_CUSTOM_REAL
+  model_dbetah = 0.0_CUSTOM_REAL
+  model_deta = 0.0_CUSTOM_REAL
 
   ! initializes kernel maximum
   max = 0._CUSTOM_REAL
@@ -291,8 +347,10 @@ subroutine get_gradient_steepest_tiso()
 
     ! determines maximum kernel betav value within given radius
     if (USE_DEPTH_RANGE_MAXIMUM) then
-      print*,'  using depth maximum between 50km and 100km: ',max
-      print*,'  approximate depth maximum: ',depth_max
+      print*,'  using depth maximum: '
+      print*,'  between depths (top/bottom)   : ',R_top,R_bottom
+      print*,'  maximum kernel value          : ',max
+      print*,'  depth of maximum kernel value : ',depth_max
       print*
     else
       ! maximum gradient values
@@ -303,14 +361,17 @@ subroutine get_gradient_steepest_tiso()
 
       ! maximum value of all kernel maxima
       max = maxval(minmax)
-      print*,'  using maximum: ',max
-      print*
     endif
+    print*,'step length:'
+    print*,'  using kernel maximum: ',max
+
+    ! checks maximum value
+    if (max < 1.e-25) stop 'Error maximum kernel value too small for update'
 
     ! chooses step length such that it becomes the desired, given step factor as inputted
     step_length = step_fac/max
 
-    print*,'  step length : ',step_length
+    print*,'  step length value   : ',step_length
     print*
 
   endif
@@ -328,12 +389,12 @@ subroutine get_gradient_steepest_tiso()
   call sum_all_cr(norm_betah,norm_betah_sum)
   call sum_all_cr(norm_eta,norm_eta_sum)
 
-  norm_bulk = sqrt(norm_bulk_sum)
-  norm_betav = sqrt(norm_betav_sum)
-  norm_betah = sqrt(norm_betah_sum)
-  norm_eta = sqrt(norm_eta_sum)
-
   if (myrank == 0) then
+    norm_bulk = sqrt(norm_bulk_sum)
+    norm_betav = sqrt(norm_betav_sum)
+    norm_betah = sqrt(norm_betah_sum)
+    norm_eta = sqrt(norm_eta_sum)
+
     print*,'norm model updates:'
     print*,'  bulk : ',norm_bulk
     print*,'  betav: ',norm_betav
@@ -369,6 +430,7 @@ subroutine get_gradient_steepest_tiso()
     print*,'  eta min/max  : ',min_eta,max_eta
     print*
   endif
+  call synchronize_all()
 
 end subroutine get_gradient_steepest_tiso
 

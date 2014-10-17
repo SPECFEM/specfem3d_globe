@@ -1441,6 +1441,10 @@
   integer(kind=8) :: filesize
 
   ! sets up absorbing boundary buffer arrays
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing absorbing boundaries"
+    call flush_IMAIN()
+  endif
 
   ! crust_mantle
 

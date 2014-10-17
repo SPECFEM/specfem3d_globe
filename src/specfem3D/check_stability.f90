@@ -508,7 +508,7 @@
                                   day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote)
 
   use constants,only: CUSTOM_REAL,IOUT, &
-    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE
+    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE,MAX_STRING_LEN
 
   use specfem_par,only: &
     SIMULATION_TYPE,OUTPUT_FILES,DT,t0, &
@@ -533,7 +533,7 @@
   ! local parameters
   integer :: it_run,nstep_run
   ! names of the data files for all the processors in MPI
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
   ! to determine date and time at which the run will finish
   character(len=3), dimension(12) :: month_name
   character(len=3), dimension(0:6) :: weekday_name

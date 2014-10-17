@@ -51,9 +51,9 @@ program sum_kernels_globe
 
   implicit none
 
-  character(len=150) :: kernel_list(MAX_NUM_NODES), sline, kernel_name
-  integer :: nker, sizeprocs
-  integer :: ios
+  character(len=MAX_STRING_LEN) :: kernel_list(MAX_NUM_NODES), sline, kernel_name
+  integer :: nker
+  integer :: ier
 
   ! ============ program starts here =====================
   ! initialize the MPI communicator and start the NPROCTOT MPI processes
@@ -69,14 +69,14 @@ program sum_kernels_globe
 
   ! reads in event list
   nker=0
-  open(unit = IIN, file = trim(kernel_file_list), status = 'old',iostat = ios)
-  if (ios /= 0) then
+  open(unit = IIN, file = trim(kernel_file_list), status = 'old',iostat = ier)
+  if (ier /= 0) then
      print *,'Error opening ',trim(kernel_file_list),myrank
      stop 1
   endif
   do while (1 == 1)
-     read(IIN,'(a)',iostat=ios) sline
-     if (ios /= 0) exit
+     read(IIN,'(a)',iostat=ier) sline
+     if (ier /= 0) exit
      nker = nker+1
      if (nker > MAX_NUM_NODES) stop 'Error number of kernels exceeds MAX_NUM_NODES'
      kernel_list(nker) = sline
@@ -86,6 +86,21 @@ program sum_kernels_globe
     write(*,*) '  ',nker,' events'
     write(*,*)
   endif
+
+  ! checks if number of MPI process as specified
+  if (sizeprocs /= NPROCTOT_VAL) then
+    if( myrank == 0 ) then
+      print*,''
+      print*,'Error: run xsum_kernels with the same number of MPI processes '
+      print*,'       as specified when slices were created'
+      print*,''
+      print*,'for example: mpirun -np ',NPROCTOT_VAL,' ./xsum_kernels ...'
+      print*,''
+    endif
+    call synchronize_all()
+    stop 'Error total number of slices'
+  endif
+  call synchronize_all()
 
   ! user output
   if(myrank == 0) then
@@ -103,13 +118,13 @@ program sum_kernels_globe
     !  isotropic kernels
     if( myrank == 0 ) write(*,*) 'isotropic kernels: bulk_c, bulk_beta, rho'
 
-    kernel_name = 'reg1_' // 'bulk_c_kernel'
+    kernel_name = 'bulk_c_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_' // 'bulk_beta_kernel'
+    kernel_name = 'bulk_beta_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_' // 'rho_kernel'
+    kernel_name = 'rho_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
   else if( USE_ALPHA_BETA_RHO ) then
@@ -117,13 +132,13 @@ program sum_kernels_globe
     ! isotropic kernels
     if( myrank == 0 ) write(*,*) 'isotropic kernels: alpha, beta, rho'
 
-    kernel_name = 'reg1_' // 'alpha_kernel'
+    kernel_name = 'alpha_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_' // 'beta_kernel'
+    kernel_name = 'beta_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_' // 'rho_kernel'
+    kernel_name = 'rho_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
   else
@@ -131,23 +146,23 @@ program sum_kernels_globe
     ! transverse isotropic kernels
     if( myrank == 0 ) write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah,eta'
 
-    kernel_name = 'reg1_' // 'bulk_c_kernel'
+    kernel_name = 'bulk_c_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_' // 'bulk_betav_kernel'
+    kernel_name = 'bulk_betav_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_' // 'bulk_betah_kernel'
+    kernel_name = 'bulk_betah_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
-    kernel_name = 'reg1_' // 'eta_kernel'
+    kernel_name = 'eta_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
 
   endif
 
   if(myrank==0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
 
-  ! stop all the MPI processes, and exit
+  ! stop all the processes, and exit
   call finalize_mpi()
 
 end program sum_kernels_globe
@@ -162,15 +177,20 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
 
   implicit none
 
-  character(len=150) :: kernel_name,kernel_list(MAX_NUM_NODES)
+  character(len=MAX_STRING_LEN) :: kernel_name,kernel_list(MAX_NUM_NODES)
   integer :: nker
 
   ! local parameters
-  character(len=150) :: k_file
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: kernel,total_kernel
+  character(len=MAX_STRING_LEN) :: k_file
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: kernel,total_kernel
   double precision :: norm,norm_sum
-  integer :: iker,ios
+  integer :: iker,ier
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
+
+  ! initializes arrays
+  allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+           total_kernel(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating kernel arrays'
 
   if( USE_SOURCE_MASK ) then
     allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
@@ -186,13 +206,13 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
     write(*,*) '    ',iker, ' out of ', nker
     endif
 
-    ! sensitivity kernel
+    ! sensitivity kernel / frechet derivative
     kernel = 0._CUSTOM_REAL
     write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
-                          //'/proc',myrank,'_'//trim(kernel_name)//'.bin'
+                          //'/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
 
-    open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ios)
-    if( ios /= 0 ) then
+    open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
+    if( ier /= 0 ) then
      write(*,*) '  kernel not found: ',trim(k_file)
      stop 'Error kernel file not found'
     endif
@@ -211,9 +231,9 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
     if( USE_SOURCE_MASK ) then
       ! reads in mask
       write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
-                            //'/proc',myrank,'_reg1_mask_source.bin'
-      open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ios)
-      if( ios /= 0 ) then
+                            //'/proc',myrank,trim(REG)//'mask_source.bin'
+      open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
+      if( ier /= 0 ) then
         write(*,*) '  file not found: ',trim(k_file)
         stop 'Error source mask file not found'
       endif
@@ -231,10 +251,10 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
   ! stores summed kernels
   if(myrank==0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
 
-  write(k_file,'(a,i6.6,a)') 'OUTPUT_SUM/proc',myrank,'_'//trim(kernel_name)//'.bin'
+  write(k_file,'(a,i6.6,a)') 'OUTPUT_SUM/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
 
-  open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ios)
-  if( ios /= 0 ) then
+  open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ier)
+  if( ier /= 0 ) then
     write(*,*) 'Error kernel not written: ',trim(k_file)
     stop 'Error kernel write'
   endif
@@ -244,6 +264,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
   if(myrank==0) write(*,*)
 
   ! frees memory
+  deallocate(kernel,total_kernel)
   if( USE_SOURCE_MASK ) deallocate(mask_source)
 
 end subroutine sum_kernel

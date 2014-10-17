@@ -246,7 +246,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   if (myrank == 0) then
     write(IMAIN,*)

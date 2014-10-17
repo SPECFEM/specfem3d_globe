@@ -33,12 +33,29 @@ subroutine read_model_iso()
 
   implicit none
   real(kind=CUSTOM_REAL) :: min_vp,min_vs,max_vp,max_vs,min_rho,max_rho
-  integer :: ival,ier
-  character(len=150) :: m_file
+  integer :: ier
+  character(len=MAX_STRING_LEN) :: m_file, fname
 
-  ! reads in current vp & vs & rho model
+  ! user output
+  if (myrank == 0) print*,'reading model...'
+
+  ! allocate arrays for storing the databases
+  allocate(model_vp(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_vs(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_rho(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'Error allocating model arrays'
+
+  ! initializes arrays
+  model_vp = 0.0_CUSTOM_REAL
+  model_vs = 0.0_CUSTOM_REAL
+  model_rho = 0.0_CUSTOM_REAL
+
+  ! reads in current vp & vs & rho model files
   ! vp model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_vp.bin'
+  fname = 'vp'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -48,7 +65,10 @@ subroutine read_model_iso()
   close(IIN)
 
   ! vs model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_vs.bin'
+  fname = 'vs'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -58,7 +78,10 @@ subroutine read_model_iso()
   close(IIN)
 
   ! rho model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_rho.bin'
+  fname = 'rho'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -78,31 +101,24 @@ subroutine read_model_iso()
   call max_all_cr(maxval(model_rho),max_rho)
 
   if (myrank == 0) then
+    print*
     print*,'initial models:'
-    print*,'  vs min/max: ',min_vs,max_vs
-    print*,'  vp min/max: ',min_vp,max_vp
+    print*,'  vp min/max : ',min_vp,max_vp
+    print*,'  vs min/max : ',min_vs,max_vs
     print*,'  rho min/max: ',min_rho,max_rho
     print*
   endif
+  call synchronize_all()
 
-  ! global addressing
-  write(m_file,'(a,i6.6,a)') 'topo/proc',myrank,'_reg1_solver_data.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
-  if (ier /= 0) then
-    print*,'Error opening: ',trim(m_file)
-    call exit_mpi(myrank,'file not found')
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown')
+    write(IOUT,*) '#min_vs #max_vs #min_vp #max_vp #min_rho #max_rho'
+    write(IOUT,'(6e24.12)') min_vs,max_vs,min_vp,max_vp,min_rho,max_rho
+    close(IOUT)
   endif
 
-  read(IIN) ival !nspec
-  if (ival /= nspec) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bin')
-  read(IIN) ival !nglob
-  if (ival /= nglob) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bin')
-
-  read(IIN) x(1:nglob)
-  read(IIN) y(1:nglob)
-  read(IIN) z(1:nglob)
-  read(IIN) ibool(:,:,:,1:nspec)
-  close(IIN)
+  ! global addressing
+  call read_model_database()
 
 end subroutine read_model_iso
 
@@ -119,11 +135,35 @@ subroutine read_model_tiso()
   implicit none
   real(kind=CUSTOM_REAL) :: min_vpv,min_vph,min_vsv,min_vsh, &
     max_vpv,max_vph,max_vsv,max_vsh,min_eta,max_eta,min_rho,max_rho
-  integer :: ival,ier
-  character(len=150) :: m_file
+  integer :: ier
+  character(len=MAX_STRING_LEN) :: m_file, fname
 
+  ! user output
+  if (myrank == 0) print*,'reading model...'
+
+  ! allocate arrays for storing the databases
+  allocate(model_vpv(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_vph(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_vsv(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_vsh(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_eta(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_rho(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'Error allocating model arrays'
+
+  ! initializes arrays
+  model_vpv = 0.0_CUSTOM_REAL
+  model_vph = 0.0_CUSTOM_REAL
+  model_vsv = 0.0_CUSTOM_REAL
+  model_vsh = 0.0_CUSTOM_REAL
+  model_eta = 0.0_CUSTOM_REAL
+  model_rho = 0.0_CUSTOM_REAL
+
+  ! reads in model files
   ! vpv model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_vpv.bin'
+  fname = 'vpv'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -133,7 +173,10 @@ subroutine read_model_tiso()
   close(IIN)
 
   ! vph model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_vph.bin'
+  fname = 'vph'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -143,7 +186,10 @@ subroutine read_model_tiso()
   close(IIN)
 
   ! vsv model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_vsv.bin'
+  fname = 'vsv'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -153,7 +199,10 @@ subroutine read_model_tiso()
   close(IIN)
 
   ! vsh model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_vsh.bin'
+  fname = 'vsh'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -163,7 +212,10 @@ subroutine read_model_tiso()
   close(IIN)
 
   ! eta model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_eta.bin'
+  fname = 'eta'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -173,7 +225,10 @@ subroutine read_model_tiso()
   close(IIN)
 
   ! rho model
-  write(m_file,'(a,i6.6,a)') 'INPUT_MODEL/proc',myrank,'_reg1_rho.bin'
+  fname = 'rho'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -202,6 +257,7 @@ subroutine read_model_tiso()
   call max_all_cr(maxval(model_rho),max_rho)
 
   if (myrank == 0) then
+    print*
     print*,'initial models:'
     print*,'  vpv min/max: ',min_vpv,max_vpv
     print*,'  vph min/max: ',min_vph,max_vph
@@ -211,9 +267,40 @@ subroutine read_model_tiso()
     print*,'  rho min/max: ',min_rho,max_rho
     print*
   endif
+  call synchronize_all()
+
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown')
+    write(IOUT,*) '#min_vsv #max_vsv #min_vsh #max_vsh #min_vpv #max_vpv #min_vph #max_vph ' &
+               // '#min_eta #max_eta #min_rho #max_rho'
+    write(IOUT,'(12e24.12)') min_vsv,max_vsv,min_vsh,max_vsh,min_vpv,max_vpv,min_vph,max_vph, &
+                            min_eta,max_eta,min_rho,max_rho
+    close(IOUT)
+  endif
 
   ! global addressing
-  write(m_file,'(a,i6.6,a)') 'topo/proc',myrank,'_reg1_solver_data.bin'
+  call read_model_database()
+
+end subroutine read_model_tiso
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+subroutine read_model_database()
+
+! reads in current transverse isotropic model: vpv.. & vsv.. & eta & rho
+
+  use tomography_par
+
+  implicit none
+  integer :: ival,ier
+  integer, dimension(:),allocatable :: dummy_idoubling
+  character(len=MAX_STRING_LEN) :: m_file
+
+  ! global addressing
+  write(m_file,'(a,i6.6,a)') trim(INPUT_DATABASES_DIR)//'proc',myrank,trim(REG)//'solver_data.bin'
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -225,13 +312,29 @@ subroutine read_model_tiso()
   read(IIN) ival ! nglob
   if (ival /= nglob) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bin')
 
+  ! allocate arrays for storing the databases
+  allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'Error allocating ibool array for databases'
+  allocate(ispec_is_tiso(NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'Error allocating ispec_is_tiso array for databases'
+
+  ! mesh node locations
+  allocate(x(NGLOB),y(NGLOB),z(NGLOB),stat=ier)
+  if( ier /= 0 ) stop 'Error allocating x/y/z arrays for mesh nodes'
+
+  allocate(dummy_idoubling(NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'Error allocating idoubling array for databases'
+
   read(IIN) x(1:nglob)
   read(IIN) y(1:nglob)
   read(IIN) z(1:nglob)
+
   read(IIN) ibool(:,:,:,1:nspec)
-  read(IIN) idoubling(1:nspec)
+  read(IIN) dummy_idoubling(1:nspec)
   read(IIN) ispec_is_tiso(1:nspec)
   close(IIN)
 
-end subroutine read_model_tiso
+  deallocate(dummy_idoubling)
+  
+end subroutine read_model_database
 

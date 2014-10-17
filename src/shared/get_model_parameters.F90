@@ -39,7 +39,7 @@
 
   implicit none
 
-  character(len=150) MODEL
+  character(len=MAX_STRING_LEN) MODEL
 
   integer REFERENCE_1D_MODEL,THREE_D_MODEL
 
@@ -90,7 +90,7 @@
 
   implicit none
 
-  character(len=150) MODEL
+  character(len=MAX_STRING_LEN) MODEL
 
   integer REFERENCE_1D_MODEL,THREE_D_MODEL
 
@@ -104,7 +104,7 @@
   character(len=4) ending
   character(len=8) ending_1Dcrust
 
-  character(len=150) MODEL_ROOT
+  character(len=MAX_STRING_LEN) MODEL_ROOT
   logical :: impose_1Dcrust
 
   ! defaults:
@@ -381,7 +381,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
-#if defined (CEM)
+#ifdef CEM
   else if (MODEL_ROOT == 'CEM_REQUEST') then
     CEM_REQUEST         = .true.
     TRANSVERSE_ISOTROPY = .true.

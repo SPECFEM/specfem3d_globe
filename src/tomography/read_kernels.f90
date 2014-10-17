@@ -33,9 +33,25 @@ subroutine read_kernels_iso()
   use tomography_kernels_iso
 
   implicit none
+  ! local parameters
   real(kind=CUSTOM_REAL) :: min_vp,min_vs,max_vp,max_vs,min_rho,max_rho
   integer :: ier
-  character(len=150) :: m_file, fname
+  character(len=MAX_STRING_LEN) :: m_file, fname
+
+  ! user output
+  if (myrank == 0) print*,'reading kernels...'
+
+  ! allocate arrays for storing kernels and perturbations
+  ! isotropic arrays
+  allocate(kernel_bulk(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           kernel_beta(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           kernel_rho(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'error allocating kernel arrays'
+
+  ! initializes arrays
+  kernel_bulk = 0.0_CUSTOM_REAL
+  kernel_beta = 0.0_CUSTOM_REAL
+  kernel_rho = 0.0_CUSTOM_REAL
 
   ! reads in smoothed (& summed) event kernel
   if (USE_ALPHA_BETA_RHO) then
@@ -45,7 +61,9 @@ subroutine read_kernels_iso()
     ! reads in bulk_c kernel
     fname = 'bulk_c_kernel_smooth'
   endif
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -62,7 +80,9 @@ subroutine read_kernels_iso()
     ! reads in bulk_beta kernel
     fname = 'bulk_beta_kernel_smooth'
   endif
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -73,14 +93,15 @@ subroutine read_kernels_iso()
 
   ! rho kernel
   if (USE_RHO_SCALING) then
-
     ! uses scaling relation with shear perturbations
     kernel_rho(:,:,:,:) = RHO_SCALING * kernel_beta(:,:,:,:)
-
+    if (myrank == 0) print*,'  rho kernel uses scaling with shear kernel: scaling value = ',RHO_SCALING
   else
-
     ! uses rho kernel
-    write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_rho_kernel_smooth.bin'
+    fname = 'rho_kernel_smooth'
+    write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+    if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
     open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
@@ -101,16 +122,26 @@ subroutine read_kernels_iso()
   call max_all_cr(maxval(kernel_rho),max_rho)
 
   if (myrank == 0) then
+    print*
     print*,'initial kernels:'
     if (USE_ALPHA_BETA_RHO) then
-      print*,'  alpha min/max: ',min_vp,max_vp
-      print*,'  beta min/max : ',min_vs,max_vs
+      print*,'  alpha min/max    : ',min_vp,max_vp
+      print*,'  beta min/max     : ',min_vs,max_vs
     else
       print*,'  bulk_c min/max   : ',min_vp,max_vp
       print*,'  bulk_beta min/max: ',min_vs,max_vs
     endif
-    print*,'  rho min/max: ',min_rho,max_rho
+    print*,'  rho min/max      : ',min_rho,max_rho
     print*
+  endif
+  call synchronize_all()
+
+  ! statistics output
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernels_minmax',status='unknown')
+    write(IOUT,*) '#min_vs #max_vs #min_vp #max_vp #min_rho #max_rho'
+    write(IOUT,'(4e24.12)') min_vs, max_vs, min_vp, max_vp, min_rho, max_rho
+    close(IOUT)
   endif
 
 end subroutine read_kernels_iso
@@ -127,12 +158,33 @@ subroutine read_kernels_tiso()
   use tomography_kernels_tiso
 
   implicit none
+  ! local parameters
   real(kind=CUSTOM_REAL) :: min_vsv,min_vsh,max_vsv,max_vsh,min_eta,max_eta,min_bulk,max_bulk
   integer :: ier
-  character(len=150) :: m_file
+  character(len=MAX_STRING_LEN) :: m_file, fname
+
+  ! user output
+  if (myrank == 0) print*,'reading kernels...'
+
+  ! allocate arrays for storing kernels and perturbations
+  ! transversely isotropic arrays
+  allocate(kernel_bulk(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           kernel_betav(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           kernel_betah(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           kernel_eta(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'error allocating kernel arrays'
+
+  ! initializes arrays
+  kernel_bulk = 0.0_CUSTOM_REAL
+  kernel_betav = 0.0_CUSTOM_REAL
+  kernel_betah = 0.0_CUSTOM_REAL
+  kernel_eta = 0.0_CUSTOM_REAL
 
   ! bulk kernel
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_bulk_c_kernel_smooth.bin'
+  fname = 'bulk_c_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -142,7 +194,10 @@ subroutine read_kernels_tiso()
   close(IIN)
 
   ! betav kernel
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_bulk_betav_kernel_smooth.bin'
+  fname = 'bulk_betav_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -152,7 +207,10 @@ subroutine read_kernels_tiso()
   close(IIN)
 
   ! betah kernel
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_bulk_betah_kernel_smooth.bin'
+  fname = 'bulk_betah_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -162,7 +220,10 @@ subroutine read_kernels_tiso()
   close(IIN)
 
   ! eta kernel
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_eta_kernel_smooth.bin'
+  fname = 'eta_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -186,12 +247,22 @@ subroutine read_kernels_tiso()
   call max_all_cr(maxval(kernel_eta),max_eta)
 
   if (myrank == 0) then
+    print*
     print*,'initial kernels:'
     print*,'  bulk min/max : ',min_bulk,max_bulk
     print*,'  betav min/max: ',min_vsv,max_vsv
     print*,'  betah min/max: ',min_vsh,max_vsh
     print*,'  eta min/max  : ',min_eta,max_eta
     print*
+  endif
+  call synchronize_all()
+
+  ! statistics output
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernels_minmax',status='unknown')
+    write(IOUT,*) '#min_bulk #max_bulk #min_vsv #max_vsv #min_vsh #max_vsh #min_eta #max_eta'
+    write(IOUT,'(4e24.12)') min_bulk, max_bulk, min_vsv, max_vsv, min_vsh, max_vsh, min_eta, max_eta
+    close(IOUT)
   endif
 
 end subroutine read_kernels_tiso

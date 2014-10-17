@@ -53,7 +53,7 @@
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
     TWO_PI,R_UNIT_SPHERE,NX_BATHY,NY_BATHY, &
     GAUSSALPHA,GAUSSBETA,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM, &
-    IIN,IOUT,IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL
+    IIN,IOUT,IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL,MAX_STRING_LEN
 
   use kdtree_search, only: kdtree_setup,kdtree_set_verbose,kdtree_delete,kdtree_find_nearest_neighbor, &
     kdtree_nnodes_local,kdtree_nodes_local,kdtree_index_local
@@ -127,10 +127,10 @@
   integer, dimension(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1) :: addressing2
 
   ! input arguments
-  character(len=256) :: arg
-  character(len=256) :: dir_topo1
-  character(len=256) :: dir_topo2
-  character(len=256) :: input_model_dir,output_model_dir
+  character(len=MAX_STRING_LEN) :: arg
+  character(len=MAX_STRING_LEN) :: dir_topo1
+  character(len=MAX_STRING_LEN) :: dir_topo2
+  character(len=MAX_STRING_LEN) :: input_model_dir,output_model_dir
 
   ! kdtree search:
   ! note: looking for mid-points only is a good approach when changing number of processes (NPROC) only,
@@ -156,8 +156,8 @@
 #ifdef ADIOS_INPUT
   character(len=16) :: model_name(7)
 #endif
-  character(len=256) :: m_file
-  character(len=256) :: solver_file
+  character(len=MAX_STRING_LEN) :: m_file
+  character(len=MAX_STRING_LEN) :: solver_file
 
   ! mpi parameters
   integer :: sizeprocs,myrank

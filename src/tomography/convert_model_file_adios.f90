@@ -35,7 +35,7 @@ program convert_model_file_adios
   use adios_helpers_mod
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT, &
-    ADIOS_TRANSPORT_METHOD,ADIOS_BUFFER_SIZE_IN_MB
+    ADIOS_TRANSPORT_METHOD,ADIOS_BUFFER_SIZE_IN_MB,MAX_STRING_LEN
 
   ! converts between adios and binary format for a model file like
 
@@ -71,19 +71,19 @@ program convert_model_file_adios
   integer :: myrank, sizeprocs
 
   ! model parameters
-  character(len=256) :: m_file
-  character(len=256) :: m_adios_file
+  character(len=MAX_STRING_LEN) :: m_file
+  character(len=MAX_STRING_LEN) :: m_adios_file
   character(len=16) :: model_name(7),fname(7)
   integer :: nparams
   integer :: i,iker
 
   ! input arguments
-  character(len=256) :: arg
-  character(len=256) :: input_model_dir, output_model_dir
+  character(len=MAX_STRING_LEN) :: arg
+  character(len=MAX_STRING_LEN) :: input_model_dir, output_model_dir
   integer :: convert_format
 
   ! adios
-  character(len=150) :: group_name
+  character(len=MAX_STRING_LEN) :: group_name
   integer(kind=8) :: group, model_handle
   integer(kind=8) :: totalsize
   integer(kind=8) :: group_size_inc

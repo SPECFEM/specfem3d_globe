@@ -83,7 +83,7 @@
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   character(len=MAX_LENGTH_STATION_NAME), allocatable, dimension(:) :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), allocatable, dimension(:) :: network_name
-  character(len=150) dummystring
+  character(len=MAX_STRING_LEN) dummystring
 
   double precision, allocatable, dimension(:) :: x_target,y_target,z_target
 
@@ -91,7 +91,7 @@
   double precision reference,radius_dummy,theta_s,phi_s
 
 ! processor identification
-  character(len=150) prname
+  character(len=MAX_STRING_LEN) prname
 
 ! small offset for source and receiver line in AVS_DX
 ! (small compared to normalized radius of the Earth)

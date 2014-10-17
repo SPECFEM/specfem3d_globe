@@ -860,11 +860,11 @@
   integer :: myrank,NSPEC
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: mask_source
-  character(len=150) :: LOCAL_TMP_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_TMP_PATH
 
   ! local parameters
   integer :: ier
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -911,7 +911,7 @@
   double precision, external :: comp_source_time_function_rickr
   double precision, external :: get_cmt_scalar_moment
 
-  character(len=150) :: plot_file
+  character(len=MAX_STRING_LEN) :: plot_file
 
   ! number of points to plot the source time function and spectrum
   integer, parameter :: NSAMP_PLOT_SOURCE = 1000

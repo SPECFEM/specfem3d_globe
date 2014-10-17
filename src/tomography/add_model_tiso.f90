@@ -74,7 +74,7 @@ program add_model
   use tomography_kernels_tiso
 
   implicit none
-  integer :: i,j,k,ispec
+  integer :: i,j,k,ispec,ier
   real(kind=CUSTOM_REAL) :: betav1,betah1,betav0,betah0,rho1,rho0, &
     betaiso1,betaiso0,eta1,eta0,alphav1,alphav0,alphah1,alphah0
   real(kind=CUSTOM_REAL) :: dbetaiso,dbulk
@@ -89,12 +89,16 @@ program add_model
 
   ! user output
   if (myrank == 0) then
+    print*
+    print*,'***********'
     print*,'program add_model_tiso: '
     print*,'  NPROC_XI , NPROC_ETA: ',nproc_xi_val,nproc_eta_val
     print*,'  NCHUNKS: ',nchunks_val
     print*
     print*,'model update for vsv,vsh,vpv,vph,eta,rho:'
     print*,'  step_fac = ',step_fac
+    print*
+    print*,'***********'
     print*
   endif
 
@@ -110,6 +114,22 @@ program add_model
 
   ! compute new model in terms of alpha, beta, eta and rho
   ! (see also Carl's Latex notes)
+  ! allocate new model arrays
+  allocate(model_vpv_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_vph_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_vsv_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_vsh_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_eta_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_rho_new(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'Error allocating model arrays'
+
+  ! initializes arrays
+  model_vpv_new = 0.0_CUSTOM_REAL
+  model_vph_new = 0.0_CUSTOM_REAL
+  model_vsv_new = 0.0_CUSTOM_REAL
+  model_vsh_new = 0.0_CUSTOM_REAL
+  model_eta_new = 0.0_CUSTOM_REAL
+  model_rho_new = 0.0_CUSTOM_REAL
 
   ! model update:
   !   transverse isotropic update only in layer Moho to 220 (where SPECFEM3D_GLOBE considers TISO)
@@ -231,49 +251,28 @@ subroutine initialize()
 
 ! initializes arrays
 
-  use tomography_model_tiso
-  use tomography_kernels_tiso
+  use tomography_par
 
   implicit none
-
-  integer :: sizeprocs
 
   ! initialize the MPI communicator and start the NPROCTOT MPI processes
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  if (sizeprocs /= nchunks_val*nproc_xi_val*nproc_eta_val ) then
-    print*,'sizeprocs:',sizeprocs,nchunks_val,nproc_xi_val,nproc_eta_val
-    call exit_mpi(myrank,'Error number sizeprocs')
+  if (sizeprocs /= NPROCTOT_VAL ) then
+    if( myrank == 0 ) then
+      print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
+      print*, 'Error number of MPI processors actually run on: ',sizeprocs
+      print*
+      print*, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xadd_model .. '
+    endif
+    call exit_MPI(myrank,'Error wrong number of MPI processes')
   endif
 
-  ! model
-  model_vpv = 0.0_CUSTOM_REAL
-  model_vph = 0.0_CUSTOM_REAL
-  model_vsv = 0.0_CUSTOM_REAL
-  model_vsh = 0.0_CUSTOM_REAL
-  model_eta = 0.0_CUSTOM_REAL
-  model_rho = 0.0_CUSTOM_REAL
-
-  model_vpv_new = 0.0_CUSTOM_REAL
-  model_vph_new = 0.0_CUSTOM_REAL
-  model_vsv_new = 0.0_CUSTOM_REAL
-  model_vsh_new = 0.0_CUSTOM_REAL
-  model_eta_new = 0.0_CUSTOM_REAL
-  model_rho_new = 0.0_CUSTOM_REAL
-
-  ! model updates
-  model_dbulk = 0.0_CUSTOM_REAL
-  model_dbetah = 0.0_CUSTOM_REAL
-  model_dbetav = 0.0_CUSTOM_REAL
-  model_deta = 0.0_CUSTOM_REAL
-
-  ! gradients
-  kernel_bulk = 0.0_CUSTOM_REAL
-  kernel_betav = 0.0_CUSTOM_REAL
-  kernel_betah = 0.0_CUSTOM_REAL
-  kernel_eta = 0.0_CUSTOM_REAL
+  ! sets tomography array dimensions
+  NSPEC = NSPEC_CRUST_MANTLE
+  NGLOB = NGLOB_CRUST_MANTLE
 
   ! needs density scaling
   if (.not. USE_RHO_SCALING) stop 'Error this model update needs density scaling to be turned on...'

@@ -148,7 +148,7 @@ contains
   integer :: nrec_local_received
   integer :: total_seismos
   integer,dimension(:),allocatable:: islice_num_rec_local
-  character(len=256) :: sisname
+  character(len=MAX_STRING_LEN) :: sisname
   ! timing
   double precision, external :: wtime
   type(asdf_event) :: asdf_container
@@ -397,7 +397,7 @@ contains
   integer :: iorientation,length_station_name,length_network_name
 
   character(len=4) :: chn
-  character(len=256) :: sisname,sisname_big_file
+  character(len=MAX_STRING_LEN) :: sisname,sisname_big_file
   character(len=2) :: bic
 
   ! variables used for calculation of backazimuth and
@@ -543,7 +543,7 @@ contains
   integer :: iorientation,isample
 
   character(len=4) :: chn
-  character(len=256) :: sisname
+  character(len=MAX_STRING_LEN) :: sisname
   character(len=2) :: bic
 
   call band_instrument_code(DT,bic)

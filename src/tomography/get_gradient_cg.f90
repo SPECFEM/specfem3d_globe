@@ -57,7 +57,21 @@ subroutine get_gradient_cg_tiso()
   integer :: maxindex(1)
   real(kind=CUSTOM_REAL) :: ratio_bulk,ratio_betav,ratio_betah,ratio_eta
   integer :: iglob
-  integer :: i,j,k,ispec
+  integer :: i,j,k,ispec,ier
+
+  ! allocate arrays for storing gradients
+  ! transversely isotropic arrays
+  allocate(model_dbulk(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_dbetav(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_dbetah(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_deta(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'error allocating gradient arrays'
+
+  ! initializes arrays
+  model_dbulk = 0.0_CUSTOM_REAL
+  model_dbetav = 0.0_CUSTOM_REAL
+  model_dbetah = 0.0_CUSTOM_REAL
+  model_deta = 0.0_CUSTOM_REAL
 
   ! old kernel/gradient
   ! length ( gamma_(n-1)^T * lambda_(n-1) )
@@ -84,10 +98,8 @@ subroutine get_gradient_cg_tiso()
     print*,'  betah: ',norm_betah_old
     print*,'  eta  : ',norm_eta_old
     print*
-  endif
 
-  ! checks lengths
-  if (myrank == 0) then
+    ! checks lengths
     if (norm_bulk_old < 1.e-22 ) call exit_mpi(myrank,'norm old gradient bulk is zero')
     if (norm_betav_old < 1.e-22 ) call exit_mpi(myrank,'norm old gradient betav is zero')
     if (norm_betah_old < 1.e-22 ) call exit_mpi(myrank,'norm old gradient betah is zero')
@@ -106,14 +118,14 @@ subroutine get_gradient_cg_tiso()
   call sum_all_cr(norm_betah,norm_betah_sum)
   call sum_all_cr(norm_eta,norm_eta_sum)
 
-  ! ratio:  ( g_n * g_n-1 ) / ( g_n-1 * g_n-1)
-  ratio_bulk = norm_bulk_sum / norm_bulk_old
-  ratio_betav = norm_betav_sum / norm_betav_old
-  ratio_betah = norm_betah_sum / norm_betah_old
-  ratio_eta = norm_eta_sum / norm_eta_old
-
-  ! if ratio > 0.2 (empirical threshold value), then one should restart with a steepest descent
   if (myrank == 0) then
+    ! ratio:  ( g_n * g_n-1 ) / ( g_n-1 * g_n-1)
+    ratio_bulk = norm_bulk_sum / norm_bulk_old
+    ratio_betav = norm_betav_sum / norm_betav_old
+    ratio_betah = norm_betah_sum / norm_betah_old
+    ratio_eta = norm_eta_sum / norm_eta_old
+
+    ! if ratio > 0.2 (empirical threshold value), then one should restart with a steepest descent
     print*,'Powell ratio: (> 0.2 then restart with steepest descent)'
     print*,'  bulk : ',ratio_bulk
     print*,'  betav: ',ratio_betav
@@ -122,8 +134,13 @@ subroutine get_gradient_cg_tiso()
     print*
     if (ratio_bulk > 0.2 .and. ratio_betav > 0.2 .and. ratio_betah > 0.2 &
       .and. ratio_eta > 0.2 ) then
-      print*,'  please consider doing a steepest descent instead cg...'
+      print*,'  critical ratio found!'
       print*
+      print*,'****************'
+      print*
+      print*,'  Please consider doing a steepest descent instead cg...'
+      print*
+      print*,'****************'
     endif
   endif
 
@@ -374,8 +391,10 @@ subroutine get_gradient_cg_tiso()
       depthmax_depth = depthmax_radius(maxindex(1))
       depthmax_depth = 6371.0 *( 1.0 - depthmax_depth )
       ! maximum in given depth range
-      print*,'  using depth maximum between 50km and 100km: ',max
-      print*,'  approximate depth maximum: ',depthmax_depth
+      print*,'  using depth maximum: '
+      print*,'  between depths (top/bottom)   : ',R_top,R_bottom
+      print*,'  maximum kernel value          : ',max
+      print*,'  depth of maximum kernel value : ',depthmax_depth
       print*
     else
       ! maximum gradient values
@@ -386,9 +405,12 @@ subroutine get_gradient_cg_tiso()
 
       ! maximum value of all kernel maxima
       max = maxval(minmax)
-      print*,'  using maximum: ',max
-      print*
     endif
+    print*,'step length:'
+    print*,'  using kernel maximum: ',max
+
+    ! checks maximum value
+    if (max < 1.e-25) stop 'Error maximum kernel value too small for update'
 
     ! chooses step length such that it becomes the desired, given step factor as inputted
     step_length = step_fac/max
@@ -411,12 +433,12 @@ subroutine get_gradient_cg_tiso()
   call sum_all_cr(norm_betah,norm_betah_sum)
   call sum_all_cr(norm_eta,norm_eta_sum)
 
-  norm_bulk = sqrt(norm_bulk_sum)
-  norm_betav = sqrt(norm_betav_sum)
-  norm_betah = sqrt(norm_betah_sum)
-  norm_eta = sqrt(norm_eta_sum)
-
   if (myrank == 0) then
+    norm_bulk = sqrt(norm_bulk_sum)
+    norm_betav = sqrt(norm_betav_sum)
+    norm_betah = sqrt(norm_betah_sum)
+    norm_eta = sqrt(norm_eta_sum)
+
     print*,'norm model updates:'
     print*,'  bulk : ',norm_bulk
     print*,'  betav: ',norm_betav
@@ -452,6 +474,7 @@ subroutine get_gradient_cg_tiso()
     print*,'  eta min/max  : ',min_eta,max_eta
     print*
   endif
+  call synchronize_all()
 
 end subroutine get_gradient_cg_tiso
 

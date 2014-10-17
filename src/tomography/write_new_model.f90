@@ -34,13 +34,19 @@ subroutine write_new_model_iso()
 
   implicit none
   real(kind=CUSTOM_REAL) :: min_vp,min_vs,max_vp,max_vs,min_rho,max_rho
-  character(len=150) :: m_file, fname
+  character(len=MAX_STRING_LEN) :: m_file, fname
+
+  ! user output
+  if (myrank == 0) print*,'writing out new model...'
 
   ! vp model
   call max_all_cr(maxval(model_vp_new),max_vp)
   call min_all_cr(minval(model_vp_new),min_vp)
+
   fname = 'vp_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_vp_new
   close(IOUT)
@@ -48,8 +54,11 @@ subroutine write_new_model_iso()
   ! vs model
   call max_all_cr(maxval(model_vs_new),max_vs)
   call min_all_cr(minval(model_vs_new),min_vs)
+
   fname = 'vs_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_vs_new
   close(IOUT)
@@ -57,18 +66,30 @@ subroutine write_new_model_iso()
   ! rho model
   call max_all_cr(maxval(model_rho_new),max_rho)
   call min_all_cr(minval(model_rho_new),min_rho)
+
   fname = 'rho_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_rho_new
   close(IOUT)
 
   if (myrank == 0) then
+    print*
     print*,'new models:'
-    print*,'  vp min/max: ',min_vp,max_vp
-    print*,'  vs min/max: ',min_vs,max_vs
+    print*,'  vp min/max : ',min_vp,max_vp
+    print*,'  vs min/max : ',min_vs,max_vs
     print*,'  rho min/max: ',min_rho,max_rho
     print*
+  endif
+  call synchronize_all()
+
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown')
+    write(IOUT,*) '#min_vs #max_vs #min_vp #max_vp #min_rho #max_rho'
+    write(IOUT,'(6e24.12)') min_vs,max_vs,min_vp,max_vp,min_rho,max_rho
+    close(IOUT)
   endif
 
 end subroutine write_new_model_iso
@@ -86,13 +107,19 @@ subroutine write_new_model_tiso()
   implicit none
   real(kind=CUSTOM_REAL) :: min_vpv,min_vph,min_vsv,min_vsh, &
     max_vpv,max_vph,max_vsv,max_vsh,min_eta,max_eta, min_rho,max_rho
-  character(len=150) :: m_file, fname
+  character(len=MAX_STRING_LEN) :: m_file, fname
+
+  ! user output
+  if (myrank == 0) print*,'writing out new model...'
 
   ! vpv model
   call max_all_cr(maxval(model_vpv_new),max_vpv)
   call min_all_cr(minval(model_vpv_new),min_vpv)
+
   fname = 'vpv_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_vpv_new
   close(IOUT)
@@ -100,8 +127,11 @@ subroutine write_new_model_tiso()
   ! vph model
   call max_all_cr(maxval(model_vph_new),max_vph)
   call min_all_cr(minval(model_vph_new),min_vph)
+
   fname = 'vph_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_vph_new
   close(IOUT)
@@ -109,8 +139,11 @@ subroutine write_new_model_tiso()
   ! vsv model
   call max_all_cr(maxval(model_vsv_new),max_vsv)
   call min_all_cr(minval(model_vsv_new),min_vsv)
+
   fname = 'vsv_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_vsv_new
   close(IOUT)
@@ -118,8 +151,11 @@ subroutine write_new_model_tiso()
   ! vsh model
   call max_all_cr(maxval(model_vsh_new),max_vsh)
   call min_all_cr(minval(model_vsh_new),min_vsh)
+
   fname = 'vsh_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_vsh_new
   close(IOUT)
@@ -127,8 +163,11 @@ subroutine write_new_model_tiso()
   ! eta model
   call max_all_cr(maxval(model_eta_new),max_eta)
   call min_all_cr(minval(model_eta_new),min_eta)
+
   fname = 'eta_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_eta_new
   close(IOUT)
@@ -136,14 +175,18 @@ subroutine write_new_model_tiso()
   ! rho model
   call max_all_cr(maxval(model_rho_new),max_rho)
   call min_all_cr(minval(model_rho_new),min_rho)
+
   fname = 'rho_new'
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_rho_new
   close(IOUT)
 
   ! user output
   if (myrank == 0) then
+    print*
     print*,'new models:'
     print*,'  vpv min/max: ',min_vpv,max_vpv
     print*,'  vph min/max: ',min_vph,max_vph
@@ -152,6 +195,16 @@ subroutine write_new_model_tiso()
     print*,'  eta min/max: ',min_eta,max_eta
     print*,'  rho min/max: ',min_rho,max_rho
     print*
+  endif
+  call synchronize_all()
+
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown')
+    write(IOUT,*) '#min_vsv #max_vsv #min_vsh #max_vsh #min_vpv #max_vpv #min_vph #max_vph ' &
+               // '#min_eta #max_eta #min_rho #max_rho'
+    write(IOUT,'(12e24.12)') min_vsv,max_vsv,min_vsh,max_vsh,min_vpv,max_vpv,min_vph,max_vph, &
+                             min_eta,max_eta,min_rho,max_rho
+    close(IOUT)
   endif
 
 end subroutine write_new_model_tiso

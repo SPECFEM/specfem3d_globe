@@ -54,7 +54,7 @@
   double precision, dimension(:), allocatable :: xleft,yleft,zleft,xright,yright,zright
 
 ! processor identification
-  character(len=150) prname,prname_other
+  character(len=MAX_STRING_LEN) prname,prname_other
 
   integer :: NGLOB1D_RADIAL_MAX
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER

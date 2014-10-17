@@ -97,7 +97,7 @@
   ! local parameters
   integer :: ier,lnspec,lnglob
   ! processor identification
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)

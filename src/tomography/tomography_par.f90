@@ -28,7 +28,7 @@
 
 module tomography_par
 
-  use constants,only: CUSTOM_REAL,NX_BATHY,NY_BATHY, &
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NX_BATHY,NY_BATHY, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
 
@@ -40,21 +40,38 @@ module tomography_par
   ! tomography parameter settings
   include "constants_tomography.h"
 
-  integer, parameter :: NSPEC = NSPEC_CRUST_MANTLE
-  integer, parameter :: NGLOB = NGLOB_CRUST_MANTLE
+  ! mesh size
+  integer :: NSPEC, NGLOB
 
   ! volume
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: x, y, z
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: ibool
-  integer, dimension(NSPEC) :: idoubling
-  logical, dimension(NSPEC) :: ispec_is_tiso
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: x, y, z
+  integer, dimension(:,:,:,:),allocatable :: ibool
+  logical, dimension(:),allocatable :: ispec_is_tiso
 
   ! model update length
   real(kind=CUSTOM_REAL) :: step_fac,step_length
 
   ! mpi process
-  integer :: myrank
+  integer :: myrank,sizeprocs
+
+  ! defaults
+  ! directory which holds kernel files (alpha_kernel.bin,..)
+  character(len=MAX_STRING_LEN) :: INPUT_KERNELS_DIR = 'INPUT_GRADIENT/'
+
+  ! directory which holds model files (vp.bin,..)
+  character(len=MAX_STRING_LEN) :: INPUT_MODEL_DIR = 'INPUT_MODEL/'
+
+  ! directory which holds databases files (external_mesh.bin)
+  character(len=MAX_STRING_LEN) :: INPUT_DATABASES_DIR = 'topo/'
+
+  ! directory which holds new model files (vp_new.bin,..)
+  character(len=MAX_STRING_LEN) :: OUTPUT_MODEL_DIR = 'OUTPUT_MODEL/'
+
+  ! statistics
+  ! set to true if you want to print out log files with statistics
+  logical :: PRINT_STATISTICS_FILES = .false.
+  ! directory where the statistics output files will be written
+  character(len=MAX_STRING_LEN) :: OUTPUT_STATISTICS_DIR = 'OUTPUT_MODEL/'
 
 end module tomography_par
 
@@ -69,10 +86,10 @@ module tomography_kernels_iso
   implicit none
 
   ! kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: kernel_bulk,kernel_beta,kernel_rho
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: kernel_bulk,kernel_beta,kernel_rho
 
   ! gradients for model updates
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: model_dbulk,model_dbeta,model_drho
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: model_dbulk,model_dbeta,model_drho
 
 end module tomography_kernels_iso
 
@@ -88,11 +105,10 @@ module tomography_kernels_tiso
   implicit none
 
   ! kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: kernel_bulk,kernel_betav,kernel_betah,kernel_eta
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: kernel_bulk,kernel_betav,kernel_betah,kernel_eta
 
   ! gradients for model updates
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
-        model_dbulk,model_dbetah,model_dbetav,model_deta
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: model_dbulk,model_dbetah,model_dbetav,model_deta
 
 end module tomography_kernels_tiso
 
@@ -112,11 +128,11 @@ module tomography_kernels_tiso_cg
   logical :: USE_OLD_GRADIENT
 
   ! kernels from former iteration
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
         kernel_bulk_old,kernel_betav_old,kernel_betah_old,kernel_eta_old
 
   ! gradients for model updates from former iteration
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
         model_dbulk_old,model_dbetah_old,model_dbetav_old,model_deta_old
 
 end module tomography_kernels_tiso_cg
@@ -132,8 +148,8 @@ module tomography_model_iso
   implicit none
 
   ! isotropic model files
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: model_vp,model_vs,model_rho
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: model_vp_new,model_vs_new,model_rho_new
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: model_vp,model_vs,model_rho
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: model_vp_new,model_vs_new,model_rho_new
 
 end module tomography_model_iso
 
@@ -148,12 +164,11 @@ module tomography_model_tiso
   implicit none
 
   ! transverse isotropic model files
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
         model_vpv,model_vph,model_vsv,model_vsh,model_eta,model_rho
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: &
         model_vpv_new,model_vph_new,model_vsv_new,model_vsh_new,model_eta_new,model_rho_new
 
 end module tomography_model_tiso
-
 
 

@@ -69,7 +69,7 @@
   type(avs_dx_global_chunks_t) :: avs_dx_global_chunks_vars
   type(avs_dx_surface_t) :: avs_dx_surface_vars
 
-  character(len=150) :: reg_name, outputname, group_name
+  character(len=MAX_STRING_LEN) :: reg_name, outputname, group_name
   integer :: comm, ier
   integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
 

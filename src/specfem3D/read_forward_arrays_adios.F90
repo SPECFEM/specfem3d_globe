@@ -51,7 +51,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -233,7 +233,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -421,7 +421,7 @@
   integer, intent(in) :: iteration_on_subset_tmp
   ! Local parameters
   integer :: comm
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err

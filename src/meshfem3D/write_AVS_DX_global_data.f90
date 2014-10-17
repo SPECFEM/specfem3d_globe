@@ -54,7 +54,7 @@
   integer npoin,numpoin
 
 ! processor identification
-  character(len=150) prname
+  character(len=MAX_STRING_LEN) prname
 
 ! writing points
   open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpoints.txt',status='unknown')
@@ -208,7 +208,7 @@
   implicit none
 
   integer nspec
-  character(len=150) prname
+  character(len=MAX_STRING_LEN) prname
 
   double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
   double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)

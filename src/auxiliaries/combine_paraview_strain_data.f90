@@ -45,8 +45,8 @@ program combine_paraview_movie_data
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore,datstore
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: SEEstore,SNNstore,SZZstore,SNEstore,SNZstore,SEZstore
   real(kind=CUSTOM_REAL) :: x, y, z, dat
-  character(len=150) :: arg(7), prname, dimension_file
-  character(len=150) :: mesh_file, local_element_file, local_data_file
+  character(len=MAX_STRING_LEN) :: arg(7), prname, dimension_file
+  character(len=MAX_STRING_LEN) :: mesh_file, local_element_file, local_data_file
   character(len=3) :: comp
   logical :: MOVIE_COARSE
 

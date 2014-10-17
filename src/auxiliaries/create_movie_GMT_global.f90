@@ -86,7 +86,7 @@
   real :: disp,lat,long
   integer :: nframes,iframe,USE_COMPONENT
 
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   integer :: iproc,ipoin
 

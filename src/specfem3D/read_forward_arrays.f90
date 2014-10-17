@@ -38,7 +38,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
 
   ! checks run/checkpoint number
   if (NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
@@ -133,7 +133,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
 
   ! checks if anything to do
   if (UNDO_ATTENUATION ) return
@@ -256,7 +256,7 @@
   ! local parameters
   integer :: iteration_on_subset_tmp
   integer :: ier
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! current subset iteration
   iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1

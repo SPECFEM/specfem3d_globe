@@ -71,13 +71,10 @@ tomography_MODULES = \
 	$(FC_MODDIR)/tomography_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/tomography_kernels_iso.$(FC_MODEXT) \
 	$(FC_MODDIR)/tomography_kernels_tiso.$(FC_MODEXT) \
+	$(FC_MODDIR)/tomography_kernels_tiso_cg.$(FC_MODEXT) \
 	$(FC_MODDIR)/tomography_model_tiso.$(FC_MODEXT) \
 	$(FC_MODDIR)/tomography_model_iso.$(FC_MODEXT) \
 	$(FC_MODDIR)/kdtree_search.$(FC_MODEXT) \
-	$(FC_MODDIR)/model_update_cg.$(FC_MODEXT) \
-	$(FC_MODDIR)/model_update_iso.$(FC_MODEXT) \
-	$(FC_MODDIR)/model_update_tiso.$(FC_MODEXT) \
-	$(FC_MODDIR)/model_update_tiso_iso.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 ####
@@ -100,7 +97,7 @@ tomography: $(tomography_TARGETS)
 
 #######################################
 
-xadd_model_SHARED_OBJECTS = \
+xadd_model_OBJECTS = \
 	$O/tomography_par.tomo_module.o \
 	$O/compute_kernel_integral.tomo.o \
 	$O/get_gradient_cg.tomo.o \
@@ -112,6 +109,9 @@ xadd_model_SHARED_OBJECTS = \
 	$O/write_gradients.tomo.o \
 	$O/write_new_model.tomo.o \
 	$O/write_new_model_perturbations.tomo.o \
+	$(EMPTY_MACRO)
+
+xadd_model_SHARED_OBJECTS = \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
@@ -122,6 +122,7 @@ xadd_model_SHARED_OBJECTS = \
 ##
 xadd_model_iso_OBJECTS = \
 	$O/add_model_iso.tomo.o \
+	$(xadd_model_OBJECTS) \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_iso: $(xadd_model_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
@@ -133,6 +134,7 @@ ${E}/xadd_model_iso: $(xadd_model_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 ##
 xadd_model_tiso_OBJECTS = \
 	$O/add_model_tiso.tomo.o \
+	$(xadd_model_OBJECTS) \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_tiso: $(xadd_model_tiso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
@@ -143,6 +145,7 @@ ${E}/xadd_model_tiso: $(xadd_model_tiso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
 ##
 xadd_model_tiso_cg_OBJECTS = \
 	$O/add_model_tiso_cg.tomo.o \
+	$(xadd_model_OBJECTS) \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_tiso_cg: $(xadd_model_tiso_cg_OBJECTS) $(xadd_model_SHARED_OBJECTS)
@@ -154,6 +157,7 @@ ${E}/xadd_model_tiso_cg: $(xadd_model_tiso_cg_OBJECTS) $(xadd_model_SHARED_OBJEC
 ##
 xadd_model_tiso_iso_OBJECTS = \
 	$O/add_model_tiso_iso.tomo.o \
+	$(xadd_model_OBJECTS) \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_tiso_iso: $(xadd_model_tiso_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)

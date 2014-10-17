@@ -118,7 +118,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
       tmp_array_y, tmp_array_z
 
   ! local parameters
-  character(len=150) :: reg_name, outputname, group_name
+  character(len=MAX_STRING_LEN) :: reg_name, outputname, group_name
   integer :: comm, local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
@@ -905,7 +905,7 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
   real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: dummy_ijke
 
   ! local parameters
-  character(len=150) :: outputname, group_name
+  character(len=MAX_STRING_LEN) :: outputname, group_name
   integer :: comm, local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
@@ -1104,7 +1104,7 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   implicit none
 
   integer :: iregion_code,myrank
-  character(len=150) :: LOCAL_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_PATH
   ! MPI interfaces
   integer :: num_interfaces,max_nibool_interfaces
   integer, dimension(num_interfaces) :: my_neighbours
@@ -1121,7 +1121,7 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
     num_elem_colors
 
   ! local parameters
-  character(len=150) :: prname, outputname, group_name
+  character(len=MAX_STRING_LEN) :: prname, outputname, group_name
   integer :: comm, local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
@@ -1336,7 +1336,7 @@ subroutine save_arrays_solver_boundary_adios()
 
   ! local parameters
   ! local parameters
-  character(len=150) :: outputname, group_name
+  character(len=MAX_STRING_LEN) :: outputname, group_name
   integer :: comm, local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables

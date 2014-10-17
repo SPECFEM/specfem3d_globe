@@ -44,8 +44,8 @@ program combine_vol_data
 
   integer,parameter :: MAX_NUM_NODES = 2000
   integer :: ir, irs, ire, ires
-  character(len=256) :: arg(7), filename, outdir
-  character(len=256) :: data_file, topo_file
+  character(len=MAX_STRING_LEN) :: arg(7), filename, outdir
+  character(len=MAX_STRING_LEN) :: data_file, topo_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob, npoint, nelement
   integer :: iproc, num_node, i,j,k,ispec, it, di, dj, dk
   integer :: np, ne
@@ -89,10 +89,10 @@ program combine_vol_data
 !!! .mesh specific !!!!!!!!!!!
   integer :: pfd, efd
   character(len=1038) :: command_name
-  character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file
+  character(len=MAX_STRING_LEN) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file
 #else
 !!! .vtk specific !!!!!!!!!!!
-  character(len=256) :: mesh_file
+  character(len=MAX_STRING_LEN) :: mesh_file
   ! global point data
   real,dimension(:),allocatable :: total_dat
   real,dimension(:,:),allocatable :: total_dat_xyz
@@ -101,13 +101,13 @@ program combine_vol_data
 
 #ifdef ADIOS_INPUT
   integer :: sizeprocs,myrank
-  character(len=256) :: var_name, value_file_name, mesh_file_name
+  character(len=MAX_STRING_LEN) :: var_name, value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
 #else
   integer :: iregion,njunk
-  character(len=256) :: prname_topo, prname_file, dimension_file
-  character(len=256) :: in_file_dir, in_topo_dir
-  character(len=256) :: sline
+  character(len=MAX_STRING_LEN) :: prname_topo, prname_file, dimension_file
+  character(len=MAX_STRING_LEN) :: in_file_dir, in_topo_dir
+  character(len=MAX_STRING_LEN) :: sline
 #endif
 
   ! starts here---------------------------------------------------------------

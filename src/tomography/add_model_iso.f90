@@ -71,7 +71,7 @@ program add_model
   use tomography_kernels_iso
 
   implicit none
-  integer :: i,j,k,ispec
+  integer :: i,j,k,ispec,ier
   real(kind=CUSTOM_REAL) :: beta1,beta0,rho1,rho0,alpha1,alpha0
   real(kind=CUSTOM_REAL) :: dbetaiso,dbulk
 
@@ -85,6 +85,8 @@ program add_model
 
   ! user output
   if (myrank == 0) then
+    print*
+    print*,'***********'
     print*,'program add_model_iso: '
     print*,'  NPROC_XI , NPROC_ETA: ',nproc_xi_val,nproc_eta_val
     print*,'  NCHUNKS: ',nchunks_val
@@ -102,9 +104,11 @@ program add_model
       print*,'scaling rho perturbations'
       print*
     endif
+    print*,'***********'
+    print*
   endif
 
-  ! reads in current transverse isotropic model files: vpv.. & vsv.. & eta & rho
+  ! reads in current isotropic model files: vp & vs & rho
   call read_model_iso()
 
   ! reads in smoothed kernels: bulk, beta, rho
@@ -116,6 +120,16 @@ program add_model
 
   ! computes new model values for alpha, beta and rho
   ! and stores new model files
+  ! allocate new model arrays
+  allocate(model_vp_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_vs_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           model_rho_new(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'Error allocating model arrays'
+
+  ! initializes arrays
+  model_vp_new = 0.0_CUSTOM_REAL
+  model_vs_new = 0.0_CUSTOM_REAL
+  model_rho_new = 0.0_CUSTOM_REAL
 
   ! model update:
   !   isotropic update everywhere
@@ -163,6 +177,7 @@ program add_model
       enddo
     enddo
   enddo
+  call synchronize_all()
 
   ! stores new model in files
   call write_new_model_iso()
@@ -187,33 +202,28 @@ subroutine initialize()
 
 ! initializes arrays
 
-  use tomography_model_iso
-  use tomography_kernels_iso
+  use tomography_par
 
   implicit none
-  integer :: sizeprocs
 
   ! initialize the MPI communicator and start the NPROCTOT MPI processes
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  if (sizeprocs /= nchunks_val*nproc_xi_val*nproc_eta_val ) then
-    print*,'sizeprocs:',sizeprocs,nchunks_val,nproc_xi_val,nproc_eta_val
-    call exit_mpi(myrank,'Error number sizeprocs')
+  if (sizeprocs /= NPROCTOT_VAL ) then
+    if( myrank == 0 ) then
+      print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
+      print*, 'Error number of MPI processors actually run on: ',sizeprocs
+      print*
+      print*, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xadd_model .. '
+    endif
+    call exit_MPI(myrank,'Error wrong number of MPI processes')
   endif
 
-  model_vp = 0.0_CUSTOM_REAL
-  model_vs = 0.0_CUSTOM_REAL
-  model_rho = 0.0_CUSTOM_REAL
-
-  model_dbulk = 0.0_CUSTOM_REAL
-  model_dbeta = 0.0_CUSTOM_REAL
-  model_drho = 0.0_CUSTOM_REAL
-
-  kernel_bulk = 0.0_CUSTOM_REAL
-  kernel_beta = 0.0_CUSTOM_REAL
-  kernel_rho = 0.0_CUSTOM_REAL
+  ! sets tomography array dimensions
+  NSPEC = NSPEC_CRUST_MANTLE
+  NGLOB = NGLOB_CRUST_MANTLE
 
 end subroutine initialize
 

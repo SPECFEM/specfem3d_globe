@@ -43,7 +43,7 @@
   real(kind=CUSTOM_REAL) :: radius
   integer, dimension(:), allocatable :: integer_mask_ibool_exact_undo
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
 
 !
 !   s t a r t   t i m e   i t e r a t i o n s

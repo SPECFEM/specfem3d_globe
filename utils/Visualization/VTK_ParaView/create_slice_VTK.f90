@@ -55,10 +55,10 @@
 
   integer,parameter :: MAX_NUM_NODES = 300
   integer  iregion, ir, irs, ire, ires, pfd, efd
-  character(len=256) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
-  character(len=256) :: prname_topo, prname_file, dimension_file
+  character(len=MAX_STRING_LEN) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
+  character(len=MAX_STRING_LEN) :: prname_topo, prname_file, dimension_file
   character(len=1038) :: command_name
-  character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file, data_file, topo_file
+  character(len=MAX_STRING_LEN) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file, data_file, topo_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob, npoint, nelement
   integer iproc, num_node, i,j,k,ispec, ios, it, di, dj, dk
   integer np, ne,  njunk
@@ -267,7 +267,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: gll_data
 
 ! file name
-  character(len=256) prname_file
+  character(len=MAX_STRING_LEN) prname_file
 
   integer :: ispec,i,ier
 

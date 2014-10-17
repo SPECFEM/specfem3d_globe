@@ -55,7 +55,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   integer                 :: adios_err
@@ -126,7 +126,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   integer                 :: adios_err
@@ -599,10 +599,10 @@
   implicit none
   ! Local parameters
   integer :: comm, iteration_on_subset_tmp
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
-  character(len=150) :: group_name
+  character(len=MAX_STRING_LEN) :: group_name
   integer                 :: adios_err
   integer(kind=8)         :: adios_group, adios_handle
   integer(kind=8)         :: adios_totalsize

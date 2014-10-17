@@ -39,6 +39,8 @@
 
 ! holds input parameters given in DATA/Par_file
 
+  use constants,only: MAX_STRING_LEN
+
   implicit none
 
   ! parameters read from parameter file
@@ -79,7 +81,7 @@
   logical :: ABSORBING_CONDITIONS
 
   ! file directories
-  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+  character(len=MAX_STRING_LEN) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
 
   ! attenuation parameters
   logical :: UNDO_ATTENUATION,PARTIAL_PHYS_DISPERSION_ONLY

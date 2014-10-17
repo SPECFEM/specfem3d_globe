@@ -75,7 +75,7 @@
   ! local parameters
   integer :: nglob
   integer :: NGLOB1D_RADIAL
-  character(len=150) :: ERR_MSG
+  character(len=MAX_STRING_LEN) :: ERR_MSG
 
   ! mask for ibool to mark points already found
   logical, dimension(:), allocatable ::  mask_ibool
@@ -119,7 +119,7 @@
   integer :: imsg
 
   ! names of the data files for all the processors in MPI
-  character(len=150) :: prname,filename_out
+  character(len=MAX_STRING_LEN) :: prname,filename_out
 
   ! for addressing of the slices
   integer :: ichunk,iproc_xi,iproc_eta,iproc

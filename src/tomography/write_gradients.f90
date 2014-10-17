@@ -25,32 +25,44 @@
 !
 !=====================================================================
 
+
 subroutine write_gradients_iso()
 
 ! file output for new model
 
   use tomography_kernels_iso
   implicit none
-  character(len=150) :: m_file, fname
+  character(len=MAX_STRING_LEN) :: m_file, fname
+
+  ! user output
+  if (myrank == 0) print*,'writing out gradients...'
 
   ! kernel updates
   fname = 'dbulk'
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_dbulk
   close(IOUT)
 
   fname = 'dbeta'
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_dbeta
   close(IOUT)
 
   fname = 'drho'
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_drho
   close(IOUT)
+
+  if (myrank == 0) print*
 
 end subroutine write_gradients_iso
 
@@ -65,32 +77,45 @@ subroutine write_gradients_tiso()
   use tomography_kernels_tiso
   implicit none
 
-  character(len=150) :: m_file, fname
+  character(len=MAX_STRING_LEN) :: m_file, fname
+
+  ! user output
+  if (myrank == 0) print*,'writing out gradients...'
 
   ! kernel updates
   fname = 'dbulk_c'
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_dbulk
   close(IOUT)
 
   fname = 'dbetav'
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_dbetav
   close(IOUT)
 
   fname = 'dbetah'
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_dbetah
   close(IOUT)
 
   fname = 'deta'
-  write(m_file,'(a,i6.6,a)') 'INPUT_GRADIENT/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_KERNELS_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  ',trim(INPUT_KERNELS_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) model_deta
   close(IOUT)
+
+  if (myrank == 0) print*
 
 end subroutine write_gradients_tiso
 

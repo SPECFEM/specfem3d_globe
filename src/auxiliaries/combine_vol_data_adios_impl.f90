@@ -174,7 +174,7 @@ subroutine read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob, nspec)
   integer, intent(out) :: nglob, nspec
   ! Variables
   integer(kind=8) :: sel
-  character(len=256) :: reg_name
+  character(len=80) :: reg_name
   integer :: ier
 
   write(reg_name, '(a,i1)') trim("reg"), ir
@@ -212,7 +212,7 @@ subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
   real(kind=CUSTOM_REAL),dimension(:), intent(inout) :: xstore, ystore, zstore
   integer, dimension(:,:,:,:), intent(inout) :: ibool
   ! Variables
-  character(len=256) :: reg_name
+  character(len=80) :: reg_name
   integer(kind=8), dimension(1) :: start, count_ad
   integer(kind=8) :: sel_coord, sel_ibool, sel_scalar
   integer :: offset_coord, offset_ibool, ier
@@ -275,7 +275,7 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
   integer(kind=8), dimension(1) :: start, count_ad
   integer(kind=8) :: sel
   integer :: offset, ier
-  character(len=256) :: data_name
+  character(len=128) :: data_name
   character(len=8) :: reg_name
   logical :: is_kernel
 

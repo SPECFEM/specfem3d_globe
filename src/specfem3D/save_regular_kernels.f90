@@ -44,7 +44,6 @@
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   real(kind=CUSTOM_REAL) :: alphah_kl,alphav_kl,betah_kl,betav_kl,rhonotprime_kl
   integer :: ispec,i,j,k,iglob
-!  character(len=150) prname
   double precision :: hlagrange
   integer :: ipoint
 

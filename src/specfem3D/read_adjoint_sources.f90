@@ -114,7 +114,7 @@
     nrec,islice_selected_rec,station_name,network_name, &
     xi_receiver,eta_receiver,gamma_receiver,nu,xigll,yigll,zigll, &
     iadjsrc_len,iadjsrc,NSTEP_SUB_ADJ, &
-    DT,CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC
+    DT,CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC,MAX_STRING_LEN
 
   implicit none
 
@@ -125,7 +125,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tmp_sourcearray
   integer :: irec,irec_local,itime,ier
-  character(len=150) :: adj_source_file
+  character(len=MAX_STRING_LEN) :: adj_source_file
 
   ! debug
   !print*,'reading adjoint sources local:',myrank,' - chunk ',it_sub_adj,'out of ',NSTEP_SUB_ADJ, &
@@ -211,7 +211,7 @@
   double precision :: junk
   integer :: icomp,itime
   integer :: ier
-  character(len=256) :: filename,adj_source_file
+  character(len=MAX_STRING_LEN) :: filename,adj_source_file
   character(len=3),dimension(NDIM) :: comp
   character(len=2) :: bic
 

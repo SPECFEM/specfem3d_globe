@@ -551,7 +551,7 @@
   double precision corpar(21,47)
   double precision aa,an,al,af,ac,vpv,vph,vsv,vsh,rho,red,a2l
   character(len=80) nullval
-  character(len=150), parameter :: Adrem119 = 'DATA/Montagner_model/Adrem119'
+  character(len=256), parameter :: Adrem119 = 'DATA/Montagner_model/Adrem119'
 
      nri = 47
 

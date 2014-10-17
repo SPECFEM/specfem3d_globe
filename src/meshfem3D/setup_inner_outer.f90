@@ -30,7 +30,7 @@
 
   use meshfem3D_par,only: &
     myrank,OUTPUT_FILES,IMAIN, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN
 
   use meshfem3D_par,only: ibool,is_on_a_slice_edge
 
@@ -46,7 +46,7 @@
   real :: percentage_edge
   integer :: ier,ispec,iinner,iouter
   ! debug file output
-  character(len=150) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
 
   ! stores inner / outer elements

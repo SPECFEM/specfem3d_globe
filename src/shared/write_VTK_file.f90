@@ -47,7 +47,7 @@
   integer, dimension(num_points_globalindices) :: points_globalindices
 
   ! file name
-  character(len=150) prname_file
+  character(len=MAX_STRING_LEN) prname_file
 
   integer :: i,iglob
 
@@ -104,7 +104,7 @@
   real(kind=CUSTOM_REAL), dimension(nglob) :: glob_values
 
   ! file name
-  character(len=150) prname_file
+  character(len=MAX_STRING_LEN) prname_file
 
   integer :: iglob
 
@@ -165,7 +165,7 @@
   integer :: ispec,i
 
   ! file name
-  character(len=150) prname_file
+  character(len=MAX_STRING_LEN) prname_file
 
   ! write source and receiver VTK files for Paraview
   !debug
@@ -240,7 +240,7 @@
   integer :: ispec,i
 
   ! file name
-  character(len=150) prname_file
+  character(len=MAX_STRING_LEN) prname_file
 
   ! write source and receiver VTK files for Paraview
   !debug
@@ -310,7 +310,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: glob_data
 
   ! file name
-  character(len=256) prname_file
+  character(len=MAX_STRING_LEN) prname_file
 
   ! local parameters
   integer :: ispec,i
@@ -438,7 +438,7 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: glob_data
 
   ! file name
-  character(len=256) prname_file
+  character(len=MAX_STRING_LEN) prname_file
 
   ! local parameters
   integer :: ispec,i,iproc,ier

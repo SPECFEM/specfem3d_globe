@@ -45,7 +45,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
 
   ! checks if anything to do
   if (UNDO_ATTENUATION ) return
@@ -178,7 +178,7 @@
   ! local parameters
   integer :: iteration_on_subset_tmp
   integer :: ier
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! transfers wavefields from GPU device to CPU host
   if (GPU_MODE) then

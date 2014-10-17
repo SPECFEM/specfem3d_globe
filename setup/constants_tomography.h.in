@@ -43,6 +43,10 @@
   ! if you prefer isotropic  (alpha,beta,rho) kernels, set this flag to true
   logical, parameter :: USE_ALPHA_BETA_RHO = .false.
 
+  ! region code 
+  ! (local version "_", globe version "_reg1_" for crust/mantle
+  character(len=8),parameter :: REG = "_reg1_"
+
 !!-----------------------------------------------------------
 !!
 !! Scaling laws
@@ -90,9 +94,9 @@
 
   ! normalized radii
   ! top at 50km depth
-  real(kind=CUSTOM_REAL),parameter :: R_top = (6371.0 - 50.0 ) / R_EARTH_KM ! shallow depth
+  real(kind=CUSTOM_REAL),parameter :: R_TOP = (6371.0 - 50.0 ) / R_EARTH_KM ! shallow depth
   ! bottom at 100km depth
-  real(kind=CUSTOM_REAL),parameter :: R_bottom = (6371.0 - 100.0 ) / R_EARTH_KM ! deep depth
+  real(kind=CUSTOM_REAL),parameter :: R_BOTTOM = (6371.0 - 100.0 ) / R_EARTH_KM ! deep depth
 
 !!-----------------------------------------------------------
 !!
@@ -115,7 +119,7 @@
   logical,parameter :: USE_SEPARATE_CG_STEPLENGTHS = .false.
 
   ! directory which contains kernels/gradients from former iteration
-  character(len=150),parameter :: kernel_old_dir = './KERNELS/OUTPUT_SUM.old'
+  character(len=MAX_STRING_LEN),parameter :: KERNEL_OLD_DIR = './KERNELS/OUTPUT_SUM.old'
 
 
 !!-----------------------------------------------------------
@@ -127,5 +131,5 @@
   integer, parameter :: MAX_NUM_NODES = 10000
 
   ! default list name
-  character(len=*), parameter :: kernel_file_list = './kernels_list.txt'
+  character(len=*), parameter :: KERNEL_FILE_LIST = './kernels_list.txt'
 

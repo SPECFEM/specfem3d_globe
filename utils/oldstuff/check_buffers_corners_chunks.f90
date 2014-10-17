@@ -51,7 +51,7 @@
 ! communication pattern for corners between chunks
   integer, dimension(:), allocatable :: iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners
 
-  character(len=150) filename,prname
+  character(len=MAX_STRING_LEN) filename,prname
 
 ! ************** PROGRAM STARTS HERE **************
 

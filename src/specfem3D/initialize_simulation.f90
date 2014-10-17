@@ -35,7 +35,7 @@
   ! local parameters
   integer :: sizeprocs
   integer :: ier
-  character(len=150) :: dummystring
+  character(len=MAX_STRING_LEN) :: dummystring
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.

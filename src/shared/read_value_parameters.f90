@@ -84,7 +84,7 @@
 
   character(len=*) value_to_read
   character(len=*) name
-  character(len=150) string_read
+  character(len=256) string_read
   integer ierr
 
   call param_read(string_read, len(string_read), name, len(name), ierr)

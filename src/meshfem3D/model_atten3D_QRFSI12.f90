@@ -122,7 +122,7 @@
   integer :: indexval,ll,mm
   double precision :: v1,v2
 
-  character(len=150) :: QRFSI12,QRFSI12_ref
+  character(len=MAX_STRING_LEN) :: QRFSI12,QRFSI12_ref
 
 ! read in QRFSI12
 ! hard-wire for now

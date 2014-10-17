@@ -146,7 +146,7 @@
   ! local parameters
   integer ::            ier,counter,i
   double precision ::    lon,lat,depth,dvs,vs
-  character(len=150) ::  line
+  character(len=256) ::  line
 
   !e.g. Mediterranean model
   ! counts entries
@@ -160,7 +160,7 @@
   endif
 
   ! first line is text and will be ignored
-  read(10,'(a150)') line
+  read(10,'(a256)') line
 
   ! counts number of data lines
   ier = 0
@@ -201,7 +201,7 @@
     write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
     call exit_mpi(0,"Error opening model ppm")
   endif
-  read(10,'(a150)') line   ! first line is text
+  read(10,'(a256)') line   ! first line is text
   counter = 0
   ier = 0
   do while (ier == 0 )

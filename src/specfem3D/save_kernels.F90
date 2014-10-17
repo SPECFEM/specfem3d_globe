@@ -436,7 +436,7 @@
         close(IOUT)
 
         ! Output these kernels as netcdf files -- one per processor.
-#if defined (CEM)
+#ifdef CEM
 
         call write_kernel_netcdf ('./OUTPUT_FILES/alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
         call write_kernel_netcdf ('./OUTPUT_FILES/alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
@@ -732,7 +732,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL),parameter :: scale_mass = RHOAV * (R_EARTH**3)
   integer :: irec_local
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
 
   !scale_mass = RHOAV * (R_EARTH**3)
 

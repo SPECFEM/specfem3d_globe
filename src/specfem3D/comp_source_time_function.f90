@@ -96,7 +96,7 @@
   implicit none
 
   integer :: RetCode, iterator
-  character (len=200) :: line
+  character(len=256) :: line
 
   ! Allocate the source time function array to the number of time steps.
   allocate ( stfArray_external (NSTEP) )

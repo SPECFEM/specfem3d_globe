@@ -55,7 +55,7 @@
 ! communication pattern for faces between chunks
   integer, dimension(:), allocatable :: iprocfrom_faces,iprocto_faces,imsg_type
 
-  character(len=150) filename,prname
+  character(len=MAX_STRING_LEN) filename,prname
 
 ! ************** PROGRAM STARTS HERE **************
 

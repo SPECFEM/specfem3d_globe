@@ -198,7 +198,7 @@
   integer, intent(in) :: ind
 
   ! local variables
-  character(len=150) :: eucrust
+  character(len=MAX_STRING_LEN) :: eucrust
   integer :: ier, ila, iln
 
   write(eucrust,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind

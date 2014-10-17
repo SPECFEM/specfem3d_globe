@@ -563,7 +563,7 @@
 
   integer :: iregion_code,myrank
 
-  character(len=150) :: LOCAL_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_PATH
 
   ! MPI interfaces
   integer :: num_interfaces,max_nibool_interfaces
@@ -583,7 +583,7 @@
     num_elem_colors
 
   ! local parameters
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
   integer :: ier
 
   ! create the name for the database of the current slide and region

@@ -82,7 +82,7 @@
   double precision rspl(NR),espl(NR),espl2(NR)
 
 ! processor identification
-  character(len=150) prname
+  character(len=MAX_STRING_LEN) prname
 
   integer iregion_code
 

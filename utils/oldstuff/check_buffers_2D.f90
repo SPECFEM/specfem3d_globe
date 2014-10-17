@@ -60,7 +60,7 @@
      xright_eta,yright_eta,zright_eta
 
 ! processor identification
-  character(len=150) prname,prname_other
+  character(len=MAX_STRING_LEN) prname,prname_other
 
 ! ************** PROGRAM STARTS HERE **************
 

@@ -96,7 +96,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   ! flags to know if we should read Vs and anisotropy arrays
   logical :: READ_KAPPA_MU,READ_TISO
 
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
 
   ! local parameters
   integer :: comm, lnspec, lnglob, local_dim

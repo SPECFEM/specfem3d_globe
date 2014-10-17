@@ -36,24 +36,45 @@ subroutine read_kernels_cg_tiso_old()
   real(kind=CUSTOM_REAL) :: min_vsv,min_vsh,max_vsv,max_vsh,min_eta,max_eta,min_bulk,max_bulk
   logical:: exist,exist_all,use_old_gradient_all
   integer :: ier
-  character(len=150) :: m_file, fname
+  character(len=MAX_STRING_LEN) :: m_file, fname
+
+  ! user output
+  if (myrank == 0) print*,'reading kernels...'
+
+  ! allocate arrays for storing kernels and perturbations
+  ! transversely isotropic arrays
+  allocate(kernel_bulk_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           kernel_betav_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           kernel_betah_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
+           kernel_eta_old(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+  if( ier /= 0 ) stop 'error allocating kernel arrays'
+
+  ! initializes arrays
+  kernel_bulk_old = 0.0_CUSTOM_REAL
+  kernel_betav_old = 0.0_CUSTOM_REAL
+  kernel_betah_old = 0.0_CUSTOM_REAL
+  kernel_eta_old = 0.0_CUSTOM_REAL
 
   ! checks if files are available:
-  write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_bulk_c_kernel_smooth.bin'
+  fname = 'bulk_c_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   inquire(file=trim(m_file),EXIST=exist)
   if (.not. exist) then
     print*,'Error file does not exist: ',trim(m_file)
     call exit_mpi(myrank,'file not exist')
   endif
   ! makes sure all processes have same flag
-  call lor_allreduce_l(exist,exist_all)
+  call any_all_l(exist,exist_all)
   if (.not. exist_all) then
     print*,'old kernels do not exist: ',trim(m_file)
     call exit_mpi(myrank,'flags old model not consistent')
   endif
 
   ! bulk kernel
-  write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_bulk_c_kernel_smooth.bin'
+  fname = 'bulk_c_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -63,7 +84,10 @@ subroutine read_kernels_cg_tiso_old()
   close(IIN)
 
   ! betav kernel
-  write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_bulk_betav_kernel_smooth.bin'
+  fname = 'bulk_betav_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -73,7 +97,10 @@ subroutine read_kernels_cg_tiso_old()
   close(IIN)
 
   ! betah kernel
-  write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_bulk_betah_kernel_smooth.bin'
+  fname = 'bulk_betah_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -83,7 +110,10 @@ subroutine read_kernels_cg_tiso_old()
   close(IIN)
 
   ! eta kernel
-  write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_eta_kernel_smooth.bin'
+  fname = 'eta_kernel_smooth'
+  write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
+  if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
@@ -106,6 +136,7 @@ subroutine read_kernels_cg_tiso_old()
   call max_all_cr(maxval(kernel_eta_old),max_eta)
 
   if (myrank == 0) then
+    print*
     print*,'old kernels:'
     print*,'  bulk min/max : ',min_bulk,max_bulk
     print*,'  betav min/max: ',min_vsv,max_vsv
@@ -114,18 +145,27 @@ subroutine read_kernels_cg_tiso_old()
     print*
   endif
 
+  ! statistics output
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernels_minmax',status='unknown')
+    write(IOUT,*) '#min_bulk #max_bulk #min_vsv #max_vsv #min_vsh #max_vsh #min_eta #max_eta'
+    write(IOUT,'(4e24.12)') min_bulk, max_bulk, min_vsv, max_vsv, min_vsh, max_vsh, min_eta, max_eta
+    close(IOUT)
+  endif
+
   ! reads in old gradient directions (phi_(n-1))
   USE_OLD_GRADIENT = .true.
 
   ! checks if files are available:
-  write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_dbulk_c.bin'
+  fname = 'dbulk_c'
+  write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   inquire(file=trim(m_file),EXIST=exist)
   if (.not. exist) then
     print*,'old kernel updates do not exist: ',trim(m_file)
     USE_OLD_GRADIENT = .false.
   endif
   ! makes sure all processes have same flag
-  call lor_allreduce_l(exist,exist_all)
+  call any_all_l(exist,exist_all)
   if (.not. exist_all) then
     if (myrank == 0) print*,'old kernel updates do not exist for all: ',trim(m_file)
     call exit_mpi(myrank,'flags old model not consistent')
@@ -135,7 +175,7 @@ subroutine read_kernels_cg_tiso_old()
   use_old_gradient_all = .false.
   call synchronize_all()
 
-  call lor_allreduce_l(USE_OLD_GRADIENT,use_old_gradient_all)
+  call any_all_l(USE_OLD_GRADIENT,use_old_gradient_all)
   if (.not. use_old_gradient_all) then
     print*,'old kernel updates exists, not consistent for all: ',trim(m_file)
     call exit_mpi(myrank,'flags old model not consistent')
@@ -143,9 +183,29 @@ subroutine read_kernels_cg_tiso_old()
 
   ! reads in old gradients
   if (USE_OLD_GRADIENT) then
+
+    ! user output
+    if (myrank == 0) print*,'reading old gradients...'
+
+    ! allocate arrays for storing old gradients
+    ! transversely isotropic arrays
+    allocate(model_dbulk_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
+             model_dbetav_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
+             model_dbetah_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
+             model_deta_old(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+    if( ier /= 0 ) stop 'error allocating gradient arrays'
+
+    ! initializes arrays
+    model_dbulk_old = 0.0_CUSTOM_REAL
+    model_dbetav_old = 0.0_CUSTOM_REAL
+    model_dbetah_old = 0.0_CUSTOM_REAL
+    model_deta_old = 0.0_CUSTOM_REAL
+
     ! bulk kernel
     fname = 'dbulk_c'
-    write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+    write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
+    if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
+
     open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
@@ -156,7 +216,9 @@ subroutine read_kernels_cg_tiso_old()
 
     ! betav kernel
     fname = 'dbetav'
-    write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+    write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
+    if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
+
     open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
@@ -167,7 +229,9 @@ subroutine read_kernels_cg_tiso_old()
 
     ! betah kernel
     fname = 'dbetah'
-    write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+    write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
+    if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
+
     open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
@@ -178,7 +242,9 @@ subroutine read_kernels_cg_tiso_old()
 
     ! eta kernel
     fname = 'deta'
-    write(m_file,'(a,i6.6,a)') trim(kernel_old_dir)//'/proc',myrank,'_reg1_'//trim(fname)//'.bin'
+    write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
+    if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
+
     open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
@@ -186,7 +252,6 @@ subroutine read_kernels_cg_tiso_old()
     endif
     read(IIN) model_deta_old(:,:,:,1:nspec)
     close(IIN)
-
 
     ! statistics
     call min_all_cr(minval(model_dbulk_old),min_bulk)
@@ -202,6 +267,7 @@ subroutine read_kernels_cg_tiso_old()
     call max_all_cr(maxval(model_deta_old),max_eta)
 
     if (myrank == 0) then
+      print*
       print*,'old kernel updates:'
       print*,'  bulk min/max : ',min_bulk,max_bulk
       print*,'  betav min/max: ',min_vsv,max_vsv
@@ -209,7 +275,17 @@ subroutine read_kernels_cg_tiso_old()
       print*,'  eta min/max  : ',min_eta,max_eta
       print*
     endif
+
+    ! statistics output
+    if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+      open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernel_updates_minmax',status='unknown')
+      write(IOUT,*) '#min_bulk #max_bulk #min_vsv #max_vsv #min_vsh #max_vsh #min_eta #max_eta'
+      write(IOUT,'(4e24.12)') min_bulk, max_bulk, min_vsv, max_vsv, min_vsh, max_vsh, min_eta, max_eta
+      close(IOUT)
+    endif
+
   endif ! USE_OLD_GRADIENT
+  call synchronize_all()
 
 end subroutine read_kernels_cg_tiso_old
 

@@ -79,7 +79,7 @@
   ! local parameters
   double precision :: min_tshift_cmt_original
   integer :: isource
-  character(len=256) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   integer :: ier
 
   ! makes smaller hdur for movies
@@ -565,11 +565,11 @@
 
   subroutine setup_sources_receivers_VTKfile()
 
-  use specfem_par,only: myrank,OUTPUT_FILES,NSOURCES,nrec
+  use specfem_par,only: myrank,OUTPUT_FILES,NSOURCES,nrec,MAX_STRING_LEN
   implicit none
 
   ! local parameters
-  character(len=256) :: filename,system_command,filename_new
+  character(len=MAX_STRING_LEN) :: filename,system_command,filename_new
 
   ! user output
   if (myrank == 0) then

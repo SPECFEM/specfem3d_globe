@@ -56,7 +56,7 @@
   integer :: ier
 
   ! processor identification
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   ! initializes
   ispecb1 = 0

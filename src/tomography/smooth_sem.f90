@@ -62,7 +62,7 @@ program smooth_sem_globe
 !              algorithm uses vector components in radial/horizontal direction
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT, &
-    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH
+    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH,MAX_STRING_LEN
 
   implicit none
 
@@ -81,8 +81,8 @@ program smooth_sem_globe
   integer, parameter :: NSLICES = 3
   integer ,parameter :: NSLICES2 = NSLICES * NSLICES
 
-  character(len=256) :: s_sigma_h, s_sigma_v
-  character(len=256) :: kernel_file_name, scratch_topo_dir, scratch_file_dir
+  character(len=MAX_STRING_LEN) :: s_sigma_h, s_sigma_v
+  character(len=MAX_STRING_LEN) :: kernel_file_name, scratch_topo_dir, scratch_file_dir
   integer :: sizeprocs,ier,myrank,ichunk, ixi, ieta, iglob
   integer :: islice(NSLICES2), islice0(NSLICES2), nums
   integer :: ival
@@ -93,9 +93,9 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: x0, y0, z0, norm, norm_h, norm_v, element_size_m, max_old, max_new
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor, exp_val
 
-  character(len=256) ::  ks_file, reg_name
-  character(len=256), dimension(NSLICES2) :: k_file
-  character(len=256), dimension(NSLICES2) :: solver_file
+  character(len=MAX_STRING_LEN) ::  ks_file, reg_name
+  character(len=MAX_STRING_LEN), dimension(NSLICES2) :: k_file
+  character(len=MAX_STRING_LEN), dimension(NSLICES2) :: solver_file
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX) :: ibool
   integer, dimension(NSPEC_MAX) :: idoubling

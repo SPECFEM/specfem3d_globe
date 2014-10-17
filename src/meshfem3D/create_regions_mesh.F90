@@ -61,7 +61,7 @@
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
     OCEANS
-#if defined (CEM)
+#ifdef CEM
   use meshfem3D_models_par,only: CEM_REQUEST
 #endif
 
@@ -189,7 +189,7 @@
                                      NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
 
     ! Only go into here if we're requesting xyz files for CEM
-#if defined (CEM)
+#ifdef CEM
     if (CEM_REQUEST) then
 
       call build_global_coordinates (nspec, nglob_theor, iregion_code)
@@ -1177,7 +1177,7 @@
   integer :: nglob
   integer :: ieoff,ilocnum,ier
   integer :: i,j,k,ispec
-  character(len=150) :: errmsg
+  character(len=MAX_STRING_LEN) :: errmsg
 
   ! allocate memory for arrays
   allocate(locval(npointot), &
@@ -1343,7 +1343,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
 
   ! structures used for ADIOS AVS/DX files
 !  type(avs_dx_global_t) :: avs_dx_global_vars
-!  character(len=150) :: reg_name, outputname, group_name
+!  character(len=MAX_STRING_LEN) :: reg_name, outputname, group_name
 !  integer :: comm, sizeprocs
 !  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
 

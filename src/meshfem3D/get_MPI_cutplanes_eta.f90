@@ -63,7 +63,7 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_eta_all
 
   ! processor identification
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   ! local parameters
   ! global element numbering

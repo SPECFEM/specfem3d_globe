@@ -398,7 +398,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine lor_allreduce_l(sendbuf, recvbuf)
+  subroutine any_all_l(sendbuf, recvbuf)
 
   use mpi
 
@@ -409,7 +409,7 @@
 
   call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_LOGICAL,MPI_LOR,MPI_COMM_WORLD,ier)
 
-  end subroutine lor_allreduce_l
+  end subroutine any_all_l
 
 !
 !-------------------------------------------------------------------------------------------------

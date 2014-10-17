@@ -35,7 +35,10 @@ subroutine write_new_model_perturbations_iso()
   implicit none
   real(kind=CUSTOM_REAL) :: min_vp,min_vs,max_vp,max_vs,min_rho,max_rho
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: total_model
-  character(len=150) :: m_file
+  character(len=MAX_STRING_LEN) :: m_file
+
+  ! user output
+  if (myrank == 0) print*,'writing out model perturbations...'
 
   ! vp relative perturbations
   ! logarithmic perturbation: log( v_new) - log( v_old) = log( v_new / v_old )
@@ -45,7 +48,9 @@ subroutine write_new_model_perturbations_iso()
   ! linear approximation: (v_new - v_old) / v_old
   !where( model_vp /= 0.0 ) total_model = ( model_vp_new - model_vp) / model_vp
 
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_dvpvp.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvpvp.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvpvp.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -55,7 +60,10 @@ subroutine write_new_model_perturbations_iso()
   ! vs relative perturbations
   total_model = 0.0_CUSTOM_REAL
   where( model_vs /= 0.0 ) total_model = log( model_vs_new / model_vs)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_dvsvs.bin'
+
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvsvs.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvsvs.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -65,7 +73,10 @@ subroutine write_new_model_perturbations_iso()
   ! rho relative model perturbations
   total_model = 0.0_CUSTOM_REAL
   where( model_rho /= 0.0 ) total_model = log( model_rho_new / model_rho)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_drhorho.bin'
+
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'drhorho.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'drhorho.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -73,11 +84,21 @@ subroutine write_new_model_perturbations_iso()
   call min_all_cr(minval(total_model),min_rho)
 
   if (myrank == 0) then
+    print*
     print*,'relative update:'
-    print*,'  dvp/vp min/max: ',min_vp,max_vp
-    print*,'  dvs/vs min/max: ',min_vs,max_vs
+    print*,'  dvp/vp min/max  : ',min_vp,max_vp
+    print*,'  dvs/vs min/max  : ',min_vs,max_vs
     print*,'  drho/rho min/max: ',min_rho,max_rho
     print*
+  endif
+  call synchronize_all()
+
+  ! statistics output
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_relative_vs_vp_rho',status='unknown')
+    write(IOUT,*) '#min_vs #max_vs #min_vp #max_vp #min_rho #max_rho'
+    write(IOUT,'(6e24.12)') min_vs,max_vs,min_vp,max_vp,min_rho,max_rho
+    close(IOUT)
   endif
 
 end subroutine write_new_model_perturbations_iso
@@ -96,7 +117,10 @@ subroutine write_new_model_perturbations_tiso()
     max_vpv,max_vph,max_vsv,max_vsh,min_eta,max_eta,min_rho,max_rho
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: total_model
 
-  character(len=150) :: m_file
+  character(len=MAX_STRING_LEN) :: m_file
+
+  ! user output
+  if (myrank == 0) print*,'writing out model perturbations...'
 
   ! vpv relative perturbations
   ! logarithmic perturbation: log( v_new) - log( v_old) = log( v_new / v_old )
@@ -106,7 +130,9 @@ subroutine write_new_model_perturbations_tiso()
   ! linear approximation: (v_new - v_old) / v_old
   !where( model_vpv /= 0.0 ) total_model = ( model_vpv_new - model_vpv) / model_vpv
 
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_dvpvvpv.bin'
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvpvvpv.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvpvvpv.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -116,7 +142,10 @@ subroutine write_new_model_perturbations_tiso()
   ! vph relative perturbations
   total_model = 0.0_CUSTOM_REAL
   where( model_vph /= 0.0 ) total_model = log( model_vph_new / model_vph)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_dvphvph.bin'
+
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvphvph.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvphvph.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -126,7 +155,10 @@ subroutine write_new_model_perturbations_tiso()
   ! vsv relative perturbations
   total_model = 0.0_CUSTOM_REAL
   where( model_vsv /= 0.0 ) total_model = log( model_vsv_new / model_vsv)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_dvsvvsv.bin'
+
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvsvvsv.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvsvvsv.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -136,7 +168,10 @@ subroutine write_new_model_perturbations_tiso()
   ! vsh relative perturbations
   total_model = 0.0_CUSTOM_REAL
   where( model_vsh /= 0.0 ) total_model = log( model_vsh_new / model_vsh)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_dvshvsh.bin'
+
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'dvshvsh.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'dvshvsh.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -146,7 +181,10 @@ subroutine write_new_model_perturbations_tiso()
   ! eta relative perturbations
   total_model = 0.0_CUSTOM_REAL
   where( model_eta /= 0.0 ) total_model = log( model_eta_new / model_eta)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_detaeta.bin'
+
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'detaeta.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'detaeta.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -156,7 +194,10 @@ subroutine write_new_model_perturbations_tiso()
   ! rho relative model perturbations
   total_model = 0.0_CUSTOM_REAL
   where( model_rho /= 0.0 ) total_model = log( model_rho_new / model_rho)
-  write(m_file,'(a,i6.6,a)') 'OUTPUT_MODEL/proc',myrank,'_reg1_drhorho.bin'
+
+  write(m_file,'(a,i6.6,a)') trim(OUTPUT_MODEL_DIR)//'proc',myrank,trim(REG)//'drhorho.bin'
+  if (myrank == 0) print*,'  ',trim(OUTPUT_MODEL_DIR)//'proc**'//trim(REG)//'drhorho.bin'
+
   open(IOUT,file=trim(m_file),form='unformatted',action='write')
   write(IOUT) total_model
   close(IOUT)
@@ -164,6 +205,7 @@ subroutine write_new_model_perturbations_tiso()
   call min_all_cr(minval(total_model),min_rho)
 
   if (myrank == 0) then
+    print*
     print*,'relative update:'
     print*,'  dvpv/vpv min/max: ',min_vpv,max_vpv
     print*,'  dvph/vph min/max: ',min_vph,max_vph
@@ -172,6 +214,17 @@ subroutine write_new_model_perturbations_tiso()
     print*,'  deta/eta min/max: ',min_eta,max_eta
     print*,'  drho/rho min/max: ',min_rho,max_rho
     print*
+  endif
+  call synchronize_all()
+
+  ! statistics output
+  if (PRINT_STATISTICS_FILES .and. myrank == 0) then
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_relative_vs_vp_rho',status='unknown')
+    write(IOUT,*) '#min_vsv #max_vsv #min_vsh #max_vsh #min_vpv #max_vpv #min_vph #max_vph ' &
+               // '#min_eta #max_eta #min_rho #max_rho'
+    write(IOUT,'(12e24.12)') min_vsv,max_vsv,min_vsh,max_vsh,min_vpv,max_vpv,min_vph,max_vph, &
+                            min_eta,max_eta,min_rho,max_rho
+    close(IOUT)
   endif
 
 end subroutine write_new_model_perturbations_tiso

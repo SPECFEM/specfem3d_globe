@@ -43,7 +43,7 @@
 
   double precision :: R80,R220,R670,RCMB,RICB
 
-  character(len=150) :: LOCAL_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_PATH
 
 !---
 !
@@ -144,7 +144,7 @@
 
   ! Enclose this in an ifdef so we don't link to netcdf
   ! if we don't need it.
-#if defined (CEM)
+#ifdef CEM
   if (CEM_REQUEST .or. CEM_ACCEPT) &
     call model_cem_broadcast(myrank)
 #endif
@@ -350,7 +350,7 @@
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
-#if defined (CEM)
+#ifdef CEM
                               ,ispec,i,j,k &
 #endif
                               )
@@ -360,7 +360,7 @@
 
   implicit none
 
-#if defined (CEM)
+#ifdef CEM
   ! CEM needs these to determine iglob
   integer, intent (in) :: ispec, i, j, k
 #endif
@@ -610,7 +610,7 @@
     endif
   endif ! ANISOTROPIC_3D_MANTLE
 
-#if defined (CEM)
+#ifdef CEM
   if (CEM_ACCEPT) then
     call request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
   endif

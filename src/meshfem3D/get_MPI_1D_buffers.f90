@@ -63,7 +63,7 @@
                                                          xyz1D_leftxi_righteta,xyz1D_rightxi_righteta
 
   ! processor identification
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   ! local parameters
   ! global element numbering

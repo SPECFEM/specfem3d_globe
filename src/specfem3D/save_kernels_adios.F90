@@ -83,7 +83,7 @@ subroutine define_kernel_adios_variables(adios_handle)
   ! Parameters
   integer(kind=8), intent(INOUT) :: adios_handle
   ! Variables
-  character(len=256) :: outputname, group_name
+  character(len=MAX_STRING_LEN) :: outputname, group_name
   integer(kind=8) :: adios_group, group_size_inc, adios_totalsize
   integer :: local_dim, comm, adios_err
 
