@@ -221,8 +221,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     ! sensitivity kernel / frechet derivative
     kernel = 0._CUSTOM_REAL
     write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
-                          //'/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
-
+                               //'/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
     if( ier /= 0 ) then
       write(*,*) '  kernel not found: ',trim(k_file)
@@ -241,8 +240,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     ! approximate Hessian
     hess = 0._CUSTOM_REAL
     write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
-                          //'/proc',myrank,trim(REG)//'hess_kernel.bin'
-
+                               //'/proc',myrank,trim(REG)//'hess_kernel.bin'
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
     if( ier /= 0 ) then
       write(*,*) '  hessian kernel not found: ',trim(k_file)
@@ -266,7 +264,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     if( USE_SOURCE_MASK ) then
       ! reads in mask
       write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
-                            //'/proc',myrank,trim(REG)//'mask_source.bin'
+                                 //'/proc',myrank,trim(REG)//'mask_source.bin'
       open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
       if( ier /= 0 ) then
         write(*,*) '  file not found: ',trim(k_file)
@@ -277,7 +275,6 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
 
       ! masks source elements
       kernel = kernel * mask_source
-
     endif
 
     ! precondition

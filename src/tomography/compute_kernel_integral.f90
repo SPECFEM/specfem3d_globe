@@ -392,9 +392,9 @@ subroutine compute_kernel_integral_tiso()
   if (myrank == 0) then
     print*,'integral kernels:'
     print*,'  bulk : ',integral_bulk_sum
-    print*,'  betav : ',integral_betav_sum
-    print*,'  betah : ',integral_betah_sum
-    print*,'  eta : ',integral_eta_sum
+    print*,'  betav: ',integral_betav_sum
+    print*,'  betah: ',integral_betah_sum
+    print*,'  eta  : ',integral_eta_sum
     print*
     print*,'  total volume:',volume_glob_sum
     print*
@@ -415,9 +415,9 @@ subroutine compute_kernel_integral_tiso()
 
     print*,'norm kernels:'
     print*,'  bulk : ',norm_bulk
-    print*,'  betav : ',norm_betav
-    print*,'  betah : ',norm_betah
-    print*,'  eta : ',norm_eta
+    print*,'  betav: ',norm_betav
+    print*,'  betah: ',norm_betah
+    print*,'  eta  : ',norm_eta
     print*
   endif
 
@@ -438,12 +438,12 @@ subroutine compute_kernel_integral_tiso()
     rms_rho = sqrt( rms_rho_sum / volume_glob_sum )
 
     print*,'root-mean square of perturbations:'
-    print*,'  vpv : ',rms_vpv
-    print*,'  vph : ',rms_vph
-    print*,'  vsv : ',rms_vsv
-    print*,'  vsh : ',rms_vsh
-    print*,'  eta : ',rms_eta
-    print*,'  rho : ',rms_rho
+    print*,'  vpv: ',rms_vpv
+    print*,'  vph: ',rms_vph
+    print*,'  vsv: ',rms_vsv
+    print*,'  vsh: ',rms_vsh
+    print*,'  eta: ',rms_eta
+    print*,'  rho: ',rms_rho
     print*
   endif
   call synchronize_all()
@@ -635,8 +635,8 @@ subroutine compute_kernel_integral_tiso_iso()
     norm_rho = sqrt(norm_rho_sum)
 
     print*,'norm kernels:'
-    print*,'  a : ',norm_bulk
-    print*,'  beta : ',norm_beta
+    print*,'  a   : ',norm_bulk
+    print*,'  beta: ',norm_beta
     print*,'  rho : ',norm_rho
     print*
   endif
@@ -658,12 +658,12 @@ subroutine compute_kernel_integral_tiso_iso()
     rms_rho = sqrt( rms_rho_sum / volume_glob_sum )
 
     print*,'root-mean square of perturbations:'
-    print*,'  vpv : ',rms_vpv
-    print*,'  vph : ',rms_vph
-    print*,'  vsv : ',rms_vsv
-    print*,'  vsh : ',rms_vsh
-    print*,'  eta : ',rms_eta
-    print*,'  rho : ',rms_rho
+    print*,'  vpv: ',rms_vpv
+    print*,'  vph: ',rms_vph
+    print*,'  vsv: ',rms_vsv
+    print*,'  vsh: ',rms_vsh
+    print*,'  eta: ',rms_eta
+    print*,'  rho: ',rms_rho
     print*
   endif
   call synchronize_all()

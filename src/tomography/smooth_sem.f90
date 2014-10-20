@@ -31,19 +31,19 @@
 ! where it smooths files with a given input kernel name:
 !
 ! Usage:
-!   ./smooth_sem_globe sigma_h(km) sigma_v(km) kernel_file_name scratch_file_dir scratch_topo_dir
+!   ./xsmooth_sem sigma_h(km) sigma_v(km) kernel_file_name scratch_file_dir topo_dir
 !   e.g.
-!   ./smooth_sem_globe 160 10 bulk_c_kernel OUTPUT_SUM/ topo/
+!   ./xsmooth_sem 160 10 bulk_c_kernel OUTPUT_SUM/ topo/
 !
 ! where:
 !   sigma_h                - gaussian width for horizontal smoothing (in km)
 !   sigma_v                - gaussian width for vertical smoothing (in km)
-!   kernel_file_name  - takes file with this kernel name,
-!                                     e.g. "bulk_c_kernel"
-!   scratch_file_dir     - directory containing kernel files,
+!   kernel_file_name       - takes file with this kernel name,
+!                                      e.g. "bulk_c_kernel"
+!   scratch_file_dir       - directory containing kernel files,
 !                                      e.g. proc***_reg1_bulk_c_kernel.bin
-!   topo_dir                - directory containing mesh topo files:
-!                                       proc***_solver_data.bin
+!   topo_dir               - directory containing mesh topo files:
+!                                      e.g. proc***_solver_data.bin
 ! outputs:
 !    puts the resulting, smoothed kernel files into the same directory as scratch_file_dir/
 !    with a file ending "proc***_kernel_smooth.bin"
@@ -62,7 +62,7 @@ program smooth_sem_globe
 !              algorithm uses vector components in radial/horizontal direction
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT, &
-    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH,MAX_STRING_LEN
+    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS
 
   implicit none
 
@@ -81,21 +81,20 @@ program smooth_sem_globe
   integer, parameter :: NSLICES = 3
   integer ,parameter :: NSLICES2 = NSLICES * NSLICES
 
-  character(len=MAX_STRING_LEN) :: s_sigma_h, s_sigma_v
-  character(len=MAX_STRING_LEN) :: kernel_file_name, scratch_topo_dir, scratch_file_dir
-  integer :: sizeprocs,ier,myrank,ichunk, ixi, ieta, iglob
-  integer :: islice(NSLICES2), islice0(NSLICES2), nums
-  integer :: ival
+  character(len=MAX_STRING_LEN) :: arg(5)
+  character(len=MAX_STRING_LEN) :: kernel_filename, topo_dir, scratch_file_dir
+  character(len=MAX_STRING_LEN) :: prname_lp
+  character(len=MAX_STRING_LEN) :: local_data_file
+
+  character(len=MAX_STRING_LEN) ::  ks_file
+  character(len=20) ::  reg_name
+
+  integer :: islice(NSLICES2), islice0(NSLICES2)
+  integer :: sizeprocs,ier,myrank,ichunk, ixi, ieta, iglob,nums,ival
 
   real(kind=CUSTOM_REAL) :: sigma_h, sigma_h2, sigma_h3, sigma_v, sigma_v2, sigma_v3
-
-  real(kind=CUSTOM_REAL) :: element_size
   real(kind=CUSTOM_REAL) :: x0, y0, z0, norm, norm_h, norm_v, element_size_m, max_old, max_new
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor, exp_val
-
-  character(len=MAX_STRING_LEN) ::  ks_file, reg_name
-  character(len=MAX_STRING_LEN), dimension(NSLICES2) :: k_file
-  character(len=MAX_STRING_LEN), dimension(NSLICES2) :: solver_file
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX) :: ibool
   integer, dimension(NSPEC_MAX) :: idoubling
@@ -108,10 +107,11 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX) :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_MAX) :: x, y, z
+  real(kind=CUSTOM_REAL), dimension(NGLOB_MAX) :: xstore, ystore, zstore
   real(kind=CUSTOM_REAL), dimension(NSPEC_MAX) :: cx0, cy0, cz0, cx, cy, cz
 
-  integer :: i,j,k,ispec,iproc,ispec2,nspec(NSLICES2),nglob(NSLICES2)
+  integer :: nspec(NSLICES2),nglob(NSLICES2)
+  integer :: i,j,k,ispec,iproc,ispec2,inum
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll, wxgll
@@ -122,6 +122,8 @@ program smooth_sem_globe
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
+  real(kind=CUSTOM_REAL) :: element_size
+  real(kind=CUSTOM_REAL) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
   ! ============ program starts here =====================
 
@@ -130,30 +132,50 @@ program smooth_sem_globe
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  if (myrank == 0) print*,"smooth:"
+  if (myrank == 0) print*,"smooth_sem:"
   call synchronize_all()
 
-  ! arguments
-  call getarg(1,s_sigma_h)
-  call getarg(2,s_sigma_v)
-  call getarg(3,kernel_file_name)
-  call getarg(4,scratch_file_dir)
-  call getarg(5,scratch_topo_dir)
+  ! reads arguments
+  do i = 1, 5
+    call get_command_argument(i,arg(i))
+    if (i <= 5 .and. trim(arg(i)) == '') then
+      if (myrank == 0 ) then
+        print *, 'Usage: '
+        print *, '        xsmooth_sem sigma_h sigma_v kernel_file_name scratch_file_dir/ topo_dir/'
+        print *
+        print *, 'with '
+        print *, ' sigma_h                - gaussian width for horizontal smoothing (in km)'
+        print *, ' sigma_v                - gaussian width for vertical smoothing (in km)'
+        print *, ' kernel_file_name       - takes file with this kernel name'
+        print *, ' scratch_file_dir       - directory containing kernel files'
+        print *, '                            e.g. proc***_reg1_bulk_c_kernel.bin'
+        print *, ' topo_dir               - directory containing mesh topo files:'
+        print *, '                            e.g. proc***_solver_data.bin'
+        print *
+        print *, ' possible kernel_file_names are: '
+        print *, '   "alpha_kernel", "beta_kernel", .., "rho_vp", "rho_vs", "kappastore", "mustore", etc.'
+        print *
+        print *, '   that are stored in the local directory scratch_file_dir/ '
+        print *, '   as real(kind=CUSTOM_REAL) filename(NGLLX,NGLLY,NGLLZ,NSPEC_AB) in filename.bin'
+        print *
+        print *, ' outputs smoothed files to scratch_file_dir/ '
+        print *
+      endif
+      call synchronize_all()
+      stop ' Reenter command line options'
+    endif
+  enddo
 
-  if ( trim(s_sigma_h) == '' .or. trim(s_sigma_v) == '' &
-    .or. trim(kernel_file_name) == '' &
-    .or. trim(scratch_file_dir) == '' &
-    .or. trim(scratch_topo_dir) == '') then
-    call exit_MPI(myrank,'Usage: smooth_sem_globe sigma_h(km) sigma_v(km) kernel_file_name scratch_file_dir scratch_topo_dir')
-  endif
-
-  ! read in parameter information
-  read(s_sigma_h,*) sigma_h
-  read(s_sigma_v,*) sigma_v
+  ! gets arguments
+  read(arg(1),*) sigma_h
+  read(arg(2),*) sigma_v
+  kernel_filename = arg(3)
+  scratch_file_dir= arg(4)
+  topo_dir = arg(5)
 
   ! checks if basin code or global code: global code uses nchunks /= 0
   if (NCHUNKS == 0) stop 'Error nchunks'
-  if (sizeprocs /= NPROC_XI*NPROC_ETA*NCHUNKS) call exit_mpi(myrank,'Error total number of slices')
+  if (sizeprocs /= NPROCTOT_VAL) call exit_mpi(myrank,'Error total number of slices')
 
   ! crust/mantle region smoothing only
   reg_name='_reg1_'
@@ -163,15 +185,29 @@ program smooth_sem_globe
   ! see values_from_mesher.h:
   !   average size of a spectral element in km = ...
   !   e.g. nproc 12x12, nex 192: element_size = 52.122262
-  element_size = real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI_VAL)
+  if (NCHUNKS_VAL == 6 ) then
+    element_size = TWO_PI * dble(4) * R_EARTH_KM / dble(NEX_XI_VAL)
+  else
+    ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES_VAL * DEGREES_TO_RADIANS
+    ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES_VAL * DEGREES_TO_RADIANS
+    element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI_VAL,ANGULAR_WIDTH_ETA_RAD/NEX_ETA_VAL ) * R_EARTH_KM
+  endif
 
   ! user output
   if (myrank == 0) then
     print*,"defaults:"
-    print*,"  NPROC_XI , NPROC_ETA: ",NPROC_XI,NPROC_ETA
-    print*,"  NCHUNKS                         : ",NCHUNKS
+    print*,"  NPROC_XI , NPROC_ETA       : ",NPROC_XI,NPROC_ETA
+    print*,"  NCHUNKS                    : ",NCHUNKS
     print*,"  element size on surface(km): ",element_size
-    print*,"  smoothing sigma_h , sigma_v: ",sigma_h,sigma_v
+    print*
+    print*,"  smoothing sigma_h , sigma_v                : ",sigma_h,sigma_v
+    ! scalelength: approximately S ~ sigma * sqrt(8.0) for a gaussian smoothing
+    print*,"  smoothing scalelengths horizontal, vertical: ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
+    print*
+    print*,"  data name      : ",trim(kernel_filename)
+    print*,"  input file dir : ",trim(scratch_file_dir)
+    print*,"  topo dir       : ",trim(topo_dir)
+    print*
   endif
   ! synchronizes
   call synchronize_all()
@@ -187,6 +223,10 @@ program smooth_sem_globe
 
   sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for gaussian distribution with standard variance sigma
   sigma_v2 = 2.0 * sigma_v ** 2
+
+  ! checks
+  if( sigma_h2 < 1.e-18 ) stop 'Error sigma_h2 zero, must be non-zero'
+  if( sigma_v2 < 1.e-18 ) stop 'Error sigma_v2 zero, must be non-zero'
 
   ! search radius
   sigma_h3 = 3.0  * sigma_h + element_size_m
@@ -205,7 +245,6 @@ program smooth_sem_globe
   norm_v = sqrt(2.0*PI) * sigma_v
   norm   = norm_h * norm_v
   !norm = (sqrt(2.0*PI) * sigma) ** 3 ! for sigma_h = sigma_v = sigma
-
 
   ! GLL points weights
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
@@ -241,26 +280,24 @@ program smooth_sem_globe
 
   if (myrank == 0) then
     print *,'slices:',nums
+    print *,'  rank:',myrank,'  smoothing slices'
     print *,'  ',islice(1:nums)
     print *
   endif
 
   ! read in the topology files of the current and neighboring slices
-  do i = 1, nums
-    write(k_file(i),'(a,i6.6,a)') &
-      trim(scratch_file_dir)//'/proc',islice(i),trim(reg_name)//trim(kernel_file_name)//'.bin'
-
-    write(solver_file(i),'(a,i6.6,a)') &
-      trim(scratch_topo_dir)//'/proc',islice(i),trim(reg_name)//'solver_data.bin'
-
-    nspec(i) = NSPEC_MAX
-    nglob(i) = NGLOB_MAX
+  do inum = 1, nums
+    nspec(inum) = NSPEC_MAX
+    nglob(inum) = NGLOB_MAX
   enddo
 
   ! point locations
-  open(IIN,file=trim(solver_file(1)),status='old',form='unformatted',iostat=ier)
+  write(prname_lp,'(a,i6.6,a)') &
+      trim(topo_dir)//'/proc',myrank,trim(reg_name)//'solver_data.bin'
+
+  open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
-    print*,'Error opening file: ',trim(solver_file(1))
+    print*,'Error opening file: ',trim(prname_lp)
     call exit_mpi(myrank,'Error opening solver_data.bin file')
   endif
 
@@ -273,9 +310,9 @@ program smooth_sem_globe
   if (ival /= NGLOB_MAX) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bin')
 
   ! node locations
-  read(IIN) x(1:nglob(1))
-  read(IIN) y(1:nglob(1))
-  read(IIN) z(1:nglob(1))
+  read(IIN) xstore(1:nglob(1))
+  read(IIN) ystore(1:nglob(1))
+  read(IIN) zstore(1:nglob(1))
 
   read(IIN) ibool(:,:,:,1:nspec(1))
   read(IIN) idoubling(1:nspec(1))
@@ -298,9 +335,9 @@ program smooth_sem_globe
       do j = 1, NGLLY
         do i = 1, NGLLX
           iglob = ibool(i,j,k,ispec)
-          xl(i,j,k,ispec) = x(iglob)
-          yl(i,j,k,ispec) = y(iglob)
-          zl(i,j,k,ispec) = z(iglob)
+          xl(i,j,k,ispec) = xstore(iglob)
+          yl(i,j,k,ispec) = ystore(iglob)
+          zl(i,j,k,ispec) = zstore(iglob)
 
           ! build jacobian
           ! get derivatives of ux, uy and uz with respect to x, y and z
@@ -319,9 +356,6 @@ program smooth_sem_globe
                         + xizl*(etaxl*gammayl-etayl*gammaxl))
 
           jacobian(i,j,k,ispec) = jacobianl
-
-
-
         enddo
       enddo
     enddo
@@ -330,34 +364,43 @@ program smooth_sem_globe
     cz0(ispec) = (zl(1,1,1,ispec) + zl(NGLLX,NGLLY,NGLLZ,ispec))/2.0
   enddo
 
-  if (myrank == 0) write(*,*) 'start looping over elements and points for smoothing ...'
+  if (myrank == 0) print*, 'start looping over elements and points for smoothing ...'
 
-  ! smoothed kernel file name
-  write(ks_file,'(a,i6.6,a)') trim(scratch_file_dir)//'/proc',myrank, &
-                          trim(reg_name)//trim(kernel_file_name)//'_smooth.bin'
+  ! synchronizes
+  call synchronize_all()
 
-  tk = 0.0
-  bk = 0.0
-  kernel_smooth=0.0
+  tk = 0.0_CUSTOM_REAL
+  bk = 0.0_CUSTOM_REAL
 
-  ! loop over all the slices
-  do iproc = 1, nums
+  ! loop over all slices
+  do inum = 1, nums
+
+    iproc = islice(inum)
+
+    if( myrank == 0 ) print*,'  reading slice:',iproc
+
+    ! neighbor database file
+    write(prname_lp,'(a,i6.6,a)') &
+      trim(topo_dir)//'/proc',iproc,trim(reg_name)//'solver_data.bin'
 
     ! read in the topology, kernel files, calculate center of elements
     ! point locations
     ! given in cartesian coordinates
-    open(IIN,file=trim(solver_file(iproc)),status='old',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_mpi(myrank,'Error opening slices in solver_data.bin file')
+    open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print*,'Error could not open database file: ',trim(prname_lp)
+      call exit_mpi(myrank,'Error opening slices in solver_data.bin file')
+    endif
 
     read(IIN) ival  ! nspec
     read(IIN) ival  ! nglob
-    read(IIN) x(1:nglob(iproc))
-    read(IIN) y(1:nglob(iproc))
-    read(IIN) z(1:nglob(iproc))
+    read(IIN) xstore(1:nglob(inum))
+    read(IIN) ystore(1:nglob(inum))
+    read(IIN) zstore(1:nglob(inum))
 
-    read(IIN) ibool(:,:,:,1:nspec(iproc))
-    read(IIN) idoubling(1:nspec(iproc))
-    read(IIN) ispec_is_tiso(1:nspec(iproc))
+    read(IIN) ibool(:,:,:,1:nspec(inum))
+    read(IIN) idoubling(1:nspec(inum))
+    read(IIN) ispec_is_tiso(1:nspec(inum))
 
     read(IIN) xix
     read(IIN) xiy
@@ -371,7 +414,7 @@ program smooth_sem_globe
     close(IIN)
 
     ! get the location of the center of the elements
-    do ispec = 1, nspec(iproc)
+    do ispec = 1, nspec(inum)
       do k = 1, NGLLZ
         do j = 1, NGLLY
           do i = 1, NGLLX
@@ -396,47 +439,48 @@ program smooth_sem_globe
       enddo
     enddo
 
-    ! kernel file
-    open(IIN,file=k_file(iproc),status='old',form='unformatted',iostat=ier)
-    if (ier /= 0) call exit_mpi(myrank,'Error opening kernel file')
-
-    read(IIN) kernel(:,:,:,1:nspec(iproc))
-    close(IIN)
-
-
-    ! get the global maximum value of the original kernel file
-    if (iproc == 1) then
-      call max_all_cr(maxval(abs(kernel(:,:,:,1:nspec(iproc)))), max_old)
-    endif
-
     ! calculate element center location
-    do ispec2 = 1, nspec(iproc)
+    do ispec = 1, nspec(inum)
       do k = 1, NGLLZ
         do j = 1, NGLLY
           do i = 1, NGLLX
-            iglob = ibool(i,j,k,ispec2)
-            xx(i,j,k,ispec2) = x(iglob)
-            yy(i,j,k,ispec2) = y(iglob)
-            zz(i,j,k,ispec2) = z(iglob)
+            iglob = ibool(i,j,k,ispec)
+            xx(i,j,k,ispec) = xstore(iglob)
+            yy(i,j,k,ispec) = ystore(iglob)
+            zz(i,j,k,ispec) = zstore(iglob)
           enddo
         enddo
       enddo
-      cx(ispec2) = (xx(1,1,1,ispec2) + xx(NGLLX,NGLLZ,NGLLY,ispec2))/2.0
-      cy(ispec2) = (yy(1,1,1,ispec2) + yy(NGLLX,NGLLZ,NGLLY,ispec2))/2.0
-      cz(ispec2) = (zz(1,1,1,ispec2) + zz(NGLLX,NGLLZ,NGLLY,ispec2))/2.0
+      cx(ispec) = (xx(1,1,1,ispec) + xx(NGLLX,NGLLY,NGLLZ,ispec))/2.0
+      cy(ispec) = (yy(1,1,1,ispec) + yy(NGLLX,NGLLY,NGLLZ,ispec))/2.0
+      cz(ispec) = (zz(1,1,1,ispec) + zz(NGLLX,NGLLY,NGLLZ,ispec))/2.0
     enddo
+
+    ! data file
+    write(local_data_file,'(a,i6.6,a)') &
+      trim(scratch_file_dir)//'/proc',iproc,trim(reg_name)//trim(kernel_filename)//'.bin'
+
+    open(IIN,file=trim(local_data_file),status='old',form='unformatted',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening data file: ',trim(local_data_file)
+      call exit_mpi(myrank,'Error opening data file')
+    endif
+
+    read(IIN) kernel(:,:,:,1:nspec(inum))
+    close(IIN)
+
+    ! get the global maximum value of the original kernel file
+    if (iproc == myrank) max_old = maxval(abs(kernel(:,:,:,1:nspec(inum))))
 
     ! loop over elements to be smoothed in the current slice
     do ispec = 1, nspec(1)
-
       ! --- only double loop over the elements in the search radius ---
-      do ispec2 = 1, nspec(iproc)
+      do ispec2 = 1, nspec(inum)
 
         ! calculates horizontal and vertical distance between two element centers
-
         ! vector approximation
         call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
-                          cx(ispec2),cy(ispec2),cz(ispec2))
+                              cx(ispec2),cy(ispec2),cz(ispec2))
 
         ! note: distances and sigmah, sigmav are normalized by R_EARTH
 
@@ -462,7 +506,7 @@ program smooth_sem_globe
 
               ! calculate weights based on gaussian smoothing
               call smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
-                      xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+                                         xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
               ! adds GLL integration weights
               exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)
@@ -490,10 +534,16 @@ program smooth_sem_globe
       enddo ! (ispec2)
     enddo   ! (ispec)
   enddo     ! islice
+  if( myrank == 0 ) print *
 
-  if (myrank == 0) write(*,*) 'Done with integration ...'
+  ! normalizes/scaling factor
+  if (myrank == 0) then
+    print*, 'Scaling values: min/max = ',minval(bk),maxval(bk)
+    print*, '                norm    = ',norm
+  endif
 
   ! compute the smoothed kernel values
+  kernel_smooth(:,:,:,:) = 0.0_CUSTOM_REAL
   do ispec = 1, nspec(1)
     do k = 1, NGLLZ
       do j = 1, NGLLY
@@ -511,43 +561,47 @@ program smooth_sem_globe
           ! normalizes smoothed kernel values by integral value of gaussian weighting
           kernel_smooth(i,j,k,ispec) = tk(i,j,k,ispec) / bk(i,j,k,ispec)
 
-          ! checks number
-          if (isNaN(kernel_smooth(i,j,k,ispec))) then
+          ! checks number (isNaN check)
+          if (kernel_smooth(i,j,k,ispec) /= kernel_smooth(i,j,k,ispec)) then
             print*,'Error kernel_smooth NaN: ',kernel_smooth(i,j,k,ispec)
             print*,'rank:',myrank
             print*,'i,j,k,ispec:',i,j,k,ispec
             print*,'tk: ',tk(i,j,k,ispec),'bk:',bk(i,j,k,ispec)
-            call exit_MPI('Error NaN')
+            call exit_MPI('Error kernel value is NaN')
           endif
-
         enddo
       enddo
     enddo
   enddo
-  if (myrank == 0) write(*,*) '  norm: ',norm
+
+  max_new = maxval(abs(kernel_smooth(:,:,:,1:nspec(1))))
 
   ! file output
+  ! smoothed kernel file name
+  write(ks_file,'(a,i6.6,a)') trim(scratch_file_dir)//'/proc',myrank, &
+                              trim(reg_name)//trim(kernel_filename)//'_smooth.bin'
+
   open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',iostat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
 
   ! Note: output the following instead of kernel_smooth(:,:,:,1:nspec(1)) to create files of the same sizes
   write(IOUT) kernel_smooth(:,:,:,:)
   close(IOUT)
-
-  if (myrank == 0) print *,'  written:',trim(ks_file)
-
+  if (myrank == 0) print *,'written: ',trim(ks_file)
 
   ! the maximum value for the smoothed kernel
-  call max_all_cr(maxval(abs(kernel_smooth(:,:,:,1:nspec(1)))), max_new)
-
+  norm = max_old
+  call max_all_cr(norm, max_old)
+  norm = max_new
+  call max_all_cr(norm, max_new)
   if (myrank == 0) then
     print *
     print *, 'Maximum data value before smoothing = ', max_old
-    print *, 'Maximum data value after smoothing = ', max_new
+    print *, 'Maximum data value after smoothing  = ', max_new
     print *
   endif
 
-! stop all the MPI processes, and exit
+  ! stop all the processes, and exit
   call finalize_mpi()
 
 end program smooth_sem_globe

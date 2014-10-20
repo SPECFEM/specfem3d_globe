@@ -122,6 +122,9 @@
   double precision r_corner,theta_corner,phi_corner,lat,long,colat_corner
   integer :: ier
 
+  integer :: num_elem_gc,num_gll_gc
+  double precision :: avg_dist_deg,avg_dist_km,avg_element_size
+
 !! DK DK for UNDO_ATTENUATION
   integer :: saved_SIMULATION_TYPE
   integer :: number_of_dumpings_to_do
@@ -434,14 +437,31 @@
 
   endif  ! regional chunk
 
+  ! mesh averages
+  if (NCHUNKS == 6 ) then
+    ! global mesh, chunks of 90 degrees
+    num_elem_gc = 4 * NEX_XI
+    num_gll_gc = 4*NEX_XI*(NGLLX-1)
+    avg_dist_deg = 360.d0 / dble(4) / dble(NEX_XI*(NGLLX-1))
+    avg_dist_km = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI*(NGLLX-1))
+    avg_element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI)
+  else
+    ! regional mesh, variable chunk sizes
+    num_elem_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI )
+    num_gll_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI *(NGLLX-1) )
+    avg_dist_deg = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) / dble(NGLLX-1)
+    avg_dist_km = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM / dble(NGLLX-1)
+    avg_element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM
+  endif
+
   write(IOUT,*) '! resolution of the mesh at the surface:'
   write(IOUT,*) '! -------------------------------------'
   write(IOUT,*) '!'
-  write(IOUT,*) '! spectral elements along a great circle = ',4*NEX_XI
-  write(IOUT,*) '! GLL points along a great circle = ',4*NEX_XI*(NGLLX-1)
-  write(IOUT,*) '! average distance between points in degrees = ',360./real(4*NEX_XI*(NGLLX-1))
-  write(IOUT,*) '! average distance between points in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI*(NGLLX-1))
-  write(IOUT,*) '! average size of a spectral element in km = ',real(TWO_PI*R_EARTH/1000.d0)/real(4*NEX_XI)
+  write(IOUT,*) '! spectral elements along a great circle = ',num_elem_gc
+  write(IOUT,*) '! GLL points along a great circle = ',num_gll_gc
+  write(IOUT,*) '! average distance between points in degrees = ',real(avg_dist_deg)
+  write(IOUT,*) '! average distance between points in km = ',real(avg_dist_km)
+  write(IOUT,*) '! average size of a spectral element in km = ',real(avg_element_size)
   write(IOUT,*) '!'
   write(IOUT,*)
 
@@ -757,10 +777,18 @@
 #else
   write(IOUT,*) 'logical, parameter :: FORCE_VECTORIZATION_VAL = .false.'
 #endif
+  write(IOUT,*)
 
 !! DK DK for UNDO_ATTENUATION
-  write(IOUT,*)
   write(IOUT,*) 'integer, parameter :: NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
+  write(IOUT,*)
+
+  ! mesh geometry
+  write(IOUT,*) 'double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL = ',ANGULAR_WIDTH_ETA_IN_DEGREES
+  write(IOUT,*) 'double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL = ',ANGULAR_WIDTH_XI_IN_DEGREES
+  write(IOUT,*) 'double precision, parameter :: CENTER_LATITUDE_IN_DEGREES_VAL = ',CENTER_LATITUDE_IN_DEGREES
+  write(IOUT,*) 'double precision, parameter :: CENTER_LONGITUDE_IN_DEGREES_VAL = ',CENTER_LONGITUDE_IN_DEGREES
+  write(IOUT,*) 'double precision, parameter :: GAMMA_ROTATION_AZIMUTH_VAL = ',GAMMA_ROTATION_AZIMUTH
 
   close(IOUT)
 

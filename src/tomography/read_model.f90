@@ -335,6 +335,6 @@ subroutine read_model_database()
   close(IIN)
 
   deallocate(dummy_idoubling)
-  
+
 end subroutine read_model_database
 

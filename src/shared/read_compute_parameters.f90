@@ -281,10 +281,10 @@
     stop 'absorbing conditions not supported for three chunks yet'
 
   if (ATTENUATION_3D .and. .not. ATTENUATION) &
-    stop 'need ATTENUATION to use ATTENUATION_3D'
+    stop 'Please set ATTENUATION to .true. in Par_file to use ATTENUATION_3D'
 
   if (SAVE_TRANSVERSE_KL_ONLY .and. .not. ANISOTROPIC_KL) &
-    stop 'need ANISOTROPIC_KL to use SAVE_TRANSVERSE_KL_ONLY'
+    stop 'Please set ANISOTROPIC_KL to .true. in Par_file to use SAVE_TRANSVERSE_KL_ONLY'
 
   if (PARTIAL_PHYS_DISPERSION_ONLY .and. UNDO_ATTENUATION) &
     stop 'cannot have both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION, they are mutually exclusive'

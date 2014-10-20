@@ -929,7 +929,6 @@
               ! adds GLL integration weights
               exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)
 
-
               ! smoothed kernel values
               tk_rho(i,j,k,ispec) = tk_rho(i,j,k,ispec) + sum(exp_val(:,:,:) * ks_rho(:,:,:,ispec2))
               tk_kv(i,j,k,ispec) = tk_kv(i,j,k,ispec) + sum(exp_val(:,:,:) * ks_kv(:,:,:,ispec2))
