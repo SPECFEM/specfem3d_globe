@@ -783,12 +783,13 @@
   write(IOUT,*) 'integer, parameter :: NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
   write(IOUT,*)
 
-  ! mesh geometry
-  write(IOUT,*) 'double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL = ',ANGULAR_WIDTH_ETA_IN_DEGREES
-  write(IOUT,*) 'double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL = ',ANGULAR_WIDTH_XI_IN_DEGREES
-  write(IOUT,*) 'double precision, parameter :: CENTER_LATITUDE_IN_DEGREES_VAL = ',CENTER_LATITUDE_IN_DEGREES
-  write(IOUT,*) 'double precision, parameter :: CENTER_LONGITUDE_IN_DEGREES_VAL = ',CENTER_LONGITUDE_IN_DEGREES
-  write(IOUT,*) 'double precision, parameter :: GAMMA_ROTATION_AZIMUTH_VAL = ',GAMMA_ROTATION_AZIMUTH
+  ! mesh geometry (with format specifier to avoid writing double values on a newline)
+  write(IOUT,'(1x,a,f12.6)') 'double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL = ',ANGULAR_WIDTH_ETA_IN_DEGREES
+  write(IOUT,'(1x,a,f12.6)') 'double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL = ',ANGULAR_WIDTH_XI_IN_DEGREES
+  write(IOUT,'(1x,a,f12.6)') 'double precision, parameter :: CENTER_LATITUDE_IN_DEGREES_VAL = ',CENTER_LATITUDE_IN_DEGREES
+  write(IOUT,'(1x,a,f12.6)') 'double precision, parameter :: CENTER_LONGITUDE_IN_DEGREES_VAL = ',CENTER_LONGITUDE_IN_DEGREES
+  write(IOUT,'(1x,a,f12.6)') 'double precision, parameter :: GAMMA_ROTATION_AZIMUTH_VAL = ',GAMMA_ROTATION_AZIMUTH
+  write(IOUT,*)
 
   close(IOUT)
 
