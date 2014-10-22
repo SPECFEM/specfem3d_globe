@@ -32,6 +32,7 @@ tomography_TARGETS = \
 	$E/xadd_model_tiso \
 	$E/xadd_model_tiso_cg \
 	$E/xadd_model_tiso_iso \
+	$E/xdifference_sem \
 	$E/xinterpolate_model \
 	$E/xsmooth_sem \
 	$E/xsum_kernels \
@@ -49,6 +50,7 @@ tomography_OBJECTS = \
 	$(xadd_model_tiso_OBJECTS) \
 	$(xadd_model_tiso_cg_OBJECTS) \
 	$(xadd_model_tiso_iso_OBJECTS) \
+	$(xdifference_sem_OBJECTS) \
 	$(xinterpolate_model_OBJECTS) \
 	$(xsmooth_sem_OBJECTS) \
 	$(xsum_kernels_OBJECTS) \
@@ -59,6 +61,7 @@ tomography_OBJECTS = \
 # These files come from the shared directory
 tomography_SHARED_OBJECTS = \
 	$(xadd_model_SHARED_OBJECTS) \
+	$(xdifference_sem_SHARED_OBJECTS) \
 	$(xinterpolate_model_SHARED_OBJECTS) \
 	$(xsmooth_sem_SHARED_OBJECTS) \
 	$(xsum_kernels_SHARED_OBJECTS) \
@@ -184,6 +187,20 @@ xconvert_model_file_adios_SHARED_OBJECTS = \
 ${E}/xconvert_model_file_adios: $(xconvert_model_file_adios_OBJECTS) $(xconvert_model_file_adios_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
+
+##
+## xdifference_sem
+##
+xdifference_sem_OBJECTS = \
+	$O/difference_sem.tomo.o \
+	$(EMPTY_MACRO)
+
+xdifference_sem_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$(EMPTY_MACRO)
+
+${E}/xdifference_sem: $(xdifference_sem_OBJECTS) $(xdifference_sem_SHARED_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
 
 ##
 ## xinterpolate_model
