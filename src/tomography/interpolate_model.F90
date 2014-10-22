@@ -44,7 +44,13 @@
 !
 ! usage: ./xinterpolate_model vsv MODEL_M10/
 !
-
+! note on mid-point search option:
+!  - mid-point-search == 1: looking for mid-points only is a good approach when changing number of processes (NPROC) only,
+!                           while keeping the mesh resolution (NEX) the same
+!                           (by default set to .true.)
+!  - mid-point-search == 0: searching for each single gll point is a good approach when changing resolution (NEX) of meshes;
+!                           in general, interpolation suffers and might lead to differences at internal interfaces (e.g. 410)
+!
 !------------------------------------------------------------------------------
 
 
@@ -132,12 +138,7 @@
   character(len=MAX_STRING_LEN) :: dir_topo2
   character(len=MAX_STRING_LEN) :: input_model_dir,output_model_dir
 
-  ! kdtree search:
-  ! note: looking for mid-points only is a good approach when changing number of processes (NPROC) only,
-  !       while keeping the mesh resolution (NEX) the same;
-  !       searching for each single gll point is a good approach when changing resolution (NEX) of meshes;
-  !       in general, interpolation suffers and might lead to differences at internal interfaces (e.g. 410);
-  ! by default set to .true.
+  ! kdtree search
   integer :: want_midpoint
   logical :: USE_MIDPOINT_SEARCH
 
@@ -745,17 +746,26 @@
         enddo
       enddo
       if (inodes /= kdtree_nnodes_local ) stop 'Error index inodes does not match nnodes_local'
+      call synchronize_all()
 
       ! creates kd-tree for searching
-      do i = 0,NPROCTOT_VAL-1
-        if (myrank == i) then
-          !print*,'kd-tree setup for process: ',myrank
-          call kdtree_setup()
-        endif
-        call synchronize_all()
-      enddo
+      ! serial way
+      !do i = 0,NPROCTOT_VAL-1
+      !  if (myrank == i) then
+      !    print*,'kd-tree setup for process: ',myrank
+      !    call kdtree_setup()
+      !  endif
+      !  call synchronize_all()
+      !enddo
+      ! parallel way
+      call kdtree_setup()
 
     endif
+    call synchronize_all()
+
+    ! user output
+    if (myrank == 0) print*,'looping over elements:'
+    call synchronize_all()
 
     ! loop over all elements (mainly those in this layer)
     do ispec = 1, nspec
@@ -786,6 +796,8 @@
                                      USE_MIDPOINT_SEARCH)
       endif
     enddo ! ispec
+    if (myrank == 0) print*
+    call synchronize_all()
 
     ! frees tree memory
     if (.not. DO_BRUTE_FORCE_SEARCH) then
@@ -805,9 +817,8 @@
     enddo
 
     ! user output
-    if (myrank == 0) then
-      print*
-    endif
+    if (myrank == 0) print*
+    call synchronize_all()
   enddo ! ilayer
 
   ! frees memory
@@ -1083,8 +1094,9 @@
       stop 'Error locate_single: specifying closest ispec element'
     endif
     ! checks minimum distance within a typical element size
-    if (dist_min > typical_size ) then
-      print*,'Error rank ',myrank,' - invalid dist_min: ',dist_min * R_EARTH_KM,'(km)'
+    if (dist_min > 2 * typical_size ) then
+      print*,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
+             'element size:',typical_size * R_EARTH_KM
       print*,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
       print*,'typical element size:',typical_size * 0.5 * R_EARTH_KM
       print*,'target location:',xyz_target(:)
@@ -1093,7 +1105,8 @@
       print*,'found radius   :',sqrt(kdtree_nodes_local(1,iglob_min)**2 &
                                    + kdtree_nodes_local(2,iglob_min)**2 &
                                    + kdtree_nodes_local(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
-      stop 'Error dist_min too large'
+      !debug
+      !stop 'Error dist_min too large'
     endif
     ! debug
     !if (myrank == 0 .and. iglob < 100) &
@@ -1141,8 +1154,9 @@
             stop 'Error locate_single: specifying closest ispec element'
           endif
           ! checks minimum distance within a typical element size
-          if (dist_min > typical_size ) then
-            print*,'Error rank ',myrank,' - invalid dist_min: ',dist_min * R_EARTH_KM,'(km)'
+          if (dist_min > 2 * typical_size ) then
+            print*,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
+                   'element size:',typical_size * R_EARTH_KM
             print*,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
             print*,'typical element size:',typical_size * 0.5 * R_EARTH_KM
             print*,'target location:',xyz_target(:)
@@ -1151,7 +1165,8 @@
             print*,'found radius   :',sqrt(kdtree_nodes_local(1,iglob_min)**2 &
                                          + kdtree_nodes_local(2,iglob_min)**2 &
                                          + kdtree_nodes_local(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
-            stop 'Error dist_min too large'
+            ! debug
+            !stop 'Error dist_min too large'
           endif
           ! debug
           !if (myrank == 0 .and. iglob < 100) &
@@ -1175,14 +1190,16 @@
 
         ! checks distance
         dist_min = sqrt((x_found-x_target)**2 + (y_found-y_target)**2 + (z_found-z_target)**2)
-        if (dist_min > typical_size ) then
-          print*,'Error selected gll point: rank ',myrank,' - invalid dist_min: ',dist_min * R_EARTH_KM,'(km)'
+        if (dist_min > 2 * typical_size ) then
+          print*,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
+                 'element size:',typical_size * R_EARTH_KM
           print*,'target location:',xyz_target(:)
           print*,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
           print*,'gll location   :',x_found,y_found,z_found
           print*,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
           print*,'distance gll:',dist_min * R_EARTH_KM,'(km)'
-          stop 'Error model value invalid'
+          ! debug
+          !stop 'Error gll model value invalid'
         endif
         ! debug
         !if (myrank == 0 .and. iglob < 100) &
@@ -1615,11 +1632,11 @@
     ! add warning if estimate is poor
     ! (usually means receiver outside the mesh given by the user)
     if (DO_WARNING) then
-      if (final_distance > typical_size / NGLLX * R_EARTH_KM ) then
+      if (final_distance > typical_size * R_EARTH_KM ) then
         print*, '*****************************************************************'
         print*, '***** WARNING: location estimate is poor                    *****'
         print*, '*****************************************************************'
-        print*, 'closest estimate found: ',sngl(final_distance),'km away',' - not within:',typical_size /NGLLX * R_EARTH_KM
+        print*, 'closest estimate found: ',sngl(final_distance),'km away',' - not within:',typical_size * R_EARTH_KM
         print*, ' in rank ',rank_selected,' in element ',ispec_selected,ix_initial_guess,iy_initial_guess,iz_initial_guess
         print*, ' at xi,eta,gamma coordinates = ',xi,eta,gamma
         print*, ' at radius ',sqrt(x**2 + y**2 + z**2) * R_EARTH_KM,'(km)'

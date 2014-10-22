@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
-                                        elem_in_crust,elem_in_mantle)
+                                         elem_in_crust,elem_in_mantle)
 
 ! stretching the moho according to the crust 2.0
 ! input:  myrank, xelm, yelm, zelm
@@ -224,7 +224,7 @@
 !
 
   subroutine moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
-                                            elem_in_crust,elem_in_mantle)
+                                             elem_in_crust,elem_in_mantle)
 
 ! regional routine: for REGIONAL_MOHO_MESH adaptations
 !

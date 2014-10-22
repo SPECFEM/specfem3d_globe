@@ -112,6 +112,7 @@ xadd_model_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xadd_model_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
@@ -172,6 +173,7 @@ xconvert_model_file_adios_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xconvert_model_file_adios_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/adios_helpers_definitions.shared_adios_module.o \
 	$O/adios_helpers_writers.shared_adios_module.o \
@@ -192,6 +194,7 @@ xinterpolate_model_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xinterpolate_model_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/gll_library.shared.o \
 	$O/hex_nodes.shared.o \
@@ -213,6 +216,7 @@ xsmooth_sem_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xsmooth_sem_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
 	$O/get_all_eight_slices.shared.o \
@@ -233,6 +237,7 @@ xsum_kernels_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xsum_kernels_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$(EMPTY_MACRO)
 
@@ -249,6 +254,7 @@ xsum_preconditioned_kernels_OBJECTS = \
 	$(EMPTY_MACRO)
 
 xsum_preconditioned_kernels_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$(EMPTY_MACRO)
 

@@ -172,7 +172,8 @@ contains
     if (numnodes > 2147483646 - i ) stop 'Error number of nodes might exceed integer limit'
   enddo
   if (be_verbose) then
-    print*,'  theoretical number of nodes: ',numnodes
+    print*,'  theoretical   number of nodes: ',numnodes
+    print*,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
   endif
 
   ! local ordering
@@ -197,9 +198,9 @@ contains
   if (.not. associated(kdtree) ) stop 'Error creation of kd-tree failed'
 
   if (be_verbose) then
-    print*,'  actual      number of nodes: ',numnodes
+    print*,'  actual        number of nodes: ',numnodes
     ! tree node size: 4 (idim) + 8 (cut_value) + 4 (ipoint) + 2*4 (ibound_**) + 2*4 (left,right) = 32 bytes
-    print*,'  tree memory size: ', ( numnodes * 32 )/1024./1024.,'MB'
+    print*,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
     print*,'  maximum depth   : ',maxdepth
 
     ! timing
@@ -333,7 +334,10 @@ contains
 
   ! creates new node
   allocate(node,stat=ier)
-  if (ier /= 0) stop 'Error allocating kd-tree node'
+  if (ier /= 0) then
+    print*,'Error creating node: ',numnodes
+    stop 'Error allocating kd-tree node'
+  endif
 
   ! initializes new node
   node%idim = -1
