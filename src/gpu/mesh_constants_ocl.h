@@ -43,7 +43,7 @@ const char* clewErrorString (cl_int error);
   size_t size;                                      \
   cl_buffer_region region_type;
 
-#define INIT_OFFSET_OCL(_buffer_, _offset_)                             \
+#define INIT_OFFSET_OCL(_buffer_, _offset_) do {                        \
   if (run_opencl) {                                                     \
     clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_FLAGS, sizeof(cl_uint), &buffer_create_type, NULL)); \
     clCheck (clGetMemObjectInfo (mp->_buffer_.ocl, CL_MEM_SIZE , sizeof(size_t), &size, NULL)); \
@@ -53,26 +53,31 @@ const char* clewErrorString (cl_int error);
                                                                         \
     _buffer_##_##_offset_.ocl = clCreateSubBuffer (mp->_buffer_.ocl, buffer_create_type, CL_BUFFER_CREATE_TYPE_REGION, \
                                                    (void *) &region_type, clck_(&mocl_errcode)); \
-  }
+  }                                                                     \
+    } while (0)
+    
 
 
-#define RELEASE_OFFSET_OCL(_buffer_, _offset_)                  \
+#define RELEASE_OFFSET_OCL(_buffer_, _offset_) do {             \
   if (run_opencl) {                                             \
     clCheck(clReleaseMemObject(_buffer_##_##_offset_.ocl));     \
-  }
+  }                                                             \
+  } while (0)
 
-#define ALLOC_PINNED_BUFFER_OCL(_buffer_, _size_)                       \
+#define ALLOC_PINNED_BUFFER_OCL(_buffer_, _size_) do {                  \
   mp->h_pinned_##_buffer_ = clCreateBuffer(mocl.context, CL_MEM_READ_WRITE | CL_MEM_ALLOC_HOST_PTR, \
                                            _size_, NULL, clck_(&mocl_errcode)); \
   mp->h_##_buffer_ = (realw *) clEnqueueMapBuffer(mocl.command_queue, mp->h_pinned_##_buffer_, CL_TRUE, \
                                                   CL_MAP_READ | CL_MAP_WRITE, 0, _size_, 0, \
-                                                  NULL, NULL, clck_(&mocl_errcode))
+                                                  NULL, NULL, clck_(&mocl_errcode)); \
+  } while (0)
 
-#define RELEASE_PINNED_BUFFER_OCL(_buffer_)                             \
-  clCheck(clEnqueueUnmapMemObject(mocl.command_queue, mp->h_pinned_##_buffer_, \
-                                  mp->h_##_buffer_, 0, NULL, NULL));                      \
-  clCheck(clReleaseMemObject (mp->h_pinned_##_buffer_))
-
+#define RELEASE_PINNED_BUFFER_OCL(_buffer_) do {                        \
+    clCheck(clEnqueueUnmapMemObject(mocl.command_queue, mp->h_pinned_##_buffer_, \
+                                    mp->h_##_buffer_, 0, NULL, NULL));  \
+    clCheck(clReleaseMemObject (mp->h_pinned_##_buffer_));              \
+      } while (0)
+    
 
 /* ----------------------------------------------------------------------------------------------- */
 
@@ -96,10 +101,12 @@ static inline cl_int _clCheck(cl_int errcode, const char *file, int line, const 
 
 /* ----------------------------------------------------------------------------------------------- */
 
-#define TAKE_REF_OCL(_buffer_)                                  \
+#define TAKE_REF_OCL(_buffer_) do {                             \
   if (run_opencl) {                                             \
     clCheck(clRetainMemObject(_buffer_.ocl));                   \
-  }
+  }                                                             \
+  } while (0)
+
 
 /* ----------------------------------------------------------------------------------------------- */
 
