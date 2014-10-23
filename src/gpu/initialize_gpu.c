@@ -353,15 +353,6 @@ void build_kernels (void) {
   #include "kernel_list.h"
 }
 
-void release_kernels (void) {
-#undef BOAST_KERNEL
-#define BOAST_KERNEL(__kern_name__)                                     \
-  clCheck (clReleaseKernel (mocl.kernels.__kern_name__));               \
-  clCheck (clReleaseProgram (mocl.programs.__kern_name__ ## _program));
-
-  #include "kernel_list.h"
-}
-
 
 struct _opencl_version {
   cl_uint minor;
