@@ -55,7 +55,7 @@ const char* clewErrorString (cl_int error);
                                                    (void *) &region_type, clck_(&mocl_errcode)); \
   }                                                                     \
     } while (0)
-    
+
 
 
 #define RELEASE_OFFSET_OCL(_buffer_, _offset_) do {             \
@@ -77,7 +77,7 @@ const char* clewErrorString (cl_int error);
                                     mp->h_##_buffer_, 0, NULL, NULL));  \
     clCheck(clReleaseMemObject (mp->h_pinned_##_buffer_));              \
       } while (0)
-    
+
 
 /* ----------------------------------------------------------------------------------------------- */
 

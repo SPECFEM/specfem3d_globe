@@ -3050,7 +3050,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   }
 #endif
 #endif
-  
+
   // synchronizes device
   gpuSynchronize();
 

@@ -12,7 +12,7 @@ program difference_sem
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT,MAX_STRING_LEN
 
   implicit none
-  
+
   include 'OUTPUT_FILES/values_from_mesher.h'
 
   integer,parameter :: MAX_NUM_NODES = 2000
@@ -96,14 +96,14 @@ program difference_sem
   max_rel_all = 0.0
 
   do it = 1, num_node
-  
+
     if(it==1) write(*,*) 'reading files: '
 
     iproc = node_list(it)
-     
+
     write(file1name,'(a,i6.6,a)') trim(input1dir)//'/proc',iproc,'_'//trim(kernel_name)//'.bin'
     write(file2name,'(a,i6.6,a)') trim(input2dir)//'/proc',iproc,'_'//trim(kernel_name)//'.bin'
-    
+
     ! reads in file from first directory
     open(IIN,file=trim(file1name),status='old',form='unformatted',iostat=ier)
     if (ier /= 0 ) then
@@ -128,10 +128,10 @@ program difference_sem
 
     ! takes the difference
     sem_data = sem_data - sem_data_2
-  
+
     ! stores difference between kernel files
     if(it==1) write(*,*) 'writing out difference:'
-  
+
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(kernel_name)//'_diff.bin'
     open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
     if (ier /= 0 ) then
@@ -140,25 +140,25 @@ program difference_sem
     endif
     write(IOUT) sem_data
     close(IOUT)
-    
+
     min = minval(sem_data)
     max = maxval(sem_data)
-    
+
     print *,trim(file1name)
     print *,'  min/max value: ',min,max
-    
+
     if( min < min_all ) min_all = min
     if( max > max_all ) max_all = max
 
     ! stores relative difference (k1 - k2)/ k2 with respect to second input file
     if(it==1) write(*,*) 'writing out relative difference:'
-    
+
     where( sem_data_2 /= 0.0)
       sem_data = sem_data / sem_data_2
     elsewhere
       sem_data = 0.0
     endwhere
-  
+
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(kernel_name)//'_diff_relative.bin'
     open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
     if (ier /= 0 ) then
@@ -178,7 +178,7 @@ program difference_sem
 
     if( min < min_rel_all ) min_rel_all = min
     if( max > max_rel_all ) max_rel_all = max
-  
+
   enddo
   write(*,*)
   write(*,*) 'statistics:'
