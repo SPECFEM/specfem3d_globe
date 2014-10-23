@@ -221,7 +221,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE_STRAIN_ONLY));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
-
+#ifdef USE_TEXTURES_FIELDS
     if (FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_ic_tex));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_ic_tex));
@@ -229,7 +229,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_ic_tex));
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_ic_tex));
     }
-
+#endif
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;

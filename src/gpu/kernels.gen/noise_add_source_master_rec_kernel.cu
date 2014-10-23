@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -89,9 +89,9 @@ __global__ void noise_add_source_master_rec_kernel(const int * ibool, const int 
   int ispec;
   int iglob;
   tx = threadIdx.x;
-  ispec = ispec_selected_rec[irec_master_noise - (0)] - (1);
-  iglob = ibool[tx + (NGLL3) * (ispec) - (0)] - (1);
-  atomicAdd(accel + (iglob) * (3) + 0, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 0 - (0)]);
-  atomicAdd(accel + (iglob) * (3) + 1, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 1 - (0)]);
-  atomicAdd(accel + (iglob) * (3) + 2, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 2 - (0)]);
+  ispec = ispec_selected_rec[irec_master_noise] - (1);
+  iglob = ibool[tx + (NGLL3) * (ispec)] - (1);
+  atomicAdd(accel + (iglob) * (3) + 0, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 0]);
+  atomicAdd(accel + (iglob) * (3) + 1, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 1]);
+  atomicAdd(accel + (iglob) * (3) + 2, noise_sourcearray[(tx) * (3) + ((NGLL3) * (3)) * (it) + 2]);
 }

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -85,7 +85,7 @@
 #endif
 
 __global__ void get_maximum_vector_kernel(const float * array, const int size, float * d_max){
-  __shared__ float sdata[BLOCKSIZE_TRANSFER + 0 - (1) - (0) + 1];
+  __shared__ float sdata[(BLOCKSIZE_TRANSFER)];
   int tid;
   int bx;
   int i;
@@ -93,19 +93,19 @@ __global__ void get_maximum_vector_kernel(const float * array, const int size, f
   tid = threadIdx.x;
   bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
   i = tid + (bx) * (blockDim.x);
-  sdata[tid - (0)] = (i < size ? sqrt((array[(i) * (3) + 0 - (0)]) * (array[(i) * (3) + 0 - (0)]) + (array[(i) * (3) + 1 - (0)]) * (array[(i) * (3) + 1 - (0)]) + (array[(i) * (3) + 2 - (0)]) * (array[(i) * (3) + 2 - (0)])) : 0.0f);
+  sdata[tid] = (i < size ? sqrt((array[(i) * (3) + 0]) * (array[(i) * (3) + 0]) + (array[(i) * (3) + 1]) * (array[(i) * (3) + 1]) + (array[(i) * (3) + 2]) * (array[(i) * (3) + 2])) : 0.0f);
   __syncthreads();
   s = (blockDim.x) / (2);
   while (s > 0) {
     if (tid < s) {
-      if (sdata[tid - (0)] < sdata[tid + s - (0)]) {
-        sdata[tid - (0)] = sdata[tid + s - (0)];
+      if (sdata[tid] < sdata[tid + s]) {
+        sdata[tid] = sdata[tid + s];
       }
     }
     s = s >> 1;
     __syncthreads();
   }
   if (tid == 0) {
-    d_max[bx - (0)] = sdata[0 - (0)];
+    d_max[bx] = sdata[0];
   }
 }

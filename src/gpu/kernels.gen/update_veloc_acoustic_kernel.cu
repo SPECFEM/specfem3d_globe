@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -88,6 +88,6 @@ __global__ void update_veloc_acoustic_kernel(float * veloc, const float * accel,
   int id;
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + (blockIdx.y) * ((gridDim.x) * (blockDim.x));
   if (id < size) {
-    veloc[id - (0)] = veloc[id - (0)] + (deltatover2) * (accel[id - (0)]);
+    veloc[id] = veloc[id] + (deltatover2) * (accel[id]);
   }
 }

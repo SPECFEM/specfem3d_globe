@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -115,29 +115,29 @@ static __device__ void compute_gradient_kernel(const int ijk, const int ispec, c
   temp2l = 0.0f;
   temp3l = 0.0f;
   for (l = 0; l <= NGLLX - (1); l += 1) {
-    hp1 = hprime_xx[(l) * (NGLLX) + I - (0)];
-    hp2 = hprime_xx[(l) * (NGLLX) + J - (0)];
-    hp3 = hprime_xx[(l) * (NGLLX) + K - (0)];
+    hp1 = hprime_xx[(l) * (NGLLX) + I];
+    hp2 = hprime_xx[(l) * (NGLLX) + J];
+    hp3 = hprime_xx[(l) * (NGLLX) + K];
     offset1 = (K) * (NGLL2) + (J) * (NGLLX) + l;
     offset2 = (K) * (NGLL2) + (l) * (NGLLX) + I;
     offset3 = (l) * (NGLL2) + (J) * (NGLLX) + I;
-    temp1l = temp1l + (scalar_field[offset1 - (0)]) * (hp1);
-    temp2l = temp2l + (scalar_field[offset2 - (0)]) * (hp2);
-    temp3l = temp3l + (scalar_field[offset3 - (0)]) * (hp3);
+    temp1l = temp1l + (scalar_field[offset1]) * (hp1);
+    temp2l = temp2l + (scalar_field[offset2]) * (hp2);
+    temp3l = temp3l + (scalar_field[offset3]) * (hp3);
   }
   offset = (ispec) * (NGLL3_PADDED) + ijk;
-  xixl = d_xix[offset - (0)];
-  xiyl = d_xiy[offset - (0)];
-  xizl = d_xiz[offset - (0)];
-  etaxl = d_etax[offset - (0)];
-  etayl = d_etay[offset - (0)];
-  etazl = d_etaz[offset - (0)];
-  gammaxl = d_gammax[offset - (0)];
-  gammayl = d_gammay[offset - (0)];
-  gammazl = d_gammaz[offset - (0)];
-  vector_field_element[0 - (0)] = (temp1l) * (xixl) + (temp2l) * (etaxl) + (temp3l) * (gammaxl);
-  vector_field_element[1 - (0)] = (temp1l) * (xiyl) + (temp2l) * (etayl) + (temp3l) * (gammayl);
-  vector_field_element[2 - (0)] = (temp1l) * (xizl) + (temp2l) * (etazl) + (temp3l) * (gammazl);
+  xixl = d_xix[offset];
+  xiyl = d_xiy[offset];
+  xizl = d_xiz[offset];
+  etaxl = d_etax[offset];
+  etayl = d_etay[offset];
+  etazl = d_etaz[offset];
+  gammaxl = d_gammax[offset];
+  gammayl = d_gammay[offset];
+  gammazl = d_gammaz[offset];
+  vector_field_element[0] = (temp1l) * (xixl) + (temp2l) * (etaxl) + (temp3l) * (gammaxl);
+  vector_field_element[1] = (temp1l) * (xiyl) + (temp2l) * (etayl) + (temp3l) * (gammayl);
+  vector_field_element[2] = (temp1l) * (xizl) + (temp2l) * (etazl) + (temp3l) * (gammazl);
 }
 __global__ void compute_acoustic_kernel(const int * ibool, const float * rhostore, const float * kappastore, const float * hprime_xx, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * potential_dot_dot_acoustic, const float * b_potential_acoustic, const float * b_potential_dot_dot_acoustic, float * rho_ac_kl, float * kappa_ac_kl, const float deltat, const int NSPEC){
   int ispec;
@@ -145,30 +145,30 @@ __global__ void compute_acoustic_kernel(const int * ibool, const float * rhostor
   int ijk_ispec;
   int ijk_ispec_padded;
   int iglob;
-  float accel_elm[3];
-  float b_displ_elm[3];
+  float accel_elm[(3)];
+  float b_displ_elm[(3)];
   float rhol;
   float kappal;
   float div_displ;
   float b_div_displ;
-  __shared__ float scalar_field_displ[NGLL3 + 0 - (1) - (0) + 1];
-  __shared__ float scalar_field_accel[NGLL3 + 0 - (1) - (0) + 1];
+  __shared__ float scalar_field_displ[(NGLL3)];
+  __shared__ float scalar_field_accel[(NGLL3)];
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
   if (ispec < NSPEC) {
     ijk = threadIdx.x;
     ijk_ispec = ijk + (NGLL3) * (ispec);
     ijk_ispec_padded = ijk + (NGLL3_PADDED) * (ispec);
-    iglob = ibool[ijk_ispec - (0)] - (1);
-    scalar_field_displ[ijk - (0)] = b_potential_acoustic[iglob - (0)];
-    scalar_field_accel[ijk - (0)] = potential_dot_dot_acoustic[iglob - (0)];
+    iglob = ibool[ijk_ispec] - (1);
+    scalar_field_displ[ijk] = b_potential_acoustic[iglob];
+    scalar_field_accel[ijk] = potential_dot_dot_acoustic[iglob];
     __syncthreads();
     compute_gradient_kernel(ijk, ispec, scalar_field_displ, b_displ_elm, hprime_xx, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz);
     compute_gradient_kernel(ijk, ispec, scalar_field_accel, accel_elm, hprime_xx, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz);
-    rhol = rhostore[ijk_ispec_padded - (0)];
-    rho_ac_kl[ijk_ispec - (0)] = rho_ac_kl[ijk_ispec - (0)] + ((deltat) * (rhol)) * ((accel_elm[0 - (0)]) * (b_displ_elm[0 - (0)]) + (accel_elm[1 - (0)]) * (b_displ_elm[1 - (0)]) + (accel_elm[2 - (0)]) * (b_displ_elm[2 - (0)]));
-    kappal = (rhol) / (kappastore[ijk_ispec_padded - (0)]);
-    div_displ = (kappal) * (potential_dot_dot_acoustic[iglob - (0)]);
-    b_div_displ = (kappal) * (b_potential_dot_dot_acoustic[iglob - (0)]);
-    kappa_ac_kl[ijk_ispec - (0)] = kappa_ac_kl[ijk_ispec - (0)] + ((deltat) * (div_displ)) * (b_div_displ);
+    rhol = rhostore[ijk_ispec_padded];
+    rho_ac_kl[ijk_ispec] = rho_ac_kl[ijk_ispec] + ((deltat) * (rhol)) * ((accel_elm[0]) * (b_displ_elm[0]) + (accel_elm[1]) * (b_displ_elm[1]) + (accel_elm[2]) * (b_displ_elm[2]));
+    kappal = (rhol) / (kappastore[ijk_ispec_padded]);
+    div_displ = (kappal) * (potential_dot_dot_acoustic[iglob]);
+    b_div_displ = (kappal) * (b_potential_dot_dot_acoustic[iglob]);
+    kappa_ac_kl[ijk_ispec] = kappa_ac_kl[ijk_ispec] + ((deltat) * (div_displ)) * (b_div_displ);
   }
 }

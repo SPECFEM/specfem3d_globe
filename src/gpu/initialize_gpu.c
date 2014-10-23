@@ -520,7 +520,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         clCheck( clGetPlatformInfo(platform_ids[i], props_to_check[j], info_length, info, NULL));
 
         // stores info
-        info_all[i][j] = malloc( strlen(info) + 1);
+        info_all[i][j] = (char *) malloc( strlen(info) + 1);
         strcpy(info_all[i][j],info);
 
         // sets matching platform id
@@ -606,7 +606,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
       clCheck( clGetDeviceInfo(device_ids[i], CL_DEVICE_NAME, info_length, info, NULL));
 
       // stores info
-      info_device_all[i] = malloc( strlen(info) + 1);
+      info_device_all[i] = (char *) malloc( strlen(info) + 1);
       strcpy(info_device_all[i],info);
 
       // sets matching device id

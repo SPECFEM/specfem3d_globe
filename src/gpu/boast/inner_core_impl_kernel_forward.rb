@@ -528,6 +528,9 @@ module BOAST
 
     constants = []
 
+    textures_fields = []
+    textures_constants = []
+
     if type == :inner_core then
       d_displ_tex = Real("d_#{forward ? "":"b_"}displ_ic_tex", :texture => true, :dir => :in, :dim => [Dim()] )
       d_accel_tex = Real("d_#{forward ? "":"b_"}accel_ic_tex", :texture => true, :dir => :in, :dim => [Dim()] )
@@ -536,7 +539,7 @@ module BOAST
       d_accel_tex = Real("d_#{forward ? "":"b_"}accel_cm_tex", :texture => true, :dir => :in, :dim => [Dim()] )
     end
     if get_lang == CL then
-      v.push(d_displ_tex, d_accel_tex)
+      textures_fields.push(d_displ_tex, d_accel_tex)
     end
     if type == :inner_core then
       d_hprime_xx_tex = Real("d_hprime_xx_ic_tex", :texture => true, :dir => :in, :dim => [Dim()] )
@@ -545,9 +548,8 @@ module BOAST
       d_hprime_xx_tex = Real("d_hprime_xx_tex", :texture => true, :dir => :in, :dim => [Dim()] )
       d_hprimewgll_xx_tex = Real("d_hprimewgll_xx_tex", :texture => true, :dir => :in, :dim => [Dim()] )
     end
-    if get_lang == CL and type == :crust_mantle then
-      # WARNING : dectivates texture usage in opencl fo inner core
-      v.push(d_hprime_xx_tex)
+    if get_lang == CL then
+      textures_constants.push(d_hprime_xx_tex, d_hprimewgll_xx_tex)
     end
 
     if (get_lang == CUDA) then
@@ -556,7 +558,6 @@ module BOAST
       qualifiers = "" # "__attribute__((reqd_work_group_size(#{ngll3_padded},1,1))) " # (inefficient)
     end
 
-    p = Procedure(function_name, v, constants, :qualifiers => qualifiers)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
@@ -597,16 +598,42 @@ module BOAST
         sub_compute_element_cm_tiso = compute_element_cm_tiso
         print sub_compute_element_cm_tiso
       end
-      open p
-        if get_lang == CL then
-          get_output.puts "#ifdef #{use_textures_fields}"
-            decl d_displ_tex.sampler
-            decl d_accel_tex.sampler
-          get_output.puts "#endif"
+
+      if get_lang == CL then
+        get_output.puts "#ifdef #{use_textures_fields}"
           get_output.puts "#ifdef #{use_textures_constants}"
-            decl d_hprime_xx_tex.sampler
+            p = Procedure(function_name, v+textures_fields+textures_constants, constants, :qualifiers => qualifiers)
+            open p
+            set_indent_level(0)
+          get_output.puts "#else"
+            p = Procedure(function_name, v+textures_fields, constants, :qualifiers => qualifiers)
+            open p
+            set_indent_level(0)
           get_output.puts "#endif"
-        end
+        get_output.puts "#else"
+          get_output.puts "#ifdef #{use_textures_constants}"
+            p = Procedure(function_name, v+textures_constants, constants, :qualifiers => qualifiers)
+            open p
+            set_indent_level(0)
+          get_output.puts "#else"
+            p = Procedure(function_name, v, constants, :qualifiers => qualifiers)
+            open p
+          get_output.puts "#endif"
+        get_output.puts "#endif"
+
+        get_output.puts "#ifdef #{use_textures_fields}"
+          decl d_displ_tex.sampler
+          decl d_accel_tex.sampler
+        get_output.puts "#endif"
+        get_output.puts "#ifdef #{use_textures_constants}"
+          decl d_hprime_xx_tex.sampler
+          decl d_hprimewgll_xx_tex.sampler
+        get_output.puts "#endif"
+      else
+        p = Procedure(function_name, v, constants, :qualifiers => qualifiers)
+        open p
+      end
+
         decl bx = Int("bx")
         decl tx = Int("tx")
         decl k  = Int("K"), j = Int("J"), i = Int("I")

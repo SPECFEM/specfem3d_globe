@@ -928,7 +928,7 @@ typedef struct mesh_ {
   // specific OpenCL texture arrays
 #ifdef USE_OPENCL
 // note: need to be defined as they are passed as function arguments
-  // USE_TEXTURES_FIELDS
+#ifdef USE_TEXTURES_FIELDS
   // forward
   cl_mem d_displ_cm_tex;
   cl_mem d_accel_cm_tex;
@@ -948,11 +948,13 @@ typedef struct mesh_ {
 
   cl_mem d_b_displ_ic_tex;
   cl_mem d_b_accel_ic_tex;
-  // USE_TEXTURES_CONSTANTS
+#endif
+#ifdef USE_TEXTURES_CONSTANTS
   // hprime
   cl_mem d_hprime_xx_cm_tex;
   // weighted hprime
   cl_mem d_hprimewgll_xx_cm_tex;
+#endif
 #endif
 
   // ------------------------------------------------------------------ //

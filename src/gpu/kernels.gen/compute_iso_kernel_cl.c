@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -101,8 +101,8 @@ __kernel void compute_iso_kernel(const __global float * epsilondev_xx, const __g
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   if (ispec < NSPEC) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
-    mu_kl[ijk_ispec - (0)] = mu_kl[ijk_ispec - (0)] + (deltat) * ((epsilondev_xx[ijk_ispec - (0)]) * (b_epsilondev_xx[ijk_ispec - (0)]) + (epsilondev_yy[ijk_ispec - (0)]) * (b_epsilondev_yy[ijk_ispec - (0)]) + (epsilondev_xx[ijk_ispec - (0)] + epsilondev_yy[ijk_ispec - (0)]) * (b_epsilondev_xx[ijk_ispec - (0)] + b_epsilondev_yy[ijk_ispec - (0)]) + ((epsilondev_xy[ijk_ispec - (0)]) * (b_epsilondev_xy[ijk_ispec - (0)]) + (epsilondev_xz[ijk_ispec - (0)]) * (b_epsilondev_xz[ijk_ispec - (0)]) + (epsilondev_yz[ijk_ispec - (0)]) * (b_epsilondev_yz[ijk_ispec - (0)])) * (2));\n\
-    kappa_kl[ijk_ispec - (0)] = kappa_kl[ijk_ispec - (0)] + (deltat) * (((epsilon_trace_over_3[ijk_ispec - (0)]) * (b_epsilon_trace_over_3[ijk_ispec - (0)])) * (9));\n\
+    mu_kl[ijk_ispec] = mu_kl[ijk_ispec] + (deltat) * ((epsilondev_xx[ijk_ispec]) * (b_epsilondev_xx[ijk_ispec]) + (epsilondev_yy[ijk_ispec]) * (b_epsilondev_yy[ijk_ispec]) + (epsilondev_xx[ijk_ispec] + epsilondev_yy[ijk_ispec]) * (b_epsilondev_xx[ijk_ispec] + b_epsilondev_yy[ijk_ispec]) + ((epsilondev_xy[ijk_ispec]) * (b_epsilondev_xy[ijk_ispec]) + (epsilondev_xz[ijk_ispec]) * (b_epsilondev_xz[ijk_ispec]) + (epsilondev_yz[ijk_ispec]) * (b_epsilondev_yz[ijk_ispec])) * (2));\n\
+    kappa_kl[ijk_ispec] = kappa_kl[ijk_ispec] + (deltat) * (((epsilon_trace_over_3[ijk_ispec]) * (b_epsilon_trace_over_3[ijk_ispec])) * (9));\n\
   }\n\
 }\n\
 ";
