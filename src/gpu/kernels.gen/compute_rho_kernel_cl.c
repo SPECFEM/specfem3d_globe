@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -102,8 +102,8 @@ __kernel void compute_rho_kernel(const __global int * ibool, const __global floa
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   if (ispec < NSPEC) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
-    iglob = ibool[ijk_ispec - (0)] - (1);\n\
-    rho_kl[ijk_ispec - (0)] = rho_kl[ijk_ispec - (0)] + (deltat) * ((accel[0 - (0) + (iglob - (0)) * (3)]) * (b_displ[0 - (0) + (iglob - (0)) * (3)]) + (accel[1 - (0) + (iglob - (0)) * (3)]) * (b_displ[1 - (0) + (iglob - (0)) * (3)]) + (accel[2 - (0) + (iglob - (0)) * (3)]) * (b_displ[2 - (0) + (iglob - (0)) * (3)]));\n\
+    iglob = ibool[ijk_ispec] - (1);\n\
+    rho_kl[ijk_ispec] = rho_kl[ijk_ispec] + (deltat) * ((accel[0 + (3) * (iglob)]) * (b_displ[0 + (3) * (iglob)]) + (accel[1 + (3) * (iglob)]) * (b_displ[1 + (3) * (iglob)]) + (accel[2 + (3) * (iglob)]) * (b_displ[2 + (3) * (iglob)]));\n\
   }\n\
 }\n\
 ";

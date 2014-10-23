@@ -108,20 +108,21 @@ module BOAST
     manually_unrolled_loops = Int("MANUALLY_UNROLLED_LOOPS", :const => unroll_loops)
 
     constants = [] #ngllx, ngll2, ngll3, ngll3_padded]
+    textures_fields = []
+    textures_constants = []
+
     d_displ_oc_tex = Real("d_#{forward ? "":"b_"}displ_oc_tex", :texture => true, :dir => :in, :dim => [Dim()] )
     d_accel_oc_tex = Real("d_#{forward ? "":"b_"}accel_oc_tex", :texture => true, :dir => :in, :dim => [Dim()] )
 
     if get_lang == CL then
-      v.push(d_displ_oc_tex, d_accel_oc_tex)
+      textures_fields.push(d_displ_oc_tex, d_accel_oc_tex)
     end
     d_hprime_xx_oc_tex = Real("d_hprime_xx_oc_tex", :texture => true, :dir => :in, :dim => [Dim()] )
     d_hprimewgll_xx_oc_tex = Real("d_hprimewgll_xx_oc_tex", :texture => true, :dir => :in, :dim => [Dim()] )
     if get_lang == CL then
-      #WARNING deactivates texture usage for OpenCL
-      #v.push(d_hprime_xx_oc_tex)
+      textures_constants.push(d_hprime_xx_oc_tex, d_hprimewgll_xx_oc_tex)
     end
 
-    p = Procedure(function_name, v, constants)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
@@ -142,17 +143,41 @@ module BOAST
 #      end
       sub_kernel =  compute_element_oc_rotation(n_gll3)
       print sub_kernel
-      open p
-        if get_lang == CL then
-          get_output.puts "#ifdef #{use_textures_fields}"
-            decl d_displ_oc_tex.sampler
-            decl d_accel_oc_tex.sampler
-          get_output.puts "#endif"
+
+      if get_lang == CL then
+        get_output.puts "#ifdef #{use_textures_fields}"
           get_output.puts "#ifdef #{use_textures_constants}"
-            decl d_hprime_xx_oc_tex.sampler
-            decl d_hprimewgll_xx_oc_tex.sampler
+            p = Procedure(function_name, v+textures_fields+textures_constants, constants)
+            open p
+            set_indent_level(0)
+          get_output.puts "#else"
+            p = Procedure(function_name, v+textures_fields, constants)
+            open p
+            set_indent_level(0)
           get_output.puts "#endif"
-        end
+        get_output.puts "#else"
+          get_output.puts "#ifdef #{use_textures_constants}"
+            p = Procedure(function_name, v+textures_constants, constants)
+            open p
+            set_indent_level(0)
+          get_output.puts "#else"
+            p = Procedure(function_name, v, constants)
+            open p
+          get_output.puts "#endif"
+        get_output.puts "#endif"
+
+        get_output.puts "#ifdef #{use_textures_fields}"
+          decl d_displ_oc_tex.sampler
+          decl d_accel_oc_tex.sampler
+        get_output.puts "#endif"
+        get_output.puts "#ifdef #{use_textures_constants}"
+          decl d_hprime_xx_oc_tex.sampler
+          decl d_hprimewgll_xx_oc_tex.sampler
+        get_output.puts "#endif"
+      else
+        p = Procedure(function_name, v, constants)
+        open p
+      end
         decl bx = Int("bx")
         decl tx = Int("tx")
         decl k  = Int("K"), j = Int("J"), i = Int("I")

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -102,14 +102,14 @@ static void compute_element_cm_att_stress(const int tx, const int working_elemen
   float R_yy_val;\n\
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
-    R_xx_val = R_xx[offset - (0)];\n\
-    R_yy_val = R_yy[offset - (0)];\n\
-    sigma_xx[0 - (0)] = sigma_xx[0 - (0)] - (R_xx_val);\n\
-    sigma_yy[0 - (0)] = sigma_yy[0 - (0)] - (R_yy_val);\n\
-    sigma_zz[0 - (0)] = sigma_zz[0 - (0)] + R_xx_val + R_yy_val;\n\
-    sigma_xy[0 - (0)] = sigma_xy[0 - (0)] - (R_xy[offset - (0)]);\n\
-    sigma_xz[0 - (0)] = sigma_xz[0 - (0)] - (R_xz[offset - (0)]);\n\
-    sigma_yz[0 - (0)] = sigma_yz[0 - (0)] - (R_yz[offset - (0)]);\n\
+    R_xx_val = R_xx[offset];\n\
+    R_yy_val = R_yy[offset];\n\
+    sigma_xx[0] = sigma_xx[0] - (R_xx_val);\n\
+    sigma_yy[0] = sigma_yy[0] - (R_yy_val);\n\
+    sigma_zz[0] = sigma_zz[0] + R_xx_val + R_yy_val;\n\
+    sigma_xy[0] = sigma_xy[0] - (R_xy[offset]);\n\
+    sigma_xz[0] = sigma_xz[0] - (R_xz[offset]);\n\
+    sigma_yz[0] = sigma_yz[0] - (R_yz[offset]);\n\
   }\n\
 }\n\
 static void compute_element_cm_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const __global float * d_c44store, const int ANISOTROPY, const int USE_3D_ATTENUATION_ARRAYS){\n\
@@ -123,35 +123,35 @@ static void compute_element_cm_att_memory(const int tx, const int working_elemen
   float sn;\n\
   float snp1;\n\
   if (ANISOTROPY) {\n\
-    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element) - (0)];\n\
+    mul = d_c44store[tx + (NGLL3_PADDED) * (working_element)];\n\
   } else {\n\
-    mul = d_muv[tx + (NGLL3_PADDED) * (working_element) - (0)];\n\
+    mul = d_muv[tx + (NGLL3_PADDED) * (working_element)];\n\
   }\n\
   for (i_sls = 0; i_sls <= N_SLS - (1); i_sls += 1) {\n\
     offset = tx + (NGLL3) * (i_sls + (N_SLS) * (working_element));\n\
     if (USE_3D_ATTENUATION_ARRAYS) {\n\
-      factor_loc = (mul) * (factor_common[offset - (0)]);\n\
+      factor_loc = (mul) * (factor_common[offset]);\n\
     } else {\n\
-      factor_loc = (mul) * (factor_common[i_sls + (N_SLS) * (working_element) - (0)]);\n\
+      factor_loc = (mul) * (factor_common[i_sls + (N_SLS) * (working_element)]);\n\
     }\n\
-    alphaval_loc = alphaval[i_sls - (0)];\n\
-    betaval_loc = betaval[i_sls - (0)];\n\
-    gammaval_loc = gammaval[i_sls - (0)];\n\
-    sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element) - (0)]);\n\
+    alphaval_loc = alphaval[i_sls];\n\
+    betaval_loc = betaval[i_sls];\n\
+    gammaval_loc = gammaval[i_sls];\n\
+    sn = (factor_loc) * (epsilondev_xx[tx + (NGLL3) * (working_element)]);\n\
     snp1 = (factor_loc) * (epsilondev_xx_loc);\n\
-    R_xx[offset - (0)] = (alphaval_loc) * (R_xx[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-    sn = (factor_loc) * (epsilondev_yy[tx + (NGLL3) * (working_element) - (0)]);\n\
+    R_xx[offset] = (alphaval_loc) * (R_xx[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    sn = (factor_loc) * (epsilondev_yy[tx + (NGLL3) * (working_element)]);\n\
     snp1 = (factor_loc) * (epsilondev_yy_loc);\n\
-    R_yy[offset - (0)] = (alphaval_loc) * (R_yy[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-    sn = (factor_loc) * (epsilondev_xy[tx + (NGLL3) * (working_element) - (0)]);\n\
+    R_yy[offset] = (alphaval_loc) * (R_yy[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    sn = (factor_loc) * (epsilondev_xy[tx + (NGLL3) * (working_element)]);\n\
     snp1 = (factor_loc) * (epsilondev_xy_loc);\n\
-    R_xy[offset - (0)] = (alphaval_loc) * (R_xy[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-    sn = (factor_loc) * (epsilondev_xz[tx + (NGLL3) * (working_element) - (0)]);\n\
+    R_xy[offset] = (alphaval_loc) * (R_xy[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    sn = (factor_loc) * (epsilondev_xz[tx + (NGLL3) * (working_element)]);\n\
     snp1 = (factor_loc) * (epsilondev_xz_loc);\n\
-    R_xz[offset - (0)] = (alphaval_loc) * (R_xz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
-    sn = (factor_loc) * (epsilondev_yz[tx + (NGLL3) * (working_element) - (0)]);\n\
+    R_xz[offset] = (alphaval_loc) * (R_xz[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    sn = (factor_loc) * (epsilondev_yz[tx + (NGLL3) * (working_element)]);\n\
     snp1 = (factor_loc) * (epsilondev_yz_loc);\n\
-    R_yz[offset - (0)] = (alphaval_loc) * (R_yz[offset - (0)]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
+    R_yz[offset] = (alphaval_loc) * (R_yz[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
   }\n\
 }\n\
 static void compute_element_cm_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
@@ -185,21 +185,21 @@ static void compute_element_cm_gravity(const int tx, const int iglob, const __gl
   float sz_l;\n\
   float factor;\n\
   int int_radius;\n\
-  radius = d_xstore[iglob - (0)];\n\
+  radius = d_xstore[iglob];\n\
   if (radius < 1.5696123057604773e-05f) {\n\
     radius = 1.5696123057604773e-05f;\n\
   }\n\
-  theta = d_ystore[iglob - (0)];\n\
-  phi = d_zstore[iglob - (0)];\n\
+  theta = d_ystore[iglob];\n\
+  phi = d_zstore[iglob];\n\
   sin_theta = sincos(theta,  &cos_theta);\n\
   sin_phi = sincos(phi,  &cos_phi);\n\
   int_radius = rint(((radius) * (6371.0f)) * (10.0f)) - (1);\n\
   if (int_radius < 0) {\n\
     int_radius = 0;\n\
   }\n\
-  minus_g = d_minus_gravity_table[int_radius - (0)];\n\
-  minus_dg = d_minus_deriv_gravity_table[int_radius - (0)];\n\
-  rho = d_density_table[int_radius - (0)];\n\
+  minus_g = d_minus_gravity_table[int_radius];\n\
+  minus_dg = d_minus_deriv_gravity_table[int_radius];\n\
+  rho = d_density_table[int_radius];\n\
   gxl = ((minus_g) * (sin_theta)) * (cos_phi);\n\
   gyl = ((minus_g) * (sin_theta)) * (sin_phi);\n\
   gzl = (minus_g) * (cos_theta);\n\
@@ -215,9 +215,9 @@ static void compute_element_cm_gravity(const int tx, const int iglob, const __gl
   Hxyl = (((cos_phi) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta_sq);\n\
   Hxzl = (((cos_phi) * (cos_theta)) * (minus_dg_plus_g_over_radius)) * (sin_theta);\n\
   Hyzl = (((cos_theta) * (minus_dg_plus_g_over_radius)) * (sin_phi)) * (sin_theta);\n\
-  sx_l = (rho) * (s_dummyx_loc[tx - (0)]);\n\
-  sy_l = (rho) * (s_dummyy_loc[tx - (0)]);\n\
-  sz_l = (rho) * (s_dummyz_loc[tx - (0)]);\n\
+  sx_l = (rho) * (s_dummyx_loc[tx]);\n\
+  sy_l = (rho) * (s_dummyy_loc[tx]);\n\
+  sz_l = (rho) * (s_dummyz_loc[tx]);\n\
   *(sigma_xx) = *(sigma_xx) + (sy_l) * (gyl) + (sz_l) * (gzl);\n\
   *(sigma_yy) = *(sigma_yy) + (sx_l) * (gxl) + (sz_l) * (gzl);\n\
   *(sigma_zz) = *(sigma_zz) + (sx_l) * (gxl) + (sy_l) * (gyl);\n\
@@ -227,10 +227,10 @@ static void compute_element_cm_gravity(const int tx, const int iglob, const __gl
   *(sigma_zx) = *(sigma_zx) - ((sz_l) * (gxl));\n\
   *(sigma_yz) = *(sigma_yz) - ((sy_l) * (gzl));\n\
   *(sigma_zy) = *(sigma_zy) - ((sz_l) * (gyl));\n\
-  factor = (jacobianl) * (wgll_cube[tx - (0)]);\n\
-  rho_s_H1[0 - (0)] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
-  rho_s_H2[0 - (0)] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
-  rho_s_H3[0 - (0)] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
+  factor = (jacobianl) * (wgll_cube[tx]);\n\
+  rho_s_H1[0] = (factor) * ((sx_l) * (Hxxl) + (sy_l) * (Hxyl) + (sz_l) * (Hxzl));\n\
+  rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
+  rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
 }\n\
 static void compute_element_cm_aniso(const int offset, const __global float * d_c11store, const __global float * d_c12store, const __global float * d_c13store, const __global float * d_c14store, const __global float * d_c15store, const __global float * d_c16store, const __global float * d_c22store, const __global float * d_c23store, const __global float * d_c24store, const __global float * d_c25store, const __global float * d_c26store, const __global float * d_c33store, const __global float * d_c34store, const __global float * d_c35store, const __global float * d_c36store, const __global float * d_c44store, const __global float * d_c45store, const __global float * d_c46store, const __global float * d_c55store, const __global float * d_c56store, const __global float * d_c66store, const int ATTENUATION, const float one_minus_sum_beta_use, const float duxdxl, const float duxdyl, const float duxdzl, const float duydxl, const float duydyl, const float duydzl, const float duzdxl, const float duzdyl, const float duzdzl, const float duxdyl_plus_duydxl, const float duzdxl_plus_duxdzl, const float duzdyl_plus_duydzl, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   float c11;\n\
@@ -256,27 +256,27 @@ static void compute_element_cm_aniso(const int offset, const __global float * d_
   float c66;\n\
   float mul;\n\
   float minus_sum_beta;\n\
-  c11 = d_c11store[offset - (0)];\n\
-  c12 = d_c12store[offset - (0)];\n\
-  c13 = d_c13store[offset - (0)];\n\
-  c14 = d_c14store[offset - (0)];\n\
-  c15 = d_c15store[offset - (0)];\n\
-  c16 = d_c16store[offset - (0)];\n\
-  c22 = d_c22store[offset - (0)];\n\
-  c23 = d_c23store[offset - (0)];\n\
-  c24 = d_c24store[offset - (0)];\n\
-  c25 = d_c25store[offset - (0)];\n\
-  c26 = d_c26store[offset - (0)];\n\
-  c33 = d_c33store[offset - (0)];\n\
-  c34 = d_c34store[offset - (0)];\n\
-  c35 = d_c35store[offset - (0)];\n\
-  c36 = d_c36store[offset - (0)];\n\
-  c44 = d_c44store[offset - (0)];\n\
-  c45 = d_c45store[offset - (0)];\n\
-  c46 = d_c46store[offset - (0)];\n\
-  c55 = d_c55store[offset - (0)];\n\
-  c56 = d_c56store[offset - (0)];\n\
-  c66 = d_c66store[offset - (0)];\n\
+  c11 = d_c11store[offset];\n\
+  c12 = d_c12store[offset];\n\
+  c13 = d_c13store[offset];\n\
+  c14 = d_c14store[offset];\n\
+  c15 = d_c15store[offset];\n\
+  c16 = d_c16store[offset];\n\
+  c22 = d_c22store[offset];\n\
+  c23 = d_c23store[offset];\n\
+  c24 = d_c24store[offset];\n\
+  c25 = d_c25store[offset];\n\
+  c26 = d_c26store[offset];\n\
+  c33 = d_c33store[offset];\n\
+  c34 = d_c34store[offset];\n\
+  c35 = d_c35store[offset];\n\
+  c36 = d_c36store[offset];\n\
+  c44 = d_c44store[offset];\n\
+  c45 = d_c45store[offset];\n\
+  c46 = d_c46store[offset];\n\
+  c55 = d_c55store[offset];\n\
+  c56 = d_c56store[offset];\n\
+  c66 = d_c66store[offset];\n\
   if (ATTENUATION) {\n\
     minus_sum_beta = one_minus_sum_beta_use - (1.0f);\n\
     mul = (c44) * (minus_sum_beta);\n\
@@ -302,8 +302,8 @@ static void compute_element_cm_iso(const int offset, const __global float * d_ka
   float mul;\n\
   float lambdalplus2mul;\n\
   float kappal;\n\
-  kappal = d_kappavstore[offset - (0)];\n\
-  mul = d_muvstore[offset - (0)];\n\
+  kappal = d_kappavstore[offset];\n\
+  mul = d_muvstore[offset];\n\
   if (ATTENUATION) {\n\
     mul = (mul) * (one_minus_sum_beta_use);\n\
   }\n\
@@ -379,10 +379,10 @@ static void compute_element_cm_tiso(const int offset, const __global float * d_k
   float c66;\n\
   float theta;\n\
   float phi;\n\
-  kappavl = d_kappavstore[offset - (0)];\n\
-  muvl = d_muvstore[offset - (0)];\n\
-  kappahl = d_kappahstore[offset - (0)];\n\
-  muhl = d_muhstore[offset - (0)];\n\
+  kappavl = d_kappavstore[offset];\n\
+  muvl = d_muvstore[offset];\n\
+  kappahl = d_kappahstore[offset];\n\
+  muhl = d_muhstore[offset];\n\
   if (ATTENUATION) {\n\
     muvl = (muvl) * (one_minus_sum_beta_use);\n\
     muhl = (muhl) * (one_minus_sum_beta_use);\n\
@@ -391,9 +391,9 @@ static void compute_element_cm_tiso(const int offset, const __global float * d_k
   rhovphsq = kappahl + (muhl) * (1.3333333333333333f);\n\
   rhovsvsq = muvl;\n\
   rhovshsq = muhl;\n\
-  eta_aniso = d_eta_anisostore[offset - (0)];\n\
-  theta = d_ystore[iglob - (0)];\n\
-  phi = d_zstore[iglob - (0)];\n\
+  eta_aniso = d_eta_anisostore[offset];\n\
+  theta = d_ystore[iglob];\n\
+  phi = d_zstore[iglob];\n\
   sintheta = sincos(theta,  &costheta);\n\
   sinphi = sincos(phi,  &cosphi);\n\
   sintwotheta = sincos((theta) * (2.0f),  &costwotheta);\n\
@@ -448,13 +448,26 @@ static void compute_element_cm_tiso(const int offset, const __global float * d_k
   *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);\n\
   *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);\n\
 }\n\
-__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex, __read_only image2d_t d_hprime_xx_tex){\n\
+#ifdef USE_TEXTURES_FIELDS\n\
+#ifdef USE_TEXTURES_CONSTANTS\n\
+__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
+#else\n\
+__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex){\n\
+#endif\n\
+#else\n\
+#ifdef USE_TEXTURES_CONSTANTS\n\
+__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
+#else\n\
+__kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY){\n\
+#endif\n\
+#endif\n\
 #ifdef USE_TEXTURES_FIELDS\n\
   const sampler_t sampler_d_displ_cm_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
   const sampler_t sampler_d_accel_cm_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
 #endif\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
   const sampler_t sampler_d_hprime_xx_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
+  const sampler_t sampler_d_hprimewgll_xx_tex = CLK_NORMALIZED_COORDS_FALSE | CLK_ADDRESS_NONE | CLK_FILTER_NEAREST;\n\
 #endif\n\
   int bx;\n\
   int tx;\n\
@@ -527,20 +540,20 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
   float rho_s_H1;\n\
   float rho_s_H2;\n\
   float rho_s_H3;\n\
-  __local float s_dummyx_loc[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_dummyy_loc[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_dummyz_loc[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempx1[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempx2[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempx3[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempy1[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempy2[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempy3[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempz1[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempz2[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float s_tempz3[NGLL3 + 0 - (1) - (0) + 1];\n\
-  __local float sh_hprime_xx[NGLL2 + 0 - (1) - (0) + 1];\n\
-  __local float sh_hprimewgll_xx[NGLL2 + 0 - (1) - (0) + 1];\n\
+  __local float s_dummyx_loc[(NGLL3)];\n\
+  __local float s_dummyy_loc[(NGLL3)];\n\
+  __local float s_dummyz_loc[(NGLL3)];\n\
+  __local float s_tempx1[(NGLL3)];\n\
+  __local float s_tempx2[(NGLL3)];\n\
+  __local float s_tempx3[(NGLL3)];\n\
+  __local float s_tempy1[(NGLL3)];\n\
+  __local float s_tempy2[(NGLL3)];\n\
+  __local float s_tempy3[(NGLL3)];\n\
+  __local float s_tempz1[(NGLL3)];\n\
+  __local float s_tempz2[(NGLL3)];\n\
+  __local float s_tempz3[(NGLL3)];\n\
+  __local float sh_hprime_xx[(NGLL2)];\n\
+  __local float sh_hprimewgll_xx[(NGLL2)];\n\
   bx = (get_group_id(1)) * (get_num_groups(0)) + get_group_id(0);\n\
   tx = get_local_id(0);\n\
   K = (tx) / (NGLL2);\n\
@@ -554,27 +567,27 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     if (use_mesh_coloring_gpu) {\n\
       working_element = bx;\n\
     } else {\n\
-      working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1)) - (0)] - (1);\n\
+      working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1))] - (1);\n\
     }\n\
 #endif\n\
-    iglob = d_ibool[(working_element) * (NGLL3) + tx - (0)] - (1);\n\
+    iglob = d_ibool[(working_element) * (NGLL3) + tx] - (1);\n\
 #ifdef USE_TEXTURES_FIELDS\n\
-    s_dummyx_loc[tx - (0)] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob) * (3) + 0,0)).x);\n\
-    s_dummyy_loc[tx - (0)] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob) * (3) + 1,0)).x);\n\
-    s_dummyz_loc[tx - (0)] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob) * (3) + 2,0)).x);\n\
+    s_dummyx_loc[tx] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob) * (3) + 0,0)).x);\n\
+    s_dummyy_loc[tx] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob) * (3) + 1,0)).x);\n\
+    s_dummyz_loc[tx] = as_float(read_imageui(d_displ_cm_tex, sampler_d_displ_cm_tex, int2((iglob) * (3) + 2,0)).x);\n\
 #else\n\
-    s_dummyx_loc[tx - (0)] = d_displ[0 - (0) + (iglob - (0)) * (3)];\n\
-    s_dummyy_loc[tx - (0)] = d_displ[1 - (0) + (iglob - (0)) * (3)];\n\
-    s_dummyz_loc[tx - (0)] = d_displ[2 - (0) + (iglob - (0)) * (3)];\n\
+    s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob)];\n\
+    s_dummyy_loc[tx] = d_displ[1 + (3) * (iglob)];\n\
+    s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob)];\n\
 #endif\n\
   }\n\
   if (tx < NGLL2) {\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
-    sh_hprime_xx[tx - (0)] = as_float(read_imageui(d_hprime_xx_tex, sampler_d_hprime_xx_tex, int2(tx,0)).x);\n\
-    sh_hprimewgll_xx[tx - (0)] = as_float(read_imageui(d_hprimewgll_xx_tex, sampler_d_hprimewgll_xx_tex, int2(tx,0)).x);\n\
+    sh_hprime_xx[tx] = as_float(read_imageui(d_hprime_xx_tex, sampler_d_hprime_xx_tex, int2(tx,0)).x);\n\
+    sh_hprimewgll_xx[tx] = as_float(read_imageui(d_hprimewgll_xx_tex, sampler_d_hprimewgll_xx_tex, int2(tx,0)).x);\n\
 #else\n\
-    sh_hprime_xx[tx - (0)] = d_hprime_xx[tx - (0)];\n\
-    sh_hprimewgll_xx[tx - (0)] = d_hprimewgll_xx[tx - (0)];\n\
+    sh_hprime_xx[tx] = d_hprime_xx[tx];\n\
+    sh_hprimewgll_xx[tx] = d_hprimewgll_xx[tx];\n\
 #endif\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
@@ -589,92 +602,92 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     tempz2l = 0.0f;\n\
     tempz3l = 0.0f;\n\
 #ifdef MANUALLY_UNROLLED_LOOPS\n\
-    fac1 = sh_hprime_xx[(0) * (NGLLX) + I - (0)];\n\
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0 - (0)]) * (fac1);\n\
-    fac2 = sh_hprime_xx[(0) * (NGLLX) + J - (0)];\n\
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (0) * (NGLLX) + I - (0)]) * (fac2);\n\
-    fac3 = sh_hprime_xx[(0) * (NGLLX) + K - (0)];\n\
-    tempx3l = tempx3l + (s_dummyx_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_dummyy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_dummyz_loc[(0) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    fac1 = sh_hprime_xx[(1) * (NGLLX) + I - (0)];\n\
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1 - (0)]) * (fac1);\n\
-    fac2 = sh_hprime_xx[(1) * (NGLLX) + J - (0)];\n\
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (1) * (NGLLX) + I - (0)]) * (fac2);\n\
-    fac3 = sh_hprime_xx[(1) * (NGLLX) + K - (0)];\n\
-    tempx3l = tempx3l + (s_dummyx_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_dummyy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_dummyz_loc[(1) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    fac1 = sh_hprime_xx[(2) * (NGLLX) + I - (0)];\n\
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2 - (0)]) * (fac1);\n\
-    fac2 = sh_hprime_xx[(2) * (NGLLX) + J - (0)];\n\
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (2) * (NGLLX) + I - (0)]) * (fac2);\n\
-    fac3 = sh_hprime_xx[(2) * (NGLLX) + K - (0)];\n\
-    tempx3l = tempx3l + (s_dummyx_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_dummyy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_dummyz_loc[(2) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    fac1 = sh_hprime_xx[(3) * (NGLLX) + I - (0)];\n\
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3 - (0)]) * (fac1);\n\
-    fac2 = sh_hprime_xx[(3) * (NGLLX) + J - (0)];\n\
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (3) * (NGLLX) + I - (0)]) * (fac2);\n\
-    fac3 = sh_hprime_xx[(3) * (NGLLX) + K - (0)];\n\
-    tempx3l = tempx3l + (s_dummyx_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_dummyy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_dummyz_loc[(3) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    fac1 = sh_hprime_xx[(4) * (NGLLX) + I - (0)];\n\
-    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4 - (0)]) * (fac1);\n\
-    fac2 = sh_hprime_xx[(4) * (NGLLX) + J - (0)];\n\
-    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (4) * (NGLLX) + I - (0)]) * (fac2);\n\
-    fac3 = sh_hprime_xx[(4) * (NGLLX) + K - (0)];\n\
-    tempx3l = tempx3l + (s_dummyx_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_dummyy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_dummyz_loc[(4) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(0) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 0]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(0) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (0) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(0) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(0) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(1) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 1]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(1) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (1) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(1) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(1) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(2) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 2]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(2) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (2) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(2) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(2) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(3) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 3]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(3) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (3) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(3) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(3) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    fac1 = sh_hprime_xx[(4) * (NGLLX) + I];\n\
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);\n\
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);\n\
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + 4]) * (fac1);\n\
+    fac2 = sh_hprime_xx[(4) * (NGLLX) + J];\n\
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);\n\
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);\n\
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (4) * (NGLLX) + I]) * (fac2);\n\
+    fac3 = sh_hprime_xx[(4) * (NGLLX) + K];\n\
+    tempx3l = tempx3l + (s_dummyx_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempy3l = tempy3l + (s_dummyy_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+    tempz3l = tempz3l + (s_dummyz_loc[(4) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
 #else\n\
     for (l = 0; l <= NGLLX - (1); l += 1) {\n\
-      fac1 = sh_hprime_xx[(l) * (NGLLX) + I - (0)];\n\
-      tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);\n\
-      tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);\n\
-      tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l - (0)]) * (fac1);\n\
-      fac2 = sh_hprime_xx[(l) * (NGLLX) + J - (0)];\n\
-      tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);\n\
-      tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);\n\
-      tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I - (0)]) * (fac2);\n\
-      fac3 = sh_hprime_xx[(l) * (NGLLX) + K - (0)];\n\
-      tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-      tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
-      tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I - (0)]) * (fac3);\n\
+      fac1 = sh_hprime_xx[(l) * (NGLLX) + I];\n\
+      tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
+      tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
+      tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);\n\
+      fac2 = sh_hprime_xx[(l) * (NGLLX) + J];\n\
+      tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);\n\
+      tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);\n\
+      tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);\n\
+      fac3 = sh_hprime_xx[(l) * (NGLLX) + K];\n\
+      tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+      tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
+      tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);\n\
     }\n\
 #endif\n\
     offset = (working_element) * (NGLL3_PADDED) + tx;\n\
-    xixl = d_xix[offset - (0)];\n\
-    etaxl = d_etax[offset - (0)];\n\
-    gammaxl = d_gammax[offset - (0)];\n\
-    xiyl = d_xiy[offset - (0)];\n\
-    etayl = d_etay[offset - (0)];\n\
-    gammayl = d_gammay[offset - (0)];\n\
-    xizl = d_xiz[offset - (0)];\n\
-    etazl = d_etaz[offset - (0)];\n\
-    gammazl = d_gammaz[offset - (0)];\n\
+    xixl = d_xix[offset];\n\
+    etaxl = d_etax[offset];\n\
+    gammaxl = d_gammax[offset];\n\
+    xiyl = d_xiy[offset];\n\
+    etayl = d_etay[offset];\n\
+    gammayl = d_gammay[offset];\n\
+    xizl = d_xiz[offset];\n\
+    etazl = d_etaz[offset];\n\
+    gammazl = d_gammaz[offset];\n\
     duxdxl = (xixl) * (tempx1l) + (etaxl) * (tempx2l) + (gammaxl) * (tempx3l);\n\
     duxdyl = (xiyl) * (tempx1l) + (etayl) * (tempx2l) + (gammayl) * (tempx3l);\n\
     duxdzl = (xizl) * (tempx1l) + (etazl) * (tempx2l) + (gammazl) * (tempx3l);\n\
@@ -698,22 +711,22 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
       epsilondev_xz_loc = (duzdxl_plus_duxdzl) * (0.5f);\n\
       epsilondev_yz_loc = (duzdyl_plus_duydzl) * (0.5f);\n\
       if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {\n\
-        epsilon_trace_over_3[tx - (0)] = templ;\n\
+        epsilon_trace_over_3[tx] = templ;\n\
       } else {\n\
-        epsilon_trace_over_3[tx + (working_element) * (NGLL3) - (0)] = templ;\n\
+        epsilon_trace_over_3[tx + (working_element) * (NGLL3)] = templ;\n\
       }\n\
     }\n\
     if (ATTENUATION) {\n\
       if (USE_3D_ATTENUATION_ARRAYS) {\n\
-        one_minus_sum_beta_use = one_minus_sum_beta[tx + (working_element) * (NGLL3) - (0)];\n\
+        one_minus_sum_beta_use = one_minus_sum_beta[tx + (working_element) * (NGLL3)];\n\
       } else {\n\
-        one_minus_sum_beta_use = one_minus_sum_beta[working_element - (0)];\n\
+        one_minus_sum_beta_use = one_minus_sum_beta[working_element];\n\
       }\n\
     }\n\
     if (ANISOTROPY) {\n\
       compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
     } else {\n\
-      if ( ! d_ispec_is_tiso[working_element - (0)]) {\n\
+      if ( ! d_ispec_is_tiso[working_element]) {\n\
         compute_element_cm_iso(offset, d_kappavstore, d_muvstore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
       } else {\n\
         compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob, d_ystore, d_zstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
@@ -729,15 +742,15 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     if (GRAVITY) {\n\
       compute_element_cm_gravity(tx, iglob, d_xstore, d_ystore, d_zstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H1,  &rho_s_H2,  &rho_s_H3);\n\
     }\n\
-    s_tempx1[tx - (0)] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));\n\
-    s_tempy1[tx - (0)] = (jacobianl) * ((sigma_xy) * (xixl) + (sigma_yy) * (xiyl) + (sigma_zy) * (xizl));\n\
-    s_tempz1[tx - (0)] = (jacobianl) * ((sigma_xz) * (xixl) + (sigma_yz) * (xiyl) + (sigma_zz) * (xizl));\n\
-    s_tempx2[tx - (0)] = (jacobianl) * ((sigma_xx) * (etaxl) + (sigma_yx) * (etayl) + (sigma_zx) * (etazl));\n\
-    s_tempy2[tx - (0)] = (jacobianl) * ((sigma_xy) * (etaxl) + (sigma_yy) * (etayl) + (sigma_zy) * (etazl));\n\
-    s_tempz2[tx - (0)] = (jacobianl) * ((sigma_xz) * (etaxl) + (sigma_yz) * (etayl) + (sigma_zz) * (etazl));\n\
-    s_tempx3[tx - (0)] = (jacobianl) * ((sigma_xx) * (gammaxl) + (sigma_yx) * (gammayl) + (sigma_zx) * (gammazl));\n\
-    s_tempy3[tx - (0)] = (jacobianl) * ((sigma_xy) * (gammaxl) + (sigma_yy) * (gammayl) + (sigma_zy) * (gammazl));\n\
-    s_tempz3[tx - (0)] = (jacobianl) * ((sigma_xz) * (gammaxl) + (sigma_yz) * (gammayl) + (sigma_zz) * (gammazl));\n\
+    s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));\n\
+    s_tempy1[tx] = (jacobianl) * ((sigma_xy) * (xixl) + (sigma_yy) * (xiyl) + (sigma_zy) * (xizl));\n\
+    s_tempz1[tx] = (jacobianl) * ((sigma_xz) * (xixl) + (sigma_yz) * (xiyl) + (sigma_zz) * (xizl));\n\
+    s_tempx2[tx] = (jacobianl) * ((sigma_xx) * (etaxl) + (sigma_yx) * (etayl) + (sigma_zx) * (etazl));\n\
+    s_tempy2[tx] = (jacobianl) * ((sigma_xy) * (etaxl) + (sigma_yy) * (etayl) + (sigma_zy) * (etazl));\n\
+    s_tempz2[tx] = (jacobianl) * ((sigma_xz) * (etaxl) + (sigma_yz) * (etayl) + (sigma_zz) * (etazl));\n\
+    s_tempx3[tx] = (jacobianl) * ((sigma_xx) * (gammaxl) + (sigma_yx) * (gammayl) + (sigma_zx) * (gammazl));\n\
+    s_tempy3[tx] = (jacobianl) * ((sigma_xy) * (gammaxl) + (sigma_yy) * (gammayl) + (sigma_zy) * (gammazl));\n\
+    s_tempz3[tx] = (jacobianl) * ((sigma_xz) * (gammaxl) + (sigma_yz) * (gammayl) + (sigma_zz) * (gammazl));\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
   if (active) {\n\
@@ -751,103 +764,103 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     tempz2l = 0.0f;\n\
     tempz3l = 0.0f;\n\
 #ifdef MANUALLY_UNROLLED_LOOPS\n\
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 0 - (0)];\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 0];\n\
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 0;\n\
-    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);\n\
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 0 - (0)];\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 0];\n\
     offset = (K) * (NGLL2) + (0) * (NGLLX) + I;\n\
-    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);\n\
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 0 - (0)];\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 0];\n\
     offset = (0) * (NGLL2) + (J) * (NGLLX) + I;\n\
-    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);\n\
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 1 - (0)];\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 1];\n\
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 1;\n\
-    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);\n\
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 1 - (0)];\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 1];\n\
     offset = (K) * (NGLL2) + (1) * (NGLLX) + I;\n\
-    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);\n\
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 1 - (0)];\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 1];\n\
     offset = (1) * (NGLL2) + (J) * (NGLLX) + I;\n\
-    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);\n\
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 2 - (0)];\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 2];\n\
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 2;\n\
-    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);\n\
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 2 - (0)];\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 2];\n\
     offset = (K) * (NGLL2) + (2) * (NGLLX) + I;\n\
-    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);\n\
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 2 - (0)];\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 2];\n\
     offset = (2) * (NGLL2) + (J) * (NGLLX) + I;\n\
-    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);\n\
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 3 - (0)];\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 3];\n\
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 3;\n\
-    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);\n\
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 3 - (0)];\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 3];\n\
     offset = (K) * (NGLL2) + (3) * (NGLLX) + I;\n\
-    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);\n\
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 3 - (0)];\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 3];\n\
     offset = (3) * (NGLL2) + (J) * (NGLLX) + I;\n\
-    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);\n\
-    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 4 - (0)];\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
+    fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + 4];\n\
     offset = (K) * (NGLL2) + (J) * (NGLLX) + 4;\n\
-    tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);\n\
-    tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);\n\
-    tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);\n\
-    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 4 - (0)];\n\
+    tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+    tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+    tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+    fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + 4];\n\
     offset = (K) * (NGLL2) + (4) * (NGLLX) + I;\n\
-    tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);\n\
-    tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);\n\
-    tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);\n\
-    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 4 - (0)];\n\
+    tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+    tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+    tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+    fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + 4];\n\
     offset = (4) * (NGLL2) + (J) * (NGLLX) + I;\n\
-    tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);\n\
-    tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);\n\
-    tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);\n\
+    tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+    tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+    tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
 #else\n\
     for (l = 0; l <= NGLLX - (1); l += 1) {\n\
-      fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + l - (0)];\n\
+      fac1 = sh_hprimewgll_xx[(I) * (NGLLX) + l];\n\
       offset = (K) * (NGLL2) + (J) * (NGLLX) + l;\n\
-      tempx1l = tempx1l + (s_tempx1[offset - (0)]) * (fac1);\n\
-      tempy1l = tempy1l + (s_tempy1[offset - (0)]) * (fac1);\n\
-      tempz1l = tempz1l + (s_tempz1[offset - (0)]) * (fac1);\n\
-      fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + l - (0)];\n\
+      tempx1l = tempx1l + (s_tempx1[offset]) * (fac1);\n\
+      tempy1l = tempy1l + (s_tempy1[offset]) * (fac1);\n\
+      tempz1l = tempz1l + (s_tempz1[offset]) * (fac1);\n\
+      fac2 = sh_hprimewgll_xx[(J) * (NGLLX) + l];\n\
       offset = (K) * (NGLL2) + (l) * (NGLLX) + I;\n\
-      tempx2l = tempx2l + (s_tempx2[offset - (0)]) * (fac2);\n\
-      tempy2l = tempy2l + (s_tempy2[offset - (0)]) * (fac2);\n\
-      tempz2l = tempz2l + (s_tempz2[offset - (0)]) * (fac2);\n\
-      fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + l - (0)];\n\
+      tempx2l = tempx2l + (s_tempx2[offset]) * (fac2);\n\
+      tempy2l = tempy2l + (s_tempy2[offset]) * (fac2);\n\
+      tempz2l = tempz2l + (s_tempz2[offset]) * (fac2);\n\
+      fac3 = sh_hprimewgll_xx[(K) * (NGLLX) + l];\n\
       offset = (l) * (NGLL2) + (J) * (NGLLX) + I;\n\
-      tempx3l = tempx3l + (s_tempx3[offset - (0)]) * (fac3);\n\
-      tempy3l = tempy3l + (s_tempy3[offset - (0)]) * (fac3);\n\
-      tempz3l = tempz3l + (s_tempz3[offset - (0)]) * (fac3);\n\
+      tempx3l = tempx3l + (s_tempx3[offset]) * (fac3);\n\
+      tempy3l = tempy3l + (s_tempy3[offset]) * (fac3);\n\
+      tempz3l = tempz3l + (s_tempz3[offset]) * (fac3);\n\
     }\n\
 #endif\n\
-    fac1 = d_wgllwgll_yz[(K) * (NGLLX) + J - (0)];\n\
-    fac2 = d_wgllwgll_xz[(K) * (NGLLX) + I - (0)];\n\
-    fac3 = d_wgllwgll_xy[(J) * (NGLLX) + I - (0)];\n\
+    fac1 = d_wgllwgll_yz[(K) * (NGLLX) + J];\n\
+    fac2 = d_wgllwgll_xz[(K) * (NGLLX) + I];\n\
+    fac3 = d_wgllwgll_xy[(J) * (NGLLX) + I];\n\
     sum_terms1 =  -((fac1) * (tempx1l) + (fac2) * (tempx2l) + (fac3) * (tempx3l));\n\
     sum_terms2 =  -((fac1) * (tempy1l) + (fac2) * (tempy2l) + (fac3) * (tempy3l));\n\
     sum_terms3 =  -((fac1) * (tempz1l) + (fac2) * (tempz2l) + (fac3) * (tempz3l));\n\
@@ -858,24 +871,24 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     }\n\
 #ifdef USE_MESH_COLORING_GPU\n\
 #ifdef USE_TEXTURES_FIELDS\n\
-    d_accel[0 - (0) + (iglob - (0)) * (3)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 0,0)).x) + sum_terms1;\n\
-    d_accel[1 - (0) + (iglob - (0)) * (3)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 1,0)).x) + sum_terms2;\n\
-    d_accel[2 - (0) + (iglob - (0)) * (3)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 2,0)).x) + sum_terms3;\n\
+    d_accel[0 + (3) * (iglob)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 0,0)).x) + sum_terms1;\n\
+    d_accel[1 + (3) * (iglob)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 1,0)).x) + sum_terms2;\n\
+    d_accel[2 + (3) * (iglob)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 2,0)).x) + sum_terms3;\n\
 #else\n\
-    d_accel[0 - (0) + (iglob - (0)) * (3)] = d_accel[0 - (0) + (iglob - (0)) * (3)] + sum_terms1;\n\
-    d_accel[1 - (0) + (iglob - (0)) * (3)] = d_accel[1 - (0) + (iglob - (0)) * (3)] + sum_terms2;\n\
-    d_accel[2 - (0) + (iglob - (0)) * (3)] = d_accel[2 - (0) + (iglob - (0)) * (3)] + sum_terms3;\n\
+    d_accel[0 + (3) * (iglob)] = d_accel[0 + (3) * (iglob)] + sum_terms1;\n\
+    d_accel[1 + (3) * (iglob)] = d_accel[1 + (3) * (iglob)] + sum_terms2;\n\
+    d_accel[2 + (3) * (iglob)] = d_accel[2 + (3) * (iglob)] + sum_terms3;\n\
 #endif\n\
 #else\n\
     if (use_mesh_coloring_gpu) {\n\
 #ifdef USE_TEXTURES_FIELDS\n\
-      d_accel[0 - (0) + (iglob - (0)) * (3)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 0,0)).x) + sum_terms1;\n\
-      d_accel[1 - (0) + (iglob - (0)) * (3)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 1,0)).x) + sum_terms2;\n\
-      d_accel[2 - (0) + (iglob - (0)) * (3)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 2,0)).x) + sum_terms3;\n\
+      d_accel[0 + (3) * (iglob)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 0,0)).x) + sum_terms1;\n\
+      d_accel[1 + (3) * (iglob)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 1,0)).x) + sum_terms2;\n\
+      d_accel[2 + (3) * (iglob)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob) * (3) + 2,0)).x) + sum_terms3;\n\
 #else\n\
-      d_accel[0 - (0) + (iglob - (0)) * (3)] = d_accel[0 - (0) + (iglob - (0)) * (3)] + sum_terms1;\n\
-      d_accel[1 - (0) + (iglob - (0)) * (3)] = d_accel[1 - (0) + (iglob - (0)) * (3)] + sum_terms2;\n\
-      d_accel[2 - (0) + (iglob - (0)) * (3)] = d_accel[2 - (0) + (iglob - (0)) * (3)] + sum_terms3;\n\
+      d_accel[0 + (3) * (iglob)] = d_accel[0 + (3) * (iglob)] + sum_terms1;\n\
+      d_accel[1 + (3) * (iglob)] = d_accel[1 + (3) * (iglob)] + sum_terms2;\n\
+      d_accel[2 + (3) * (iglob)] = d_accel[2 + (3) * (iglob)] + sum_terms3;\n\
 #endif\n\
     } else {\n\
       atomicAdd(d_accel + (iglob) * (3) + 0, sum_terms1);\n\
@@ -887,11 +900,11 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
       compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc, epsilondev_yy_loc, epsilondev_xy_loc, epsilondev_xz_loc, epsilondev_yz_loc, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);\n\
     }\n\
     if (COMPUTE_AND_STORE_STRAIN) {\n\
-      epsilondev_xx[tx + (working_element) * (NGLL3) - (0)] = epsilondev_xx_loc;\n\
-      epsilondev_yy[tx + (working_element) * (NGLL3) - (0)] = epsilondev_yy_loc;\n\
-      epsilondev_xy[tx + (working_element) * (NGLL3) - (0)] = epsilondev_xy_loc;\n\
-      epsilondev_xz[tx + (working_element) * (NGLL3) - (0)] = epsilondev_xz_loc;\n\
-      epsilondev_yz[tx + (working_element) * (NGLL3) - (0)] = epsilondev_yz_loc;\n\
+      epsilondev_xx[tx + (working_element) * (NGLL3)] = epsilondev_xx_loc;\n\
+      epsilondev_yy[tx + (working_element) * (NGLL3)] = epsilondev_yy_loc;\n\
+      epsilondev_xy[tx + (working_element) * (NGLL3)] = epsilondev_xy_loc;\n\
+      epsilondev_xz[tx + (working_element) * (NGLL3)] = epsilondev_xz_loc;\n\
+      epsilondev_yz[tx + (working_element) * (NGLL3)] = epsilondev_yz_loc;\n\
     }\n\
   }\n\
 }\n\

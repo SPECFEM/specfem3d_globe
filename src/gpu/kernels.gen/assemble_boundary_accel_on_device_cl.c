@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -102,12 +102,12 @@ __kernel void assemble_boundary_accel_on_device(__global float * d_accel, const 
   int iinterface;\n\
   id = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
   for (iinterface = 0; iinterface <= num_interfaces - (1); iinterface += 1) {\n\
-    if (id < d_nibool_interfaces[iinterface - (0)]) {\n\
+    if (id < d_nibool_interfaces[iinterface]) {\n\
       iloc = id + (max_nibool_interfaces) * (iinterface);\n\
-      iglob = d_ibool_interfaces[iloc - (0)] - (1);\n\
-      atomicAdd(d_accel + (iglob) * (3) + 0, d_send_accel_buffer[(iloc) * (3) + 0 - (0)]);\n\
-      atomicAdd(d_accel + (iglob) * (3) + 1, d_send_accel_buffer[(iloc) * (3) + 1 - (0)]);\n\
-      atomicAdd(d_accel + (iglob) * (3) + 2, d_send_accel_buffer[(iloc) * (3) + 2 - (0)]);\n\
+      iglob = d_ibool_interfaces[iloc] - (1);\n\
+      atomicAdd(d_accel + (iglob) * (3) + 0, d_send_accel_buffer[(iloc) * (3) + 0]);\n\
+      atomicAdd(d_accel + (iglob) * (3) + 1, d_send_accel_buffer[(iloc) * (3) + 1]);\n\
+      atomicAdd(d_accel + (iglob) * (3) + 2, d_send_accel_buffer[(iloc) * (3) + 2]);\n\
     }\n\
   }\n\
 }\n\

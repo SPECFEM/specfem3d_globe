@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9996
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -96,35 +96,35 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #endif\n\
 \n\
 static void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){\n\
-  float eps[6];\n\
-  float b_eps[6];\n\
+  float eps[(6)];\n\
+  float b_eps[(6)];\n\
   int p;\n\
   int i;\n\
   int j;\n\
-  eps[0 - (0)] = epsdev[0 - (0)] + eps_trace_over_3;\n\
-  eps[1 - (0)] = epsdev[1 - (0)] + eps_trace_over_3;\n\
-  eps[2 - (0)] =  -(eps[0 - (0)] + eps[1 - (0)]) + (eps_trace_over_3) * (3.0f);\n\
-  eps[3 - (0)] = epsdev[4 - (0)];\n\
-  eps[4 - (0)] = epsdev[3 - (0)];\n\
-  eps[5 - (0)] = epsdev[2 - (0)];\n\
-  b_eps[0 - (0)] = b_epsdev[0 - (0)] + b_eps_trace_over_3;\n\
-  b_eps[1 - (0)] = b_epsdev[1 - (0)] + b_eps_trace_over_3;\n\
-  b_eps[2 - (0)] =  -(b_eps[0 - (0)] + b_eps[1 - (0)]) + (b_eps_trace_over_3) * (3.0f);\n\
-  b_eps[3 - (0)] = b_epsdev[4 - (0)];\n\
-  b_eps[4 - (0)] = b_epsdev[3 - (0)];\n\
-  b_eps[5 - (0)] = b_epsdev[2 - (0)];\n\
+  eps[0] = epsdev[0] + eps_trace_over_3;\n\
+  eps[1] = epsdev[1] + eps_trace_over_3;\n\
+  eps[2] =  -(eps[0] + eps[1]) + (eps_trace_over_3) * (3.0f);\n\
+  eps[3] = epsdev[4];\n\
+  eps[4] = epsdev[3];\n\
+  eps[5] = epsdev[2];\n\
+  b_eps[0] = b_epsdev[0] + b_eps_trace_over_3;\n\
+  b_eps[1] = b_epsdev[1] + b_eps_trace_over_3;\n\
+  b_eps[2] =  -(b_eps[0] + b_eps[1]) + (b_eps_trace_over_3) * (3.0f);\n\
+  b_eps[3] = b_epsdev[4];\n\
+  b_eps[4] = b_epsdev[3];\n\
+  b_eps[5] = b_epsdev[2];\n\
   p = 0;\n\
   for (i = 0; i <= 5; i += 1) {\n\
     for (j = i; j <= 5; j += 1) {\n\
-      prod[p - (0)] = (eps[i - (0)]) * (b_eps[j - (0)]);\n\
+      prod[p] = (eps[i]) * (b_eps[j]);\n\
       if (j > i) {\n\
-        prod[p - (0)] = prod[p - (0)] + (eps[j - (0)]) * (b_eps[i - (0)]);\n\
+        prod[p] = prod[p] + (eps[j]) * (b_eps[i]);\n\
         if (j > 2 && i < 3) {\n\
-          prod[p - (0)] = (prod[p - (0)]) * (2.0f);\n\
+          prod[p] = (prod[p]) * (2.0f);\n\
         }\n\
       }\n\
       if (i > 2) {\n\
-        prod[p - (0)] = (prod[p - (0)]) * (4.0f);\n\
+        prod[p] = (prod[p]) * (4.0f);\n\
       }\n\
       p = p + 1;\n\
     }\n\
@@ -136,27 +136,27 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
   int ijk_ispec;\n\
   float eps_trace_over_3;\n\
   float b_eps_trace_over_3;\n\
-  float prod[21];\n\
-  float epsdev[5];\n\
-  float b_epsdev[5];\n\
+  float prod[(21)];\n\
+  float epsdev[(5)];\n\
+  float b_epsdev[(5)];\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
   if (ispec < NSPEC) {\n\
     ijk_ispec = get_local_id(0) + (NGLL3) * (ispec);\n\
-    epsdev[0 - (0)] = epsilondev_xx[ijk_ispec - (0)];\n\
-    epsdev[1 - (0)] = epsilondev_yy[ijk_ispec - (0)];\n\
-    epsdev[2 - (0)] = epsilondev_xy[ijk_ispec - (0)];\n\
-    epsdev[3 - (0)] = epsilondev_xz[ijk_ispec - (0)];\n\
-    epsdev[4 - (0)] = epsilondev_yz[ijk_ispec - (0)];\n\
-    b_epsdev[0 - (0)] = b_epsilondev_xx[ijk_ispec - (0)];\n\
-    b_epsdev[1 - (0)] = b_epsilondev_yy[ijk_ispec - (0)];\n\
-    b_epsdev[2 - (0)] = b_epsilondev_xy[ijk_ispec - (0)];\n\
-    b_epsdev[3 - (0)] = b_epsilondev_xz[ijk_ispec - (0)];\n\
-    b_epsdev[4 - (0)] = b_epsilondev_yz[ijk_ispec - (0)];\n\
-    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec - (0)];\n\
-    b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec - (0)];\n\
+    epsdev[0] = epsilondev_xx[ijk_ispec];\n\
+    epsdev[1] = epsilondev_yy[ijk_ispec];\n\
+    epsdev[2] = epsilondev_xy[ijk_ispec];\n\
+    epsdev[3] = epsilondev_xz[ijk_ispec];\n\
+    epsdev[4] = epsilondev_yz[ijk_ispec];\n\
+    b_epsdev[0] = b_epsilondev_xx[ijk_ispec];\n\
+    b_epsdev[1] = b_epsilondev_yy[ijk_ispec];\n\
+    b_epsdev[2] = b_epsilondev_xy[ijk_ispec];\n\
+    b_epsdev[3] = b_epsilondev_xz[ijk_ispec];\n\
+    b_epsdev[4] = b_epsilondev_yz[ijk_ispec];\n\
+    eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];\n\
+    b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec];\n\
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);\n\
     for (i = 0; i <= 20; i += 1) {\n\
-      cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] = cijkl_kl[i - (0) + (ijk_ispec - (0)) * (21)] + (deltat) * (prod[i - (0)]);\n\
+      cijkl_kl[i + (21) * (ijk_ispec)] = cijkl_kl[i + (21) * (ijk_ispec)] + (deltat) * (prod[i]);\n\
     }\n\
   }\n\
 }\n\
