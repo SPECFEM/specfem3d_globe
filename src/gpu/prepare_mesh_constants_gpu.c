@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------------------------------------- */
 
 #ifdef USE_OPENCL
-
-cl_mem moclGetDummyImage2D (Mesh *mp) {
+#ifdef USE_TEXTURES_FIELDS
+static cl_mem moclGetDummyImage2D (Mesh *mp) {
   static int inited = 0;
   static cl_mem image2d;
   cl_int errcode;
@@ -51,7 +51,7 @@ cl_mem moclGetDummyImage2D (Mesh *mp) {
 
   return image2d;
 }
-
+#endif
 /* ----------------------------------------------------------------------------------------------- */
 
 void release_kernels (void) {
@@ -1942,12 +1942,6 @@ void FC_FUNC_ (prepare_outer_core_device,
       mp->d_b_displ_oc_tex = moclGetDummyImage2D(mp);
       mp->d_b_accel_oc_tex = moclGetDummyImage2D(mp);
     }
-#else
-    mp->d_displ_oc_tex = moclGetDummyImage2D(mp);
-    mp->d_accel_oc_tex = moclGetDummyImage2D(mp);
-    // backward/reconstructed fields
-    mp->d_b_displ_oc_tex = moclGetDummyImage2D(mp);
-    mp->d_b_accel_oc_tex = moclGetDummyImage2D(mp);
 #endif
   }
 #endif
@@ -2454,7 +2448,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (mp->nrec_local > 0) {
     if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
-      if (run_opencl ) RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
+      if (run_opencl) RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
 #endif
 #ifdef USE_CUDA
       if (run_cuda) cudaFreeHost(mp->h_station_seismo_field);
