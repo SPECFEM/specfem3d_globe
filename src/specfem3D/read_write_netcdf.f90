@@ -26,39 +26,39 @@
 !=====================================================================
 
 
-subroutine write_coordinates_netcdf (fName)
+subroutine write_coordinates_netcdf(fName)
 
   ! This writes the corresponding kernel coordinates.
 
-  use mpi
-  use :: netcdf
-  use :: specfem_par
-  use :: specfem_par_crustmantle
+  use netcdf
+  use specfem_par
+  use specfem_par_crustmantle
 
   implicit none
 
-  intent (in) :: fName
+  character(len=MAX_STRING_LEN),intent(in) :: fName
 
-  character (1024)           :: fName
+  integer, parameter :: NDIMS = 2
 
-  integer, parameter         :: NDIMS=2
+  integer :: ncid
+  integer :: sizeprocs
+  integer :: procDimId, kernDimId, varIdRadius, varIdTheta, varIdPhi
+  integer :: mpicomm,mpiinfo_null
 
-  integer                    :: ncid
-  integer                    :: commWorldSize
-  integer                    :: procDimId, kernDimId, varIdRadius, varIdTheta, varIdPhi
-
-  integer, dimension (NDIMS) :: start, count, ids
+  integer, dimension(NDIMS) :: start, count, ids
 
   ! Get the total number of processors.
-  call world_size (commWorldSize)
+  call world_size(sizeprocs)
+  call world_get_comm(mpicomm)
+  call world_get_info_null(mpiinfo_null)
 
   ! Create parallel NetCDF file.
   call checkNC (nf90_create (fName, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
-    comm = MPI_COMM_WORLD, info = MPI_INFO_NULL))
+                             comm = mpicomm, info = mpiinfo_null))
 
   ! Define the processor array.
   call checkNC (nf90_def_dim (ncid, 'glob', NGLOB_CRUST_MANTLE, kernDimId))
-  call checkNC (nf90_def_dim (ncid, 'proc', commWorldSize, procDimID))
+  call checkNC (nf90_def_dim (ncid, 'proc', sizeprocs, procDimID))
 
   ! Sort ids into array.
   ids = (/ kernDimID, procDimID /)
@@ -87,35 +87,37 @@ end subroutine write_coordinates_netcdf
 !-------------------------------------------------------------------------------------------------
 !
 
-subroutine write_kernel_netcdf (fName, param)
+subroutine write_kernel_netcdf(fName, param)
 
   ! This guy converts the kernels to global numbering, and writes to a NetCDF file in parallel.
 
-  use mpi
-  use :: netcdf
-  use :: specfem_par
-  use :: specfem_par_crustmantle
+  use netcdf
+  use specfem_par
+  use specfem_par_crustmantle
 
   implicit none
 
-  intent (in) :: param, fName
+  character(len=MAX_STRING_LEN),intent(in) :: fName
 
-  character (1024) :: fName
+  real (kind=CUSTOM_REAL), dimension (NGLLX, NGLLY, NGLLZ, NSPEC_CRUST_MANTLE),intent(in) :: param
 
+  ! local parameters
   real (kind=CUSTOM_REAL), dimension (:), allocatable :: paramUnpacked
-  real (kind=CUSTOM_REAL), dimension (NGLLX, NGLLY, NGLLZ, NSPEC_CRUST_MANTLE) :: param
 
-  integer, parameter         :: NDIMS=2
+  integer, parameter :: NDIMS = 2
 
-  integer                    :: ncid
-  integer                    :: i, j, k, ispec, iglob
-  integer                    :: commWorldSize
-  integer                    :: procDimId, kernDimId, varId
+  integer :: ncid
+  integer :: i, j, k, ispec, iglob
+  integer :: sizeprocs
+  integer :: procDimId, kernDimId, varId
+  integer :: mpicomm,mpiinfo_null
 
   integer, dimension (NDIMS) :: start, count, ids
 
   ! Get the total number of processors.
-  call world_size (commWorldSize)
+  call world_size(sizeprocs)
+  call world_get_comm(mpicomm)
+  call world_get_info_null(mpiinfo_null)
 
   ! Allocate the kernel dump array.
   allocate (paramUnpacked (NGLOB_CRUST_MANTLE))
@@ -136,11 +138,11 @@ subroutine write_kernel_netcdf (fName, param)
 
   ! Create the parallel NetCDF file.
   call checkNC (nf90_create (fName, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
-    comm = MPI_COMM_WORLD, info = MPI_INFO_NULL))
+    comm = mpicomm, info = mpiinfo_null))
 
   ! Define the processor array.
   call checkNC (nf90_def_dim (ncid, 'glob', NGLOB_CRUST_MANTLE, kernDimId))
-  call checkNC (nf90_def_dim (ncid, 'proc', commWorldSize, procDimID))
+  call checkNC (nf90_def_dim (ncid, 'proc', sizeprocs, procDimID))
 
   ! Sort ids into array.
   ids = (/ kernDimID, procDimID /)
@@ -176,15 +178,15 @@ subroutine checkNC (status)
   ! This little guy just checks for an error from the NetCDF libraries and throws a tantrum if
   ! one's found.
 
-  use :: netcdf
+  use netcdf
 
   implicit none
 
   integer, intent (in) :: status
 
   if (status /= nf90_noerr) then
-    print *, trim (nf90_strerror (status))
-    stop 'Netcdf error.'
+    print *,'Error: ', trim(nf90_strerror(status))
+    stop 'Error Netcdf command failed'
   endif
 
 end subroutine checkNC

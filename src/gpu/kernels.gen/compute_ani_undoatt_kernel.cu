@@ -84,7 +84,7 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-static __device__ void compute_element_strain_undo_att(const int ispec, const int ijk_ispec, const int * d_ibool, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * sh_hprime_xx, float * epsilondev_loc, float * epsilon_trace_over_3){
+static __device__ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const int * d_ibool, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * sh_hprime_xx, float * epsilondev_loc, float * epsilon_trace_over_3){
   int tx;
   int K;
   int J;
@@ -176,13 +176,50 @@ static __device__ void compute_element_strain_undo_att(const int ispec, const in
   epsilondev_loc[4] = (duzdyl + duydzl) * (0.5f);
   *(epsilon_trace_over_3) = templ;
 }
-__global__ void compute_iso_undo_att_kernel(const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float * epsilon_trace_over_3, float * mu_kl, float * kappa_kl, const int NSPEC, const float deltat, const int * d_ibool, const float * d_b_displ, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * d_hprime_xx){
+static __device__ void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){
+  float eps[(6)];
+  float b_eps[(6)];
+  int p;
+  int i;
+  int j;
+  eps[0] = epsdev[0] + eps_trace_over_3;
+  eps[1] = epsdev[1] + eps_trace_over_3;
+  eps[2] =  -(eps[0] + eps[1]) + (eps_trace_over_3) * (3.0f);
+  eps[3] = epsdev[4];
+  eps[4] = epsdev[3];
+  eps[5] = epsdev[2];
+  b_eps[0] = b_epsdev[0] + b_eps_trace_over_3;
+  b_eps[1] = b_epsdev[1] + b_eps_trace_over_3;
+  b_eps[2] =  -(b_eps[0] + b_eps[1]) + (b_eps_trace_over_3) * (3.0f);
+  b_eps[3] = b_epsdev[4];
+  b_eps[4] = b_epsdev[3];
+  b_eps[5] = b_epsdev[2];
+  p = 0;
+  for (i = 0; i <= 5; i += 1) {
+    for (j = i; j <= 5; j += 1) {
+      prod[p] = (eps[i]) * (b_eps[j]);
+      if (j > i) {
+        prod[p] = prod[p] + (eps[j]) * (b_eps[i]);
+        if (j > 2 && i < 3) {
+          prod[p] = (prod[p]) * (2.0f);
+        }
+      }
+      if (i > 2) {
+        prod[p] = (prod[p]) * (4.0f);
+      }
+      p = p + 1;
+    }
+  }
+}
+__global__ void compute_ani_undoatt_kernel(const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float * epsilon_trace_over_3, float * cijkl_kl, const int NSPEC, const float deltat, const int * d_ibool, const float * d_b_displ, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * d_hprime_xx){
   int ispec;
   int ijk_ispec;
   int tx;
   int iglob;
   float eps_trace_over_3;
   float b_eps_trace_over_3;
+  float prod[(21)];
+  int i;
   float epsdev[(5)];
   float b_epsdev[(5)];
   __shared__ float s_dummyx_loc[(NGLL3)];
@@ -209,8 +246,10 @@ __global__ void compute_iso_undo_att_kernel(const float * epsilondev_xx, const f
     epsdev[3] = epsilondev_xz[ijk_ispec];
     epsdev[4] = epsilondev_yz[ijk_ispec];
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];
-    compute_element_strain_undo_att(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_epsdev,  &b_eps_trace_over_3);
-    mu_kl[ijk_ispec] = mu_kl[ijk_ispec] + (deltat) * ((epsdev[0]) * (b_epsdev[0]) + (epsdev[1]) * (b_epsdev[1]) + (epsdev[0] + epsdev[1]) * (b_epsdev[0] + b_epsdev[1]) + ((epsdev[2]) * (b_epsdev[2]) + (epsdev[3]) * (b_epsdev[3]) + (epsdev[4]) * (b_epsdev[4])) * (2.0f));
-    kappa_kl[ijk_ispec] = kappa_kl[ijk_ispec] + (deltat) * (((eps_trace_over_3) * (b_eps_trace_over_3)) * (9.0f));
+    compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_epsdev,  &b_eps_trace_over_3);
+    compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);
+    for (i = 0; i <= 20; i += 1) {
+      cijkl_kl[i + (21) * (ijk_ispec)] = cijkl_kl[i + (21) * (ijk_ispec)] + (deltat) * (prod[i]);
+    }
   }
 }

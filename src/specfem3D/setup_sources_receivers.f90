@@ -569,7 +569,8 @@
   implicit none
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: filename,system_command,filename_new
+  character(len=MAX_STRING_LEN) :: filename,filename_new
+  character(len=MAX_STRING_LEN) :: command
 
   ! user output
   if (myrank == 0) then
@@ -579,30 +580,30 @@
     ! creates source/receiver location file
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
     filename_new = trim(OUTPUT_FILES)//'/sr.vtk'
-    write(system_command, &
+    write(command, &
   "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,' < ',a,' > ',a)")&
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
 
     ! note: this system() routine is non-standard fortran
-    call system(system_command)
+    call system_command(command)
 
     ! only extract receiver locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/receiver.vtk'
-    write(system_command, &
+    write(command, &
   "('awk ',a1,'{if (NR<5) print $0;if (NR==6)print ',a1,'POINTS',i6,' float',a1,';if (NR>5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
 
     ! note: this system() routine is non-standard fortran
-    call system(system_command)
+    call system_command(command)
 
     ! only extract source locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/source.vtk'
-    write(system_command, &
+    write(command, &
   "('awk ',a1,'{if (NR< 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
 
     ! note: this system() routine is non-standard fortran
-    call system(system_command)
+    call system_command(command)
 
   endif
 

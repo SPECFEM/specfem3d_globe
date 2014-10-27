@@ -2,7 +2,7 @@ package GMT_PLOT;
 
 use warnings;
 use Exporter;
-use lib '/opt/seismo-util/lib/perl';
+#use lib '/opt/seismo-util/lib/perl';
 use CMT_TOOLS;
 
 @ISA = ('Exporter');

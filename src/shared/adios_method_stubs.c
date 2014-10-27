@@ -68,7 +68,7 @@ void FC_FUNC_(save_arrays_solver_adios,SAVE_ARRAYS_SOLVER_ADIOS)(int* myrank, in
 
 void FC_FUNC_(save_arrays_solver_meshfiles_adios,SAVE_ARRAYS_SOLVER_MESHFILES_ADIOS)(void) {}
 
-void FC_FUNC_(save_arrays_solver_boundary_adios,SAVE_ARRAYS_SOLVER_BOUNDARY_ADIOS)(void) {}
+void FC_FUNC_(save_arrays_boundary_adios,SAVE_ARRAYS_BOUNDARY_ADIOS)(void) {}
 
 void FC_FUNC_(save_mpi_arrays_adios,SAVE_MPI_ARRAYS_ADIOS)(void) {}
 
@@ -106,11 +106,11 @@ void FC_FUNC_(perform_write_adios_kernels,PERFORM_WRITE_ADIOS_KERNELS)(void) {}
 
 void FC_FUNC_(define_kernel_adios_variables,DEFINE_KERNEL_ADIOS_VARIABLES)(void) {}
 
-void FC_FUNC_(write_kernels_crust_mantle_adios,WRITE_KERNELS_CRUST_MANTLE_ADIOS)(void) {}
+void FC_FUNC_(write_kernels_cm_adios,WRITE_KERNELS_CM_ADIOS)(void) {}
 
-void FC_FUNC_(write_kernels_outer_core_adios,WRITE_KERNELS_OUTER_CORE_ADIOS)(void) {}
+void FC_FUNC_(write_kernels_oc_adios,WRITE_KERNELS_OC_ADIOS)(void) {}
 
-void FC_FUNC_(write_kernels_inner_core_adios,WRITE_KERNELS_INNER_CORE_ADIOS)(void) {}
+void FC_FUNC_(write_kernels_ic_adios,WRITE_KERNELS_IC_ADIOS)(void) {}
 
 void FC_FUNC_(write_kernels_boundary_kl_adios,WRITE_KERNELS_BOUNDARY_KL_ADIOS)(void) {}
 

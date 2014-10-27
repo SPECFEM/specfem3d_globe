@@ -614,7 +614,7 @@
 
   else
     ! on GPU
-    call compute_kernels_strgth_noise_gpu(Mesh_pointer,noise_surface_movie,deltat)
+    call compute_kernels_strength_noise_gpu(Mesh_pointer,noise_surface_movie,deltat)
   endif
 
   end subroutine compute_kernels_strength_noise

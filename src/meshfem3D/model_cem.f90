@@ -1,12 +1,38 @@
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+
 module cem_par
 
-  use :: constants, only: PI, GRAV, RHOAV, R_EARTH
+  use constants, only: PI, GRAV, RHOAV, R_EARTH, MAX_STRING_LEN
 
   implicit none
 
-  double precision, parameter :: scaleval=dsqrt(PI*GRAV*RHOAV)
-  double precision, parameter :: scale_GPa = (RHOAV / 1000.d0) * &
-    ((R_EARTH * scaleval / 1000.d0) ** 2)
+  double precision :: scaleval
+  double precision :: scale_GPa
 
   integer, dimension (:), allocatable :: regCode
   integer, parameter                  :: shuOn=1
@@ -21,13 +47,13 @@ module cem_par
 
   type par
 
-    double precision, dimension (:), allocatable :: vsv, vsh, vpv, vph, rho
-    double precision, dimension (:), allocatable :: c11, c12, c13, c14
-    double precision, dimension (:), allocatable :: c15, c16, c26, c33
-    double precision, dimension (:), allocatable :: c22, c23, c24, c25
-    double precision, dimension (:), allocatable :: c34, c35, c36, c44
-    double precision, dimension (:), allocatable :: c55, c56, c66, c45
-    double precision, dimension (:), allocatable :: c46
+    double precision, dimension (:), pointer :: vsv, vsh, vpv, vph, rho
+    double precision, dimension (:), pointer :: c11, c12, c13, c14
+    double precision, dimension (:), pointer :: c15, c16, c26, c33
+    double precision, dimension (:), pointer :: c22, c23, c24, c25
+    double precision, dimension (:), pointer :: c34, c35, c36, c44
+    double precision, dimension (:), pointer :: c55, c56, c66, c45
+    double precision, dimension (:), pointer :: c46
 
   end type par
 
@@ -35,17 +61,25 @@ module cem_par
 
 end module cem_par
 
+!
+!--------------------------------------------------------------------------------------------------
+!
+
 subroutine model_cem_broadcast ( myrank )
 
-  use :: cem_par
-  use :: netcdf
-  use :: meshfem3D_models_par, only: CEM_ACCEPT
+  use cem_par
+  use netcdf
+  use meshfem3D_models_par, only: CEM_ACCEPT
 
   integer, intent (in) :: myrank
   integer              :: wSize
 
+  ! initializes
   rank = myrank
   call world_size (wSize)
+
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  scale_GPa = (RHOAV / 1000.d0) * ((R_EARTH * scaleval / 1000.d0) ** 2)
 
   if ( CEM_ACCEPT ) then
 
@@ -70,12 +104,16 @@ subroutine model_cem_broadcast ( myrank )
 
 end subroutine model_cem_broadcast
 
+!
+!--------------------------------------------------------------------------------------------------
+!
+
 subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
 
-  use :: cem_par
-  use :: constants
+  use cem_par
+  use constants
 
-  use :: meshfem3D_par, only: ibool
+  use meshfem3D_par, only: ibool
 
   implicit none
 
@@ -117,10 +155,14 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
 
 end subroutine request_cem
 
+!
+!--------------------------------------------------------------------------------------------------
+!
+
 subroutine return_populated_arrays ( structure, param, reg )
 
-  use :: cem_par
-  use :: netcdf
+  use cem_par
+  use netcdf
 
   implicit none
 
@@ -133,14 +175,13 @@ subroutine return_populated_arrays ( structure, param, reg )
 
   type (par) :: structure
 
-  character (len=1024) :: fileName
-  character (len=1024) :: fileNameTrim
-  character (len=1024) :: formatString
+  character (len=MAX_STRING_LEN) :: fileName
+  character (len=MAX_STRING_LEN) :: fileNameTrim
+  character (len=MAX_STRING_LEN) :: formatString
 
 
   formatString = "(A,I0.2,A,I0.4,A1,A3,A3)"
-  write (fileName,formatString) "./DATA/cemRequest/xyz_reg", reg, &
-    "_proc", rank, ".", param, ".nc"
+  write (fileName,formatString) "./DATA/cemRequest/xyz_reg", reg, "_proc", rank, ".", param, ".nc"
 
   fileNameTrim = trim(fileName)
 
@@ -163,24 +204,27 @@ subroutine return_populated_arrays ( structure, param, reg )
 
 end subroutine return_populated_arrays
 
+!
+!--------------------------------------------------------------------------------------------------
+!
+
 subroutine write_cem_request ( iregion_code )
 
-  use :: netcdf
-  use :: constants
-  use :: CEM_par
+  use netcdf
+  use constants
+  use CEM_par
 
   implicit none
 
   integer :: ncid, status, x_dimind, y_dimind, z_dimind, varidX, varidY, varidZ
   integer :: varidR, r_dimind, iregion_code
-  character (len = 1024) :: fileName, fileNameTrim, formatString
+  character (len = MAX_STRING_LEN) :: fileName, fileNameTrim, formatString
 
 !  This line does not seem portable.
 !  call execute_command_line ('mkdir -p cemRequest/')
 
   formatString = "(A,I0.2,A,I0.4)"
-  write (fileName,formatString) "DATA/cemRequest/xyz_reg", iregion_code, &
-    "_proc", rank
+  write (fileName,formatString) "DATA/cemRequest/xyz_reg", iregion_code, "_proc", rank
   fileNameTrim = trim(fileName)
 
   status = nf90_create  (path = fileNameTrim, cmode = NF90_CLOBBER, ncid = ncid)
@@ -213,13 +257,16 @@ subroutine write_cem_request ( iregion_code )
 
 end subroutine write_cem_request
 
+!
+!--------------------------------------------------------------------------------------------------
+!
+
 subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
-  use :: constants
-  use :: cem_par
+  use constants
+  use cem_par
 
-  use :: meshfem3D_par, only: &
-    ibool,idoubling,xstore,ystore,zstore
+  use meshfem3D_par, only: ibool,xstore,ystore,zstore
 
   implicit none
 

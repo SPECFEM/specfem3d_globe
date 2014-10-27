@@ -50,9 +50,11 @@ typedef float* __restrict__ realw_p; // otherwise use: //typedef float* realw_p;
 #define INITIALIZE_OFFSET_CUDA()
 
 #define INIT_OFFSET_CUDA(_buffer_, _offset_)                        \
+do {                                                                \
   if (run_opencl) {                                                 \
     _buffer_##_##_offset_.cuda = mp->_buffer_.cuda + _offset_;      \
   }                                                                 \
+} while (0)
 
 #define RELEASE_OFFSET_CUDA(_buffer_, _offset_)
 

@@ -193,7 +193,7 @@
 
        ! absorbing boundaries
        ! Stacey
-       if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_crust_mantle_forward()
+       if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) call compute_stacey_cm_forward()
 
        ! add the sources
 
@@ -644,9 +644,9 @@
       ! Stacey
       if (NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) then
         if (UNDO_ATTENUATION) then
-          call compute_stacey_crust_mantle_backward_undoatt()
+          call compute_stacey_cm_backward_undoatt()
         else
-          call compute_stacey_crust_mantle_backward()
+          call compute_stacey_cm_backward()
         endif
       endif
 

@@ -50,7 +50,7 @@
   if (SIMULATION_TYPE == 3) then
     ! crust mantle
     if (SAVE_REGULAR_KL) then
-      call save_regular_kernels_crust_mantle()
+      call save_regular_kernels_cm()
     else
       call save_kernels_crust_mantle()
     endif
@@ -398,7 +398,7 @@
 
   ! writes out kernels to files
   if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
-    call write_kernels_crust_mantle_adios(current_adios_handle, &
+    call write_kernels_cm_adios(current_adios_handle, &
                                           mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
                                           alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
                                           betav_kl_crust_mantle,betah_kl_crust_mantle, &
@@ -438,14 +438,14 @@
         ! Output these kernels as netcdf files -- one per processor.
 #ifdef CEM
 
-        call write_kernel_netcdf ('./OUTPUT_FILES/alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
-        call write_kernel_netcdf ('./OUTPUT_FILES/alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
-        call write_kernel_netcdf ('./OUTPUT_FILES/betavKernelCrustMantle.nc',  betav_kl_crust_mantle)
-        call write_kernel_netcdf ('./OUTPUT_FILES/betahKernelCrustMantle.nc',  betah_kl_crust_mantle)
-        call write_kernel_netcdf ('./OUTPUT_FILES/etaKernelCrustMantle.nc',    eta_kl_crust_mantle)
-        call write_kernel_netcdf ('./OUTPUT_FILES/rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
+        call write_kernel_netcdf('./OUTPUT_FILES/alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
+        call write_kernel_netcdf('./OUTPUT_FILES/alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
+        call write_kernel_netcdf('./OUTPUT_FILES/betavKernelCrustMantle.nc',  betav_kl_crust_mantle)
+        call write_kernel_netcdf('./OUTPUT_FILES/betahKernelCrustMantle.nc',  betah_kl_crust_mantle)
+        call write_kernel_netcdf('./OUTPUT_FILES/etaKernelCrustMantle.nc',    eta_kl_crust_mantle)
+        call write_kernel_netcdf('./OUTPUT_FILES/rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
 
-        call write_coordinates_netcdf ('./OUTPUT_FILES/xyzCrustMantle.nc')
+        call write_coordinates_netcdf('./OUTPUT_FILES/xyzCrustMantle.nc')
 
 #endif
 
@@ -577,7 +577,7 @@
 
   ! writes out kernels to file
   if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
-    call write_kernels_outer_core_adios(current_adios_handle)
+    call write_kernels_oc_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
 
@@ -644,7 +644,7 @@
 
   ! writes out kernels to file
   if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
-    call write_kernels_inner_core_adios(current_adios_handle)
+    call write_kernels_ic_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
 

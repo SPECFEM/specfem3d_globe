@@ -178,7 +178,7 @@
 
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then
-          print*,'Error vpv: ',vpv,vph,vsv,vsh,rho
+          print*,'Error vpv: ',vpv,' vph:',vph,' vsv: ',vsv,' vsh: ',vsh,' rho:',rho
           print*,'radius:',r*R_EARTH_KM
           call exit_mpi(myrank,'Error get_model values')
         endif

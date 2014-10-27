@@ -88,7 +88,7 @@ program combine_vol_data
 #ifndef USE_VTK_INSTEAD_OF_MESH
 !!! .mesh specific !!!!!!!!!!!
   integer :: pfd, efd
-  character(len=1038) :: command_name
+  character(len=MAX_STRING_LEN) :: command_name
   character(len=MAX_STRING_LEN) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file
 #else
 !!! .vtk specific !!!!!!!!!!!
@@ -701,7 +701,7 @@ program combine_vol_data
     print *, ' '
     print *, 'cat mesh files: '
     print *, trim(command_name)
-    call system(trim(command_name))
+    call system_command(command_name)
 #endif
   enddo
 

@@ -6,17 +6,17 @@
 
 typedef float realw;
 
-__device__ void compute_element_strain_undo_att(int ispec,int ijk_ispec,
-                                                int* d_ibool,
-                                                realw* s_dummyx_loc,
-                                                realw* s_dummyy_loc,
-                                                realw* s_dummyz_loc,
-                                                realw* d_xix,realw* d_xiy,realw* d_xiz,
-                                                realw* d_etax,realw* d_etay,realw* d_etaz,
-                                                realw* d_gammax,realw* d_gammay,realw* d_gammaz,
-                                                realw* sh_hprime_xx,
-                                                realw* epsilondev_loc,
-                                                realw* epsilon_trace_over_3) {
+__device__ void compute_element_strain_undoatt(int ispec,int ijk_ispec,
+                                               int* d_ibool,
+                                               realw* s_dummyx_loc,
+                                               realw* s_dummyy_loc,
+                                               realw* s_dummyz_loc,
+                                               realw* d_xix,realw* d_xiy,realw* d_xiz,
+                                               realw* d_etax,realw* d_etay,realw* d_etaz,
+                                               realw* d_gammax,realw* d_gammay,realw* d_gammaz,
+                                               realw* sh_hprime_xx,
+                                               realw* epsilondev_loc,
+                                               realw* epsilon_trace_over_3) {
 
 
   // thread id == GLL point id
@@ -106,28 +106,76 @@ __device__ void compute_element_strain_undo_att(int ispec,int ijk_ispec,
 
 /* ----------------------------------------------------------------------------------------------- */
 
-__global__ void compute_iso_undo_att_kernel(realw* epsilondev_xx,
-                                            realw* epsilondev_yy,
-                                            realw* epsilondev_xy,
-                                            realw* epsilondev_xz,
-                                            realw* epsilondev_yz,
-                                            realw* epsilon_trace_over_3,
-                                            realw* mu_kl,
-                                            realw* kappa_kl,
-                                            int NSPEC,
-                                            realw deltat,
-                                            int* d_ibool,
-                                            realw* d_b_displ,
-                                            realw* d_xix,
-                                            realw* d_xiy,
-                                            realw* d_xiz,
-                                            realw* d_etax,
-                                            realw* d_etay,
-                                            realw* d_etaz,
-                                            realw* d_gammax,
-                                            realw* d_gammay,
-                                            realw* d_gammaz,
-                                            realw* d_hprime_xx) {
+__device__ void compute_strain_product_cuda(realw* prod,
+                                            realw eps_trace_over_3,
+                                            realw* epsdev,
+                                            realw b_eps_trace_over_3,
+                                            realw* b_epsdev){
+
+  realw eps[6],b_eps[6];
+
+  // Building of the local matrix of the strain tensor
+  // for the adjoint field and the regular backward field
+
+  // note: indices are -1 compared to fortran routine because of fortran -> C array indexing
+
+  // eps11 et eps22
+  eps[0] = epsdev[0] + eps_trace_over_3;
+  eps[1] = epsdev[1] + eps_trace_over_3;
+  //eps33
+  eps[2] = - (eps[0] + eps[1]) + 3.0f*eps_trace_over_3;
+  //eps23
+  eps[3] = epsdev[4];
+  //eps13
+  eps[4] = epsdev[3];
+  //eps12
+  eps[5] = epsdev[2];
+
+  b_eps[0] = b_epsdev[0] + b_eps_trace_over_3;
+  b_eps[1] = b_epsdev[1] + b_eps_trace_over_3;
+  b_eps[2] = - (b_eps[0] + b_eps[1]) + 3.0f*b_eps_trace_over_3;
+  b_eps[3] = b_epsdev[4];
+  b_eps[4] = b_epsdev[3];
+  b_eps[5] = b_epsdev[2];
+
+  // Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
+  int p = 0;
+  for(int i=0; i<6; i++){
+    for(int j=i; j<6; j++){
+      prod[p]=eps[i]*b_eps[j];
+      if(j>i){
+        prod[p]=prod[p]+eps[j]*b_eps[i];
+        if(j>2 && i<3){ prod[p] = prod[p]*2.0f;}
+      }
+      if(i>2){ prod[p]=prod[p]*4.0f;}
+      p=p+1;
+    }
+  }
+}
+
+/* ----------------------------------------------------------------------------------------------- */
+
+__global__ void compute_ani_undoatt_kernel(realw* epsilondev_xx,
+                                           realw* epsilondev_yy,
+                                           realw* epsilondev_xy,
+                                           realw* epsilondev_xz,
+                                           realw* epsilondev_yz,
+                                           realw* epsilon_trace_over_3,
+                                           realw* cijkl_kl,
+                                           int NSPEC,
+                                           realw deltat,
+                                           int* d_ibool,
+                                           realw* d_b_displ,
+                                           realw* d_xix,
+                                           realw* d_xiy,
+                                           realw* d_xiz,
+                                           realw* d_etax,
+                                           realw* d_etay,
+                                           realw* d_etaz,
+                                           realw* d_gammax,
+                                           realw* d_gammay,
+                                           realw* d_gammaz,
+                                           realw* d_hprime_xx) {
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
   int ijk_ispec = threadIdx.x + NGLL3*ispec;
@@ -165,7 +213,9 @@ __global__ void compute_iso_undo_att_kernel(realw* epsilondev_xx,
   // handles case when there is 1 extra block (due to rectangular grid)
   if(ispec < NSPEC) {
 
+    // fully anisotropic kernel contributions
     realw eps_trace_over_3,b_eps_trace_over_3;
+    realw prod[21];
     realw epsdev[5];
     realw b_epsdev[5];
 
@@ -178,20 +228,19 @@ __global__ void compute_iso_undo_att_kernel(realw* epsilondev_xx,
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];
 
     // strain from backward/reconstructed forward wavefield
-    compute_element_strain_undo_att(ispec,ijk_ispec,
-                                    d_ibool,
-                                    s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
-                                    d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz,
-                                    sh_hprime_xx,
-                                    b_epsdev,&b_eps_trace_over_3);
+    compute_element_strain_undoatt(ispec,ijk_ispec,
+                                   d_ibool,
+                                   s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
+                                   d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz,
+                                   sh_hprime_xx,
+                                   b_epsdev,&b_eps_trace_over_3);
 
-    // isotropic kernel contributions
-    // shear modulus kernel
-    mu_kl[ijk_ispec] += deltat * ( epsdev[0]*b_epsdev[0] + epsdev[1]*b_epsdev[1]
-                                   + (epsdev[0]+epsdev[1])*(b_epsdev[0]+b_epsdev[1])
-                                   + 2*( epsdev[2]*b_epsdev[2] + epsdev[3]*b_epsdev[3] + epsdev[4]*b_epsdev[4]) );
+    // fully anisotropic kernel contributions
+    compute_strain_product(prod,eps_trace_over_3,epsdev,b_eps_trace_over_3,b_epsdev);
 
-    // bulk modulus kernel
-    kappa_kl[ijk_ispec] += deltat * ( 9 * eps_trace_over_3 * b_eps_trace_over_3);
+    // updates full anisotropic kernel
+    for(int i=0;i<21;i++){
+      cijkl_kl[i + 21*ijk_ispec] += deltat * prod[i];
+    }
   }
 }

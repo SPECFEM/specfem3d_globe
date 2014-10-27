@@ -622,7 +622,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_arrays_solver_boundary()
+  subroutine save_arrays_boundary()
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
 
@@ -679,5 +679,5 @@
 
   close(IOUT)
 
-  end subroutine save_arrays_solver_boundary
+  end subroutine save_arrays_boundary
 

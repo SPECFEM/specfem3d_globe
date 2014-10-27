@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_stacey_outer_core_forward()
+  subroutine compute_stacey_oc_forward()
 
   use constants_solver
 
@@ -282,7 +282,7 @@
     endif
   endif
 
-  end subroutine compute_stacey_outer_core_forward
+  end subroutine compute_stacey_oc_forward
 
 
 !
@@ -290,7 +290,7 @@
 !
 
 
-  subroutine compute_stacey_outer_core_backward()
+  subroutine compute_stacey_oc_backward()
 
   use constants_solver
 
@@ -490,13 +490,13 @@
     endif
   endif
 
-  end subroutine compute_stacey_outer_core_backward
+  end subroutine compute_stacey_oc_backward
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_stacey_outer_core_backward_undoatt()
+  subroutine compute_stacey_oc_backward_undoatt()
 
   use constants_solver
 
@@ -529,7 +529,7 @@
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
   if (SAVE_FORWARD) return
-  if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_outer_core_backward_undoatt()'
+  if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_oc_backward_undoatt()'
 
   ! outer core
 
@@ -698,6 +698,6 @@
     endif
   endif
 
-  end subroutine compute_stacey_outer_core_backward_undoatt
+  end subroutine compute_stacey_oc_backward_undoatt
 
 

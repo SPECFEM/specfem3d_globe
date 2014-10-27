@@ -207,10 +207,10 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 void FC_FUNC_ (compute_kernels_oc_gpu,
                COMPUTE_KERNELS_OC_GPU) (long *Mesh_pointer_f, realw *deltat_f) {}
 
-void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
-               COMPUTE_KERNELS_STRGTH_NOISE_GPU) (long *Mesh_pointer_f,
-                                                  realw *h_noise_surface_movie,
-                                                  realw *deltat_f) {}
+void FC_FUNC_ (compute_kernels_strength_noise_gpu,
+               COMPUTE_KERNELS_STRENGTH_NOISE_GPU) (long *Mesh_pointer_f,
+                                                    realw *h_noise_surface_movie,
+                                                    realw *deltat_f) {}
 
 void FC_FUNC_ (compute_kernels_hess_gpu,
                COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer_f,

@@ -100,56 +100,56 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
       idx = 0;
       if (!mp->anisotropic_kl) {
         // isotropic kernels
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (realw), (void *) &deltat));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (realw), (void *) &deltat));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undo_att_kernel, 2, NULL,
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undoatt_kernel, 2, NULL,
                                          global_work_size, local_work_size, 0, NULL, NULL));
       } else {
         // anisotropic kernels
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_cijkl_kl_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (realw), (void *) &deltat));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_crust_mantle.ocl));
-        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_cijkl_kl_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (realw), (void *) &deltat));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_crust_mantle.ocl));
+        clCheck (clSetKernelArg (mocl.kernels.compute_ani_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
 
-        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undo_att_kernel, 2, NULL,
+        clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_ani_undoatt_kernel, 2, NULL,
                                          global_work_size, local_work_size, 0, NULL, NULL));
       }
     }
@@ -159,39 +159,39 @@ void FC_FUNC_ (compute_kernels_cm_gpu,
       // computes strain locally based on current backward/reconstructed (b_displ) wavefield
       if (! mp->anisotropic_kl) {
         // isotropic kernels
-        compute_iso_undo_att_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
-                                                                           mp->d_epsilondev_yy_crust_mantle.cuda,
-                                                                           mp->d_epsilondev_xy_crust_mantle.cuda,
-                                                                           mp->d_epsilondev_xz_crust_mantle.cuda,
-                                                                           mp->d_epsilondev_yz_crust_mantle.cuda,
-                                                                           mp->d_eps_trace_over_3_crust_mantle.cuda,
-                                                                           mp->d_beta_kl_crust_mantle.cuda,
-                                                                           mp->d_alpha_kl_crust_mantle.cuda,
-                                                                           mp->NSPEC_CRUST_MANTLE,
-                                                                           deltat,
-                                                                           mp->d_ibool_crust_mantle.cuda,
-                                                                           mp->d_b_displ_crust_mantle.cuda,
-                                                                           mp->d_xix_crust_mantle.cuda,mp->d_xiy_crust_mantle.cuda,mp->d_xiz_crust_mantle.cuda,
-                                                                           mp->d_etax_crust_mantle.cuda,mp->d_etay_crust_mantle.cuda,mp->d_etaz_crust_mantle.cuda,
-                                                                           mp->d_gammax_crust_mantle.cuda,mp->d_gammay_crust_mantle.cuda,mp->d_gammaz_crust_mantle.cuda,
-                                                                           mp->d_hprime_xx.cuda);
+        compute_iso_undoatt_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
+                                                                          mp->d_epsilondev_yy_crust_mantle.cuda,
+                                                                          mp->d_epsilondev_xy_crust_mantle.cuda,
+                                                                          mp->d_epsilondev_xz_crust_mantle.cuda,
+                                                                          mp->d_epsilondev_yz_crust_mantle.cuda,
+                                                                          mp->d_eps_trace_over_3_crust_mantle.cuda,
+                                                                          mp->d_beta_kl_crust_mantle.cuda,
+                                                                          mp->d_alpha_kl_crust_mantle.cuda,
+                                                                          mp->NSPEC_CRUST_MANTLE,
+                                                                          deltat,
+                                                                          mp->d_ibool_crust_mantle.cuda,
+                                                                          mp->d_b_displ_crust_mantle.cuda,
+                                                                          mp->d_xix_crust_mantle.cuda,mp->d_xiy_crust_mantle.cuda,mp->d_xiz_crust_mantle.cuda,
+                                                                          mp->d_etax_crust_mantle.cuda,mp->d_etay_crust_mantle.cuda,mp->d_etaz_crust_mantle.cuda,
+                                                                          mp->d_gammax_crust_mantle.cuda,mp->d_gammay_crust_mantle.cuda,mp->d_gammaz_crust_mantle.cuda,
+                                                                          mp->d_hprime_xx.cuda);
       } else {
         // anisotropic kernels
-        compute_ani_undo_att_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
-                                                                           mp->d_epsilondev_yy_crust_mantle.cuda,
-                                                                           mp->d_epsilondev_xy_crust_mantle.cuda,
-                                                                           mp->d_epsilondev_xz_crust_mantle.cuda,
-                                                                           mp->d_epsilondev_yz_crust_mantle.cuda,
-                                                                           mp->d_eps_trace_over_3_crust_mantle.cuda,
-                                                                           mp->d_cijkl_kl_crust_mantle.cuda,
-                                                                           mp->NSPEC_CRUST_MANTLE,
-                                                                           deltat,
-                                                                           mp->d_ibool_crust_mantle.cuda,
-                                                                           mp->d_b_displ_crust_mantle.cuda,
-                                                                           mp->d_xix_crust_mantle.cuda,mp->d_xiy_crust_mantle.cuda,mp->d_xiz_crust_mantle.cuda,
-                                                                           mp->d_etax_crust_mantle.cuda,mp->d_etay_crust_mantle.cuda,mp->d_etaz_crust_mantle.cuda,
-                                                                           mp->d_gammax_crust_mantle.cuda,mp->d_gammay_crust_mantle.cuda,mp->d_gammaz_crust_mantle.cuda,
-                                                                           mp->d_hprime_xx.cuda);
+        compute_ani_undoatt_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_crust_mantle.cuda,
+                                                                          mp->d_epsilondev_yy_crust_mantle.cuda,
+                                                                          mp->d_epsilondev_xy_crust_mantle.cuda,
+                                                                          mp->d_epsilondev_xz_crust_mantle.cuda,
+                                                                          mp->d_epsilondev_yz_crust_mantle.cuda,
+                                                                          mp->d_eps_trace_over_3_crust_mantle.cuda,
+                                                                          mp->d_cijkl_kl_crust_mantle.cuda,
+                                                                          mp->NSPEC_CRUST_MANTLE,
+                                                                          deltat,
+                                                                          mp->d_ibool_crust_mantle.cuda,
+                                                                          mp->d_b_displ_crust_mantle.cuda,
+                                                                          mp->d_xix_crust_mantle.cuda,mp->d_xiy_crust_mantle.cuda,mp->d_xiz_crust_mantle.cuda,
+                                                                          mp->d_etax_crust_mantle.cuda,mp->d_etay_crust_mantle.cuda,mp->d_etaz_crust_mantle.cuda,
+                                                                          mp->d_gammax_crust_mantle.cuda,mp->d_gammay_crust_mantle.cuda,mp->d_gammaz_crust_mantle.cuda,
+                                                                          mp->d_hprime_xx.cuda);
       }
     }
 #endif
@@ -364,57 +364,57 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 #ifdef USE_OPENCL
     if (run_opencl) {
       idx = 0;
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (realw), (void *) &deltat));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_inner_core.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undo_att_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xx_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_xz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_epsilondev_yz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_beta_kl_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_alpha_kl_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (int), (void *) &mp->NSPEC_INNER_CORE));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (realw), (void *) &deltat));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xix_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiy_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_xiz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etax_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etay_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_etaz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammax_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammay_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_gammaz_inner_core.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.compute_iso_undoatt_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx.ocl));
 
-      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undo_att_kernel, 2, NULL,
+      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.compute_iso_undoatt_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
     }
 #endif
 #ifdef USE_CUDA
     if (run_cuda) {
-      compute_iso_undo_att_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
-                                                                         mp->d_epsilondev_yy_inner_core.cuda,
-                                                                         mp->d_epsilondev_xy_inner_core.cuda,
-                                                                         mp->d_epsilondev_xz_inner_core.cuda,
-                                                                         mp->d_epsilondev_yz_inner_core.cuda,
-                                                                         mp->d_eps_trace_over_3_inner_core.cuda,
-                                                                         mp->d_beta_kl_inner_core.cuda,
-                                                                         mp->d_alpha_kl_inner_core.cuda,
-                                                                         mp->NSPEC_INNER_CORE,
-                                                                         deltat,
-                                                                         mp->d_ibool_inner_core.cuda,
-                                                                         mp->d_b_displ_inner_core.cuda,
-                                                                         mp->d_xix_inner_core.cuda,
-                                                                         mp->d_xiy_inner_core.cuda,
-                                                                         mp->d_xiz_inner_core.cuda,
-                                                                         mp->d_etax_inner_core.cuda,
-                                                                         mp->d_etay_inner_core.cuda,
-                                                                         mp->d_etaz_inner_core.cuda,
-                                                                         mp->d_gammax_inner_core.cuda,
-                                                                         mp->d_gammay_inner_core.cuda,
-                                                                         mp->d_gammaz_inner_core.cuda,
-                                                                         mp->d_hprime_xx.cuda);
+      compute_iso_undoatt_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_epsilondev_xx_inner_core.cuda,
+                                                                        mp->d_epsilondev_yy_inner_core.cuda,
+                                                                        mp->d_epsilondev_xy_inner_core.cuda,
+                                                                        mp->d_epsilondev_xz_inner_core.cuda,
+                                                                        mp->d_epsilondev_yz_inner_core.cuda,
+                                                                        mp->d_eps_trace_over_3_inner_core.cuda,
+                                                                        mp->d_beta_kl_inner_core.cuda,
+                                                                        mp->d_alpha_kl_inner_core.cuda,
+                                                                        mp->NSPEC_INNER_CORE,
+                                                                        deltat,
+                                                                        mp->d_ibool_inner_core.cuda,
+                                                                        mp->d_b_displ_inner_core.cuda,
+                                                                        mp->d_xix_inner_core.cuda,
+                                                                        mp->d_xiy_inner_core.cuda,
+                                                                        mp->d_xiz_inner_core.cuda,
+                                                                        mp->d_etax_inner_core.cuda,
+                                                                        mp->d_etay_inner_core.cuda,
+                                                                        mp->d_etaz_inner_core.cuda,
+                                                                        mp->d_gammax_inner_core.cuda,
+                                                                        mp->d_gammay_inner_core.cuda,
+                                                                        mp->d_gammaz_inner_core.cuda,
+                                                                        mp->d_hprime_xx.cuda);
     }
 #endif
 
@@ -563,12 +563,12 @@ void FC_FUNC_ (compute_kernels_oc_gpu,
 /* ----------------------------------------------------------------------------------------------- */
 
 extern EXTERN_LANG
-void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
-               COMPUTE_KERNELS_STRGTH_NOISE_GPU) (long *Mesh_pointer_f,
-                                                  realw *h_noise_surface_movie,
-                                                  realw *deltat_f) {
+void FC_FUNC_ (compute_kernels_strength_noise_gpu,
+               COMPUTE_KERNELS_STRENGTH_NOISE_GPU) (long *Mesh_pointer_f,
+                                                    realw *h_noise_surface_movie,
+                                                    realw *deltat_f) {
 
-  TRACE ("compute_kernels_strgth_noise_gpu");
+  TRACE ("compute_kernels_strength_noise_gpu");
   // debug
   DEBUG_BACKWARD_KERNEL();
 

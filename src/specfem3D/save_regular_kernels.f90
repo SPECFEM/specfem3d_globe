@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine save_regular_kernels_crust_mantle()
+  subroutine save_regular_kernels_cm()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -506,5 +506,5 @@
              beta_kl_crust_mantle_reg, &
              alpha_kl_crust_mantle_reg)
 
-  end subroutine save_regular_kernels_crust_mantle
+  end subroutine save_regular_kernels_cm
 

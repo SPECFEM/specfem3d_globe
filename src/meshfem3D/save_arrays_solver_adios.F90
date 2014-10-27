@@ -1309,7 +1309,7 @@ end subroutine save_mpi_arrays_adios
 !===============================================================================
 !> \brief Write boundary conditions (MOHO, 400, 600) to a single ADIOS file.
 
-subroutine save_arrays_solver_boundary_adios()
+subroutine save_arrays_boundary_adios()
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
 
@@ -1456,7 +1456,7 @@ subroutine save_arrays_solver_boundary_adios()
 
   num_regions_written = num_regions_written + 1
 
-end subroutine save_arrays_solver_boundary_adios
+end subroutine save_arrays_boundary_adios
 
 !!------------------------------------------------------------------------------
 !!> Write local, global and offset dimensions to ADIOS

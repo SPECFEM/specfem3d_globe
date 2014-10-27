@@ -25,6 +25,7 @@
 !
 !=====================================================================
 
+!------------------------------------------------------------------------------
 ! interpolates from one mesh resolution to another
 !
 ! inputs:
@@ -56,7 +57,7 @@
 
   program interpolate_model
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
+  use constants,only: CUSTOM_REAL,SIZE_INTEGER,NGLLX,NGLLY,NGLLZ, &
     TWO_PI,R_UNIT_SPHERE,NX_BATHY,NY_BATHY, &
     GAUSSALPHA,GAUSSBETA,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM, &
     IIN,IOUT,IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL,MAX_STRING_LEN
@@ -90,6 +91,12 @@
   ! brute-force search for closest element
   ! by default set to .false., thus a tree search for initial guess element is used
   logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.
+
+  ! kd-tree setup
+  ! uses all internal gll points for search tree
+  ! or only element mid-points (only one option must be true)
+  logical,parameter :: TREE_INTERNAL_GLL_POINTS = .true.
+  logical,parameter :: TREE_MID_POINTS = .false.
 
   !-------------------------------------------------------------------
 
@@ -355,16 +362,17 @@
     if (USE_ATTENUATION_Q) then
       print*,'  includes qmu model parameter'
     endif
+    print*,'  ( ',(trim(fname(i))//" ",i=1,nparams),')'
     print*
     print*,'input model  directory: ',trim(input_model_dir)
     print*,'output model directory: ',trim(output_model_dir)
     print*
     print*,'array size:'
-    print*,'  ibool1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nproc_eta_old*nproc_xi_old*sizeof(i)/1024./1024.,'MB'
-    print*,'  x1,y1,z1 = ',nglob_max_old*nproc_eta_old*nproc_xi_old*CUSTOM_REAL/1024./1024.,'MB'
+    print*,'  ibool1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nproc_eta_old*nproc_xi_old*dble(SIZE_INTEGER)/1024./1024.,'MB'
+    print*,'  x1,y1,z1 = ',nglob_max_old*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print*
-    print*,'  model1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nparams*nproc_eta_old*nproc_xi_old*CUSTOM_REAL/1024./1024.,'MB'
-    print*,'  model2   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*CUSTOM_REAL/1024./1024.,'MB'
+    print*,'  model1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nparams*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
+    print*,'  model2   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print*
     print*,'total mpi processes: ',sizeprocs
     if (DO_BRUTE_FORCE_SEARCH) then
@@ -378,6 +386,7 @@
     endif
     print*
   endif
+  call synchronize_all()
 
   ! checks
   if (sizeprocs /= NPROCTOT_VAL) stop 'Error target mesh processors not equal to current total mpi processes'
@@ -417,6 +426,9 @@
   ! statistics
   allocate( model_maxdiff(nparams),stat=ier)
   if (ier /= 0) stop 'Error allocating model_maxdiff'
+
+  ! synchronizes
+  call synchronize_all()
 
   ! GLL points
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
@@ -665,11 +677,6 @@
 
     ! builds search tree
     if (.not. DO_BRUTE_FORCE_SEARCH) then
-
-      ! allocates search tree for source chunk
-      ! (only single midpoint per element)
-      !kdtree_nnodes_local = nspec_max_old * nproc_chunk1
-
       ! counts total number of points in this layer in source mesh
       iprocnum = 0
       inodes = 0
@@ -679,15 +686,27 @@
           iprocnum = iprocnum + 1
           ! all elements
           do ispec = 1, nspec_max_old
-            ! all internal gll points ( 2 to NGLLX-1 )
-            if (idoubling1(ispec,iprocnum-1) == ilayer ) inodes = inodes + (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+            if (idoubling1(ispec,iprocnum-1) == ilayer ) then
+              if (TREE_INTERNAL_GLL_POINTS) then
+                ! all internal gll points ( 2 to NGLLX-1 )
+                inodes = inodes + (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+              endif
+              if (TREE_MID_POINTS) then
+                ! only element mid-points
+                inodes = inodes + 1
+              endif
+            endif
           enddo
         enddo
       enddo
       ! checks
-      if (inodes < 1 ) stop 'Error no elements in source mesh for this layer'
-      if (inodes > nspec_max_old * nproc_chunk1 * (NGLLX-2)*(NGLLY-2)*(NGLLZ-2) ) &
-        stop 'Error invalid number of elements in this layer'
+      if (inodes < 1 ) stop 'Error no search tree nodes in source mesh for this layer'
+      ! checks maximum number of nodes
+      k = 0
+      if (TREE_INTERNAL_GLL_POINTS) k = nspec_max_old * nproc_chunk1 * (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
+      if (TREE_MID_POINTS) k = nspec_max_old * nproc_chunk1 * 1
+      if (inodes > k ) stop 'Error invalid number of search tree nodes in this layer'
+
       ! set number of tree nodes
       kdtree_nnodes_local = inodes
 
@@ -716,32 +735,53 @@
           ! counter
           iprocnum = iprocnum + 1
 
-          ! adds midpoints
+          ! adds tree nodes
           do ispec = 1,nspec_max_old
 
             ! skips elements outside of this layer
             if (idoubling1(ispec,iprocnum-1) /= ilayer ) cycle
 
+            ! sets up tree nodes
             ! all internal gll points
-            do k = 2,NGLLZ-1
-              do j = 2,NGLLY-1
-                do i = 2,NGLLX-1
-                  iglob = ibool1(i,j,k,ispec,iprocnum-1)
+            if (TREE_INTERNAL_GLL_POINTS) then
+              do k = 2,NGLLZ-1
+                do j = 2,NGLLY-1
+                  do i = 2,NGLLX-1
+                    iglob = ibool1(i,j,k,ispec,iprocnum-1)
 
-                  ! counts nodes
-                  inodes = inodes + 1
-                  if (inodes > kdtree_nnodes_local ) stop 'Error index inodes bigger than kdtree_nnodes_local'
+                    ! counts nodes
+                    inodes = inodes + 1
+                    if (inodes > kdtree_nnodes_local ) stop 'Error index inodes bigger than kdtree_nnodes_local'
 
-                  ! adds node index ( index points to same ispec for all internal gll points)
-                  kdtree_index_local(inodes) = ispec + (iprocnum - 1) * nspec_max_old
+                    ! adds node index ( index points to same ispec for all internal gll points)
+                    kdtree_index_local(inodes) = ispec + (iprocnum - 1) * nspec_max_old
 
-                  ! adds node location
-                  kdtree_nodes_local(1,inodes) = x1(iglob,iprocnum-1)
-                  kdtree_nodes_local(2,inodes) = y1(iglob,iprocnum-1)
-                  kdtree_nodes_local(3,inodes) = z1(iglob,iprocnum-1)
+                    ! adds node location
+                    kdtree_nodes_local(1,inodes) = x1(iglob,iprocnum-1)
+                    kdtree_nodes_local(2,inodes) = y1(iglob,iprocnum-1)
+                    kdtree_nodes_local(3,inodes) = z1(iglob,iprocnum-1)
+                  enddo
                 enddo
               enddo
-            enddo
+            endif
+
+            ! only element midpoints
+            if (TREE_MID_POINTS) then
+              iglob = ibool1(MIDX,MIDY,MIDZ,ispec,iprocnum-1)
+
+              ! counts nodes
+              inodes = inodes + 1
+              if (inodes > kdtree_nnodes_local ) stop 'Error index inodes bigger than kdtree_nnodes_local'
+
+              ! adds node index ( index points to same ispec for all internal gll points)
+              kdtree_index_local(inodes) = ispec + (iprocnum - 1) * nspec_max_old
+
+              ! adds node location
+              kdtree_nodes_local(1,inodes) = x1(iglob,iprocnum-1)
+              kdtree_nodes_local(2,inodes) = y1(iglob,iprocnum-1)
+              kdtree_nodes_local(3,inodes) = z1(iglob,iprocnum-1)
+            endif
+
           enddo
         enddo
       enddo
@@ -991,7 +1031,7 @@
                                      USE_MIDPOINT_SEARCH)
 
 
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH
 
   use kdtree_search, only: kdtree_find_nearest_neighbor,kdtree_nodes_local
 
@@ -1037,17 +1077,40 @@
   ! nodes search
   double precision,dimension(3) :: xyz_target
   double precision :: dist_min
+  double precision :: mid_radius,elem_height,r
   integer :: iglob_min
   integer :: i_selected,j_selected,k_selected
   ! locations
   real(kind=CUSTOM_REAL) :: x_found,y_found,z_found
   real(kind=CUSTOM_REAL) :: val,val_initial
+  logical :: is_critical,search_internal
+  integer :: ii,jj,kk
+  ! Earth radius
+  double precision,parameter :: RTOP = R_EARTH      ! 6371000.d0
+  double precision,parameter :: R220 = 6151000.d0
+  double precision,parameter :: R410 = 5961000.d0
+  double precision,parameter :: R600 = 5771000.d0
+  double precision,parameter :: R650 = 5721000.d0
+  ! margins
+  ! surface topography and moho stretching: uses a 120-km margin
+  ! (moho max ~ 80 km below Himalayan)
+  double precision,parameter :: RTOP_MARGIN = 120000.d0
+  ! 410-km: uses a 50-km margin
+  ! (s362ani: 410 topography perturbations have min/max ~ -13/+13 km)
+  ! (element heights are around 60km below and 64km above the 410-km discontinuity)
+  double precision,parameter :: R410_MARGIN = 50000.d0
+  ! 650-km: uses a 50-km margin
+  ! (s362ani: 650 topography perturbations have min/max ~ -14/+19 km)
+  double precision,parameter :: R650_MARGIN = 50000.d0
 
   !------------------------------------------------------
 
   ! warn about large model value differences
   logical,parameter :: DO_WARNING = .false.
 
+  ! special case for elements
+  ! e.g. around 410-km discontinuity and surface (due to moho-stretching) where internal topography distorts meshes
+  logical,parameter :: DO_SPECIAL_SEPARATION = .true.
   !------------------------------------------------------
 
   ! checks given ispec
@@ -1056,8 +1119,13 @@
     stop 'Error invalid ispec in get_model_values_kdtree() routine'
   endif
 
+  ! initializes for 410 special case
+  mid_radius = 0.d0
+  elem_height = 0.d0
+  is_critical = .false.
+
   ! searches for element using mid-point
-  if (USE_MIDPOINT_SEARCH) then
+  if (USE_MIDPOINT_SEARCH .or. DO_SPECIAL_SEPARATION) then
     iglob = ibool2(MIDX,MIDY,MIDZ,ispec)
 
     xyz_target(1) = x2(iglob)
@@ -1073,44 +1141,51 @@
     ispec_selected = iglob_min - rank_selected * nspec_max_old
 
     ! checks if mid-point was found properly
-    ! checks valid iglob
-    if (iglob_min < 1 .or. iglob_min > nspec_max_old * nproc_chunk1 ) then
-      print*,'Error iglob_min :',iglob_min
-      print*,'nspec / nproc :',nspec_max_old,nproc_chunk1
-      stop 'Error invalid iglob_min index'
-    endif
-    ! checks valid rank
-    if (rank_selected < 0 .or. rank_selected >= nproc_chunk1 ) then
-      print*,'Error rank:',myrank,'invalid selected rank ',rank_selected,'for element',ispec
-      print*,'target location:',xyz_target(:)
-      stop 'Error locate_single: specifying closest rank for element'
-    endif
-    ! checks valid ispec
-    if (ispec_selected < 1 .or. ispec_selected > nspec_max_old ) then
-      print*,'Error rank:',myrank,'invalid selected ispec ',ispec_selected,'for element',ispec
-      print*,'rank_selected:',rank_selected,'iglob_min:',iglob_min,'nspec_max_old:',nspec_max_old
-      print*,'target location:',xyz_target(:)
-      print*,'dist_min: ',dist_min * R_EARTH_KM,'(km)'
-      stop 'Error locate_single: specifying closest ispec element'
-    endif
-    ! checks minimum distance within a typical element size
-    if (dist_min > 2 * typical_size ) then
-      print*,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
-             'element size:',typical_size * R_EARTH_KM
-      print*,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
-      print*,'typical element size:',typical_size * 0.5 * R_EARTH_KM
-      print*,'target location:',xyz_target(:)
-      print*,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
-      print*,'found location :',kdtree_nodes_local(:,iglob_min)
-      print*,'found radius   :',sqrt(kdtree_nodes_local(1,iglob_min)**2 &
-                                   + kdtree_nodes_local(2,iglob_min)**2 &
-                                   + kdtree_nodes_local(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
-      !debug
-      !stop 'Error dist_min too large'
-    endif
+    call check_point_result()
+
     ! debug
     !if (myrank == 0 .and. iglob < 100) &
     !  print*,'dist_min kdtree midpoint: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+
+    ! special case for 410-km discontinuity
+    if (DO_SPECIAL_SEPARATION) then
+      ! point radius
+      r = sqrt(xyz_target(1)*xyz_target(1) + xyz_target(2)*xyz_target(2) + xyz_target(3)*xyz_target(3))
+
+      ! surface
+      if (r >= R220/R_EARTH) then
+        ! elements close to surface
+        is_critical = .true.
+      endif
+
+      ! 410-km discontinuity
+      if (r >= R600/R_EARTH .and. r <= R220/R_EARTH) then
+        ! elements within 220 - 600 km depth
+        is_critical = .true.
+      endif
+
+      ! 650-km discontinuity
+      if (r >= (R650 - R650_MARGIN)/R_EARTH .and. r <= (R650 + R650_MARGIN)/R_EARTH) then
+        ! elements within around 650 km depth
+        is_critical = .true.
+      endif
+
+      if (is_critical) then
+        ! stores mid-point radius
+        mid_radius = r
+
+        ! element height: size along a vertical edge
+        ! top point
+        iglob = ibool2(1,1,NGLLZ,ispec)
+        r = sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
+        ! bottom point
+        iglob = ibool2(1,1,1,ispec)
+        elem_height = r - sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
+        ! debug
+        !if (myrank == 0) print*,'element height: ',elem_height * R_EARTH_KM,'(km)','radius: ',mid_radius*R_EARTH_KM
+      endif
+    endif
+
   endif
 
   ! loops over all element gll points
@@ -1125,8 +1200,57 @@
         y_target = y2(iglob)
         z_target = z2(iglob)
 
-        ! kdtree search for each single GLL point
+        ! kd-search for this single GLL point
         if (.not. USE_MIDPOINT_SEARCH) then
+          ! avoids getting values from "wrong" side on 410-km discontinuity,etc.
+          if (DO_SPECIAL_SEPARATION) then
+            if (is_critical) then
+              ! gll point radius
+              r = sqrt(x_target*x_target + y_target*y_target + z_target*z_target)
+
+              ! takes corresponding internal gll point for element search
+              search_internal = .false.
+              ! surface elements
+              if (r >= (RTOP - RTOP_MARGIN)/R_EARTH) search_internal = .true.
+              ! 410-km discontinuity
+              if (r >= (R410 - R410_MARGIN)/R_EARTH .and. r <= (R410 + R410_MARGIN)/R_EARTH) search_internal = .true.
+              ! 650-km discontinuity
+              if (r >= (R650 - R650_MARGIN)/R_EARTH .and. r <= (R650 + R650_MARGIN)/R_EARTH) search_internal = .true.
+
+              ! avoid using nodes at upper/lower/..outer surfaces
+              if (search_internal) then
+                ! new search point indices
+                ii = i
+                jj = j
+                kk = k
+
+                ! takes corresponding internal one for element search
+                if (i == 1) then
+                  ii = 2
+                else if (i == NGLLX) then
+                  ii = NGLLX - 1
+                endif
+                if (j == 1) then
+                  jj = 2
+                else if (j == NGLLY) then
+                  jj = NGLLY - 1
+                endif
+                if (k == 1) then
+                  kk = 2
+                else if (k == NGLLZ) then
+                  kk = NGLLZ - 1
+                endif
+
+                ! target point location
+                iglob = ibool2(ii,jj,kk,ispec)
+                x_target = x2(iglob)
+                y_target = y2(iglob)
+                z_target = z2(iglob)
+              endif
+            endif
+          endif
+
+          ! kdtree search for each single GLL point
           xyz_target(1) = x_target
           xyz_target(2) = y_target
           xyz_target(3) = z_target
@@ -1139,38 +1263,18 @@
           ! selected closest element
           ispec_selected = iglob_min - rank_selected * nspec_max_old
 
-          ! checks valid rank
-          if (rank_selected < 0 .or. rank_selected >= nproc_chunk1 ) then
-            print*,'Error rank:',myrank,'invalid selected rank ',rank_selected,'for element',ispec
-            print*,'target location:',xyz_target(:)
-            stop 'Error locate_single: specifying closest rank for element'
-          endif
-          ! checks valid ispec
-          if (ispec_selected < 1 .or. ispec_selected > nspec_max_old ) then
-            print*,'Error rank:',myrank,'invalid selected ispec ',ispec_selected,'for element',ispec
-            print*,'rank_selected:',rank_selected,'iglob_min:',iglob_min,'nspec_max_old:',nspec_max_old
-            print*,'target location:',xyz_target(:)
-            print*,'dist_min: ',dist_min * R_EARTH_KM,'(km)'
-            stop 'Error locate_single: specifying closest ispec element'
-          endif
-          ! checks minimum distance within a typical element size
-          if (dist_min > 2 * typical_size ) then
-            print*,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
-                   'element size:',typical_size * R_EARTH_KM
-            print*,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
-            print*,'typical element size:',typical_size * 0.5 * R_EARTH_KM
-            print*,'target location:',xyz_target(:)
-            print*,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
-            print*,'found location :',kdtree_nodes_local(:,iglob_min)
-            print*,'found radius   :',sqrt(kdtree_nodes_local(1,iglob_min)**2 &
-                                         + kdtree_nodes_local(2,iglob_min)**2 &
-                                         + kdtree_nodes_local(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
-            ! debug
-            !stop 'Error dist_min too large'
-          endif
+          ! checks if point was found properly
+          call check_point_result()
+
           ! debug
           !if (myrank == 0 .and. iglob < 100) &
           !  print*,'dist_min kdtree: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+
+          ! restores original target point location for locating/interpolating
+          iglob = ibool2(i,j,k,ispec)
+          x_target = x2(iglob)
+          y_target = y2(iglob)
+          z_target = z2(iglob)
         endif
 
         ! gets interpolated position within selected element
@@ -1209,8 +1313,7 @@
         do iker = 1,nparams
           call interpolate(xi,eta,gamma,ispec_selected, &
                            nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
-                           val, &
-                           xigll,yigll,zigll)
+                           val,xigll,yigll,zigll)
 
           ! sets new model value
           model2(i,j,k,ispec,iker) = val
@@ -1250,6 +1353,53 @@
       enddo
     enddo
   enddo
+
+  contains
+
+    subroutine check_point_result()
+
+    implicit none
+
+    ! checks valid iglob
+    if (iglob_min < 1 .or. iglob_min > nspec_max_old * nproc_chunk1 ) then
+      print*,'Error iglob_min :',iglob_min
+      print*,'nspec / nproc :',nspec_max_old,nproc_chunk1
+      stop 'Error invalid iglob_min index'
+    endif
+
+    ! checks valid rank
+    if (rank_selected < 0 .or. rank_selected >= nproc_chunk1 ) then
+      print*,'Error rank:',myrank,'invalid selected rank ',rank_selected,'for element',ispec
+      print*,'target location:',xyz_target(:)
+      stop 'Error specifying closest rank for element'
+    endif
+
+    ! checks valid ispec
+    if (ispec_selected < 1 .or. ispec_selected > nspec_max_old ) then
+      print*,'Error rank:',myrank,'invalid selected ispec ',ispec_selected,'for element',ispec
+      print*,'rank_selected:',rank_selected,'iglob_min:',iglob_min,'nspec_max_old:',nspec_max_old
+      print*,'target location:',xyz_target(:)
+      print*,'dist_min: ',dist_min * R_EARTH_KM,'(km)'
+      stop 'Error specifying closest ispec element'
+    endif
+
+    ! checks minimum distance within a typical element size
+    if (dist_min > 2 * typical_size ) then
+      print*,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
+             'element size:',typical_size * R_EARTH_KM
+      print*,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
+      print*,'typical element size:',typical_size * 0.5 * R_EARTH_KM
+      print*,'target location:',xyz_target(:)
+      print*,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
+      print*,'found location :',kdtree_nodes_local(:,iglob_min)
+      print*,'found radius   :',sqrt(kdtree_nodes_local(1,iglob_min)**2 &
+                                   + kdtree_nodes_local(2,iglob_min)**2 &
+                                   + kdtree_nodes_local(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
+      !debug
+      !stop 'Error dist_min too large in check_point_result() routine'
+    endif
+
+    end subroutine check_point_result
 
   end subroutine get_model_values_kdtree
 

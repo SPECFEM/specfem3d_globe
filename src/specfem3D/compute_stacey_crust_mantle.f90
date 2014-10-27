@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_stacey_crust_mantle_forward()
+  subroutine compute_stacey_cm_forward()
 
 ! Stacey conditions for forward or adjoint wavefields (SIMULATION_TYPE == 1 or 2)
 
@@ -310,13 +310,13 @@
     call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
   endif
 
-  end subroutine compute_stacey_crust_mantle_forward
+  end subroutine compute_stacey_cm_forward
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_stacey_crust_mantle_backward()
+  subroutine compute_stacey_cm_backward()
 
 ! Stacey for backward/reconstructed wavefield
 
@@ -393,8 +393,8 @@
     else
       ! on GPU
       if (nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_backward_gpu(Mesh_pointer, &
-                                                                                    absorb_xmin_crust_mantle, &
-                                                                                    0) ! <= xmin
+                                                                                   absorb_xmin_crust_mantle, &
+                                                                                   0) ! <= xmin
     endif
 
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC
@@ -430,8 +430,8 @@
     else
       ! on GPU
       if (nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_backward_gpu(Mesh_pointer, &
-                                                                                    absorb_xmax_crust_mantle, &
-                                                                                    1) ! <= xmin
+                                                                                   absorb_xmax_crust_mantle, &
+                                                                                   1) ! <= xmin
     endif
 
   endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
@@ -465,8 +465,8 @@
   else
     ! on GPU
     if (nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_backward_gpu(Mesh_pointer, &
-                                                                                  absorb_ymin_crust_mantle, &
-                                                                                  2) ! <= ymin
+                                                                                 absorb_ymin_crust_mantle, &
+                                                                                 2) ! <= ymin
   endif
 
   !   ymax
@@ -498,17 +498,17 @@
   else
     ! on GPU
     if (nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_backward_gpu(Mesh_pointer, &
-                                                                                  absorb_ymax_crust_mantle, &
-                                                                                  3) ! <= ymax
+                                                                                 absorb_ymax_crust_mantle, &
+                                                                                 3) ! <= ymax
   endif
 
-  end subroutine compute_stacey_crust_mantle_backward
+  end subroutine compute_stacey_cm_backward
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_stacey_crust_mantle_backward_undoatt()
+  subroutine compute_stacey_cm_backward_undoatt()
 
 ! Stacey conditions for backward/reconstructed wavefields in UNDO_ATTENUATION case
 
@@ -555,7 +555,7 @@
   ! checks
   if (SIMULATION_TYPE /= 3) return
   if (SAVE_FORWARD) return
-  if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_crust_mantle_backward_undoatt()'
+  if (.not. UNDO_ATTENUATION) stop 'Error invalid UNDO_ATTENUATION flag for compute_stacey_cm_backward_undoatt()'
 
   ! crust & mantle
 
@@ -747,5 +747,5 @@
     if (nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_undoatt_gpu(Mesh_pointer,3) ! <= ymax
   endif
 
-  end subroutine compute_stacey_crust_mantle_backward_undoatt
+  end subroutine compute_stacey_cm_backward_undoatt
 

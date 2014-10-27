@@ -618,9 +618,9 @@
     RMOHO = 6346600.d0
     R80  = 6291000.d0
     R220 = 6151000.d0
-    R400 = 5961000.d0
+    R400 = 5961000.d0 ! 410km discontinuity
     R600 = 5771000.d0
-    R670 = 5721000.d0
+    R670 = 5721000.d0 ! 650km discontinuity
     R771 = 5600000.d0
     RTOPDDOUBLEPRIME = 3630000.d0
     RCMB = 3479958.d0

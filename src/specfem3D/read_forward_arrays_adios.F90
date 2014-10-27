@@ -214,8 +214,7 @@
 
 !-------------------------------------------------------------------------------
 !> \brief Read forward arrays from an ADIOS file.
-!> \note read_intermediate_forward_arrays_adios()
-!!       and read_forward_arrays_adios() are not factorized, because
+!> \note read_intermediate_forward_arrays_adios() and read_forward_arrays_adios() are not factorized, because
 !>       the latest read the bp file in "b_" prefixed arrays
 
   subroutine read_forward_arrays_adios()

@@ -6,17 +6,17 @@
 
 typedef float realw;
 
-__device__ void compute_element_strain_undo_att(int ispec,int ijk_ispec,
-                                                int* d_ibool,
-                                                realw* s_dummyx_loc,
-                                                realw* s_dummyy_loc,
-                                                realw* s_dummyz_loc,
-                                                realw* d_xix,realw* d_xiy,realw* d_xiz,
-                                                realw* d_etax,realw* d_etay,realw* d_etaz,
-                                                realw* d_gammax,realw* d_gammay,realw* d_gammaz,
-                                                realw* sh_hprime_xx,
-                                                realw* epsilondev_loc,
-                                                realw* epsilon_trace_over_3) {
+__device__ void compute_element_strain_undoatt(int ispec,int ijk_ispec,
+                                               int* d_ibool,
+                                               realw* s_dummyx_loc,
+                                               realw* s_dummyy_loc,
+                                               realw* s_dummyz_loc,
+                                               realw* d_xix,realw* d_xiy,realw* d_xiz,
+                                               realw* d_etax,realw* d_etay,realw* d_etaz,
+                                               realw* d_gammax,realw* d_gammay,realw* d_gammaz,
+                                               realw* sh_hprime_xx,
+                                               realw* epsilondev_loc,
+                                               realw* epsilon_trace_over_3) {
 
 
   // thread id == GLL point id
@@ -171,12 +171,12 @@ __global__ void compute_strain_kernel(realw* d_displ,
     realw epsdev[5];
 
     // strain from wavefield
-    compute_element_strain_undo_att(ispec,ijk_ispec,
-                                    d_ibool,
-                                    s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
-                                    d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz,
-                                    sh_hprime_xx,
-                                    epsdev,&eps_trace_over_3);
+    compute_element_strain_undoatt(ispec,ijk_ispec,
+                                   d_ibool,
+                                   s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
+                                   d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz,
+                                   sh_hprime_xx,
+                                   epsdev,&eps_trace_over_3);
 
     // stores strain from wavefield
     if (NSPEC_STRAIN_ONLY == 1 ) {

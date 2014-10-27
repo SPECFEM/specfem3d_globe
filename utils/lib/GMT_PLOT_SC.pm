@@ -2,7 +2,7 @@ package GMT_PLOT_SC;
 
 use warnings;
 use Exporter;
-use lib '/opt/seismo-util/lib/perl';
+#use lib '/opt/seismo-util/lib/perl';
 use GMT_PLOT;
 use SACLST;
 
@@ -11,7 +11,9 @@ use SACLST;
 
 # Qinya Liu, Caltech, May 2007
 
-$datalib_dir = "/opt/seismo-util/data/datalib_SC";
+#$datalib_dir = "/opt/seismo-util/data/datalib_SC";
+$datalib_dir = "./";
+
 if (not -d $datalib_dir) {die("Check the datalib path\n");}
 
 # plot faults

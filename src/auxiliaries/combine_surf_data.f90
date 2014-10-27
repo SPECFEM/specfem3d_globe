@@ -192,7 +192,7 @@ program combine_surf_data
   write(em_mesh_file,'(a,i1,a)') trim(outdir)//'/'//trim(filename)//'_element.surf'
   command_name='rm -f '//trim(pt_mesh_file)//' '//trim(em_mesh_file)//' '//trim(mesh_file)
 
-  call system(trim(command_name))
+  call system_command(command_name)
   call open_file_fd(trim(pt_mesh_file)//char(0),pfd)
   call open_file_fd(trim(em_mesh_file)//char(0),efd)
 
@@ -342,7 +342,7 @@ program combine_surf_data
   print *, ' '
   print *, 'cat mesh files ...'
   print *, trim(command_name)
-  call system(trim(command_name))
+  call system_command(command_name)
 
   print *, 'Done writing '//trim(mesh_file)
   print *, ' '

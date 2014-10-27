@@ -27,72 +27,50 @@
 
 !-------------------------------------------------------------------------------------------------
 !
-! end the simulation and exit MPI
+! I/O wrapper function
 !
 !-------------------------------------------------------------------------------------------------
 
-! version with rank number printed in the error message
-  subroutine exit_MPI(myrank,error_msg)
+  subroutine flush_IMAIN()
 
   use constants
 
   implicit none
 
-  ! identifier for error message file
-  integer, parameter :: IERROR = 30
+  ! only master process writes out to main output file
+  ! file I/O in Fortran is buffered by default
+  !
+  ! note: Fortran2003 includes a FLUSH statement
+  !          which is implemented by most compilers by now
+  !
+  ! otherwise:
+  !   a) comment out the line below
+  !   b) try to use instead: call flush(IMAIN)
 
-  integer :: myrank
-  character(len=*) :: error_msg
-  character(len=80) :: outputname
+  flush(IMAIN)
 
-  ! write error message to screen
-  write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI... proc ',myrank
+  end subroutine flush_IMAIN
 
-  ! write error message to file
-  write(outputname,"('/error_message',i6.6,'.txt')") myrank
-  open(unit=IERROR,file='OUTPUT_FILES'//outputname,status='unknown')
-  write(IERROR,*) error_msg(1:len(error_msg))
-  write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
-  close(IERROR)
 
-  ! close output file
-  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) close(IMAIN)
-
-  ! stop all the MPI processes, and exit
-  call abort_mpi()
-
-  ! otherwise: there is no standard behaviour to exit with an error code in Fortran,
-  ! however most compilers do recognize this as an error code stop statement;
-  ! to check stop code in terminal: > echo $?
-  stop 30
-
-  ! or just exit with message:
-  !stop 'Error, program ended in exit_MPI'
-
-  end subroutine exit_MPI
-
-!
 !-------------------------------------------------------------------------------------------------
-!
 
-! version without rank number printed in the error message
-  subroutine exit_MPI_without_rank(error_msg)
+  subroutine system_command(command)
 
   use constants
 
   implicit none
 
-  character(len=*) :: error_msg
+  character(len=MAX_STRING_LEN), intent(in):: command
 
-  ! write error message to screen
-  write(*,*) error_msg(1:len(error_msg))
-  write(*,*) 'Error detected, aborting MPI...'
+  ! note: system() is a GNU Fortran extension, compilers might complain about this command
+  !       (non-standard Fortran2003)
+  !
+  ! otherwise:
+  !   a) comment out the line below
+  !   b) try to use other function implementation: e.g. fortran 2008 supports
+  !      call execute_command_line(trim(command))
 
-  ! stop all the MPI processes, and exit
-  call abort_mpi()
+  call system(trim(command))
 
-  stop 'Error, program ended in exit_MPI'
-
-  end subroutine exit_MPI_without_rank
+  end subroutine system_command
 

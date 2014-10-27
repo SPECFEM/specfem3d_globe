@@ -31,7 +31,7 @@
 !
 !-------------------------------------------------------------------------------------------------
 
-  subroutine update_displacement_Newmark()
+  subroutine update_displ_Newmark()
 
 ! explicit Newmark time scheme with acoustic & elastic domains:
 ! (see e.g. Hughes, 1987; Chaljub et al., 2003)
@@ -94,14 +94,14 @@
     call update_displacement_ic_gpu(Mesh_pointer,deltat,deltatsqover2,deltatover2,1)
   endif
 
-  end subroutine update_displacement_Newmark
+  end subroutine update_displ_Newmark
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
 
-  subroutine update_displacement_Newmark_backward()
+  subroutine update_displ_Newmark_backward()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -137,7 +137,7 @@
     call update_displacement_ic_gpu(Mesh_pointer,b_deltat,b_deltatsqover2,b_deltatover2,3)
   endif
 
-  end subroutine update_displacement_Newmark_backward
+  end subroutine update_displ_Newmark_backward
 
 !
 !-------------------------------------------------------------------------------------------------

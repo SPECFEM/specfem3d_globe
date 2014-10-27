@@ -130,6 +130,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \

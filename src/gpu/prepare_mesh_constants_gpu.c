@@ -3027,9 +3027,9 @@ void FC_FUNC_ (prepare_cleanup_device,
     gpuFree (&mp->d_normal_ocean_load);
   }
 
-#ifdef USE_TEXTURES_FIELDS
 #ifdef USE_OPENCL
   if (run_opencl) {
+#ifdef USE_TEXTURES_FIELDS
     clReleaseMemObject (mp->d_displ_cm_tex);
     clReleaseMemObject (mp->d_accel_cm_tex);
     clReleaseMemObject (mp->d_b_displ_cm_tex);
@@ -3044,11 +3044,12 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_accel_ic_tex);
     clReleaseMemObject (mp->d_b_displ_ic_tex);
     clReleaseMemObject (mp->d_b_accel_ic_tex);
-
+#endif
+#ifdef USE_TEXTURES_CONSTANTS
     clReleaseMemObject (mp->d_hprime_xx_cm_tex);
     clReleaseMemObject (mp->d_hprimewgll_xx_cm_tex);
-  }
 #endif
+  }
 #endif
 
   // synchronizes device

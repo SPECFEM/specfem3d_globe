@@ -1,19 +1,19 @@
 module BOAST
 
   require './compute_strain_product_helper.rb'
-  require './compute_element_strain_undo_att_helper.rb'
+  require './compute_element_strain_undoatt_helper.rb'
 
-  def BOAST::compute_ani_undo_att_kernel(ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
-    compute_undo_att_kernel(:ani, ref, n_gllx, n_gll2, n_gll3, n_gll3_padded)
+  def BOAST::compute_ani_undoatt_kernel(ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
+    compute_undoatt_kernel(:ani, ref, n_gllx, n_gll2, n_gll3, n_gll3_padded)
   end
 
-  def BOAST::compute_undo_att_kernel(type, ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
+  def BOAST::compute_undoatt_kernel(type, ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     if type == :ani then
-      function_name = "compute_ani_undo_att_kernel"
+      function_name = "compute_ani_undoatt_kernel"
     elsif type == :iso then
-      function_name = "compute_iso_undo_att_kernel"
+      function_name = "compute_iso_undoatt_kernel"
     else
       raise "Unsupported type #{type}!"
     end
@@ -52,8 +52,8 @@ module BOAST
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
 
-      sub_compute_element_strain_undo_att = compute_element_strain_undo_att(n_gllx, n_gll2, n_gll3, n_gll3_padded )
-      print sub_compute_element_strain_undo_att
+      sub_compute_element_strain_undoatt = compute_element_strain_undoatt(n_gllx, n_gll2, n_gll3, n_gll3_padded )
+      print sub_compute_element_strain_undoatt
       if type == :ani then
         sub_compute_strain_product =  compute_strain_product()
         print sub_compute_strain_product
@@ -113,7 +113,7 @@ module BOAST
         print eps_trace_over_3 === epsilon_trace_over_3[ijk_ispec]
 
         # strain from backward/reconstructed forward wavefield
-        print sub_compute_element_strain_undo_att.call(ispec,ijk_ispec,
+        print sub_compute_element_strain_undoatt.call(ispec,ijk_ispec,
                                                        d_ibool,
                                                        *s_dummy_loc,
                                                        *d_xi, *d_eta, *d_gamma,

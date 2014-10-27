@@ -1303,3 +1303,20 @@
 
   end subroutine world_get_comm_self
 
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_get_info_null(info)
+
+  use mpi
+
+  implicit none
+
+  integer,intent(out) :: info
+
+  info = MPI_INFO_NULL
+
+  end subroutine world_get_info_null
+
