@@ -1203,12 +1203,14 @@
     b_epsilondev_xy_crust_mantle = 0._CUSTOM_REAL
     b_epsilondev_xz_crust_mantle = 0._CUSTOM_REAL
     b_epsilondev_yz_crust_mantle = 0._CUSTOM_REAL
+    b_eps_trace_over_3_crust_mantle = init_value
 
     b_epsilondev_xx_inner_core = 0._CUSTOM_REAL
     b_epsilondev_yy_inner_core = 0._CUSTOM_REAL
     b_epsilondev_xy_inner_core = 0._CUSTOM_REAL
     b_epsilondev_xz_inner_core = 0._CUSTOM_REAL
     b_epsilondev_yz_inner_core = 0._CUSTOM_REAL
+    b_eps_trace_over_3_inner_core = init_value
 
     if (ROTATION_VAL) then
       b_A_array_rotation = 0._CUSTOM_REAL
