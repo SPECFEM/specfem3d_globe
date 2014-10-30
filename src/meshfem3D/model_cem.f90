@@ -1,38 +1,12 @@
-!=====================================================================
-!
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
-!          --------------------------------------------------
-!
-!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
-!                        Princeton University, USA
-!                and CNRS / University of Marseille, France
-!                 (there are currently many more authors!)
-! (c) Princeton University and CNRS / University of Marseille, April 2014
-!
-! This program is free software; you can redistribute it and/or modify
-! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation; either version 2 of the License, or
-! (at your option) any later version.
-!
-! This program is distributed in the hope that it will be useful,
-! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-! GNU General Public License for more details.
-!
-! You should have received a copy of the GNU General Public License along
-! with this program; if not, write to the Free Software Foundation, Inc.,
-! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
-!
-!=====================================================================
-
 module cem_par
 
-  use constants, only: PI, GRAV, RHOAV, R_EARTH, MAX_STRING_LEN
+  use :: constants, only: PI, GRAV, RHOAV, R_EARTH
 
   implicit none
 
-  double precision :: scaleval
-  double precision :: scale_GPa
+  double precision, parameter :: scaleval=dsqrt(PI*GRAV*RHOAV)
+  double precision, parameter :: scale_GPa = (RHOAV / 1000.d0) * &
+    ((R_EARTH * scaleval / 1000.d0) ** 2)
 
   integer, dimension (:), allocatable :: regCode
   integer, parameter                  :: shuOn=1
@@ -47,13 +21,13 @@ module cem_par
 
   type par
 
-    double precision, dimension (:), pointer :: vsv, vsh, vpv, vph, rho
-    double precision, dimension (:), pointer :: c11, c12, c13, c14
-    double precision, dimension (:), pointer :: c15, c16, c26, c33
-    double precision, dimension (:), pointer :: c22, c23, c24, c25
-    double precision, dimension (:), pointer :: c34, c35, c36, c44
-    double precision, dimension (:), pointer :: c55, c56, c66, c45
-    double precision, dimension (:), pointer :: c46
+    double precision, dimension (:), allocatable :: vsv, vsh, vpv, vph, rho
+    double precision, dimension (:), allocatable :: c11, c12, c13, c14
+    double precision, dimension (:), allocatable :: c15, c16, c26, c33
+    double precision, dimension (:), allocatable :: c22, c23, c24, c25
+    double precision, dimension (:), allocatable :: c34, c35, c36, c44
+    double precision, dimension (:), allocatable :: c55, c56, c66, c45
+    double precision, dimension (:), allocatable :: c46
 
   end type par
 
@@ -61,25 +35,17 @@ module cem_par
 
 end module cem_par
 
-!
-!--------------------------------------------------------------------------------------------------
-!
-
 subroutine model_cem_broadcast ( myrank )
 
-  use cem_par
-  use netcdf
-  use meshfem3D_models_par, only: CEM_ACCEPT
+  use :: cem_par
+  use :: netcdf
+  use :: meshfem3D_models_par, only: CEM_ACCEPT
 
   integer, intent (in) :: myrank
   integer              :: wSize
 
-  ! initializes
   rank = myrank
   call world_size (wSize)
-
-  scaleval = dsqrt(PI*GRAV*RHOAV)
-  scale_GPa = (RHOAV / 1000.d0) * ((R_EARTH * scaleval / 1000.d0) ** 2)
 
   if ( CEM_ACCEPT ) then
 
@@ -95,25 +61,28 @@ subroutine model_cem_broadcast ( myrank )
     call return_populated_arrays (reg2Bc, "vsh", 2)
     call return_populated_arrays (reg3Bc, "vsh", 3)
 
-    call return_populated_arrays (reg1Bc, "vpp", 1)
-    call return_populated_arrays (reg2Bc, "vpp", 2)
-    call return_populated_arrays (reg3Bc, "vpp", 3)
+    call return_populated_arrays (reg1Bc, "vpv", 1)
+    call return_populated_arrays (reg2Bc, "vpv", 2)
+    call return_populated_arrays (reg3Bc, "vpv", 3)
+
+    call return_populated_arrays (reg1Bc, "vph", 1)
+    call return_populated_arrays (reg2Bc, "vph", 2)
+    call return_populated_arrays (reg3Bc, "vph", 3)
 
     call synchronize_all ()
+
+print *, reg1Bc%vsv(1)
+
   endif
 
 end subroutine model_cem_broadcast
 
-!
-!--------------------------------------------------------------------------------------------------
-!
-
 subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
 
-  use cem_par
-  use constants
+  use :: cem_par
+  use :: constants
 
-  use meshfem3D_par, only: ibool
+  use :: meshfem3D_par, only: ibool
 
   implicit none
 
@@ -130,6 +99,7 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
     vpv = reg1Bc%vpv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vsv = reg1Bc%vsv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vsh = reg1Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
+    vph = reg1Bc%vph(iglob) * 1000.0d0 / (R_EARTH * scaleval)
 
   else if ( iregion_code == IREGION_OUTER_CORE ) then
 
@@ -139,6 +109,7 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
     vpv = reg2Bc%vpv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vsv = reg2Bc%vsv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vsh = reg2Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
+    vph = reg2Bc%vph(iglob) * 1000.0d0 / (R_EARTH * scaleval)
 
   else if ( iregion_code == IREGION_INNER_CORE ) then
 
@@ -148,21 +119,16 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
     vpv = reg3Bc%vpv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vsv = reg3Bc%vsv(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vsh = reg3Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
+    vph = reg3Bc%vph(iglob) * 1000.0d0 / (R_EARTH * scaleval)
 
   endif
 
-  vph = vpv
-
 end subroutine request_cem
 
-!
-!--------------------------------------------------------------------------------------------------
-!
+subroutine return_populated_arrays (structure, param, reg)
 
-subroutine return_populated_arrays ( structure, param, reg )
-
-  use cem_par
-  use netcdf
+  use :: cem_par
+  use :: netcdf
 
   implicit none
 
@@ -175,13 +141,14 @@ subroutine return_populated_arrays ( structure, param, reg )
 
   type (par) :: structure
 
-  character (len=MAX_STRING_LEN) :: fileName
-  character (len=MAX_STRING_LEN) :: fileNameTrim
-  character (len=MAX_STRING_LEN) :: formatString
+  character (len=1024) :: fileName
+  character (len=1024) :: fileNameTrim
+  character (len=1024) :: formatString
 
 
-  formatString = "(A,I0.2,A,I0.4,A1,A3,A3)"
-  write (fileName,formatString) "./DATA/cemRequest/xyz_reg", reg, "_proc", rank, ".", param, ".nc"
+  formatString = "(A,A3,A,I0.2,A,I0.6,A)"
+  write (fileName,formatString) "./DATA/cemRequest/", param, "_reg", reg, &
+    ".proc", rank, ".nc"
 
   fileNameTrim = trim(fileName)
 
@@ -191,82 +158,90 @@ subroutine return_populated_arrays ( structure, param, reg )
 
   if ( param == "vsv" ) allocate(structure%vsv(nPar))
   if ( param == "rho" ) allocate(structure%rho(nPar))
-  if ( param == "vpp" ) allocate(structure%vpv(nPar))
+  if ( param == "vpv" ) allocate(structure%vpv(nPar))
+  if ( param == "vph" ) allocate(structure%vph(nPar))
   if ( param == "vsh" ) allocate(structure%vsh(nPar))
 
   status = nf90_inq_varid (ncid, "data", varid)
 
   if ( param == "vsv" ) status = nf90_get_var (ncid, varid, structure%vsv)
   if ( param == "rho" ) status = nf90_get_var (ncid, varid, structure%rho)
-  if ( param == "vpp" ) status = nf90_get_var (ncid, varid, structure%vpv)
+  if ( param == "vpv" ) status = nf90_get_var (ncid, varid, structure%vpv)
+  if ( param == "vph" ) status = nf90_get_var (ncid, varid, structure%vph)
   if ( param == "vsh" ) status = nf90_get_var (ncid, varid, structure%vsh)
 
 
 end subroutine return_populated_arrays
 
-!
-!--------------------------------------------------------------------------------------------------
-!
+subroutine write_cem_request (iregion_code)
 
-subroutine write_cem_request ( iregion_code )
-
-  use netcdf
-  use constants
-  use CEM_par
+  use :: mpi
+  use :: netcdf
+  use :: constants
+  use :: CEM_par
 
   implicit none
+  
+  integer, parameter :: NDIMS_WRITE=2
+  integer, dimension (NDIMS_WRITE) :: start, count, ids
 
-  integer :: ncid, status, x_dimind, y_dimind, z_dimind, varidX, varidY, varidZ
-  integer :: varidR, r_dimind, iregion_code
-  character (len = MAX_STRING_LEN) :: fileName, fileNameTrim, formatString
+  integer :: ncid, paramDimID, procDimID, varidX, varidY, varidZ
+  integer :: varidR, iregion_code, commWorldSize, worldComm, myRank
+  character (len = 1024) :: fileName, fileNameTrim, formatString
 
-!  This line does not seem portable.
-!  call execute_command_line ('mkdir -p cemRequest/')
+  ! Get the total number of processors.
+  call world_rank     (myRank)
+  call world_size     (commWorldSize)
+  call world_get_comm (worldComm)
 
-  formatString = "(A,I0.2,A,I0.4)"
-  write (fileName,formatString) "DATA/cemRequest/xyz_reg", iregion_code, "_proc", rank
-  fileNameTrim = trim(fileName)
-
-  status = nf90_create  (path = fileNameTrim, cmode = NF90_CLOBBER, ncid = ncid)
-
-  status = nf90_def_dim (ncid, "x", size (xyzOut(:,1)), x_dimind )
-  status = nf90_def_dim (ncid, "y", size (xyzOut(:,2)), y_dimind )
-  status = nf90_def_dim (ncid, "z", size (xyzOut(:,3)), z_dimind )
-  status = nf90_def_dim (ncid, "r", size (regCode),     r_dimind )
-
-  status = nf90_def_var (ncid, "dataX", NF90_FLOAT, x_dimind, varidX)
-  status = nf90_def_var (ncid, "dataY", NF90_FLOAT, y_dimind, varidY)
-  status = nf90_def_var (ncid, "dataZ", NF90_FLOAT, z_dimind, varidZ)
-  status = nf90_def_var (ncid, "regC_", NF90_SHORT, r_dimind, varidR)
-
-  status = nf90_def_var_deflate (ncid, varidX, shuOn, comOn, comLvl)
-  status = nf90_def_var_deflate (ncid, varidY, shuOn, comOn, comLvl)
-  status = nf90_def_var_deflate (ncid, varidZ, shuOn, comOn, comLvl)
-  status = nf90_def_var_deflate (ncid, varidR, shuOn, comOn, comLvl)
-
-  status = nf90_enddef  (ncid)
-
-  status = nf90_put_var (ncid, varidX, xyzOut(:,1))
-  status = nf90_put_var (ncid, varidY, xyzOut(:,2))
-  status = nf90_put_var (ncid, varidZ, xyzOut(:,3))
-  status = nf90_put_var (ncid, varidR, regCode)
-  status = nf90_close   (ncid)
+  ! Define filename.
+  formatString = "(A,I0.2,A)"
+  write (fileName, formatString) "DATA/cemRequest/xyz_reg", iregion_code, ".nc"
+  fileNameTrim = trim (fileName)
+  
+  ! Create parallel NetCDF file.
+  call checkNC (nf90_create (fileNameTrim, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
+    comm = worldComm, info = MPI_INFO_NULL))
+    
+  ! Define the processor array.
+  call checkNC (nf90_def_dim (ncid, 'glob', size (xyzOut(:,1)), paramDimID))
+  call checkNC (nf90_def_dim (ncid, 'proc', commWorldSize,      procDimID))
+  
+  ! Sort ids into array.
+  ids = (/ paramDimID, procDimID /)
+  
+  ! Define the kernel variable.
+  call checkNC (nf90_def_var (ncid, 'x', NF90_float, ids, varidX))
+  call checkNC (nf90_def_var (ncid, 'y', NF90_float, ids, varidY))
+  call checkNC (nf90_def_var (ncid, 'z', NF90_float, ids, varidZ))
+  call checkNC (nf90_def_var (ncid, 'r', NF90_SHORT, ids, varidR))
+    
+  ! End definitions.
+  call checkNC (nf90_enddef (ncid))
+  
+  ! Each processor writes one row.
+  start = (/ 1, myRank + 1 /)
+  count = (/ size (xyzOut(:,1)), 1 /)
+  call checkNC (nf90_put_var (ncid, varidX, xyzOut(:,1), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varidY, xyzOut(:,2), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varidZ, xyzOut(:,3), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varidR, regCode,     start = start, count = count))
+  
+  ! Close the file.
+  call checkNC (nf90_close (ncid))  
 
   deallocate(xyzOut)
   deallocate(regCode)
 
 end subroutine write_cem_request
 
-!
-!--------------------------------------------------------------------------------------------------
-!
-
 subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
-  use constants
-  use cem_par
+  use :: constants
+  use :: cem_par
 
-  use meshfem3D_par, only: ibool,xstore,ystore,zstore
+  use :: meshfem3D_par, only: &
+    ibool,idoubling,xstore,ystore,zstore
 
   implicit none
 
@@ -275,8 +250,8 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
   double precision, parameter :: R_020_KM=6351.0d0, R_052_KM=6319.0d0
   double precision, parameter :: R_100_KM=6271.0d0, R_400_KM=5971.0d0
-  double precision, parameter :: R_670_KM=5701.0d0, R_OCR_KM=3480.0d0
-  double precision, parameter :: R_ICR_KM=1221.0d0, R_THO_KM=5371.0d0
+  double precision, parameter :: R_670_KM=5701.0d0, R_CMB_KM=3480.0d0
+  double precision, parameter :: R_ICB_KM=1221.0d0, R_THO_KM=5371.0d0
   double precision            :: x, y, z, rad
 
   allocate(xyzOut(nglob,NDIMS))
@@ -346,21 +321,13 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
             iglob           = ibool(i,j,k,ispec)
             xyzOut(iglob,3) = z
 
-            rad = dsqrt( x * x + y * y + z * z )
+            rad = dsqrt ( x * x + y * y + z * z )
 
-            if      ( rad < R_THO_KM .and. rad >= R_ICR_KM ) then
-              region = 7
-            else if ( rad < R_670_KM .and. rad >= R_THO_KM ) then
-              region = 6
-            else if ( rad < R_400_KM .and. rad >= R_670_KM ) then
-              region = 5
-            else if ( rad < R_100_KM .and. rad >= R_400_KM ) then
-              region = 4
-            else if ( rad < R_052_KM .and. rad >= R_100_KM ) then
+            if      ( rad < R_670_KM .and. rad >= R_CMB_KM ) then
               region = 3
-            else if ( rad < R_020_KM .and. rad >= R_052_KM ) then
+            else if ( rad < R_400_KM .and. rad >= R_670_KM ) then
               region = 2
-            else if ( rad >= R_020_KM ) then
+            else if ( rad >= R_400_KM ) then
               region = 1
             endif
 
@@ -374,12 +341,30 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
   else if (iregion_code == 2) then
 
-    regCode(:) = 8
+    regCode(:) = 4
 
   else if (iregion_code == 3) then
 
-    regCode(:) = 9
+    regCode(:) = 5
 
   endif
 
 end subroutine build_global_coordinates
+
+subroutine checkNC (status)
+
+  ! This little guy just checks for an error from the NetCDF libraries and throws a tantrum if
+  ! one's found.
+
+  use :: netcdf
+
+  implicit none
+
+  integer, intent (in) :: status
+
+  if (status /= nf90_noerr) then
+    print *, trim (nf90_strerror (status))
+    stop 'Netcdf error.'
+  endif
+
+end subroutine checkNC
