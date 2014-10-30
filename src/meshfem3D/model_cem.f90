@@ -117,7 +117,7 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
 
 end subroutine request_cem
 
-subroutine return_populated_arrays ( structure, param, reg )
+subroutine return_populated_arrays (structure, param, reg)
 
   use :: cem_par
   use :: netcdf
@@ -163,50 +163,62 @@ subroutine return_populated_arrays ( structure, param, reg )
 
 end subroutine return_populated_arrays
 
-subroutine write_cem_request ( iregion_code )
+subroutine write_cem_request (iregion_code)
 
+  use :: mpi
   use :: netcdf
   use :: constants
   use :: CEM_par
 
   implicit none
+  
+  integer, parameter :: NDIMS_WRITE=2
+  integer, dimension (NDIMS_WRITE) :: start, count, ids
 
-  integer :: ncid, status, x_dimind, y_dimind, z_dimind, varidX, varidY, varidZ
-  integer :: varidR, r_dimind, iregion_code
+  integer :: ncid, paramDimID, procDimID, varidX, varidY, varidZ
+  integer :: varidR, iregion_code, commWorldSize, worldComm, myRank
   character (len = 1024) :: fileName, fileNameTrim, formatString
 
-!  This line does not seem portable.
-!  call execute_command_line ('mkdir -p cemRequest/')
+  ! Get the total number of processors.
+  call world_rank     (myRank)
+  call world_size     (commWorldSize)
+  call world_get_comm (worldComm)
 
-  formatString = "(A,I0.2,A,I0.4)"
-  write (fileName,formatString) "DATA/cemRequest/xyz_reg", iregion_code, &
-    "_proc", rank
-  fileNameTrim = trim(fileName)
-
-  status = nf90_create  (path = fileNameTrim, cmode = NF90_CLOBBER, ncid = ncid)
-
-  status = nf90_def_dim (ncid, "x", size (xyzOut(:,1)), x_dimind )
-  status = nf90_def_dim (ncid, "y", size (xyzOut(:,2)), y_dimind )
-  status = nf90_def_dim (ncid, "z", size (xyzOut(:,3)), z_dimind )
-  status = nf90_def_dim (ncid, "r", size (regCode),     r_dimind )
-
-  status = nf90_def_var (ncid, "dataX", NF90_FLOAT, x_dimind, varidX)
-  status = nf90_def_var (ncid, "dataY", NF90_FLOAT, y_dimind, varidY)
-  status = nf90_def_var (ncid, "dataZ", NF90_FLOAT, z_dimind, varidZ)
-  status = nf90_def_var (ncid, "regC_", NF90_SHORT, r_dimind, varidR)
-
-  status = nf90_def_var_deflate (ncid, varidX, shuOn, comOn, comLvl)
-  status = nf90_def_var_deflate (ncid, varidY, shuOn, comOn, comLvl)
-  status = nf90_def_var_deflate (ncid, varidZ, shuOn, comOn, comLvl)
-  status = nf90_def_var_deflate (ncid, varidR, shuOn, comOn, comLvl)
-
-  status = nf90_enddef  (ncid)
-
-  status = nf90_put_var (ncid, varidX, xyzOut(:,1))
-  status = nf90_put_var (ncid, varidY, xyzOut(:,2))
-  status = nf90_put_var (ncid, varidZ, xyzOut(:,3))
-  status = nf90_put_var (ncid, varidR, regCode)
-  status = nf90_close   (ncid)
+  ! Define filename.
+  formatString = "(A,I0.2,A)"
+  write (fileName, formatString) "DATA/cemRequest/xyz_reg", iregion_code, ".nc"
+  fileNameTrim = trim (fileName)
+  
+  ! Create parallel NetCDF file.
+  call checkNC (nf90_create (fileNameTrim, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
+    comm = worldComm, info = MPI_INFO_NULL))
+    
+  ! Define the processor array.
+  call checkNC (nf90_def_dim (ncid, 'glob', size (xyzOut(:,1)), paramDimID))
+  call checkNC (nf90_def_dim (ncid, 'proc', commWorldSize,      procDimID))
+  
+  ! Sort ids into array.
+  ids = (/ paramDimID, procDimID /)
+  
+  ! Define the kernel variable.
+  call checkNC (nf90_def_var (ncid, 'x', NF90_float, ids, varidX))
+  call checkNC (nf90_def_var (ncid, 'y', NF90_float, ids, varidY))
+  call checkNC (nf90_def_var (ncid, 'z', NF90_float, ids, varidZ))
+  call checkNC (nf90_def_var (ncid, 'r', NF90_SHORT, ids, varidR))
+    
+  ! End definitions.
+  call checkNC (nf90_enddef (ncid))
+  
+  ! Each processor writes one row.
+  start = (/ 1, myRank + 1 /)
+  count = (/ size (xyzOut(:,1)), 1 /)
+  call checkNC (nf90_put_var (ncid, varidX, xyzOut(:,1), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varidY, xyzOut(:,2), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varidZ, xyzOut(:,3), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varidR, regCode,     start = start, count = count))
+  
+  ! Close the file.
+  call checkNC (nf90_close (ncid))  
 
   deallocate(xyzOut)
   deallocate(regCode)
@@ -228,8 +240,8 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
   double precision, parameter :: R_020_KM=6351.0d0, R_052_KM=6319.0d0
   double precision, parameter :: R_100_KM=6271.0d0, R_400_KM=5971.0d0
-  double precision, parameter :: R_670_KM=5701.0d0, R_OCR_KM=3480.0d0
-  double precision, parameter :: R_ICR_KM=1221.0d0, R_THO_KM=5371.0d0
+  double precision, parameter :: R_670_KM=5701.0d0, R_CMB_KM=3480.0d0
+  double precision, parameter :: R_ICB_KM=1221.0d0, R_THO_KM=5371.0d0
   double precision            :: x, y, z, rad
 
   allocate(xyzOut(nglob,NDIMS))
@@ -299,21 +311,13 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
             iglob           = ibool(i,j,k,ispec)
             xyzOut(iglob,3) = z
 
-            rad = dsqrt( x * x + y * y + z * z )
+            rad = dsqrt ( x * x + y * y + z * z )
 
-            if      ( rad < R_THO_KM .and. rad >= R_ICR_KM ) then
-              region = 7
-            else if ( rad < R_670_KM .and. rad >= R_THO_KM ) then
-              region = 6
-            else if ( rad < R_400_KM .and. rad >= R_670_KM ) then
-              region = 5
-            else if ( rad < R_100_KM .and. rad >= R_400_KM ) then
-              region = 4
-            else if ( rad < R_052_KM .and. rad >= R_100_KM ) then
+            if      ( rad < R_670_KM .and. rad >= R_CMB_KM ) then
               region = 3
-            else if ( rad < R_020_KM .and. rad >= R_052_KM ) then
+            else if ( rad < R_400_KM .and. rad >= R_670_KM ) then
               region = 2
-            else if ( rad >= R_020_KM ) then
+            else if ( rad >= R_400_KM ) then
               region = 1
             endif
 
@@ -327,12 +331,30 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
   else if (iregion_code == 2) then
 
-    regCode(:) = 8
+    regCode(:) = 4
 
   else if (iregion_code == 3) then
 
-    regCode(:) = 9
+    regCode(:) = 5
 
   endif
 
 end subroutine build_global_coordinates
+
+subroutine checkNC (status)
+
+  ! This little guy just checks for an error from the NetCDF libraries and throws a tantrum if
+  ! one's found.
+
+  use :: netcdf
+
+  implicit none
+
+  integer, intent (in) :: status
+
+  if (status /= nf90_noerr) then
+    print *, trim (nf90_strerror (status))
+    stop 'Netcdf error.'
+  endif
+
+end subroutine checkNC
