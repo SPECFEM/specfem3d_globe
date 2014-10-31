@@ -47,7 +47,7 @@ subroutine model_cem_broadcast ( myrank )
   rank = myrank
   call world_size (wSize)
 
-  if ( CEM_ACCEPT ) then
+  if (CEM_ACCEPT) then
 
     call return_populated_arrays (reg1Bc, "vsv", 1)
     call return_populated_arrays (reg2Bc, "vsv", 2)
@@ -66,11 +66,12 @@ subroutine model_cem_broadcast ( myrank )
     call return_populated_arrays (reg3Bc, "vpp", 3)
 
     call synchronize_all ()
+    
   endif
 
 end subroutine model_cem_broadcast
 
-subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
+subroutine request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
 
   use :: cem_par
   use :: constants
@@ -119,15 +120,18 @@ end subroutine request_cem
 
 subroutine return_populated_arrays (structure, param, reg)
 
+  use :: mpi
   use :: cem_par
   use :: netcdf
 
   implicit none
 
-  integer, intent (in) :: reg
-  integer :: ncid, dimid, nPar
-  integer :: status, varid
+  integer, parameter :: NDIMS_READ=2
+  integer, dimension (NDIMS_READ) :: start, count
 
+  integer, intent (in) :: reg
+  integer :: ncid, nPar, dimid
+  integer :: varid, commWorldSize, myRank, worldComm
 
   character(3), intent(in) :: param
 
@@ -137,29 +141,43 @@ subroutine return_populated_arrays (structure, param, reg)
   character (len=1024) :: fileNameTrim
   character (len=1024) :: formatString
 
+  ! mpi things.
+  call world_rank     (myRank)
+  call world_size     (commWorldSize)
+  call world_get_comm (worldComm)
 
-  formatString = "(A,I0.2,A,I0.4,A1,A3,A3)"
-  write (fileName,formatString) "./DATA/cemRequest/xyz_reg", reg, &
-    "_proc", rank, ".", param, ".nc"
+  
+  formatString = "(A,I0.2,A,A3,A3)"
+  write (fileName,formatString) "./DATA/cemRequest/xyz_reg", reg, ".", param, ".nc"
 
   fileNameTrim = trim(fileName)
 
-  status = nf90_open              (fileNameTrim, NF90_NOWRITE, ncid)
-  status = nf90_inq_dimid         (ncid, "param", dimid)
-  status = nf90_inquire_dimension (ncid, dimid, len = nPar)
+  call checkNC (nf90_open (fileNameTrim, IOR(NF90_NOWRITE, NF90_MPIIO), ncid, &
+    comm = worldComm, info = MPI_INFO_NULL))
 
-  if ( param == "vsv" ) allocate(structure%vsv(nPar))
-  if ( param == "rho" ) allocate(structure%rho(nPar))
-  if ( param == "vpp" ) allocate(structure%vpv(nPar))
-  if ( param == "vsh" ) allocate(structure%vsh(nPar))
+  call checkNC (nf90_inq_dimid (ncid, "glob", dimid))
+  call checkNC (nf90_inquire_dimension (ncid, dimid, len = nPar))
+  call checkNC (nf90_inq_varid (ncid, "data", varid))
+  
+  start = (/ 1, myRank + 1 /)
+  count = (/ commWorldSize, 1 /)
 
-  status = nf90_inq_varid (ncid, "data", varid)
+  if (param == "vsv") allocate(structure%vsv(nPar))
+  if (param == "rho") allocate(structure%rho(nPar))
+  if (param == "vpp") allocate(structure%vpv(nPar))
+  if (param == "vsh") allocate(structure%vsh(nPar))
 
-  if ( param == "vsv" ) status = nf90_get_var (ncid, varid, structure%vsv)
-  if ( param == "rho" ) status = nf90_get_var (ncid, varid, structure%rho)
-  if ( param == "vpp" ) status = nf90_get_var (ncid, varid, structure%vpv)
-  if ( param == "vsh" ) status = nf90_get_var (ncid, varid, structure%vsh)
-
+  if (param == "vsv") call checkNC (nf90_get_var (ncid, varid, structure%vsv, start = start, &
+    count = count))                                                                     
+                                                                                      
+  if (param == "rho") call checkNC (nf90_get_var (ncid, varid, structure%rho, start = start, &
+    count = count))                                                                     
+                                                                                      
+  if (param == "vpp") call checkNC (nf90_get_var (ncid, varid, structure%vpv, start = start, &
+    count = count))                                                                     
+                                                                                      
+  if (param == "vsh") call checkNC (nf90_get_var (ncid, varid, structure%vsh, start = start, &
+    count = count))
 
 end subroutine return_populated_arrays
 
@@ -212,6 +230,7 @@ subroutine write_cem_request (iregion_code)
   ! Each processor writes one row.
   start = (/ 1, myRank + 1 /)
   count = (/ size (xyzOut(:,1)), 1 /)
+  
   call checkNC (nf90_put_var (ncid, varidX, xyzOut(:,1), start = start, count = count))
   call checkNC (nf90_put_var (ncid, varidY, xyzOut(:,2), start = start, count = count))
   call checkNC (nf90_put_var (ncid, varidZ, xyzOut(:,3), start = start, count = count))
@@ -225,13 +244,13 @@ subroutine write_cem_request (iregion_code)
 
 end subroutine write_cem_request
 
-subroutine build_global_coordinates ( nspec, nglob, iregion_code )
+subroutine build_global_coordinates (nspec, nglob, iregion_code)
 
   use :: constants
   use :: cem_par
 
   use :: meshfem3D_par, only: &
-    ibool,idoubling,xstore,ystore,zstore
+    ibool,xstore,ystore,zstore
 
   implicit none
 
@@ -313,6 +332,7 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
             rad = dsqrt ( x * x + y * y + z * z )
 
+            region = 0
             if      ( rad < R_670_KM .and. rad >= R_CMB_KM ) then
               region = 3
             else if ( rad < R_400_KM .and. rad >= R_670_KM ) then
