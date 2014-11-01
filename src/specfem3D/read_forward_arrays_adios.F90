@@ -51,7 +51,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -214,8 +214,7 @@
 
 !-------------------------------------------------------------------------------
 !> \brief Read forward arrays from an ADIOS file.
-!> \note read_intermediate_forward_arrays_adios()
-!!       and read_forward_arrays_adios() are not factorized, because
+!> \note read_intermediate_forward_arrays_adios() and read_forward_arrays_adios() are not factorized, because
 !>       the latest read the bp file in "b_" prefixed arrays
 
   subroutine read_forward_arrays_adios()
@@ -233,7 +232,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -421,7 +420,7 @@
   integer, intent(in) :: iteration_on_subset_tmp
   ! Local parameters
   integer :: comm
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err

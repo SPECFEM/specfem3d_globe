@@ -104,7 +104,7 @@
 
   implicit none
 
-  character(len=150),dimension(15) :: header
+  character(len=MAX_STRING_LEN),dimension(15) :: header
   double precision,dimension(15) :: tmp
   integer:: ilon,jlat,ier
 

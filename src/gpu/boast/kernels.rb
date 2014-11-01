@@ -2,6 +2,7 @@ require 'rubygems'
 require 'BOAST'
 require 'narray'
 require './HEADER.rb'
+require './FUNCTIONS.rb'
 
 def rndup( val, div)
   return (val%div) == 0 ? val : val + div - (val%div)
@@ -72,8 +73,8 @@ kernels = [
 :compute_strength_noise_kernel,
 :crust_mantle_impl_kernel_forward,
 :crust_mantle_impl_kernel_adjoint,
-:compute_ani_undo_att_kernel,
-:compute_iso_undo_att_kernel,
+:compute_ani_undoatt_kernel,
+:compute_iso_undoatt_kernel,
 :compute_strain_kernel
 ]
 
@@ -95,6 +96,7 @@ kerns = kerns.select { |k,v| k.to_s.match($options[:kernel]) } if $options[:kern
 # debug
 #puts "kernels:"
 #puts kerns
+
 # output info
 v = BOAST::get_boast_version()
 puts ""
@@ -103,6 +105,18 @@ puts "-------------------------------"
 puts "building kernel files:"
 puts "-------------------------------"
 
+# checks output directory
+if File.exists? "#{$options[:output_dir]}/" then
+puts "directory exists: #{$options[:output_dir]}/"
+else
+puts "directory does not exist: #{$options[:output_dir]}/"
+puts "please check your output-directory (--output-dir)"
+puts ""
+puts "exiting now..."
+abort "Error: output directory does not exist"
+end
+
+# loops over all kernels
 kerns.each { |kern|
   puts kern.to_s
   # imports kernel ruby file
@@ -219,3 +233,10 @@ langs.each { |lang|
   end
   puts "  Generated"
 }
+
+puts ""
+puts "done"
+puts ""
+outdir = File.expand_path("#{$options[:output_dir]}/")
+puts "see all files in directory: #{outdir}"
+puts ""

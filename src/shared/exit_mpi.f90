@@ -96,29 +96,3 @@
 
   end subroutine exit_MPI_without_rank
 
-!-------------------------------------------------------------------------------------------------
-!
-! I/O wrapper function
-!
-!-------------------------------------------------------------------------------------------------
-
-  subroutine flush_IMAIN()
-
-  use constants
-
-  implicit none
-
-  ! only master process writes out to main output file
-  ! file I/O in Fortran is buffered by default
-  !
-  ! note: Fortran2003 includes a FLUSH statement
-  !          which is implemented by most compilers by now
-  !
-  ! otherwise:
-  !   a) comment out the line below
-  !   b) try to use instead: call flush(IMAIN)
-
-  flush(IMAIN)
-
-  end subroutine flush_IMAIN
-

@@ -83,7 +83,7 @@ subroutine define_kernel_adios_variables(adios_handle)
   ! Parameters
   integer(kind=8), intent(INOUT) :: adios_handle
   ! Variables
-  character(len=256) :: outputname, group_name
+  character(len=MAX_STRING_LEN) :: outputname, group_name
   integer(kind=8) :: adios_group, group_size_inc, adios_totalsize
   integer :: local_dim, comm, adios_err
 
@@ -224,7 +224,7 @@ end subroutine define_kernel_adios_variables
 !> Schedule ADIOS writes for kernel variables related to the crust mantle.
 !! \param[INOUT] adios_handle The handle pointing on the open ADIOS file
 !!                            intended to store kernels data.
-subroutine write_kernels_crust_mantle_adios(adios_handle, &
+subroutine write_kernels_cm_adios(adios_handle, &
                                             mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
                                             alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
                                             betav_kl_crust_mantle,betah_kl_crust_mantle, &
@@ -325,14 +325,14 @@ subroutine write_kernels_crust_mantle_adios(adios_handle, &
                                      STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
   endif
 
-end subroutine write_kernels_crust_mantle_adios
+end subroutine write_kernels_cm_adios
 
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the outer core.
 !! \param[INOUT] adios_handle The handle pointing on the open ADIOS file
 !!                            intended to store kernels data.
-subroutine write_kernels_outer_core_adios(adios_handle)
+subroutine write_kernels_oc_adios(adios_handle)
 
   use adios_write_mod
 
@@ -362,14 +362,14 @@ subroutine write_kernels_outer_core_adios(adios_handle)
     call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(beta_kl_outer_core))
   endif
 
-end subroutine write_kernels_outer_core_adios
+end subroutine write_kernels_oc_adios
 
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the inner core.
 !! \param[INOUT] adios_handle The handle pointing on the open ADIOS file
 !!                            intended to store kernels data.
-subroutine write_kernels_inner_core_adios(adios_handle)
+subroutine write_kernels_ic_adios(adios_handle)
 
   use adios_write_mod
 
@@ -396,7 +396,7 @@ subroutine write_kernels_inner_core_adios(adios_handle)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(alpha_kl_inner_core))
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(beta_kl_inner_core))
 
-end subroutine write_kernels_inner_core_adios
+end subroutine write_kernels_ic_adios
 
 
 !==============================================================================

@@ -55,10 +55,10 @@
 
   integer,parameter :: MAX_NUM_NODES = 300
   integer  iregion, ir, irs, ire, ires, pfd, efd
-  character(len=256) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
-  character(len=256) :: prname_topo, prname_file, dimension_file
+  character(len=MAX_STRING_LEN) :: sline, arg(7), filename, in_topo_dir, in_file_dir, outdir
+  character(len=MAX_STRING_LEN) :: prname_topo, prname_file, dimension_file
   character(len=1038) :: command_name
-  character(len=256) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file, data_file, topo_file
+  character(len=MAX_STRING_LEN) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file, data_file, topo_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob, npoint, nelement
   integer iproc, num_node, i,j,k,ispec, ios, it, di, dj, dk
   integer np, ne,  njunk
@@ -199,7 +199,7 @@
       print *
 
       ! topology file
-      topo_file = trim(prname_topo) // 'solver_data_2' // '.bin'
+      topo_file = trim(prname_topo) // 'solver_data' // '.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
        print*,'error ',ios
@@ -210,12 +210,19 @@
       ystore(:) = 0.0
       zstore(:) = 0.0
       ibool(:,:,:,:) = -1
+      ! skipps nspec
+      read(28) njunk
+      if (njunk /= nspec(it)) stop 'Error invalid nspec in solver_data.bin'
+      ! skipps nglob
+      read(28) njunk
+      if (njunk /= nglob(it)) stop 'Error invalid nglob in solver_data.bin'
+
+      ! mesh node locations
       read(28) xstore(1:nglob(it))
       read(28) ystore(1:nglob(it))
       read(28) zstore(1:nglob(it))
       read(28) ibool(:,:,:,1:nspec(it))
       close(28)
-
 
       write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)
       print *, trim(mesh_file)
@@ -260,7 +267,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: gll_data
 
 ! file name
-  character(len=256) prname_file
+  character(len=MAX_STRING_LEN) prname_file
 
   integer :: ispec,i,ier
 

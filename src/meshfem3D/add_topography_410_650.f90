@@ -48,8 +48,19 @@
   double precision :: gamma
   double precision :: x,y,z
 
+  !statistics
+  logical,parameter :: DEBUG_STATISTICS = .false.
+  real(kind=CUSTOM_REAL),save :: min_410 = HUGEVAL,max_410 = - HUGEVAL
+  real(kind=CUSTOM_REAL),save :: min_650 = HUGEVAL,max_650 = - HUGEVAL
+  real(kind=CUSTOM_REAL) :: min_410_all,max_410_all
+  real(kind=CUSTOM_REAL) :: min_650_all,max_650_all
+
 ! note: adding topography to 410 and 660 strongly affects PcP, PKiKP, etc. phases,
 !       we leave it in and check whether the stretching makes simulation unstable
+!
+! topography perturbations
+!   410-km: minimum / maximum = -13.48 km / + 13.24 km
+!   650-km: minimum / maximum = -14.34 km / + 19.19 km
 
 ! we loop on all the points of the element
   do ia = 1,NGNOD
@@ -83,8 +94,15 @@
     ! compute topography on 410 and 650 at current point
     call model_s362ani_subtopo(xcolat,xlon,topo410out,topo650out)
 
-    ! debug
-    !print*,'topo410 / topo650: ',r,xcolat,xlon,topo410out,topo650out
+    ! min/max statistics
+    if (DEBUG_STATISTICS) then
+      if ( topo410out < min_410 ) min_410 = topo410out
+      if ( topo410out > max_410 ) max_410 = topo410out
+      if ( topo650out < min_650 ) min_650 = topo650out
+      if ( topo650out > max_650 ) max_650 = topo650out
+      ! debug
+      !print*,'topo410 / topo650: ',r,xcolat,xlon,topo410out,topo650out
+    endif
 
     ! non-dimensionalize the topography, which is in km
     ! positive for a depression, so change the sign for a perturbation in radius
@@ -114,6 +132,24 @@
     if (gamma < -0.0001 .or. gamma > 1.0001) call exit_MPI(myrank,'incorrect value of gamma for 410-650 topography')
 
   enddo
+
+  ! debug
+  if (DEBUG_STATISTICS) then
+    ! collects min/max on master
+    call min_all_cr(min_410,min_410_all)
+    call max_all_cr(max_410,max_410_all)
+    call min_all_cr(min_650,min_650_all)
+    call max_all_cr(max_650,max_650_all)
+    if (myrank == 0) then
+      if (r <= R220/R_EARTH .and. r >= R771/R_EARTH) then
+        print*,'add_topography_410_650: min/max_410 = ',min_410_all,max_410_all,'min/max_650 = ',min_650_all,max_650_all
+      endif
+    endif
+    !if (r <= R220/R_EARTH .and. r >= R771/R_EARTH) then
+    !  print*,myrank,'add_topography_410_650: min/max_410 = ',min_410,max_410,'min/max_650 = ',min_650,max_650
+    !  print*,myrank,'add_topography_410_650: depth = ',(1.d0 - r)*R_EARTH_KM,' 410-km = ',topo410out,' 650-km = ',topo650out
+    !endif
+  endif
 
   end subroutine add_topography_410_650
 

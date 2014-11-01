@@ -124,6 +124,9 @@
   integer :: imin,imax,jmin,jmax,kmin,kmax
   double precision :: f0,t0_ricker
 
+  double precision, external :: get_cmt_scalar_moment
+  double precision, external :: get_cmt_moment_magnitude
+
   ! mask source region (mask values are between 0 and 1, with 0 around sources)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
 
@@ -143,8 +146,11 @@
   final_distance_source(:) = HUGEVAL
 
   ! read all the sources
-  if (myrank == 0) call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
-                               DT,NSOURCES,min_tshift_cmt_original)
+  if (myrank == 0) then
+    ! only master process reads in CMTSOLUTION file
+    call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
+                 DT,NSOURCES,min_tshift_cmt_original)
+  endif
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(tshift_cmt,NSOURCES)
@@ -503,7 +509,7 @@
 
           ! recompute Jacobian for the new point
           call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                                  xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
           ! compute distance to target location
           dx = - (x - x_target_source)
@@ -541,7 +547,7 @@
 
         ! compute final coordinates of point found
         call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
-                               xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
+                                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
         ! store xi,eta,gamma and x,y,z of point found
         xi_source_subset(isource_in_this_subset) = xi
@@ -665,6 +671,13 @@
           write(IMAIN,*) ' half duration: ',hdur(isource),' seconds'
         endif
         write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
+        write(IMAIN,*)
+        write(IMAIN,*) 'magnitude of the source:'
+        write(IMAIN,*) '     scalar moment M0 = ', &
+          get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource)),' dyne-cm'
+        write(IMAIN,*) '  moment magnitude Mw = ', &
+          get_cmt_moment_magnitude(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
+        write(IMAIN,*)
 
         ! writes out actual source position to VTK file
         write(IOUT_VTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
@@ -847,11 +860,11 @@
   integer :: myrank,NSPEC
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: mask_source
-  character(len=150) :: LOCAL_TMP_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_TMP_PATH
 
   ! local parameters
   integer :: ier
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -896,8 +909,9 @@
 
   double precision, external :: comp_source_time_function,comp_source_spectrum
   double precision, external :: comp_source_time_function_rickr
+  double precision, external :: get_cmt_scalar_moment
 
-  character(len=150) :: plot_file
+  character(len=MAX_STRING_LEN) :: plot_file
 
   ! number of points to plot the source time function and spectrum
   integer, parameter :: NSAMP_PLOT_SOURCE = 1000
@@ -925,9 +939,8 @@
         status='unknown',iostat=ier)
   if (ier /= 0 ) call exit_mpi(0,'Error opening plot_source_time_function file')
 
-  scalar_moment = Mxx(isource)**2 + Myy(isource)**2 + Mzz(isource)**2 &
-                + Mxy(isource)**2 + Mxz(isource)**2 + Myz(isource)**2
-  scalar_moment = dsqrt(scalar_moment/2.0d0)
+  ! calculates scalar moment M0
+  scalar_moment = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
 
   ! define t0 as the earliest start time
   ! note: this calculation here is only used for outputting the plot_source_time_function file

@@ -129,7 +129,7 @@
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
-    OUTPUT_FILES
+    OUTPUT_FILES,MAX_STRING_LEN
 
   use meshfem3D_par,only: ibool,is_on_a_slice_edge
 
@@ -149,7 +149,7 @@
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
   ! debug file output
-  character(len=150) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
 
   ! sets up MPI interfaces
@@ -258,7 +258,7 @@
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
-    OUTPUT_FILES
+    OUTPUT_FILES,MAX_STRING_LEN
 
   use meshfem3D_par,only: ibool,is_on_a_slice_edge
 
@@ -278,7 +278,7 @@
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
   ! debug file output
-  character(len=150) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
 
   ! sets up MPI interfaces
@@ -389,7 +389,7 @@
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
-    OUTPUT_FILES,IFLAG_IN_FICTITIOUS_CUBE,NGLLX,NGLLY,NGLLZ,NSPEC2D_BOTTOM
+    OUTPUT_FILES,IFLAG_IN_FICTITIOUS_CUBE,NGLLX,NGLLY,NGLLZ,NSPEC2D_BOTTOM,MAX_STRING_LEN
 
   use meshfem3D_par,only: ibool,idoubling,is_on_a_slice_edge
 
@@ -410,7 +410,7 @@
   integer :: i,j,k,ispec,iglob,ier
   integer :: ndim_assemble
   ! debug file output
-  character(len=150) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
 
   ! sets up MPI interfaces

@@ -30,20 +30,21 @@ module BOAST
       print b_eps[4] === b_epsdev[3]
       print b_eps[5] === b_epsdev[2]
 
+      # Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
       print p === 0
       print For(i, 0, 5) {
-        print For(j, 0, 5) {
+        print For(j, i, 5) {
           print prod[p] === eps[i]*b_eps[j]
           print If(j>i) {
             print prod[p] === prod[p] + eps[j]*b_eps[i]
             print If(Expression("&&", j>2, i<3) ) {
               print prod[p] === prod[p]*2.0
             }
-            print If(i>2) {
-              print prod[p] === prod[p]*4.0
-            }
-            print p === p + 1
           }
+          print If(i>2) {
+            print prod[p] === prod[p]*4.0
+          }
+          print p === p + 1
         }
       }
     }

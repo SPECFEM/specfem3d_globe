@@ -316,7 +316,7 @@
 !!-----------------------------------------------------------
 
   integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
-  character(len=256), parameter :: ADIOS_TRANSPORT_METHOD = 'MPI'
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = 'MPI'
 
 
 !!-----------------------------------------------------------
@@ -373,7 +373,7 @@
 ! runs external bash script after storing movie files
 ! (useful for postprocessing during simulation time)
   logical, parameter :: RUN_EXTERNAL_MOVIE_SCRIPT = .false.
-  character(len=256) :: MOVIE_SCRIPT_NAME = "./tar_movie_files.sh"
+  character(len=*),parameter :: MOVIE_SCRIPT_NAME = "./tar_movie_files.sh"
 
 
 !!-----------------------------------------------------------

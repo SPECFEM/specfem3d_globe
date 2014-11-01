@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
-                                        elem_in_crust,elem_in_mantle)
+                                         elem_in_crust,elem_in_mantle)
 
 ! stretching the moho according to the crust 2.0
 ! input:  myrank, xelm, yelm, zelm
@@ -224,7 +224,7 @@
 !
 
   subroutine moho_stretching_honor_crust_reg(myrank,xelm,yelm,zelm, &
-                                            elem_in_crust,elem_in_mantle)
+                                             elem_in_crust,elem_in_mantle)
 
 ! regional routine: for REGIONAL_MOHO_MESH adaptations
 !
@@ -378,7 +378,7 @@
 
   ! checks moho position: supposed to be at 60 km
   if (RMOHO_STRETCH_ADJUSTMENT /= -20000.d0 ) &
-    stop 'wrong moho stretch adjustement for stretch_deep_moho'
+    stop 'wrong moho stretch adjustment for stretch_deep_moho'
   if (RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R60 ) &
     stop 'wrong moho depth '
   ! checks middle crust position: supposed to be bottom of first layer at 15 km
@@ -527,7 +527,7 @@
 
   ! checks moho position: supposed to be at 55 km
   if (RMOHO_STRETCH_ADJUSTMENT /= -15000.d0 ) &
-    stop 'wrong moho stretch adjustement for stretch_deep_moho'
+    stop 'wrong moho stretch adjustment for stretch_moho'
   if (RMOHO_FICTITIOUS_IN_MESHER/R_EARTH /= R55 ) &
     stop 'wrong moho depth '
   ! checks middle crust position: supposed to be bottom of first layer at 15 km

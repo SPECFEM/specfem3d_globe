@@ -60,7 +60,10 @@
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
-    OCEANS,CEM_REQUEST
+    OCEANS
+#ifdef CEM
+  use meshfem3D_models_par,only: CEM_REQUEST
+#endif
 
   use create_MPI_interfaces_par, only: &
     NGLOB1D_RADIAL_MAX,iboolcorner,iboolfaces, &
@@ -186,7 +189,7 @@
                                      NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
 
     ! Only go into here if we're requesting xyz files for CEM
-#if defined (CEM)
+#ifdef CEM
     if (CEM_REQUEST) then
 
       call build_global_coordinates (nspec, nglob_theor, iregion_code)
@@ -431,9 +434,9 @@
       ! saves boundary file
       if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
         if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
-        call save_arrays_solver_boundary_adios()
+        call save_arrays_boundary_adios()
       else
-        call save_arrays_solver_boundary()
+        call save_arrays_boundary()
       endif
 
     endif
@@ -953,14 +956,14 @@
   integer :: ner_without_doubling,ilayer,ilayer_loop
   ! timing
   double precision, external :: wtime
-  double precision :: time_start,tCPU
+  !double precision :: time_start,tCPU
   integer,dimension(8) :: tval
 
   ! initializes flags for transverse isotropic elements
   ispec_is_tiso(:) = .false.
 
   ! get MPI starting time
-  time_start = wtime()
+  !time_start = wtime()
 
   ! loop on all the layers in this region of the mesh
   ispec = 0 ! counts all the elements in this region of the mesh
@@ -1062,7 +1065,7 @@
     ! user output
     if (myrank == 0) then
       ! time estimate
-      tCPU = wtime() - time_start
+      !tCPU = wtime() - time_start
 
       ! outputs current time on system
       call date_and_time(VALUES=tval)
@@ -1174,7 +1177,7 @@
   integer :: nglob
   integer :: ieoff,ilocnum,ier
   integer :: i,j,k,ispec
-  character(len=150) :: errmsg
+  character(len=MAX_STRING_LEN) :: errmsg
 
   ! allocate memory for arrays
   allocate(locval(npointot), &
@@ -1340,7 +1343,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
 
   ! structures used for ADIOS AVS/DX files
 !  type(avs_dx_global_t) :: avs_dx_global_vars
-!  character(len=150) :: reg_name, outputname, group_name
+!  character(len=MAX_STRING_LEN) :: reg_name, outputname, group_name
 !  integer :: comm, sizeprocs
 !  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
 

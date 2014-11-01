@@ -40,11 +40,12 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
   TRACE ("compute_stacey_elastic_gpu");
 
   int num_abs_boundary_faces = 0;
-  gpu_int_mem *d_abs_boundary_ispec;
-  gpu_realw_mem *d_abs_boundary_normal;
-  gpu_realw_mem *d_abs_boundary_jacobian2D;
-  gpu_realw_mem *d_wgllwgll;
-  gpu_realw_mem *d_b_absorb_field;
+
+  gpu_int_mem d_abs_boundary_ispec;
+  gpu_realw_mem d_abs_boundary_normal;
+  gpu_realw_mem d_abs_boundary_jacobian2D;
+  gpu_realw_mem d_wgllwgll;
+  gpu_realw_mem d_b_absorb_field;
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
@@ -55,41 +56,41 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
   case 0:
     // xmin
     num_abs_boundary_faces = mp->nspec2D_xmin_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_xmin_crust_mantle;
-    d_abs_boundary_normal = &mp->d_normal_xmin_crust_mantle;
-    d_abs_boundary_jacobian2D = &mp->d_jacobian2D_xmin_crust_mantle;
-    d_b_absorb_field = &mp->d_absorb_xmin_crust_mantle;
-    d_wgllwgll = &mp->d_wgllwgll_yz;
+    d_abs_boundary_ispec = mp->d_ibelm_xmin_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_xmin_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmin_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_xmin_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_yz;
     break;
 
   case 1:
     // xmax
     num_abs_boundary_faces = mp->nspec2D_xmax_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_xmax_crust_mantle;
-    d_abs_boundary_normal = &mp->d_normal_xmax_crust_mantle;
-    d_abs_boundary_jacobian2D = &mp->d_jacobian2D_xmax_crust_mantle;
-    d_b_absorb_field = &mp->d_absorb_xmax_crust_mantle;
-    d_wgllwgll = &mp->d_wgllwgll_yz;
+    d_abs_boundary_ispec = mp->d_ibelm_xmax_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_xmax_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmax_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_xmax_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_yz;
     break;
 
   case 2:
     // ymin
     num_abs_boundary_faces = mp->nspec2D_ymin_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_ymin_crust_mantle;
-    d_abs_boundary_normal = &mp->d_normal_ymin_crust_mantle;
-    d_abs_boundary_jacobian2D = &mp->d_jacobian2D_ymin_crust_mantle;
-    d_b_absorb_field = &mp->d_absorb_ymin_crust_mantle;
-    d_wgllwgll = &mp->d_wgllwgll_xz;
+    d_abs_boundary_ispec = mp->d_ibelm_ymin_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_ymin_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymin_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_ymin_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_xz;
     break;
 
   case 3:
     // ymax
     num_abs_boundary_faces = mp->nspec2D_ymax_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_ymax_crust_mantle;
-    d_abs_boundary_normal = &mp->d_normal_ymax_crust_mantle;
-    d_abs_boundary_jacobian2D = &mp->d_jacobian2D_ymax_crust_mantle;
-    d_b_absorb_field = &mp->d_absorb_ymax_crust_mantle;
-    d_wgllwgll = &mp->d_wgllwgll_xz;
+    d_abs_boundary_ispec = mp->d_ibelm_ymax_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_ymax_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_ymax_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_xz;
     break;
 
   default:
@@ -121,21 +122,21 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &interface_type));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &num_abs_boundary_faces));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec->ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_xi_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_eta_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmin_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmax_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimin_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimax_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_normal->ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_jacobian2D->ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_wgllwgll->ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_normal.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_jacobian2D.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_wgllwgll.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rho_vp_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rho_vs_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &mp->save_forward));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_field->ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_field.ocl));
 
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
@@ -153,32 +154,33 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
 
     // absorbing boundary contributions
     compute_stacey_elastic_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_veloc_crust_mantle.cuda,
-                                                    mp->d_accel_crust_mantle.cuda,
-                                                    interface_type,
-                                                    num_abs_boundary_faces,
-                                                    d_abs_boundary_ispec->cuda,
-                                                    mp->d_nkmin_xi_crust_mantle.cuda,
-                                                    mp->d_nkmin_eta_crust_mantle.cuda,
-                                                    mp->d_njmin_crust_mantle.cuda,
-                                                    mp->d_njmax_crust_mantle.cuda,
-                                                    mp->d_nimin_crust_mantle.cuda,
-                                                    mp->d_nimax_crust_mantle.cuda,
-                                                    d_abs_boundary_normal->cuda,
-                                                    d_abs_boundary_jacobian2D->cuda,
-                                                    d_wgllwgll->cuda,
-                                                    mp->d_ibool_crust_mantle.cuda,
-                                                    mp->d_rho_vp_crust_mantle.cuda,
-                                                    mp->d_rho_vs_crust_mantle.cuda,
-                                                    mp->save_forward,
-                                                    d_b_absorb_field->cuda);
+                                                                         mp->d_accel_crust_mantle.cuda,
+                                                                         interface_type,
+                                                                         num_abs_boundary_faces,
+                                                                         d_abs_boundary_ispec.cuda,
+                                                                         mp->d_nkmin_xi_crust_mantle.cuda,
+                                                                         mp->d_nkmin_eta_crust_mantle.cuda,
+                                                                         mp->d_njmin_crust_mantle.cuda,
+                                                                         mp->d_njmax_crust_mantle.cuda,
+                                                                         mp->d_nimin_crust_mantle.cuda,
+                                                                         mp->d_nimax_crust_mantle.cuda,
+                                                                         d_abs_boundary_normal.cuda,
+                                                                         d_abs_boundary_jacobian2D.cuda,
+                                                                         d_wgllwgll.cuda,
+                                                                         mp->d_ibool_crust_mantle.cuda,
+                                                                         mp->d_rho_vp_crust_mantle.cuda,
+                                                                         mp->d_rho_vs_crust_mantle.cuda,
+                                                                         mp->save_forward,
+                                                                         d_b_absorb_field.cuda);
   }
 #endif
+
   // adjoint simulations: stores absorbed wavefield part
   if (mp->save_forward) {
     // explicitly waits until kernel is finished
     gpuSynchronize();
     // copies array to CPU
-    gpuCopy_from_device_realw (d_b_absorb_field, absorb_field, NDIM * NGLL2 * num_abs_boundary_faces);
+    gpuCopy_from_device_realw (&d_b_absorb_field, absorb_field, NDIM * NGLL2 * num_abs_boundary_faces);
   }
 
   GPU_ERROR_CHECKING ("compute_stacey_elastic_gpu");
@@ -195,8 +197,9 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
   TRACE ("compute_stacey_elastic_backward_gpu");
 
   int num_abs_boundary_faces = 0;
-  gpu_int_mem *d_abs_boundary_ispec;
-  gpu_realw_mem *d_b_absorb_field;
+
+  gpu_int_mem d_abs_boundary_ispec;
+  gpu_realw_mem d_b_absorb_field;
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
@@ -207,29 +210,29 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
   case 0:
     // xmin
     num_abs_boundary_faces = mp->nspec2D_xmin_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_xmin_crust_mantle;
-    d_b_absorb_field = &mp->d_absorb_xmin_crust_mantle;
+    d_abs_boundary_ispec = mp->d_ibelm_xmin_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_xmin_crust_mantle;
     break;
 
   case 1:
     // xmax
     num_abs_boundary_faces = mp->nspec2D_xmax_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_xmax_crust_mantle;
-    d_b_absorb_field = &mp->d_absorb_xmax_crust_mantle;
+    d_abs_boundary_ispec = mp->d_ibelm_xmax_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_xmax_crust_mantle;
     break;
 
   case 2:
     // ymin
     num_abs_boundary_faces = mp->nspec2D_ymin_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_ymin_crust_mantle;
-    d_b_absorb_field = &mp->d_absorb_ymin_crust_mantle;
+    d_abs_boundary_ispec = mp->d_ibelm_ymin_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_ymin_crust_mantle;
     break;
 
   case 3:
     // ymax
     num_abs_boundary_faces = mp->nspec2D_ymax_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_ymax_crust_mantle;
-    d_b_absorb_field = &mp->d_absorb_ymax_crust_mantle;
+    d_abs_boundary_ispec = mp->d_ibelm_ymax_crust_mantle;
+    d_b_absorb_field = mp->d_absorb_ymax_crust_mantle;
     break;
 
   default:
@@ -252,7 +255,7 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
 
   // adjoint simulations: needs absorbing boundary buffer
   // copies array to GPU
-  gpuCopy_todevice_realw (d_b_absorb_field, absorb_field, NDIM * NGLL2 * num_abs_boundary_faces);
+  gpuCopy_todevice_realw (&d_b_absorb_field, absorb_field, NDIM * NGLL2 * num_abs_boundary_faces);
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -262,10 +265,10 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
 
     // absorbing boundary contributions
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_field->ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_field.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (int), (void *) &interface_type));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (int), (void *) &num_abs_boundary_faces));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec->ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_xi_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_eta_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_backward_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmin_crust_mantle.ocl));
@@ -290,14 +293,14 @@ void FC_FUNC_ (compute_stacey_elastic_backward_gpu,
 
     // absorbing boundary contributions
     compute_stacey_elastic_backward_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_b_accel_crust_mantle.cuda,
-                                                             d_b_absorb_field->cuda,
-                                                             interface_type,
-                                                             num_abs_boundary_faces,
-                                                             d_abs_boundary_ispec->cuda,
-                                                             mp->d_nkmin_xi_crust_mantle.cuda,mp->d_nkmin_eta_crust_mantle.cuda,
-                                                             mp->d_njmin_crust_mantle.cuda,mp->d_njmax_crust_mantle.cuda,
-                                                             mp->d_nimin_crust_mantle.cuda,mp->d_nimax_crust_mantle.cuda,
-                                                             mp->d_ibool_crust_mantle.cuda);
+                                                                                  d_b_absorb_field.cuda,
+                                                                                  interface_type,
+                                                                                  num_abs_boundary_faces,
+                                                                                  d_abs_boundary_ispec.cuda,
+                                                                                  mp->d_nkmin_xi_crust_mantle.cuda,mp->d_nkmin_eta_crust_mantle.cuda,
+                                                                                  mp->d_njmin_crust_mantle.cuda,mp->d_njmax_crust_mantle.cuda,
+                                                                                  mp->d_nimin_crust_mantle.cuda,mp->d_nimax_crust_mantle.cuda,
+                                                                                  mp->d_ibool_crust_mantle.cuda);
   }
 #endif
 
@@ -318,11 +321,10 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 
   int num_abs_boundary_faces = 0;
 
-  gpu_int_mem *d_abs_boundary_ispec;
-  gpu_realw_mem *d_abs_boundary_normal;
-  gpu_realw_mem *d_abs_boundary_jacobian2D;
-  gpu_realw_mem *d_wgllwgll;
-  gpu_realw_mem *d_b_absorb_field = NULL;
+  gpu_int_mem d_abs_boundary_ispec;
+  gpu_realw_mem d_abs_boundary_normal;
+  gpu_realw_mem d_abs_boundary_jacobian2D;
+  gpu_realw_mem d_wgllwgll;
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
@@ -336,37 +338,37 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
   case 0:
     // xmin
     num_abs_boundary_faces = mp->nspec2D_xmin_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_xmin_crust_mantle;
-    d_abs_boundary_normal = &mp->d_normal_xmin_crust_mantle;
-    d_abs_boundary_jacobian2D = &mp->d_jacobian2D_xmin_crust_mantle;
-    d_wgllwgll = &mp->d_wgllwgll_yz;
+    d_abs_boundary_ispec = mp->d_ibelm_xmin_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_xmin_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmin_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_yz;
     break;
 
   case 1:
     // xmax
     num_abs_boundary_faces = mp->nspec2D_xmax_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_xmax_crust_mantle;
-    d_abs_boundary_normal = &mp->d_normal_xmax_crust_mantle;
-    d_abs_boundary_jacobian2D = &mp->d_jacobian2D_xmax_crust_mantle;
-    d_wgllwgll = &mp->d_wgllwgll_yz;
+    d_abs_boundary_ispec = mp->d_ibelm_xmax_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_xmax_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_xmax_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_yz;
     break;
 
   case 2:
     // ymin
     num_abs_boundary_faces = mp->nspec2D_ymin_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_ymin_crust_mantle;
-    d_abs_boundary_normal = &mp->d_normal_ymin_crust_mantle;
-    d_abs_boundary_jacobian2D = &mp->d_jacobian2D_ymin_crust_mantle;
-    d_wgllwgll = &mp->d_wgllwgll_xz;
+    d_abs_boundary_ispec = mp->d_ibelm_ymin_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_ymin_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymin_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_xz;
     break;
 
   case 3:
     // ymax
     num_abs_boundary_faces = mp->nspec2D_ymax_crust_mantle;
-    d_abs_boundary_ispec = &mp->d_ibelm_ymax_crust_mantle;
-    d_abs_boundary_normal = &mp->d_normal_ymax_crust_mantle;
-    d_abs_boundary_jacobian2D = &mp->d_jacobian2D_ymax_crust_mantle;
-    d_wgllwgll = &mp->d_wgllwgll_xz;
+    d_abs_boundary_ispec = mp->d_ibelm_ymax_crust_mantle;
+    d_abs_boundary_normal = mp->d_normal_ymax_crust_mantle;
+    d_abs_boundary_jacobian2D = mp->d_jacobian2D_ymax_crust_mantle;
+    d_wgllwgll = mp->d_wgllwgll_xz;
     break;
 
   default:
@@ -398,21 +400,21 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &interface_type));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &num_abs_boundary_faces));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec->ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_ispec.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_xi_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nkmin_eta_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmin_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_njmax_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimin_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_nimax_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_normal->ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_jacobian2D->ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_wgllwgll->ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_normal.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_abs_boundary_jacobian2D.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_wgllwgll.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rho_vp_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rho_vs_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &mp->save_forward));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_field->ocl));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) NULL));
 
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
@@ -433,21 +435,21 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
                                                                          mp->d_b_accel_crust_mantle.cuda,
                                                                          interface_type,
                                                                          num_abs_boundary_faces,
-                                                                         d_abs_boundary_ispec->cuda,
+                                                                         d_abs_boundary_ispec.cuda,
                                                                          mp->d_nkmin_xi_crust_mantle.cuda,
                                                                          mp->d_nkmin_eta_crust_mantle.cuda,
                                                                          mp->d_njmin_crust_mantle.cuda,
                                                                          mp->d_njmax_crust_mantle.cuda,
                                                                          mp->d_nimin_crust_mantle.cuda,
                                                                          mp->d_nimax_crust_mantle.cuda,
-                                                                         d_abs_boundary_normal->cuda,
-                                                                         d_abs_boundary_jacobian2D->cuda,
-                                                                         d_wgllwgll->cuda,
+                                                                         d_abs_boundary_normal.cuda,
+                                                                         d_abs_boundary_jacobian2D.cuda,
+                                                                         d_wgllwgll.cuda,
                                                                          mp->d_ibool_crust_mantle.cuda,
                                                                          mp->d_rho_vp_crust_mantle.cuda,
                                                                          mp->d_rho_vs_crust_mantle.cuda,
                                                                          mp->save_forward,
-                                                                         d_b_absorb_field->cuda);
+                                                                         NULL);
   }
 #endif
 

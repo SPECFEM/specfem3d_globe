@@ -46,7 +46,7 @@ subroutine read_mesh_databases_coupling_adios()
   ! local parameters
   integer :: njunk1,njunk2,njunk3
   integer :: comm
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -57,7 +57,7 @@ subroutine read_mesh_databases_coupling_adios()
 
   call world_duplicate(comm)
 
-  file_name= trim(LOCAL_PATH) // "/boundary.bp"
+  file_name = trim(LOCAL_PATH) // "/boundary.bp"
 
   ! opens adios file
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
@@ -500,7 +500,7 @@ subroutine read_mesh_databases_coupling_adios()
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
 
-    file_name = LOCAL_PATH // "boundary_disc.bp"
+    file_name = trim(LOCAL_PATH) // "boundary_disc.bp"
 
     ! opens adios file
     call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
@@ -736,7 +736,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
 
   ! local parameters
   integer :: comm, ierr
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
@@ -750,7 +750,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
 
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
-  file_name= trim(LOCAL_PATH) // "/solver_data_mpi.bp"
+  file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
 
   call world_duplicate(comm)
 
@@ -944,7 +944,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
 
   ! local parameters
   integer :: comm, ierr
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
@@ -957,7 +957,8 @@ subroutine read_mesh_databases_MPI_OC_adios()
   character(len=128)      :: region_name
 
   write(region_name,"('reg',i1, '/')") IREGION_OUTER_CORE
-  file_name= trim(LOCAL_PATH) // "/solver_data_mpi.bp"
+
+  file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
 
   call world_duplicate(comm)
 
@@ -1148,7 +1149,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
 
   ! local parameters
   integer :: comm, ierr
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
@@ -1162,7 +1163,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
 
   write(region_name,"('reg',i1, '/')") IREGION_INNER_CORE
 
-  file_name= trim(LOCAL_PATH) // "/solver_data_mpi.bp"
+  file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
 
   call world_duplicate(comm)
 
@@ -1358,7 +1359,7 @@ subroutine read_mesh_databases_stacey_adios()
   ! local parameters
   integer :: comm, local_dim
   ! processor identification
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
@@ -1368,7 +1369,7 @@ subroutine read_mesh_databases_stacey_adios()
 
   call world_duplicate(comm)
 
-  file_name= trim(LOCAL_PATH) // "/stacey.bp"
+  file_name = trim(LOCAL_PATH) // "/stacey.bp"
 
   ! crust and mantle
 

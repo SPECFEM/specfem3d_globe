@@ -254,7 +254,7 @@
 
   subroutine cmi_get_buffers(iregion_code)
 
-  use meshfem3D_par,only: myrank,&
+  use meshfem3D_par,only: myrank,MAX_STRING_LEN,&
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NGLOB1D_RADIAL,NSPEC2D_BOTTOM, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
@@ -288,7 +288,7 @@
   integer, dimension(:),allocatable :: ibelm_top_inner_core
 
   ! debug file output
-  character(len=150) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
 
   ! gets 2-D addressing for summation between slices with MPI

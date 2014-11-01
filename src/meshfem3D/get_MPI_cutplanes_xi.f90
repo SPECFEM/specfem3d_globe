@@ -63,7 +63,7 @@
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_all
 
   ! processor identification
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   ! local parameters
   ! global element numbering
@@ -73,7 +73,7 @@
   integer :: nspec2Dtheor
   integer :: ier
 
-  character(len=150) :: errmsg
+  character(len=MAX_STRING_LEN) :: errmsg
 
   ! debug: file output
   logical,parameter :: DEBUG = .false.

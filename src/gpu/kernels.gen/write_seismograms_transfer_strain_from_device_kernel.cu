@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -93,9 +93,9 @@ __global__ void write_seismograms_transfer_strain_from_device_kernel(const int *
   blockID = blockIdx.x + (blockIdx.y) * (gridDim.x);
   tx = threadIdx.x;
   if (blockID < nrec_local) {
-    irec = number_receiver_global[blockID - (0)] - (1);
-    ispec = ispec_selected_rec[irec - (0)] - (1);
-    iglob = ibool[tx + (NGLL3) * (ispec) - (0)] - (1);
-    station_strain_field[(NGLL3) * (blockID) + tx - (0)] = d_field[iglob - (0)];
+    irec = number_receiver_global[blockID] - (1);
+    ispec = ispec_selected_rec[irec] - (1);
+    iglob = ibool[tx + (NGLL3) * (ispec)] - (1);
+    station_strain_field[(NGLL3) * (blockID) + tx] = d_field[iglob];
   }
 }

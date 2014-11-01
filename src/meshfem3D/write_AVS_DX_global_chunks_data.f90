@@ -41,7 +41,7 @@
   integer :: myrank
 
   ! processor identification
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   integer :: nspec
 

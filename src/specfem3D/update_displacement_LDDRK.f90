@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine update_displacement_lddrk()
+  subroutine update_displ_lddrk()
 
 ! low-memory Runge-Kutta time scheme
 
@@ -43,13 +43,13 @@
   ! inner core
   accel_inner_core(:,:) = 0._CUSTOM_REAL
 
-  end subroutine update_displacement_lddrk
+  end subroutine update_displ_lddrk
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine update_displacement_lddrk_backward()
+  subroutine update_displ_lddrk_backward()
 
 ! low-memory Runge-Kutta time scheme
 
@@ -70,7 +70,7 @@
   ! inner core
   b_accel_inner_core(:,:) = 0._CUSTOM_REAL
 
-  end subroutine update_displacement_lddrk_backward
+  end subroutine update_displ_lddrk_backward
 
 
 !

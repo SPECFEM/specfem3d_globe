@@ -217,8 +217,8 @@
   ! adds surface topography
   if (TOPOGRAPHY) then
     if (idoubling(ispec) == IFLAG_CRUST .or. &
-       idoubling(ispec) == IFLAG_220_80 .or. &
-       idoubling(ispec) == IFLAG_80_MOHO) then
+        idoubling(ispec) == IFLAG_220_80 .or. &
+        idoubling(ispec) == IFLAG_80_MOHO) then
       ! stretches mesh between surface and R220 accordingly
       if (USE_GLL) then
         ! stretches every GLL point accordingly
@@ -235,7 +235,7 @@
     .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
     ! stretching between 220 and 770
     if (idoubling(ispec) == IFLAG_670_220 .or. &
-       idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
+        idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
       if (USE_GLL) then
         ! stretches every GLL point accordingly
         call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)

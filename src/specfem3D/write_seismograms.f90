@@ -91,8 +91,9 @@ contains
   if (seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
 
     ! writes out seismogram files
-    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-
+    select case( SIMULATION_TYPE )
+    case( 1,3 )
+      ! forward/reconstructed wavefields
       call write_seismograms_to_file()
 
       ! user output
@@ -102,11 +103,11 @@ contains
         write(IMAIN,*)
         call flush_IMAIN()
       endif
-    else if (SIMULATION_TYPE == 2) then
-      if (nrec_local > 0 ) &
-        call write_adj_seismograms(nit_written)
+    case( 2 )
+      ! adjoint wavefield
+      if (nrec_local > 0 ) call write_adj_seismograms(nit_written)
       nit_written = it
-    endif
+    end select
 
     ! resets current seismogram position
     seismo_offset = seismo_offset + seismo_current
@@ -147,7 +148,7 @@ contains
   integer :: nrec_local_received
   integer :: total_seismos
   integer,dimension(:),allocatable:: islice_num_rec_local
-  character(len=256) :: sisname
+  character(len=MAX_STRING_LEN) :: sisname
   ! timing
   double precision, external :: wtime
   type(asdf_event) :: asdf_container
@@ -396,7 +397,7 @@ contains
   integer :: iorientation,length_station_name,length_network_name
 
   character(len=4) :: chn
-  character(len=256) :: sisname,sisname_big_file
+  character(len=MAX_STRING_LEN) :: sisname,sisname_big_file
   character(len=2) :: bic
 
   ! variables used for calculation of backazimuth and
@@ -542,7 +543,7 @@ contains
   integer :: iorientation,isample
 
   character(len=4) :: chn
-  character(len=256) :: sisname
+  character(len=MAX_STRING_LEN) :: sisname
   character(len=2) :: bic
 
   call band_instrument_code(DT,bic)
@@ -625,11 +626,11 @@ contains
   double precision :: DT
   character(len=2) :: bic
 
-  if (DT >= 1.0d0)  bic = 'LX'
-  if (DT < 1.0d0 .and. DT > 0.1d0) bic = 'MX'
-  if (DT <= 0.1d0 .and. DT > 0.0125d0) bic = 'BX'
-  if (DT <= 0.0125d0 .and. DT > 0.004d0) bic = 'HX'
-  if (DT <= 0.004d0 .and. DT > 0.001d0) bic = 'CX'
+  if (1.0d0 <= DT)  bic = 'LX'
+  if (0.1d0 < DT .and. DT < 1.0d0) bic = 'MX'
+  if (0.0125d0 < DT .and. DT <= 0.1d0) bic = 'BX'
+  if (0.004d0 < DT .and. DT <= 0.0125d0) bic = 'HX'
+  if (0.001d0 < DT .and. DT <= 0.004d0) bic = 'CX'
   if (DT <= 0.001d0) bic = 'FX'
 
  end subroutine band_instrument_code

@@ -92,20 +92,20 @@ void local_init_ldchecker(void) {
 
 void init_ldchecker(struct callback_s callbacks, struct ld_bindings_s *lib_bindings) {
   static int inited = 0;
-  
+
   if (inited) {
     return;
   }
   local_init_ldchecker();
-  
+
   init_bindings(lib_bindings);
-  
+
   _callbacks = callbacks;
 
 #if PRINT_KERNEL_PARAMS_TO_FILE == 1
   mkdir(PARAM_FILE_DIRECTORY, PARAM_FILE_DIRECTORY_PERM);
 #endif
-  
+
   inited = 1;
 }
 
@@ -113,7 +113,7 @@ void init_ldchecker(struct callback_s callbacks, struct ld_bindings_s *lib_bindi
 int myrank = -1;
 int MPI_Comm_rank(MPI_Comm comm, int *rank) {
   local_init_ldchecker();
-  
+
   int ret = real_MPI_Comm_rank (comm, rank);
   myrank = *rank;
   warning("Rank is %d\n", myrank);
@@ -140,7 +140,7 @@ void buffer_created_event(struct ld_mem_s *ldBuffer) {
   ldBuffer->has_values = 0;
   ldBuffer->values_outdated = 0;
   ldBuffer->released = 0;
-  
+
 #if PRINT_KERNEL_BUFFER_CREATION
   {
     static char *H_UNITS[] = {"", "K", "M", "G"};
@@ -156,7 +156,7 @@ void buffer_created_event(struct ld_mem_s *ldBuffer) {
 static
 size_t get_fsize(FILE *fp) {
   size_t sz = 0;
-  
+
   fseek(fp, 0L, SEEK_END);
   sz = ftell(fp);
   fseek(fp, 0L, SEEK_SET);
@@ -176,13 +176,13 @@ int validate_buffer_content(const unsigned char *act_buffer, const unsigned char
   float max_diff = 0;
   for (i = 0; i < sz; i++) {
     if (is_float) {
-      
+
       float diff = ((float *) act_buffer)[i] - ((float *) ref_buffer)[i];
-      
+
       if (fabsf(diff) > fabsf(max_diff)) {
         max_diff = diff;
       }
-      
+
     } else {
       if (act_buffer[i] != ref_buffer[i]) {
         return 0;
@@ -195,7 +195,7 @@ int validate_buffer_content(const unsigned char *act_buffer, const unsigned char
       return 0;
     }
   }
-  
+
   return 1;
 }
 
@@ -204,7 +204,7 @@ static
 void kernel_run_tests(struct ld_kernel_s *ldKernel) {
   static char filename[256];
   static char dirname[256];
-  
+
   char *line;
   FILE *fp;
   size_t sz = 0;
@@ -213,36 +213,36 @@ void kernel_run_tests(struct ld_kernel_s *ldKernel) {
   struct work_size_s work_sizes;
   unsigned int work_dim;
   unsigned int valid = 1;
-  
+
   SET_PARAMS_TO_FILE_DIR_RUN(dirname, ldKernel, "");
   DIR *dp = opendir(dirname);
   struct dirent *dir;
-  
+
   if (!dp) {
     warning("No test data for kernel '%s'\n", ldKernel->name);
     return;
   }
-  
+
   while ((dir = readdir(dp))) {
     const char *test_name =  dir->d_name;
 
     if (dir->d_name[0] == '.') {
       continue;
     }
-    
+
     SET_PARAMS_TO_FILE_DIR_RUN(dirname, ldKernel, test_name);
     mkdir (dirname, PARAM_FILE_DIRECTORY_PERM);
     sprintf(filename, "%s/problem_size", dirname);
-    
+
     fp = fopen(filename, "r");
     getline (&line, &sz, fp); //  eg: <1,32><1,1>
     {
       int loc_glob, dim;
       char *line_pos = line;
-    
+
       for (loc_glob = 0; loc_glob < 2; loc_glob++) {
         size_t *work_size = loc_glob == 0 ? work_sizes.local : work_sizes.global;
-      
+
         line_pos++; // eat first '<'
         dim = 0;
         while (1) {
@@ -263,22 +263,22 @@ void kernel_run_tests(struct ld_kernel_s *ldKernel) {
 
     free(line);
     fclose(fp);
-  
+
     for (arg_index = 0; arg_index < ldKernel->nb_params; arg_index++) {
       struct ld_kern_param_s *ldParam = &ldKernel->params[arg_index];
       unsigned char *buffer;
-    
+
       SET_PARAM_FILE_NAME(filename, dirname, ldParam, 0);
       fp = fopen(filename, "r");
       sz = get_fsize(fp);
 
       buffer = malloc(sz);
       fread(buffer, sizeof(char), sz, fp);
-    
+
       /* check if buffer is correctly read */
-    
+
       gpu_buffer_handles[arg_index] = _callbacks.setParameterValue(ldKernel, ldParam, buffer, sz);
-    
+
       free(buffer);
       fclose(fp);
     }
@@ -289,27 +289,27 @@ void kernel_run_tests(struct ld_kernel_s *ldKernel) {
       struct ld_kern_param_s *ldParam = &ldKernel->params[arg_index];
       unsigned char *ref_buffer;
       unsigned char *act_buffer;
-    
+
       SET_PARAM_FILE_NAME(filename, dirname, ldParam, 1);
       fp = fopen(filename, "r");
 
       if (!fp) {
         continue;
       }
-    
+
       sz = get_fsize(fp);
 
       ref_buffer = malloc(sz);
       act_buffer = malloc(sz);
-    
+
       _callbacks.getAndReleaseParameterValue(ldKernel, ldParam, gpu_buffer_handles[arg_index],
                                              act_buffer, sz);
       fread(ref_buffer, sizeof(char), sz, fp);
-    
+
       if (!validate_buffer_content(act_buffer, ref_buffer, sz, ldParam->type_info->type == TYPE_INFO_FLOAT)) {
         valid = 0;
       }
-    
+
       free(ref_buffer);
       free(act_buffer);
       fclose(fp);
@@ -323,7 +323,7 @@ void kernel_run_tests(struct ld_kernel_s *ldKernel) {
     }
     break;
   }
-  
+
   free(gpu_buffer_handles);
 }
 #endif
@@ -335,9 +335,9 @@ void kernel_created_event(struct ld_kernel_s *ldKernel) {
 #endif
   for (i = 0; i < ldKernel->nb_params; i++) {
     const char *type = ldKernel->params[i].type;
-    
+
     ldKernel->params[i].is_pointer = is_pointer_type(type);
-    
+
     ldKernel->params[i].type_info = get_type_info(type);
     ldKernel->params[i].has_current_value = 0;
     ldKernel->params[i].current_buffer = NULL;
@@ -364,7 +364,7 @@ static void kernel_set_arg_event (struct ld_kernel_s *ldKernel,
     warning("current value already set (%s#%d)\n",
             ldKernel->name, arg_index);
   }
-  
+
   ldParam->has_current_value = 1;
 
 }
@@ -374,7 +374,7 @@ void setBufferValue (char *value, struct ld_kern_param_s *ldParam);
 static
 void arg_to_param_value (char *value, struct ld_kern_param_s *ldParam) {
   snprintf(ldParam->current_value, CURRENT_VALUE_BUFFER_SZ, "%s%s%s=<%s>",
-           ldParam->type, ldParam->is_pointer ? "" : " ", 
+           ldParam->type, ldParam->is_pointer ? "" : " ",
            ldParam->name, value);
 }
 
@@ -395,11 +395,11 @@ void kernel_set_buffer_arg_event (struct ld_kernel_s *ldKernel,
 {
   ldParam->current_buffer = ldBuffer;
   ldParam->offset = offset;
-  
+
   buffer_to_param_value(ldParam);
-  
+
   kernel_set_arg_event(ldKernel, ldParam, arg_index);
-      
+
   if (!ldBuffer->flags & LD_FLAG_READ_ONLY) {
       ldBuffer->values_outdated = 1;
   }
@@ -414,16 +414,16 @@ void kernel_set_scalar_arg_event (struct ld_kernel_s *ldKernel,
 
   if (ldParam->type_info->type == TYPE_INFO_FLOAT) {
     const float float_value =  *(float *) arg_value;
-    
+
     snprintf(value, BVALUE_SIZE, ldParam->type_info->format, float_value);
   } else {
     snprintf(value, BVALUE_SIZE, ldParam->type_info->format, *arg_value);
   }
 
   memcpy (ldParam->current_binary_value, arg_value, ldParam->type_info->size);
-  
+
   arg_to_param_value(value, ldParam);
-  
+
   kernel_set_arg_event(ldKernel, ldParam, arg_index);
 }
 
@@ -436,14 +436,14 @@ int updateLdBufferLocalValue (struct ld_mem_s *ldBuffer) {
     ldBuffer->has_values = 0;
     return 1;
   }
-  
+
   return _callbacks.getBufferContent (ldBuffer, ldBuffer->first_values, 0, size);
 }
 
 static
 char *print_a_number (const char *ptr, const struct type_info_s *type_info) {
   static char value[MAX_LEN_ONE_NUMBER];
-  
+
   switch(type_info->type) {
   case TYPE_INFO_FLOAT:
     snprintf(value, MAX_LEN_ONE_NUMBER, type_info->format, *(float *) ptr);
@@ -473,7 +473,7 @@ void print_scalar_param_to_file (struct ld_kernel_s *ldKernel,
 
   SET_PARAMS_TO_FILE_DIR(dirname, ldKernel);
   SET_PARAM_FILE_NAME(filename, dirname, ldParam, 0);
-  
+
   fp = fopen(filename, "w");
   if (!fp) {
     perror("Failed to open file:");
@@ -506,16 +506,16 @@ void print_kernel_problem_to_file(struct ld_kernel_s *ldKernel,
   SET_PARAMS_TO_FILE_DIR(dirname, ldKernel);
   mkdir (dirname, PARAM_FILE_DIRECTORY_PERM);
   sprintf(filename, "%s/problem_size", dirname);
-  
+
   fp = fopen(filename, "w");
   if (!fp) {
     perror("Failed to open file:");
     error("Failure with file %s", filename);
   }
-  
+
   for (i = 0; i < 2; i++) {
     const size_t *work_size = i == 0 ? work_sizes->local : work_sizes->global;
-    
+
     fprintf(fp, "<");
     for (j = 0; j < work_dim; j++) {
       fprintf(fp, "%zu%s", work_size[j], j != work_dim - 1 ? "," : "");
@@ -537,7 +537,7 @@ void print_full_buffer(struct ld_kernel_s *ldKernel,
   size_t size = ldBuffer->size; /* maybe get size of written data ?  */
   size_t tsize = type_info->size;
   size_t bytes_written = 0;
-  
+
   void *buffer;
   char *ptr;
 
@@ -556,7 +556,7 @@ void print_full_buffer(struct ld_kernel_s *ldKernel,
     warning("couldn't allocate a buffer of %zub to print "
             "the content of Buffer #%d\n", size, ldBuffer->uid);
   }
-  
+
   if (!_callbacks.getBufferContent(ldBuffer, buffer, 0, size)) {
     warning("failed to retrieve the content of Buffer #%d\n",
             ldBuffer->uid);
@@ -566,11 +566,11 @@ void print_full_buffer(struct ld_kernel_s *ldKernel,
 #if PRINT_KERNEL_PARAMS_TO_FILE == 1
   static char filename[80];
   static char dirname[80];
-  
+
   SET_PARAMS_TO_FILE_DIR(dirname, ldKernel);
-  
+
   SET_PARAM_FILE_NAME(filename, dirname, ldParam, finish);
-  
+
   FILE *fp = fopen(filename, "w");
   if (!fp) {
     perror("Failed to open file:");
@@ -588,7 +588,7 @@ void print_full_buffer(struct ld_kernel_s *ldKernel,
     gpu_trace(print_a_number (ptr, type_info));
     gpu_trace(" ");
 #endif
-    
+
     ptr += tsize;
     bytes_written += tsize;
   }
@@ -596,7 +596,7 @@ void print_full_buffer(struct ld_kernel_s *ldKernel,
 #if PRINT_FULL_PARAMS_TO_FILE == 1
   fclose (fp);
 #endif
-  
+
 finish:
   free(buffer);
 }
@@ -615,14 +615,14 @@ int skip_kernel_printing(struct ld_kernel_s *ldKernel) {
     char *adv_kernel_filter = getenv(ENV__KERNEL_FILTER);
     char *kname_kcount;
     int nb_filters = 0;
-    
+
     if (adv_kernel_filter) {
       int i;
       char *s = adv_kernel_filter;
       for (i = 0; *s; i += *s == ':', s++);
       nb_filters = i;
     }
-    
+
     kfilters = malloc (sizeof (struct kernel_filter_s) * (nb_filters + 1));
     kfilters[nb_filters].kern_name = NULL;
     kfilters[nb_filters].exec_count = 0;
@@ -632,22 +632,22 @@ int skip_kernel_printing(struct ld_kernel_s *ldKernel) {
       char *kname;
       int kcount;
       char *split = strchr(kname_kcount, ':');
-      
+
       *split = '\0';
-      
+
       kname = kname_kcount;
       kcount = atoi(split + 1);
 
       kfilters[nb_filters].kern_name = kname;
       kfilters[nb_filters].exec_count = kcount;
-      
+
       nb_filters--;
       kname_kcount = strtok(NULL, ",");
     }
   }
   {
     int i;
-    
+
     for (i = 0; kfilters[i].kern_name; i++) {
       if (!strstr(ldKernel->name, kfilters[i].kern_name)) {
         continue;
@@ -669,11 +669,11 @@ int skip_kernel_printing(struct ld_kernel_s *ldKernel) {
       goto dont_skip;
     } else {
       goto do_skip;
-    }    
+    }
 #endif
-    
+
   }
-  
+
 #else
 #if FILTER_BY_KERNEL_EXEC_CPT == 1
   if (ldKernel->exec_counter < KERNEL_EXEC_CPT_LOWER_BOUND ||
@@ -695,13 +695,13 @@ dont_skip:
 #if PRINT_KERNEL_PARAMS_TO_FILE == 1
   {
     static char dirname[80];
-    
+
     SET_PARAM_TO_FILE_SUITE_DIR(dirname, ldKernel->name);
     mkdir(dirname, PARAM_FILE_DIRECTORY_PERM);
   }
 #endif
   return 0;
-  
+
 do_skip:
   return 1;
 }
@@ -717,13 +717,13 @@ void kernel_print_current_parameters(struct ld_kernel_s *ldKernel,
   if (skip_kernel_printing(ldKernel)) {
     return;
   }
-  
+
   if (!finish) {
     gpu_trace("%d@%s", ldKernel->exec_counter, ldKernel->name);
-    
+
     for (i = 0; i < 2; i++) {
       const size_t *work_size = i == 0 ? work_sizes->local : work_sizes->global;
-    
+
       gpu_trace("<");
       for (j = 0; j < work_dim; j++) {
         gpu_trace("%zu%s", work_size[j], j != work_dim - 1 ? "," : "");
@@ -732,7 +732,7 @@ void kernel_print_current_parameters(struct ld_kernel_s *ldKernel,
     }
     gpu_trace("(");
   }
-  
+
 #if PRINT_KERNEL_NAME_ONLY == 1
   if (!finish) {
     gpu_trace(");\n");
@@ -748,7 +748,7 @@ void kernel_print_current_parameters(struct ld_kernel_s *ldKernel,
     print_kernel_problem_to_file(ldKernel, work_sizes, work_dim);
   }
 #endif
-  
+
   for (i = 0; i < ldKernel->nb_params; i++) {
 #if PRINT_KERNEL_AFTER_EXEC_IGNORE_CONST != 1
     if (finish
@@ -774,7 +774,7 @@ void kernel_print_current_parameters(struct ld_kernel_s *ldKernel,
     } else {
       gpu_trace(ldKernel->params[i].current_value);
     }
-    
+
 #if PRINT_KERNEL_ARG_FULL_BUFFER == 1
     if (ldKernel->params[i].is_pointer) {
       print_full_buffer(ldKernel, &ldKernel->params[i],
@@ -816,11 +816,11 @@ void kernel_finished_event(struct ld_kernel_s *ldKernel,
                            int work_dim)
 {
   int i;
-  
+
 #if PRINT_KERNEL_AFTER_EXEC == 1
   kernel_print_current_parameters(ldKernel, work_sizes, work_dim, 1);
 #endif
-  
+
   for (i = 0; i < ldKernel->nb_params; i++) {
     ldKernel->params[i].has_current_value = 0;
   }
@@ -830,7 +830,7 @@ void buffer_copy_event(struct ld_mem_s *ldBuffer, int is_read, void **ptr,
                        size_t size, size_t offset)
 {
   size_t size_to_read;
-  
+
   if (!is_read && ldBuffer->flags & LD_FLAG_WRITE_ONLY) {
     warning("writing in write-only buffer#%d\n", ldBuffer->uid);
   }
@@ -843,11 +843,11 @@ void buffer_copy_event(struct ld_mem_s *ldBuffer, int is_read, void **ptr,
   memcpy(ldBuffer->first_values, ptr, size_to_read);
   ldBuffer->has_values = 1;
   ldBuffer->values_outdated = 0;
-  
+
 #if PRINT_BUFFER_TRANSFER == 1
   {
     static int cpt = 0;
-   
+
     gpu_trace("%d) Buffer #%d %s, %zub at +%zub", cpt++,
               ldBuffer->uid, is_read ? "read" : "written",
               size, offset);
@@ -862,16 +862,16 @@ void buffer_copy_event(struct ld_mem_s *ldBuffer, int is_read, void **ptr,
       }
       gpu_trace("%u, ", fptr[i]);
     }
-    
+
     gpu_trace("}");
 #endif
     gpu_trace("\n");
   }
 #endif
-  
+
   if (offset + size > ldBuffer->size) {
     warning("%s too many bits from buffer #%d: %zub at +%zu, buffer is %zu\n",
-            is_read ? "reading" : "writing", 
+            is_read ? "reading" : "writing",
             ldBuffer->uid,
             size, offset, ldBuffer->size);
   }
@@ -886,7 +886,7 @@ void setBufferValue (char *value, struct ld_kern_param_s *ldParam)
   char *read_ptr = (char *) ldBuffer->first_values;
 
 #define WRITE_PTR value + (BVALUE_SIZE - to_write)
-  
+
   to_write -= snprintf(WRITE_PTR, to_write, "buffer #%d", ldBuffer->uid);
 
   if (ldParam->offset != 0) {
@@ -910,7 +910,7 @@ void setBufferValue (char *value, struct ld_kern_param_s *ldParam)
     return;
   } else if (ldBuffer->values_outdated) {
     ldBuffer->values_outdated = !updateLdBufferLocalValue(ldBuffer);
-    
+
     if (ldBuffer->values_outdated) {
       snprintf(WRITE_PTR, to_write, "outdated value");
       return;
@@ -922,21 +922,21 @@ void setBufferValue (char *value, struct ld_kern_param_s *ldParam)
          && bytes_written < ldBuffer->size)
   {
     char *number = print_a_number (read_ptr, ldParam->type_info);
-    
+
     to_write -= snprintf(WRITE_PTR, to_write, "%s", number);
 
     if (to_write < strlen(TRAILER) + MAX_LEN_ONE_NUMBER) {
       break;
     }
-    
+
     if (bytes_written < ldBuffer->size) {
       to_write -= snprintf(WRITE_PTR, to_write, ", ");
     }
-    
+
     read_ptr += ldParam->type_info->size;
     bytes_written += ldParam->type_info->size;
   }
-  
+
   if (bytes_written < ldBuffer->size) {
     snprintf(WRITE_PTR, to_write, "...");
   }
@@ -947,7 +947,7 @@ void buffer_released (struct ld_mem_s *ldBuffer) {
     warning("releasing unknown buffer ...\n");
     return;
   }
-  
+
 #if PRINT_BUFFER_RELEASE
   info("Release buffer #%d\n", ldBuffer->uid);
 #endif
@@ -961,12 +961,12 @@ void debug(const char *format, ...) {
   va_list args;
 
   ONLY_MPI_MASTER();
-  
+
   va_start(args, format);
 
   printf("DEBUG: ");
   vprintf(format, args);
-  
+
   va_end(args);
 }
 
@@ -974,12 +974,12 @@ void info(const char *format, ...) {
   va_list args;
 
   ONLY_MPI_MASTER();
-  
+
   va_start(args, format);
 
   printf("INFO: ");
   vprintf(format, args);
-  
+
   va_end(args);
 }
 
@@ -987,7 +987,7 @@ void warning(const char *format, ...) {
   va_list args;
 
   ONLY_MPI_MASTER();
-  
+
   va_start(args, format);
 
   printf("WARNING: ");
@@ -998,14 +998,14 @@ void warning(const char *format, ...) {
 
 void error(const char *format, ...) {
   va_list args;
-  
+
   va_start(args, format);
-  
+
   printf("ERROR: ");
   vprintf(format, args);
 
   va_end(args);
-  
+
   dbg_crash_event();
 
   exit(1);
@@ -1015,11 +1015,11 @@ void gpu_info(const char *format, ...) {
   va_list args;
 
   ONLY_MPI_MASTER();
-  
+
   va_start(args, format);
-  
+
   vfprintf(stdout, format, args);
-  
+
   va_end(args);
 }
 
@@ -1027,10 +1027,10 @@ void gpu_trace(const char *format, ...) {
   va_list args;
 
   ONLY_MPI_MASTER();
-  
+
   va_start(args, format);
-  
+
   vfprintf(stdout, format, args);
-  
+
   va_end(args);
 }

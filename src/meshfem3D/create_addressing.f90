@@ -39,7 +39,7 @@
   integer, dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1) :: addressing
   integer, dimension(0:NPROCTOT-1) :: ichunk_slice,iproc_xi_slice,iproc_eta_slice
 
-  character(len=150) :: OUTPUT_FILES
+  character(len=MAX_STRING_LEN) :: OUTPUT_FILES
 
   ! local parameters
   integer :: ichunk,iproc_eta,iproc_xi,iprocnum,ier

@@ -232,7 +232,7 @@
 
   use meshfem3D_par,only: &
     LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN
 
   use meshfem3D_par,only: &
     idoubling
@@ -284,8 +284,8 @@
   integer :: ier
 
   character(len=2),dimension(3) :: str_domain = (/ "cm", "oc", "ic" /)
-  character(len=256) :: filename
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: filename
+  character(len=MAX_STRING_LEN) :: prname
 
   ! debug file output
   logical, parameter :: DEBUG = .false.
@@ -509,8 +509,6 @@
   end select
 
   ! sets up elements for loops in simulations
-  ispec_inner = 0
-  ispec_outer = 0
   do ispec = 1, nspec
     ! only elements in this domain
     if (ispec_is_d(ispec)) then
@@ -523,7 +521,7 @@
         ! checks
         if (ispec_outer < 1 .or. ispec_outer > num_phase_ispec_d) then
           print*,'Error outer permutation:',idomain
-          print*,'rank:',myrank,'  ispec_inner = ',ispec_outer
+          print*,'rank:',myrank,'  ispec_outer = ',ispec_outer
           print*,'num_phase_ispec_d = ',num_phase_ispec_d
           call exit_MPI(myrank,'Error outer permutation')
         endif
@@ -661,8 +659,8 @@
   integer :: icolor,icounter,ispec,ielem,ier,i
   integer :: iface,old_ispec,new_ispec
 
-  character(len=256) :: filename
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: filename
+  character(len=MAX_STRING_LEN) :: prname
 
   ! debug file output
   logical,parameter :: DEBUG = .false.
@@ -1026,7 +1024,7 @@
 !  logical, dimension(nspec) :: is_on_a_slice_edge
 !
 !  ! name of the database file
-!  character(len=150) :: prname
+!  character(len=MAX_STRING_LEN) :: prname
 !
 !  integer :: npoin2D_xi,npoin2D_eta
 !

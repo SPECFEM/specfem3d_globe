@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -93,11 +93,11 @@ __global__ void write_seismograms_transfer_from_device_kernel(const int * number
   blockID = blockIdx.x + (blockIdx.y) * (gridDim.x);
   tx = threadIdx.x;
   if (blockID < nrec_local) {
-    irec = number_receiver_global[blockID - (0)] - (1);
-    ispec = ispec_selected_rec[irec - (0)] - (1);
-    iglob = ibool[tx + (NGLL3) * (ispec) - (0)] - (1);
-    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 0 - (0)] = d_field[(iglob) * (3) + 0 - (0)];
-    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 1 - (0)] = d_field[(iglob) * (3) + 1 - (0)];
-    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 2 - (0)] = d_field[(iglob) * (3) + 2 - (0)];
+    irec = number_receiver_global[blockID] - (1);
+    ispec = ispec_selected_rec[irec] - (1);
+    iglob = ibool[tx + (NGLL3) * (ispec)] - (1);
+    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 0] = d_field[(iglob) * (3) + 0];
+    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 1] = d_field[(iglob) * (3) + 1];
+    station_seismo_field[((NGLL3) * (3)) * (blockID) + (tx) * (3) + 2] = d_field[(iglob) * (3) + 2];
   }
 }

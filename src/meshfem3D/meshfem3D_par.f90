@@ -277,7 +277,7 @@
 
   module create_regions_mesh_par2
 
-  use constants,only: CUSTOM_REAL,N_SLS
+  use constants,only: CUSTOM_REAL,N_SLS,MAX_STRING_LEN
 
   implicit none
 
@@ -367,7 +367,7 @@
   logical, dimension(:), allocatable :: ispec_is_tiso
 
   ! name of the database file
-  character(len=150) :: prname, prname_adios
+  character(len=MAX_STRING_LEN) :: prname, prname_adios
 
   end module create_regions_mesh_par2
 

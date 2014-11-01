@@ -35,12 +35,11 @@
   implicit none
 
   ! local parameters
-  integer :: ipoin,ispec2D,i,j,k,npoin
+  integer :: ipoin,ispec2D,i,j,npoin
 
   ! gets number of points on surface mesh
   ipoin = 0
   do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
-    k = NGLLZ
     ! loop on all the points inside the element
     do j = 1,NGLLY,NIT
       do i = 1,NGLLX,NIT
@@ -76,7 +75,7 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: store_val_x,store_val_y,store_val_z
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: store_val_x_all,store_val_y_all,store_val_z_all
   integer :: ipoin,ispec2D,ispec,i,j,k,ier,iglob,npoin
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! allocates movie surface arrays
   allocate(store_val_x(nmovie_points), &
@@ -163,7 +162,7 @@
   implicit none
 
   ! local parameters
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
   integer :: ipoin,ispec2D,ispec,i,j,k,ier,iglob
 
   ! by default: save velocity here to avoid static offset on displacement for movies

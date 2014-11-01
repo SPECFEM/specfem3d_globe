@@ -29,10 +29,10 @@
 
   implicit none
 
-  integer yr,mo,da
+  integer :: yr,mo,da
 
-  integer mon(12)
-  integer lpyr
+  integer :: mon(12)
+  integer :: lpyr
   data mon /0,31,59,90,120,151,181,212,243,273,304,334/
 
   julian_day = da + mon(mo)

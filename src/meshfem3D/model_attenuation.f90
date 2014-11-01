@@ -240,13 +240,10 @@
 
   ! local parameters
   double precision :: tau_e(N_SLS)
-  double precision :: Qb
-  double precision :: R120
   integer :: i,ier
 
   ! parameter definitions
-  Qb = 57287.0d0
-  R120 = 6251.d3 ! as defined by IASP91
+  double precision, parameter :: R120 = 6251.d3 ! as defined by IASP91
 
   ! uses "pure" 1D models including their 1D-crust profiles
   ! (uses USE_EXTERNAL_CRUSTAL_MODEL set to false)

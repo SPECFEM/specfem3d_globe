@@ -38,7 +38,7 @@
 
   integer :: ios,icounter
 
-  character(len=150) :: dummystring
+  character(len=MAX_STRING_LEN) :: dummystring
 
   open(unit=IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ios)
   if (ios /= 0) stop 'Error opening DATA/CMTSOLUTION file'

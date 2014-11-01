@@ -139,7 +139,7 @@
   character(len=20), dimension(NSOURCES) :: e_n
   real :: ms
   character(len=5) :: datasource
-  character(len=150) :: string
+  character(len=256) :: string
 
 !
 !---- read hypocenter info

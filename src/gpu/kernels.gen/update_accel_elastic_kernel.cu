@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -88,8 +88,8 @@ __global__ void update_accel_elastic_kernel(float * accel, const float * veloc, 
   int id;
   id = threadIdx.x + (blockIdx.x) * (blockDim.x) + (blockIdx.y) * ((gridDim.x) * (blockDim.x));
   if (id < size) {
-    accel[(id) * (3) - (0)] = (accel[(id) * (3) - (0)]) * (rmassx[id - (0)]) + (two_omega_earth) * (veloc[(id) * (3) + 1 - (0)]);
-    accel[(id) * (3) + 1 - (0)] = (accel[(id) * (3) + 1 - (0)]) * (rmassy[id - (0)]) - ((two_omega_earth) * (veloc[(id) * (3) - (0)]));
-    accel[(id) * (3) + 2 - (0)] = (accel[(id) * (3) + 2 - (0)]) * (rmassz[id - (0)]);
+    accel[(id) * (3)] = (accel[(id) * (3)]) * (rmassx[id]) + (two_omega_earth) * (veloc[(id) * (3) + 1]);
+    accel[(id) * (3) + 1] = (accel[(id) * (3) + 1]) * (rmassy[id]) - ((two_omega_earth) * (veloc[(id) * (3)]));
+    accel[(id) * (3) + 2] = (accel[(id) * (3) + 2]) * (rmassz[id]);
   }
 }

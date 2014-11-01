@@ -164,7 +164,7 @@ module specfem_par
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
-  character(len=150) :: STATIONS,rec_filename
+  character(len=MAX_STRING_LEN) :: STATIONS,rec_filename
 
   ! Lagrange interpolators at receivers
   double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
@@ -210,7 +210,7 @@ module specfem_par
   logical :: COMPUTE_AND_STORE_STRAIN
 
   ! process/partition name
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
 
   !-----------------------------------------------------------------
   ! MPI partitions

@@ -39,10 +39,10 @@
   ! local parameters
   integer :: it_temp,seismo_current_temp
   integer :: i,j,ier
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_crust_mantle_store_buffer
-  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_inner_core_store_buffer
-  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_outer_core_store_buffer,b_accel_outer_core_store_buffer
-
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_cm_store_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_ic_store_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_oc_store_buffer,b_accel_oc_store_buffer
+  double precision :: sizeval
   ! timing
   double precision, external :: wtime
 
@@ -53,8 +53,34 @@
   ! checks
   if (.not. UNDO_ATTENUATION) return
 
+  ! user output
+  if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
+    if (myrank == 0 ) then
+      write(IMAIN,*) 'undoing attenuation:'
+      write(IMAIN,*) '  wavefield snapshots at every NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION
+      call flush_IMAIN()
+    endif
+  endif
+
   ! allocates buffers
   if (SIMULATION_TYPE == 3) then
+    ! user output
+    if (myrank == 0) then
+      ! crust/mantle
+      ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
+      sizeval = dble(NDIM) * dble(NGLOB_CRUST_MANTLE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  size of crust/mantle wavefield buffer per slice = ', sngl(sizeval),'MB'
+      ! outer core
+      ! buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION) in MB
+      sizeval = dble(2) * dble(NGLOB_OUTER_CORE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  size of   outer core wavefield buffer per slice = ', sngl(sizeval),'MB'
+      ! inner core
+      ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
+      sizeval = dble(NDIM) * dble(NGLOB_INNER_CORE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+      write(IMAIN,*) '  size of   inner core wavefield buffer per slice = ', sngl(sizeval),'MB'
+      call flush_IMAIN()
+    endif
+
     !! DK DK to Daniel, July 2013: in the case of GPU_MODE it will be *crucial* to leave these arrays on the host
     !! i.e. on the CPU, in order to be able to use all the (unused) memory of the host for them, since they are
     !! (purposely) huge and designed to use almost all the memory available (by carefully optimizing the
@@ -64,14 +90,14 @@
     !! because we then use the values read immediately (one value at a time, but to reduce the total number of reads
     !! across the PCI-Express bus we could / should consider reading them 10 by 10 for instance (?) if that fits
     !! in the memory of the GPU
-    allocate(b_displ_crust_mantle_store_buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_crust_mantle_store_buffer')
-    allocate(b_displ_outer_core_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_outer_core_store_buffer')
-    allocate(b_accel_outer_core_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_outer_core_store_buffer')
-    allocate(b_displ_inner_core_store_buffer(NDIM,NGLOB_INNER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_inner_core_store_buffer')
+    allocate(b_displ_cm_store_buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_cm_store_buffer')
+    allocate(b_displ_oc_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_oc_store_buffer')
+    allocate(b_accel_oc_store_buffer(NGLOB_OUTER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_accel_oc_store_buffer')
+    allocate(b_displ_ic_store_buffer(NDIM,NGLOB_INNER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_ic_store_buffer')
   endif
 
   ! synchronize all processes to make sure everybody is ready to start time loop
@@ -143,10 +169,10 @@
 
           if (USE_LDDRK) then
             ! update displacement using Runge-Kutta time scheme
-            call update_displacement_lddrk()
+            call update_displ_lddrk()
           else
             ! update displacement using Newmark time scheme
-            call update_displacement_Newmark()
+            call update_displ_Newmark()
           endif
 
           ! acoustic solver for outer core
@@ -203,10 +229,10 @@
 
           if (USE_LDDRK) then
             ! update displacement using Runge-Kutta time scheme
-            call update_displacement_lddrk_backward()
+            call update_displ_lddrk_backward()
           else
             ! update displacement using Newmark time scheme
-            call update_displacement_Newmark_backward()
+            call update_displ_Newmark_backward()
           endif
 
           ! acoustic solver for outer core
@@ -228,10 +254,10 @@
         endif
 
         ! stores wavefield in buffers
-        b_displ_crust_mantle_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
-        b_displ_outer_core_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
-        b_accel_outer_core_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
-        b_displ_inner_core_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
+        b_displ_cm_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
+        b_displ_oc_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
+        b_accel_oc_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
+        b_displ_ic_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
 
       enddo ! subset loop
 
@@ -249,18 +275,18 @@
         ! crust/mantle
         do j = 1,NGLOB_CRUST_MANTLE_ADJOINT
           do i = 1, NDIM
-            b_displ_crust_mantle(i,j) = b_displ_crust_mantle_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_displ_crust_mantle(i,j) = b_displ_cm_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
           enddo
         enddo
         ! outer core
         do j = 1,NGLOB_OUTER_CORE_ADJOINT
-            b_displ_outer_core(j) = b_displ_outer_core_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
-            b_accel_outer_core(j) = b_accel_outer_core_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_displ_outer_core(j) = b_displ_oc_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_accel_outer_core(j) = b_accel_oc_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
         enddo
         ! inner core
         do j = 1,NGLOB_INNER_CORE_ADJOINT
           do i = 1, NDIM
-            b_displ_inner_core(i,j) = b_displ_inner_core_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_displ_inner_core(i,j) = b_displ_ic_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
           enddo
         enddo
 
@@ -284,10 +310,10 @@
 
           if (USE_LDDRK) then
             ! update displacement using Runge-Kutta time scheme
-            call update_displacement_lddrk()
+            call update_displ_lddrk()
           else
             ! update displacement using Newmark time scheme
-            call update_displacement_Newmark()
+            call update_displ_Newmark()
           endif
 
           ! acoustic solver for outer core
@@ -322,10 +348,10 @@
 
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then
-    deallocate(b_displ_crust_mantle_store_buffer, &
-               b_displ_outer_core_store_buffer, &
-               b_accel_outer_core_store_buffer, &
-               b_displ_inner_core_store_buffer)
+    deallocate(b_displ_cm_store_buffer, &
+               b_displ_oc_store_buffer, &
+               b_accel_oc_store_buffer, &
+               b_displ_ic_store_buffer)
   endif
 
   call print_elapsed_time()

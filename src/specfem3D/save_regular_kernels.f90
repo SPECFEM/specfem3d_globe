@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine save_regular_kernels_crust_mantle()
+  subroutine save_regular_kernels_cm()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -44,7 +44,6 @@
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   real(kind=CUSTOM_REAL) :: alphah_kl,alphav_kl,betah_kl,betav_kl,rhonotprime_kl
   integer :: ispec,i,j,k,iglob
-!  character(len=150) prname
   double precision :: hlagrange
   integer :: ipoint
 
@@ -172,8 +171,6 @@
                 kappal = kappavstore_crust_mantle(i,j,k,ispec)
                 muvl = mul
                 muhl = mul
-                kappavl = kappal
-                kappahl = kappal
 
                 A = kappal + FOUR_THIRDS * mul
                 C = A
@@ -509,5 +506,5 @@
              beta_kl_crust_mantle_reg, &
              alpha_kl_crust_mantle_reg)
 
-  end subroutine save_regular_kernels_crust_mantle
+  end subroutine save_regular_kernels_cm
 

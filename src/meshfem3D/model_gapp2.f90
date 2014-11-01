@@ -98,7 +98,7 @@
   implicit none
 
   integer i,ir,ia,io,ier
-  character(len=150), parameter :: GAPP2 = 'DATA/3dvpGAP_P2'
+  character(len=MAX_STRING_LEN), parameter :: GAPP2 = 'DATA/3dvpGAP_P2'
 
 !...........................................input data
 

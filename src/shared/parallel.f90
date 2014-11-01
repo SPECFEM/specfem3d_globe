@@ -377,6 +377,44 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine max_allreduce_cr(sendbuf, recvbuf)
+
+  use constants
+  use mpi
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,MPI_COMM_WORLD,ier)
+
+  end subroutine max_allreduce_cr
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine any_all_l(sendbuf, recvbuf)
+
+  use mpi
+
+  implicit none
+
+  logical :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_LOGICAL,MPI_LOR,MPI_COMM_WORLD,ier)
+
+  end subroutine any_all_l
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine sum_all_i(sendbuf, recvbuf)
 
   use mpi
@@ -389,6 +427,26 @@
   call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
 
   end subroutine sum_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_cr(sendbuf, recvbuf)
+
+  use constants
+  use mpi
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_SUM,0,MPI_COMM_WORLD,ier)
+
+  end subroutine sum_all_cr
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -503,6 +561,28 @@
   call MPI_BCAST(buffer,countval,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
 
   end subroutine bcast_all_cr
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_singlecr(buffer)
+
+  use constants
+  use mpi
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL) :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,1,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+
+  end subroutine bcast_all_singlecr
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1222,4 +1302,21 @@
   comm = MPI_COMM_SELF
 
   end subroutine world_get_comm_self
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_get_info_null(info)
+
+  use mpi
+
+  implicit none
+
+  integer,intent(out) :: info
+
+  info = MPI_INFO_NULL
+
+  end subroutine world_get_info_null
 

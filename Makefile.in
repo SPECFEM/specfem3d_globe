@@ -214,7 +214,9 @@ SUBDIRS = \
 	create_header_file \
 	meshfem3D \
 	specfem3D \
-	auxiliaries
+	auxiliaries \
+	tomography \
+	$(EMPTY_MACRO)
 
 ifeq ($(HAS_GPU),yes)
   SUBDIRS := gpu $(SUBDIRS)
@@ -247,11 +249,11 @@ default: $(DEFAULT)
 
 ifdef CLEAN
 clean:
-	@echo "cleaning by CLEAN defined"
+	@echo "cleaning by CLEAN"
 	-rm -f $(foreach dir, $(CLEAN), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_SHARED_OBJECTS) $($(dir)_TARGETS))
 else
 clean:
-	@echo "cleaning by CLEAN not defined"
+	@echo "cleaning all"
 	-rm -f $(foreach dir, $(SUBDIRS), $($(dir)_OBJECTS) $($(dir)_MODULES) $($(dir)_TARGETS)) $O/*
 endif
 
@@ -261,10 +263,24 @@ mrproper: clean
 help:
 	@echo "usage: make [executable]"
 	@echo ""
-	@echo "supported executables:"
+	@echo "supported main executables:"
+	@echo "    xmeshfem3D"
+	@echo "    xspecfem3D"
+	@echo ""
+	@echo "defaults:"
 	@echo "    xcreate_header_file"
 	@echo "    xmeshfem3D"
 	@echo "    xspecfem3D"
+	@echo "    xcombine_AVS_DX"
+	@echo "    xcombine_surf_data"
+	@echo "    xcombine_vol_data"
+	@echo "    xcombine_vol_data_vtk"
+	@echo "    xconvolve_source_timefunction"
+	@echo "    xcreate_movie_AVS_DX"
+	@echo "    xcreate_movie_GMT_global"
+	@echo ""
+	@echo "additional executables:"
+	@echo "- auxiliary executables: [make aux]"
 	@echo "    xcombine_vol_data"
 	@echo "    xcombine_vol_data_vtk"
 ifeq ($(ADIOS), yes)
@@ -274,9 +290,24 @@ endif
 	@echo "    xcombine_surf_data"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"
+	@echo ""
+	@echo "- movie executables: [make movies]"
 	@echo "    xcreate_movie_AVS_DX"
 	@echo "    xcreate_movie_GMT_global"
 	@echo "    xcombine_paraview_strain_data"
+	@echo ""
+	@echo "- tomography tools: [make tomography]"
+	@echo "    xadd_model_iso"
+	@echo "    xadd_model_tiso"
+	@echo "    xadd_model_tiso_cg"
+	@echo "    xadd_model_tiso_iso"
+	@echo "    xinterpolate_model"
+	@echo "    xsmooth_sem"
+	@echo "    xsum_kernels"
+	@echo "    xsum_preconditioned_kernels"
+ifeq ($(ADIOS), yes)
+	@echo "    xconvert_model_file_adios"
+endif
 	@echo ""
 
 .PHONY: all default clean help

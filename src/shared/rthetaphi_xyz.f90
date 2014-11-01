@@ -308,12 +308,19 @@
 ! Anyway, I'm sorry that I'm not giving a clear answer, but hopefully this
 ! gives some thoughts.
 
-  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT
+  use constants, only: PI_OVER_TWO,TINYVAL,ASSUME_PERFECT_SPHERE,USE_OLD_VERSION_5_1_5_FORMAT,ONE_MINUS_F_SQUARED
 
   implicit none
 
   double precision,intent(in) :: theta
   double precision,intent(out) :: theta_prime
+
+  ! note: september, 2014
+  ! factor: 1/(1 - e^2) = 1/(1 - (1 - (1-f)^2)) = 1/( (1-f)^2 )
+  !         with eccentricity e^2 = 1 - (1-f)^2
+  ! see about Earth flattening in constants.h: flattening factor changed to 1/299.8
+  !                                            f = 1/299.8 -> 1/( (1-f)^2 ) = 1.0067046409645724
+  double precision, parameter :: FACTOR_TAN = 1.d0 / ONE_MINUS_F_SQUARED
 
   ! note: instead of 1/tan(theta) we take cos(theta)/sin(theta) and avoid division by zero
 
@@ -323,7 +330,7 @@
       theta_prime = PI_OVER_TWO - datan(1.006760466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
     else
       ! converts geocentric colatitude theta to geographic colatitude theta_prime
-      theta_prime = PI_OVER_TWO - datan(1.00670466d0*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
+      theta_prime = PI_OVER_TWO - datan(FACTOR_TAN*dcos(theta)/dmax1(TINYVAL,dsin(theta)))
     endif
   else
     ! mesh is spherical, thus geocentric and geographic colatitudes are identical

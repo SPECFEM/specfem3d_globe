@@ -22,7 +22,7 @@ module BOAST
     blocksize_transfer = Int("BLOCKSIZE_TRANSFER", :const => block_size_transfer)
     p = Procedure(function_name, [array, size, d_max])
     if (get_lang == CUDA and ref) then
-      @@output.print File::read("references/#{function_name}.cu")
+      get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CUDA or get_lang == CL) then
       make_specfem3d_header( :blocksize_transfer => block_size_transfer )
       open p

@@ -27,7 +27,7 @@ module BOAST
 
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
-      @@output.print File::read("references/#{function_name}.cu")
+      get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngll3 => n_gll3 )
       open p

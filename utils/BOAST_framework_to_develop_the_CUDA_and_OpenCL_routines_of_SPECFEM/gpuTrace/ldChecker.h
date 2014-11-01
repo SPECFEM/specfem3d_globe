@@ -17,7 +17,7 @@
 
 
 /******************************
- * Select what and when info 
+ * Select what and when info
  * are traced.
  ******************************/
 
@@ -32,7 +32,7 @@
 #define PRINT_KERNEL_NAME_ONLY 0
 
 /******************************
- * Filters for kernel execution 
+ * Filters for kernel execution
  ******************************/
 
 #define USE_ADVANCED_KERNEL_FILTER 1
@@ -47,7 +47,7 @@
 
 /******************************
  * Print full buffers to screen
- * or into a file.                   
+ * or into a file.
  ******************************/
 
 #define PRINT_KERNEL_PARAMS_TO_FILE 0
@@ -62,7 +62,7 @@
 #define ENABLE_KERNEL_TESTING 1
 
 /******************************
- * MPI support                
+ * MPI support
  ******************************/
 
 #define WITH_MPI 0
@@ -192,7 +192,7 @@ void warning(const char *format, ...);
 void error(const char *format, ...);
 void gpu_trace(const char *format, ...);
 
-/* 
+/*
  * struct ld_name_s *find_name_entry(cl_key_type key);
  * struct ld_name_s *get_next_name_spot();
  * int add_to_name_map (cl_key_type key);
@@ -248,7 +248,7 @@ void gpu_trace(const char *format, ...);
         }                                                               \
         next->handle = key;                                             \
         return _NAME##_elt_count - 1;   /* next - start / size ? */     \
-  }     
+  }
 #define FOR_ALL_MAP_ELTS(_CPT, _VAR, _NAME)                             \
   for (_CPT = 0, _VAR = &_NAME##_map[_CPT];                             \
        _CPT < _NAME##_elt_count;                                        \
@@ -319,7 +319,7 @@ static inline int is_pointer_type (const char *type_name) {
   if (!type_name) {
     return 0;
   }
-  
+
   for(i = 0; type_name[i]; i++) {
     if (type_name[i] == '*') {
       return 1;

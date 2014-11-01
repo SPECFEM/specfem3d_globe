@@ -156,8 +156,8 @@
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
-#if defined (CEM)
-                              ,ispec,i,j,k
+#ifdef CEM
+                              ,ispec,i,j,k &
 #endif
                               )
 
@@ -178,7 +178,7 @@
 
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then
-          print*,'Error vpv: ',vpv,vph,vsv,vsh,rho
+          print*,'Error vpv: ',vpv,' vph:',vph,' vsv: ',vsv,' vsh: ',vsh,' rho:',rho
           print*,'radius:',r*R_EARTH_KM
           call exit_mpi(myrank,'Error get_model values')
         endif

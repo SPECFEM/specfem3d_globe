@@ -21,7 +21,7 @@ index 4d2b31d..e4a678f 100644
 --- a/src/gpu/boast/kernels.rb
 +++ b/src/gpu/boast/kernels.rb
 @@ -76,7 +76,7 @@ kernels = [
- :compute_iso_undo_att_kernel
+ :compute_iso_undoatt_kernel
  ]
  
 -langs = [ :CUDA, :CL]

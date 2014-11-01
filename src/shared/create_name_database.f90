@@ -29,12 +29,14 @@
 
 ! create the name of the database for the mesher and the solver
 
+  use constants,only: MAX_STRING_LEN
+
   implicit none
 
   integer iproc,iregion_code
 
 ! name of the database file
-  character(len=150) prname,procname,LOCAL_PATH
+  character(len=MAX_STRING_LEN) prname,procname,LOCAL_PATH
 
 ! create the name for the database of the current slide and region
   write(procname,"('/proc',i6.6,'_reg',i1,'_')") iproc,iregion_code
@@ -48,12 +50,14 @@ subroutine create_name_database_adios(prname,iregion_code,LOCAL_PATH)
 
   ! create the name of the database for the mesher and the solver
 
+  use constants,only: MAX_STRING_LEN
+
   implicit none
 
   integer iregion_code
 
 ! name of the database file
-  character(len=150) prname,procname,LOCAL_PATH
+  character(len=MAX_STRING_LEN) prname,procname,LOCAL_PATH
 
 ! create the name for the database of the current slide and region
   write(procname,"('/reg',i1,'_')") iregion_code

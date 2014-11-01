@@ -1,7 +1,7 @@
 module BOAST
-  def BOAST::compute_element_strain_undo_att(n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
+  def BOAST::compute_element_strain_undoatt(n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
 
-    function_name = "compute_element_strain_undo_att"
+    function_name = "compute_element_strain_undoatt"
 
     ngllx = Int("NGLLX", :const => n_gllx)
     ngll2 = Int("NGLL2", :const => n_gll2)

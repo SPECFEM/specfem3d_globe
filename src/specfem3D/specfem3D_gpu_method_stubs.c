@@ -69,7 +69,7 @@ void FC_FUNC_ (transfer_asmbl_accel_to_device,
 
 void FC_FUNC_(transfer_buffer_to_device_async,
               TRANSFER_BUFFER_TO_DEVICE_ASYNC)(long* Mesh_pointer_f,
-                                               realw* buffer,
+                                               realw* buffer_f,
                                                int* IREGION,
                                                int* FORWARD_OR_ADJOINT) {}
 
@@ -207,10 +207,10 @@ void FC_FUNC_ (compute_kernels_ic_gpu,
 void FC_FUNC_ (compute_kernels_oc_gpu,
                COMPUTE_KERNELS_OC_GPU) (long *Mesh_pointer_f, realw *deltat_f) {}
 
-void FC_FUNC_ (compute_kernels_strgth_noise_gpu,
-               COMPUTE_KERNELS_STRGTH_NOISE_GPU) (long *Mesh_pointer_f,
-                                                  realw *h_noise_surface_movie,
-                                                  realw *deltat_f) {}
+void FC_FUNC_ (compute_kernels_strength_noise_gpu,
+               COMPUTE_KERNELS_STRENGTH_NOISE_GPU) (long *Mesh_pointer_f,
+                                                    realw *h_noise_surface_movie,
+                                                    realw *deltat_f) {}
 
 void FC_FUNC_ (compute_kernels_hess_gpu,
                COMPUTE_KERNELS_HESS_GPU) (long *Mesh_pointer_f,
@@ -260,7 +260,7 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
 //
 
 void FC_FUNC_ (compute_strain_gpu,
-               COMPUTE_STRAIN_GPU) (long *Mesh_pointer_f, realw *deltat_f, int *FORWARD_OR_ADJOINT_f) {}
+               COMPUTE_STRAIN_GPU) (long *Mesh_pointer_f, realw *deltat_f, int *FORWARD_OR_ADJOINT) {}
 
 
 //
@@ -485,6 +485,9 @@ void FC_FUNC_ (prepare_oceans_device,
                                        realw *h_rmass_ocean_load_selected,
                                        realw *h_normal_ocean_load) {}
 
+void FC_FUNC_ (prepare_lddrk_device,
+               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f) {}
+
 void FC_FUNC_ (prepare_crust_mantle_device,
                PREPARE_CRUST_MANTLE_DEVICE) (long *Mesh_pointer_f,
                                              realw *h_xix, realw *h_xiy, realw *h_xiz,
@@ -637,10 +640,10 @@ void FC_FUNC_(transfer_displ_oc_from_device,
               TRANSFER_DISPL_OC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_b_displ_oc_from_device,
-              TRANSFER_B_DISPL_OC_FROM_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
+              TRANSFER_B_DISPL_OC_FROM_DEVICE)(int *size, realw *b_displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_b_displ_oc_to_device,
-              TRANSFER_B_DISPL_OC_TO_DEVICE)(int *size, realw *displ, long *Mesh_pointer_f) {}
+              TRANSFER_B_DISPL_OC_TO_DEVICE)(int *size, realw *b_displ, long *Mesh_pointer_f) {}
 
 void FC_FUNC_(transfer_veloc_cm_from_device,
               TRANSFER_VELOC_CM_FROM_DEVICE)(int *size, realw *veloc, long *Mesh_pointer_f) {}

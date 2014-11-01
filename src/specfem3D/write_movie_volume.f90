@@ -347,10 +347,10 @@
 
   logical :: MOVIE_COARSE
   real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
-  character(len=150) LOCAL_TMP_PATH,outputname
+  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH,outputname
 
   ! variables
-  ! character(len=150) prname
+  ! character(len=MAX_STRING_LEN) prname
   real(kind=CUSTOM_REAL) :: muv_3dmovie
   real(kind=CUSTOM_REAL),dimension(3,3) :: eps_loc,eps_loc_new
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ,&
@@ -502,14 +502,14 @@
   double precision :: scalingval
   real(kind=CUSTOM_REAL), dimension(NDIM,NDIM,npoints_3dmovie) :: nu_3dmovie
 
-  character(len=150) :: LOCAL_TMP_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_TMP_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NDIM) :: vector_local,vector_local_new
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: store_val3d_N,store_val3d_E,store_val3d_Z
 
   integer :: ipoints_3dmovie,i,j,k,ispec,iNIT,iglob,ier
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
   character(len=2) :: movie_prefix
 
   ! check
@@ -626,13 +626,13 @@
     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
     epsilondev_xz_inner_core,epsilondev_yz_inner_core
 
-  character(len=150) LOCAL_TMP_PATH
+  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: rhol,kappal
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: div_s_outer_core
   integer :: ispec,iglob,i,j,k,ier
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
 
   ! output parameters
@@ -802,11 +802,11 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
-  character(len=150) LOCAL_TMP_PATH
+  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH
 
   ! local parameters
   integer :: ispec,iglob,i,j,k,ier
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
   real(kind=CUSTOM_REAL) :: scale_displ
 
@@ -924,11 +924,11 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
-  character(len=150) LOCAL_TMP_PATH
+  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH
 
   ! local parameters
   integer :: ispec,iglob,i,j,k,ier
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
   real(kind=CUSTOM_REAL) :: scale_displ,scale_veloc
 
@@ -1046,11 +1046,11 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
-  character(len=150) LOCAL_TMP_PATH
+  character(len=MAX_STRING_LEN) LOCAL_TMP_PATH
 
   ! local parameters
   integer :: ispec,iglob,i,j,k,ier
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
   real(kind=CUSTOM_REAL) :: scale_displ,scale_veloc,scale_accel
 

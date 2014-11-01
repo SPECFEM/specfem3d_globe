@@ -35,8 +35,8 @@
 /* ----------------------------------------------------------------------------------------------- */
 
 #ifdef USE_OPENCL
-
-cl_mem moclGetDummyImage2D (Mesh *mp) {
+#ifdef USE_TEXTURES_FIELDS
+static cl_mem moclGetDummyImage2D (Mesh *mp) {
   static int inited = 0;
   static cl_mem image2d;
   cl_int errcode;
@@ -51,7 +51,7 @@ cl_mem moclGetDummyImage2D (Mesh *mp) {
 
   return image2d;
 }
-
+#endif
 /* ----------------------------------------------------------------------------------------------- */
 
 void release_kernels (void) {
@@ -159,9 +159,6 @@ void FC_FUNC_ (prepare_constants_device,
 
     mp->d_hprime_xx_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, NGLL2, 1, 0, mp->d_hprime_xx.ocl, clck_(&errcode));
     mp->d_hprimewgll_xx_cm_tex = clCreateImage2D (mocl.context, CL_MEM_READ_ONLY, &format, NGLL2, 1, 0, mp->d_hprimewgll_xx.ocl, clck_(&errcode));
-#else //USE_TEXTURES_CONSTANTS
-    mp->d_hprime_xx_cm_tex = moclGetDummyImage2D(mp);
-    mp->d_hprimewgll_xx_cm_tex = moclGetDummyImage2D(mp);
 #endif //USE_TEXTURES_CONSTANTS
   }
 #endif
@@ -1194,6 +1191,26 @@ void FC_FUNC_ (prepare_oceans_device,
   GPU_ERROR_CHECKING ("prepare_oceans_device");
 }
 
+/*----------------------------------------------------------------------------------------------- */
+// LDDRK
+/*----------------------------------------------------------------------------------------------- */
+
+extern EXTERN_LANG
+void FC_FUNC_ (prepare_lddrk_device,
+               PREPARE_LDDRK_DEVICE) (long *Mesh_pointer_f) {
+
+  // prepares LDDRK time scheme arrays on GPU
+  TRACE ("prepare_lddrk_device");
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
+  // sets flag
+  mp->use_lddrk = 1;
+
+  exit_on_error ("prepare_lddrk_device not implemented yet");
+
+  GPU_ERROR_CHECKING ("prepare_lddrk_device");
+}
+
 
 
 /*----------------------------------------------------------------------------------------------- */
@@ -1602,12 +1619,6 @@ void FC_FUNC_ (prepare_crust_mantle_device,
       mp->d_b_displ_cm_tex = moclGetDummyImage2D(mp);
       mp->d_b_accel_cm_tex = moclGetDummyImage2D(mp);
     }
-#else
-    mp->d_displ_cm_tex = moclGetDummyImage2D(mp);
-    mp->d_accel_cm_tex = moclGetDummyImage2D(mp);
-    // backward/reconstructed fields
-    mp->d_b_displ_cm_tex = moclGetDummyImage2D(mp);
-    mp->d_b_accel_cm_tex = moclGetDummyImage2D(mp);
 #endif
   }
 #endif
@@ -1931,12 +1942,6 @@ void FC_FUNC_ (prepare_outer_core_device,
       mp->d_b_displ_oc_tex = moclGetDummyImage2D(mp);
       mp->d_b_accel_oc_tex = moclGetDummyImage2D(mp);
     }
-#else
-    mp->d_displ_oc_tex = moclGetDummyImage2D(mp);
-    mp->d_accel_oc_tex = moclGetDummyImage2D(mp);
-    // backward/reconstructed fields
-    mp->d_b_displ_oc_tex = moclGetDummyImage2D(mp);
-    mp->d_b_accel_oc_tex = moclGetDummyImage2D(mp);
 #endif
   }
 #endif
@@ -2287,12 +2292,6 @@ void FC_FUNC_ (prepare_inner_core_device,
       mp->d_b_displ_ic_tex = moclGetDummyImage2D(mp);
       mp->d_b_accel_ic_tex = moclGetDummyImage2D(mp);
     }
-#else
-    mp->d_displ_ic_tex = moclGetDummyImage2D(mp);
-    mp->d_accel_ic_tex = moclGetDummyImage2D(mp);
-    // backward/reconstructed fields
-    mp->d_b_displ_ic_tex = moclGetDummyImage2D(mp);
-    mp->d_b_accel_ic_tex = moclGetDummyImage2D(mp);
 #endif
   }
 #endif
@@ -2449,7 +2448,7 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (mp->nrec_local > 0) {
     if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
-      if (run_opencl ) RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
+      if (run_opencl) RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
 #endif
 #ifdef USE_CUDA
       if (run_cuda) cudaFreeHost(mp->h_station_seismo_field);
@@ -2550,8 +2549,10 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
 #ifdef USE_OPENCL
   if (run_opencl) {
+#ifdef USE_TEXTURES_CONSTANTS
     clReleaseMemObject (mp->d_hprime_xx.ocl);
     clReleaseMemObject (mp->d_hprimewgll_xx.ocl);
+#endif
 
     clReleaseMemObject (mp->d_wgllwgll_xy.ocl);
     clReleaseMemObject (mp->d_wgllwgll_xz.ocl);
@@ -3028,7 +3029,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
 #ifdef USE_OPENCL
   if (run_opencl) {
-    // note: texture arrays in OpenCL are always allocated (either dummy or valid ones)
+#ifdef USE_TEXTURES_FIELDS
     clReleaseMemObject (mp->d_displ_cm_tex);
     clReleaseMemObject (mp->d_accel_cm_tex);
     clReleaseMemObject (mp->d_b_displ_cm_tex);
@@ -3043,9 +3044,11 @@ void FC_FUNC_ (prepare_cleanup_device,
     clReleaseMemObject (mp->d_accel_ic_tex);
     clReleaseMemObject (mp->d_b_displ_ic_tex);
     clReleaseMemObject (mp->d_b_accel_ic_tex);
-
+#endif
+#ifdef USE_TEXTURES_CONSTANTS
     clReleaseMemObject (mp->d_hprime_xx_cm_tex);
     clReleaseMemObject (mp->d_hprimewgll_xx_cm_tex);
+#endif
   }
 #endif
 

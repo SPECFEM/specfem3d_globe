@@ -79,7 +79,7 @@
   ! local parameters
   double precision :: min_tshift_cmt_original
   integer :: isource
-  character(len=256) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   integer :: ier
 
   ! makes smaller hdur for movies
@@ -228,7 +228,7 @@
       ! notifies user
       if (myrank == 0) then
         write(IMAIN,*) 'Error: USER_T0 is too small'
-        write(IMAIN,*) '       must make one of three adjustements:'
+        write(IMAIN,*) '       must make one of three adjustments:'
         write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-min_tshift_cmt_original
         write(IMAIN,*) '       - decrease time shift in CMTSOLUTION file'
         write(IMAIN,*) '       - decrease hdur in CMTSOLUTION file'
@@ -565,11 +565,12 @@
 
   subroutine setup_sources_receivers_VTKfile()
 
-  use specfem_par,only: myrank,OUTPUT_FILES,NSOURCES,nrec
+  use specfem_par,only: myrank,OUTPUT_FILES,NSOURCES,nrec,MAX_STRING_LEN
   implicit none
 
   ! local parameters
-  character(len=256) :: filename,system_command,filename_new
+  character(len=MAX_STRING_LEN) :: filename,filename_new
+  character(len=MAX_STRING_LEN) :: command
 
   ! user output
   if (myrank == 0) then
@@ -579,30 +580,30 @@
     ! creates source/receiver location file
     filename = trim(OUTPUT_FILES)//'/sr_tmp.vtk'
     filename_new = trim(OUTPUT_FILES)//'/sr.vtk'
-    write(system_command, &
+    write(command, &
   "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,' < ',a,' > ',a)")&
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
 
     ! note: this system() routine is non-standard fortran
-    call system(system_command)
+    call system_command(command)
 
     ! only extract receiver locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/receiver.vtk'
-    write(system_command, &
+    write(command, &
   "('awk ',a1,'{if (NR<5) print $0;if (NR==6)print ',a1,'POINTS',i6,' float',a1,';if (NR>5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
 
     ! note: this system() routine is non-standard fortran
-    call system(system_command)
+    call system_command(command)
 
     ! only extract source locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/source.vtk'
-    write(system_command, &
+    write(command, &
   "('awk ',a1,'{if (NR< 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
 
     ! note: this system() routine is non-standard fortran
-    call system(system_command)
+    call system_command(command)
 
   endif
 
@@ -802,12 +803,6 @@
   it_sub_adj = 0
   iadj_block = 1
   do it = 1,NSTEP
-
-    ! block number
-    ! e.g. increases from 1 (case it=1-1000), 2 (case it=1001-2000) to 3 (case it=2001-3000)
-    ! beware: the call below might return a wrong integer number due to machine precision, i.e. 1000./1000. -> 2
-    !it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
-
     ! we are at the edge of a block
     if (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) then
       ! sets it_sub_adj subset number
@@ -831,14 +826,6 @@
 
       ! increases block number
       iadj_block = iadj_block + 1
-    endif
-
-    ! checks that ceiling function above returns correct integer values
-    if (it_sub_adj /= iadj_block-1) then
-      print*,'Error: confusing block number for reverse adjoint source indexing'
-      print*,'  it_sub_adj = ',it_sub_adj,'should be equal to ',iadj_block-1
-      print*,'  it = ',it,' istart/iend = ',istart,iend,' NTSTEP_BETWEEN_READ_ADJSRC = ',NTSTEP_BETWEEN_READ_ADJSRC
-      stop 'Error reverse adjoint source indexing'
     endif
 
     ! time stepping for adjoint sources:

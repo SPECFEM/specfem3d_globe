@@ -148,15 +148,13 @@ void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, in
     // note: cudaMalloc uses a double-pointer, such that it can return an error code in case it fails
     //          we thus pass the address to the pointer above (as void double-pointer) to have it
     //          pointing to the correct pointer of the array here
-    print_CUDA_error_if_any(cudaMalloc((void**)&d_array_addr_ptr->cuda,size*sizeof(int)),
-                            12001);
+    print_CUDA_error_if_any(cudaMalloc((void**)&d_array_addr_ptr->cuda,size*sizeof(int)),12001);
 
     // copies values onto GPU
     //
     // note: cudaMemcpy uses the pointer to the array, we thus re-cast the value of
     //          the double-pointer above to have the correct pointer to the array
-    print_CUDA_error_if_any(cudaMemcpy((int*) d_array_addr_ptr->cuda,h_array,size*sizeof(int),cudaMemcpyHostToDevice),
-                            12002);
+    print_CUDA_error_if_any(cudaMemcpy((int*) d_array_addr_ptr->cuda,h_array,size*sizeof(int),cudaMemcpyHostToDevice),12002);
   }
 #endif
 }
@@ -184,11 +182,9 @@ void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_arr
 #ifdef USE_CUDA
   if (run_cuda) {
     // allocates memory on GPU
-    print_CUDA_error_if_any(cudaMalloc((void**)&d_array_addr_ptr->cuda,size*sizeof(realw)),
-                            22001);
+    print_CUDA_error_if_any(cudaMalloc((void**)&d_array_addr_ptr->cuda,size*sizeof(realw)),22001);
     // copies values onto GPU
-    print_CUDA_error_if_any(cudaMemcpy((realw*) d_array_addr_ptr->cuda,h_array,size*sizeof(realw),cudaMemcpyHostToDevice),
-                            22002);
+    print_CUDA_error_if_any(cudaMemcpy((realw*) d_array_addr_ptr->cuda,h_array,size*sizeof(realw),cudaMemcpyHostToDevice),22002);
   }
 #endif
 }

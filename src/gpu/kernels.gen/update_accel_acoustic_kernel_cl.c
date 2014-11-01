@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -99,7 +99,7 @@ __kernel void update_accel_acoustic_kernel(__global float * accel, const int siz
   int id;\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
   if (id < size) {\n\
-    accel[id - (0)] = (accel[id - (0)]) * (rmass[id - (0)]);\n\
+    accel[id] = (accel[id]) * (rmass[id]);\n\
   }\n\
 }\n\
 ";

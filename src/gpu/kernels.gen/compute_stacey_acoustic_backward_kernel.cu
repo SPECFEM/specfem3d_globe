@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -95,61 +95,61 @@ __global__ void compute_stacey_acoustic_backward_kernel(float * b_potential_dot_
   igll = threadIdx.x;
   iface = blockIdx.x + (blockIdx.y) * (gridDim.x);
   if (iface < num_abs_boundary_faces) {
-    ispec = abs_boundary_ispec[iface - (0)] - (1);
+    ispec = abs_boundary_ispec[iface] - (1);
     switch (interface_type) {
       case 4 :
-        if (nkmin_xi[INDEX2(2, 0, iface) - (0)] == 0 || njmin[INDEX2(2, 0, iface) - (0)] == 0) {
+        if (nkmin_xi[INDEX2(2, 0, iface)] == 0 || njmin[INDEX2(2, 0, iface)] == 0) {
            return ;
         }
         i = 0;
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if (k < nkmin_xi[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)) {
+        if (k < nkmin_xi[INDEX2(2, 0, iface)] - (1) || k > NGLLX - (1)) {
            return ;
         }
-        if (j < njmin[INDEX2(2, 0, iface) - (0)] - (1) || j > njmax[INDEX2(2, 0, iface) - (0)] - (1)) {
+        if (j < njmin[INDEX2(2, 0, iface)] - (1) || j > njmax[INDEX2(2, 0, iface)] - (1)) {
            return ;
         }
         break;
       case 5 :
-        if (nkmin_xi[INDEX2(2, 1, iface) - (0)] == 0 || njmin[INDEX2(2, 1, iface) - (0)] == 0) {
+        if (nkmin_xi[INDEX2(2, 1, iface)] == 0 || njmin[INDEX2(2, 1, iface)] == 0) {
            return ;
         }
         i = NGLLX - (1);
         k = (igll) / (NGLLX);
         j = igll - ((k) * (NGLLX));
-        if (k < nkmin_xi[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)) {
+        if (k < nkmin_xi[INDEX2(2, 1, iface)] - (1) || k > NGLLX - (1)) {
            return ;
         }
-        if (j < njmin[INDEX2(2, 1, iface) - (0)] - (1) || j > njmax[INDEX2(2, 1, iface) - (0)] - (1)) {
+        if (j < njmin[INDEX2(2, 1, iface)] - (1) || j > njmax[INDEX2(2, 1, iface)] - (1)) {
            return ;
         }
         break;
       case 6 :
-        if (nkmin_eta[INDEX2(2, 0, iface) - (0)] == 0 || nimin[INDEX2(2, 0, iface) - (0)] == 0) {
+        if (nkmin_eta[INDEX2(2, 0, iface)] == 0 || nimin[INDEX2(2, 0, iface)] == 0) {
            return ;
         }
         j = 0;
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if (k < nkmin_eta[INDEX2(2, 0, iface) - (0)] - (1) || k > NGLLX - (1)) {
+        if (k < nkmin_eta[INDEX2(2, 0, iface)] - (1) || k > NGLLX - (1)) {
            return ;
         }
-        if (i < nimin[INDEX2(2, 0, iface) - (0)] - (1) || i > nimax[INDEX2(2, 0, iface) - (0)] - (1)) {
+        if (i < nimin[INDEX2(2, 0, iface)] - (1) || i > nimax[INDEX2(2, 0, iface)] - (1)) {
            return ;
         }
         break;
       case 7 :
-        if (nkmin_eta[INDEX2(2, 1, iface) - (0)] == 0 || nimin[INDEX2(2, 1, iface) - (0)] == 0) {
+        if (nkmin_eta[INDEX2(2, 1, iface)] == 0 || nimin[INDEX2(2, 1, iface)] == 0) {
            return ;
         }
         j = NGLLX - (1);
         k = (igll) / (NGLLX);
         i = igll - ((k) * (NGLLX));
-        if (k < nkmin_eta[INDEX2(2, 1, iface) - (0)] - (1) || k > NGLLX - (1)) {
+        if (k < nkmin_eta[INDEX2(2, 1, iface)] - (1) || k > NGLLX - (1)) {
            return ;
         }
-        if (i < nimin[INDEX2(2, 1, iface) - (0)] - (1) || i > nimax[INDEX2(2, 1, iface) - (0)] - (1)) {
+        if (i < nimin[INDEX2(2, 1, iface)] - (1) || i > nimax[INDEX2(2, 1, iface)] - (1)) {
            return ;
         }
         break;
@@ -165,7 +165,7 @@ __global__ void compute_stacey_acoustic_backward_kernel(float * b_potential_dot_
         }
         break;
       }
-    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
-    atomicAdd(b_potential_dot_dot_acoustic + iglob,  -(b_absorb_potential[INDEX2(NGLL2, igll, iface) - (0)]));
+    iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
+    atomicAdd(b_potential_dot_dot_acoustic + iglob,  -(b_absorb_potential[INDEX2(NGLL2, igll, iface)]));
   }
 }

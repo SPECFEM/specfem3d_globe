@@ -34,10 +34,10 @@
   double precision t,hdur
 
   double precision, external :: netlib_specfun_erf
-  double precision, external :: comp_source_time_function_external
+  double precision, external :: comp_source_time_function_ext
 
   if ( EXTERNAL_SOURCE_TIME_FUNCTION ) then
-    comp_source_time_function = comp_source_time_function_external ()
+    comp_source_time_function = comp_source_time_function_ext ()
   else
     ! quasi Heaviside
     comp_source_time_function = 0.5d0*(1.0d0 + netlib_specfun_erf(t/hdur))
@@ -72,31 +72,31 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  double precision function comp_source_time_function_external ( )
+  double precision function comp_source_time_function_ext ( )
 
   use specfem_par, only: it, stfArray_external
   implicit none
 
   ! On the first iteration, go get the ASCII file.
   if ( .not. allocated (stfArray_external) ) then
-    call get_external_source_time_function ()
+    call get_external_stf()
   endif
 
-  comp_source_time_function_external = stfArray_external (it)
+  comp_source_time_function_ext = stfArray_external (it)
 
-  end function comp_source_time_function_external
+  end function comp_source_time_function_ext
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_external_source_time_function()
+  subroutine get_external_stf()
 
   use specfem_par, only: NSTEP, stfArray_external
   implicit none
 
   integer :: RetCode, iterator
-  character (len=200) :: line
+  character(len=256) :: line
 
   ! Allocate the source time function array to the number of time steps.
   allocate ( stfArray_external (NSTEP) )
@@ -123,4 +123,4 @@
 
   close (10)
 
-  end subroutine get_external_source_time_function
+  end subroutine get_external_stf

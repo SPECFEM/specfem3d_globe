@@ -138,6 +138,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     cl_kernel *crust_mantle_kernel_p;
     cl_uint idx = 0;
 
+    // sets function pointer
     if (FORWARD_OR_ADJOINT == 1) {
       crust_mantle_kernel_p = &mocl.kernels.crust_mantle_impl_kernel_forward;
     } else {
@@ -261,7 +262,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_density_table.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_CRUST_MANTLE_STRAIN_ONLY));
-
+#ifdef USE_TEXTURES_FIELDS
     if (FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_cm_tex));
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_cm_tex));
@@ -269,8 +270,10 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_cm_tex));
       clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_cm_tex));
     }
+#endif
+#ifdef USE_TEXTURES_CONSTANTS
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_hprime_xx_cm_tex));
-
+#endif
     local_work_size[0] = blocksize;
     local_work_size[1] = 1;
     global_work_size[0] = num_blocks_x * blocksize;

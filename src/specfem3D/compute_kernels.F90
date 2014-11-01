@@ -99,22 +99,22 @@
       ! backward/reconstructed wavefield strain will be re-computed locally here
       if (UNDO_ATTENUATION) then
         if (USE_DEVILLE_PRODUCTS_VAL) then
-          call compute_element_strain_undo_att_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
-                                                   b_displ_crust_mantle,ibool_crust_mantle, &
-                                                   hprime_xx,hprime_xxT,&
-                                                   xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                                   etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                                   gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
-                                                   b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+          call compute_element_strain_undoatt_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
+                                                  b_displ_crust_mantle,ibool_crust_mantle, &
+                                                  hprime_xx,hprime_xxT,&
+                                                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle,&
+                                                  b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
 
         else
-          call compute_element_strain_undo_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                                                     b_displ_crust_mantle, &
-                                                     hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle, &
-                                                     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                                     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                                     b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+          call compute_element_strain_undoatt_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                                                    b_displ_crust_mantle, &
+                                                    hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle, &
+                                                    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                                    etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                                    b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
         endif
       else
         ! backward/reconstructed strain arrays
@@ -167,7 +167,7 @@
               b_epsilondev_loc(5) = b_epsilondev_loc_matrix(i,j,k,5)
 
               call compute_strain_product(prod,eps_trace_over_3_crust_mantle(i,j,k,ispec),epsilondev_loc, &
-                                         b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
+                                          b_eps_trace_over_3_loc_matrix(i,j,k),b_epsilondev_loc)
 
               cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_crust_mantle(:,i,j,k,ispec) + deltat * prod(:)
 
@@ -621,21 +621,21 @@
       ! gets element strain
       if (UNDO_ATTENUATION) then
         if (USE_DEVILLE_PRODUCTS_VAL) then
-          call compute_element_strain_undo_att_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core, &
-                                                   b_displ_inner_core,ibool_inner_core, &
-                                                   hprime_xx,hprime_xxT, &
-                                                   xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                                   etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                                   gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                                   b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+          call compute_element_strain_undoatt_Dev(ispec,NGLOB_inner_core,NSPEC_inner_core, &
+                                                  b_displ_inner_core,ibool_inner_core, &
+                                                  hprime_xx,hprime_xxT, &
+                                                  xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                                  etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                                  gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                                  b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
         else
-          call compute_element_strain_undo_att_noDev(ispec,NGLOB_inner_core,NSPEC_inner_core, &
-                                                     b_displ_inner_core, &
-                                                     hprime_xx,hprime_yy,hprime_zz,ibool_inner_core, &
-                                                     xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                                     etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                                     gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                                     b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
+          call compute_element_strain_undoatt_noDev(ispec,NGLOB_inner_core,NSPEC_inner_core, &
+                                                    b_displ_inner_core, &
+                                                    hprime_xx,hprime_yy,hprime_zz,ibool_inner_core, &
+                                                    xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                                    etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                                    gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                                    b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
         endif
       else
         ! backward/reconstructed strain arrays
@@ -726,17 +726,17 @@
 
   ! Building of the local matrix of the strain tensor
   ! for the adjoint field and the regular backward field
-  eps(1:2)=epsdev(1:2)+eps_trace_over_3           !eps11 et eps22
-  eps(3)=-(eps(1)+eps(2))+3*eps_trace_over_3     !eps33
-  eps(4)=epsdev(5)                                !eps23
-  eps(5)=epsdev(4)                                !eps13
-  eps(6)=epsdev(3)                                !eps12
+  eps(1:2) = epsdev(1:2)+eps_trace_over_3           !eps11 et eps22
+  eps(3) = -(eps(1)+eps(2))+3*eps_trace_over_3     !eps33
+  eps(4) = epsdev(5)                                !eps23
+  eps(5) = epsdev(4)                                !eps13
+  eps(6) = epsdev(3)                                !eps12
 
-  b_eps(1:2)=b_epsdev(1:2)+b_eps_trace_over_3
-  b_eps(3)=-(b_eps(1)+b_eps(2))+3*b_eps_trace_over_3
-  b_eps(4)=b_epsdev(5)
-  b_eps(5)=b_epsdev(4)
-  b_eps(6)=b_epsdev(3)
+  b_eps(1:2) = b_epsdev(1:2)+b_eps_trace_over_3
+  b_eps(3) = -(b_eps(1)+b_eps(2))+3*b_eps_trace_over_3
+  b_eps(4) = b_epsdev(5)
+  b_eps(5) = b_epsdev(4)
+  b_eps(6) = b_epsdev(3)
 
   ! Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
   p = 1

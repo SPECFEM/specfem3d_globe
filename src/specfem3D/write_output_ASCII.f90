@@ -33,7 +33,7 @@
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
 
-  use constants,only: CUSTOM_REAL,SIZE_REAL,IOUT
+  use constants,only: CUSTOM_REAL,SIZE_REAL,IOUT,MAX_STRING_LEN
 
   use specfem_par,only: &
     DT,t0,NSTEP, &
@@ -47,14 +47,14 @@
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
 
   integer :: iorientation
-  character(len=256) :: sisname,sisname_big_file
+  character(len=MAX_STRING_LEN) :: sisname,sisname_big_file
 
   ! local parameters
   integer :: it
   integer :: ier,isample
   double precision :: value
   double precision :: timeval
-  character(len=256) :: sisname_2
+  character(len=MAX_STRING_LEN) :: sisname_2
 
   ! add .ascii extension to seismogram file name for ASCII seismograms
   write(sisname_2,"('/',a,'.ascii')") trim(sisname)

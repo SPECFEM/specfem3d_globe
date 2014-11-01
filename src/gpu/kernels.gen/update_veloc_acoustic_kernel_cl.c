@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -99,7 +99,7 @@ __kernel void update_veloc_acoustic_kernel(__global float * veloc, const __globa
   int id;\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
   if (id < size) {\n\
-    veloc[id - (0)] = veloc[id - (0)] + (deltatover2) * (accel[id - (0)]);\n\
+    veloc[id] = veloc[id] + (deltatover2) * (accel[id]);\n\
   }\n\
 }\n\
 ";

@@ -77,7 +77,7 @@ subroutine get_absorb_adios(myrank, iregion, &
   integer,dimension(2,NSPEC2DMAX_YMIN_YMAX) :: nkmin_eta
 
   ! local parameters
-  character(len=150) :: outputname, group_name
+  character(len=MAX_STRING_LEN) :: outputname, group_name
   integer :: comm, local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables

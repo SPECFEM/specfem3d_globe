@@ -62,7 +62,7 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
 
   ! local parameters
   integer :: local_dim
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: comm
 
   ! ADIOS variables

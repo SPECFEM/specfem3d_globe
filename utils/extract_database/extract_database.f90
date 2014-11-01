@@ -1,7 +1,7 @@
 program extract_databases
 
 ! right now just extract the mantle databases
-! Usage: extract_databases proc000000_reg1_solver_data_1.bin ireg n  proc000000_reg1_kappa.bin
+! Usage: extract_databases proc000000_reg1_solver_data.bin ireg n  proc000000_reg1_kappa.bin
 ! for example: n = 10 (rho), 11 (kappav), 12 (muv)
 !  Qinya Liu, Caltech, May 2007
 
@@ -12,6 +12,11 @@ program extract_databases
 
   character(len=150) :: infile, s_num, outfile, s_ireg
   integer :: num, i, nspec, ireg
+
+  !integer :: idummy
+  !integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
+  !integer,dimension(NSPEC_CRUST_MANTLE) :: idoubling
+  !logical,dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: junk
   real(kind=CUSTOM_REAL) :: junk2
@@ -41,7 +46,40 @@ program extract_databases
 
   read(s_num,*) num
 
-  open(11,file=infile,status='old',form='unformatted')
+  ! note: routine below works with old solver_data_1.bin file
+  !       remove this stop if you're sure about it..
+  stop 'Error extracting from new solver_data.bin files not implemented yet'
+
+
+  open(11,file=trim(infile),status='old',form='unformatted')
+
+  ! new solver_data.bin: ordering see save_arrays_solver.f90
+  ! 0.a nspec
+  ! 0.b nglob
+  ! 1. xstore
+  ! 2. ystore
+  ! 3. zstore
+  ! 4. ibool - integer array
+  ! 5. idoubling - integer array
+  ! 6. ispec_is_tiso - logical array
+  ! 7. xixstore
+  ! 8. xiystore
+  ! 9. xizstore
+  ! 10. etaxstore
+  ! 11. etaystore
+  ! 12. etazstore
+  ! 13. gammaxstore
+  ! 14. gammaystore
+  ! 15. gammazstore
+  ! 16. rhostore
+  ! 17. kappavstore
+
+  ! skipps nspec
+  !read(11) idummy
+  !if (idummy /= NSPEC_CRUST_MANTLE) stop 'Error invalid nspec in input file (solver_data.bin)'
+  ! skipps nglob
+  !read(11) idummy
+
   do i = 1, num-1
     read(11) junk2
   enddo

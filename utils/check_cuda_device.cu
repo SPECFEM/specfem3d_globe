@@ -1,4 +1,4 @@
-/* 
+/*
 **************************
 
 check_cuda_device utility
@@ -58,7 +58,7 @@ void get_free_memory(double* free_db, double* used_db, double* total_db) {
 void exit_on_error(char* info) {
   printf("\nERROR: %s\n",info);
   fflush(stdout);
-  
+
   // stops program
 #ifdef WITH_MPI
   MPI_Abort(MPI_COMM_WORLD,1);
@@ -83,7 +83,7 @@ void exit_on_cuda_error(char* kernel_name) {
 #else
     cudaDeviceReset();
 #endif
-    
+
     // stops program
     //free(kernel_name);
 #ifdef WITH_MPI
@@ -267,7 +267,7 @@ int main(int argc, char **argv)
 #endif
 
   ndevices = 0;
-  
+
   // initializes cuda devices
   initialize_cuda_device(&myrank,&ndevices);
 
@@ -277,7 +277,7 @@ int main(int argc, char **argv)
 #else
   cudaDeviceReset();
 #endif
-  
+
   printf("number of total devices: %d\n\n",ndevices);
 
 #ifdef WITH_MPI

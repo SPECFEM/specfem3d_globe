@@ -1203,12 +1203,14 @@
     b_epsilondev_xy_crust_mantle = 0._CUSTOM_REAL
     b_epsilondev_xz_crust_mantle = 0._CUSTOM_REAL
     b_epsilondev_yz_crust_mantle = 0._CUSTOM_REAL
+    b_eps_trace_over_3_crust_mantle = init_value
 
     b_epsilondev_xx_inner_core = 0._CUSTOM_REAL
     b_epsilondev_yy_inner_core = 0._CUSTOM_REAL
     b_epsilondev_xy_inner_core = 0._CUSTOM_REAL
     b_epsilondev_xz_inner_core = 0._CUSTOM_REAL
     b_epsilondev_yz_inner_core = 0._CUSTOM_REAL
+    b_eps_trace_over_3_inner_core = init_value
 
     if (ROTATION_VAL) then
       b_A_array_rotation = 0._CUSTOM_REAL
@@ -1441,6 +1443,10 @@
   integer(kind=8) :: filesize
 
   ! sets up absorbing boundary buffer arrays
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing absorbing boundaries"
+    call flush_IMAIN()
+  endif
 
   ! crust_mantle
 
@@ -2086,6 +2092,13 @@
     ! frees memory
     deallocate(ibool_ocean_load,rmass_ocean_load_selected,normal_ocean_load)
 
+  endif
+
+  ! prepares LDDRK arrays
+  if (USE_LDDRK) then
+    if (myrank == 0 ) write(IMAIN,*) "  loading LDDRK arrays"
+    stop 'prepare_lddrk_device not implemented yet'
+    !call prepare_lddrk_device(Mesh_pointer)
   endif
 
   ! crust/mantle region

@@ -134,7 +134,7 @@
   vercof(1)=1.
 !        vercof(16)=1.
 !        vercof(17)=1.
-!      else if(string(1:21).eq.'WDC+ANI_362_U6L8_TOPO') then
+!      else if(string(1:21)=='WDC+ANI_362_U6L8_TOPO') then
 !        if(upper) then
 !         nspl=6
 !         splpts(1)=24.4

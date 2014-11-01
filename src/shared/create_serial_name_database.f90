@@ -37,7 +37,7 @@
   integer iproc,iregion_code,NPROCTOT
 
 ! name of the database file
-  character(len=150) prname,procname,base_path,serial_prefix, &
+  character(len=MAX_STRING_LEN) prname,procname,base_path,serial_prefix, &
       LOCAL_PATH,OUTPUT_FILES
 
   integer iprocloop

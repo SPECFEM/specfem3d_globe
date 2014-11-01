@@ -928,7 +928,7 @@ typedef struct mesh_ {
   // specific OpenCL texture arrays
 #ifdef USE_OPENCL
 // note: need to be defined as they are passed as function arguments
-  // USE_TEXTURES_FIELDS
+#ifdef USE_TEXTURES_FIELDS
   // forward
   cl_mem d_displ_cm_tex;
   cl_mem d_accel_cm_tex;
@@ -948,12 +948,20 @@ typedef struct mesh_ {
 
   cl_mem d_b_displ_ic_tex;
   cl_mem d_b_accel_ic_tex;
-  // USE_TEXTURES_CONSTANTS
+#endif
+#ifdef USE_TEXTURES_CONSTANTS
   // hprime
   cl_mem d_hprime_xx_cm_tex;
   // weighted hprime
   cl_mem d_hprimewgll_xx_cm_tex;
 #endif
+#endif
+
+  // ------------------------------------------------------------------ //
+  // LDDRK
+  // ------------------------------------------------------------------ //
+  int use_lddrk;
+  // daniel debug: todo - add lddrk arrays here and in gpu_buffer_list.c for initialization
 
 } Mesh;
 
@@ -1026,8 +1034,8 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 
 #define INIT_OFFSET(_buffer_, _offset_)         \
   typeof(mp->_buffer_) _buffer_##_##_offset_;   \
-  INIT_OFFSET_OCL(_buffer_, _offset_)           \
-  INIT_OFFSET_CUDA(_buffer_, _offset_)
+  INIT_OFFSET_OCL(_buffer_, _offset_);           \
+  INIT_OFFSET_CUDA(_buffer_, _offset_);
 
 #define PASS_OFFSET(_buffer_, _offset_) _buffer_ ##_##  _offset_
 
@@ -1039,7 +1047,7 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #endif
 
 #define RELEASE_OFFSET(_buffer_, _offset_)      \
-  RELEASE_OFFSET_OCL(_buffer_, _offset_)        \
-  RELEASE_OFFSET_CUDA(_buffer_, _offset_)
+  RELEASE_OFFSET_OCL(_buffer_, _offset_);        \
+  RELEASE_OFFSET_CUDA(_buffer_, _offset_);
 
 #endif   // MESH_CONSTANTS_GPU_H

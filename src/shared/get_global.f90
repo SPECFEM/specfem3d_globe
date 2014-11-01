@@ -32,8 +32,6 @@
 
 ! non-structured global numbering software provided by Paul F. Fischer
 
-! leave sorting subroutines in same source file to allow for inlining
-
   use constants
 
   implicit none
@@ -41,7 +39,7 @@
   ! input parameters
   integer, intent(in) :: npointot
 
-  double precision, dimension(npointot), intent(in) :: xp,yp,zp
+  double precision, dimension(npointot), intent(inout) :: xp,yp,zp
 
   integer, dimension(npointot), intent(out) :: iglob,locval
   logical, dimension(npointot), intent(out) :: ifseg

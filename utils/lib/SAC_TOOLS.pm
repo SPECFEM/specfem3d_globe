@@ -2,7 +2,7 @@ package SAC_TOOLS;
 
 use warnings;
 use Exporter;
-use lib '/opt/seismo-util/lib/perl';
+#use lib '/opt/seismo-util/lib/perl';
 use SACLST;
 
 @ISA = ('Exporter');

@@ -139,6 +139,7 @@
   logical :: located_target
 
   character(len=2) :: bic
+  character(len=256) :: string
 
   integer :: nrec_SUBSET_current_size,irec_in_this_subset,irec_already_done
   double precision, allocatable, dimension(:) :: x_found_subset,y_found_subset,z_found_subset
@@ -158,6 +159,8 @@
   double precision :: lat_min,lat_max,lon_min,lon_max
   ! search margin in degrees
   double precision,parameter :: LAT_LON_MARGIN = 2.d0
+  ! sorting order
+  integer, allocatable, dimension(:) :: irec_dist_ordered
 
   ! get MPI starting time
   time_start = wtime()
@@ -184,40 +187,59 @@
   ! use 10 times the distance as a criterion for source detection
   typical_size = 10. * typical_size
 
-  if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) '****************************'
-    write(IMAIN,*) 'reading receiver information'
-    write(IMAIN,*) '****************************'
-    write(IMAIN,*)
-    call flush_IMAIN()
-  endif
-
   ! allocate memory for arrays using number of stations
   allocate(epidist(nrec), &
-          ix_initial_guess(nrec), &
-          iy_initial_guess(nrec), &
-          iz_initial_guess(nrec), &
-          x_target(nrec), &
-          y_target(nrec), &
-          z_target(nrec), &
-          x_found(nrec), &
-          y_found(nrec), &
-          z_found(nrec), &
-          final_distance(nrec),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
+           ix_initial_guess(nrec), &
+           iy_initial_guess(nrec), &
+           iz_initial_guess(nrec), &
+           x_target(nrec), &
+           y_target(nrec), &
+           z_target(nrec), &
+           x_found(nrec), &
+           y_found(nrec), &
+           z_found(nrec), &
+           final_distance(nrec),stat=ier)
+  if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
 
   ! initializes search distances
   final_distance(:) = HUGEVAL
 
   ! read that STATIONS file on the master
   if (myrank == 0) then
+    ! user output
+    write(IMAIN,*) 'reading receiver information...'
+    write(IMAIN,*)
+    call flush_IMAIN()
+
+    ! opens station file STATIONS or STATIONS_ADJOINT
     open(unit=IIN,file=trim(rec_filename),status='old',action='read',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening STATIONS file')
 
     ! loop on all the stations to read station information
     do irec = 1,nrec
-      read(IIN,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+
+      ! old line:
+      !read(IIN,*,iostat=ier) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)
+
+      ! reads in line as string
+      read(IIN,"(a256)",iostat=ier) string
+      if (ier /= 0) then
+        write(IMAIN,*) 'Error reading in station ',irec
+        call exit_MPI(myrank,'Error reading in station in STATIONS file')
+      endif
+
+      ! skips empty lines
+      do while( len_trim(string) == 0 )
+        read(IIN,"(a256)",iostat=ier) string
+        if (ier /= 0) then
+          write(IMAIN,*) 'Error reading in station ',irec
+          call exit_MPI(myrank,'Error reading in station in STATIONS file')
+        endif
+      enddo
+
+      ! reads in station information
+      read(string(1:len_trim(string)),*,iostat=ier) station_name(irec),network_name(irec), &
+                                                    stlat(irec),stlon(irec),stele(irec),stbur(irec)
       if (ier /= 0) then
         write(IMAIN,*) 'Error reading in station ',irec
         call exit_MPI(myrank,'Error reading in station in STATIONS file')
@@ -225,8 +247,8 @@
 
       ! checks latitude
       if (stlat(irec) < -90.d0 .or. stlat(irec) > 90.d0) then
-        print*,'Error station ',trim(station_name(irec)),': latitude ',stlat(irec),' is invalid, please check STATIONS record'
-        close(IIN)
+        write(IMAIN,*) 'Error station ',trim(station_name(irec)),': latitude ',stlat(irec), &
+                       ' is invalid, please check STATIONS record'
         call exit_MPI(myrank,'Error station latitude invalid')
       endif
 
@@ -331,13 +353,6 @@
     ! compute epicentral distance
     epidist(irec) = acos(cos(theta)*cos(theta_source) + &
                          sin(theta)*sin(theta_source)*cos(phi-phi_source))*RADIANS_TO_DEGREES
-
-    ! print some information about stations
-    if (myrank == 0) then
-      write(IMAIN,*) 'Station #',irec,': ',station_name(irec)(1:len_trim(station_name(irec))), &
-                       '.',network_name(irec)(1:len_trim(network_name(irec))), &
-                       '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
-    endif
 
     ! record three components for each station
     do iorientation = 1,3
@@ -496,6 +511,27 @@
   enddo
 
   if (USE_DISTANCE_CRITERION ) deallocate(xyz_midpoints)
+
+  ! print some information about stations
+  if (myrank == 0) then
+    ! sorts stations according to epicentral distances
+    allocate(irec_dist_ordered(nrec),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary irec_dist_ordered array')
+
+    ! sorts array
+    call heap_sort_distances(nrec,epidist,irec_dist_ordered)
+
+    ! outputs info
+    write(IMAIN,*) 'Stations sorted by epicentral distance:'
+    do i = 1,nrec
+      irec = irec_dist_ordered(i)
+      write(IMAIN,'(a,i6,a,a24,a,f12.6,a)') ' Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec)), &
+                                          '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
+    enddo
+
+    deallocate(irec_dist_ordered)
+  endif
+
 
   ! create RECORDHEADERS file with usual format for normal-mode codes
   if (myrank == 0) then
@@ -809,8 +845,7 @@
   if (myrank == 0) then
 
     ! appends receiver locations to sr.vtk file
-    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk', &
-          position='append',status='old',iostat=ier)
+    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk',position='append',status='old',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
     ! chooses best receivers locations
@@ -822,7 +857,7 @@
 
       if (DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0) then
         write(IMAIN,*)
-        write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
+        write(IMAIN,*) 'Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec))
         write(IMAIN,*) '     original latitude: ',sngl(stlat(irec))
         write(IMAIN,*) '    original longitude: ',sngl(stlon(irec))
         write(IMAIN,*) '   epicentral distance: ',sngl(epidist(irec))
@@ -834,7 +869,7 @@
       ! add warning if estimate is poor
       ! (usually means receiver outside the mesh given by the user)
       if (final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
-        write(IMAIN,*) 'station # ',irec,'    ',station_name(irec),network_name(irec)
+        write(IMAIN,*) 'Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec))
         write(IMAIN,*) '*****************************************************************'
         if (NCHUNKS_VAL == 6) then
           write(IMAIN,*) '***** WARNING: receiver location estimate is poor, therefore receiver excluded *****'
@@ -974,4 +1009,102 @@
   call synchronize_all()
 
   end subroutine locate_receivers
+
+! sorting routine left here for inlining
+!
+! Implementation of a Heap Sort Routine
+!    Input
+!      n = Input
+!         Length of arrays
+!      X_in = Input
+!             Vector to be sorted
+!             dimension(n)
+!      Y = Output
+!         Sorted Indices of vector X
+!
+!      Example:
+!         D = [ 4.0 3.0 1.0 2.0 ] on Input
+!         Y = [ 1 2 3 4 ] Computed Internally (in order)
+!
+!         X = [ 1.0 2.0 3.0 4.0 ] Computed Internally
+!         Y = [ 3 4 2 1 ] on Output
+!
+  subroutine heap_sort_distances(N, X_in, Y)
+
+  implicit none
+  integer, intent(in) :: N
+  double precision, dimension(N), intent(in) :: X_in
+  integer, dimension(N), intent(out) :: Y
+
+  ! local parameters
+  double precision, dimension(N) :: X
+  double precision :: tmp
+  integer :: itmp
+  integer :: i
+
+  do i = 1,N
+     Y(i) = i
+     X(i) = X_in(i)
+  enddo
+
+  ! checks if anything to do
+  if (N < 2) return
+
+  ! builds heap
+  do i = N/2, 1, -1
+    call heap_sort_siftdown(i, N)
+  enddo
+
+  ! sorts array
+  do i = N, 2, -1
+    ! swaps last and first entry in this section
+    tmp = X(1)
+    X(1) = X(i)
+    X(i) = tmp
+    itmp = Y(1)
+    Y(1) = Y(i)
+    Y(i) = itmp
+
+    call heap_sort_siftdown(1, i - 1)
+  enddo
+
+  contains
+
+    subroutine heap_sort_siftdown(start, bottom)
+
+    implicit none
+
+    integer, intent(in) :: start, bottom
+
+    ! local parameters
+    integer :: i, j
+    double precision :: xtmp
+    integer :: ytmp
+
+    i = start
+    xtmp = X(i)
+    ytmp = Y(i)
+
+    j = 2 * i
+    do while (j <= bottom)
+      ! chooses larger value first in this section
+      if (j < bottom) then
+        if (X(j) <= X(j+1)) j = j + 1
+      endif
+
+      ! checks if section already smaller than initial value
+      if (X(j) < xtmp) exit
+
+      X(i) = X(j)
+      Y(i) = Y(j)
+      i = j
+      j = 2 * i
+    enddo
+
+    X(i) = xtmp
+    Y(i) = ytmp
+
+    end subroutine heap_sort_siftdown
+
+  end subroutine heap_sort_distances
 

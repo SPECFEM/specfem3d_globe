@@ -40,7 +40,6 @@
 
   ! local parameters
   integer :: NEX_MAX
-  double precision :: ELEMENT_WIDTH
   integer :: nblocks_xi,nblocks_eta
   ! doubling layers
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
@@ -159,8 +158,6 @@
     if (mod(NEX_XI/32,NPROC_XI) /= 0) CUT_SUPERBRICK_XI = .true.
     if (mod(NEX_ETA/32,NPROC_ETA) /= 0) CUT_SUPERBRICK_ETA = .true.
   endif
-
-  ELEMENT_WIDTH = ANGULAR_WIDTH_XI_IN_DEGREES/dble(NEX_MAX) * DEGREES_TO_RADIANS
 
 !
 !--- compute additional parameters
@@ -284,10 +281,10 @@
     stop 'absorbing conditions not supported for three chunks yet'
 
   if (ATTENUATION_3D .and. .not. ATTENUATION) &
-    stop 'need ATTENUATION to use ATTENUATION_3D'
+    stop 'Please set ATTENUATION to .true. in Par_file to use ATTENUATION_3D'
 
   if (SAVE_TRANSVERSE_KL_ONLY .and. .not. ANISOTROPIC_KL) &
-    stop 'need ANISOTROPIC_KL to use SAVE_TRANSVERSE_KL_ONLY'
+    stop 'Please set ANISOTROPIC_KL to .true. in Par_file to use SAVE_TRANSVERSE_KL_ONLY'
 
   if (PARTIAL_PHYS_DISPERSION_ONLY .and. UNDO_ATTENUATION) &
     stop 'cannot have both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION, they are mutually exclusive'
@@ -385,13 +382,18 @@
 
   if (MEMORY_INSTALLED_PER_CORE_IN_GB < 0.1d0) &
        stop 'less than 100 MB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
-  if (MEMORY_INSTALLED_PER_CORE_IN_GB > 200.d0) &
-       stop 'more than 200 GB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
+!! DK DK the value below will probably need to be increased one day, on future machines
+  if (MEMORY_INSTALLED_PER_CORE_IN_GB > 512.d0) &
+       stop 'more than 512 GB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
 
   if (PERCENT_OF_MEM_TO_USE_PER_CORE < 50.d0) &
        stop 'less than 50% for PERCENT_OF_MEM_TO_USE_PER_CORE does not seem realistic; exiting...'
-  if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0) &
-       stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE is risky; exiting...'
+  if (PERCENT_OF_MEM_TO_USE_PER_CORE > 100.d0) &
+       stop 'more than 100% for PERCENT_OF_MEM_TO_USE_PER_CORE makes no sense; exiting...'
+!! DK DK will need to remove the ".and. .not. GPU_MODE" test here
+!! DK DK if the undo_attenuation buffers are stored on the GPU instead of on the host
+  if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
+       stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'
 
   what_we_can_use_in_GB = MEMORY_INSTALLED_PER_CORE_IN_GB * PERCENT_OF_MEM_TO_USE_PER_CORE / 100.d0
 

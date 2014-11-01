@@ -78,11 +78,17 @@ auxiliaries_SHARED_OBJECTS = \
 #### rules for executables
 ####
 
-.PHONY: all_aux aux
+.PHONY: all_aux aux movies
 
 all_aux: $(auxiliaries_TARGETS)
 
 aux: $(auxiliaries_TARGETS)
+
+movies: \
+	$E/xcombine_paraview_strain_data \
+	$E/xcreate_movie_AVS_DX \
+	$E/xcreate_movie_GMT_global \
+	$(EMPTY_MACRO)
 
 #######################################
 
@@ -155,6 +161,7 @@ xcombine_surf_data_OBJECTS = \
 xcombine_surf_data_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
+	$O/flush_system.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_surf_data: $(xcombine_surf_data_OBJECTS) $(xcombine_surf_data_SHARED_OBJECTS)
@@ -170,6 +177,7 @@ xcombine_vol_data_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
@@ -193,6 +201,7 @@ xcombine_vol_data_adios_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
@@ -217,6 +226,7 @@ xcombine_vol_data_vtk_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
@@ -240,6 +250,7 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/binary_c_io.cc.o \
 	$O/exit_mpi.shared.o \
+	$O/flush_system.shared.o \
 	$O/intgrl.shared.o \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \

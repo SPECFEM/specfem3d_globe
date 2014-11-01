@@ -56,7 +56,7 @@
   integer :: irec
   integer :: iorientation
 
-  character(len=256) :: sisname
+  character(len=MAX_STRING_LEN) :: sisname
   character(len=4) :: chn
 
   double precision :: phi
@@ -65,7 +65,7 @@
   double precision :: btime
   real, dimension(NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: tmp
   integer :: time_sec,isample
-  character(len=256) :: sisname_2
+  character(len=MAX_STRING_LEN) :: sisname_2
 
   ! SAC header variables
   real DELTA
@@ -570,7 +570,7 @@
       call write_integer(int(undef))     !(91)ISTREG
       call write_integer(int(undef))     !(92)IEVREG
       call write_integer(IEVTYP)        !(93)
-      call write_integer(int(undef))     !(94)IQUAL
+      call write_integer(IQUAL)         !(94)
       call write_integer(ISYNTH)        !(95)
       call write_integer(IMAGTYP)       !(96)
       call write_integer(int(undef))     !(97)IMAGSRC

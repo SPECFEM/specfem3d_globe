@@ -39,9 +39,11 @@ specfem3D_OBJECTS = \
 	$O/convert_time.solver.o \
 	$O/define_derivation_matrices.solver.o \
 	$O/file_io_threads.cc.o \
+	$O/force_ftz.cc.o \
 	$O/get_backazimuth.solver.o \
 	$O/get_cmt.solver.o \
 	$O/get_event_info.solver.o \
+	$O/make_gravity.solver.o \
 	$O/netlib_specfun_erf.solver.o \
 	$O/recompute_jacobian.solver.o \
 	$(EMPTY_MACRO)
@@ -127,9 +129,8 @@ specfem3D_SHARED_OBJECTS = \
 	$O/count_points.shared.o \
 	$O/create_name_database.shared.o \
 	$O/define_all_layers.shared.o \
-	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
-	$O/force_ftz.cc.o \
+	$O/flush_system.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
@@ -137,8 +138,6 @@ specfem3D_SHARED_OBJECTS = \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
-	$O/make_gravity.shared.o \
-	$O/memory_eval.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_topo_bathy.shared.o \
 	$O/parallel.sharedmpi.o \
@@ -186,9 +185,6 @@ adios_specfem3D_SHARED_OBJECTS = \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
 	$O/adios_manager.shared_adios.o \
-	$O/asdf_helpers_definitions.shared_adios_module.o \
-	$O/asdf_helpers_writers.shared_adios_module.o \
-	$O/asdf_helpers.shared_adios.o \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_STUBS = \
@@ -205,6 +201,11 @@ specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
 else
 specfem3D_OBJECTS += $(adios_specfem3D_STUBS)
 specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
+endif
+
+# conditional CEM model
+ifeq ($(CEM),yes)
+specfem3D_OBJECTS += $O/read_write_netcdf.checknetcdf.o
 endif
 
 ###
@@ -263,7 +264,7 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 ### additional dependencies
 ###
 
-$O/write_output_ASDF.solverstatic_adios.o: $O/asdf_helpers.shared_adios.o $O/asdf_helpers_writers.shared_adios.o $O/asdf_data.solverstatic_module.o
+$O/write_output_ASDF.solverstatic_adios.o: $O/asdf_data.solverstatic_module.o
 
 $O/write_seismograms.solverstatic.o: $O/asdf_data.solverstatic_module.o
 
@@ -322,3 +323,8 @@ $O/%.visualcc.o: $S/%.cpp ${SETUP}/config.h
 $O/%.visualc.o: $S/%.c ${SETUP}/config.h
 	${CC} -c $(CPPFLAGS) $(MPI_INCLUDES) -o $@ $<
 
+###
+### CEM
+###
+$O/%.checknetcdf.o: $S/%.f90 $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} $(NETCDF_INCLUDE) -c -o $@ $<

@@ -75,15 +75,13 @@ subroutine write_specfem_header_adios()
   character(len=:),   allocatable :: station_name, network_name
   double precision, allocatable, dimension(:) :: stlat, stlon, stele, stbur
 
-!  character(len=150) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
-
   ! Adios variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_group, adios_handle
   integer(kind=8)         :: adios_groupsize, adios_totalsize
   ! TODO: find a better name once the use of ADIOS is more completely
   !       implemented
-  character(len=256):: filename = "OUTPUT_FILES/header_specfem3d_globe.bp"
+  character(len=MAX_STRING_LEN):: filename = "OUTPUT_FILES/header_specfem3d_globe.bp"
   integer(kind=8)   :: group_size_inc
   integer           :: model_length ! for later reading of MODEL
   integer           :: isource, irec, ier

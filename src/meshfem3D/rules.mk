@@ -155,7 +155,6 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
-	$O/calendar.shared.o \
 	$O/count_elements.shared.o \
 	$O/count_number_of_sources.shared.o \
 	$O/count_points.shared.o \
@@ -163,7 +162,8 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/define_all_layers.shared.o \
 	$O/euler_angles.shared.o \
 	$O/exit_mpi.shared.o \
-	$O/force_ftz.cc.o \
+	$O/flush_system.shared.o \
+	$O/get_all_eight_slices.shared.o \
 	$O/get_global.shared.o \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
@@ -172,7 +172,6 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
-	$O/make_gravity.shared.o \
 	$O/memory_eval.shared.o \
 	$O/model_prem.shared.o \
 	$O/model_topo_bathy.shared.o \
@@ -184,6 +183,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
+	$O/smooth_weights_vec.shared.o \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \

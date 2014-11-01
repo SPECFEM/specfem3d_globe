@@ -41,7 +41,12 @@
 ! s29ea: A global model with higher resolution in the upper mantle beneath Eurasia
 ! calculated using REF as the 1D reference model.
 !
+! note:
+! - statistics on topography perturbations: (depending on mesh resolution, here nex=256)
+!   410-km: minimum / maximum = -13.48 km / + 13.24 km
+!   650-km: minimum / maximum = -14.34 km / + 19.19 km
 !--------------------------------------------------------------------------------------------------
+
 
   module model_s362ani_par
 

@@ -79,6 +79,8 @@
 
 ! find element below top of which we should implement the second doubling in the mantle
 ! locate element closest to optimal value
+  elem_doubling_mantle = -1
+  DEPTH_SECOND_DOUBLING_REAL = 0
   distance_min = HUGEVAL
   do ielem = 2,NER_TOPDDOUBLEPRIME_771
     zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
@@ -89,9 +91,12 @@
       DEPTH_SECOND_DOUBLING_REAL = R_EARTH - zval
     endif
   enddo
+  if (elem_doubling_mantle == -1) stop 'Unable to determine second doubling element'
 
 ! find element below top of which we should implement the third doubling in the middle of the outer core
 ! locate element closest to optimal value
+  elem_doubling_middle_outer_core = -1
+  DEPTH_THIRD_DOUBLING_REAL = 0
   distance_min = HUGEVAL
 ! start at element number 4 because we need at least two elements below for the fourth doubling
 ! implemented at the bottom of the outer core
@@ -104,10 +109,13 @@
       DEPTH_THIRD_DOUBLING_REAL = R_EARTH - zval
     endif
   enddo
+  if (elem_doubling_middle_outer_core == -1) stop 'Unable to determine third doubling element'
 
   if (ADD_4TH_DOUBLING) then
 ! find element below top of which we should implement the fourth doubling in the middle of the outer core
 ! locate element closest to optimal value
+    elem_doubling_bottom_outer_core = -1
+    DEPTH_FOURTH_DOUBLING_REAL = 0
     distance_min = HUGEVAL
 ! end two elements before the top because we need at least two elements above for the third doubling
 ! implemented in the middle of the outer core
@@ -120,6 +128,7 @@
         DEPTH_FOURTH_DOUBLING_REAL = R_EARTH - zval
       endif
     enddo
+    if (elem_doubling_bottom_outer_core == -1) stop 'Unable to determine fourth doubling element'
 ! make sure that the two doublings in the outer core are found in the right order
     if (elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
                     stop 'Error in location of the two doublings in the outer core'

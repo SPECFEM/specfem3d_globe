@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -99,9 +99,9 @@ __kernel void update_potential_kernel(__global float * potential_acoustic, __glo
   int id;\n\
   id = get_global_id(0) + (get_group_id(1)) * (get_global_size(0));\n\
   if (id < size) {\n\
-    potential_acoustic[id - (0)] = potential_acoustic[id - (0)] + (deltat) * (potential_dot_acoustic[id - (0)]) + (deltatsqover2) * (potential_dot_dot_acoustic[id - (0)]);\n\
-    potential_dot_acoustic[id - (0)] = potential_dot_acoustic[id - (0)] + (deltatover2) * (potential_dot_dot_acoustic[id - (0)]);\n\
-    potential_dot_dot_acoustic[id - (0)] = 0.0f;\n\
+    potential_acoustic[id] = potential_acoustic[id] + (deltat) * (potential_dot_acoustic[id]) + (deltatsqover2) * (potential_dot_dot_acoustic[id]);\n\
+    potential_dot_acoustic[id] = potential_dot_acoustic[id] + (deltatover2) * (potential_dot_dot_acoustic[id]);\n\
+    potential_dot_dot_acoustic[id] = 0.0f;\n\
   }\n\
 }\n\
 ";

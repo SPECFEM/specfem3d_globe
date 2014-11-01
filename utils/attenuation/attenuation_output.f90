@@ -19,7 +19,7 @@
 
     integer i,j,k,ispec
     integer myrank, vnspec, process, iregion
-    character(len=150) prname, LOCAL_PATH
+    character(len=MAX_STRING_LEN) prname, LOCAL_PATH
     double precision, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_AC)       :: one_minus_sum_beta, scale_factor
     double precision, dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_AC) :: factor_common
     double precision, dimension(N_SLS)                                         :: tau_s

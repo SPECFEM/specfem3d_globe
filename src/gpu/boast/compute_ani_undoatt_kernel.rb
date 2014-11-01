@@ -1,19 +1,19 @@
 module BOAST
 
   require './compute_strain_product_helper.rb'
-  require './compute_element_strain_undo_att_helper.rb'
+  require './compute_element_strain_undoatt_helper.rb'
 
-  def BOAST::compute_ani_undo_att_kernel(ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
-    compute_undo_att_kernel(:ani, ref, n_gllx, n_gll2, n_gll3, n_gll3_padded)
+  def BOAST::compute_ani_undoatt_kernel(ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
+    compute_undoatt_kernel(:ani, ref, n_gllx, n_gll2, n_gll3, n_gll3_padded)
   end
 
-  def BOAST::compute_undo_att_kernel(type, ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
+  def BOAST::compute_undoatt_kernel(type, ref = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     if type == :ani then
-      function_name = "compute_ani_undo_att_kernel"
+      function_name = "compute_ani_undoatt_kernel"
     elsif type == :iso then
-      function_name = "compute_iso_undo_att_kernel"
+      function_name = "compute_iso_undoatt_kernel"
     else
       raise "Unsupported type #{type}!"
     end
@@ -48,11 +48,12 @@ module BOAST
 
     p = Procedure(function_name, v)
     if (get_lang == CUDA and ref) then
-      @@output.print File::read("references/#{function_name}.cu")
+      get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
       make_specfem3d_header( :ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded )
-      sub_compute_element_strain_undo_att = compute_element_strain_undo_att(n_gllx, n_gll2, n_gll3, n_gll3_padded )
-      print sub_compute_element_strain_undo_att
+
+      sub_compute_element_strain_undoatt = compute_element_strain_undoatt(n_gllx, n_gll2, n_gll3, n_gll3_padded )
+      print sub_compute_element_strain_undoatt
       if type == :ani then
         sub_compute_strain_product =  compute_strain_product()
         print sub_compute_strain_product
@@ -83,37 +84,52 @@ module BOAST
       print ijk_ispec === get_local_id(0) + ngll3*ispec
       print tx === get_local_id(0)
 
+      # minor threads load hprime
       print If(tx < ngll2) {
         print sh_hprime_xx[tx] === d_hprime_xx[tx]
       }
 
+      # loads element displacements
+      # all threads load their displacement into shared memory
       print If(ispec < nspec) {
         print iglob === d_ibool[ijk_ispec] - 1
         (0..2).each { |indx|
           print s_dummy_loc[indx][tx] === d_b_displ[indx,iglob]
         }
       }
+
+      # synchronizes threads
       print barrier(:local)
 
+      # handles case when there is 1 extra block (due to rectangular grid)
       print If(ispec < nspec) {
+
+        # kernel contributions
+        # strain from adjoint wavefield
         (0..4).each { |indx|
           print epsdev[indx] === epsilondev[indx][ijk_ispec]
         }
 
         print eps_trace_over_3 === epsilon_trace_over_3[ijk_ispec]
 
-        print sub_compute_element_strain_undo_att.call(ispec,ijk_ispec,
+        # strain from backward/reconstructed forward wavefield
+        print sub_compute_element_strain_undoatt.call(ispec,ijk_ispec,
                                                        d_ibool,
                                                        *s_dummy_loc,
                                                        *d_xi, *d_eta, *d_gamma,
                                                        sh_hprime_xx,
                                                        b_epsdev,b_eps_trace_over_3.address)
-        if type == :ani then 
+
+        if type == :ani then
+          # fully anisotropic kernel contributions
           print sub_compute_strain_product.call(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev)
+
+          # updates full anisotropic kernel
           print For(i, 0, 21-1) {
             print cijkl_kl[i, ijk_ispec] === cijkl_kl[i, ijk_ispec] + deltat * prod[i]
           }
         else
+          # isotropic kernel contributions
           print mu_kl[ijk_ispec] === mu_kl[ijk_ispec] + deltat * \
                                    ( epsdev[0] * b_epsdev[0] + \
                                      epsdev[1] * b_epsdev[1] + \

@@ -185,7 +185,11 @@ void open_file_abs_r_fbin(int *fid, char *filename,int *length, long long *files
 
   // opens file
   ft = fopen( fncopy, "rb" );
-  if (ft == NULL ) { perror("fopen"); exit(-1); }
+  if (ft == NULL ) {
+    fprintf(stderr, "Error opening file: %s exiting\n", fncopy);
+    perror("Error fopen in open_file_abs_r_fbin");
+    exit(-1);
+  }
 
   // sets mode for full buffering
   work_buffer[*fid] = (char *)malloc(MAX_B);
@@ -226,7 +230,11 @@ void open_file_abs_w_fbin(int *fid, char *filename, int *length, long long *file
 
   // opens file
   ft = fopen( fncopy, "wb+" );
-  if (ft == NULL ) { perror("fopen"); exit(-1); }
+  if (ft == NULL ) {
+    fprintf(stderr, "Error opening file: %s exiting\n", fncopy);
+    perror("Error fopen in open_file_abs_w_fbin");
+    exit(-1);
+  }
 
   // sets mode for full buffering
   work_buffer[*fid] = (char *)malloc(MAX_B);
@@ -261,7 +269,6 @@ void write_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 
   donelen = 0;
   remlen = *length;
-  ret = 0;
 
   // writes items of maximum MAX_B to the file
   while (remlen > 0) {
@@ -300,7 +307,6 @@ void read_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 
   donelen = 0;
   remlen = *length;
-  ret = 0;
 
   // reads items of maximum MAX_B to the file
   while (remlen > 0) {
@@ -392,6 +398,7 @@ void open_file_abs_w_map(int *fid, char *filename, int *length, long long *files
    */
   ft = open(fncopy, O_RDWR | O_CREAT | O_TRUNC, (mode_t)0600);
   if (ft == -1) {
+    fprintf(stderr, "Error opening file: %s exiting\n", fncopy);
     perror("Error opening file for writing");
     exit(EXIT_FAILURE);
   }
@@ -462,6 +469,7 @@ void open_file_abs_r_map(int *fid, char *filename,int *length, long long *filesi
 
   ft = open(fncopy, O_RDONLY);
   if (ft == -1) {
+    fprintf(stderr, "Error opening file: %s exiting\n", fncopy);
     perror("Error opening file for reading");
     exit(EXIT_FAILURE);
   }

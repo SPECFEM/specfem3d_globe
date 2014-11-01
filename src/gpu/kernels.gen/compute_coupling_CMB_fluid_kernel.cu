@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -103,20 +103,20 @@ __global__ void compute_coupling_CMB_fluid_kernel(const float * displ_crust_mant
   j = threadIdx.y;
   iface = blockIdx.x + (gridDim.x) * (blockIdx.y);
   if (iface < NSPEC2D_BOTTOM_CM) {
-    ispec = ibelm_bottom_crust_mantle[iface - (0)] - (1);
-    ispec_selected = ibelm_top_outer_core[iface - (0)] - (1);
+    ispec = ibelm_bottom_crust_mantle[iface] - (1);
+    ispec_selected = ibelm_top_outer_core[iface] - (1);
     k = 0;
     k_corresp = NGLLX - (1);
-    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected) - (0)] - (1);
-    nx = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface) - (0)];
-    ny = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface) - (0)];
-    nz = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface) - (0)];
-    weight = (jacobian2D_top_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface) - (0)]) * (wgllwgll_xy[INDEX2(NGLLX, i, j) - (0)]);
-    iglob_cm = ibool_crust_mantle[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
+    iglob_oc = ibool_outer_core[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k_corresp, ispec_selected)] - (1);
+    nx = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 0, i, j, iface)];
+    ny = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 1, i, j, iface)];
+    nz = normal_top_outer_core[INDEX4(NDIM, NGLLX, NGLLX, 2, i, j, iface)];
+    weight = (jacobian2D_top_outer_core[INDEX3(NGLLX, NGLLX, i, j, iface)]) * (wgllwgll_xy[INDEX2(NGLLX, i, j)]);
+    iglob_cm = ibool_crust_mantle[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
     if (GRAVITY) {
-      pressure = (RHO_TOP_OC) * ((minus_g_cmb) * ((displ_crust_mantle[(iglob_cm) * (3) - (0)]) * (nx) + (displ_crust_mantle[(iglob_cm) * (3) + 1 - (0)]) * (ny) + (displ_crust_mantle[(iglob_cm) * (3) + 2 - (0)]) * (nz)) - (accel_outer_core[iglob_oc - (0)]));
+      pressure = (RHO_TOP_OC) * ((minus_g_cmb) * ((displ_crust_mantle[(iglob_cm) * (3)]) * (nx) + (displ_crust_mantle[(iglob_cm) * (3) + 1]) * (ny) + (displ_crust_mantle[(iglob_cm) * (3) + 2]) * (nz)) - (accel_outer_core[iglob_oc]));
     } else {
-      pressure = ( -(RHO_TOP_OC)) * (accel_outer_core[iglob_oc - (0)]);
+      pressure = ( -(RHO_TOP_OC)) * (accel_outer_core[iglob_oc]);
     }
     atomicAdd(accel_crust_mantle + (iglob_cm) * (3) + 0, ((weight) * (nx)) * (pressure));
     atomicAdd(accel_crust_mantle + (iglob_cm) * (3) + 1, ((weight) * (ny)) * (pressure));

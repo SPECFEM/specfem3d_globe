@@ -46,7 +46,7 @@
   ! bathymetry and topography: use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
-  character(len=150) :: LOCAL_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_PATH
 
   if (myrank == 0) then
     ! user output
@@ -136,10 +136,10 @@
 
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-  character(len=150) :: LOCAL_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_PATH
 
   ! local parameters
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
   integer :: ier
 
   ! create the name for the database of the current slide and region
@@ -175,10 +175,10 @@
 
   ! use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
-  character(len=150) :: LOCAL_PATH
+  character(len=MAX_STRING_LEN) :: LOCAL_PATH
 
   ! local parameters
-  character(len=150) :: prname
+  character(len=MAX_STRING_LEN) :: prname
   integer :: ier
 
   ! create the name for the database of the current slide and region

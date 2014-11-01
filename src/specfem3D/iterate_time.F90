@@ -43,7 +43,7 @@
   real(kind=CUSTOM_REAL) :: radius
   integer, dimension(:), allocatable :: integer_mask_ibool_exact_undo
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
-  character(len=150) outputname
+  character(len=MAX_STRING_LEN) outputname
 
 !
 !   s t a r t   t i m e   i t e r a t i o n s
@@ -147,10 +147,10 @@
 
       if (USE_LDDRK) then
         ! update displacement using Runge-Kutta time scheme
-        call update_displacement_lddrk()
+        call update_displ_lddrk()
       else
         ! update displacement using Newmark time scheme
-        call update_displacement_Newmark()
+        call update_displ_Newmark()
       endif
 
       ! acoustic solver for outer core
@@ -190,10 +190,10 @@
 
         if (USE_LDDRK) then
           ! update displacement using Runge-Kutta time scheme
-          call update_displacement_lddrk_backward()
+          call update_displ_lddrk_backward()
         else
           ! update displacement using Newmark time scheme
-          call update_displacement_Newmark_backward()
+          call update_displ_Newmark_backward()
         endif
 
         ! acoustic solver for outer core
@@ -355,6 +355,7 @@
     endif
   endif
 
+  ! from here on, no gpu data is needed anymore
   ! frees allocated memory on GPU
   call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
 

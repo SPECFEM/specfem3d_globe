@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -102,10 +102,10 @@ __kernel void assemble_boundary_potential_on_device(__global float * d_potential
   int iinterface;\n\
   id = get_global_id(0) + (get_global_size(0)) * (get_global_id(1));\n\
   for (iinterface = 0; iinterface <= num_interfaces - (1); iinterface += 1) {\n\
-    if (id < d_nibool_interfaces[iinterface - (0)]) {\n\
+    if (id < d_nibool_interfaces[iinterface]) {\n\
       iloc = id + (max_nibool_interfaces) * (iinterface);\n\
-      iglob = d_ibool_interfaces[iloc - (0)] - (1);\n\
-      atomicAdd(d_potential_dot_dot_acoustic + iglob, d_send_potential_dot_dot_buffer[iloc - (0)]);\n\
+      iglob = d_ibool_interfaces[iloc] - (1);\n\
+      atomicAdd(d_potential_dot_dot_acoustic + iglob, d_send_potential_dot_dot_buffer[iloc]);\n\
     }\n\
   }\n\
 }\n\

@@ -87,7 +87,7 @@
   ! local parameters
   integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ios
   real(kind=CUSTOM_REAL) :: normal_x_noise_out,normal_y_noise_out,normal_z_noise_out,mask_noise_out
-  character(len=150) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
       val_x,val_y,val_z,val_ux,val_uy,val_uz
   real(kind=CUSTOM_REAL), dimension(nmovie_points,0:NPROCTOT_VAL-1) :: &
@@ -99,6 +99,8 @@
   if (ios /= 0) &
     call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file contains the ID of the master receiver')
   read(IIN_NOISE,*,iostat=ios) irec_master_noise
+  if (ios /= 0) &
+    call exit_MPI(myrank, 'Unable to read the ID of the master receiver from '//trim(filename))
   close(IIN_NOISE)
 
   if (myrank == 0) then
@@ -216,7 +218,7 @@
   ! local parameters
   integer :: reclen,ier
   integer(kind=8) :: filesize
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
 
   if (myrank == 0) then
@@ -319,7 +321,7 @@
   double precision,parameter :: scale_displ_inv = 1.d0/R_EARTH ! non-dimensional scaling
   double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
         hgammar(NGLLZ), hpgammar(NGLLZ)
-  character(len=150) :: filename
+  character(len=MAX_STRING_LEN) :: filename
 
 
   noise_src(:) = 0._CUSTOM_REAL
@@ -612,7 +614,7 @@
 
   else
     ! on GPU
-    call compute_kernels_strgth_noise_gpu(Mesh_pointer,noise_surface_movie,deltat)
+    call compute_kernels_strength_noise_gpu(Mesh_pointer,noise_surface_movie,deltat)
   endif
 
   end subroutine compute_kernels_strength_noise

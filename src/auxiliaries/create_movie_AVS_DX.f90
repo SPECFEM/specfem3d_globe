@@ -90,7 +90,7 @@
 
   integer :: nframes,iframe
 
-  character(len=150) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   integer :: iproc,ipoin
 

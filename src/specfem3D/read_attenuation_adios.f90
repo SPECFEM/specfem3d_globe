@@ -51,7 +51,7 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   ! local parameters
   double precision :: T_c_source
   integer :: comm
-  character(len=256) :: file_name
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err

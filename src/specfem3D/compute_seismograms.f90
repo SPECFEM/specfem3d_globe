@@ -162,7 +162,7 @@
   double precision, external :: comp_source_time_function
 
   ! element strain
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: eps_trace_over_3_loc_cm
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc_crust_mantle
 
   double precision :: hxir(NGLLX), hetar(NGLLY), hgammar(NGLLZ), &
@@ -190,16 +190,16 @@
     ! adjoint strain
     if (UNDO_ATTENUATION) then
       ! recomputes strain
-      call compute_element_strain_undo_att_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                                                 displ_crust_mantle, &
-                                                 hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle, &
-                                                 xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                                 etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                                 gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                                 epsilondev_loc_crust_mantle,eps_trace_over_3_loc_crust_mantle)
+      call compute_element_strain_undoatt_noDev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                                                displ_crust_mantle, &
+                                                hprime_xx,hprime_yy,hprime_zz,ibool_crust_mantle, &
+                                                xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                                etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                                gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                                epsilondev_loc_crust_mantle,eps_trace_over_3_loc_cm)
     else
       ! element adjoint strain
-      eps_trace_over_3_loc_crust_mantle(:,:,:) = eps_trace_over_3_crust_mantle(:,:,:,ispec)
+      eps_trace_over_3_loc_cm(:,:,:) = eps_trace_over_3_crust_mantle(:,:,:,ispec)
       epsilondev_loc_crust_mantle(:,:,:,1) = epsilondev_xx_crust_mantle(:,:,:,ispec)
       epsilondev_loc_crust_mantle(:,:,:,2) = epsilondev_yy_crust_mantle(:,:,:,ispec)
       epsilondev_loc_crust_mantle(:,:,:,3) = epsilondev_xy_crust_mantle(:,:,:,ispec)
@@ -220,7 +220,7 @@
           uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
           uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
 
-          eps_trace = eps_trace + dble(eps_trace_over_3_loc_crust_mantle(i,j,k))*hlagrange
+          eps_trace = eps_trace + dble(eps_trace_over_3_loc_cm(i,j,k))*hlagrange
 
           dxx = dxx + dble(epsilondev_loc_crust_mantle(i,j,k,1))*hlagrange
           dyy = dyy + dble(epsilondev_loc_crust_mantle(i,j,k,2))*hlagrange

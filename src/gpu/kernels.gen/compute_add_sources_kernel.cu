@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.9995
+//      this file has been generated automatically by BOAST version 0.99994
 //      by: make boast_kernels
 
 /*
@@ -97,13 +97,13 @@ __global__ void compute_add_sources_kernel(float * accel, const int * ibool, con
   k = threadIdx.z;
   isource = blockIdx.x + (gridDim.x) * (blockIdx.y);
   if (isource < NSOURCES) {
-    if (myrank == islice_selected_source[isource - (0)]) {
-      ispec = ispec_selected_source[isource - (0)] - (1);
-      stf = stf_pre_compute[isource - (0)];
-      iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec) - (0)] - (1);
-      atomicAdd(accel + (iglob) * (3) + 0, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, isource) - (0)]) * (stf));
-      atomicAdd(accel + (iglob) * (3) + 1, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, isource) - (0)]) * (stf));
-      atomicAdd(accel + (iglob) * (3) + 2, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, isource) - (0)]) * (stf));
+    if (myrank == islice_selected_source[isource]) {
+      ispec = ispec_selected_source[isource] - (1);
+      stf = stf_pre_compute[isource];
+      iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
+      atomicAdd(accel + (iglob) * (3) + 0, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 0, i, j, k, isource)]) * (stf));
+      atomicAdd(accel + (iglob) * (3) + 1, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 1, i, j, k, isource)]) * (stf));
+      atomicAdd(accel + (iglob) * (3) + 2, (sourcearrays[INDEX5(NDIM, NGLLX, NGLLX, NGLLX, 2, i, j, k, isource)]) * (stf));
     }
   }
 }

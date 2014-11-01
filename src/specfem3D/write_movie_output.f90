@@ -36,7 +36,7 @@
 
   ! local parameters
   ! debugging
-  character(len=256) :: filename
+  character(len=MAX_STRING_LEN) :: filename
   integer,dimension(:),allocatable :: dummy_i
 
   !-----------------------------------------------------------------------------
@@ -45,7 +45,7 @@
   logical, parameter :: DEBUG_SNAPSHOT = .false.
   !-----------------------------------------------------------------------------
 
-  character(len=256) :: system_command
+  character(len=MAX_STRING_LEN) :: command
 
   ! save movie on surface
   if (MOVIE_SURFACE) then
@@ -70,9 +70,9 @@
         call synchronize_all()
         ! calls shell external command
         if (myrank == 0) then
-          write(system_command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
-          !print*,trim(system_command)
-          call system(system_command)
+          write(command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
+          !print*,trim(command)
+          call system_command(command)
         endif
       endif
 
@@ -251,9 +251,9 @@
         call synchronize_all()
         ! calls shell external command
         if (myrank == 0) then
-          write(system_command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
-          !print*,trim(system_command)
-          call system(system_command)
+          write(command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
+          !print*,trim(command)
+          call system_command(command)
         endif
       endif
 
