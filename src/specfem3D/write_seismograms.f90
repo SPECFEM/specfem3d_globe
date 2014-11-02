@@ -290,7 +290,7 @@ contains
       ! loop on all the slices
       do iproc = 0,NPROCTOT_VAL-1
 
-       ! communicates only with processes which contain local receivers (to minimize MPI chatter)
+       ! communicates only with processes that contain local receivers (to minimize MPI chatter)
        if (islice_num_rec_local(iproc) == 0 ) cycle
 
        ! receive except from proc 0, which is me and therefore I already have this value

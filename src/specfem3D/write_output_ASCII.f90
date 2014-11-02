@@ -60,7 +60,7 @@
   write(sisname_2,"('/',a,'.ascii')") trim(sisname)
 
   ! save all seismograms in one large combined file instead of one file per seismogram
-  ! to avoid overloading shared non-local file systems such as GPFS for instance
+  ! to avoid overloading shared non-local file systems
 
   ! create one large file instead of one small file per station to avoid file system overload
   if (SAVE_ALL_SEISMOS_IN_ONE_FILE) then
