@@ -375,6 +375,7 @@
   if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
     call exit_MPI(myrank, 'SIMULATION_TYPE can only be 1, 2, or 3')
 
+  ! checks number of sources for adjoint simulations
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999) &
     call exit_MPI(myrank,'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
 

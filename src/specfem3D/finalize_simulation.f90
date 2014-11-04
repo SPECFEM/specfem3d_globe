@@ -239,14 +239,14 @@
 
   ! receivers
   deallocate(islice_selected_rec,ispec_selected_rec, &
-            xi_receiver,eta_receiver,gamma_receiver)
+             xi_receiver,eta_receiver,gamma_receiver)
   deallocate(station_name,network_name, &
-            stlat,stlon,stele,stbur)
+             stlat,stlon,stele,stbur)
   deallocate(nu,number_receiver_global)
   if (nrec_local > 0) then
     deallocate(hxir_store, &
-              hetar_store, &
-              hgammar_store)
+               hetar_store, &
+               hgammar_store)
     if (SIMULATION_TYPE == 2) then
       deallocate(moment_der,stshift_der)
     endif

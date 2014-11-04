@@ -174,7 +174,7 @@ module specfem_par
   ! asynchronous read buffer when IO_ASYNC_COPY is set
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: buffer_sourcearrays
 
-  integer :: nrec_simulation, nadj_rec_local
+  integer :: nadj_rec_local
   integer :: NSTEP_SUB_ADJ  ! to read input in chunks
 
   integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
@@ -185,7 +185,6 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: sloc_der
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: stshift_der, shdur_der
   double precision, dimension(:,:), allocatable :: hpxir_store,hpetar_store,hpgammar_store
-  integer :: nadj_hprec_local
 
 
   !-----------------------------------------------------------------

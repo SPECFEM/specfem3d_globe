@@ -732,7 +732,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL),parameter :: scale_mass = RHOAV * (R_EARTH**3)
   integer :: irec_local
-  character(len=MAX_STRING_LEN) outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   !scale_mass = RHOAV * (R_EARTH**3)
 
@@ -751,7 +751,7 @@
 
     ! writes out kernels to file
     if (.not. ( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS )) then
-      write(outputname,'(a,i5.5)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
+      write(outputname,'(a,i6.6)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
       open(unit=IOUT,file=trim(outputname),status='unknown',action='write')
       !
       ! r -> z, theta -> -n, phi -> e, plus factor 2 for Mrt,Mrp,Mtp, and 1e-7 to dyne.cm
@@ -772,8 +772,10 @@
       write(IOUT,'(g16.5)') sloc_der(2,irec_local)
       write(IOUT,'(g16.5)') sloc_der(1,irec_local)
       write(IOUT,'(g16.5)') -sloc_der(3,irec_local)
+
       write(IOUT,'(g16.5)') stshift_der(irec_local)
       write(IOUT,'(g16.5)') shdur_der(irec_local)
+
       close(IOUT)
     endif
   enddo
