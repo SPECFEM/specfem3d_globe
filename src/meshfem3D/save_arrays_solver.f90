@@ -474,8 +474,8 @@
 
   integer,intent(in):: iregion_code
 
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust mantle
     if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
@@ -497,7 +497,7 @@
                             num_elem_colors_crust_mantle)
     endif
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
@@ -519,7 +519,7 @@
                             num_elem_colors_outer_core)
     endif
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_INNER_CORE,LOCAL_PATH, &

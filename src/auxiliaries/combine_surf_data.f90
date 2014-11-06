@@ -81,17 +81,17 @@ program combine_surf_data
 
   ! get slice list
   num_node = 0
-  open(unit = 20, file = trim(arg(1)), status = 'unknown',iostat = ios)
+  open(unit = IIN, file = trim(arg(1)), status = 'unknown',iostat = ios)
   if (ios /= 0) stop 'Error opening file'
   do while (1 == 1)
-    read(20,'(a)',iostat=ios) sline
+    read(IIN,'(a)',iostat=ios) sline
     if (ios /= 0) exit
     read(sline,*,iostat=ios) njunk
     if (ios /= 0) exit
     num_node = num_node + 1
     node_list(num_node) = njunk
   enddo
-  close(20)
+  close(IIN)
   print *, 'Slice list: '
   print *, node_list(1:num_node)
   print *, ' '
@@ -139,20 +139,20 @@ program combine_surf_data
   write(prname,'(a,i6.6,a)') trim(indir)//'/proc',node_list(1),'_'
   nspec2D_file = trim(prname) // trim(belm_name)
 
-  open(27,file=trim(nspec2D_file),status='old',form='unformatted')
+  open(IIN,file=trim(nspec2D_file),status='old',form='unformatted')
   if (trim(surfname) == 'CMB' .or. trim(surfname) == 'ICB') then
-    read(27) njunk
-    read(27) njunk
-    read(27) njunk
-    read(27) njunk
-    read(27) nspec_surf
+    read(IIN) njunk
+    read(IIN) njunk
+    read(IIN) njunk
+    read(IIN) njunk
+    read(IIN) nspec_surf
   else
-    read(27) nspec2D_moho_val,nspec2D_400_val,nspec2D_670_val
+    read(IIN) nspec2D_moho_val,nspec2D_400_val,nspec2D_670_val
     if (trim(surfname) == 'Moho') nspec_surf = nspec2D_moho_val
     if (trim(surfname) == '400') nspec_surf = nspec2D_400_val
     if (trim(surfname) == '670') nspec_surf = nspec2D_670_val
   endif
-  close(27)
+  close(IIN)
   nex = int(dsqrt(nspec_surf*1.0d0))
   if (HIGH_RESOLUTION_MESH) then
     npoint = (nex*(NGLLX-1)+1) * (nex*(NGLLY-1)+1)
@@ -173,11 +173,11 @@ program combine_surf_data
   do it = 1, num_node
     write(prname,'(a,i6.6,a)') trim(indir)//'/proc',node_list(it),'_'
     dimension_file = trim(prname) // trim(dimen_name)
-    open(unit=27,file=trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
+    open(unit=IIN,file=trim(dimension_file),status='old',action='read', iostat = ios, form='unformatted')
     if (ios /= 0) stop 'Error opening file'
-    read(27) nspec(it)
-    read(27) nglob(it)
-    close(27)
+    read(IIN) nspec(it)
+    read(IIN) nglob(it)
+    close(IIN)
   enddo
 
   if (FILE_ARRAY_IS_3D) then
@@ -214,60 +214,60 @@ program combine_surf_data
     ! surface topology file
     ibelm_surf_file = trim(prname) // trim(belm_name)
     print *, trim(ibelm_surf_file)
-    open(unit = 28,file = trim(ibelm_surf_file),status='old', iostat = ios, form='unformatted')
+    open(unit = IIN,file = trim(ibelm_surf_file),status='old', iostat = ios, form='unformatted')
     if (ios /= 0) then
       print *,'Error opening ',trim(ibelm_surf_file); stop
     endif
     if (trim(surfname) == 'Moho' .or. trim(surfname) == '400' .or. trim(surfname) == '670') then
-      read(28) njunk1,njunk2,njunk3
+      read(IIN) njunk1,njunk2,njunk3
       if (trim(surfname) == 'Moho') then;
-        read(28) ibelm_surf  ! moho top
+        read(IIN) ibelm_surf  ! moho top
       else if (trim(surfname) == '400' .or. trim(surfname) == '670') then
-        read(28) njunk       ! moho top
-        read(28) njunk       ! moho bot
+        read(IIN) njunk       ! moho top
+        read(IIN) njunk       ! moho bot
         if (trim(surfname) == '400') then
-          read(28) ibelm_surf  ! 400 top
+          read(IIN) ibelm_surf  ! 400 top
         else
-          read(28) njunk       ! 400 top
-          read(28) njunk       ! 400 bot
-          read(28) ibelm_surf  ! 670 top
+          read(IIN) njunk       ! 400 top
+          read(IIN) njunk       ! 400 bot
+          read(IIN) ibelm_surf  ! 670 top
         endif
       endif
     else ! CMB or ICB
-      read(28) njunk; read(28) njunk; read(28) njunk; read(28) njunk; read(28) njunk; read(28) njunk;
-      read(28) njunk; read(28) njunk; read(28) njunk; read(28) njunk
-      read(28) ibelm_surf
+      read(IIN) njunk; read(IIN) njunk; read(IIN) njunk; read(IIN) njunk; read(IIN) njunk; read(IIN) njunk;
+      read(IIN) njunk; read(IIN) njunk; read(IIN) njunk; read(IIN) njunk
+      read(IIN) ibelm_surf
     endif
-    close(28)
+    close(IIN)
 
     ! datafile
     data_file = trim(prname2)//trim(filename)//'.bin'
     print *, trim(data_file)
-    open(unit = 27,file = trim(data_file),status='old', iostat = ios,form ='unformatted')
+    open(unit = IIN,file = trim(data_file),status='old', iostat = ios,form ='unformatted')
     if (ios /= 0) then
       print *,'Error opening ',trim(data_file); stop
     endif
     if (FILE_ARRAY_IS_3D) then
-      read(27) data_3D(:,:,:,1:nspec(it))
+      read(IIN) data_3D(:,:,:,1:nspec(it))
    else
-      read(27) data_2D
+      read(IIN) data_2D
     endif
-    close(27)
+    close(IIN)
 
     ! ibool file
     ibool_file = trim(prname2) // 'solver_data.bin'
     print *, trim(ibool_file)
-    open(unit = 28,file = trim(ibool_file),status='old', iostat = ios, form='unformatted')
+    open(unit = IIN,file = trim(ibool_file),status='old', iostat = ios, form='unformatted')
     if (ios /= 0) then
       print *,'Error opening ',trim(ibool_file); stop
     endif
-    read(28) nspec(it)
-    read(28) nglob(it)
-    read(28) xstore(1:nglob(it))
-    read(28) ystore(1:nglob(it))
-    read(28) zstore(1:nglob(it))
-    read(28) ibool(:,:,:,1:nspec(it))
-    close(28)
+    read(IIN) nspec(it)
+    read(IIN) nglob(it)
+    read(IIN) xstore(1:nglob(it))
+    read(IIN) ystore(1:nglob(it))
+    read(IIN) zstore(1:nglob(it))
+    read(IIN) ibool(:,:,:,1:nspec(it))
+    close(IIN)
 
     mask_ibool(:) = .false.
     num_ibool(:) = 0

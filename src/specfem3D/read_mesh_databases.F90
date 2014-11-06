@@ -608,39 +608,39 @@
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
     ! Stacey put back
-    open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
           status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening crust_mantle boundary.bin file')
 
-    read(27) nspec2D_xmin_crust_mantle
-    read(27) nspec2D_xmax_crust_mantle
-    read(27) nspec2D_ymin_crust_mantle
-    read(27) nspec2D_ymax_crust_mantle
-    read(27) njunk1
-    read(27) njunk2
+    read(IIN) nspec2D_xmin_crust_mantle
+    read(IIN) nspec2D_xmax_crust_mantle
+    read(IIN) nspec2D_ymin_crust_mantle
+    read(IIN) nspec2D_ymax_crust_mantle
+    read(IIN) njunk1
+    read(IIN) njunk2
 
   ! boundary parameters
-    read(27) ibelm_xmin_crust_mantle
-    read(27) ibelm_xmax_crust_mantle
-    read(27) ibelm_ymin_crust_mantle
-    read(27) ibelm_ymax_crust_mantle
-    read(27) ibelm_bottom_crust_mantle
-    read(27) ibelm_top_crust_mantle
+    read(IIN) ibelm_xmin_crust_mantle
+    read(IIN) ibelm_xmax_crust_mantle
+    read(IIN) ibelm_ymin_crust_mantle
+    read(IIN) ibelm_ymax_crust_mantle
+    read(IIN) ibelm_bottom_crust_mantle
+    read(IIN) ibelm_top_crust_mantle
 
-    read(27) normal_xmin_crust_mantle
-    read(27) normal_xmax_crust_mantle
-    read(27) normal_ymin_crust_mantle
-    read(27) normal_ymax_crust_mantle
-    read(27) normal_bottom_crust_mantle
-    read(27) normal_top_crust_mantle
+    read(IIN) normal_xmin_crust_mantle
+    read(IIN) normal_xmax_crust_mantle
+    read(IIN) normal_ymin_crust_mantle
+    read(IIN) normal_ymax_crust_mantle
+    read(IIN) normal_bottom_crust_mantle
+    read(IIN) normal_top_crust_mantle
 
-    read(27) jacobian2D_xmin_crust_mantle
-    read(27) jacobian2D_xmax_crust_mantle
-    read(27) jacobian2D_ymin_crust_mantle
-    read(27) jacobian2D_ymax_crust_mantle
-    read(27) jacobian2D_bottom_crust_mantle
-    read(27) jacobian2D_top_crust_mantle
-    close(27)
+    read(IIN) jacobian2D_xmin_crust_mantle
+    read(IIN) jacobian2D_xmax_crust_mantle
+    read(IIN) jacobian2D_ymin_crust_mantle
+    read(IIN) jacobian2D_ymax_crust_mantle
+    read(IIN) jacobian2D_bottom_crust_mantle
+    read(IIN) jacobian2D_top_crust_mantle
+    close(IIN)
 
     ! read parameters to couple fluid and solid regions
     !
@@ -652,40 +652,40 @@
     ! boundary parameters
 
     ! Stacey put back
-    open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
           status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening outer_core boundary.bin file')
 
-    read(27) nspec2D_xmin_outer_core
-    read(27) nspec2D_xmax_outer_core
-    read(27) nspec2D_ymin_outer_core
-    read(27) nspec2D_ymax_outer_core
-    read(27) njunk1
-    read(27) njunk2
+    read(IIN) nspec2D_xmin_outer_core
+    read(IIN) nspec2D_xmax_outer_core
+    read(IIN) nspec2D_ymin_outer_core
+    read(IIN) nspec2D_ymax_outer_core
+    read(IIN) njunk1
+    read(IIN) njunk2
 
     nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
 
-    read(27) ibelm_xmin_outer_core
-    read(27) ibelm_xmax_outer_core
-    read(27) ibelm_ymin_outer_core
-    read(27) ibelm_ymax_outer_core
-    read(27) ibelm_bottom_outer_core
-    read(27) ibelm_top_outer_core
+    read(IIN) ibelm_xmin_outer_core
+    read(IIN) ibelm_xmax_outer_core
+    read(IIN) ibelm_ymin_outer_core
+    read(IIN) ibelm_ymax_outer_core
+    read(IIN) ibelm_bottom_outer_core
+    read(IIN) ibelm_top_outer_core
 
-    read(27) normal_xmin_outer_core
-    read(27) normal_xmax_outer_core
-    read(27) normal_ymin_outer_core
-    read(27) normal_ymax_outer_core
-    read(27) normal_bottom_outer_core
-    read(27) normal_top_outer_core
+    read(IIN) normal_xmin_outer_core
+    read(IIN) normal_xmax_outer_core
+    read(IIN) normal_ymin_outer_core
+    read(IIN) normal_ymax_outer_core
+    read(IIN) normal_bottom_outer_core
+    read(IIN) normal_top_outer_core
 
-    read(27) jacobian2D_xmin_outer_core
-    read(27) jacobian2D_xmax_outer_core
-    read(27) jacobian2D_ymin_outer_core
-    read(27) jacobian2D_ymax_outer_core
-    read(27) jacobian2D_bottom_outer_core
-    read(27) jacobian2D_top_outer_core
-    close(27)
+    read(IIN) jacobian2D_xmin_outer_core
+    read(IIN) jacobian2D_xmax_outer_core
+    read(IIN) jacobian2D_ymin_outer_core
+    read(IIN) jacobian2D_ymax_outer_core
+    read(IIN) jacobian2D_bottom_outer_core
+    read(IIN) jacobian2D_top_outer_core
+    close(IIN)
 
     !
     ! inner core
@@ -695,47 +695,47 @@
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
 
     ! read info for vertical edges for central cube matching in inner core
-    open(unit=27,file=prname(1:len_trim(prname))//'boundary.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
           status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening inner_core boundary.bin file')
 
-    read(27) nspec2D_xmin_inner_core
-    read(27) nspec2D_xmax_inner_core
-    read(27) nspec2D_ymin_inner_core
-    read(27) nspec2D_ymax_inner_core
-    read(27) njunk1
-    read(27) njunk2
+    read(IIN) nspec2D_xmin_inner_core
+    read(IIN) nspec2D_xmax_inner_core
+    read(IIN) nspec2D_ymin_inner_core
+    read(IIN) nspec2D_ymax_inner_core
+    read(IIN) njunk1
+    read(IIN) njunk2
 
     ! boundary parameters
-    read(27) ibelm_xmin_inner_core
-    read(27) ibelm_xmax_inner_core
-    read(27) ibelm_ymin_inner_core
-    read(27) ibelm_ymax_inner_core
-    read(27) ibelm_bottom_inner_core
-    read(27) ibelm_top_inner_core
-    close(27)
+    read(IIN) ibelm_xmin_inner_core
+    read(IIN) ibelm_xmax_inner_core
+    read(IIN) ibelm_ymin_inner_core
+    read(IIN) ibelm_ymax_inner_core
+    read(IIN) ibelm_bottom_inner_core
+    read(IIN) ibelm_top_inner_core
+    close(IIN)
 
     ! -- Boundary Mesh for crust and mantle ---
     if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-      open(unit=27,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+      open(unit=IIN,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
             status='old',form='unformatted',action='read',iostat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error opening boundary_disc.bin file')
 
-      read(27) njunk1,njunk2,njunk3
+      read(IIN) njunk1,njunk2,njunk3
       if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
                  call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
-      read(27) ibelm_moho_top
-      read(27) ibelm_moho_bot
-      read(27) ibelm_400_top
-      read(27) ibelm_400_bot
-      read(27) ibelm_670_top
-      read(27) ibelm_670_bot
-      read(27) normal_moho
-      read(27) normal_400
-      read(27) normal_670
-      close(27)
+      read(IIN) ibelm_moho_top
+      read(IIN) ibelm_moho_bot
+      read(IIN) ibelm_400_top
+      read(IIN) ibelm_400_bot
+      read(IIN) ibelm_670_top
+      read(IIN) ibelm_670_bot
+      read(IIN) normal_moho
+      read(IIN) normal_400
+      read(IIN) normal_670
+      close(IIN)
     endif
 
   endif ! ADIOS
@@ -1268,17 +1268,17 @@
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
     ! read arrays for Stacey conditions
-    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
           status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for crust mantle')
 
-    read(27) nimin_crust_mantle
-    read(27) nimax_crust_mantle
-    read(27) njmin_crust_mantle
-    read(27) njmax_crust_mantle
-    read(27) nkmin_xi_crust_mantle
-    read(27) nkmin_eta_crust_mantle
-    close(27)
+    read(IIN) nimin_crust_mantle
+    read(IIN) nimax_crust_mantle
+    read(IIN) njmin_crust_mantle
+    read(IIN) njmax_crust_mantle
+    read(IIN) nkmin_xi_crust_mantle
+    read(IIN) nkmin_eta_crust_mantle
+    close(IIN)
 
     ! outer core
 
@@ -1286,17 +1286,17 @@
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
     ! read arrays for Stacey conditions
-    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
           status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for outer core')
 
-    read(27) nimin_outer_core
-    read(27) nimax_outer_core
-    read(27) njmin_outer_core
-    read(27) njmax_outer_core
-    read(27) nkmin_xi_outer_core
-    read(27) nkmin_eta_outer_core
-    close(27)
+    read(IIN) nimin_outer_core
+    read(IIN) nimax_outer_core
+    read(IIN) njmin_outer_core
+    read(IIN) njmax_outer_core
+    read(IIN) nkmin_xi_outer_core
+    read(IIN) nkmin_eta_outer_core
+    close(IIN)
   endif ! ADIOS
 
   end subroutine read_mesh_databases_stacey

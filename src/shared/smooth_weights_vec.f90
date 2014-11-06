@@ -111,8 +111,8 @@
   ratio = (x0*x1 + y0*y1 + z0*z1)/(r0 * r1)
 
   ! checks boundaries of ratio (due to numerical inaccuracies)
-  if( ratio > 1.0_CUSTOM_REAL ) ratio = 1.0_CUSTOM_REAL
-  if( ratio < -1.0_CUSTOM_REAL ) ratio = -1.0_CUSTOM_REAL
+  if (ratio > 1.0_CUSTOM_REAL) ratio = 1.0_CUSTOM_REAL
+  if (ratio < -1.0_CUSTOM_REAL) ratio = -1.0_CUSTOM_REAL
 
   theta = acos( ratio )
 

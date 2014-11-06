@@ -315,30 +315,30 @@
       LOCAL_PATH,NPROCTOT,OUTPUT_FILES)
 
   if (ivalue == 1) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
+    open(unit=IIN,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='old',action='read')
   else if (ivalue == 2) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old',action='read')
+    open(unit=IIN,file=prname(1:len_trim(prname))//'AVS_DXpointschunks.txt',status='old',action='read')
   else if (ivalue == 3) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
+    open(unit=IIN,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='old',action='read')
   endif
 
-  read(10,*) npoin
+  read(IIN,*) npoin
   print *,'There are ',npoin,' global AVS or DX points in the slice'
   ntotpoin = ntotpoin + npoin
-  close(10)
+  close(IIN)
 
   if (ivalue == 1) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
+    open(unit=IIN,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='old',action='read')
   else if (ivalue == 2) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
+    open(unit=IIN,file=prname(1:len_trim(prname))//'AVS_DXelementschunks.txt',status='old',action='read')
   else if (ivalue == 3) then
-    open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
+    open(unit=IIN,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='old',action='read')
   endif
 
-  read(10,*) nspec_ab
+  read(IIN,*) nspec_ab
   print *,'There are ',nspec_ab,' AVS or DX elements in the slice'
   ntotspec = ntotspec + nspec_ab
-  close(10)
+  close(IIN)
 
   enddo
   enddo
@@ -555,15 +555,15 @@
 ! from the lower-left corner, continuing to the lower-right corner and so on
     do iloop_corners = 1,2
 
-    select case(iloop_corners)
-    case(1)
+    select case (iloop_corners)
+    case (1)
       ipointnumber1_horiz = iglob1
       ipointnumber2_horiz = iglob2
 
       ipointnumber1_vert = iglob1
       ipointnumber2_vert = iglob4
 
-    case(2)
+    case (2)
       ipointnumber1_horiz = iglob4
       ipointnumber2_horiz = iglob3
 

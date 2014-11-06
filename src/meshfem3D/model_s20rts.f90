@@ -114,23 +114,23 @@
   character(len=*), parameter :: P12 = 'DATA/s20rts/P12.dat'
 
   ! S20RTS degree 20 S model from Ritsema
-  open(unit=10,file=S20RTS,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=S20RTS,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening file S20RTS.dat')
 
   do k = 0,NK_20
     do l = 0,NS_20
-      read(10,*) S20RTS_V_dvs_a(k,l,0),(S20RTS_V_dvs_a(k,l,m),S20RTS_V_dvs_b(k,l,m),m = 1,l)
+      read(IIN,*) S20RTS_V_dvs_a(k,l,0),(S20RTS_V_dvs_a(k,l,m),S20RTS_V_dvs_b(k,l,m),m = 1,l)
     enddo
   enddo
-  close(10)
+  close(IIN)
 
   ! P12 degree 12 P model from Ritsema
-  open(unit=10,file=P12,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=P12,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening file P12.dat')
 
   do k = 0,NK_20
     do l=0,12
-      read(10,*) S20RTS_V_dvp_a(k,l,0),(S20RTS_V_dvp_a(k,l,m),S20RTS_V_dvp_b(k,l,m),m = 1,l)
+      read(IIN,*) S20RTS_V_dvp_a(k,l,0),(S20RTS_V_dvp_a(k,l,m),S20RTS_V_dvp_b(k,l,m),m = 1,l)
     enddo
     do l=13,NS_20
       S20RTS_V_dvp_a(k,l,0) = 0.0d0
@@ -140,7 +140,7 @@
       enddo
     enddo
   enddo
-  close(10)
+  close(IIN)
 
   ! set up the splines used as radial basis functions by Ritsema
   call s20rts_splhsetup()

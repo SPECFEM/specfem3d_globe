@@ -105,28 +105,28 @@
       y = y_top*rn + y_bot*(ONE-rn)
       z = z_top*rn + z_bot*(ONE-rn)
 
-      select case(ichunk)
-        case(CHUNK_AB)
+      select case (ichunk)
+        case (CHUNK_AB)
           xelm(ignod) = -y
           yelm(ignod) = x
           zelm(ignod) = z
-        case(CHUNK_AB_ANTIPODE)
+        case (CHUNK_AB_ANTIPODE)
           xelm(ignod) = -y
           yelm(ignod) = -x
           zelm(ignod) = -z
-        case(CHUNK_AC)
+        case (CHUNK_AC)
           xelm(ignod) = -y
           yelm(ignod) = -z
           zelm(ignod) = x
-        case(CHUNK_AC_ANTIPODE)
+        case (CHUNK_AC_ANTIPODE)
           xelm(ignod) = -y
           yelm(ignod) = z
           zelm(ignod) = -x
-        case(CHUNK_BC)
+        case (CHUNK_BC)
           xelm(ignod) = -z
           yelm(ignod) = y
           zelm(ignod) = x
-        case(CHUNK_BC_ANTIPODE)
+        case (CHUNK_BC_ANTIPODE)
           xelm(ignod) = z
           yelm(ignod) = -y
           zelm(ignod) = x
@@ -163,9 +163,9 @@
       rgb = (r_bottom / R_EARTH)*gamma
 
     ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
-      select case(ichunk)
+      select case (ichunk)
 
-        case(CHUNK_AB)
+        case (CHUNK_AB)
 
           x_top = -y*rgt
           y_top = x*rgt
@@ -175,7 +175,7 @@
           y_bot = x*rgb
           z_bot = rgb
 
-        case(CHUNK_AB_ANTIPODE)
+        case (CHUNK_AB_ANTIPODE)
 
           x_top = -y*rgt
           y_top = -x*rgt
@@ -185,7 +185,7 @@
           y_bot = -x*rgb
           z_bot = -rgb
 
-        case(CHUNK_AC)
+        case (CHUNK_AC)
 
           x_top = -y*rgt
           y_top = -rgt
@@ -195,7 +195,7 @@
           y_bot = -rgb
           z_bot = x*rgb
 
-        case(CHUNK_AC_ANTIPODE)
+        case (CHUNK_AC_ANTIPODE)
 
           x_top = -y*rgt
           y_top = rgt
@@ -205,7 +205,7 @@
           y_bot = rgb
           z_bot = -x*rgb
 
-        case(CHUNK_BC)
+        case (CHUNK_BC)
 
           x_top = -rgt
           y_top = y*rgt
@@ -215,7 +215,7 @@
           y_bot = y*rgb
           z_bot = x*rgb
 
-        case(CHUNK_BC_ANTIPODE)
+        case (CHUNK_BC_ANTIPODE)
 
           x_top = rgt
           y_top = -y*rgt
@@ -356,7 +356,7 @@
   if (REUSE_EXISTING_OBSERVATION_SURF) then
 
     if (myrank == 0) then
-      open(unit=9965,file=trim(OUTPUT_FILES)//'/saved_observation_grid_real_x_y_z_used_by_the_code.txt',status='old', &
+      open(unit=IIN,file=trim(OUTPUT_FILES)//'/saved_observation_grid_real_x_y_z_used_by_the_code.txt',status='old', &
                                                                                                action='read',iostat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error opening file for REUSE_EXISTING_OBSERVATION_SURF')
 
@@ -365,11 +365,11 @@
         do iy = 1,NY_OBSERVATION
           do ix = 1,NX_OBSERVATION
             ! read the saved values
-            read(9965,*) x_observation(ix,iy,ichunk),y_observation(ix,iy,ichunk),z_observation(ix,iy,ichunk)
+            read(IIN,*) x_observation(ix,iy,ichunk),y_observation(ix,iy,ichunk),z_observation(ix,iy,ichunk)
           enddo
         enddo
       enddo
-      close(unit=9965)
+      close(unit=IIN)
 
     endif
 
@@ -429,39 +429,39 @@
       rgt = R_UNIT_SPHERE*gamma
 
     ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
-      select case(ichunk)
+      select case (ichunk)
 
-        case(CHUNK_AB)
+        case (CHUNK_AB)
 
           x_top = -y*rgt
           y_top = x*rgt
           z_top = rgt
 
-        case(CHUNK_AB_ANTIPODE)
+        case (CHUNK_AB_ANTIPODE)
 
           x_top = -y*rgt
           y_top = -x*rgt
           z_top = -rgt
 
-        case(CHUNK_AC)
+        case (CHUNK_AC)
 
           x_top = -y*rgt
           y_top = -rgt
           z_top = x*rgt
 
-        case(CHUNK_AC_ANTIPODE)
+        case (CHUNK_AC_ANTIPODE)
 
           x_top = -y*rgt
           y_top = rgt
           z_top = -x*rgt
 
-        case(CHUNK_BC)
+        case (CHUNK_BC)
 
           x_top = -rgt
           y_top = y*rgt
           z_top = x*rgt
 
-        case(CHUNK_BC_ANTIPODE)
+        case (CHUNK_BC_ANTIPODE)
 
           x_top = rgt
           y_top = -y*rgt

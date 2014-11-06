@@ -85,7 +85,7 @@
 
   if (DEBUG) then
     ! global point number and coordinates left MPI 1D buffer
-    open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='unknown')
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'ibool1D_leftxi_lefteta.txt',status='unknown')
   endif
 
   ! erase the logical mask used to mark points already found
@@ -126,8 +126,8 @@
 
           ! debug file output
           if (DEBUG) then
-            write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+            write(IOUT,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                          ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
         endif
       enddo
@@ -136,10 +136,10 @@
 
   if (DEBUG) then
     ! put flag to indicate end of the list of points
-    write(10,*) '0  0  0.  0.  0.'
+    write(IOUT,*) '0  0  0.  0.  0.'
     ! write total number of points
-    write(10,*) npoin1D
-    close(10)
+    write(IOUT,*) npoin1D
+    close(IOUT)
   endif
 
   ! compare number of edge elements detected to analytical value
@@ -150,7 +150,7 @@
 
   if (DEBUG) then
     ! global point number and coordinates right MPI 1D buffer
-    open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='unknown')
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='unknown')
   endif
 
   ! erase the logical mask used to mark points already found
@@ -189,8 +189,8 @@
 
           ! debug file output
           if (DEBUG) then
-            write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+            write(IOUT,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                          ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
         endif
       enddo
@@ -199,10 +199,10 @@
 
   if (DEBUG) then
     ! put flag to indicate end of the list of points
-    write(10,*) '0  0  0.  0.  0.'
+    write(IOUT,*) '0  0  0.  0.  0.'
     ! write total number of points
-    write(10,*) npoin1D
-    close(10)
+    write(IOUT,*) npoin1D
+    close(IOUT)
   endif
 
   ! compare number of edge elements and points detected to analytical value
@@ -217,7 +217,7 @@
 
   if (DEBUG) then
     ! global point number and coordinates left MPI 1D buffer
-    open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='unknown')
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='unknown')
   endif
 
   ! erase the logical mask used to mark points already found
@@ -260,8 +260,8 @@
 
           ! debug file output
           if (DEBUG) then
-            write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+            write(IOUT,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                          ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
         endif
       enddo
@@ -270,10 +270,10 @@
 
   if (DEBUG) then
     ! put flag to indicate end of the list of points
-    write(10,*) '0  0  0.  0.  0.'
+    write(IOUT,*) '0  0  0.  0.  0.'
     ! write total number of points
-    write(10,*) npoin1D
-    close(10)
+    write(IOUT,*) npoin1D
+    close(IOUT)
   endif
 
   ! compare number of edge elements detected to analytical value
@@ -284,7 +284,7 @@
 
   if (DEBUG) then
     ! global point number and coordinates right MPI 1D buffer
-    open(unit=10,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='unknown')
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='unknown')
   endif
 
   ! erase the logical mask used to mark points already found
@@ -328,8 +328,8 @@
 
           ! debug file output
           if (DEBUG) then
-            write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                        ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+            write(IOUT,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                          ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
           endif
         endif
       enddo
@@ -338,10 +338,10 @@
 
   if (DEBUG) then
     ! put flag to indicate end of the list of points
-    write(10,*) '0  0  0.  0.  0.'
+    write(IOUT,*) '0  0  0.  0.  0.'
     ! write total number of points
-    write(10,*) npoin1D
-    close(10)
+    write(IOUT,*) npoin1D
+    close(IOUT)
   endif
 
   ! compare number of edge elements and points detected to analytical value

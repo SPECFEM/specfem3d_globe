@@ -27,7 +27,7 @@ __global__ void get_maximum_vector_kernel(realw* array, int size, realw* d_max){
       // summation:
       //sdata[tid] += sdata[tid + s];
       // maximum:
-      if( sdata[tid] < sdata[tid + s] ) sdata[tid] = sdata[tid + s];
+      if (sdata[tid] < sdata[tid + s]) sdata[tid] = sdata[tid + s];
     }
     __syncthreads();
   }

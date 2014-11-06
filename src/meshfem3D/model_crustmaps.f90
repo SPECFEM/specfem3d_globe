@@ -203,7 +203,7 @@
 
   write(eucrust,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
 
-  open(unit = 1,file=trim(eucrust),status='old',action='read',iostat=ier)
+  open(unit = IIN,file=trim(eucrust),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(eucrust), '": ', ier
     call flush_IMAIN()
@@ -212,9 +212,9 @@
   endif
 
   do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
+    read(IIN,*) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
   enddo
-  close(1)
+  close(IIN)
 
   end subroutine read_general_crustmap_layer
 

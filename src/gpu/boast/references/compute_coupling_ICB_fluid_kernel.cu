@@ -34,7 +34,7 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
   realw weight;
 
   // for surfaces elements exactly at the top of the inner core (outer core bottom)
-  if( iface < NSPEC2D_TOP_IC ){
+  if (iface < NSPEC2D_TOP_IC ){
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = ibelm_top_inner_core[iface] - 1;
@@ -56,7 +56,7 @@ __global__ void compute_coupling_ICB_fluid_kernel(realw* displ_inner_core,
     iglob_ic = ibool_inner_core[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
 
     // compute pressure, taking gravity into account
-    if( GRAVITY ){
+    if (GRAVITY){
       pressure = RHO_BOTTOM_OC * ( - accel_outer_core[iglob_oc]
                                    + minus_g_icb * ( displ_inner_core[iglob_ic*3]*nx
                                                    + displ_inner_core[iglob_ic*3+1]*ny

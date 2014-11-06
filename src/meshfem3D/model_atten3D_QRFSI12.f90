@@ -130,24 +130,24 @@
   QRFSI12_ref='DATA/QRFSI12/ref_QRFSI12'
 
 ! get the dq model coefficients
-  open(unit=10,file=QRFSI12,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=QRFSI12,status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(QRFSI12), '": ', ier
     call exit_MPI(0, 'Error model QRFSI12')
   endif
 
   do k = 1,NKQ
-    read(10,*) indexval
+    read(IIN,*) indexval
     j = 0
     do l = 0,MAXL_Q
       do m = 0,l
         if (m == 0) then
           j=j+1
-          read(10,*)ll,mm,v1
+          read(IIN,*)ll,mm,v1
           QRFSI12_Q_dqmu(k,j)=v1
         else
           j=j+2
-          read(10,*)ll,mm,v1,v2
+          read(IIN,*)ll,mm,v1,v2
   !       write(*,*) 'k,l,m,ll,mm:',k,l,m,ll,mm,v1
           QRFSI12_Q_dqmu(k,j-1)=2.*v1
           QRFSI12_Q_dqmu(k,j)=-2.*v2
@@ -155,7 +155,7 @@
       enddo
     enddo
   enddo
-  close(10)
+  close(IIN)
 
 ! get the depths (km) of the spline knots
   QRFSI12_Q_spknt(1) = 24.4d0
@@ -168,16 +168,16 @@
   QRFSI12_Q_spknt(8) = 650.d0
 
 ! get the depths and 1/Q values of the reference model
-  open(11,file=QRFSI12_ref,status='old',action='read',iostat=ier)
+  open(IIN,file=QRFSI12_ref,status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(QRFSI12_ref), '": ', ier
     call exit_MPI(0, 'Error model QRFSI12')
   endif
 
   do j = 1,NDEPTHS_REFQ
-    read(11,*)QRFSI12_Q_refdepth(j),QRFSI12_Q_refqmu(j)
+    read(IIN,*)QRFSI12_Q_refdepth(j),QRFSI12_Q_refqmu(j)
   enddo
-  close(11)
+  close(IIN)
 
 
   end subroutine read_atten_model_3D_QRFSI12

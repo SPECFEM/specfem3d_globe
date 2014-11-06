@@ -53,8 +53,8 @@
   !
   ! note: arrays is_on_a_slice_edge_.. have flags set for elements which need to
   !         communicate with other MPI processes
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust_mantle
     nspec_outer_crust_mantle = count( is_on_a_slice_edge )
     nspec_inner_crust_mantle = NSPEC_CRUST_MANTLE - nspec_outer_crust_mantle
@@ -100,7 +100,7 @@
                                 is_on_a_slice_edge,filename)
     endif
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer_core
     nspec_outer_outer_core = count( is_on_a_slice_edge )
     nspec_inner_outer_core = NSPEC_OUTER_CORE - nspec_outer_outer_core
@@ -142,7 +142,7 @@
                                 is_on_a_slice_edge,filename)
     endif
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner_core
     nspec_outer_inner_core = count( is_on_a_slice_edge )
     nspec_inner_inner_core = NSPEC_INNER_CORE - nspec_outer_inner_core

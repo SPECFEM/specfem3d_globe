@@ -117,7 +117,7 @@
   character(len=*), parameter :: P12 = 'DATA/s20rts/P12.dat'    !model P12 is in s20rts data directory
 
   ! S40RTS degree 40 S model from Ritsema
-  open(unit=10,file=trim(S40RTS),status='old',action='read',iostat=ier)
+  open(unit=IIN,file=trim(S40RTS),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(S40RTS), '": ', ier
     call flush_IMAIN()
@@ -127,20 +127,20 @@
 
   do k = 0,NK_20
     do l = 0,NS_40
-      read(10,*) S40RTS_V_dvs_a(k,l,0),(S40RTS_V_dvs_a(k,l,m),S40RTS_V_dvs_b(k,l,m),m = 1,l)
+      read(IIN,*) S40RTS_V_dvs_a(k,l,0),(S40RTS_V_dvs_a(k,l,m),S40RTS_V_dvs_b(k,l,m),m = 1,l)
     enddo
   enddo
-  close(10)
+  close(IIN)
 
   ! P12 degree 12 P model from Ritsema
-  open(unit=10,file=trim(P12),status='old',action='read',iostat=ier)
+  open(unit=IIN,file=trim(P12),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(P12), '": ', ier
     call exit_MPI(0, 'Error : opening model s40rts data file DATA/s20rts/P12.dat failed, please check...')
   endif
   do k = 0,NK_20
     do l=0,12
-      read(10,*) S40RTS_V_dvp_a(k,l,0),(S40RTS_V_dvp_a(k,l,m),S40RTS_V_dvp_b(k,l,m),m = 1,l)
+      read(IIN,*) S40RTS_V_dvp_a(k,l,0),(S40RTS_V_dvp_a(k,l,m),S40RTS_V_dvp_b(k,l,m),m = 1,l)
     enddo
     do l=13,NS_40
       S40RTS_V_dvp_a(k,l,0) = 0.0d0
@@ -150,7 +150,7 @@
       enddo
     enddo
   enddo
-  close(10)
+  close(IIN)
 
   ! set up the splines used as radial basis functions by Ritsema
   call s40rts_splhsetup()

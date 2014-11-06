@@ -614,24 +614,24 @@
     write(IMAIN,*)
     write(IMAIN,*) 'Movie volume:'
     write(IMAIN,*) '  Writing to movie3D*** files on local disk databases directory'
-    select case( MOVIE_VOLUME_TYPE )
-    case( 1 )
+    select case (MOVIE_VOLUME_TYPE)
+    case (1)
       write(IMAIN,*) '  movie output: strains'
-    case( 2 )
+    case (2)
       write(IMAIN,*) '  movie output: time integral of strains'
-    case( 3 )
+    case (3)
       write(IMAIN,*) '  movie output: potency or integral of strain'
-    case( 4 )
+    case (4)
       write(IMAIN,*) '  movie output: divergence and curl'
-    case( 5 )
+    case (5)
       write(IMAIN,*) '  movie output: displacement'
-    case( 6 )
+    case (6)
       write(IMAIN,*) '  movie output: velocity'
-    case( 7 )
+    case (7)
       write(IMAIN,*) '  movie output: norm of displacement'
-    case( 8 )
+    case (8)
       write(IMAIN,*) '  movie output: norm of velocity'
-    case( 9 )
+    case (9)
       write(IMAIN,*) '  movie output: norm of acceleration'
     case default
       call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')

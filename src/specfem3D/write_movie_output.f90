@@ -109,8 +109,8 @@
     if (mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 &
       .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
-      select case( MOVIE_VOLUME_TYPE )
-      case( 1 )
+      select case (MOVIE_VOLUME_TYPE)
+      case (1)
         ! output strains
 
         ! gets resulting array values onto CPU
@@ -130,7 +130,7 @@
                     muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-      case( 2, 3 )
+      case (2, 3)
         ! output the Time Integral of Strain, or \mu*TIS
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
@@ -140,7 +140,7 @@
                     muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-      case( 4 )
+      case (4)
         ! output divergence and curl in whole volume
 
         ! gets resulting array values onto CPU
@@ -171,7 +171,7 @@
                         epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                         LOCAL_TMP_PATH)
 
-      case( 5 )
+      case (5)
         !output displacement
         if (GPU_MODE) then
           call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
@@ -183,7 +183,7 @@
                                        displ_crust_mantle, &
                                        scalingval,mask_3dmovie,nu_3dmovie)
 
-      case( 6 )
+      case (6)
         !output velocity
         if (GPU_MODE) then
           call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
@@ -195,7 +195,7 @@
                                        veloc_crust_mantle, &
                                        scalingval,mask_3dmovie,nu_3dmovie)
 
-      case( 7 )
+      case (7)
         ! output norm of displacement
 
         ! gets resulting array values onto CPU
@@ -210,7 +210,7 @@
                         displ_crust_mantle,displ_inner_core,displ_outer_core, &
                         ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
-      case( 8 )
+      case (8)
         ! output norm of velocity
 
         ! gets resulting array values onto CPU
@@ -225,7 +225,7 @@
                         veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
                         ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
-      case( 9 )
+      case (9)
         ! output norm of acceleration
 
         ! gets resulting array values onto CPU

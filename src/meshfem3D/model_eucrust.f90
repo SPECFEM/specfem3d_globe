@@ -122,7 +122,7 @@
   eucrust_ucdepth(:) = ZERO
 
   ! opens data file
-  open(unit=11,file=filename,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=filename,status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(filename), '": ', ier
     call flush_IMAIN()
@@ -131,12 +131,12 @@
   endif
 
   ! skip first line
-  read(11,*)
+  read(IIN,*)
 
   ! data
   do i = 1,num_eucrust
 
-    read(11,'(a80)',iostat=ier) line
+    read(IIN,'(a80)',iostat=ier) line
     if (ier /= 0 ) stop 'Error reading EUcrust file'
 
     read(line,*)lon,lat,vp_uppercrust,vp_lowercrust,vp_avg,topo,basement,upper_lower_depth,moho_depth
@@ -151,7 +151,7 @@
     eucrust_ucdepth(i) = upper_lower_depth
 
   enddo
-  close(11)
+  close(IIN)
 
   end subroutine read_EuCrust
 

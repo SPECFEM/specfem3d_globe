@@ -43,7 +43,7 @@ subroutine read_model_iso()
   allocate(model_vp(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_vs(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_rho(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating model arrays'
+  if (ier /= 0) stop 'Error allocating model arrays'
 
   ! initializes arrays
   model_vp = 0.0_CUSTOM_REAL
@@ -148,7 +148,7 @@ subroutine read_model_tiso()
            model_vsh(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_eta(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_rho(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating model arrays'
+  if (ier /= 0) stop 'Error allocating model arrays'
 
   ! initializes arrays
   model_vpv = 0.0_CUSTOM_REAL
@@ -314,16 +314,16 @@ subroutine read_model_database()
 
   ! allocate arrays for storing the databases
   allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating ibool array for databases'
+  if (ier /= 0) stop 'Error allocating ibool array for databases'
   allocate(ispec_is_tiso(NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating ispec_is_tiso array for databases'
+  if (ier /= 0) stop 'Error allocating ispec_is_tiso array for databases'
 
   ! mesh node locations
   allocate(x(NGLOB),y(NGLOB),z(NGLOB),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating x/y/z arrays for mesh nodes'
+  if (ier /= 0) stop 'Error allocating x/y/z arrays for mesh nodes'
 
   allocate(dummy_idoubling(NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating idoubling array for databases'
+  if (ier /= 0) stop 'Error allocating idoubling array for databases'
 
   read(IIN) x(1:nglob)
   read(IIN) y(1:nglob)

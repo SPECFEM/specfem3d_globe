@@ -87,7 +87,7 @@
   integer iregion_code
 
 ! writing points
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='unknown')
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXpointsfaces.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -151,7 +151,7 @@
   npoin = count(mask_ibool(:))
 
 ! number of points in AVS or DX file
-  write(10,*) npoin
+  write(IOUT,*) npoin
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -176,26 +176,26 @@
     if (.not. mask_ibool(iglob1)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob1) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,1,1,ispec)), &
-              sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,1,1,ispec)), &
+                    sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
     endif
     if (.not. mask_ibool(iglob4)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob4) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
-              sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
+                    sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
     endif
     if (.not. mask_ibool(iglob8)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob8) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
+                    sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
     endif
     if (.not. mask_ibool(iglob5)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob5) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
-              sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
+                    sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
     endif
     mask_ibool(iglob1) = .true.
     mask_ibool(iglob4) = .true.
@@ -208,26 +208,26 @@
     if (.not. mask_ibool(iglob2)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob2) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
-              sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
+                    sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
     endif
     if (.not. mask_ibool(iglob3)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob3) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
+                    sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
     endif
     if (.not. mask_ibool(iglob7)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob7) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
+                    sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
     endif
     if (.not. mask_ibool(iglob6)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob6) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
+                    sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
     endif
     mask_ibool(iglob2) = .true.
     mask_ibool(iglob3) = .true.
@@ -240,26 +240,26 @@
     if (.not. mask_ibool(iglob1)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob1) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,1,1,ispec)), &
-              sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,1,1,ispec)), &
+                    sngl(ystore(1,1,1,ispec)),sngl(zstore(1,1,1,ispec))
     endif
     if (.not. mask_ibool(iglob2)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob2) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
-              sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,1,ispec)), &
+                    sngl(ystore(NGLLX,1,1,ispec)),sngl(zstore(NGLLX,1,1,ispec))
     endif
     if (.not. mask_ibool(iglob6)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob6) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
+                    sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
     endif
     if (.not. mask_ibool(iglob5)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob5) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
-              sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
+                    sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
     endif
     mask_ibool(iglob1) = .true.
     mask_ibool(iglob2) = .true.
@@ -272,26 +272,26 @@
     if (.not. mask_ibool(iglob4)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob4) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
-              sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,1,ispec)), &
+                    sngl(ystore(1,NGLLY,1,ispec)),sngl(zstore(1,NGLLY,1,ispec))
     endif
     if (.not. mask_ibool(iglob3)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob3) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,1,ispec)), &
+                    sngl(ystore(NGLLX,NGLLY,1,ispec)),sngl(zstore(NGLLX,NGLLY,1,ispec))
     endif
     if (.not. mask_ibool(iglob7)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob7) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
+                    sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
     endif
     if (.not. mask_ibool(iglob8)) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglob8) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
+                    sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
     endif
     mask_ibool(iglob4) = .true.
     mask_ibool(iglob3) = .true.
@@ -306,17 +306,17 @@
   if (numpoin /= npoin) &
     call exit_MPI(myrank,'incorrect number of global points in AVS or DX file creation')
 
-  close(10)
+  close(IOUT)
 
 ! output global AVS or DX elements
 
 ! writing elements
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='unknown')
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces.txt',status='unknown')
  if (ISOTROPIC_3D_MANTLE) &
     open(unit=11,file=prname(1:len_trim(prname))//'AVS_DXelementsfaces_dvp_dvs.txt',status='unknown')
 
 ! number of elements in AVS or DX file
-  write(10,*) nspecface
+  write(IOUT,*) nspecface
 
   ispecface = 0
   do ispec = 1,nspec
@@ -407,7 +407,7 @@
 ! face xi = xi_min
   if (iMPIcut_xi(1,ispec)) then
     ispecface = ispecface + 1
-    write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
+    write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
                   num_ibool_AVS_DX(iglob4),num_ibool_AVS_DX(iglob8), &
                   num_ibool_AVS_DX(iglob5)
     if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
@@ -416,7 +416,7 @@
 ! face xi = xi_max
   if (iMPIcut_xi(2,ispec)) then
     ispecface = ispecface + 1
-    write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob2), &
+    write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob2), &
                   num_ibool_AVS_DX(iglob3),num_ibool_AVS_DX(iglob7), &
                   num_ibool_AVS_DX(iglob6)
     if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
@@ -425,7 +425,7 @@
 ! face eta = eta_min
   if (iMPIcut_eta(1,ispec)) then
     ispecface = ispecface + 1
-    write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
+    write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob1), &
                   num_ibool_AVS_DX(iglob2),num_ibool_AVS_DX(iglob6), &
                   num_ibool_AVS_DX(iglob5)
     if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
@@ -434,7 +434,7 @@
 ! face eta = eta_max
   if (iMPIcut_eta(2,ispec)) then
     ispecface = ispecface + 1
-    write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob4), &
+    write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglob4), &
                   num_ibool_AVS_DX(iglob3),num_ibool_AVS_DX(iglob7), &
                   num_ibool_AVS_DX(iglob8)
     if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
@@ -447,7 +447,7 @@
   if (ispecface /= nspecface) &
     call exit_MPI(myrank,'incorrect number of surface elements in AVS or DX file creation')
 
-  close(10)
+  close(IOUT)
   if (ISOTROPIC_3D_MANTLE) close(11)
 
   end subroutine write_AVS_DX_global_faces_data

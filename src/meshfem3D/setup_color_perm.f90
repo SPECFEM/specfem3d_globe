@@ -55,8 +55,8 @@
     call flush_IMAIN()
   endif
 
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust mantle
     ! initializes
     num_colors_outer_crust_mantle = 0
@@ -108,7 +108,7 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
     endif
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     ! initializes
     num_colors_outer_outer_core = 0
@@ -160,7 +160,7 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
     endif
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     ! initializes
     num_colors_outer_inner_core = 0
@@ -232,7 +232,7 @@
 
   use meshfem3D_par,only: &
     LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
-    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN
+    IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN,IOUT
 
   use meshfem3D_par,only: &
     idoubling
@@ -310,11 +310,11 @@
   if (ier /= 0 ) stop 'Error allocating ispec_is_d array'
 
   ! sets up domain coloring arrays
-  select case(idomain)
-  case( IREGION_CRUST_MANTLE,IREGION_OUTER_CORE )
+  select case (idomain)
+  case (IREGION_CRUST_MANTLE,IREGION_OUTER_CORE)
     ! crust/mantle and outer core region meshes use all elements
     ispec_is_d(:) = .true.
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! initializes
     ispec_is_d(:) = .true.
     ! excludes fictitious elements from coloring
@@ -444,18 +444,18 @@
     ! debug file output
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'num_of_elems_in_this_color_'//str_domain(idomain)//'.dat'
-    open(unit=99,file=trim(filename),status='unknown',iostat=ier)
+    open(unit=IOUT,file=trim(filename),status='unknown',iostat=ier)
     if (ier /= 0 ) stop 'Error opening num_of_elems_in_this_color file'
     ! number of colors for outer elements
-    write(99,*) nb_colors_outer_elements
+    write(IOUT,*) nb_colors_outer_elements
     ! number of colors for inner elements
-    write(99,*) nb_colors_inner_elements
+    write(IOUT,*) nb_colors_inner_elements
     ! number of elements in each color
     ! outer elements
     do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
-      write(99,*) num_of_elems_in_this_color(icolor)
+      write(IOUT,*) num_of_elems_in_this_color(icolor)
     enddo
-    close(99)
+    close(IOUT)
   endif
 
   ! checks non-zero elements in colors
@@ -473,8 +473,8 @@
 
 
   ! sets up domain coloring arrays
-  select case(idomain)
-  case( IREGION_CRUST_MANTLE )
+  select case (idomain)
+  case (IREGION_CRUST_MANTLE)
     ! crust/mantle domains
     num_colors_outer_crust_mantle = nb_colors_outer_elements
     num_colors_inner_crust_mantle = nb_colors_inner_elements
@@ -484,7 +484,7 @@
 
     num_elem_colors_crust_mantle(:) = num_of_elems_in_this_color(:)
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core domains
     num_colors_outer_outer_core = nb_colors_outer_elements
     num_colors_inner_outer_core = nb_colors_inner_elements
@@ -494,7 +494,7 @@
 
     num_elem_colors_outer_core(:) = num_of_elems_in_this_color(:)
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core domains
     num_colors_outer_inner_core = nb_colors_outer_elements
     num_colors_inner_inner_core = nb_colors_inner_elements
@@ -871,8 +871,8 @@
     endif
   endif
 
-  select case( idomain )
-  case( IREGION_CRUST_MANTLE )
+  select case (idomain)
+  case (IREGION_CRUST_MANTLE)
     ! checks number of elements
     if (nspec /= NSPEC_CRUST_MANTLE ) &
       call exit_MPI(myrank,'Error in permutation nspec should be NSPEC_CRUST_MANTLE')
@@ -960,7 +960,7 @@
       enddo
     endif
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! checks number of elements
     if (nspec /= NSPEC_OUTER_CORE ) &
       call exit_MPI(myrank,'Error in permutation nspec should be NSPEC_OUTER_CORE')
@@ -973,7 +973,7 @@
       deallocate(temp_array_real)
     endif
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! checks number of elements
     if (nspec /= NSPEC_INNER_CORE ) &
       call exit_MPI(myrank,'Error in permutation nspec should be NSPEC_INNER_CORE')
@@ -1060,23 +1060,23 @@
 !    allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements))
 !
 !    ! save mesh coloring
-!    open(unit=99,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat', &
+!    open(unit=IOUT,file=prname(1:len_trim(prname))//'num_of_elems_in_this_color.dat', &
 !         status='unknown',iostat=ier)
 !    if (ier /= 0 ) call exit_mpi(myrank,'Error opening num_of_elems_in_this_color file')
 !
 !    ! number of colors for outer elements
-!    write(99,*) nb_colors_outer_elements
+!    write(IOUT,*) nb_colors_outer_elements
 !
 !    ! number of colors for inner elements
-!    write(99,*) nb_colors_inner_elements
+!    write(IOUT,*) nb_colors_inner_elements
 !
 !    ! number of elements in each color
 !    do icolor = 1, nb_colors_outer_elements + nb_colors_inner_elements
 !      num_of_elems_in_this_color(icolor) = first_elem_number_in_this_color(icolor+1) &
 !                                          - first_elem_number_in_this_color(icolor)
-!      write(99,*) num_of_elems_in_this_color(icolor)
+!      write(IOUT,*) num_of_elems_in_this_color(icolor)
 !    enddo
-!    close(99)
+!    close(IOUT)
 !
 !    ! check that the sum of all the numbers of elements found in each color is equal
 !    ! to the total number of elements in the mesh
@@ -1149,79 +1149,79 @@
 !
 !  if (myrank == 0 .and. iregion_code == IREGION_CRUST_MANTLE) then
 !    ! write a header file for the Fortran version of the solver
-!    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h', &
+!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_f90.h', &
 !          status='unknown',iostat=ier)
 !    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file values_from_mesher_f90.h')
 !
-!    write(99,*) 'integer, parameter :: NSPEC = ',nspec
-!    write(99,*) 'integer, parameter :: NGLOB = ',nglob
+!    write(IOUT,*) 'integer, parameter :: NSPEC = ',nspec
+!    write(IOUT,*) 'integer, parameter :: NGLOB = ',nglob
 !    !!! DK DK use 1000 time steps only for the scaling tests
-!    write(99,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
-!    write(99,*) 'real(kind=4), parameter :: deltat = ',DT
-!    write(99,*)
-!    write(99,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
-!    write(99,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
-!    write(99,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
-!    write(99,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
-!    write(99,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
-!    write(99,*)
-!    write(99,*) '! element number of the source and of the station'
-!    write(99,*) '! after permutation of the elements by mesh coloring'
-!    write(99,*) '! and inner/outer set splitting in the mesher'
-!    write(99,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
-!    write(99,*) 'integer, parameter :: RANK_SOURCE = 0'
-!    write(99,*)
-!    write(99,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
-!    write(99,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
+!    write(IOUT,*) 'integer, parameter :: NSTEP = 1000 !!!!!!!!!!! ',nstep
+!    write(IOUT,*) 'real(kind=4), parameter :: deltat = ',DT
+!    write(IOUT,*)
+!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_XMIN_XMAX = ',npoin2D_xi
+!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_YMIN_YMAX = ',npoin2D_eta
+!    write(IOUT,*) 'integer, parameter ::  NGLOB2DMAX_ALL = ',max(npoin2D_xi,npoin2D_eta)
+!    write(IOUT,*) 'integer, parameter ::  NPROC_XI = ',NPROC_XI
+!    write(IOUT,*) 'integer, parameter ::  NPROC_ETA = ',NPROC_ETA
+!    write(IOUT,*)
+!    write(IOUT,*) '! element number of the source and of the station'
+!    write(IOUT,*) '! after permutation of the elements by mesh coloring'
+!    write(IOUT,*) '! and inner/outer set splitting in the mesher'
+!    write(IOUT,*) 'integer, parameter :: NSPEC_SOURCE = ',perm(NSPEC/3)
+!    write(IOUT,*) 'integer, parameter :: RANK_SOURCE = 0'
+!    write(IOUT,*)
+!    write(IOUT,*) 'integer, parameter :: RANK_STATION = (NPROC_XI*NPROC_ETA - 1)'
+!    write(IOUT,*) 'integer, parameter :: NSPEC_STATION = ',perm(2*NSPEC/3)
 !
 !    ! save coordinates of the seismic source
-!    !   write(99,*) xstore(2,2,2,10);
-!    !   write(99,*) ystore(2,2,2,10);
-!    !   write(99,*) zstore(2,2,2,10);
+!    !   write(IOUT,*) xstore(2,2,2,10);
+!    !   write(IOUT,*) ystore(2,2,2,10);
+!    !   write(IOUT,*) zstore(2,2,2,10);
 !
 !    ! save coordinates of the seismic station
-!    !   write(99,*) xstore(2,2,2,nspec-10);
-!    !   write(99,*) ystore(2,2,2,nspec-10);
-!    !   write(99,*) zstore(2,2,2,nspec-10);
-!    close(99)
+!    !   write(IOUT,*) xstore(2,2,2,nspec-10);
+!    !   write(IOUT,*) ystore(2,2,2,nspec-10);
+!    !   write(IOUT,*) zstore(2,2,2,nspec-10);
+!    close(IOUT)
 !
 !    !! write a header file for the C version of the solver
-!    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_C.h', &
+!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_C.h', &
 !          status='unknown',iostat=ier)
 !    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file values_from_mesher_C.h')
 !
-!    write(99,*) '#define NSPEC ',nspec
-!    write(99,*) '#define NGLOB ',nglob
-!    !!    write(99,*) '#define NSTEP ',nstep
+!    write(IOUT,*) '#define NSPEC ',nspec
+!    write(IOUT,*) '#define NGLOB ',nglob
+!    !!    write(IOUT,*) '#define NSTEP ',nstep
 !    !!! DK DK use 1000 time steps only for the scaling tests
-!    write(99,*) '// #define NSTEP ',nstep
-!    write(99,*) '#define NSTEP 1000'
+!    write(IOUT,*) '// #define NSTEP ',nstep
+!    write(IOUT,*) '#define NSTEP 1000'
 !    ! put an "f" at the end to force single precision
-!    write(99,"('#define deltat ',e18.10,'f')") DT
-!    write(99,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
-!    write(99,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
-!    write(99,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
-!    write(99,*) '#define NPROC_XI ',NPROC_XI
-!    write(99,*) '#define NPROC_ETA ',NPROC_ETA
-!    write(99,*)
-!    write(99,*) '// element and MPI slice number of the source and the station'
-!    write(99,*) '// after permutation of the elements by mesh coloring'
-!    write(99,*) '// and inner/outer set splitting in the mesher'
-!    write(99,*) '#define RANK_SOURCE 0'
-!    write(99,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
-!    write(99,*)
-!    write(99,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
-!    write(99,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
-!    close(99)
+!    write(IOUT,"('#define deltat ',e18.10,'f')") DT
+!    write(IOUT,*) '#define NGLOB2DMAX_XMIN_XMAX ',npoin2D_xi
+!    write(IOUT,*) '#define NGLOB2DMAX_YMIN_YMAX ',npoin2D_eta
+!    write(IOUT,*) '#define NGLOB2DMAX_ALL ',max(npoin2D_xi,npoin2D_eta)
+!    write(IOUT,*) '#define NPROC_XI ',NPROC_XI
+!    write(IOUT,*) '#define NPROC_ETA ',NPROC_ETA
+!    write(IOUT,*)
+!    write(IOUT,*) '// element and MPI slice number of the source and the station'
+!    write(IOUT,*) '// after permutation of the elements by mesh coloring'
+!    write(IOUT,*) '// and inner/outer set splitting in the mesher'
+!    write(IOUT,*) '#define RANK_SOURCE 0'
+!    write(IOUT,*) '#define NSPEC_SOURCE ',perm(NSPEC/3)
+!    write(IOUT,*)
+!    write(IOUT,*) '#define RANK_STATION (NPROC_XI*NPROC_ETA - 1)'
+!    write(IOUT,*) '#define NSPEC_STATION ',perm(2*NSPEC/3)
+!    close(IOUT)
 !
-!    open(unit=99,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h', &
+!    open(unit=IOUT,file=prname(1:len_trim(prname))//'values_from_mesher_nspec_outer.h', &
 !          status='unknown',iostat=ier)
 !    if (ier /= 0 ) call exit_mpi(myrank,'Error opening values_from_mesher_nspec_outer.h file')
 !
-!    write(99,*) '#define NSPEC_OUTER ',nspec_outer_max_global
-!    write(99,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
-!    write(99,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
-!    close(99)
+!    write(IOUT,*) '#define NSPEC_OUTER ',nspec_outer_max_global
+!    write(IOUT,*) '// NSPEC_OUTER_min = ',nspec_outer_min_global
+!    write(IOUT,*) '// NSPEC_OUTER_max = ',nspec_outer_max_global
+!    close(IOUT)
 !
 !  endif
 !

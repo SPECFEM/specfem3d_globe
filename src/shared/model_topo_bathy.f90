@@ -147,7 +147,7 @@
   call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
   ! saves topography and bathymetry file for solver
-  open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
 
   if (ier /= 0) then
@@ -158,8 +158,8 @@
     call exit_mpi(0,'Error opening file for database topo')
   endif
 
-  write(27) ibathy_topo
-  close(27)
+  write(IOUT) ibathy_topo
+  close(IOUT)
 
   end subroutine save_topo_bathy_database
 
@@ -186,7 +186,7 @@
   call create_name_database(prname,0,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
   ! reads topography and bathymetry file from saved database file
-  open(unit=27,file=prname(1:len_trim(prname))//'topo.bin', &
+  open(unit=IIN,file=prname(1:len_trim(prname))//'topo.bin', &
         status='unknown',form='unformatted',action='read',iostat=ier)
 
   if (ier /= 0) then
@@ -205,8 +205,8 @@
 
   else
     ! database topo file exists
-    read(27) ibathy_topo
-    close(27)
+    read(IIN) ibathy_topo
+    close(IIN)
 
     ! user output
     write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)

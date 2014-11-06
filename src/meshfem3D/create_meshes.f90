@@ -72,12 +72,12 @@
       write(IMAIN,*)
       write(IMAIN,*) '*******************************************'
       write(IMAIN,*) 'creating mesh in region ',iregion_code
-      select case(iregion_code)
-        case(IREGION_CRUST_MANTLE)
+      select case (iregion_code)
+        case (IREGION_CRUST_MANTLE)
           write(IMAIN,*) 'this region is the crust and mantle'
-        case(IREGION_OUTER_CORE)
+        case (IREGION_OUTER_CORE)
           write(IMAIN,*) 'this region is the outer core'
-        case(IREGION_INNER_CORE)
+        case (IREGION_INNER_CORE)
           write(IMAIN,*) 'this region is the inner core'
         case default
           call exit_MPI(myrank,'incorrect region code')

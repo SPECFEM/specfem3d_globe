@@ -485,12 +485,12 @@
           iedge = -1
 
           ! selects mode
-          select case(imode_comm)
-          case( 1 )
+          select case (imode_comm)
+          case (1)
             iproc = iprocfrom_faces(imsg)
             iedge = iproc_edge_send
             write(filename_out,"('buffer_faces_chunks_sender_msg',i6.6,'.txt')") imsg
-          case( 2 )
+          case (2)
             iproc = iprocto_faces(imsg)
             iedge = iproc_edge_receive
             write(filename_out,"('buffer_faces_chunks_receiver_msg',i6.6,'.txt')") imsg

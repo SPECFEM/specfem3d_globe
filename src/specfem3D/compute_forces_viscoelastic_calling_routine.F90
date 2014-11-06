@@ -205,21 +205,21 @@
        endif
 
        ! add the sources
-       select case( NOISE_TOMOGRAPHY )
-       case( 0 )
+       select case (NOISE_TOMOGRAPHY)
+       case (0)
           ! regular forward or backward simulation, no noise tomography simulation
           ! adds sources for forward simulation
           if (SIMULATION_TYPE == 1 .and. nsources_local > 0) &
             call compute_add_sources()
 
-       case( 1 )
+       case (1)
           ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
           ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
           ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
           ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
           call noise_add_source_master_rec()
 
-       case( 2 )
+       case (2)
           ! second step of noise tomography, i.e., read the surface movie saved at every timestep
           ! use the movie to drive the ensemble forward wavefield
           call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE,accel_crust_mantle,NSTEP-it+1)
@@ -651,13 +651,13 @@
       endif
 
       ! add the sources
-      select case( NOISE_TOMOGRAPHY )
-      case( 0 )
+      select case (NOISE_TOMOGRAPHY)
+      case (0)
         ! add sources for backward/reconstructed wavefield
         if (nsources_local > 0 ) &
           call compute_add_sources_backward()
 
-      case( 3 )
+      case (3)
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
         ! the ensemble adjoint wavefield is done as usual

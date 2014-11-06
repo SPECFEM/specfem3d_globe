@@ -65,6 +65,8 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
                            var_name, value_file_name, mesh_file_name, &
                            outdir, ires, irs, ire)
 
+  use constants,only: IIN
+
   implicit none
   ! Arguments
   character(len=*), intent(in) :: arg(:)
@@ -79,13 +81,13 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
 
   if ((command_argument_count() == 6) .or. (command_argument_count() == 7)) then
     num_node = 0
-    open(unit = 20, file = trim(arg(1)), status = 'unknown',iostat = ios)
+    open(unit = IIN, file = trim(arg(1)), status = 'unknown',iostat = ios)
     if (ios /= 0) then
       print *,'Error opening slice file ',trim(arg(1))
       stop
     endif
     do while ( 1 == 1)
-      read(20,'(a)',iostat=ios) sline
+      read(IIN,'(a)',iostat=ios) sline
       if (ios /= 0) exit
       read(sline,*,iostat=ios) njunk
       if (ios /= 0) exit
@@ -93,7 +95,7 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
       if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
       node_list(num_node) = njunk
     enddo
-    close(20)
+    close(IIN)
     var_name = arg(2)
     value_file_name = arg(3)
     mesh_file_name = arg(4)
@@ -203,7 +205,7 @@ end subroutine read_scalars_adios_mesh
 subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
                                        xstore, ystore, zstore, ibool)
 
-  use constants
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
   ! Parameters
@@ -263,7 +265,7 @@ end subroutine read_coordinates_adios_mesh
 
 subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
 
-  use constants
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
 
   implicit none
   ! Parameters
@@ -307,12 +309,12 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
     !
     ! note: this must match the naming convention used
     !       in file save_kernels_adios.F90
-    select case( ir )
-    case( IREGION_CRUST_MANTLE )
+    select case (ir)
+    case (IREGION_CRUST_MANTLE)
       data_name = trim(var_name) // "_crust_mantle"
-    case( IREGION_OUTER_CORE )
+    case (IREGION_OUTER_CORE)
       data_name = trim(var_name) // "_outer_core"
-    case( IREGION_INNER_CORE )
+    case (IREGION_INNER_CORE)
       data_name = trim(var_name) // "_inner_core"
     case default
       stop 'Error wrong region code in read_values_adios() routine'

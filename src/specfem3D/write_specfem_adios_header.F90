@@ -45,8 +45,6 @@
 !! DATA/Par_file, DATA/CMTSOLUTION, DATA/STATIONS
 subroutine write_specfem_header_adios()
 
-!  use constants
-!  use shared_input_parameters
   use shared_parameters
 
   use adios_helpers_mod
@@ -189,6 +187,7 @@ contains
 !! \param adios_group The ADIOS entity grouping variables for data transfers
 !! \param group_size_inc The group size to increment wrt. the variable size
 subroutine define_solver_info_variables (adios_group, group_size_inc)
+
   implicit none
   ! Parameters
   integer(kind=8), intent(in)    :: adios_group
@@ -306,7 +305,8 @@ end subroutine define_par_file_variables
 !! \param datasource_length The number of character of the datasource string.
 !!                          Useful for reading back the datasources.
 subroutine define_cmtsolution_variables (adios_group, group_size_inc, NSOURCES,&
-    event_name_length, datasource_length)
+                                         event_name_length, datasource_length)
+
   implicit none
   integer(kind=8), intent(in)    :: adios_group
   integer(kind=8), intent(inout) :: group_size_inc
@@ -350,7 +350,8 @@ end subroutine define_cmtsolution_variables
 !! \param network_name_length The number of character of the station_name
 !!                            string.  Useful for reading back the networks.
 subroutine define_stations_variables (adios_group, group_size_inc, NSTATIONS,&
-    station_name_length, network_name_length)
+                                      station_name_length, network_name_length)
+
   implicit none
   integer(kind=8), intent(in)    :: adios_group
   integer(kind=8), intent(inout) :: group_size_inc
@@ -399,8 +400,10 @@ end subroutine define_stations_variables
 !> \note This subroutine and get_cmt.f90 are redundant. Might be factorized in
 !!       the future. For now we do not want the value modification from get_cmt
 subroutine read_raw_cmtsolution (yr, mo, da, ho, mi, sec, t_shift, hdur, lat, &
-    long, depth, mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name, &
-    datasource_length, datasource)
+                                 long, depth, mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name, &
+                                 datasource_length, datasource)
+
+  use constants,only: IIN
   implicit none
   ! Parameters
   integer,           dimension(NSOURCES), intent(out) :: yr, mo, da, ho, mi
@@ -416,66 +419,69 @@ subroutine read_raw_cmtsolution (yr, mo, da, ho, mi, sec, t_shift, hdur, lat, &
   ! get_cmt() routine modify the read values
   ! TODO factorize what follows and get_cmt.f90 and probably one or two other
   !      routines
-  open(unit = 1,file='DATA/CMTSOLUTION',status='old',action='read')
+  open(unit = IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ier)
+  if (ier /= 0) stop 'Error opening file DATA/CMTSOLUTION'
+
   datasource_length = 4*NSOURCES ! a datasource is 4 character, by convention
+
   allocate(character(len=(datasource_length)) :: datasource, stat=ier)
-  if (ier /= 0) &
-      call exit_MPI (myrank, &
-          "Error allocating datasource string for adios header")
+  if (ier /= 0) call exit_MPI (myrank, "Error allocating datasource string for adios header")
+
   datasource = ""
   ! ADIOS only  (1) byte for a string. This may cause data overwriting.
   ! => increase the generate by the string size -1
   adios_groupsize = adios_groupsize + 4*NSOURCES - 1
   do isource = 1,NSOURCES
 
-    read(1,"(a256)") string
+    read(IIN,"(a256)") string
     ! skips empty lines
     do while( len_trim(string) == 0 )
-    read(1,"(a256)") string
+    read(IIN,"(a256)") string
     enddo
     ! read header with event information
     read(string,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource_tmp,yr(isource), &
         mo(isource),da(isource),ho(isource),mi(isource),sec(isource)
     datasource = datasource // datasource_tmp
     ! read event name
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(12:len_trim(string)),*) event_name
     ! read time shift
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(12:len_trim(string)),*) t_shift(isource)
     ! read half duration
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(15:len_trim(string)),*) hdur(isource)
     ! read latitude
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(10:len_trim(string)),*) lat(isource)
     ! read longitude
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(11:len_trim(string)),*) long(isource)
     ! read depth
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(7:len_trim(string)),*) depth(isource)
     ! read Mrr
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(5:len_trim(string)),*) mrr(isource)
     ! read Mtt
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(5:len_trim(string)),*) mtt(isource)
     ! read Mpp
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(5:len_trim(string)),*) mpp(isource)
     ! read Mrt
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(5:len_trim(string)),*) mrt(isource)
     ! read Mrp
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(5:len_trim(string)),*) mrp(isource)
     ! read Mtp
-    read(1,"(a)") string
+    read(IIN,"(a)") string
     read(string(5:len_trim(string)),*) mtp(isource)
   enddo
-  close(1)
+  close(IIN)
   event_name_length = len_trim(event_name)
+
 end subroutine read_raw_cmtsolution
 
 !> \brief Reads information form the 'STATIONS' file without modifying anything
@@ -493,9 +499,9 @@ end subroutine read_raw_cmtsolution
 !! \param network_name String in which the different network names are
 !!                     concatenated
 subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur, &
-    station_name_length, station_name, network_name_length, network_name)
+                              station_name_length, station_name, network_name_length, network_name)
 
-  use constants,only: MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,IMAIN
+  use constants,only: MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME,IMAIN,IIN
 
   implicit none
   ! Parameters
@@ -509,12 +515,15 @@ subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur, &
   character(len=256) :: string
 
   ! Extract values from STATIONS File
-  open(unit = 1,file='DATA/STATIONS',iostat=ier,status='old',action='read')
+  open(unit = IIN,file='DATA/STATIONS',status='old',action='read',iostat=ier)
+  if (ier /= 0) stop 'Error opening file DATA/STATIONS'
+
   NSTATIONS = 0
   do while(ier == 0)
-  read(1,"(a)",iostat=ier) string
-  if (ier == 0) NSTATIONS = NSTATIONS + 1
+    read(IIN,"(a)",iostat=ier) string
+    if (ier == 0) NSTATIONS = NSTATIONS + 1
   enddo
+
   allocate (character (len=(MAX_LENGTH_STATION_NAME*NSTATIONS)) :: station_name)
   allocate (character (len=(MAX_LENGTH_NETWORK_NAME*NSTATIONS)) :: network_name)
   allocate (stlat (NSTATIONS))
@@ -523,29 +532,33 @@ subroutine read_raw_stations (NSTATIONS, stlat, stlon, stele, stbur, &
   allocate (stbur (NSTATIONS))
   station_name = ""
   network_name = ""
-  rewind(1)
+
+  rewind(IIN)
   do irec = 1,NSTATIONS
-  read(1,*,iostat=ier) station_name_tmp, network_name_tmp, &
-  stlat(irec),      stlon(irec), &
-  stele(irec),      stbur(irec)
-  if (ier /= 0) then
-    write(IMAIN,*) 'Error reading in station ',irec
-    call exit_MPI(myrank,'Error reading in station in DATA/STATIONS file')
-  endif
-  station_name = station_name // trim(station_name_tmp) // " "
-  network_name = network_name // trim(network_name_tmp) // " "
+    read(IIN,*,iostat=ier) station_name_tmp, network_name_tmp, &
+    stlat(irec),      stlon(irec), &
+    stele(irec),      stbur(irec)
+    if (ier /= 0) then
+      write(IMAIN,*) 'Error reading in station ',irec
+      call exit_MPI(myrank,'Error reading in station in DATA/STATIONS file')
+    endif
+    station_name = station_name // trim(station_name_tmp) // " "
+    network_name = network_name // trim(network_name_tmp) // " "
   enddo
-  close(1)
+  close(IIN)
+
   station_name = trim(station_name)
   network_name = trim(network_name)
   station_name_length = len(station_name)
   network_name_length = len(network_name)
+
 end subroutine read_raw_stations
 
 !> \brief Wrapper to write the 'config.h' variables into the adios header
 !! \param adios_handle The handle to the file where the variable should be
 !!                     written
 subroutine write_adios_solver_info_variables (adios_handle)
+
   implicit none
   ! Parameters
   integer(kind=8), intent(in)    :: adios_handle
@@ -564,28 +577,30 @@ subroutine write_adios_solver_info_variables (adios_handle)
   call adios_write (adios_handle, "package_name", pkg_str, adios_err)
   call adios_write (adios_handle, "conf_flags_len", conf_flags_len, adios_err)
   call adios_write (adios_handle, "conf_flags", conf_flags, adios_err)
+
 end subroutine write_adios_solver_info_variables
 
 !> \brief Wrapper to write the 'Par_file' variables into the adios header
 !! \param adios_handle The handle to the file where the variable should be
 !!                     written
 subroutine write_adios_par_file_variables (adios_handle, &
-    ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES, &
-    CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES, &
-    GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM, &
-    MOVIE_EAST_DEG, MOVIE_WEST_DEG, MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG, &
-    RECORD_LENGTH_IN_MINUTES, NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    NTSTEP_BETWEEN_READ_ADJSRC, NTSTEP_BETWEEN_FRAMES, &
-    NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN, NCHUNKS, &
-    SIMULATION_TYPE, MOVIE_VOLUME_TYPE, MOVIE_START, MOVIE_STOP, NEX_XI, &
-    NEX_ETA, NPROC_XI, NPROC_ETA, NOISE_TOMOGRAPHY, ELLIPTICITY, GRAVITY, &
-    ROTATION, TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE, &
-    RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES, &
-    ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD, &
-    OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
-    OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT, &
-    WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE, &
-    USE_BINARY_FOR_LARGE_FILE, model_length, MODEL)
+                                           ANGULAR_WIDTH_XI_IN_DEGREES, ANGULAR_WIDTH_ETA_IN_DEGREES, &
+                                           CENTER_LONGITUDE_IN_DEGREES, CENTER_LATITUDE_IN_DEGREES, &
+                                           GAMMA_ROTATION_AZIMUTH, HDUR_MOVIE, MOVIE_TOP_KM, MOVIE_BOTTOM_KM, &
+                                           MOVIE_EAST_DEG, MOVIE_WEST_DEG, MOVIE_NORTH_DEG, MOVIE_SOUTH_DEG, &
+                                           RECORD_LENGTH_IN_MINUTES, NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+                                           NTSTEP_BETWEEN_READ_ADJSRC, NTSTEP_BETWEEN_FRAMES, &
+                                           NTSTEP_BETWEEN_OUTPUT_INFO, NUMBER_OF_RUNS, NUMBER_OF_THIS_RUN, NCHUNKS, &
+                                           SIMULATION_TYPE, MOVIE_VOLUME_TYPE, MOVIE_START, MOVIE_STOP, NEX_XI, &
+                                           NEX_ETA, NPROC_XI, NPROC_ETA, NOISE_TOMOGRAPHY, ELLIPTICITY, GRAVITY, &
+                                           ROTATION, TOPOGRAPHY, OCEANS, MOVIE_SURFACE, MOVIE_VOLUME, MOVIE_COARSE, &
+                                           RECEIVERS_CAN_BE_BURIED, PRINT_SOURCE_TIME_FUNCTION, SAVE_MESH_FILES, &
+                                           ATTENUATION, ABSORBING_CONDITIONS, SAVE_FORWARD, &
+                                           OUTPUT_SEISMOS_ASCII_TEXT, OUTPUT_SEISMOS_SAC_ALPHANUM, &
+                                           OUTPUT_SEISMOS_SAC_BINARY, ROTATE_SEISMOGRAMS_RT, &
+                                           WRITE_SEISMOGRAMS_BY_MASTER, SAVE_ALL_SEISMOS_IN_ONE_FILE, &
+                                           USE_BINARY_FOR_LARGE_FILE, model_length, MODEL)
+
  implicit none
  ! Parameters
   integer(kind=8), intent(in) :: adios_handle
@@ -663,15 +678,17 @@ subroutine write_adios_par_file_variables (adios_handle, &
   call adios_write (adios_handle, "USE_BINARY_FOR_LARGE_FILE", USE_BINARY_FOR_LARGE_FILE, adios_err)
   call adios_write (adios_handle, "model_length", model_length, adios_err)
   call adios_write (adios_handle, "MODEL", MODEL, adios_err)
+
 end subroutine write_adios_par_file_variables
 
 !> \brief Wrapper to write the 'CMTSOLUTION' variables into the adios header
 !! \param adios_handle The handle to the file where the variable should be
 !!                     written
 subroutine write_adios_cmtsolution_variables (adios_handle, &
-    NSOURCES, yr, mo, da, ho, mi, sec, t_shift, hdur, lat, long, depth, &
-    mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name, &
-    datasource_length, datasource)
+                                              NSOURCES, yr, mo, da, ho, mi, sec, t_shift, hdur, lat, long, depth, &
+                                              mrr, mtt, mpp, mrt, mrp, mtp, event_name_length, event_name, &
+                                              datasource_length, datasource)
+
   implicit none
   ! Parameters
   integer(kind=8), intent(in) :: adios_handle
@@ -709,14 +726,16 @@ subroutine write_adios_cmtsolution_variables (adios_handle, &
   call adios_write (adios_handle, "event_name", event_name, adios_err)
   call adios_write (adios_handle, "datasource_length", datasource_length, adios_err)
   call adios_write (adios_handle, "datasource", datasource, adios_err)
+
 end subroutine write_adios_cmtsolution_variables
 
 !> \brief Wrapper to write the 'STATIONS' variables into the adios header
 !! \param adios_handle The handle to the file where the variable should be
 !!                     written
 subroutine write_adios_stations_variables (adios_handle, &
-    NSTATIONS, stlat, stlon, stele, stbur, station_name_length, station_name, &
-    network_name_length, network_name)
+                                           NSTATIONS, stlat, stlon, stele, stbur, station_name_length, station_name, &
+                                           network_name_length, network_name)
+
   implicit none
   ! Parameters
   integer(kind=8), intent(in) :: adios_handle
@@ -737,6 +756,7 @@ subroutine write_adios_stations_variables (adios_handle, &
   call adios_write (adios_handle, "network_name_length", network_name_length, adios_err)
   call adios_write (adios_handle, "station_name", station_name, adios_err)
   call adios_write (adios_handle, "network_name", network_name, adios_err)
+
 end subroutine write_adios_stations_variables
 
 
@@ -750,6 +770,7 @@ end subroutine write_adios_stations_variables
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 subroutine define_adios_double_scalar_s (adios_group, name, path, group_size_inc)
+
   use adios_write_mod
   implicit none
   ! Arguments
@@ -762,6 +783,7 @@ subroutine define_adios_double_scalar_s (adios_group, name, path, group_size_inc
   ! adios: 6 == real(kind=8)
   call adios_define_var (adios_group, name, path, 6,  "", "", "", varid)
   group_size_inc = group_size_inc + 8
+
 end subroutine define_adios_double_scalar_s
 
 !===============================================================================
@@ -774,6 +796,7 @@ end subroutine define_adios_double_scalar_s
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 subroutine define_adios_integer_scalar_s (adios_group, name, path, group_size_inc)
+
   use adios_write_mod
   implicit none
   ! Arguments
@@ -786,6 +809,7 @@ subroutine define_adios_integer_scalar_s (adios_group, name, path, group_size_in
   ! adios: 2 == integer(kind=4)
   call adios_define_var (adios_group, name, path, adios_integer,  "", "", "", varid)
   group_size_inc = group_size_inc + 4
+
 end subroutine define_adios_integer_scalar_s
 
 !===============================================================================
@@ -798,6 +822,7 @@ end subroutine define_adios_integer_scalar_s
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 subroutine define_adios_byte_scalar_s (adios_group, name, path, group_size_inc)
+
   use adios_write_mod
   implicit none
   ! Arguments
@@ -810,6 +835,7 @@ subroutine define_adios_byte_scalar_s (adios_group, name, path, group_size_inc)
   ! adios: 0 == byte == any_data_type(kind=1)
   call adios_define_var (adios_group, name, path, 0,  "", "", "", varid)
   group_size_inc = group_size_inc + 1
+
 end subroutine define_adios_byte_scalar_s
 
 !===============================================================================
@@ -827,6 +853,7 @@ end subroutine define_adios_byte_scalar_s
 !!       mandatory to increase the group size by the length of the
 !!       string in order not to overlap 'data regions'.
 subroutine define_adios_string_s (adios_group, name, path, length, group_size_inc)
+
   use adios_write_mod
   implicit none
   ! Arguments
@@ -857,6 +884,7 @@ end subroutine define_adios_string_s
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 subroutine define_adios_double_local_array1D_s (adios_group, name, path, dim, dim_str, group_size_inc)
+
   use adios_write_mod
   implicit none
   ! Arguments
@@ -887,6 +915,7 @@ end subroutine define_adios_double_local_array1D_s
 !! \param group_size_inc The inout adios group size to increment
 !!                       with the size of the variable
 subroutine define_adios_integer_local_array1D_s (adios_group, name, path, dim, dim_str, group_size_inc)
+
   use adios_write_mod
   implicit none
   ! Arguments
@@ -900,6 +929,7 @@ subroutine define_adios_integer_local_array1D_s (adios_group, name, path, dim, d
   ! adios: 2 == integer
   call adios_define_var (adios_group, name, path, 2,  dim_str, "", "", varid)
   group_size_inc = group_size_inc + 4*dim
+
 end subroutine define_adios_integer_local_array1D_s
 
 

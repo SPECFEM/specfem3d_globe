@@ -41,7 +41,7 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
   //if(igll < NGLL2 && iface < num_abs_boundary_faces) {
 
   // way 2: only check face, no further check needed since blocksize = 25
-  if( iface < num_abs_boundary_faces){
+  if (iface < num_abs_boundary_faces){
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = abs_boundary_ispec[iface]-1;
@@ -50,56 +50,56 @@ __global__ void compute_stacey_elastic_kernel(realw* veloc,
     switch( interface_type ){
       case 0:
         // xmin
-        if( nkmin_xi[INDEX2(2,0,iface)] == 0 || njmin[INDEX2(2,0,iface)] == 0 ) return;
+        if (nkmin_xi[INDEX2(2,0,iface)] == 0 || njmin[INDEX2(2,0,iface)] == 0) return;
 
         i = 0; // index -1
         k = (igll/NGLLX);
         j = (igll-k*NGLLX);
 
-        if( k < nkmin_xi[INDEX2(2,0,iface)]-1 || k > NGLLX-1 ) return;
-        if( j < njmin[INDEX2(2,0,iface)]-1 || j > NGLLX-1 ) return;
+        if (k < nkmin_xi[INDEX2(2,0,iface)]-1 || k > NGLLX-1) return;
+        if (j < njmin[INDEX2(2,0,iface)]-1 || j > NGLLX-1) return;
 
         fac1 = wgllwgll[k*NGLLX+j];
         break;
 
       case 1:
         // xmax
-        if( nkmin_xi[INDEX2(2,1,iface)] == 0 || njmin[INDEX2(2,1,iface)] == 0 ) return;
+        if (nkmin_xi[INDEX2(2,1,iface)] == 0 || njmin[INDEX2(2,1,iface)] == 0) return;
 
         i = NGLLX-1;
         k = (igll/NGLLX);
         j = (igll-k*NGLLX);
 
-        if( k < nkmin_xi[INDEX2(2,1,iface)]-1 || k > NGLLX-1 ) return;
-        if( j < njmin[INDEX2(2,1,iface)]-1 || j > njmax[INDEX2(2,1,iface)]-1 ) return;
+        if (k < nkmin_xi[INDEX2(2,1,iface)]-1 || k > NGLLX-1) return;
+        if (j < njmin[INDEX2(2,1,iface)]-1 || j > njmax[INDEX2(2,1,iface)]-1) return;
 
         fac1 = wgllwgll[k*NGLLX+j];
         break;
 
       case 2:
         // ymin
-        if( nkmin_eta[INDEX2(2,0,iface)] == 0 || nimin[INDEX2(2,0,iface)] == 0 ) return;
+        if (nkmin_eta[INDEX2(2,0,iface)] == 0 || nimin[INDEX2(2,0,iface)] == 0) return;
 
         j = 0;
         k = (igll/NGLLX);
         i = (igll-k*NGLLX);
 
-        if( k < nkmin_eta[INDEX2(2,0,iface)]-1 || k > NGLLX-1 ) return;
-        if( i < nimin[INDEX2(2,0,iface)]-1 || i > nimax[INDEX2(2,0,iface)]-1 ) return;
+        if (k < nkmin_eta[INDEX2(2,0,iface)]-1 || k > NGLLX-1) return;
+        if (i < nimin[INDEX2(2,0,iface)]-1 || i > nimax[INDEX2(2,0,iface)]-1) return;
 
         fac1 = wgllwgll[k*NGLLX+i];
         break;
 
       case 3:
         // ymax
-        if( nkmin_eta[INDEX2(2,1,iface)] == 0 || nimin[INDEX2(2,1,iface)] == 0 ) return;
+        if (nkmin_eta[INDEX2(2,1,iface)] == 0 || nimin[INDEX2(2,1,iface)] == 0) return;
 
         j = NGLLX-1;
         k = (igll/NGLLX);
         i = (igll-k*NGLLX);
 
-        if( k < nkmin_eta[INDEX2(2,1,iface)]-1 || k > NGLLX-1 ) return;
-        if( i < nimin[INDEX2(2,1,iface)]-1 || i > nimax[INDEX2(2,1,iface)]-1 ) return;
+        if (k < nkmin_eta[INDEX2(2,1,iface)]-1 || k > NGLLX-1) return;
+        if (i < nimin[INDEX2(2,1,iface)]-1 || i > nimax[INDEX2(2,1,iface)]-1) return;
 
         fac1 = wgllwgll[k*NGLLX+i];
         break;

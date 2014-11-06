@@ -68,11 +68,11 @@ contains
     endif
 
     ! computes traces at interpolated receiver locations
-    select case( SIMULATION_TYPE )
-    case( 1 )
+    select case (SIMULATION_TYPE)
+    case (1)
       call compute_seismograms(NGLOB_CRUST_MANTLE,displ_crust_mantle, &
                                seismo_current,seismograms)
-    case( 2 )
+    case (2)
       call compute_seismograms_adjoint(displ_crust_mantle, &
                                        eps_trace_over_3_crust_mantle, &
                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
@@ -80,7 +80,7 @@ contains
                                        nit_written, &
                                        moment_der,sloc_der,stshift_der,shdur_der, &
                                        seismograms)
-    case( 3 )
+    case (3)
       call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
                                seismo_current,seismograms)
     end select
@@ -91,8 +91,8 @@ contains
   if (seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
 
     ! writes out seismogram files
-    select case( SIMULATION_TYPE )
-    case( 1,3 )
+    select case (SIMULATION_TYPE)
+    case (1,3)
       ! forward/reconstructed wavefields
       call write_seismograms_to_file()
 
@@ -103,7 +103,7 @@ contains
         write(IMAIN,*)
         call flush_IMAIN()
       endif
-    case( 2 )
+    case (2)
       ! adjoint wavefield
       if (nrec_local > 0 ) call write_adj_seismograms(nit_written)
       nit_written = it
@@ -424,20 +424,20 @@ contains
 
   do iorientation = ior_start,ior_end      ! BS BS changed according to ROTATE_SEISMOGRAMS_RT
 
-    select case( iorientation )
-    case( 1 )
+    select case (iorientation)
+    case (1)
       !chn = 'LHN'
       chn = bic(1:2)//'N'
-    case( 2 )
+    case (2)
       !chn = 'LHE'
       chn = bic(1:2)//'E'
-    case( 3 )
+    case (3)
       !chn = 'LHZ'
       chn = bic(1:2)//'Z'
-    case( 4 )
+    case (4)
       !chn = 'LHR'
       chn = bic(1:2)//'R'
-    case( 5 )
+    case (5)
       !chn = 'LHT'
       chn = bic(1:2)//'T'
     case default

@@ -151,8 +151,8 @@
     endif
 
     ! time loop within this iteration subset
-    select case( SIMULATION_TYPE )
-    case( 1, 2 )
+    select case (SIMULATION_TYPE)
+    case (1, 2)
       ! forward and adjoint simulations
 
       ! subset loop
@@ -207,7 +207,7 @@
 
       enddo ! subset loop
 
-    case( 3 )
+    case (3)
       ! kernel simulations
 
       ! reconstructs forward wavefield based on last stored wavefield data

@@ -82,8 +82,9 @@
   NSPEC_INNER_CORE = 0
   NGLOB_INNER_CORE = 0
 
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+
+  case (IREGION_CRUST_MANTLE)
     NGLOB2DMAX_XMIN_XMAX_CM = NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE)
     NGLOB2DMAX_YMIN_YMAX_CM = NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE)
 
@@ -95,7 +96,7 @@
     NSPEC_CRUST_MANTLE = NSPEC(IREGION_CRUST_MANTLE)
     NGLOB_CRUST_MANTLE = NGLOB(IREGION_CRUST_MANTLE)
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     NGLOB2DMAX_XMIN_XMAX_OC = NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE)
     NGLOB2DMAX_YMIN_YMAX_OC = NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE)
 
@@ -107,7 +108,7 @@
     NSPEC_OUTER_CORE = NSPEC(IREGION_OUTER_CORE)
     NGLOB_OUTER_CORE = NGLOB(IREGION_OUTER_CORE)
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     NGLOB2DMAX_XMIN_XMAX_IC = NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE)
     NGLOB2DMAX_YMIN_YMAX_IC = NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE)
 
@@ -130,8 +131,8 @@
   allocate(buffer_send_chunkcorn_vector(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC), &
           buffer_recv_chunkcorn_vector(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC))
 
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust mantle
     allocate(iboolcorner_crust_mantle(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED))
     allocate(iboolleft_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM), &
@@ -147,7 +148,7 @@
             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary crust mantle arrays')
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     allocate(iboolcorner_outer_core(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED))
     allocate(iboolleft_xi_outer_core(NGLOB2DMAX_XMIN_XMAX_OC), &
@@ -163,7 +164,7 @@
             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary outer core arrays')
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     allocate(iboolcorner_inner_core(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED))
     allocate(iboolleft_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC), &
@@ -207,8 +208,8 @@
   integer,intent(in):: iregion_code
 
   ! read coordinates of the mesh
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust mantle
 !    ibool_crust_mantle(:,:,:,:) = -1
     call cmi_read_solver_data(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
@@ -219,7 +220,7 @@
       maxval(ibool(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
         call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
 !    ibool_outer_core(:,:,:,:) = -1
     call cmi_read_solver_data(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
@@ -230,7 +231,7 @@
        maxval(ibool(:,:,:,:)) /= NGLOB_OUTER_CORE) &
       call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
 !    ibool_inner_core(:,:,:,:) = -1
     call cmi_read_solver_data(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
@@ -293,8 +294,8 @@
 
   ! gets 2-D addressing for summation between slices with MPI
 
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! mantle and crust
     if (myrank == 0) then
       write(IMAIN,*)
@@ -340,7 +341,7 @@
     npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_crust_mantle(:)), &
                                 maxval(npoin2D_eta_crust_mantle(:)))
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     if (myrank == 0) then
       write(IMAIN,*)
@@ -384,7 +385,7 @@
     npoin2D_max_all_CM_IC = max(maxval(npoin2D_xi_outer_core(:)), &
                                 maxval(npoin2D_eta_outer_core(:)))
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     if (myrank == 0) then
       write(IMAIN,*)

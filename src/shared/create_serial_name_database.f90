@@ -53,11 +53,11 @@
     allocate(num_active_proc(0:NPROCTOT-1))
 
 ! read filtered file with name of active machines
-    open(unit=48,file=trim(OUTPUT_FILES)//'/filtered_machines.txt',status='old',action='read')
+    open(unit=IIN,file=trim(OUTPUT_FILES)//'/filtered_machines.txt',status='old',action='read')
     do iprocloop = 0,NPROCTOT-1
-      read(48,*) num_active_proc(iprocloop)
+      read(IIN,*) num_active_proc(iprocloop)
     enddo
-    close(48)
+    close(IIN)
 
 ! create the serial prefix pointing to the correct machine
     write(serial_prefix,"('/auto/scratch_n',i6.6,'/')") num_active_proc(iproc)

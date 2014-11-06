@@ -151,7 +151,7 @@
   !e.g. Mediterranean model
   ! counts entries
   counter = 0
-  open(unit=10,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
+  open(unit=IIN,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
     call flush_IMAIN()
@@ -160,17 +160,17 @@
   endif
 
   ! first line is text and will be ignored
-  read(10,'(a256)') line
+  read(IIN,'(a256)') line
 
   ! counts number of data lines
   ier = 0
   do while (ier == 0 )
-    read(10,*,iostat=ier) lon,lat,depth,dvs,vs
+    read(IIN,*,iostat=ier) lon,lat,depth,dvs,vs
     if (ier == 0) then
       counter = counter + 1
     endif
   enddo
-  close(10)
+  close(IIN)
 
   PPM_num_v = counter
   if (counter < 1) then
@@ -196,16 +196,16 @@
   PPM_dvs(:) = 0.0
 
   ! vs values
-  open(unit=10,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
+  open(unit=IIN,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
     call exit_mpi(0,"Error opening model ppm")
   endif
-  read(10,'(a256)') line   ! first line is text
+  read(IIN,'(a256)') line   ! first line is text
   counter = 0
   ier = 0
   do while (ier == 0 )
-    read(10,*,iostat=ier) lon,lat,depth,dvs,vs
+    read(IIN,*,iostat=ier) lon,lat,depth,dvs,vs
     if (ier == 0) then
       counter = counter + 1
       PPM_lat(counter) = lat
@@ -217,7 +217,7 @@
       !if (abs(depth - 100.0) < 1.e-3) write(IMAIN,*) '  lon/lat/depth : ',lon,lat,depth,' dvs:',dvs
     endif
   enddo
-  close(10)
+  close(IIN)
   if (counter /= PPM_num_v) then
     write(IMAIN,*)
     write(IMAIN,*) '  model PPM:',PPM_file_path

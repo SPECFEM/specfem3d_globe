@@ -1373,21 +1373,21 @@
 !  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
 !
 !  ! chooses optimized version
-!  select case( n2 )
+!  select case (n2)
 !
-!  case( 4 )
+!  case (4)
 !    call mxm4(A,n1,B,C,n3)
 !
-!  case( 5 )
+!  case (5)
 !    call mxm5(A,n1,B,C,n3)
 !
-!  case( 6 )
+!  case (6)
 !    call mxm6(A,n1,B,C,n3)
 !
-!  case( 7 )
+!  case (7)
 !    call mxm7(A,n1,B,C,n3)
 !
-!  case( 8 )
+!  case (8)
 !    call mxm8(A,n1,B,C,n3)
 !
 !  case default
@@ -1597,21 +1597,21 @@
 !  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
 !
 !  ! chooses optimized version
-!  select case( n2 )
+!  select case (n2)
 !
-!  case( 4 )
+!  case (4)
 !    call mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  case( 5 )
+!  case (5)
 !    call mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  case( 6 )
+!  case (6)
 !    call mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  case( 7 )
+!  case (7)
 !    call mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  case( 8 )
+!  case (8)
 !    call mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
 !  case default

@@ -9,10 +9,10 @@ __global__ void get_maximum_scalar_kernel(realw* array, int size, realw* d_max){
    realw max;
    max = 0;
    // finds maximum value in array
-   if( size > 0 ){
+   if (size > 0){
    max = fabs(array[0]);
    for( int i=1; i < size; i++){
-   if( fabs(array[i]) > max ) max = fabs(array[i]);
+   if (fabs(array[i]) > max) max = fabs(array[i]);
    }
    }
    *d_max = max;
@@ -38,7 +38,7 @@ __global__ void get_maximum_scalar_kernel(realw* array, int size, realw* d_max){
       // summation:
       //sdata[tid] += sdata[tid + s];
       // maximum:
-      if( sdata[tid] < sdata[tid + s] ) sdata[tid] = sdata[tid + s];
+      if (sdata[tid] < sdata[tid + s]) sdata[tid] = sdata[tid + s];
     }
     __syncthreads();
   }

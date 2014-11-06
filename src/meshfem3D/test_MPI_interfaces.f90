@@ -71,12 +71,12 @@
   endif
 
   ! allocates global mask
-  select case(iregion_code)
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     allocate(mask(NGLOB_CRUST_MANTLE))
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     allocate(mask(NGLOB_OUTER_CORE))
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     allocate(mask(NGLOB_INNER_CORE))
   case default
     call exit_mpi(myrank,'Error test MPI: iregion_code not recognized')

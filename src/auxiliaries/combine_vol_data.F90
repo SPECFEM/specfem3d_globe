@@ -174,21 +174,21 @@ program combine_vol_data
 
   ! get slices id
   num_node = 0
-  open(unit = 20, file = trim(arg(1)), status = 'old',iostat = ier)
+  open(unit = IIN, file = trim(arg(1)), status = 'old',iostat = ier)
   if (ier /= 0) then
     print*,'no file: ',trim(arg(1))
     stop 'Error opening slices file'
   endif
 
   do while (1 == 1)
-    read(20,'(a)',iostat=ier) sline
+    read(IIN,'(a)',iostat=ier) sline
     if (ier /= 0) exit
     read(sline,*,iostat=ier) njunk
     if (ier /= 0) exit
     num_node = num_node + 1
     node_list(num_node) = njunk
   enddo
-  close(20)
+  close(IIN)
 
   ! output info
   print *, 'slice list: '
@@ -283,15 +283,15 @@ program combine_vol_data
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
       dimension_file = trim(prname_topo) //'solver_data.bin'
-      open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
+      open(unit = IIN,file = trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
        print*,'Error ',ier
        print*,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
-      read(27) nspec(it)
-      read(27) nglob(it)
-      close(27)
+      read(IIN) nspec(it)
+      read(IIN) nglob(it)
+      close(IIN)
 #else
       ! adios reading
       call read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob(it), nspec(it))
@@ -368,19 +368,19 @@ program combine_vol_data
       ! filename.bin
       data_file = trim(prname_file) // trim(filename) // '.bin'
 
-      open(unit = 27,file = trim(data_file),status='old',action='read', iostat = ier,form ='unformatted')
+      open(unit = IIN,file = trim(data_file),status='old',action='read', iostat = ier,form ='unformatted')
       if (ier /= 0) then
         print*,'Error ',ier
         print*,'file:',trim(data_file)
         stop 'Error opening file'
       endif
-      read(27,iostat=ier) data(:,:,:,1:nspec(it))
+      read(IIN,iostat=ier) data(:,:,:,1:nspec(it))
       if (ier /= 0) then
         print*,'read error ',ier
         print*,'file:',trim(data_file)
         stop 'Error reading data'
       endif
-      close(27)
+      close(IIN)
 #else
       ! adios reading
       call read_values_adios(value_handle, var_name, iproc, ir, nspec(it), data)
@@ -395,7 +395,7 @@ program combine_vol_data
       ! reads in mesh coordinates and local-to-global mapping (ibool)
 #ifndef ADIOS_INPUT
       topo_file = trim(prname_topo) // 'solver_data.bin'
-      open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ier, form='unformatted')
+      open(unit = IIN,file = trim(topo_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
         print*,'Error ',ier
         print*,'file:',trim(topo_file)
@@ -405,14 +405,14 @@ program combine_vol_data
       ystore(:) = 0.0
       zstore(:) = 0.0
       ibool(:,:,:,:) = -1
-      read(28) nspec(it)
-      read(28) nglob(it)
-      read(28) xstore(1:nglob(it))
-      read(28) ystore(1:nglob(it))
-      read(28) zstore(1:nglob(it))
-      read(28) ibool(:,:,:,1:nspec(it))
-      if (ir == 3) read(28) idoubling_inner_core(1:nspec(it)) ! flag that can indicate fictitious elements
-      close(28)
+      read(IIN) nspec(it)
+      read(IIN) nglob(it)
+      read(IIN) xstore(1:nglob(it))
+      read(IIN) ystore(1:nglob(it))
+      read(IIN) zstore(1:nglob(it))
+      read(IIN) ibool(:,:,:,1:nspec(it))
+      if (ir == 3) read(IIN) idoubling_inner_core(1:nspec(it)) ! flag that can indicate fictitious elements
+      close(IIN)
 #else
       ! adios reading
       call read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob(it), nspec(it), xstore, ystore, zstore, ibool)

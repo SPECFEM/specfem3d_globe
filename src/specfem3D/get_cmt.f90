@@ -144,23 +144,23 @@
       !print*,itype,'line ----',string(istart:iend),'----'
 
       ! reads in event time information
-      select case( itype )
-      case( 1 )
+      select case (itype)
+      case (1)
         ! year (as integer value)
         read(string(istart:iend),*) yr
-      case( 2 )
+      case (2)
         ! month (as integer value)
         read(string(istart:iend),*) mo
-      case( 3 )
+      case (3)
         ! day (as integer value)
         read(string(istart:iend),*) da
-      case( 4 )
+      case (4)
         ! hour (as integer value)
         read(string(istart:iend),*) ho
-      case( 5 )
+      case (5)
         ! minutes (as integer value)
         read(string(istart:iend),*) mi
-      case( 6 )
+      case (6)
         ! seconds (as float value)
         read(string(istart:iend),*) sec
       end select

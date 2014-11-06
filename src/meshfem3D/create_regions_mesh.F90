@@ -108,10 +108,10 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    select case(ipass)
-    case(1)
+    select case (ipass)
+    case (1)
       write(IMAIN,*) 'first pass'
-    case(2)
+    case (2)
       write(IMAIN,*) 'second pass'
     case default
       call exit_MPI(myrank,'Error ipass value in create_regions_mesh')
@@ -155,10 +155,10 @@
                           offset_proc_xi,offset_proc_eta)
 
 
-  select case(ipass)
+  select case (ipass)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  case( 1 ) !!!!!!!!!!! first pass of the mesher
+  case (1) !!!!!!!!!!! first pass of the mesher
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! only create global addressing and the MPI buffers in the first pass
@@ -208,7 +208,7 @@
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  case( 2 ) !!!!!!!!!!! second pass of the mesher
+  case (2) !!!!!!!!!!! second pass of the mesher
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! only create mass matrix and save all the final arrays in the second pass
@@ -293,12 +293,12 @@
     call setup_color_perm(iregion_code)
 
     ! frees allocated mesh memory
-    select case( iregion_code )
-    case( IREGION_CRUST_MANTLE )
+    select case (iregion_code)
+    case (IREGION_CRUST_MANTLE)
       deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
-    case( IREGION_OUTER_CORE )
+    case (IREGION_OUTER_CORE)
       deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
-    case( IREGION_INNER_CORE )
+    case (IREGION_INNER_CORE)
       deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
     end select
 
@@ -336,23 +336,23 @@
     nglob = nglob_theor
 
     if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
-      select case(iregion_code)
-      case( IREGION_CRUST_MANTLE )
+      select case (iregion_code)
+      case (IREGION_CRUST_MANTLE)
         nglob_xy = nglob
-      case( IREGION_INNER_CORE, IREGION_OUTER_CORE )
+      case (IREGION_INNER_CORE, IREGION_OUTER_CORE)
         nglob_xy = 1
-      endselect
+      end select
     else
        nglob_xy = 1
     endif
 
     if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-      select case(iregion_code)
-      case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
+      select case (iregion_code)
+      case (IREGION_CRUST_MANTLE,IREGION_INNER_CORE)
          nglob_xy = nglob
-      case( IREGION_OUTER_CORE )
+      case (IREGION_OUTER_CORE)
          nglob_xy = 1
-      endselect
+      end select
     endif
 
     allocate(rmassx(nglob_xy), &
@@ -1408,16 +1408,16 @@ end subroutine crm_save_mesh_files
   integer,intent(in):: iregion_code
 
   ! free memory
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust mantle
     deallocate(phase_ispec_inner_crust_mantle)
     deallocate(num_elem_colors_crust_mantle)
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     deallocate(phase_ispec_inner_outer_core)
     deallocate(num_elem_colors_outer_core)
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     deallocate(phase_ispec_inner_inner_core)
     deallocate(num_elem_colors_inner_core)

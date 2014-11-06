@@ -105,10 +105,10 @@
   ! default model: 3dvpGAP_P2
 
   ! reads in GAP-P2 model from Obayashi
-  open(unit=10,file=GAPP2,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=GAPP2,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening file for GAPP2 model')
 
-  read(10,*) no,na,nnr,dela,delo
+  read(IIN,*) no,na,nnr,dela,delo
 
   ! user output
   write(IMAIN,*)
@@ -123,12 +123,12 @@
     print*,'Error GAPP2 model bounds: '
     print*,'  file dimensions: nnr,no,na = ',nnr,no,na
     print*,'  module dimensions: mr,mo,ma = ',mr,mo,ma
-    close(10)
+    close(IIN)
     call exit_MPI(0,'please check GAPP2 model dimensions, and update model_gapp2.f90')
   endif
 
-  read(10,*) (dep(i),i = 0,nnr)
-  read(10,*) nr1
+  read(IIN,*) (dep(i),i = 0,nnr)
+  read(IIN,*) nr1
 
   ! checks bounds
   write(IMAIN,*) "             nr1 = ",nr1
@@ -136,21 +136,21 @@
     print*,'Error GAPP2 model bounds: '
     print*,'  file dimensions: nr1 = ',nr1
     print*,'  module dimensions: mr1 = ',mr1
-    close(10)
+    close(IIN)
     call exit_MPI(0,'please check GAPP2 model dimensions, and update model_gapp2.f90')
   endif
 
-  read(10,*) (dep1(i),i = 0,nr1)
-  read(10,*) (vp1(i),i = 0,nr1)
+  read(IIN,*) (dep1(i),i = 0,nr1)
+  read(IIN,*) (vp1(i),i = 0,nr1)
 
   ! reads vp
   do ir = 1,nnr
     do ia = 1,na
       ! reads file 2 lines for all no values
-      read(10,'(288f7.3)') (vp3(ia,io,ir),io = 1,no)
+      read(IIN,'(288f7.3)') (vp3(ia,io,ir),io = 1,no)
 
-      !read(10,*,iostat=ier) (vp3(ia,io,ir),io = 1,no/2)
-      !read(10,*,iostat=ier) (vp3(ia,io,ir),io=no/2,no)
+      !read(IIN,*,iostat=ier) (vp3(ia,io,ir),io = 1,no/2)
+      !read(IIN,*,iostat=ier) (vp3(ia,io,ir),io=no/2,no)
 
       if (ier /= 0) then
         print*,'Error GAPP2 read: ia,ir = ',ia,ir
@@ -158,7 +158,7 @@
       endif
     enddo
   enddo
-  close(10)
+  close(IIN)
 
   ! user output
   write(IMAIN,*) '  check vp3: ',vp3(1,1,1),vp3(na,no,nnr)

@@ -66,18 +66,18 @@
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating ibool_neighbours')
 
   ! sets up MPI interfaces between different processes
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust/mantle
     call setup_MPI_interfaces_cm(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     call setup_MPI_interfaces_oc(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     call setup_MPI_interfaces_ic(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
@@ -92,20 +92,21 @@
   deallocate(iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
   deallocate(buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar)
   deallocate(buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector)
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust mantle
     deallocate(iboolcorner_crust_mantle)
     deallocate(iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle)
     deallocate(iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle)
     deallocate(iboolfaces_crust_mantle)
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     deallocate(iboolcorner_outer_core)
     deallocate(iboolleft_xi_outer_core,iboolright_xi_outer_core)
     deallocate(iboolleft_eta_outer_core,iboolright_eta_outer_core)
     deallocate(iboolfaces_outer_core)
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     deallocate(iboolcorner_inner_core)
     deallocate(iboolleft_xi_inner_core,iboolright_xi_inner_core)

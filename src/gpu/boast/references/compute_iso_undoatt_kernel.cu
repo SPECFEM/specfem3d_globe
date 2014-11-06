@@ -143,7 +143,7 @@ __global__ void compute_iso_undoatt_kernel(realw* epsilondev_xx,
 
   // loads element displacements
   // all threads load their displacement into shared memory
-  if( ispec < NSPEC){
+  if (ispec < NSPEC){
     iglob = d_ibool[ijk_ispec]-1;
     // changing iglob indexing to match fortran row changes fast style
     s_dummyx_loc[tx] = d_b_displ[iglob*3];
@@ -151,7 +151,7 @@ __global__ void compute_iso_undoatt_kernel(realw* epsilondev_xx,
     s_dummyz_loc[tx] = d_b_displ[iglob*3 + 2];
 
     // master thread loads hprime
-    if( threadIdx.x == 0 ){
+    if (threadIdx.x == 0){
       for(int m=0; m < NGLL2; m++){
         // hprime
         sh_hprime_xx[m] = d_hprime_xx[m];

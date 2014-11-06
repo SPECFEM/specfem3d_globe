@@ -90,7 +90,7 @@ program difference_sem
 
   ! get slices id
   num_node = 0
-  open(unit = 20, file = trim(arg(1)), status = 'old',iostat=ier)
+  open(unit = IIN, file = trim(arg(1)), status = 'old',iostat=ier)
   if (ier /= 0) then
     print*,'Error no file: ',trim(arg(1))
     stop 'Error opening slices file'
@@ -98,14 +98,14 @@ program difference_sem
 
   ! reads in slices list
   do while (1 == 1)
-    read(20,'(a)',iostat=ier) sline
+    read(IIN,'(a)',iostat=ier) sline
     if (ier /= 0) exit
     read(sline,*,iostat=ier) njunk
     if (ier /= 0) exit
     num_node = num_node + 1
     node_list(num_node) = njunk
   enddo
-  close(20)
+  close(IIN)
   print *, 'slice list: '
   print *, node_list(1:num_node)
   print *, ' '
@@ -180,8 +180,8 @@ program difference_sem
     ! min/max
     min = minval(sem_data)
     max = maxval(sem_data)
-    if( min < min_all ) min_all = min
-    if( max > max_all ) max_all = max
+    if (min < min_all) min_all = min
+    if (max > max_all) max_all = max
 
     ! stores relative difference (k1 - k2)/ k2 with respect to second input file
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(kernel_name)//'_diff_relative.bin'
@@ -205,8 +205,8 @@ program difference_sem
     ! min/max
     min_rel = minval(sem_data)
     max_rel = maxval(sem_data)
-    if( min_rel < min_rel_all ) min_rel_all = min_rel
-    if( max_rel > max_rel_all ) max_rel_all = max_rel
+    if (min_rel < min_rel_all) min_rel_all = min_rel
+    if (max_rel > max_rel_all) max_rel_all = max_rel
 
     ! output
     write(*,*) '  min/max value         : ',min,max

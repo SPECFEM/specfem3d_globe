@@ -48,11 +48,11 @@
   double precision, dimension(:), allocatable :: timeval,sem,sem_fil
 
 ! read file with number of lines in input
-  open(unit=33,file='input_convolve_code.txt',status='old',action='read')
-  read(33,*) nlines
-  read(33,*) half_duration_triangle
-  read(33,*) triangle
-  close(33)
+  open(unit=IIN,file='input_convolve_code.txt',status='old',action='read')
+  read(IIN,*) nlines
+  read(IIN,*) half_duration_triangle
+  read(IIN,*) triangle
+  close(IIN)
 
 ! allocate arrays
   allocate(timeval(nlines),sem(nlines),sem_fil(nlines))

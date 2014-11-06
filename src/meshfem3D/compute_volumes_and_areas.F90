@@ -138,12 +138,12 @@
 
     ! compare to exact theoretical value
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
-      select case(iregion_code)
-        case(IREGION_CRUST_MANTLE)
+      select case (iregion_code)
+        case (IREGION_CRUST_MANTLE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*R_UNIT_SPHERE**2
-        case(IREGION_OUTER_CORE)
+        case (IREGION_OUTER_CORE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
-        case(IREGION_INNER_CORE)
+        case (IREGION_INNER_CORE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
         case default
           call exit_MPI(myrank,'incorrect region code')
@@ -154,12 +154,12 @@
 
     ! compare to exact theoretical value
     if (NCHUNKS == 6 .and. .not. TOPOGRAPHY) then
-      select case(iregion_code)
-        case(IREGION_CRUST_MANTLE)
+      select case (iregion_code)
+        case (IREGION_CRUST_MANTLE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RCMB/R_EARTH)**2
-        case(IREGION_OUTER_CORE)
+        case (IREGION_OUTER_CORE)
           write(IMAIN,*) '            exact area: ',dble(NCHUNKS)*(4.0d0/6.0d0)*PI*(RICB/R_EARTH)**2
-        case(IREGION_INNER_CORE)
+        case (IREGION_INNER_CORE)
           write(IMAIN,*) '            more or less similar area (central cube): ', &
                                            dble(NCHUNKS)*(2.*(R_CENTRAL_CUBE / R_EARTH)/sqrt(3.))**2
         case default

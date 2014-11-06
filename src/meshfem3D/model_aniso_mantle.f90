@@ -57,7 +57,6 @@
 
 ! standard routine to setup model
 
-  use constants
   use model_aniso_mantle_par
 
   implicit none
@@ -69,8 +68,7 @@
 
   ! allocates model arrays
   allocate(AMM_V_beta(14,34,37,73), &
-          AMM_V_pro(47), &
-          stat=ier)
+           AMM_V_pro(47),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating AMM_V arrays')
 
   ! the variables read are declared and stored in structure AMM_V
@@ -91,7 +89,7 @@
                                c11,c12,c13,c14,c15,c16, &
                                c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
-  use constants
+  use constants,only: DEGREES_TO_RADIANS
   use model_aniso_mantle_par
 
   implicit none
@@ -133,7 +131,7 @@
        d11,d12,d13,d14,d15,d16,d22,d23,d24,d25,d26,d33,d34,d35,d36,&
        d44,d45,d46,d55,d56,d66)
 
-  use constants
+  use constants,only: R_EARTH,R_EARTH_KM,R_UNIT_SPHERE,DEGREES_TO_RADIANS,ZERO,PI,GRAV,RHOAV
 
   implicit none
 
@@ -368,7 +366,7 @@
 
   subroutine read_aniso_mantle_model()
 
-  use constants
+  use constants,only: IIN,DEGREES_TO_RADIANS
   use model_aniso_mantle_par
 
   implicit none
@@ -394,7 +392,7 @@
 !
 ! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
 !
-  open(19,file=glob_prem3sm01,status='old',action='read',iostat=ier)
+  open(IIN,file=glob_prem3sm01,status='old',action='read',iostat=ier)
   if (ier /= 0 ) stop 'Error opening file DATA/Montagner_model/glob-prem3sm01'
 
 !
@@ -413,10 +411,10 @@
     ipa = ipa + 1
     do idep = 1,AMM_V_npar1
       il = idep + np1 - 1
-      read(19,"(2f4.0,2i3,f4.0)",end = 88) xinf,yinf,nx,ny,pxy
+      read(IIN,"(2f4.0,2i3,f4.0)",end = 88) xinf,yinf,nx,ny,pxy
 
       ppp = 1.
-      read(19,"(f5.0,f8.4)",end = 88) AMM_V_pro(idep),ppp
+      read(IIN,"(f5.0,f8.4)",end = 88) AMM_V_pro(idep),ppp
 
       if (nf == 1) pari(nf,il) = ppp
       if (nf == 2) pari(nf,il) = ppp
@@ -424,7 +422,7 @@
       if (nf == 4) ppp = pari(nf,il)
       if (nf == 5) ppp = pari(nf,il)
       do ilat = 1,nx
-        read(19,"(17f7.2)",end = 88) (AMM_V_beta(ipa,idep,ilat,ilon),ilon = 1,ny)
+        read(IIN,"(17f7.2)",end = 88) (AMM_V_beta(ipa,idep,ilat,ilon),ilon = 1,ny)
 !
 ! calculation of A,C,F,L,N
 !
@@ -445,7 +443,7 @@
        enddo
      enddo
    enddo
-88 close(19)
+88 close(IIN)
 
 !
 ! read anisotropic azimuthal parameters
@@ -455,7 +453,7 @@
 ! beta(ipa,idep,ilat,ilon) are sorted in (amplitude, phase)
 ! normalized, in percents: 100 G/L
 !
-  open(unit=15,file=globpreman3sm01,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=globpreman3sm01,status='old',action='read',iostat=ier)
   if (ier /= 0 ) stop 'Error opening file DATA/Montagner_model/globpreman3sm01'
 
   do nf = 7,nfin,2
@@ -463,8 +461,8 @@
     ipa1 = ipa + 1
     do idep = 1,AMM_V_npar1
       il = idep + np1 - 1
-      read(15,"(2f4.0,2i3,f4.0)",end = 888) xinf,yinf,nx,ny,pxy
-      read(15,"(f5.0,f8.4)",end = 888) AMM_V_pro(idep),ppp
+      read(IIN,"(2f4.0,2i3,f4.0)",end = 888) xinf,yinf,nx,ny,pxy
+      read(IIN,"(f5.0,f8.4)",end = 888) AMM_V_pro(idep),ppp
       if (nf == 7) ppp = pari(2,il)
       if (nf == 9) ppp = pari(3,il)
       af = pari(6,il)*(pari(2,il) - 2.*pari(3,il))
@@ -472,11 +470,11 @@
       if (nf == 13) ppp = (pari(4,il) + 1.)*pari(3,il)
 
       do ilat = 1,nx
-        read(15,"(17f7.2)",end = 888) (alph(ilon,ilat),ilon = 1,ny)
+        read(IIN,"(17f7.2)",end = 888) (alph(ilon,ilat),ilon = 1,ny)
       enddo
 
       do ilat = 1,nx
-        read(15,"(17f7.2)",end = 888) (ph(ilon,ilat),ilon = 1,ny)
+        read(IIN,"(17f7.2)",end = 888) (ph(ilon,ilat),ilon = 1,ny)
       enddo
 
       do ilat = 1,nx
@@ -492,7 +490,7 @@
     enddo
   enddo
 
-888 close(15)
+888 close(IIN)
 
   do idep = 1,AMM_V_npar1
     do ilat = 1,nx
@@ -538,6 +536,8 @@
 
   subroutine lecmod(nri,pari,ra)
 
+  use constants,only: IIN
+
   implicit none
 
 ! read the reference Earth model: rho, Vph, Vsv, XI, PHI, ETA
@@ -555,15 +555,15 @@
 
      nri = 47
 
-     open(unit=13,file=Adrem119,status='old',action='read')
-     read(13,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,nullval
+     open(unit=IIN,file=Adrem119,status='old',action='read')
+     read(IIN,*,end = 77) nlayer,minlay,moho,nout,neff,nband,kiti,nullval
 
-     if (kiti == 0) read(13,"(20a4)",end = 77) idum1
-     read(13,"(20a4)",end = 77) idum2
-     read(13,"(20a4)",end = 77) idum3
+     if (kiti == 0) read(IIN,"(20a4)",end = 77) idum1
+     read(IIN,"(20a4)",end = 77) idum2
+     read(IIN,"(20a4)",end = 77) idum3
 
      do i = 1,nlayer
-       read(13,"(4x,f11.1,8d12.5)",end = 77) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
+       read(IIN,"(4x,f11.1,8d12.5)",end = 77) ra(i),(par(k,i),k = 1,6),qshear(i),qkappa(i)
      enddo
 
      do i = 1,nlayer
@@ -603,7 +603,7 @@
 
   red = 1.
   do i = 1,nlayer
-    read(13,"(15x,6e12.5,f11.1)",end = 77) (epa(j,i),j = 1,6),dcori(i)
+    read(IIN,"(15x,6e12.5,f11.1)",end = 77) (epa(j,i),j = 1,6),dcori(i)
     epa(7,i) = epa(2,i)
     epa(8,i) = epa(2,i)
     epa(9,i) = epa(3,i)
@@ -619,11 +619,11 @@
       epa(j,i) = red*epa(j,i)
     enddo
 
-    read(13,"(21f7.3)",end = 77) (corpar(j,i),j = 1,21)
+    read(IIN,"(21f7.3)",end = 77) (corpar(j,i),j = 1,21)
 
   enddo
 
-77 close(13)
+77 close(IIN)
 
   end subroutine lecmod
 
@@ -634,8 +634,6 @@
                            d33,d34,d35,d36,d44,d45,d46,d55,d56,d66,&
                            c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
                            c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
-
-  use constants
 
   implicit none
 

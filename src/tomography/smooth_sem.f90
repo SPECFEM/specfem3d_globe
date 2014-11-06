@@ -225,8 +225,8 @@ program smooth_sem_globe
   sigma_v2 = 2.0 * sigma_v ** 2
 
   ! checks
-  if( sigma_h2 < 1.e-18 ) stop 'Error sigma_h2 zero, must be non-zero'
-  if( sigma_v2 < 1.e-18 ) stop 'Error sigma_v2 zero, must be non-zero'
+  if (sigma_h2 < 1.e-18) stop 'Error sigma_h2 zero, must be non-zero'
+  if (sigma_v2 < 1.e-18) stop 'Error sigma_v2 zero, must be non-zero'
 
   ! search radius
   sigma_h3 = 3.0  * sigma_h + element_size_m
@@ -377,7 +377,7 @@ program smooth_sem_globe
 
     iproc = islice(inum)
 
-    if( myrank == 0 ) print*,'  reading slice:',iproc
+    if (myrank == 0) print*,'  reading slice:',iproc
 
     ! neighbor database file
     write(prname_lp,'(a,i6.6,a)') &
@@ -534,7 +534,7 @@ program smooth_sem_globe
       enddo ! (ispec2)
     enddo   ! (ispec)
   enddo     ! islice
-  if( myrank == 0 ) print *
+  if (myrank == 0) print *
 
   ! normalizes/scaling factor
   if (myrank == 0) then
