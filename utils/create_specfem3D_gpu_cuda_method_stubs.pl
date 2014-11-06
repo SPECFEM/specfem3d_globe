@@ -14,7 +14,7 @@ $outfile = "src/specfem3D/specfem3D_gpu_method_stubs.c";
 open(IOUT,"> _____temp_tutu_____");
 
 $header = <<END;
-/* 
+/*
 !=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
@@ -59,7 +59,7 @@ $warning = <<END;
  exit(1);
 END
 
-print IOUT "$header \n";
+print IOUT "${header}\n";
 
 $success = 0;
 
@@ -111,9 +111,9 @@ foreach $name (@objects) {
         # function declaration ends
         if( $line =~ /INITIALIZE_GPU_DEVICE/ ){
           # adds warning
-          print IOUT "$line \n$warning\} \n\n";
+          print IOUT "$line\n$warning\}\n\n";
         }else{
-          print IOUT "$line\} \n\n";
+          print IOUT "$line\}\n\n";
         }
         $do_extract = 0;
       }else{
