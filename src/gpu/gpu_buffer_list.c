@@ -335,6 +335,8 @@ GPU_REALW_BUFFER (d_station_seismo_field);
 GPU_REALW_BUFFER (d_adj_sourcearrays);
 GPU_INT_BUFFER (d_pre_computed_irec);
 
+GPU_REALW_BUFFER (d_norm_max);
+
   // ------------------------------------------------------------------   //
   // assembly
   // ------------------------------------------------------------------   //

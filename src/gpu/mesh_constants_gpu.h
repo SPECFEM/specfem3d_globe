@@ -748,6 +748,9 @@ typedef struct mesh_ {
   realw *h_adj_sourcearrays_slice;
   gpu_int_mem d_pre_computed_irec;
 
+  // norm checking
+  gpu_realw_mem d_norm_max;
+
   // ------------------------------------------------------------------   //
   // assembly
   // ------------------------------------------------------------------   //

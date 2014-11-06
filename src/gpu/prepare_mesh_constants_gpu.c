@@ -386,6 +386,24 @@ void FC_FUNC_ (prepare_constants_device,
   }
 #endif
 
+  // buffer for norm checking at every timestamp
+  int blocksize = BLOCKSIZE_TRANSFER;
+
+  int size,size_padded;
+  int num_blocks_x,num_blocks_y;
+
+  // buffer for crust_mantle arrays has maximum size
+  if (mp->compute_and_store_strain){
+    size = max(mp->NGLOB_CRUST_MANTLE, NGLL3 * (mp->NSPEC_CRUST_MANTLE));
+  } else{
+    size = mp->NGLOB_CRUST_MANTLE;
+  }
+  size_padded = ((int) ceil (((double) size) / ((double) blocksize))) * blocksize;
+  get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
+
+  // creates buffer on GPU for maximum array values
+  gpuMalloc_realw (&mp->d_norm_max, num_blocks_x * num_blocks_y);
+
   GPU_ERROR_CHECKING ("prepare_constants_device");
 }
 
@@ -2068,7 +2086,7 @@ void FC_FUNC_ (prepare_inner_core_device,
   gpuMalloc_realw (&mp->d_gammay_inner_core, size_padded);
   gpuMalloc_realw (&mp->d_gammaz_inner_core, size_padded);
 
-  // muvstore needed for attenuatioin also for anisotropic inner core
+  // muvstore needed for attenuation also for anisotropic inner core
   gpuMalloc_realw (&mp->d_muvstore_inner_core, size_padded);
 
   // transfer constant element data with padding
@@ -2586,6 +2604,8 @@ void FC_FUNC_ (prepare_cleanup_device,
     gpuFree (&mp->d_adj_sourcearrays);
     gpuFree (&mp->d_pre_computed_irec);
   }
+
+  gpuFree (&mp->d_norm_max);
 
   //------------------------------------------
   // rotation arrays
