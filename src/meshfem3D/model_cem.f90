@@ -27,13 +27,12 @@
 
 module cem_par
 
-  use :: constants, only: PI, GRAV, RHOAV, R_EARTH
+  use constants, only: PI, GRAV, RHOAV, R_EARTH, MAX_STRING_LEN
 
   implicit none
 
-  double precision, parameter :: scaleval=dsqrt(PI*GRAV*RHOAV)
-  double precision, parameter :: scale_GPa = (RHOAV / 1000.d0) * &
-    ((R_EARTH * scaleval / 1000.d0) ** 2)
+  double precision :: scaleval
+  double precision :: scale_GPa
 
   integer, dimension (:), allocatable :: regCode
   integer, parameter                  :: shuOn=1
@@ -48,13 +47,13 @@ module cem_par
 
   type par
 
-    double precision, dimension (:), allocatable :: vsv, vsh, vpv, vph, rho
-    double precision, dimension (:), allocatable :: c11, c12, c13, c14
-    double precision, dimension (:), allocatable :: c15, c16, c26, c33
-    double precision, dimension (:), allocatable :: c22, c23, c24, c25
-    double precision, dimension (:), allocatable :: c34, c35, c36, c44
-    double precision, dimension (:), allocatable :: c55, c56, c66, c45
-    double precision, dimension (:), allocatable :: c46
+    double precision, dimension (:), pointer :: vsv, vsh, vpv, vph, rho
+    double precision, dimension (:), pointer :: c11, c12, c13, c14
+    double precision, dimension (:), pointer :: c15, c16, c26, c33
+    double precision, dimension (:), pointer :: c22, c23, c24, c25
+    double precision, dimension (:), pointer :: c34, c35, c36, c44
+    double precision, dimension (:), pointer :: c55, c56, c66, c45
+    double precision, dimension (:), pointer :: c46
 
   end type par
 
@@ -64,15 +63,21 @@ end module cem_par
 
 subroutine model_cem_broadcast (myrank)
 
-  use :: cem_par
-  use :: netcdf
-  use :: meshfem3D_models_par, only: CEM_ACCEPT
+  use cem_par
+  use netcdf
+  use meshfem3D_models_par, only: CEM_ACCEPT
 
   integer, intent (in) :: myrank
   integer              :: wSize
 
+  ! initializes
+
   rank = myrank
   call world_size (wSize)
+  
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  scale_GPa = (RHOAV / 1000.d0) * &
+      ((R_EARTH * scaleval / 1000.d0) ** 2)    
 
   if ( CEM_ACCEPT ) then
 
@@ -98,18 +103,16 @@ subroutine model_cem_broadcast (myrank)
 
     call synchronize_all ()
 
-print *, reg1Bc%vsv(1)
-
   endif
 
 end subroutine model_cem_broadcast
 
 subroutine request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
 
-  use :: cem_par
-  use :: constants
+  use cem_par
+  use constants
 
-  use :: meshfem3D_par, only: ibool
+  use meshfem3D_par, only: ibool
 
   implicit none
 
@@ -154,8 +157,8 @@ end subroutine request_cem
 
 subroutine return_populated_arrays (structure, param, reg)
 
-  use :: cem_par
-  use :: netcdf
+  use cem_par
+  use netcdf
 
   implicit none
 
@@ -168,9 +171,9 @@ subroutine return_populated_arrays (structure, param, reg)
 
   type (par) :: structure
 
-  character (len=1024) :: fileName
-  character (len=1024) :: fileNameTrim
-  character (len=1024) :: formatString
+  character (len=MAX_STRING_LEN) :: fileName
+  character (len=MAX_STRING_LEN) :: fileNameTrim
+  character (len=MAX_STRING_LEN) :: formatString
 
 
   formatString = "(A,A3,A,I0.2,A,I0.6,A)"
@@ -202,10 +205,9 @@ end subroutine return_populated_arrays
 
 subroutine write_cem_request (iregion_code)
 
-  use :: mpi
-  use :: netcdf
-  use :: constants
-  use :: CEM_par
+  use netcdf
+  use constants
+  use CEM_par
 
   implicit none
   
@@ -213,13 +215,14 @@ subroutine write_cem_request (iregion_code)
   integer, dimension (NDIMS_WRITE) :: start, count, ids
 
   integer :: ncid, paramDimID, procDimID, varidX, varidY, varidZ
-  integer :: varidR, iregion_code, commWorldSize, worldComm, myRank
-  character (len = 1024) :: fileName, fileNameTrim, formatString
+  integer :: varidR, iregion_code, commWorldSize, worldComm, myRank, info
+  character (len = MAX_STRING_LEN) :: fileName, fileNameTrim, formatString
 
   ! Get the total number of processors.
   call world_rank     (myRank)
   call world_size     (commWorldSize)
   call world_get_comm (worldComm)
+  call world_get_info_null (info)
 
   ! Define filename.
   formatString = "(A,I0.2,A)"
@@ -228,7 +231,7 @@ subroutine write_cem_request (iregion_code)
   
   ! Create parallel NetCDF file.
   call checkNC (nf90_create (fileNameTrim, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
-    comm = worldComm, info = MPI_INFO_NULL))
+    comm = worldComm, info = info))
     
   ! Define the processor array.
   call checkNC (nf90_def_dim (ncid, 'glob', size (xyzOut(:,1)), paramDimID))
@@ -264,10 +267,10 @@ end subroutine write_cem_request
 
 subroutine build_global_coordinates (nspec, nglob, iregion_code)
 
-  use :: constants
-  use :: cem_par
+  use constants
+  use cem_par
 
-  use :: meshfem3D_par, only: &
+  use meshfem3D_par, only: &
     ibool,xstore,ystore,zstore
 
   implicit none
@@ -383,7 +386,7 @@ subroutine checkNC (status)
   ! This little guy just checks for an error from the NetCDF libraries and throws a tantrum if
   ! one's found.
 
-  use :: netcdf
+  use netcdf
 
   implicit none
 
