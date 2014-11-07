@@ -1,3 +1,30 @@
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+
 module cem_par
 
   use :: constants, only: PI, GRAV, RHOAV, R_EARTH
@@ -35,7 +62,7 @@ module cem_par
 
 end module cem_par
 
-subroutine model_cem_broadcast ( myrank )
+subroutine model_cem_broadcast (myrank)
 
   use :: cem_par
   use :: netcdf
@@ -77,7 +104,7 @@ print *, reg1Bc%vsv(1)
 
 end subroutine model_cem_broadcast
 
-subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
+subroutine request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
 
   use :: cem_par
   use :: constants
@@ -91,7 +118,7 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
   integer, intent (in) :: iregion_code, ispec, i, j, k
   integer              :: iglob
 
-  if      ( iregion_code == IREGION_CRUST_MANTLE ) then
+  if      (iregion_code == IREGION_CRUST_MANTLE) then
 
     iglob = ibool(i,j,k,ispec)
 
@@ -101,7 +128,7 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
     vsh = reg1Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vph = reg1Bc%vph(iglob) * 1000.0d0 / (R_EARTH * scaleval)
 
-  else if ( iregion_code == IREGION_OUTER_CORE ) then
+  else if (iregion_code == IREGION_OUTER_CORE) then
 
     iglob = ibool(i,j,k,ispec)
 
@@ -111,7 +138,7 @@ subroutine request_cem ( vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k )
     vsh = reg2Bc%vsh(iglob) * 1000.0d0 / (R_EARTH * scaleval)
     vph = reg2Bc%vph(iglob) * 1000.0d0 / (R_EARTH * scaleval)
 
-  else if ( iregion_code == IREGION_INNER_CORE ) then
+  else if (iregion_code == IREGION_INNER_CORE) then
 
     iglob = ibool(i,j,k,ispec)
 
@@ -235,13 +262,13 @@ subroutine write_cem_request (iregion_code)
 
 end subroutine write_cem_request
 
-subroutine build_global_coordinates ( nspec, nglob, iregion_code )
+subroutine build_global_coordinates (nspec, nglob, iregion_code)
 
   use :: constants
   use :: cem_par
 
   use :: meshfem3D_par, only: &
-    ibool,idoubling,xstore,ystore,zstore
+    ibool,xstore,ystore,zstore
 
   implicit none
 
@@ -265,7 +292,7 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
           x               = sngl(xstore(i,j,k,ispec)) * R_EARTH_KM
           iglob           = ibool(i,j,k,ispec)
-          xyzOut(iglob,1) = x
+          xyzOut(iglob,1) = sngl(x)
 
         enddo
       enddo
@@ -280,7 +307,7 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
           y               = sngl(ystore(i,j,k,ispec)) * R_EARTH_KM
           iglob           = ibool(i,j,k,ispec)
-          xyzOut(iglob,2) = y
+          xyzOut(iglob,2) = sngl(y)
 
         enddo
       enddo
@@ -295,7 +322,7 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
           z               = sngl(zstore(i,j,k,ispec)) * R_EARTH_KM
           iglob           = ibool(i,j,k,ispec)
-          xyzOut(iglob,3) = z
+          xyzOut(iglob,3) = sngl(z)
 
         enddo
       enddo
@@ -311,15 +338,15 @@ subroutine build_global_coordinates ( nspec, nglob, iregion_code )
 
             x               = sngl(xstore(i,j,k,ispec)) * R_EARTH_KM
             iglob           = ibool(i,j,k,ispec)
-            xyzOut(iglob,1) = x
+            xyzOut(iglob,1) = sngl(x)
 
             y               = sngl(ystore(i,j,k,ispec)) * R_EARTH_KM
             iglob           = ibool(i,j,k,ispec)
-            xyzOut(iglob,2) = y
+            xyzOut(iglob,2) = sngl(y)
 
             z               = sngl(zstore(i,j,k,ispec)) * R_EARTH_KM
             iglob           = ibool(i,j,k,ispec)
-            xyzOut(iglob,3) = z
+            xyzOut(iglob,3) = sngl(z)
 
             rad = dsqrt ( x * x + y * y + z * z )
 
