@@ -152,68 +152,68 @@
 
   if (PRINT_INFO_TO_SCREEN) then
 
-  print *
-  print *,'edit file OUTPUT_FILES/values_from_mesher.h to see'
-  print *,'some statistics about the mesh'
-  print *
-
-  print *,'number of processors = ',NPROCTOT
-  print *
-  print *,'maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
-  print *
-  print *,'total elements per slice = ',sum(NSPEC)
-  print *,'total points per slice = ',sum(nglob)
-  print *
-  print *,'the time step of the solver will be DT = ',sngl(DT)
-  print *
-  if (MOVIE_SURFACE .or. MOVIE_VOLUME) then
-    print *,'MOVIE_VOLUME :',MOVIE_VOLUME
-    print *,'MOVIE_SURFACE:',MOVIE_SURFACE
-    print *,'Saving movie frames every',NTSTEP_BETWEEN_FRAMES
     print *
-  endif
-  print *,'on NEC SX, make sure "loopcnt=" parameter'
-! use fused loops on NEC SX
-  print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
-  print *
+    print *,'edit file OUTPUT_FILES/values_from_mesher.h to see'
+    print *,'some statistics about the mesh'
+    print *
 
-  print *,'approximate static memory needed by the solver:'
-  print *,'----------------------------------------------'
-  print *
-  print *,'(lower bound, usually the real amount used is 5% to 10% higher)'
-  print *
-  print *,'(you can get a more precise estimate of the size used per MPI process'
-  print *,' by typing "size -d bin/xspecfem3D"'
-  print *,' after compiling the code with the DATA/Par_file you plan to use)'
-  print *
-  print *,'size of static arrays per slice = ',static_memory_size/1.d6,' MB'
-  print *,'                                = ',static_memory_size/1048576.d0,' MiB'
-  print *,'                                = ',static_memory_size/1.d9,' GB'
-  print *,'                                = ',static_memory_size/1073741824.d0,' GiB'
-  print *
+    print *,'number of processors = ',NPROCTOT
+    print *
+    print *,'maximum number of points per region = ',nglob(IREGION_CRUST_MANTLE)
+    print *
+    print *,'total elements per slice = ',sum(NSPEC)
+    print *,'total points per slice = ',sum(nglob)
+    print *
+    print *,'the time step of the solver will be DT = ',sngl(DT)
+    print *
+    if (MOVIE_SURFACE .or. MOVIE_VOLUME) then
+      print *,'MOVIE_VOLUME :',MOVIE_VOLUME
+      print *,'MOVIE_SURFACE:',MOVIE_SURFACE
+      print *,'Saving movie frames every',NTSTEP_BETWEEN_FRAMES
+      print *
+    endif
+    print *,'on NEC SX, make sure "loopcnt=" parameter'
+! use fused loops on NEC SX
+    print *,'in Makefile is greater than max vector length = ',nglob(IREGION_CRUST_MANTLE)*NDIM
+    print *
+
+    print *,'approximate static memory needed by the solver:'
+    print *,'----------------------------------------------'
+    print *
+    print *,'(lower bound, usually the real amount used is 5% to 10% higher)'
+    print *
+    print *,'(you can get a more precise estimate of the size used per MPI process'
+    print *,' by typing "size -d bin/xspecfem3D"'
+    print *,' after compiling the code with the DATA/Par_file you plan to use)'
+    print *
+    print *,'size of static arrays per slice = ',static_memory_size/1.d6,' MB'
+    print *,'                                = ',static_memory_size/1048576.d0,' MiB'
+    print *,'                                = ',static_memory_size/1.d9,' GB'
+    print *,'                                = ',static_memory_size/1073741824.d0,' GiB'
+    print *
 
 ! note: using less memory becomes an issue only if the strong scaling of the code is poor.
 !          Some users will run simulations with an executable using far less than 80% RAM per core
 !          if they prefer having a faster computational time (and use a higher number of cores).
 
-  print *,'   (should be below 80% or 90% of the memory installed per core)'
-  print *,'   (if significantly more, the job will not run by lack of memory)'
-  print *,'   (note that if significantly less, you waste a significant amount'
-  print *,'    of memory per processor core)'
-  print *,'   (but that can be perfectly acceptable if you can afford it and'
-  print *,'    want faster results by using more cores)'
-  print *
-  if (static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
-    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
-    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
-    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
-  else
-    print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
-  endif
-  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
-  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
-  print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
-  print *
+    print *,'   (should be below 80% or 90% of the memory installed per core)'
+    print *,'   (if significantly more, the job will not run by lack of memory)'
+    print *,'   (note that if significantly less, you waste a significant amount'
+    print *,'    of memory per processor core)'
+    print *,'   (but that can be perfectly acceptable if you can afford it and'
+    print *,'    want faster results by using more cores)'
+    print *
+    if (static_memory_size*dble(NPROCTOT)/1.d6 < 10000.d0) then
+      print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d6,' MB'
+      print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1048576.d0,' MiB'
+      print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+    else
+      print *,'size of static arrays for all slices = ',static_memory_size*dble(NPROCTOT)/1.d9,' GB'
+    endif
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1073741824.d0,' GiB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1.d12,' TB'
+    print *,'                                     = ',static_memory_size*dble(NPROCTOT)/1099511627776.d0,' TiB'
+    print *
 
   endif ! of if (PRINT_INFO_TO_SCREEN)
 
@@ -259,36 +259,36 @@
 
     if (PRINT_INFO_TO_SCREEN) then
 
-    print *,'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
-    print *,'  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
+      print *,'without undoing of attenuation you are using ',static_memory_size_GB,' GB per core'
+      print *,'  i.e. ',sngl(100.d0 * static_memory_size_GB / MEMORY_INSTALLED_PER_CORE_IN_GB),'% of the installed memory'
 
-    print *
-    print *,'each time step to store in memory to undo attenuation will require storing ', &
-                  size_to_store_at_each_time_step,' GB per core'
-    print *
-    print *,'*******************************************************************************'
-    print *,'the optimal value is thus NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
-    print *,'*******************************************************************************'
+      print *
+      print *,'each time step to store in memory to undo attenuation will require storing ', &
+                    size_to_store_at_each_time_step,' GB per core'
+      print *
+      print *,'*******************************************************************************'
+      print *,'the optimal value is thus NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
+      print *,'*******************************************************************************'
 
-    print *
-    print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
+      print *
+      print *,'we will need to save a total of ',number_of_dumpings_to_do,' dumpings (restart files) to disk'
 
-    print *
-    print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
+      print *
+      print *,'each dumping on the disk to undo attenuation will require storing ',disk_size_of_each_dumping,' GB per core'
 
-    print *
-    print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT,' GB for all cores'
+      print *
+      print *,'each dumping on the disk will require storing ',disk_size_of_each_dumping*NPROCTOT,' GB for all cores'
 
-    print *
-    print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
+      print *
+      print *,'ALL dumpings on the disk will require storing ',disk_size_of_each_dumping*number_of_dumpings_to_do,' GB per core'
 
-    print *
-    print *,'*******************************************************************************'
-    print *,'ALL dumpings on the disk will require storing ', &
-                   disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
-    print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
-    print *,'*******************************************************************************'
-    print *
+      print *
+      print *,'*******************************************************************************'
+      print *,'ALL dumpings on the disk will require storing ', &
+                     disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT,' GB for all cores'
+      print *,'  i.e. ',disk_size_of_each_dumping*number_of_dumpings_to_do*NPROCTOT/1000.d0,' TB'
+      print *,'*******************************************************************************'
+      print *
 
     endif
 
@@ -356,102 +356,102 @@
     - 3.d0*subtract_central_cube_points
   write(IOUT,*) '!'
 
-! display location of chunk if regional run
-  if (NCHUNKS /= 6) then
-
-  write(IOUT,*) '! position of the mesh chunk at the surface:'
-  write(IOUT,*) '! -----------------------------------------'
-  write(IOUT,*) '!'
-  write(IOUT,*) '! angular size in first direction in degrees = ',sngl(ANGULAR_WIDTH_XI_IN_DEGREES)
-  write(IOUT,*) '! angular size in second direction in degrees = ',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES)
-  write(IOUT,*) '!'
-  write(IOUT,*) '! longitude of center in degrees = ',sngl(CENTER_LONGITUDE_IN_DEGREES)
-  write(IOUT,*) '! latitude of center in degrees = ',sngl(CENTER_LATITUDE_IN_DEGREES)
-  write(IOUT,*) '!'
-  write(IOUT,*) '! angle of rotation of the first chunk = ',sngl(GAMMA_ROTATION_AZIMUTH)
-
 ! convert width to radians
   ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES * DEGREES_TO_RADIANS
   ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES * DEGREES_TO_RADIANS
 
+! display location of chunk if regional run
+  if (NCHUNKS /= 6) then
+
+    write(IOUT,*) '! position of the mesh chunk at the surface:'
+    write(IOUT,*) '! -----------------------------------------'
+    write(IOUT,*) '!'
+    write(IOUT,*) '! angular size in first direction in degrees = ',sngl(ANGULAR_WIDTH_XI_IN_DEGREES)
+    write(IOUT,*) '! angular size in second direction in degrees = ',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES)
+    write(IOUT,*) '!'
+    write(IOUT,*) '! longitude of center in degrees = ',sngl(CENTER_LONGITUDE_IN_DEGREES)
+    write(IOUT,*) '! latitude of center in degrees = ',sngl(CENTER_LATITUDE_IN_DEGREES)
+    write(IOUT,*) '!'
+    write(IOUT,*) '! angle of rotation of the first chunk = ',sngl(GAMMA_ROTATION_AZIMUTH)
+
 ! compute rotation matrix from Euler angles
-  call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
+    call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
 ! loop on the four corners of the chunk to display their coordinates
-  icorner = 0
-  do iy = 0,1
-    do ix = 0,1
+    icorner = 0
+    do iy = 0,1
+      do ix = 0,1
 
-    icorner = icorner + 1
+      icorner = icorner + 1
 
-    xi= - ANGULAR_WIDTH_XI_RAD/2. + dble(ix)*ANGULAR_WIDTH_XI_RAD
-    eta= - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
+      xi= - ANGULAR_WIDTH_XI_RAD/2. + dble(ix)*ANGULAR_WIDTH_XI_RAD
+      eta= - ANGULAR_WIDTH_ETA_RAD/2. + dble(iy)*ANGULAR_WIDTH_ETA_RAD
 
-    x=dtan(xi)
-    y=dtan(eta)
+      x=dtan(xi)
+      y=dtan(eta)
 
-    gamma=ONE/dsqrt(ONE+x*x+y*y)
-    rgt=R_UNIT_SPHERE*gamma
+      gamma=ONE/dsqrt(ONE+x*x+y*y)
+      rgt=R_UNIT_SPHERE*gamma
 
-    ! define the mesh points at the top surface
-    x_top=-y*rgt
-    y_top=x*rgt
-    z_top=rgt
+      ! define the mesh points at the top surface
+      x_top=-y*rgt
+      y_top=x*rgt
+      z_top=rgt
 
-    ! rotate top
-    vector_ori(1) = x_top
-    vector_ori(2) = y_top
-    vector_ori(3) = z_top
-    do i=1,3
-      vector_rotated(i)=0.0d0
-      do j=1,3
-        vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
+      ! rotate top
+      vector_ori(1) = x_top
+      vector_ori(2) = y_top
+      vector_ori(3) = z_top
+      do i=1,3
+        vector_rotated(i)=0.0d0
+        do j=1,3
+          vector_rotated(i)=vector_rotated(i)+rotation_matrix(i,j)*vector_ori(j)
+        enddo
+      enddo
+      x_top = vector_rotated(1)
+      y_top = vector_rotated(2)
+      z_top = vector_rotated(3)
+
+      ! convert to latitude and longitude
+      call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
+      call reduce(theta_corner,phi_corner)
+
+      ! convert geocentric to geographic colatitude
+      call geocentric_2_geographic_dble(theta_corner,colat_corner)
+
+      if (phi_corner>PI) phi_corner=phi_corner-TWO_PI
+
+      ! compute real position of the source
+      lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
+      long = phi_corner*RADIANS_TO_DEGREES
+
+      write(IOUT,*) '!'
+      write(IOUT,*) '! corner ',icorner
+      write(IOUT,*) '! longitude in degrees = ',long
+      write(IOUT,*) '! latitude in degrees = ',lat
+
       enddo
     enddo
-    x_top = vector_rotated(1)
-    y_top = vector_rotated(2)
-    z_top = vector_rotated(3)
-
-    ! convert to latitude and longitude
-    call xyz_2_rthetaphi_dble(x_top,y_top,z_top,r_corner,theta_corner,phi_corner)
-    call reduce(theta_corner,phi_corner)
-
-    ! convert geocentric to geographic colatitude
-    call geocentric_2_geographic_dble(theta_corner,colat_corner)
-
-    if (phi_corner>PI) phi_corner=phi_corner-TWO_PI
-
-    ! compute real position of the source
-    lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
-    long = phi_corner*RADIANS_TO_DEGREES
 
     write(IOUT,*) '!'
-    write(IOUT,*) '! corner ',icorner
-    write(IOUT,*) '! longitude in degrees = ',long
-    write(IOUT,*) '! latitude in degrees = ',lat
-
-    enddo
-  enddo
-
-  write(IOUT,*) '!'
 
   endif  ! regional chunk
 
   ! mesh averages
-  if (NCHUNKS == 6 ) then
-    ! global mesh, chunks of 90 degrees
-    num_elem_gc = 4 * NEX_XI
-    num_gll_gc = 4*NEX_XI*(NGLLX-1)
-    avg_dist_deg = 360.d0 / dble(4) / dble(NEX_XI*(NGLLX-1))
-    avg_dist_km = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI*(NGLLX-1))
-    avg_element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI)
-  else
+  if (NCHUNKS /= 6 ) then
     ! regional mesh, variable chunk sizes
     num_elem_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI )
     num_gll_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI *(NGLLX-1) )
     avg_dist_deg = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) / dble(NGLLX-1)
     avg_dist_km = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM / dble(NGLLX-1)
     avg_element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM
+  else
+    ! global mesh, chunks of 90 degrees
+    num_elem_gc = 4 * NEX_XI
+    num_gll_gc = 4*NEX_XI*(NGLLX-1)
+    avg_dist_deg = 360.d0 / dble(4) / dble(NEX_XI*(NGLLX-1))
+    avg_dist_km = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI*(NGLLX-1))
+    avg_element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI)
   endif
 
   write(IOUT,*) '! resolution of the mesh at the surface:'

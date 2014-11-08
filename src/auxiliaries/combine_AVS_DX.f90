@@ -555,6 +555,12 @@
 ! from the lower-left corner, continuing to the lower-right corner and so on
     do iloop_corners = 1,2
 
+    ipointnumber1_horiz = 0
+    ipointnumber2_horiz = 0
+
+    ipointnumber1_vert = 0
+    ipointnumber2_vert = 0
+
     select case (iloop_corners)
     case (1)
       ipointnumber1_horiz = iglob1

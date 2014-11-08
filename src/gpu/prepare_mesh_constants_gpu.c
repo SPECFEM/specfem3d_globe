@@ -249,7 +249,6 @@ void FC_FUNC_ (prepare_constants_device,
   mp->anisotropic_kl = *ANISOTROPIC_KL_f;
   mp->approximate_hess_kl = *APPROXIMATE_HESS_KL_f;
 
-
   // mesh coloring flag
 #ifdef USE_MESH_COLORING_GPU
   mp->use_mesh_coloring_gpu = 1;
@@ -1894,7 +1893,6 @@ void FC_FUNC_ (prepare_outer_core_device,
 
   // global indexing
   gpuCreateCopy_todevice_int (&mp->d_ibool_outer_core, h_ibool, NGLL3 * (mp->NSPEC_OUTER_CORE));
-
 
   // mesh locations
 
