@@ -2368,6 +2368,29 @@
     ! d_hprime_xx,d_hprimewgll_xx
     memory_size = memory_size + 2.d0 * NGLL2 * dble(CUSTOM_REAL)
 
+    ! sources
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+      ! d_sourcearrays
+      memory_size = memory_size + NGLL3 * NSOURCES * NDIM * dble(CUSTOM_REAL)
+    endif
+    ! d_islice_selected_source,d_ispec_selected_source
+    memory_size = memory_size + 2.0 * NSOURCES * dble(SIZE_INTEGER)
+
+    ! receivers
+    !d_number_receiver_global
+    memory_size = memory_size + nrec_local * dble(SIZE_INTEGER)
+    ! d_station_seismo_field
+    memory_size = memory_size + NDIM * NGLL3 * nrec_local * dble(CUSTOM_REAL)
+    ! d_station_strain_field
+    if (SIMULATION_TYPE == 2) then
+      memory_size = memory_size + NGLL3 * nrec_local * dble(SIZE_INTEGER)
+    endif
+    ! d_ispec_selected_rec
+    memory_size = memory_size + nrec * dble(SIZE_INTEGER)
+
+    ! d_adj_sourcearrays
+    memory_size = memory_size + NDIM * NGLL3 * nadj_rec_local * dble(CUSTOM_REAL)
+
     ! rotation
     if (ROTATION_VAL) then
       ! d_A_array_rotation,..
@@ -2489,6 +2512,12 @@
       ! padded c11,..
       memory_size = memory_size + 21.d0 * NGLL3_PADDED * NSPEC_CRUST_MANTLE * dble(CUSTOM_REAL)
     endif
+    ! ystore,zstore
+    memory_size = memory_size + 2.d0 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
+    ! xstore
+    if (GRAVITY_VAL) then
+      memory_size = memory_size + NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
+    endif
     ! inner core
     ! padded muv
     memory_size = memory_size + NGLL3_PADDED * NSPEC_INNER_CORE * dble(CUSTOM_REAL)
@@ -2499,19 +2528,26 @@
       ! padded c11,..
       memory_size = memory_size + 5.d0 * NGLL3_PADDED * NSPEC_INNER_CORE * dble(CUSTOM_REAL)
     endif
-    ! xstore,ystore,..
+    ! xstore,ystore,zstore
     if (GRAVITY_VAL) then
-      memory_size = memory_size + 3.d0 * NDIM * NGLOB_AB * dble(CUSTOM_REAL)
+      memory_size = memory_size + 3.d0 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
     endif
     ! d_phase_ispec_inner_crust_mantle
     memory_size = memory_size + 2 * num_phase_ispec_crust_mantle * dble(SIZE_INTEGER)
     ! d_displ,..
     memory_size = memory_size + 3.d0 * NDIM * NGLOB_AB * dble(CUSTOM_REAL)
+    ! crust/mantle
+    ! d_rmassz
+    memory_size = memory_size + NGLOB_AB * dble(CUSTOM_REAL)
     ! d_rmassx,..
-    memory_size = memory_size + 3.d0 * NGLOB_AB * dble(CUSTOM_REAL)
-
-    ! d_station_seismo_field
-    memory_size = memory_size + 3.d0 * NGLL3 * nrec_local * dble(CUSTOM_REAL)
+    if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+      memory_size = memory_size + 2.d0 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
+    endif
+    ! inner core
+    if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+      ! d_rmassx,..
+      memory_size = memory_size + 2.d0 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
+    endif
 
     ! outer core
     ! padded d_xix_outer_core,..
@@ -2528,22 +2564,6 @@
     memory_size = memory_size + 3.d0 * NGLOB_OUTER_CORE * dble(CUSTOM_REAL)
     ! d_rmass_outer_core
     memory_size = memory_size + NGLOB_OUTER_CORE * dble(CUSTOM_REAL)
-
-    ! sources
-    ! d_sourcearrays
-    memory_size = memory_size + NGLL3 * NSOURCES * NDIM * dble(CUSTOM_REAL)
-    ! d_islice_selected_source,d_ispec_selected_source
-    memory_size = memory_size + 2.0 * NSOURCES * dble(SIZE_INTEGER)
-
-    ! receivers
-    !d_number_receiver_global
-    memory_size = memory_size + nrec_local * dble(SIZE_INTEGER)
-    ! d_station_seismo_field
-    memory_size = memory_size + NDIM * NGLL3 * nrec_local * dble(CUSTOM_REAL)
-    ! d_ispec_selected_rec
-    memory_size = memory_size + nrec * dble(SIZE_INTEGER)
-    ! d_adj_sourcearrays
-    memory_size = memory_size + NDIM * NGLL3 * nadj_rec_local * dble(CUSTOM_REAL)
 
     ! poor estimate for kernel simulations...
     if (SIMULATION_TYPE == 3) memory_size = 2.d0 * memory_size
