@@ -1111,6 +1111,9 @@
   ! special case for elements
   ! e.g. around 410-km discontinuity and surface (due to moho-stretching) where internal topography distorts meshes
   logical,parameter :: DO_SPECIAL_SEPARATION = .true.
+
+  ! use closest point value in case of large differences
+  logical,parameter :: USE_FALLBACK = .false.
   !------------------------------------------------------
 
   ! checks given ispec
@@ -1315,6 +1318,17 @@
                            nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
                            val,xigll,yigll,zigll)
 
+          ! note: interpolation of values close to the surface or 3D moho encounters problems;
+          !       this is a fall-back to the closest point value
+          !
+          ! uses closest point value if too far off (by more than 5%)
+          if (USE_FALLBACK) then
+            val_initial = model1(i_selected,j_selected,k_selected,ispec_selected,iker,rank_selected)
+            if (abs(val - val_initial ) > abs( 0.05 * val_initial ) ) then
+              val = val_initial
+            endif
+          endif
+
           ! sets new model value
           model2(i,j,k,ispec,iker) = val
         enddo
@@ -1345,9 +1359,11 @@
               !stop 'Error model value invalid'
             endif
           endif
+
           ! debug
           !if (myrank == 0 .and. iglob < 100) &
           !  print*,'new model ',iker,': value ',val,'initial ',val_initial,'diff ',(val - val_initial)/val_initial*100.0,'(%)'
+
         enddo
 
       enddo
