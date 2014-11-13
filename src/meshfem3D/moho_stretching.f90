@@ -34,12 +34,13 @@
 
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
+    SUPPRESS_MOHO_STRETCHING
 
   use meshfem3D_par,only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_par,only: &
     TOPOGRAPHY
 
   implicit none
@@ -125,69 +126,68 @@
     ! note: we will honor the moho only, if the moho depth is below R_moho (~35km)
     !          or above R_middlecrust (~15km). otherwise, the moho will be "interpolated"
     !          within the element
-
-    if (TOPOGRAPHY) then
-      ! globe surface honors topography, elements stretched for moho
+    if (.not. SUPPRESS_MOHO_STRETCHING) then
+      ! globe surface must honor topography for elements to be stretched for moho
       !
       ! note:  if no topography is honored, stretching may lead to distorted elements and invalid Jacobian
+      if (TOPOGRAPHY) then
+        if (moho < R_moho) then
+          ! actual moho below fictitious moho
+          ! elements in second layer will stretch down to honor moho topography
 
-      if (moho < R_moho) then
-        ! actual moho below fictitious moho
-        ! elements in second layer will stretch down to honor moho topography
+          elevation = moho - R_moho
 
-        elevation = moho - R_moho
+          if (r >= R_moho) then
+            ! point above fictitious moho
+            ! gamma ranges from 0 (point at surface) to 1 (point at fictitious moho depth)
+            gamma = (( R_UNIT_SPHERE - r )/( R_UNIT_SPHERE - R_moho ))
+          else
+            ! point below fictitious moho
+            ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
+            gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
 
-        if (r >= R_moho) then
-          ! point above fictitious moho
-          ! gamma ranges from 0 (point at surface) to 1 (point at fictitious moho depth)
-          gamma = (( R_UNIT_SPHERE - r )/( R_UNIT_SPHERE - R_moho ))
-        else
-          ! point below fictitious moho
-          ! gamma ranges from 0 (point at R220) to 1 (point at fictitious moho depth)
-          gamma = (( r - R220/R_EARTH)/( R_moho - R220/R_EARTH))
-
-          ! since not all GLL points are exactly at R220, use a small
-          ! tolerance for R220 detection, fix R220
-          if (abs(gamma) < SMALLVAL) then
-            gamma = 0.0d0
+            ! since not all GLL points are exactly at R220, use a small
+            ! tolerance for R220 detection, fix R220
+            if (abs(gamma) < SMALLVAL) then
+              gamma = 0.0d0
+            endif
           endif
-        endif
 
-        if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
-          call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
+          if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
+            call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
 
-        call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+          call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
-      else  if (moho > R_middlecrust) then
-        ! moho above middle crust
-        ! elements in first layer will squeeze into crust above moho
+        else  if (moho > R_middlecrust) then
+          ! moho above middle crust
+          ! elements in first layer will squeeze into crust above moho
 
-        elevation = moho - R_middlecrust
+          elevation = moho - R_middlecrust
 
-        if (r > R_middlecrust) then
-          ! point above middle crust
-          ! gamma ranges from 0 (point at surface) to 1 (point at middle crust depth)
-          gamma = (R_UNIT_SPHERE-r)/(R_UNIT_SPHERE - R_middlecrust )
-        else
-          ! point below middle crust
-          ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
-          gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
+          if (r > R_middlecrust) then
+            ! point above middle crust
+            ! gamma ranges from 0 (point at surface) to 1 (point at middle crust depth)
+            gamma = (R_UNIT_SPHERE-r)/(R_UNIT_SPHERE - R_middlecrust )
+          else
+            ! point below middle crust
+            ! gamma ranges from 0 (point at R220) to 1 (point at middle crust depth)
+            gamma = (r - R220/R_EARTH)/( R_middlecrust - R220/R_EARTH )
 
-          ! since not all GLL points are exactly at R220, use a small
-          ! tolerance for R220 detection, fix R220
-          if (abs(gamma) < SMALLVAL) then
-            gamma = 0.0d0
+            ! since not all GLL points are exactly at R220, use a small
+            ! tolerance for R220 detection, fix R220
+            if (abs(gamma) < SMALLVAL) then
+              gamma = 0.0d0
+            endif
           endif
+
+          if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
+            call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
+
+          call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
+
         endif
-
-        if (gamma < -0.0001d0 .or. gamma > 1.0001d0) &
-          call exit_MPI(myrank,'incorrect value of gamma for moho from crust 2.0')
-
-        call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
-
-      endif
-
-    endif ! TOPOGRAPHY
+      endif ! TOPOGRAPHY
+    endif
 
     ! counts corners in above moho
     ! note: uses a small tolerance
@@ -236,7 +236,8 @@
 
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
-    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT
+    PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT, &
+    SUPPRESS_MOHO_STRETCHING
 
   use meshfem3D_par,only: &
     R220
@@ -304,10 +305,13 @@
     !         - between 25km and 45km
     !         - below 60 km (in HONOR_DEEP_MOHO case)
     !         otherwise, the moho will be "interpolated" within the element
-    if (HONOR_DEEP_MOHO) then
-      call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
-    else
-      call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
+    if (.not. SUPPRESS_MOHO_STRETCHING) then
+      ! distinguish between regions with very deep moho (e.g. Himalayan)
+      if (HONOR_DEEP_MOHO) then
+        call stretch_deep_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
+      else
+        call stretch_moho(ia,xelm,yelm,zelm,x,y,z,r,moho)
+      endif
     endif
 
     ! counts corners in above moho

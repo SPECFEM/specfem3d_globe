@@ -190,7 +190,7 @@
 
   ! interpolates and stores GLL point locations
   call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                    xstore,ystore,zstore,shape3D)
+                                     xstore,ystore,zstore,shape3D)
 
   ! computes velocity/density/... values for the chosen Earth model
   ! (only needed for second meshing phase)
@@ -231,35 +231,38 @@
   endif
 
   ! adds topography on 410 km and 650 km discontinuity in model S362ANI
-  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
-    .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
-    ! stretching between 220 and 770
-    if (idoubling(ispec) == IFLAG_670_220 .or. &
-        idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
-      if (USE_GLL) then
-        ! stretches every GLL point accordingly
-        call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
-      else
-        ! stretches anchor points only, interpolates GLL points later on
-        call add_topography_410_650(myrank,xelm,yelm,zelm)
+  if (.not. SUPPRESS_INTERNAL_TOPOGRAPHY) then
+    if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
+      .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
+      ! stretching between 220 and 770
+      if (idoubling(ispec) == IFLAG_670_220 .or. &
+          idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
+        if (USE_GLL) then
+          ! stretches every GLL point accordingly
+          call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
+        else
+          ! stretches anchor points only, interpolates GLL points later on
+          call add_topography_410_650(myrank,xelm,yelm,zelm)
+        endif
       endif
     endif
+
+    ! these are placeholders:
+    ! their corresponding subroutines subtopo_cmb() and subtopo_icb() are not implemented yet....
+    ! must be done/supplied by the user; uncomment in case
+    ! CMB topography
+    !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
+    !     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
+    !           call add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
+
+    ! ICB topography
+    !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
+    !     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
+    !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
+    !     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
+    !           call add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)
   endif
 
-  ! these are placeholders:
-  ! their corresponding subroutines subtopo_cmb() and subtopo_icb() are not implemented yet....
-  ! must be done/supplied by the user; uncomment in case
-  ! CMB topography
-  !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
-  !     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
-  !           call add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
-
-  ! ICB topography
-  !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
-  !     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
-  !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
-  !     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
-  !           call add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)
 
   ! make the Earth elliptical
   if (ELLIPTICITY) then

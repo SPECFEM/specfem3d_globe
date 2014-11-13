@@ -299,6 +299,13 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
+! to suppress element stretching for 3D moho surface
+  logical,parameter :: SUPPRESS_MOHO_STRETCHING = .false.
+
+! to suppress element stretching at 410/660 internal topography
+! (i.e. creates mesh without 410/660 topography for Harvard model (s362ani,..))
+  logical,parameter :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
+
 !!-----------------------------------------------------------
 !!
 !! GPU optimization
@@ -763,7 +770,6 @@
 !!-- uncomment for using S29EA as reference model
 !  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
 !  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
-
 
 !!-----------------------------------------------------------
 !!
