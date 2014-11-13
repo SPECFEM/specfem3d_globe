@@ -37,6 +37,7 @@
 
   ! local variables
   integer :: multiplication_factor
+  double precision :: min_chunk_width_in_degrees
 
   !----
   !----  case prem_onecrust by default
@@ -347,26 +348,34 @@
     endif
   endif
 
+  ! minimum width of chunk
+  min_chunk_width_in_degrees = min(ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES)
+
+  ! gets attenuation min/max range
   if (.not. ATTENUATION_RANGE_PREDEFINED) then
-     call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-                          MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+     call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, &
+                                   MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
   endif
 
+  ! adapts number of layer elements and time step size
   if (ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. &
-     ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
-     NEX_MAX > 1248) then
+      ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
+      NEX_MAX > 1248) then
 
-    call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-                NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
-                NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-                NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-                R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
-                HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
+    ! gets number of element-layers
+    call auto_ner(min_chunk_width_in_degrees, NEX_MAX, &
+                  NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
+                  NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
+                  NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
+                  R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
+                  HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
-    call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-                        MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+    ! gets attenuation min/max range
+    call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, &
+                                  MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-    call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
+    ! gets time step size
+    call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, DT)
 
     !! DK DK suppressed because this routine should not write anything to the screen
     !    write(*,*)'##############################################################'
@@ -376,7 +385,7 @@
     !    write(*,*)' This should only be invoked for chunks less than 90 degrees'
     !    write(*,*)' and for chunks greater than 1248 elements wide'
     !    write(*,*)
-    !    write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES
+    !    write(*,*)'CHUNK WIDTH:              ', min_chunk_width_in_degrees
     !    write(*,*)'NEX:                      ', NEX_MAX
     !    write(*,*)'NER_CRUST:                ', NER_CRUST
     !    write(*,*)'NER_80_MOHO:              ', NER_80_MOHO
@@ -398,6 +407,7 @@
     !    write(*,*)
     !    write(*,*)'##############################################################'
 
+    ! checks minimum number of element-layers in crust
     if (HONOR_1D_SPHERICAL_MOHO) then
       if (.not. ONE_CRUST) then
         ! case 1D + two crustal layers
