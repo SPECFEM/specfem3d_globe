@@ -192,6 +192,10 @@ case $my_FC in
         # one should also use additional flags:
         # CFLAGS = -Wl,-relax
         #
+        # The -qstrict option prevents some minor differences of results between xlf and
+        # other compilers. There is a small decrease in performance, but generally
+        # it is small or negligible compared to other issues like slow I/O.
+        #
         # On IBM BlueGene at IDRIS (France) use:
         # -qtune=auto -qarch=450d -qsave     instead of -qtune=auto -qarch=auto
         DEF_FFLAGS="-qassert=contig -qhot -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003std -g -qsuppress=1518-234 -qsuppress=1518-317 -qsuppress=1518-318 -qsuppress=1500-036"
