@@ -74,10 +74,10 @@ subroutine model_cem_broadcast (myrank)
 
   rank = myrank
   call world_size (wSize)
-  
+
   scaleval = dsqrt(PI*GRAV*RHOAV)
   scale_GPa = (RHOAV / 1000.d0) * &
-      ((R_EARTH * scaleval / 1000.d0) ** 2)    
+      ((R_EARTH * scaleval / 1000.d0) ** 2)
 
   if ( CEM_ACCEPT ) then
 
@@ -210,7 +210,7 @@ subroutine write_cem_request (iregion_code)
   use CEM_par
 
   implicit none
-  
+
   integer, parameter :: NDIMS_WRITE=2
   integer, dimension (NDIMS_WRITE) :: start, count, ids
 
@@ -228,27 +228,27 @@ subroutine write_cem_request (iregion_code)
   formatString = "(A,I0.2,A)"
   write (fileName, formatString) "DATA/cemRequest/xyz_reg", iregion_code, ".nc"
   fileNameTrim = trim (fileName)
-  
+
   ! Create parallel NetCDF file.
   call checkNC (nf90_create (fileNameTrim, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
     comm = worldComm, info = info))
-    
+
   ! Define the processor array.
   call checkNC (nf90_def_dim (ncid, 'glob', size (xyzOut(:,1)), paramDimID))
   call checkNC (nf90_def_dim (ncid, 'proc', commWorldSize,      procDimID))
-  
+
   ! Sort ids into array.
   ids = (/ paramDimID, procDimID /)
-  
+
   ! Define the kernel variable.
   call checkNC (nf90_def_var (ncid, 'x', NF90_float, ids, varidX))
   call checkNC (nf90_def_var (ncid, 'y', NF90_float, ids, varidY))
   call checkNC (nf90_def_var (ncid, 'z', NF90_float, ids, varidZ))
   call checkNC (nf90_def_var (ncid, 'r', NF90_SHORT, ids, varidR))
-    
+
   ! End definitions.
   call checkNC (nf90_enddef (ncid))
-  
+
   ! Each processor writes one row.
   start = (/ 1, myRank + 1 /)
   count = (/ size (xyzOut(:,1)), 1 /)
@@ -256,9 +256,9 @@ subroutine write_cem_request (iregion_code)
   call checkNC (nf90_put_var (ncid, varidY, xyzOut(:,2), start = start, count = count))
   call checkNC (nf90_put_var (ncid, varidZ, xyzOut(:,3), start = start, count = count))
   call checkNC (nf90_put_var (ncid, varidR, regCode,     start = start, count = count))
-  
+
   ! Close the file.
-  call checkNC (nf90_close (ncid))  
+  call checkNC (nf90_close (ncid))
 
   deallocate(xyzOut)
   deallocate(regCode)
