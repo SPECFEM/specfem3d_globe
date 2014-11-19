@@ -98,6 +98,15 @@
   logical,parameter :: TREE_INTERNAL_GLL_POINTS = .true.
   logical,parameter :: TREE_MID_POINTS = .false.
 
+  ! special case for elements
+  ! around 410-km discontinuity where internal topography distorts meshes
+  logical,parameter :: DO_SEPARATION_410_650 = .true.
+  ! around surface (due to moho-stretching)
+  logical,parameter :: DO_SEPARATION_TOPO = .true.
+
+  ! use closest point value in case of large differences
+  logical,parameter :: USE_FALLBACK = .false.
+
   !-------------------------------------------------------------------
 
   ! Gauss-Lobatto-Legendre points of integration and weights
@@ -375,13 +384,24 @@
     print*,'  model2   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print*
     print*,'total mpi processes: ',sizeprocs
+    print*
     if (DO_BRUTE_FORCE_SEARCH) then
       print*,'location search by : brute-force approach'
     else
+      print*,'location search by : kd-tree search'
       if (USE_MIDPOINT_SEARCH) then
-        print*,'location search by : midpoint element search'
+        print*,'location search by : uses midpoints of elements only'
       else
-        print*,'location search by : gll element search'
+        print*,'  uses internal gll points'
+      endif
+      if (DO_SEPARATION_410_650) then
+        print*,'  uses element separation for 410-km/650-km discontinuity'
+      endif
+      if (DO_SEPARATION_TOPO) then
+        print*,'  uses element separation for surface (moho) discontinuity'
+      endif
+      if (USE_FALLBACK) then
+        print*,'  uses fall-back to model value of closest point in case of large differences'
       endif
     endif
     print*
@@ -420,9 +440,9 @@
 
   ! model files
   allocate( model1(NGLLX,NGLLY,NGLLZ,nspec_max_old,nparams,0:nproc_chunk1-1),stat=ier )
-  if (ier /= 0) stop 'Error allocating model1'
+  if (ier /= 0) stop 'Error allocating initial model1'
   allocate( model2(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE,nparams),stat=ier )
-  if (ier /= 0) stop 'Error allocating model2'
+  if (ier /= 0) stop 'Error allocating target model2'
   ! statistics
   allocate( model_maxdiff(nparams),stat=ier)
   if (ier /= 0) stop 'Error allocating model_maxdiff'
@@ -551,6 +571,10 @@
   ! user output
   if (myrank == 0) then
     print*, 'loading source model ... '
+    do iker = 1,nparams
+      print*, '  for parameter: ',trim(fname(iker))
+    enddo
+    print*
   endif
 
   ! reads in old model files
@@ -571,10 +595,8 @@
 
       ! reads in model slices
       do iker = 1,nparams
-        ! user output
-        if (myrank == 0) then
-          print *, '  for parameter: ',trim(fname(iker))
-        endif
+        ! debug user output
+        !if (myrank == 0) print *, '  for parameter: ',trim(fname(iker))
         ! opens model file
         write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
         open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
@@ -833,7 +855,7 @@
         call get_model_values_kdtree(ispec,nspec,nglob,ibool2,x2,y2,z2,nparams,model2, &
                                      nspec_max_old,nglob_max_old,nproc_chunk1,ibool1,x1,y1,z1,model1, &
                                      iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff, &
-                                     USE_MIDPOINT_SEARCH)
+                                     USE_MIDPOINT_SEARCH,DO_SEPARATION_410_650,DO_SEPARATION_TOPO,USE_FALLBACK)
       endif
     enddo ! ispec
     if (myrank == 0) print*
@@ -1028,7 +1050,7 @@
   subroutine get_model_values_kdtree(ispec,nspec,nglob,ibool2,x2,y2,z2,nparams,model2, &
                                      nspec_max_old,nglob_max_old,nproc_chunk1,ibool1,x1,y1,z1,model1, &
                                      iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff, &
-                                     USE_MIDPOINT_SEARCH)
+                                     USE_MIDPOINT_SEARCH,DO_SEPARATION_410_650,DO_SEPARATION_TOPO,USE_FALLBACK)
 
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH
@@ -1066,6 +1088,8 @@
 
   real(kind=CUSTOM_REAL),dimension(nparams),intent(inout) :: model_maxdiff
   logical,intent(in) :: USE_MIDPOINT_SEARCH
+  logical,intent(in) :: DO_SEPARATION_410_650,DO_SEPARATION_TOPO
+  logical,intent(in) :: USE_FALLBACK
 
   ! local parameters
   integer :: i,j,k,iglob,iker
@@ -1103,18 +1127,8 @@
   ! (s362ani: 650 topography perturbations have min/max ~ -14/+19 km)
   double precision,parameter :: R650_MARGIN = 50000.d0
 
-  !------------------------------------------------------
-
-  ! warn about large model value differences
+  ! debug warning about large model value differences
   logical,parameter :: DO_WARNING = .false.
-
-  ! special case for elements
-  ! e.g. around 410-km discontinuity and surface (due to moho-stretching) where internal topography distorts meshes
-  logical,parameter :: DO_SPECIAL_SEPARATION = .true.
-
-  ! use closest point value in case of large differences
-  logical,parameter :: USE_FALLBACK = .false.
-  !------------------------------------------------------
 
   ! checks given ispec
   if (ispec < 1 .or. ispec > nspec) then
@@ -1128,7 +1142,7 @@
   is_critical = .false.
 
   ! searches for element using mid-point
-  if (USE_MIDPOINT_SEARCH .or. DO_SPECIAL_SEPARATION) then
+  if (USE_MIDPOINT_SEARCH .or. DO_SEPARATION_410_650 .or. DO_SEPARATION_TOPO) then
     iglob = ibool2(MIDX,MIDY,MIDZ,ispec)
 
     xyz_target(1) = x2(iglob)
@@ -1150,8 +1164,8 @@
     !if (myrank == 0 .and. iglob < 100) &
     !  print*,'dist_min kdtree midpoint: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
 
-    ! special case for 410-km discontinuity
-    if (DO_SPECIAL_SEPARATION) then
+    ! special case for 410-km/650-km discontinuity
+    if (DO_SEPARATION_410_650) then
       ! point radius
       r = sqrt(xyz_target(1)*xyz_target(1) + xyz_target(2)*xyz_target(2) + xyz_target(3)*xyz_target(3))
 
@@ -1172,21 +1186,33 @@
         ! elements within around 650 km depth
         is_critical = .true.
       endif
+    endif
 
-      if (is_critical) then
-        ! stores mid-point radius
-        mid_radius = r
+    ! special case for surface (moho) discontinuity
+    if (DO_SEPARATION_TOPO) then
+      ! point radius
+      r = sqrt(xyz_target(1)*xyz_target(1) + xyz_target(2)*xyz_target(2) + xyz_target(3)*xyz_target(3))
 
-        ! element height: size along a vertical edge
-        ! top point
-        iglob = ibool2(1,1,NGLLZ,ispec)
-        r = sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
-        ! bottom point
-        iglob = ibool2(1,1,1,ispec)
-        elem_height = r - sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
-        ! debug
-        !if (myrank == 0) print*,'element height: ',elem_height * R_EARTH_KM,'(km)','radius: ',mid_radius*R_EARTH_KM
+      ! surface
+      if (r >= R220/R_EARTH) then
+        ! elements close to surface
+        is_critical = .true.
       endif
+    endif
+
+    if (is_critical) then
+      ! stores mid-point radius
+      mid_radius = r
+
+      ! element height: size along a vertical edge
+      ! top point
+      iglob = ibool2(1,1,NGLLZ,ispec)
+      r = sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
+      ! bottom point
+      iglob = ibool2(1,1,1,ispec)
+      elem_height = r - sqrt(x2(iglob)*x2(iglob) + y2(iglob)*y2(iglob) + z2(iglob)*z2(iglob))
+      ! debug
+      !if (myrank == 0) print*,'element height: ',elem_height * R_EARTH_KM,'(km)','radius: ',mid_radius*R_EARTH_KM
     endif
 
   endif
@@ -1205,52 +1231,62 @@
 
         ! kd-search for this single GLL point
         if (.not. USE_MIDPOINT_SEARCH) then
+          search_internal = .false.
+
           ! avoids getting values from "wrong" side on 410-km discontinuity,etc.
-          if (DO_SPECIAL_SEPARATION) then
+          if (DO_SEPARATION_410_650) then
             if (is_critical) then
               ! gll point radius
               r = sqrt(x_target*x_target + y_target*y_target + z_target*z_target)
 
               ! takes corresponding internal gll point for element search
-              search_internal = .false.
-              ! surface elements
-              if (r >= (RTOP - RTOP_MARGIN)/R_EARTH) search_internal = .true.
               ! 410-km discontinuity
               if (r >= (R410 - R410_MARGIN)/R_EARTH .and. r <= (R410 + R410_MARGIN)/R_EARTH) search_internal = .true.
               ! 650-km discontinuity
               if (r >= (R650 - R650_MARGIN)/R_EARTH .and. r <= (R650 + R650_MARGIN)/R_EARTH) search_internal = .true.
-
-              ! avoid using nodes at upper/lower/..outer surfaces
-              if (search_internal) then
-                ! new search point indices
-                ii = i
-                jj = j
-                kk = k
-
-                ! takes corresponding internal one for element search
-                if (i == 1) then
-                  ii = 2
-                else if (i == NGLLX) then
-                  ii = NGLLX - 1
-                endif
-                if (j == 1) then
-                  jj = 2
-                else if (j == NGLLY) then
-                  jj = NGLLY - 1
-                endif
-                if (k == 1) then
-                  kk = 2
-                else if (k == NGLLZ) then
-                  kk = NGLLZ - 1
-                endif
-
-                ! target point location
-                iglob = ibool2(ii,jj,kk,ispec)
-                x_target = x2(iglob)
-                y_target = y2(iglob)
-                z_target = z2(iglob)
-              endif
             endif
+          endif
+
+          if (DO_SEPARATION_TOPO) then
+            if (is_critical) then
+              ! gll point radius
+              r = sqrt(x_target*x_target + y_target*y_target + z_target*z_target)
+
+              ! takes corresponding internal gll point for element search
+              ! surface elements
+              if (r >= (RTOP - RTOP_MARGIN)/R_EARTH) search_internal = .true.
+            endif
+          endif
+
+          ! avoid using nodes at upper/lower/..outer surfaces
+          if (search_internal) then
+            ! new search point indices
+            ii = i
+            jj = j
+            kk = k
+
+            ! takes corresponding internal one for element search
+            if (i == 1) then
+              ii = 2
+            else if (i == NGLLX) then
+              ii = NGLLX - 1
+            endif
+            if (j == 1) then
+              jj = 2
+            else if (j == NGLLY) then
+              jj = NGLLY - 1
+            endif
+            if (k == 1) then
+              kk = 2
+            else if (k == NGLLZ) then
+              kk = NGLLZ - 1
+            endif
+
+            ! target point location
+            iglob = ibool2(ii,jj,kk,ispec)
+            x_target = x2(iglob)
+            y_target = y2(iglob)
+            z_target = z2(iglob)
           endif
 
           ! kdtree search for each single GLL point

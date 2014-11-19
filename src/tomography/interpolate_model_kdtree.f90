@@ -578,7 +578,6 @@ contains
 
   ! local parameters
   double precision :: dist
-  double precision,dimension(3) :: xyz
 
   ! debug
   !if (node%idim == 0) then
@@ -596,8 +595,7 @@ contains
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
 
     ! squared distance to associated data point
-    xyz(:) = xyz_target(:) - points_data(:,node%ipoint)
-    dist = xyz(1) * xyz(1) + xyz(2)*xyz(2) + xyz(3)*xyz(3)
+    dist = get_distance_squared(xyz_target(:),points_data(:,node%ipoint))
     if (dist < dist_min) then
       ! debug
       !if (ipoint_min < 1 ) then
@@ -642,7 +640,7 @@ contains
     if (associated(node%right) ) then
       ! checks right node as a final node
       if (node%right%idim == 0 ) then
-        dist = sum((xyz_target(:) - points_data(:,node%right%ipoint))**2)
+        dist = get_distance_squared(xyz_target(:),points_data(:,node%right%ipoint))
         if (dist <= dist_min) then
           ! stores minimum point
           dist_min = dist
@@ -660,7 +658,7 @@ contains
     if (associated(node%left) ) then
       ! checks left node as a final node
       if (node%left%idim == 0 ) then
-        dist = sum((xyz_target(:) - points_data(:,node%left%ipoint))**2)
+        dist = get_distance_squared(xyz_target(:),points_data(:,node%left%ipoint))
         if (dist <= dist_min) then
           ! stores minimum point
           dist_min = dist
@@ -689,5 +687,29 @@ contains
   be_verbose = .true.
 
   end subroutine kdtree_set_verbose
+
+
+!===================================================================================================
+
+  double precision function get_distance_squared(xyz0,xyz1)
+
+  implicit none
+  double precision,dimension(3),intent(in) :: xyz0,xyz1
+
+  ! local parameters
+  double precision :: dist
+  !double precision,dimension(3) :: xyz
+
+  ! calculates distance (squared) between 2 points
+  dist = sum((xyz0(:) - xyz1(:))**2)
+
+  ! explicit alternative calculation
+  !xyz(:) = xyz0(:) - xyz1(:)
+  !dist = xyz(1) * xyz(1) + xyz(2)*xyz(2) + xyz(3)*xyz(3)
+
+  ! returns distance squared
+  get_distance_squared = dist
+
+  end function get_distance_squared
 
 end module
