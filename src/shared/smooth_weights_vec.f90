@@ -28,7 +28,7 @@
 
 
   subroutine smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
-                              xx_elem,yy_elem,zz_elem)
+                                   xx_elem,yy_elem,zz_elem)
 
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
@@ -65,11 +65,11 @@
 
         ! vector approximation:
         call get_distance_vec(dist_h,dist_v,x0,y0,z0, &
-            xx_elem(ii,jj,kk),yy_elem(ii,jj,kk),zz_elem(ii,jj,kk))
+                              xx_elem(ii,jj,kk),yy_elem(ii,jj,kk),zz_elem(ii,jj,kk))
 
         ! Gaussian function
         exp_val(ii,jj,kk) = exp( - (dist_h*dist_h)/sigma_h2 &
-                                  - (dist_v*dist_v)/sigma_v2 )    ! * factor(ii,jj,kk)
+                                 - (dist_v*dist_v)/sigma_v2 )    ! * factor(ii,jj,kk)
       enddo
     enddo
   enddo

@@ -62,7 +62,7 @@ program smooth_sem_globe
 !              algorithm uses vector components in radial/horizontal direction
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT, &
-    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS
+    GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER
 
   implicit none
 
@@ -74,12 +74,38 @@ program smooth_sem_globe
   integer, parameter :: NCHUNKS   = NCHUNKS_VAL
 
   !takes region 1 kernels
-  integer, parameter :: NSPEC_MAX = NSPEC_CRUST_MANTLE
-  integer, parameter :: NGLOB_MAX = NGLOB_CRUST_MANTLE
+  integer, parameter :: NSPEC_AB = NSPEC_CRUST_MANTLE
+  integer, parameter :: NGLOB_AB = NGLOB_CRUST_MANTLE
 
   ! only include the neighboring 3 x 3 slices
   integer, parameter :: NSLICES = 3
   integer ,parameter :: NSLICES2 = NSLICES * NSLICES
+
+  integer :: islice(NSLICES2), islice0(NSLICES2)
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: ibool
+  integer, dimension(NSPEC_AB) :: idoubling
+  logical, dimension(NSPEC_AB) :: ispec_is_tiso
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: kernel, kernel_smooth
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: tk, bk, jacobian
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: xx0, yy0, zz0, xx, yy, zz
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: &
+    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+
+  real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: xstore, ystore, zstore
+  real(kind=CUSTOM_REAL), dimension(NSPEC_AB) :: cx0, cy0, cz0, cx, cy, cz
+
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) :: sigma_h, sigma_h2, sigma_h3, sigma_v, sigma_v2, sigma_v3
+  real(kind=CUSTOM_REAL) :: x0, y0, z0, norm, norm_h, norm_v, element_size_m, max_old, max_new
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: exp_val
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor
+
+  integer :: sizeprocs,ier,myrank,ichunk, ixi, ieta, iglob,nums,ival
+  integer :: i,j,k,ispec,iproc,ispec2,inum
 
   character(len=MAX_STRING_LEN) :: arg(5)
   character(len=MAX_STRING_LEN) :: kernel_filename, topo_dir, scratch_file_dir
@@ -88,30 +114,6 @@ program smooth_sem_globe
 
   character(len=MAX_STRING_LEN) ::  ks_file
   character(len=20) ::  reg_name
-
-  integer :: islice(NSLICES2), islice0(NSLICES2)
-  integer :: sizeprocs,ier,myrank,ichunk, ixi, ieta, iglob,nums,ival
-
-  real(kind=CUSTOM_REAL) :: sigma_h, sigma_h2, sigma_h3, sigma_v, sigma_v2, sigma_v3
-  real(kind=CUSTOM_REAL) :: x0, y0, z0, norm, norm_h, norm_v, element_size_m, max_old, max_new
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor, exp_val
-
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX) :: ibool
-  integer, dimension(NSPEC_MAX) :: idoubling
-  logical, dimension(NSPEC_MAX) :: ispec_is_tiso
-
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX) :: kernel, kernel_smooth
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX) :: tk, bk, jacobian, xl, yl, zl, xx, yy, zz
-
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_MAX) :: &
-    xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
-
-  real(kind=CUSTOM_REAL), dimension(NGLOB_MAX) :: xstore, ystore, zstore
-  real(kind=CUSTOM_REAL), dimension(NSPEC_MAX) :: cx0, cy0, cz0, cx, cy, cz
-
-  integer :: nspec(NSLICES2),nglob(NSLICES2)
-  integer :: i,j,k,ispec,iproc,ispec2,inum
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll, wxgll
@@ -124,6 +126,38 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
   real(kind=CUSTOM_REAL) :: element_size
   real(kind=CUSTOM_REAL) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+
+  ! search elements
+  integer :: ielem,ielem_total
+  integer :: num_elem_local
+  integer :: max_num_search_elem,max_local,max_local_estimated
+  integer, dimension(NSPEC_AB) :: num_search_elem
+  integer, dimension(:),allocatable :: ispec_search_elem
+  real(kind=CUSTOM_REAL) :: size_array_mb
+
+  logical :: DO_SEARCH_ELEM_LIST
+
+  ! debugging
+  logical, parameter :: DEBUG = .false.
+  integer ,parameter :: tmp_ispec_dbg = 910 ! interior point: 2382
+
+  integer, dimension(:),allocatable :: ispec_flag
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: tmp_bk
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! time
+  integer,dimension(8) :: tval
+
+  !------------------------------------------------------------------------------------------
+  ! USER PARAMETERS
+
+  ! limit of array size in MB when using a search element list
+  real(kind=CUSTOM_REAL),parameter :: SEARCH_ARRAY_LIMIT_MB = 250.0
+
+  ! number of steps to reach 100 percent, i.e. 10 outputs info for every 10 percent
+  integer,parameter :: NSTEP_PERCENT_INFO = 100
+
+  !------------------------------------------------------------------------------------------
 
   ! ============ program starts here =====================
 
@@ -196,13 +230,13 @@ program smooth_sem_globe
   ! user output
   if (myrank == 0) then
     print*,"defaults:"
-    print*,"  NPROC_XI , NPROC_ETA       : ",NPROC_XI,NPROC_ETA
-    print*,"  NCHUNKS                    : ",NCHUNKS
-    print*,"  element size on surface(km): ",element_size
+    print*,"  NPROC_XI , NPROC_ETA        : ",NPROC_XI,NPROC_ETA
+    print*,"  NCHUNKS                     : ",NCHUNKS
+    print*,"  element size on surface (km): ",element_size
     print*
-    print*,"  smoothing sigma_h , sigma_v                : ",sigma_h,sigma_v
+    print*,"  smoothing sigma_h , sigma_v (km)                : ",sigma_h,sigma_v
     ! scalelength: approximately S ~ sigma * sqrt(8.0) for a gaussian smoothing
-    print*,"  smoothing scalelengths horizontal, vertical: ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
+    print*,"  smoothing scalelengths horizontal, vertical (km): ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
     print*
     print*,"  data name      : ",trim(kernel_filename)
     print*,"  input file dir : ",trim(scratch_file_dir)
@@ -212,14 +246,11 @@ program smooth_sem_globe
   ! synchronizes
   call synchronize_all()
 
-  ! initializes lengths
-  element_size_m = element_size * 1000  ! e.g. 9 km on the surface, 36 km at CMB
-  element_size_m = element_size_m/R_EARTH
+  ! initializes lengths (non-dimensionalizes)
+  element_size_m = element_size / R_EARTH_KM ! e.g. 9 km on the surface, 36 km at CMB
 
-  sigma_h = sigma_h * 1000.0 ! m
-  sigma_h = sigma_h / R_EARTH ! scale
-  sigma_v = sigma_v * 1000.0 ! m
-  sigma_v = sigma_v / R_EARTH ! scale
+  sigma_h = sigma_h / R_EARTH_KM ! scale
+  sigma_v = sigma_v / R_EARTH_KM ! scale
 
   sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for gaussian distribution with standard variance sigma
   sigma_v2 = 2.0 * sigma_v ** 2
@@ -286,15 +317,8 @@ program smooth_sem_globe
   endif
 
   ! read in the topology files of the current and neighboring slices
-  do inum = 1, nums
-    nspec(inum) = NSPEC_MAX
-    nglob(inum) = NGLOB_MAX
-  enddo
-
   ! point locations
-  write(prname_lp,'(a,i6.6,a)') &
-      trim(topo_dir)//'/proc',myrank,trim(reg_name)//'solver_data.bin'
-
+  write(prname_lp,'(a,i6.6,a)') trim(topo_dir)//'/proc',myrank,trim(reg_name)//'solver_data.bin'
   open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening file: ',trim(prname_lp)
@@ -303,20 +327,20 @@ program smooth_sem_globe
 
   ! checks nspec
   read(IIN) ival
-  if (ival /= NSPEC_MAX) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bin')
+  if (ival /= NSPEC_AB) call exit_mpi(myrank,'Error invalid nspec value in solver_data.bin')
 
   ! checks nglob
   read(IIN) ival
-  if (ival /= NGLOB_MAX) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bin')
+  if (ival /= NGLOB_AB) call exit_mpi(myrank,'Error invalid nglob value in solver_data.bin')
 
   ! node locations
-  read(IIN) xstore(1:nglob(1))
-  read(IIN) ystore(1:nglob(1))
-  read(IIN) zstore(1:nglob(1))
+  read(IIN) xstore
+  read(IIN) ystore
+  read(IIN) zstore
 
-  read(IIN) ibool(:,:,:,1:nspec(1))
-  read(IIN) idoubling(1:nspec(1))
-  read(IIN) ispec_is_tiso(1:nspec(1))
+  read(IIN) ibool
+  read(IIN) idoubling
+  read(IIN) ispec_is_tiso
 
   read(IIN) xix
   read(IIN) xiy
@@ -329,15 +353,18 @@ program smooth_sem_globe
   read(IIN) gammaz
   close(IIN)
 
+  ! synchronizes
+  call synchronize_all()
+
   ! get the location of the center of the elements
-  do ispec = 1, nspec(1)
+  do ispec = 1, NSPEC_AB
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
           iglob = ibool(i,j,k,ispec)
-          xl(i,j,k,ispec) = xstore(iglob)
-          yl(i,j,k,ispec) = ystore(iglob)
-          zl(i,j,k,ispec) = zstore(iglob)
+          xx0(i,j,k,ispec) = xstore(iglob)
+          yy0(i,j,k,ispec) = ystore(iglob)
+          zz0(i,j,k,ispec) = zstore(iglob)
 
           ! build jacobian
           ! get derivatives of ux, uy and uz with respect to x, y and z
@@ -359,18 +386,93 @@ program smooth_sem_globe
         enddo
       enddo
     enddo
-    cx0(ispec) = (xl(1,1,1,ispec) + xl(NGLLX,NGLLY,NGLLZ,ispec))/2.0
-    cy0(ispec) = (yl(1,1,1,ispec) + yl(NGLLX,NGLLY,NGLLZ,ispec))/2.0
-    cz0(ispec) = (zl(1,1,1,ispec) + zl(NGLLX,NGLLY,NGLLZ,ispec))/2.0
+    cx0(ispec) = (xx0(1,1,1,ispec) + xx0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+    cy0(ispec) = (yy0(1,1,1,ispec) + yy0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+    cz0(ispec) = (zz0(1,1,1,ispec) + zz0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
   enddo
+
+  ! search element list
+  ! maximum ratio of search radius to element size (factor 0.5462 accounts for element size at CMB)
+  ielem = max(sigma_h3 / (0.5462 * element_size_m ), sigma_v3 / (0.5462 * element_size_m))
+  ! estimated number of search elements in all 3 directions
+  max_local_estimated = ielem*ielem*ielem + 1
+
+  ! counts closest neighbor elements in own slice
+  num_search_elem(:) = 0
+  ielem_total = 0
+  do ispec = 1, NSPEC_AB
+    num_elem_local = 0
+    do ispec2 = 1, NSPEC_AB
+      ! calculates horizontal and vertical distance between two element centers
+      ! vector approximation
+      call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
+                            cx0(ispec2),cy0(ispec2),cz0(ispec2))
+
+      ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
+      ! checks distance between centers of elements
+      if ( dist_h <= sigma_h3 .and. abs(dist_v) <= sigma_v3 ) then
+        ielem_total = ielem_total + 1
+        ! local counter
+        num_elem_local = num_elem_local + 1
+      endif
+    enddo
+    num_search_elem(ispec) = num_elem_local
+  enddo
+  ! sets maximum local search elements
+  max_local = maxval(num_search_elem(:))
+  max_num_search_elem = sum(num_search_elem(:))
+
+  ! checks
+  if (max_num_search_elem /= ielem_total) stop 'Error number of search elements invalid'
+
+  ! needed array size in MB
+  size_array_mb = max_num_search_elem * dble(SIZE_INTEGER) / 1024.d0 / 1024.d0
+
+  ! user output
+  if (myrank == 0) then
+    print*,'element search list:'
+    print*,'  maximum number of elements per slice = ',NSPEC_AB
+    print*
+    !print*,'  estimated maximum of local search elements = ',max_local_estimated
+    !print*,'  estimated total number of search elements  = ',max_local * NSPEC_AB
+    print*,'  maximum of local search elements     = ',max_local
+    print*,'  total number of search elements      = ',max_num_search_elem
+    print*
+    print*,'  required array size = ',size_array_mb,'MB'
+    print*,'  limit set at ',SEARCH_ARRAY_LIMIT_MB,'MB for list search'
+    print*
+  endif
+
+  ! limits element list to a maximum array size of 100 MB,
+  ! otherwise the search will not be faster
+  if ( size_array_mb > SEARCH_ARRAY_LIMIT_MB) then
+    DO_SEARCH_ELEM_LIST = .false.
+  else
+    DO_SEARCH_ELEM_LIST = .true.
+  endif
+  ! uncomment to set brute-force search
+  !DO_SEARCH_ELEM_LIST = .false.
+
+  if (DO_SEARCH_ELEM_LIST) then
+    ! user output
+    if (myrank == 0) then
+      print*,'  using element search list'
+      print*
+    endif
+    allocate(ispec_search_elem(max_num_search_elem),stat=ier)
+    if (ier /= 0) stop 'Error allocating array ispec_search_elem'
+  endif
+
+  ! synchronizes
+  call synchronize_all()
 
   if (myrank == 0) print*, 'start looping over elements and points for smoothing ...'
 
   ! synchronizes
   call synchronize_all()
 
-  tk = 0.0_CUSTOM_REAL
-  bk = 0.0_CUSTOM_REAL
+  tk(:,:,:,:) = 0.0_CUSTOM_REAL
+  bk(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! loop over all slices
   do inum = 1, nums
@@ -378,6 +480,13 @@ program smooth_sem_globe
     iproc = islice(inum)
 
     if (myrank == 0) print*,'  reading slice:',iproc
+
+    ! debugging
+    if (DEBUG .and. myrank == 0) then
+      allocate(tmp_bk(NGLLX,NGLLY,NGLLZ,NSPEC_AB),stat=ier)
+      if (ier /= 0) stop 'Error allocating array tmp_bk'
+      tmp_bk(:,:,:,:) = 0.0_CUSTOM_REAL
+    endif
 
     ! neighbor database file
     write(prname_lp,'(a,i6.6,a)') &
@@ -394,13 +503,13 @@ program smooth_sem_globe
 
     read(IIN) ival  ! nspec
     read(IIN) ival  ! nglob
-    read(IIN) xstore(1:nglob(inum))
-    read(IIN) ystore(1:nglob(inum))
-    read(IIN) zstore(1:nglob(inum))
+    read(IIN) xstore
+    read(IIN) ystore
+    read(IIN) zstore
 
-    read(IIN) ibool(:,:,:,1:nspec(inum))
-    read(IIN) idoubling(1:nspec(inum))
-    read(IIN) ispec_is_tiso(1:nspec(inum))
+    read(IIN) ibool
+    read(IIN) idoubling
+    read(IIN) ispec_is_tiso
 
     read(IIN) xix
     read(IIN) xiy
@@ -414,10 +523,15 @@ program smooth_sem_globe
     close(IIN)
 
     ! get the location of the center of the elements
-    do ispec = 1, nspec(inum)
+    do ispec = 1, NSPEC_AB
       do k = 1, NGLLZ
         do j = 1, NGLLY
           do i = 1, NGLLX
+            iglob = ibool(i,j,k,ispec)
+            xx(i,j,k,ispec) = xstore(iglob)
+            yy(i,j,k,ispec) = ystore(iglob)
+            zz(i,j,k,ispec) = zstore(iglob)
+
             ! build jacobian
             ! get derivatives of ux, uy and uz with respect to x, y and z
             xixl = xix(i,j,k,ispec)
@@ -437,24 +551,69 @@ program smooth_sem_globe
           enddo
         enddo
       enddo
+      ! calculate element center location
+      cx(ispec) = (xx(1,1,1,ispec) + xx(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+      cy(ispec) = (yy(1,1,1,ispec) + yy(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+      cz(ispec) = (zz(1,1,1,ispec) + zz(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
     enddo
 
-    ! calculate element center location
-    do ispec = 1, nspec(inum)
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            iglob = ibool(i,j,k,ispec)
-            xx(i,j,k,ispec) = xstore(iglob)
-            yy(i,j,k,ispec) = ystore(iglob)
-            zz(i,j,k,ispec) = zstore(iglob)
-          enddo
+    ! counts closest neighbor elements
+    if (DO_SEARCH_ELEM_LIST) then
+      num_search_elem(:) = 0
+      ispec_search_elem(:) = 0
+      ielem_total = 0
+      do ispec = 1, NSPEC_AB
+        num_elem_local = 0
+        do ispec2 = 1, NSPEC_AB
+          ! calculates horizontal and vertical distance between two element centers
+          ! vector approximation
+          call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
+                                cx(ispec2),cy(ispec2),cz(ispec2))
+
+          ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
+          ! checks distance between centers of elements
+          if ( dist_h <= sigma_h3 .and. abs(dist_v) <= sigma_v3 ) then
+            ! adds element to search list
+            ielem_total = ielem_total + 1
+            if (ielem_total > max_num_search_elem) then
+              print*,'Error: number of search elements ',ielem_total,'maximum:',max_num_search_elem
+              print*,'  element',ispec,'of',NSPEC_AB,' element neighbor',ispec2,'of',NSPEC_AB
+              print*,'  num_search_elem:',num_search_elem(:)
+              stop 'Error number of search elements exceeds maximum'
+            endif
+            ispec_search_elem(ielem_total) = ispec2
+            ! local counter
+            num_elem_local = num_elem_local + 1
+          endif
         enddo
+        num_search_elem(ispec) = num_elem_local
       enddo
-      cx(ispec) = (xx(1,1,1,ispec) + xx(NGLLX,NGLLY,NGLLZ,ispec))/2.0
-      cy(ispec) = (yy(1,1,1,ispec) + yy(NGLLX,NGLLY,NGLLZ,ispec))/2.0
-      cz(ispec) = (zz(1,1,1,ispec) + zz(NGLLX,NGLLY,NGLLZ,ispec))/2.0
-    enddo
+      if (myrank == 0) print*,'  total number of search elements: ',sum(num_search_elem(:))
+      ! checks
+      if (sum(num_search_elem(:)) /= ielem_total) stop 'Error number of search elements invalid'
+      ! re-sets counter
+      ielem_total = 0
+
+      ! debug output
+      if (DEBUG .and. myrank == 0) then
+        ! outputs search elements with integer flags
+        allocate(ispec_flag(NSPEC_AB))
+        ispec_flag(:) = 0
+        ! debug element (tmp_ispec_dbg)
+        do ielem = 1,num_search_elem(tmp_ispec_dbg)
+          i = sum(num_search_elem(1:tmp_ispec_dbg-1)) + ielem
+          ispec_flag(ispec_search_elem(i)) = ielem
+        enddo
+        write(filename,'(a,i4.4,a,i6.6)') trim(scratch_file_dir)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
+        call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
+                                   ibool,ispec_flag,filename)
+        print*,'file written: ',trim(filename)//'.vtk'
+        deallocate(ispec_flag)
+      endif
+    endif
+
+    ! user output
+    if (myrank == 0) print*,'  reading data file:',iproc,trim(kernel_filename)
 
     ! data file
     write(local_data_file,'(a,i6.6,a)') &
@@ -466,26 +625,62 @@ program smooth_sem_globe
       call exit_mpi(myrank,'Error opening data file')
     endif
 
-    read(IIN) kernel(:,:,:,1:nspec(inum))
+    read(IIN) kernel
     close(IIN)
 
     ! get the global maximum value of the original kernel file
-    if (iproc == myrank) max_old = maxval(abs(kernel(:,:,:,1:nspec(inum))))
+    if (iproc == myrank) max_old = maxval(abs(kernel))
+
+    if (myrank == 0) print*,'  looping over elements:',NSPEC_AB
 
     ! loop over elements to be smoothed in the current slice
-    do ispec = 1, nspec(1)
+    do ispec = 1, NSPEC_AB
+
+      ! user info about progress
+      if (myrank == 0) then
+        if (mod(ispec-1,NSPEC_AB/NSTEP_PERCENT_INFO) == 0) then
+          ! outputs current time on system
+          call date_and_time(VALUES=tval)
+          write(*,'(a,f5.1,a,i2,a,i2,a,i2,a)') '    ', &
+                 int((ispec-1) / (NSPEC_AB/NSTEP_PERCENT_INFO)) * (100.0 / NSTEP_PERCENT_INFO), &
+                 ' % elements done - current clock (NOT elapsed) time is: ',tval(5),"h ",tval(6),"min ",tval(7),"sec"
+        endif
+        if (ispec == NSPEC_AB) then
+          ! outputs current time on system
+          call date_and_time(VALUES=tval)
+          write(*,'(a,f5.1,a,i2,a,i2,a,i2,a)') '    ',100.0, &
+                 ' % elements done - current clock (NOT elapsed) time is: ',tval(5),"h ",tval(6),"min ",tval(7),"sec"
+        endif
+      endif
+
+      ! sets number of elements to loop over
+      if (DO_SEARCH_ELEM_LIST) then
+        num_elem_local = num_search_elem(ispec)
+      else
+        num_elem_local = NSPEC_AB
+      endif
+
       ! --- only double loop over the elements in the search radius ---
-      do ispec2 = 1, nspec(inum)
+      do ielem = 1, num_elem_local
 
-        ! calculates horizontal and vertical distance between two element centers
-        ! vector approximation
-        call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
-                              cx(ispec2),cy(ispec2),cz(ispec2))
+        ! takes only elements in search radius
+        if (DO_SEARCH_ELEM_LIST) then
+          ielem_total = ielem_total + 1
+          if (ielem_total > max_num_search_elem) stop 'Error index ielem_total is invalid'
+          ispec2 = ispec_search_elem(ielem_total)
+        else
+          ispec2 = ielem
 
-        ! note: distances and sigmah, sigmav are normalized by R_EARTH
+          ! calculates horizontal and vertical distance between two element centers
+          ! vector approximation
+          call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
+                                cx(ispec2),cy(ispec2),cz(ispec2))
 
-        ! checks distance between centers of elements
-        if ( dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+          ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
+
+          ! checks distance between centers of elements
+          if ( dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+        endif
 
         ! integration factors:
         ! uses volume assigned to GLL points
@@ -500,13 +695,20 @@ program smooth_sem_globe
 
               ! reference location
               ! current point (i,j,k,ispec) location, cartesian coordinates
-              x0 = xl(i,j,k,ispec)
-              y0 = yl(i,j,k,ispec)
-              z0 = zl(i,j,k,ispec)
+              x0 = xx0(i,j,k,ispec)
+              y0 = yy0(i,j,k,ispec)
+              z0 = zz0(i,j,k,ispec)
 
               ! calculate weights based on gaussian smoothing
               call smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
                                          xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+
+              ! debug
+              if (DEBUG .and. myrank == 0) then
+                if (i == 3 .and. j == 3 .and. k == 3 .and. ispec == tmp_ispec_dbg) then
+                  tmp_bk(:,:,:,ispec2) = exp_val(:,:,:)
+                endif
+              endif
 
               ! adds GLL integration weights
               exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)
@@ -531,10 +733,37 @@ program smooth_sem_globe
             enddo
           enddo
         enddo ! (i,j,k)
-      enddo ! (ispec2)
+      enddo ! (ielem)
+
+      ! debug output
+      if (DEBUG .and. myrank == 0) then
+        ! debug element (tmp_ispec_dbg)
+        if (ispec == tmp_ispec_dbg) then
+          ! outputs gaussian weighting function
+          write(filename,'(a,i4.4,a,i6.6)') trim(scratch_file_dir)//'/search_elem',tmp_ispec_dbg,'_gaussian_proc',iproc
+          call write_VTK_data_elem_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
+                                     ibool,tmp_bk,filename)
+          print*,'file written: ',trim(filename)//'.vtk'
+        endif
+      endif
+
     enddo   ! (ispec)
+
+    ! debug output
+    if (DEBUG .and. myrank == 0) then
+      deallocate(tmp_bk)
+    endif
+
   enddo     ! islice
   if (myrank == 0) print *
+
+  ! frees memory
+  if (DO_SEARCH_ELEM_LIST) then
+    deallocate(ispec_search_elem)
+  endif
+
+  ! synchronizes
+  call synchronize_all()
 
   ! normalizes/scaling factor
   if (myrank == 0) then
@@ -544,7 +773,7 @@ program smooth_sem_globe
 
   ! compute the smoothed kernel values
   kernel_smooth(:,:,:,:) = 0.0_CUSTOM_REAL
-  do ispec = 1, nspec(1)
+  do ispec = 1, NSPEC_AB
     do k = 1, NGLLZ
       do j = 1, NGLLY
         do i = 1, NGLLX
@@ -574,7 +803,7 @@ program smooth_sem_globe
     enddo
   enddo
 
-  max_new = maxval(abs(kernel_smooth(:,:,:,1:nspec(1))))
+  max_new = maxval(abs(kernel_smooth))
 
   ! file output
   ! smoothed kernel file name
@@ -584,10 +813,13 @@ program smooth_sem_globe
   open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',iostat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
 
-  ! Note: output the following instead of kernel_smooth(:,:,:,1:nspec(1)) to create files of the same sizes
+  ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes
   write(IOUT) kernel_smooth(:,:,:,:)
   close(IOUT)
   if (myrank == 0) print *,'written: ',trim(ks_file)
+
+  ! synchronizes
+  call synchronize_all()
 
   ! the maximum value for the smoothed kernel
   norm = max_old

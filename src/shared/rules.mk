@@ -66,8 +66,9 @@ shared_OBJECTS = \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
-	$O/sort_array_coordinates.shared.o \
+	$O/search_kdtree.shared.o \
 	$O/smooth_weights_vec.shared.o \
+	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
@@ -78,6 +79,7 @@ shared_MODULES = \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_compute_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
+	$(FC_MODDIR)/kdtree_search.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 adios_shared_OBJECTS = \

@@ -77,7 +77,6 @@ tomography_MODULES = \
 	$(FC_MODDIR)/tomography_kernels_tiso_cg.$(FC_MODEXT) \
 	$(FC_MODDIR)/tomography_model_tiso.$(FC_MODEXT) \
 	$(FC_MODDIR)/tomography_model_iso.$(FC_MODEXT) \
-	$(FC_MODDIR)/kdtree_search.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 ####
@@ -207,7 +206,6 @@ ${E}/xdifference_sem: $(xdifference_sem_OBJECTS) $(xdifference_sem_SHARED_OBJECT
 ##
 xinterpolate_model_OBJECTS = \
 	$O/interpolate_model.tomo.o \
-	$O/interpolate_model_kdtree.tomo.o \
 	$(EMPTY_MACRO)
 
 xinterpolate_model_SHARED_OBJECTS = \
@@ -217,10 +215,11 @@ xinterpolate_model_SHARED_OBJECTS = \
 	$O/hex_nodes.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/recompute_jacobian.solver.o \
+	$O/search_kdtree.shared.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
-$O/interpolate_model.tomo.o: $O/interpolate_model_kdtree.tomo.o
+$O/interpolate_model.tomo.o: $O/search_kdtree.shared.o
 
 ${E}/xinterpolate_model: $(xinterpolate_model_OBJECTS) $(xinterpolate_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
@@ -238,7 +237,10 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/get_all_eight_slices.shared.o \
 	$O/gll_library.shared.o \
+	$O/reduce.shared.o \
+	$O/rthetaphi_xyz.shared.o \
 	$O/smooth_weights_vec.shared.o \
+	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
