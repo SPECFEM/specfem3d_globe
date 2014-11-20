@@ -715,8 +715,9 @@
 ! number of lines per source in CMTSOLUTION file
   integer, parameter :: NLINES_PER_CMTSOLUTION_SOURCE = 13
 
-! number of iterations to solve the non linear system for xi and eta; this value
-! should be the minimum required to produce consistent results between compilers
+! number of iterations to solve the system for xi and eta
+! setting it to 5 instead of 4 ensures that the result obtained is not compiler dependent
+! (when using 4 only some small discrepancies were observed)
   integer, parameter :: NUM_ITER = 5
 
 ! number of hours per day for rotation rate of the Earth
