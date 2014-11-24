@@ -38,32 +38,49 @@
   double precision,dimension(NGLL),intent(in) :: xigll
   double precision,dimension(NGLL),intent(out) :: h,hprime
 
+  ! local parameters
   integer :: dgr,i,j
-  double precision :: prod1,prod2
+  double precision :: prod1,prod2,prod3
+  double precision :: prod2_inv
+  double precision :: sum
+  double precision :: x0,x
+
+! note: this routine is hit pretty hard by the mesher, optimizing the loops here will be beneficial
 
   do dgr = 1,NGLL
 
     prod1 = 1.0d0
     prod2 = 1.0d0
-    do i = 1,NGLL
-      if (i /= dgr) then
-        prod1 = prod1*(xi-xigll(i))
-        prod2 = prod2*(xigll(dgr)-xigll(i))
-      endif
-    enddo
-    h(dgr)=prod1/prod2
 
-    hprime(dgr) = 0.0d0
+    ! lagrangian interpolants
+    x0 = xigll(dgr)
     do i = 1,NGLL
       if (i /= dgr) then
-        prod1 = 1.0d0
-        do j = 1,NGLL
-          if (j /= dgr .and. j /= i) prod1 = prod1*(xi-xigll(j))
-        enddo
-        hprime(dgr) = hprime(dgr)+prod1
+        x = xigll(i)
+        prod1 = prod1*(xi-x)
+        prod2 = prod2*(x0-x)
       endif
     enddo
-    hprime(dgr) = hprime(dgr)/prod2
+
+    ! takes inverse to avoid additional divisions 
+    ! (multiplications are cheaper than divisions)
+    prod2_inv = 1.d0/prod2
+
+    h(dgr) = prod1 * prod2_inv
+
+    ! first derivatives
+    sum = 0.0d0
+    do i = 1,NGLL
+      if (i /= dgr) then
+        prod3 = 1.0d0
+        do j = 1,NGLL
+          if (j /= dgr .and. j /= i) prod3 = prod3*(xi-xigll(j))
+        enddo
+        sum = sum + prod3
+      endif
+    enddo
+
+    hprime(dgr) = sum * prod2_inv
 
   enddo
 
