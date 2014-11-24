@@ -51,6 +51,7 @@ shared_OBJECTS = \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
+	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \

@@ -61,34 +61,50 @@ module kdtree_search
   !       however, putting it here into the module declaration will have the same effect
   type (kdtree_node),pointer :: kdtree
 
-  ! tree search arrays
+  ! kdtree arrays
   ! total number of tree nodes
-  integer :: kdtree_nnodes_local
-
+  integer :: kdtree_num_nodes = 0
   ! tree node locations
-  double precision, dimension(:,:),allocatable,target :: kdtree_nodes_local
-
+  double precision, dimension(:,:),allocatable,target :: kdtree_nodes_location
   ! associated node index
-  integer, dimension(:),allocatable :: kdtree_index_local
+  integer, dimension(:),allocatable :: kdtree_nodes_index
+
+  ! n-search result arrays
+  integer :: kdtree_search_num_nodes = 0
+  ! n-search result node index
+  integer, dimension(:),allocatable :: kdtree_search_index
+  ! sorts result node index array (increasing order)
+  logical, parameter :: DO_SORT_RESULTS = .true.
 
   ! info output
   logical :: be_verbose = .false.
 
+  !---------------------------------------------------------------
   ! public routines
-  public :: kdtree_setup,kdtree_find_nearest_neighbor,kdtree_delete
+  public :: kdtree_setup
+  public :: kdtree_find_nearest_neighbor
+  public :: kdtree_find_nearest_n_neighbors
+  public :: kdtree_count_nearest_n_neighbors
+  public :: kdtree_get_nearest_n_neighbors
+  public :: kdtree_count_nearest_n_neighbors_ellip
+  public :: kdtree_get_nearest_n_neighbors_ellip
+  public :: kdtree_delete
   public :: kdtree_set_verbose
 
   ! public parameters/arrays
-  public :: kdtree_nnodes_local
-  public :: kdtree_nodes_local
-  public :: kdtree_index_local
+  public :: kdtree_num_nodes
+  public :: kdtree_nodes_location
+  public :: kdtree_nodes_index
+  public :: kdtree_search_num_nodes
+  public :: kdtree_search_index
+  !---------------------------------------------------------------
 
 contains
 
 ! example:
 !
 ! creates kd-tree for searching
-!  .. prepare point array kdtree_nodes_local,kdtree_nnodes_local
+!  .. prepare point array kdtree_nodes_location,kdtree_num_nodes
 !  call kdtree_setup()
 !
 ! finds closest point
@@ -105,8 +121,8 @@ contains
   ! sets up the kd-tree structure
   !
   ! needs:
-  !   kdtree_nnodes_local  - total number of points
-  !   kdtree_nodes_local   - 3D array of points
+  !   kdtree_num_nodes  - total number of points
+  !   kdtree_nodes_location   - 3D array of points
   !
   ! returns:
   !   creates internal tree representation
@@ -142,17 +158,17 @@ contains
   !------------------------------------------------------
 
   ! checks
-  if (kdtree_nnodes_local <= 0 ) stop 'Error creating kdtree with zero nodes is invalid'
-  if (.not. allocated(kdtree_nodes_local) ) stop 'Error array kdtree_nodes_local not allocated yet'
+  if (kdtree_num_nodes <= 0 ) stop 'Error creating kdtree with zero nodes is invalid'
+  if (.not. allocated(kdtree_nodes_location) ) stop 'Error array kdtree_nodes_location not allocated yet'
 
   ! timing
   call cpu_time(ct_start)
 
   ! number of data points
-  npoints = kdtree_nnodes_local
+  npoints = kdtree_num_nodes
 
   ! 3D point coordinates
-  points_data => kdtree_nodes_local(:,:)
+  points_data => kdtree_nodes_location(:,:)
 
   if (be_verbose) then
     print*,'kd-tree:'
@@ -177,7 +193,7 @@ contains
   endif
 
   ! local ordering
-  allocate(points_index(kdtree_nnodes_local),stat=ier)
+  allocate(points_index(kdtree_num_nodes),stat=ier)
   if (ier /= 0) stop 'Error allocating array points_index'
 
   ! initial point ordering
@@ -229,8 +245,7 @@ contains
     ipoint_min = -1
     dist_min = 1.d30
 
-    call find_nearest_kdtree_node(npoints,points_data,kdtree, &
-                                  xyz_target,ipoint_min,dist_min)
+    call find_nearest_node(npoints,points_data,kdtree,xyz_target,ipoint_min,dist_min)
 
     dist_min = sqrt(dist_min)
     print*,'found : ',ipoint_min,'distance:',dist_min
@@ -250,7 +265,9 @@ contains
 
   end subroutine kdtree_setup
 
-!===================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine kdtree_find_nearest_neighbor(xyz_target,iglob_min,dist_min)
 
@@ -276,13 +293,12 @@ contains
   dist_min = 1.d30
 
   ! searches closest node in kd-tree
-  call find_nearest_kdtree_node(kdtree_nnodes_local,kdtree_nodes_local,kdtree, &
-                                xyz_target,ipoint_min,dist_min)
+  call find_nearest_node(kdtree_num_nodes,kdtree_nodes_location,kdtree,xyz_target,ipoint_min,dist_min)
 
-  if (ipoint_min < 1 .or. ipoint_min > kdtree_nnodes_local ) stop 'Error search kd-tree found no point'
+  if (ipoint_min < 1 .or. ipoint_min > kdtree_num_nodes ) stop 'Error search kd-tree found no point'
 
   ! gets global index
-  iglob_min = kdtree_index_local(ipoint_min)
+  iglob_min = kdtree_nodes_index(ipoint_min)
 
   ! checks global index
   if (iglob_min < 1 ) stop 'Error minimum location has wrong global index in kdtree_find_nearest_neighbor'
@@ -293,12 +309,317 @@ contains
   ! debug
   !if (be_verbose) then
   !  print*,'target  : ',xyz_target(:)
-  !  print*,'nearest : ',kdtree_nodes_local(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
+  !  print*,'nearest : ',kdtree_nodes_location(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
   !endif
 
   end subroutine kdtree_find_nearest_neighbor
 
-!===================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine kdtree_find_nearest_n_neighbors(xyz_target,search_radius,num_nodes)
+
+  ! kd-tree n-search
+  !
+  ! input: target location (xyz_target) and search radius (search_radius)
+  !
+  ! returns: number of nodes within search radius (num_nodes),
+  !          and
+  !          fills array kdtree_search_index with search result
+
+  implicit none
+
+  double precision, dimension(3),intent(in) :: xyz_target
+  double precision, intent(in) :: search_radius
+
+  integer, intent(out) :: num_nodes
+
+  ! local parameters
+  double precision :: r_squared
+
+  ! initializes
+  num_nodes = 0
+
+  ! checks tree
+  if (kdtree_num_nodes <= 0) return
+
+  ! checks radius
+  if (search_radius < 0.d0) &
+    stop 'Error kd-tree search radius is invalid (negative value)'
+
+  ! checks if result array length non-zero
+  if (kdtree_search_num_nodes <= 0) &
+    stop 'Please set kdtree_search_num_nodes and allocate kdtree_search_index first, before finding closest n neighbors'
+
+  ! checks result array
+  if (.not. allocated(kdtree_search_index)) &
+    stop 'Please allocate kdtree_search_index first, before finding closest n neighbors'
+
+  ! initializes search results
+  kdtree_search_index(:) = 0
+
+  ! distances are squared
+  r_squared = search_radius**2
+
+  ! searches closest nodes in kd-tree and returns results in array kdtree_search_index(:)
+  call find_nearest_n_nodes(kdtree_num_nodes,kdtree_nodes_location,kdtree,xyz_target,r_squared,num_nodes,.true.)
+
+  ! checks result
+  !if (num_nodes /= kdtree_search_num_nodes) &
+  !  stop 'Error kd-tree search paramater kdtree_search_num_nodes is different to number of nodes found'
+
+  ! checks result bounds
+  if (minval(kdtree_search_index(1:num_nodes)) <= 0) &
+    stop 'Error kd-tree search found invalid search result'
+
+  ! sorts values in increasing order
+  if (DO_SORT_RESULTS) then
+    call heap_sort( num_nodes, kdtree_search_index(1:num_nodes) )
+  endif
+
+  end subroutine kdtree_find_nearest_n_neighbors
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine kdtree_count_nearest_n_neighbors(xyz_target,search_radius,num_nodes)
+
+  ! kd-tree n-search
+  !
+  ! input: target location (xyz_target) and search radius (search_radius)
+  !
+  ! returns: number of nodes within search radius (num_nodes),
+
+  implicit none
+
+  double precision, dimension(3),intent(in) :: xyz_target
+  double precision, intent(in) :: search_radius
+
+  integer, intent(out) :: num_nodes
+
+  ! local parameters
+  double precision :: r_squared
+
+  ! initializes
+  num_nodes = 0
+
+  ! checks tree
+  if (kdtree_num_nodes <= 0) return
+
+  ! checks radius
+  if (search_radius < 0.d0) stop 'Error kd-tree search radius is invalid (negative value)'
+
+  ! distances are squared always
+  r_squared = search_radius**2
+
+  ! searches closest nodes in kd-tree (only counts nodes and returns result in num_nodes)
+  call find_nearest_n_nodes(kdtree_num_nodes,kdtree_nodes_location,kdtree,xyz_target,r_squared,num_nodes,.false.)
+
+  end subroutine kdtree_count_nearest_n_neighbors
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine kdtree_get_nearest_n_neighbors(xyz_target,search_radius,num_nodes_get)
+
+  ! kd-tree n-search
+  !
+  ! input: target location (xyz_target), search radius (search_radius), number of nodes to fill (num_nodes_get)
+  !
+  ! returns: fills array kdtree_search_index with search result
+
+  implicit none
+
+  double precision, dimension(3),intent(in) :: xyz_target
+  double precision, intent(in) :: search_radius
+
+  integer, intent(inout) :: num_nodes_get
+
+  ! local parameters
+  double precision :: r_squared
+  integer :: num_nodes
+
+  ! initializes
+  num_nodes = 0
+
+  ! checks if anything to do
+  if (num_nodes_get <= 0) return
+
+  ! checks radius
+  if (search_radius < 0.d0) &
+    stop 'Error kd-tree search radius is invalid (negative value)'
+
+  ! checks if result array length non-zero
+  if (kdtree_search_num_nodes <= 0) &
+    stop 'Please set kdtree_search_num_nodes and allocate kdtree_search_index first, before getting closest n neighbors'
+
+  ! checks result array
+  if (.not. allocated(kdtree_search_index)) &
+    stop 'Please allocate kdtree_search_index first, before getting closest n neighbors'
+
+  ! checks if num_nodes_get limited by search array size
+  if (kdtree_search_num_nodes < num_nodes_get) then
+    print*,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
+  endif
+
+  ! initializes search results
+  kdtree_search_index(:) = 0
+
+  ! distances are squared
+  r_squared = search_radius**2
+
+  ! searches closest nodes in kd-tree and returns results in array kdtree_search_index(:)
+  call find_nearest_n_nodes(kdtree_num_nodes,kdtree_nodes_location,kdtree,xyz_target,r_squared,num_nodes,.true.)
+
+  ! updates return results
+  if (num_nodes < num_nodes_get) num_nodes_get = num_nodes
+
+  ! returns only requested number of nodes
+  if (num_nodes > num_nodes_get) then
+    kdtree_search_index(num_nodes_get+1:num_nodes) = 0
+  endif
+
+  ! checks result bounds
+  if (minval(kdtree_search_index(1:num_nodes_get)) <= 0) &
+    stop 'Error kd-tree search found invalid search result'
+
+  ! sorts values in increasing order
+  if (DO_SORT_RESULTS) then
+    call heap_sort( num_nodes_get, kdtree_search_index(1:num_nodes_get) )
+  endif
+
+  end subroutine kdtree_get_nearest_n_neighbors
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine kdtree_count_nearest_n_neighbors_ellip(xyz_target,dist_v,dist_h,num_nodes)
+
+  ! kd-tree n-search
+  !
+  ! input: target location (xyz_target) and search ellipsoid (dist_v/dist_h)
+  !
+  ! returns: number of nodes within search radius (num_nodes),
+
+  implicit none
+
+  double precision, dimension(3),intent(in) :: xyz_target
+  double precision, intent(in) :: dist_v,dist_h
+
+  integer, intent(out) :: num_nodes
+
+  ! local parameters
+  double precision :: r_squared_v,r_squared_h
+
+  ! initializes
+  num_nodes = 0
+
+  ! checks tree
+  if (kdtree_num_nodes <= 0) return
+
+  ! checks radius
+  if (dist_v < 0.d0 .or. dist_h < 0.d0) &
+    stop 'Error kd-tree search ellipsoid is invalid (negative value)'
+
+  ! distances are squared
+  r_squared_v = dist_v**2
+  r_squared_h = dist_h**2
+
+  ! searches closest nodes in kd-tree (only counts nodes and returns result in num_nodes)
+  call find_nearest_n_nodes_ellip(kdtree_num_nodes,kdtree_nodes_location,kdtree,xyz_target, &
+                                  r_squared_v,r_squared_h,num_nodes,.false.)
+
+  end subroutine kdtree_count_nearest_n_neighbors_ellip
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine kdtree_get_nearest_n_neighbors_ellip(xyz_target,dist_v,dist_h,num_nodes_get)
+
+  ! kd-tree n-search
+  !
+  ! input: target location (xyz_target), search ellipsoid (dist_v/disth),
+  !        number of nodes to fill (num_nodes_get)
+  !
+  ! returns: fills array kdtree_search_index with search result
+
+  implicit none
+
+  double precision, dimension(3),intent(in) :: xyz_target
+  double precision, intent(in) :: dist_v,dist_h
+
+  integer, intent(inout) :: num_nodes_get
+
+  ! local parameters
+  double precision :: r_squared_v,r_squared_h
+  integer :: num_nodes
+
+  ! initializes
+  num_nodes = 0
+
+  ! checks if anything to do
+  if (num_nodes_get <= 0) return
+
+  ! checks radius
+  if (dist_v < 0.d0 .or. dist_h < 0.d0) &
+    stop 'Error kd-tree search ellipsoid is invalid (negative value)'
+
+  ! checks if result array length non-zero
+  if (kdtree_search_num_nodes <= 0) &
+    stop 'Please set kdtree_search_num_nodes and allocate kdtree_search_index first, before getting closest n neighbors'
+
+  ! checks result array
+  if (.not. allocated(kdtree_search_index)) &
+    stop 'Please allocate kdtree_search_index first, before getting closest n neighbors'
+
+  ! checks if num_nodes_get limited by search array size
+  if (kdtree_search_num_nodes < num_nodes_get) then
+    print*,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
+  endif
+
+  ! initializes search results
+  kdtree_search_index(:) = 0
+
+  ! distances are squared
+  r_squared_v = dist_v**2
+  r_squared_h = dist_h**2
+
+  ! searches closest nodes in kd-tree and returns results in array kdtree_search_index(:)
+  call find_nearest_n_nodes_ellip(kdtree_num_nodes,kdtree_nodes_location,kdtree,xyz_target, &
+                                  r_squared_v,r_squared_h,num_nodes,.true.)
+
+  ! updates return results
+  if (num_nodes < num_nodes_get) num_nodes_get = num_nodes
+
+  ! returns only requested number of nodes
+  if (num_nodes > num_nodes_get) then
+    kdtree_search_index(num_nodes_get+1:num_nodes) = 0
+  endif
+
+  ! checks result bounds
+  if (minval(kdtree_search_index(1:num_nodes_get)) <= 0) &
+    stop 'Error kd-tree search found invalid search result'
+
+  ! sorts values in increasing order
+  if (DO_SORT_RESULTS) then
+    call heap_sort( num_nodes_get, kdtree_search_index(1:num_nodes_get) )
+  endif
+
+  end subroutine kdtree_get_nearest_n_neighbors_ellip
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   recursive subroutine create_kdtree(npoints,points_data,points_index,node, &
                                      depth,ibound_lower,ibound_upper,numnodes,maxdepth)
@@ -460,8 +781,9 @@ contains
 
   end subroutine create_kdtree
 
-!===================================================================================================
-
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   recursive subroutine print_kdtree(npoints,points_data,points_index,node,numnodes)
 
@@ -518,8 +840,9 @@ contains
 
   end subroutine print_kdtree
 
-!===================================================================================================
-
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   subroutine kdtree_delete()
 
@@ -532,8 +855,9 @@ contains
 
   end subroutine kdtree_delete
 
-!===================================================================================================
-
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   recursive subroutine delete_node(node)
 
@@ -559,10 +883,11 @@ contains
 
   end subroutine delete_node
 
-!===================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-  recursive subroutine find_nearest_kdtree_node(npoints,points_data,node, &
-                                                xyz_target,ipoint_min,dist_min)
+  recursive subroutine find_nearest_node(npoints,points_data,node,xyz_target,ipoint_min,dist_min)
 
   ! searches for node point closest to given location
   implicit none
@@ -619,14 +944,12 @@ contains
   if (xyz_target(node%idim) < node%cut_value ) then
     ! finds closer node in lower hemisphere
     if (associated(node%left) ) then
-      call find_nearest_kdtree_node(npoints,points_data,node%left, &
-                                    xyz_target,ipoint_min,dist_min)
+      call find_nearest_node(npoints,points_data,node%left,xyz_target,ipoint_min,dist_min)
     endif
   else
     ! finds closer node in upper hemisphere
     if (associated(node%right) ) then
-      call find_nearest_kdtree_node(npoints,points_data,node%right, &
-                                    xyz_target,ipoint_min,dist_min)
+      call find_nearest_node(npoints,points_data,node%right,xyz_target,ipoint_min,dist_min)
     endif
   endif
 
@@ -650,8 +973,7 @@ contains
       endif
       ! checks if points beyond cut plane could be closer
       if (dist < dist_min) then
-        call find_nearest_kdtree_node(npoints,points_data,node%right, &
-                                        xyz_target,ipoint_min,dist_min)
+        call find_nearest_node(npoints,points_data,node%right,xyz_target,ipoint_min,dist_min)
       endif
     endif
   else
@@ -668,16 +990,281 @@ contains
       endif
       ! checks if points beyond cut plane could be closer
       if (dist < dist_min) then
-        call find_nearest_kdtree_node(npoints,points_data,node%left, &
-                                    xyz_target,ipoint_min,dist_min)
+        call find_nearest_node(npoints,points_data,node%left,xyz_target,ipoint_min,dist_min)
       endif
     endif
   endif
 
-  end subroutine find_nearest_kdtree_node
+  end subroutine find_nearest_node
 
 
-!===================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  recursive subroutine find_nearest_n_nodes(npoints,points_data,node,xyz_target,r_squared,num_nodes,fill_index)
+
+  ! searches for all node points within a given radius to given location
+
+  implicit none
+  integer,intent(in) :: npoints
+  double precision,dimension(3,npoints),intent(in) :: points_data
+
+  type (kdtree_node), pointer,intent(inout) :: node
+
+  double precision,dimension(3),intent(in) :: xyz_target
+
+  double precision,intent(in) :: r_squared
+  integer,intent(inout) :: num_nodes
+
+  logical,intent(in) :: fill_index
+
+  ! local parameters
+  double precision :: dist
+  double precision,dimension(3) :: xyz
+
+  ! checks a final node
+  if ( .not. associated(node%left) .and. .not. associated(node%right) ) then
+    ! checks node
+    if (node%idim /= 0 ) stop 'Error searched node is not final node'
+    if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
+
+    ! node location
+    xyz(:) = points_data(:,node%ipoint)
+
+    ! squared distance to associated data point
+    dist = get_distance_squared(xyz_target(:),xyz(:))
+    if (dist <= r_squared) then
+      ! debug
+      !print*,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
+      ! counts point
+      num_nodes = num_nodes + 1
+
+      ! adds point
+      if (fill_index) then
+        if (num_nodes <= kdtree_search_num_nodes) then
+          kdtree_search_index(num_nodes) = node%ipoint
+        endif
+      endif
+    endif
+
+    ! done
+    return
+  endif
+
+  ! checks cut dimension
+  if (node%idim < 1 .or. node%idim > 3 ) stop 'Error searched node has invalid cut dimension'
+
+  ! compares cut value
+  if (xyz_target(node%idim) < node%cut_value ) then
+    ! finds closer node in lower hemisphere
+    if (associated(node%left) ) then
+      call find_nearest_n_nodes(npoints,points_data,node%left,xyz_target,r_squared,num_nodes,fill_index)
+    endif
+  else
+    ! finds closer node in upper hemisphere
+    if (associated(node%right) ) then
+      call find_nearest_n_nodes(npoints,points_data,node%right,xyz_target,r_squared,num_nodes,fill_index)
+    endif
+  endif
+
+  ! at this point, dist_min is the distance to the closest point in the initial hemisphere search
+  ! we might need to search in other hemisphere as well if distances are closer
+
+  ! squared distance to cut plane
+  dist = ( xyz_target(node%idim) - node%cut_value )**2
+
+  if (xyz_target(node%idim) < node%cut_value ) then
+    if (associated(node%right) ) then
+      ! checks right node as a final node
+      if (node%right%idim == 0 ) then
+        xyz(:) = points_data(:,node%right%ipoint)
+        dist = get_distance_squared(xyz_target(:),xyz(:))
+        if (dist <= r_squared) then
+          ! counts point
+          num_nodes = num_nodes + 1
+          ! adds point
+          if (fill_index) then
+            if (num_nodes <= kdtree_search_num_nodes) then
+              kdtree_search_index(num_nodes) = node%right%ipoint
+            endif
+          endif
+          ! done
+          return
+        endif
+      endif
+      ! checks if points beyond cut plane could be closer
+      if (dist <= r_squared) then
+        call find_nearest_n_nodes(npoints,points_data,node%right,xyz_target,r_squared,num_nodes,fill_index)
+      endif
+    endif
+  else
+    if (associated(node%left) ) then
+      ! checks left node as a final node
+      if (node%left%idim == 0 ) then
+        xyz(:) = points_data(:,node%left%ipoint)
+        dist = get_distance_squared(xyz_target(:),xyz(:))
+        if (dist <= r_squared) then
+          ! counts point
+          num_nodes = num_nodes + 1
+          ! adds point
+          if (fill_index) then
+            if (num_nodes <= kdtree_search_num_nodes) then
+              kdtree_search_index(num_nodes) = node%left%ipoint
+            endif
+          endif
+          ! done
+          return
+        endif
+      endif
+      ! checks if points beyond cut plane could be closer
+      if (dist <= r_squared) then
+        call find_nearest_n_nodes(npoints,points_data,node%left,xyz_target,r_squared,num_nodes,fill_index)
+      endif
+    endif
+  endif
+
+  end subroutine find_nearest_n_nodes
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  recursive subroutine find_nearest_n_nodes_ellip(npoints,points_data,node,xyz_target, &
+                                                  r_squared_v,r_squared_h,num_nodes,fill_index)
+
+  ! searches for all node points within a given search ellipsoid to given location
+
+  implicit none
+  integer,intent(in) :: npoints
+  double precision,dimension(3,npoints),intent(in) :: points_data
+
+  type (kdtree_node), pointer,intent(inout) :: node
+
+  double precision,dimension(3),intent(in) :: xyz_target
+
+  double precision,intent(in) :: r_squared_v,r_squared_h
+  integer,intent(inout) :: num_nodes
+
+  logical,intent(in) :: fill_index
+
+  ! local parameters
+  double precision :: dist,dist_v,dist_h
+  double precision,dimension(3) :: xyz
+
+  ! checks a final node
+  if ( .not. associated(node%left) .and. .not. associated(node%right) ) then
+    ! checks node
+    if (node%idim /= 0 ) stop 'Error searched node is not final node'
+    if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
+
+    ! node location
+    xyz(:) = points_data(:,node%ipoint)
+
+    ! squared distance to associated data point
+    call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+    if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
+      ! debug
+      !print*,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
+      ! counts point
+      num_nodes = num_nodes + 1
+
+      ! adds point
+      if (fill_index) then
+        if (num_nodes <= kdtree_search_num_nodes) then
+          kdtree_search_index(num_nodes) = node%ipoint
+        endif
+      endif
+    endif
+
+    ! done
+    return
+  endif
+
+  ! checks cut dimension
+  if (node%idim < 1 .or. node%idim > 3 ) stop 'Error searched node has invalid cut dimension'
+
+  ! compares cut value
+  if (xyz_target(node%idim) < node%cut_value ) then
+    ! finds closer node in lower hemisphere
+    if (associated(node%left) ) then
+      call find_nearest_n_nodes_ellip(npoints,points_data,node%left,xyz_target, &
+                                      r_squared_v,r_squared_h,num_nodes,fill_index)
+    endif
+  else
+    ! finds closer node in upper hemisphere
+    if (associated(node%right) ) then
+      call find_nearest_n_nodes_ellip(npoints,points_data,node%right,xyz_target, &
+                                      r_squared_v,r_squared_h,num_nodes,fill_index)
+    endif
+  endif
+
+  ! at this point, dist_min is the distance to the closest point in the initial hemisphere search
+  ! we might need to search in other hemisphere as well if distances are closer
+
+  ! squared distance to cut plane
+  dist = ( xyz_target(node%idim) - node%cut_value )**2
+
+  if (xyz_target(node%idim) < node%cut_value ) then
+    if (associated(node%right) ) then
+      ! checks right node as a final node
+      if (node%right%idim == 0 ) then
+        xyz(:) = points_data(:,node%right%ipoint)
+        call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+        if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
+          ! counts point
+          num_nodes = num_nodes + 1
+          ! adds point
+          if (fill_index) then
+            if (num_nodes <= kdtree_search_num_nodes) then
+              kdtree_search_index(num_nodes) = node%right%ipoint
+            endif
+          endif
+          ! done
+          return
+        endif
+      endif
+      ! checks if points beyond cut plane could be closer
+      if (dist <= r_squared_v .or. dist <= r_squared_h) then
+        call find_nearest_n_nodes_ellip(npoints,points_data,node%right,xyz_target, &
+                                        r_squared_v,r_squared_h,num_nodes,fill_index)
+      endif
+    endif
+  else
+    if (associated(node%left) ) then
+      ! checks left node as a final node
+      if (node%left%idim == 0 ) then
+        xyz(:) = points_data(:,node%left%ipoint)
+        call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
+        if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
+          ! counts point
+          num_nodes = num_nodes + 1
+          ! adds point
+          if (fill_index) then
+            if (num_nodes <= kdtree_search_num_nodes) then
+              kdtree_search_index(num_nodes) = node%left%ipoint
+            endif
+          endif
+          ! done
+          return
+        endif
+      endif
+      ! checks if points beyond cut plane could be closer
+      if (dist <= r_squared_v .or. dist <= r_squared_h) then
+        call find_nearest_n_nodes_ellip(npoints,points_data,node%left,xyz_target, &
+                                        r_squared_v,r_squared_h,num_nodes,fill_index)
+      endif
+    endif
+  endif
+
+  end subroutine find_nearest_n_nodes_ellip
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 
   subroutine kdtree_set_verbose()
 
@@ -689,7 +1276,9 @@ contains
   end subroutine kdtree_set_verbose
 
 
-!===================================================================================================
+!
+!-------------------------------------------------------------------------------------------------
+!
 
   double precision function get_distance_squared(xyz0,xyz1)
 
@@ -711,5 +1300,46 @@ contains
   get_distance_squared = dist
 
   end function get_distance_squared
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine get_distance_ellip(xyz0,xyz1,dist_v,dist_h)
+
+  implicit none
+  double precision,dimension(3),intent(in) :: xyz0,xyz1
+  double precision,intent(out) :: dist_v,dist_h
+
+  ! local parameters
+  double precision :: r0,r1
+  double precision :: theta,ratio
+
+  ! vertical distance (squared)
+  r0 = sqrt( sum( xyz0(:)**2 ) ) ! length of first position vector
+  r1 = sqrt( sum( xyz1(:)**2 ) )
+
+  dist_v = (r1 - r0)*(r1 - r0)
+
+  ! only for flat earth with z in depth: dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
+
+  ! epicentral distance
+  ! (accounting for spherical curvature)
+  ! calculates distance of circular segment
+  ! angle between r0 and r1 in radian
+  ! given by dot-product of two vectors
+  ratio = sum(xyz0(:)*xyz1(:)) / (r0 * r1)
+
+  ! checks boundaries of ratio (due to numerical inaccuracies)
+  if (ratio > 1.d0) ratio = 1.d0
+  if (ratio < -1.d0) ratio = -1.d0
+
+  theta = acos( ratio )
+
+  ! segment length at heigth of r1 (squared)
+  dist_h = (r1 * theta)*(r1 * theta)
+
+  end subroutine get_distance_ellip
+
 
 end module

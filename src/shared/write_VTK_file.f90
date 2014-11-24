@@ -660,9 +660,9 @@
 
   !--------------------------------------------------------------
 
-! write source and receiver VTK files for Paraview
-  write(IMAIN,*) '  vtk file: '
-  write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
+  !debug
+  !print*, '  vtk file: '
+  !print*, '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
   open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
   if (ier /= 0) stop 'Error opening VTK file'

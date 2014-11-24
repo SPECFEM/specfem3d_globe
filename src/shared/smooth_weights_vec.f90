@@ -27,7 +27,7 @@
 
 
 
-  subroutine smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
+  subroutine smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
                                    xx_elem,yy_elem,zz_elem)
 
 
@@ -38,11 +38,14 @@
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: exp_val
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: xx_elem, yy_elem, zz_elem
   real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,sigma_h2,sigma_v2
-  integer,intent(in) :: ispec2
+  !integer,intent(in) :: ispec2
 
   ! local parameters
   integer :: ii,jj,kk
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
+  real(kind=CUSTOM_REAL) :: r0,r1
+  real(kind=CUSTOM_REAL) :: theta,ratio
+  real(kind=CUSTOM_REAL) :: x1,y1,z1
 
   ! >>>>>
   ! uniform sigma
@@ -55,21 +58,44 @@
   !                      -(yy(:,:,:,ispec2)-y0)**2/(sigma_h2) &
   !                      -(zz(:,:,:,ispec2)-z0)**2/(sigma_v2) ) * factor(:,:,:)
   ! >>>>>
-  ! to avoid compiler warning
-  ii = ispec2
 
   do kk = 1, NGLLZ
     do jj = 1, NGLLY
       do ii = 1, NGLLX
         ! point in second slice
 
-        ! vector approximation:
-        call get_distance_vec(dist_h,dist_v,x0,y0,z0, &
-                              xx_elem(ii,jj,kk),yy_elem(ii,jj,kk),zz_elem(ii,jj,kk))
+        ! without explicit function calls to help compiler optimize loops
+
+        x1 = xx_elem(ii,jj,kk)
+        y1 = yy_elem(ii,jj,kk)
+        z1 = zz_elem(ii,jj,kk)
+
+        ! vertical distance (squared)
+        r0 = sqrt( x0*x0 + y0*y0 + z0*z0 ) ! length of first position vector
+        r1 = sqrt( x1*x1 + y1*y1 + z1*z1 )
+        dist_v = (r1 - r0)*(r1 - r0)
+
+        ! only for flat earth with z in depth: dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
+
+        ! epicentral distance
+        ! (accounting for spherical curvature)
+        ! calculates distance of circular segment
+        ! angle between r0 and r1 in radian
+        ! given by dot-product of two vectors
+        ratio = (x0*x1 + y0*y1 + z0*z1)/(r0 * r1)
+
+        ! checks boundaries of ratio (due to numerical inaccuracies)
+        if (ratio > 1.0_CUSTOM_REAL) ratio = 1.0_CUSTOM_REAL
+        if (ratio < -1.0_CUSTOM_REAL) ratio = -1.0_CUSTOM_REAL
+
+        theta = acos( ratio )
+
+        ! segment length at heigth of r1 (squared)
+        dist_h = (r1 * theta)*(r1 * theta)
 
         ! Gaussian function
-        exp_val(ii,jj,kk) = exp( - (dist_h*dist_h)/sigma_h2 &
-                                 - (dist_v*dist_v)/sigma_v2 )    ! * factor(ii,jj,kk)
+        exp_val(ii,jj,kk) = exp( - dist_h/sigma_h2 - dist_v/sigma_v2 )    ! * factor(ii,jj,kk)
+
       enddo
     enddo
   enddo
@@ -101,6 +127,7 @@
   r0 = sqrt( x0*x0 + y0*y0 + z0*z0 ) ! length of first position vector
   r1 = sqrt( x1*x1 + y1*y1 + z1*z1 )
   dist_v = r1 - r0
+
   ! only for flat earth with z in depth: dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
 
   ! epicentral distance

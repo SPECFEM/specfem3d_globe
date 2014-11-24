@@ -63,7 +63,7 @@
     IIN,IOUT,IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL,MAX_STRING_LEN
 
   use kdtree_search, only: kdtree_setup,kdtree_set_verbose,kdtree_delete,kdtree_find_nearest_neighbor, &
-    kdtree_nnodes_local,kdtree_nodes_local,kdtree_index_local
+    kdtree_num_nodes,kdtree_nodes_location,kdtree_nodes_index
 
   implicit none
 
@@ -730,23 +730,23 @@
       if (inodes > k ) stop 'Error invalid number of search tree nodes in this layer'
 
       ! set number of tree nodes
-      kdtree_nnodes_local = inodes
+      kdtree_num_nodes = inodes
 
       ! debug
-      !print*,'kdtree nodes: ',kdtree_nnodes_local
+      !print*,'kdtree nodes: ',kdtree_num_nodes
 
       ! allocates tree arrays
-      allocate(kdtree_nodes_local(3,kdtree_nnodes_local),stat=ier)
-      if (ier /= 0) stop 'Error allocating kdtree_nodes_local arrays'
-      allocate(kdtree_index_local(kdtree_nnodes_local),stat=ier)
-      if (ier /= 0) stop 'Error allocating kdtree_index_local arrays'
+      allocate(kdtree_nodes_location(3,kdtree_num_nodes),stat=ier)
+      if (ier /= 0) stop 'Error allocating kdtree_nodes_location arrays'
+      allocate(kdtree_nodes_index(kdtree_num_nodes),stat=ier)
+      if (ier /= 0) stop 'Error allocating kdtree_nodes_index arrays'
 
       ! tree verbosity
       if (myrank == 0) call kdtree_set_verbose()
 
       ! prepares search arrays, each element takes its internal GLL points for tree search
-      kdtree_index_local(:) = 0
-      kdtree_nodes_local(:,:) = 0.0
+      kdtree_nodes_index(:) = 0
+      kdtree_nodes_location(:,:) = 0.0
 
       ! fills all local nodes into tree array
       iprocnum = 0
@@ -773,15 +773,15 @@
 
                     ! counts nodes
                     inodes = inodes + 1
-                    if (inodes > kdtree_nnodes_local ) stop 'Error index inodes bigger than kdtree_nnodes_local'
+                    if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
 
                     ! adds node index ( index points to same ispec for all internal gll points)
-                    kdtree_index_local(inodes) = ispec + (iprocnum - 1) * nspec_max_old
+                    kdtree_nodes_index(inodes) = ispec + (iprocnum - 1) * nspec_max_old
 
                     ! adds node location
-                    kdtree_nodes_local(1,inodes) = x1(iglob,iprocnum-1)
-                    kdtree_nodes_local(2,inodes) = y1(iglob,iprocnum-1)
-                    kdtree_nodes_local(3,inodes) = z1(iglob,iprocnum-1)
+                    kdtree_nodes_location(1,inodes) = x1(iglob,iprocnum-1)
+                    kdtree_nodes_location(2,inodes) = y1(iglob,iprocnum-1)
+                    kdtree_nodes_location(3,inodes) = z1(iglob,iprocnum-1)
                   enddo
                 enddo
               enddo
@@ -793,21 +793,21 @@
 
               ! counts nodes
               inodes = inodes + 1
-              if (inodes > kdtree_nnodes_local ) stop 'Error index inodes bigger than kdtree_nnodes_local'
+              if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
 
               ! adds node index ( index points to same ispec for all internal gll points)
-              kdtree_index_local(inodes) = ispec + (iprocnum - 1) * nspec_max_old
+              kdtree_nodes_index(inodes) = ispec + (iprocnum - 1) * nspec_max_old
 
               ! adds node location
-              kdtree_nodes_local(1,inodes) = x1(iglob,iprocnum-1)
-              kdtree_nodes_local(2,inodes) = y1(iglob,iprocnum-1)
-              kdtree_nodes_local(3,inodes) = z1(iglob,iprocnum-1)
+              kdtree_nodes_location(1,inodes) = x1(iglob,iprocnum-1)
+              kdtree_nodes_location(2,inodes) = y1(iglob,iprocnum-1)
+              kdtree_nodes_location(3,inodes) = z1(iglob,iprocnum-1)
             endif
 
           enddo
         enddo
       enddo
-      if (inodes /= kdtree_nnodes_local ) stop 'Error index inodes does not match nnodes_local'
+      if (inodes /= kdtree_num_nodes ) stop 'Error index inodes does not match nnodes_local'
       call synchronize_all()
 
       ! creates kd-tree for searching
@@ -864,8 +864,8 @@
     ! frees tree memory
     if (.not. DO_BRUTE_FORCE_SEARCH) then
       ! deletes tree arrays
-      deallocate(kdtree_nodes_local)
-      deallocate(kdtree_index_local)
+      deallocate(kdtree_nodes_location)
+      deallocate(kdtree_nodes_index)
       ! deletes search tree nodes
       call kdtree_delete()
     endif
@@ -1055,7 +1055,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH
 
-  use kdtree_search, only: kdtree_find_nearest_neighbor,kdtree_nodes_local
+  use kdtree_search, only: kdtree_find_nearest_neighbor,kdtree_nodes_location
 
   implicit none
 
@@ -1443,10 +1443,10 @@
       print*,'typical element size:',typical_size * 0.5 * R_EARTH_KM
       print*,'target location:',xyz_target(:)
       print*,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
-      print*,'found location :',kdtree_nodes_local(:,iglob_min)
-      print*,'found radius   :',sqrt(kdtree_nodes_local(1,iglob_min)**2 &
-                                   + kdtree_nodes_local(2,iglob_min)**2 &
-                                   + kdtree_nodes_local(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
+      print*,'found location :',kdtree_nodes_location(:,iglob_min)
+      print*,'found radius   :',sqrt(kdtree_nodes_location(1,iglob_min)**2 &
+                                   + kdtree_nodes_location(2,iglob_min)**2 &
+                                   + kdtree_nodes_location(3,iglob_min)**2 ) * R_EARTH_KM,'(km)'
       !debug
       !stop 'Error dist_min too large in check_point_result() routine'
     endif

@@ -114,6 +114,13 @@
 
   end subroutine sort_array_coordinates
 
+!
+!--------------------
+!
+
+
+! sorting routine left here for inlining
+
 ! -------------------- library for sorting routine ------------------
 
   subroutine heap_sort_multi(N, dx, dy, dz, ia, ib)
@@ -221,3 +228,4 @@
     end subroutine heap_sort_siftdown
 
   end subroutine heap_sort_multi
+

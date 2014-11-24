@@ -72,7 +72,6 @@ meshfem3D_OBJECTS = \
 	$O/get_perm_color.check.o \
 	$O/get_shape2D.check.o \
 	$O/get_shape3D.check.o \
-	$O/heap_sort.check.o \
 	$O/initialize_layers.check.o \
 	$O/initialize_mesher.check.o \
 	$O/lgndr.check.o \
@@ -168,6 +167,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/get_model_parameters.shared.o \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
+	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \

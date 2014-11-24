@@ -61,9 +61,11 @@ program smooth_sem_globe
 ! NOTE:  smoothing can be different in radial & horizontal directions; mesh is in spherical geometry.
 !              algorithm uses vector components in radial/horizontal direction
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT, &
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NX_BATHY,NY_BATHY,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER
 
+  use kdtree_search
+  
   implicit none
 
   include 'OUTPUT_FILES/values_from_mesher.h'
@@ -128,34 +130,38 @@ program smooth_sem_globe
   real(kind=CUSTOM_REAL) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
 
   ! search elements
-  integer :: ielem,ielem_total
-  integer :: num_elem_local
-  integer :: max_num_search_elem,max_local,max_local_estimated
-  integer, dimension(NSPEC_AB) :: num_search_elem
-  integer, dimension(:),allocatable :: ispec_search_elem
-  real(kind=CUSTOM_REAL) :: size_array_mb
+  integer :: ielem,num_elem_local
 
-  logical :: DO_SEARCH_ELEM_LIST
+  ! tree nodes search
+  double precision,dimension(3) :: xyz_target
+  double precision :: r_search,r_search_dist_v,r_search_dist_h
 
   ! debugging
-  logical, parameter :: DEBUG = .false.
-  integer ,parameter :: tmp_ispec_dbg = 910 ! interior point: 2382
-
   integer, dimension(:),allocatable :: ispec_flag
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: tmp_bk
   character(len=MAX_STRING_LEN) :: filename
 
-  ! time
-  integer,dimension(8) :: tval
+  ! timing
+  double precision :: time_start
+  double precision :: tCPU
+  double precision, external :: wtime
 
   !------------------------------------------------------------------------------------------
   ! USER PARAMETERS
 
-  ! limit of array size in MB when using a search element list
-  real(kind=CUSTOM_REAL),parameter :: SEARCH_ARRAY_LIMIT_MB = 250.0
-
   ! number of steps to reach 100 percent, i.e. 10 outputs info for every 10 percent
-  integer,parameter :: NSTEP_PERCENT_INFO = 100
+  integer,parameter :: NSTEP_PERCENT_INFO = 10
+
+  ! brute-force search for neighboring elements, if set to .false. a kd-tree search will be used
+  logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.
+
+  ! kd-tree search uses either a spherical or ellipsoid search
+  logical,parameter :: DO_SEARCH_ELLIP = .true.
+
+  ! debugging
+  logical, parameter :: DEBUG = .false.
+  ! boundary point: 910, interior point: 2382
+  integer ,parameter :: tmp_ispec_dbg = 10
 
   !------------------------------------------------------------------------------------------
 
@@ -242,6 +248,8 @@ program smooth_sem_globe
     print*,"  input file dir : ",trim(scratch_file_dir)
     print*,"  topo dir       : ",trim(topo_dir)
     print*
+    print*,"number of elements per slice: ",NSPEC_AB
+    print*
   endif
   ! synchronizes
   call synchronize_all()
@@ -262,6 +270,15 @@ program smooth_sem_globe
   ! search radius
   sigma_h3 = 3.0  * sigma_h + element_size_m
   sigma_v3 = 3.0  * sigma_v + element_size_m
+
+  if (.not. DO_BRUTE_FORCE_SEARCH) then
+    ! kd-tree search uses a slightly larger constant search radius
+    r_search = max( 1.1d0 * sigma_h3, 1.1d0 * sigma_v3 )
+    r_search_dist_v = sigma_v3
+    r_search_dist_h = sigma_h3
+  else
+    r_search = 0.d0
+  endif
 
   ! theoretic normal value
   ! (see integral over -inf to +inf of exp[- x*x/(2*sigma) ] = sigma * sqrt(2*pi) )
@@ -391,76 +408,45 @@ program smooth_sem_globe
     cz0(ispec) = (zz0(1,1,1,ispec) + zz0(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
   enddo
 
-  ! search element list
-  ! maximum ratio of search radius to element size (factor 0.5462 accounts for element size at CMB)
-  ielem = max(sigma_h3 / (0.5462 * element_size_m ), sigma_v3 / (0.5462 * element_size_m))
-  ! estimated number of search elements in all 3 directions
-  max_local_estimated = ielem*ielem*ielem + 1
-
-  ! counts closest neighbor elements in own slice
-  num_search_elem(:) = 0
-  ielem_total = 0
-  do ispec = 1, NSPEC_AB
-    num_elem_local = 0
-    do ispec2 = 1, NSPEC_AB
-      ! calculates horizontal and vertical distance between two element centers
-      ! vector approximation
-      call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
-                            cx0(ispec2),cy0(ispec2),cz0(ispec2))
-
-      ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
-      ! checks distance between centers of elements
-      if ( dist_h <= sigma_h3 .and. abs(dist_v) <= sigma_v3 ) then
-        ielem_total = ielem_total + 1
-        ! local counter
-        num_elem_local = num_elem_local + 1
-      endif
-    enddo
-    num_search_elem(ispec) = num_elem_local
-  enddo
-  ! sets maximum local search elements
-  max_local = maxval(num_search_elem(:))
-  max_num_search_elem = sum(num_search_elem(:))
-
-  ! checks
-  if (max_num_search_elem /= ielem_total) stop 'Error number of search elements invalid'
-
-  ! needed array size in MB
-  size_array_mb = max_num_search_elem * dble(SIZE_INTEGER) / 1024.d0 / 1024.d0
-
-  ! user output
-  if (myrank == 0) then
-    print*,'element search list:'
-    print*,'  maximum number of elements per slice = ',NSPEC_AB
-    print*
-    !print*,'  estimated maximum of local search elements = ',max_local_estimated
-    !print*,'  estimated total number of search elements  = ',max_local * NSPEC_AB
-    print*,'  maximum of local search elements     = ',max_local
-    print*,'  total number of search elements      = ',max_num_search_elem
-    print*
-    print*,'  required array size = ',size_array_mb,'MB'
-    print*,'  limit set at ',SEARCH_ARRAY_LIMIT_MB,'MB for list search'
-    print*
-  endif
-
-  ! limits element list to a maximum array size of 100 MB,
-  ! otherwise the search will not be faster
-  if ( size_array_mb > SEARCH_ARRAY_LIMIT_MB) then
-    DO_SEARCH_ELEM_LIST = .false.
-  else
-    DO_SEARCH_ELEM_LIST = .true.
-  endif
-  ! uncomment to set brute-force search
-  !DO_SEARCH_ELEM_LIST = .false.
-
-  if (DO_SEARCH_ELEM_LIST) then
+  ! element search
+  if (.not. DO_BRUTE_FORCE_SEARCH) then
+    ! search by kd-tree
     ! user output
     if (myrank == 0) then
-      print*,'  using element search list'
+      print*,'using kd-tree search:'
+      if (DO_SEARCH_ELLIP) then
+        print*,'  search radius horizontal: ',r_search_dist_h * R_EARTH_KM,'km'
+        print*,'  search radius vertical  : ',r_search_dist_v * R_EARTH_KM,'km'
+      else
+        print*,'  search sphere radius: ',r_search * R_EARTH_KM,'km'
+      endif
       print*
     endif
-    allocate(ispec_search_elem(max_num_search_elem),stat=ier)
-    if (ier /= 0) stop 'Error allocating array ispec_search_elem'
+
+    ! set number of tree nodes
+    kdtree_num_nodes = NSPEC_AB
+
+    ! checks 
+    if (kdtree_num_nodes <= 0) stop 'Error number of kd-tree nodes is zero, please check NSPEC_AB'
+
+    ! allocates tree arrays
+    allocate(kdtree_nodes_location(NDIM,kdtree_num_nodes),stat=ier)
+    if (ier /= 0) stop 'Error allocating kdtree_nodes_location arrays'
+    allocate(kdtree_nodes_index(kdtree_num_nodes),stat=ier)
+    if (ier /= 0) stop 'Error allocating kdtree_nodes_index arrays'
+
+    ! tree verbosity
+    if (myrank == 0) call kdtree_set_verbose()
+
+  else
+    ! brute-force search
+    ! user output
+    if (myrank == 0) then
+      print*,'using brute-force search:'
+      print*,'  search radius horizontal: ',sigma_h3 * R_EARTH_KM,'km'
+      print*,'  search radius vertical  : ',sigma_v3 * R_EARTH_KM,'km'
+      print*
+    endif
   endif
 
   ! synchronizes
@@ -477,6 +463,9 @@ program smooth_sem_globe
   ! loop over all slices
   do inum = 1, nums
 
+    ! timing
+    time_start = wtime()
+
     iproc = islice(inum)
 
     if (myrank == 0) print*,'  reading slice:',iproc
@@ -489,8 +478,7 @@ program smooth_sem_globe
     endif
 
     ! neighbor database file
-    write(prname_lp,'(a,i6.6,a)') &
-      trim(topo_dir)//'/proc',iproc,trim(reg_name)//'solver_data.bin'
+    write(prname_lp,'(a,i6.6,a)') trim(topo_dir)//'/proc',iproc,trim(reg_name)//'solver_data.bin'
 
     ! read in the topology, kernel files, calculate center of elements
     ! point locations
@@ -557,61 +545,6 @@ program smooth_sem_globe
       cz(ispec) = (zz(1,1,1,ispec) + zz(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
     enddo
 
-    ! counts closest neighbor elements
-    if (DO_SEARCH_ELEM_LIST) then
-      num_search_elem(:) = 0
-      ispec_search_elem(:) = 0
-      ielem_total = 0
-      do ispec = 1, NSPEC_AB
-        num_elem_local = 0
-        do ispec2 = 1, NSPEC_AB
-          ! calculates horizontal and vertical distance between two element centers
-          ! vector approximation
-          call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
-                                cx(ispec2),cy(ispec2),cz(ispec2))
-
-          ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
-          ! checks distance between centers of elements
-          if ( dist_h <= sigma_h3 .and. abs(dist_v) <= sigma_v3 ) then
-            ! adds element to search list
-            ielem_total = ielem_total + 1
-            if (ielem_total > max_num_search_elem) then
-              print*,'Error: number of search elements ',ielem_total,'maximum:',max_num_search_elem
-              print*,'  element',ispec,'of',NSPEC_AB,' element neighbor',ispec2,'of',NSPEC_AB
-              print*,'  num_search_elem:',num_search_elem(:)
-              stop 'Error number of search elements exceeds maximum'
-            endif
-            ispec_search_elem(ielem_total) = ispec2
-            ! local counter
-            num_elem_local = num_elem_local + 1
-          endif
-        enddo
-        num_search_elem(ispec) = num_elem_local
-      enddo
-      if (myrank == 0) print*,'  total number of search elements: ',sum(num_search_elem(:))
-      ! checks
-      if (sum(num_search_elem(:)) /= ielem_total) stop 'Error number of search elements invalid'
-      ! re-sets counter
-      ielem_total = 0
-
-      ! debug output
-      if (DEBUG .and. myrank == 0) then
-        ! outputs search elements with integer flags
-        allocate(ispec_flag(NSPEC_AB))
-        ispec_flag(:) = 0
-        ! debug element (tmp_ispec_dbg)
-        do ielem = 1,num_search_elem(tmp_ispec_dbg)
-          i = sum(num_search_elem(1:tmp_ispec_dbg-1)) + ielem
-          ispec_flag(ispec_search_elem(i)) = ielem
-        enddo
-        write(filename,'(a,i4.4,a,i6.6)') trim(scratch_file_dir)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
-        call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
-                                   ibool,ispec_flag,filename)
-        print*,'file written: ',trim(filename)//'.vtk'
-        deallocate(ispec_flag)
-      endif
-    endif
-
     ! user output
     if (myrank == 0) print*,'  reading data file:',iproc,trim(kernel_filename)
 
@@ -627,35 +560,106 @@ program smooth_sem_globe
 
     read(IIN) kernel
     close(IIN)
-
     ! get the global maximum value of the original kernel file
     if (iproc == myrank) max_old = maxval(abs(kernel))
 
-    if (myrank == 0) print*,'  looping over elements:',NSPEC_AB
+    if (myrank == 0) print*
 
-    ! loop over elements to be smoothed in the current slice
+    ! search setup
+    if (.not. DO_BRUTE_FORCE_SEARCH) then
+      ! search by kd-tree
+
+      ! prepares search arrays, each element takes its midpoint for tree search
+      kdtree_nodes_index(:) = 0
+      kdtree_nodes_location(:,:) = 0.0
+
+      ! fills kd-tree arrays
+      do ispec = 1,NSPEC_AB
+        ! adds node index ( index points to same ispec for all internal gll points)
+        kdtree_nodes_index(ispec) = ispec
+
+        ! adds node location
+        kdtree_nodes_location(1,ispec) = cx(ispec)
+        kdtree_nodes_location(2,ispec) = cy(ispec)
+        kdtree_nodes_location(3,ispec) = cz(ispec)
+      enddo
+
+      ! creates kd-tree for searching
+      call kdtree_setup()
+    endif
+
+    ! loops over elements to be smoothed in the current slice
     do ispec = 1, NSPEC_AB
 
       ! user info about progress
       if (myrank == 0) then
-        if (mod(ispec-1,NSPEC_AB/NSTEP_PERCENT_INFO) == 0) then
-          ! outputs current time on system
-          call date_and_time(VALUES=tval)
-          write(*,'(a,f5.1,a,i2,a,i2,a,i2,a)') '    ', &
-                 int((ispec-1) / (NSPEC_AB/NSTEP_PERCENT_INFO)) * (100.0 / NSTEP_PERCENT_INFO), &
-                 ' % elements done - current clock (NOT elapsed) time is: ',tval(5),"h ",tval(6),"min ",tval(7),"sec"
+        tCPU = wtime() - time_start
+        if (mod(ispec-1,NSPEC_AB/NSTEP_PERCENT_INFO) == 0 .and. ispec < (NSPEC_AB - 0.5*NSPEC_AB/NSTEP_PERCENT_INFO)) then
+          print*,'    ',int((ispec-1) / (NSPEC_AB/NSTEP_PERCENT_INFO)) * (100.0 / NSTEP_PERCENT_INFO), &
+                 ' % elements done - Elapsed time in seconds = ',tCPU
         endif
         if (ispec == NSPEC_AB) then
-          ! outputs current time on system
-          call date_and_time(VALUES=tval)
-          write(*,'(a,f5.1,a,i2,a,i2,a,i2,a)') '    ',100.0, &
-                 ' % elements done - current clock (NOT elapsed) time is: ',tval(5),"h ",tval(6),"min ",tval(7),"sec"
+          print*,'    ',100.0,' % elements done - Elapsed time in seconds = ',tCPU
         endif
       endif
 
       ! sets number of elements to loop over
-      if (DO_SEARCH_ELEM_LIST) then
-        num_elem_local = num_search_elem(ispec)
+      if (.not. DO_BRUTE_FORCE_SEARCH) then
+        xyz_target(1) = cx0(ispec)
+        xyz_target(2) = cy0(ispec)
+        xyz_target(3) = cz0(ispec)
+
+        ! counts nearest neighbors
+        if (DO_SEARCH_ELLIP) then
+          ! (within ellipsoid)
+          call kdtree_count_nearest_n_neighbors_ellip(xyz_target,r_search_dist_v,r_search_dist_h,num_elem_local)
+        else
+          ! (within search sphere)
+          call kdtree_count_nearest_n_neighbors(xyz_target,r_search,num_elem_local)
+        endif
+
+        ! sets n-search number of nodes
+        kdtree_search_num_nodes = num_elem_local
+
+        ! allocates search array
+        if (kdtree_search_num_nodes > 0) then
+          allocate(kdtree_search_index(kdtree_search_num_nodes),stat=ier)
+          if (ier /= 0) stop 'Error allocating array kdtree_search_index'
+
+          ! finds closest point in target chunk
+          if (DO_SEARCH_ELLIP) then
+            ! (within ellipsoid)
+            call kdtree_get_nearest_n_neighbors_ellip(xyz_target,r_search_dist_v,r_search_dist_h,num_elem_local)
+          else
+            ! (within search sphere)
+            call kdtree_get_nearest_n_neighbors(xyz_target,r_search,num_elem_local)
+          endif
+        endif
+
+        ! debug output
+        if (DEBUG .and. myrank == 0) then
+          ! user info
+          if (ispec < 10) then
+            print*,'  total number of search elements: ',num_elem_local,'ispec',ispec
+          endif
+          ! file output
+          if (ispec == tmp_ispec_dbg) then
+            ! outputs search elements with integer flags
+            allocate(ispec_flag(NSPEC_AB))
+            ispec_flag(:) = 0
+            ! debug element (tmp_ispec_dbg)
+            do ielem = 1,num_elem_local
+              i = kdtree_search_index(ielem)
+              ispec_flag(i) = ielem
+            enddo
+            write(filename,'(a,i4.4,a,i6.6)') trim(scratch_file_dir)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
+            call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
+                                       ibool,ispec_flag,filename)
+            print*,'file written: ',trim(filename)//'.vtk'
+            deallocate(ispec_flag)
+          endif
+        endif
+
       else
         num_elem_local = NSPEC_AB
       endif
@@ -663,16 +667,25 @@ program smooth_sem_globe
       ! --- only double loop over the elements in the search radius ---
       do ielem = 1, num_elem_local
 
-        ! takes only elements in search radius
-        if (DO_SEARCH_ELEM_LIST) then
-          ielem_total = ielem_total + 1
-          if (ielem_total > max_num_search_elem) stop 'Error index ielem_total is invalid'
-          ispec2 = ispec_search_elem(ielem_total)
-        else
-          ispec2 = ielem
+        if (.not. DO_BRUTE_FORCE_SEARCH) then
+          ! kd-tree search elements
+          ispec2 = kdtree_search_index(ielem)
 
+          ! (spherical search radius)
           ! calculates horizontal and vertical distance between two element centers
           ! vector approximation
+          call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
+                                cx(ispec2),cy(ispec2),cz(ispec2))
+
+          ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
+
+          ! checks distance between centers of elements
+          if ( dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+        else
+          ! brute-force search
+          ! takes only elements in search radius
+          ! calculates horizontal and vertical distance between two element centers
+          ispec2 = ielem
           call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
                                 cx(ispec2),cy(ispec2),cz(ispec2))
 
@@ -700,7 +713,7 @@ program smooth_sem_globe
               z0 = zz0(i,j,k,ispec)
 
               ! calculate weights based on gaussian smoothing
-              call smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
+              call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
                                          xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
               ! debug
@@ -735,6 +748,14 @@ program smooth_sem_globe
         enddo ! (i,j,k)
       enddo ! (ielem)
 
+      ! frees search results
+      if (.not. DO_BRUTE_FORCE_SEARCH) then
+        if (kdtree_search_num_nodes > 0) then
+          deallocate(kdtree_search_index)
+          kdtree_search_num_nodes = 0
+        endif
+      endif
+
       ! debug output
       if (DEBUG .and. myrank == 0) then
         ! debug element (tmp_ispec_dbg)
@@ -754,12 +775,20 @@ program smooth_sem_globe
       deallocate(tmp_bk)
     endif
 
+    ! deletes search tree nodes
+    if (.not. DO_BRUTE_FORCE_SEARCH) then
+      call kdtree_delete()
+    endif
+    if (myrank == 0) print *
+
   enddo     ! islice
+
   if (myrank == 0) print *
 
   ! frees memory
-  if (DO_SEARCH_ELEM_LIST) then
-    deallocate(ispec_search_elem)
+  if (.not. DO_BRUTE_FORCE_SEARCH) then
+    deallocate(kdtree_nodes_location)
+    deallocate(kdtree_nodes_index)
   endif
 
   ! synchronizes
@@ -787,12 +816,15 @@ program smooth_sem_globe
             !call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
           endif
 
+          ! avoids division by zero
+          !if (bk(i,j,k,ispec) == 0.0_CUSTOM_REAL) bk(i,j,k,ispec) = 1.0_CUSTOM_REAL
+
           ! normalizes smoothed kernel values by integral value of gaussian weighting
           kernel_smooth(i,j,k,ispec) = tk(i,j,k,ispec) / bk(i,j,k,ispec)
 
           ! checks number (isNaN check)
           if (kernel_smooth(i,j,k,ispec) /= kernel_smooth(i,j,k,ispec)) then
-            print*,'Error kernel_smooth NaN: ',kernel_smooth(i,j,k,ispec)
+            print*,'Error kernel_smooth value not a number: ',kernel_smooth(i,j,k,ispec)
             print*,'rank:',myrank
             print*,'i,j,k,ispec:',i,j,k,ispec
             print*,'tk: ',tk(i,j,k,ispec),'bk:',bk(i,j,k,ispec)

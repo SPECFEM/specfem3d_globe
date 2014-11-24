@@ -921,8 +921,8 @@
               z0 = zl(i,j,k,ispec)
 
               ! calculate weights based on Gaussian smoothing
-              call smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
-                      xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+              call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
+                                         xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
               ! adds GLL integration weights
               exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)

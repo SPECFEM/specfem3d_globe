@@ -212,6 +212,7 @@ xinterpolate_model_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/gll_library.shared.o \
+	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/recompute_jacobian.solver.o \
@@ -237,11 +238,16 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/exit_mpi.shared.o \
 	$O/get_all_eight_slices.shared.o \
 	$O/gll_library.shared.o \
+	$O/heap_sort.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
+	$O/search_kdtree.shared.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/write_VTK_file.shared.o \
 	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/smooth_sem.tomo.o: $O/search_kdtree.shared.o
 
 ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
