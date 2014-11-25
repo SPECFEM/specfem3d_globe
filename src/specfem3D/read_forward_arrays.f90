@@ -64,7 +64,7 @@
 
   ! read files back from local disk or MT tape system if restart file
   if (NUMBER_OF_THIS_RUN > 1) then
-    if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
+    if (ADIOS_FOR_FORWARD_ARRAYS) then
       call read_intermediate_forward_arrays_adios()
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
@@ -139,7 +139,7 @@
   if (UNDO_ATTENUATION ) return
 
   ! reads in file data
-  if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
+  if (ADIOS_FOR_FORWARD_ARRAYS) then
     call read_forward_arrays_adios()
   else
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
@@ -261,7 +261,7 @@
   ! current subset iteration
   iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
 
-  if (ADIOS_ENABLED .and. ADIOS_FOR_UNDO_ATTENUATION) then
+  if (ADIOS_FOR_UNDO_ATTENUATION) then
     call read_forward_arrays_undoatt_adios(iteration_on_subset_tmp)
   else
     ! reads in saved wavefield

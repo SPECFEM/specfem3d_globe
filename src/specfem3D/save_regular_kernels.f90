@@ -377,12 +377,11 @@
   enddo
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     ! check implementation
     call exit_mpi(myrank,'saving regular kernels in ADIOS file format is not supported yet')
-
   else
-
+    ! sets up database name
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
     ! For anisotropic kernels

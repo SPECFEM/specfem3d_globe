@@ -31,7 +31,7 @@
 
   use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,nrec_local, &
     APPROXIMATE_HESS_KL,SAVE_REGULAR_KL, &
-    current_adios_handle,ADIOS_ENABLED,ADIOS_FOR_KERNELS
+    current_adios_handle,ADIOS_FOR_KERNELS
 
   use specfem_par_innercore, only: rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
     rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core
@@ -42,7 +42,7 @@
 
   ! Open an handler to the ADIOS file in which kernel variables are written.
   if (((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      .and. ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+      .and. ADIOS_FOR_KERNELS) then
     call define_kernel_adios_variables(current_adios_handle)
   endif
 
@@ -85,7 +85,7 @@
 
   ! Write ADIOS defined variables to disk.
   if (((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      .and. ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+      .and. ADIOS_FOR_KERNELS) then
     call perform_write_adios_kernels(current_adios_handle)
   endif
 
@@ -397,7 +397,7 @@
   enddo
 
   ! writes out kernels to files
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_cm_adios(current_adios_handle, &
                                           mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
                                           alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
@@ -576,7 +576,7 @@
   enddo
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_oc_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
@@ -643,7 +643,7 @@
   enddo
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_ic_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
@@ -687,7 +687,7 @@
   icb_kl = icb_kl * scale_kl * 1.d3
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_boundary_kl_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -750,7 +750,7 @@
     shdur_der(irec_local) = shdur_der(irec_local) * scale_displ**2
 
     ! writes out kernels to file
-    if (.not. ( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS )) then
+    if (.not. ADIOS_FOR_KERNELS) then
       write(outputname,'(a,i6.6)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
       open(unit=IOUT,file=trim(outputname),status='unknown',action='write')
       !
@@ -781,7 +781,7 @@
   enddo
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_source_derivatives_adios(current_adios_handle)
   endif
 
@@ -808,7 +808,7 @@
   hess_kl_crust_mantle(:,:,:,:) = 2._CUSTOM_REAL * hess_kl_crust_mantle(:,:,:,:) * scale_kl
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_hessian_adios(current_adios_handle)
   else
     ! stores into file

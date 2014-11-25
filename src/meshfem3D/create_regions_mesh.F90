@@ -55,7 +55,7 @@
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-    ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER, &
+    ADIOS_FOR_ARRAYS_SOLVER, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,ROLAND_SYLVAIN
 
   use meshfem3D_models_par,only: &
@@ -396,7 +396,7 @@
         call flush_IMAIN()
       endif
       ! saves mesh and model parameters
-      if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+      if (ADIOS_FOR_ARRAYS_SOLVER) then
         if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
         call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                                       iregion_code,xstore,ystore,zstore, &
@@ -432,7 +432,7 @@
         call flush_IMAIN()
       endif
       ! saves boundary file
-      if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+      if (ADIOS_FOR_ARRAYS_SOLVER) then
         if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
         call save_arrays_boundary_adios()
       else
@@ -1318,7 +1318,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
     myrank,NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST,ROCEAN, &
-    ADIOS_ENABLED,ADIOS_FOR_AVS_DX
+    ADIOS_FOR_AVS_DX
 
 
   use meshfem3D_models_par,only: &
@@ -1354,7 +1354,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
           stat=ier)
   if (ier /= 0) stop 'Error in allocate 21'
 
-  if (ADIOS_ENABLED .and. ADIOS_FOR_AVS_DX) then
+  if (ADIOS_FOR_AVS_DX) then
     call crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
                                    num_ibool_AVS_DX, mask_ibool)
   else

@@ -39,7 +39,7 @@
 
   use constants
   use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
-  use meshfem3D_par, only: ADIOS_ENABLED,ADIOS_FOR_MODELS
+  use meshfem3D_par, only: ADIOS_FOR_MODELS
 
   implicit none
 
@@ -87,7 +87,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating rho_new,.. arrays')
 
   ! reads in model files for each process
-  if (ADIOS_ENABLED .and. ADIOS_FOR_MODELS) then
+  if (ADIOS_FOR_MODELS) then
     call read_gll_model_adios(myrank,MGLL_V,NSPEC)
   else
     call read_gll_model(myrank,MGLL_V,NSPEC)

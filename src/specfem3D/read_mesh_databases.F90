@@ -224,7 +224,7 @@
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in crust_mantle'
 
   ! reads databases file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
     call read_arrays_solver_adios(IREGION_CRUST_MANTLE,myrank, &
                                   NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
                                   nspec_iso,nspec_tiso,nspec_ani, &
@@ -361,7 +361,7 @@
   if (ier /= 0) stop 'Error allocating dummy rmass and dummy ispec/idoubling in outer core'
 
   ! reads in mesh arrays
-  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
     call read_arrays_solver_adios(IREGION_OUTER_CORE,myrank, &
                                   NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
                                   nspec_iso,nspec_tiso,nspec_ani, &
@@ -484,7 +484,7 @@
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in inner_core'
 
   ! reads in arrays
-  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
     call read_arrays_solver_adios(IREGION_INNER_CORE,myrank, &
                                   NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
                                   nspec_iso,nspec_tiso,nspec_ani, &
@@ -600,7 +600,7 @@
   integer :: ier
 
   ! reads in arrays
-  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
     call read_mesh_databases_coupling_adios()
   else
     ! crust and mantle
@@ -893,7 +893,7 @@
   ! read MPI interfaces from file
 
   ! crust mantle
-  if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
+  if (ADIOS_FOR_MPI_ARRAYS) then
     call read_mesh_databases_MPI_CM_adios()
   else
     call read_mesh_databases_MPI_CM()
@@ -916,7 +916,7 @@
   endif
 
   ! outer core
-  if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
+  if (ADIOS_FOR_MPI_ARRAYS) then
     call read_mesh_databases_MPI_OC_adios()
   else
     call read_mesh_databases_MPI_OC()
@@ -939,7 +939,7 @@
   endif
 
   ! inner core
-  if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
+  if (ADIOS_FOR_MPI_ARRAYS) then
     call read_mesh_databases_MPI_IC_adios()
   else
     call read_mesh_databases_MPI_IC()
@@ -1259,7 +1259,7 @@
   integer :: ier
 
   ! reads in arrays
-  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
     call read_mesh_databases_stacey_adios()
   else
     ! crust and mantle

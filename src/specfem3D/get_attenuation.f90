@@ -31,7 +31,7 @@
                                       scale_factor, tau_s, vnspec)
 
   use constants_solver
-  use specfem_par,only: ATTENUATION_VAL,ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH
+  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH
 
   implicit none
 
@@ -60,7 +60,7 @@
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
-  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
     call read_attenuation_adios(myrank, iregion_code, &
                                 factor_common, scale_factor, tau_s, vnspec, T_c_source)
   else

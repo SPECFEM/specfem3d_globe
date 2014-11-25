@@ -462,7 +462,7 @@
   use meshfem3D_par,only: &
     myrank,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
-    ADIOS_ENABLED,ADIOS_FOR_MPI_ARRAYS
+    ADIOS_FOR_MPI_ARRAYS
 
 !  use create_MPI_interfaces_par
 
@@ -477,7 +477,7 @@
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
     ! crust mantle
-    if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
+    if (ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
                                   num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                                   my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
@@ -499,7 +499,7 @@
 
   case (IREGION_OUTER_CORE)
     ! outer core
-    if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
+    if (ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
                                   num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                   my_neighbours_outer_core,nibool_interfaces_outer_core, &
@@ -521,7 +521,7 @@
 
   case (IREGION_INNER_CORE)
     ! inner core
-    if (ADIOS_ENABLED .and. ADIOS_FOR_MPI_ARRAYS) then
+    if (ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
                                   num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                   my_neighbours_inner_core,nibool_interfaces_inner_core, &

@@ -254,13 +254,25 @@
   call read_value_logical(ADIOS_FOR_MODELS, 'ADIOS_FOR_MODELS', ierr)
   if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_MODELS'
   call read_value_logical(ADIOS_FOR_UNDO_ATTENUATION, 'ADIOS_FOR_UNDO_ATTENUATION', ierr)
-  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_UNDO_ATT'
+  if (ierr /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_UNDO_ATTENUATION'
 
   ! closes parameter file
   call close_parameter_file()
 
   ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
   if (.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+
+  ! re-sets ADIOS flags
+  if (.not. ADIOS_ENABLED) then
+    ADIOS_FOR_FORWARD_ARRAYS = .false.
+    ADIOS_FOR_MPI_ARRAYS = .false.
+    ADIOS_FOR_ARRAYS_SOLVER = .false.
+    ADIOS_FOR_SOLVER_MESHFILES = .false.
+    ADIOS_FOR_AVS_DX = .false.
+    ADIOS_FOR_KERNELS = .false.
+    ADIOS_FOR_MODELS = .false.
+    ADIOS_FOR_UNDO_ATTENUATION = .false.
+  endif
 
   ! produces simulations compatible with old globe version 5.1.5
   if (USE_OLD_VERSION_5_1_5_FORMAT) then
