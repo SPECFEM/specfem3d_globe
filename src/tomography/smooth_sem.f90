@@ -65,7 +65,7 @@ program smooth_sem_globe
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER
 
   use kdtree_search
-  
+
   implicit none
 
   include 'OUTPUT_FILES/values_from_mesher.h'
@@ -426,7 +426,7 @@ program smooth_sem_globe
     ! set number of tree nodes
     kdtree_num_nodes = NSPEC_AB
 
-    ! checks 
+    ! checks
     if (kdtree_num_nodes <= 0) stop 'Error number of kd-tree nodes is zero, please check NSPEC_AB'
 
     ! allocates tree arrays

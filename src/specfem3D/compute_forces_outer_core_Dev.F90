@@ -139,7 +139,7 @@
   endif
 
   ! note: this is an OpenMP work-around for gfortran
-  ! gfortran has problems with parameters inside a DEFAULT(NONE) OpenMP block 
+  ! gfortran has problems with parameters inside a DEFAULT(NONE) OpenMP block
   ! for a fix see https://gcc.gnu.org/ml/fortran/2014-10/msg00064.html
   !
   ! we use local variables to cirumvent it, another possibility would be to use DEFAULT(SHARED)

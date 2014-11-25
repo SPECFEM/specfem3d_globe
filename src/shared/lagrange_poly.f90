@@ -62,7 +62,7 @@
       endif
     enddo
 
-    ! takes inverse to avoid additional divisions 
+    ! takes inverse to avoid additional divisions
     ! (multiplications are cheaper than divisions)
     prod2_inv = 1.d0/prod2
 
