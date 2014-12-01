@@ -609,145 +609,148 @@
   integer :: ier
 
   ! reads in arrays
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call read_mesh_databases_coupling_adios()
-  else
-    ! crust and mantle
-    ! create name of database
-    call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-
-    ! Stacey put back
-    open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
-          status='old',form='unformatted',action='read',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening crust_mantle boundary.bin file')
-
-    read(IIN) nspec2D_xmin_crust_mantle
-    read(IIN) nspec2D_xmax_crust_mantle
-    read(IIN) nspec2D_ymin_crust_mantle
-    read(IIN) nspec2D_ymax_crust_mantle
-    read(IIN) njunk1
-    read(IIN) njunk2
-
-  ! boundary parameters
-    read(IIN) ibelm_xmin_crust_mantle
-    read(IIN) ibelm_xmax_crust_mantle
-    read(IIN) ibelm_ymin_crust_mantle
-    read(IIN) ibelm_ymax_crust_mantle
-    read(IIN) ibelm_bottom_crust_mantle
-    read(IIN) ibelm_top_crust_mantle
-
-    read(IIN) normal_xmin_crust_mantle
-    read(IIN) normal_xmax_crust_mantle
-    read(IIN) normal_ymin_crust_mantle
-    read(IIN) normal_ymax_crust_mantle
-    read(IIN) normal_bottom_crust_mantle
-    read(IIN) normal_top_crust_mantle
-
-    read(IIN) jacobian2D_xmin_crust_mantle
-    read(IIN) jacobian2D_xmax_crust_mantle
-    read(IIN) jacobian2D_ymin_crust_mantle
-    read(IIN) jacobian2D_ymax_crust_mantle
-    read(IIN) jacobian2D_bottom_crust_mantle
-    read(IIN) jacobian2D_top_crust_mantle
-    close(IIN)
-
-    ! read parameters to couple fluid and solid regions
-    !
-    ! outer core
-
-    ! create name of database
-    call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-
-    ! boundary parameters
-
-    ! Stacey put back
-    open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
-          status='old',form='unformatted',action='read',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening outer_core boundary.bin file')
-
-    read(IIN) nspec2D_xmin_outer_core
-    read(IIN) nspec2D_xmax_outer_core
-    read(IIN) nspec2D_ymin_outer_core
-    read(IIN) nspec2D_ymax_outer_core
-    read(IIN) njunk1
-    read(IIN) njunk2
-
-    nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
-
-    read(IIN) ibelm_xmin_outer_core
-    read(IIN) ibelm_xmax_outer_core
-    read(IIN) ibelm_ymin_outer_core
-    read(IIN) ibelm_ymax_outer_core
-    read(IIN) ibelm_bottom_outer_core
-    read(IIN) ibelm_top_outer_core
-
-    read(IIN) normal_xmin_outer_core
-    read(IIN) normal_xmax_outer_core
-    read(IIN) normal_ymin_outer_core
-    read(IIN) normal_ymax_outer_core
-    read(IIN) normal_bottom_outer_core
-    read(IIN) normal_top_outer_core
-
-    read(IIN) jacobian2D_xmin_outer_core
-    read(IIN) jacobian2D_xmax_outer_core
-    read(IIN) jacobian2D_ymin_outer_core
-    read(IIN) jacobian2D_ymax_outer_core
-    read(IIN) jacobian2D_bottom_outer_core
-    read(IIN) jacobian2D_top_outer_core
-    close(IIN)
-
-    !
-    ! inner core
-    !
-
-    ! create name of database
-    call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
-
-    ! read info for vertical edges for central cube matching in inner core
-    open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
-          status='old',form='unformatted',action='read',iostat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening inner_core boundary.bin file')
-
-    read(IIN) nspec2D_xmin_inner_core
-    read(IIN) nspec2D_xmax_inner_core
-    read(IIN) nspec2D_ymin_inner_core
-    read(IIN) nspec2D_ymax_inner_core
-    read(IIN) njunk1
-    read(IIN) njunk2
-
-    ! boundary parameters
-    read(IIN) ibelm_xmin_inner_core
-    read(IIN) ibelm_xmax_inner_core
-    read(IIN) ibelm_ymin_inner_core
-    read(IIN) ibelm_ymax_inner_core
-    read(IIN) ibelm_bottom_inner_core
-    read(IIN) ibelm_top_inner_core
-    close(IIN)
-
-    ! -- Boundary Mesh for crust and mantle ---
-    if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
+  if (I_should_read_the_database) then
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call read_mesh_databases_coupling_adios()
+    else
+      ! crust and mantle
+      ! create name of database
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-      open(unit=IIN,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+      ! Stacey put back
+      open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
             status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0 ) call exit_mpi(myrank,'Error opening boundary_disc.bin file')
+      if (ier /= 0 ) call exit_mpi(myrank,'Error opening crust_mantle boundary.bin file')
 
-      read(IIN) njunk1,njunk2,njunk3
-      if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
-                 call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
-      read(IIN) ibelm_moho_top
-      read(IIN) ibelm_moho_bot
-      read(IIN) ibelm_400_top
-      read(IIN) ibelm_400_bot
-      read(IIN) ibelm_670_top
-      read(IIN) ibelm_670_bot
-      read(IIN) normal_moho
-      read(IIN) normal_400
-      read(IIN) normal_670
+      read(IIN) nspec2D_xmin_crust_mantle
+      read(IIN) nspec2D_xmax_crust_mantle
+      read(IIN) nspec2D_ymin_crust_mantle
+      read(IIN) nspec2D_ymax_crust_mantle
+      read(IIN) njunk1
+      read(IIN) njunk2
+
+    ! boundary parameters
+      read(IIN) ibelm_xmin_crust_mantle
+      read(IIN) ibelm_xmax_crust_mantle
+      read(IIN) ibelm_ymin_crust_mantle
+      read(IIN) ibelm_ymax_crust_mantle
+      read(IIN) ibelm_bottom_crust_mantle
+      read(IIN) ibelm_top_crust_mantle
+
+      read(IIN) normal_xmin_crust_mantle
+      read(IIN) normal_xmax_crust_mantle
+      read(IIN) normal_ymin_crust_mantle
+      read(IIN) normal_ymax_crust_mantle
+      read(IIN) normal_bottom_crust_mantle
+      read(IIN) normal_top_crust_mantle
+
+      read(IIN) jacobian2D_xmin_crust_mantle
+      read(IIN) jacobian2D_xmax_crust_mantle
+      read(IIN) jacobian2D_ymin_crust_mantle
+      read(IIN) jacobian2D_ymax_crust_mantle
+      read(IIN) jacobian2D_bottom_crust_mantle
+      read(IIN) jacobian2D_top_crust_mantle
       close(IIN)
-    endif
 
-  endif ! ADIOS
+      ! read parameters to couple fluid and solid regions
+      !
+      ! outer core
+
+      ! create name of database
+      call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+
+      ! boundary parameters
+
+      ! Stacey put back
+      open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
+            status='old',form='unformatted',action='read',iostat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error opening outer_core boundary.bin file')
+
+      read(IIN) nspec2D_xmin_outer_core
+      read(IIN) nspec2D_xmax_outer_core
+      read(IIN) nspec2D_ymin_outer_core
+      read(IIN) nspec2D_ymax_outer_core
+      read(IIN) njunk1
+      read(IIN) njunk2
+
+      nspec2D_zmin_outer_core = NSPEC2D_BOTTOM(IREGION_OUTER_CORE)
+
+      read(IIN) ibelm_xmin_outer_core
+      read(IIN) ibelm_xmax_outer_core
+      read(IIN) ibelm_ymin_outer_core
+      read(IIN) ibelm_ymax_outer_core
+      read(IIN) ibelm_bottom_outer_core
+      read(IIN) ibelm_top_outer_core
+
+      read(IIN) normal_xmin_outer_core
+      read(IIN) normal_xmax_outer_core
+      read(IIN) normal_ymin_outer_core
+      read(IIN) normal_ymax_outer_core
+      read(IIN) normal_bottom_outer_core
+      read(IIN) normal_top_outer_core
+
+      read(IIN) jacobian2D_xmin_outer_core
+      read(IIN) jacobian2D_xmax_outer_core
+      read(IIN) jacobian2D_ymin_outer_core
+      read(IIN) jacobian2D_ymax_outer_core
+      read(IIN) jacobian2D_bottom_outer_core
+      read(IIN) jacobian2D_top_outer_core
+      close(IIN)
+
+      !
+      ! inner core
+      !
+
+      ! create name of database
+      call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
+
+      ! read info for vertical edges for central cube matching in inner core
+      open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
+            status='old',form='unformatted',action='read',iostat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error opening inner_core boundary.bin file')
+
+      read(IIN) nspec2D_xmin_inner_core
+      read(IIN) nspec2D_xmax_inner_core
+      read(IIN) nspec2D_ymin_inner_core
+      read(IIN) nspec2D_ymax_inner_core
+      read(IIN) njunk1
+      read(IIN) njunk2
+
+      ! boundary parameters
+      read(IIN) ibelm_xmin_inner_core
+      read(IIN) ibelm_xmax_inner_core
+      read(IIN) ibelm_ymin_inner_core
+      read(IIN) ibelm_ymax_inner_core
+      read(IIN) ibelm_bottom_inner_core
+      read(IIN) ibelm_top_inner_core
+      close(IIN)
+
+      ! -- Boundary Mesh for crust and mantle ---
+      if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
+        call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+
+        open(unit=IIN,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
+              status='old',form='unformatted',action='read',iostat=ier)
+        if (ier /= 0 ) call exit_mpi(myrank,'Error opening boundary_disc.bin file')
+
+        read(IIN) njunk1,njunk2,njunk3
+        if (njunk1 /= NSPEC2D_MOHO .and. njunk2 /= NSPEC2D_400 .and. njunk3 /= NSPEC2D_670) &
+                   call exit_mpi(myrank, 'Error reading ibelm_disc.bin file')
+        read(IIN) ibelm_moho_top
+        read(IIN) ibelm_moho_bot
+        read(IIN) ibelm_400_top
+        read(IIN) ibelm_400_bot
+        read(IIN) ibelm_670_top
+        read(IIN) ibelm_670_bot
+        read(IIN) normal_moho
+        read(IIN) normal_400
+        read(IIN) normal_670
+        close(IIN)
+      endif
+
+    endif ! ADIOS
+  endif
+  call bcast_mesh_databases_coupling()
 
   ! checks dimensions
   ! crust mantle
@@ -1545,3 +1548,97 @@
   call bcast_all_cr_for_database(b_rmassy_inner_core(1), size(b_rmassy_inner_core))
 
   end subroutine bcast_mesh_databases_IC
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_mesh_databases_coupling()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  implicit none
+
+  call bcast_all_i_for_database(nspec2D_xmin_crust_mantle, 1)
+  call bcast_all_i_for_database(nspec2D_xmax_crust_mantle, 1)
+  call bcast_all_i_for_database(nspec2D_ymin_crust_mantle, 1)
+  call bcast_all_i_for_database(nspec2D_ymax_crust_mantle, 1)
+
+  call bcast_all_i_for_database(ibelm_xmin_crust_mantle(1), size(ibelm_xmin_crust_mantle))
+  call bcast_all_i_for_database(ibelm_xmax_crust_mantle(1), size(ibelm_xmax_crust_mantle))
+  call bcast_all_i_for_database(ibelm_ymin_crust_mantle(1), size(ibelm_ymin_crust_mantle))
+  call bcast_all_i_for_database(ibelm_ymax_crust_mantle(1), size(ibelm_ymax_crust_mantle))
+  call bcast_all_i_for_database(ibelm_bottom_crust_mantle(1), size(ibelm_bottom_crust_mantle))
+  call bcast_all_i_for_database(ibelm_top_crust_mantle(1), size(ibelm_top_crust_mantle))
+
+  call bcast_all_cr_for_database(normal_xmin_crust_mantle(1,1,1,1), size(normal_xmin_crust_mantle))
+  call bcast_all_cr_for_database(normal_xmax_crust_mantle(1,1,1,1), size(normal_xmax_crust_mantle))
+  call bcast_all_cr_for_database(normal_ymin_crust_mantle(1,1,1,1), size(normal_ymin_crust_mantle))
+  call bcast_all_cr_for_database(normal_ymax_crust_mantle(1,1,1,1), size(normal_ymax_crust_mantle))
+  call bcast_all_cr_for_database(normal_bottom_crust_mantle(1,1,1,1), size(normal_bottom_crust_mantle))
+  call bcast_all_cr_for_database(normal_top_crust_mantle(1,1,1,1), size(normal_top_crust_mantle))
+
+  call bcast_all_cr_for_database(jacobian2D_xmin_crust_mantle(1,1,1), size(jacobian2D_xmin_crust_mantle))
+  call bcast_all_cr_for_database(jacobian2D_xmax_crust_mantle(1,1,1), size(jacobian2D_xmax_crust_mantle))
+  call bcast_all_cr_for_database(jacobian2D_ymin_crust_mantle(1,1,1), size(jacobian2D_ymin_crust_mantle))
+  call bcast_all_cr_for_database(jacobian2D_ymax_crust_mantle(1,1,1), size(jacobian2D_ymax_crust_mantle))
+  call bcast_all_cr_for_database(jacobian2D_bottom_crust_mantle(1,1,1), size(jacobian2D_bottom_crust_mantle))
+  call bcast_all_cr_for_database(jacobian2D_top_crust_mantle(1,1,1), size(jacobian2D_top_crust_mantle))
+
+  call bcast_all_i_for_database(nspec2D_xmin_outer_core, 1)
+  call bcast_all_i_for_database(nspec2D_xmax_outer_core, 1)
+  call bcast_all_i_for_database(nspec2D_ymin_outer_core, 1)
+  call bcast_all_i_for_database(nspec2D_ymax_outer_core, 1)
+  call bcast_all_i_for_database(nspec2D_zmin_outer_core, 1)
+
+  call bcast_all_i_for_database(ibelm_xmin_outer_core(1), size(ibelm_xmin_outer_core))
+  call bcast_all_i_for_database(ibelm_xmax_outer_core(1), size(ibelm_xmax_outer_core))
+  call bcast_all_i_for_database(ibelm_ymin_outer_core(1), size(ibelm_ymin_outer_core))
+  call bcast_all_i_for_database(ibelm_ymax_outer_core(1), size(ibelm_ymax_outer_core))
+  call bcast_all_i_for_database(ibelm_bottom_outer_core(1), size(ibelm_bottom_outer_core))
+  call bcast_all_i_for_database(ibelm_top_outer_core(1), size(ibelm_top_outer_core))
+
+  call bcast_all_cr_for_database(normal_xmin_outer_core(1,1,1,1), size(normal_xmin_outer_core))
+  call bcast_all_cr_for_database(normal_xmax_outer_core(1,1,1,1), size(normal_xmax_outer_core))
+  call bcast_all_cr_for_database(normal_ymin_outer_core(1,1,1,1), size(normal_ymin_outer_core))
+  call bcast_all_cr_for_database(normal_ymax_outer_core(1,1,1,1), size(normal_ymax_outer_core))
+  call bcast_all_cr_for_database(normal_bottom_outer_core(1,1,1,1), size(normal_bottom_outer_core))
+  call bcast_all_cr_for_database(normal_top_outer_core(1,1,1,1), size(normal_top_outer_core))
+
+  call bcast_all_cr_for_database(jacobian2D_xmin_outer_core(1,1,1), size(jacobian2D_xmin_outer_core))
+  call bcast_all_cr_for_database(jacobian2D_xmax_outer_core(1,1,1), size(jacobian2D_xmax_outer_core))
+  call bcast_all_cr_for_database(jacobian2D_ymin_outer_core(1,1,1), size(jacobian2D_ymin_outer_core))
+  call bcast_all_cr_for_database(jacobian2D_ymax_outer_core(1,1,1), size(jacobian2D_ymax_outer_core))
+  call bcast_all_cr_for_database(jacobian2D_bottom_outer_core(1,1,1), size(jacobian2D_bottom_outer_core))
+  call bcast_all_cr_for_database(jacobian2D_top_outer_core(1,1,1), size(jacobian2D_top_outer_core))
+
+  call bcast_all_i_for_database(nspec2D_xmin_inner_core, 1)
+  call bcast_all_i_for_database(nspec2D_xmax_inner_core, 1)
+  call bcast_all_i_for_database(nspec2D_ymin_inner_core, 1)
+  call bcast_all_i_for_database(nspec2D_ymax_inner_core, 1)
+
+    ! boundary parameters
+  call bcast_all_i_for_database(ibelm_xmin_inner_core(1), size(ibelm_xmin_inner_core))
+  call bcast_all_i_for_database(ibelm_xmax_inner_core(1), size(ibelm_xmax_inner_core))
+  call bcast_all_i_for_database(ibelm_ymin_inner_core(1), size(ibelm_ymin_inner_core))
+  call bcast_all_i_for_database(ibelm_ymax_inner_core(1), size(ibelm_ymax_inner_core))
+  call bcast_all_i_for_database(ibelm_bottom_inner_core(1), size(ibelm_bottom_inner_core))
+  call bcast_all_i_for_database(ibelm_top_inner_core(1), size(ibelm_top_inner_core))
+
+  ! -- Boundary Mesh for crust and mantle ---
+  if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
+    call bcast_all_i_for_database(ibelm_moho_top(1), size(ibelm_moho_top))
+    call bcast_all_i_for_database(ibelm_moho_bot(1), size(ibelm_moho_bot))
+    call bcast_all_i_for_database(ibelm_400_top(1), size(ibelm_400_top))
+    call bcast_all_i_for_database(ibelm_400_bot(1), size(ibelm_400_bot))
+    call bcast_all_i_for_database(ibelm_670_top(1), size(ibelm_670_top))
+    call bcast_all_i_for_database(ibelm_670_bot(1), size(ibelm_670_bot))
+    call bcast_all_cr_for_database(normal_moho(1,1,1,1), size(normal_moho))
+    call bcast_all_cr_for_database(normal_400(1,1,1,1), size(normal_400))
+    call bcast_all_cr_for_database(normal_670(1,1,1,1), size(normal_670))
+  endif
+
+  end subroutine bcast_mesh_databases_coupling
