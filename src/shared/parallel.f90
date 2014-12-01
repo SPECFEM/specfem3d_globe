@@ -74,8 +74,12 @@ end module my_mpi
 
   integer :: ier
 
+! initialize the MPI communicator and start the NPROCTOT MPI processes.
   call MPI_INIT(ier)
   if (ier /= 0 ) stop 'Error initializing MPI'
+
+! create sub-communicators if needed, if running more than one earthquake from the same job
+  call world_split()
 
   end subroutine init_mpi
 
@@ -85,12 +89,16 @@ end module my_mpi
 
   subroutine finalize_mpi()
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   integer :: ier
 
+! close sub-communicators if needed, if running more than one earthquake from the same job
+  call world_unsplit()
+
+! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
   if (ier /= 0 ) stop 'Error finalizing MPI'
 
@@ -102,7 +110,7 @@ end module my_mpi
 
   subroutine abort_mpi()
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -120,14 +128,14 @@ end module my_mpi
 
   subroutine synchronize_all()
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   integer :: ier
 
   ! synchronizes MPI processes
-  call MPI_BARRIER(MPI_COMM_WORLD,ier)
+  call MPI_BARRIER(my_local_mpi_comm_world, ier)
   if (ier /= 0 ) stop 'Error synchronize MPI processes'
 
   end subroutine synchronize_all
@@ -138,7 +146,7 @@ end module my_mpi
 
   subroutine synchronize_all_comm(comm)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -159,7 +167,7 @@ end module my_mpi
 
   integer function null_process()
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -173,7 +181,7 @@ end module my_mpi
 
   subroutine test_request(request,flag_result_test)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -193,7 +201,7 @@ end module my_mpi
   subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -205,7 +213,7 @@ end module my_mpi
   integer ier
 
   call MPI_IRECV(recvbuf(1),recvcount,CUSTOM_MPI_TYPE,dest,recvtag, &
-                  MPI_COMM_WORLD,req,ier)
+                 my_local_mpi_comm_world,req,ier)
 
   end subroutine irecv_cr
 
@@ -215,7 +223,7 @@ end module my_mpi
 
   subroutine irecv_dp(recvbuf, recvcount, dest, recvtag, req)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -225,7 +233,7 @@ end module my_mpi
   integer :: ier
 
   call MPI_IRECV(recvbuf(1),recvcount,MPI_DOUBLE_PRECISION,dest,recvtag, &
-                  MPI_COMM_WORLD,req,ier)
+                  my_local_mpi_comm_world,req,ier)
 
   end subroutine irecv_dp
 
@@ -236,7 +244,7 @@ end module my_mpi
   subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -248,7 +256,7 @@ end module my_mpi
   integer ier
 
   call MPI_ISEND(sendbuf(1),sendcount,CUSTOM_MPI_TYPE,dest,sendtag, &
-                  MPI_COMM_WORLD,req,ier)
+                  my_local_mpi_comm_world,req,ier)
 
   end subroutine isend_cr
 
@@ -258,7 +266,7 @@ end module my_mpi
 
   subroutine isend_dp(sendbuf, sendcount, dest, sendtag, req)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -268,7 +276,7 @@ end module my_mpi
   integer :: ier
 
   call MPI_ISEND(sendbuf(1),sendcount,MPI_DOUBLE_PRECISION,dest,sendtag, &
-                  MPI_COMM_WORLD,req,ier)
+                  my_local_mpi_comm_world,req,ier)
 
   end subroutine isend_dp
 
@@ -278,7 +286,7 @@ end module my_mpi
 
   subroutine wait_req(req)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -296,7 +304,7 @@ end module my_mpi
 
   double precision function wtime()
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -310,14 +318,14 @@ end module my_mpi
 
   subroutine min_all_i(sendbuf, recvbuf)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   integer:: sendbuf, recvbuf
   integer ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,my_local_mpi_comm_world,ier)
 
   end subroutine min_all_i
 
@@ -328,7 +336,7 @@ end module my_mpi
   subroutine min_all_cr(sendbuf, recvbuf)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -337,7 +345,7 @@ end module my_mpi
   real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MIN,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MIN,0,my_local_mpi_comm_world,ier)
 
   end subroutine min_all_cr
 
@@ -347,14 +355,14 @@ end module my_mpi
 
   subroutine max_all_i(sendbuf, recvbuf)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   integer :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,my_local_mpi_comm_world,ier)
 
   end subroutine max_all_i
 
@@ -364,7 +372,7 @@ end module my_mpi
 
   subroutine max_allreduce_i(buffer,countval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -383,7 +391,7 @@ end module my_mpi
 
   send(:) = buffer(:)
 
-  call MPI_ALLREDUCE(send, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
+  call MPI_ALLREDUCE(send, buffer, countval, MPI_INTEGER, MPI_MAX, my_local_mpi_comm_world, ier)
   if (ier /= 0 ) stop 'Allreduce to get max values failed.'
 
   end subroutine max_allreduce_i
@@ -395,7 +403,7 @@ end module my_mpi
   subroutine max_all_cr(sendbuf, recvbuf)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -404,7 +412,7 @@ end module my_mpi
   real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,0,my_local_mpi_comm_world,ier)
 
   end subroutine max_all_cr
 
@@ -415,7 +423,7 @@ end module my_mpi
   subroutine max_allreduce_cr(sendbuf, recvbuf)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -424,7 +432,7 @@ end module my_mpi
   real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_ALLREDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,MPI_COMM_WORLD,ier)
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,my_local_mpi_comm_world,ier)
 
   end subroutine max_allreduce_cr
 
@@ -435,14 +443,14 @@ end module my_mpi
 
   subroutine any_all_l(sendbuf, recvbuf)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   logical :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_LOGICAL,MPI_LOR,MPI_COMM_WORLD,ier)
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_LOGICAL,MPI_LOR,my_local_mpi_comm_world,ier)
 
   end subroutine any_all_l
 
@@ -452,14 +460,14 @@ end module my_mpi
 
   subroutine sum_all_i(sendbuf, recvbuf)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   integer :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_SUM,0,my_local_mpi_comm_world,ier)
 
   end subroutine sum_all_i
 
@@ -470,7 +478,7 @@ end module my_mpi
   subroutine sum_all_cr(sendbuf, recvbuf)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -479,7 +487,7 @@ end module my_mpi
   real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_SUM,0,my_local_mpi_comm_world,ier)
 
   end subroutine sum_all_cr
 
@@ -489,14 +497,14 @@ end module my_mpi
 
   subroutine sum_all_dp(sendbuf, recvbuf)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   double precision :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,my_local_mpi_comm_world,ier)
 
   end subroutine sum_all_dp
 
@@ -506,7 +514,7 @@ end module my_mpi
 
   subroutine sum_all_3Darray_dp(sendbuf, recvbuf, nx,ny,nz)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -515,7 +523,7 @@ end module my_mpi
   integer :: ier
 
   ! this works only if the arrays are contiguous in memory (which is always the case for static arrays, as used in the code)
-  call MPI_REDUCE(sendbuf,recvbuf,nx*ny*nz,MPI_DOUBLE_PRECISION,MPI_SUM,0,MPI_COMM_WORLD,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,nx*ny*nz,MPI_DOUBLE_PRECISION,MPI_SUM,0,my_local_mpi_comm_world,ier)
 
   end subroutine sum_all_3Darray_dp
 
@@ -525,7 +533,7 @@ end module my_mpi
 
   subroutine bcast_iproc_i(buffer,iproc)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -534,7 +542,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,1,MPI_INTEGER,iproc,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,1,MPI_INTEGER,iproc,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_iproc_i
 
@@ -544,7 +552,7 @@ end module my_mpi
 
   subroutine bcast_all_singlei(buffer)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -552,7 +560,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,1,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_singlei
 
@@ -562,7 +570,7 @@ end module my_mpi
 
   subroutine bcast_all_i(buffer, countval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -582,7 +590,7 @@ end module my_mpi
   subroutine bcast_all_cr(buffer, countval)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -593,7 +601,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,countval,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,CUSTOM_MPI_TYPE,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_cr
 
@@ -605,7 +613,7 @@ end module my_mpi
   subroutine bcast_all_singlecr(buffer)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -615,7 +623,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,1,CUSTOM_MPI_TYPE,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,1,CUSTOM_MPI_TYPE,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_singlecr
 
@@ -625,7 +633,7 @@ end module my_mpi
 
   subroutine bcast_all_r(buffer, countval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -634,7 +642,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,countval,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_REAL,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_r
 
@@ -644,7 +652,7 @@ end module my_mpi
 
   subroutine bcast_all_singler(buffer)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -652,7 +660,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,1,MPI_REAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,1,MPI_REAL,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_singler
 
@@ -662,7 +670,7 @@ end module my_mpi
 
   subroutine bcast_all_dp(buffer, countval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -671,7 +679,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,countval,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_dp
 
@@ -681,7 +689,7 @@ end module my_mpi
 
   subroutine bcast_all_singledp(buffer)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -689,7 +697,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,1,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_singledp
 
@@ -699,7 +707,7 @@ end module my_mpi
 
   subroutine bcast_all_ch(buffer, countval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -708,7 +716,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,countval,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_CHARACTER,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_ch
 
@@ -718,7 +726,7 @@ end module my_mpi
 
   subroutine bcast_all_ch_array(buffer,ndim,countval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -727,7 +735,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,ndim*countval,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,ndim*countval,MPI_CHARACTER,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_ch_array
 
@@ -737,7 +745,7 @@ end module my_mpi
 
   subroutine bcast_all_ch_array2(buffer,ndim1,ndim2,countval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -746,7 +754,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,ndim1*ndim2*countval,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,ndim1*ndim2*countval,MPI_CHARACTER,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_ch_array2
 
@@ -756,7 +764,7 @@ end module my_mpi
 
   subroutine bcast_all_l(buffer, countval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -765,7 +773,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,countval,MPI_LOGICAL,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_LOGICAL,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_l
 
@@ -775,7 +783,7 @@ end module my_mpi
 
   subroutine recv_singlei(recvbuf, dest, recvtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -784,7 +792,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_RECV(recvbuf,1,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+  call MPI_RECV(recvbuf,1,MPI_INTEGER,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_singlei
 
@@ -794,7 +802,7 @@ end module my_mpi
 
   subroutine recv_singlel(recvbuf, dest, recvtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -803,7 +811,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_RECV(recvbuf,1,MPI_LOGICAL,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+  call MPI_RECV(recvbuf,1,MPI_LOGICAL,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_singlel
 
@@ -813,7 +821,7 @@ end module my_mpi
 
   subroutine recv_i(recvbuf, recvcount, dest, recvtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -823,7 +831,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_RECV(recvbuf,recvcount,MPI_INTEGER,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+  call MPI_RECV(recvbuf,recvcount,MPI_INTEGER,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_i
 
@@ -834,7 +842,7 @@ end module my_mpi
   subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -846,7 +854,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_RECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+  call MPI_RECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_cr
 
@@ -856,7 +864,7 @@ end module my_mpi
 
   subroutine recv_dp(recvbuf, recvcount, dest, recvtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -866,7 +874,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_RECV(recvbuf,recvcount,MPI_DOUBLE_PRECISION,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+  call MPI_RECV(recvbuf,recvcount,MPI_DOUBLE_PRECISION,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_dp
 
@@ -876,7 +884,7 @@ end module my_mpi
 
   subroutine recv_ch(recvbuf, recvcount, dest, recvtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -886,7 +894,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_RECV(recvbuf,recvcount,MPI_CHARACTER,dest,recvtag,MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+  call MPI_RECV(recvbuf,recvcount,MPI_CHARACTER,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_ch
 
@@ -896,7 +904,7 @@ end module my_mpi
 
   subroutine send_ch(sendbuf, sendcount, dest, sendtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -906,7 +914,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_SEND(sendbuf,sendcount,MPI_CHARACTER,dest,sendtag,MPI_COMM_WORLD,ier)
+  call MPI_SEND(sendbuf,sendcount,MPI_CHARACTER,dest,sendtag,my_local_mpi_comm_world,ier)
 
   end subroutine send_ch
 
@@ -917,7 +925,7 @@ end module my_mpi
 
   subroutine send_i(sendbuf, sendcount, dest, sendtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -927,7 +935,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_SEND(sendbuf,sendcount,MPI_INTEGER,dest,sendtag,MPI_COMM_WORLD,ier)
+  call MPI_SEND(sendbuf,sendcount,MPI_INTEGER,dest,sendtag,my_local_mpi_comm_world,ier)
 
   end subroutine send_i
 
@@ -937,7 +945,7 @@ end module my_mpi
 
   subroutine send_singlei(sendbuf, dest, sendtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -946,7 +954,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_SEND(sendbuf,1,MPI_INTEGER,dest,sendtag,MPI_COMM_WORLD,ier)
+  call MPI_SEND(sendbuf,1,MPI_INTEGER,dest,sendtag,my_local_mpi_comm_world,ier)
 
   end subroutine send_singlei
 
@@ -956,7 +964,7 @@ end module my_mpi
 
   subroutine send_singlel(sendbuf, dest, sendtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -965,7 +973,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_SEND(sendbuf,1,MPI_LOGICAL,dest,sendtag,MPI_COMM_WORLD,ier)
+  call MPI_SEND(sendbuf,1,MPI_LOGICAL,dest,sendtag,my_local_mpi_comm_world,ier)
 
   end subroutine send_singlel
 
@@ -976,7 +984,7 @@ end module my_mpi
   subroutine send_cr(sendbuf, sendcount, dest, sendtag)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -987,7 +995,7 @@ end module my_mpi
   real(kind=CUSTOM_REAL),dimension(sendcount):: sendbuf
   integer :: ier
 
-  call MPI_SEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,MPI_COMM_WORLD,ier)
+  call MPI_SEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,my_local_mpi_comm_world,ier)
 
   end subroutine send_cr
 
@@ -997,7 +1005,7 @@ end module my_mpi
 
   subroutine send_dp(sendbuf, sendcount, dest, sendtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1006,7 +1014,7 @@ end module my_mpi
   double precision,dimension(sendcount):: sendbuf
   integer :: ier
 
-  call MPI_SEND(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag,MPI_COMM_WORLD,ier)
+  call MPI_SEND(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag,my_local_mpi_comm_world,ier)
 
   end subroutine send_dp
 
@@ -1018,7 +1026,7 @@ end module my_mpi
                          recvbuf, recvcount, source, recvtag)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1032,7 +1040,7 @@ end module my_mpi
 
   call MPI_SENDRECV(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag, &
                     recvbuf,recvcount,CUSTOM_MPI_TYPE,source,recvtag, &
-                    MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+                    my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine sendrecv_cr
 
@@ -1043,7 +1051,7 @@ end module my_mpi
   subroutine sendrecv_dp(sendbuf, sendcount, dest, sendtag, &
                          recvbuf, recvcount, source, recvtag)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1055,7 +1063,7 @@ end module my_mpi
 
   call MPI_SENDRECV(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag, &
                     recvbuf,recvcount,MPI_DOUBLE_PRECISION,source,recvtag, &
-                    MPI_COMM_WORLD,MPI_STATUS_IGNORE,ier)
+                    my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine sendrecv_dp
 
@@ -1065,7 +1073,7 @@ end module my_mpi
 
   subroutine gather_all_i(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1077,7 +1085,7 @@ end module my_mpi
 
   call MPI_GATHER(sendbuf,sendcnt,MPI_INTEGER, &
                   recvbuf,recvcount,MPI_INTEGER, &
-                  0,MPI_COMM_WORLD,ier)
+                  0,my_local_mpi_comm_world,ier)
 
   end subroutine gather_all_i
 
@@ -1087,7 +1095,7 @@ end module my_mpi
 
   subroutine gather_all_singlei(sendbuf, recvbuf, NPROC)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1099,7 +1107,7 @@ end module my_mpi
 
   call MPI_GATHER(sendbuf,1,MPI_INTEGER, &
                   recvbuf,1,MPI_INTEGER, &
-                  0,MPI_COMM_WORLD,ier)
+                  0,my_local_mpi_comm_world,ier)
 
   end subroutine gather_all_singlei
 
@@ -1110,7 +1118,7 @@ end module my_mpi
   subroutine gather_all_cr(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1124,7 +1132,7 @@ end module my_mpi
 
   call MPI_GATHER(sendbuf,sendcnt,CUSTOM_MPI_TYPE, &
                   recvbuf,recvcount,CUSTOM_MPI_TYPE, &
-                  0,MPI_COMM_WORLD,ier)
+                  0,my_local_mpi_comm_world,ier)
 
   end subroutine gather_all_cr
 
@@ -1134,7 +1142,7 @@ end module my_mpi
 
   subroutine gather_all_dp(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1146,7 +1154,7 @@ end module my_mpi
 
   call MPI_GATHER(sendbuf,sendcnt,MPI_DOUBLE_PRECISION, &
                   recvbuf,recvcount,MPI_DOUBLE_PRECISION, &
-                  0,MPI_COMM_WORLD,ier)
+                  0,my_local_mpi_comm_world,ier)
 
   end subroutine gather_all_dp
 
@@ -1157,7 +1165,7 @@ end module my_mpi
   subroutine gatherv_all_i(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1172,7 +1180,7 @@ end module my_mpi
 
   call MPI_GATHERV(sendbuf,sendcnt,MPI_INTEGER, &
                   recvbuf,recvcount,recvoffset,MPI_INTEGER, &
-                  0,MPI_COMM_WORLD,ier)
+                  0,my_local_mpi_comm_world,ier)
 
   end subroutine gatherv_all_i
 
@@ -1183,7 +1191,7 @@ end module my_mpi
   subroutine gatherv_all_cr(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1198,7 +1206,7 @@ end module my_mpi
 
   call MPI_GATHERV(sendbuf,sendcnt,CUSTOM_MPI_TYPE, &
                   recvbuf,recvcount,recvoffset,CUSTOM_MPI_TYPE, &
-                  0,MPI_COMM_WORLD,ier)
+                  0,my_local_mpi_comm_world,ier)
 
   end subroutine gatherv_all_cr
 
@@ -1209,7 +1217,7 @@ end module my_mpi
   subroutine gatherv_all_r(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
   use constants
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1222,7 +1230,7 @@ end module my_mpi
 
   call MPI_GATHERV(sendbuf,sendcnt,MPI_REAL, &
                   recvbuf,recvcount,recvoffset,MPI_REAL, &
-                  0,MPI_COMM_WORLD,ier)
+                  0,my_local_mpi_comm_world,ier)
 
   end subroutine gatherv_all_r
 
@@ -1232,7 +1240,7 @@ end module my_mpi
 
   subroutine scatter_all_singlei(sendbuf, recvbuf, NPROC)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1244,7 +1252,7 @@ end module my_mpi
 
   call MPI_Scatter(sendbuf, 1, MPI_INTEGER, &
                    recvbuf, 1, MPI_INTEGER, &
-                   0, MPI_COMM_WORLD, ier)
+                   0, my_local_mpi_comm_world, ier)
 
   end subroutine scatter_all_singlei
 
@@ -1254,7 +1262,7 @@ end module my_mpi
 
   subroutine world_size(sizeval)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1263,7 +1271,7 @@ end module my_mpi
   ! local parameters
   integer :: ier
 
-  call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeval,ier)
+  call MPI_COMM_SIZE(my_local_mpi_comm_world,sizeval,ier)
   if (ier /= 0 ) stop 'Error getting MPI world size'
 
   end subroutine world_size
@@ -1274,7 +1282,7 @@ end module my_mpi
 
   subroutine world_rank(rank)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1283,7 +1291,7 @@ end module my_mpi
   ! local parameters
   integer :: ier
 
-  call MPI_COMM_RANK(MPI_COMM_WORLD,rank,ier)
+  call MPI_COMM_RANK(my_local_mpi_comm_world,rank,ier)
   if (ier /= 0 ) stop 'Error getting MPI rank'
 
   end subroutine world_rank
@@ -1294,15 +1302,15 @@ end module my_mpi
 
   subroutine world_duplicate(comm)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   integer,intent(out) :: comm
   integer :: ier
 
-  call MPI_COMM_DUP(MPI_COMM_WORLD,comm,ier)
-  if (ier /= 0 ) stop 'Error duplicating MPI_COMM_WORLD communicator'
+  call MPI_COMM_DUP(my_local_mpi_comm_world,comm,ier)
+  if (ier /= 0 ) stop 'Error duplicating my_local_mpi_comm_world communicator'
 
   end subroutine world_duplicate
 
@@ -1312,13 +1320,13 @@ end module my_mpi
 
   subroutine world_get_comm(comm)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
   integer,intent(out) :: comm
 
-  comm = MPI_COMM_WORLD
+  comm = my_local_mpi_comm_world
 
   end subroutine world_get_comm
 
@@ -1328,7 +1336,7 @@ end module my_mpi
 
   subroutine world_get_comm_self(comm)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
@@ -1345,7 +1353,7 @@ end module my_mpi
 
   subroutine world_get_info_null(info)
 
-  use mpi
+  use my_mpi
 
   implicit none
 
