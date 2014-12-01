@@ -778,6 +778,133 @@ end module my_mpi
   end subroutine bcast_all_l
 
 !
+!---- broadcast using the communicator to send the mesh and model to other simultaneous runs
+!
+
+  subroutine bcast_all_i_for_database(buffer, countval)
+
+  use my_mpi
+  use constants,only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
+
+  implicit none
+
+  integer countval
+  ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
+  ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
+  ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
+  integer :: buffer
+
+  integer ier
+
+  if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
+
+  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_for_bcast,ier)
+
+  end subroutine bcast_all_i_for_database
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_l_for_database(buffer, countval)
+
+  use my_mpi
+  use constants,only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
+
+  implicit none
+
+  integer countval
+  ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
+  ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
+  ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
+  logical :: buffer
+
+  integer ier
+
+  if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
+
+  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_for_bcast,ier)
+
+  end subroutine bcast_all_l_for_database
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_cr_for_database(buffer, countval)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL,NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
+
+  implicit none
+
+  include "precision.h"
+
+  integer countval
+  ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
+  ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
+  ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
+  real(kind=CUSTOM_REAL) :: buffer
+
+  integer ier
+
+  if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
+
+  call MPI_BCAST(buffer,countval,CUSTOM_MPI_TYPE,0,my_local_mpi_comm_for_bcast,ier)
+
+  end subroutine bcast_all_cr_for_database
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_dp_for_database(buffer, countval)
+
+  use my_mpi
+  use constants,only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
+
+  implicit none
+
+  integer countval
+  ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
+  ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
+  ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
+  double precision :: buffer
+
+  integer ier
+
+  if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
+
+  call MPI_BCAST(buffer,countval,MPI_DOUBLE_PRECISION,0,my_local_mpi_comm_for_bcast,ier)
+
+  end subroutine bcast_all_dp_for_database
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_r_for_database(buffer, countval)
+
+  use my_mpi
+  use constants,only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL
+
+  implicit none
+
+  integer countval
+  ! by not specifying any dimensions for the buffer here we can use this routine for arrays of any number
+  ! of indices, provided we call the routine using the first memory cell of that multidimensional array,
+  ! i.e. for instance buffer(1,1,1) if the array has three dimensions with indices that all start at 1.
+  real :: buffer
+
+  integer ier
+
+  if (.not. (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. BROADCAST_SAME_MESH_AND_MODEL)) return
+
+  call MPI_BCAST(buffer,countval,MPI_REAL,0,my_local_mpi_comm_for_bcast,ier)
+
+  end subroutine bcast_all_r_for_database
+
+!
 !-------------------------------------------------------------------------------------------------
 !
 
