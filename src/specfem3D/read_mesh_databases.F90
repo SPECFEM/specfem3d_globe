@@ -224,53 +224,56 @@
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in crust_mantle'
 
   ! reads databases file
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call read_arrays_solver_adios(IREGION_CRUST_MANTLE,myrank, &
-                                  NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
-                                  nspec_iso,nspec_tiso,nspec_ani, &
-                                  rho_vp_crust_mantle,rho_vs_crust_mantle, &
-                                  xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                                  xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                  etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                  gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                                  rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                                  kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                                  c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-                                  c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-                                  c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-                                  c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-                                  c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-                                  c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                                  c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                                  ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
-                                  rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
-                                  NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
-                                  READ_KAPPA_MU,READ_TISO, &
-                                  b_rmassx_crust_mantle,b_rmassy_crust_mantle)
-  else
-    call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
-                            NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
-                            nspec_iso,nspec_tiso,nspec_ani, &
-                            rho_vp_crust_mantle,rho_vs_crust_mantle, &
-                            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
-                            rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                            kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
-                            c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
-                            c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
-                            c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
-                            c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
-                            c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
-                            c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
-                            c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
-                            ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
-                            rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
-                            NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
-                            READ_KAPPA_MU,READ_TISO, &
-                            b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+  if (I_should_read_the_database) then
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call read_arrays_solver_adios(IREGION_CRUST_MANTLE,myrank, &
+                                    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
+                                    nspec_iso,nspec_tiso,nspec_ani, &
+                                    rho_vp_crust_mantle,rho_vs_crust_mantle, &
+                                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                                    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                                    etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                                    gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                    rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                                    kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                                    c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+                                    c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+                                    c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+                                    c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+                                    c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+                                    c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                                    c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                                    ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
+                                    rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                                    NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
+                                    READ_KAPPA_MU,READ_TISO, &
+                                    b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+    else
+      call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
+                              NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
+                              nspec_iso,nspec_tiso,nspec_ani, &
+                              rho_vp_crust_mantle,rho_vs_crust_mantle, &
+                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                              xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
+                              etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
+                              gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                              rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
+                              kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
+                              c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
+                              c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
+                              c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
+                              c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+                              c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle, &
+                              c44store_crust_mantle,c45store_crust_mantle,c46store_crust_mantle, &
+                              c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
+                              ibool_crust_mantle,dummy_idoubling,ispec_is_tiso_crust_mantle, &
+                              rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
+                              NGLOB_CRUST_MANTLE_OCEANS,rmass_ocean_load, &
+                              READ_KAPPA_MU,READ_TISO, &
+                              b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+    endif
   endif
+  call bcast_mesh_databases_CM()
 
   ! check that the number of points in this slice is correct
   if (minval(ibool_crust_mantle(:,:,:,:)) /= 1) &
@@ -1395,4 +1398,69 @@
 
   end subroutine read_mesh_databases_regular_kl
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
+  subroutine bcast_mesh_databases_CM()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  implicit none
+    
+  call bcast_all_i_for_database(NSPEC_CRUST_MANTLE, 1)
+  call bcast_all_i_for_database(NGLOB_CRUST_MANTLE, 1)
+  call bcast_all_i_for_database(NGLOB_XY_CM, 1)
+  call bcast_all_cr_for_database(rho_vp_crust_mantle(1,1,1,1), size(rho_vp_crust_mantle))
+  call bcast_all_cr_for_database(rho_vs_crust_mantle(1,1,1,1), size(rho_vs_crust_mantle))
+
+  call bcast_all_cr_for_database(xstore_crust_mantle(1), size(xstore_crust_mantle))
+  call bcast_all_cr_for_database(ystore_crust_mantle(1), size(ystore_crust_mantle))
+  call bcast_all_cr_for_database(zstore_crust_mantle(1), size(zstore_crust_mantle))
+  call bcast_all_cr_for_database(xix_crust_mantle(1,1,1,1), size(xix_crust_mantle))
+  call bcast_all_cr_for_database(xiy_crust_mantle(1,1,1,1), size(xiy_crust_mantle))
+  call bcast_all_cr_for_database(xiz_crust_mantle(1,1,1,1), size(xiz_crust_mantle))
+  call bcast_all_cr_for_database(etax_crust_mantle(1,1,1,1), size(etax_crust_mantle))
+  call bcast_all_cr_for_database(etay_crust_mantle(1,1,1,1), size(etay_crust_mantle))
+  call bcast_all_cr_for_database(etaz_crust_mantle(1,1,1,1), size(etaz_crust_mantle))
+  call bcast_all_cr_for_database(gammax_crust_mantle(1,1,1,1), size(gammax_crust_mantle))
+  call bcast_all_cr_for_database(gammay_crust_mantle(1,1,1,1), size(gammay_crust_mantle))
+  call bcast_all_cr_for_database(gammaz_crust_mantle(1,1,1,1), size(gammaz_crust_mantle))
+  call bcast_all_cr_for_database(rhostore_crust_mantle(1,1,1,1), size(rhostore_crust_mantle))
+  call bcast_all_cr_for_database(kappavstore_crust_mantle(1,1,1,1), size(kappavstore_crust_mantle))
+  call bcast_all_cr_for_database(muvstore_crust_mantle(1,1,1,1), size(muvstore_crust_mantle))
+  call bcast_all_cr_for_database(kappahstore_crust_mantle(1,1,1,1), size(kappahstore_crust_mantle))
+  call bcast_all_cr_for_database(muhstore_crust_mantle(1,1,1,1), size(muhstore_crust_mantle))
+  call bcast_all_cr_for_database(eta_anisostore_crust_mantle(1,1,1,1), size(eta_anisostore_crust_mantle))
+  call bcast_all_cr_for_database(c11store_crust_mantle(1,1,1,1), size(c11store_crust_mantle))
+  call bcast_all_cr_for_database(c12store_crust_mantle(1,1,1,1), size(c12store_crust_mantle))
+  call bcast_all_cr_for_database(c13store_crust_mantle(1,1,1,1), size(c13store_crust_mantle))
+  call bcast_all_cr_for_database(c14store_crust_mantle(1,1,1,1), size(c14store_crust_mantle))
+  call bcast_all_cr_for_database(c15store_crust_mantle(1,1,1,1), size(c15store_crust_mantle))
+  call bcast_all_cr_for_database(c16store_crust_mantle(1,1,1,1), size(c16store_crust_mantle))
+  call bcast_all_cr_for_database(c22store_crust_mantle(1,1,1,1), size(c22store_crust_mantle))
+  call bcast_all_cr_for_database(c23store_crust_mantle(1,1,1,1), size(c23store_crust_mantle))
+  call bcast_all_cr_for_database(c24store_crust_mantle(1,1,1,1), size(c24store_crust_mantle))
+  call bcast_all_cr_for_database(c25store_crust_mantle(1,1,1,1), size(c25store_crust_mantle))
+  call bcast_all_cr_for_database(c26store_crust_mantle(1,1,1,1), size(c26store_crust_mantle))
+  call bcast_all_cr_for_database(c33store_crust_mantle(1,1,1,1), size(c33store_crust_mantle))
+  call bcast_all_cr_for_database(c34store_crust_mantle(1,1,1,1), size(c34store_crust_mantle))
+  call bcast_all_cr_for_database(c35store_crust_mantle(1,1,1,1), size(c35store_crust_mantle))
+  call bcast_all_cr_for_database(c36store_crust_mantle(1,1,1,1), size(c36store_crust_mantle))
+  call bcast_all_cr_for_database(c44store_crust_mantle(1,1,1,1), size(c44store_crust_mantle))
+  call bcast_all_cr_for_database(c45store_crust_mantle(1,1,1,1), size(c45store_crust_mantle))
+  call bcast_all_cr_for_database(c46store_crust_mantle(1,1,1,1), size(c46store_crust_mantle))
+  call bcast_all_cr_for_database(c55store_crust_mantle(1,1,1,1), size(c55store_crust_mantle))
+  call bcast_all_cr_for_database(c56store_crust_mantle(1,1,1,1), size(c56store_crust_mantle))
+  call bcast_all_cr_for_database(c66store_crust_mantle(1,1,1,1), size(c66store_crust_mantle))
+  call bcast_all_i_for_database(ibool_crust_mantle(1,1,1,1), size(ibool_crust_mantle))
+  call bcast_all_l_for_database(ispec_is_tiso_crust_mantle(1), size(ispec_is_tiso_crust_mantle))
+  call bcast_all_cr_for_database(rmassx_crust_mantle(1), size(rmassx_crust_mantle))
+  call bcast_all_cr_for_database(rmassy_crust_mantle(1), size(rmassy_crust_mantle))
+  call bcast_all_cr_for_database(rmassz_crust_mantle(1), size(rmassz_crust_mantle))
+  call bcast_all_i_for_database(NGLOB_CRUST_MANTLE_OCEANS, 1)
+  call bcast_all_cr_for_database(rmass_ocean_load(1), size(rmass_ocean_load))
+  call bcast_all_cr_for_database(b_rmassx_crust_mantle(1), size(b_rmassx_crust_mantle))
+  call bcast_all_cr_for_database(b_rmassy_crust_mantle(1), size(b_rmassy_crust_mantle))
+
+  end subroutine bcast_mesh_databases_CM
