@@ -364,53 +364,56 @@
   if (ier /= 0) stop 'Error allocating dummy rmass and dummy ispec/idoubling in outer core'
 
   ! reads in mesh arrays
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call read_arrays_solver_adios(IREGION_OUTER_CORE,myrank, &
-                                  NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
-                                  nspec_iso,nspec_tiso,nspec_ani, &
-                                  vp_outer_core,dummy_array, &
-                                  xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-                                  xix_outer_core,xiy_outer_core,xiz_outer_core, &
-                                  etax_outer_core,etay_outer_core,etaz_outer_core, &
-                                  gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-                                  rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-                                  dummy_rmass,dummy_rmass,rmass_outer_core, &
-                                  1,dummy_array, &
-                                  READ_KAPPA_MU,READ_TISO, &
-                                  dummy_rmass,dummy_rmass)
-  else
-    call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
-                            NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
-                            nspec_iso,nspec_tiso,nspec_ani, &
-                            vp_outer_core,dummy_array, &
-                            xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-                            xix_outer_core,xiy_outer_core,xiz_outer_core, &
-                            etax_outer_core,etay_outer_core,etaz_outer_core, &
-                            gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
-                            rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
-                            dummy_rmass,dummy_rmass,rmass_outer_core, &
-                            1, dummy_array, &
-                            READ_KAPPA_MU,READ_TISO, &
-                            dummy_rmass,dummy_rmass)
+  if (I_should_read_the_database) then
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call read_arrays_solver_adios(IREGION_OUTER_CORE,myrank, &
+                                    NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
+                                    nspec_iso,nspec_tiso,nspec_ani, &
+                                    vp_outer_core,dummy_array, &
+                                    xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                                    xix_outer_core,xiy_outer_core,xiz_outer_core, &
+                                    etax_outer_core,etay_outer_core,etaz_outer_core, &
+                                    gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+                                    rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
+                                    dummy_rmass,dummy_rmass,rmass_outer_core, &
+                                    1,dummy_array, &
+                                    READ_KAPPA_MU,READ_TISO, &
+                                    dummy_rmass,dummy_rmass)
+    else
+      call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
+                              NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
+                              nspec_iso,nspec_tiso,nspec_ani, &
+                              vp_outer_core,dummy_array, &
+                              xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                              xix_outer_core,xiy_outer_core,xiz_outer_core, &
+                              etax_outer_core,etay_outer_core,etaz_outer_core, &
+                              gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+                              rhostore_outer_core,kappavstore_outer_core,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              ibool_outer_core,dummy_idoubling_outer_core,dummy_ispec_is_tiso, &
+                              dummy_rmass,dummy_rmass,rmass_outer_core, &
+                              1, dummy_array, &
+                              READ_KAPPA_MU,READ_TISO, &
+                              dummy_rmass,dummy_rmass)
+    endif
   endif
+  call bcast_mesh_databases_OC()
 
   deallocate(dummy_idoubling_outer_core,dummy_ispec_is_tiso,dummy_rmass)
 
@@ -1464,3 +1467,35 @@
   call bcast_all_cr_for_database(b_rmassy_crust_mantle(1), size(b_rmassy_crust_mantle))
 
   end subroutine bcast_mesh_databases_CM
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_mesh_databases_OC()
+
+  use specfem_par
+  use specfem_par_outercore
+  implicit none
+
+  call bcast_all_i_for_database(NSPEC_OUTER_CORE, 1)
+  call bcast_all_i_for_database(NGLOB_OUTER_CORE, 1)
+  call bcast_all_cr_for_database(vp_outer_core(1,1,1,1), size(vp_outer_core))
+  call bcast_all_cr_for_database(xstore_outer_core(1), size(xstore_outer_core))
+  call bcast_all_cr_for_database(ystore_outer_core(1), size(ystore_outer_core))
+  call bcast_all_cr_for_database(zstore_outer_core(1), size(zstore_outer_core))
+  call bcast_all_cr_for_database(xix_outer_core(1,1,1,1), size(xix_outer_core))
+  call bcast_all_cr_for_database(xiy_outer_core(1,1,1,1), size(xiy_outer_core))
+  call bcast_all_cr_for_database(xiz_outer_core(1,1,1,1), size(xiz_outer_core))
+  call bcast_all_cr_for_database(etax_outer_core(1,1,1,1), size(etax_outer_core))
+  call bcast_all_cr_for_database(etay_outer_core(1,1,1,1), size(etay_outer_core))
+  call bcast_all_cr_for_database(etaz_outer_core(1,1,1,1), size(etaz_outer_core))
+  call bcast_all_cr_for_database(gammax_outer_core(1,1,1,1), size(gammax_outer_core))
+  call bcast_all_cr_for_database(gammay_outer_core(1,1,1,1), size(gammay_outer_core))
+  call bcast_all_cr_for_database(gammaz_outer_core(1,1,1,1), size(gammaz_outer_core))
+  call bcast_all_cr_for_database(rhostore_outer_core(1,1,1,1), size(rhostore_outer_core))
+  call bcast_all_cr_for_database(kappavstore_outer_core(1,1,1,1), size(kappavstore_outer_core))
+  call bcast_all_i_for_database(ibool_outer_core(1,1,1,1), size(ibool_outer_core))
+  call bcast_all_cr_for_database(rmass_outer_core(1), size(rmass_outer_core))
+    
+  end subroutine bcast_mesh_databases_OC
