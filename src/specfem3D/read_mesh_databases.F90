@@ -490,53 +490,56 @@
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in inner_core'
 
   ! reads in arrays
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call read_arrays_solver_adios(IREGION_INNER_CORE,myrank, &
-                                  NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
-                                  nspec_iso,nspec_tiso,nspec_ani, &
-                                  dummy_array,dummy_array, &
-                                  xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                                  xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                  etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                  gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                                  rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,c33store_inner_core, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  c44store_inner_core,dummy_array,dummy_array, &
-                                  dummy_array,dummy_array,dummy_array, &
-                                  ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-                                  rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
-                                  1,dummy_array, &
-                                  READ_KAPPA_MU,READ_TISO, &
-                                  b_rmassx_inner_core,b_rmassy_inner_core)
-  else
-    call read_arrays_solver(IREGION_INNER_CORE,myrank, &
-                            NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
-                            nspec_iso,nspec_tiso,nspec_ani, &
-                            dummy_array,dummy_array, &
-                            xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                            xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                            etax_inner_core,etay_inner_core,etaz_inner_core, &
-                            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
-                            rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-                            dummy_array,dummy_array,dummy_array, &
-                            c11store_inner_core,c12store_inner_core,c13store_inner_core, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,c33store_inner_core, &
-                            dummy_array,dummy_array,dummy_array, &
-                            c44store_inner_core,dummy_array,dummy_array, &
-                            dummy_array,dummy_array,dummy_array, &
-                            ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
-                            rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
-                            1,dummy_array, &
-                            READ_KAPPA_MU,READ_TISO, &
-                            b_rmassx_inner_core,b_rmassy_inner_core)
+  if (I_should_read_the_database) then
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call read_arrays_solver_adios(IREGION_INNER_CORE,myrank, &
+                                    NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
+                                    nspec_iso,nspec_tiso,nspec_ani, &
+                                    dummy_array,dummy_array, &
+                                    xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                                    xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                                    etax_inner_core,etay_inner_core,etaz_inner_core, &
+                                    gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                    rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,c33store_inner_core, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    c44store_inner_core,dummy_array,dummy_array, &
+                                    dummy_array,dummy_array,dummy_array, &
+                                    ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
+                                    rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
+                                    1,dummy_array, &
+                                    READ_KAPPA_MU,READ_TISO, &
+                                    b_rmassx_inner_core,b_rmassy_inner_core)
+    else
+      call read_arrays_solver(IREGION_INNER_CORE,myrank, &
+                              NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
+                              nspec_iso,nspec_tiso,nspec_ani, &
+                              dummy_array,dummy_array, &
+                              xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                              xix_inner_core,xiy_inner_core,xiz_inner_core, &
+                              etax_inner_core,etay_inner_core,etaz_inner_core, &
+                              gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                              rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
+                              dummy_array,dummy_array,dummy_array, &
+                              c11store_inner_core,c12store_inner_core,c13store_inner_core, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,c33store_inner_core, &
+                              dummy_array,dummy_array,dummy_array, &
+                              c44store_inner_core,dummy_array,dummy_array, &
+                              dummy_array,dummy_array,dummy_array, &
+                              ibool_inner_core,idoubling_inner_core,dummy_ispec_is_tiso, &
+                              rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
+                              1,dummy_array, &
+                              READ_KAPPA_MU,READ_TISO, &
+                              b_rmassx_inner_core,b_rmassy_inner_core)
+    endif
   endif
+  call bcast_mesh_databases_IC()
 
   deallocate(dummy_ispec_is_tiso)
 
@@ -1499,3 +1502,46 @@
   call bcast_all_cr_for_database(rmass_outer_core(1), size(rmass_outer_core))
     
   end subroutine bcast_mesh_databases_OC
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_mesh_databases_IC()
+
+  use specfem_par
+  use specfem_par_innercore
+  implicit none
+
+  call bcast_all_i_for_database(NSPEC_INNER_CORE, 1)
+  call bcast_all_i_for_database(NGLOB_INNER_CORE, 1)
+  call bcast_all_i_for_database(NGLOB_XY_IC, 1)
+  call bcast_all_cr_for_database(xstore_inner_core(1), size(xstore_inner_core))
+  call bcast_all_cr_for_database(ystore_inner_core(1), size(ystore_inner_core))
+  call bcast_all_cr_for_database(zstore_inner_core(1), size(zstore_inner_core))
+  call bcast_all_cr_for_database(xix_inner_core(1,1,1,1), size(xix_inner_core))
+  call bcast_all_cr_for_database(xiy_inner_core(1,1,1,1), size(xiy_inner_core))
+  call bcast_all_cr_for_database(xiz_inner_core(1,1,1,1), size(xiz_inner_core))
+  call bcast_all_cr_for_database(etax_inner_core(1,1,1,1), size(etax_inner_core))
+  call bcast_all_cr_for_database(etay_inner_core(1,1,1,1), size(etay_inner_core))
+  call bcast_all_cr_for_database(etaz_inner_core(1,1,1,1), size(etaz_inner_core))
+  call bcast_all_cr_for_database(gammax_inner_core(1,1,1,1), size(gammax_inner_core))
+  call bcast_all_cr_for_database(gammay_inner_core(1,1,1,1), size(gammay_inner_core))
+  call bcast_all_cr_for_database(gammaz_inner_core(1,1,1,1), size(gammaz_inner_core))
+  call bcast_all_cr_for_database(rhostore_inner_core(1,1,1,1), size(rhostore_inner_core))
+  call bcast_all_cr_for_database(kappavstore_inner_core(1,1,1,1), size(kappavstore_inner_core))
+  call bcast_all_cr_for_database(muvstore_inner_core(1,1,1,1), size(muvstore_inner_core))
+  call bcast_all_cr_for_database(c11store_inner_core(1,1,1,1), size(c11store_inner_core))
+  call bcast_all_cr_for_database(c12store_inner_core(1,1,1,1), size(c12store_inner_core))
+  call bcast_all_cr_for_database(c13store_inner_core(1,1,1,1), size(c13store_inner_core))
+  call bcast_all_cr_for_database(c33store_inner_core(1,1,1,1), size(c33store_inner_core))
+  call bcast_all_cr_for_database(c44store_inner_core(1,1,1,1), size(c44store_inner_core))
+  call bcast_all_i_for_database(ibool_inner_core(1,1,1,1), size(ibool_inner_core))
+  call bcast_all_i_for_database(idoubling_inner_core(1), size(idoubling_inner_core))
+  call bcast_all_cr_for_database(rmassx_inner_core(1), size(rmassx_inner_core))
+  call bcast_all_cr_for_database(rmassy_inner_core(1), size(rmassy_inner_core))
+  call bcast_all_cr_for_database(rmassz_inner_core(1), size(rmassz_inner_core))
+  call bcast_all_cr_for_database(b_rmassx_inner_core(1), size(b_rmassx_inner_core))
+  call bcast_all_cr_for_database(b_rmassy_inner_core(1), size(b_rmassy_inner_core))
+
+  end subroutine bcast_mesh_databases_IC
