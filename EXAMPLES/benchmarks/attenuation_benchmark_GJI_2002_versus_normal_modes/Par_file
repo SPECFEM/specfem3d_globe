@@ -153,7 +153,7 @@ ROTATE_SEISMOGRAMS_RT           = .true.
 WRITE_SEISMOGRAMS_BY_MASTER     = .true.
 
 # save all seismograms in one large combined file instead of one file per seismogram
-# to avoid overloading shared non-local file systems such as GPFS for instance
+# to avoid overloading shared non-local file systems such as LUSTRE or GPFS for instance
 SAVE_ALL_SEISMOS_IN_ONE_FILE    = .false.
 USE_BINARY_FOR_LARGE_FILE       = .false.
 
