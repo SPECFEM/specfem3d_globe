@@ -1285,45 +1285,48 @@
   integer :: ier
 
   ! reads in arrays
-  if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call read_mesh_databases_stacey_adios()
-  else
-    ! crust and mantle
+  if (I_should_read_the_database) then 
+    if (ADIOS_FOR_ARRAYS_SOLVER) then
+      call read_mesh_databases_stacey_adios()
+    else
+      ! crust and mantle
 
-    ! create name of database
-    call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+      ! create name of database
+      call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
-    ! read arrays for Stacey conditions
-    open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
-          status='old',form='unformatted',action='read',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for crust mantle')
+      ! read arrays for Stacey conditions
+      open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
+            status='old',form='unformatted',action='read',iostat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for crust mantle')
 
-    read(IIN) nimin_crust_mantle
-    read(IIN) nimax_crust_mantle
-    read(IIN) njmin_crust_mantle
-    read(IIN) njmax_crust_mantle
-    read(IIN) nkmin_xi_crust_mantle
-    read(IIN) nkmin_eta_crust_mantle
-    close(IIN)
+      read(IIN) nimin_crust_mantle
+      read(IIN) nimax_crust_mantle
+      read(IIN) njmin_crust_mantle
+      read(IIN) njmax_crust_mantle
+      read(IIN) nkmin_xi_crust_mantle
+      read(IIN) nkmin_eta_crust_mantle
+      close(IIN)
 
-    ! outer core
+      ! outer core
 
-    ! create name of database
-    call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+      ! create name of database
+      call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
 
-    ! read arrays for Stacey conditions
-    open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
-          status='old',form='unformatted',action='read',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for outer core')
+      ! read arrays for Stacey conditions
+      open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
+            status='old',form='unformatted',action='read',iostat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file for outer core')
 
-    read(IIN) nimin_outer_core
-    read(IIN) nimax_outer_core
-    read(IIN) njmin_outer_core
-    read(IIN) njmax_outer_core
-    read(IIN) nkmin_xi_outer_core
-    read(IIN) nkmin_eta_outer_core
-    close(IIN)
-  endif ! ADIOS
+      read(IIN) nimin_outer_core
+      read(IIN) nimax_outer_core
+      read(IIN) njmin_outer_core
+      read(IIN) njmax_outer_core
+      read(IIN) nkmin_xi_outer_core
+      read(IIN) nkmin_eta_outer_core
+      close(IIN)
+    endif ! ADIOS
+  endif ! I_should_read_the_database
+  call bcast_mesh_databases_stacey()
 
   end subroutine read_mesh_databases_stacey
 
@@ -1926,3 +1929,34 @@
   endif
 
   end subroutine bcast_mesh_databases_MPI_IC
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_mesh_databases_stacey()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  implicit none
+
+  ! crust and mantle
+  call bcast_all_i_for_database(nimin_crust_mantle(1,1), size(nimin_crust_mantle))
+  call bcast_all_i_for_database(nimax_crust_mantle(1,1), size(nimax_crust_mantle))
+  call bcast_all_i_for_database(njmin_crust_mantle(1,1), size(njmin_crust_mantle))
+  call bcast_all_i_for_database(njmax_crust_mantle(1,1), size(njmax_crust_mantle))
+  call bcast_all_i_for_database(nkmin_xi_crust_mantle(1,1), size(nkmin_xi_crust_mantle))
+  call bcast_all_i_for_database(nkmin_eta_crust_mantle(1,1), size(nkmin_eta_crust_mantle))
+
+  ! outer core
+  call bcast_all_i_for_database(nimin_outer_core(1,1), size(nimin_outer_core))
+  call bcast_all_i_for_database(nimax_outer_core(1,1), size(nimax_outer_core))
+  call bcast_all_i_for_database(njmin_outer_core(1,1), size(njmin_outer_core))
+  call bcast_all_i_for_database(njmax_outer_core(1,1), size(njmax_outer_core))
+  call bcast_all_i_for_database(nkmin_xi_outer_core(1,1), size(nkmin_xi_outer_core))
+  call bcast_all_i_for_database(nkmin_eta_outer_core(1,1), size(nkmin_eta_outer_core))
+
+  end subroutine bcast_mesh_databases_stacey
