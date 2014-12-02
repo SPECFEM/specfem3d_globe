@@ -1,6 +1,6 @@
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 3
+SIMULATION_TYPE                 = 3        # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
 NOISE_TOMOGRAPHY                = 3        # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
 SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
 
@@ -10,9 +10,9 @@ NCHUNKS                         = 1
 # angular width of the first chunk (not used if full sphere with six chunks)
 ANGULAR_WIDTH_XI_IN_DEGREES   = 90.d0      # angular size of a chunk
 ANGULAR_WIDTH_ETA_IN_DEGREES  = 90.d0
-CENTER_LATITUDE_IN_DEGREES    =  0.d0
+CENTER_LATITUDE_IN_DEGREES    = 0.d0
 CENTER_LONGITUDE_IN_DEGREES   = 15.d0
-GAMMA_ROTATION_AZIMUTH        =  0.d0
+GAMMA_ROTATION_AZIMUTH        = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
@@ -52,7 +52,7 @@ ATTENUATION                     = .false.
 ABSORBING_CONDITIONS            = .true.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        =  1.0d0
+RECORD_LENGTH_IN_MINUTES        = 1.0d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
@@ -61,15 +61,21 @@ PARTIAL_PHYS_DISPERSION_ONLY    = .false.
 UNDO_ATTENUATION                = .false.
 # How much memory (in GB) is installed on your machine per CPU core (only used for UNDO_ATTENUATION, can be ignored otherwise)
 #         (or per GPU card or per INTEL MIC Phi board)
-#   (beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node)
-#   (this value is for instance:
+#   Beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node.
+#   This value is for instance:
 #   -  4 GB on Tiger at Princeton
-#   -  4 GB or 2 GB on the non-GPU part of Titan at ORNL i.e. when using CPUs only there
-#             depending on whether you use 8 or 16 MPI tasks per compute node
-#   - 32 GB on the GPU part of Titan at ORNL
+#   -  4 GB on TGCC Curie in Paris
+#   -  4 GB on Titan at ORNL when using CPUs only (no GPUs); start your run with "aprun -n$NPROC -N8 -S4 -j1"
 #   -  2 GB on the machine used by Christina Morency
 #   -  2 GB on the TACC machine used by Min Chen
-#   -  1.5 GB on the GPU cluster in Marseille)
+#   -  1.5 GB on the GPU cluster in Marseille
+# When running on GPU machines, it is simpler to set PERCENT_OF_MEM_TO_USE_PER_CORE = 100.d0
+# and then set MEMORY_INSTALLED_PER_CORE_IN_GB to the amount of memory that you estimate is free (rather than installed)
+# on the host of the GPU card while running your GPU job.
+# For GPU runs on Titan at ORNL, use PERCENT_OF_MEM_TO_USE_PER_CORE = 100.d0 and MEMORY_INSTALLED_PER_CORE_IN_GB = 25.d0
+# and run your job with "aprun -n$NPROC -N1 -S1 -j1"
+# (each host has 32 GB on Titan, each GPU has 6 GB, thus even if all the GPU arrays are duplicated on the host
+#  this leaves 32 - 6 = 26 GB free on the host; leaving 1 GB for the Linux system, we can safely use 100% of 25 GB)
 MEMORY_INSTALLED_PER_CORE_IN_GB = 4.d0
 # What percentage of this total do you allow us to use for arrays to undo attenuation, keeping in mind that you
 # need to leave some memory available for the GNU/Linux system to run
@@ -78,6 +84,31 @@ MEMORY_INSTALLED_PER_CORE_IN_GB = 4.d0
 #    on other systems, depending on how much memory per node the GNU/Linux system needs for itself; thus you can try
 #    a higher value and if the adjoint crashes then try again with a lower value)
 PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
+
+# three mass matrices instead of one are needed to handle rotation very accurately;
+# otherwise rotation is handled slightly less accurately (but still reasonably well);
+# set to .true. if you are interested in precise effects related to rotation;
+# set to .false. if you are solving very large inverse problems at high frequency and also undoing attenuation exactly
+# using the UNDO_ATTENUATION flag above, in which case saving as much memory as possible can be a good idea.
+# You can also safely set it to .false. if you are not in a period range in which rotation matters, e.g. if you are targetting very short-period body waves.
+# if in doubt, set to .true.
+# Set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code will use the three mass matrices anyway
+# and thus there is no additional cost.
+# this flag is of course unused if ROTATION above is set to .false.
+EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
+
+# this for LDDRK high-order time scheme instead of Newmark
+USE_LDDRK                       = .false.
+
+# the maximum CFL of LDDRK is significantly higher than that of the Newmark scheme,
+# in a ratio that is theoretically 1.327 / 0.697 = 1.15 / 0.604 = 1.903 for a solid with Poisson's ratio = 0.25
+# and for a fluid (see the manual of the 2D code, SPECFEM2D, Tables 4.1 and 4.2, and that ratio does not
+# depend on whether we are in 2D or in 3D). However in practice a ratio of about 1.5 to 1.7 is often safer
+# (for instance for models with a large range of Poisson's ratio values).
+# Since the code computes the time step using the Newmark scheme, for LDDRK we will simply
+# multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
+INCREASE_CFL_FOR_LDDRK          = .true.
+RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
 
 # save AVS or OpenDX movies
 #MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
@@ -112,7 +143,7 @@ NUMBER_OF_RUNS                  = 1
 NUMBER_OF_THIS_RUN              = 1
 
 # path to store the local database files on each node
-LOCAL_PATH                      = /scratch/yangl/DATABASES_MPI
+LOCAL_PATH                      = ./DATABASES_MPI
 # temporary wavefield/kernel/movie files
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
@@ -144,7 +175,7 @@ USE_BINARY_FOR_LARGE_FILE       = .false.
 RECEIVERS_CAN_BE_BURIED         = .true.
 
 # print source time function
-PRINT_SOURCE_TIME_FUNCTION      = .true.
+PRINT_SOURCE_TIME_FUNCTION      = .false.
 
 #-----------------------------------------------------------
 #
@@ -198,4 +229,3 @@ ADIOS_FOR_AVS_DX                = .true.
 ADIOS_FOR_KERNELS               = .true.
 ADIOS_FOR_MODELS                = .true.
 ADIOS_FOR_UNDO_ATTENUATION      = .true.
-

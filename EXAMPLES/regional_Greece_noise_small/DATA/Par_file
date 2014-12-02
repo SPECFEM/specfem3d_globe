@@ -1,6 +1,6 @@
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1
+SIMULATION_TYPE                 = 1        # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
 NOISE_TOMOGRAPHY                = 1        # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
 SAVE_FORWARD                    = .true.  # save last frame of forward simulation or not
 
@@ -61,15 +61,21 @@ PARTIAL_PHYS_DISPERSION_ONLY    = .true.
 UNDO_ATTENUATION                = .false.
 # How much memory (in GB) is installed on your machine per CPU core (only used for UNDO_ATTENUATION, can be ignored otherwise)
 #         (or per GPU card or per INTEL MIC Phi board)
-#   (beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node)
-#   (this value is for instance:
+#   Beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node.
+#   This value is for instance:
 #   -  4 GB on Tiger at Princeton
-#   -  4 GB or 2 GB on the non-GPU part of Titan at ORNL i.e. when using CPUs only there
-#             depending on whether you use 8 or 16 MPI tasks per compute node
-#   - 32 GB on the GPU part of Titan at ORNL
+#   -  4 GB on TGCC Curie in Paris
+#   -  4 GB on Titan at ORNL when using CPUs only (no GPUs); start your run with "aprun -n$NPROC -N8 -S4 -j1"
 #   -  2 GB on the machine used by Christina Morency
 #   -  2 GB on the TACC machine used by Min Chen
-#   -  1.5 GB on the GPU cluster in Marseille)
+#   -  1.5 GB on the GPU cluster in Marseille
+# When running on GPU machines, it is simpler to set PERCENT_OF_MEM_TO_USE_PER_CORE = 100.d0
+# and then set MEMORY_INSTALLED_PER_CORE_IN_GB to the amount of memory that you estimate is free (rather than installed)
+# on the host of the GPU card while running your GPU job.
+# For GPU runs on Titan at ORNL, use PERCENT_OF_MEM_TO_USE_PER_CORE = 100.d0 and MEMORY_INSTALLED_PER_CORE_IN_GB = 25.d0
+# and run your job with "aprun -n$NPROC -N1 -S1 -j1"
+# (each host has 32 GB on Titan, each GPU has 6 GB, thus even if all the GPU arrays are duplicated on the host
+#  this leaves 32 - 6 = 26 GB free on the host; leaving 1 GB for the Linux system, we can safely use 100% of 25 GB)
 MEMORY_INSTALLED_PER_CORE_IN_GB = 4.d0
 # What percentage of this total do you allow us to use for arrays to undo attenuation, keeping in mind that you
 # need to leave some memory available for the GNU/Linux system to run
@@ -130,7 +136,7 @@ MOVIE_START                     = 0
 MOVIE_STOP                      = 40000
 
 # save mesh files to check the mesh
-SAVE_MESH_FILES                 = .true.
+SAVE_MESH_FILES                 = .false.
 
 # restart files (number of runs can be 1 or higher, choose 1 for no restart files)
 NUMBER_OF_RUNS                  = 1
@@ -223,4 +229,3 @@ ADIOS_FOR_AVS_DX                = .true.
 ADIOS_FOR_KERNELS               = .true.
 ADIOS_FOR_MODELS                = .true.
 ADIOS_FOR_UNDO_ATTENUATION      = .true.
-
