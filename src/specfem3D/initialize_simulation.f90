@@ -36,6 +36,7 @@
   integer :: sizeprocs
   integer :: ier
   character(len=MAX_STRING_LEN) :: dummystring
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
@@ -224,6 +225,10 @@
     rec_filename = 'DATA/STATIONS'
   else
     rec_filename = 'DATA/STATIONS_ADJOINT'
+  endif
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    rec_filename=path_to_add(1:len_trim(path_to_add))//rec_filename(1:len_trim(rec_filename))
   endif
   STATIONS = rec_filename
 

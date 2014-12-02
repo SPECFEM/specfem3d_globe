@@ -180,7 +180,6 @@
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
 
-  print *, "yo---------> ", trim(OUTPUT_FILES)
   ! appends receiver locations to sr.vtk file
   if (myrank == 0) then
     open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
