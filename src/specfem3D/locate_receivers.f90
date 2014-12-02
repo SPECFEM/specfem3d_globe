@@ -43,6 +43,8 @@
     HUGEVAL,IMAIN,IIN,IOUT,IOUT_VTK,MIDX,MIDY,MIDZ, &
     DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,TWO_PI,R_UNIT_SPHERE,R_EARTH,R_EARTH_KM
 
+  use shared_input_parameters, only: OUTPUT_FILES
+
   use specfem_par,only: &
     myrank,DT,NSTEP, &
     xigll,yigll,zigll, &
@@ -543,7 +545,7 @@
     ! Harvard format does not support the network name
     ! therefore only the station name is included below
     ! compute total number of samples for normal modes with 1 sample per second
-    open(unit=IOUT,file='OUTPUT_FILES/RECORDHEADERS', &
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/RECORDHEADERS', &
           status='unknown',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file RECORDHEADERS')
 
@@ -845,7 +847,7 @@
   if (myrank == 0) then
 
     ! appends receiver locations to sr.vtk file
-    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk',position='append',status='old',iostat=ier)
+    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk',position='append',status='old',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
     ! chooses best receivers locations
@@ -938,7 +940,7 @@
     epidist(1:nrec) = epidist_found(1:nrec)
 
     ! write the list of stations and associated epicentral distance
-    open(unit=IOUT,file='OUTPUT_FILES/output_list_stations.txt', &
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/output_list_stations.txt', &
           status='unknown',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_list_stations.txt')
     write(IOUT,*)
@@ -953,7 +955,7 @@
 
     ! write out a filtered station list
     if (NCHUNKS_VAL /= 6) then
-      open(unit=IOUT,file='OUTPUT_FILES/STATIONS_FILTERED', &
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED', &
             status='unknown',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information

@@ -791,6 +791,8 @@
 
   subroutine read_mesh_databases_addressing()
 
+  use constants
+
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
@@ -805,7 +807,7 @@
   if (I_should_read_the_database) then
     ! open file with global slice number addressing
     if (myrank == 0) then
-      open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read',iostat=ier)
+      open(unit=IIN,file=trim(OUTPUT_FILES_PATH_BASE)//'/addressing.txt',status='old',action='read',iostat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error opening addressing.txt')
 
       do iproc = 0,NPROCTOT_VAL-1
@@ -1434,9 +1436,9 @@
   use specfem_par_crustmantle
   implicit none
     
-  call bcast_all_i_for_database(NSPEC_CRUST_MANTLE, 1)
-  call bcast_all_i_for_database(NGLOB_CRUST_MANTLE, 1)
-  call bcast_all_i_for_database(NGLOB_XY_CM, 1)
+  !call bcast_all_i_for_database(NSPEC_CRUST_MANTLE, 1)
+  !call bcast_all_i_for_database(NGLOB_CRUST_MANTLE, 1)
+  !call bcast_all_i_for_database(NGLOB_XY_CM, 1)
   call bcast_all_cr_for_database(rho_vp_crust_mantle(1,1,1,1), size(rho_vp_crust_mantle))
   call bcast_all_cr_for_database(rho_vs_crust_mantle(1,1,1,1), size(rho_vs_crust_mantle))
 
@@ -1484,7 +1486,7 @@
   call bcast_all_cr_for_database(rmassx_crust_mantle(1), size(rmassx_crust_mantle))
   call bcast_all_cr_for_database(rmassy_crust_mantle(1), size(rmassy_crust_mantle))
   call bcast_all_cr_for_database(rmassz_crust_mantle(1), size(rmassz_crust_mantle))
-  call bcast_all_i_for_database(NGLOB_CRUST_MANTLE_OCEANS, 1)
+  !call bcast_all_i_for_database(NGLOB_CRUST_MANTLE_OCEANS, 1)
   call bcast_all_cr_for_database(rmass_ocean_load(1), size(rmass_ocean_load))
   call bcast_all_cr_for_database(b_rmassx_crust_mantle(1), size(b_rmassx_crust_mantle))
   call bcast_all_cr_for_database(b_rmassy_crust_mantle(1), size(b_rmassy_crust_mantle))
@@ -1501,8 +1503,8 @@
   use specfem_par_outercore
   implicit none
 
-  call bcast_all_i_for_database(NSPEC_OUTER_CORE, 1)
-  call bcast_all_i_for_database(NGLOB_OUTER_CORE, 1)
+  !call bcast_all_i_for_database(NSPEC_OUTER_CORE, 1)
+  !call bcast_all_i_for_database(NGLOB_OUTER_CORE, 1)
   call bcast_all_cr_for_database(vp_outer_core(1,1,1,1), size(vp_outer_core))
   call bcast_all_cr_for_database(xstore_outer_core(1), size(xstore_outer_core))
   call bcast_all_cr_for_database(ystore_outer_core(1), size(ystore_outer_core))
@@ -1533,9 +1535,9 @@
   use specfem_par_innercore
   implicit none
 
-  call bcast_all_i_for_database(NSPEC_INNER_CORE, 1)
-  call bcast_all_i_for_database(NGLOB_INNER_CORE, 1)
-  call bcast_all_i_for_database(NGLOB_XY_IC, 1)
+  !call bcast_all_i_for_database(NSPEC_INNER_CORE, 1)
+  !call bcast_all_i_for_database(NGLOB_INNER_CORE, 1)
+  !call bcast_all_i_for_database(NGLOB_XY_IC, 1)
   call bcast_all_cr_for_database(xstore_inner_core(1), size(xstore_inner_core))
   call bcast_all_cr_for_database(ystore_inner_core(1), size(ystore_inner_core))
   call bcast_all_cr_for_database(zstore_inner_core(1), size(zstore_inner_core))

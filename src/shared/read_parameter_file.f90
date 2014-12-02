@@ -44,7 +44,7 @@
   integer :: ierr
 
   ! sets the base pathname for output files
-  OUTPUT_FILES = 'OUTPUT_FILES'
+  ! OUTPUT_FILES = 'OUTPUT_FILES' -- set in shared/parallel.f90
 
   ! opens the parameter file: DATA/Par_file
   call open_parameter_file(ierr)

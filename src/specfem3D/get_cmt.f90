@@ -29,7 +29,7 @@
                      DT,NSOURCES,min_tshift_cmt_original)
 
   use constants,only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
-    RHOAV,R_EARTH,PI,GRAV,TINYVAL
+    RHOAV,R_EARTH,PI,GRAV,TINYVAL, MAX_STRING_LEN,NUMBER_OF_SIMULTANEOUS_RUNS,mygroup
 
   implicit none
 
@@ -45,11 +45,12 @@
 
   ! local variables below
   integer :: mo,da,julian_day,isource
-  integer :: i,itype,istart,iend,ier
+  integer :: i,itype,istart,iend,ier, ios
   double precision :: scaleM
   double precision :: t_shift(NSOURCES)
   !character(len=5) :: datasource
   character(len=256) :: string
+  character(len=MAX_STRING_LEN) :: CMTSOLUTION, path_to_add
 
   ! initializes
   lat(:) = 0.d0
@@ -63,8 +64,14 @@
 !
 !---- read hypocenter info
 !
-  open(unit = IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ier)
-  if (ier /= 0) stop 'Error opening DATA/CMTSOLUTION file'
+  CMTSOLUTION = 'DATA/CMTSOLUTION'
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    CMTSOLUTION=path_to_add(1:len_trim(path_to_add))//CMTSOLUTION(1:len_trim(CMTSOLUTION))
+  endif
+
+  open(unit=IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ios)
+  if (ios /= 0) stop 'Error opening CMTSOLUTION file (get_cmt)'
 
 ! read source number isource
   do isource = 1,NSOURCES
@@ -78,6 +85,7 @@
 
     ! gets header line
     read(IIN,"(a256)",iostat=ier) string
+    print *, isource, trim(CMTSOLUTION)
     if (ier /= 0) then
       write(IMAIN,*) 'Error reading header line in source ',isource
       stop 'Error reading header line in station in CMTSOLUTION file'
@@ -88,7 +96,7 @@
       read(IIN,"(a256)",iostat=ier) string
       if (ier /= 0) then
         write(IMAIN,*) 'Error reading header line in source ',isource
-        stop 'Error reading header line in station in CMTSOLUTION file'
+        stop 'Error reading header blank lines in station in CMTSOLUTION file'
       endif
     enddo
 

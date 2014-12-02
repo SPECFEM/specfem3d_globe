@@ -579,7 +579,7 @@ end module my_mpi
 
   integer :: ier
 
-  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_all_i
 
@@ -1502,6 +1502,7 @@ end module my_mpi
   use my_mpi
   use constants,only: MAX_STRING_LEN,NUMBER_OF_SIMULTANEOUS_RUNS,OUTPUT_FILES_PATH, &
     IMAIN,ISTANDARD_OUTPUT,mygroup,BROADCAST_SAME_MESH_AND_MODEL,I_should_read_the_database
+  use shared_input_parameters
 
   implicit none
 
@@ -1519,6 +1520,8 @@ end module my_mpi
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. IMAIN == ISTANDARD_OUTPUT) &
     stop 'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled'
+
+  OUTPUT_FILES = OUTPUT_FILES_PATH(1:len_trim(OUTPUT_FILES))
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS == 1) then
 
@@ -1545,7 +1548,8 @@ end module my_mpi
 
 !   add the right directory for that run (group numbers start at zero, but directory names start at run0001, thus we add one)
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    OUTPUT_FILES_PATH = path_to_add(1:len_trim(path_to_add))//OUTPUT_FILES_PATH(1:len_trim(OUTPUT_FILES_PATH))
+    !OUTPUT_FILES_PATH = path_to_add(1:len_trim(path_to_add))//OUTPUT_FILES_PATH(1:len_trim(OUTPUT_FILES_PATH))
+    OUTPUT_FILES = path_to_add(1:len_trim(path_to_add))//OUTPUT_FILES(1:len_trim(OUTPUT_FILES))
 
 !--- create a subcommunicator to broadcast the identical mesh and model databases if needed
     if (BROADCAST_SAME_MESH_AND_MODEL) then

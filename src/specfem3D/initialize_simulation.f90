@@ -74,7 +74,8 @@
   call synchronize_all()
 
   ! set the base pathname for output files
-  OUTPUT_FILES = 'OUTPUT_FILES'
+  ! See world split -> parallel.f90
+  ! OUTPUT_FILES = 'OUTPUT_FILES'
 
   ! open main output file, only written to by process 0
   if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then

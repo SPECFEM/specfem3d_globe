@@ -141,10 +141,18 @@
   character(len=5) :: datasource
   character(len=256) :: string
 
+  character(len=MAX_STRING_LEN) :: CMTSOLUTION, path_to_add
+
 !
 !---- read hypocenter info
+  CMTSOLUTION = 'DATA/CMTSOLUTION'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    CMTSOLUTION=path_to_add(1:len_trim(path_to_add))//CMTSOLUTION(1:len_trim(CMTSOLUTION))
+  endif
 !
-  open(unit=IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ios)
+  open(unit=IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ios)
   if (ios /= 0) stop 'Error opening DATA/CMTSOLUTION file (in get_event_info_serial)'
 
   ! example header line of CMTSOLUTION file
