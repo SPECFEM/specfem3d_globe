@@ -910,11 +910,14 @@
   ! read MPI interfaces from file
 
   ! crust mantle
-  if (ADIOS_FOR_MPI_ARRAYS) then
-    call read_mesh_databases_MPI_CM_adios()
-  else
-    call read_mesh_databases_MPI_CM()
+  if (I_should_read_the_database) then
+    if (ADIOS_FOR_MPI_ARRAYS) then
+      call read_mesh_databases_MPI_CM_adios()
+    else  
+      call read_mesh_databases_MPI_CM()
+    endif
   endif
+  call bcast_mesh_databases_MPI_CM()
 
   allocate(buffer_send_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
            buffer_recv_vector_crust_mantle(NDIM,max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
@@ -1647,3 +1650,100 @@
   endif
 
   end subroutine bcast_mesh_databases_coupling
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_mesh_databases_MPI_CM()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  implicit none
+
+  ! local parameters
+  integer :: ier
+
+  ! MPI interfaces
+  call bcast_all_i_for_database(num_interfaces_crust_mantle, 1)
+  
+  ! could also test for not allocated, only reader processes have
+  ! allocated these arrays.
+  if (.not. I_should_read_the_database) then 
+    allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
+            nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
+            stat=ier)
+    if (ier /= 0 ) &
+      call exit_mpi(myrank,'Error allocating array my_neighbours_crust_mantle etc.')
+  endif
+
+  if (num_interfaces_crust_mantle > 0) then
+    call bcast_all_i_for_database(max_nibool_interfaces_cm, 1)
+    if (.not. I_should_read_the_database) then 
+      allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
+              stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
+    endif
+
+    call bcast_all_i_for_database(my_neighbours_crust_mantle(1), 1)
+    call bcast_all_i_for_database(nibool_interfaces_crust_mantle(1), 1)
+    call bcast_all_i_for_database(ibool_interfaces_crust_mantle(1,1), 1)
+  else
+    ! dummy array
+    max_nibool_interfaces_cm = 0
+    if (.not. I_should_read_the_database) then 
+      allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_crust_mantle')
+    endif
+  endif
+
+  ! inner / outer elements
+  call bcast_all_i_for_database(nspec_inner_crust_mantle, 1)
+  call bcast_all_i_for_database(nspec_outer_crust_mantle, 1)
+  call bcast_all_i_for_database(num_phase_ispec_crust_mantle, 1)
+  if (num_phase_ispec_crust_mantle < 0 ) &
+    call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
+
+  if (.not. I_should_read_the_database) then 
+    allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),&
+            stat=ier)
+    if (ier /= 0 ) &
+      call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
+  endif
+
+  if (num_phase_ispec_crust_mantle > 0 ) then
+    call bcast_all_i_for_database(phase_ispec_inner_crust_mantle(1,1), 1)
+  endif
+
+  ! mesh coloring for GPUs
+  if (USE_MESH_COLORING_GPU) then
+    ! colors
+    call bcast_all_i_for_database(num_colors_outer_crust_mantle, 1)
+    call bcast_all_i_for_database(num_colors_inner_crust_mantle, 1)
+
+    if (.not. I_should_read_the_database) then 
+      allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
+              stat=ier)
+      if (ier /= 0 ) &
+        call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+    endif
+
+    call bcast_all_i_for_database(num_elem_colors_crust_mantle(1), 1)
+  else
+    ! allocates dummy arrays
+    num_colors_outer_crust_mantle = 0
+    num_colors_inner_crust_mantle = 0
+    if (.not. I_should_read_the_database) then 
+      allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
+              stat=ier)
+      if (ier /= 0 ) &
+        call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
+    endif
+  endif
+
+  end subroutine bcast_mesh_databases_MPI_CM
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
