@@ -962,11 +962,14 @@
   endif
 
   ! inner core
-  if (ADIOS_FOR_MPI_ARRAYS) then
-    call read_mesh_databases_MPI_IC_adios()
-  else
-    call read_mesh_databases_MPI_IC()
+  if (I_should_read_the_database) then
+    if (ADIOS_FOR_MPI_ARRAYS) then
+      call read_mesh_databases_MPI_IC_adios()
+    else
+      call read_mesh_databases_MPI_IC()
+    endif
   endif
+  call bcast_mesh_databases_MPI_IC()
 
   allocate(buffer_send_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
            buffer_recv_vector_inner_core(NDIM,max_nibool_interfaces_ic,num_interfaces_inner_core), &
@@ -1834,3 +1837,92 @@
   endif
 
   end subroutine bcast_mesh_databases_MPI_OC
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_mesh_databases_MPI_IC()
+
+  use specfem_par
+  use specfem_par_innercore
+  implicit none
+
+  ! local parameters
+  integer :: ier
+
+  ! MPI interfaces
+  call bcast_all_i_for_database(num_interfaces_inner_core, 1)
+  if (.not. I_should_read_the_database) then 
+    allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
+            nibool_interfaces_inner_core(num_interfaces_inner_core), &
+            stat=ier)
+    if (ier /= 0 ) &
+      call exit_mpi(myrank,'Error allocating array my_neighbours_inner_core etc.')
+  endif
+
+  if (num_interfaces_inner_core > 0) then
+    call bcast_all_i_for_database(max_nibool_interfaces_ic, 1)
+    if (.not. I_should_read_the_database) then 
+      allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
+              stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
+    endif
+
+    call bcast_all_i_for_database(my_neighbours_inner_core(1), 1)
+    call bcast_all_i_for_database(nibool_interfaces_inner_core(1), 1)
+    call bcast_all_i_for_database(ibool_interfaces_inner_core(1,1), 1)
+  else
+    ! dummy array
+    max_nibool_interfaces_ic = 0
+    if (.not. I_should_read_the_database) then 
+      allocate(ibool_interfaces_inner_core(0,0),stat=ier)
+      if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_inner_core')
+    endif
+  endif
+
+  ! inner / outer elements
+  call bcast_all_i_for_database(nspec_inner_inner_core, 1)
+  call bcast_all_i_for_database(nspec_outer_inner_core, 1)
+  call bcast_all_i_for_database(num_phase_ispec_inner_core, 1)
+  if (num_phase_ispec_inner_core < 0 ) &
+    call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
+
+  if (.not. I_should_read_the_database) then 
+    allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),&
+            stat=ier)
+    if (ier /= 0 ) &
+      call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
+  endif
+
+  if (num_phase_ispec_inner_core > 0 ) then
+    call bcast_all_i_for_database(phase_ispec_inner_inner_core(1,1), 1)
+  endif
+
+  ! mesh coloring for GPUs
+  if (USE_MESH_COLORING_GPU) then
+    ! colors
+    call bcast_all_i_for_database(num_colors_outer_inner_core, 1)
+    call bcast_all_i_for_database(num_colors_inner_inner_core, 1)
+
+    if (.not. I_should_read_the_database) then 
+      allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
+              stat=ier)
+      if (ier /= 0 ) &
+        call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+    endif
+
+    call bcast_all_i_for_database(num_elem_colors_inner_core(1), 1)
+  else
+    ! allocates dummy arrays
+    num_colors_outer_inner_core = 0
+    num_colors_inner_inner_core = 0
+    if (.not. I_should_read_the_database) then 
+      allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
+              stat=ier)
+      if (ier /= 0 ) &
+        call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
+    endif
+  endif
+
+  end subroutine bcast_mesh_databases_MPI_IC
