@@ -276,7 +276,7 @@ subroutine write_asdf(asdf_container)
 
   use asdf_data,only: asdf_event
 
-  use specfem_par, only : event_name_SAC,myrank,ADIOS_TRANSPORT_METHOD
+  use specfem_par, only : event_name_SAC,myrank,ADIOS_TRANSPORT_METHOD, OUTPUT_FILES
 
   implicit none
   ! Parameters
@@ -300,7 +300,7 @@ subroutine write_asdf(asdf_container)
   !call check_adios_err(myrank,adios_err)
 
   ! output file name
-  ASDF_FN="OUTPUT_FILES/"//trim(event_name_SAC)//"_sem.bp"
+  ASDF_FN=trim(OUTPUT_FILES)//"/"//trim(event_name_SAC)//"_sem.bp"
 
   call write_asdf_data (ASDF_FN, asdf_container, adios_group, myrank, sizeprocs, comm)
 

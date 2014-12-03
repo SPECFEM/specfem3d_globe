@@ -90,7 +90,7 @@ subroutine define_kernel_adios_variables(adios_handle)
   ! Type inference for define_adios_global_array1D. Avoid additional args.
   real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: dummy_real4d
 
-  outputname = "OUTPUT_FILES/kernels.bp"
+  outputname = trim(OUTPUT_FILES)//"/kernels.bp"
   group_name = "SPECFEM3D_GLOBE_KERNELS"
 
   call world_duplicate(comm)

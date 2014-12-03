@@ -85,7 +85,6 @@
 
     ! gets header line
     read(IIN,"(a256)",iostat=ier) string
-    print *, isource, trim(CMTSOLUTION)
     if (ier /= 0) then
       write(IMAIN,*) 'Error reading header line in source ',isource
       stop 'Error reading header line in station in CMTSOLUTION file'

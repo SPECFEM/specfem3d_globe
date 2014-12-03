@@ -1696,9 +1696,9 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
     endif
 
-    call bcast_all_i_for_database(my_neighbours_crust_mantle(1), 1)
-    call bcast_all_i_for_database(nibool_interfaces_crust_mantle(1), 1)
-    call bcast_all_i_for_database(ibool_interfaces_crust_mantle(1,1), 1)
+    call bcast_all_i_for_database(my_neighbours_crust_mantle(1), size(my_neighbours_crust_mantle))
+    call bcast_all_i_for_database(nibool_interfaces_crust_mantle(1), size(nibool_interfaces_crust_mantle))
+    call bcast_all_i_for_database(ibool_interfaces_crust_mantle(1,1), size(ibool_interfaces_crust_mantle))
   else
     ! dummy array
     max_nibool_interfaces_cm = 0
@@ -1723,7 +1723,7 @@
   endif
 
   if (num_phase_ispec_crust_mantle > 0 ) then
-    call bcast_all_i_for_database(phase_ispec_inner_crust_mantle(1,1), 1)
+    call bcast_all_i_for_database(phase_ispec_inner_crust_mantle(1,1), size(phase_ispec_inner_crust_mantle))
   endif
 
   ! mesh coloring for GPUs
@@ -1739,7 +1739,7 @@
         call exit_mpi(myrank,'Error allocating num_elem_colors_crust_mantle array')
     endif
 
-    call bcast_all_i_for_database(num_elem_colors_crust_mantle(1), 1)
+    call bcast_all_i_for_database(num_elem_colors_crust_mantle(1), size(num_elem_colors_crust_mantle))
   else
     ! allocates dummy arrays
     num_colors_outer_crust_mantle = 0
@@ -1785,9 +1785,9 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
     endif
 
-    call bcast_all_i_for_database(my_neighbours_outer_core(1), 1)
-    call bcast_all_i_for_database(nibool_interfaces_outer_core(1), 1)
-    call bcast_all_i_for_database(ibool_interfaces_outer_core(1,1), 1)
+    call bcast_all_i_for_database(my_neighbours_outer_core(1), size(my_neighbours_outer_core))
+    call bcast_all_i_for_database(nibool_interfaces_outer_core(1), size(nibool_interfaces_outer_core))
+    call bcast_all_i_for_database(ibool_interfaces_outer_core(1,1), size(ibool_interfaces_outer_core))
   else
     ! dummy array
     max_nibool_interfaces_oc = 0
@@ -1812,7 +1812,7 @@
   endif
 
   if (num_phase_ispec_outer_core > 0 ) then
-    call bcast_all_i_for_database(phase_ispec_inner_outer_core(1,1), 1)
+    call bcast_all_i_for_database(phase_ispec_inner_outer_core(1,1), size(phase_ispec_inner_outer_core))
   endif
 
   ! mesh coloring for GPUs
@@ -1828,7 +1828,7 @@
         call exit_mpi(myrank,'Error allocating num_elem_colors_outer_core array')
     endif
 
-    call bcast_all_i_for_database(num_elem_colors_outer_core(1), 1)
+    call bcast_all_i_for_database(num_elem_colors_outer_core(1), size(num_elem_colors_outer_core))
   else
     ! allocates dummy arrays
     num_colors_outer_outer_core = 0
@@ -1874,9 +1874,9 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
     endif
 
-    call bcast_all_i_for_database(my_neighbours_inner_core(1), 1)
-    call bcast_all_i_for_database(nibool_interfaces_inner_core(1), 1)
-    call bcast_all_i_for_database(ibool_interfaces_inner_core(1,1), 1)
+    call bcast_all_i_for_database(my_neighbours_inner_core(1), size(my_neighbours_inner_core))
+    call bcast_all_i_for_database(nibool_interfaces_inner_core(1), size(nibool_interfaces_inner_core))
+    call bcast_all_i_for_database(ibool_interfaces_inner_core(1,1), size(ibool_interfaces_inner_core))
   else
     ! dummy array
     max_nibool_interfaces_ic = 0
@@ -1901,7 +1901,7 @@
   endif
 
   if (num_phase_ispec_inner_core > 0 ) then
-    call bcast_all_i_for_database(phase_ispec_inner_inner_core(1,1), 1)
+    call bcast_all_i_for_database(phase_ispec_inner_inner_core(1,1), size(phase_ispec_inner_inner_core))
   endif
 
   ! mesh coloring for GPUs
@@ -1917,7 +1917,7 @@
         call exit_mpi(myrank,'Error allocating num_elem_colors_inner_core array')
     endif
 
-    call bcast_all_i_for_database(num_elem_colors_inner_core(1), 1)
+    call bcast_all_i_for_database(num_elem_colors_inner_core(1), size(num_elem_colors_inner_core))
   else
     ! allocates dummy arrays
     num_colors_outer_inner_core = 0
