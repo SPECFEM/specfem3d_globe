@@ -674,6 +674,7 @@ CPPFLAGS
 CFLAGS
 CC
 FCLIBS
+srcdir
 FCENV
 OBJEXT
 EXEEXT
@@ -3319,6 +3320,11 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 export FC
 export MPIFC
+F77="$FC"
+FFLAGS="$FCFLAGS"
+
+
+
 
 
 flags_guess="$SHELL $srcdir/flags.guess"
@@ -4698,6 +4704,7 @@ ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
 ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
 
 ac_ext=${ac_fc_srcext-f}
 ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'

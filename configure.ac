@@ -148,7 +148,12 @@ fi
 AC_PROG_FC
 export FC
 export MPIFC
+F77="$FC"
+FFLAGS="$FCFLAGS"
+
+AC_PROVIDE([AC_PROG_F77])
 AC_SUBST([FCENV])
+AC_SUBST(srcdir)
 
 flags_guess="$SHELL $srcdir/flags.guess"
 AC_MSG_NOTICE([running $flags_guess])
@@ -160,6 +165,7 @@ AC_FC_WRAPPERS
 AC_LANG(Fortran)
 AC_FC_SRCEXT(f90)
 AC_FC_FREEFORM()
+
 AC_FC_PP_DEFINE()
 AC_SUBST([FC_DEFINE])
 AC_FC_PP_SRCEXT(F90)dnl Because AC_FC_PP_DEFINE messes with things.
