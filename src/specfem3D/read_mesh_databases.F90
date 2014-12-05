@@ -915,7 +915,7 @@
   if (I_should_read_the_database) then
     if (ADIOS_FOR_MPI_ARRAYS) then
       call read_mesh_databases_MPI_CM_adios()
-    else  
+    else
       call read_mesh_databases_MPI_CM()
     endif
     !call synchronize_all()
@@ -1289,7 +1289,7 @@
   integer :: ier
 
   ! reads in arrays
-  if (I_should_read_the_database) then 
+  if (I_should_read_the_database) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
       call read_mesh_databases_stacey_adios()
     else
@@ -1437,7 +1437,7 @@
   use specfem_par
   use specfem_par_crustmantle
   implicit none
-    
+
   !call bcast_all_i_for_database(NSPEC_CRUST_MANTLE, 1)
   !call bcast_all_i_for_database(NGLOB_CRUST_MANTLE, 1)
   !call bcast_all_i_for_database(NGLOB_XY_CM, 1)
@@ -1524,7 +1524,7 @@
   call bcast_all_cr_for_database(kappavstore_outer_core(1,1,1,1), size(kappavstore_outer_core))
   call bcast_all_i_for_database(ibool_outer_core(1,1,1,1), size(ibool_outer_core))
   call bcast_all_cr_for_database(rmass_outer_core(1), size(rmass_outer_core))
-    
+
   end subroutine bcast_mesh_databases_OC
 
 !
@@ -1679,10 +1679,10 @@
 
   ! MPI interfaces
   call bcast_all_i_for_database(num_interfaces_crust_mantle, 1)
-  
+
   ! could also test for not allocated, only reader processes have
   ! allocated these arrays.
-  if (.not. I_should_read_the_database) then 
+  if (.not. I_should_read_the_database) then
     allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
             nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
             stat=ier)
@@ -1691,7 +1691,7 @@
   endif
   if (num_interfaces_crust_mantle > 0) then
     call bcast_all_i_for_database(max_nibool_interfaces_cm, 1)
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
@@ -1703,7 +1703,7 @@
   else
     ! dummy array
     max_nibool_interfaces_cm = 0
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_crust_mantle')
     endif
@@ -1716,7 +1716,7 @@
   if (num_phase_ispec_crust_mantle < 0 ) &
     call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
 
-  if (.not. I_should_read_the_database) then 
+  if (.not. I_should_read_the_database) then
     allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),&
             stat=ier)
     if (ier /= 0 ) &
@@ -1733,7 +1733,7 @@
     call bcast_all_i_for_database(num_colors_outer_crust_mantle, 1)
     call bcast_all_i_for_database(num_colors_inner_crust_mantle, 1)
 
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
               stat=ier)
       if (ier /= 0 ) &
@@ -1745,7 +1745,7 @@
     ! allocates dummy arrays
     num_colors_outer_crust_mantle = 0
     num_colors_inner_crust_mantle = 0
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_crust_mantle(num_colors_outer_crust_mantle + num_colors_inner_crust_mantle), &
               stat=ier)
       if (ier /= 0 ) &
@@ -1770,7 +1770,7 @@
 
   ! MPI interfaces
   call bcast_all_i_for_database(num_interfaces_outer_core, 1)
-  if (.not. I_should_read_the_database) then 
+  if (.not. I_should_read_the_database) then
     allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
             nibool_interfaces_outer_core(num_interfaces_outer_core), &
             stat=ier)
@@ -1780,7 +1780,7 @@
 
   if (num_interfaces_outer_core > 0) then
     call bcast_all_i_for_database(max_nibool_interfaces_oc, 1)
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
@@ -1794,7 +1794,7 @@
   else
     ! dummy array
     max_nibool_interfaces_oc = 0
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_outer_core(0,0),stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_outer_core')
     endif
@@ -1807,7 +1807,7 @@
   if (num_phase_ispec_outer_core < 0 ) &
     call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
 
-  if (.not. I_should_read_the_database) then 
+  if (.not. I_should_read_the_database) then
     allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),&
             stat=ier)
     if (ier /= 0 ) &
@@ -1824,7 +1824,7 @@
     call bcast_all_i_for_database(num_colors_outer_outer_core, 1)
     call bcast_all_i_for_database(num_colors_inner_outer_core, 1)
 
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
               stat=ier)
       if (ier /= 0 ) &
@@ -1836,7 +1836,7 @@
     ! allocates dummy arrays
     num_colors_outer_outer_core = 0
     num_colors_inner_outer_core = 0
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_outer_core(num_colors_outer_outer_core + num_colors_inner_outer_core), &
               stat=ier)
       if (ier /= 0 ) &
@@ -1861,7 +1861,7 @@
 
   ! MPI interfaces
   call bcast_all_i_for_database(num_interfaces_inner_core, 1)
-  if (.not. I_should_read_the_database) then 
+  if (.not. I_should_read_the_database) then
     allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
             nibool_interfaces_inner_core(num_interfaces_inner_core), &
             stat=ier)
@@ -1871,7 +1871,7 @@
 
   if (num_interfaces_inner_core > 0) then
     call bcast_all_i_for_database(max_nibool_interfaces_ic, 1)
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
@@ -1883,7 +1883,7 @@
   else
     ! dummy array
     max_nibool_interfaces_ic = 0
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(ibool_interfaces_inner_core(0,0),stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array dummy ibool_interfaces_inner_core')
     endif
@@ -1896,7 +1896,7 @@
   if (num_phase_ispec_inner_core < 0 ) &
     call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
 
-  if (.not. I_should_read_the_database) then 
+  if (.not. I_should_read_the_database) then
     allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),&
             stat=ier)
     if (ier /= 0 ) &
@@ -1913,7 +1913,7 @@
     call bcast_all_i_for_database(num_colors_outer_inner_core, 1)
     call bcast_all_i_for_database(num_colors_inner_inner_core, 1)
 
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
               stat=ier)
       if (ier /= 0 ) &
@@ -1925,7 +1925,7 @@
     ! allocates dummy arrays
     num_colors_outer_inner_core = 0
     num_colors_inner_inner_core = 0
-    if (.not. I_should_read_the_database) then 
+    if (.not. I_should_read_the_database) then
       allocate(num_elem_colors_inner_core(num_colors_outer_inner_core + num_colors_inner_inner_core), &
               stat=ier)
       if (ier /= 0 ) &

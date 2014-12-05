@@ -29,7 +29,7 @@
 
   include "constants.h"
 
-  ! a negative initial value is a convention that indicates that groups 
+  ! a negative initial value is a convention that indicates that groups
   ! (i.e. sub-communicators, one per run) are off by default
   integer :: mygroup = -1
 
