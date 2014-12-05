@@ -888,7 +888,7 @@
   endif ! I_should_read_the_database
 
   call bcast_all_i_for_database(ichunk, 1)
-  call bcast_all_i_for_database(addressing(1,1,1), size(addressing))
+  call bcast_all_i_for_database(addressing(1,0,0), size(addressing))
 
   end subroutine read_mesh_databases_addressing
 
@@ -918,6 +918,9 @@
     else  
       call read_mesh_databases_MPI_CM()
     endif
+    !call synchronize_all()
+    !print *, "read_mesh_databases_MPI_CM done"
+    !call flush()
   endif
   call bcast_mesh_databases_MPI_CM()
 
@@ -988,7 +991,6 @@
              stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array b_buffer_send_vector_inner_core etc.')
   endif
-
 
   ! user output
   if (myrank == 0) then
@@ -1687,7 +1689,6 @@
     if (ier /= 0 ) &
       call exit_mpi(myrank,'Error allocating array my_neighbours_crust_mantle etc.')
   endif
-
   if (num_interfaces_crust_mantle > 0) then
     call bcast_all_i_for_database(max_nibool_interfaces_cm, 1)
     if (.not. I_should_read_the_database) then 
@@ -1784,7 +1785,9 @@
               stat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
     endif
+  endif
 
+  if (num_interfaces_outer_core > 0) then
     call bcast_all_i_for_database(my_neighbours_outer_core(1), size(my_neighbours_outer_core))
     call bcast_all_i_for_database(nibool_interfaces_outer_core(1), size(nibool_interfaces_outer_core))
     call bcast_all_i_for_database(ibool_interfaces_outer_core(1,1), size(ibool_interfaces_outer_core))
