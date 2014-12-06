@@ -13,6 +13,7 @@ config.status
 setup/config.fh
 setup/config.h
 setup/constants.h
+setup/constants_tomography.h
 setup/precision.h
 
 # Build time
