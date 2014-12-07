@@ -847,6 +847,7 @@
   integer :: NEX_PER_PROC_ETA
 
   ! local parameters
+  integer :: cpt
   integer :: i,ier
 
   ! initializes element layers

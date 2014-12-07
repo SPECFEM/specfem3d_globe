@@ -344,7 +344,7 @@
   double precision :: T_c_source
 
   ! element layers
-  integer :: NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
+  integer :: NUMBER_OF_MESH_LAYERS,layer_shift, &
     first_layer_aniso,last_layer_aniso
   logical :: USE_ONE_LAYER_SB
 
