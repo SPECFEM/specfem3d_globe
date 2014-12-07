@@ -345,12 +345,11 @@
 
   ! element layers
   integer :: NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
-    first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
+    first_layer_aniso,last_layer_aniso
   logical :: USE_ONE_LAYER_SB
 
   ! layer stretching
   double precision, dimension(:,:), allocatable :: stretch_tab
-  integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   ! Boundary Mesh
   integer :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho

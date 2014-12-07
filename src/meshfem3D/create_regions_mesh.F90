@@ -859,7 +859,7 @@
                         NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
                         ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
                         iregion_code,ifirst_region,ilast_region, &
-                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso,is_on_a_slice_edge)
+                        first_layer_aniso,last_layer_aniso,is_on_a_slice_edge)
 
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   allocate (perm_layer(ifirst_region:ilast_region),stat=ier)
@@ -981,14 +981,6 @@
     ! determine the radii that define the shell
     rmin = rmins(ilayer)
     rmax = rmaxs(ilayer)
-
-    if (iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop == 3) then
-      FIRST_ELT_NON_ANISO = ispec+1
-    endif
-    if (iregion_code == IREGION_CRUST_MANTLE &
-      .and. ilayer_loop==(ilast_region-nb_layer_above_aniso+1)) then
-      FIRST_ELT_ABOVE_ANISO = ispec+1
-    endif
 
     ner_without_doubling = ner(ilayer)
 
