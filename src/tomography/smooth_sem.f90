@@ -603,7 +603,7 @@ program smooth_sem_globe
         endif
       endif
 
-      ! initializes 
+      ! initializes
       num_elem_local = 0
 
       ! sets number of elements to loop over
