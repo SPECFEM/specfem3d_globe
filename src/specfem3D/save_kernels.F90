@@ -438,14 +438,14 @@
         ! Output these kernels as netcdf files -- one per processor.
 #ifdef CEM
 
-        call write_kernel_netcdf(trim(OUTPUT_FILES)'/alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
-        call write_kernel_netcdf(trim(OUTPUT_FILES)'/alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
-        call write_kernel_netcdf(trim(OUTPUT_FILES)'/betavKernelCrustMantle.nc',  betav_kl_crust_mantle)
-        call write_kernel_netcdf(trim(OUTPUT_FILES)'/betahKernelCrustMantle.nc',  betah_kl_crust_mantle)
-        call write_kernel_netcdf(trim(OUTPUT_FILES)'/etaKernelCrustMantle.nc',    eta_kl_crust_mantle)
-        call write_kernel_netcdf(trim(OUTPUT_FILES)'/rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/betavKernelCrustMantle.nc',  betav_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/betahKernelCrustMantle.nc',  betah_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/etaKernelCrustMantle.nc',    eta_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
 
-        call write_coordinates_netcdf('./OUTPUT_FILES/xyzCrustMantle.nc')
+        call write_coordinates_netcdf(trim(OUTPUT_FILES)//'/xyzCrustMantle.nc')
 
 #endif
 

@@ -177,9 +177,7 @@ subroutine return_populated_arrays (structure, param, reg)
 
 
   formatString = "(A,A3,A,I0.2,A,I0.6,A)"
-  write (fileName,formatString) "./DATA/cemRequest/", param, "_reg", reg, &
-    ".proc", rank, ".nc"
-
+  write (fileName,formatString) "./DATA/cemRequest/", param, "_reg", reg, ".proc", rank, ".nc"
   fileNameTrim = trim(fileName)
 
   status = nf90_open              (fileNameTrim, NF90_NOWRITE, ncid)
