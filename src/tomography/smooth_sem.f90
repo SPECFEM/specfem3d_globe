@@ -226,7 +226,7 @@ program smooth_sem_globe
   !   average size of a spectral element in km = ...
   !   e.g. nproc 12x12, nex 192: element_size = 52.122262
   if (NCHUNKS_VAL == 6 ) then
-    element_size = TWO_PI * dble(4) * R_EARTH_KM / dble(NEX_XI_VAL)
+    element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI_VAL)
   else
     ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES_VAL * DEGREES_TO_RADIANS
     ANGULAR_WIDTH_ETA_RAD = ANGULAR_WIDTH_ETA_IN_DEGREES_VAL * DEGREES_TO_RADIANS
@@ -603,6 +603,9 @@ program smooth_sem_globe
         endif
       endif
 
+      ! initializes 
+      num_elem_local = 0
+
       ! sets number of elements to loop over
       if (.not. DO_BRUTE_FORCE_SEARCH) then
         xyz_target(1) = cx0(ispec)
@@ -616,6 +619,11 @@ program smooth_sem_globe
         else
           ! (within search sphere)
           call kdtree_count_nearest_n_neighbors(xyz_target,r_search,num_elem_local)
+        endif
+
+        ! checks that at least a single element was choosen
+        if (iproc == myrank) then
+          if (num_elem_local < 1) stop 'Error no local search element found'
         endif
 
         ! sets n-search number of nodes
@@ -659,8 +667,8 @@ program smooth_sem_globe
             deallocate(ispec_flag)
           endif
         endif
-
       else
+        ! brute-force search always loops over whole mesh slice
         num_elem_local = NSPEC_AB
       endif
 

@@ -196,10 +196,12 @@ xdifference_sem_OBJECTS = \
 
 xdifference_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/parallel.sharedmpi.o \
+	$O/exit_mpi.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xdifference_sem: $(xdifference_sem_OBJECTS) $(xdifference_sem_SHARED_OBJECTS)
-	${FCCOMPILE_CHECK} -o $@ $+
+	${MPIFCCOMPILE_CHECK} -o $@ $+
 
 ##
 ## xinterpolate_model

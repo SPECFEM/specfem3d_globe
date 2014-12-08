@@ -105,7 +105,7 @@
   logical,parameter :: DO_SEPARATION_TOPO = .true.
 
   ! use closest point value in case of large differences
-  logical,parameter :: USE_FALLBACK = .false.
+  logical,parameter :: USE_FALLBACK = .true.
 
   !-------------------------------------------------------------------
 
@@ -1020,8 +1020,7 @@
         do iker = 1,nparams
           call interpolate(xi,eta,gamma,ispec_selected, &
                            nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
-                           val, &
-                           xigll,yigll,zigll)
+                           val,xigll,yigll,zigll)
 
           ! sets new model value
           model2(i,j,k,ispec,iker) = val
@@ -1350,20 +1349,9 @@
 
         ! interpolate model values
         do iker = 1,nparams
-          call interpolate(xi,eta,gamma,ispec_selected, &
-                           nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
-                           val,xigll,yigll,zigll)
-
-          ! note: interpolation of values close to the surface or 3D moho encounters problems;
-          !       this is a fall-back to the closest point value
-          !
-          ! uses closest point value if too far off (by more than 5%)
-          if (USE_FALLBACK) then
-            val_initial = model1(i_selected,j_selected,k_selected,ispec_selected,iker,rank_selected)
-            if (abs(val - val_initial ) > abs( 0.05 * val_initial ) ) then
-              val = val_initial
-            endif
-          endif
+          call interpolate_limited(xi,eta,gamma,i_selected,j_selected,k_selected,ispec_selected, &
+                                   nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
+                                   val,xigll,yigll,zigll,USE_FALLBACK)
 
           ! sets new model value
           model2(i,j,k,ispec,iker) = val
@@ -1866,11 +1854,9 @@
 !------------------------------------------------------------------------------
 !
 
-  subroutine interpolate(xi,eta,gamma, &
-                         ielem, &
+  subroutine interpolate(xi,eta,gamma,ielem, &
                          nspec,model, &
-                         val, &
-                         xigll,yigll,zigll)
+                         val,xigll,yigll,zigll)
 
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
@@ -1911,4 +1897,83 @@
   enddo
 
   end subroutine interpolate
+
+!
+!------------------------------------------------------------------------------
+!
+
+  subroutine interpolate_limited(xi,eta,gamma, &
+                                 i_selected,j_selected,k_selected,ielem, &
+                                 nspec,model, &
+                                 val, &
+                                 xigll,yigll,zigll,USE_FALLBACK)
+
+
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  double precision,intent(in):: xi,eta,gamma
+  integer,intent(in):: i_selected,j_selected,k_selected,ielem
+
+  integer,intent(in):: nspec
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
+
+  real(kind=CUSTOM_REAL),intent(out) :: val
+
+  ! Gauss-Lobatto-Legendre points of integration and weights
+  double precision, dimension(NGLLX),intent(in) :: xigll
+  double precision, dimension(NGLLY),intent(in) :: yigll
+  double precision, dimension(NGLLZ),intent(in) :: zigll
+
+  logical,intent(in) :: USE_FALLBACK
+
+  ! local parameters
+  double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
+                      hgammar(NGLLZ), hpgammar(NGLLZ)
+  integer:: i,j,k
+  real(kind=CUSTOM_REAL) :: val_initial,val_avg,pert,pert_limit
+
+  ! percentage
+  real(kind=CUSTOM_REAL), parameter :: PERCENTAGE_LIMIT = 0.05
+
+  ! interpolation weights
+  call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
+  call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
+  call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
+
+  ! interpolates value
+  val = 0.0_CUSTOM_REAL
+  do k = 1, NGLLZ
+    do j = 1, NGLLY
+      do i = 1, NGLLX
+          val = val +  hxir(i) * hetar(j) * hgammar(k) * model(i,j,k,ielem)
+      enddo
+    enddo
+  enddo
+
+  ! note: interpolation of values close to the surface or 3D moho encounters problems;
+  !       this is a fall-back to the closest point value
+  !
+  ! uses average/closest point value if too far off (by more than 5%)
+  if (USE_FALLBACK) then
+    ! average value
+    val_avg = sum(model(:,:,:,ielem)) / NGLLX / NGLLY / NGLLZ
+    ! closest point value
+    val_initial = model(i_selected,j_selected,k_selected,ielem)
+
+    ! initial difference
+    pert = abs(val_initial - val_avg)
+
+    ! upper/lower perturbation bound
+    pert_limit = PERCENTAGE_LIMIT * abs(val_avg)
+    if (pert > pert_limit) pert_limit = pert
+
+    ! within a certain percentage range
+    if (abs(val - val_avg ) > pert_limit) then
+      val = val_initial
+    endif
+  endif
+
+  end subroutine interpolate_limited
 
