@@ -26,16 +26,16 @@
 !=====================================================================
 
 !------------------------------------------------------------------------------------------------
-! difference_sem
+! addition_sem
 !
 ! this runs in parallel, please submit as parallel job.
-! takes the difference between proc***.bin from two different input directories
+! adds two proc***.bin files from two different input directories
 !
-! usage: mpirun -np * ./xdifference_sem filename INPUT_dir_1/ INPUT_dir_2/ OUTPUT_DIR/ [region]
+! usage: mpirun -np * ./xaddition_sem filename INPUT_dir_1/ INPUT_dir_2/ OUTPUT_DIR/ [region]
 !
 !------------------------------------------------------------------------------------------------
 
-program difference_sem
+program addition_sem
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT,MAX_STRING_LEN
 
@@ -72,7 +72,7 @@ program difference_sem
       print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
       print*, 'Error number of MPI processors actually run on: ',sizeprocs
       print*
-      print*, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xdifference_sem .. '
+      print*, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xaddition_sem .. '
     endif
     call exit_MPI(myrank,'Error wrong number of MPI processes')
   endif
@@ -85,14 +85,14 @@ program difference_sem
     if (i <= 4 .and. trim(arg(i)) == '') then
       if (myrank == 0) then
         print *, ' '
-        print *, ' Usage: difference_sem kernel_name input1_dir/ input2_dir/ output_dir/ [region]'
+        print *, ' Usage: addition_sem kernel_name input1_dir/ input2_dir/ output_dir/ [region]'
         print *, ' '
         print *, ' with'
         print *, '   kernel_name   - takes files with this kernel name'
         print *, '                     e.g. "vsv" for proc***_reg1_vsv.bin'
         print *, '   input1_dir/   - input directory for first files'
         print *, '   input2_dir/   - input directory for second files'
-        print *, '   output_dir/   - output directory for (first - second) file values'
+        print *, '   output_dir/   - output directory for (first + second) file values'
         print *, '   [region]      - optional: if region (1/2/3) is not specified, all 3 regions will be taken,'
         print *, '                             otherwise, only takes region specified'
         print *, ' '
@@ -138,7 +138,7 @@ program difference_sem
 
   ! user output
   if (myrank == 0) then
-    write(*,*) 'differencing files: ',sizeprocs,' slices'
+    write(*,*) 'adding files: ',sizeprocs,' slices'
     write(*,*)
     write(*,*) 'kernel name: ',trim(kernel_name)
     write(*,*) 'input 1 directory: ',trim(input1dir)
@@ -205,11 +205,11 @@ program difference_sem
       write(*,*)
     endif
 
-    ! stores difference between kernel files
-    if (myrank == 0) write(*,*) '  difference: (data_1 - data_2)'
+    ! stores sum between kernel files
+    if (myrank == 0) write(*,*) '  addition: (data_1 + data_2)'
 
     ! absolute values
-    write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_diff.bin'
+    write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_add.bin'
     if (myrank == 0) write(*,*) '  file: ',trim(file1name)
     open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
     if (ier /= 0 ) then
@@ -217,8 +217,8 @@ program difference_sem
       stop 'Error opening output data file'
     endif
 
-    ! takes the difference
-    sem_data(:,:,:,1:nspec) = sem_data(:,:,:,1:nspec) - sem_data_2(:,:,:,1:nspec)
+    ! takes the sums
+    sem_data(:,:,:,1:nspec) = sem_data(:,:,:,1:nspec) + sem_data_2(:,:,:,1:nspec)
 
     write(IOUT) sem_data(:,:,:,1:nspec)
     close(IOUT)
@@ -229,8 +229,8 @@ program difference_sem
     call min_all_cr(min,min_all)
     call max_all_cr(max,max_all)
 
-    ! stores relative difference (k1 - k2)/ k2 with respect to second input file
-    write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_diff_relative.bin'
+    ! stores relative addition (k1 + k2)/ k2 with respect to second input file
+    write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_add_relative.bin'
     if (myrank == 0) write(*,*) '  file: ',trim(file1name)
     open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
     if (ier /= 0 ) then
@@ -238,7 +238,7 @@ program difference_sem
       stop 'Error opening output data file'
     endif
 
-    ! relative difference (k1 - k2)/ k2 with respect to second input file
+    ! relative addition (k1 + k2)/ k2 with respect to second input file
     where( sem_data_2(:,:,:,1:nspec) /= 0.0_CUSTOM_REAL)
       sem_data(:,:,:,1:nspec) = sem_data(:,:,:,1:nspec) / sem_data_2(:,:,:,1:nspec)
     elsewhere
@@ -270,7 +270,7 @@ program difference_sem
     write(*,*) '  total min/max         : ',min_all,max_all
     write(*,*) '  total relative min/max: ',min_rel_all,max_rel_all
     write(*,*)
-    write(*,*) 'done writing all difference and relative difference files'
+    write(*,*) 'done writing all additions and relative addition files'
     write(*,*) 'see output directory: ',trim(outputdir)
     write(*,*)
   endif
@@ -278,6 +278,6 @@ program difference_sem
   ! stop all the MPI processes, and exit
   call finalize_mpi()
 
-end program difference_sem
+end program addition_sem
 
 

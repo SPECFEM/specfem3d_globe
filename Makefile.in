@@ -301,6 +301,8 @@ endif
 	@echo "    xadd_model_tiso"
 	@echo "    xadd_model_tiso_cg"
 	@echo "    xadd_model_tiso_iso"
+	@echo "    xaddition_sem"
+	@echo "    xdifference_sem"
 	@echo "    xinterpolate_model"
 	@echo "    xsmooth_sem"
 	@echo "    xsum_kernels"
