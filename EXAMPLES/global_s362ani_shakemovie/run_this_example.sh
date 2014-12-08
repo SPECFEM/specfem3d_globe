@@ -36,12 +36,8 @@ rm -rf OUTPUT_FILES/*
 # using default configuration
 
 cd $rootdir
-# configures package with ifort compiler
-#./configure F90=ifort MPIF90=mpif90 FLAGS_CHECK="-O3 -assume byterecl" FLAGS_NO_CHECK="-O3 -assume byterecl"
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
-make clean
-make 
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
