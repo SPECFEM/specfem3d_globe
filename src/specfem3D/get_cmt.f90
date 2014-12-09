@@ -29,7 +29,9 @@
                      DT,NSOURCES,min_tshift_cmt_original)
 
   use constants,only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
-    RHOAV,R_EARTH,PI,GRAV,TINYVAL, MAX_STRING_LEN,NUMBER_OF_SIMULTANEOUS_RUNS,mygroup
+    RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
+
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 

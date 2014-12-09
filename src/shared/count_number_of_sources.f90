@@ -31,6 +31,7 @@
 ! there are NLINES_PER_CMTSOLUTION_SOURCE lines per source in that file
 
   use constants
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 

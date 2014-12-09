@@ -120,6 +120,10 @@
   logical :: SAVE_REGULAR_KL,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY, &
              APPROXIMATE_HESS_KL,USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
 
+  ! for simultaneous runs from the same batch job
+  integer :: NUMBER_OF_SIMULTANEOUS_RUNS
+  logical :: BROADCAST_SAME_MESH_AND_MODEL
+
   ! GPU simulations
   logical :: GPU_MODE
   integer :: GPU_RUNTIME

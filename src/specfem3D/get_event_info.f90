@@ -116,6 +116,7 @@
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
   use constants
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
