@@ -101,7 +101,9 @@ program smooth_sem_globe
 
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) :: sigma_h, sigma_h2, sigma_h3, sigma_v, sigma_v2, sigma_v3
-  real(kind=CUSTOM_REAL) :: x0, y0, z0, norm, norm_h, norm_v, element_size_m, max_old, max_new
+  real(kind=CUSTOM_REAL) :: x0, y0, z0, norm, norm_h, norm_v, element_size_m
+  real(kind=CUSTOM_REAL) :: max_old, max_new, min_old, min_new
+  real(kind=CUSTOM_REAL) :: max_old_all, max_new_all, min_old_all, min_new_all
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: exp_val
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: factor
@@ -160,8 +162,8 @@ program smooth_sem_globe
 
   ! debugging
   logical, parameter :: DEBUG = .false.
-  ! boundary point: 910, interior point: 2382
-  integer ,parameter :: tmp_ispec_dbg = 10
+  ! boundary point: 910, interior point: 2382, surface point: 5128
+  integer ,parameter :: tmp_ispec_dbg = 5128
 
   !------------------------------------------------------------------------------------------
 
@@ -267,9 +269,11 @@ program smooth_sem_globe
   if (sigma_h2 < 1.e-18) stop 'Error sigma_h2 zero, must be non-zero'
   if (sigma_v2 < 1.e-18) stop 'Error sigma_v2 zero, must be non-zero'
 
-  ! search radius
-  sigma_h3 = 3.0  * sigma_h + element_size_m
-  sigma_v3 = 3.0  * sigma_v + element_size_m
+  ! search radius 
+  ! note: crust/mantle region has at least 2 doubling layers, we enlarge the search radius according to element size at CMB;
+  !       we always smooth among several elements, thus jumps at discontinuities will get averaged
+  sigma_h3 = 3.0  * sigma_h + 4.0 * element_size_m
+  sigma_v3 = 3.0  * sigma_v + 4.0 * element_size_m
 
   if (.not. DO_BRUTE_FORCE_SEARCH) then
     ! kd-tree search uses a slightly larger constant search radius
@@ -288,8 +292,8 @@ program smooth_sem_globe
 !          and vertical distance as radial distance?
 
 ! not squared since epicentral distance is taken? values from bk seem to be closer to squared ones...
-  !norm_h = sqrt(2.0*PI) * sigma_h
-  norm_h = 2.0*PI*sigma_h**2
+  norm_h = sqrt(2.0*PI) * sigma_h
+  norm_h = norm_h * norm_h ! squared since 2 horizontal directions
   norm_v = sqrt(2.0*PI) * sigma_v
   norm   = norm_h * norm_v
   !norm = (sqrt(2.0*PI) * sigma) ** 3 ! for sigma_h = sigma_v = sigma
@@ -457,6 +461,7 @@ program smooth_sem_globe
   ! synchronizes
   call synchronize_all()
 
+  ! initializes
   tk(:,:,:,:) = 0.0_CUSTOM_REAL
   bk(:,:,:,:) = 0.0_CUSTOM_REAL
 
@@ -477,73 +482,85 @@ program smooth_sem_globe
       tmp_bk(:,:,:,:) = 0.0_CUSTOM_REAL
     endif
 
-    ! neighbor database file
-    write(prname_lp,'(a,i6.6,a)') trim(topo_dir)//'/proc',iproc,trim(reg_name)//'solver_data.bin'
+    ! sets up mesh locations
+    if (iproc == myrank) then
+      ! element centers
+      cx(:) = cx0(:)
+      cy(:) = cy0(:)
+      cz(:) = cz0(:)
+      ! locations
+      xx(:,:,:,:) = xx0(:,:,:,:)
+      yy(:,:,:,:) = yy0(:,:,:,:)
+      zz(:,:,:,:) = zz0(:,:,:,:)
+    else
+      ! neighbor database file
+      write(prname_lp,'(a,i6.6,a)') trim(topo_dir)//'/proc',iproc,trim(reg_name)//'solver_data.bin'
 
-    ! read in the topology, kernel files, calculate center of elements
-    ! point locations
-    ! given in cartesian coordinates
-    open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
-    if (ier /= 0) then
-      print*,'Error could not open database file: ',trim(prname_lp)
-      call exit_mpi(myrank,'Error opening slices in solver_data.bin file')
-    endif
+      ! read in the topology, kernel files, calculate center of elements
+      ! point locations
+      ! given in cartesian coordinates
+      open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
+      if (ier /= 0) then
+        print*,'Error could not open database file: ',trim(prname_lp)
+        call exit_mpi(myrank,'Error opening slices in solver_data.bin file')
+      endif
 
-    read(IIN) ival  ! nspec
-    read(IIN) ival  ! nglob
-    read(IIN) xstore
-    read(IIN) ystore
-    read(IIN) zstore
+      read(IIN) ival  ! nspec
+      read(IIN) ival  ! nglob
+      read(IIN) xstore
+      read(IIN) ystore
+      read(IIN) zstore
 
-    read(IIN) ibool
-    read(IIN) idoubling
-    read(IIN) ispec_is_tiso
+      read(IIN) ibool
+      read(IIN) idoubling
+      read(IIN) ispec_is_tiso
 
-    read(IIN) xix
-    read(IIN) xiy
-    read(IIN) xiz
-    read(IIN) etax
-    read(IIN) etay
-    read(IIN) etaz
-    read(IIN) gammax
-    read(IIN) gammay
-    read(IIN) gammaz
-    close(IIN)
+      read(IIN) xix
+      read(IIN) xiy
+      read(IIN) xiz
+      read(IIN) etax
+      read(IIN) etay
+      read(IIN) etaz
+      read(IIN) gammax
+      read(IIN) gammay
+      read(IIN) gammaz
+      close(IIN)
 
-    ! get the location of the center of the elements
-    do ispec = 1, NSPEC_AB
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            iglob = ibool(i,j,k,ispec)
-            xx(i,j,k,ispec) = xstore(iglob)
-            yy(i,j,k,ispec) = ystore(iglob)
-            zz(i,j,k,ispec) = zstore(iglob)
+      ! get the location of the center of the elements
+      do ispec = 1, NSPEC_AB
+        do k = 1, NGLLZ
+          do j = 1, NGLLY
+            do i = 1, NGLLX
+              iglob = ibool(i,j,k,ispec)
+              xx(i,j,k,ispec) = xstore(iglob)
+              yy(i,j,k,ispec) = ystore(iglob)
+              zz(i,j,k,ispec) = zstore(iglob)
 
-            ! build jacobian
-            ! get derivatives of ux, uy and uz with respect to x, y and z
-            xixl = xix(i,j,k,ispec)
-            xiyl = xiy(i,j,k,ispec)
-            xizl = xiz(i,j,k,ispec)
-            etaxl = etax(i,j,k,ispec)
-            etayl = etay(i,j,k,ispec)
-            etazl = etaz(i,j,k,ispec)
-            gammaxl = gammax(i,j,k,ispec)
-            gammayl = gammay(i,j,k,ispec)
-            gammazl = gammaz(i,j,k,ispec)
-            ! compute the jacobian
-            jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                          - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                          + xizl*(etaxl*gammayl-etayl*gammaxl))
-            jacobian(i,j,k,ispec) = jacobianl
+              ! build jacobian
+              ! get derivatives of ux, uy and uz with respect to x, y and z
+              xixl = xix(i,j,k,ispec)
+              xiyl = xiy(i,j,k,ispec)
+              xizl = xiz(i,j,k,ispec)
+              etaxl = etax(i,j,k,ispec)
+              etayl = etay(i,j,k,ispec)
+              etazl = etaz(i,j,k,ispec)
+              gammaxl = gammax(i,j,k,ispec)
+              gammayl = gammay(i,j,k,ispec)
+              gammazl = gammaz(i,j,k,ispec)
+              ! compute the jacobian
+              jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                            - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                            + xizl*(etaxl*gammayl-etayl*gammaxl))
+              jacobian(i,j,k,ispec) = jacobianl
+            enddo
           enddo
         enddo
+        ! calculate element center location
+        cx(ispec) = (xx(1,1,1,ispec) + xx(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+        cy(ispec) = (yy(1,1,1,ispec) + yy(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
+        cz(ispec) = (zz(1,1,1,ispec) + zz(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
       enddo
-      ! calculate element center location
-      cx(ispec) = (xx(1,1,1,ispec) + xx(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
-      cy(ispec) = (yy(1,1,1,ispec) + yy(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
-      cz(ispec) = (zz(1,1,1,ispec) + zz(NGLLX,NGLLY,NGLLZ,ispec)) * 0.5_CUSTOM_REAL
-    enddo
+    endif
 
     ! user output
     if (myrank == 0) print*,'  reading data file:',iproc,trim(kernel_filename)
@@ -560,9 +577,13 @@ program smooth_sem_globe
 
     read(IIN) kernel
     close(IIN)
-    ! get the global maximum value of the original kernel file
-    if (iproc == myrank) max_old = maxval(abs(kernel))
 
+    ! statistics
+    ! get the global maximum value of the original kernel file
+    if (iproc == myrank) then
+      min_old = minval(kernel)
+      max_old = maxval(kernel)
+    endif
     if (myrank == 0) print*
 
     ! search setup
@@ -688,7 +709,7 @@ program smooth_sem_globe
           ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
 
           ! checks distance between centers of elements
-          if ( dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+          if ( dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
         else
           ! brute-force search
           ! takes only elements in search radius
@@ -700,7 +721,7 @@ program smooth_sem_globe
           ! note: distances and sigmah, sigmav are normalized by R_EARTH_KM
 
           ! checks distance between centers of elements
-          if ( dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+          if ( dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
         endif
 
         ! integration factors:
@@ -726,8 +747,11 @@ program smooth_sem_globe
 
               ! debug
               if (DEBUG .and. myrank == 0) then
-                if (i == 3 .and. j == 3 .and. k == 3 .and. ispec == tmp_ispec_dbg) then
+                if (i == 2 .and. j == 3 .and. k == 4 .and. ispec == tmp_ispec_dbg) then
                   tmp_bk(:,:,:,ispec2) = exp_val(:,:,:)
+                  print*,'debug',myrank,'ispec',ispec,'ispec2',ispec2,'dist:',dist_h,dist_v
+                  print*,'debug exp',minval(exp_val),maxval(exp_val)
+                  print*,'debug kernel',minval(kernel(:,:,:,ispec2)),maxval(kernel(:,:,:,ispec2))
                 endif
               endif
 
@@ -804,8 +828,11 @@ program smooth_sem_globe
 
   ! normalizes/scaling factor
   if (myrank == 0) then
-    print*, 'Scaling values: min/max = ',minval(bk),maxval(bk)
-    print*, '                norm    = ',norm
+    print*, 'Scaling values:'
+    print*, '  tk min/max = ',minval(tk),maxval(tk)
+    print*, '  bk min/max = ',minval(bk),maxval(bk)
+    print*, '  theoretical norm = ',norm
+    print*
   endif
 
   ! compute the smoothed kernel values
@@ -819,13 +846,19 @@ program smooth_sem_globe
           ! e.g. sigma_h 160km, sigma_v 40km:
           !     norm (not squared sigma_h ) ~ 0.001
           !     norm ( squared sigma_h) ~ 6.23 * e-5
-          if (abs(bk(i,j,k,ispec) - norm) > 1.e-4 ) then
-            print *, 'Problem norm here --- ', myrank, ispec, i, j, k, bk(i,j,k,ispec), norm
-            !call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
-          endif
+          !if (abs(bk(i,j,k,ispec) - norm) > 1.e-4 ) then
+          !  print *, 'Problem norm here --- ', myrank, ispec, i, j, k, bk(i,j,k,ispec), norm
+          !  !call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
+          !endif
+
+          !debug
+          !if (tk(i,j,k,ispec) == 0.0_CUSTOM_REAL .and. myrank == 0) then
+          !  print*,myrank,'zero tk: ',i,j,k,ispec,'tk:',tk(i,j,k,ispec),'bk:',bk(i,j,k,ispec)
+          !endif
+
 
           ! avoids division by zero
-          !if (bk(i,j,k,ispec) == 0.0_CUSTOM_REAL) bk(i,j,k,ispec) = 1.0_CUSTOM_REAL
+          if (bk(i,j,k,ispec) == 0.0_CUSTOM_REAL) bk(i,j,k,ispec) = 1.0_CUSTOM_REAL
 
           ! normalizes smoothed kernel values by integral value of gaussian weighting
           kernel_smooth(i,j,k,ispec) = tk(i,j,k,ispec) / bk(i,j,k,ispec)
@@ -835,7 +868,7 @@ program smooth_sem_globe
             print*,'Error kernel_smooth value not a number: ',kernel_smooth(i,j,k,ispec)
             print*,'rank:',myrank
             print*,'i,j,k,ispec:',i,j,k,ispec
-            print*,'tk: ',tk(i,j,k,ispec),'bk:',bk(i,j,k,ispec)
+            print*,'tk: ',tk(i,j,k,ispec),'bk:',bk(i,j,k,ispec),'norm:',norm
             call exit_mpi(myrank, 'Error kernel value is NaN')
           endif
         enddo
@@ -843,7 +876,9 @@ program smooth_sem_globe
     enddo
   enddo
 
-  max_new = maxval(abs(kernel_smooth))
+  ! statistics
+  min_new = minval(kernel_smooth)
+  max_new = maxval(kernel_smooth)
 
   ! file output
   ! smoothed kernel file name
@@ -861,15 +896,19 @@ program smooth_sem_globe
   ! synchronizes
   call synchronize_all()
 
-  ! the maximum value for the smoothed kernel
-  norm = max_old
-  call max_all_cr(norm, max_old)
-  norm = max_new
-  call max_all_cr(norm, max_new)
+  ! the minimum/maximum value for the smoothed kernel
+  call min_all_cr(min_old, min_old_all)
+  call min_all_cr(min_new, min_new_all)
+  call max_all_cr(max_old, max_old_all)
+  call max_all_cr(max_new, max_new_all)
+
   if (myrank == 0) then
     print *
-    print *, 'Maximum data value before smoothing = ', max_old
-    print *, 'Maximum data value after smoothing  = ', max_new
+    print *, 'Minimum data value before smoothing = ', min_old_all
+    print *, 'Minimum data value after smoothing  = ', min_new_all
+    print *
+    print *, 'Maximum data value before smoothing = ', max_old_all
+    print *, 'Maximum data value after smoothing  = ', max_new_all
     print *
   endif
 

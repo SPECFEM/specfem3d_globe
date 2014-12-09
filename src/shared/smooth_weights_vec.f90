@@ -38,7 +38,6 @@
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: exp_val
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: xx_elem, yy_elem, zz_elem
   real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,sigma_h2,sigma_v2
-  !integer,intent(in) :: ispec2
 
   ! local parameters
   integer :: ii,jj,kk
@@ -46,6 +45,9 @@
   real(kind=CUSTOM_REAL) :: r0,r1
   real(kind=CUSTOM_REAL) :: theta,ratio
   real(kind=CUSTOM_REAL) :: x1,y1,z1
+
+  ! explicit initialization
+  !exp_val(:,:,:) = 0.0_CUSTOM_REAL
 
   ! >>>>>
   ! uniform sigma
@@ -96,6 +98,10 @@
         ! Gaussian function
         exp_val(ii,jj,kk) = exp( - dist_h/sigma_h2 - dist_v/sigma_v2 )    ! * factor(ii,jj,kk)
 
+        ! debug
+        !if (debug) then
+        !  print*,ii,jj,kk,'smoothing:',dist_v,dist_h,sigma_h2,sigma_v2,ratio,theta,'val',- dist_h/sigma_h2 - dist_v/sigma_v2
+        !endif
       enddo
     enddo
   enddo
@@ -126,7 +132,7 @@
   ! vertical distance
   r0 = sqrt( x0*x0 + y0*y0 + z0*z0 ) ! length of first position vector
   r1 = sqrt( x1*x1 + y1*y1 + z1*z1 )
-  dist_v = r1 - r0
+  dist_v = abs(r1 - r0)
 
   ! only for flat earth with z in depth: dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
 

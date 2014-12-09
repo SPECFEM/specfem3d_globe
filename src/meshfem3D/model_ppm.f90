@@ -906,7 +906,7 @@
         ! note: distances and sigmah, sigmav are normalized by R_EARTH
 
         ! checks distance between centers of elements
-        if (dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+        if (dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
 
         factor(:,:,:) = jacobian(:,:,:,ispec2) * wgll_cube(:,:,:) ! integration factors
 
