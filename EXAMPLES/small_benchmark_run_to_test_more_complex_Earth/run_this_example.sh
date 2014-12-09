@@ -1,20 +1,14 @@
 #!/bin/bash
 #
-# regional simulation example
+# The script runs mesher and solver on 24 CPUs at long period, i.e. the benchmark is cheap.
+# It does validate a lot of things though.
 #
-# script runs mesher and solver using mpirun
-# on 4 CPUs
-#
-# synthetics have an approximate shortest period ~ 15 s
-#
-# modify accordingly for your own system specifics
 ##################################################
 
 echo "running example: `date`"
 currentdir=`pwd`
 
 echo "directory: $currentdir"
-echo "(will take about 15 minutes)"
 echo
 
 # sets up directory structure in current example directoy

@@ -1,13 +1,11 @@
 #!/bin/bash
 
 ###########################################################
-# USER PARAMETERS
 
 ## CPUs 
 CPUs=24
 
 ###########################################################
-
 
 BASEMPIDIR=`grep LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
 
