@@ -34,6 +34,8 @@ cd ../../
 
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
+make clean
+make all
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
