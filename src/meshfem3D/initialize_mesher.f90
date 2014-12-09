@@ -49,13 +49,10 @@
   OUTPUT_FILES = 'OUTPUT_FILES'
 
 ! open main output file, only written to by process 0
-  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) &
-    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_mesher.txt',status='unknown')
-
-! get MPI starting time
-  time_start = wtime()
-
   if (myrank == 0) then
+    if (IMAIN /= ISTANDARD_OUTPUT) &
+      open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_mesher.txt',status='unknown')
+
     write(IMAIN,*)
     write(IMAIN,*) '****************************'
     write(IMAIN,*) '*** Specfem3D MPI Mesher ***'
@@ -63,6 +60,9 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+! get MPI starting time
+  time_start = wtime()
 
   if (myrank == 0) then
     ! reads the parameter file and computes additional parameters
