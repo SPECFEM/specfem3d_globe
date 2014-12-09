@@ -45,6 +45,22 @@
   call world_size(sizeprocs)
   call world_rank(myrank)
 
+  ! open main output file, only written to by process 0
+  if (myrank == 0) then
+    if (IMAIN /= ISTANDARD_OUTPUT) then
+      open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write',iostat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_solver.txt for writing output info')
+    endif
+
+    write(IMAIN,*)
+    write(IMAIN,*) '******************************'
+    write(IMAIN,*) '**** Specfem3D MPI Solver ****'
+    write(IMAIN,*) '******************************'
+    write(IMAIN,*)
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
 !! DK DK for Roland_Sylvain
   if (ROLAND_SYLVAIN) call exit_MPI(myrank,'no need to run the solver to compute Roland_Sylvain integrals, only the mesher')
 
@@ -78,20 +94,7 @@
   ! See world split -> parallel.f90
   ! OUTPUT_FILES = 'OUTPUT_FILES'
 
-  ! open main output file, only written to by process 0
-  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
-    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_solver.txt for writing output info')
-  endif
-
   if (myrank == 0) then
-
-    write(IMAIN,*)
-    write(IMAIN,*) '******************************'
-    write(IMAIN,*) '**** Specfem3D MPI Solver ****'
-    write(IMAIN,*) '******************************'
-    write(IMAIN,*)
-    write(IMAIN,*)
 
     if (FIX_UNDERFLOW_PROBLEM) write(IMAIN,*) 'Fixing slow underflow trapping problem using small initial field'
 
