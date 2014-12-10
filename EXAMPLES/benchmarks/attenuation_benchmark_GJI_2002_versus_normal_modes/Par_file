@@ -225,7 +225,7 @@ SAVE_REGULAR_KL                 = .false.
 # When that option is on, of course the number of processor cores used to start
 # the code in the batch system must be a multiple of NUMBER_OF_SIMULTANEOUS_RUNS,
 # all the individual runs must use the same number of processor cores,
-# which as usual is NPROC in the input file DATA/Par_file,
+# which as usual is NPROC in the Par_file,
 # and thus the total number of processor cores to request from the batch system
 # should be NUMBER_OF_SIMULTANEOUS_RUNS * NPROC.
 # All the runs to perform must be placed in directories called run0001, run0002, run0003 and so on
