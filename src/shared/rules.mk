@@ -131,7 +131,7 @@ $O/%.shared.o: $S/%.f90 $O/shared_par.shared_module.o
 $O/%.shared.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-$O/%.sharedmpi.o: $S/%.f90 $O/shared_par.shared_module.o
+$O/%.sharedmpi.o: $S/%.f90 $O/shared_par.shared_module.o $O/read_parameter_file.shared.o $O/read_value_parameters.shared.o
 	${MPIFCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 ## adios

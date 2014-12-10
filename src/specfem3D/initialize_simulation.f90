@@ -78,7 +78,7 @@
     endif
   endif
 
-  ! distributes parameters from master to all processes
+  ! broadcast parameters read from master to all processes
   call broadcast_computed_parameters(myrank)
 
   ! check that the code is running with the requested nb of processes

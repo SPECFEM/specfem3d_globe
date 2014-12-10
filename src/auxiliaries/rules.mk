@@ -182,6 +182,9 @@ xcombine_vol_data_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
@@ -206,6 +209,9 @@ xcombine_vol_data_adios_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
@@ -231,6 +237,9 @@ xcombine_vol_data_vtk_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
@@ -255,6 +264,9 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
