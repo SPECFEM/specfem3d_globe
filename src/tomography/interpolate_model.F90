@@ -1349,9 +1349,16 @@
 
         ! interpolate model values
         do iker = 1,nparams
-          call interpolate_limited(xi,eta,gamma,i_selected,j_selected,k_selected,ispec_selected, &
-                                   nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
-                                   val,xigll,yigll,zigll,USE_FALLBACK)
+          if (USE_FALLBACK) then
+            call interpolate_limited(xi,eta,gamma,ispec_selected, &
+                                     nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
+                                     val,xigll,yigll,zigll, &
+                                     i_selected,j_selected,k_selected)
+          else
+            call interpolate(xi,eta,gamma,ispec_selected, &
+                             nspec_max_old,model1(:,:,:,:,iker,rank_selected), &
+                             val,xigll,yigll,zigll)
+          endif
 
           ! sets new model value
           model2(i,j,k,ispec,iker) = val
@@ -1902,11 +1909,10 @@
 !------------------------------------------------------------------------------
 !
 
-  subroutine interpolate_limited(xi,eta,gamma, &
-                                 i_selected,j_selected,k_selected,ielem, &
+  subroutine interpolate_limited(xi,eta,gamma,ielem, &
                                  nspec,model, &
-                                 val, &
-                                 xigll,yigll,zigll,USE_FALLBACK)
+                                 val,xigll,yigll,zigll, &
+                                 i_selected,j_selected,k_selected)
 
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
@@ -1914,7 +1920,7 @@
   implicit none
 
   double precision,intent(in):: xi,eta,gamma
-  integer,intent(in):: i_selected,j_selected,k_selected,ielem
+  integer,intent(in):: ielem
 
   integer,intent(in):: nspec
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
@@ -1926,7 +1932,7 @@
   double precision, dimension(NGLLY),intent(in) :: yigll
   double precision, dimension(NGLLZ),intent(in) :: zigll
 
-  logical,intent(in) :: USE_FALLBACK
+  integer,intent(in):: i_selected,j_selected,k_selected
 
   ! local parameters
   double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
@@ -1935,7 +1941,7 @@
   real(kind=CUSTOM_REAL) :: val_initial,val_avg,pert,pert_limit
 
   ! percentage
-  real(kind=CUSTOM_REAL), parameter :: PERCENTAGE_LIMIT = 0.05
+  real(kind=CUSTOM_REAL), parameter :: PERCENTAGE_LIMIT = 0.01
 
   ! interpolation weights
   call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
@@ -1947,7 +1953,7 @@
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
-          val = val +  hxir(i) * hetar(j) * hgammar(k) * model(i,j,k,ielem)
+        val = val + hxir(i) * hetar(j) * hgammar(k) * model(i,j,k,ielem)
       enddo
     enddo
   enddo
@@ -1955,24 +1961,24 @@
   ! note: interpolation of values close to the surface or 3D moho encounters problems;
   !       this is a fall-back to the closest point value
   !
-  ! uses average/closest point value if too far off (by more than 5%)
-  if (USE_FALLBACK) then
-    ! average value
-    val_avg = sum(model(:,:,:,ielem)) / NGLLX / NGLLY / NGLLZ
-    ! closest point value
-    val_initial = model(i_selected,j_selected,k_selected,ielem)
+  ! uses average/closest point value if too far off
 
-    ! initial difference
-    pert = abs(val_initial - val_avg)
+  ! closest point value
+  val_initial = model(i_selected,j_selected,k_selected,ielem)
 
-    ! upper/lower perturbation bound
-    pert_limit = PERCENTAGE_LIMIT * abs(val_avg)
-    if (pert > pert_limit) pert_limit = pert
+  ! average value
+  val_avg = sum(model(:,:,:,ielem)) / NGLLX / NGLLY / NGLLZ
 
-    ! within a certain percentage range
-    if (abs(val - val_avg ) > pert_limit) then
-      val = val_initial
-    endif
+  ! initial difference
+  pert = abs(val_initial - val_avg)
+
+  ! upper/lower perturbation bound
+  pert_limit = PERCENTAGE_LIMIT * abs(val_avg)
+  if (pert > pert_limit) pert_limit = pert
+
+  ! within a certain percentage range
+  if (abs(val - val_avg ) > pert_limit) then
+    val = val_initial
   endif
 
   end subroutine interpolate_limited

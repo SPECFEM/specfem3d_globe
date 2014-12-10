@@ -152,7 +152,7 @@ program smooth_sem_globe
   ! USER PARAMETERS
 
   ! number of steps to reach 100 percent, i.e. 10 outputs info for every 10 percent
-  integer,parameter :: NSTEP_PERCENT_INFO = 10
+  integer,parameter :: NSTEP_PERCENT_INFO = 100
 
   ! brute-force search for neighboring elements, if set to .false. a kd-tree search will be used
   logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.

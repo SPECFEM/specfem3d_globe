@@ -25,13 +25,16 @@
 !
 !=====================================================================
 
+! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
+! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+#include "config.fh"
 
 
   subroutine smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
                                    xx_elem,yy_elem,zz_elem)
 
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE
 
   implicit none
 
@@ -40,14 +43,21 @@
   real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,sigma_h2,sigma_v2
 
   ! local parameters
-  integer :: ii,jj,kk
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
   real(kind=CUSTOM_REAL) :: r0,r1
   real(kind=CUSTOM_REAL) :: theta,ratio
   real(kind=CUSTOM_REAL) :: x1,y1,z1
+  real(kind=CUSTOM_REAL) :: sigma_h2_inv,sigma_v2_inv
+  real(kind=CUSTOM_REAL) :: val
 
-  ! explicit initialization
-  !exp_val(:,:,:) = 0.0_CUSTOM_REAL
+#ifdef FORCE_VECTORIZATION
+! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
+! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
+! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
 
   ! >>>>>
   ! uniform sigma
@@ -61,50 +71,68 @@
   !                      -(zz(:,:,:,ispec2)-z0)**2/(sigma_v2) ) * factor(:,:,:)
   ! >>>>>
 
-  do kk = 1, NGLLZ
-    do jj = 1, NGLLY
-      do ii = 1, NGLLX
-        ! point in second slice
+  ! helper variables
+  sigma_h2_inv = 1.0_CUSTOM_REAL / sigma_h2
+  sigma_v2_inv = 1.0_CUSTOM_REAL / sigma_v2
 
-        ! without explicit function calls to help compiler optimize loops
+  ! length of first position vector
+  r0 = sqrt( x0*x0 + y0*y0 + z0*z0 )
 
-        x1 = xx_elem(ii,jj,kk)
-        y1 = yy_elem(ii,jj,kk)
-        z1 = zz_elem(ii,jj,kk)
+  DO_LOOP_IJK
 
-        ! vertical distance (squared)
-        r0 = sqrt( x0*x0 + y0*y0 + z0*z0 ) ! length of first position vector
-        r1 = sqrt( x1*x1 + y1*y1 + z1*z1 )
-        dist_v = (r1 - r0)*(r1 - r0)
+    ! point in second slice
+    x1 = xx_elem(INDEX_IJK)
+    y1 = yy_elem(INDEX_IJK)
+    z1 = zz_elem(INDEX_IJK)
 
-        ! only for flat earth with z in depth: dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
+    ! without explicit function calls to help compiler optimize loops
 
-        ! epicentral distance
-        ! (accounting for spherical curvature)
-        ! calculates distance of circular segment
-        ! angle between r0 and r1 in radian
-        ! given by dot-product of two vectors
-        ratio = (x0*x1 + y0*y1 + z0*z1)/(r0 * r1)
+    ! length of position vector
+    r1 = sqrt( x1*x1 + y1*y1 + z1*z1 )
 
-        ! checks boundaries of ratio (due to numerical inaccuracies)
-        if (ratio > 1.0_CUSTOM_REAL) ratio = 1.0_CUSTOM_REAL
-        if (ratio < -1.0_CUSTOM_REAL) ratio = -1.0_CUSTOM_REAL
+    ! vertical distance (squared)
+    dist_v = (r1 - r0)*(r1 - r0)
 
-        theta = acos( ratio )
+    ! only for flat earth with z in depth: dist_v = sqrt( (cz(ispec2)-cz0(ispec))** 2)
 
-        ! segment length at heigth of r1 (squared)
-        dist_h = (r1 * theta)*(r1 * theta)
+    ! epicentral distance
+    ! (accounting for spherical curvature)
+    ! calculates distance of circular segment
+    ! angle between r0 and r1 in radian
+    ! given by dot-product of two vectors
+    ratio = (x0*x1 + y0*y1 + z0*z1) / (r0 * r1)
 
-        ! Gaussian function
-        exp_val(ii,jj,kk) = exp( - dist_h/sigma_h2 - dist_v/sigma_v2 )    ! * factor(ii,jj,kk)
+    ! checks boundaries of ratio (due to numerical inaccuracies)
+    if (ratio > 1.0_CUSTOM_REAL) then
+      ratio = 1.0_CUSTOM_REAL
+    else if (ratio < -1.0_CUSTOM_REAL) then
+      ratio = -1.0_CUSTOM_REAL
+    endif
 
-        ! debug
-        !if (debug) then
-        !  print*,ii,jj,kk,'smoothing:',dist_v,dist_h,sigma_h2,sigma_v2,ratio,theta,'val',- dist_h/sigma_h2 - dist_v/sigma_v2
-        !endif
-      enddo
-    enddo
-  enddo
+    theta = acos( ratio )
+
+    ! segment length at heigth of r1 (squared)
+    dist_h = (r1 * theta)*(r1 * theta)
+
+    ! Gaussian function
+    val = - dist_h*sigma_h2_inv - dist_v*sigma_v2_inv
+
+    !exp_val(i,j,k) = exp(val)    ! * factor(i,j,k)
+
+    ! limits to single precision
+    if (val < - 86.0) then
+      ! smaller than numerical precision: exp(-86) < 1.e-37
+      exp_val(INDEX_IJK) = 0.0_CUSTOM_REAL
+    else
+      exp_val(INDEX_IJK) = exp(val)    ! * factor(i,j,k)
+    endif
+
+    ! debug
+    !if (debug) then
+    !  print*,i,j,k,'smoothing:',dist_v,dist_h,sigma_h2,sigma_v2,ratio,theta,'val',- dist_h/sigma_h2 - dist_v/sigma_v2
+    !endif
+
+  ENDDO_LOOP_IJK
 
   end subroutine smoothing_weights_vec
 
