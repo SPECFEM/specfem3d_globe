@@ -78,7 +78,7 @@ end module my_mpi
   if (ier /= 0 ) stop 'Error initializing MPI'
 
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
-  ! read the parameter file and compute additional parameters
+  ! thus read the parameter file
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
   if (myrank == 0) call read_parameter_file()
   ! broadcast parameters read from master to all processes
