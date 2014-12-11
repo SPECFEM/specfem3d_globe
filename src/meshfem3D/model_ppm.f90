@@ -908,7 +908,8 @@
         ! checks distance between centers of elements
         if (dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
 
-        factor(:,:,:) = jacobian(:,:,:,ispec2) * wgll_cube(:,:,:) ! integration factors
+        ! integration factors
+        factor(:,:,:) = jacobian(:,:,:,ispec2) * wgll_cube(:,:,:)
 
         ! loop over GLL points of the elements in current slice (ispec)
         do k = 1, NGLLZ

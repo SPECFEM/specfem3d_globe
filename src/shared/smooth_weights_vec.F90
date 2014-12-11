@@ -33,14 +33,13 @@
   subroutine smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
                                    xx_elem,yy_elem,zz_elem)
 
-
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE
 
   implicit none
 
+  real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,sigma_h2,sigma_v2
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: exp_val
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: xx_elem, yy_elem, zz_elem
-  real(kind=CUSTOM_REAL),intent(in) :: x0,y0,z0,sigma_h2,sigma_v2
 
   ! local parameters
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
@@ -117,19 +116,19 @@
     ! Gaussian function
     val = - dist_h*sigma_h2_inv - dist_v*sigma_v2_inv
 
-    !exp_val(i,j,k) = exp(val)    ! * factor(i,j,k)
+    !exp_val(INDEX_IJK) = exp(val) ! * factor(INDEX_IJK)
 
     ! limits to single precision
     if (val < - 86.0) then
       ! smaller than numerical precision: exp(-86) < 1.e-37
       exp_val(INDEX_IJK) = 0.0_CUSTOM_REAL
     else
-      exp_val(INDEX_IJK) = exp(val)    ! * factor(i,j,k)
+      exp_val(INDEX_IJK) = exp(val)    ! * factor(INDEX_IJK)
     endif
 
     ! debug
     !if (debug) then
-    !  print*,i,j,k,'smoothing:',dist_v,dist_h,sigma_h2,sigma_v2,ratio,theta,'val',- dist_h/sigma_h2 - dist_v/sigma_v2
+    !  print*,INDEX_IJK,'smoothing:',dist_v,dist_h,sigma_h2,sigma_v2,ratio,theta,'val',- dist_h/sigma_h2 - dist_v/sigma_v2
     !endif
 
   ENDDO_LOOP_IJK
@@ -200,3 +199,4 @@
   !dist_h = sqrt( vx*vx + vy*vy + vz*vz )
 
   end subroutine get_distance_vec
+
