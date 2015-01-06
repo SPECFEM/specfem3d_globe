@@ -80,7 +80,9 @@ end module my_mpi
   ! we need to make sure that NUMBER_OF_SIMULTANEOUS_RUNS and BROADCAST_SAME_MESH_AND_MODEL are read before calling world_split()
   ! thus read the parameter file
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
+
   if (myrank == 0) call read_parameter_file()
+
   ! broadcast parameters read from master to all processes
   my_local_mpi_comm_world = MPI_COMM_WORLD
   call bcast_all_singlei(NUMBER_OF_SIMULTANEOUS_RUNS)

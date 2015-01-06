@@ -121,6 +121,9 @@ xadd_model_SHARED_OBJECTS = \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
 	$O/gll_library.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 ##
@@ -200,6 +203,9 @@ xaddition_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xaddition_sem: $(xaddition_sem_OBJECTS) $(xaddition_sem_SHARED_OBJECTS)
@@ -217,6 +223,9 @@ xdifference_sem_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
 	$O/exit_mpi.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xdifference_sem: $(xdifference_sem_OBJECTS) $(xdifference_sem_SHARED_OBJECTS)
@@ -238,6 +247,9 @@ xinterpolate_model_SHARED_OBJECTS = \
 	$O/lagrange_poly.shared.o \
 	$O/recompute_jacobian.solver.o \
 	$O/search_kdtree.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
@@ -265,6 +277,9 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/search_kdtree.shared.o \
 	$O/smooth_weights_vec.shared.o \
 	$O/write_VTK_file.shared.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
@@ -285,6 +300,9 @@ xsum_kernels_OBJECTS = \
 xsum_kernels_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS)
@@ -302,6 +320,9 @@ xsum_preconditioned_kernels_OBJECTS = \
 xsum_preconditioned_kernels_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
 	$O/parallel.sharedmpi.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
 	$(EMPTY_MACRO)
 
 ${E}/xsum_preconditioned_kernels: $(xsum_preconditioned_kernels_OBJECTS) $(xsum_preconditioned_kernels_SHARED_OBJECTS)

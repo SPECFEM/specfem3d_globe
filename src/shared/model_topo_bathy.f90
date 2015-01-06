@@ -56,6 +56,7 @@
 
     ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
+
     if (.not. ROLAND_SYLVAIN) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
   endif
 
@@ -114,7 +115,6 @@
 
       ! stores in array
       ibathy_topo(itopo_x,itopo_y) = ival
-
     enddo
   enddo
   call close_file_abs(10)
