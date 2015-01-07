@@ -3,7 +3,7 @@ To run this benchmark with attenuation from our 2002 GJI paper (Dimitri Komatits
 
 1/ run the current version of SPECFEM3D_GLOBE using the Par_file, STATIONS and CMTSOLUTION files that you will find in this directory
 
-2/ when the run is finished, copy the PAS.CI.*.sem.ascii seismograms to this directory i.e. replace the current files
+2/ when the run is finished, copy the CI.PAS.*.sem.ascii seismograms to this directory i.e. replace the current files
 
 3/ run ./convolve_all.csh 
 (edit that script to change the name of the Fortran compiler if GNU gfortran is not installed on your system)

@@ -69,7 +69,7 @@ misfit_traveltime = 0.0d0
 !!!! loading data and synthetics !!!!
 do irec = 1,nrec
 
-   file_data = './SEM/'//trim(station)//'.'//trim(network)//'.MXZ.sem.ascii'
+   file_data = './SEM/'//trim(network)//'.'//trim(station)//'.MXZ.sem.ascii'
 
    open(unit=1001,file=trim(file_data),status='old',action='read')
    do itime = 1,nstep
@@ -179,14 +179,14 @@ do irec = 1,nrec
    enddo  !do ifreq=1,nfreq
 
    !!!! output !!!!
-   file_adj_BHZ      = './SEM/'//trim(station)//'.'//trim(network)//'.MXZ.adj'
+   file_adj_BHZ      = './SEM/'//trim(network)//'.'//trim(station)//'.MXZ.adj'
    open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
    do itime = 1,nstep
       write(1002,*) t(itime), adj(nstep-itime+1,irec)
 !      write(1002,*) t(itime), adj(itime,irec)
    enddo
    close(1002)
-   file_adj_BHZ      = './SEM/'//trim(station)//'.'//trim(network)//'.MXZ.adj_reversed'
+   file_adj_BHZ      = './SEM/'//trim(network)//'.'//trim(station)//'.MXZ.adj_reversed'
    open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
    do itime = 1,nstep
 !      write(1002,*) t(itime), adj(nstep-itime+1,irec)
@@ -195,13 +195,13 @@ do irec = 1,nrec
    close(1002)
 
 
-   file_adj_BHZ      = './SEM/'//trim(station)//'.'//trim(network)//'.MXE.adj'
+   file_adj_BHZ      = './SEM/'//trim(network)//'.'//trim(station)//'.MXE.adj'
    open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
    do itime = 1,nstep
       write(1002,*) t(itime), 0.0
    enddo
    close(1002)
-   file_adj_BHZ      = './SEM/'//trim(station)//'.'//trim(network)//'.MXN.adj'
+   file_adj_BHZ      = './SEM/'//trim(network)//'.'//trim(station)//'.MXN.adj'
    open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
    do itime = 1,nstep
       write(1002,*) t(itime), 0.0
