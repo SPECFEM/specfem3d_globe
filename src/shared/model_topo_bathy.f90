@@ -122,6 +122,9 @@
   ! user output
   write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
 
+  ! plots image
+  call plot_topo_bathy_pnm(ibathy_topo)
+
   end subroutine read_topo_bathy_file
 
 !
@@ -214,6 +217,9 @@
 
   endif
 
+  ! plots image
+  call plot_topo_bathy_pnm(ibathy_topo)
+
   end subroutine read_topo_bathy_database
 
 !
@@ -301,4 +307,74 @@
   endif
 
   end subroutine get_topo_bathy
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine plot_topo_bathy_pnm(ibathy_topo)
+
+! stores topo_bathy image in PNM format with grey levels
+
+  use constants,only: NX_BATHY,NY_BATHY,IOUT,IMAIN
+  use shared_input_parameters, only: OUTPUT_FILES
+
+  implicit none
+
+  ! use integer array to store values
+  integer, dimension(NX_BATHY,NY_BATHY),intent(in) :: ibathy_topo
+
+  ! local parameters
+  integer :: ix,iy,ival,ier
+  integer :: minvalue,maxvalue
+
+  !----------------------------------------------------------------------
+
+  ! for debugging: plots pnm-image showing used topography
+  !                file can become fairly big for large topo-files, e.g. ETOPO1 creates a ~2.7 GB pnm-image
+  logical,parameter :: DO_IMAGE_PLOT = .false.
+
+  !----------------------------------------------------------------------
+
+  ! checks if anything to do
+  if (.not. DO_IMAGE_PLOT) return
+
+  ! gets min and max
+  minvalue = minval(ibathy_topo)
+  maxvalue = maxval(ibathy_topo)
+
+  ! creates the PNM image
+  write(IMAIN,*) '  plotting PNM image ',trim(OUTPUT_FILES)//'/'//'image_topo_bathy.pnm'
+  write(IMAIN,*)
+
+  ! creating the header
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//'/'//'image_topo_bathy.pnm',status='unknown',iostat=ier)
+  if (ier /= 0) stop 'Error opening file image_topo_bathy.pnm'
+
+  write(IOUT,'(a)') 'P3'
+  write(IOUT,'(i6,1x,i6)') NX_BATHY,NY_BATHY
+  write(IOUT,'(i3)') 255
+
+  ! creates image with grey levels
+  do iy = 1,NY_BATHY
+    do ix = 1,NX_BATHY
+      if (minvalue == maxvalue) then
+        ival = 128
+      else
+        ival = 255 * (ibathy_topo(ix,iy) - minvalue) / (maxvalue - minvalue)
+      endif
+
+      if(ival < 1) ival = 1
+      if(ival > 255) ival = 255
+
+      ! write data value (red = green = blue to produce grey levels)
+      write(IOUT,'(i3)') ival
+      write(IOUT,'(i3)') ival
+      write(IOUT,'(i3)') ival
+    enddo
+  enddo
+
+  close(IOUT)
+
+  end subroutine plot_topo_bathy_pnm
 
