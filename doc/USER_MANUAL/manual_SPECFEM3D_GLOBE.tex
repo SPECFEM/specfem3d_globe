@@ -652,7 +652,7 @@ Packages such as \texttt{doxywizard} can be used to visualize the subroutine cal
 
 \section{Becoming a developer of the code, or making small modifications in the source code}
 
-If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there is a robot called BuildBot that is in charge of checking and validating all new contributions and changes), please visit this Web page: \url{https://github.com/geodynamics/specfem3dglobe/wiki/Using-Hub}.
+If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there is a robot called BuildBot that is in charge of checking and validating all new contributions and changes), please visit this Web page: \url{https://github.com/geodynamics/specfem3d/wiki}.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -824,7 +824,7 @@ is incorporated. See Chapter~\ref{cha:-Changing-the} for a discussion
 on how to change 3D models.
 \item [{\texttt{s40rts}}] A global 3D mantle model \citep{RiDeVaWo10} succeeding S20RTS
 with a higher resolution.
-S40RTS uses transversely isotropic PREM as a background
+S40RTS uses transversely isotropic PREM as a backgroun
 model and the 3D crustal model Crust2.0 \citep{BaLaMa00}.
 We use the PREM radial attenuation model when \texttt{ATTENUATION}
 is incorporated.
@@ -1002,7 +1002,8 @@ sources read in each time for an adjoint simulation.
 if you want to have the synthetic seismograms written in two-column
 ASCII format (the first column contains time in seconds and the second
 column the displacement in meters of the recorded signal, no header
-information). Files will be named with extension \texttt{.ascii}, e.g., \texttt{STA.NT.?X?.sem.ascii} where STA and NT are the station and network codes given in \texttt{STATIONS} file, and \texttt{?X?} is the channel code (see Appendix~\ref{cha:channel-codes}).
+information). Files will be named with extension \texttt{.ascii}, e.g., \texttt{NT.STA.?X?.sem.ascii}
+where NT and STA are the network and station codes given in \texttt{STATIONS} file, and \texttt{?X?} is the channel code (see Appendix~\ref{cha:channel-codes}).
 \item [{\texttt{OUTPUT\_SEISMOS\_SAC\_ALPHANUM}}] Set this flag to \texttt{.true.}
 if you want to have the synthetic seismograms written in alphanumeric
 (human readable) SAC format, which includes header information on
@@ -1923,12 +1924,12 @@ as the regular \texttt{DATA/STATIONS} file.
 \item Depending on what type of misfit function is used for the source inversion,
 adjoint sources need to be computed from the original recorded seismograms
 for the selected stations and saved in the \texttt{SEM/} directory
-with the format \texttt{STA.NT.?X?.adj}, where \texttt{STA}, \texttt{NT}
+with the format \texttt{NT.STA.?X?.adj}, where \texttt{STA}, \texttt{NT}
 are the station name and network code given in the \texttt{DATA/STATIONS\_ADJOINT}
 file, and \texttt{?X?}  represents the channel name of a particular
 adjoint seismogram where the first letter corresponds to the band code governed by the resolution of simulations, for example, generally \texttt{MX?} for the current resolution of global simulations (see Appendix~\ref{cha:channel-codes} for details). The last letter of channel names is the component name \texttt{E/N/Z}.
 \item The adjoint seismograms are in the same format as the original seismogram
-(\texttt{STA.NT.?X?.sem?}), with the same start time, time interval
+(\texttt{NT.STA.?X?.sem?}), with the same start time, time interval
 and record length.
 \end{itemize}
 \item Notice that even if you choose to time reverse only one component
@@ -1955,9 +1956,9 @@ from directory \texttt{OUTPUT\_FILES}.
 \begin{itemize}
 \item These adjoint seismograms are recorded at the locations of the original
 earthquake sources given by the \texttt{DATA/CMTSOLUTION} file, and
-have names of the form \texttt{S?????.NT.S??.sem} for the six-component
+have names of the form \texttt{NT.S?????.S??.sem} for the six-component
 strain tensor (\texttt{SNN,SEE,SZZ,SNE,SNZ,SEZ}) at these locations,
-and \texttt{S?????.NT.?X?.sem} for the three-component displacements
+and \texttt{NT.S?????.?X?.sem} for the three-component displacements
 (i.e., \texttt{MXN,MXE,MXZ}) recorded at these locations.
 \item \texttt{S?????} denotes the source number; for example, if the original
 \texttt{CMTSOLUTION} provides only a point source, then the seismograms
@@ -2043,13 +2044,13 @@ For adjoint runs (SIMULATION\_TYPE = 3), the adjoint sources need to be put in t
 
 If your adjoint source have names of the following form for instance:
 
-STA00.NET.MXZ.sem.ascii.adj
-STA00.NET.MXZ.sem.ascii.adj
+NET.STA00.MXZ.sem.ascii.adj
+NET.STA00.MXZ.sem.ascii.adj
 
 you will need to rename them to:
 
-STA00.NET.MXZ.adj
-STA00.NET.MXZ.adj
+NET.STA00.MXZ.adj
+NET.STA00.MXZ.adj
 
 i.e. suppress ".sem.ascii".
 
@@ -3739,7 +3740,7 @@ Accordingly, when you run a simulation the band code will be chosen depending on
 
 \noindent \textbf{\texttt{Orientation code:}} The third letter in channel codes is an orientation code, which generally describes the physical configuration of the components of instrument packages. SPECFEM uses the traditional orientation code  \texttt{E/N/Z} (East-West, North-South, Vertical) for three components. \\
 
-\noindent \textbf{\texttt{EXAMPLE:}} Depending on the resolution of your simulations, if the sampling rate is greater than $0.1$ s and less than $1$ s, a seismogram recorded on the vertical component of station \texttt{AAK} will be named \texttt{AAK.IU.MXZ.sem.sac}, whereas it will be \texttt{AAK.IU.BXZ.sem.sac}, if the sampling rate is greater than 0.0125 and less equal to 0.1 s.
+\noindent \textbf{\texttt{EXAMPLE:}} Depending on the resolution of your simulations, if the sampling rate is greater than $0.1$ s and less than $1$ s, a seismogram recorded on the vertical component of station \texttt{AAK} will be named \texttt{IU.AAK.MXZ.sem.sac}, whereas it will be \texttt{IU.AAK.BXZ.sem.sac}, if the sampling rate is greater than 0.0125 and less equal to 0.1 s.
 
 
 
@@ -3813,7 +3814,7 @@ Accordingly, when you run a simulation the band code will be chosen depending on
 {\footnotesize  ... }{\footnotesize \par}
 {\footnotesize     case(THREE\_D\_MODEL\_PPM ) }{\footnotesize \par}
 {\footnotesize       ! point profile model }{\footnotesize \par}
-{\footnotesize       call model\_PPM(r\_used,theta,phi,dvs,dvp,drho,PPM\_V) }{\footnotesize \par}
+{\footnotesize       call model\_PPM(r\_used,theta,phi,dvs,dvp,drho) }{\footnotesize \par}
 {\footnotesize       vpv=vpv*(1.0d0+dvp) }{\footnotesize \par}
 {\footnotesize       vph=vph*(1.0d0+dvp) }{\footnotesize \par}
 {\footnotesize       vsv=vsv*(1.0d0+dvs) }{\footnotesize \par}
@@ -3826,24 +3827,6 @@ Accordingly, when you run a simulation the band code will be chosen depending on
  You can see how this is done with e.g. the model \texttt{s362ani},
  following the flag \texttt{THREE\_D\_MODEL\_S362ANI} on how to modify accordingly the file \texttt{meshfem3D\_models.f90}.
 
-  \item In case you modify the structure \texttt{PPM\_V} in file \texttt{model\_ppm.f90},
-  also check that in file \texttt{meshfem3D\_models.f90}, you use your updated \texttt{PPM\_V} structure (for example including dvp):
-  \begin{lyxcode}
-{\footnotesize  ... }{\footnotesize \par}
-{\footnotesize! point profile model\_variables }{\footnotesize \par}
-{\footnotesize type model\_ppm\_variables }{\footnotesize \par}
-{\footnotesize   sequence }{\footnotesize \par}
-{\footnotesize   double precision,dimension(:),pointer :: dvs,dvp,lat,lon,depth }{\footnotesize \par}
-{\footnotesize   double precision :: maxlat,maxlon,minlat,minlon,maxdepth,mindepth }{\footnotesize \par}
-{\footnotesize   double precision :: dlat,dlon,ddepth,max\_dvs,min\_dvs,max\_dvp,min\_dvp }{\footnotesize \par}
-{\footnotesize   integer :: num\_v,num\_latperlon,num\_lonperdepth }{\footnotesize \par}
-{\footnotesize   integer :: dummy ! padding 4 bytes to align the structure }{\footnotesize \par}
-{\footnotesize end type model\_ppm\_variables }{\footnotesize \par}
-{\footnotesize type (model\_ppm\_variables) PPM\_V }{\footnotesize \par}
-{\footnotesize  ... }{\footnotesize \par}
-  \end{lyxcode}
-
-  Together with these modifications in file \texttt{meshfem3D\_models.f90}, your code should work fine.
   In case you want to add more specific model routines, follow the code sections starting with:
   \begin{lyxcode}
 {\footnotesize  !--- }{\footnotesize \par}
