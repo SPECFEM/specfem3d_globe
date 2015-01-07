@@ -64,6 +64,12 @@
 
   ! read files back from local disk or MT tape system if restart file
   if (NUMBER_OF_THIS_RUN > 1) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'reading startup file for run = ',NUMBER_OF_THIS_RUN
+      call flush_IMAIN()
+    endif
+
     if (ADIOS_FOR_FORWARD_ARRAYS) then
       call read_intermediate_forward_arrays_adios()
     else

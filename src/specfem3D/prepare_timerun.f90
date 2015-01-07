@@ -206,6 +206,9 @@
     call flush_IMAIN()
   endif
 
+  ! synchronizes processes
+  call synchronize_all()
+
   end subroutine prepare_timerun_user_output
 
 !
@@ -321,6 +324,9 @@
   rmassz_inner_core = 1._CUSTOM_REAL / rmassz_inner_core
   ! outer core
   rmass_outer_core = 1._CUSTOM_REAL / rmass_outer_core
+
+  ! synchronizes processes
+  call synchronize_all()
 
   end subroutine prepare_timerun_mass_matrices
 
@@ -711,6 +717,7 @@
    b_two_omega_earth = two_omega_earth
   endif
 
+  ! synchronizes processes
   call synchronize_all()
 
   end subroutine prepare_timerun_constants
@@ -800,6 +807,7 @@
 
   endif
 
+  ! synchronizes processes
   call synchronize_all()
 
   end subroutine prepare_timerun_gravity
@@ -1004,6 +1012,7 @@
     write(IMAIN,*) "preparing wavefields"
     call flush_IMAIN()
   endif
+  call synchronize_all()
 
   ! put negligible initial value to avoid very slow underflow trapping
   if (FIX_UNDERFLOW_PROBLEM) then
@@ -1418,6 +1427,7 @@
 
   endif
 
+  ! synchronizes processes
   call synchronize_all()
 
   end subroutine prepare_timerun_init_wavefield
@@ -1709,6 +1719,9 @@
     endif
   endif
 
+  ! synchronizes processes
+  call synchronize_all()
+
   end subroutine prepare_timerun_stacey
 
 !
@@ -1726,12 +1739,13 @@
 
   ! NOISE TOMOGRAPHY
   if (NOISE_TOMOGRAPHY /= 0) then
-
+    ! user info
     if (myrank == 0) then
       write(IMAIN,*) "preparing noise arrays"
       call flush_IMAIN()
     endif
 
+    ! allocates noise arrays
     allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
              normal_x_noise(nmovie_points), &
              normal_y_noise(nmovie_points), &
@@ -1740,6 +1754,7 @@
              noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise arrays')
 
+    ! initializes
     noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
     normal_x_noise(:)            = 0._CUSTOM_REAL
     normal_y_noise(:)            = 0._CUSTOM_REAL
@@ -1747,13 +1762,15 @@
     mask_noise(:)                = 0._CUSTOM_REAL
     noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
 
+    ! gets noise parameters
     call read_parameters_noise()
 
+    ! checks noise setup
     call check_parameters_noise()
-
-    call synchronize_all()
-
   endif
+
+  ! synchronizes processes
+  call synchronize_all()
 
   end subroutine prepare_timerun_noise
 
@@ -1785,6 +1802,7 @@
   real(kind=CUSTOM_REAL) :: dummy
 
   ! user output
+  call synchronize_all()
   if (myrank == 0) then
     write(IMAIN,*) "preparing fields and constants on GPU devices:"
     call flush_IMAIN()
@@ -2342,6 +2360,8 @@
     endif
     call flush_IMAIN()
   endif
+
+  ! synchronizes processes
   call synchronize_all()
 
   contains

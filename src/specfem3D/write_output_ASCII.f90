@@ -77,7 +77,7 @@
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2), &
             status='old',position='append',action='write',iostat=ier)
     endif
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file:'//trim(OUTPUT_FILES)//trim(sisname_2))
+    if (ier /= 0) call exit_mpi(myrank,'Error opening file:'//trim(OUTPUT_FILES)//trim(sisname_2))
   endif
 
   ! subtract half duration of the source to make sure travel time is correct

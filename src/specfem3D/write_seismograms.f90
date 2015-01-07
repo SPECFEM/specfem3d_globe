@@ -36,7 +36,12 @@ contains
 
   implicit none
 
-  ! note: this routine gets called if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) )
+  ! checks if anything to do
+  ! note: ASDF uses adios that defines the MPI communicator group that the solver is
+  !       run with. this means every processor in the group is needed for write_seismograms
+  if (.not. (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) .or. OUTPUT_SEISMOS_ASDF)) then
+    return
+  endif
 
   ! update position in seismograms
   seismo_current = seismo_current + 1
@@ -206,7 +211,7 @@ contains
       ! get global number of that receiver
       irec = number_receiver_global(irec_local)
 
-      one_seismogram = seismograms(:,irec_local,:)
+      one_seismogram(:,:) = seismograms(:,irec_local,:)
 
       ! write this seismogram
       if (OUTPUT_SEISMOS_ASDF) then
@@ -245,7 +250,8 @@ contains
 
     write_time_begin = wtime()
 
-    if (myrank == 0) then ! on the master, gather all the seismograms
+    if (myrank == 0) then
+      ! on the master, gather all the seismograms
 
       ! create one large file instead of one small file per station to avoid file system overload
       if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
@@ -335,7 +341,8 @@ contains
       ! create one large file instead of one small file per station to avoid file system overload
       if (SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
-    else  ! on the nodes, send the seismograms to the master
+    else
+      ! on the nodes, send the seismograms to the master
       receiver = 0
       ! only sends if this slice contains receiver stations
       if (nrec_local > 0) then
