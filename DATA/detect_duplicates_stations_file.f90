@@ -58,9 +58,10 @@
     do irec2 = irec+1,nrec
       if(is_a_duplicate(irec2)) cycle
       if(station_name(irec) == station_name(irec2) .and. network_name(irec) == network_name(irec2)) then
-        print *,station_name(irec2)(1:len_trim(station_name(irec2))),'.', &
-          network_name(irec2)(1:len_trim(network_name(irec2))),' is a duplicate of ',&
-          station_name(irec)(1:len_trim(station_name(irec))),'.',network_name(irec)(1:len_trim(network_name(irec))), &
+        print *, &
+          network_name(irec2)(1:len_trim(network_name(irec2))),'.',station_name(irec2)(1:len_trim(station_name(irec2))), &
+          ' is a duplicate of ',&
+          network_name(irec)(1:len_trim(network_name(irec))),'.',station_name(irec)(1:len_trim(station_name(irec))), &
           ' (same name)'
         is_a_duplicate(irec2) = .true.
       endif
@@ -75,9 +76,10 @@
     do irec2 = irec+1,nrec
       if(is_a_duplicate(irec2)) cycle
       if(stlat(irec) == stlat(irec2) .and. stlon(irec) == stlon(irec2)) then
-        print *,station_name(irec2)(1:len_trim(station_name(irec2))),'.', &
-          network_name(irec2)(1:len_trim(network_name(irec2))),' is a duplicate of ',&
-          station_name(irec)(1:len_trim(station_name(irec))),'.',network_name(irec)(1:len_trim(network_name(irec))), &
+        print *, &
+          network_name(irec2)(1:len_trim(network_name(irec2))),'.',station_name(irec2)(1:len_trim(station_name(irec2))), &
+          ' is a duplicate of ', &
+          network_name(irec)(1:len_trim(network_name(irec))),'.',station_name(irec)(1:len_trim(station_name(irec))), &
           ' (same lat/long)'
         is_a_duplicate(irec2) = .true.
       endif

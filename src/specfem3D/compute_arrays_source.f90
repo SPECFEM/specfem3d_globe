@@ -232,9 +232,12 @@
       !read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,itime-it_start+1)
       read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,index_i)
 
-      if (ios /= 0) &
-        call exit_MPI(myrank, &
-          'file '//trim(filename)//' has wrong length, please check with your simulation duration')
+      if (ios /= 0) then
+        print*,'Error reading adjoint source: ',trim(filename)
+        print*,'rank ',myrank,' - time step: ',itime,' it_start: ',it_start,' it_end: ',it_end
+        print*,'  ',trim(filename)//'has wrong length, please check with your simulation duration'
+        call exit_MPI(myrank,'file '//trim(filename)//' has wrong length, please check with your simulation duration')
+      endif
     enddo
 
     close(IIN_ADJ)

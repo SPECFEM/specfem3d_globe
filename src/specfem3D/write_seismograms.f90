@@ -504,12 +504,13 @@ contains
            call exit_MPI(myrank,'wrong length of network name')
 
     ! create the name of the seismogram file using the station name and network name
-    write(sisname,"('/',a,'.',a,'.',a3,'.sem')") station_name(irec)(1:length_station_name), &
-                   network_name(irec)(1:length_network_name),chn
+    ! using format: **net**.**sta**.channel
+    write(sisname,"('/',a,'.',a,'.',a3,'.sem')") network_name(irec)(1:length_network_name), &
+                   station_name(irec)(1:length_station_name),chn
 
     ! create this name also for the text line added to the unique big seismogram file
-    write(sisname_big_file,"(a,'.',a,'.',a3,'.sem')") station_name(irec)(1:length_station_name), &
-                   network_name(irec)(1:length_network_name),chn
+    write(sisname_big_file,"(a,'.',a,'.',a3,'.sem')") network_name(irec)(1:length_network_name), &
+                   station_name(irec)(1:length_station_name),chn
 
     ! SAC output format
     if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) &
@@ -585,7 +586,7 @@ contains
 
       ! create the name of the seismogram file for each slice
       ! file name includes the name of the station, the network and the component
-      write(sisname,"(a2,i6.6,'.',a,'.',a3,'.sem')") '/S',irec,'NT',chn
+      write(sisname,"(a3,'.',a1,i6.6,'.',a3,'.sem')") '/NT','S',irec,chn
 
       ! save seismograms in text format with no subsampling.
       ! Because we do not subsample the output, this can result in large files

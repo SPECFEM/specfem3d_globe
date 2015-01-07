@@ -527,8 +527,9 @@
     write(IMAIN,*) 'Stations sorted by epicentral distance:'
     do i = 1,nrec
       irec = irec_dist_ordered(i)
-      write(IMAIN,'(a,i6,a,a24,a,f12.6,a)') ' Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec)), &
-                                          '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
+      write(IMAIN,'(a,i6,a,a24,a,f12.6,a)') ' Station #',irec,': ', &
+        trim(network_name(irec))//'.'//trim(station_name(irec)), &
+        '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
     enddo
 
     deallocate(irec_dist_ordered)
@@ -859,7 +860,7 @@
 
       if (DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0) then
         write(IMAIN,*)
-        write(IMAIN,*) 'Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec))
+        write(IMAIN,*) 'Station #',irec,': ',trim(network_name(irec))//'.'//trim(station_name(irec))
         write(IMAIN,*) '     original latitude: ',sngl(stlat(irec))
         write(IMAIN,*) '    original longitude: ',sngl(stlon(irec))
         write(IMAIN,*) '   epicentral distance: ',sngl(epidist(irec))
@@ -871,7 +872,7 @@
       ! add warning if estimate is poor
       ! (usually means receiver outside the mesh given by the user)
       if (final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
-        write(IMAIN,*) 'Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec))
+        write(IMAIN,*) 'Station #',irec,': ',trim(network_name(irec))//'.'//trim(station_name(irec))
         write(IMAIN,*) '*****************************************************************'
         if (NCHUNKS_VAL == 6) then
           write(IMAIN,*) '***** WARNING: receiver location estimate is poor, therefore receiver excluded *****'
@@ -947,9 +948,9 @@
     write(IOUT,*) 'total number of stations: ',nrec
     write(IOUT,*)
     do irec = 1,nrec
-      write(IOUT,*) station_name(irec)(1:len_trim(station_name(irec))), &
-                  '.',network_name(irec)(1:len_trim(network_name(irec))), &
-                  ' epicentral distance ',sngl(epidist(irec)),' deg'
+      write(IOUT,*) &
+        network_name(irec)(1:len_trim(network_name(irec))),'.',station_name(irec)(1:len_trim(station_name(irec))), &
+        ' epicentral distance ',sngl(epidist(irec)),' deg'
     enddo
     close(IOUT)
 
@@ -960,9 +961,8 @@
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information
       do irec = 1,nrec
-        write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),&
-                  trim(network_name(irec)),sngl(stlat(irec)),&
-                  sngl(stlon(irec)),sngl(stele(irec)),sngl(stbur(irec))
+        write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),trim(network_name(irec)), &
+          sngl(stlat(irec)),sngl(stlon(irec)),sngl(stele(irec)),sngl(stbur(irec))
       enddo
       ! close receiver file
       close(IOUT)

@@ -422,7 +422,7 @@
         ! updates counter
         nadj_rec_local = nadj_rec_local + 1
 
-        ! checks **sta**.**net**.**MX**.adj files for correct number of time steps
+        ! checks **net**.**sta**.**MX**.adj files for correct number of time steps
         call check_adjoint_sources(irec,nadj_files_found)
       endif
     enddo

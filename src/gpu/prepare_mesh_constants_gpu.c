@@ -29,7 +29,6 @@
 
 #include "mesh_constants_gpu.h"
 
-
 /* ----------------------------------------------------------------------------------------------- */
 // OpenCL setup
 /* ----------------------------------------------------------------------------------------------- */
@@ -393,7 +392,7 @@ void FC_FUNC_ (prepare_constants_device,
 
   // buffer for crust_mantle arrays has maximum size
   if (mp->compute_and_store_strain){
-    size = max(mp->NGLOB_CRUST_MANTLE, NGLL3 * (mp->NSPEC_CRUST_MANTLE));
+    size = MAX(mp->NGLOB_CRUST_MANTLE, NGLL3 * (mp->NSPEC_CRUST_MANTLE));
   } else{
     size = mp->NGLOB_CRUST_MANTLE;
   }
