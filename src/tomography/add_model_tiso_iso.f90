@@ -241,7 +241,7 @@ subroutine initialize()
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  if (sizeprocs /= NPROCTOT_VAL ) then
+  if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
       print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
       print*, 'Error number of MPI processors actually run on: ',sizeprocs

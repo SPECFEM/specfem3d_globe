@@ -438,7 +438,7 @@
   endif  ! regional chunk
 
   ! mesh averages
-  if (NCHUNKS /= 6 ) then
+  if (NCHUNKS /= 6) then
     ! regional mesh, variable chunk sizes
     num_elem_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI )
     num_gll_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI *(NGLLX-1) )

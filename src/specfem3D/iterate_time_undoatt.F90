@@ -55,7 +55,7 @@
 
   ! user output
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
-    if (myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) 'undoing attenuation:'
       write(IMAIN,*) '  wavefield snapshots at every NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION
       call flush_IMAIN()
@@ -241,7 +241,7 @@
         enddo ! istage
 
         ! transfers wavefields from GPU to CPU for buffering
-        if (GPU_MODE ) then
+        if (GPU_MODE) then
           ! daniel debug: check if these transfers could be made async to overlap
           call transfer_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,Mesh_pointer)
           call transfer_b_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,Mesh_pointer)
@@ -287,7 +287,7 @@
         enddo
 
         ! transfers wavefields from CPU to GPU
-        if (GPU_MODE ) then
+        if (GPU_MODE) then
           ! daniel debug: check if these transfers could be made async to overlap
           call transfer_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,Mesh_pointer)
           call transfer_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,Mesh_pointer)

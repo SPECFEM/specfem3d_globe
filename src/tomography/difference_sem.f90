@@ -67,7 +67,7 @@ program difference_sem
   call world_rank(myrank)
 
   ! checks compilation setup
-  if (sizeprocs /= NPROCTOT_VAL ) then
+  if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
       print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
       print*, 'Error number of MPI processors actually run on: ',sizeprocs
@@ -181,7 +181,7 @@ program difference_sem
     ! reads in file from first directory
     if(myrank==0) write(*,*) '  data_1: ',trim(file1name)
     open(IIN,file=trim(file1name),status='old',form='unformatted',iostat=ier)
-    if (ier /= 0 ) then
+    if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening first data file'
     endif
@@ -191,7 +191,7 @@ program difference_sem
     ! reads in file from second directory
     if (myrank == 0) write(*,*) '  data_2: ',trim(file2name)
     open(IIN,file=trim(file2name),status='old',form='unformatted',iostat=ier)
-    if (ier /= 0 ) then
+    if (ier /= 0) then
       print *,'Error opening file: ',trim(file2name)
       stop 'Error opening second data file'
     endif
@@ -212,7 +212,7 @@ program difference_sem
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_diff.bin'
     if (myrank == 0) write(*,*) '  file: ',trim(file1name)
     open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
-    if (ier /= 0 ) then
+    if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening output data file'
     endif
@@ -233,7 +233,7 @@ program difference_sem
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_diff_relative.bin'
     if (myrank == 0) write(*,*) '  file: ',trim(file1name)
     open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
-    if (ier /= 0 ) then
+    if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening output data file'
     endif

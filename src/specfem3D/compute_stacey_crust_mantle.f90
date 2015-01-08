@@ -365,7 +365,7 @@
   if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
 
     ! reads absorbing boundary values
-    if (nspec2D_xmin_crust_mantle > 0 ) then
+    if (nspec2D_xmin_crust_mantle > 0) then
       ! note: backward/reconstructed wavefields are read in after the Newmark time scheme in the first time loop
       !          this leads to a corresponding boundary condition at time index NSTEP - (it-1) = NSTEP - it + 1
       call read_abs(0,absorb_xmin_crust_mantle,reclen_xmin_crust_mantle,NSTEP-it+1)

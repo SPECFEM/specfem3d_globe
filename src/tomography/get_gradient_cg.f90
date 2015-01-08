@@ -132,8 +132,7 @@ subroutine get_gradient_cg_tiso()
     print*,'  betah: ',ratio_betah
     print*,'  eta  : ',ratio_eta
     print*
-    if (ratio_bulk > 0.2 .and. ratio_betav > 0.2 .and. ratio_betah > 0.2 &
-      .and. ratio_eta > 0.2 ) then
+    if (ratio_bulk > 0.2 .and. ratio_betav > 0.2 .and. ratio_betah > 0.2 .and. ratio_eta > 0.2) then
       print*,'  critical ratio found!'
       print*
       print*,'****************'

@@ -648,7 +648,7 @@ contains
   integer,dimension(:),allocatable :: workindex
 
   ! checks if anything to sort
-  if (ibound_lower > ibound_upper ) then
+  if (ibound_lower > ibound_upper) then
     nullify(node)
     return
   endif
@@ -675,7 +675,7 @@ contains
   !node%id = numnodes
 
   ! checks if final node
-  if (ibound_lower == ibound_upper ) then
+  if (ibound_lower == ibound_upper) then
     node%idim = 0
     node%ipoint = points_index(ibound_lower)
     ! done with this node
@@ -711,7 +711,7 @@ contains
     max = maxval(points_data(i,points_index(ibound_lower:ibound_upper)))
     range = max - min
     ! sets cut dimension where data has maximum range
-    if (range > range_max ) then
+    if (range > range_max) then
       range_max = range
       idim = i
       cut_value = 0.5d0 * ( min + max )
@@ -738,7 +738,7 @@ contains
   iupper = 0
   do i = ibound_lower,ibound_upper
     iloc = points_index(i)
-    if (points_data(idim,iloc) < cut_value ) then
+    if (points_data(idim,iloc) < cut_value) then
       ilower = ilower + 1
       workindex(ilower) = iloc
     else
@@ -813,9 +813,9 @@ contains
   endif
 
   ! outputs infos for a final node
-  if (.not. associated(node%left) .and. .not. associated(node%right) ) then
+  if (.not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks info
-    if (node%idim /= 0 ) then
+    if (node%idim /= 0) then
       print*,'problem kd-tree node:',node%idim,node%ipoint,numnodes
       print*,'point x/y/z: ',points_data(:,node%ipoint)
       stop 'Error kd-tree node not correct'
@@ -831,10 +831,10 @@ contains
   endif
 
   ! checks child nodes
-  if (associated(node%left) ) then
+  if (associated(node%left)) then
     call print_kdtree(npoints,points_data,points_index,node%left,numnodes)
   endif
-  if (associated(node%right) ) then
+  if (associated(node%right)) then
     call print_kdtree(npoints,points_data,points_index,node%right,numnodes)
   endif
 
@@ -914,7 +914,7 @@ contains
   !  print*,'node distance',node%id,ipoint_min,dist_min
 
   ! in case this is a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right) ) then
+  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
@@ -923,7 +923,7 @@ contains
     dist = get_distance_squared(xyz_target(:),points_data(:,node%ipoint))
     if (dist < dist_min) then
       ! debug
-      !if (ipoint_min < 1 ) then
+      !if (ipoint_min < 1) then
       !  print*,'new node distance',node%id,node%ipoint,dist
       !else
       !  print*,'     new distance',node%id,node%ipoint,dist
@@ -941,14 +941,14 @@ contains
   if (node%idim < 1 .or. node%idim > 3 ) stop 'Error searched node has invalid cut dimension'
 
   ! compares cut value
-  if (xyz_target(node%idim) < node%cut_value ) then
+  if (xyz_target(node%idim) < node%cut_value) then
     ! finds closer node in lower hemisphere
-    if (associated(node%left) ) then
+    if (associated(node%left)) then
       call find_nearest_node(npoints,points_data,node%left,xyz_target,ipoint_min,dist_min)
     endif
   else
     ! finds closer node in upper hemisphere
-    if (associated(node%right) ) then
+    if (associated(node%right)) then
       call find_nearest_node(npoints,points_data,node%right,xyz_target,ipoint_min,dist_min)
     endif
   endif
@@ -959,10 +959,10 @@ contains
   ! squared distance to cut plane
   dist = ( xyz_target(node%idim) - node%cut_value )**2
 
-  if (xyz_target(node%idim) < node%cut_value ) then
-    if (associated(node%right) ) then
+  if (xyz_target(node%idim) < node%cut_value) then
+    if (associated(node%right)) then
       ! checks right node as a final node
-      if (node%right%idim == 0 ) then
+      if (node%right%idim == 0) then
         dist = get_distance_squared(xyz_target(:),points_data(:,node%right%ipoint))
         if (dist <= dist_min) then
           ! stores minimum point
@@ -977,9 +977,9 @@ contains
       endif
     endif
   else
-    if (associated(node%left) ) then
+    if (associated(node%left)) then
       ! checks left node as a final node
-      if (node%left%idim == 0 ) then
+      if (node%left%idim == 0) then
         dist = get_distance_squared(xyz_target(:),points_data(:,node%left%ipoint))
         if (dist <= dist_min) then
           ! stores minimum point
@@ -1025,7 +1025,7 @@ contains
   double precision,dimension(3) :: xyz
 
   ! checks a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right) ) then
+  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
@@ -1057,14 +1057,14 @@ contains
   if (node%idim < 1 .or. node%idim > 3 ) stop 'Error searched node has invalid cut dimension'
 
   ! compares cut value
-  if (xyz_target(node%idim) < node%cut_value ) then
+  if (xyz_target(node%idim) < node%cut_value) then
     ! finds closer node in lower hemisphere
-    if (associated(node%left) ) then
+    if (associated(node%left)) then
       call find_nearest_n_nodes(npoints,points_data,node%left,xyz_target,r_squared,num_nodes,fill_index)
     endif
   else
     ! finds closer node in upper hemisphere
-    if (associated(node%right) ) then
+    if (associated(node%right)) then
       call find_nearest_n_nodes(npoints,points_data,node%right,xyz_target,r_squared,num_nodes,fill_index)
     endif
   endif
@@ -1075,10 +1075,10 @@ contains
   ! squared distance to cut plane
   dist = ( xyz_target(node%idim) - node%cut_value )**2
 
-  if (xyz_target(node%idim) < node%cut_value ) then
-    if (associated(node%right) ) then
+  if (xyz_target(node%idim) < node%cut_value) then
+    if (associated(node%right)) then
       ! checks right node as a final node
-      if (node%right%idim == 0 ) then
+      if (node%right%idim == 0) then
         xyz(:) = points_data(:,node%right%ipoint)
         dist = get_distance_squared(xyz_target(:),xyz(:))
         if (dist <= r_squared) then
@@ -1100,9 +1100,9 @@ contains
       endif
     endif
   else
-    if (associated(node%left) ) then
+    if (associated(node%left)) then
       ! checks left node as a final node
-      if (node%left%idim == 0 ) then
+      if (node%left%idim == 0) then
         xyz(:) = points_data(:,node%left%ipoint)
         dist = get_distance_squared(xyz_target(:),xyz(:))
         if (dist <= r_squared) then
@@ -1155,7 +1155,7 @@ contains
   double precision,dimension(3) :: xyz
 
   ! checks a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right) ) then
+  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
@@ -1187,15 +1187,15 @@ contains
   if (node%idim < 1 .or. node%idim > 3 ) stop 'Error searched node has invalid cut dimension'
 
   ! compares cut value
-  if (xyz_target(node%idim) < node%cut_value ) then
+  if (xyz_target(node%idim) < node%cut_value) then
     ! finds closer node in lower hemisphere
-    if (associated(node%left) ) then
+    if (associated(node%left)) then
       call find_nearest_n_nodes_ellip(npoints,points_data,node%left,xyz_target, &
                                       r_squared_v,r_squared_h,num_nodes,fill_index)
     endif
   else
     ! finds closer node in upper hemisphere
-    if (associated(node%right) ) then
+    if (associated(node%right)) then
       call find_nearest_n_nodes_ellip(npoints,points_data,node%right,xyz_target, &
                                       r_squared_v,r_squared_h,num_nodes,fill_index)
     endif
@@ -1207,10 +1207,10 @@ contains
   ! squared distance to cut plane
   dist = ( xyz_target(node%idim) - node%cut_value )**2
 
-  if (xyz_target(node%idim) < node%cut_value ) then
-    if (associated(node%right) ) then
+  if (xyz_target(node%idim) < node%cut_value) then
+    if (associated(node%right)) then
       ! checks right node as a final node
-      if (node%right%idim == 0 ) then
+      if (node%right%idim == 0) then
         xyz(:) = points_data(:,node%right%ipoint)
         call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
         if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
@@ -1233,9 +1233,9 @@ contains
       endif
     endif
   else
-    if (associated(node%left) ) then
+    if (associated(node%left)) then
       ! checks left node as a final node
-      if (node%left%idim == 0 ) then
+      if (node%left%idim == 0) then
         xyz(:) = points_data(:,node%left%ipoint)
         call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
         if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then

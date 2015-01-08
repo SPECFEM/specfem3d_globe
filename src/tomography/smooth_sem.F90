@@ -197,7 +197,7 @@ program smooth_sem_globe
   do i = 1, 5
     call get_command_argument(i,arg(i))
     if (i <= 5 .and. trim(arg(i)) == '') then
-      if (myrank == 0 ) then
+      if (myrank == 0) then
         print *, 'Usage: '
         print *, '        xsmooth_sem sigma_h sigma_v kernel_file_name scratch_file_dir/ topo_dir/'
         print *
@@ -243,7 +243,7 @@ program smooth_sem_globe
   ! see values_from_mesher.h:
   !   average size of a spectral element in km = ...
   !   e.g. nproc 12x12, nex 192: element_size = 52.122262
-  if (NCHUNKS_VAL == 6 ) then
+  if (NCHUNKS_VAL == 6) then
     element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI_VAL)
   else
     ANGULAR_WIDTH_XI_RAD = ANGULAR_WIDTH_XI_IN_DEGREES_VAL * DEGREES_TO_RADIANS
@@ -861,7 +861,7 @@ program smooth_sem_globe
       ! e.g. sigma_h 160km, sigma_v 40km:
       !     norm (not squared sigma_h ) ~ 0.001
       !     norm ( squared sigma_h) ~ 6.23 * e-5
-      !if (abs(bk(INDEX_IJK,ispec) - norm) > 1.e-4 ) then
+      !if (abs(bk(INDEX_IJK,ispec) - norm) > 1.e-4) then
       !  print *, 'Problem norm here --- ', myrank, ispec, i, j, k, bk(INDEX_IJK,ispec), norm
       !  !call exit_mpi(myrank, 'Error computing Gaussian function on the grid')
       !endif

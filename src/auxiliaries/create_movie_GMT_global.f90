@@ -414,7 +414,7 @@
       print*,'simulation time: ',(it-1)*DT - t0,'(s)'
 
       ! muting radius grows/shrinks with time
-      if ((it-1)*DT - t0 > STARTTIME_TO_MUTE ) then
+      if ((it-1)*DT - t0 > STARTTIME_TO_MUTE) then
 
         ! approximate wavefront travel distance in degrees
         ! (~3.5 km/s wave speed for surface waves)
@@ -572,7 +572,7 @@
                   ! mutes source region values
                   if (distance < RADIUS_TO_MUTE) then
                     ! muting takes account of the event time
-                    if ((it-1)*DT-t0 > STARTTIME_TO_MUTE ) then
+                    if ((it-1)*DT-t0 > STARTTIME_TO_MUTE) then
                       ! wavefield will be tapered to mask out noise in source area
                       ! factor from 0 to 1
                       mute_factor = ( 0.5*(1.0 - cos(distance/RADIUS_TO_MUTE*PI)) )**6

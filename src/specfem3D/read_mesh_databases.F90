@@ -1723,7 +1723,7 @@
       call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
   endif
 
-  if (num_phase_ispec_crust_mantle > 0 ) then
+  if (num_phase_ispec_crust_mantle > 0) then
     call bcast_all_i_for_database(phase_ispec_inner_crust_mantle(1,1), size(phase_ispec_inner_crust_mantle))
   endif
 
@@ -1814,7 +1814,7 @@
       call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
   endif
 
-  if (num_phase_ispec_outer_core > 0 ) then
+  if (num_phase_ispec_outer_core > 0) then
     call bcast_all_i_for_database(phase_ispec_inner_outer_core(1,1), size(phase_ispec_inner_outer_core))
   endif
 
@@ -1903,7 +1903,7 @@
       call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
   endif
 
-  if (num_phase_ispec_inner_core > 0 ) then
+  if (num_phase_ispec_inner_core > 0) then
     call bcast_all_i_for_database(phase_ispec_inner_inner_core(1,1), size(phase_ispec_inner_inner_core))
   endif
 

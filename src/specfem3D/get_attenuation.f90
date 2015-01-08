@@ -87,12 +87,10 @@
 
   ! loops over elements
   do ispec = 1, vnspec
-
     ! loops over GLL points
     do k = 1, ATT3_VAL
       do j = 1, ATT2_VAL
         do i = 1, ATT1_VAL
-
           ! gets relaxation times for each standard linear solid
           do i_sls = 1,N_SLS
             tau_e(i_sls) = factor_common(i,j,k,i_sls,ispec)
@@ -242,11 +240,11 @@
 
   tauinv(:) = - 1.d0 / tau_s(:)
 
-  alphaval(:)  = 1.d0 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2.d0 + &
-                    deltat**3*tauinv(:)**3 / 6.d0 + deltat**4*tauinv(:)**4 / 24.d0
-  betaval(:)   = deltat / 2.d0 + deltat**2*tauinv(:) / 3.d0 &
-                + deltat**3*tauinv(:)**2 / 8.d0 + deltat**4*tauinv(:)**3 / 24.d0
-  gammaval(:)  = deltat / 2.d0 + deltat**2*tauinv(:) / 6.d0 &
-                + deltat**3*tauinv(:)**2 / 24.d0
+  alphaval(:) = 1.d0 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2.d0 &
+                  + deltat**3*tauinv(:)**3 / 6.d0 + deltat**4*tauinv(:)**4 / 24.d0
+  betaval(:)  = deltat / 2.d0 + deltat**2*tauinv(:) / 3.d0 &
+                  + deltat**3*tauinv(:)**2 / 8.d0 + deltat**4*tauinv(:)**3 / 24.d0
+  gammaval(:) = deltat / 2.d0 + deltat**2*tauinv(:) / 6.d0 &
+                  + deltat**3*tauinv(:)**2 / 24.d0
 
   end subroutine get_attenuation_memory_values

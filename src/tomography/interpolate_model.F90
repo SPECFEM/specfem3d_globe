@@ -204,7 +204,7 @@
 
 
   ! checks program arguments
-  if (myrank == 0 ) then
+  if (myrank == 0) then
     do i = 1,4
       call get_command_argument(i,arg)
       ! usage info
@@ -245,7 +245,7 @@
       output_model_dir = trim(arg)
     end select
     if (.not. DO_BRUTE_FORCE_SEARCH) then
-      if (i == 5 .and. len_trim(arg) > 0 ) then
+      if (i == 5 .and. len_trim(arg) > 0) then
         read(arg(1:len_trim(arg)),*,iostat=ier) want_midpoint
         if (ier /= 0) then
           if (myrank == 0) print*,'Error reading in midpoint-search value, please check your arguments...'
@@ -313,7 +313,7 @@
   endif
 
   ! master process gets old, source mesh dimension
-  if (myrank == 0 ) then
+  if (myrank == 0) then
     ! gets nspec/nglob
     write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',myrank,'_reg1_'//'solver_data.bin'
     open(IIN,file=trim(solver_file),status='old',form='unformatted',iostat=ier)
@@ -330,7 +330,7 @@
     do while (ier == 0)
       write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',rank,'_reg1_'//'solver_data.bin'
       open(IIN,file=trim(solver_file),status='old',form='unformatted',iostat=ier)
-      if (ier == 0 ) then
+      if (ier == 0) then
         rank = rank + 1
         close(IIN)
       endif
@@ -412,7 +412,7 @@
   if (sizeprocs /= NPROCTOT_VAL) stop 'Error target mesh processors not equal to current total mpi processes'
 
   ! checks temporary file creation, to see if we could write out new model
-  if (myrank == 0 ) then
+  if (myrank == 0) then
     write(m_file,'(a,i6.6,a)') trim(output_model_dir)// '/proc',myrank,'_reg1_'//trim(fname(1))//'.tmp'
     open(IOUT,file=trim(m_file),status='unknown',form='unformatted',iostat=ier)
     if (ier /= 0) then
@@ -547,7 +547,7 @@
       read(IIN) nglob
 
       ! checks dimensions
-      if (nspec /= nspec_max_old .or. nglob /= nglob_max_old ) then
+      if (nspec /= nspec_max_old .or. nglob /= nglob_max_old) then
         print*,'Error dimension of old, source mesh: solver_data nspec/nglob = ',nspec,nglob
         stop 'Error new mesh dimensions'
       endif
@@ -642,7 +642,7 @@
   read(IIN) nglob
 
   ! checks dimensions
-  if (nspec /= NSPEC_CRUST_MANTLE .or. nglob /= NGLOB_CRUST_MANTLE ) then
+  if (nspec /= NSPEC_CRUST_MANTLE .or. nglob /= NGLOB_CRUST_MANTLE) then
     print*,'Error dimension of new mesh: solver_data nspec/nglob = ',nspec,nglob
     stop 'Error new mesh dimensions'
   endif
@@ -656,7 +656,7 @@
   close(IIN)
 
   ! checks that layers match
-  if (minval(idoubling1) /= minval(idoubling2) .or. maxval(idoubling1) /= maxval(idoubling2) ) then
+  if (minval(idoubling1) /= minval(idoubling2) .or. maxval(idoubling1) /= maxval(idoubling2)) then
     print*,'Error idoubling range:'
     print*,'idoubling 1:',minval(idoubling1),maxval(idoubling1)
     print*,'idoubling 2:',minval(idoubling2),maxval(idoubling2)
@@ -708,7 +708,7 @@
           iprocnum = iprocnum + 1
           ! all elements
           do ispec = 1, nspec_max_old
-            if (idoubling1(ispec,iprocnum-1) == ilayer ) then
+            if (idoubling1(ispec,iprocnum-1) == ilayer) then
               if (TREE_INTERNAL_GLL_POINTS) then
                 ! all internal gll points ( 2 to NGLLX-1 )
                 inodes = inodes + (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
@@ -833,7 +833,7 @@
     do ispec = 1, nspec
       ! user output
       if (myrank == 0) then
-        if (ispec == 1 .or. mod(ispec,int(0.1*nspec)) == 0 .or. ispec == nspec ) then
+        if (ispec == 1 .or. mod(ispec,int(0.1*nspec)) == 0 .or. ispec == nspec) then
           print*,'  ispec',ispec,' out of ',nspec
         endif
       endif
@@ -1332,7 +1332,7 @@
 
         ! checks distance
         dist_min = sqrt((x_found-x_target)**2 + (y_found-y_target)**2 + (z_found-z_target)**2)
-        if (dist_min > 2 * typical_size ) then
+        if (dist_min > 2 * typical_size) then
           print*,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
                  'element size:',typical_size * R_EARTH_KM
           print*,'target location:',xyz_target(:)
@@ -1375,7 +1375,7 @@
           ! checks model difference
           if (DO_WARNING) then
             ! note: warns for top elements, probably due to crustal structure
-            if (abs(val - val_initial ) > abs( 0.2 * val_initial ) ) then
+            if (abs(val - val_initial ) > abs( 0.2 * val_initial )) then
               print*,'Warning: model ',iker,' value:',val,'is very different from initial value ',val_initial
               print*,'  rank ',myrank,' - dist_min: ',dist_min * R_EARTH_KM,'(km)'
               print*,'  element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
@@ -1408,21 +1408,21 @@
     implicit none
 
     ! checks valid iglob
-    if (iglob_min < 1 .or. iglob_min > nspec_max_old * nproc_chunk1 ) then
+    if (iglob_min < 1 .or. iglob_min > nspec_max_old * nproc_chunk1) then
       print*,'Error iglob_min :',iglob_min
       print*,'nspec / nproc :',nspec_max_old,nproc_chunk1
       stop 'Error invalid iglob_min index'
     endif
 
     ! checks valid rank
-    if (rank_selected < 0 .or. rank_selected >= nproc_chunk1 ) then
+    if (rank_selected < 0 .or. rank_selected >= nproc_chunk1) then
       print*,'Error rank:',myrank,'invalid selected rank ',rank_selected,'for element',ispec
       print*,'target location:',xyz_target(:)
       stop 'Error specifying closest rank for element'
     endif
 
     ! checks valid ispec
-    if (ispec_selected < 1 .or. ispec_selected > nspec_max_old ) then
+    if (ispec_selected < 1 .or. ispec_selected > nspec_max_old) then
       print*,'Error rank:',myrank,'invalid selected ispec ',ispec_selected,'for element',ispec
       print*,'rank_selected:',rank_selected,'iglob_min:',iglob_min,'nspec_max_old:',nspec_max_old
       print*,'target location:',xyz_target(:)
@@ -1431,7 +1431,7 @@
     endif
 
     ! checks minimum distance within a typical element size
-    if (dist_min > 2 * typical_size ) then
+    if (dist_min > 2 * typical_size) then
       print*,'Warning: rank ',myrank,' - large dist_min: ',dist_min * R_EARTH_KM,'(km)', &
              'element size:',typical_size * R_EARTH_KM
       print*,'element',ispec,'selected ispec:',ispec_selected,'in rank:',rank_selected,'iglob_min:',iglob_min
@@ -1734,7 +1734,7 @@
 ! debug
 !      if (ier /= 0) then
 !        ! debug
-!        if ( .true. ) then
+!        if (.true.) then
 !          print*,'jacobian error in locate_single(): '
 !          print*,'jacobian error i,j,k,ispec :',ix_initial_guess,iy_initial_guess,iz_initial_guess,ispec_selected
 !          print*,'jacobian error iter_loop   :',iter_loop
@@ -1792,7 +1792,7 @@
       !if (gamma < -1.10d0) gamma = -1.10d0
 
       ! point leaves element, stay to closest guess
-      if (xi > 1.10d0 .or. xi < -1.10d0 .or. eta > 1.10d0 .or. eta < -1.10d0 .or. gamma > 1.10d0 .or. gamma < -1.10d0 ) then
+      if (xi > 1.10d0 .or. xi < -1.10d0 .or. eta > 1.10d0 .or. eta < -1.10d0 .or. gamma > 1.10d0 .or. gamma < -1.10d0) then
         ! uses previous guess
         xi = xi - dxi
         eta = eta - deta
@@ -1816,7 +1816,7 @@
     !  print*,'final distance = ',sngl(final_distance),'(km)',distmin,xi,eta,gamma
 
     ! checks if location improved
-    if (distmin <= final_distance ) then
+    if (distmin <= final_distance) then
       ! uses initial guess
       xi = xigll(ix_initial_guess)
       eta = yigll(iy_initial_guess)
@@ -1829,7 +1829,7 @@
     ! add warning if estimate is poor
     ! (usually means receiver outside the mesh given by the user)
     if (DO_WARNING) then
-      if (final_distance > typical_size * R_EARTH_KM ) then
+      if (final_distance > typical_size * R_EARTH_KM) then
         print*, '*****************************************************************'
         print*, '***** WARNING: location estimate is poor                    *****'
         print*, '*****************************************************************'

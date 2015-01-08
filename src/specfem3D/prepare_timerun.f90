@@ -2083,7 +2083,7 @@
 
   ! prepares oceans arrays
   if (OCEANS_VAL) then
-    if (myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) "  loading oceans arrays"
       call flush_IMAIN()
     endif
@@ -2159,7 +2159,7 @@
 
   ! prepares LDDRK arrays
   if (USE_LDDRK) then
-    if (myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) "  loading LDDRK arrays"
       call flush_IMAIN()
     endif
@@ -2170,7 +2170,7 @@
   endif
 
   ! crust/mantle region
-  if (myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "  loading crust/mantle region"
     call flush_IMAIN()
   endif
@@ -2236,7 +2236,7 @@
   call synchronize_all()
 
   ! outer core region
-  if (myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "  loading outer core region"
     call flush_IMAIN()
   endif
@@ -2265,7 +2265,7 @@
   call synchronize_all()
 
   ! inner core region
-  if (myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "  loading inner core region"
     call flush_IMAIN()
   endif
@@ -2313,7 +2313,7 @@
   call synchronize_all()
 
   ! transfer forward and backward fields to device with initial values
-  if (myrank == 0 ) then
+  if (myrank == 0) then
     write(IMAIN,*) "  transferring initial wavefield"
     call flush_IMAIN()
   endif

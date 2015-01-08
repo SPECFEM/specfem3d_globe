@@ -78,7 +78,7 @@
   implicit none
 
   ! On the first iteration, go get the ASCII file.
-  if ( .not. allocated (stfArray_external) ) then
+  if (.not. allocated (stfArray_external)) then
     call get_external_stf()
   endif
 

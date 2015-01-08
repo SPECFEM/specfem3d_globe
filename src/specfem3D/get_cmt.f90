@@ -119,7 +119,7 @@
     do itype = 1,6
       ! determines where first number starts
       do i = istart,len_trim(string)
-        if (is_numeric(string(i:i)) ) then
+        if (is_numeric(string(i:i))) then
           istart = i
           exit
         endif
@@ -130,7 +130,7 @@
       ! determines end and length of number
       iend = istart
       do i = istart,len_trim(string)
-        if (itype /= 6 ) then
+        if (itype /= 6) then
           ! integer values
           if (.not. is_numeric(string(i:i))) then
             iend = i

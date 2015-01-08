@@ -288,7 +288,7 @@ program convert_model_file_adios
       endif
       ! adds shear attenuation
       if (USE_ATTENUATION_Q) then
-        if (iker == nparams ) then
+        if (iker == nparams) then
            model_qmu(:,:,:,:) = model(:,:,:,:)
         endif
       endif
@@ -361,7 +361,7 @@ program convert_model_file_adios
       endif
       ! adds shear attenuation
       if (USE_ATTENUATION_Q) then
-        if (iker == nparams ) then
+        if (iker == nparams) then
           ! qmu model
           write(IOUT) model_qmu
         endif
@@ -436,7 +436,7 @@ program convert_model_file_adios
       endif
       ! adds shear attenuation
       if (USE_ATTENUATION_Q) then
-        if (iker == nparams ) then
+        if (iker == nparams) then
           ! qmu model
           read(IIN) model_qmu
         endif
@@ -509,7 +509,7 @@ program convert_model_file_adios
       endif
       ! adds shear attenuation
       if (USE_ATTENUATION_Q) then
-        if (iker == nparams ) then
+        if (iker == nparams) then
           ! qmu model
           model(:,:,:,:) = model_qmu(:,:,:,:)
         endif

@@ -128,7 +128,7 @@ do irec = 1,nrec
    I(:)=(length_window-1)
    data_trace=data_filtered(:,irec)
     syn_trace= syn_filtered(:,irec)
-!   if ( ( trace_data_max(irec) > (factor*data_max) ) .and. (trace_syn_max(irec) > (factor*syn_max)) ) then
+!   if ( ( trace_data_max(irec) > (factor*data_max) ) .and. (trace_syn_max(irec) > (factor*syn_max))) then
    if (1 == 1) then
       !!!! cross-correlation !!!!
       do i_start_window = (nstep+1)/2, (nstep+1)/2                                 !the positive branch

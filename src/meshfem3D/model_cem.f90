@@ -76,10 +76,9 @@ subroutine model_cem_broadcast (myrank)
   call world_size (wSize)
 
   scaleval = dsqrt(PI*GRAV*RHOAV)
-  scale_GPa = (RHOAV / 1000.d0) * &
-      ((R_EARTH * scaleval / 1000.d0) ** 2)
+  scale_GPa = (RHOAV / 1000.d0) * ((R_EARTH * scaleval / 1000.d0) ** 2)
 
-  if ( CEM_ACCEPT ) then
+  if (CEM_ACCEPT) then
 
     call return_populated_arrays (reg1Bc, "vsv", 1)
     call return_populated_arrays (reg2Bc, "vsv", 2)
@@ -351,11 +350,11 @@ subroutine build_global_coordinates (nspec, nglob, iregion_code)
 
             rad = dsqrt ( x * x + y * y + z * z )
 
-            if      ( rad < R_670_KM .and. rad >= R_CMB_KM ) then
+            if      (rad < R_670_KM .and. rad >= R_CMB_KM) then
               region = 3
-            else if ( rad < R_400_KM .and. rad >= R_670_KM ) then
+            else if (rad < R_400_KM .and. rad >= R_670_KM) then
               region = 2
-            else if ( rad >= R_400_KM ) then
+            else if (rad >= R_400_KM) then
               region = 1
             endif
 

@@ -155,7 +155,7 @@ program add_model
           alphah1 = 0._CUSTOM_REAL
 
           ! do not use transverse isotropy except if element is between d220 and Moho
-!          if (.not. ( idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO) ) then
+!          if (.not. ( idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO)) then
           if (.not. ispec_is_tiso(ispec)) then
             ! isotropic model update
 
@@ -260,7 +260,7 @@ subroutine initialize()
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  if (sizeprocs /= NPROCTOT_VAL ) then
+  if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
       print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
       print*, 'Error number of MPI processors actually run on: ',sizeprocs
