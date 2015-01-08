@@ -37,7 +37,7 @@
 
 program difference_sem
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT,MAX_STRING_LEN
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT,MAX_STRING_LEN
 
   implicit none
 

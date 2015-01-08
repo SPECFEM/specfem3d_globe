@@ -358,6 +358,11 @@
   ! by defaults uses only 1 point location
   num_points = 1
 
+  ! initializes cap arrays (to avoid compiler warning)
+  xlat(:) = 0.d0
+  xlon(:) = 0.d0
+  weight(:) = 0.d0
+
   ! checks if inside/outside of critical region for mesh stretching
   if (SMOOTH_CRUST_EVEN_MORE) then
 

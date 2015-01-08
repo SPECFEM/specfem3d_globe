@@ -638,8 +638,8 @@
   write(IOUT,*)
 
   if (TOPOGRAPHY .or. OCEANS) then
-    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = NX_BATHY'
-    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = NY_BATHY'
+    write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = ',NX_BATHY
+    write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = ',NY_BATHY
   else
     write(IOUT,*) 'integer, parameter :: NX_BATHY_VAL = 1'
     write(IOUT,*) 'integer, parameter :: NY_BATHY_VAL = 1'

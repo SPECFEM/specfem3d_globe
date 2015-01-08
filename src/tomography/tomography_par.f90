@@ -28,7 +28,7 @@
 
 module tomography_par
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NX_BATHY,NY_BATHY, &
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
 

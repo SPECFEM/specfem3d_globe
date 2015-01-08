@@ -415,7 +415,7 @@
   static_memory_size = static_memory_size + &
       4.d0*NPROCTOT*dble(SIZE_INTEGER)
 
-  if (TOPOGRAPHY) then
+  if (TOPOGRAPHY .or. OCEANS) then
     ! ibathy_topo
     static_memory_size = static_memory_size + &
       NX_BATHY*NY_BATHY*dble(SIZE_INTEGER)

@@ -65,7 +65,7 @@ program smooth_sem_globe
 ! NOTE:  smoothing can be different in radial & horizontal directions; mesh is in spherical geometry.
 !              algorithm uses vector components in radial/horizontal direction
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NX_BATHY,NY_BATHY,IIN,IOUT, &
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER,NGLLCUBE
 
   use kdtree_search

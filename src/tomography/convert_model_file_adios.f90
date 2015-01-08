@@ -34,7 +34,7 @@ program convert_model_file_adios
   use adios_write_mod
   use adios_helpers_mod
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NX_BATHY,NY_BATHY,IIN,IOUT, &
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     ADIOS_TRANSPORT_METHOD,ADIOS_BUFFER_SIZE_IN_MB,MAX_STRING_LEN
 
   ! converts between adios and binary format for a model file like
