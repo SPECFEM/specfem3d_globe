@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -290,6 +290,16 @@
 !
 ! Evolution of the code:
 ! ---------------------
+!
+! v. 7.0, many developers, January 2015:
+!     simultaneous MPI runs, ADIOS file I/O support, ASDF seismograms, new seismogram names, tomography tools,
+!     CUDA and OpenCL GPU support, CEM model support, updates AK135 model, binary topography files, 
+!     fixes geocentric/geographic conversions, updates ellipticity and gravity factors, git versioning system.
+!
+! v. 6.0, Daniel Peter (ETH Z\"urich, Switzerland), Dimitri Komatitsch and Zhinan Xie (CNRS / University of Marseille, France),
+!     Elliott Sales de Andrade (University of Toronto, Canada), and many others, in particular from Princeton University, USA,
+!     April 2014:
+!     more flexible MPI implementation, GPU support, exact undoing of attenuation, LDDRK4-6 higher-order time scheme, etc...
 !
 ! v. 5.1, Dimitri Komatitsch, University of Toulouse, France and Ebru Bozdag, Princeton University, USA, February 2011:
 !     non blocking MPI for much better scaling on large clusters;

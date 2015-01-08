@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -161,12 +161,10 @@
   character(len=MAX_STRING_LEN) :: filename
   character(len=2) :: bic
 
-! by Ebru
   call band_instrument_code(DT,bic)
   comp(1) = bic(1:2)//'N'
   comp(2) = bic(1:2)//'E'
   comp(3) = bic(1:2)//'Z'
-!
 
   ! (sub)trace start and end
   ! reading starts in chunks of NSTEP_BLOCK from the end of the trace,

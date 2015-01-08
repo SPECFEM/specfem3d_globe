@@ -1,11 +1,11 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99994
+//      this file has been generated automatically by BOAST version 0.99996
 //      by: make boast_kernels
 
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -220,7 +220,7 @@ static __device__ void compute_element_ic_gravity(const int tx, const int iglob,
   rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));
   rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));
 }
-__global__
+__global__ 
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif

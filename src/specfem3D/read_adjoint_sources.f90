@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -220,7 +220,6 @@
   adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
 
   ! bandwidth code
-  ! by Ebru
   call band_instrument_code(DT,bic)
   comp(1) = bic(1:2)//'N'
   comp(2) = bic(1:2)//'E'

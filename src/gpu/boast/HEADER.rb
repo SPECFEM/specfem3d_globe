@@ -30,7 +30,7 @@ module BOAST
 /*\n\
 !=====================================================================\n\
 !\n\
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0\n\
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0\n\
 !          --------------------------------------------------\n\
 !\n\
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp\n\

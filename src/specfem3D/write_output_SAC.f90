@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -185,7 +185,6 @@
   EVDP   = sngl(cmt_depth)
 
 
-  ! by Ebru
   ! SAC headers will have new format
   USER0  = sngl(cmt_hdur) !half duration from CMT file if not changed to t0 = 0.d0 (point source)
 
@@ -225,7 +224,6 @@
   !   or leave magnitude and use scalar moment (M0, but calculated by which convention, Harvard?)
   !
   ! it's confusing, and as a result, we will omit it.
-  ! by Ebru
   MAG     = undef
   IMAGTYP = int(undef)
 
@@ -263,7 +261,6 @@
   NZMIN  = mi
 
   ! adds time-shift to get the CMT time in the headers as origin time of events
-  ! by Ebru
   NZSEC  = int(sec+t_shift)
   NZMSEC = int((sec+t_shift-int(sec+t_shift))*1000)
 
@@ -317,7 +314,6 @@
   KSTNM  = station_name(irec)(1:8) ! A8
 
   ! writes out event id as event name
-  ! by Ebru
   KEVNM  = event_name(1:len_trim(event_name)) ! A16
 
   !if (NSOURCES == 1) then
@@ -340,10 +336,9 @@
   if (trim(MODEL(1:2)) == "1D") KHOLE = 'S1'
 
   ! indicates SEM synthetics
-  ! by Ebru
   KUSER0 = 'SY'          ! Network code assigned by IRIS for synthetic seismograms
-  KUSER1 = 'SEM5.1.2'
-  KUSER2 = 'Tiger'       ! year of the tiger version :)
+  KUSER1 = 'SEM7.0.0'
+  KUSER2 = 'Horse'       ! year of the horse: jan 31, 2014 - feb 18, 2015 (chinese zodiac :)
 
   !KUSER0 = 'PDE_LAT_'          !  A8
   !KUSER1 = 'PDE_LON_'          !  A8

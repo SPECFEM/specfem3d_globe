@@ -1,11 +1,11 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99994
+//      this file has been generated automatically by BOAST version 0.99996
 //      by: make boast_kernels
 
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
