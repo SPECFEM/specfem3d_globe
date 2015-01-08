@@ -293,7 +293,7 @@
 !
 ! v. 7.0, many developers, January 2015:
 !     simultaneous MPI runs, ADIOS file I/O support, ASDF seismograms, new seismogram names, tomography tools,
-!     CUDA and OpenCL GPU support, CEM model support, updates AK135 model, binary topography files, 
+!     CUDA and OpenCL GPU support, CEM model support, updates AK135 model, binary topography files,
 !     fixes geocentric/geographic conversions, updates ellipticity and gravity factors, git versioning system.
 !
 ! v. 6.0, Daniel Peter (ETH Z\"urich, Switzerland), Dimitri Komatitsch and Zhinan Xie (CNRS / University of Marseille, France),
