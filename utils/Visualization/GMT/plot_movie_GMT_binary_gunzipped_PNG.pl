@@ -44,7 +44,7 @@ $power_scaling = 0.5;
 # global region
 $R = "-Rd";
 
-#plate carré projection
+#plate carre projection
 $JM = "-JQ0/0/15"; 
 
 # color tables

@@ -32,7 +32,7 @@ $xy_file = "OUTPUT_FILES/bin_movie.xy";
 # global region
 $R = "-Rd";
 
-#plate carré projection
+#plate carre projection
 $JM = "-JQ0/0/15"; 
 
 # interpolation

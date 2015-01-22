@@ -7,7 +7,7 @@ use strict;
 $|++;
 # for using database analysis, you have to install, run & configure mysql-server
 
-# constantes utilisées globalement
+# constantes utilisees globalement
 my $pi = 3.141592653589793;
 my $pisur2 = (3.141592653589793 / 2);
 my $pisur4 = (3.141592653589793 / 4);
@@ -33,7 +33,7 @@ if (exists($opts{c}))
 {	print_usage() if (scalar(@ARGV)!=1);
 	my $max_angle_param = shift(@ARGV);
 	if ($max_angle_param<90 or $max_angle_param>180)
-	{	print "angle max have to belong to [90°,180°]\n";
+	{	print "angle max have to belong to [90 degrees,180 degrees]\n";
 		print_usage();
 	}
 	my $alpha=1;

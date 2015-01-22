@@ -2,8 +2,8 @@
 readme
 --------------------------------
 
-GMT, the Generic Mapping Tools 
-http://www.soest.hawaii.edu/GMT/ 
+GMT, the Generic Mapping Tools
+http://www.soest.hawaii.edu/GMT/
 
 
 
@@ -13,9 +13,9 @@ http://www.soest.hawaii.edu/GMT/
 
    MOVIE_SURFACE = .true.
    MOVIE_COARSE  = .false.
-   
-   and adjust the time steps NSTEP_BETWEEN_FRAMES   
-   
+
+   and adjust the time steps NSTEP_BETWEEN_FRAMES
+
    this creates binary files in directory OUTPUT_FILES/ like: moviedata000100,...
 
 
@@ -25,13 +25,13 @@ now, you have basically two options:
 2.A) convert binary files to GMT-files:
 
    in SPECFEM3D_GLOBE:  > make xcreate_movie_AVS_DX
-                          
-	         run it > ./xcreate_movie_AVS_DX
+
+           run it > ./xcreate_movie_AVS_DX
 
                           choose option 4 for individual files
-                          
+
    outputs file like: OUTPUT_FILES/gmt_movie_000100.xyz
-   
+
 
   - render gif files using GMT:
 
@@ -42,8 +42,8 @@ now, you have basically two options:
 2.B) convert binary files to GMT-files:
 
    in SPECFEM3D_GLOBE:  > make xcreate_movie_GMT_global
-   
-	         run it > ./xcreate_movie_GMT_global
+
+           run it > ./xcreate_movie_GMT_global
 
                           choose either option for ascii (F) or binary (T)
                           to create individual files

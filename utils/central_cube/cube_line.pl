@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-# mesh an inflated cube and write an opendx file for line rendering.
-# david Michéa. University of Pau.
-# march 2007.
+# Mesh an inflated cube and write an opendx file for line rendering.
+# David Michea. University of Pau.
+# March 2007.
 
 print "\nnb d'elements radiaux ? : ";
 $nbelem=<STDIN>;

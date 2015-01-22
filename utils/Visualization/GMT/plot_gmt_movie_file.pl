@@ -27,7 +27,7 @@ if (!getopts('l:L:cdts')) {die('Check input arguments\n');}
 # global
 $R = "-Rd";
 
-#plate carré projection (centered at 0 meridian, parallel to equator, plot width 15 inches)
+#plate carre projection (centered at 0 meridian, parallel to equator, plot width 15 inches)
 $JM = "-JQ0/0/15"; 
 
 # use white as transparent color

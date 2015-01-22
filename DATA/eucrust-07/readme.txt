@@ -29,7 +29,7 @@ Dataset 1 contains the data in digital form of the crustal model EuCRUST-07
 presented in the paper. 
 
 Available results of deep seismic reflection, refraction and receiver 
-functions studies are assembled in this integrated model at a uniform grid (15’x15’). 
+functions studies are assembled in this integrated model at a uniform grid (15x15). 
 The study area is limited to 35N-71N, 25W-35E.
 The model consists of three layers: sediments and two layers of the crystalline crust. 
 The table provides the depth to the crustal boundaries (in km), average 
