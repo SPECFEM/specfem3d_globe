@@ -6,7 +6,7 @@
 
 # this script has been written for this particular usage, not for a general purpose.
 
-# David Michéa. University of Pau. February 2007.
+# David Michea. University of Pau. February 2007.
 
 $|++;
 

@@ -12,7 +12,7 @@ integer N,i,j,k
 
 
 
-!Calculate the Gauﬂ-Lobatto-Legendre Quadrature points and the values of the
+!Calculate the Gauss-Lobatto-Legendre Quadrature points and the values of the
 !Legendre polynomials VN at the gll nodes
 
 call main_pol(xi,N,VN)
@@ -21,7 +21,7 @@ call main_pol(xi,N,VN)
 
 rho = 2 / ( float((N+1)*N) * VN**2)
 
-!calculating the derivatives of the Polynomials at the  Gauﬂ-Lobatto-Legendre Quadrature points
+!calculating the derivatives of the Polynomials at the  Gauss-Lobatto-Legendre Quadrature points
 
 do i=0,N
 

@@ -2,7 +2,7 @@ EPcrust crustal model (version 1.0)
 
 I. Molinari, and A. Morelli, 2011.
 EPcrust: a reference crustal model for the European plate.
-GJI, 185 (1), pages 352-364 
+GJI, 185 (1), pages 352-364
 
 
 The model can be up for change! Be careful.

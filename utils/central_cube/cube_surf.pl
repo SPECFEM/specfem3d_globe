@@ -1,8 +1,8 @@
 #!/usr/bin/perl
 
-# mesh an inflated cube and write an opendx file for hexahedron rendering.
-# david Michéa. University of Pau.
-# march 2007.
+# Mesh an inflated cube and write an opendx file for hexahedron rendering.
+# David Michea. University of Pau.
+# March 2007.
 
 print "\nnb d'elements radiaux ? : ";
 $nbelem=<STDIN>;
@@ -23,7 +23,7 @@ my @iaddy = (2,0,2,0,2,0,2,0);
 my @iaddz = (2,2,2,2,0,0,0,0);
 my $radius = 100;
 my @points;
-# calcul des coordonnées
+# calcul des coordonnees
 for (my $ix=0;$ix<2*$nb_elem_x;$ix+=2)
 {	for (my $iy=0;$iy<2*$nb_elem_y;$iy+=2)
 	{	for (my $iz=0;$iz<2*$nb_elem_z;$iz+=2)

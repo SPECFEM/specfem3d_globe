@@ -1,6 +1,6 @@
 The files distributed with this README are the model CRUST1.0 and three
-Fortran 77 routines to get a 1D profile at a point (give latitude and 
-longitude) (getCN1point.f)  or a set of maps (getCN1maps.f)  or a set 
+Fortran 77 routines to get a 1D profile at a point (give latitude and
+longitude) (getCN1point.f)  or a set of maps (getCN1maps.f)  or a set
 of xyz datai (getCN1xyz.f)..
 
 CRUST1.0 is a 8 layer model defined as 1x1 degree cells. The cells
@@ -26,9 +26,9 @@ assignment. The crustal type file can be obtained upon request.
 
 The 8 crustal layers:
 ====================
-1) water             
-2) ice               
-3) upper sediments   (VP, VS, rho not defined in all cells) 
+1) water
+2) ice
+3) upper sediments   (VP, VS, rho not defined in all cells)
 4) middle sediments  "
 5) lower sediments   "
 6) upper crystalline crust
@@ -45,21 +45,21 @@ model:
 crust1.bnds: boundary topography.
 crust1.vp:   vp
 crust1.vs:   vs
-crust1.rho:  rho 
+crust1.rho:  rho
 
 Format:
 ======
 The model is defined from 89.5 to -89.5 deg latitude and -179.5 to 179.5 deg
 longitude. Longitudes are the inner loop, i.e. all longitudes are stored
-for each latitude, then the next latitude is given. The model starts at 
+for each latitude, then the next latitude is given. The model starts at
 89.5 N and 179.5 W.
 
 Each line has the nine values for one parameter, in one cell, i.e.
-there are 360x180=64800 lines in each file. 
+there are 360x180=64800 lines in each file.
 
 Current output files using getCN1maps.f:
 =======================================
-map-bd[x], where x goes from 1 to 9: 
+map-bd[x], where x goes from 1 to 9:
  1) top of water
  2) bottom of water
  3) bottom of ice
@@ -76,7 +76,7 @@ map=ro[x], same for density
 file sedthk: sediment thickness
 file crsthk: crustal thickness (without water)
 
-same for getCN1xyz.f, except that each cell has its own line, 
+same for getCN1xyz.f, except that each cell has its own line,
 with longitude, latitude, value.
 
 the maps go from 89.5 to -89.5 latitude and from -179.5 to 179.5 longitude
