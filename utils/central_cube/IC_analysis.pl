@@ -112,13 +112,13 @@ sub analyse
 			my $skewness_m_m;
 			
 			my $nex_xi = $NEXXI/16;
-			# calcul du nb d'éléments radiaux dans les chunks
+			# calcul du nb d'elements radiaux dans les chunks
 			my $nex_eta = compute_ner($nex_xi,$Ricb,$iRcube,$ialpha);
 			my $nspec_cube=0;
 			my $nspec_chunks=0;
 			# maillage
 			my $points = mesh($iRcube,$ialpha,$nex_xi,$nex_eta,\$nspec_cube, \$nspec_chunks);
-			# analyse des éléments
+			# analyse des elements
 			for (my $ispec=1;$ispec<=($nspec_cube+$nspec_chunks);$ispec++)
 			{	my @elem=get_elem($points,$ispec);
 				my ($edgemin,$edgemax) = get_size_min_max(@elem);
@@ -145,7 +145,7 @@ sub analyse
 			my @f2=($aspect_ratio_max,($sum_aspect_ratio/($nspec_cube+$nspec_chunks)));
 			my @f3=(\@skewness_worth_histo,\@skewness_moy_histo);
 			
-			# écriture des résultats
+			# ecriture des resultats
 			if (exists($opts{d}))
 			{	#db_insert();
 			}
@@ -318,19 +318,19 @@ sub compute_coord_chunk
 	my $factx = (2*$ratio_x -1);
 	my $xi = $pisur2*$factx;
 		
-	# coordonnées des extrémités d'arêtes à la surface du CC
+	# coordonnees des extremites d'aretes a la surface du CC
 	my $xcc=($Rcube / sqrt(2)) * $factx;
 	my $ycc=($Rcube / sqrt(2)) * (1 + cos($xi)*$alpha / $pisur2);
-	# coordonnées des extrémités d'arêtes à la surface de l'ICB
+	# coordonnees des extremites d'aretes a la surface de l'ICB
 	my $xsurf = $Ricb * cos(3*$pisur4 - $ratio_x * $pisur2);
 	my $ysurf = $Ricb * sin(3*$pisur4 - $ratio_x * $pisur2);
 
 	my $deltax=$xsurf-$xcc;
 	my $deltay=$ysurf-$ycc;
-	# coordonnées du point
+	# coordonnees du point
 	my $x = $xsurf-$ratio_y*$deltax;
 	my $y = $ysurf-$ratio_y*$deltay;
-	# changement de repère pour les trois autres chunks
+	# changement de repere pour les trois autres chunks
 	if ($ichunk==1)
 	{	my $temp=$x; $x=$y; $y=-$temp;
 	}
@@ -367,22 +367,22 @@ sub compute_ner
 	
 	my $somme=0;
 	# on fait la moyenne des distances ICB<>CC sur 1/2 chunk (suffisant)
-	# attention ! valable seulement si $nex_xi est pair, il faudra prendre en compte le cas général si besoin
+	# attention ! valable seulement si $nex_xi est pair, il faudra prendre en compte le cas general si besoin
 	for (my $ix=0;$ix<=$nex_xi/2;$ix++)
 	{	
 		my $ratio_x = $ix/$nex_xi;
 		my $factx = 2*$ratio_x-1;
 		my $xi = $pisur2*$factx;
 		
-		# coordonnées des extrémités d'arêtes à la surface du CC
+		# coordonnees des extremites d'aretes a la surface du CC
 		my $x=($Rcube / sqrt(2)) * $factx;
 		my $y=($Rcube / sqrt(2)) * (1 + cos($xi)*$alpha / $pisur2);
-		# coordonnées des extrémités d'arêtes à la surface de l'ICB
+		# coordonnees des extremites d'aretes a la surface de l'ICB
 		my $xsurf = $Ricb * cos(3*$pisur4 - $ratio_x * $pisur2);
 		my $ysurf = $Ricb * sin(3*$pisur4 - $ratio_x * $pisur2);
-		# taille de l'arête
+		# taille de l'arete
 		my $dist_cc_icb = sqrt(($xsurf-$x)**2+($ysurf-$y)**2);
-		# on double le poids de chaque arête sauf l'arête centrale (la dernière) à ne compter qu'une fois
+		# on double le poids de chaque arete sauf l'arete centrale (la derniere) a ne compter qu'une fois
 		$dist_cc_icb*=2 unless($ix==$nex_xi/2);
 		$somme+=$dist_cc_icb;
 	}
