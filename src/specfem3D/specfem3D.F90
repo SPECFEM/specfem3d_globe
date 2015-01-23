@@ -313,7 +313,7 @@
 !     slight changes in code structure (see also trivia at program start)
 !
 ! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
-!      new doubling brick in the mesh, new perfectly load-balanced mesh,
+!      first port to GPUs using CUDA, new doubling brick in the mesh, new perfectly load-balanced mesh,
 !      more flexible routines for mesh design, new inflated central cube
 !      with optimized shape, far fewer mesh files saved by the mesher,
 !      global arrays sorted to speed up the simulation, seismos can be
