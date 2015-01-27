@@ -82,6 +82,8 @@ module BOAST
     if BOAST::get_lang == CL then
       if BOAST::get_default_real_size == 8 or opts[:double] then
         BOAST::get_output.puts "#pragma OPENCL EXTENSION cl_khr_fp64: enable"
+      end
+      if BOAST::get_default_real_size == 8 then
         BOAST::get_output.puts "#pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable"
       end
       load "./atomicAdd_f.rb"
