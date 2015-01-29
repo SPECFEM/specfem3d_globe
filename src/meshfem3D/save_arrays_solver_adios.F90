@@ -791,7 +791,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
 
     !--- Schedule writes for the previously defined ADIOS variables
-    call adios_write(handle, trim(region_name) // "T_c_source", T_c_source, adios_err)
+    call adios_write(handle, trim(region_name) // "t_c_source", T_c_source, adios_err)
 
     local_dim = size (tau_s)
     call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
