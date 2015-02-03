@@ -101,7 +101,7 @@ FC_FUNC_(param_open,PARAM_OPEN)(char * filename, int * length, int * ierr)
     fncopy[blank - fncopy] = '\0';
   }
   if ((fid = fopen(fncopy, "r")) == NULL) {
-    printf("Can't open '%s'\n", fncopy);
+// DK DK purposely suppressed this      printf("Can't open '%s'\n", fncopy);
     *ierr = 1;
     return;
   }
@@ -180,6 +180,7 @@ FC_FUNC_(param_read,PARAM_READ)(char * string_read, int * string_read_len, char 
       regfree(&compiled_pattern);
       return;
     }
+    //    printf("Line read = %s\n", line);
     // If we have a match, extract the keyword from the line.
     keyword = strndup(line+parameter[1].rm_so, parameter[1].rm_eo-parameter[1].rm_so);
     // If the keyword is not the one we're looking for, check the next line.
