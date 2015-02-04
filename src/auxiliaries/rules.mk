@@ -29,6 +29,7 @@
 
 auxiliaries_TARGETS = \
 	$E/xconvolve_source_timefunction \
+	$E/xdetect_duplicates_stations_file \
 	$E/xcombine_AVS_DX \
 	$E/xcombine_paraview_strain_data \
 	$E/xcombine_vol_data \
@@ -48,6 +49,7 @@ endif
 
 auxiliaries_OBJECTS = \
 	$(xconvolve_source_timefunction_OBJECTS) \
+	$(xdetect_duplicates_stations_file_OBJECTS) \
 	$(xcombine_AVS_DX_OBJECTS) \
 	$(xcombine_paraview_strain_data_OBJECTS) \
 	$(xcombine_surf_data_OBJECTS) \
@@ -62,6 +64,7 @@ auxiliaries_OBJECTS = \
 # These files come from the shared directory
 auxiliaries_SHARED_OBJECTS = \
 	$(xconvolve_source_timefunction_SHARED_OBJECTS) \
+	$(xdetect_duplicates_stations_file_SHARED_OBJECTS) \
 	$(xcombine_AVS_DX_SHARED_OBJECTS) \
 	$(xcombine_paraview_strain_data_SHARED_OBJECTS) \
 	$(xcombine_surf_data_SHARED_OBJECTS) \
@@ -108,6 +111,19 @@ xconvolve_source_timefunction_SHARED_OBJECTS = \
 
 ${E}/xconvolve_source_timefunction: $(xconvolve_source_timefunction_OBJECTS) $(xconvolve_source_timefunction_SHARED_OBJECTS)
 	${FCCOMPILE_CHECK} -o $@ $+
+
+#######################################
+
+xdetect_duplicates_stations_file_OBJECTS = \
+  $O/detect_duplicates_stations_file.aux.o \
+  $(EMPTY_MACRO)
+
+xdetect_duplicates_stations_file_SHARED_OBJECTS = \
+  $O/shared_par.shared_module.o \
+  $(EMPTY_MACRO)
+
+${E}/xdetect_duplicates_stations_file: $(xdetect_duplicates_stations_file_OBJECTS) $(xdetect_duplicates_stations_file_SHARED_OBJECTS)
+  ${FCCOMPILE_CHECK} -o $@ $+
 
 #######################################
 
