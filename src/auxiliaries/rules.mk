@@ -115,15 +115,15 @@ ${E}/xconvolve_source_timefunction: $(xconvolve_source_timefunction_OBJECTS) $(x
 #######################################
 
 xdetect_duplicates_stations_file_OBJECTS = \
-  $O/detect_duplicates_stations_file.aux.o \
-  $(EMPTY_MACRO)
+	$O/detect_duplicates_stations_file.aux.o \
+	$(EMPTY_MACRO)
 
 xdetect_duplicates_stations_file_SHARED_OBJECTS = \
-  $O/shared_par.shared_module.o \
-  $(EMPTY_MACRO)
+	$O/shared_par.shared_module.o \
+	$(EMPTY_MACRO)
 
 ${E}/xdetect_duplicates_stations_file: $(xdetect_duplicates_stations_file_OBJECTS) $(xdetect_duplicates_stations_file_SHARED_OBJECTS)
-  ${FCCOMPILE_CHECK} -o $@ $+
+	${FCCOMPILE_CHECK} -o $@ $+
 
 #######################################
 
