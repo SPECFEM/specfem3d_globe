@@ -1226,7 +1226,7 @@ contains
   integer(I4P), intent(IN):: cell_type(1:NC) ! VTK cell type
   integer(I4P)::             E_IO            ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
   character(len=maxlen)::    s_buffer        ! buffer string
-  integer(I4P)::             ncon            ! dimension of connectivity vector 
+  integer(I4P)::             ncon            ! dimension of connectivity vector
   !!The VTK\_CON variables have the following meaning:
   !!
   !!\begin{description}
