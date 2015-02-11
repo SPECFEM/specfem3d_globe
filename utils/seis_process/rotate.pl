@@ -108,5 +108,5 @@ foreach $file (@ARGV) {
   print SAC "w $radial $tang\nquit\n";
   close(SAC);
 }
-	
+
 print "   Done !\n";

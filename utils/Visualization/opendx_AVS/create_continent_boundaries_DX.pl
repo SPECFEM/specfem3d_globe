@@ -43,22 +43,22 @@
     }
   }
   close(FILEGMT);
-	$num_individual_lines = $currentelem;
+  $num_individual_lines = $currentelem;
   print STDOUT "There are $num_individual_lines individual line segments\n";
 
-	$pi = 3.1415926535 ;
+  $pi = 3.1415926535 ;
 
 # write header for AVS (with point data)
       print FILEAVS "object 1 class array type float rank 1 shape 3 items $numpoints data follows\n";
 
 # read the GMT file to get the points
-	$currentpoint = 0;
+  $currentpoint = 0;
   open(FILEGMT,"<$name");
   while($line = <FILEGMT>) {
     chop $line;
 #   get point only if line is not a comment
     if(substr($line,0,1) ne '>') {
-			$currentpoint ++;
+      $currentpoint ++;
 
 # longitude is the number before the white space
  $longitude = substr($line,0,index($line," "));
@@ -66,14 +66,14 @@
 # latitude is the number after the white space
  $latitude = substr($line,index($line," ")+1);
 
-# convert geographic latitude to geocentric colatitude and convert to radians 
+# convert geographic latitude to geocentric colatitude and convert to radians
 #     $theta = $pi/2. - atan2(0.99329534 * tan($latitude * $pi / 180.),1) ;
       $theta = $pi/2. - $latitude * $pi / 180. ;
       $phi = $longitude * $pi / 180. ;
 
 # compute the Cartesian position of the receiver (ignore ellipticity)
 # assume a sphere of radius one
-## DK DK make the radius a little bit bigger to make sure it is 
+## DK DK make the radius a little bit bigger to make sure it is
 ## DK DK correctly superimposed to the mesh in final AVS or OpenDX figure
 #     $r_target = 1.015 ;
       $r_target = 1.007 ;
@@ -81,41 +81,41 @@
       $y_target = $r_target*sin($theta)*sin($phi) ;
       $z_target = $r_target*cos($theta) ;
 
- 			print FILEAVS "$x_target $y_target $z_target\n";
+      print FILEAVS "$x_target $y_target $z_target\n";
 
-			}
-	}
+      }
+  }
   close(FILEGMT);
 
  print FILEAVS "object 2 class array type int rank 1 shape 2 items $num_individual_lines data follows\n";
 
 # read the GMT file to get the lines
-	$currentline = 0;
-	$currentelem = 0;
-	$currentpoint = 0;
-	$previous_was_comment = 1;
+  $currentline = 0;
+  $currentelem = 0;
+  $currentpoint = 0;
+  $previous_was_comment = 1;
   open(FILEGMT,"<$name");
   while($line = <FILEGMT>) {
     chop $line;
 #   get line marker (comment in file)
     if(substr($line,0,1) eq '>') {
-			$currentline ++;
-			$currentpoint ++;
-			$previous_was_comment = 1;
-			print STDOUT "processing contour $currentline named $line\n";
-			} 
-		else {
-		  if($previous_was_comment == 0) {
-				$previouspoint = $currentpoint;
-			  $currentelem ++;
-			  $currentpoint ++;
+      $currentline ++;
+      $currentpoint ++;
+      $previous_was_comment = 1;
+      print STDOUT "processing contour $currentline named $line\n";
+      }
+    else {
+      if($previous_was_comment == 0) {
+        $previouspoint = $currentpoint;
+        $currentelem ++;
+        $currentpoint ++;
         $previouspointdx = $previouspoint - 1;
         $currentpointdx = $currentpoint - 1;
-				print FILEAVS "$previouspointdx $currentpointdx\n";
-				}
-				$previous_was_comment = 0;
-		}
-  }     
+        print FILEAVS "$previouspointdx $currentpointdx\n";
+        }
+        $previous_was_comment = 0;
+    }
+  }
   close(FILEGMT);
 
  print FILEAVS "attribute \"element type\" string \"lines\"\n";

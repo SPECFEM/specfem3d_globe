@@ -21,7 +21,7 @@ go_solver
 sleep 5
 if (! -d $OUTDIR) then
    mkdir $OUTDIR
-endif 
+endif
 cd $OUTDIR
 cp ../DATA/CMTSOLUTION .
 cp ../DATA/STATIONS .

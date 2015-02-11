@@ -28,9 +28,9 @@ tmax="400"
 rm -rf ../REF_SEIS/$sta.MX*sac
 
 # convert sac files to ascii
-sac2asc ../REF_SEIS/$sta.MXE*filt > ../REF_SEIS/$sta.MXE.filt.ascii  
-sac2asc ../REF_SEIS/$sta.MXN*filt > ../REF_SEIS/$sta.MXN.filt.ascii  
-sac2asc ../REF_SEIS/$sta.MXZ*filt > ../REF_SEIS/$sta.MXZ.filt.ascii  
+sac2asc ../REF_SEIS/$sta.MXE*filt > ../REF_SEIS/$sta.MXE.filt.ascii
+sac2asc ../REF_SEIS/$sta.MXN*filt > ../REF_SEIS/$sta.MXN.filt.ascii
+sac2asc ../REF_SEIS/$sta.MXZ*filt > ../REF_SEIS/$sta.MXZ.filt.ascii
 
 rm -rf ../REF_SEIS/$sta.MX*sac.filt
 

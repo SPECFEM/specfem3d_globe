@@ -65,45 +65,45 @@ $success = 0;
 
 @objects = `ls src/gpu/*.c`;
 
-foreach $name (@objects) {  
+foreach $name (@objects) {
   chop $name;
   print "extracting word in file $name ...\n";
 
-  print IOUT "\n//\n// $name\n//\n\n";  
-  
+  print IOUT "\n//\n// $name\n//\n\n";
+
   # change tabs to white spaces
-  system("expand -2 < $name > _____temp_tutu01_____");  
+  system("expand -2 < $name > _____temp_tutu01_____");
   open(IIN,"<_____temp_tutu01_____");
 
-  
+
   # open the source file
   $success = 1;
   $do_extract = 0;
   while($line = <IIN>) {
     chop $line;
-    
+
     # suppress trailing white spaces and carriage return
     $line =~ s/\s*$//;
-    
+
     # change the version number and copyright information
     #    $line =~ s#\(c\) California Institute of Technology and University of Pau, October 2007#\(c\) California Institute of Technology and University of Pau, November 2007#og;
     #    $line =~ s#rmass_sigma#rmass_time_integral_of_sigma#og;
-    
+
     if($line =~ /extern EXTERN_LANG/){
-      # new function declaration starts  
+      # new function declaration starts
       #print "$line\n";
-      if( $line =~/FC_FUNC/ ){ 
+      if( $line =~/FC_FUNC/ ){
         # function declaration on same line as extern, ask for line skip
         print "problem: please add a line break after extern 'C' here:";
         print "$line\n";
         $success = 0;
-        close(IIN);  
+        close(IIN);
         exit;
       }
       $do_extract = 1;
-      next;          
+      next;
     }
-    
+
     # extract section
     if($do_extract == 1 ){
       # function declaration
@@ -118,12 +118,12 @@ foreach $name (@objects) {
         $do_extract = 0;
       }else{
         # write line to the output file
-        print IOUT "$line\n";  
+        print IOUT "$line\n";
       }
       next;
     }
   }
-  close(IIN);  
+  close(IIN);
 
   if( $success == 0 ){ exit; }
 }

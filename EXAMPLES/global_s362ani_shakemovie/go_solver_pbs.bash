@@ -51,7 +51,7 @@ cp $BASEMPIDIR/list*.txt OUTPUT_FILES/
 echo
 echo `date`
 echo starting run in current directory $PWD
-echo 
+echo
 
 mpiexec -np $numnodes $PWD/bin/xspecfem3D
 

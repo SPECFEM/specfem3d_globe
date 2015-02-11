@@ -59,7 +59,7 @@ echo "  rho_kernel min/max: $min $max"
 ./paraviewpython-example.py state_rho_kernel.pvsm
 mv image.jpg image_rho_kernel.jpg
 
-echo 
+echo
 echo "visualize kernel vtu files in directory: OUTPUT_FILES/ using e.g. Paraview"
 echo "done"
 

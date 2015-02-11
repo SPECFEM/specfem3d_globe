@@ -3,7 +3,7 @@
 ###########################################################
 # USER PARAMETERS
 
-## 4 CPUs 
+## 4 CPUs
 CPUs=4
 
 ###########################################################
@@ -42,14 +42,14 @@ sleep 2
 echo
 echo `date`
 echo "starting MPI mesher on $numnodes processors"
-echo 
+echo
 
 mpirun -np $numnodes $PWD/bin/xmeshfem3D
 
 echo "  mesher done: `date`"
 echo
 
-# backup important files addressing.txt and list*.txt 
+# backup important files addressing.txt and list*.txt
 cp OUTPUT_FILES/*.txt $BASEMPIDIR/
 
 
@@ -66,7 +66,7 @@ sleep 2
 echo
 echo `date`
 echo starting run in current directory $PWD
-echo 
+echo
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D
 

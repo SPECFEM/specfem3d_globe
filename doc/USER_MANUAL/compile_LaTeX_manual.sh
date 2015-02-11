@@ -15,12 +15,12 @@
 /bin/rm -rf *.tit >  /dev/null
 /bin/rm -rf *.spl >  /dev/null
 
-	pdflatex --shell-escape manual_SPECFEM3D_GLOBE
-	bibtex manual_SPECFEM3D_GLOBE
-	pdflatex --shell-escape manual_SPECFEM3D_GLOBE
-	pdflatex --shell-escape manual_SPECFEM3D_GLOBE
-	pdflatex --shell-escape manual_SPECFEM3D_GLOBE
-	pdflatex --shell-escape manual_SPECFEM3D_GLOBE
+  pdflatex --shell-escape manual_SPECFEM3D_GLOBE
+  bibtex manual_SPECFEM3D_GLOBE
+  pdflatex --shell-escape manual_SPECFEM3D_GLOBE
+  pdflatex --shell-escape manual_SPECFEM3D_GLOBE
+  pdflatex --shell-escape manual_SPECFEM3D_GLOBE
+  pdflatex --shell-escape manual_SPECFEM3D_GLOBE
 
 /bin/rm -rf *.dvi >  /dev/null
 /bin/rm -rf *.log >  /dev/null

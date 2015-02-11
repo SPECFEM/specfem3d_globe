@@ -58,7 +58,7 @@ USE LIB_VTK_IO
 !  (you will also maybe need   -mcmodel=medium -shared-intel  )
 
 ! to debug or test, one can also use:
-! -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments 
+! -implicitnone -warn truncated_source -warn argument_checking -warn unused -warn declarations -warn alignments
 ! -warn ignore_loc -warn usage -check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv
 
   integer, parameter :: NX = 512, NY = 512, NZ = 400

@@ -8,5 +8,5 @@
 
  real(kind=CUSTOM_REAL), parameter :: pi = 3.1415926
  real(kind=CUSTOM_REAL), parameter :: EPS = 0.01_CUSTOM_REAL
- 
+
  integer, parameter :: NPTS = 100000

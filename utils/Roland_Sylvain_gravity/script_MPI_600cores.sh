@@ -11,7 +11,7 @@
 
 ##################MSUB -A gen7165
 #MSUB -A gen6351
-#MSUB -r SPECFEM128          # Nom du job                
+#MSUB -r SPECFEM128          # Nom du job
 #MSUB -T 28800               # Limite de temps elapsed du job en secondes
 #BSUB -x              # mode exclusif
 #MSUB -o output_night_%I.o          # Sortie standard et %I est le job_ID

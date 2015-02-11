@@ -3,7 +3,7 @@
 # regional simulation example
 #
 # script runs mesher and solver
-# using batch scripts for a PBS queueing system 
+# using batch scripts for a PBS queueing system
 # on 64 CPUs
 #
 # synthetics have an approximate shortest period ~ 17 s

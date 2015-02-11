@@ -32,7 +32,7 @@ echo "  $par min/max: $min $max"
 ./paraviewpython-example.py state_vs.pvsm
 mv image.jpg image_vs.jpg
 
-echo 
+echo
 echo "visualize mesh vtu files in directory: OUTPUT_FILES/ using e.g. Paraview"
 echo "done"
 

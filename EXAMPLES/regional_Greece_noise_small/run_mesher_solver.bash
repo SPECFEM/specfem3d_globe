@@ -3,7 +3,7 @@
 ###########################################################
 # USER PARAMETERS
 
-## 4 CPUs 
+## 4 CPUs
 CPUs=4
 
 ###########################################################
@@ -44,7 +44,7 @@ sleep 2
 echo
 echo `date`
 echo "starting MPI mesher on $numnodes processors"
-echo 
+echo
 
 mpirun -np $numnodes $PWD/bin/xmeshfem3D
 output=$?
@@ -55,7 +55,7 @@ fi
 echo "  mesher done: $output `date`"
 echo
 
-# backup important files addressing.txt and list*.txt 
+# backup important files addressing.txt and list*.txt
 cp OUTPUT_FILES/*.txt $BASEMPIDIR/
 
 
@@ -69,7 +69,7 @@ sleep 1
 echo
 echo `date`
 echo starting 0.1 run in current directory $PWD
-echo 
+echo
 
 sed -i "s:SIMULATION_TYPE .*:SIMULATION_TYPE                 = 1:g" DATA/Par_file
 sed -i "s:NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY                = 1:g" DATA/Par_file
@@ -119,7 +119,7 @@ cp $BASEMPIDIR/list*.txt OUTPUT_FILES/
 
 
 ##
-## prepare adjoint source 
+## prepare adjoint source
 ##
 echo `date`
 echo "prepare adjoint source..."

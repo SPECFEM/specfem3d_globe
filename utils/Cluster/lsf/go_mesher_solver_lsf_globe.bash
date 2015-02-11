@@ -4,8 +4,8 @@
 #BSUB -J go_mesher_solver_lsf
 
 if [ -z $USER ]; then
-	echo "could not run go_mesher_solver_...bash as no USER env is set"
-	exit 2
+  echo "could not run go_mesher_solver_...bash as no USER env is set"
+  exit 2
 fi
 
 BASEMPIDIR=/scratch/$USER/DATABASES_MPI

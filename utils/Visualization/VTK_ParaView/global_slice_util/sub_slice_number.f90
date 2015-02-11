@@ -35,7 +35,7 @@ contains
 
   subroutine tp2norm2(ths,phs,thr,phr,nx,ny,nz)
 
-! find out the normal of the plane (nx,ny,nz) 
+! find out the normal of the plane (nx,ny,nz)
 ! constructed by (ths,phs), (thr,phr), and the origin.
 
     real(kind=CUSTOM_REAL) :: ths, phs, thr, phr, nx, ny, nz
@@ -51,7 +51,7 @@ contains
     nx = nx/nr
     ny = ny/nr
     nz = nz/nr
-    
+
   end subroutine tp2norm2
 
   ! -------------------------------------------------
@@ -124,7 +124,7 @@ contains
                sing, cosg
 
     ! compute colatitude and longitude
-    alpha = clon 
+    alpha = clon
     beta = pi/2 - clat
     gamma = grot
 
@@ -247,7 +247,7 @@ contains
       if (z > 0)  xi = 10
     else
       stop 'chunk number k < 6'
-    end if
+    endif
 
   end subroutine chunk_map
 
@@ -270,7 +270,7 @@ contains
     enddo
 
   end subroutine compact_int_array
-  
+
 
 ! -----------------------------------------
 
@@ -305,8 +305,8 @@ contains
         daze=0.0
         dazs=0.0
         return
-      end if
-    end if
+      endif
+    endif
 
     if (sta==90.) then
       if (epa==90.0) then
@@ -315,8 +315,8 @@ contains
         daze=0.00
         dazs=0.00
         return
-      end if
-    end if
+      endif
+    endif
 
     if (sta==-90.0) then
       if (epa==-90.0) then
@@ -325,8 +325,8 @@ contains
         daze=0.00
         dazs=0.00
         return
-      end if
-    end if
+      endif
+    endif
 
     dd = ssa*sea+csa*cea*ces
     if (dd /=0.) dd=atan(sqrt(1.0-dd*dd)/dd)
@@ -350,21 +350,21 @@ contains
   subroutine latlon2norm(lats,lons,latr,lonr,xs,ys,zs,nx,ny,nz,xc,yc,zc)
 
     ! [xs,ys,zs,nx,ny,nz] = latlon2norm(lats,lons,latr,lonr)
-    ! find out the coordinates of the source (xs,ys,zs) 
-    ! the normal of the plane (nx,ny,nz) 
+    ! find out the coordinates of the source (xs,ys,zs)
+    ! the normal of the plane (nx,ny,nz)
     ! the center of the source and receiver garc (xc,yc,zc)
     ! constructed by (lons,lats), (lonr,latr), and the origin
     ! for a "banana cross-section"
-    
+
     real(kind=CUSTOM_REAL) :: lats, lons, latr, lonr, xs, ys, zs, nx, ny, nz, xc, yc, zc
-    
-    real(kind=CUSTOM_REAL) :: ts, ps, tr, pr, xr, yr, zr, nr 
+
+    real(kind=CUSTOM_REAL) :: ts, ps, tr, pr, xr, yr, zr, nr
 
     ts = (90 - lats) * pi/180
     ps = lons * pi / 180
     tr = (90 - latr) * pi/180
     pr = lonr * pi / 180
-    
+
     call tp2xyz(ts,ps,xs,ys,zs)
     call tp2xyz(tr,pr,xr,yr,zr)
 

@@ -7,7 +7,7 @@
 # bash script
 #PBS -S /bin/bash
 
-# job name 
+# job name
 #PBS -N go_solver
 
 # joins output and error information
@@ -25,7 +25,7 @@
 # 150 CPUs ( 18*8+6 ), walltime 15 hour
 #PBS -l nodes=18:ppn=8+1:ppn=6,walltime=15:00:00
 
-# valgrind mpi library 
+# valgrind mpi library
 PRELOAD_LIB=/my_valgrind_path/valgrind/lib/valgrind/libmpiwrap-x86-linux.so
 
 ###########################################################

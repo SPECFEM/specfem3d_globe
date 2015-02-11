@@ -20,7 +20,7 @@
 
 foreach $name (@objects) {
   chop $name;
-        
+
 # change tabs to white spaces
   system("expand -2 < $name > _____tutu01_____");
   $f90name = $name;
@@ -38,7 +38,7 @@ foreach $name (@objects) {
 
 # converts tabs to space
 #      $line =~ s/\t/ /g;
-    
+
 # change the version number
 #    $line =~ s#!          S p e c f e m 3 D  G l o b e  V e r s i o n  5 . 1#!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0#og;
 

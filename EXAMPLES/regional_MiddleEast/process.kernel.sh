@@ -3,7 +3,7 @@
 # regional simulation example to compute an adjoint kernel
 #
 # script runs mesher and solver for an adjoint kernel
-# using batch scripts for a PBS queueing system 
+# using batch scripts for a PBS queueing system
 # on 64 CPUs
 #
 # modify accordingly for your own system specifics

@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 
-# this script collects the seismograms from the scratch directory given by Par_file on 
+# this script collects the seismograms from the scratch directory given by Par_file on
 # the machines given by machinefile
 
 # Qinya Liu, Caltech, May 2007
@@ -24,13 +24,13 @@ for($i=0;$i<@junk;$i++) {
 open(FILE3,"<$par_file") or die ("Fatal Error openning file $par_file\n");
 while (<FILE3>) {
    if ($_ =~ /^LOCAL_PATH/) {
-	chop;	
-	@vals = split("=", $_);
-	$mpidir = $vals[1];
-	$mpidir =~ s/^\s+//;
-	$mpidir =~ s/\s+$//;
-	close(FILE3);
-	last;
+  chop;
+  @vals = split("=", $_);
+  $mpidir = $vals[1];
+  $mpidir =~ s/^\s+//;
+  $mpidir =~ s/\s+$//;
+  close(FILE3);
+  last;
    }
 }
 
@@ -38,6 +38,6 @@ foreach $node (@nodes) {
     system("scp $node:$mpidir/*sem* .");
     print "$node\n";}
 
-# you can choose to delete the seismograms on the scratch disk after collecting them 
+# you can choose to delete the seismograms on the scratch disk after collecting them
 #`shmux -M50 -Sall -c "rm -f $mpidir/*sem*" - < $machine`;
 

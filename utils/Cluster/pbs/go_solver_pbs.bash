@@ -55,7 +55,7 @@ echo " "
 cp $BASEMPIDIR/addr*.txt OUTPUT_FILES/
 cp $BASEMPIDIR/list*.txt OUTPUT_FILES/
 
-sleep 2 
+sleep 2
 mpiexec -np $numnodes $PWD/bin/xspecfem3D
 
 echo "finished successfully"

@@ -3,7 +3,7 @@
 # global simulation example
 #
 # script runs mesher and solver
-# using batch scripts for a PBS queueing system 
+# using batch scripts for a PBS queueing system
 # on 24 CPUs
 #
 #
@@ -68,7 +68,7 @@ echo
 echo "please submit job now manually: "
 echo "  meshing            : qsub go_mesher_pbs.bash"
 echo "  forward simulation : qsub go_solver_pbs.bash"
-echo 
+echo
 echo "after job completion, see results in directory: OUTPUT_FILES/"
 echo "done: `date`"
 

@@ -5,12 +5,12 @@ use POSIX;
 
 sub Usage {
   print STDERR <<EOF;
-  
+
 Usage: google-earth-kml.pl file_name
-  
-  
+
+
   ex. ./google-earth-kml.pl gmt_movie*.gif
-  
+
 EOF
 exit(1)
 }
@@ -59,19 +59,19 @@ foreach $file (@ARGV) {
   print "processing $file\n";
   if (! -f $file) {die (" check to see if $file exists or not\n");}
 
-  # image overlay  
+  # image overlay
   print KML "<GroundOverlay>\n";
-  print KML "	<name>test-movie</name>\n";
-  print KML "	<TimeSpan>\n";
+  print KML " <name>test-movie</name>\n";
+  print KML " <TimeSpan>\n";
 
 
   # takes starttime from last image
   ($cal,$utc) = split("T",$starttime);
   ($year,$month,$day) = split("-",$cal);
-      
+
   $utc2 = substr($utc,1,10);
   ($hh,$mm,$ss) = split(":",$utc2);
-  
+
   # adds time increment
   $ss = $ss+$tinc;
 
@@ -83,36 +83,36 @@ foreach $file (@ARGV) {
   if( $mm > 60 ){
     $hh = $hh + 1;
     $mm = $mm - 60;
-  }  
+  }
   if( $hh > 23 ){
     $hh = 00;
     $day = $day+1;
   }
-  
+
   $time = sprintf("%4.4i-%2.2i-%2.2iT%2.2i:%2.2i:%03.1fZ",$year,$month,$day,$hh,$mm,$ss);
 
-  print KML "	<begin>$starttime</begin>\n";
-  print KML "	<end>$time</end>\n";
-  print KML "	</TimeSpan>\n";
-  print KML "	<color>a1ffffff</color>\n";
-  print KML "	<Icon>\n";
+  print KML " <begin>$starttime</begin>\n";
+  print KML " <end>$time</end>\n";
+  print KML " </TimeSpan>\n";
+  print KML " <color>a1ffffff</color>\n";
+  print KML " <Icon>\n";
   print KML "  <href>$file</href>\n";
   print KML "  <viewBoundScale>0.75</viewBoundScale>\n";
-  print KML "	</Icon>\n";
+  print KML " </Icon>\n";
 
   # image box (spans the whole globe)
-  print KML "	<LatLonBox>\n";
+  print KML " <LatLonBox>\n";
   print KML "  <north>90.0</north>\n";
   print KML "  <south>-90.0</south>\n";
   print KML "  <east>180.0</east>\n";
   print KML "  <west>-180.0</west>\n";
-  
-  print KML "	</LatLonBox>\n";
+
+  print KML " </LatLonBox>\n";
   print KML "  </GroundOverlay>\n";
-  
+
   # sets new starttime
   $starttime = $time;
-  
+
 }
 
 print KML "</Folder>\n";

@@ -13,13 +13,13 @@ $par_file = $ARGV[1];
 open(FILE3,"<$par_file") or die ("Fatal Error openning file $par_file\n");
 while (<FILE3>) {
    if ($_ =~ /^LOCAL_PATH/) {
-	chop;	
-	@vals = split("=", $_);
-	$mpidir = $vals[1];
-	$mpidir =~ s/^\s+//;
-	$mpidir =~ s/\s+$//;
-	close(FILE3);
-	last;
+  chop;
+  @vals = split("=", $_);
+  $mpidir = $vals[1];
+  $mpidir =~ s/^\s+//;
+  $mpidir =~ s/\s+$//;
+  close(FILE3);
+  last;
    }
 }
 

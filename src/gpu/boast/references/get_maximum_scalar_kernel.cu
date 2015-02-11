@@ -1,5 +1,5 @@
 // from check_fields_cuda.cu
-#define BLOCKSIZE_TRANSFER 256 
+#define BLOCKSIZE_TRANSFER 256
 
 typedef float realw;
 

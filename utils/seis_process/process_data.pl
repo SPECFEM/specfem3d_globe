@@ -7,7 +7,7 @@ use POSIX;
 sub Usage{
   print STDERR <<END;
 
-  process_data_new.pl -m CMTFILE -l Start/End 
+  process_data_new.pl -m CMTFILE -l Start/End
                       -t Ts/Tl -h hdur -f -i -R resp_dir
                       -p -s Sps -P n/p -T Taper_width -c -y t1/v1/...
                       -x Ext -d OutDir
@@ -21,7 +21,7 @@ sub Usage{
        -t Ts/Tl -- shortest and longest period (used in filters and ins transfer)
        -i -- transfer record to displacement based on instrument response
        -f -- transfer record only, no extra filtering
-               (possible scenarios: -i/-R -t; -i/-R -t -h; -i/-R -t -f; 
+               (possible scenarios: -i/-R -t; -i/-R -t -h; -i/-R -t -f;
        -R resp_dir -- transfer record using RESP file in resp_dir
        -p -- pick event p and s first arrival into sac headers (t1 and t2)
        -x Ext -- extension of new file name
@@ -35,7 +35,7 @@ sub Usage{
        data_sac_files --- names of the data sac files to be processed
 
  Notice:
-  1. We require that polezero files in the same directory as the sac 
+  1. We require that polezero files in the same directory as the sac
      data files which is generally satisfied. We require that resp dir
      be specified even if it is current(.). All the needed info is
      taken from sac headers
@@ -43,7 +43,7 @@ sub Usage{
   3. The displacement outputs after -i option are in the unit of meters
   4. For BH? components, please set -s 20, otherwise interpolation to
      1 sample/second will be performed
- 
+
   Qinya Liu, Originally written in Oct, 2002; updated in Nov 2009
 END
   exit(1);
@@ -64,7 +64,7 @@ if ($opt_R and not -d $opt_R) {die("Check if dir $opt_R exists\n");}
 if ($opt_h and !($opt_I or $opt_R)) {die("-h and -I/-R should appear in pairs\n");}
 if ($opt_h) {$hdur_input=$opt_h;}
 if ($opt_t) {($tmin, $tmax) = split(/\//,$opt_t);
-	     $f1 = 1./$tmax;  $f2=1./$tmin;}
+       $f1 = 1./$tmax;  $f2=1./$tmin;}
 
 if ($opt_d) {
   $out_dir=$opt_d; if (not -d $out_dir) {mkdir($out_dir,0777);}
@@ -88,7 +88,7 @@ foreach $file (@ARGV) {
   print "Processing data file $file \n";
   if (not $opt_d) {$outfile = $file.$ext;}
   else { ($filename) = split(" ",`basename $file`);
-	 $outfile = "$out_dir/${filename}${ext}";}
+   $outfile = "$out_dir/${filename}${ext}";}
   ($filedir) = split(" ",`dirname $file`);
   if ($ext or $opt_d) {system("\\cp -f $file $outfile");}
 
@@ -160,17 +160,17 @@ foreach $file (@ARGV) {
       chomp($pzfile);
       if (!-f $pzfile) {print " **** No pzfile $pzfile **** \n"; $no_resp=1;}
       else {print "    Transfer instrument response using pz file $pzfile\n";
-	    printf SAC ("trans from polezero s %20s to none freq %12.6f%12.6f%12.6f%12.6f \n",
-			$pzfile,$f0,$f1,$f2,$f3);}
+      printf SAC ("trans from polezero s %20s to none freq %12.6f%12.6f%12.6f%12.6f \n",
+      $pzfile,$f0,$f1,$f2,$f3);}
     } else { # assume resp file in opt_R
       @respfiles=glob("$opt_R/${network}.${sta}.${khole}.${comp}*.RESP");
       $respfile = find_resp_file($outfile,@respfiles);
       if (! -f $respfile or @respfiles == 0) {print " **** No respfile $respfiles for $network, $sta, $khole, $comp ****\n";  $no_resp=1;}
       else {
-	print "    Transfer instrument response using response file $respfile\n";
-	printf SAC ("trans from evalresp fname $respfile to none freq %12.6f%12.6f%12.6f%12.6f \n",
-		  $f0,$f1,$f2,$f3);
-	printf SAC "mul 1e-9\n"; }}
+  print "    Transfer instrument response using response file $respfile\n";
+  printf SAC ("trans from evalresp fname $respfile to none freq %12.6f%12.6f%12.6f%12.6f \n",
+      $f0,$f1,$f2,$f3);
+  printf SAC "mul 1e-9\n"; }}
   }
 
   if ($opt_t and not $opt_h and not $opt_f) {# butterworth filter
@@ -222,7 +222,7 @@ foreach $file (@ARGV) {
   print SAC "echo off\nquit\n";
   close(SAC);
   if ($no_resp and defined $opt_d) {
-    print "Deleting $outfile\n"; 
+    print "Deleting $outfile\n";
     system("rm -f $outfile");}
 }
 print "  Done! \n";
