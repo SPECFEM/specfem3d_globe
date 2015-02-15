@@ -257,14 +257,13 @@
       call it_update_vtkwindow()
     endif
 
+  !
+  !---- end of time iteration loop
+  !
   enddo   ! end of main time loop
 
   ! close the huge file that contains a dump of all the time steps to disk
   if (EXACT_UNDOING_TO_DISK) close(IFILE_FOR_EXACT_UNDOING)
-
-  !
-  !---- end of time iteration loop
-  !
 
   call it_print_elapsed_time()
 

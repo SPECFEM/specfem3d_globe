@@ -90,10 +90,6 @@
   ! synchronizes processes
   call synchronize_all()
 
-  ! set the base pathname for output files
-  ! See world split -> parallel.f90
-  ! OUTPUT_FILES = 'OUTPUT_FILES'
-
   if (myrank == 0) then
 
     if (FIX_UNDERFLOW_PROBLEM) write(IMAIN,*) 'Fixing slow underflow trapping problem using small initial field'

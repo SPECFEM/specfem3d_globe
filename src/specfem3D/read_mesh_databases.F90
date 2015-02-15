@@ -807,7 +807,7 @@
   if (I_should_read_the_database) then
     ! open file with global slice number addressing
     if (myrank == 0) then
-      open(unit=IIN,file=trim(OUTPUT_FILES_PATH_BASE)//'/addressing.txt',status='old',action='read',iostat=ier)
+      open(unit=IIN,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read',iostat=ier)
       if (ier /= 0 ) call exit_mpi(myrank,'Error opening addressing.txt')
 
       do iproc = 0,NPROCTOT_VAL-1

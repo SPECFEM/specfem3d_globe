@@ -1537,7 +1537,7 @@ end module my_mpi
   subroutine world_split()
 
   use my_mpi
-  use constants,only: MAX_STRING_LEN,OUTPUT_FILES_PATH, &
+  use constants,only: MAX_STRING_LEN,OUTPUT_FILES_BASE, &
     IMAIN,ISTANDARD_OUTPUT,mygroup,I_should_read_the_database
   use shared_input_parameters
 
@@ -1558,7 +1558,7 @@ end module my_mpi
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. IMAIN == ISTANDARD_OUTPUT) &
     stop 'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled'
 
-  OUTPUT_FILES = OUTPUT_FILES_PATH(1:len_trim(OUTPUT_FILES))
+  OUTPUT_FILES = OUTPUT_FILES_BASE(1:len_trim(OUTPUT_FILES_BASE))
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS == 1) then
 
@@ -1585,7 +1585,6 @@ end module my_mpi
 
 !   add the right directory for that run (group numbers start at zero, but directory names start at run0001, thus we add one)
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    !OUTPUT_FILES_PATH = path_to_add(1:len_trim(path_to_add))//OUTPUT_FILES_PATH(1:len_trim(OUTPUT_FILES_PATH))
     OUTPUT_FILES = path_to_add(1:len_trim(path_to_add))//OUTPUT_FILES(1:len_trim(OUTPUT_FILES))
 
 !--- create a subcommunicator to broadcast the identical mesh and model databases if needed

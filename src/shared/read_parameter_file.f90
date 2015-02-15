@@ -43,9 +43,6 @@
 ! local variables
   integer :: ier
 
-  ! sets the base pathname for output files
-  ! OUTPUT_FILES = 'OUTPUT_FILES' -- set in shared/parallel.f90
-
   ! opens the parameter file: DATA/Par_file
   call open_parameter_file(ier)
   if (ier /= 0) stop 'an error occurred while opening the parameter file'

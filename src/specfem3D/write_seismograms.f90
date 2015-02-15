@@ -164,9 +164,6 @@ contains
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error while allocating one temporary seismogram')
 
-  ! set the base pathname for output files
-  !OUTPUT_FILES = 'OUTPUT_FILES' -- done in parallel.f90
-
   ! writes out seismograms
   if (.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 

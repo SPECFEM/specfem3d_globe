@@ -392,7 +392,7 @@
 !!-----------------------------------------------------------
 
 ! paths for inputs and outputs files
-  character(len=*), parameter :: OUTPUT_FILES_PATH_BASE = './OUTPUT_FILES/'
+  character(len=*), parameter :: OUTPUT_FILES_BASE = './OUTPUT_FILES/'
 
 
 !!-----------------------------------------------------------

@@ -294,29 +294,8 @@
                             b_displ_crust_mantle,filename)
       endif
 
-      ! single file for all
-      !write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
-      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it
-      !call write_VTK_data_cr_all(myrank,NPROCTOT_VAL,dummy_i, &
-      !                    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-      !                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
-      !                    displ_crust_mantle,filename)
       deallocate(dummy_i)
 
-      ! inner core
-      ! one file per process
-      !write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
-      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-      !call write_VTK_data_cr(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-      !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-      !                    displ_inner_core,filename)
-      ! single file for all
-      !write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
-      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-      !call write_VTK_data_cr_all(myrank,NPROCTOT_VAL,idoubling_inner_core, &
-      !                    NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-      !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-      !                    displ_inner_core,filename)
     endif
   endif
 

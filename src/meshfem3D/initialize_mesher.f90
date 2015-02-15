@@ -46,7 +46,7 @@
   call world_rank(myrank)
 
 ! set the base pathname for output files
-  OUTPUT_FILES = 'OUTPUT_FILES'
+  OUTPUT_FILES = OUTPUT_FILES_BASE
 
 ! open main output file, only written to by process 0
   if (myrank == 0) then

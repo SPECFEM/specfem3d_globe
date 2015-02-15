@@ -145,7 +145,7 @@
   if (.not. SAVE_MESH_FILES) stop 'AVS or DX files were not saved by the mesher'
 
 ! get the base pathname for output files
-  OUTPUT_FILES = 'OUTPUT_FILES'
+  OUTPUT_FILES = OUTPUT_FILES_BASE
 
   print *,'1 = create files in OpenDX format'
   print *,'2 = create files in AVS UCD format'
