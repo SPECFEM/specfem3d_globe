@@ -47,6 +47,31 @@
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
   character(len=MAX_STRING_LEN) outputname
 
+  !----  create a Gnuplot script to display the energy curve in log scale
+  if (OUTPUT_ENERGY .and. myrank == 0) then
+    open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'plot_energy.gnu',status='unknown',action='write')
+    write(IOUT_ENERGY,*) 'set term wxt'
+    write(IOUT_ENERGY,*) '#set term postscript landscape color solid "Helvetica" 22'
+    write(IOUT_ENERGY,*) '#set output "energy.ps"'
+    write(IOUT_ENERGY,*) 'set logscale y'
+    write(IOUT_ENERGY,*) 'set xlabel "Time step number"'
+    write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
+    write(IOUT_ENERGY,'(a152)') '#plot "energy.dat" us 1:2 t ''Kinetic Energy'' w l lc 1, "energy.dat" us 1:3 &
+                         &t ''Potential Energy'' w l lc 2, "energy.dat" us 1:4 t ''Total Energy'' w l lc 4'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:2 t ''Kinetic Energy'' w l lc 1'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:3 t ''Potential Energy'' w l lc 2'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) 'plot "energy.dat" us 1:4 t ''Total Energy'' w l lc 4'
+    write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
+    close(IOUT_ENERGY)
+  endif
+
+  ! open the file in which we will store the energy curve
+  if (OUTPUT_ENERGY .and. myrank == 0) &
+    open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
+
 !
 !   s t a r t   t i m e   i t e r a t i o n s
 !
@@ -93,7 +118,7 @@
     if (ANISOTROPIC_KL) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires ANISOTROPIC_KL to be turned off')
 
 !! DK DK determine the largest value of iglob that we need to save to disk,
-!! DK DK since we save the upper mantle only in the case of surface-wave kernels
+!! DK DK since we save the upper part of the mesh only in the case of surface-wave kernels
     ! crust_mantle
     allocate(integer_mask_ibool_exact_undo(NGLOB_CRUST_MANTLE))
     integer_mask_ibool_exact_undo(:) = -1
@@ -106,7 +131,7 @@
             iglob = ibool_crust_mantle(i,j,k,ispec)
             ! xstore ystore zstore have previously been converted to r theta phi, thus xstore now stores the radius
             radius = xstore_crust_mantle(iglob) ! <- radius r (normalized)
-            ! save that element only if it is in the upper mantle
+            ! save that element only if it is in the upper part of the mesh
             if (radius >= R670 / R_EARTH) then
               ! if this point has not yet been found before
               if (integer_mask_ibool_exact_undo(iglob) == -1) then
@@ -244,7 +269,7 @@
     call write_seismograms()
 
     ! outputs movie files
-      call write_movie_output()
+    call write_movie_output()
 
     ! first step of noise tomography, i.e., save a surface movie at every time step
     ! modified from the subroutine 'write_movie_surface'
@@ -270,8 +295,10 @@
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
 
-  end subroutine iterate_time
+!----  close energy file
+  if (OUTPUT_ENERGY .and. myrank == 0) close(IOUT_ENERGY)
 
+  end subroutine iterate_time
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -313,6 +340,8 @@
       call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
     endif
 
+  else if (SIMULATION_TYPE == 3) then
+
     ! note: for kernel simulations (SIMULATION_TYPE == 3), attenuation is
     !          only mimicking effects on phase shifts, but not on amplitudes.
     !          flag PARTIAL_PHYS_DISPERSION_ONLY will have to be set to true in this case.
@@ -322,7 +351,6 @@
     !if (ATTENUATION) then
     !endif
 
-  else if (SIMULATION_TYPE == 3) then
     ! to store kernels
     ! inner core
     call transfer_kernels_ic_to_host(Mesh_pointer, &
@@ -351,6 +379,7 @@
     if (APPROXIMATE_HESS_KL) then
       call transfer_kernels_hess_cm_tohost(Mesh_pointer,hess_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
+
   endif
 
   ! from here on, no gpu data is needed anymore
@@ -362,7 +391,6 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine it_update_vtkwindow()
 
