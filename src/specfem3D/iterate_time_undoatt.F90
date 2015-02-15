@@ -346,7 +346,7 @@
                b_displ_ic_store_buffer)
   endif
 
-  call print_elapsed_time()
+  call it_print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()

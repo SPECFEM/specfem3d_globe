@@ -24,6 +24,8 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
+!
+! United States and French Government Sponsorship Acknowledged.
 
   subroutine iterate_time()
 
@@ -51,6 +53,7 @@
 
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
+  if (myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
 
   if (myrank == 0) then
     write(IMAIN,*)
@@ -241,7 +244,7 @@
     call write_seismograms()
 
     ! outputs movie files
-    call write_movie_output()
+      call write_movie_output()
 
     ! first step of noise tomography, i.e., save a surface movie at every time step
     ! modified from the subroutine 'write_movie_surface'
@@ -263,7 +266,7 @@
   !---- end of time iteration loop
   !
 
-  call print_elapsed_time()
+  call it_print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
@@ -356,7 +359,6 @@
   call prepare_cleanup_device(Mesh_pointer,NCHUNKS_VAL)
 
   end subroutine it_transfer_from_GPU
-
 
 !
 !-------------------------------------------------------------------------------------------------

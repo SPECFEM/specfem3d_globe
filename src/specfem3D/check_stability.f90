@@ -639,8 +639,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
-  subroutine print_elapsed_time()
+  subroutine it_print_elapsed_time()
 
   use specfem_par,only: time_start,IMAIN,myrank
   implicit none
@@ -665,5 +664,5 @@
     call flush_IMAIN()
   endif
 
-  end subroutine print_elapsed_time
+  end subroutine it_print_elapsed_time
 
