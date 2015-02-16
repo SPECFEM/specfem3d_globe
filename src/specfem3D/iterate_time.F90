@@ -213,6 +213,7 @@
       ! note: we step back in time (using time steps - DT ), i.e. wavefields b_displ_..() are time-reversed here
 
       ! reconstructs forward wavefields based on last stored wavefield data
+
       ! note: NSTAGE_TIME_SCHEME is equal to 1 if Newmark because only one stage then
       do istage = 1, NSTAGE_TIME_SCHEME
 
