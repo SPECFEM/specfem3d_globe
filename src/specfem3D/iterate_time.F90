@@ -260,13 +260,18 @@
 
       endif ! of if (.not. EXACT_UNDOING_TO_DISK)
 
-      ! adjoint simulations: kernels
-      call compute_kernels()
-
     endif ! kernel simulations
 
-    ! write the seismograms with time shift
+    ! calculating gravity field at current timestep
+    if (GRAVITY_SIMULATION) call gravity_timeseries()
+
+    ! write the seismograms with time shift (GPU_MODE transfer included)
     call write_seismograms()
+
+    ! adjoint simulations: kernels
+    if (SIMULATION_TYPE == 3) then
+      call compute_kernels()
+    endif
 
     ! outputs movie files
     call write_movie_output()
@@ -312,6 +317,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+
   implicit none
 
   ! to store forward wave fields
@@ -458,4 +464,16 @@
   endif
 
   end subroutine it_update_vtkwindow
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gravity_timeseries()
+
+  implicit none
+
+  stop 'gravity_timeseries() not implemented in this code yet'
+
+  end subroutine gravity_timeseries
 
