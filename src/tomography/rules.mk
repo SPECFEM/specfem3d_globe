@@ -105,13 +105,13 @@ tomography: $(tomography_TARGETS)
 xadd_model_OBJECTS = \
 	$O/tomography_par.tomo_module.o \
 	$O/compute_kernel_integral.tomo.o \
-	$O/get_gradient_cg.tomo.o \
-	$O/get_gradient_steepest.tomo.o \
+	$O/get_cg_direction.tomo.o \
+	$O/get_sd_direction.tomo.o \
 	$O/read_kernels.tomo.o \
 	$O/read_kernels_cg.tomo.o \
 	$O/read_model.tomo.o \
 	$O/read_parameters_tomo.tomo.o \
-	$O/write_gradients.tomo.o \
+	$O/write_gradient.tomo.o \
 	$O/write_new_model.tomo.o \
 	$O/write_new_model_perturbations.tomo.o \
 	$(EMPTY_MACRO)
