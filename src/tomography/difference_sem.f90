@@ -37,11 +37,11 @@
 
 program difference_sem
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT,MAX_STRING_LEN
+  use tomography_par,only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT,MAX_STRING_LEN, &
+    NPROCTOT_VAL,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE
 
   implicit none
-
-  include 'OUTPUT_FILES/values_from_mesher.h'
 
   character(len=MAX_STRING_LEN) :: arg(5)
   character(len=MAX_STRING_LEN) :: file1name,file2name

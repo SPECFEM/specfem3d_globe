@@ -57,24 +57,22 @@
 
   program interpolate_model
 
-  use constants,only: CUSTOM_REAL,SIZE_INTEGER,NGLLX,NGLLY,NGLLZ, &
+  use constants,only: SIZE_INTEGER, &
     TWO_PI,R_UNIT_SPHERE, &
-    GAUSSALPHA,GAUSSBETA,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM, &
-    IIN,IOUT,IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL,MAX_STRING_LEN
+    NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM, &
+    IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL
+
+  use tomography_par,only: &
+    CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
+    GAUSSALPHA,GAUSSBETA,R_EARTH_KM, &
+    IIN,IOUT,MAX_STRING_LEN, &
+    NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL, &
+    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE
 
   use kdtree_search, only: kdtree_setup,kdtree_set_verbose,kdtree_delete,kdtree_find_nearest_neighbor, &
     kdtree_num_nodes,kdtree_nodes_location,kdtree_nodes_index
 
   implicit none
-
-  ! new, target mesh:
-  include 'OUTPUT_FILES/values_from_mesher.h'
-  ! takes:
-  ! NPROC_XI and NPROC_ETA
-  ! NPROCTOT_VAL
-  ! NEX_XI_VAL
-  ! NSPEC_CRUST_MANTLE
-  ! NGLOB_CRUST_MANTLE
 
   !-------------------------------------------------------------------
   ! USER PARAMETERS

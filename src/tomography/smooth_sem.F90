@@ -67,12 +67,14 @@ program smooth_sem_globe
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER,NGLLCUBE
+  use tomography_par,only: &
+    NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
+    ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
+    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE
 
   use kdtree_search
 
   implicit none
-
-  include 'OUTPUT_FILES/values_from_mesher.h'
 
   ! copy from static compilation (depends on Par_file values)
   integer, parameter :: NPROC_XI  = NPROC_XI_VAL
