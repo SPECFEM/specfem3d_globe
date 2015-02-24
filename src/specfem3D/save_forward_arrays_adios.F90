@@ -621,7 +621,8 @@
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD_UNDO_ATT, &
+                           ADIOS_METHOD_PARAMS_UNDO_ATT, "", adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 

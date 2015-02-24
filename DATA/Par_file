@@ -2,10 +2,10 @@
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1        # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
 NOISE_TOMOGRAPHY                = 0        # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
-SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
+SAVE_FORWARD                    = .true.
 
 # number of chunks (1,2,3 or 6)
-NCHUNKS                         = 1
+NCHUNKS                         = 6
 
 # angular width of the first chunk (not used if full sphere with six chunks)
 ANGULAR_WIDTH_XI_IN_DEGREES   = 20.d0      # angular size of a chunk
@@ -16,12 +16,12 @@ GAMMA_ROTATION_AZIMUTH        = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 64
-NEX_ETA                         = 64
+NEX_XI                          = 256
+NEX_ETA                         = 256
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 2
-NPROC_ETA                       = 2
+NPROC_XI                        = 8
+NPROC_ETA                       = 8
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135f_no_mud, 1D_ref, 1D_ref_iso, 1D_jp3d,1D_sea99
@@ -38,7 +38,7 @@ NPROC_ETA                       = 2
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = 1D_isotropic_prem
+MODEL                           = s362ani
 
 # parameters describing the Earth model
 OCEANS                          = .true.
@@ -49,16 +49,16 @@ ROTATION                        = .true.
 ATTENUATION                     = .true.
 
 # absorbing boundary conditions for a regional simulation
-ABSORBING_CONDITIONS            = .true.
+ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 2.5d0
+RECORD_LENGTH_IN_MINUTES        = 200d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
-PARTIAL_PHYS_DISPERSION_ONLY    = .true.
-UNDO_ATTENUATION                = .false.
+PARTIAL_PHYS_DISPERSION_ONLY    = .false.
+UNDO_ATTENUATION                = .true.
 # How much memory (in GB) is installed on your machine per CPU core (only used for UNDO_ATTENUATION, can be ignored otherwise)
 #         (or per GPU card or per INTEL MIC Phi board)
 #   Beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node.
@@ -76,14 +76,14 @@ UNDO_ATTENUATION                = .false.
 # and run your job with "aprun -n$NPROC -N1 -S1 -j1"
 # (each host has 32 GB on Titan, each GPU has 6 GB, thus even if all the GPU arrays are duplicated on the host
 #  this leaves 32 - 6 = 26 GB free on the host; leaving 1 GB for the Linux system, we can safely use 100% of 25 GB)
-MEMORY_INSTALLED_PER_CORE_IN_GB = 4.d0
+MEMORY_INSTALLED_PER_CORE_IN_GB = 20.d0
 # What percentage of this total do you allow us to use for arrays to undo attenuation, keeping in mind that you
 # need to leave some memory available for the GNU/Linux system to run
 #   (a typical value is 85%; any value below is fine but the code will then save a lot of data to disk;
 #    values above, say 90% or 92%, can be OK on some systems but can make the adjoint code run out of memory
 #    on other systems, depending on how much memory per node the GNU/Linux system needs for itself; thus you can try
 #    a higher value and if the adjoint crashes then try again with a lower value)
-PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
+PERCENT_OF_MEM_TO_USE_PER_CORE  = 100.d0
 
 # three mass matrices instead of one are needed to handle rotation very accurately;
 # otherwise rotation is handled slightly less accurately (but still reasonably well);
@@ -152,7 +152,7 @@ NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
-NTSTEP_BETWEEN_READ_ADJSRC      = 1000
+NTSTEP_BETWEEN_READ_ADJSRC      = 10000
 
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
@@ -186,16 +186,16 @@ PRINT_SOURCE_TIME_FUNCTION      = .false.
 # this parameter must be set to .true. to compute anisotropic kernels
 # in crust and mantle (related to the 21 Cij in geographical coordinates)
 # default is .false. to compute isotropic kernels (related to alpha and beta)
-ANISOTROPIC_KL                  = .false.
+ANISOTROPIC_KL                  = .true.
 
 # output only transverse isotropic kernels (alpha_v,alpha_h,beta_v,beta_h,eta,rho)
 # rather than fully anisotropic kernels when ANISOTROPIC_KL above is set to .true.
 # means to save radial anisotropic kernels, i.e., sensitivity kernels for beta_v, beta_h, etc.
-SAVE_TRANSVERSE_KL_ONLY         = .false.
+SAVE_TRANSVERSE_KL_ONLY         = .true.
 
 # output approximate Hessian in crust mantle region.
 # means to save the preconditioning for gradients, they are cross correlations between forward and adjoint accelerations.
-APPROXIMATE_HESS_KL             = .false.
+APPROXIMATE_HESS_KL             = .true.
 
 # forces transverse isotropy for all mantle elements
 # (default is to use transverse isotropy only between MOHO and 220)
@@ -261,7 +261,7 @@ BROADCAST_SAME_MESH_AND_MODEL   = .false.
 #-----------------------------------------------------------
 
 # set to true to use GPUs
-GPU_MODE                        = .false.
+GPU_MODE                        = .true.
 # Only used if GPU_MODE = .true. :
 GPU_RUNTIME                     = 1
 # 2 (OpenCL), 1 (Cuda) ou 0 (Compile-time -- does not work if configured with --with-cuda *AND* --with-opencl)
@@ -269,7 +269,7 @@ GPU_PLATFORM                    = NVIDIA
 GPU_DEVICE                      = Tesla
 
 # set to true to use the ADIOS library for I/Os
-ADIOS_ENABLED                   = .false.
+ADIOS_ENABLED                   = .true.
 ADIOS_FOR_FORWARD_ARRAYS        = .true.
 ADIOS_FOR_MPI_ARRAYS            = .true.
 ADIOS_FOR_ARRAYS_SOLVER         = .true.
