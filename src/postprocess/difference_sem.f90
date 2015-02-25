@@ -37,7 +37,7 @@
 
 program difference_sem
 
-  use tomography_par,only: &
+  use postprocess_par,only: &
     CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT,MAX_STRING_LEN, &
     NPROCTOT_VAL,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE
 
