@@ -215,6 +215,7 @@ SUBDIRS = \
 	meshfem3D \
 	specfem3D \
 	auxiliaries \
+	postprocess \
 	tomography \
 	$(EMPTY_MACRO)
 
@@ -296,15 +297,18 @@ endif
 	@echo "    xcreate_movie_GMT_global"
 	@echo "    xcombine_paraview_strain_data"
 	@echo ""
+        @echo "- postprocessing tools: [make postprocess]"
+	@echo "    xaddition_sem"
+	@echo "    xcombine_sem"
+	@echo "    xdifference_sem"
+	@echo "    xinterpolate_model"
+	@echo "    xsmooth_sem"
+	@echo ""
 	@echo "- tomography tools: [make tomography]"
 	@echo "    xadd_model_iso"
 	@echo "    xadd_model_tiso"
 	@echo "    xadd_model_tiso_cg"
 	@echo "    xadd_model_tiso_iso"
-	@echo "    xaddition_sem"
-	@echo "    xdifference_sem"
-	@echo "    xinterpolate_model"
-	@echo "    xsmooth_sem"
 	@echo "    xsum_kernels"
 	@echo "    xsum_preconditioned_kernels"
 ifeq ($(ADIOS), yes)
