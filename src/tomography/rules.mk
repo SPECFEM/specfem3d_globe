@@ -32,44 +32,24 @@ tomography_TARGETS = \
 	$E/xadd_model_tiso \
 	$E/xadd_model_tiso_cg \
 	$E/xadd_model_tiso_iso \
-	$E/xaddition_sem \
-	$E/xdifference_sem \
-	$E/xinterpolate_model \
-	$E/xsmooth_sem \
 	$E/xsum_kernels \
 	$E/xsum_preconditioned_kernels \
 	$(EMPTY_MACRO)
-
-ifeq ($(ADIOS),yes)
-tomography_TARGETS += \
-	$E/xconvert_model_file_adios \
-	$(EMPTY_MACRO)
-endif
 
 tomography_OBJECTS = \
 	$(xadd_model_iso_OBJECTS) \
 	$(xadd_model_tiso_OBJECTS) \
 	$(xadd_model_tiso_cg_OBJECTS) \
 	$(xadd_model_tiso_iso_OBJECTS) \
-	$(xaddition_sem_OBJECTS) \
-	$(xdifference_sem_OBJECTS) \
-	$(xinterpolate_model_OBJECTS) \
-	$(xsmooth_sem_OBJECTS) \
 	$(xsum_kernels_OBJECTS) \
 	$(xsum_preconditioned_kernels_OBJECTS) \
-	$(xconvert_model_file_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
 tomography_SHARED_OBJECTS = \
 	$(xadd_model_SHARED_OBJECTS) \
-	$(xaddition_sem_SHARED_OBJECTS) \
-	$(xdifference_sem_SHARED_OBJECTS) \
-	$(xinterpolate_model_SHARED_OBJECTS) \
-	$(xsmooth_sem_SHARED_OBJECTS) \
 	$(xsum_kernels_SHARED_OBJECTS) \
 	$(xsum_preconditioned_kernels_SHARED_OBJECTS) \
-	$(xconvert_model_file_adios_SHARED_OBJECTS) \
 	$(EMPTY_MACRO)
 
 
@@ -170,125 +150,6 @@ xadd_model_tiso_iso_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xadd_model_tiso_iso: $(xadd_model_tiso_iso_OBJECTS) $(xadd_model_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
-
-
-##
-## xconvert_model_file_adios
-##
-xconvert_model_file_adios_OBJECTS = \
-	$O/convert_model_file_adios.tomoadios.o \
-	$(EMPTY_MACRO)
-
-xconvert_model_file_adios_SHARED_OBJECTS = \
-	$O/shared_par.shared_module.o \
-	$O/parallel.sharedmpi.o \
-	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
-	$O/read_value_parameters.shared.o \
-	$O/adios_helpers_definitions.shared_adios_module.o \
-	$O/adios_helpers_writers.shared_adios_module.o \
-	$O/adios_helpers.shared_adios.o \
-	$O/adios_manager.shared_adios.o \
-	$(EMPTY_MACRO)
-
-${E}/xconvert_model_file_adios: $(xconvert_model_file_adios_OBJECTS) $(xconvert_model_file_adios_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
-
-##
-## xaddition_sem
-##
-xaddition_sem_OBJECTS = \
-	$O/addition_sem.tomo.o \
-	$(EMPTY_MACRO)
-
-xaddition_sem_SHARED_OBJECTS = \
-	$O/shared_par.shared_module.o \
-	$O/parallel.sharedmpi.o \
-	$O/exit_mpi.shared.o \
-	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
-	$O/read_value_parameters.shared.o \
-	$(EMPTY_MACRO)
-
-${E}/xaddition_sem: $(xaddition_sem_OBJECTS) $(xaddition_sem_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+
-
-
-##
-## xdifference_sem
-##
-xdifference_sem_OBJECTS = \
-	$O/difference_sem.tomo.o \
-	$(EMPTY_MACRO)
-
-xdifference_sem_SHARED_OBJECTS = \
-	$O/shared_par.shared_module.o \
-	$O/parallel.sharedmpi.o \
-	$O/exit_mpi.shared.o \
-	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
-	$O/read_value_parameters.shared.o \
-	$(EMPTY_MACRO)
-
-${E}/xdifference_sem: $(xdifference_sem_OBJECTS) $(xdifference_sem_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+
-
-##
-## xinterpolate_model
-##
-xinterpolate_model_OBJECTS = \
-	$O/interpolate_model.tomo.o \
-	$(EMPTY_MACRO)
-
-xinterpolate_model_SHARED_OBJECTS = \
-	$O/shared_par.shared_module.o \
-	$O/parallel.sharedmpi.o \
-	$O/gll_library.shared.o \
-	$O/heap_sort.shared.o \
-	$O/hex_nodes.shared.o \
-	$O/lagrange_poly.shared.o \
-	$O/recompute_jacobian.solver.o \
-	$O/search_kdtree.shared.o \
-	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
-	$O/read_value_parameters.shared.o \
-	$(EMPTY_MACRO)
-
-# extra dependencies
-$O/interpolate_model.tomo.o: $O/search_kdtree.shared.o
-
-${E}/xinterpolate_model: $(xinterpolate_model_OBJECTS) $(xinterpolate_model_SHARED_OBJECTS)
-	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
-
-##
-## xsmooth_sem
-##
-xsmooth_sem_OBJECTS = \
-	$O/smooth_sem.tomo.o \
-	$(EMPTY_MACRO)
-
-xsmooth_sem_SHARED_OBJECTS = \
-	$O/shared_par.shared_module.o \
-	$O/parallel.sharedmpi.o \
-	$O/exit_mpi.shared.o \
-	$O/get_all_eight_slices.shared.o \
-	$O/gll_library.shared.o \
-	$O/heap_sort.shared.o \
-	$O/reduce.shared.o \
-	$O/rthetaphi_xyz.shared.o \
-	$O/search_kdtree.shared.o \
-	$O/smooth_weights_vec.shared.o \
-	$O/write_VTK_file.shared.o \
-	$O/param_reader.cc.o \
-	$O/read_parameter_file.shared.o \
-	$O/read_value_parameters.shared.o \
-	$(EMPTY_MACRO)
-
-# extra dependencies
-$O/smooth_sem.tomo.o: $O/search_kdtree.shared.o
-
-${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
