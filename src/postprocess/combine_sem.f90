@@ -30,12 +30,9 @@
 ! USAGE
 !   mpirun -np NPROC bin/xcombine_sem INPUT_FILE OUTPUT_DIR KERNEL_NAMES
 !
-! e.g.
-!   mpirun -np 8 bin/xcombine_sem kernels_list.txt OUTPUT_SUM/ alpha_kernel,rho_kernel
-!
 !
 ! COMMAND LINE ARGUMENTS
-!   INPUT_FILE             - text file containing list of kernel directories
+!   INPUT_FILE             - text file containing kernel paths
 !   OUTPUT_PATH            - directory to which summed kernels are written
 !   KERNEL_NAMES           - one or more kernel names separated by commas
 !
@@ -45,11 +42,17 @@
 !   KERNEL_NAMES. Writes the resulting sum to OUTPUT_DIR.
 !
 !   INPUT_FILE is a text file containing a list of absolute or relative paths to
-!   kernel direcotires, one directoy per line. In legacy versions XCOMBINE_SEM,
-!   INPUT_FILE had the hardwired name 'kernels_list.txt'
+!   kernel direcotires, one directoy per line. In legacy versions of XCOMBINE_SEM,
+!   INPUT_FILE had the hardwired name './kernels_list.txt'
 !
 !   KERNEL_NAMES is comma-delimited list of kernel names,
-!   e.g.'alpha_kernel,rho_kernel'.
+!   e.g. 'alpha_kernel,beta_kernel,rho_kernel'
+!
+!   This program works on any scalar field of dimension (NGLLX,NGLLY,NGLLZ,NSPEC). 
+!   Its primary use case though is to clip kernels.
+!
+!   This is an embarassingly-parallel program.
+
 
 
 program combine_sem_globe
@@ -201,8 +204,7 @@ subroutine sum_kernel(kernel_name,kernel_list,output_dir,nker)
 
     ! sensitivity kernel / frechet derivative
     kernel = 0._CUSTOM_REAL
-    write(k_file,'(a,i6.6,a)') trim(kernel_list(iker)) &
-                               //'/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
+    write(k_file,'(a,i6.6,a)') trim(kernel_list(iker))//'/proc',myrank,'_'//trim(kernel_name)//'.bin'
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
      write(*,*) '  kernel not found: ',trim(k_file)
@@ -219,23 +221,6 @@ subroutine sum_kernel(kernel_name,kernel_list,output_dir,nker)
       print*
     endif
 
-    ! source mask
-    if (USE_SOURCE_MASK) then
-      ! reads in mask
-      write(k_file,'(a,i6.6,a)') trim(kernel_list(iker)) &
-                                 //'/proc',myrank,trim(REG)//'mask_source.bin'
-      open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0) then
-        write(*,*) '  file not found: ',trim(k_file)
-        stop 'Error source mask file not found'
-      endif
-      read(IIN) mask_source
-      close(IIN)
-
-      ! masks source elements
-      kernel = kernel * mask_source
-    endif
-
     ! sums all kernels from each event
     total_kernel = total_kernel + kernel
   enddo
@@ -244,7 +229,7 @@ subroutine sum_kernel(kernel_name,kernel_list,output_dir,nker)
   ! stores summed kernels
   if(myrank==0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
 
-  write(k_file,'(a,i6.6,a)') trim(output_dir)//'/'//'proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
+  write(k_file,'(a,i6.6,a)') trim(output_dir)//'/'//'proc',myrank,'_'//trim(kernel_name)//'.bin'
 
   open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ier)
   if (ier /= 0) then
