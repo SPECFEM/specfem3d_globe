@@ -40,6 +40,9 @@ module postprocess_par
   ! tomography parameter settings
   include "constants_tomography.h"
 
+  integer,parameter :: MAX_KERNEL_NAMES = 255
+  integer,parameter :: MAX_KERNEL_PATHS = 65535
+
   ! mesh size
   integer :: NSPEC, NGLOB
 
@@ -47,9 +50,6 @@ module postprocess_par
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: x, y, z
   integer, dimension(:,:,:,:),allocatable :: ibool
   logical, dimension(:),allocatable :: ispec_is_tiso
-
-  ! model update length
-  real(kind=CUSTOM_REAL) :: step_fac,step_length
 
   ! mpi process
   integer :: myrank,sizeprocs

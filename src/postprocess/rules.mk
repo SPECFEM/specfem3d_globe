@@ -25,7 +25,6 @@
 #
 #=====================================================================
 
-#######################################
 
 postprocess_TARGETS = \
 	$E/xaddition_sem \
@@ -129,6 +128,7 @@ ${E}/xaddition_sem: $(xaddition_sem_OBJECTS) $(xaddition_sem_SHARED_OBJECTS)
 ##
 xcombine_sem_OBJECTS = \
 	$O/postprocess_par.postprocess_module.o \
+	$O/parse_kernel_names.postprocess.o \
 	$O/combine_sem.postprocess.o \
 	$(EMPTY_MACRO)
 
@@ -194,6 +194,8 @@ ${E}/xinterpolate_model: $(xinterpolate_model_OBJECTS) $(xinterpolate_model_SHAR
 ## xsmooth_sem
 ##
 xsmooth_sem_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
+	$O/parse_kernel_names.postprocess.o \
 	$O/smooth_sem.postprocess.o \
 	$(EMPTY_MACRO)
 
