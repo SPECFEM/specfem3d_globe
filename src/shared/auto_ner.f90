@@ -52,7 +52,7 @@
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
 
-  use constants
+  use constants,only: DEGREES_TO_RADIANS
 
   implicit none
 
@@ -96,7 +96,7 @@
 !
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-  use constants
+  use constants,only: N_SLS
 
   implicit none
 
@@ -156,7 +156,7 @@
                       R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
                       HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
-  use constants
+  use constants,only: R_EARTH
 
   implicit none
 
@@ -267,7 +267,7 @@
 
   subroutine auto_optimal_ner(NUM_REGIONS, width, NEX, r, scaling, NER, rt, rb)
 
-  use constants
+  use constants,only: DEGREES_TO_RADIANS
 
   implicit none
 
@@ -381,7 +381,7 @@
 
   subroutine compute_nex(nex_xi, rcube, alpha, ner)
 
-  use constants
+  use constants,only: PI,PI_OVER_TWO,PI_OVER_FOUR
 
   implicit none
 
@@ -400,12 +400,12 @@
   do ix = 0,nex_xi/2,1
      ratio_x = (ix * 1.0d0) / ( nex_xi * 1.0d0)
      factx = 2.0d0 * ratio_x - 1.0d0
-     xi = (PI / 2.0d0) * factx
+     xi = PI_OVER_TWO * factx
      x = (rcube / sqrt(2.0d0)) * factx
      y = (rcube / sqrt(2.0d0)) * (1 + cos(xi) * alpha / PI_OVER_TWO)
 
-     surfx = RICB_KM * cos(3 * (PI/4.0d0) - ratio_x * PI_OVER_TWO)
-     surfy = RICB_KM * sin(3 * (PI/4.0d0) - ratio_x * PI_OVER_TWO)
+     surfx = RICB_KM * cos(3 * PI_OVER_FOUR - ratio_x * PI_OVER_TWO)
+     surfy = RICB_KM * sin(3 * PI_OVER_FOUR - ratio_x * PI_OVER_TWO)
 
      dist_cc_icb = sqrt((surfx -x)**2 + (surfy - y)**2)
      if (ix /= nex_xi/2) then
@@ -528,7 +528,7 @@
 
   subroutine compute_coordinate_central_cube(ix,iy,nbx,nby,radius, alpha, x, y)
 
-  use constants
+  use constants,only: PI_OVER_TWO
 
   implicit none
 
@@ -560,7 +560,7 @@
 
   subroutine compute_coordinate(ix,iy,nbx, nby, rcube, ic, alpha, x, y)
 
-  use constants
+  use constants,only: PI_OVER_TWO,PI_OVER_FOUR
 
   implicit none
 

@@ -107,7 +107,7 @@ void *fread_adj_thread(void* dummy) {
   //printf("adjoint thread: nadj_rec_local = %i - it_sub_adj = %i \n",ptDataAdj.pid,ptDataAdj.it_sub);
 
   // calls fortran function
-  // see file: src/specfem3D/read_adjonit_sources.f90
+  // see file: src/specfem3D/read_adjoint_sources.f90
   FC_FUNC_(read_adjoint_sources_local,READ_ADJOINT_SOURCES_LOCAL)(ptDataAdj.buffer,&ptDataAdj.pid,&ptDataAdj.it_sub);
 
   // reading done
@@ -142,7 +142,7 @@ void wait_adj_io_thread() {
 
 // initializes adjoint thread
 void
-FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length,int* nadj_rec_local) {
+FC_FUNC_(prepare_adj_io_thread,CREATE_IO_ADJ_THREAD)(char *buffer, long* length, int* nadj_rec_local) {
 
   TRACE("prepare_adj_io_thread");
 

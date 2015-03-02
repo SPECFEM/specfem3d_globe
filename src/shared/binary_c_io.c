@@ -65,22 +65,34 @@ FC_FUNC_(close_file,CLOSE_FILE)() {
 
 void
 FC_FUNC_(write_integer,WRITE_INTEGER)(int *z) {
-  int dummy_unused_variable = write(fd, z, sizeof(int));
+  if (write(fd, z, sizeof(int)) == -1) {
+    fprintf(stderr, "Error writing integer to file id: %d exiting\n", fd);
+    exit(-1);
+  }
 }
 
 void
 FC_FUNC_(write_real,WRITE_REAL)(float *z) {
-  int dummy_unused_variable = write(fd, z, sizeof(float));
+  if (write(fd, z, sizeof(float)) == -1) {
+    fprintf(stderr, "Error writing real to file id: %d exiting\n", fd);
+    exit(-1);
+  }
 }
 
 void
 FC_FUNC_(write_n_real,WRITE_N_REAL)(float *z,int *n) {
-  int dummy_unused_variable = write(fd, z, *n*sizeof(float));
+  if (write(fd, z, *n*sizeof(float)) == -1) {
+    fprintf(stderr, "Error writing n real to file id: %d exiting\n", fd);
+    exit(-1);
+  }
 }
 
 void
 FC_FUNC_(write_character,WRITE_CHARACTER)(char *z, int *lchar) {
-  int dummy_unused_variable = write(fd, z, *lchar*sizeof(char));
+  if (write(fd, z, *lchar*sizeof(char)) == -1) {
+    fprintf(stderr, "Error writing character to file id: %d exiting\n", fd);
+    exit(-1);
+  }
 }
 
 void
@@ -99,22 +111,34 @@ FC_FUNC_(close_file_fd,CLOSE_FILE_FD)(int *pfd) {
 
 void
 FC_FUNC_(write_integer_fd,WRITE_INTEGER_FD)(int *pfd, int *z) {
-  int dummy_unused_variable = write(*pfd, z, sizeof(int));
+  if (write(*pfd, z, sizeof(int)) == -1) {
+    fprintf(stderr, "Error writing integer to file id: %d exiting\n", *pfd);
+    exit(-1);
+  }
 }
 
 void
 FC_FUNC_(write_real_fd,WRITE_REAL_FD)(int *pfd, float *z) {
-  int dummy_unused_variable = write(*pfd, z, sizeof(float));
+  if (write(*pfd, z, sizeof(float)) == -1) {
+    fprintf(stderr, "Error writing real to file id: %d exiting\n", *pfd);
+    exit(-1);
+  }
 }
 
 void
 FC_FUNC_(write_n_real_fd,WRITE_N_REAL_FD)(int *pfd, float *z,int *n) {
-  int dummy_unused_variable = write(*pfd, z, *n*sizeof(float));
+  if (write(*pfd, z, *n*sizeof(float)) == -1) {
+    fprintf(stderr, "Error writing n real to file id: %d exiting\n", *pfd);
+    exit(-1);
+  }
 }
 
 void
 FC_FUNC_(write_character_fd,WRITE_CHARACTER_FD)(int *pfd, char *z, int *lchar) {
-  int dummy_unused_variable = write(*pfd, z, *lchar*sizeof(char));
+  if (write(*pfd, z, *lchar*sizeof(char)) == -1) {
+    fprintf(stderr, "Error writing character to file id: %d exiting\n", *pfd);
+    exit(-1);
+  }
 }
 
 

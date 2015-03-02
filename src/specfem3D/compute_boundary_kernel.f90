@@ -43,7 +43,9 @@
   real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
   real(kind=CUSTOM_REAL) :: tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) :: gradx,grady,gradz
-  logical,dimension(NGLOB_OUTER_CORE) :: mask_ibool
+
+  logical,dimension(:),allocatable :: mask_ibool
+  integer :: ier
 
   ! transfers wavefields onto CPU
   if (GPU_MODE) then
@@ -64,8 +66,11 @@
     ! pre-calculates gradients in outer core
     ! note: for CPU, this is already done in compute_kernels_outer_core() routine
 
-    ! pre-calculates gradients
+    allocate(mask_ibool(NGLOB_OUTER_CORE),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error allocating mask_ibool array in routine compute_boundary_kernels()')
     mask_ibool(:) = .false.
+
+    ! pre-calculates gradients
     do ispec = 1, NSPEC_OUTER_CORE
       do k = 1, NGLLZ
         do j = 1, NGLLY
@@ -159,6 +164,9 @@
         enddo
       enddo
     enddo
+
+    ! frees memory
+    deallocate(mask_ibool)
 
   endif ! GPU_MODE
 

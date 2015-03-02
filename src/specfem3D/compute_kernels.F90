@@ -309,15 +309,20 @@
   real(kind=CUSTOM_REAL) :: div_displ,b_div_displ
   real(kind=CUSTOM_REAL) :: gradx,grady,gradz
   integer :: i,j,k,l,ispec,iglob
-  logical,dimension(NGLOB_OUTER_CORE) :: mask_ibool
+
+  logical,dimension(:),allocatable :: mask_ibool
+  integer :: ier
 
   ! outer_core -- compute the actual displacement and acceleration (NDIM,NGLOBMAX_OUTER_CORE)
 
   if (.not. GPU_MODE) then
     ! on CPU
 
-    ! pre-calculates gradients in outer core on CPU
+    allocate(mask_ibool(NGLOB_OUTER_CORE),stat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Error allocating mask_ibool array in routine compute_boundary_kernels()')
     mask_ibool(:) = .false.
+
+    ! pre-calculates gradients in outer core on CPU
     do ispec = 1, NSPEC_OUTER_CORE
       do k = 1, NGLLZ
         do j = 1, NGLLY
@@ -415,6 +420,9 @@
         enddo
       enddo
     enddo
+
+    ! frees memory
+    deallocate(mask_ibool)
 
     ! acoustic kernels
     do ispec = 1, NSPEC_OUTER_CORE

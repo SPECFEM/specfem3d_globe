@@ -33,21 +33,21 @@
 
 ! external mesh routine for saving VTK files for points locations
 
-  use constants
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 
   implicit none
 
-  integer :: nglob
+  integer,intent(in) :: nglob
 
   ! global coordinates
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! GLL data values array
-  integer :: num_points_globalindices
-  integer, dimension(num_points_globalindices) :: points_globalindices
+  integer,intent(in) :: num_points_globalindices
+  integer, dimension(num_points_globalindices),intent(in) :: points_globalindices
 
   ! file name
-  character(len=MAX_STRING_LEN) prname_file
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
 
   integer :: i,iglob,ier
 
@@ -93,21 +93,22 @@
 
 ! external mesh routine for saving VTK files for points locations
 
-  use constants
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 
   implicit none
 
-  integer :: nglob
+  integer,intent(in) :: nglob
 
   ! global coordinates
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! GLL data values array
-  real(kind=CUSTOM_REAL), dimension(nglob) :: glob_values
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: glob_values
 
   ! file name
-  character(len=MAX_STRING_LEN) prname_file
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
 
+  ! local parameters
   integer :: iglob,ier
 
   ! write source and receiver VTK files for Paraview
@@ -154,22 +155,24 @@
 
 ! routine for saving VTK file holding logical flag on each spectral element
 
-  use constants
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
-  integer :: nspec,nglob
+  integer,intent(in) :: nspec,nglob
 
   ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! element flag array
-  logical, dimension(nspec) :: elem_flag
-  integer :: ispec,i,ier
+  logical, dimension(nspec),intent(in) :: elem_flag
 
   ! file name
-  character(len=MAX_STRING_LEN) prname_file
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
+
+  ! local parameters
+  integer :: ispec,i,ier
 
   ! write source and receiver VTK files for Paraview
   !debug
@@ -232,22 +235,24 @@
 
 ! routine for saving VTK file holding integer value on each spectral element
 
-  use constants
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
-  integer :: nspec,nglob
+  integer,intent(in) :: nspec,nglob
 
   ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! element flag array
-  integer, dimension(nspec) :: elem_flag
-  integer :: ispec,i,ier
+  integer, dimension(nspec),intent(in) :: elem_flag
 
   ! file name
-  character(len=MAX_STRING_LEN) prname_file
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
+
+  ! local parameters
+  integer :: ispec,i,ier
 
   ! write source and receiver VTK files for Paraview
   !debug
@@ -304,23 +309,23 @@
 
 ! outputs single file for each process
 
-  use constants
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
 
   implicit none
 
-  integer :: nspec,nglob
+  integer,intent(in) :: nspec,nglob
 
-  integer, dimension(nspec):: idoubling
+  integer, dimension(nspec),intent(in) :: idoubling
 
   ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! global data values array
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: glob_data
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: glob_data
 
   ! file name
-  character(len=MAX_STRING_LEN) prname_file
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
 
   ! local parameters
   integer :: ispec,i,ier
@@ -432,25 +437,25 @@
 
 ! outputs single file for all processes
 
-  use constants
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
 
   implicit none
 
-  integer :: myrank,NPROCTOT
+  integer,intent(in) :: myrank,NPROCTOT
 
-  integer ::nspec,nglob
+  integer,intent(in) ::nspec,nglob
 
-  integer, dimension(nspec):: idoubling
+  integer, dimension(nspec),intent(in) :: idoubling
 
   ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! global data values array
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: glob_data
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: glob_data
 
   ! file name
-  character(len=MAX_STRING_LEN) prname_file
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
 
   ! local parameters
   integer :: ispec,i,iproc,ier
@@ -633,21 +638,21 @@
 
 ! external mesh routine for saving vtk files for custom_real values on all gll points
 
-  use constants
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
-  integer :: nspec,nglob
+  integer,intent(in) :: nspec,nglob
 
   ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
   ! gll data values array
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: gll_data
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: gll_data
 
   ! file name
-  character(len=MAX_STRING_LEN) prname_file
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
 
   ! local parameters
   integer :: ispec,i,j,k,ier,iglob
