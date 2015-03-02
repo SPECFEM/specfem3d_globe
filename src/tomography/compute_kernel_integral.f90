@@ -681,7 +681,7 @@ subroutine compute_jacobian(jacobian)
 
 ! computes volume element associated with points
 
-  use tomography_par,only: CUSTOM_REAL,NSPEC,NGLOB,NGLLX,NGLLY,NGLLZ,IIN,myrank,MAX_STRING_LEN,REG
+  use tomography_par,only: CUSTOM_REAL,NSPEC,NGLOB,NGLLX,NGLLY,NGLLZ,IIN,myrank,MAX_STRING_LEN,REG,INPUT_DATABASES_DIR
 
   implicit none
 
@@ -708,7 +708,8 @@ subroutine compute_jacobian(jacobian)
   jacobian(:,:,:,:) = 0.0_CUSTOM_REAL
 
   ! builds jacobian
-  write(m_file,'(a,i6.6,a)') 'topo/proc',myrank,trim(REG)//'solver_data.bin'
+  write(m_file,'(a,i6.6,a)') trim(INPUT_DATABASES_DIR)//'proc',myrank,trim(REG)//'solver_data.bin'
+
   open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
