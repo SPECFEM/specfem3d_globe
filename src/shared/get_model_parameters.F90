@@ -389,6 +389,10 @@
   else if (MODEL_ROOT == 'CEM_ACCEPT') then
     CEM_ACCEPT          = .true.
     TRANSVERSE_ISOTROPY = .true.
+
+  else if (MODEL_ROOT == 'CEM_GLL') then
+    THREE_D_MODEL = THREE_D_MODEL_GLL
+    TRANSVERSE_ISOTROPY = .true.
 #endif
 
   else if (MODEL_ROOT == 'PPM') then

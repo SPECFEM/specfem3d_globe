@@ -782,6 +782,10 @@
 ! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
 
+!!-- uncomment for using PREM as reference model (used in CEM inversion)
+!  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+!  integer, parameter :: GLL_REFERENCE_MODEL = REFERENCE_MODEL_PREM
+
 !!-- uncomment for using S362ANI as reference model
   integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
   integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI
