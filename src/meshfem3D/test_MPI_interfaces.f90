@@ -74,14 +74,16 @@
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
     allocate(mask(NGLOB_CRUST_MANTLE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
   case (IREGION_OUTER_CORE)
     allocate(mask(NGLOB_OUTER_CORE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
   case (IREGION_INNER_CORE)
     allocate(mask(NGLOB_INNER_CORE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
   case default
     call exit_mpi(myrank,'Error test MPI: iregion_code not recognized')
   end select
-  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
 
   ! test ibool entries
   ! (must be non-zero and unique)
