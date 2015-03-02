@@ -449,13 +449,37 @@ void gpuInitialize_buffers(Mesh *mp) {
 }
 
 /* ----------------------------------------------------------------------------------------------- */
+// GPU reset
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuReset() {
+  // releases previous contexts
+
+  // opencl version
+#ifdef USE_OPENCL
+  if (run_opencl) clReleaseContext (mocl.context);
+#endif
+
+  // cuda version
+#ifdef USE_CUDA
+  if (run_cuda) {
+#if CUDA_VERSION < 4000
+    cudaThreadExit();
+#else
+    cudaDeviceReset();
+#endif
+  }
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
 // GPU synchronization
 /* ----------------------------------------------------------------------------------------------- */
 
 void gpuSynchronize() {
   // synchronizes device
 
-  //opencl version
+  // opencl version
 #ifdef USE_OPENCL
   if (run_opencl) {
     clFinish (mocl.command_queue);
@@ -466,10 +490,10 @@ void gpuSynchronize() {
   // cuda version
 #ifdef USE_CUDA
   if (run_cuda) {
-#if CUDA_VERSION >= 4000
-    cudaDeviceSynchronize();
-#else
+#if CUDA_VERSION < 4000
     cudaThreadSynchronize();
+#else
+    cudaDeviceSynchronize();
 #endif
   }
 #endif

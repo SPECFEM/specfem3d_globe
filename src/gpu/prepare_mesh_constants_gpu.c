@@ -134,10 +134,18 @@ void FC_FUNC_ (prepare_constants_device,
   if (run_cuda) {
     // setup two streams, one for compute and one for host<->device memory copies
     // uses pinned memory for asynchronous data transfers
+    // note: creating streams may fail if multiple processes use a single GPU, and when CUDA devices are set
+    //       for exclusive usage. in this case, you will have to setup a CUDA multiple process service (MPS), aka CUDA proxy.
+    //       see: https://docs.nvidia.com/deploy/pdf/CUDA_Multi_Process_Service_Overview.pdf
+    //            http://cudamusing.blogspot.ch/2013/07/enabling-cuda-multi-process-service-mps.html
+    //
+    //       for some reason, calling cudaSetDevice() may return success even when devices are exclusive,
+    //       and only when calling the cudaStreamCreate() below a cudaError occurs...
+    //
     // compute stream
-    print_CUDA_error_if_any( cudaStreamCreate(&mp->compute_stream), 1);
+    print_CUDA_error_if_any( cudaStreamCreate(&mp->compute_stream), 101);
     // copy stream (needed to transfer MPI buffers)
-    if (GPU_ASYNC_COPY) print_CUDA_error_if_any( cudaStreamCreate(&mp->copy_stream), 2);
+    if (GPU_ASYNC_COPY) print_CUDA_error_if_any( cudaStreamCreate(&mp->copy_stream), 102);
   }
 #endif
 
@@ -401,6 +409,9 @@ void FC_FUNC_ (prepare_constants_device,
 
   // creates buffer on GPU for maximum array values
   gpuMalloc_realw (&mp->d_norm_max, num_blocks_x * num_blocks_y);
+
+  // synchronizes gpu calls
+  gpuSynchronize();
 
   GPU_ERROR_CHECKING ("prepare_constants_device");
 }
@@ -1276,6 +1287,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   int size_glob = mp->NGLOB_CRUST_MANTLE;
 
   // mesh
+  TRACE ("prepare_crust_mantle gll mesh");
   gpuMalloc_realw (&mp->d_xix_crust_mantle, size_padded);
   gpuMalloc_realw (&mp->d_xiy_crust_mantle, size_padded);
   gpuMalloc_realw (&mp->d_xiz_crust_mantle, size_padded);
@@ -1347,14 +1359,16 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   }
 
   // global indexing
+  TRACE ("prepare_crust_mantle global indexing");
   gpuCreateCopy_todevice_int (&mp->d_ibool_crust_mantle, h_ibool, NGLL3 * mp->NSPEC_CRUST_MANTLE);
 
-
-  // transverse isotropic elements
-
-  // only needed if not anisotropic 3D mantle
+  // Earth model arrays
+  TRACE ("prepare_crust_mantle model arrays");
   if (! mp->anisotropic_3D_mantle) {
     // no anisotropy
+    // only needed if not anisotropic 3D mantle
+
+    // transverse isotropic elements
 
     // transverse isotropy flag
     gpuCreateCopy_todevice_int (&mp->d_ispec_is_tiso_crust_mantle, h_ispec_is_tiso, mp->NSPEC_CRUST_MANTLE);
@@ -1579,6 +1593,8 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   }
 
   // mesh locations
+  TRACE ("prepare_crust_mantle mesh locations");
+
   // ystore & zstore needed for tiso elements
   gpuCreateCopy_todevice_realw (&mp->d_ystore_crust_mantle, h_ystore, size_glob);
   gpuCreateCopy_todevice_realw (&mp->d_zstore_crust_mantle, h_zstore, size_glob);
@@ -1600,6 +1616,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   gpuCreateCopy_todevice_int (&mp->d_ibelm_bottom_crust_mantle, h_ibelm_bottom_crust_mantle, mp->nspec2D_bottom_crust_mantle);
 
   // wavefield
+  TRACE ("prepare_crust_mantle wavefields");
   int size = NDIM * mp->NGLOB_CRUST_MANTLE;
 
   gpuMalloc_realw (&mp->d_displ_crust_mantle, size);
@@ -1689,6 +1706,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
 #endif
 
   // mass matrices
+  TRACE ("prepare_crust_mantle mass matrices");
   gpuCreateCopy_todevice_realw (&mp->d_rmassz_crust_mantle, h_rmassz, size_glob);
   if ((*NCHUNKS_VAL != 6 && mp->absorbing_conditions) || (mp->rotation && mp->exact_mass_matrix_for_rotation)) {
     gpuCreateCopy_todevice_realw (&mp->d_rmassx_crust_mantle, h_rmassx, size_glob);
@@ -1749,6 +1767,8 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   gpuSynchronize();
 
   GPU_ERROR_CHECKING ("prepare_crust_mantle_device");
+  // debug
+  //printf("%d rank - prepare_crust_mantle done",mp->myrank);
 }
 
 
@@ -3093,19 +3113,8 @@ void FC_FUNC_ (prepare_cleanup_device,
 #endif
 
   // releases previous contexts
-#ifdef USE_OPENCL
-  if (run_opencl) clReleaseContext (mocl.context);
-#endif
-#ifdef USE_CUDA
-  if (run_cuda) {
-#if CUDA_VERSION < 4000
-    cudaThreadExit();
-#else
-    cudaDeviceReset();
-#endif
-  }
-#endif
-
+  gpuReset();
+  
   // mesh pointer - not needed anymore
   free (mp);
 }

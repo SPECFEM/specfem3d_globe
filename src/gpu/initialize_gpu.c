@@ -86,6 +86,7 @@ int run_opencl = 0;
 
 static void initialize_cuda_device(const char *platform_filter, const char *device_filter, int myrank, int *nb_devices) {
   int device_count = 0;
+  cudaError_t err;
 
   // Gets number of GPU devices
   cudaGetDeviceCount(&device_count);
@@ -95,13 +96,12 @@ static void initialize_cuda_device(const char *platform_filter, const char *devi
   // when setting the device number. If MPS is enabled, some GPUs will silently not be used.
   //
   // being verbose and catches error from first call to CUDA runtime function, without synchronize call
-  cudaError_t err = cudaGetLastError();
+  err = cudaGetLastError();
   if (err != cudaSuccess) {
     fprintf(stderr,"Error after cudaGetDeviceCount: %s\n", cudaGetErrorString(err));
     exit_on_error("\
 CUDA runtime error: cudaGetDeviceCount failed\n\n\
-please check if driver and runtime libraries work together\n\
-or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multiple MPI processes\n\n");
+please check if driver and runtime libraries work together\n\n");
   }
 
   // returns device count to fortran
@@ -112,12 +112,9 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
   *nb_devices = device_count;
 
   // releases previous contexts
-#if CUDA_VERSION < 4000
-  cudaThreadExit();
-#else
-  cudaDeviceReset();
-#endif
+  gpuReset();
 
+  // determines device id for this process
   int *matchingDevices = (int *) malloc (sizeof(int) * device_count);
   int nbMatchingDevices = 0;
   struct cudaDeviceProp deviceProp;
@@ -129,18 +126,61 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
     if (!strcasestr(deviceProp.name, device_filter)) {
       continue;
     }
-    matchingDevices[nbMatchingDevices++] = i;
+    // debug
+    //printf("device match: %d match %d out of %d - filter platform = %s device = %s\n",
+    //        i,nbMatchingDevices,device_count,platform_filter, device_filter);
+
+    // adds match
+    matchingDevices[nbMatchingDevices] = i;
+    nbMatchingDevices++;
   }
 
   if (nbMatchingDevices == 0) {
     printf("Error: no matching devices for criteria %s/%s\n", platform_filter, device_filter);
-    exit(1);
+    exit_on_error("Error CUDA found no matching devices (for device filter set in Par_file)\n");
   }
 
   int myDevice = matchingDevices[myrank % nbMatchingDevices];
+
   free(matchingDevices);
 
-  cudaSetDevice(myDevice);
+  // user error info
+  const char* err_info = "\
+Please check GPU settings on your node \n\
+and/or check CUDA MPS setup to use a single GPU with multiple MPI processes,\n\
+e.g., on titan enable environment CRAY_CUDA_MPS=1 to use a single GPU with multiple MPI processes\n\n";
+
+  // sets CUDA device for this process
+  // note: setting/getting device ids seems to return success also for multiple processes setting the same GPU id
+  //       and even if the GPU mode is thread exclusive (only a single process would be allowed to use a single GPU).
+  //       we will have to catch the error later on...
+  err = cudaSetDevice(myDevice);
+  if (err != cudaSuccess) {
+    fprintf(stderr,"Error cudaSetDevice: %s\n", cudaGetErrorString(err));
+    if (err == cudaErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("CUDA runtime error: cudaSetDevice failed\n\n");
+  }
+
+  // checks if setting device was successful
+  int device;
+  cudaGetDevice(&device);
+
+  err = cudaGetLastError();
+  // debug
+  //printf("device set/get: rank %d set %d get %d\n - return %s",myrank,myDevice,device,cudaGetErrorString(err));
+  if (err != cudaSuccess) {
+    fprintf(stderr,"Error cudaGetDevice: %s\n", cudaGetErrorString(err));
+    if (err == cudaErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("CUDA runtime error: cudaGetDevice failed\n\n");
+  }
+
+  // checks device id
+  if ( device != myDevice){
+    fprintf(stderr,"Error cudaGetDevice: setting myDevice = %d is differnt to actual device = %d\n", myDevice,device);
+    exit_on_error("Error CUDA setting device failed\n");
+  }
+
+  // checks device properties
   cudaGetDeviceProperties(&deviceProp, myDevice);
 
   // exit if the machine has no CUDA-enabled device
@@ -255,6 +295,27 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
     }
   }
 #endif
+
+  // tests the device with a small memory allocation
+  int size = 128;
+  int* d_array;
+  err = cudaMalloc((void**)&d_array,size*sizeof(int));
+  if (err != cudaSuccess) {
+    fprintf(stderr,"Error testing memory allocation on device failed\n");
+    fprintf(stderr,"Error rank %d: cudaMalloc failed: %s\n", myrank,cudaGetErrorString(err));
+    if (err == cudaErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("CUDA runtime error: cudaMalloc failed\n\n");
+  }
+  err = cudaFree(d_array);
+  if (err != cudaSuccess) {
+    fprintf(stderr,"Error cudaFree failed: %s\n", cudaGetErrorString(err));
+    if (err == cudaErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("CUDA runtime error: cudaFree failed\n\n");
+  }
+
+  // synchronizes
+  gpuSynchronize();
+
 }
 #endif
 

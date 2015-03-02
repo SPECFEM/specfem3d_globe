@@ -141,7 +141,6 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
                                                                                   mp->d_nibool_interfaces_outer_core.cuda,
                                                                                   mp->d_ibool_interfaces_outer_core.cuda);
 
-
     // copies buffer to CPU
     if (GPU_ASYNC_COPY) {
       // waits until kernel is finished before starting async memcpy
