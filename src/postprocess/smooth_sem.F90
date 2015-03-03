@@ -42,11 +42,11 @@
 !   Reads kernels from INPUT_DIR, smooths by convolution with a Gaussian, and
 !   write the resulting smoothed kernels to OUTPUT_DIR.
 !
-!   Files written to OUTPUT_DIR have the suffix 'smooth' appended, 
+!   Files written to OUTPUT_DIR have the suffix 'smooth' appended,
 !   e.g. proc***alpha_kernel.bin becomes proc***alpha_kernel_smooth.bin
 !
 !   This program's primary use case is to smooth kernels. It can be used though
-!   on any scalar field of dimension (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). 
+!   on any scalar field of dimension (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE).
 !
 !   This is a parrallel program -- it must be invoked with mpirun or other
 !   appropriate utility.  Operations are performed in embarassingly-parallel
@@ -55,8 +55,8 @@
 !   Because this routine uses constants.h and values_from_mesher_globe.h,
 !   you need to compile it for your specific case.
 !
-!   We switch between vectorized and non-vectorized version by using pre-processor 
-!   flag FORCE_VECTORIZATION and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK 
+!   We switch between vectorized and non-vectorized version by using pre-processor
+!   flag FORCE_VECTORIZATION and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK
 !   defined in config.fh
 
 #include "config.fh"
