@@ -28,13 +28,13 @@
 ! XCOMBINE_SEM
 !
 ! USAGE
-!   mpirun -np NPROC bin/xcombine_sem INPUT_FILE OUTPUT_DIR KERNELL_NAMES
+!   mpirun -np NPROC bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR
 !
 !
 ! COMMAND LINE ARGUMENTS
+!   KERNEL_NAMES           - one or more material parameter names separated by commas
 !   INPUT_FILE             - text file containing list of kernel directories
 !   OUTPUT_PATH            - directory to which summed kernels are written
-!   KERNEL_NAMES           - one or more material parameter names separated by commas
 !
 !
 ! DESCRIPTION
@@ -47,10 +47,10 @@
 !   KERNEL_NAMES is comma-delimited list of kernel names,
 !   e.g.'reg1_alpha_kernel,reg1_beta_kernel,reg1_rho_kernel'.
 !
-!   Currently only names beginning with 'reg1' are supported.
-!
 !   This program's primary use case is to sum kernels. It can be used though on
-!   any scalar field of dimension (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE).
+!   any "reg1" array, i.e. any array of dimension 
+!   (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). The region suffix must be included
+!   explicitly in all names supplied through the KERNEL_NAMES arugment.
 !
 !   This is a parrallel program -- it must be invoked with mpirun or other
 !   appropriate utility.  Operations are performed in embarassingly-parallel
@@ -79,26 +79,25 @@ program combine_sem
     call get_command_argument(i,arg(i), status=ier)
     if (i <= 1 .and. trim(arg(i)) == '') then
       if (myrank == 0) then
-      stop ' Reenter command line options'
+        print *, 'USAGE: mpirun -np NPROC bin/xclip_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
+        stop ' Please check command line arguments'
       endif
     endif
   enddo
-  read(arg(1),'(a)') input_file
-  read(arg(2),'(a)') output_dir
-  read(arg(3),'(a)') kernel_names_comma_delimited
+  read(arg(1),'(a)') kernel_names_comma_delimited
+  read(arg(2),'(a)') input_file
+  read(arg(3),'(a)') output_dir
 
   ! checks if number of MPI process as specified
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print*,''
-      print*,'Error: run xcombine_sem with the same number of MPI processes '
-      print*,'       as specified when slices were created'
-      print*,''
-      print*,'for example: mpirun -np ',NPROCTOT_VAL,' ./xcombine_sem ...'
-      print*,''
+      print *,''
+      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
+      print *,'Actual number of MPI processes: ', sizeprocs
+      print *,''
     endif
     call synchronize_all()
-    stop 'Error total number of slices'
+    stop 'Error wrong number of MPI processes'
   endif
   call synchronize_all()
 
@@ -112,11 +111,17 @@ program combine_sem
  ! parse names from KERNEL_NAMES
   call parse_kernel_names(kernel_names_comma_delimited, kernel_names, nker)
 
-  ! currently, only names beginning with 'reg1' supported
+  ! currently, only 'reg1' arrays supported
   if (myrank == 0) then
     do iker = 1, nker
       kernel_name = kernel_names(iker)
-      if (kernel_name(1:4) /= 'reg1') stop 'Currently, only names beginning with reg1 supported.'
+      print *
+      print *, 'This programs primary use case is to sum kernels. It can be used though on'
+      print *, 'any "reg1" array, i.e. any array of dimension '
+      print *, '(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). The region suffix must be included'
+      print *, 'explicitly in all names supplied through the KERNEL_NAMES arugment.'
+      print *
+      if (kernel_name(1:5) /= 'reg1_') stop 'Bad kernel name.'
     enddo
   endif
   call synchronize_all()
@@ -142,9 +147,9 @@ program combine_sem
   endif
 
   if(myrank == 0) then
-    print*,'summing kernels in:'
-    print*,kernel_paths(1:npath)
-    print*
+    print *,'summing kernels in:'
+    print *,kernel_paths(1:npath)
+    print *
   endif
 
   call synchronize_all()
@@ -208,8 +213,8 @@ subroutine sum_kernel(kernel_name,kernel_paths,output_dir,npath)
     norm = sum( kernel * kernel )
     call sum_all_dp(norm,norm_sum)
     if (myrank == 0) then
-      print*,'  norm kernel: ',sqrt(norm_sum)
-      print*
+      print *,'  norm kernel: ',sqrt(norm_sum)
+      print *
     endif
 
     ! keep track of sum
