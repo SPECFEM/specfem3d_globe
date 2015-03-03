@@ -28,6 +28,7 @@
 
 postprocess_TARGETS = \
 	$E/xaddition_sem \
+	$E/xclip_sem \
 	$E/xcombine_sem \
 	$E/xdifference_sem \
 	$E/xinterpolate_model \
@@ -42,6 +43,7 @@ endif
 
 postprocess_OBJECTS = \
 	$(xaddition_sem_OBJECTS) \
+	$(xclip_sem_OBJECTS) \
 	$(xcombine_sem_OBJECTS) \
 	$(xdifference_sem_OBJECTS) \
 	$(xinterpolate_model_OBJECTS) \
@@ -52,6 +54,7 @@ postprocess_OBJECTS = \
 # These files come from the shared directory
 postprocess_SHARED_OBJECTS = \
 	$(xaddition_sem_SHARED_OBJECTS) \
+	$(xclip_sem_SHARED_OBJECTS) \
 	$(xcombine_sem_SHARED_OBJECTS) \
 	$(xdifference_sem_SHARED_OBJECTS) \
 	$(xinterpolate_model_SHARED_OBJECTS) \
@@ -121,6 +124,26 @@ xaddition_sem_SHARED_OBJECTS = \
 
 ${E}/xaddition_sem: $(xaddition_sem_OBJECTS) $(xaddition_sem_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+
+
+##
+## xclip_sem
+##
+xclip_sem_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
+	$O/parse_kernel_names.postprocess.o \
+	$O/clip_sem.postprocess.o \
+	$(EMPTY_MACRO)
+
+xclip_sem_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$O/parallel.sharedmpi.o \
+	$O/param_reader.cc.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$(EMPTY_MACRO)
+
+${E}/xclip_sem: $(xclip_sem_OBJECTS) $(xclip_sem_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
 
 ##
