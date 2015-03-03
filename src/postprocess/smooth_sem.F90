@@ -25,52 +25,51 @@
 !
 !=====================================================================
 
-! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
-! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+! XSMOOTH_SEM
+!
+! USAGE
+!   mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR
+!
+!
+! COMMAND LINE ARGUMENTS
+!   SIGMA_H                - horizontal smoothing radius
+!   SIGMA_V                - vertical smoothing radius
+!   KERNEL_NAME            - kernel name, e.g. reg1_alpha_kernel
+!   INPUT_DIR              - directory from which arrays are read
+!   OUTPUT_DIR             - directory to which smoothed array are written
+!
+! DESCRIPTION
+!   Reads kernels from INPUT_DIR, smooths by convolution with a Gaussian, and
+!   write the resulting smoothed kernels to OUTPUT_DIR.
+!
+!   Files written to OUTPUT_DIR have the suffix 'smooth' appended, 
+!   e.g. proc***alpha_kernel.bin becomes proc***alpha_kernel_smooth.bin
+!
+!   This program's primary use case is to smooth kernels. It can be used though
+!   on any scalar field of dimension (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). 
+!
+!   This is a parrallel program -- it must be invoked with mpirun or other
+!   appropriate utility.  Operations are performed in embarassingly-parallel
+!   fashion.
+!
+!   Because this routine uses constants.h and values_from_mesher_globe.h,
+!   you need to compile it for your specific case.
+!
+!   We switch between vectorized and non-vectorized version by using pre-processor 
+!   flag FORCE_VECTORIZATION and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK 
+!   defined in config.fh
+
 #include "config.fh"
 
-! smooth_sem_globe
-!
-! this program can be used for smoothing a (summed) event kernel,
-! where it smooths files with a given input kernel name:
-!
-! Usage:
-!   ./xsmooth_sem sigma_h(km) sigma_v(km) kernel_file_name scratch_file_dir topo_dir
-!   e.g.
-!   ./xsmooth_sem 160 10 bulk_c_kernel OUTPUT_SUM/ topo/
-!
-! where:
-!   sigma_h                - gaussian width for horizontal smoothing (in km)
-!   sigma_v                - gaussian width for vertical smoothing (in km)
-!   kernel_file_name       - takes file with this kernel name,
-!                                      e.g. "bulk_c_kernel"
-!   scratch_file_dir       - directory containing kernel files,
-!                                      e.g. proc***_reg1_bulk_c_kernel.bin
-!   topo_dir               - directory containing mesh topo files:
-!                                      e.g. proc***_solver_data.bin
-! outputs:
-!    puts the resulting, smoothed kernel files into the same directory as scratch_file_dir/
-!    with a file ending "proc***_kernel_smooth.bin"
-
 program smooth_sem_globe
-
-! this is the embarassingly-parallel program that smooths any specfem function (primarily the kernels)
-! that has the dimension of (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
-!
-! notice that it uses the constants_globe.h and precision_globe.h files
-! from the original SPECFEM3D_GLOBE package, and the
-! values_from_mesher_globe.h file from the output of the mesher (or create_header_file),
-! therefore, you need to compile it for your specific case
-!
-! NOTE:  smoothing can be different in radial & horizontal directions; mesh is in spherical geometry.
-!              algorithm uses vector components in radial/horizontal direction
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER,NGLLCUBE
   use postprocess_par,only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
     ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
-    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE
+    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES
+  use specfem_par,only: LOCAL_PATH
 
   use kdtree_search
 
@@ -123,12 +122,15 @@ program smooth_sem_globe
   integer :: i,j,k
 
   character(len=MAX_STRING_LEN) :: arg(5)
-  character(len=MAX_STRING_LEN) :: kernel_filename, topo_dir, scratch_file_dir
+  character(len=MAX_STRING_LEN) :: kernel_names_comma_delimited, kernel_names(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN) :: kernel_name, topo_dir, input_dir, output_dir
   character(len=MAX_STRING_LEN) :: prname_lp
   character(len=MAX_STRING_LEN) :: local_data_file
 
   character(len=MAX_STRING_LEN) ::  ks_file
   character(len=20) ::  reg_name
+
+  integer :: nker
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX) :: xigll, wxgll
@@ -192,7 +194,10 @@ program smooth_sem_globe
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  if (myrank == 0) print*,"smooth_sem:"
+  if (myrank == 0) then
+    print *, 'Running XSMOOTH_SEM'
+    print *
+  endif
   call synchronize_all()
 
   ! reads arguments
@@ -200,38 +205,40 @@ program smooth_sem_globe
     call get_command_argument(i,arg(i))
     if (i <= 5 .and. trim(arg(i)) == '') then
       if (myrank == 0) then
-        print *, 'Usage: '
-        print *, '        xsmooth_sem sigma_h sigma_v kernel_file_name scratch_file_dir/ topo_dir/'
-        print *
-        print *, 'with '
-        print *, ' sigma_h                - gaussian width for horizontal smoothing (in km)'
-        print *, ' sigma_v                - gaussian width for vertical smoothing (in km)'
-        print *, ' kernel_file_name       - takes file with this kernel name'
-        print *, ' scratch_file_dir       - directory containing kernel files'
-        print *, '                            e.g. proc***_reg1_bulk_c_kernel.bin'
-        print *, ' topo_dir               - directory containing mesh topo files:'
-        print *, '                            e.g. proc***_solver_data.bin'
-        print *
-        print *, ' possible kernel_file_names are: '
-        print *, '   "alpha_kernel", "beta_kernel", .., "rho_vp", "rho_vs", "kappastore", "mustore", etc.'
-        print *
-        print *, '   that are stored in the local directory scratch_file_dir/ '
-        print *, '   as real(kind=CUSTOM_REAL) filename(NGLLX,NGLLY,NGLLZ,NSPEC_AB) in filename.bin'
-        print *
-        print *, ' outputs smoothed files to scratch_file_dir/ '
+        print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
         print *
       endif
       call synchronize_all()
-      stop ' Reenter command line options'
+      stop ' Please check command line arguments'
     endif
   enddo
 
   ! gets arguments
   read(arg(1),*) sigma_h
   read(arg(2),*) sigma_v
-  kernel_filename = arg(3)
-  scratch_file_dir= arg(4)
-  topo_dir = arg(5)
+  kernel_names_comma_delimited = arg(3)
+  input_dir = arg(4)
+  output_dir = arg(5)
+
+  ! parse kernel names
+  call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
+  if ((myrank == 0) .and. (nker > 1)) then
+      if (myrank == 0) print *
+      if (myrank == 0) print *, 'Multiple kernel names supplied'
+      if (myrank == 0) print *
+      if (myrank == 0) print *, 'The machinery for reading multiple names from the command line'
+      if (myrank == 0) print *, 'is in place, but the smoothing routines themselves have not yet been'
+      if (myrank == 0) print *, 'modified to work on multiple arrays.'
+      if (myrank == 0) print *
+      if (myrank == 0) print *, 'Smoothing only first name in list: ', kernel_names(1)
+      if (myrank == 0) print *
+  endif
+  call synchronize_all()
+  kernel_name = trim(kernel_names(1))
+
+  ! read parameter file
+  call read_parameter_file()
+  topo_dir = trim(LOCAL_PATH)//'/'
 
   ! checks if basin code or global code: global code uses nchunks /= 0
   if (NCHUNKS == 0) stop 'Error nchunks'
@@ -264,9 +271,9 @@ program smooth_sem_globe
     ! scalelength: approximately S ~ sigma * sqrt(8.0) for a gaussian smoothing
     print*,"  smoothing scalelengths horizontal, vertical (km): ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
     print*
-    print*,"  data name      : ",trim(kernel_filename)
-    print*,"  input file dir : ",trim(scratch_file_dir)
-    print*,"  topo dir       : ",trim(topo_dir)
+    print*,"  data name      : ",trim(kernel_name)
+    print*,"  input dir      : ",trim(input_dir)
+    print*,"  output dir     : ",trim(output_dir)
     print*
     print*,"number of elements per slice: ",NSPEC_AB
     print*
@@ -581,11 +588,11 @@ program smooth_sem_globe
     endif
 
     ! user output
-    if (myrank == 0) print*,'  reading data file:',iproc,trim(kernel_filename)
+    if (myrank == 0) print*,'  reading data file:',iproc,trim(kernel_name)
 
     ! data file
     write(local_data_file,'(a,i6.6,a)') &
-      trim(scratch_file_dir)//'/proc',iproc,trim(reg_name)//trim(kernel_filename)//'.bin'
+      trim(input_dir)//'/proc',iproc,trim(reg_name)//trim(kernel_name)//'.bin'
 
     open(IIN,file=trim(local_data_file),status='old',form='unformatted',iostat=ier)
     if (ier /= 0) then
@@ -704,7 +711,7 @@ program smooth_sem_globe
               i = kdtree_search_index(ielem)
               ispec_flag(i) = ielem
             enddo
-            write(filename,'(a,i4.4,a,i6.6)') trim(scratch_file_dir)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
+            write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
             call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
                                        ibool,ispec_flag,filename)
             print*,'file written: ',trim(filename)//'.vtk'
@@ -812,7 +819,7 @@ program smooth_sem_globe
         ! debug element (tmp_ispec_dbg)
         if (ispec == tmp_ispec_dbg) then
           ! outputs gaussian weighting function
-          write(filename,'(a,i4.4,a,i6.6)') trim(scratch_file_dir)//'/search_elem',tmp_ispec_dbg,'_gaussian_proc',iproc
+          write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_gaussian_proc',iproc
           call write_VTK_data_elem_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
           print*,'file written: ',trim(filename)//'.vtk'
         endif
@@ -899,8 +906,8 @@ program smooth_sem_globe
 
   ! file output
   ! smoothed kernel file name
-  write(ks_file,'(a,i6.6,a)') trim(scratch_file_dir)//'/proc',myrank, &
-                              trim(reg_name)//trim(kernel_filename)//'_smooth.bin'
+  write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank, &
+                              trim(reg_name)//trim(kernel_name)//'_smooth.bin'
 
   open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',iostat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
