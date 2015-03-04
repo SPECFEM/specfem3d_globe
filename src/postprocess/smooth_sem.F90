@@ -45,8 +45,9 @@
 !   Files written to OUTPUT_DIR have the suffix 'smooth' appended,
 !   e.g. proc***alpha_kernel.bin becomes proc***alpha_kernel_smooth.bin
 !
-!   This program's primary use case is to smooth kernels. It can be used though
-!   on any scalar field of dimension (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE).
+!   This program's primary use case is to sum kernels. It can be used though on
+!   any "reg1" array, i.e. any array of dimension
+!   (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE).
 !
 !   This is a parrallel program -- it must be invoked with mpirun or other
 !   appropriate utility.  Operations are performed in embarassingly-parallel

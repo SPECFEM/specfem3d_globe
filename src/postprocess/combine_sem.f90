@@ -115,13 +115,15 @@ program combine_sem
   if (myrank == 0) then
     do iker = 1, nker
       kernel_name = kernel_names(iker)
-      print *
-      print *, 'This programs primary use case is to sum kernels. It can be used though on'
-      print *, 'any "reg1" array, i.e. any array of dimension '
-      print *, '(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). The region suffix must be included'
-      print *, 'explicitly in all names supplied through the KERNEL_NAMES arugment.'
-      print *
-      if (kernel_name(1:5) /= 'reg1_') stop 'Bad kernel name.'
+      if (kernel_name(1:5) /= 'reg1_') then
+          print *
+          print *, 'This programs primary use case is to sum kernels. It can be used though on'
+          print *, 'any "reg1" array, i.e. any array of dimension '
+          print *, '(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). The region suffix must be included'
+          print *, 'explicitly in all names supplied through the KERNEL_NAMES arugment.'
+          print *
+          stop 'Bad kernel name.'
+      endif
     enddo
   endif
   call synchronize_all()
