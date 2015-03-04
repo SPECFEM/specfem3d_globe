@@ -253,18 +253,17 @@ S := ${S_TOP}/src/postprocess
 $(postprocess_OBJECTS): S := ${S_TOP}/src/postprocess
 
 ###
-### Model dependencies
+### module dependencies
 ###
-$O/postprocess_par.postprocess_module.o: $O/shared_par.shared_module.o
+$O/postprocess_par.postprocess_module.o: $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
 
 
 ####
 #### rule for each .o file below
 ####
 
-$O/%.postprocess_module.o: $S/%.f90 ${SETUP}/constants_tomography.h ${OUTPUT}/values_from_mesher.h $O/shared_par.shared_module.o
+$O/%.postprocess_module.o: $S/%.f90 ${SETUP}/constants_tomography.h ${OUTPUT}/values_from_mesher.h 
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
-
 
 $O/%.postprocess.o: $S/%.f90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<

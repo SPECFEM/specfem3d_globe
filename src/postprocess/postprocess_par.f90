@@ -28,6 +28,8 @@
 
 module postprocess_par
 
+  use specfem_par,only: LOCAL_PATH
+
   use constants,only: CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
