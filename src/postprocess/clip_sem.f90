@@ -50,7 +50,7 @@
 !   e.g. proc***alphav_kernel.bin becomes proc***alphav_kernel_clip.bin
 !
 !   This program's primary use case is to clip kernels. It can be used though on
-!   any "reg1" array, i.e. any array of dimension 
+!   any "reg1" array, i.e. any array of dimension
 !   (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). The region suffix must be included
 !   explicitly in all names supplied through the KERNEL_NAMES arugment.
 !
