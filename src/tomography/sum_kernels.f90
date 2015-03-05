@@ -51,7 +51,7 @@ program sum_kernels_globe
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_list(MAX_NUM_NODES), sline, kernel_name
+  character(len=MAX_STRING_LEN) :: kernel_list(MAX_KERNEL_PATHS), sline, kernel_name
   integer :: nker
   integer :: ier
 
@@ -78,7 +78,7 @@ program sum_kernels_globe
      read(IIN,'(a)',iostat=ier) sline
      if (ier /= 0) exit
      nker = nker+1
-     if (nker > MAX_NUM_NODES) stop 'Error number of kernels exceeds MAX_NUM_NODES'
+     if (nker > MAX_KERNEL_PATHS) stop 'Error number of kernels exceeds MAX_KERNEL_PATHS'
      kernel_list(nker) = sline
   enddo
   close(IIN)
@@ -177,7 +177,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_name,kernel_list(MAX_NUM_NODES)
+  character(len=MAX_STRING_LEN) :: kernel_name,kernel_list(MAX_KERNEL_PATHS)
   integer :: nker
 
   ! local parameters

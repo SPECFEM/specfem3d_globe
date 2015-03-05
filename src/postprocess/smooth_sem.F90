@@ -34,7 +34,7 @@
 ! COMMAND LINE ARGUMENTS
 !   SIGMA_H                - horizontal smoothing radius
 !   SIGMA_V                - vertical smoothing radius
-!   KERNEL_NAME            - kernel name, e.g. reg1_alpha_kernel
+!   KERNEL_NAME            - kernel name, e.g. alpha_kernel
 !   INPUT_DIR              - directory from which arrays are read
 !   OUTPUT_DIR             - directory to which smoothed array are written
 !
@@ -45,7 +45,7 @@
 !   Files written to OUTPUT_DIR have the suffix 'smooth' appended,
 !   e.g. proc***alpha_kernel.bin becomes proc***alpha_kernel_smooth.bin
 !
-!   This program's primary use case is to sum kernels. It can be used though on
+!   This program's primary use case is to smooth kernels. It can be used though on
 !   any "reg1" array, i.e. any array of dimension
 !   (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE).
 !
@@ -89,6 +89,9 @@ program smooth_sem_globe
   integer, parameter :: NSLICES = 3
   integer ,parameter :: NSLICES2 = NSLICES * NSLICES
 
+  integer, parameter :: NARGS = 5
+  character(len=*), parameter :: reg_name = '_reg1_'
+
   integer :: islice(NSLICES2), islice0(NSLICES2)
 
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_AB) :: ibool
@@ -129,7 +132,6 @@ program smooth_sem_globe
   character(len=MAX_STRING_LEN) :: local_data_file
 
   character(len=MAX_STRING_LEN) ::  ks_file
-  character(len=20) ::  reg_name
 
   integer :: nker
 
@@ -195,58 +197,67 @@ program smooth_sem_globe
   call world_size(sizeprocs)
   call world_rank(myrank)
 
+  ! check command line arguments
+  if (command_argument_count() /= NARGS) then
+    if (myrank == 0) then
+        print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
+      stop ' Please check command line arguments'
+    endif
+  endif
+  call synchronize_all()
+
+  ! check number of MPI processes
+  if (sizeprocs /= NPROCTOT_VAL) then
+    if (myrank == 0) then
+      print *,''
+      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
+      print *,'Actual number of MPI processes: ', sizeprocs
+      print *,''
+    endif
+    call synchronize_all()
+    stop 'Error wrong number of MPI processes'
+  endif
+  call synchronize_all()
+
   if (myrank == 0) then
     print *, 'Running XSMOOTH_SEM'
     print *
   endif
   call synchronize_all()
 
-  ! reads arguments
-  do i = 1, 5
+  ! parse command line arguments
+  do i = 1, NARGS
     call get_command_argument(i,arg(i))
     if (i <= 5 .and. trim(arg(i)) == '') then
-      if (myrank == 0) then
-        print *, 'Usage: mpirun -np NPROC bin/xsmooth_sem SIGMA_H SIGMA_V KERNEL_NAME INPUT_DIR OUPUT_DIR'
-        print *
-      endif
-      call synchronize_all()
       stop ' Please check command line arguments'
     endif
   enddo
-
-  ! gets arguments
   read(arg(1),*) sigma_h
   read(arg(2),*) sigma_v
   kernel_names_comma_delimited = arg(3)
   input_dir = arg(4)
   output_dir = arg(5)
 
-  ! parse kernel names
   call parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
-  if ((myrank == 0) .and. (nker > 1)) then
+  kernel_name = trim(kernel_names(1))
+  if (nker > 1) then
+    if (myrank == 0) then
+      ! The machinery for reading multiple names from the command line is in
+      ! place, 
+      ! but the smoothing routines themselves have not yet been modified to work
+      !  on multiple arrays.
+      if (myrank == 0) print *, 'Smoothing only first name in list: ', trim(kernel_name)
       if (myrank == 0) print *
-      if (myrank == 0) print *, 'Multiple kernel names supplied'
-      if (myrank == 0) print *
-      if (myrank == 0) print *, 'The machinery for reading multiple names from the command line'
-      if (myrank == 0) print *, 'is in place, but the smoothing routines themselves have not yet been'
-      if (myrank == 0) print *, 'modified to work on multiple arrays.'
-      if (myrank == 0) print *
-      if (myrank == 0) print *, 'Smoothing only first name in list: ', kernel_names(1)
-      if (myrank == 0) print *
+    endif
   endif
   call synchronize_all()
-  kernel_name = trim(kernel_names(1))
 
-  ! read parameter file
   call read_parameter_file()
   topo_dir = trim(LOCAL_PATH)//'/'
 
   ! checks if basin code or global code: global code uses nchunks /= 0
   if (NCHUNKS == 0) stop 'Error nchunks'
   if (sizeprocs /= NPROCTOT_VAL) call exit_mpi(myrank,'Error total number of slices')
-
-  ! crust/mantle region smoothing only
-  reg_name='_reg1_'
 
   ! estimates mesh element size
   ! note: this estimation is for global meshes valid only

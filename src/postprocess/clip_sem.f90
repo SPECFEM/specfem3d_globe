@@ -44,7 +44,7 @@
 !   thresholds, and writes the resulting clipped kernels to OUTPUT_DIR.
 !
 !   KERNEL_NAMES is comma-delimited list of material names,
-!   e.g. 'reg1_alphav_kernel,reg1_alphah_kernel'
+!   e.g. 'alphav_kernel,alphah_kernel'
 !
 !   Files written to OUTPUT_DIR have the suffix 'clip' appended,
 !   e.g. proc***alphav_kernel.bin becomes proc***alphav_kernel_clip.bin
@@ -68,6 +68,8 @@ program clip_sem_globe
 
   integer, parameter :: NARGS = 5
 
+  character(len=*) ,parameter :: reg = '_reg1_'
+
   character(len=MAX_STRING_LEN) :: input_dir,output_dir,kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: filename, kernel_name, kernel_names(MAX_KERNEL_NAMES)
   character(len=MAX_STRING_LEN) :: arg(NARGS)
@@ -81,44 +83,43 @@ program clip_sem_globe
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  ! parse command line arguments
-  do i = 1, NARGS
-    call get_command_argument(i,arg(i), status=ier)
-    if (i <= 1 .and. trim(arg(i)) == '') then
-      if (myrank == 0) then
-      print *, 'USAGE: mpirun -np NPROC bin/xclip_sem MIN_VAL MAX_VAL KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
-      print *, ''
-      stop 'Please check command line arguments'
-      endif
-    endif
-  enddo
-
-  read(arg(1),*) min_val
-  read(arg(2),*) max_val
-  read(arg(3),'(a)') kernel_names_comma_delimited
-  read(arg(4),'(a)') input_dir
-  read(arg(5),'(a)') output_dir
-
-  ! checks if number of MPI process as specified
-  if (sizeprocs /= NPROCTOT_VAL) then
+  ! check command line arguments
+  if (command_argument_count() /= NARGS) then
     if (myrank == 0) then
-      print*,''
-      print*,'Expected number of MPI processes: ', NPROCTOT_VAL
-      print*,'Actual number of MPI processes: ', sizeprocs
-      print*,''
+      print *, 'USAGE: mpirun -np NPROC bin/xclip_sem MIN_VAL MAX_VAL KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
+      stop ' Please check command line arguments'
     endif
-    call synchronize_all()
-    stop 'Error total number of slices'
   endif
   call synchronize_all()
 
+  ! check number of MPI processes
+  if (sizeprocs /= NPROCTOT_VAL) then
+    if (myrank == 0) then
+      print *,''
+      print *,'Expected number of MPI processes: ', NPROCTOT_VAL
+      print *,'Actual number of MPI processes: ', sizeprocs
+      print *,''
+    endif
+    call synchronize_all()
+    stop 'Error wrong number of MPI processes'
+  endif
+  call synchronize_all()
 
-  ! start execution
   if(myrank==0) then
     write(*,*) 'Running XCLIP_SEM'
     write(*,*)
   endif
   call synchronize_all()
+
+  ! parse command line arguments
+  do i = 1, NARGS
+    call get_command_argument(i,arg(i), status=ier)
+  enddo
+  read(arg(1),*) min_val
+  read(arg(2),*) max_val
+  read(arg(3),'(a)') kernel_names_comma_delimited
+  read(arg(4),'(a)') input_dir
+  read(arg(5),'(a)') output_dir
 
   ! parse kernel names
   call parse_kernel_names(kernel_names_comma_delimited, kernel_names, nker)
@@ -130,7 +131,7 @@ program clip_sem_globe
   do iker=1,nker
 
       kernel_name = trim(kernel_names(iker))
-      write(filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,'_'//trim(kernel_name)//'.bin'
+      write(filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,reg//trim(kernel_name)//'.bin'
 
       ! read array
       open(IIN,file=trim(filename),status='old',form='unformatted',action='read',iostat=ier)
@@ -157,7 +158,7 @@ program clip_sem_globe
 
       ! write clipped array
       kernel_name = trim(kernel_names(iker))//'_clip'
-      write(filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,'_'//trim(kernel_name)//'.bin'
+      write(filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,reg//trim(kernel_name)//'.bin'
 
       open(IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
       if (ier /= 0) then

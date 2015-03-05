@@ -40,7 +40,7 @@ module postprocess_par
   include "OUTPUT_FILES/values_from_mesher.h"
 
   ! tomography parameter settings
-  include "constants_tomography.h"
+  !include "constants_tomography.h"
 
   integer,parameter :: MAX_KERNEL_NAMES = 255
   integer,parameter :: MAX_KERNEL_PATHS = 65535

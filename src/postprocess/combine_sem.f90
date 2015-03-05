@@ -45,12 +45,11 @@
 !   kernel direcotires, one directoy per line.
 !
 !   KERNEL_NAMES is comma-delimited list of kernel names,
-!   e.g.'reg1_alpha_kernel,reg1_beta_kernel,reg1_rho_kernel'.
+!   e.g.'alpha_kernel,beta_kernel,rho_kernel'.
 !
 !   This program's primary use case is to sum kernels. It can be used though on
 !   any "reg1" array, i.e. any array of dimension
-!   (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). The region suffix must be included
-!   explicitly in all names supplied through the KERNEL_NAMES arugment.
+!   (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE).
 !
 !   This is a parrallel program -- it must be invoked with mpirun or other
 !   appropriate utility.  Operations are performed in embarassingly-parallel
@@ -58,15 +57,17 @@
 
 
 
-program combine_sem
+program combine_sem_globe
 
   use postprocess_par
 
   implicit none
 
+  integer, parameter :: NARGS = 3
+
   character(len=MAX_STRING_LEN) :: kernel_paths(MAX_KERNEL_PATHS),kernel_names(MAX_KERNEL_NAMES)
   character(len=MAX_STRING_LEN) :: sline,output_dir,input_file,kernel_names_comma_delimited, kernel_name
-  character(len=MAX_STRING_LEN) :: arg(3)
+  character(len=MAX_STRING_LEN) :: arg(NARGS)
   integer :: i,ier,iker,npath,nker
 
 
@@ -74,21 +75,16 @@ program combine_sem
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  ! parse command line arguments
-  do i = 1, 3
-    call get_command_argument(i,arg(i), status=ier)
-    if (i <= 1 .and. trim(arg(i)) == '') then
-      if (myrank == 0) then
-        print *, 'USAGE: mpirun -np NPROC bin/xclip_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
-        stop ' Please check command line arguments'
-      endif
+  ! check command line arguments
+  if (command_argument_count() /= NARGS) then
+    if (myrank == 0) then
+      print *, 'USAGE: mpirun -np NPROC bin/xcombine_sem KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
+      stop ' Please check command line arguments'
     endif
-  enddo
-  read(arg(1),'(a)') kernel_names_comma_delimited
-  read(arg(2),'(a)') input_file
-  read(arg(3),'(a)') output_dir
+  endif
+  call synchronize_all()
 
-  ! checks if number of MPI process as specified
+  ! check number of MPI processes
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
       print *,''
@@ -101,32 +97,21 @@ program combine_sem
   endif
   call synchronize_all()
 
-
-  ! start execution
   if(myrank==0) then
     write(*,*) 'Running XCOMBINE_SEM'
     write(*,*)
   endif
 
+  ! parse command line arguments
+  do i = 1, NARGS
+    call get_command_argument(i,arg(i), status=ier)
+  enddo
+  read(arg(1),'(a)') kernel_names_comma_delimited
+  read(arg(2),'(a)') input_file
+  read(arg(3),'(a)') output_dir
+
  ! parse names from KERNEL_NAMES
   call parse_kernel_names(kernel_names_comma_delimited, kernel_names, nker)
-
-  ! currently, only 'reg1' arrays supported
-  if (myrank == 0) then
-    do iker = 1, nker
-      kernel_name = kernel_names(iker)
-      if (kernel_name(1:5) /= 'reg1_') then
-          print *
-          print *, 'This programs primary use case is to sum kernels. It can be used though on'
-          print *, 'any "reg1" array, i.e. any array of dimension '
-          print *, '(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE). The region suffix must be included'
-          print *, 'explicitly in all names supplied through the KERNEL_NAMES arugment.'
-          print *
-          stop 'Bad kernel name.'
-      endif
-    enddo
-  endif
-  call synchronize_all()
 
   ! parse paths from INPUT_FILE
   npath=0
@@ -167,7 +152,7 @@ program combine_sem
   ! stop all the processes, and exit
   call finalize_mpi()
 
-end program combine_sem
+end program combine_sem_globe
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -178,6 +163,8 @@ subroutine sum_kernel(kernel_name,kernel_paths,output_dir,npath)
   use postprocess_par
 
   implicit none
+
+  character(len=*),parameter :: reg = '_reg1_'
 
   character(len=MAX_STRING_LEN) :: output_dir,kernel_name,kernel_paths(MAX_KERNEL_PATHS)
   integer :: ipath,npath
@@ -203,7 +190,7 @@ subroutine sum_kernel(kernel_name,kernel_paths,output_dir,npath)
 
     ! read kernel
     kernel = 0._CUSTOM_REAL
-    write(k_file,'(a,i6.6,a)') trim(kernel_paths(ipath))//'/proc',myrank,'_'//trim(kernel_name)//'.bin'
+    write(k_file,'(a,i6.6,a)') trim(kernel_paths(ipath))//'/proc',myrank,reg//trim(kernel_name)//'.bin'
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
      write(*,*) '  kernel not found: ',trim(k_file)
@@ -226,7 +213,7 @@ subroutine sum_kernel(kernel_name,kernel_paths,output_dir,npath)
 
   ! write sum
   if(myrank==0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
-  write(k_file,'(a,i6.6,a)') trim(output_dir)//'/'//'proc',myrank,'_'//trim(kernel_name)//'.bin'
+  write(k_file,'(a,i6.6,a)') trim(output_dir)//'/'//'proc',myrank,reg//trim(kernel_name)//'.bin'
 
   open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ier)
   if (ier /= 0) then
