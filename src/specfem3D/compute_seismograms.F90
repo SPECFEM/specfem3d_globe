@@ -79,7 +79,7 @@
     DO_LOOP_IJK
 
           iglob = ibool_crust_mantle(INDEX_IJK,ispec)
-          hlagrange = hlagrange_store(INDEX_IJK,nrec_local) 
+          hlagrange = hlagrange_store(INDEX_IJK,nrec_local)
 
           uxd = uxd + dble(displ(1,iglob))*hlagrange
           uyd = uyd + dble(displ(2,iglob))*hlagrange
@@ -221,7 +221,7 @@
 
           iglob = ibool_crust_mantle(INDEX_IJK,ispec)
 
-          hlagrange = hlagrange_store(INDEX_IJK,nrec_local) 
+          hlagrange = hlagrange_store(INDEX_IJK,nrec_local)
 
           uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
           uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
