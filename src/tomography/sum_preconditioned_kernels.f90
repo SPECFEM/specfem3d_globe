@@ -25,33 +25,25 @@
 !
 !=====================================================================
 
-! xsmooth_sem
+! sum_preconditioned_kernels_globe
 !
-! USAGE
-!   mpirun -np NPROC ./xsmooth_sem SIGMA_H SIGMA_V INPUT_DIR OUPUT_DIR
-!   MATERIAL_NAME
+! this program can be used for event kernel summation,
+! where it sums up transverse isotropic kernel files:
 !
-!  e.g.,
-!   mpirun -np 8 ./xsmooth_sem 100 20 DATABASES_MPI/ OUTPUT_DIR/ alpha_kernel
+!   - proc***_reg1_bulk_c_kernel.bin
+!   - proc***_reg1_bulk_betav_kernel.bin
+!   - proc***_reg1_bulk_betah_kernel.bin
+!   - proc***_reg1_eta_kernel.bin
 !
+! input file: kernels_list.txt
+!   lists all event kernel directories which should be summed together
 !
-! COMMAND LINE ARGUMENTS
-!   SIGMA_H                - horizontal smoothing radius
-!   SIGMA_V                - vertical smoothing radius
-!   INPUT_DIR              - directory from which arrays are read
-!   OUTPUT_DIR             - directory to which smoothed array are written
-!   MATERIAL_NAME          - material parmater name, e.g. alpha_kernel
+! input directory:  INPUT_KERNELS/
+!    contains links to all event kernel directories (listed in
+!    "kernels_list.txt")
 !
-! DESCRIPTION
-!   Smooths arrays defined on GLL points by convolution with a Gaussian. Writes
-!   the resulting smoothed arrays to OUTPUT_DIR, with the suffix '_smooth'
-!   appended to each filename, e.g. proc***alpha_kernel.bin becomes
-!   proc***alpha_kernel_smooth.bin
-!
-!   This program works on any  scalar field of appropriate dimension,
-!   i.e. (NGLLX,NGLLY,NGLLZ,NSPEC). Its primary use case is to smooth kernels.
-!
-!   This is an embarassingly-parallel program.
+! output directory: OUTPUT_SUM/
+!    the resulting kernel files will be stored in this directory
 
 
 program sum_preconditioned_kernels_globe
