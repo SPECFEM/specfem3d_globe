@@ -168,6 +168,7 @@ module specfem_par
 
   ! Lagrange interpolators at receivers
   double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
+  double precision, dimension(:,:,:,:), allocatable :: hlagrange_store
 
   ! ADJOINT sources
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: adj_sourcearrays
