@@ -332,7 +332,7 @@
             beta_kl_crust_mantle_reg(ipoint) = beta_kl_crust_mantle_reg(ipoint) + &
               2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl * hlagrange
             alpha_kl_crust_mantle_reg(ipoint) = alpha_kl_crust_mantle_reg(ipoint) + &
-              2._CUSTOM_REAL * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl * hlagrange
+              2._CUSTOM_REAL * (1._CUSTOM_REAL +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl * hlagrange
 
             ! for a parameterization: (rho,bulk, beta)
             ! where bulk wave speed is c = sqrt( kappa / rho)

@@ -632,11 +632,11 @@
 
           rho_kl = -rhol * rho_kl_inner_core(i,j,k,ispec)
           alpha_kl = -kappal * alpha_kl_inner_core(i,j,k,ispec)
-          beta_kl =  - 2 * mul * beta_kl_inner_core(i,j,k,ispec)
+          beta_kl =  - 2._CUSTOM_REAL * mul * beta_kl_inner_core(i,j,k,ispec)
 
           rho_kl_inner_core(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
-          beta_kl_inner_core(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
-          alpha_kl_inner_core(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
+          beta_kl_inner_core(i,j,k,ispec) = 2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+          alpha_kl_inner_core(i,j,k,ispec) = 2._CUSTOM_REAL * (1._CUSTOM_REAL +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
         enddo
       enddo
     enddo
