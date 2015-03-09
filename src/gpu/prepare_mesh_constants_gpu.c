@@ -3114,7 +3114,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   // releases previous contexts
   gpuReset();
-  
+
   // mesh pointer - not needed anymore
   free (mp);
 }
