@@ -164,7 +164,7 @@ please check if driver and runtime libraries work together\n\n");
     exit_on_error("CUDA runtime error: there is no device supporting CUDA\n");
   } else {
    printf("\nprocess %d found number of CUDA devices = %d\n",myrank,device_count);
-   fflush(stdout); 
+   fflush(stdout);
   }
 
   // synchronizes mpi processes
