@@ -873,8 +873,8 @@
              hetar_store(nrec_local,NGLLY), &
              hgammar_store(nrec_local,NGLLZ),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver interpolators')
-    allocate(hlagrange_store(NGLLX, NGLLZ, NGLLZ, nrec_local), stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver interpolators')
+    allocate(hlagrange_store(NGLLX, NGLLY, NGLLZ, nrec_local), stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array hlagrange_store')
 
     ! defines and stores Lagrange interpolators at all the receivers
     if (SIMULATION_TYPE == 2) then
@@ -990,6 +990,9 @@
     do irec = 1,nrec
       if (myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
+        ! checks counter
+        if (irec_local > nrec_local) call exit_MPI(myrank,'Error receiver interpolators: irec_local exceeds bounds')
+        ! stores local to global receiver ids
         number_receiver_global(irec_local) = irec
       endif
     enddo
@@ -997,10 +1000,15 @@
     do isource = 1,NSOURCES
       if (myrank == islice_selected_source(isource)) then
         irec_local = irec_local + 1
+        ! checks counter
+        if (irec_local > nrec_local) call exit_MPI(myrank,'Error adjoint source interpolators: irec_local exceeds bounds')
+        ! stores local to global receiver/source ids
         number_receiver_global(irec_local) = isource
       endif
     enddo
   endif
+  ! checks if all local receivers have been found
+  if (irec_local /= nrec_local) call exit_MPI(myrank,'Error number of local receivers do not match')
 
   ! define and store Lagrange interpolators at all the receivers
   do irec_local = 1,nrec_local
@@ -1026,13 +1034,10 @@
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-
-          hlagrange_store(i,j,k,nrec_local) = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
-
+          hlagrange_store(i,j,k,irec_local) = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
         enddo
       enddo
     enddo
-
 
     ! stores derivatives
     if (SIMULATION_TYPE == 2) then

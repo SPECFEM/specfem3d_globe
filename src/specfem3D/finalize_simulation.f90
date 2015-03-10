@@ -247,6 +247,7 @@
     deallocate(hxir_store, &
                hetar_store, &
                hgammar_store)
+    deallocate(hlagrange_store)
     if (SIMULATION_TYPE == 2) then
       deallocate(moment_der,stshift_der)
     endif

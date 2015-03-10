@@ -148,7 +148,7 @@ LOCAL_PATH                      = ./DATABASES_MPI
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 500
+NTSTEP_BETWEEN_OUTPUT_INFO      = 200
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000

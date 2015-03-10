@@ -32,16 +32,11 @@
   subroutine compute_seismograms(nglob,displ,seismo_current,seismograms)
 
   use constants_solver
-  !use constants_solver,only: &
-    !CUSTOM_REAL,SIZE_REAL,ZERO,NGLLX,NGLLY,NGLLZ, &
-    !NDIM
 
   use specfem_par,only: &
     NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    nrec_local, &
-    nu,hxir_store,hetar_store,hgammar_store, &
-    ispec_selected_rec,number_receiver_global, &
-    scale_displ, hlagrange_store
+    nrec_local,nu,ispec_selected_rec,number_receiver_global, &
+    scale_displ,hlagrange_store
 
   use specfem_par_crustmantle,only: ibool_crust_mantle
 
@@ -78,15 +73,17 @@
 
     DO_LOOP_IJK
 
-          iglob = ibool_crust_mantle(INDEX_IJK,ispec)
-          hlagrange = hlagrange_store(INDEX_IJK,nrec_local)
+      iglob = ibool_crust_mantle(INDEX_IJK,ispec)
 
-          uxd = uxd + dble(displ(1,iglob))*hlagrange
-          uyd = uyd + dble(displ(2,iglob))*hlagrange
-          uzd = uzd + dble(displ(3,iglob))*hlagrange
+      hlagrange = hlagrange_store(INDEX_IJK,irec_local)
+
+      uxd = uxd + dble(displ(1,iglob))*hlagrange
+      uyd = uyd + dble(displ(2,iglob))*hlagrange
+      uzd = uzd + dble(displ(3,iglob))*hlagrange
+
     ENDDO_LOOP_IJK
-    ! store North, East and Vertical components
 
+    ! store North, East and Vertical components
     ! distinguish between single and double precision for reals
     seismograms(:,irec_local,seismo_current) = real(scale_displ*(nu(:,1,irec)*uxd + &
                                                                  nu(:,2,irec)*uyd + &
@@ -219,23 +216,23 @@
     ! perform the general interpolation using Lagrange polynomials
     DO_LOOP_IJK
 
-          iglob = ibool_crust_mantle(INDEX_IJK,ispec)
+      iglob = ibool_crust_mantle(INDEX_IJK,ispec)
 
-          hlagrange = hlagrange_store(INDEX_IJK,nrec_local)
+      hlagrange = hlagrange_store(INDEX_IJK,irec_local)
 
-          uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
-          uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
-          uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
+      uxd = uxd + dble(displ_crust_mantle(1,iglob))*hlagrange
+      uyd = uyd + dble(displ_crust_mantle(2,iglob))*hlagrange
+      uzd = uzd + dble(displ_crust_mantle(3,iglob))*hlagrange
 
-          eps_trace = eps_trace + dble(eps_trace_over_3_loc_cm(INDEX_IJK))*hlagrange
+      eps_trace = eps_trace + dble(eps_trace_over_3_loc_cm(INDEX_IJK))*hlagrange
 
-          dxx = dxx + dble(epsilondev_loc_crust_mantle(INDEX_IJK,1))*hlagrange
-          dyy = dyy + dble(epsilondev_loc_crust_mantle(INDEX_IJK,2))*hlagrange
-          dxy = dxy + dble(epsilondev_loc_crust_mantle(INDEX_IJK,3))*hlagrange
-          dxz = dxz + dble(epsilondev_loc_crust_mantle(INDEX_IJK,4))*hlagrange
-          dyz = dyz + dble(epsilondev_loc_crust_mantle(INDEX_IJK,5))*hlagrange
+      dxx = dxx + dble(epsilondev_loc_crust_mantle(INDEX_IJK,1))*hlagrange
+      dyy = dyy + dble(epsilondev_loc_crust_mantle(INDEX_IJK,2))*hlagrange
+      dxy = dxy + dble(epsilondev_loc_crust_mantle(INDEX_IJK,3))*hlagrange
+      dxz = dxz + dble(epsilondev_loc_crust_mantle(INDEX_IJK,4))*hlagrange
+      dyz = dyz + dble(epsilondev_loc_crust_mantle(INDEX_IJK,5))*hlagrange
 
-          displ_s(:,INDEX_IJK) = displ_crust_mantle(:,iglob)
+      displ_s(:,INDEX_IJK) = displ_crust_mantle(:,iglob)
 
     ENDDO_LOOP_IJK
 
