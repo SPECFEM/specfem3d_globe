@@ -222,10 +222,3 @@ $O/%.tomo.o: $S/%.f90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o
 $O/%.tomo.o: $S/%.F90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
-
-$O/%.tomoadios.o: $S/%.F90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)ADIOS_INPUT
-
-$O/%.tomoadios.o: $S/%.f90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
-

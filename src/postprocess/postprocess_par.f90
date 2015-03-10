@@ -39,10 +39,10 @@ module postprocess_par
   ! array dimensions for static compilation
   include "OUTPUT_FILES/values_from_mesher.h"
 
-  ! tomography parameter settings
-  !include "constants_tomography.h"
-
+  ! maximum number of kernel names (comma-separated e.g. vsv,vsh,vpv,vph,eta,rho -> 6 kernel names)
   integer,parameter :: MAX_KERNEL_NAMES = 255
+
+  ! maximum number of kernel directory paths (e.g. for summing kernels from different events)
   integer,parameter :: MAX_KERNEL_PATHS = 65535
 
   ! mesh size

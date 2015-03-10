@@ -42,7 +42,7 @@
 !   INPUT_FILE. Writes the resulting sum to OUTPUT_DIR.
 !
 !   INPUT_FILE is a text file containing a list of absolute or relative paths to
-!   kernel direcotires, one directoy per line.
+!   kernel directories, one directory per line.
 !
 !   KERNEL_NAMES is comma-delimited list of kernel names,
 !   e.g.'alpha_kernel,beta_kernel,rho_kernel'.
@@ -51,8 +51,8 @@
 !   any "reg1" array, i.e. any array of dimension
 !   (NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE).
 !
-!   This is a parrallel program -- it must be invoked with mpirun or other
-!   appropriate utility.  Operations are performed in embarassingly-parallel
+!   This is a parallel program -- it must be invoked with mpirun or other
+!   appropriate utility.  Operations are performed in embarrassingly-parallel
 !   fashion.
 
 

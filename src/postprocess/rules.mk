@@ -87,7 +87,7 @@ postprocess: $(postprocess_TARGETS)
 ## xconvert_model_file_adios
 ##
 xconvert_model_file_adios_OBJECTS = \
-	$O/convert_model_file_adios.tomoadios.o \
+	$O/convert_model_file_adios.postprocess_adios.o \
 	$(EMPTY_MACRO)
 
 xconvert_model_file_adios_SHARED_OBJECTS = \
@@ -120,6 +120,7 @@ xaddition_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xaddition_sem: $(xaddition_sem_OBJECTS) $(xaddition_sem_SHARED_OBJECTS)
@@ -140,6 +141,7 @@ xclip_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xclip_sem: $(xclip_sem_OBJECTS) $(xclip_sem_SHARED_OBJECTS)
@@ -161,6 +163,7 @@ xcombine_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
@@ -171,6 +174,7 @@ ${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
 ## xdifference_sem
 ##
 xdifference_sem_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
 	$O/difference_sem.postprocess.o \
 	$(EMPTY_MACRO)
 
@@ -181,6 +185,7 @@ xdifference_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xdifference_sem: $(xdifference_sem_OBJECTS) $(xdifference_sem_SHARED_OBJECTS)
@@ -190,6 +195,7 @@ ${E}/xdifference_sem: $(xdifference_sem_OBJECTS) $(xdifference_sem_SHARED_OBJECT
 ## xinterpolate_model
 ##
 xinterpolate_model_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
 	$O/interpolate_model.postprocess.o \
 	$(EMPTY_MACRO)
 
@@ -205,6 +211,7 @@ xinterpolate_model_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
@@ -237,6 +244,7 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
@@ -262,7 +270,7 @@ $O/postprocess_par.postprocess_module.o: $O/shared_par.shared_module.o $O/specfe
 #### rule for each .o file below
 ####
 
-$O/%.postprocess_module.o: $S/%.f90 ${SETUP}/constants_tomography.h ${OUTPUT}/values_from_mesher.h 
+$O/%.postprocess_module.o: $S/%.f90 ${OUTPUT}/values_from_mesher.h
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.postprocess.o: $S/%.f90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o
@@ -272,9 +280,9 @@ $O/%.postprocess.o: $S/%.F90 $O/postprocess_par.postprocess_module.o $O/parallel
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 
-$O/%.tomoadios.o: $S/%.F90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
+$O/%.postprocess_adios.o: $S/%.F90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)ADIOS_INPUT
 
-$O/%.tomoadios.o: $S/%.f90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
+$O/%.postprocess_adios.o: $S/%.f90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 

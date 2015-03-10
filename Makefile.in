@@ -306,6 +306,9 @@ endif
 	@echo "    xdifference_sem"
 	@echo "    xinterpolate_model"
 	@echo "    xsmooth_sem"
+ifeq ($(ADIOS), yes)
+	@echo "    xconvert_model_file_adios"
+endif
 	@echo ""
 	@echo "- tomography tools: [make tomography]"
 	@echo "    xadd_model_iso"
@@ -314,9 +317,6 @@ endif
 	@echo "    xadd_model_tiso_iso"
 	@echo "    xsum_kernels"
 	@echo "    xsum_preconditioned_kernels"
-ifeq ($(ADIOS), yes)
-	@echo "    xconvert_model_file_adios"
-endif
 	@echo ""
 
 .PHONY: all default clean help
