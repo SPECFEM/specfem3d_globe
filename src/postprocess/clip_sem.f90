@@ -28,7 +28,7 @@
 ! XCLIP_SEM
 !
 ! USAGE
-!   mpirun -np NPROC bin/xclip_sem MIN_VAL MAX_VAL KERNEL_NAMES INPUT_FILE OUTPUT_DIR
+!   mpirun -np NPROC bin/xclip_sem MIN_VAL MAX_VAL KERNEL_NAMES INPUT_DIR OUTPUT_DIR
 !
 !
 ! COMMAND LINE ARGUMENTS
@@ -71,7 +71,8 @@ program clip_sem_globe
   character(len=*) ,parameter :: reg = '_reg1_'
 
   character(len=MAX_STRING_LEN) :: input_dir,output_dir,kernel_names_comma_delimited
-  character(len=MAX_STRING_LEN) :: filename, kernel_name, kernel_names(MAX_KERNEL_NAMES)
+  character(len=MAX_STRING_LEN) :: filename, kernel_name
+  character(len=MAX_STRING_LEN) :: kernel_names(MAX_KERNEL_NAMES)
   character(len=MAX_STRING_LEN) :: arg(NARGS)
   integer :: ier, iker,nker,i,j,k,ispec
 
@@ -86,8 +87,8 @@ program clip_sem_globe
   ! check command line arguments
   if (command_argument_count() /= NARGS) then
     if (myrank == 0) then
-      print *, 'USAGE: mpirun -np NPROC bin/xclip_sem MIN_VAL MAX_VAL KERNEL_NAMES INPUT_FILE OUTPUT_DIR'
-      stop ' Please check command line arguments'
+      print *,'USAGE: mpirun -np NPROC bin/xclip_sem MIN_VAL MAX_VAL KERNEL_NAMES INPUT_DIR OUTPUT_DIR'
+      stop 'Please check command line arguments'
     endif
   endif
   call synchronize_all()
@@ -105,9 +106,9 @@ program clip_sem_globe
   endif
   call synchronize_all()
 
-  if(myrank==0) then
-    write(*,*) 'Running XCLIP_SEM'
-    write(*,*)
+  if (myrank == 0) then
+    print *,'Running XCLIP_SEM'
+    print *,''
   endif
   call synchronize_all()
 
@@ -124,53 +125,67 @@ program clip_sem_globe
   ! parse kernel names
   call parse_kernel_names(kernel_names_comma_delimited, kernel_names, nker)
 
+  ! user output
+  if (myrank == 0) then
+    print *,'clip values min/max : ',min_val,max_val
+    print *,'kernel names     : ',(trim(kernel_names(i))//' ',i=1,nker)
+    print *,'input directory  : ',trim(input_dir)
+    print *,'output directory : ',trim(output_dir)
+    print *,''
+  endif
+
   ! initialize array
-  allocate(sem_array(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE))
+  allocate(sem_array(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating array sem_array'
 
   ! clip kernels
   do iker=1,nker
 
-      kernel_name = trim(kernel_names(iker))
-      write(filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,reg//trim(kernel_name)//'.bin'
+    kernel_name = trim(kernel_names(iker))
+    if (myrank == 0) print *,'clipping array: ',trim(kernel_name)
 
-      ! read array
-      open(IIN,file=trim(filename),status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0) then
-        write(*,*) '  file not found: ',trim(filename)
-        stop 'File not found'
-      endif
-      read(IIN) sem_array
-      close(IIN)
+    ! read array
+    write(filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,reg//trim(kernel_name)//'.bin'
 
-     if (myrank==0) write(*,*) 'clipping array: ',trim(kernel_names(iker))
+    open(IIN,file=trim(filename),status='old',form='unformatted',action='read',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error file not found: ',trim(filename)
+      stop 'File not found'
+    endif
+    read(IIN) sem_array
+    close(IIN)
 
-     ! apply thresholds
-      do ispec=1,NSPEC_CRUST_MANTLE
-        do k=1,NGLLZ
-          do j=1,NGLLY
-            do i=1,NGLLX
-              if (sem_array(i,j,k,ispec) < min_val) sem_array(i,j,k,ispec) = min_val
-              if (sem_array(i,j,k,ispec) > max_val) sem_array(i,j,k,ispec) = max_val
-            enddo
+    ! apply thresholds
+    do ispec = 1,NSPEC_CRUST_MANTLE
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            if (sem_array(i,j,k,ispec) < min_val) sem_array(i,j,k,ispec) = min_val
+            if (sem_array(i,j,k,ispec) > max_val) sem_array(i,j,k,ispec) = max_val
           enddo
         enddo
       enddo
+    enddo
 
-      ! write clipped array
-      kernel_name = trim(kernel_names(iker))//'_clip'
-      write(filename,'(a,i6.6,a)') trim(input_dir)//'/proc',myrank,reg//trim(kernel_name)//'.bin'
+    ! write clipped array
+    kernel_name = trim(kernel_names(iker))//'_clip'
+    write(filename,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank,reg//trim(kernel_name)//'.bin'
 
-      open(IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
-      if (ier /= 0) then
-        write(*,*) '  error opening file: ',trim(filename)
-        stop 'Error opening file'
-      endif
-      write(IOUT) sem_array
-      close(IOUT)
+    open(IOUT,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0) then
+      print *,'Error opening file: ',trim(filename)
+      stop 'Error opening file'
+    endif
+    write(IOUT) sem_array
+    close(IOUT)
 
   enddo
 
-  if(myrank==0) write(*,*) 'done writing all kernels, see directory ', output_dir
+  ! user output
+  if (myrank == 0) then
+    print *,''
+    print *,'done writing all kernels, see directory: ',trim(output_dir)
+  endif
 
   ! stop all the processes, and exit
   call finalize_mpi()

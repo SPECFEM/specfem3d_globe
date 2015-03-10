@@ -113,6 +113,14 @@ program combine_sem_globe
  ! parse names from KERNEL_NAMES
   call parse_kernel_names(kernel_names_comma_delimited, kernel_names, nker)
 
+  ! user output
+  if (myrank == 0) then
+    print *,'kernel names     : ',(trim(kernel_names(i))//' ',i=1,nker)
+    print *,'input file       : ',trim(input_file)
+    print *,'output directory : ',trim(output_dir)
+    print *,''
+  endif
+
   ! parse paths from INPUT_FILE
   npath=0
   open(unit = IIN, file = trim(input_file), status = 'old',iostat = ier)
@@ -120,7 +128,7 @@ program combine_sem_globe
      print *,'Error opening ',trim(input_file),myrank
      stop 1
   endif
-  do while (1 == 1)
+  do while (.true.)
      read(IIN,'(a)',iostat=ier) sline
      if (ier /= 0) exit
      npath = npath+1
@@ -128,15 +136,13 @@ program combine_sem_globe
      kernel_paths(npath) = sline
   enddo
   close(IIN)
+  ! user output
   if (myrank == 0) then
-    write(*,*) '  ',npath,' events'
-    write(*,*)
-  endif
-
-  if(myrank == 0) then
+    print *,'number of events: ',npath
+    print *,''
     print *,'summing kernels in:'
-    print *,kernel_paths(1:npath)
-    print *
+    print *,(trim(kernel_paths(i))//' ',i=1,npath)
+    print *,''
   endif
 
   call synchronize_all()
@@ -147,7 +153,10 @@ program combine_sem_globe
       call sum_kernel(kernel_names(iker),kernel_paths,output_dir,npath)
   enddo
 
-  if(myrank==0) write(*,*) 'done writing all kernels, see directory ', output_dir
+  ! user output
+  if(myrank==0) then
+    print *,'done writing all kernels, see directory ',trim(output_dir)
+  endif
 
   ! stop all the processes, and exit
   call finalize_mpi()
