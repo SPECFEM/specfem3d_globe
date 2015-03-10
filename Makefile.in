@@ -246,7 +246,7 @@ DEFAULT += 	\
 	$(EMPTY_MACRO)
 endif
 
-all: default
+all: default aux movies postprocess tomography
 
 default: $(DEFAULT)
 
