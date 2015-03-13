@@ -35,17 +35,12 @@ rm -rf OUTPUT_FILES/*
 # compiles executables in root directory
 # using default configuration
 cd ../../
-# configures package with ifort compiler
-./configure F90=ifort MPIF90=/usr/local/openmpi-ifort/bin/mpif90 FLAGS_CHECK="-O3 -assume byterecl" > tmp.log
-# configures package with gfortran compiler
-#./configure F90=gfortran MPIF90=mpif90 FLAGS_CHECK="-O3"
 
 # compiles for an adjoint simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
 sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:g"  DATA/Par_file
 make clean
-make >& $currentdir/tmp_make_output.log
-make xcombine_vol_data >> $currentdir/tmp_make_output.log
+make all
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
@@ -60,6 +55,7 @@ rm -rf bin/*
 cp ../../bin/xmeshfem3D ./bin/
 cp ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
 cp ../../bin/xcombine_vol_data ./bin/
+cp ../../bin/xcombine_vol_data_vtk ./bin/
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
@@ -70,7 +66,7 @@ ln -s ../../../DATA/topo_bathy
 cd ../
 
 # copy useful script
-cp ../../UTILS/change_simulation_type.pl ./
+cp ../../utils/change_simulation_type.pl ./
 cp DATA/Par_file DATA/Par_file.org
 
 # run mesher & solver
