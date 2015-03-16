@@ -409,11 +409,11 @@ module BOAST
     return p
   end
 
-  def BOAST::inner_core_impl_kernel_forward(ref = true, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11)
-    return BOAST::impl_kernel(:inner_core, true, ref, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, r_earth_km, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube)
+  def BOAST::inner_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = true, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11)
+    return BOAST::impl_kernel(:inner_core, true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, n_sls, r_earth_km, coloring_min_nspec_inner_core, i_flag_in_fictitious_cube)
   end
 
-  def BOAST::impl_kernel(type, forward, ref = true, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7)
+  def BOAST::impl_kernel(type, forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, n_sls = 3, r_earth_km = 6371.0, coloring_min_nspec_inner_core = 1000, i_flag_in_fictitious_cube = 11, launch_bounds = false, min_blocks = 7)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     v = []
@@ -640,8 +640,11 @@ module BOAST
         get_output.puts "#ifndef #{manually_unrolled_loops}"
           decl l = Int("l")
         get_output.puts "#endif"
-        decl active = Int("active", :size => 2, :signed => false)
-        decl offset = Int("offset"), iglob = Int("iglob")
+        active = (1..elem_per_thread).collect { |e_i| Int("active_#{e_i}", :size => 2, :signed => false) }
+        decl *active
+        decl offset = Int("offset")
+        iglob = (1..elem_per_thread).collect { |e_i| Int("iglob_#{e_i}") }
+        decl *iglob
         decl working_element = Int("working_element")
         tempanl = ["x", "y", "z"].collect { |a|
           [ 1, 2, 3 ].collect { |n|
@@ -686,11 +689,11 @@ module BOAST
           }
         }
         decl *(sigma.flatten)
-        decl epsilondev_xx_loc = Real("epsilondev_xx_loc")
-        decl epsilondev_yy_loc = Real("epsilondev_yy_loc")
-        decl epsilondev_xy_loc = Real("epsilondev_xy_loc")
-        decl epsilondev_xz_loc = Real("epsilondev_xz_loc")
-        decl epsilondev_yz_loc = Real("epsilondev_yz_loc")
+        decl *epsilondev_xx_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xx_loc_#{e_i}") }
+        decl *epsilondev_yy_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_yy_loc_#{e_i}") }
+        decl *epsilondev_xy_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xy_loc_#{e_i}") }
+        decl *epsilondev_xz_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xz_loc_#{e_i}") }
+        decl *epsilondev_yz_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_yz_loc_#{e_i}") }
         if type == :inner_core then
           decl c11 = Real("c11")
           decl c12 = Real("c12")
@@ -701,9 +704,12 @@ module BOAST
         decl *sum_terms = [1,2,3].collect {|n|
           Real("sum_terms#{n}")
         }
-        decl *rho_s_H = [1,2,3].collect {|n|
-          Real("rho_s_H#{n}")
+        rho_s_H = (1..elem_per_thread).collect{ |e_i|
+          [1,2,3].collect {|n|
+            Real("rho_s_H_#{e_i}_#{n}")
+          }
         }
+        decl *(rho_s_H.flatten)
   
         decl *s_dummy_loc = ["x", "y", "z"].collect { |a|
           Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
@@ -720,14 +726,12 @@ module BOAST
         decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
   
         print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
-        print tx === get_local_id(0)
-  
-        print k === tx/ngll2
-        print j === (tx-k*ngll2)/ngllx
-        print i === tx - k*ngll2 - j*ngllx
-  
-        print active === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
-        print If(active) {
+elem_per_thread.times { |elem_index| 
+        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+        print active[elem_index] === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
+
+        print If(active[elem_index]) {
+  if elem_index == 0 then
           get_output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
           get_output.puts "#else"
@@ -737,22 +741,23 @@ module BOAST
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
             })
           get_output.puts "#endif"
+  end
           __texture_fetch = lambda {
-            print iglob === d_ibool[working_element*ngll3 + tx]-1
+            print iglob[elem_index] === d_ibool[working_element*ngll3 + tx]-1
 
             get_output.puts "#ifdef #{use_textures_fields}"
               (0..2).each { |indx|
-                print s_dummy_loc[indx][tx] === d_displ_tex[iglob*3+indx]
+                print s_dummy_loc[indx][tx] === d_displ_tex[iglob[elem_index]*3+indx]
               }
             get_output.puts "#else"
               (0..2).each { |indx|
-                print s_dummy_loc[indx][tx] === d_displ[indx, iglob]
+                print s_dummy_loc[indx][tx] === d_displ[indx, iglob[elem_index]]
               }
             get_output.puts "#endif"
           }
           if type == :inner_core then
             print If(d_idoubling[working_element] == iflag_in_fictitious_cube, lambda {
-              print active === 0
+              print active[elem_index] === 0
             }, __texture_fetch )
           elsif type == :crust_mantle then
             __texture_fetch.call
@@ -768,9 +773,18 @@ module BOAST
             print sh_hprimewgll_xx[tx] === d_hprimewgll_xx[tx]
           get_output.puts "#endif"
         }
+}
         print barrier(:local)
   
-        print If(active) {
+elem_per_thread.times { |elem_index|
+  if elem_per_thread > 1 then
+        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+  end
+        print k === tx/ngll2
+        print j === (tx-k*ngll2)/ngllx
+        print i === tx - k*ngll2 - j*ngllx
+
+        print If(active[elem_index]) {
           (0..2).each { |indx1|
             (0..2).each { |indx2|
               print tempanl[indx1][indx2] === 0.0
@@ -820,11 +834,11 @@ module BOAST
   
           print If(compute_and_store_strain) {
             print templ === (dudl[0][0] + dudl[1][1] + dudl[2][2])*0.33333333333333333333333333
-            print epsilondev_xx_loc === dudl[0][0] - templ
-            print epsilondev_yy_loc === dudl[1][1] - templ
-            print epsilondev_xy_loc === duxdyl_plus_duydxl * 0.5
-            print epsilondev_xz_loc === duzdxl_plus_duxdzl * 0.5
-            print epsilondev_yz_loc === duzdyl_plus_duydzl * 0.5
+            print epsilondev_xx_loc[elem_index] === dudl[0][0] - templ
+            print epsilondev_yy_loc[elem_index] === dudl[1][1] - templ
+            print epsilondev_xy_loc[elem_index] === duxdyl_plus_duydxl * 0.5
+            print epsilondev_xz_loc[elem_index] === duzdxl_plus_duxdzl * 0.5
+            print epsilondev_yz_loc[elem_index] === duzdyl_plus_duydzl * 0.5
             print If(nspec_strain_only == 1, lambda {
               print epsilon_trace_over_3[tx] === templ
             }, lambda {
@@ -913,7 +927,7 @@ module BOAST
                                                    one_minus_sum_beta_use,
                                                    *(dudl.flatten),
                                                    duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
-                                                   iglob, #nglob,
+                                                   iglob[elem_index], #nglob,
                                                    d_store[1], d_store[2],
                                                    sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                    sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
@@ -937,7 +951,7 @@ module BOAST
                                                  - xil[1]*(etal[0]*gammal[2] - etal[2]*gammal[0])\
                                                  + xil[2]*(etal[0]*gammal[1] - etal[1]*gammal[0]))
           print If(gravity) {
-            print sub_compute_element_gravity.call(tx, iglob,\
+            print sub_compute_element_gravity.call(tx, iglob[elem_index],\
                                    d_store[0], d_store[1], d_store[2],\
                                    d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table,\
                                    wgll_cube, jacobianl,\
@@ -945,7 +959,7 @@ module BOAST
                                    sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,\
                                    sigma[0][1].address, sigma[1][0].address, sigma[0][2].address,\
                                    sigma[2][0].address, sigma[1][2].address, sigma[2][1].address,\
-                                   rho_s_H[0].address, rho_s_H[1].address, rho_s_H[2].address)
+                                   rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address)
           }
           (0..2).each { |indx|
             print s_temp[indx][0][tx] === jacobianl * (sigma[0][indx]*xil[0] + sigma[1][indx]*xil[1] + sigma[2][indx]*xil[2])
@@ -957,8 +971,17 @@ module BOAST
             print s_temp[indx][2][tx] === jacobianl * (sigma[0][indx]*gammal[0] + sigma[1][indx]*gammal[1] + sigma[2][indx]*gammal[2])
           }
         }
+}
         print barrier(:local)
-        print If(active) {
+elem_per_thread.times { |elem_index|
+  if elem_per_thread > 1 then
+        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+        print k === tx/ngll2
+        print j === (tx-k*ngll2)/ngllx
+        print i === tx - k*ngll2 - j*ngllx
+  end
+
+        print If(active[elem_index]) {
           (0..2).each { |indx1|
             (0..2).each { |indx2|
               print tempanl[indx1][indx2] === 0.0
@@ -995,17 +1018,17 @@ module BOAST
   
           print If(gravity) {
             (0..2).each { |indx|
-              print sum_terms[indx] === sum_terms[indx] + rho_s_H[indx]
+              print sum_terms[indx] === sum_terms[indx] + rho_s_H[elem_index][indx]
             }
           }
           get_output.puts "#ifdef #{use_mesh_coloring}"
             get_output.puts "#ifdef #{use_textures_fields}"
               (0..2).each { |indx|
-                print d_accel[indx,iglob] === d_accel_tex[iglob*3+indx] + sum_terms[indx]
+                print d_accel[indx,iglob[elem_index]] === d_accel_tex[iglob[elem_index]*3+indx] + sum_terms[indx]
               }
             get_output.puts "#else"
               (0..2).each { |indx|
-                print d_accel[indx,iglob] === d_accel[indx,iglob] + sum_terms[indx]
+                print d_accel[indx,iglob[elem_index]] === d_accel[indx,iglob[elem_index]] + sum_terms[indx]
               }
             get_output.puts "#endif"
           get_output.puts "#else"
@@ -1014,16 +1037,16 @@ module BOAST
                 print If(nspec_inner_core > coloring_min_nspec_inner_core, lambda {
                   get_output.puts "#ifdef #{use_textures_fields}"
                     (0..2).each { |indx|
-                      print d_accel[indx,iglob] === d_accel_tex[iglob*3+indx] + sum_terms[indx]
+                      print d_accel[indx,iglob[elem_index]] === d_accel_tex[iglob[elem_index]*3+indx] + sum_terms[indx]
                     }
                   get_output.puts "#else"
                     (0..2).each { |indx|
-                      print d_accel[indx,iglob] === d_accel[indx,iglob] + sum_terms[indx]
+                      print d_accel[indx,iglob[elem_index]] === d_accel[indx,iglob[elem_index]] + sum_terms[indx]
                     }
                   get_output.puts "#endif"
                 }, lambda{
                   (0..2).each { |indx|
-                    print atomicAdd(d_accel+ iglob*3 +indx, sum_terms[indx])
+                    print atomicAdd(d_accel+ iglob[elem_index]*3 +indx, sum_terms[indx])
                   }
                 })
               }
@@ -1031,18 +1054,18 @@ module BOAST
               __accel_update = lambda {
                 get_output.puts "#ifdef #{use_textures_fields}"
                   (0..2).each { |indx|
-                    print d_accel[indx,iglob] === d_accel_tex[iglob*3+indx] + sum_terms[indx]
+                    print d_accel[indx,iglob[elem_index]] === d_accel_tex[iglob[elem_index]*3+indx] + sum_terms[indx]
                   }
                 get_output.puts "#else"
                   (0..2).each { |indx|
-                    print d_accel[indx,iglob] === d_accel[indx,iglob] + sum_terms[indx]
+                    print d_accel[indx,iglob[elem_index]] === d_accel[indx,iglob[elem_index]] + sum_terms[indx]
                   }
                 get_output.puts "#endif"
               }
             end
             print If(use_mesh_coloring_gpu, __accel_update, lambda {
               (0..2).each { |indx|
-                print atomicAdd(d_accel + iglob*3 + indx, sum_terms[indx])
+                print atomicAdd(d_accel + iglob[elem_index]*3 + indx, sum_terms[indx])
               }
             })
           get_output.puts "#endif"
@@ -1052,7 +1075,11 @@ module BOAST
                         alphaval, betaval, gammaval,\
                         r_xx, r_yy, r_xy, r_xz, r_yz,\
                         epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz,\
-                        epsilondev_xx_loc, epsilondev_yy_loc, epsilondev_xy_loc, epsilondev_xz_loc, epsilondev_yz_loc]
+                        epsilondev_xx_loc[elem_index],\
+                        epsilondev_yy_loc[elem_index],\
+                        epsilondev_xy_loc[elem_index],\
+                        epsilondev_xz_loc[elem_index],\
+                        epsilondev_yz_loc[elem_index]]
             if type == :crust_mantle then
               __params += [d_cstore[3][3], anisotropy]
             end
@@ -1060,13 +1087,14 @@ module BOAST
             print sub_compute_element_att_memory.call( *__params )
           }
           print If(compute_and_store_strain ) {
-            print epsilondev_xx[tx + working_element*ngll3] === epsilondev_xx_loc
-            print epsilondev_yy[tx + working_element*ngll3] === epsilondev_yy_loc
-            print epsilondev_xy[tx + working_element*ngll3] === epsilondev_xy_loc
-            print epsilondev_xz[tx + working_element*ngll3] === epsilondev_xz_loc
-            print epsilondev_yz[tx + working_element*ngll3] === epsilondev_yz_loc
+            print epsilondev_xx[tx + working_element*ngll3] === epsilondev_xx_loc[elem_index]
+            print epsilondev_yy[tx + working_element*ngll3] === epsilondev_yy_loc[elem_index]
+            print epsilondev_xy[tx + working_element*ngll3] === epsilondev_xy_loc[elem_index]
+            print epsilondev_xz[tx + working_element*ngll3] === epsilondev_xz_loc[elem_index]
+            print epsilondev_yz[tx + working_element*ngll3] === epsilondev_yz_loc[elem_index]
           }
         }
+}
       close p
     else
       raise "Unsupported language!"
