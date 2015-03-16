@@ -8,7 +8,7 @@ def rndup( val, div)
   return (val%div) == 0 ? val : val + div - (val%div)
 end
 
-$options = {:output_dir => "./output"}
+$options = {:output_dir => "./output", :elem_per_thread => 1, :langs => [:CUDA, :CL] }
 
 $parser = OptionParser::new do |opts|
   opts.on("-c","--check","Check kernels by building them") {
@@ -29,10 +29,16 @@ $parser = OptionParser::new do |opts|
   opts.on("-k","--kernel KERNEL","Selected kernel") { |kernel|
     $options[:kernel] = kernel
   }
+  opts.on("-e","--elem ELEM_PER_THREAD","Treat several elements in big kernels") { |elem_per_thread|
+    $options[:elem_per_thread] = elem_per_thread.to_i
+  }
+  opts.on("-l","--lang LANG","Select language to use (CUDA or CL)") { |lang|
+     $options[:langs] = [ lang.to_sym ]
+  }
   opts.parse!
 end
 
-kernels = [
+small_kernels = [
 :assemble_boundary_accel_on_device,
 :assemble_boundary_potential_on_device,
 :prepare_boundary_potential_on_device,
@@ -61,24 +67,30 @@ kernels = [
 :update_veloc_elastic_kernel,
 :update_accel_acoustic_kernel,
 :update_veloc_acoustic_kernel,
-:outer_core_impl_kernel_forward,
-:outer_core_impl_kernel_adjoint,
-:inner_core_impl_kernel_forward,
-:inner_core_impl_kernel_adjoint,
 :compute_rho_kernel,
 :compute_iso_kernel,
 :compute_ani_kernel,
 :compute_hess_kernel,
 :compute_acoustic_kernel,
 :compute_strength_noise_kernel,
-:crust_mantle_impl_kernel_forward,
-:crust_mantle_impl_kernel_adjoint,
 :compute_ani_undoatt_kernel,
 :compute_iso_undoatt_kernel,
 :compute_strain_kernel
 ]
 
-langs = [ :CUDA, :CL]
+big_kernels = [
+:outer_core_impl_kernel_forward,
+:outer_core_impl_kernel_adjoint,
+:inner_core_impl_kernel_forward,
+:inner_core_impl_kernel_adjoint,
+:crust_mantle_impl_kernel_forward,
+:crust_mantle_impl_kernel_adjoint
+]
+
+kernels = small_kernels + big_kernels
+
+langs = $options[:langs]
+
 BOAST::set_default_real_size(4)
 BOAST::set_replace_constants(false)
 class Float
@@ -137,7 +149,11 @@ kerns.each { |kern|
       k.print if $options[:display]
       filename = "#{kern}.cu"
     elsif lang == :CL
-      k = BOAST::method(kern).call
+      if big_kernels.include?(kern) then
+        k = BOAST::method(kern).call(false, $options[:elem_per_thread])
+      else
+        k = BOAST::method(kern).call
+      end
       puts "  Generated"
       k.print if $options[:display]
       filename = "#{kern}_cl.c"
@@ -179,6 +195,15 @@ kerns.each { |kern|
       outputs_ref = k.load_ref_outputs("../kernels.test/")
       inputs.each_key { |key|
         puts key
+        if big_kernels.include?(kern) then
+          if lang == :CL then
+            inputs[key].last[:local_work_size][0] /= $options[:elem_per_thread]
+            inputs[key].last[:global_work_size][0] /= $options[:elem_per_thread]
+          elsif lang == :CUDA then
+            inputs[key].last[:block_size][0] /= $options[:elem_per_thread]
+          end
+        end
+        puts inputs[key].inspect
         puts k.run(*(inputs[key])).inspect
         puts k.compare_ref( outputs_ref[key], inputs[key] ).inspect
       }

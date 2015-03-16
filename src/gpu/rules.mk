@@ -127,14 +127,14 @@ BUILD_VERSION_TXT += support
 ###
 ### boast kernel generation
 ###
-
+GPU_ELEM_PER_THREAD=2
 boast_kernels :
 	@echo ""
 	@echo "building boast kernels: in directory $(BOAST_DIR_NAME)"
 	@echo ""
 	cd src/gpu/boast ;\
 	mkdir -p ../$(BOAST_DIR_NAME);\
-	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME)
+	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME) -e $(GPU_ELEM_PER_THREAD)
 	@echo ""
 
 test_boast_kernels :

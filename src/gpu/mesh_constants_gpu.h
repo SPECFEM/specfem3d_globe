@@ -164,6 +164,10 @@ typedef float realw;
 // (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
 #define GPU_ASYNC_COPY 1
 
+#ifndef GPU_ELEM_PER_THREAD
+#define GPU_ELEM_PER_THREAD 2
+#endif
+
 /*----------------------------------------------------------------------------------------------- */
 
 // (optional) pre-processing directive used in kernels: if defined check that it is also set in src/shared/constants.h:
