@@ -164,8 +164,10 @@ typedef float realw;
 // (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
 #define GPU_ASYNC_COPY 1
 
+// Reduce GPU-register pressure by limited the number of thread spread
+// (GPU for embedded devices are not powerful enough for big kernels)
 #ifndef GPU_ELEM_PER_THREAD
-#define GPU_ELEM_PER_THREAD 2
+#define GPU_ELEM_PER_THREAD 1
 #endif
 
 /*----------------------------------------------------------------------------------------------- */
