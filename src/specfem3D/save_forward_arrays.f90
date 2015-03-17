@@ -45,7 +45,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) outputname
+  character(len=MAX_STRING_LEN) outputname, path_to_add
 
   ! checks if anything to do
   if (UNDO_ATTENUATION ) return
@@ -109,7 +109,14 @@
       call save_forward_arrays_adios()
     else
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='unknown', &
+      outputname = trim(LOCAL_TMP_PATH)//'/'//trim(outputname)
+
+      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+        outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
+      endif
+
+      open(unit=IOUT,file=outputname,status='unknown', &
           form='unformatted',action='write',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_forward_arrays** for writing')
 
@@ -178,7 +185,7 @@
   ! local parameters
   integer :: iteration_on_subset_tmp
   integer :: ier
-  character(len=MAX_STRING_LEN) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname, path_to_add
 
   ! transfers wavefields from GPU device to CPU host
   if (GPU_MODE) then
@@ -209,10 +216,16 @@
     ! saves frame of the forward simulation
 
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
+    outputname = trim(LOCAL_PATH)//'/'//trim(outputname)
+
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
+    endif
 
     ! debug
     !if (myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION
-    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname, &
+    open(unit=IOUT,file=outputname, &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 

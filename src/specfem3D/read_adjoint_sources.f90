@@ -211,7 +211,7 @@
   double precision :: junk
   integer :: icomp,itime
   integer :: ier
-  character(len=MAX_STRING_LEN) :: filename,adj_source_file
+  character(len=MAX_STRING_LEN) :: filename,adj_source_file,path_to_add
   character(len=3),dimension(NDIM) :: comp
   character(len=2) :: bic
 
@@ -228,8 +228,14 @@
   ! loops over file components E/N/Z
   do icomp = 1,NDIM
 
-    ! opens adjoint source file for this component
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+
+    ! opens adjoint source file for this component
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
+    endif
+
     open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
 
     ! checks if file opens/exists

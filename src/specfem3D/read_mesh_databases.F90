@@ -607,6 +607,7 @@
   ! local parameters
   integer :: njunk1,njunk2,njunk3
   integer :: ier
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! reads in arrays
   if (I_should_read_the_database) then
@@ -616,6 +617,10 @@
       ! crust and mantle
       ! create name of database
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+      endif
 
       ! Stacey put back
       open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
@@ -658,6 +663,10 @@
 
       ! create name of database
       call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+      endif
 
       ! boundary parameters
 
@@ -703,6 +712,10 @@
 
       ! create name of database
       call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
+      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+      endif
 
       ! read info for vertical edges for central cube matching in inner core
       open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
@@ -728,6 +741,10 @@
       ! -- Boundary Mesh for crust and mantle ---
       if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
         call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+        if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+          write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+          prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+        endif
 
         open(unit=IIN,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
               status='old',form='unformatted',action='read',iostat=ier)
@@ -1029,12 +1046,17 @@
   implicit none
 
   ! local parameters
+  character(len=MAX_STRING_LEN) :: path_to_add
   integer :: ier
 
   ! crust mantle region
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+  endif
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
@@ -1114,12 +1136,17 @@
   implicit none
 
   ! local parameters
+  character(len=MAX_STRING_LEN) :: path_to_add
   integer :: ier
 
   ! crust mantle region
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+  endif
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
@@ -1199,11 +1226,16 @@
 
   ! local parameters
   integer :: ier
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! crust mantle region
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+  endif
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
@@ -1287,6 +1319,7 @@
 
   ! local parameters
   integer :: ier
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! reads in arrays
   if (I_should_read_the_database) then
@@ -1297,6 +1330,10 @@
 
       ! create name of database
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+      endif
 
       ! read arrays for Stacey conditions
       open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
@@ -1315,6 +1352,10 @@
 
       ! create name of database
       call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+      endif
 
       ! read arrays for Stacey conditions
       open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &

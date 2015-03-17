@@ -850,6 +850,11 @@
                                 factor_common_crust_mantle, &
                                 factor_scale_crust_mantle,tau_sigma_dble, &
                                 NSPEC_CRUST_MANTLE)
+  call bcast_attenuation_model_3D(one_minus_sum_beta_crust_mantle, &
+                                  factor_common_crust_mantle, &
+                                  factor_scale_crust_mantle, &
+                                  tau_sigma_dble, &
+                                  NSPEC_CRUST_MANTLE)
 
   ! INNER_CORE ATTENUATION
   call get_attenuation_model_3D(myrank,IREGION_INNER_CORE, &
@@ -857,6 +862,11 @@
                                 factor_common_inner_core, &
                                 factor_scale_inner_core,tau_sigma_dble, &
                                 NSPEC_INNER_CORE)
+  call bcast_attenuation_model_3D(one_minus_sum_beta_inner_core, &
+                                  factor_common_inner_core, &
+                                  factor_scale_inner_core, &
+                                  tau_sigma_dble, &
+                                  NSPEC_INNER_CORE)
 
   ! if attenuation is on, shift PREM to right frequency
   ! rescale mu in PREM to average frequency for attenuation
@@ -1451,6 +1461,7 @@
   integer :: nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm
   integer :: nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc,nabs_zmin_oc
   integer(kind=8) :: filesize
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! sets up absorbing boundary buffer arrays
   if (myrank == 0) then
@@ -1462,6 +1473,10 @@
 
   ! create name of database
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+  endif
 
   ! allocates buffers
   if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
@@ -1580,6 +1595,10 @@
 
   ! create name of database
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+  endif
 
   ! allocates buffers
   ! xmin

@@ -118,6 +118,7 @@
 
   use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
   use write_seismograms_mod, only: band_instrument_code
+  use specfem_par, only: NUMBER_OF_SIMULTANEOUS_RUNS, mygroup
 
   implicit none
 
@@ -158,7 +159,7 @@
   integer it_start,it_end,index_i
   real(kind=CUSTOM_REAL) :: junk
   character(len=3),dimension(NDIM) :: comp
-  character(len=MAX_STRING_LEN) :: filename
+  character(len=MAX_STRING_LEN) :: filename, path_to_add
   character(len=2) :: bic
 
   call band_instrument_code(DT,bic)
@@ -194,6 +195,10 @@
 
     ! opens adjoint component file
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
+    endif
     open(unit=IIN_ADJ,file=trim(filename),status='old',action='read',iostat=ios)
 
     ! note: adjoint source files must be available for all three components E/N/Z, even
