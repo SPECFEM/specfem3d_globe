@@ -164,7 +164,7 @@ contains
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error while allocating one temporary seismogram')
 
-  ! writes out seismograms
+  ! write out seismograms: all processes write their local seismograms themselves
   if (.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
     ! all the processes write their local seismograms themselves
@@ -240,9 +240,9 @@ contains
       call flush_IMAIN()
     endif
 
-  else ! WRITE_SEISMOGRAMS_BY_MASTER
+  else ! if WRITE_SEISMOGRAMS_BY_MASTER
 
-    ! now only the master process does the writing of seismograms and
+    ! only the master process does the writing of seismograms and
     ! collects the data from all other processes
 
     write_time_begin = wtime()
@@ -364,7 +364,7 @@ contains
       call flush_IMAIN()
     endif
 
-  endif ! WRITE_SEISMOGRAMS_BY_MASTER
+  endif ! of if(WRITE_SEISMOGRAMS_BY_MASTER)
 
   deallocate(one_seismogram)
 
