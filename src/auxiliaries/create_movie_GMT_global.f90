@@ -126,6 +126,9 @@
 ! read the parameter file and compute additional parameters
   call read_compute_parameters()
 
+! get the base pathname for output files
+  OUTPUT_FILES = OUTPUT_FILES_BASE
+
 !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
 !! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
 !! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
