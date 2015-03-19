@@ -25,6 +25,7 @@
                       {\newcommand{\url}{\texttt}}
 \usepackage[authoryear]{natbib}
 
+
 \makeatletter
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
@@ -82,6 +83,10 @@
 % colors for the text
 \usepackage[dvipsnames,usenames]{color}
 \newcommand{\red}[1]{\textcolor{Red}{#1}}
+
+% Latex generated graphics
+\usepackage{tikz}
+\usetikzlibrary{trees}
 
 \usepackage{babel}
 \makeatother
@@ -1757,6 +1762,85 @@ stations by changing the \texttt{STATIONS} file. There is no need
 to rerun the mesher. Of course it is best to include as many stations
 as possible, since this does not add significantly to the cost of
 the simulation.
+
+\section{Note on the simultaneous simulation of several earthquakes}
+
+\begin{figure}[H]
+\begin{centering}
+\tikzstyle{every node}=[draw=black,thick,anchor=west]
+\tikzstyle{selected}=[draw=red,fill=red!30]
+\tikzstyle{optional}=[dashed,fill=gray!50]
+\tikzstyle{missing}=[draw=white]
+\begin{tikzpicture}[%
+  grow via three points={one child at (0.5,-0.7) and
+  two children at (0.5,-0.7) and (0.5,-1.4)},
+  edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
+  \node {EXAMPLE\_ROOT\_DIR}
+    child { node {bin}}		
+    child { node {DATA}}
+    child { node {DATABASES\_MPI}}
+    child { node {OUTPUT\_FILES}}
+    child { node [selected] {run0001}
+      child { node {DATA}}
+      child { node {DATABASES\_MPI}}
+      child { node {OUTPUT\_FILES}}
+      child { node [optional] {SEM}}
+    }
+    child [missing] {}				
+    child [missing] {}				
+    child [missing] {}				
+    child [missing] {}
+    child { node [selected] {run0002}
+      child { node {DATA}}
+      child { node {DATABASES\_MPI}}
+      child { node {OUTPUT\_FILES}}
+      child { node [optional] {SEM}}
+    }
+    child [missing] {}				
+    child [missing] {}				
+    child [missing] {}				
+    child [missing] {}
+    child { node [selected] {run....}
+      child { node {DATA}}
+      child { node {DATABASES\_MPI}}
+      child { node {OUTPUT\_FILES}}
+      child { node [optional] {SEM}}
+    };
+\end{tikzpicture}
+\par\end{centering}
+
+\caption{\textbf{\label{fig:simultaneous_dir_struct}}
+Directory structure when simulating several earthquakes at once. 
+To improve readability, only directories have been drawn.}
+
+\end{figure}
+
+Figure~\ref{fig:simultaneous_dir_struct} shows what the directory structure
+should looks like when simulating multiple earthquakes at ones.
+
+\begin{itemize}
+\item The simulation is launched within the root directory \texttt{EXAMPLE\_ROOT\_DIR}
+(usually \texttt{mpirun -np N ./bin/xspecfem3D}).
+\item \texttt{DATA} should contain the \texttt{Par\_file} parameter file with
+\texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS} as explained in Chapter~\ref{cha:Running-the-Mesher}.
+\item \texttt{DATABASES\_MPI} and {OUTPUT\_FILES} directory may contain the mesher output but they 
+are not required as they are superseded by the ones in the \texttt{runXXX} directories.
+\item \texttt{runXXXX} directories must be created beforehand. There should be be as many as
+\texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS} and the numbering should be contiguous, starting from \texttt{0001}. 
+They all should have \texttt{DATA}, 
+\texttt{DATABASES\_MPI} and \texttt{OUTPUT\_FILES} directories. Additionally a \texttt{SEM} directory
+containing adjoint sources have to be created to perform adjoint simulations.
+\item \texttt{runXXXX/DATA} directories must all contain a \texttt{CMTSOLUTION} file,
+a \texttt{STATIONS} file along with an eventual \texttt{STATIONS\_ADJOINT} file.
+\item If \texttt{BROADCAST\_SAME\_MESH\_AND\_MODEL} is set to \texttt{.true.} in \texttt{DATA/Par\_file},
+only \texttt{run0001/OUTPUT\_FILES} and \texttt{run0001/DATABASES\_MPI} directories need to contain the files
+outputted by the mesher.
+\item If \texttt{BROADCAST\_SAME\_MESH\_AND\_MODEL} is set to \texttt{.false.} in \texttt{DATA/Par\_file},
+every \texttt{runXXXX/OUTPUT\_FILES} and \texttt{runXXXX/DATABASES\_MPI} directories need to contain the files
+outputted by the mesher. Note that while the meshes might have been created from different models and
+parameter sets, they should have been created using the same number of MPI processes.
+\end{itemize}
+
 
 
 \chapter{\label{cha:Regional-Simulations}Regional Simulations}
