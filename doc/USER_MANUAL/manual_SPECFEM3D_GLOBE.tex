@@ -1776,7 +1776,7 @@ the simulation.
   two children at (0.5,-0.7) and (0.5,-1.4)},
   edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
   \node {EXAMPLE\_ROOT\_DIR}
-    child { node {bin}}		
+    child { node {bin}}
     child { node {DATA}}
     child { node {DATABASES\_MPI}}
     child { node {OUTPUT\_FILES}}
@@ -1786,9 +1786,9 @@ the simulation.
       child { node {OUTPUT\_FILES}}
       child { node [optional] {SEM}}
     }
-    child [missing] {}				
-    child [missing] {}				
-    child [missing] {}				
+    child [missing] {}
+    child [missing] {}
+    child [missing] {}
     child [missing] {}
     child { node [selected] {run0002}
       child { node {DATA}}
@@ -1796,9 +1796,9 @@ the simulation.
       child { node {OUTPUT\_FILES}}
       child { node [optional] {SEM}}
     }
-    child [missing] {}				
-    child [missing] {}				
-    child [missing] {}				
+    child [missing] {}
+    child [missing] {}
+    child [missing] {}
     child [missing] {}
     child { node [selected] {run....}
       child { node {DATA}}
@@ -1810,7 +1810,7 @@ the simulation.
 \par\end{centering}
 
 \caption{\textbf{\label{fig:simultaneous_dir_struct}}
-Directory structure when simulating several earthquakes at once. 
+Directory structure when simulating several earthquakes at once.
 To improve readability, only directories have been drawn.}
 
 \end{figure}
@@ -1823,11 +1823,11 @@ should looks like when simulating multiple earthquakes at ones.
 (usually \texttt{mpirun -np N ./bin/xspecfem3D}).
 \item \texttt{DATA} should contain the \texttt{Par\_file} parameter file with
 \texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS} as explained in Chapter~\ref{cha:Running-the-Mesher}.
-\item \texttt{DATABASES\_MPI} and {OUTPUT\_FILES} directory may contain the mesher output but they 
+\item \texttt{DATABASES\_MPI} and {OUTPUT\_FILES} directory may contain the mesher output but they
 are not required as they are superseded by the ones in the \texttt{runXXX} directories.
 \item \texttt{runXXXX} directories must be created beforehand. There should be be as many as
-\texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS} and the numbering should be contiguous, starting from \texttt{0001}. 
-They all should have \texttt{DATA}, 
+\texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS} and the numbering should be contiguous, starting from \texttt{0001}.
+They all should have \texttt{DATA},
 \texttt{DATABASES\_MPI} and \texttt{OUTPUT\_FILES} directories. Additionally a \texttt{SEM} directory
 containing adjoint sources have to be created to perform adjoint simulations.
 \item \texttt{runXXXX/DATA} directories must all contain a \texttt{CMTSOLUTION} file,
