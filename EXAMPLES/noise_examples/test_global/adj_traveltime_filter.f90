@@ -4,220 +4,221 @@
 
 program adj_traveltime
 
-implicit none
+  implicit none
 
-integer, parameter :: nstep = 799
-double precision, parameter :: dt = 0.19d0
-double precision, parameter :: C_crit = 0.5d0
+  !--------------------------------------------------------------
+  ! USER PARAMETERS
 
-double precision, parameter :: length_time_window = 60.0d0
-integer, parameter :: taper_type = 1
-integer, parameter :: i_skip_window =1
-double precision, parameter :: factor = 5d-2
+  integer, parameter :: nstep = 799
+  double precision, parameter :: dt = 0.19d0
 
+  ! time window taper
+  ! width
+  double precision, parameter :: length_time_window = 60.0d0
+  ! type (0 = boxcar / 1 = cosine)
+  integer, parameter :: taper_type = 1
 
-integer, parameter :: nrec = 1
-double precision, parameter :: pi = 3.141592653589793d0
+  ! adjoint station
+  integer, parameter :: nrec = 1
+  character(len=10) :: station='A7'
+  character(len=10) :: network='II'
 
-double precision :: data_origin(nstep,nrec),syn_origin(nstep,nrec),adj(nstep,nrec),adj_density(nstep,nrec)
-double precision :: data_picked(nstep,nrec),syn_picked(nstep,nrec),data_filtered(nstep,nrec),syn_filtered(nstep,nrec)
-double precision :: data_temp(nstep),syn_temp(nstep),data_direct(nstep),syn_direct(nstep)
-double precision :: trace_data_max(nrec), trace_syn_max(nrec), t(nstep),data_max,syn_max
-integer :: flag(nrec), irec, itime, length_window, i_start_window, i_end_window
-character(len=150) :: station_name,file_data,file_syn,file_data_direct,file_syn_direct
-character(len=150) :: file_adj,file_adj_density, file_misfit, file_adj_BHX,file_adj_BHZ
-double precision :: c(nstep), data_trace(nstep), syn_trace(nstep)
-integer :: I(nstep)
-double precision :: Norm_data_crit,Norm_syn_crit,AMP,Norm_data,Norm_syn,Norm,Norm_adj_temp
-double precision :: c_current,c_final(100), w(nstep), misfit_traveltime, traveltime_delay
-integer :: I_current, n_current, index_current, l_current, l, lag
-integer :: I_final(100), index_final(100)
+  ! filters traces (0 = off / 1 = on)
+  integer,parameter :: filter_flag = 0
 
-double precision, allocatable :: taper(:),corre(:), adj_temp(:),data_trace_temp(:),syn_trace_temp(:)
+  !---------------------------------------------------------------
 
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-integer,parameter :: filter_flag = 0
-integer :: ifreq, nfreq
-real :: F1,F2,D(8),G,DELT
-!real  freq_low(2),freq_high(2)
-!data  freq_low  / 1.0d-4 , 1.0d-4/
-!data  freq_high / 5.0d-1 , 5.0d-2/
-real  freq_low(1),freq_high(1)
-data  freq_low  / 6.67d-3 /
-data  freq_high / 3.33d-2 /
-!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  double precision, parameter :: pi = 3.141592653589793d0
 
-nfreq=size(freq_low)
+  double precision :: data_origin(nstep,nrec),adj(nstep,nrec)
+  double precision :: data_filtered(nstep,nrec)
 
-file_misfit = './OUTPUT_FILES/misfit_traveltime_delay'
-open(unit=1111,file=trim(file_misfit),status='unknown')
+  double precision :: data_temp(nstep)
+  double precision :: trace_data_max(nrec), t(nstep),data_max
+  integer :: irec, itime, length_window, i_start_window, i_end_window
+  character(len=150) :: file_data
+  character(len=150) :: file_adj, file_misfit
+  double precision :: c(nstep), data_trace(nstep)
+  integer :: I(nstep)
+  double precision :: Norm_data_crit,AMP,Norm_data,Norm,Norm_adj_temp
+  double precision :: w(nstep), misfit_traveltime, traveltime_delay
+  integer :: l
+  double precision, allocatable :: taper(:),corre(:), adj_temp(:),data_trace_temp(:)
 
-DELT=dt*1.0d3
-adj=0.0d0
-misfit_traveltime = 0.0d0
-!!!! loading data and synthetics !!!!
-do irec = 1,nrec
-   file_data = './SEM/A7.II.MXZ.sem.ascii'
-   open(unit=1001,file=trim(file_data),status='old',action='read')
-   do itime = 1,nstep
-           !read(1001,*) t(itime),data_origin(itime,irec)          ! original
-           read(1001,*) t(itime),data_origin(nstep-itime+1,irec)  ! reversed
-   enddo
-   close(1001)
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  integer :: ifreq, nfreq
+  real :: F1,F2,D(8),G,DELT
+  !real  freq_low(2),freq_high(2)
+  !data  freq_low  / 1.0d-4 , 1.0d-4/
+  !data  freq_high / 5.0d-1 , 5.0d-2/
+  real  freq_low(1),freq_high(1)
+  data  freq_low  / 6.67d-3 /
+  data  freq_high / 3.33d-2 /
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-   data_temp(1)=0.0
-   data_temp(nstep)=0.0
-   do itime = 2,nstep-1
+  nfreq=size(freq_low)
+
+  file_misfit = './OUTPUT_FILES/misfit_traveltime_delay'
+  open(unit=1111,file=trim(file_misfit),status='unknown')
+
+  DELT=dt*1.0d3
+  adj=0.0d0
+  misfit_traveltime = 0.0d0
+
+  !!!! loading data !!!!
+  do irec = 1,nrec
+    ! trace
+    file_data = './SEM/'//trim(network)//'.'//trim(station)//'.MXZ.sem.ascii'
+
+    open(unit=1001,file=trim(file_data),status='old',action='read')
+    do itime = 1,nstep
+      !read(1001,*) t(itime),data_origin(itime,irec)          ! original
+      read(1001,*) t(itime),data_origin(nstep-itime+1,irec)  ! reversed
+    enddo
+    close(1001)
+
+    data_temp(1)=0.0
+    data_temp(nstep)=0.0
+    do itime = 2,nstep-1
       data_temp(itime)=( data_origin(itime+1,irec) - data_origin(itime-1,irec) )/(2*dt)
-   enddo
-   data_origin(:,irec)=data_temp
-   trace_data_max(irec)=maxval(abs(data_temp))
-enddo
-do itime = 1,nstep
-   t(itime) = t(itime)-t(1)
-enddo
-data_max=maxval(trace_data_max)
+    enddo
+    data_origin(:,irec)=data_temp
+    trace_data_max(irec)=maxval(abs(data_temp))
+  enddo
 
-!!!! taper !!!!
-length_window = floor(length_time_window/dt)+1
-allocate(taper(length_window)); taper(:)=1.0d0
-allocate(adj_temp(length_window)); adj_temp(:)=0.0d0
-allocate(corre(2*length_window-1)); corre(:)=0.0d0
-allocate(data_trace_temp(length_window)); data_trace_temp(:)=0.0d0
-allocate(syn_trace_temp(length_window)); syn_trace_temp(:)=0.0d0
-if (taper_type == 1) then  ! cosine taper, otherwise using a constant (1.0) instead
-   do l=1,length_window
+  do itime = 1,nstep
+    t(itime) = t(itime)-t(1)
+  enddo
+  data_max=maxval(trace_data_max)
+
+  !!!! taper !!!!
+  length_window = floor(length_time_window/dt)+1
+  allocate(taper(length_window)); taper(:)=1.0d0
+  allocate(adj_temp(length_window)); adj_temp(:)=0.0d0
+  allocate(corre(2*length_window-1)); corre(:)=0.0d0
+  allocate(data_trace_temp(length_window)); data_trace_temp(:)=0.0d0
+  if (taper_type == 1) then
+    ! cosine taper, otherwise using a constant (1.0) instead
+    do l=1,length_window
       taper(l) = (1.0-cos(pi*2.0*(l-1)/(length_window-1)))/2.0
-   enddo
-endif
+    enddo
+  endif
 
-!!!! computing adj sources !!!!
-                  if (filter_flag == 0)   then
-                      nfreq=1
-                  endif
-do irec = 1,nrec
-   do ifreq = 1,nfreq
-                  data_filtered(:,irec)=data_origin(:,irec)
-                   syn_filtered(:,irec)= syn_origin(:,irec)
-                  !!!!!!!!!!!!!!!!!! to be implemented !!!!!!!!!!!!!!!!!
-                  if (filter_flag == 1) then
-                  ! THIS SECTION CALCULATES THE FILTER AND MUST BE CALLED BEFORE
-                  ! FILTER IS CALLED
-                      F1=freq_low(ifreq)
-                      F2=freq_high(ifreq)
-                      call BNDPAS(F1,F2,DELT,D,G,nstep)
-                  !    F1 = LOW FREQUENCY CUTOFF (6 DB DOWN)
-                  !    F2 = HIGH FREQUENCY CUTOFF (6 DB DOWN)
-                  !    DELT = SAMPLE INTERVAL IN MILLISECONDS
-                  !    D = WILL CONTAIN 8 Z DOMAIN COEFICIENTS OF RECURSIVE FILTER
-                  !    G = WILL CONTAIN THE GAIN OF THE FILTER,
-                      call FILTER(data_filtered(:,irec),nstep,D,G,2)
-                      call FILTER(syn_filtered(:,irec),nstep,D,G,2)
-                  !     X = DATA VECTOR OF LENGTH N CONTAINING DATA TO BE FILTERED
-                  !     D = FILTER COEFFICIENTS CALCULATED BY BNDPAS
-                  !     G = FILTER GAIN
-                  !     IG = 1  one pass
-                  !     ig = 2  two passes
-                  endif
+  !!!! computing adj sources !!!!
+  if (filter_flag == 0)   then
+    nfreq=1
+  endif
+  do irec = 1,nrec
+    do ifreq = 1,nfreq
+      data_filtered(:,irec)= data_origin(:,irec)
+      !!!!!!!!!!!!!!!!!! to be implemented !!!!!!!!!!!!!!!!!
+      if (filter_flag == 1) then
+        ! THIS SECTION CALCULATES THE FILTER AND MUST BE CALLED BEFORE
+        ! FILTER IS CALLED
+        F1=freq_low(ifreq)
+        F2=freq_high(ifreq)
+        call BNDPAS(F1,F2,DELT,D,G,nstep)
+        !    F1 = LOW FREQUENCY CUTOFF (6 DB DOWN)
+        !    F2 = HIGH FREQUENCY CUTOFF (6 DB DOWN)
+        !    DELT = SAMPLE INTERVAL IN MILLISECONDS
+        !    D = WILL CONTAIN 8 Z DOMAIN COEFICIENTS OF RECURSIVE FILTER
+        !    G = WILL CONTAIN THE GAIN OF THE FILTER,
+        call FILTER(data_filtered(:,irec),nstep,D,G,2)
+        !     X = DATA VECTOR OF LENGTH N CONTAINING DATA TO BE FILTERED
+        !     D = FILTER COEFFICIENTS CALCULATED BY BNDPAS
+        !     G = FILTER GAIN
+        !     IG = 1  one pass
+        !     ig = 2  two passes
+      endif
 
+      c(:) = 0.0
+      I(:) = (length_window-1)
 
+      data_trace = data_filtered(:,irec)
 
-
-
-   c(:)=0.0
-   I(:)=(length_window-1)
-   data_trace=data_filtered(:,irec)
-    syn_trace= syn_filtered(:,irec)
-!   if ( ( trace_data_max(irec) > (factor*data_max) ) .and. (trace_syn_max(irec) > (factor*syn_max))) then
-   if (1 == 1) then
       !!!! cross-correlation !!!!
       do i_start_window = (nstep+1)/2, (nstep+1)/2                                 !the positive branch
-!      do i_start_window = (nstep+1)/2 - length_window, (nstep+1)/2 - length_window  !the negative branch
-         i_end_window = i_start_window + length_window - 1
+      !do i_start_window = (nstep+1)/2 - length_window, (nstep+1)/2 - length_window  !the negative branch
+        i_end_window = i_start_window + length_window - 1
 
-         data_trace_temp=data_trace(i_start_window:i_end_window)
+        data_trace_temp = data_trace(i_start_window:i_end_window)
 
-         Norm_data_crit=sqrt(DOT_PRODUCT(data_trace,data_trace))
-         AMP = Norm_data_crit
+        Norm_data_crit = sqrt(DOT_PRODUCT(data_trace,data_trace))
+        AMP = Norm_data_crit
 
-         Norm_data=sqrt(DOT_PRODUCT( data_trace_temp,data_trace_temp ))
-         Norm = Norm_data*Norm_data
+        Norm_data = sqrt(DOT_PRODUCT( data_trace_temp,data_trace_temp ))
+        Norm = Norm_data*Norm_data
 
-         w(:)=0.0
-         w(i_start_window : i_end_window)=taper
+        w(:)=0.0
+        w(i_start_window : i_end_window)=taper
       enddo
-   endif
-   data_trace=data_trace*w
-   data_filtered(:,irec)=data_trace
-   !!!! normal adjoint sources !!!!
-         adj_temp=data_filtered(i_start_window : i_end_window,irec)
-         Norm_adj_temp = - DOT_PRODUCT(adj_temp,adj_temp)*dt  ! minus sign comes from integration by part !
-         !!!! choose which one to use !!!!
-         adj_temp=adj_temp/Norm_adj_temp                                              ! normal adjoint sources
-         ! adj_temp=adj_temp/Norm_adj_temp                                            ! ray density map DeltaT=+1
-         ! adj_temp=adj_temp/Norm_adj_temp * ((-1)**irec)                             ! ray density map DeltaT=+-1
 
-         adj(i_start_window : i_end_window ,irec )=adj_temp
-         traveltime_delay=dt
-         misfit_traveltime = misfit_traveltime + traveltime_delay * traveltime_delay / 2.0
-         write(1111,*) traveltime_delay
+      data_trace = data_trace*w
+      data_filtered(:,irec) = data_trace
 
-   enddo  !do ifreq=1,nfreq
+      !!!! normal adjoint sources !!!!
+      adj_temp = data_filtered(i_start_window : i_end_window,irec)
+      Norm_adj_temp = - DOT_PRODUCT(adj_temp,adj_temp)*dt  ! minus sign comes from integration by part !
+      !!!! choose which one to use !!!!
+      adj_temp = adj_temp/Norm_adj_temp                                              ! normal adjoint sources
+      !adj_temp = adj_temp/Norm_adj_temp                                            ! ray density map DeltaT=+1
+      !adj_temp = adj_temp/Norm_adj_temp * ((-1)**irec)                             ! ray density map DeltaT=+-1
 
-   !!!! output !!!!
-   file_adj_BHZ      = './SEM/A7.II.MXZ.adj'
-   open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
-   do itime = 1,nstep
+      adj(i_start_window : i_end_window ,irec ) = adj_temp
+      traveltime_delay = dt
+      misfit_traveltime = misfit_traveltime + traveltime_delay * traveltime_delay / 2.0
+      write(1111,*) traveltime_delay
+
+    enddo  !do ifreq=1,nfreq
+
+    !!!! output !!!!
+    ! vertical component
+    file_adj = './SEM/'//trim(network)//'.'//trim(station)//'.MXZ.adj'
+    open(unit=1002,file=trim(file_adj),status='unknown')
+    do itime = 1,nstep
       write(1002,*) t(itime), adj(nstep-itime+1,irec)
-!      write(1002,*) t(itime), adj(itime,irec)
-   enddo
-   close(1002)
-   file_adj_BHZ      = './SEM/A7.II.MXZ.adj_reversed'
-   open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
-   do itime = 1,nstep
-!      write(1002,*) t(itime), adj(nstep-itime+1,irec)
+      !write(1002,*) t(itime), adj(itime,irec)
+    enddo
+    close(1002)
+    file_adj = './SEM/'//trim(network)//'.'//trim(station)//'.MXZ.adj_reversed'
+    open(unit=1002,file=trim(file_adj),status='unknown')
+    do itime = 1,nstep
+      !write(1002,*) t(itime), adj(nstep-itime+1,irec)
       write(1002,*) t(itime), adj(itime,irec)
-   enddo
-   close(1002)
+    enddo
+    close(1002)
 
-
-   file_adj_BHZ      = './SEM/A7.II.MXE.adj'
-   open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
-   do itime = 1,nstep
+    ! east component
+    file_adj = './SEM/'//trim(network)//'.'//trim(station)//'.MXE.adj'
+    open(unit=1002,file=trim(file_adj),status='unknown')
+    do itime = 1,nstep
       write(1002,*) t(itime), 0.0
-   enddo
-   close(1002)
-   file_adj_BHZ      = './SEM/A7.II.MXN.adj'
-   open(unit=1002,file=trim(file_adj_BHZ),status='unknown')
-   do itime = 1,nstep
+    enddo
+    close(1002)
+
+    ! north component
+    file_adj = './SEM/'//trim(network)//'.'//trim(station)//'.MXN.adj'
+    open(unit=1002,file=trim(file_adj),status='unknown')
+    do itime = 1,nstep
       write(1002,*) t(itime), 0.0
-   enddo
-   close(1002)
+    enddo
+    close(1002)
 
-enddo
+  enddo
 
+  close(1111)
 
-close(1111)
-
-file_misfit = './OUTPUT_FILES/misfit_traveltime'
-open(unit=1001,file=trim(file_misfit),status='unknown')
-write(1001,*) misfit_traveltime, traveltime_delay
-close(1001)
+  file_misfit = './OUTPUT_FILES/misfit_traveltime'
+  open(unit=1001,file=trim(file_misfit),status='unknown')
+  write(1001,*) misfit_traveltime, traveltime_delay
+  close(1001)
 
 end program adj_traveltime
 
 
-
-
-
-
-
-
-
-
-
-
-
+!
+!-----------------------------------------------------------------------------
+!
 
 
 SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)

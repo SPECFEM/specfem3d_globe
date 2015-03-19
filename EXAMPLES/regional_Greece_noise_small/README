@@ -2,17 +2,17 @@
 README
 ----------------------------------------------------------
 
-This example creates a regional mesh using model S29EA
+This example creates a small regional mesh using model PREM
 and runs a spectral-element simulation.
 
 1. forward simulation:
 ----------------------
 
 type:
-./process.sh
+./run_this_example.sh
 
-to setup this directory for the simulation and to submit a corresponding
-PBS-job script "go_mesher_solver_pbs.bash".
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
 
 The simulation is accurate down to a shortest period of ~ 17 s.
 Reference seismograms for comparions are provided in the directory: REF_SEIS/
@@ -22,10 +22,10 @@ Reference seismograms for comparions are provided in the directory: REF_SEIS/
 ---------------------
 
 type:
-./process.kernel.sh
+./run_this_example.kernel.sh
 
-to setup this directory for the simulation and to submit a corresponding
-PBS-job script "go_mesher_solver_pbs.kernel.bash".
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.kernel.bash".
 
 The simulation will use the adjoint source given in directory: SEM/
 to compute a travel-time sensitivity kernel.

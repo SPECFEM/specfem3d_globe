@@ -42,8 +42,8 @@ cd ../../
 # compiles for an adjoint simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
 sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:"  DATA/Par_file
-make >& $currentdir/tmp_make_output.log
-make xcombine_vol_data >> tmp_make_output.log
+make clean
+make all
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
@@ -55,8 +55,9 @@ cd $currentdir
 # copy executables
 mkdir -p bin
 cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
+cp ../../bin/xspecfem3D ./bin/
 cp ../../bin/xcombine_vol_data ./bin/
+cp ../../bin/xcombine_vol_data_vtk ./bin/
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/

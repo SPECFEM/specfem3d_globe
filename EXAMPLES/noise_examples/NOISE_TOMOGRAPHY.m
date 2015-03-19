@@ -54,6 +54,26 @@ fmax=1/2/dt;       % Nyquist frequency, due to sampling theory
 df=1/T;            % frequency interval
 f=[0:df:fmax -fmax:df:-df]; % discrete frequencies
 
+%% checks noise model string
+if NOISE_MODEL=='NLNM'
+  model_info='Peterson New Low Noise Model';
+elseif NOISE_MODEL=='NHNM'
+  model_info='Peterson New High Noise Model';
+else
+  fprintf('Error: noise model %s not recognized, use NLNM or NHNM for low or high noise model',NOISE_MODEL);
+  exit 1;
+end
+
+%% user output
+fprintf('NOISE_TOMOGRAPHY input:\n');
+fprintf('  number of time steps = %i \n',NSTEP);
+fprintf('  time step size       = %f s\n',dt);
+fprintf('  period range min/max = %f / %f s\n',Tmin,Tmax);
+fprintf('  noise model          = %s - %s\n',NOISE_MODEL,model_info);
+fprintf('\n');
+fprintf('  total simulation time = %f s\n',T);
+fprintf('  Nyquist frequency: %f Hz\n',fmax);
+
 %% initialize the power spectrum of noise
 accel=zeros(size(f)); % for acceleration
 veloc=zeros(size(f)); % for velocity

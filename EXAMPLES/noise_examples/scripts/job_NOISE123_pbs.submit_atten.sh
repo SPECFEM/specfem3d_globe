@@ -1,5 +1,5 @@
 #!/bin/bash
-#PBS -N NOISE_global_long
+#PBS -N NOISE_sim
 #PBS -q tromp
 #PBS -o zzz_global_long/job_info/output
 #PBS -e zzz_global_long/job_info/error
@@ -32,7 +32,7 @@ fi
 LOCAL_PATH=`grep LOCAL_PATH DATA/Par_file | cut -d = -f 2 | sed 's/ //g'`
 d=`date`
 echo "Start cleaning local disk on nodes, $d"
-pbsdsh $PBS_O_WORKDIR/NOISE_clean_create   $LOCAL_PATH
+pbsdsh $PBS_O_WORKDIR/run_NOISE_clean_create.sh   $LOCAL_PATH
 d=`date`
 echo "Finish cleaning local disk on nodes, $d"
 
@@ -109,7 +109,7 @@ $PBS_O_WORKDIR/xcreate_movie_AVS_DX_noattenuation < temp_input_movie
 ## collect outputs (e.g., kernels, meshes) from local nodes to global disk
 d=`date`
 echo "Start collecting outputs from nodes, $d"
-pbsdsh $PBS_O_WORKDIR/NOISE_collect  $LOCAL_PATH      $PBS_O_WORKDIR/OUTPUT_FILES/
+pbsdsh $PBS_O_WORKDIR/run_NOISE_collect.sh  $LOCAL_PATH      $PBS_O_WORKDIR/OUTPUT_FILES/
 d=`date`
 echo "Finish collecting outputs from nodes, $d"
 ## combine_vol_data
@@ -131,6 +131,6 @@ cp DATA/CMTSOLUTION $DIR_TEMP/
 cp DATA/STATIONS    $DIR_TEMP/
 
 ## clean local nodes
-pbsdsh $PBS_O_WORKDIR/NOISE_clean_create   $LOCAL_PATH
+pbsdsh $PBS_O_WORKDIR/run_NOISE_clean_create.sh   $LOCAL_PATH
 d=`date`
 echo "Finish cleaning local disk on nodes, $d"
