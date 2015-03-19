@@ -79,7 +79,8 @@
     ATT1,ATT2,ATT3,ATT4,ATT5, &
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE,NTSTEP_BETWEEN_FRAMES,SIMULATION_TYPE,MOVIE_SURFACE, &
     UNDO_ATTENUATION,MEMORY_INSTALLED_PER_CORE_IN_GB,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-    this_region_has_a_doubling,doubling_index,ner,ratio_sampling_array
+    this_region_has_a_doubling,doubling_index,ner,ratio_sampling_array, &
+    RECORD_LENGTH_IN_MINUTES,NSTEP
 
   implicit none
 
@@ -165,6 +166,9 @@
     print *,'total points per slice = ',sum(nglob)
     print *
     print *,'the time step of the solver will be DT = ',sngl(DT)
+    print *
+    print *,'current record length is = ',sngl(RECORD_LENGTH_IN_MINUTES),'min'
+    print *,'current minimum number of time steps will be = ',NSTEP
     print *
     if (MOVIE_SURFACE .or. MOVIE_VOLUME) then
       print *,'MOVIE_VOLUME :',MOVIE_VOLUME
