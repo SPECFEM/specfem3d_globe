@@ -35,19 +35,18 @@
   implicit none
 
   ! local parameters
-  integer :: ipoin,ispec2D,i,j,npoin
+  integer :: ispec2D,i,j,npoin
 
   ! gets number of points on surface mesh
-  ipoin = 0
+  npoin = 0
   do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ! loop on all the points inside the element
     do j = 1,NGLLY,NIT
       do i = 1,NGLLX,NIT
-        ipoin = ipoin + 1
+        npoin = npoin + 1
       enddo
     enddo
   enddo
-  npoin = ipoin
 
   ! checks
   if (npoin /= nmovie_points) then

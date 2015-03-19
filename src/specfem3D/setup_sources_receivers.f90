@@ -180,7 +180,7 @@
 
   ! uses an external file for source time function, which starts at time 0.0
   if (EXTERNAL_SOURCE_TIME_FUNCTION) then
-    hdur(:) = 0._CUSTOM_REAL
+    hdur(:) = 0.d0
     t0      = 0.d0
   endif
 
@@ -268,6 +268,14 @@
                               elat_SAC,elon_SAC,depth_SAC,mb_SAC,cmt_lat_SAC,&
                               cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES)
 
+  ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
+  ! checks if anything to do for noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'noise simulation will ignore CMT sources'
+    endif
+  endif
+
   end subroutine setup_sources
 
 !
@@ -294,28 +302,22 @@
   !    NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
   !
   ! adds initial t0 time to update number of time steps and reach full record length
-  NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+  if (abs(t0) > 0.d0) then
+    NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+  endif
 
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-  ! noise tomography:
-  ! time steps needs to be doubled, due to +/- branches
-  if (NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1
-
 !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
   if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1) * NT_DUMP_ATTENUATION
   endif
   it_end = NSTEP
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
   if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP .or. is_initial_guess) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-
-  ! re-checks output steps?
-  !if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5) /= 0)) &
-  !  stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
 
   ! subsets used to save adjoint sources must not be larger than the whole time series,
   ! otherwise we waste memory
@@ -631,7 +633,11 @@
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
     ! source interpolated on all GLL points in source element
     allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating sourcearrays')
+    if (ier /= 0 ) then
+      print*,'Error rank ',myrank,': allocating sourcearrays failed! number of sources = ',NSOURCES
+      call exit_MPI(myrank,'Error allocating sourcearrays')
+    endif
+    ! initializes
     sourcearrays(:,:,:,:,:) = 0._CUSTOM_REAL
 
     ! stores source arrays
@@ -656,7 +662,12 @@
       ! allocate adjoint source arrays
       allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
                stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
+      if (ier /= 0 ) then
+        print*,'Error rank ',myrank,': allocating adjoint sourcearrays failed! Please check your memory usage...'
+        print*,'  failed number of local adjoint sources = ',nadj_rec_local,' steps = ',NTSTEP_BETWEEN_READ_ADJSRC
+        call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
+      endif
+      ! initializes
       adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
       ! additional buffer for asynchronous file i/o
@@ -873,6 +884,7 @@
              hetar_store(nrec_local,NGLLY), &
              hgammar_store(nrec_local,NGLLZ),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver interpolators')
+
     allocate(hlagrange_store(NGLLX, NGLLY, NGLLZ, nrec_local), stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array hlagrange_store')
 
@@ -908,8 +920,10 @@
       if (ier /= 0) stop 'Error while allocating adjoint seismograms'
 
       ! allocates Frechet derivatives array
-      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
-               stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
+      allocate(moment_der(NDIM,NDIM,nrec_local), &
+               sloc_der(NDIM,nrec_local), &
+               stshift_der(nrec_local), &
+               shdur_der(nrec_local),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Frechet derivatives arrays')
 
       moment_der(:,:,:) = 0._CUSTOM_REAL

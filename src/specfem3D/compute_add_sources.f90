@@ -42,6 +42,9 @@
   double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
 
+  ! checks if anything to do for noise simulation
+  if (NOISE_TOMOGRAPHY /= 0) return
+
   if (.not. GPU_MODE) then
     ! on CPU
     do isource = 1,NSOURCES
@@ -322,6 +325,9 @@
   double precision, external :: comp_source_time_function_rickr
 
   integer :: it_tmp
+
+  ! checks if anything to do for noise simulation
+  if (NOISE_TOMOGRAPHY /= 0) return
 
   ! iteration step
   if (UNDO_ATTENUATION) then

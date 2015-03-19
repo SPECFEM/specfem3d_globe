@@ -107,27 +107,33 @@
   NEX_MAX = max(NEX_XI,NEX_ETA)
   call get_timestep_and_layers(NEX_MAX)
 
+  ! time steps
+  ! (see also routine setup_timesteps in setup_sources_receivers.f90)
+  !
   ! initial guess : compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
+
+  ! noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    ! time steps needs to be doubled, due to +/- branches (symmetric around zero)
+    NSTEP = 2 * NSTEP - 1
+  endif
 
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-  ! noise simulations
-  if (NOISE_TOMOGRAPHY /= 0) then
-    ! time steps needs to be doubled, due to +/- branches
-    NSTEP = 2*NSTEP-1
-  endif
-
-  ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-  if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-
+  ! half-time duration
+  !
   ! computes a default hdur_movie that creates nice looking movies.
   ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if (HDUR_MOVIE <= TINYVAL) then
     HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
   endif
+  ! noise simulations require MOVIE_SURFACE flag to output wavefield at Earth's surface;
+  ! however they don't need to convolve the source time function with any HDUR_MOVIE
+  ! since they employ a separate noise-spectrum source S_squared
+  if (NOISE_TOMOGRAPHY /= 0) HDUR_MOVIE = 0.d0
 
   ! checks parameters
   call rcp_check_parameters()
@@ -299,9 +305,6 @@
   !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
   if (UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
-
-  if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5) /= 0)) &
-    stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
 
   ! check that reals are either 4 or 8 bytes
   if (CUSTOM_REAL /= SIZE_REAL .and. CUSTOM_REAL /= SIZE_DOUBLE) &

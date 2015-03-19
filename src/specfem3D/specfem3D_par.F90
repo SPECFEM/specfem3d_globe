@@ -441,7 +441,7 @@ module specfem_par_crustmantle
     rho_kl_crust_mantle,beta_kl_crust_mantle,alpha_kl_crust_mantle
 
   ! noise strength kernel
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: Sigma_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sigma_kl_crust_mantle
   ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: cijkl_kl_crust_mantle
   ! approximate hessian

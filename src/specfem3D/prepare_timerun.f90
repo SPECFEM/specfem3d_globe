@@ -1058,9 +1058,9 @@
 
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
-      allocate( Sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      allocate( sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise sigma kernel')
-      Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
     ! approximate hessian
@@ -1246,7 +1246,7 @@
 
     ! checks
     if (SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
-        stop 'Error: LDDRK is not implemented for adjoint tomography'
+        stop 'Error: LDDRK is not implemented for adjoint or noise tomography'
 
     ! number of stages for scheme
     NSTAGE_TIME_SCHEME = NSTAGE   ! 6 stages
@@ -1738,35 +1738,53 @@
   integer :: ier
 
   ! NOISE TOMOGRAPHY
-  if (NOISE_TOMOGRAPHY /= 0) then
-    ! user info
-    if (myrank == 0) then
-      write(IMAIN,*) "preparing noise arrays"
-      call flush_IMAIN()
-    endif
+  ! checks if anything to do
+  if (NOISE_TOMOGRAPHY <= 0) return
 
-    ! allocates noise arrays
-    allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
-             normal_x_noise(nmovie_points), &
-             normal_y_noise(nmovie_points), &
-             normal_z_noise(nmovie_points), &
-             mask_noise(nmovie_points), &
-             noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise arrays')
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing noise arrays:"
+    write(IMAIN,*) "  NOISE_TOMOGRAPHY = ",NOISE_TOMOGRAPHY
+    write(IMAIN,*) "  timing:"
+    write(IMAIN,*) "    start time           = ",sngl(-t0)," seconds"
+    write(IMAIN,*) "    time step            = ",sngl(DT)," s"
+    write(IMAIN,*) "    number of time steps = ",NSTEP
+    ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
+    write(IMAIN,*) "  ignoring CMT sources"
+    call flush_IMAIN()
+  endif
 
-    ! initializes
-    noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
-    normal_x_noise(:)            = 0._CUSTOM_REAL
-    normal_y_noise(:)            = 0._CUSTOM_REAL
-    normal_z_noise(:)            = 0._CUSTOM_REAL
-    mask_noise(:)                = 0._CUSTOM_REAL
-    noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
+  ! synchronizes processes
+  call synchronize_all()
 
-    ! gets noise parameters
-    call read_parameters_noise()
+  ! allocates noise arrays
+  allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
+           normal_x_noise(nmovie_points), &
+           normal_y_noise(nmovie_points), &
+           normal_z_noise(nmovie_points), &
+           mask_noise(nmovie_points), &
+           noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise arrays')
 
-    ! checks noise setup
-    call check_parameters_noise()
+  ! initializes
+  noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
+  normal_x_noise(:)            = 0._CUSTOM_REAL
+  normal_y_noise(:)            = 0._CUSTOM_REAL
+  normal_z_noise(:)            = 0._CUSTOM_REAL
+  mask_noise(:)                = 0._CUSTOM_REAL
+  noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! gets noise parameters
+  call read_parameters_noise()
+
+  ! checks noise setup
+  call check_parameters_noise()
+
+  ! user output
+  if(myrank == 0) then
+    write(IMAIN,*) "  noise source uses master record id = ",irec_master_noise
+    write(IMAIN,*) "  noise master station: ",trim(network_name(irec_master_noise))//'.'//trim(station_name(irec_master_noise))
+    call flush_IMAIN()
   endif
 
   ! synchronizes processes
