@@ -309,10 +309,19 @@
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1) * NT_DUMP_ATTENUATION
+  ! checks with undo_attenuation
+  if (UNDO_ATTENUATION) then
+    ! old:
+    !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+    !if (mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+    !  NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1) * NT_DUMP_ATTENUATION
+    !endif
+    ! makes sure buffer size is not too big for total time length
+    if (NSTEP < NT_DUMP_ATTENUATION) &
+      call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
   endif
+
+  ! time loop increments end
   it_end = NSTEP
 
   ! subsets used to save seismograms must not be larger than the whole time series,
@@ -324,6 +333,9 @@
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     if (NTSTEP_BETWEEN_READ_ADJSRC > NSTEP) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
   endif
+
+  ! debug
+  !if (myrank == 0 ) print*,'setup time steps = ',NSTEP,' t0 = ',t0,' DT = ',DT
 
   end subroutine setup_timesteps
 
@@ -933,7 +945,8 @@
     endif
     ! initializes seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
-    nit_written = 0
+    ! adjoint seismograms
+    it_adj_written = 0
   else
     ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...

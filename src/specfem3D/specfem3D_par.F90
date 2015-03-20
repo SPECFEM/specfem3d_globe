@@ -193,9 +193,11 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! seismograms
-  integer :: it_begin,it_end,nit_written
+  integer :: it_begin,it_end
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
   integer :: seismo_offset, seismo_current
+  ! adjoint seismograms
+  integer :: it_adj_written
 
   ! for SAC headers for seismograms
   integer :: yr_SAC,jda_SAC,ho_SAC,mi_SAC
@@ -297,6 +299,7 @@ module specfem_par
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
   ! undo_attenuation
+  integer :: NSUBSET_ITERATIONS
   integer :: iteration_on_subset,it_of_this_subset
 
   ! serial i/o mesh reading
@@ -304,6 +307,9 @@ module specfem_par
   logical :: you_can_start_doing_IOs
 #endif
 
+  ! for EXACT_UNDOING_TO_DISK
+  integer, dimension(:), allocatable :: integer_mask_ibool_exact_undo
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
 
 
 end module specfem_par

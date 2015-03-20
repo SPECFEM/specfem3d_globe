@@ -331,10 +331,28 @@
 
   ! iteration step
   if (UNDO_ATTENUATION) then
-    it_tmp = iteration_on_subset * NT_DUMP_ATTENUATION - it_of_this_subset + 1
+    ! example: NSTEP is a multiple of NT_DUMP_ATTENUATION
+    !         NT_DUMP_ATTENUATION = 301, NSTEP = 1204, NSUBSET_ITERATIONS = 4, iteration_on_subset = 1 -> 4,
+    !              1. subset, it_temp goes from 301 down to 1
+    !              2. subset, it_temp goes from 602 down to 302
+    !              3. subset, it_temp goes from 903 down to 603
+    !              4. subset, it_temp goes from 1204 down to 904
+    !valid for multiples only:
+    !it_tmp = iteration_on_subset * NT_DUMP_ATTENUATION - it_of_this_subset + 1
+    !
+    ! example: NSTEP is **NOT** a multiple of NT_DUMP_ATTENUATION
+    !          NT_DUMP_ATTENUATION = 301, NSTEP = 900, NSUBSET_ITERATIONS = 3, iteration_on_subset = 1 -> 3
+    !              1. subset, it_temp goes from (900 - 602) = 298 down to 1
+    !              2. subset, it_temp goes from (900 - 301) = 599 down to 299
+    !              3. subset, it_temp goes from (900 - 0)   = 900 down to 600
+    !works always:
+    it_tmp = NSTEP - (NSUBSET_ITERATIONS - iteration_on_subset)*NT_DUMP_ATTENUATION - it_of_this_subset + 1
   else
     it_tmp = it
   endif
+
+  !debug
+  !if (myrank == 0 ) print*,'compute_add_sources_backward: it_tmp = ',it_tmp,it
 
   if (.not. GPU_MODE) then
     ! on CPU

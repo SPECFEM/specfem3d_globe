@@ -155,7 +155,7 @@
   double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
   integer icomp, itime, ios
-  integer it_start,it_end,index_i
+  integer index_start,index_end,index_i
   real(kind=CUSTOM_REAL) :: junk
   character(len=3),dimension(NDIM) :: comp
   character(len=MAX_STRING_LEN) :: filename
@@ -169,10 +169,10 @@
   ! (sub)trace start and end
   ! reading starts in chunks of NSTEP_BLOCK from the end of the trace,
   ! i.e. as an example: total length NSTEP = 3000, chunk length NSTEP_BLOCK= 1000
-  !                                then it will read in first it_start=2001 to it_end=3000,
-  !                                second time, it will be it_start=1001 to it_end=2000 and so on...
-  it_start = iadjsrc(it_sub_adj,1)
-  it_end = iadjsrc(it_sub_adj,1)+NSTEP_BLOCK-1
+  !                                then it will read in first index_start=2001 to index_end=3000,
+  !                                second time, it will be index_start=1001 to index_end=2000 and so on...
+  index_start = iadjsrc(it_sub_adj,1)
+  index_end = iadjsrc(it_sub_adj,1)+NSTEP_BLOCK-1
 
 
   ! unfortunately, things become more tricky because of the Newmark time scheme at
@@ -185,9 +185,9 @@
   ! we would have to shift this indices by minus 1, to read in the adjoint source trace between 0 to 2999.
   ! since 0 index is out of bounds, we would have to put that adjoint source displacement artificially to zero
   !
-  ! here now, it_start is now 2001 and it_end = 3000, then 1001 to 2000, then 1 to 1000.
-  it_start = it_start
-  it_end = it_end
+  ! here now, index_start is now 2001 and index_end = 3000, then 1001 to 2000, then 1 to 1000.
+  index_start = index_start
+  index_end = index_end
 
   adj_src = 0._CUSTOM_REAL
   do icomp = 1, NDIM
@@ -207,7 +207,7 @@
     !if (ios /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
 
     ! jumps over unused trace length
-    do itime  = 1,it_start-1
+    do itime  = 1,index_start-1
       read(IIN_ADJ,*,iostat=ios) junk,junk
       if (ios /= 0) &
         call exit_MPI(myrank,&
@@ -215,24 +215,24 @@
     enddo
 
     ! reads in (sub)trace
-    do itime = it_start,it_end
+    do itime = index_start,index_end
 
       ! index will run from 1 to NSTEP_BLOCK
-      index_i = itime - it_start + 1
+      index_i = itime - index_start + 1
 
       ! would skip read and set source artificially to zero if out of bounds, see comments above
-      if (it_start == 0 .and. itime == 0) then
+      if (index_start == 0 .and. itime == 0) then
         adj_src(icomp,1) = 0._CUSTOM_REAL
         cycle
       endif
 
       ! reads in adjoint source trace
-      !read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,itime-it_start+1)
+      !read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,itime-index_start+1)
       read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,index_i)
 
       if (ios /= 0) then
         print*,'Error reading adjoint source: ',trim(filename)
-        print*,'rank ',myrank,' - time step: ',itime,' it_start: ',it_start,' it_end: ',it_end
+        print*,'rank ',myrank,' - time step: ',itime,' index_start: ',index_start,' index_end: ',index_end
         print*,'  ',trim(filename)//'has wrong length, please check with your simulation duration'
         call exit_MPI(myrank,'file '//trim(filename)//' has wrong length, please check with your simulation duration')
       endif

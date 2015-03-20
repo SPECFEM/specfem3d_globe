@@ -860,15 +860,6 @@
   ! get the base pathname for output files
   OUTPUT_FILES = OUTPUT_FILES_BASE
 
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
-!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
-  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
-    ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-    if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-  endif
-
   ! checks
   if (.not. MOVIE_SURFACE) stop 'movie surface frames were not saved by the solver'
 

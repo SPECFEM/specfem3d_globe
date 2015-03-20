@@ -82,7 +82,7 @@ contains
                                        eps_trace_over_3_crust_mantle, &
                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                       nit_written, &
+                                       it_adj_written, &
                                        moment_der,sloc_der,stshift_der,shdur_der, &
                                        seismograms)
     case (3)
@@ -110,8 +110,8 @@ contains
       endif
     case (2)
       ! adjoint wavefield
-      if (nrec_local > 0 ) call write_adj_seismograms(nit_written)
-      nit_written = it
+      if (nrec_local > 0 ) call write_adj_seismograms(it_adj_written)
+      it_adj_written = it
     end select
 
     ! resets current seismogram position
@@ -531,7 +531,7 @@ contains
 
 ! write adjoint seismograms to text files
 
-  subroutine write_adj_seismograms(nit_written)
+  subroutine write_adj_seismograms(it_adj_written)
 
   use constants
   use specfem_par,only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
@@ -541,7 +541,7 @@ contains
 
   implicit none
 
-  integer :: nit_written
+  integer,intent(in) :: it_adj_written
 
   ! local parameters
   integer :: irec,irec_local
@@ -601,10 +601,10 @@ contains
       endif
       ! make sure we never write more than the maximum number of time steps
       ! subtract half duration of the source to make sure travel time is correct
-      do isample = nit_written+1,min(it,NSTEP)
+      do isample = it_adj_written+1,min(it,NSTEP)
         ! distinguish between single and double precision for reals
         write(IOUT,*) real(dble(isample-1)*DT - t0, kind=CUSTOM_REAL), ' ', &
-                      seismograms(iorientation,irec_local,isample-nit_written)
+                      seismograms(iorientation,irec_local,isample-it_adj_written)
       enddo
 
       close(IOUT)

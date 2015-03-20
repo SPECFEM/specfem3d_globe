@@ -265,7 +265,7 @@
   character(len=MAX_STRING_LEN) :: outputname
 
   ! current subset iteration
-  iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
+  iteration_on_subset_tmp = NSUBSET_ITERATIONS - iteration_on_subset + 1
 
   if (ADIOS_FOR_UNDO_ATTENUATION) then
     call read_forward_arrays_undoatt_adios(iteration_on_subset_tmp)
@@ -274,10 +274,10 @@
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
 
     ! debug
-    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
+    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//trim(outputname),iteration_on_subset_tmp,iteration_on_subset,it
 
     ! opens corresponding snapshot file for reading
-    open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname, &
+    open(unit=IIN,file=trim(LOCAL_PATH)//'/'//trim(outputname), &
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 
