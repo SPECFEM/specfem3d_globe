@@ -247,6 +247,16 @@ langs.each { |lang|
     end
   }
 
+  elem_thread_check = "\n#if GPU_ELEM_PER_THREAD != #{$options[:elem_per_thread]}
+#error \"Preprocessor macro mesh_constants_gpu.h::GPU-ELEM_PER_THREAD (GPU_ELEM_PER_THREAD) is different from BOAST's value (#{$options[:elem_per_thread]}).\"
+#endif"
+
+  if lang == :CUDA then
+    kern_proto_f.puts elem_thread_check
+  elsif lang == :CL
+    kern_inc_f.puts elem_thread_check
+  end
+  
   kern_list_f.close
   if lang == :CUDA then
     kern_proto_f.close

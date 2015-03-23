@@ -166,6 +166,7 @@ typedef float realw;
 
 // Reduce GPU-register pressure by limited the number of thread spread
 // (GPU for embedded devices are not powerful enough for big kernels)
+// Must match BOAST compiled value (--elem flag)
 #ifndef GPU_ELEM_PER_THREAD
 #define GPU_ELEM_PER_THREAD 1
 #endif

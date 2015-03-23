@@ -41,3 +41,12 @@
 #include "compute_ani_undoatt_kernel_cl.c"
 #include "compute_iso_undoatt_kernel_cl.c"
 #include "compute_strain_kernel_cl.c"
+#include "outer_core_impl_kernel_forward_cl.c"
+#include "outer_core_impl_kernel_adjoint_cl.c"
+#include "inner_core_impl_kernel_forward_cl.c"
+#include "inner_core_impl_kernel_adjoint_cl.c"
+#include "crust_mantle_impl_kernel_forward_cl.c"
+#include "crust_mantle_impl_kernel_adjoint_cl.c"
+#if GPU_ELEM_PER_THREAD != 5
+#error "Preprocessor macro mesh_constants_gpu.h::GPU_ELEM_PER_THREAD is different from BOAST's compiled --elem value (2)."
+#endif
