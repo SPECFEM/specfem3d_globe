@@ -203,7 +203,6 @@ kerns.each { |kern|
             inputs[key].last[:block_size][0] /= $options[:elem_per_thread]
           end
         end
-        puts inputs[key].inspect
         puts k.run(*(inputs[key])).inspect
         puts k.compare_ref( outputs_ref[key], inputs[key] ).inspect
       }
