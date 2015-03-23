@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99996
+//      this file has been generated automatically by BOAST version 0.99998
 //      by: make boast_kernels
 
 /*

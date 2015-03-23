@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99996
+//      this file has been generated automatically by BOAST version 0.99998
 //      by: make boast_kernels
 
 /*
@@ -115,9 +115,9 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
 #ifndef MANUALLY_UNROLLED_LOOPS
   int l;
 #endif
-  unsigned short active;
+  unsigned short active_1;
   int offset;
-  int iglob;
+  int iglob_1;
   int working_element;
   float temp1l;
   float temp2l;
@@ -138,7 +138,7 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
   float dpotentialdx_with_rot;
   float dpotentialdy_with_rot;
   float sum_terms;
-  float gravity_term;
+  float gravity_term_1;
   float gxl;
   float gyl;
   float gzl;
@@ -160,12 +160,9 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
   __shared__ float sh_hprime_xx[(NGLL2)];
   __shared__ float sh_hprimewgll_xx[(NGLL2)];
   bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
-  tx = threadIdx.x;
-  K = (tx) / (NGLL2);
-  J = (tx - ((K) * (NGLL2))) / (NGLLX);
-  I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
-  active = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);
-  if (active) {
+  tx = threadIdx.x + ((NGLL3_PADDED) * (0)) / (1);
+  active_1 = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);
+  if (active_1) {
 #ifdef USE_MESH_COLORING_GPU
     working_element = bx;
 #else
@@ -175,11 +172,11 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
       working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1))] - (1);
     }
 #endif
-    iglob = d_ibool[(working_element) * (NGLL3) + tx] - (1);
+    iglob_1 = d_ibool[(working_element) * (NGLL3) + tx] - (1);
 #ifdef USE_TEXTURES_FIELDS
-    s_dummy_loc[tx] = tex1Dfetch(d_b_displ_oc_tex,iglob);
+    s_dummy_loc[tx] = tex1Dfetch(d_b_displ_oc_tex,iglob_1);
 #else
-    s_dummy_loc[tx] = d_potential[iglob];
+    s_dummy_loc[tx] = d_potential[iglob_1];
 #endif
   }
   if (tx < NGLL2) {
@@ -192,7 +189,10 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
 #endif
   }
   __syncthreads();
-  if (active) {
+  K = (tx) / (NGLL2);
+  J = (tx - ((K) * (NGLL2))) / (NGLLX);
+  I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
+  if (active_1) {
     temp1l = 0.0f;
     temp2l = 0.0f;
     temp3l = 0.0f;
@@ -239,9 +239,9 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
       dpotentialdx_with_rot = dpotentialdxl;
       dpotentialdy_with_rot = dpotentialdyl;
     }
-    radius = d_xstore[iglob];
-    theta = d_ystore[iglob];
-    phi = d_zstore[iglob];
+    radius = d_xstore[iglob_1];
+    theta = d_ystore[iglob_1];
+    phi = d_zstore[iglob_1];
     sincosf(theta,  &sin_theta,  &cos_theta);
     sincosf(phi,  &sin_phi,  &cos_phi);
     int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);
@@ -256,14 +256,14 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
       gxl = (sin_theta) * (cos_phi);
       gyl = (sin_theta) * (sin_phi);
       gzl = cos_theta;
-      gravity_term = (((d_minus_rho_g_over_kappa_fluid[int_radius]) * (jacobianl)) * (wgll_cube[tx])) * ((dpotentialdx_with_rot) * (gxl) + (dpotentialdy_with_rot) * (gyl) + (dpotentialdzl) * (gzl));
+      gravity_term_1 = (((d_minus_rho_g_over_kappa_fluid[int_radius]) * (jacobianl)) * (wgll_cube[tx])) * ((dpotentialdx_with_rot) * (gxl) + (dpotentialdy_with_rot) * (gyl) + (dpotentialdzl) * (gzl));
     }
     s_temp1[tx] = (jacobianl) * ((xixl) * (dpotentialdx_with_rot) + (xiyl) * (dpotentialdy_with_rot) + (xizl) * (dpotentialdzl));
     s_temp2[tx] = (jacobianl) * ((etaxl) * (dpotentialdx_with_rot) + (etayl) * (dpotentialdy_with_rot) + (etazl) * (dpotentialdzl));
     s_temp3[tx] = (jacobianl) * ((gammaxl) * (dpotentialdx_with_rot) + (gammayl) * (dpotentialdy_with_rot) + (gammazl) * (dpotentialdzl));
   }
   __syncthreads();
-  if (active) {
+  if (active_1) {
     temp1l = 0.0f;
     temp2l = 0.0f;
     temp3l = 0.0f;
@@ -292,27 +292,27 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
 #endif
     sum_terms =  -((wgllwgll_yz[(K) * (NGLLX) + J]) * (temp1l) + (wgllwgll_xz[(K) * (NGLLX) + I]) * (temp2l) + (wgllwgll_xy[(J) * (NGLLX) + I]) * (temp3l));
     if (GRAVITY) {
-      sum_terms = sum_terms + gravity_term;
+      sum_terms = sum_terms + gravity_term_1;
     }
 #ifdef USE_MESH_COLORING_GPU
 #ifdef USE_TEXTURES_FIELDS
-    d_potential_dot_dot[iglob] = tex1Dfetch(d_b_accel_oc_tex,iglob) + sum_terms;
+    d_potential_dot_dot[iglob_1] = tex1Dfetch(d_b_accel_oc_tex,iglob_1) + sum_terms;
 #else
-    d_potential_dot_dot[iglob] = d_potential_dot_dot[iglob] + sum_terms;
+    d_potential_dot_dot[iglob_1] = d_potential_dot_dot[iglob_1] + sum_terms;
 #endif
 #else
     if (use_mesh_coloring_gpu) {
       if (NSPEC_OUTER_CORE > 1000) {
 #ifdef USE_TEXTURES_FIELDS
-        d_potential_dot_dot[iglob] = tex1Dfetch(d_b_accel_oc_tex,iglob) + sum_terms;
+        d_potential_dot_dot[iglob_1] = tex1Dfetch(d_b_accel_oc_tex,iglob_1) + sum_terms;
 #else
-        d_potential_dot_dot[iglob] = d_potential_dot_dot[iglob] + sum_terms;
+        d_potential_dot_dot[iglob_1] = d_potential_dot_dot[iglob_1] + sum_terms;
 #endif
       } else {
-        atomicAdd(d_potential_dot_dot + iglob, sum_terms);
+        atomicAdd(d_potential_dot_dot + iglob_1, sum_terms);
       }
     } else {
-      atomicAdd(d_potential_dot_dot + iglob, sum_terms);
+      atomicAdd(d_potential_dot_dot + iglob_1, sum_terms);
     }
 #endif
   }
