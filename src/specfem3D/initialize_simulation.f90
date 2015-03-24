@@ -224,7 +224,9 @@
 
   ! get total number of receivers
   if (myrank == 0) then
-    open(unit=IIN,file=STATIONS,iostat=ier,status='old',action='read')
+    open(unit=IIN,file=trim(STATIONS),status='old',action='read',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Stations file '//trim(STATIONS)//' could not be found, please check your setup')
+    ! counts records
     nrec = 0
     do while(ier == 0)
       read(IIN,"(a)",iostat=ier) dummystring
