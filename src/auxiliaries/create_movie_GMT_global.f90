@@ -167,7 +167,7 @@
     ! used in specfem3D.f90
     ! and ilocnum = nmovie_points = 2 * 2 * NEX_XI * NEX_ETA / NPROC
     ilocnum = 2 * 2 * NEX_PER_PROC_XI*NEX_PER_PROC_ETA
-    NIT =NGLLX-1
+    NIT = NGLLX-1
   else
     ilocnum = NGLLX*NGLLY*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
     NIT = 1
@@ -730,8 +730,8 @@
           if (distance > 10.0 .and. distance <= 20.0) then
             ! smooth transition between 10 and 20 degrees
             ! sets positive and negative maximum
-            field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.0)/10.0
-            field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.0)/10.0 )
+            field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.d0)/10.d0
+            field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.d0)/10.d0 )
           else if (distance > 20.0) then
             ! sets positive and negative maximum
             field_display(istamp1) = + max_average
@@ -748,7 +748,7 @@
         ! updates current wavefield maxima
         min_field_current = minval(field_display(:))
         max_field_current = maxval(field_display(:))
-        max_absol = (abs(min_field_current)+abs(max_field_current))/2.0
+        max_absol = (abs(min_field_current)+abs(max_field_current))/2.d0
       endif
 
       ! scales field values up to match average
