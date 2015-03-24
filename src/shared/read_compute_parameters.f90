@@ -102,6 +102,9 @@
                             R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
                             CEM_REQUEST,CEM_ACCEPT)
 
+  ! checks parameters
+  call rcp_check_parameters()
+
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
@@ -139,9 +142,6 @@
   ! however they don't need to convolve the source time function with any HDUR_MOVIE
   ! since they employ a separate noise-spectrum source S_squared
   if (NOISE_TOMOGRAPHY /= 0) HDUR_MOVIE = 0.d0
-
-  ! checks parameters
-  call rcp_check_parameters()
 
   ! check that mesh can be coarsened in depth three or four times
   CUT_SUPERBRICK_XI=.false.
@@ -266,13 +266,19 @@
 
   use constants,only: &
     CUSTOM_REAL,SIZE_REAL,SIZE_DOUBLE,NUMFACES_SHARED,NUMCORNERS_SHARED, &
-    N_SLS,NGNOD,NGNOD2D
+    N_SLS,NGNOD,NGNOD2D,NGLLX,NGLLY
 
   use shared_parameters
 
   implicit none
 
 ! checks parameters
+
+  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
+    stop 'SIMULATION_TYPE must be either 1, 2 or 3'
+
+  if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
+    stop 'NOISE_TOMOGRAPHY must be either 0, 1, 2 or 3'
 
   if (NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) &
     stop 'NCHUNKS must be either 1, 2, 3 or 6'
@@ -300,6 +306,7 @@
   if (PARTIAL_PHYS_DISPERSION_ONLY .and. UNDO_ATTENUATION) &
     stop 'cannot have both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION, they are mutually exclusive'
 
+  ! simulations with undoing attenuation
   if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'MOVIE_VOLUME_TYPE == 4 is not implemented for UNDO_ATTENUATION in order to save memory'
 
@@ -362,6 +369,30 @@
       stop 'NPROC_XI,NPROC_ETA == 1: please set in constants.h NUMFACES_SHARED and NUMCORNERS_SHARED equal to 4 and recompile'
     if (NUMCORNERS_SHARED < 4 ) &
       stop 'NPROC_XI,NPROC_ETA == 1: please set in constants.h NUMFACES_SHARED and NUMCORNERS_SHARED equal to 4 and recompile'
+  endif
+
+  ! checks movie setup
+  if (MOVIE_SURFACE) then
+    if (MOVIE_COARSE .and. NGLLX /= NGLLY) &
+      stop 'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX == NGLLY'
+  endif
+  if (MOVIE_VOLUME) then
+    if (MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
+      stop 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9'
+  endif
+
+  ! noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    if ((NOISE_TOMOGRAPHY == 1 .or. NOISE_TOMOGRAPHY == 2) .and. SIMULATION_TYPE /= 1) &
+      stop 'Noise simulations with NOISE_TOMOGRAPHY == 1 / 2 must have SIMULATION_TYPE == 1'
+    if (NOISE_TOMOGRAPHY == 3 .and. SIMULATION_TYPE /= 3) &
+      stop 'Noise simulations with NOISE_TOMOGRAPHY == 3 must have SIMULATION_TYPE == 3'
+    if (NUMBER_OF_RUNS /= 1 .or. NUMBER_OF_THIS_RUN /= 1) &
+      stop 'NUMBER_OF_RUNS and NUMBER_OF_THIS_RUN must be 1 for NOISE TOMOGRAPHY simulation'
+    if (ROTATE_SEISMOGRAMS_RT) &
+      stop 'Do NOT rotate seismograms in the code, change ROTATE_SEISMOGRAMS_RT in Par_file for noise simulation'
+    if (SAVE_ALL_SEISMOS_IN_ONE_FILE .OR. USE_BINARY_FOR_LARGE_FILE) &
+      stop 'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false. for noise simulation'
   endif
 
   end subroutine rcp_check_parameters
