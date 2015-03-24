@@ -35,20 +35,16 @@ contains
   use specfem_par_crustmantle
 
   implicit none
-
-  ! checks if anything to do
-  ! note: ASDF uses adios that defines the MPI communicator group that the solver is
-  !       run with. this means every processor in the group is needed for write_seismograms
-  if (.not. (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) .or. OUTPUT_SEISMOS_ASDF)) then
-    return
-  endif
+  ! local parameters
+  ! timing
+  double precision, external :: wtime
+  double precision :: write_time_begin,write_time
 
   ! update position in seismograms
   seismo_current = seismo_current + 1
 
   ! compute & store the seismograms only if there is at least one receiver located in this slice
   if (nrec_local > 0) then
-
     ! gets resulting array values onto CPU
     if (GPU_MODE) then
       ! gets field values from GPU
@@ -89,35 +85,49 @@ contains
       call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
                                seismo_current,seismograms)
     end select
-
   endif ! nrec_local
 
   ! write the current or final seismograms
   if (seismo_current == NTSTEP_BETWEEN_OUTPUT_SEISMOS .or. it == it_end) then
+    ! timing
+    write_time_begin = wtime()
 
-    ! writes out seismogram files
-    select case (SIMULATION_TYPE)
-    case (1,3)
-      ! forward/reconstructed wavefields
-      call write_seismograms_to_file()
-
-      ! user output
-      if (myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*) ' Total number of time steps written: ', it-it_begin+1
-        write(IMAIN,*)
-        call flush_IMAIN()
-      endif
-    case (2)
-      ! adjoint wavefield
-      if (nrec_local > 0 ) call write_adj_seismograms(it_adj_written)
-      it_adj_written = it
-    end select
+    ! checks if anything to do
+    ! note: ASDF uses adios that defines the MPI communicator group that the solver is
+    !       run with. this means every processor in the group is needed for write_seismograms
+    if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) .or. OUTPUT_SEISMOS_ASDF) then
+      ! writes out seismogram files
+      select case (SIMULATION_TYPE)
+      case (1,3)
+        ! forward/reconstructed wavefields
+        call write_seismograms_to_file()
+      case (2)
+        ! adjoint wavefield
+        call write_adj_seismograms(it_adj_written)
+        it_adj_written = it
+      end select
+    endif
 
     ! resets current seismogram position
     seismo_offset = seismo_offset + seismo_current
     seismo_current = 0
 
+    ! user output
+    if (myrank == 0) then
+      ! timing
+      write_time = wtime() - write_time_begin
+      ! output
+      write(IMAIN,*)
+      write(IMAIN,*) 'Total number of time steps written: ', it-it_begin+1
+      write(IMAIN,*)
+      if (WRITE_SEISMOGRAMS_BY_MASTER) then
+        write(IMAIN,*) 'Writing the seismograms by master proc alone took ',write_time,' seconds'
+      else
+        write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
+      endif
+      write(IMAIN,*)
+      call flush_IMAIN()
+    endif
   endif
 
   end subroutine write_seismograms
@@ -146,7 +156,6 @@ contains
   implicit none
 
   ! local parameters
-  double precision :: write_time_begin,write_time
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
 
   integer :: iproc,sender,irec_local,iorientation,irec,ier,receiver
@@ -154,10 +163,8 @@ contains
   integer :: total_seismos
   integer,dimension(:),allocatable:: islice_num_rec_local
   character(len=MAX_STRING_LEN) :: sisname
-  ! timing
-  double precision, external :: wtime
-  type(asdf_event) :: asdf_container
   ! ASDF
+  type(asdf_event) :: asdf_container
   integer :: total_seismos_local
 
   ! allocates single station seismogram
@@ -168,9 +175,6 @@ contains
   if (.not. WRITE_SEISMOGRAMS_BY_MASTER) then
 
     ! all the processes write their local seismograms themselves
-
-    write_time_begin = wtime()
-
     if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) then
       write(sisname,'(A,I5.5)') '/all_seismograms_node_',myrank
 
@@ -231,22 +235,10 @@ contains
     ! create one large file instead of one small file per station to avoid file system overload
     if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
-    ! user output
-    if (myrank == 0) then
-      write_time = wtime() - write_time_begin
-      write(IMAIN,*)
-      write(IMAIN,*) 'Writing the seismograms in parallel took ',write_time,' seconds'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
   else ! WRITE_SEISMOGRAMS_BY_MASTER
 
     ! now only the master process does the writing of seismograms and
     ! collects the data from all other processes
-
-    write_time_begin = wtime()
-
     if (myrank == 0) then
       ! on the master, gather all the seismograms
 
@@ -354,16 +346,6 @@ contains
         enddo
       endif
     endif
-
-
-    if (myrank == 0) then
-      write_time  = wtime() - write_time_begin
-      write(IMAIN,*)
-      write(IMAIN,*) 'Writing the seismograms by master proc alone took ',write_time,' seconds'
-      write(IMAIN,*)
-      call flush_IMAIN()
-    endif
-
   endif ! WRITE_SEISMOGRAMS_BY_MASTER
 
   deallocate(one_seismogram)
@@ -550,6 +532,9 @@ contains
   character(len=4) :: chn
   character(len=MAX_STRING_LEN) :: sisname
   character(len=2) :: bic
+
+  ! checks if anything to do
+  if (nrec_local <= 0 ) return
 
   call band_instrument_code(DT,bic)
 
