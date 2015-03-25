@@ -758,7 +758,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
 #define isspace(c) ((c) == ' ')
 
-static char *trim_and_default(char *s)
+static char *trim_and_default(char *s, int max_string_length)
 {
   // trim before
   while (*s != '\0' && isspace(*s)) { s++; }
@@ -767,13 +767,15 @@ static char *trim_and_default(char *s)
     return s;
   }
 
-  // note: the platform_filter argument acts weird on apple platforms, giving a string "NVIDIA   Geforce", instead of just "NVIDIA" and "Geforce"
-  //       here we assume that maximum length of GPU_PLATFORM is 11 characters
-  //       todo - find better way to avoid this?
+  // note: the platform_filter argument acts weird on e.g. apple platforms,
+  //       giving a string "NVIDIA   Geforce", instead of just "NVIDIA" and "Geforce"
+  //       here we assume that maximum length of GPU_PLATFORM is 12 characters
+  // todo - find better way to avoid this?
   // debug
   //printf("string: %s has length %i \n",s,strlen(s));
+
   int len = strlen(s);
-  if (len > 11 ) len = 11;
+  if (len > max_string_length) len = max_string_length;
 
   // trim after
   char *back = s + len;
@@ -785,6 +787,9 @@ static char *trim_and_default(char *s)
     *s = '\0';
   }
 
+  // debug
+  //printf("new string: %s has length %i \n",s,strlen(s));
+
   return s;
 }
 
@@ -794,15 +799,24 @@ enum gpu_runtime_e {COMPILE, CUDA, OPENCL};
 
 extern EXTERN_LANG
 void FC_FUNC_ (initialize_gpu_device,
-               INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_filter, char *device_filter, int *myrank_f, int *nb_devices) {
+               INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_f, char *device_f, int *myrank_f, int *nb_devices) {
 
   TRACE ("initialize_device");
 
-  enum gpu_runtime_e runtime_type = (enum gpu_runtime_e) *runtime_f;
+  const int STRING_LENGTH = 12; // GPU_PLATFORM and GPU_DEVICE string length (as defined in shared_par.f90 module)
 
-  // trims GPU_PLATFORM and GPU_DEVICE strings
-  platform_filter = trim_and_default(platform_filter);
-  device_filter = trim_and_default(device_filter);
+  char *platform_filter;
+  char *device_filter;
+
+  // copy strings (avoids buffer overflow)
+  platform_filter = strndup(platform_f, STRING_LENGTH);
+  device_filter = strndup(device_f, STRING_LENGTH);
+
+  // trims GPU_PLATFORM and GPU_DEVICE strings and replaces default "*" with empty string
+  platform_filter = trim_and_default(platform_filter,STRING_LENGTH);
+  device_filter = trim_and_default(device_filter,STRING_LENGTH);
+
+  enum gpu_runtime_e runtime_type = (enum gpu_runtime_e) *runtime_f;
 
   // sets and checks gpu runtime flags
 #if defined(USE_OPENCL) && defined(USE_CUDA)
@@ -849,4 +863,7 @@ This simulation will continue using the Cuda runtime...\n", runtime_type, CUDA, 
     initialize_cuda_device(platform_filter, device_filter, *myrank_f, nb_devices);
   }
 #endif
+
+  free(platform_filter);
+  free(device_filter);
 }

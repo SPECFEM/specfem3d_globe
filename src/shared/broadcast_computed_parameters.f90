@@ -123,8 +123,8 @@
   call bcast_all_ch(LOCAL_TMP_PATH,MAX_STRING_LEN)
   call bcast_all_ch(MODEL,MAX_STRING_LEN)
 
-  call bcast_all_ch(GPU_PLATFORM,11)
-  call bcast_all_ch(GPU_DEVICE,11)
+  call bcast_all_ch(GPU_PLATFORM,12)
+  call bcast_all_ch(GPU_DEVICE,12)
 
   call bcast_all_i(ner,MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_i(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS)

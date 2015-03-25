@@ -540,6 +540,7 @@
 
   ! GPU_MODE now defined in Par_file
   if (GPU_MODE) then
+    ! user output
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) "GPU_MODE Active."
@@ -560,7 +561,7 @@
     endif
 
     ! initializes GPU and outputs info to files for all processes
-    call initialize_gpu_device(GPU_RUNTIME, GPU_PLATFORM, GPU_DEVICE, myrank,ngpu_devices)
+    call initialize_gpu_device(GPU_RUNTIME,GPU_PLATFORM,GPU_DEVICE,myrank,ngpu_devices)
   endif
 
   ! collects min/max of local devices found for statistics
