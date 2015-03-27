@@ -10,17 +10,17 @@ program adj_traveltime
   ! USER PARAMETERS
 
   ! adjoint station
-  character(len=10) :: station='ZKR'
-  character(len=10) :: network='GE'
+  character(len=10) :: station='A7'
+  character(len=10) :: network='II'
 
   ! measurement window length (in s)
-  double precision, parameter :: length_time_window = 250.0d0
+  double precision, parameter :: length_time_window = 2000.0d0
 
   ! taper type (0 = boxcar / 1 = cosine)
   integer, parameter :: taper_type = 1
 
   ! filters traces (0 = off / 1 = on)
-  integer,parameter :: filter_flag = 0
+  integer,parameter :: filter_flag = 1
 
   ! cross-correlation branch for measurement (0 = negative / 1 = positive branch)
   integer,parameter :: branch_type = 1

@@ -16,8 +16,8 @@ GAMMA_ROTATION_AZIMUTH        = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 64
-NEX_ETA                         = 64
+NEX_XI                          = 48 
+NEX_ETA                         = 48
 
 # number of MPI processors along the two sides of the first chunk
 NPROC_XI                        = 2
@@ -52,7 +52,7 @@ ATTENUATION                     = .true.
 ABSORBING_CONDITIONS            = .true.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 1.0d0
+RECORD_LENGTH_IN_MINUTES        = 5.0d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
@@ -113,7 +113,7 @@ RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
 # save AVS or OpenDX movies
 #MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
 #MOVIE_COARSE does not work with create_movie_AVS_DX
-MOVIE_SURFACE                   = .true.
+MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
 MOVIE_COARSE                    = .false.
 NTSTEP_BETWEEN_FRAMES           = 50
@@ -148,11 +148,11 @@ LOCAL_PATH                      = ./DATABASES_MPI
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 50
+NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
-NTSTEP_BETWEEN_READ_ADJSRC      = 1000
+NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
 
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.

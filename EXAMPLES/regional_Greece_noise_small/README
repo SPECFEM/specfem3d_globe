@@ -5,7 +5,7 @@ README
 This example creates a small regional mesh using model PREM
 and runs a spectral-element simulation.
 
-1. forward simulation:
+1. forward noise simulation:
 ----------------------
 
 type:
@@ -18,7 +18,7 @@ The simulation is accurate down to a shortest period of ~ 17 s.
 Reference seismograms for comparions are provided in the directory: REF_SEIS/
 
 
-2. kernel simulation:
+2. noise kernel simulation:
 ---------------------
 
 type:

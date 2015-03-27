@@ -61,11 +61,7 @@ ln -s ../../../DATA/topo_bathy
 cd ../
 
 # creates noise spectrum
-matlab -nodisplay << EOF
-NOISE_TOMOGRAPHY(399,0.127032652,2,100,'NLNM')
-exit
-EOF
-cp -v S_squared NOISE_TOMOGRAPHY/
+./xgenerate_noise_source.sh 3599  0.169376865
 
 # run mesher & solver
 echo

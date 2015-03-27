@@ -71,7 +71,7 @@ echo
 
 sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE                 = 1:g" DATA/Par_file
 sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY                = 1:g" DATA/Par_file
-sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD                    = .true.:g" DATA/Par_file
+sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD                    = .false.:g" DATA/Par_file
 
 # master noise source: receiver id for station S001
 echo "2" > NOISE_TOMOGRAPHY/irec_master_noise
@@ -97,8 +97,9 @@ echo
 echo `date`
 echo starting 2. run in current directory $PWD
 echo
-
+sed -i "s:^SIMULATION_TYPE .*:SIMULATION_TYPE                 = 1:g" DATA/Par_file
 sed -i "s:^NOISE_TOMOGRAPHY .*:NOISE_TOMOGRAPHY                = 2:g" DATA/Par_file
+sed -i "s:^SAVE_FORWARD .*:SAVE_FORWARD                    = .true.:g" DATA/Par_file
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D
 output=$?
