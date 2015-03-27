@@ -92,11 +92,11 @@
 
     ! use dynamic allocation to allocate memory for arrays
     allocate(idoubling(NSPEC(iregion_code)), &
-            ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-            xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-            ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-            zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-            stat=ier)
+             ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+             xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+             ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+             zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
 
     ! this for non blocking MPI

@@ -50,6 +50,7 @@ mkdir -p bin
 cp ../../bin/xmeshfem3D ./bin/
 cp ../../bin/xspecfem3D ./bin/
 cp ../../bin/xcombine_vol_data ./bin/
+cp ../../bin/xcombine_vol_data_vtk ./bin/
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
@@ -60,12 +61,7 @@ ln -s ../../../DATA/topo_bathy
 cd ../
 
 # creates noise spectrum
-matlabNo << EOF
-NOISE_TOMOGRAPHY(199,0.19,2,100,'NLNM')
-exit
-EOF
-cp -v S_squared NOISE_TOMOGRAPHY/
-
+./xgenerate_noise_source.sh 3599  0.169376865
 
 # run mesher & solver
 echo

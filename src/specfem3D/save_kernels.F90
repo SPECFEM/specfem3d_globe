@@ -41,9 +41,9 @@
   implicit none
 
   ! Open an handler to the ADIOS file in which kernel variables are written.
-  if (((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      .and. ADIOS_FOR_KERNELS) then
-    call define_kernel_adios_variables(current_adios_handle)
+  if (ADIOS_FOR_KERNELS) then
+    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
+      call define_kernel_adios_variables(current_adios_handle)
   endif
 
   ! dump kernel arrays
@@ -57,7 +57,7 @@
 
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
-       call save_kernels_strength_noise()
+      call save_kernels_strength_noise()
     endif
 
     ! outer core
@@ -84,9 +84,9 @@
   endif
 
   ! Write ADIOS defined variables to disk.
-  if (((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      .and. ADIOS_FOR_KERNELS) then
-    call perform_write_adios_kernels(current_adios_handle)
+  if (ADIOS_FOR_KERNELS) then
+    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
+      call perform_write_adios_kernels(current_adios_handle)
   endif
 
   end subroutine save_kernels
@@ -125,7 +125,10 @@
   real(kind=CUSTOM_REAL) :: muvl,kappavl,muhl,kappahl
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
 
-  ! scaling factors
+  ! scaling factors: note that this scaling has been introduced by Qinya Liu (2006)
+  !                  with the intent to dimensionalize kernel values to [ s km^(-3) ]
+  !
+  ! kernel unit [ s / km^3 ]
   scale_kl = scale_t/scale_displ * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
@@ -399,12 +402,12 @@
   ! writes out kernels to files
   if (ADIOS_FOR_KERNELS) then
     call write_kernels_cm_adios(current_adios_handle, &
-                                          mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
-                                          alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-                                          betav_kl_crust_mantle,betah_kl_crust_mantle, &
-                                          eta_kl_crust_mantle, &
-                                          bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                          bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+                                mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                                alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+                                betav_kl_crust_mantle,betah_kl_crust_mantle, &
+                                eta_kl_crust_mantle, &
+                                bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+                                bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
   else
 
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -437,7 +440,6 @@
 
         ! Output these kernels as netcdf files -- one per processor.
 #ifdef CEM
-
         call write_kernel_netcdf(trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
         call write_kernel_netcdf(trim(OUTPUT_FILES)//'/alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
         call write_kernel_netcdf(trim(OUTPUT_FILES)//'/betavKernelCrustMantle.nc',  betav_kl_crust_mantle)
@@ -446,7 +448,6 @@
         call write_kernel_netcdf(trim(OUTPUT_FILES)//'/rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
 
         call write_coordinates_netcdf(trim(OUTPUT_FILES)//'/xyzCrustMantle.nc')
-
 #endif
 
         ! in case one is interested in primary kernel K_rho
@@ -619,6 +620,7 @@
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
 
+  ! scaling to units
   scale_kl = scale_t / scale_displ * 1.d9
 
   ! inner_core
@@ -676,6 +678,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
 
+  ! kernel unit [ s / km^3 ]
   scale_kl = scale_t/scale_displ * 1.d9
 
   ! scale the boundary kernels properly: *scale_kl gives s/km^3 and 1.d3 gives
@@ -736,6 +739,7 @@
 
   !scale_mass = RHOAV * (R_EARTH**3)
 
+  ! computes derivatives
   do irec_local = 1, nrec_local
     ! rotate and scale the location derivatives to correspond to dn,de,dz
     sloc_der(:,irec_local) = matmul(transpose(nu_source(:,:,irec_local)),sloc_der(:,irec_local)) &
@@ -748,9 +752,14 @@
     ! derivatives for time shift and hduration
     stshift_der(irec_local) = stshift_der(irec_local) * scale_displ**2
     shdur_der(irec_local) = shdur_der(irec_local) * scale_displ**2
+  enddo
 
-    ! writes out kernels to file
-    if (.not. ADIOS_FOR_KERNELS) then
+  ! writes out kernels to file
+  if (ADIOS_FOR_KERNELS) then
+    call write_kernels_source_derivatives_adios(current_adios_handle)
+  else
+    ! kernel file output
+    do irec_local = 1, nrec_local
       write(outputname,'(a,i6.6)') trim(OUTPUT_FILES)//'/src_frechet.',number_receiver_global(irec_local)
       open(unit=IOUT,file=trim(outputname),status='unknown',action='write')
       !
@@ -777,12 +786,7 @@
       write(IOUT,'(g16.5)') shdur_der(irec_local)
 
       close(IOUT)
-    endif
-  enddo
-
-  ! writes out kernels to file
-  if (ADIOS_FOR_KERNELS) then
-    call write_kernels_source_derivatives_adios(current_adios_handle)
+    enddo
   endif
 
   end subroutine save_kernels_source_derivatives

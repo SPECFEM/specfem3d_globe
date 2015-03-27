@@ -80,34 +80,36 @@
 
   use specfem_par
   use specfem_par_crustmantle
-  use specfem_par_movie
 
   implicit none
 
   ! local parameters
-  integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ios
+  integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ier
   real(kind=CUSTOM_REAL) :: normal_x_noise_out,normal_y_noise_out,normal_z_noise_out,mask_noise_out
   character(len=MAX_STRING_LEN) :: filename
-  real(kind=CUSTOM_REAL), dimension(nmovie_points) :: &
+  real(kind=CUSTOM_REAL), dimension(num_noise_surface_points) :: &
       val_x,val_y,val_z,val_ux,val_uy,val_uz
-  real(kind=CUSTOM_REAL), dimension(nmovie_points,0:NPROCTOT_VAL-1) :: &
+  real(kind=CUSTOM_REAL), dimension(num_noise_surface_points,0:NPROCTOT_VAL-1) :: &
       val_x_all,val_y_all,val_z_all,val_ux_all,val_uy_all,val_uz_all
 
   ! read master receiver ID -- the ID in DATA/STATIONS
-  filename = trim(OUTPUT_FILES)//'/NOISE_TOMOGRAPHY/'//'irec_master_noise'
-  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ios)
-  if (ios /= 0) &
+  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/irec_master_noise'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
     call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file contains the ID of the master receiver')
-  read(IIN_NOISE,*,iostat=ios) irec_master_noise
-  if (ios /= 0) &
+  endif
+
+  read(IIN_NOISE,*,iostat=ier) irec_master_noise
+  if (ier /= 0) then
     call exit_MPI(myrank, 'Unable to read the ID of the master receiver from '//trim(filename))
+  endif
   close(IIN_NOISE)
 
+  ! user output
   if (myrank == 0) then
     open(unit=IOUT_NOISE,file=trim(OUTPUT_FILES)//'/irec_master_noise', &
-          status='unknown',action='write',iostat=ios)
-    if (ios /= 0 ) call exit_MPI(myrank,'Error opening output file irec_master_noise')
-
+          status='unknown',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening output file irec_master_noise')
     write(IOUT_NOISE,*) 'The master receiver is: (RECEIVER ID)', irec_master_noise
     close(IOUT_NOISE)
   endif
@@ -126,21 +128,25 @@
 
   ! noise distribution and noise direction
   ipoin = 0
+
+  ! loops over surface points
+  ! puts noise distrubution and direction onto the surface points
   do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
 
     k = NGLLZ
 
     ! loop on all the points inside the element
-    do j = 1,NGLLY,NIT
-      do i = 1,NGLLX,NIT
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         ipoin = ipoin + 1
         iglob = ibool_crust_mantle(i,j,k,ispec)
         ! this subroutine must be modified by USERS
         call noise_distribution_direction(xstore_crust_mantle(iglob), &
-                  ystore_crust_mantle(iglob),zstore_crust_mantle(iglob), &
-                  normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
-                  mask_noise_out)
+                                          ystore_crust_mantle(iglob),zstore_crust_mantle(iglob), &
+                                          normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
+                                          mask_noise_out)
+
         normal_x_noise(ipoin) = normal_x_noise_out
         normal_y_noise(ipoin) = normal_y_noise_out
         normal_z_noise(ipoin) = normal_z_noise_out
@@ -149,15 +155,17 @@
     enddo
 
   enddo
+  ! checks
+  if (ipoin /= num_noise_surface_points) call exit_MPI(myrank,'Error invalid number of surface points for noise distribution')
 
-  !!!BEGIN!!! save mask_noise for check, a file called "mask_noise" is saved in "./OUTPUT_FIELS/"
+  !!!BEGIN!!! save mask_noise for check, a file called "mask_noise.bin" is saved in "./OUTPUT_FIELS/"
   ipoin = 0
   do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
     ispec = ibelm_top_crust_mantle(ispec2D)
     k = NGLLZ
     ! loop on all the points inside the element
-    do j = 1,NGLLY,NIT
-      do i = 1,NGLLX,NIT
+    do j = 1,NGLLY
+      do i = 1,NGLLX
         ipoin = ipoin + 1
         iglob = ibool_crust_mantle(i,j,k,ispec)
         val_x(ipoin) = xstore_crust_mantle(iglob)
@@ -169,24 +177,26 @@
       enddo
     enddo
   enddo
+  ! checks
+  if (ipoin /= num_noise_surface_points) call exit_MPI(myrank,'Error invalid number of surface points for noise mask')
 
   ! gather info on master proc
-  ispec = nmovie_points
-  call gather_all_cr(val_x,ispec,val_x_all,ispec,NPROCTOT_VAL)
-  call gather_all_cr(val_y,ispec,val_y_all,ispec,NPROCTOT_VAL)
-  call gather_all_cr(val_z,ispec,val_z_all,ispec,NPROCTOT_VAL)
-  call gather_all_cr(val_ux,ispec,val_ux_all,ispec,NPROCTOT_VAL)
-  call gather_all_cr(val_uy,ispec,val_uy_all,ispec,NPROCTOT_VAL)
-  call gather_all_cr(val_uz,ispec,val_uz_all,ispec,NPROCTOT_VAL)
+  call gather_all_cr(val_x,num_noise_surface_points,val_x_all,num_noise_surface_points,NPROCTOT_VAL)
+  call gather_all_cr(val_y,num_noise_surface_points,val_y_all,num_noise_surface_points,NPROCTOT_VAL)
+  call gather_all_cr(val_z,num_noise_surface_points,val_z_all,num_noise_surface_points,NPROCTOT_VAL)
+
+  call gather_all_cr(val_ux,num_noise_surface_points,val_ux_all,num_noise_surface_points,NPROCTOT_VAL)
+  call gather_all_cr(val_uy,num_noise_surface_points,val_uy_all,num_noise_surface_points,NPROCTOT_VAL)
+  call gather_all_cr(val_uz,num_noise_surface_points,val_uz_all,num_noise_surface_points,NPROCTOT_VAL)
 
   ! save mask_noise data to disk in home directory
   ! this file can be viewed the same way as surface movie data (xcreate_movie_AVS_DX)
   ! create_movie_AVS_DX.f90 needs to be modified in order to do that,
   ! i.e., instead of showing the normal component, change it to either x, y or z component, or the norm.
   if (myrank == 0) then
-    open(unit=IOUT_NOISE,file=trim(OUTPUT_FILES)//'/mask_noise', &
-              status='unknown',form='unformatted',action='write',iostat=ios)
-    if (ios /= 0 ) call exit_MPI(myrank,'Error opening output file mask_noise')
+    open(unit=IOUT_NOISE,file=trim(OUTPUT_FILES)//'/mask_noise.bin', &
+              status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening output file mask_noise')
 
     write(IOUT_NOISE) val_x_all
     write(IOUT_NOISE) val_y_all
@@ -197,7 +207,7 @@
 
     close(IOUT_NOISE)
   endif
-  !!!END!!! save mask_noise for check, a file called "mask_noise" is saved in "./OUTPUT_FIELS/"
+  !!!END!!! save mask_noise for check, a file called "mask_noise.bin" is saved in "./OUTPUT_FIELS/"
 
   end subroutine read_parameters_noise
 
@@ -220,7 +230,10 @@
   integer(kind=8) :: filesize
   character(len=MAX_STRING_LEN) :: outputname
 
+  ! checks if anything to do
+  if (NOISE_TOMOGRAPHY == 0) return
 
+  ! info file output
   if (myrank == 0) then
      open(unit=IOUT_NOISE,file=trim(OUTPUT_FILES)//'/NOISE_SIMULATION', &
           status='unknown',action='write',iostat=ier)
@@ -244,47 +257,59 @@
      close(IOUT_NOISE)
   endif
 
+  ! checks parameters
   if (NUMBER_OF_RUNS /= 1 .OR. NUMBER_OF_THIS_RUN /= 1) &
-     call exit_mpi(myrank,'NUMBER_OF_RUNS and NUMBER_OF_THIS_RUN must be 1 for NOISE TOMOGRAPHY! check DATA/Par_file')
+    call exit_mpi(myrank,'NUMBER_OF_RUNS and NUMBER_OF_THIS_RUN must be 1 for NOISE TOMOGRAPHY! check DATA/Par_file')
   if (ROTATE_SEISMOGRAMS_RT) &
-     call exit_mpi(myrank,'Do NOT rotate seismograms in the code, change ROTATE_SEISMOGRAMS_RT in DATA/Par_file')
+    call exit_mpi(myrank,'Do NOT rotate seismograms in the code, change ROTATE_SEISMOGRAMS_RT in DATA/Par_file')
   if (SAVE_ALL_SEISMOS_IN_ONE_FILE .OR. USE_BINARY_FOR_LARGE_FILE) &
-     call exit_mpi(myrank,'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false.')
-  if (MOVIE_COARSE) &
-     call exit_mpi(myrank,'Please set MOVIE_COARSE in DATA/Par_file to be .false.')
+    call exit_mpi(myrank,'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false.')
 
+  ! checks noise simulation setup
+  select case (NOISE_TOMOGRAPHY)
+  case (1)
+    ! forward noise source simulation
+    if (SIMULATION_TYPE /= 1) &
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1! check DATA/Par_file')
+  case (2)
+    ! forward ensemble wavefield simulation
+    if (SIMULATION_TYPE /= 1) &
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1! check DATA/Par_file')
+    if (.not. SAVE_FORWARD) &
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true.! check DATA/Par_file')
+  case (3)
+    ! adjoint ensemble kernel simulation
+    if (SIMULATION_TYPE /= 3) &
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3! check DATA/Par_file')
+    if (SAVE_FORWARD) &
+      call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false.! check DATA/Par_file')
+  case default
+    call exit_MPI(myrank,'Error invalid NOISE_TOMOGRAPHY value for noise simulation setup! check DATA/Par_file')
+  end select
 
-  if (NOISE_TOMOGRAPHY == 1) then
-     if (SIMULATION_TYPE /= 1) &
-        call exit_mpi(myrank,'NOISE_TOMOGRAPHY=1 requires SIMULATION_TYPE=1! check DATA/Par_file')
-  else if (NOISE_TOMOGRAPHY == 2) then
-     if (SIMULATION_TYPE /= 1) &
-        call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SIMULATION_TYPE=1! check DATA/Par_file')
-     if (.not. SAVE_FORWARD) &
-        call exit_mpi(myrank,'NOISE_TOMOGRAPHY=2 requires SAVE_FORWARD=.true.! check DATA/Par_file')
-  else if (NOISE_TOMOGRAPHY == 3) then
-     if (SIMULATION_TYPE /= 3) &
-        call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SIMULATION_TYPE=3! check DATA/Par_file')
-     if (SAVE_FORWARD) &
-        call exit_mpi(myrank,'NOISE_TOMOGRAPHY=3 requires SAVE_FORWARD=.false.! check DATA/Par_file')
+  ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
+  ! size of single record
+  reclen=CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP
+
+  ! check integer size limit: size of b_reclen_field must fit onto an 4-byte integer
+  if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM)) then
+    print *,'reclen of noise surface_movie needed exceeds integer 4-byte limit: ',reclen
+    print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP
+    print*,'bit size fortran: ',bit_size(NSPEC_TOP)
+    call exit_MPI(myrank,"error NSPEC_TOP integer limit")
   endif
 
-  if (NOISE_TOMOGRAPHY /= 0) then
-     ! save/read the surface movie using the same c routine as we do for absorbing boundaries (file ID is 9)
-     ! size of single record
-     reclen=CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP
-     ! total file size
-     filesize = reclen
-     filesize = filesize*NSTEP
+  ! total file size
+  filesize = reclen
+  filesize = filesize*NSTEP
 
-     write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
-     if (NOISE_TOMOGRAPHY == 1) call open_file_abs_w(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
-                                                     len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), filesize)
-     if (NOISE_TOMOGRAPHY == 2) call open_file_abs_r(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
-                                                     len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), filesize)
-     if (NOISE_TOMOGRAPHY == 3) call open_file_abs_r(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
-                                                     len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), filesize)
-  endif
+  write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
+  if (NOISE_TOMOGRAPHY == 1) call open_file_abs_w(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
+                                                  len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), filesize)
+  if (NOISE_TOMOGRAPHY == 2) call open_file_abs_r(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
+                                                  len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), filesize)
+  if (NOISE_TOMOGRAPHY == 3) call open_file_abs_r(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
+                                                  len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), filesize)
 
   end subroutine check_parameters_noise
 
@@ -301,7 +326,7 @@
                                          xigll,yigll,zigll,NSTEP)
 
   use constants_solver
-  use shared_input_parameters, only: OUTPUT_FILES
+  use shared_parameters,only:OUTPUT_FILES,DT
 
   implicit none
 
@@ -312,43 +337,52 @@
   double precision, dimension(NGLLZ) :: zigll
   double precision, dimension(NDIM,NDIM) :: nu_single  ! rotation matrix at the master receiver
   ! output parameters
-  real(kind=CUSTOM_REAL) :: noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP)
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP) :: noise_sourcearray
   ! local parameters
-  integer itime, i, j, k, ios
+  integer itime, i, j, k, ier
   real(kind=CUSTOM_REAL) :: junk
-  real(kind=CUSTOM_REAL) :: noise_src(NSTEP),noise_src_u(NDIM,NSTEP)
+  real(kind=CUSTOM_REAL), dimension(NSTEP) :: noise_src
+  real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: noise_src_u
   double precision, dimension(NDIM) :: nu_master       ! component direction chosen at the master receiver
   double precision :: xi_noise, eta_noise, gamma_noise ! master receiver location
-  double precision,parameter :: scale_displ_inv = 1.d0/R_EARTH ! non-dimensional scaling
-  double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
-        hgammar(NGLLZ), hpgammar(NGLLZ)
+  !double precision,parameter :: scale_displ_inv = 1.d0/R_EARTH ! non-dimensional scaling
+  double precision, dimension(NGLLX) :: hxir, hpxir
+  double precision, dimension(NGLLY) :: hetar, hpetar
+  double precision, dimension(NGLLZ) :: hgammar, hpgammar
   character(len=MAX_STRING_LEN) :: filename
 
+  ! noise file (source time function)
+  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/S_squared'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file should have been generated using Matlab scripts')
+  endif
 
   noise_src(:) = 0._CUSTOM_REAL
-  ! noise file (source time function)
-  filename = trim(OUTPUT_FILES)//'/NOISE_TOMOGRAPHY/'//'S_squared'
-  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ios)
-  if (ios /= 0) &
-    call exit_MPI(myrank, 'file '//trim(filename)//' does NOT exist! This file is generated by Matlab scripts')
-
   do itime  = 1,NSTEP
-    read(IIN_NOISE,*,iostat=ios) junk, noise_src(itime)
-    if (ios /= 0)  call exit_MPI(myrank,&
-        'file '//trim(filename)//' has wrong length, please check your simulation duration')
+    read(IIN_NOISE,*,iostat=ier) junk, noise_src(itime)
+    if (ier /= 0) then
+      print*,'Error noise source S_squared file length: NSTEP length required is ',NSTEP,' with time step size ',DT
+      call exit_MPI(myrank,'file '//trim(filename)//' has wrong length, please check with your simulation duration')
+    endif
   enddo
   close(IIN_NOISE)
 
   ! master receiver component direction, \nu_master
-  filename = trim(OUTPUT_FILES)//'/NOISE_TOMOGRAPHY/'//'nu_master'
-  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ios)
-  if (ios /= 0)  call exit_MPI(myrank,&
-        'file '//trim(filename)//' does NOT exist! nu_master is the component direction (NEZ) for master receiver')
+  filename = trim(OUTPUT_FILES)//'/..//NOISE_TOMOGRAPHY/nu_master'
+  open(unit=IIN_NOISE,file=trim(filename),status='old',action='read',iostat=ier)
+  if (ier /= 0) then
+    call exit_MPI(myrank, &
+                  'file '//trim(filename)//' does NOT exist! nu_master is the component direction (NEZ) for master receiver')
+  endif
 
   do itime = 1,3
-    read(IIN_NOISE,*,iostat=ios) nu_master(itime)
-    if (ios /= 0) call exit_MPI(myrank,&
-        'file '//trim(filename)//' has wrong length, the vector should have three components (NEZ)')
+    read(IIN_NOISE,*,iostat=ier) nu_master(itime)
+    if (ier /= 0) then
+      print*,'Error noise nu_master file length: number of required components is 3'
+      call exit_MPI(myrank,&
+                    'file '//trim(filename)//' has wrong length, the vector should have three components (NEZ)')
+    endif
   enddo
   close(IIN_NOISE)
 
@@ -458,7 +492,7 @@
   ! get coordinates of surface mesh and surface displacement
   if (.not. GPU_MODE) then
     ! on CPU
-    do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
       ispec = ibelm_top_crust_mantle(ispec2D)
       k = NGLLZ
       do j = 1,NGLLY
@@ -474,7 +508,7 @@
   endif
 
   ! save surface motion to disk
-  call write_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
+  call write_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP,it)
 
   end subroutine noise_save_surface_movie
 
@@ -519,7 +553,7 @@
   if (.not. GPU_MODE) then
     ! on CPU
     ipoin = 0
-    do ispec2D = 1, nspec_top ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
+    do ispec2D = 1, NSPEC_TOP ! NSPEC2D_TOP(IREGION_CRUST_MANTLE)
       ispec = ibelm_top_crust_mantle(ispec2D)
 
       k = NGLLZ
@@ -534,14 +568,11 @@
                 noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
                 noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
 
-          accel(1,iglob) = accel(1,iglob) &
-                            + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &
+          accel(1,iglob) = accel(1,iglob) + eta * mask_noise(ipoin) * normal_x_noise(ipoin) &
                               * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-          accel(2,iglob) = accel(2,iglob) &
-                            + eta * mask_noise(ipoin) * normal_y_noise(ipoin) &
+          accel(2,iglob) = accel(2,iglob) + eta * mask_noise(ipoin) * normal_y_noise(ipoin) &
                               * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
-          accel(3,iglob) = accel(3,iglob) &
-                            + eta * mask_noise(ipoin) * normal_z_noise(ipoin) &
+          accel(3,iglob) = accel(3,iglob) + eta * mask_noise(ipoin) * normal_z_noise(ipoin) &
                               * wgllwgll_xy(i,j) * jacobian2D_top_crust_mantle(i,j,ispec2D)
         enddo
       enddo
@@ -581,8 +612,8 @@
   integer :: i,j,k,ispec,iglob,ipoin,ispec2D
   real(kind=CUSTOM_REAL) :: eta
 
-  ! read surface movie, needed for Sigma_kl_crust_mantle
-  call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*nspec_top,it)
+  ! read surface movie, needed for sigma_kl_crust_mantle
+  call read_abs(9,noise_surface_movie,CUSTOM_REAL*NDIM*NGLLX*NGLLY*NSPEC_TOP,it)
 
   ! noise source strength kernel
   ! to keep similar structure to other kernels, the source strength kernel is saved as a volumetric kernel
@@ -605,7 +636,7 @@
                 noise_surface_movie(2,i,j,ispec2D) * normal_y_noise(ipoin) + &
                 noise_surface_movie(3,i,j,ispec2D) * normal_z_noise(ipoin)
 
-          Sigma_kl_crust_mantle(i,j,k,ispec) =  Sigma_kl_crust_mantle(i,j,k,ispec) &
+          sigma_kl_crust_mantle(i,j,k,ispec) =  sigma_kl_crust_mantle(i,j,k,ispec) &
              + deltat * eta * ( normal_x_noise(ipoin) * displ_crust_mantle(1,iglob) &
                               + normal_y_noise(ipoin) * displ_crust_mantle(2,iglob) &
                               + normal_z_noise(ipoin) * displ_crust_mantle(3,iglob) )
@@ -636,14 +667,27 @@
 
   ! local parameters
   integer :: ier
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: scale_kl
 
-  call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
+  ! scaling factor for kernel units [ s / km^3 ]
+  scale_kl = scale_t/scale_displ * 1.d9
 
-  open(unit=IOUT_NOISE,file=trim(prname)//'Sigma_kernel.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error opening file Sigma_kernel.bin')
+  sigma_kl_crust_mantle(:,:,:,:) = sigma_kl_crust_mantle(:,:,:,:) * scale_kl
 
-  write(IOUT_NOISE) Sigma_kl_crust_mantle     ! need to put dimensions back (not done yet)
-  close(IOUT_NOISE)
+  ! kernel file output
+  if (ADIOS_FOR_KERNELS) then
+    call write_kernels_strength_noise_adios(current_adios_handle)
+  else
+    ! binary file output
+    call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
+
+    open(unit=IOUT_NOISE,file=trim(prname)//'sigma_kernel.bin', &
+          status='unknown',form='unformatted',action='write',iostat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file sigma_kernel.bin')
+
+    write(IOUT_NOISE) sigma_kl_crust_mantle     ! need to put dimensions back (not done yet)
+    close(IOUT_NOISE)
+  endif
 
   end subroutine save_kernels_strength_noise

@@ -81,7 +81,7 @@
         outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
       endif
 
-      open(unit=IIN,file=outputname,status='old',action='read',form='unformatted',iostat=ier)
+      open(unit=IIN,file=trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for reading')
 
       read(IIN) displ_crust_mantle
@@ -163,7 +163,7 @@
       outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
     endif
 
-    open(unit=IIN,file=outputname, &
+    open(unit=IIN,file=trim(outputname), &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print*,'Error: opening proc_****_save_forward_arrays.bin'
@@ -279,7 +279,7 @@
   character(len=MAX_STRING_LEN) :: outputname, path_to_add
 
   ! current subset iteration
-  iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
+  iteration_on_subset_tmp = NSUBSET_ITERATIONS - iteration_on_subset + 1
 
   if (ADIOS_FOR_UNDO_ATTENUATION) then
     call read_forward_arrays_undoatt_adios(iteration_on_subset_tmp)
@@ -294,10 +294,10 @@
     endif
 
     ! debug
-    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
+    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//trim(outputname),iteration_on_subset_tmp,iteration_on_subset,it
 
     ! opens corresponding snapshot file for reading
-    open(unit=IIN,file=outputname, &
+    open(unit=IIN,file=trim(outputname), &
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 
