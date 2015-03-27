@@ -151,7 +151,7 @@
         hgammar(NGLLZ), hpgammar(NGLLZ)
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
 
-  real(kind=CUSTOM_REAL) :: adj_src(NDIM,NSTEP_BLOCK)
+  real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP_BLOCK) :: adj_src
   double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
   integer icomp, itime, ios
@@ -243,7 +243,7 @@
   enddo
 
   ! non-dimensionalize
-  adj_src = adj_src*scale_displ_inv
+  adj_src(:,:) = adj_src(:,:) * scale_displ_inv
 
   ! rotates to Cartesian
   do itime = 1, NSTEP_BLOCK

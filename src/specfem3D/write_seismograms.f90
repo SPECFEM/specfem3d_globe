@@ -107,6 +107,8 @@ contains
         it_adj_written = it
       end select
     endif
+    ! synchronizes processes (waits for all processes to finish writing)
+    call synchronize_all()
 
     ! resets current seismogram position
     seismo_offset = seismo_offset + seismo_current

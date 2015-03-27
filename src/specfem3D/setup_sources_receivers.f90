@@ -321,6 +321,14 @@
       call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
   endif
 
+  ! checks length for symmetry in case of noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    if (mod(NSTEP+1,2) /= 0) then
+      print*,'Error noise simulation: invalid time steps = ',NSTEP,' -> NSTEP + 1 must be a multiple of 2 due to branch symmetry'
+      call exit_MPI(myrank,'Error noise simulation: number of timesteps must be symmetric, due to +/- branches')
+    endif
+  endif
+
   ! time loop increments end
   it_end = NSTEP
 
@@ -526,6 +534,11 @@
     endif
     ! outputs info
     write(IMAIN,*) 'seismograms:'
+    if (WRITE_SEISMOGRAMS_BY_MASTER) then
+      write(IMAIN,*) '  seismograms written by master process only'
+    else
+      write(IMAIN,*) '  seismograms written by all processes'
+    endif
     write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
     write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
     write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'

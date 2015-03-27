@@ -652,6 +652,10 @@
   double precision :: tCPU
   double precision, external :: wtime
 
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! user output
   if (myrank == 0) then
     ! elapsed time since beginning of the simulation
     tCPU = wtime() - time_start
@@ -665,6 +669,9 @@
     write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     call flush_IMAIN()
   endif
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   end subroutine print_elapsed_time
 
