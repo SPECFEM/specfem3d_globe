@@ -2,7 +2,7 @@
 ######################################
 # USER PARAMETERS
 #
-# e.g. call by: ./xgenerate_noise_source.sh 3599  0.169376865 
+# e.g. call by: ./xgenerate_noise_source.sh 3599  0.169376865
 #
 # number of time steps
 nsteps=$1

@@ -199,7 +199,7 @@ program adj_traveltime
   endif
 
   !!!! computing adj sources !!!!
-  misfit_traveltime = 0.0d0  
+  misfit_traveltime = 0.0d0
 
   ! loops over frequencies
   do ifreq = 1,nfreq

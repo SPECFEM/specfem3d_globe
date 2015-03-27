@@ -40,7 +40,7 @@ cd ../../
 # compiles for an adjoint simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
 sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:"  DATA/Par_file
-make clean 
+make clean
 make all
 
 # backup of constants setup
