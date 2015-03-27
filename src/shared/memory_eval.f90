@@ -500,7 +500,7 @@
   static_memory_size = static_memory_size + &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_HESS*dble(CUSTOM_REAL)
 
-  ! Sigma_kl_crust_mantle
+  ! sigma_kl_crust_mantle
   if (NOISE_TOMOGRAPHY > 0) then
     NSPEC_CRUST_MANTLE_ADJOINT_NOISE = NSPEC_CRUST_MANTLE_ADJOINT
   else

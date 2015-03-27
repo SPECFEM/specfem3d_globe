@@ -33,7 +33,7 @@
 
   integer value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=256) string_read
   integer ier
 
   call param_read(string_read, len(string_read), name, len(name), ier)
@@ -50,7 +50,7 @@
 
   double precision value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=256) string_read
   integer ier
 
   call param_read(string_read, len(string_read), name, len(name), ier)
@@ -67,7 +67,7 @@
 
   logical value_to_read
   character(len=*) name
-  character(len=100) string_read
+  character(len=256) string_read
   integer ier
 
   call param_read(string_read, len(string_read), name, len(name), ier)
@@ -85,11 +85,20 @@
   character(len=*) value_to_read
   character(len=*) name
   character(len=256) string_read
+  integer length
   integer ier
 
   call param_read(string_read, len(string_read), name, len(name), ier)
   if (ier /= 0) return
-  value_to_read = string_read
+
+  ! checks for string length (buffer overflow)
+  length = len(value_to_read)
+  if (len_trim(string_read) > length) then
+    print*,'Error reading parameter ',name,': string length ',length,' is too long, please check your Par_file'
+    stop 'Error reading parameter string value'
+  endif
+
+  value_to_read = trim(string_read)
 
   end subroutine read_value_string
 

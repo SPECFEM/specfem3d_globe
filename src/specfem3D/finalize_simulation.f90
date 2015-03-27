@@ -274,8 +274,8 @@
   ! noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
     deallocate(noise_sourcearray, &
-              normal_x_noise,normal_y_noise,normal_z_noise, &
-              mask_noise,noise_surface_movie)
+               normal_x_noise,normal_y_noise,normal_z_noise, &
+               mask_noise,noise_surface_movie)
   endif
 
   ! VTK visualization

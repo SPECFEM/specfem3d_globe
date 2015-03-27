@@ -9,6 +9,10 @@
 station="ZKR"
 network="GE"
 
+# fortran compiler
+f90=gfortran  #ifort
+#############################################################
+
 sta=$network.$station
 
 #
@@ -18,15 +22,15 @@ sta=$network.$station
 # for single ZKR station
 cp -v ../OUTPUT_FILES_0.2/$sta.*ascii ./
 cd ..
-ifort adj_traveltime_filter.f90
+$f90 adj_traveltime_filter.f90
 ./a.out
 cd SEM/
 
 # create STATIONS_ADJOINT file with adjoint source location
 fgrep $station ../DATA/STATIONS > ./STATIONS_ADJOINT
 
-
-
+echo
+echo "done"
 exit
 
 
@@ -49,7 +53,9 @@ rename .sem.ascii.adj .adj $sta.MX*adj
 # create STATIONS_ADJOINT file with adjoint source location
 fgrep $station ../DATA/STATIONS > ./STATIONS_ADJOINT
 
-
+echo
+echo "done"
+exit
 
 #
 # please add here more adjoint sources if you like...

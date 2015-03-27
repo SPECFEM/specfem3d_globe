@@ -49,14 +49,11 @@
   ! convert x/y/z into r/theta/phi spherical coordinates
   call prepare_timerun_convert_coord()
 
-  ! allocate files to save movies
-  ! for noise tomography, number of movie points (nmovie_points) needed for 'surface movie'
-  if (MOVIE_SURFACE .or. NOISE_TOMOGRAPHY /= 0) then
-    call prepare_timerun_movie_surface()
-  endif
+  ! allocate files to save surface movies
+  call prepare_timerun_movie_surface()
 
   ! output point and element information for 3D movies
-  if (MOVIE_VOLUME ) call prepare_timerun_movie_volume()
+  call prepare_timerun_movie_volume()
 
   ! sets up time increments and rotation constants
   call prepare_timerun_constants()
@@ -77,16 +74,16 @@
   call read_forward_arrays_startrun()
 
   ! prepares Stacey boundary arrays for re-construction of wavefields
-  if (ABSORBING_CONDITIONS ) call prepare_timerun_stacey()
+  call prepare_timerun_stacey()
 
   ! prepares noise simulations
   call prepare_timerun_noise()
 
   ! prepares GPU arrays
-  if (GPU_MODE ) call prepare_timerun_GPU()
+  call prepare_timerun_GPU()
 
   ! prepares VTK window visualization
-  if (VTK_MODE ) call prepare_vtk_window()
+  call prepare_vtk_window()
 
   ! synchronize all the processes
   call synchronize_all()
@@ -511,6 +508,9 @@
   ! local parameters
   integer :: ier
 
+  ! checks if anything to do
+  if (.not. MOVIE_SURFACE) return
+
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) "preparing movie surface"
@@ -519,7 +519,7 @@
 
   ! only output corners
   ! note: for noise tomography, must NOT be coarse (have to be saved on all GLL points)
-  if (MOVIE_COARSE .and. NOISE_TOMOGRAPHY == 0) then
+  if (MOVIE_COARSE) then
     ! checks setup
     if (NGLLX /= NGLLY) &
       call exit_MPI(myrank,'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX=NGLLY')
@@ -536,36 +536,33 @@
   call movie_surface_count_points()
 
   ! those arrays are not necessary for noise tomography, so only allocate them in MOVIE_SURFACE case
-  if (MOVIE_SURFACE) then
-    ! writes out movie point locations to file
-    call write_movie_surface_mesh()
+  ! writes out movie point locations to file
+  call write_movie_surface_mesh()
 
-    ! allocates movie surface arrays for wavefield values
-    allocate(store_val_ux(nmovie_points), &
-             store_val_uy(nmovie_points), &
-             store_val_uz(nmovie_points),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface arrays')
+  ! allocates movie surface arrays for wavefield values
+  allocate(store_val_ux(nmovie_points), &
+           store_val_uy(nmovie_points), &
+           store_val_uz(nmovie_points),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface arrays')
 
-    ! allocates arrays for gathering wavefield values
-    if (myrank == 0) then
-      ! only master needs full arrays
-      allocate(store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1), &
-               store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1), &
-               store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
-    else
-      ! slave processes only need dummy arrays
-      allocate(store_val_ux_all(1,1), &
-               store_val_uy_all(1,1), &
-               store_val_uz_all(1,1),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
-    endif
+  ! allocates arrays for gathering wavefield values
+  if (myrank == 0) then
+    ! only master needs full arrays
+    allocate(store_val_ux_all(nmovie_points,0:NPROCTOT_VAL-1), &
+             store_val_uy_all(nmovie_points,0:NPROCTOT_VAL-1), &
+             store_val_uz_all(nmovie_points,0:NPROCTOT_VAL-1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
+  else
+    ! slave processes only need dummy arrays
+    allocate(store_val_ux_all(1,1), &
+             store_val_uy_all(1,1), &
+             store_val_uz_all(1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating movie surface all arrays')
   endif
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Movie surface:'
+    write(IMAIN,*) '  Movie surface:'
     write(IMAIN,*) '  Writing to moviedata*** files in output directory'
     if (MOVIE_VOLUME_TYPE == 5) then
       write(IMAIN,*) '  movie output: displacement'
@@ -594,6 +591,10 @@
   ! local parameters
   integer :: ier
 
+  ! checks if anything to do
+  if (.not. MOVIE_VOLUME) return
+
+  ! user output
   if (myrank == 0) then
     write(IMAIN,*) "preparing movie volume"
     call flush_IMAIN()
@@ -606,6 +607,9 @@
     stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE'
   if (NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE) &
     stop 'NSPEC_CRUST_MANTLE_STRAIN_ONLY /= NSPEC_CRUST_MANTLE'
+  ! checks movie type
+  if (MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
+    stop 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9'
 
   ! counts total number of points for movie file output
   call movie_volume_count_points()
@@ -617,8 +621,7 @@
                                           muvstore_crust_mantle_3dmovie,npoints_3dmovie)
 
   if (myrank == 0) then
-    write(IMAIN,*)
-    write(IMAIN,*) 'Movie volume:'
+    write(IMAIN,*) '  Movie volume:'
     write(IMAIN,*) '  Writing to movie3D*** files on local disk databases directory'
     select case (MOVIE_VOLUME_TYPE)
     case (1)
@@ -649,9 +652,6 @@
     write(IMAIN,*) '  Starting at time step:',MOVIE_START, 'ending at:',MOVIE_STOP,'every: ',NTSTEP_BETWEEN_FRAMES
     call flush_IMAIN()
   endif
-
-  if (MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
-      call exit_MPI(myrank, 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9')
 
   call synchronize_all()
 
@@ -1068,9 +1068,9 @@
 
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
-      allocate( Sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+      allocate( sigma_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise sigma kernel')
-      Sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
+      sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
     ! approximate hessian
@@ -1256,7 +1256,7 @@
 
     ! checks
     if (SIMULATION_TYPE /= 1 .or. SAVE_FORWARD .or. NOISE_TOMOGRAPHY /= 0) &
-        stop 'Error: LDDRK is not implemented for adjoint tomography'
+        stop 'Error: LDDRK is not implemented for adjoint or noise tomography'
 
     ! number of stages for scheme
     NSTAGE_TIME_SCHEME = NSTAGE   ! 6 stages
@@ -1463,6 +1463,9 @@
   integer(kind=8) :: filesize
   character(len=MAX_STRING_LEN) :: path_to_add
 
+  ! checks if anything to do
+  if (.not. ABSORBING_CONDITIONS ) return
+
   ! sets up absorbing boundary buffer arrays
   if (myrank == 0) then
     write(IMAIN,*) "preparing absorbing boundaries"
@@ -1470,7 +1473,6 @@
   endif
 
   ! crust_mantle
-
   ! create name of database
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
@@ -1751,41 +1753,77 @@
 
   use specfem_par
   use specfem_par_crustmantle
-  use specfem_par_movie
+
   implicit none
   ! local parameters
   integer :: ier
 
   ! NOISE TOMOGRAPHY
-  if (NOISE_TOMOGRAPHY /= 0) then
-    ! user info
-    if (myrank == 0) then
-      write(IMAIN,*) "preparing noise arrays"
-      call flush_IMAIN()
-    endif
+  ! checks if anything to do
+  if (NOISE_TOMOGRAPHY == 0) return
 
-    ! allocates noise arrays
-    allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
-             normal_x_noise(nmovie_points), &
-             normal_y_noise(nmovie_points), &
-             normal_z_noise(nmovie_points), &
-             mask_noise(nmovie_points), &
-             noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise arrays')
+  ! user info
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing noise arrays"
+    write(IMAIN,*) "  NOISE_TOMOGRAPHY = ",NOISE_TOMOGRAPHY
+    write(IMAIN,*) "  timing:"
+    write(IMAIN,*) "    start time           = ",sngl(-t0)," seconds"
+    write(IMAIN,*) "    time step            = ",sngl(DT)," s"
+    write(IMAIN,*) "    number of time steps = ",NSTEP
+    ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
+    write(IMAIN,*) "  ignoring CMT sources"
+    call flush_IMAIN()
+  endif
 
-    ! initializes
-    noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
-    normal_x_noise(:)            = 0._CUSTOM_REAL
-    normal_y_noise(:)            = 0._CUSTOM_REAL
-    normal_z_noise(:)            = 0._CUSTOM_REAL
-    mask_noise(:)                = 0._CUSTOM_REAL
-    noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
+  ! synchronizes processes
+  call synchronize_all()
 
-    ! gets noise parameters
-    call read_parameters_noise()
+  ! checks that number of spectral elements at surface is set (from read_mesh_databases_CM() routine)
+  if (NSPEC_TOP /= NSPEC2D_TOP(IREGION_CRUST_MANTLE)) &
+    call exit_MPI(myrank,'Error invalid number of NSPEC_TOP for noise simulation')
 
-    ! checks noise setup
-    call check_parameters_noise()
+  ! for noise tomography, number of surface (movie) points needed for 'surface movie';
+  ! surface output must NOT be coarse (have to be saved on all GLL points)
+  ! number of points
+  num_noise_surface_points = NGLLX * NGLLY * NSPEC_TOP
+
+  ! allocates noise arrays
+  allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
+           normal_x_noise(num_noise_surface_points), &
+           normal_y_noise(num_noise_surface_points), &
+           normal_z_noise(num_noise_surface_points), &
+           mask_noise(num_noise_surface_points), &
+           noise_surface_movie(NDIM,NGLLX,NGLLY,NSPEC_TOP),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise arrays')
+
+  ! initializes
+  noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
+  normal_x_noise(:)            = 0._CUSTOM_REAL
+  normal_y_noise(:)            = 0._CUSTOM_REAL
+  normal_z_noise(:)            = 0._CUSTOM_REAL
+  mask_noise(:)                = 0._CUSTOM_REAL
+  noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! gets noise parameters
+  call read_parameters_noise()
+
+  ! checks noise setup
+  call check_parameters_noise()
+
+  ! user output
+  if(myrank == 0) then
+    select case (NOISE_TOMOGRAPHY)
+    case (1)
+      write(IMAIN,*) "  noise source uses master record id = ",irec_master_noise
+      write(IMAIN,*) "  noise master station: ",trim(network_name(irec_master_noise))//'.'//trim(station_name(irec_master_noise))
+    case (2)
+      write(IMAIN,*) "  noise source uses ensemble forward source"
+    case (3)
+      write(IMAIN,*) "  reconstructing ensemble forward wavefield"
+      write(IMAIN,*) "  noise source uses ensemble adjoint sources"
+    end select
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! synchronizes processes
@@ -1820,10 +1858,13 @@
   logical :: USE_3D_ATTENUATION_ARRAYS
   real(kind=CUSTOM_REAL) :: dummy
 
+  ! checks if anything to do
+  if (.not. GPU_MODE) return
+
   ! user output
   call synchronize_all()
   if (myrank == 0) then
-    write(IMAIN,*) "preparing fields and constants on GPU devices:"
+    write(IMAIN,*) "preparing fields and constants on GPU devices"
     call flush_IMAIN()
   endif
   call synchronize_all()
@@ -2118,7 +2159,7 @@
     ! counts global points on surface to oceans
     updated_dof_ocean_load(:) = .false.
     ipoin = 0
-    do ispec2D = 1,nspec_top
+    do ispec2D = 1,NSPEC_TOP
       ispec = ibelm_top_crust_mantle(ispec2D)
       k = NGLLZ
       do j = 1,NGLLY
@@ -2144,7 +2185,7 @@
     ! fills arrays for coupling surface at oceans
     updated_dof_ocean_load(:) = .false.
     ipoin = 0
-    do ispec2D = 1,nspec_top
+    do ispec2D = 1,NSPEC_TOP
       ispec = ibelm_top_crust_mantle(ispec2D)
       k = NGLLZ
       do j = 1,NGLLY
@@ -2672,10 +2713,13 @@
   logical, parameter :: VTK_SHOW_VOLUME       = .true.
   !-----------------------------------------------------------------------
 
+  ! checks if anything to do
+  if (.not. VTK_MODE) return
+
   ! user output
   if (myrank == 0) then
-    print*
-    print*,"VTK:"
+    write(IMAIN,*) "preparing VTK runtime visualization"
+    call flush_IMAIN()
   endif
   call synchronize_all()
 
@@ -2685,7 +2729,7 @@
   ! adds source
   if (myrank == 0) then
     ! user output
-    print*,"  VTK source sphere:"
+    write(IMAIN,*) "  VTK source sphere:"
     call prepare_vtksource(vtkdata_source_x,vtkdata_source_y,vtkdata_source_z)
   endif
   call synchronize_all()
@@ -2704,8 +2748,8 @@
   if (VTK_SHOW_FREESURFACE) then
     ! user output
     if (myrank == 0) then
-      print*,"  VTK free surface:"
-      print*,"    free surface elements    : ",NSPEC_TOP
+      write(IMAIN,*) "  VTK free surface:"
+      write(IMAIN,*) "    free surface elements    : ",NSPEC_TOP
     endif
 
     ! counts global free surface points
@@ -2732,7 +2776,7 @@
     free_np = count(vtkmask(:))
 
     ! user output
-    if (myrank == 0 ) print*,"    loading surface points: ",free_np
+    if (myrank == 0 ) write(IMAIN,*) "    loading surface points: ",free_np
 
     allocate(free_x(free_np),free_y(free_np),free_z(free_np),stat=ier)
     if (ier /= 0 ) stop 'Error allocating arrays'
@@ -2824,7 +2868,7 @@
 
       ! number of volume points for all partitions together
       call sum_all_i(free_np,free_np_all)
-      if (myrank == 0 ) print*,"    all freesurface points: ",free_np_all
+      if (myrank == 0 ) write(IMAIN,*) "    all freesurface points: ",free_np_all
 
       ! gathers point info
       allocate(free_points_all(NPROC),stat=ier)
@@ -2844,7 +2888,7 @@
 
       ! number of volume elements
       call sum_all_i(free_nspec,free_nspec_all)
-      if (myrank == 0 ) print*,"    all freesurface elements: ",free_nspec_all
+      if (myrank == 0 ) write(IMAIN,*) "    all freesurface elements: ",free_nspec_all
 
       ! freesurface elements
       allocate(free_conn_nspec_all(NPROC),stat=ier)
@@ -2955,8 +2999,8 @@
   if (VTK_SHOW_VOLUME) then
     ! user output
     if (myrank == 0) then
-      print*,"  VTK volume:"
-      print*,"    spectral elements    : ",NSPEC_CRUST_MANTLE
+      write(IMAIN,*) "  VTK volume:"
+      write(IMAIN,*) "    spectral elements    : ",NSPEC_CRUST_MANTLE
     endif
 
     ! sets new point mask
@@ -2977,7 +3021,7 @@
     vol_np = count(vtkmask(:))
 
     ! loads volume data arrays
-    if (myrank == 0 ) print*,"    loading volume points: ",vol_np
+    if (myrank == 0 ) write(IMAIN,*) "    loading volume points: ",vol_np
 
     allocate(vol_x(vol_np),vol_y(vol_np),vol_z(vol_np),stat=ier)
     if (ier /= 0 ) stop 'Error allocating arrays'
@@ -3091,7 +3135,7 @@
 
       ! number of volume points for all partitions together
       call sum_all_i(vol_np,vtkdata_numpoints_all)
-      if (myrank == 0 ) print*,"    all volume points: ",vtkdata_numpoints_all
+      if (myrank == 0 ) write(IMAIN,*) "    all volume points: ",vtkdata_numpoints_all
 
       ! gathers point info
       allocate(vtkdata_points_all(NPROC),stat=ier)
@@ -3111,7 +3155,7 @@
 
       ! number of volume elements
       call sum_all_i(vol_nspec,vol_nspec_all)
-      if (myrank == 0 ) print*,"    all volume elements: ",vol_nspec_all
+      if (myrank == 0 ) write(IMAIN,*) "    all volume elements: ",vol_nspec_all
 
       ! volume elements
       allocate(vol_conn_nspec_all(NPROC),stat=ier)
@@ -3224,14 +3268,13 @@
       if (myrank == 0 ) deallocate(vol_x_all,vol_y_all,vol_z_all,vol_conn_all)
     endif
   endif ! VTK_SHOW_VOLUME
-  call synchronize_all()
 
   ! user output
-  !if (myrank == 0) then
-  !  print*
-  !  print*,"  VTK visualization preparation done"
-  !  print*
-  !endif
+  if (myrank == 0) then
+    write(IMAIN,*)"  VTK visualization preparation done"
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
 
   end subroutine prepare_vtk_window
 

@@ -138,7 +138,6 @@
   double precision :: x_target_rec,y_target_rec,z_target_rec
 
   double precision :: typical_size
-  logical :: located_target
 
   character(len=2) :: bic
   character(len=256) :: string
@@ -276,7 +275,7 @@
             if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then
               write(station_name(irec),"(a,'_',i2.2)") trim(station_name(irec)),station_duplet(i)+1
             else
-              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at least 3')
+              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at least 3 to name station duplets')
             endif
 
         endif
@@ -433,8 +432,14 @@
     ! would write out desired target locations of receivers
     !if (myrank == 0) write(IOUT_VTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
 
-    ! flag to check that we located at least one target element
-    located_target = .false.
+    ! initializes located target
+    ! if we have not located a target element, the receiver is not in this slice
+    ! therefore use first element only for fictitious iterative search
+    ispec_selected_rec(irec) = 1
+    ix_initial_guess(irec) = MIDX
+    iy_initial_guess(irec) = MIDY
+    iz_initial_guess(irec) = MIDZ
+    distmin = HUGEVAL
 
     ! searches closest GLL point
     if (USE_DISTANCE_CRITERION) then
@@ -464,7 +469,6 @@
                   ix_initial_guess(irec) = i
                   iy_initial_guess(irec) = j
                   iz_initial_guess(irec) = k
-                  located_target = .true.
                 endif
               enddo
             enddo
@@ -491,7 +495,6 @@
                 ix_initial_guess(irec) = i
                 iy_initial_guess(irec) = j
                 iz_initial_guess(irec) = k
-                located_target = .true.
               endif
             enddo
           enddo
@@ -499,15 +502,6 @@
       ! end of loop on all the spectral elements in current slice
       enddo
     endif ! USE_DISTANCE_CRITERION
-
-    ! if we have not located a target element, the receiver is not in this slice
-    ! therefore use first element only for fictitious iterative search
-    if (.not. located_target) then
-      ispec_selected_rec(irec) = 1
-      ix_initial_guess(irec) = MIDX
-      iy_initial_guess(irec) = MIDY
-      iz_initial_guess(irec) = MIDZ
-    endif
 
   ! end of loop on all the stations
   enddo
@@ -699,15 +693,15 @@
       eta = yigll(iy_initial_guess(irec))
       gamma = zigll(iz_initial_guess(irec))
 
+      ! impose receiver exactly at the surface
+      if (.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
+
       x_target_rec = x_target(irec)
       y_target_rec = y_target(irec)
       z_target_rec = z_target(irec)
 
       ! iterate to solve the non linear system
       do iter_loop = 1,NUM_ITER
-
-        ! impose receiver exactly at the surface
-        if (.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
         ! recompute Jacobian for the new point
         call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &

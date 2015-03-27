@@ -126,14 +126,8 @@
 ! read the parameter file and compute additional parameters
   call read_compute_parameters()
 
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
-!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
-  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
-    ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-    if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-  endif
+! get the base pathname for output files
+  OUTPUT_FILES = OUTPUT_FILES_BASE
 
   if (.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 
@@ -173,7 +167,7 @@
     ! used in specfem3D.f90
     ! and ilocnum = nmovie_points = 2 * 2 * NEX_XI * NEX_ETA / NPROC
     ilocnum = 2 * 2 * NEX_PER_PROC_XI*NEX_PER_PROC_ETA
-    NIT =NGLLX-1
+    NIT = NGLLX-1
   else
     ilocnum = NGLLX*NGLLY*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
     NIT = 1
@@ -736,8 +730,8 @@
           if (distance > 10.0 .and. distance <= 20.0) then
             ! smooth transition between 10 and 20 degrees
             ! sets positive and negative maximum
-            field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.0)/10.0
-            field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.0)/10.0 )
+            field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.d0)/10.d0
+            field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.d0)/10.d0 )
           else if (distance > 20.0) then
             ! sets positive and negative maximum
             field_display(istamp1) = + max_average
@@ -754,7 +748,7 @@
         ! updates current wavefield maxima
         min_field_current = minval(field_display(:))
         max_field_current = maxval(field_display(:))
-        max_absol = (abs(min_field_current)+abs(max_field_current))/2.0
+        max_absol = (abs(min_field_current)+abs(max_field_current))/2.d0
       endif
 
       ! scales field values up to match average

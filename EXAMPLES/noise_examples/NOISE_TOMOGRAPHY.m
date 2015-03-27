@@ -1,4 +1,4 @@
-function [] = NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
+function [ ] = NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
 % This is a short Matlab program used to sample the spectrum of the 
 %     Peterson's noise model, and convert it to time-domain --- the 
 %     source time function we will use in NOISE TOMOGRAPHY simulations.
@@ -43,10 +43,19 @@ function [] = NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
 % /data2/yangl/3D_NOISE/S_squared
 % S_squared should be put into directory:
 % ./NOISE_TOMOGRAPHY/ in the SPECFEM3D package
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% USER PARAMETERS
 
+%% taper option
+taper_type=1;      % cosine type (1=on/0==off
+taper_length=40;   % number of steps for tapering ends
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%
 clf;
 fontsize=10;       % fontsize for figures
+
 %% derived parameters
 T=(NSTEP-1)*dt;    % total simulation time
 N_mid=(NSTEP+1)/2; % (NSTEP+1)/2 is the middle of the (NSTEP-1) points
@@ -54,12 +63,66 @@ fmax=1/2/dt;       % Nyquist frequency, due to sampling theory
 df=1/T;            % frequency interval
 f=[0:df:fmax -fmax:df:-df]; % discrete frequencies
 
+%% checks noise model string
+if NOISE_MODEL=='NLNM'
+  model_info='Peterson New Low Noise Model';
+elseif NOISE_MODEL=='NHNM'
+  model_info='Peterson New High Noise Model';
+else
+  fprintf('Error: noise model %s not recognized, use NLNM or NHNM for low or high noise model',NOISE_MODEL);
+  exit 1;
+end
+
+%% user output
+fprintf('NOISE_TOMOGRAPHY input:\n');
+fprintf('  number of time steps = %i \n',NSTEP);
+fprintf('  time step size       = %f s\n',dt);
+fprintf('  period range min/max = %f / %f s\n',Tmin,Tmax);
+fprintf('  noise model          = %s - %s\n',NOISE_MODEL,model_info);
+fprintf('\n');
+fprintf('  total simulation time = %f s\n',T);
+fprintf('  Nyquist frequency: %f Hz\n',fmax);
+
 %% initialize the power spectrum of noise
 accel=zeros(size(f)); % for acceleration
 veloc=zeros(size(f)); % for velocity
 displ=zeros(size(f)); % for displacement
 filter_array=zeros(size(f)); % for constraining frequencies within ranges
                              % defined by Tmin & Tmax
+
+%% taper
+if taper_type==1
+  fprintf('\n  using taper (cosine) length: %i \n',taper_length);
+  % check size
+  if NSTEP <= 2*taper_length
+    fprintf('\nError number of time steps = %i must be bigger than taper window size = %i ! Please retry... \n',NSTEP,2*taper_length+1);
+    exit(1);
+  end
+
+  % cosine taper (both branches, value 0 at index 1, value 1 at index length+1, value 0 at 2*length+1
+  taper=zeros(2*taper_length+1);
+  for l=1:2*taper_length+1
+    taper(l) = (1.0-cos(pi*2.0*(l-1)/(2*taper_length)))/2.0;
+  end
+
+  % sets up window function for multiplication with signal
+  window=ones(NSTEP);
+  % adds increasing branch
+  window(1:taper_length) = taper(1:taper_length);
+  % adds decreasing branch
+  window(NSTEP-taper_length+1:NSTEP) = taper(taper_length+2:2*taper_length+1);
+
+  % plots figure
+  figure(2);
+  subplot(2,1,1);
+  plot(taper);hold on;
+  xlabel('steps','fontsize',fontsize);ylabel('Taper','fontsize',fontsize);
+  title('Taper','fontsize',fontsize);
+  subplot(2,1,2);
+  plot(window);
+  xlabel('steps','fontsize',fontsize);ylabel('Taper window','fontsize',fontsize);
+  title('Window','fontsize',fontsize);
+end
 
 %% calculate the power spectrum of noise from Peterson's model (1993)
 % only calculate for positive frequencies
@@ -104,7 +167,7 @@ legend(['accleration, scaled by ', num2str(max(abs(accel))), ' m^2/s^4/Hz'], ...
        ['displacement, scaled by ', num2str(max(abs(displ))), ' m^2/Hz']);
 xlim([0.8/Tmax 1.2/Tmin]);ylim([-0.1 1.5]);
 
-%% update power spectrum in the negative frquencies, using symmetry
+%% update power spectrum in the negative frequencies, using symmetry
 % note the power spectrum is always REAL, instead of COMPLEX
 for l=N_mid+1:NSTEP
     accel(l)=conj(accel(NSTEP-l+2));
@@ -119,12 +182,23 @@ S_squared=zeros(NSTEP,2); % first column: time (not used in SPECFEM3D package)
                           % second column: source time function
 S_squared(:,1)=([1:NSTEP]-N_mid)*dt;
 S_squared(:,2)=real(ifft(displ));
+
 % change the order of the time series
 % instead of having t=[0 T], we need t=[-T/2 T/2];
 temp=S_squared(:,2);
 temp(N_mid:NSTEP)=S_squared(1:N_mid,2);
 temp(1:N_mid-1)  =S_squared(N_mid+1:NSTEP,2);
+
+% tapers ends
+if taper_type==1
+  for l=1:NSTEP
+    temp(l) = temp(l) * window(l);
+  end
+end
+
+% stores source time function values
 S_squared(:,2)=temp;
+
 % % filter the source time function if needed
 % Wn=[1/Tmax 1/Tmin]/fmax;
 % [B,A] = butter(4,Wn);
@@ -138,10 +212,13 @@ title('Source Time Function for Ensemble Forward Source','fontsize',fontsize);
 subplot(2,2,4);
 plot(S_squared(:,1)/60,S_squared(:,2),'r');
 xlabel('Time (min)','fontsize',fontsize); ylabel('Amplitude','fontsize',fontsize);
-xlim([-Tmax Tmax]*10/60);
+xlim([-Tmax Tmax]*0.10/60);
 title('Zoom-in of the Source Time Function','fontsize',fontsize);
+
 %% output the source time function
 save S_squared S_squared -ASCII
+
+%% user output
 DIR=pwd;
 fprintf('\n*************************************************************\n');
 fprintf('the source time function has been saved in:\n');
@@ -149,3 +226,5 @@ fprintf([DIR '/S_squared\n']);
 fprintf('S_squared should be put into directory:\n');
 fprintf('./NOISE_TOMOGRAPHY/ in the SPECFEM3D package\n');
 fprintf('*************************************************************\n');
+
+

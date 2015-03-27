@@ -56,7 +56,7 @@
       call save_intermediate_forward_arrays_adios()
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
-      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
+      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname), &
           status='unknown',form='unformatted',action='write',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for writing')
 
@@ -116,7 +116,7 @@
         outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
       endif
 
-      open(unit=IOUT,file=outputname,status='unknown', &
+      open(unit=IOUT,file=trim(outputname),status='unknown', &
           form='unformatted',action='write',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_forward_arrays** for writing')
 
@@ -224,8 +224,9 @@
     endif
 
     ! debug
-    !if (myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION
-    open(unit=IOUT,file=outputname, &
+    !if (myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//trim(outputname), iteration_on_subset_tmp,it
+
+    open(unit=IOUT,file=trim(outputname), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 

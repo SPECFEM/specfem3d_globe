@@ -16,7 +16,7 @@ t1="190."
 t2="225."
 
 #window out single phase arrival on vertical component between t1 to t2 :
-~/SPECFEM3D_GLOBE/UTILS/adjoint_sources/traveltime/xcreate_adjsrc_traveltime $t1 $t2 3 ../REF_SEIS/$sta.MX*
+~/SPECFEM3D_GLOBE/utils/adjoint_sources/traveltime/xcreate_adjsrc_traveltime $t1 $t2 3 ../REF_SEIS/$sta.MX*
 mv ../REF_SEIS/$sta.MX*adj ./
 
 # rename adjoint source files:

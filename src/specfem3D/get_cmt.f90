@@ -31,7 +31,7 @@
   use constants,only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
     RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
 
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -321,6 +321,9 @@
 
   enddo
 
+  ! noise simulations don't use the CMTSOLUTION source but a noise-spectrum source defined in S_squared
+  if (NOISE_TOMOGRAPHY /= 0) hdur(:) = 0.d0
+
   ! If we're using external stf, don't worry about hdur.
   if (EXTERNAL_SOURCE_TIME_FUNCTION) then
     hdur(:) = 0.d0
@@ -472,7 +475,11 @@
   !  for converting from scalar moment M0 to moment magnitude. (..)"
   ! see: http://earthquake.usgs.gov/aboutus/docs/020204mag_policy.php
 
-  Mw = 2.d0/3.d0 * log10( M0 ) - 10.7
+  if (M0 > 0.d0) then
+    Mw = 2.d0/3.d0 * log10( M0 ) - 10.7
+  else
+    Mw = 0.d0
+  endif
 
   ! return value
   get_cmt_moment_magnitude = Mw

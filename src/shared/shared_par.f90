@@ -120,10 +120,10 @@
   logical :: BROADCAST_SAME_MESH_AND_MODEL
 
   ! GPU simulations
-  logical :: GPU_MODE
   integer :: GPU_RUNTIME
-  character(len=11) :: GPU_PLATFORM
-  character(len=11) :: GPU_DEVICE
+  character(len=12) :: GPU_PLATFORM
+  character(len=12) :: GPU_DEVICE
+  logical :: GPU_MODE
 
   ! adios file output
   logical :: ADIOS_ENABLED

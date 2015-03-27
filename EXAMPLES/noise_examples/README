@@ -1,0 +1,34 @@
+----------------------------------------------------------
+README
+----------------------------------------------------------
+
+
+This folder contains several examples of how to compute noise sensitivity kernels 
+for global and regional simulations
+(various resolutions: global 600 CPUs/ regional 400 CPUs)
+
+
+--------------
+
+
+Example: To run a global noise simulation, type for example:
+
+./run_this_example.sh global_long
+
+this will setup all scripts and tools in sub-directory global_long/. 
+it can then be used as a run directory with e.g. the PBS job-script "job_NOISE123_pbs.submit_atten.sh".
+
+Please modify these scripts according to your specifics.
+
+
+
+---------------
+
+
+
+For more details, please see these routines being described and used in article:
+
+Tromp, J., Y. Luo, S. Hanasoge and D. Peter, 2010. 
+Noise Cross-Correlation Sensitivity Kernels, 
+Geophys. J. Int., 183 (2), 791-819.
+
