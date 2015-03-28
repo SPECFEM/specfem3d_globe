@@ -323,7 +323,7 @@
 
 !---------------------------------------------------------------------------
 
-! create observation grid (surface) on which we compute the Roland_Sylvain integrals.
+! create observation grid (surface) on which we compute the gravity integrals.
 ! each processor has a copy of the whole grid and sums its contribution there,
 ! and at the end of the process an MPI reduction is performed to compute the global sum
 

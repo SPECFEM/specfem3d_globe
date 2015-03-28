@@ -143,7 +143,7 @@
                         code,crust_thickness,crust_vp,crust_vs,crust_rho)
 
   ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
-  ! note: but for Roland_Sylvain gravity calculations we include the ice
+  ! note: but for gravity integral calculations we include the ice
   if (INCLUDE_ICE_IN_CRUST) then
     thicks_1 = thicks(1)
   else

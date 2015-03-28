@@ -258,7 +258,7 @@
           y_meshpoint = ystore(i,j,k,ispec)
           z_meshpoint = zstore(i,j,k,ispec)
 
-!! DK DK for Roland_Sylvain gravity calculations we may want to shift the reference frame to a pre-computed center of mass
+!! DK DK for gravity integral calculations we may want to shift the reference frame to a pre-computed center of mass
           if (SHIFT_TO_THIS_CENTER_OF_MASS) then
             x_meshpoint = x_meshpoint - x_shift
             y_meshpoint = y_meshpoint - y_shift
@@ -303,9 +303,9 @@
 
 !=====================================================================
 
-  ! compute Roland_Sylvain integrals of that part of the slice, and then total integrals for the whole Earth
+  ! compute gravity integrals of that part of the slice, and then total integrals for the whole Earth
 
-  subroutine compute_Roland_Sylvain_integr(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
+  subroutine compute_gravity_integrals(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
                 xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
   use constants
@@ -360,7 +360,7 @@
 
     ! print information about number of elements done so far
     if (myrank == 0 .and. (mod(ispec,NSPEC_DISPLAY_INTERVAL) == 0 .or. ispec == 1 .or. ispec == nspec)) then
-       write(IMAIN,*) 'for Roland_Sylvain integrals ',ispec,' elements computed out of ',nspec
+       write(IMAIN,*) 'for gravity integrals ',ispec,' elements computed out of ',nspec
        ! write time stamp file to give information about progression of simulation
        write(outputname,"('/timestamp_reg',i1.1,'_ispec',i7.7,'_out_of_',i7.7)") iregion_code,ispec,nspec
        ! timestamp file output
@@ -403,7 +403,7 @@
           y_meshpoint = ystore(i,j,k,ispec)
           z_meshpoint = zstore(i,j,k,ispec)
 
-!! DK DK for Roland_Sylvain gravity calculations we may want to shift the reference frame to a pre-computed center of mass
+!! DK DK for gravity integral calculations we may want to shift the reference frame to a pre-computed center of mass
           if (SHIFT_TO_THIS_CENTER_OF_MASS) then
             x_meshpoint = x_meshpoint - x_shift
             y_meshpoint = y_meshpoint - y_shift
@@ -504,5 +504,5 @@
     enddo
   enddo
 
-  end subroutine compute_Roland_Sylvain_integr
+  end subroutine compute_gravity_integrals
 

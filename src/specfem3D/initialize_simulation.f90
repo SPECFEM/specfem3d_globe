@@ -61,8 +61,8 @@
     call flush_IMAIN()
   endif
 
-!! DK DK for Roland_Sylvain
-  if (ROLAND_SYLVAIN) call exit_MPI(myrank,'no need to run the solver to compute Roland_Sylvain integrals, only the mesher')
+!! DK DK for gravity integrals
+  if (GRAVITY_INTEGRALS) call exit_MPI(myrank,'no need to run the solver to compute gravity integrals, only the mesher')
 
   if (myrank == 0) then
     ! read the parameter file and compute additional parameters
