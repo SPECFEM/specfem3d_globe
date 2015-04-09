@@ -388,7 +388,7 @@ subroutine get_gradient_cg_tiso()
       max = maxval(depthmax)
       maxindex = maxloc(depthmax)
       depthmax_depth = depthmax_radius(maxindex(1))
-      depthmax_depth = 6371.0 *( 1.0 - depthmax_depth )
+      depthmax_depth = R_EARTH_KM *( 1.0 - depthmax_depth )
       ! maximum in given depth range
       print*,'  using depth maximum: '
       print*,'  between depths (top/bottom)   : ',R_top,R_bottom

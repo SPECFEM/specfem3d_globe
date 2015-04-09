@@ -118,7 +118,7 @@ subroutine get_gradient_steepest_iso()
 
   ! statistics output
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_gradient_minmax',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_gradient_minmax',status='unknown',action='write')
     write(IOUT,*) '#min_beta #max_beta #min_bulk #max_bulk #min_rho #max_rho'
     write(IOUT,'(6e24.12)') min_beta, max_beta, min_bulk, max_bulk, min_rho, max_rho
     close(IOUT)
@@ -129,7 +129,7 @@ subroutine get_gradient_steepest_iso()
     ! maximum of all processes stored in max_vsv
     call max_all_cr(max,max_beta)
     max = max_beta
-    depth_max = 6371.0 *( 1.0 - depth_max )
+    depth_max = R_EARTH_KM *( 1.0 - depth_max )
   endif
 
   ! determines step length based on maximum gradient value (either shear or bulk)
@@ -190,7 +190,7 @@ subroutine get_gradient_steepest_iso()
 
   ! statistics output
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_sum',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_sum',status='unknown',action='write')
     write(IOUT,*) '#norm_beta #norm_bulk #norm_rho'
     write(IOUT,'(3e24.12)') norm_beta, norm_bulk, norm_rho
     close(IOUT)
@@ -222,7 +222,7 @@ subroutine get_gradient_steepest_iso()
 
   ! statistics output
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_scaled_gradient',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_scaled_gradient',status='unknown',action='write')
     write(IOUT,*) '#min_beta #max_beta #min_bulk #max_bulk #min_rho #max_rho'
     write(IOUT,'(6e24.12)') min_beta,max_beta,min_bulk,max_bulk,min_rho,max_rho
     close(IOUT)
@@ -338,7 +338,7 @@ subroutine get_gradient_steepest_tiso()
     ! maximum of all processes stored in max_vsv
     call max_all_cr(max,max_vsv)
     max = max_vsv
-    depth_max = 6371.0 *( 1.0 - depth_max )
+    depth_max = R_EARTH_KM *( 1.0 - depth_max )
   endif
 
   ! determines step length

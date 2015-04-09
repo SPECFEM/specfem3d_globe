@@ -85,7 +85,7 @@ subroutine read_parameters_tomo()
 
   ! statistics
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac',status='unknown',iostat=ier)
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac',status='unknown',action='write',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening file: ',trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac'
       print*,'Please make sure that directory '//trim(OUTPUT_STATISTICS_DIR)//' exists...'

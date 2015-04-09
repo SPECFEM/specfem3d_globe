@@ -75,7 +75,7 @@ subroutine read_kernels_cg_tiso_old()
   write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -88,7 +88,7 @@ subroutine read_kernels_cg_tiso_old()
   write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -101,7 +101,7 @@ subroutine read_kernels_cg_tiso_old()
   write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -114,7 +114,7 @@ subroutine read_kernels_cg_tiso_old()
   write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -147,7 +147,7 @@ subroutine read_kernels_cg_tiso_old()
 
   ! statistics output
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernels_minmax',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernels_minmax',status='unknown',action='write')
     write(IOUT,*) '#min_bulk #max_bulk #min_vsv #max_vsv #min_vsh #max_vsh #min_eta #max_eta'
     write(IOUT,'(4e24.12)') min_bulk, max_bulk, min_vsv, max_vsv, min_vsh, max_vsh, min_eta, max_eta
     close(IOUT)
@@ -206,7 +206,7 @@ subroutine read_kernels_cg_tiso_old()
     write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
     if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
       call exit_mpi(myrank,'file not found')
@@ -219,7 +219,7 @@ subroutine read_kernels_cg_tiso_old()
     write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
     if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
       call exit_mpi(myrank,'file not found')
@@ -232,7 +232,7 @@ subroutine read_kernels_cg_tiso_old()
     write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
     if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
       call exit_mpi(myrank,'file not found')
@@ -245,7 +245,7 @@ subroutine read_kernels_cg_tiso_old()
     write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
     if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
       call exit_mpi(myrank,'file not found')
@@ -278,7 +278,7 @@ subroutine read_kernels_cg_tiso_old()
 
     ! statistics output
     if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-      open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernel_updates_minmax',status='unknown')
+      open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernel_updates_minmax',status='unknown',action='write')
       write(IOUT,*) '#min_bulk #max_bulk #min_vsv #max_vsv #min_vsh #max_vsh #min_eta #max_eta'
       write(IOUT,'(4e24.12)') min_bulk, max_bulk, min_vsv, max_vsv, min_vsh, max_vsh, min_eta, max_eta
       close(IOUT)
