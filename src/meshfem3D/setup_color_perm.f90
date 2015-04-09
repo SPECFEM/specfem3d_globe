@@ -341,8 +341,8 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'color_'//str_domain(idomain)
     call write_VTK_data_elem_i(nspec,nglob, &
-                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool, &
-                              color,filename)
+                               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                               ibool,color,filename)
   endif
   deallocate(color)
 
@@ -576,8 +576,8 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'perm_'//str_domain(idomain)
     call write_VTK_data_elem_i(nspec,nglob, &
-                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool, &
-                              perm,filename)
+                               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                               ibool,perm,filename)
   endif
 
   deallocate(ispec_is_d)
@@ -765,8 +765,8 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'perm_global'
     call write_VTK_data_elem_i(nspec,nglob, &
-                              xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool, &
-                              temp_perm_global,filename)
+                               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                               ibool,temp_perm_global,filename)
   endif
 
   ! store as new permutation
