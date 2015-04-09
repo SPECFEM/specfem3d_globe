@@ -39,7 +39,7 @@
   ! timing
   double precision :: tCPU
   double precision, external :: wtime
-  character(len=MAX_STRING_LEN) :: path_to_add, topo_path
+  character(len=MAX_STRING_LEN) :: topo_path
 
   ! get MPI starting time
   time_start = wtime()
@@ -68,10 +68,7 @@
         call flush_IMAIN()
 
         topo_path = LOCAL_PATH
-        if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-          write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-          topo_path = path_to_add(1:len_trim(path_to_add))//topo_path(1:len_trim(topo_path))
-        endif
+
         ! reads topo file
         call read_topo_bathy_database(ibathy_topo, topo_path)
       endif

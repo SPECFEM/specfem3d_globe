@@ -46,7 +46,7 @@
   use specfem_par,only: &
     ABSORBING_CONDITIONS, &
     LOCAL_PATH,ABSORBING_CONDITIONS,&
-    EXACT_MASS_MATRIX_FOR_ROTATION, mygroup, NUMBER_OF_SIMULTANEOUS_RUNS
+    EXACT_MASS_MATRIX_FOR_ROTATION
 
   implicit none
 
@@ -97,14 +97,10 @@
   ! local parameters
   integer :: ier,lnspec,lnglob
   ! processor identification
-  character(len=MAX_STRING_LEN) :: prname, path_to_add
+  character(len=MAX_STRING_LEN) :: prname
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data.bin', &
         status='old',action='read',form='unformatted',iostat=ier)

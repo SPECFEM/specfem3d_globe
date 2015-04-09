@@ -51,7 +51,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -60,10 +60,6 @@
 
 
   file_name = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call world_duplicate(comm)
 
@@ -236,7 +232,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -244,10 +240,6 @@
   integer(kind=8), dimension(1) :: start, count
 
   file_name = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call world_duplicate(comm)
 
@@ -428,19 +420,14 @@
   integer, intent(in) :: iteration_on_subset_tmp
   ! Local parameters
   integer :: comm
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
   integer(kind=8), dimension(1) :: start, count
 
-
   write(file_name,'(a,a,i6.6,a)') trim(LOCAL_TMP_PATH), '/save_frame_at',iteration_on_subset_tmp,'.bp'
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call world_duplicate(comm)
 

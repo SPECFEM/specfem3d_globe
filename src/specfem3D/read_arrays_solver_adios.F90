@@ -49,7 +49,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   use specfem_par,only: &
     ABSORBING_CONDITIONS, &
     LOCAL_PATH,ABSORBING_CONDITIONS,&
-    EXACT_MASS_MATRIX_FOR_ROTATION, NUMBER_OF_SIMULTANEOUS_RUNS, mygroup
+    EXACT_MASS_MATRIX_FOR_ROTATION
 
   implicit none
 
@@ -96,7 +96,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   ! flags to know if we should read Vs and anisotropy arrays
   logical :: READ_KAPPA_MU,READ_TISO
 
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
 
   ! local parameters
   integer :: comm, lnspec, lnglob, local_dim
@@ -117,11 +117,6 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   sel_num = 0
 
   file_name= trim(LOCAL_PATH) // "/solver_data.bp"
-  ! Append the actual file name.
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call world_duplicate(comm)
 

@@ -42,6 +42,7 @@
 
 ! local variables
   integer :: ier
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! opens the parameter file: DATA/Par_file
   call open_parameter_file(ier)
@@ -309,6 +310,16 @@
       stop 'TOPOGRAPHY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
     endif
   endif
+
+  ! see if we are running several independent runs in parallel
+  ! if so, add the right directory for that run (group numbers start at zero, but directory names start at run0001, thus we add one)
+  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    LOCAL_PATH = path_to_add(1:len_trim(path_to_add))//LOCAL_PATH(1:len_trim(LOCAL_PATH))
+    LOCAL_TMP_PATH = path_to_add(1:len_trim(path_to_add))//LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))
+  endif
+
 
 !----------------------------------------------
 !
