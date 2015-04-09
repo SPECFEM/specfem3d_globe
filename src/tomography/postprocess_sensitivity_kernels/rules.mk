@@ -120,7 +120,6 @@ xaddition_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xaddition_sem: $(xaddition_sem_OBJECTS) $(xaddition_sem_SHARED_OBJECTS)
@@ -141,7 +140,6 @@ xclip_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xclip_sem: $(xclip_sem_OBJECTS) $(xclip_sem_SHARED_OBJECTS)
@@ -163,7 +161,6 @@ xcombine_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xcombine_sem: $(xcombine_sem_OBJECTS) $(xcombine_sem_SHARED_OBJECTS)
@@ -185,7 +182,6 @@ xdifference_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xdifference_sem: $(xdifference_sem_OBJECTS) $(xdifference_sem_SHARED_OBJECTS)
@@ -206,12 +202,11 @@ xinterpolate_model_SHARED_OBJECTS = \
 	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
 	$O/lagrange_poly.shared.o \
-	$O/recompute_jacobian.solver.o \
+	$O/recompute_jacobian.shared.o \
 	$O/search_kdtree.shared.o \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
@@ -244,7 +239,6 @@ xsmooth_sem_SHARED_OBJECTS = \
 	$O/param_reader.cc.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
-	$O/specfem3D_par.solverstatic_module.o \
 	$(EMPTY_MACRO)
 
 # extra dependencies
@@ -263,7 +257,7 @@ $(postprocess_OBJECTS): S := ${S_TOP}/src/postprocess
 ###
 ### module dependencies
 ###
-$O/postprocess_par.postprocess_module.o: $O/shared_par.shared_module.o $O/specfem3D_par.solverstatic_module.o
+$O/postprocess_par.postprocess_module.o: $O/shared_par.shared_module.o
 
 
 ####

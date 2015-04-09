@@ -180,7 +180,7 @@ program difference_sem
 
     ! reads in file from first directory
     if(myrank==0) write(*,*) '  data_1: ',trim(file1name)
-    open(IIN,file=trim(file1name),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(file1name),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening first data file'
@@ -190,7 +190,7 @@ program difference_sem
 
     ! reads in file from second directory
     if (myrank == 0) write(*,*) '  data_2: ',trim(file2name)
-    open(IIN,file=trim(file2name),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(file2name),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file2name)
       stop 'Error opening second data file'
@@ -211,7 +211,7 @@ program difference_sem
     ! absolute values
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_diff.bin'
     if (myrank == 0) write(*,*) '  file: ',trim(file1name)
-    open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
+    open(IOUT,file=trim(file1name),form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening output data file'
@@ -232,7 +232,7 @@ program difference_sem
     ! stores relative difference (k1 - k2)/ k2 with respect to second input file
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_diff_relative.bin'
     if (myrank == 0) write(*,*) '  file: ',trim(file1name)
-    open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
+    open(IOUT,file=trim(file1name),form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening output data file'

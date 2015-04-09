@@ -181,6 +181,9 @@ program clip_sem_globe
 
   enddo
 
+  ! frees memory
+  deallocate(sem_array)
+
   ! user output
   if (myrank == 0) then
     print *,''
