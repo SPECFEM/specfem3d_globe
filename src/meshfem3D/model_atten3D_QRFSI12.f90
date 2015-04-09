@@ -206,7 +206,7 @@
   real(kind=4) :: wk1(NSQ),wk2(NSQ),wk3(NSQ)
   real(kind=4) :: xlmvec(NSQ**2)
 
-  double precision, parameter :: rmoho_prem = 6371.0d0 - 24.4d0
+  double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
   double precision, parameter :: rcmb = 3480.0d0
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
@@ -248,7 +248,7 @@
 
     ! we are in the mantle
 
-    depth = 6371.-radius
+    depth = R_EARTH_KM - radius
 
     !debug
     !   print *,'QRFSI12: we are in the mantle at depth',depth

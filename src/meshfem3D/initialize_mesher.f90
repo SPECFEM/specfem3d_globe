@@ -73,7 +73,10 @@
   call broadcast_computed_parameters(myrank)
 
   ! check that the code is running with the requested number of processes
-  if (sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
+  if (sizeprocs /= NPROCTOT) then
+    if (myrank == 0) print*,'Error wrong number of MPI processes ',sizeprocs,' should be ',NPROCTOT,', please check...'
+    call exit_MPI(myrank,'wrong number of MPI processes')
+  endif
 
 !! DK DK for Roland_Sylvain
   ! in the case of ROLAND_SYLVAIN we should always use double precision
