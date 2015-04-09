@@ -45,7 +45,6 @@ specfem3D_OBJECTS = \
 	$O/get_event_info.solver.o \
 	$O/make_gravity.solver.o \
 	$O/netlib_specfun_erf.solver.o \
-	$O/recompute_jacobian.solver.o \
 	$(EMPTY_MACRO)
 
 # solver objects with statically allocated arrays; dependent upon
@@ -145,6 +144,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/recompute_jacobian.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
