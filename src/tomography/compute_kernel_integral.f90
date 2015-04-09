@@ -710,7 +710,7 @@ subroutine compute_jacobian(jacobian)
   ! builds jacobian
   write(m_file,'(a,i6.6,a)') trim(INPUT_DATABASES_DIR)//'proc',myrank,trim(REG)//'solver_data.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
