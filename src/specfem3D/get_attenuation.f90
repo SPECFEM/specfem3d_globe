@@ -33,7 +33,7 @@
   use constants_solver
   use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH, &
       NUMBER_OF_SIMULTANEOUS_RUNS
-  
+
 
   implicit none
 
