@@ -1112,6 +1112,10 @@ In that case there is no need to duplicate the mesh and model file database (the
 directories) in each of the run0001, run0002,... directories, it is sufficient to have one in run0001
 and the code will broadcast it to the others).
 
+\item [{\texttt{USE\_FAILSAFE\_MECHANISM}}]:
+if one or a few of these simultaneous runs fail, kill all the runs or let the others finish using a fail-safe mechanism
+(in most cases, should be set to true).
+
 TODO / future work to do: currently the BROADCAST\_SAME\_MESH\_AND\_MODEL option assumes to have the (master) mesh files in run0001/DATABASES\_MPI or run0001/OUTPUT\_FILES/DATABASES\_MPI. However, for adjoint runs you still need a DATABASES\_MPI folder in each of the sub-runs directories, e.g. run0002/DATABASES\_MPI, etc. to store the forward wavefields, kernels etc. of each sub-run. This would not be needed for forward simulations.
 
 TODO / future work to do: the sensitivity kernel summing and smoothing tools in directory src/tomography are currently not ported to this new option to do many runs simultaneously, only the solver (src/specfem3d) is. Thus these tools should work, but in their current version will need to be run for each simulation result independently.

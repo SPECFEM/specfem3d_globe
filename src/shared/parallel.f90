@@ -129,8 +129,7 @@ end module my_mpi
   subroutine abort_mpi()
 
   use my_mpi
-  use constants,only: USE_FAILSAFE_MECHANISM
-  use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
+  use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FAILSAFE_MECHANISM
 
   implicit none
 
