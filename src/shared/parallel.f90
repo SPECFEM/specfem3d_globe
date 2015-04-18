@@ -118,7 +118,7 @@ end module my_mpi
 
 ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
-  if (ier /= 0 ) stop 'Error finalizing MPI'
+  if (ier /= 0) stop 'Error finalizing MPI'
 
   end subroutine finalize_mpi
 
@@ -129,14 +129,23 @@ end module my_mpi
   subroutine abort_mpi()
 
   use my_mpi
+  use constants,only: USE_FAILSAFE_MECHANISM
+  use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
   integer :: ier
 
-  ! note: MPI_ABORT does not return, and does exit the
-  !          program with an error code of 30
-  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+  ! in case of a large number of simultaneous runs, if one fails we may want that one to just call MPI_FINALIZE() and wait
+  ! until all the others are finished instead of calling MPI_ABORT(), which would instead kill all the runs,
+  ! including all the successful ones
+  if(USE_FAILSAFE_MECHANISM .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1) then
+    call MPI_FINALIZE(ier)
+    if (ier /= 0) stop 'Error finalizing MPI'
+  else
+    ! note: MPI_ABORT does not return, it makes the program exit with an error code of 30
+    call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+  endif
 
   end subroutine abort_mpi
 

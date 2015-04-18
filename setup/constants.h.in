@@ -31,6 +31,8 @@
 !--- user can modify parameters below
 !
 
+  logical, parameter :: USE_FAILSAFE_MECHANISM = .false.
+
 !
 ! solver in single or double precision depending on the machine (4 or 8 bytes)
 !
