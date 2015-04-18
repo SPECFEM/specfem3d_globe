@@ -134,18 +134,27 @@ end module my_mpi
 
   implicit none
 
-  integer :: rank,ier
+  integer :: my_local_rank,my_global_rank,ier
 
   character(len=MAX_STRING_LEN) :: filename
 
-  ! get my local rank
-  call world_rank(rank)
+  ! get my local rank and my global rank (in the case of simultaneous jobs, for which we split
+  ! the MPI communicator, they will be different; otherwise they are the same)
+  call world_rank(my_local_rank)
+  call MPI_COMM_RANK(MPI_COMM_WORLD,my_global_rank,ier)
 
   ! write a stamp file to disk to let the user know that the run failed
-  write(filename,"('run_with_local_rank_',i8.8,'failed')") rank
-  open(unit=9765,file=filename,status='unknown',action='write')
-  write(9765,*) 'run with local rank ',rank,' failed'
-  close(9765)
+  if(NUMBER_OF_SIMULTANEOUS_RUNS > 1) then
+    write(filename,"('run_with_local_rank_',i8.8,'and_global_rank_',i8.8,'_failed')") my_local_rank,my_global_rank
+    open(unit=9765,file=filename,status='unknown',action='write')
+    write(9765,*) 'run with local rank ',my_local_rank,' and global rank ',my_global_rank,' failed'
+    close(9765)
+  else
+    write(filename,"('run_with_local_rank_',i8.8,'_failed')") my_local_rank
+    open(unit=9765,file=filename,status='unknown',action='write')
+    write(9765,*) 'run with local rank ',my_local_rank,' failed'
+    close(9765)
+  endif
 
   ! in case of a large number of simultaneous runs, if one fails we may want that one to just call MPI_FINALIZE() and wait
   ! until all the others are finished instead of calling MPI_ABORT(), which would instead kill all the runs,
