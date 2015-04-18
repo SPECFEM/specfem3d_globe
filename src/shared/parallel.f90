@@ -129,11 +129,23 @@ end module my_mpi
   subroutine abort_mpi()
 
   use my_mpi
+  use constants,only: MAX_STRING_LEN
   use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FAILSAFE_MECHANISM
 
   implicit none
 
-  integer :: ier
+  integer :: rank,ier
+
+  character(len=MAX_STRING_LEN) :: filename
+
+  ! get my local rank
+  call world_rank(rank)
+
+  ! write a stamp file to disk to let the user know that the run failed
+  write(filename,"('run_with_local_rank_',i8.8,'failed')") rank
+  open(unit=9765,file=filename,status='unknown',action='write')
+  write(9765,*) 'run with local rank ',rank,' failed'
+  close(9765)
 
   ! in case of a large number of simultaneous runs, if one fails we may want that one to just call MPI_FINALIZE() and wait
   ! until all the others are finished instead of calling MPI_ABORT(), which would instead kill all the runs,
