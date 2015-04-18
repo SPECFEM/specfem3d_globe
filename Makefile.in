@@ -217,7 +217,7 @@ SUBDIRS = \
 	meshfem3D \
 	specfem3D \
 	auxiliaries \
-	tomography/postprocess \
+	tomography/postprocess_sensitivity_kernels \
 	tomography \
 	$(EMPTY_MACRO)
 
@@ -246,7 +246,7 @@ DEFAULT += 	\
 	$(EMPTY_MACRO)
 endif
 
-all: default aux movies tomography/postprocess tomography
+all: default aux movies tomography/postprocess_sensitivity_kernels tomography
 
 default: $(DEFAULT)
 
@@ -299,7 +299,7 @@ endif
 	@echo "    xcreate_movie_GMT_global"
 	@echo "    xcombine_paraview_strain_data"
 	@echo ""
-	@echo "- sensitivity kernel postprocessing tools: [make tomography/postprocess]"
+	@echo "- sensitivity kernel postprocessing tools: [make tomography/postprocess_sensitivity_kernels]"
 	@echo "    xaddition_sem"
 	@echo "    xclip_sem"
 	@echo "    xcombine_sem"
