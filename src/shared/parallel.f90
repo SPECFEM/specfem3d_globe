@@ -129,7 +129,7 @@ end module my_mpi
   subroutine abort_mpi()
 
   use my_mpi
-  use constants,only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
   use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FAILSAFE_MECHANISM
 
   implicit none
@@ -165,6 +165,7 @@ end module my_mpi
   else
     ! note: MPI_ABORT does not return, it makes the program exit with an error code of 30
     call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+    stop 'error, program ended in exit_MPI'
   endif
 
   end subroutine abort_mpi
