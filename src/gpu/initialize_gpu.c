@@ -530,6 +530,9 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   cl_platform_id *platform_ids;
   cl_uint num_platforms;
 
+  // debugging
+  const int VERBOSE_OUTPUT = 0;
+
   // first OpenCL call
   // only gets number of platforms
   clCheck( clGetPlatformIDs(0, NULL, &num_platforms) );
@@ -591,6 +594,18 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         }
         // frees temporary array
         free(info);
+      }
+    }
+
+    // debug output
+    if (VERBOSE_OUTPUT){
+      if (myrank == 0) {
+        printf("\nAvailable platforms are:\n");
+        for (i = 0; i < num_platforms; i++) {
+          if (info_all[i][0]) { printf("  platform %i: vendor = %s , name = %s\n",i,info_all[i][0],info_all[i][1]);}
+        }
+        printf("\nMatching platforms: %i\n",found);
+        printf("\n");
       }
     }
 
@@ -677,6 +692,18 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
       }
 
       free(info);
+    }
+
+    // debug output
+    if (VERBOSE_OUTPUT){
+      if (myrank == 0) {
+        printf("\nAvailable devices are:\n");
+        for (i = 0; i < num_devices; i++) {
+          if (info_device_all[i]) { printf("  device %i: name = %s\n",i,info_device_all[i]);}
+        }
+        printf("\nMatching devices: %i\n",found);
+        printf("\n");
+      }
     }
 
     if (!found) {
