@@ -14,7 +14,7 @@ dir="DATABASES_MPI/"
 res="1"
 
 # for visualization
-cp ../../UTILS/Visualization/Paraview/AVS_continent_boundaries.inp ./
+cp ../../utils/Visualization/Paraview/AVS_continent_boundaries.inp ./
 
 echo
 echo "alpha_kernel"

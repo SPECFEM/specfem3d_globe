@@ -56,7 +56,7 @@
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     ADIOS_FOR_ARRAYS_SOLVER, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,ROLAND_SYLVAIN
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,GRAVITY_INTEGRALS
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
@@ -234,9 +234,9 @@
                                  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
                                  xigll,yigll,zigll)
 
-!! DK DK for Roland_Sylvain
+!! DK DK for gravity integrals
 ! creation of the top observation surface if region is the crust_mantle
-    if (ROLAND_SYLVAIN .and. iregion_code == IREGION_CRUST_MANTLE) call compute_observation_surface()
+    if (GRAVITY_INTEGRALS .and. iregion_code == IREGION_CRUST_MANTLE) call compute_observation_surface()
 
     ! create chunk buffers if more than one chunk
     call synchronize_all()
@@ -388,8 +388,8 @@
 
     ! save the binary files
     call synchronize_all()
-!! DK DK for Roland_Sylvain
-    if (.not. ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (.not. GRAVITY_INTEGRALS) then
       if (myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) '  ...saving binary files'
@@ -415,15 +415,15 @@
     deallocate(rmass_ocean_load)
 
     ! saves MPI interface info
-!! DK DK for Roland_Sylvain
-    if (.not. ROLAND_SYLVAIN) call save_arrays_solver_MPI(iregion_code)
+!! DK DK for gravity integrals
+    if (.not. GRAVITY_INTEGRALS) call save_arrays_solver_MPI(iregion_code)
 
     ! frees MPI arrays memory
     call crm_free_MPI_arrays(iregion_code)
 
     ! boundary mesh for MOHO, 400 and 670 discontinuities
-!! DK DK for Roland_Sylvain
-    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. GRAVITY_INTEGRALS) then
       ! user output
       call synchronize_all()
       if (myrank == 0) then
@@ -453,24 +453,24 @@
         nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
         etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
-!! DK DK for Roland_Sylvain
-    if (ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (GRAVITY_INTEGRALS) then
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*)
-        write(IMAIN,*) '  ...computing Roland_Sylvain integrals'
+        write(IMAIN,*) '  ...computing gravity integrals'
         call flush_IMAIN()
       endif
 
-      ! compute Roland_Sylvain integrals of that part of the slice, and then total integrals for the whole Earth
-      call compute_Roland_Sylvain_integr(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
+      ! compute gravity integrals of that part of the slice, and then total integrals for the whole Earth
+      call compute_gravity_integrals(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
     endif
 
     ! create AVS or DX mesh data for the slices
-!! DK DK for Roland_Sylvain
-    if (SAVE_MESH_FILES .and. .not. ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (SAVE_MESH_FILES .and. .not. GRAVITY_INTEGRALS) then
       ! user output
       call synchronize_all()
       if (myrank == 0) then

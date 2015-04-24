@@ -216,7 +216,6 @@
           ! the first step of noise tomography is to use |S(\omega)|^2 as a point force source at one of the receivers.
           ! hence, instead of a moment tensor 'sourcearrays', a 'noise_sourcearray' for a point force is needed.
           ! furthermore, the CMTSOLUTION needs to be zero, i.e., no earthquakes.
-          ! now this must be manually set in DATA/CMTSOLUTION, by USERS.
           call noise_add_source_master_rec()
 
        case (2)

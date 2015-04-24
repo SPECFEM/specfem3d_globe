@@ -39,7 +39,7 @@
   integer, parameter :: nparam_i = 45
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 60
+  integer, parameter :: nparam_l = 61
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 34
@@ -100,7 +100,7 @@
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
             ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX,&
             ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION, &
-            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL /)
+            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,USE_FAILSAFE_MECHANISM /)
 
     bcast_double_precision = (/ &
             DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -123,8 +123,8 @@
   call bcast_all_ch(LOCAL_TMP_PATH,MAX_STRING_LEN)
   call bcast_all_ch(MODEL,MAX_STRING_LEN)
 
-  call bcast_all_ch(GPU_PLATFORM,11)
-  call bcast_all_ch(GPU_DEVICE,11)
+  call bcast_all_ch(GPU_PLATFORM,12)
+  call bcast_all_ch(GPU_DEVICE,12)
 
   call bcast_all_i(ner,MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_i(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS)
@@ -265,6 +265,7 @@
     CEM_REQUEST = bcast_logical(58)
     CEM_ACCEPT = bcast_logical(59)
     BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(60)
+    USE_FAILSAFE_MECHANISM = bcast_logical(61)
 
     ! double precisions
     DT = bcast_double_precision(1)

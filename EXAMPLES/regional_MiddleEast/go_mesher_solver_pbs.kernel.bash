@@ -16,14 +16,14 @@
 
 cd $PBS_O_WORKDIR
 
-BASEMPIDIR=`grep LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
+BASEMPIDIR=`grep ^LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
 
 # script to run the mesher and the solver
 # read DATA/Par_file to get information about the run
 # compute total number of nodes needed
-NPROC_XI=`grep NPROC_XI DATA/Par_file | cut -d = -f 2 `
-NPROC_ETA=`grep NPROC_ETA DATA/Par_file | cut -d = -f 2`
-NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -d = -f 2 `
+NPROC_XI=`grep ^NPROC_XI DATA/Par_file | cut -d = -f 2 `
+NPROC_ETA=`grep ^NPROC_ETA DATA/Par_file | cut -d = -f 2`
+NCHUNKS=`grep ^NCHUNKS DATA/Par_file | cut -d = -f 2 `
 
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
@@ -34,7 +34,6 @@ mkdir -p OUTPUT_FILES
 cp DATA/Par_file OUTPUT_FILES/
 cp DATA/STATIONS OUTPUT_FILES/
 cp DATA/CMTSOLUTION OUTPUT_FILES/
-cp DATA/STATIONS_ADJOINT OUTPUT_FILES/
 
 # obtain job information
 cat $PBS_NODEFILE > OUTPUT_FILES/compute_nodes
@@ -89,6 +88,8 @@ cd ../
 ##
 ## adjoint simulation
 ##
+cp SEM/STATIONS_ADJOINT DATA/
+cp DATA/STATIONS_ADJOINT OUTPUT_FILES/
 ./change_simulation_type.pl -b
 sleep 2
 

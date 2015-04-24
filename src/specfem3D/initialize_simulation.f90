@@ -61,21 +61,12 @@
     call flush_IMAIN()
   endif
 
-!! DK DK for Roland_Sylvain
-  if (ROLAND_SYLVAIN) call exit_MPI(myrank,'no need to run the solver to compute Roland_Sylvain integrals, only the mesher')
+!! DK DK for gravity integrals
+  if (GRAVITY_INTEGRALS) call exit_MPI(myrank,'no need to run the solver to compute gravity integrals, only the mesher')
 
   if (myrank == 0) then
     ! read the parameter file and compute additional parameters
     call read_compute_parameters()
-
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
-!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
-    if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-      NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
-      ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-      if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-    endif
   endif
 
   ! broadcast parameters read from master to all processes
@@ -233,7 +224,9 @@
 
   ! get total number of receivers
   if (myrank == 0) then
-    open(unit=IIN,file=STATIONS,iostat=ier,status='old',action='read')
+    open(unit=IIN,file=trim(STATIONS),status='old',action='read',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Stations file '//trim(STATIONS)//' could not be found, please check your setup')
+    ! counts records
     nrec = 0
     do while(ier == 0)
       read(IIN,"(a)",iostat=ier) dummystring
@@ -547,6 +540,7 @@
 
   ! GPU_MODE now defined in Par_file
   if (GPU_MODE) then
+    ! user output
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) "GPU_MODE Active."
@@ -567,7 +561,7 @@
     endif
 
     ! initializes GPU and outputs info to files for all processes
-    call initialize_gpu_device(GPU_RUNTIME, GPU_PLATFORM, GPU_DEVICE, myrank,ngpu_devices)
+    call initialize_gpu_device(GPU_RUNTIME,GPU_PLATFORM,GPU_DEVICE,myrank,ngpu_devices)
   endif
 
   ! collects min/max of local devices found for statistics

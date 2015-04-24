@@ -639,7 +639,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine it_print_elapsed_time()
+  subroutine print_elapsed_time()
+
+! outputs runtime at the completion of time loop
 
   use specfem_par,only: time_start,IMAIN,myrank
   implicit none
@@ -650,6 +652,10 @@
   double precision :: tCPU
   double precision, external :: wtime
 
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! user output
   if (myrank == 0) then
     ! elapsed time since beginning of the simulation
     tCPU = wtime() - time_start
@@ -664,5 +670,8 @@
     call flush_IMAIN()
   endif
 
-  end subroutine it_print_elapsed_time
+  ! synchronizes all processes
+  call synchronize_all()
+
+  end subroutine print_elapsed_time
 

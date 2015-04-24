@@ -280,6 +280,7 @@
   ! iphase: iphase = 1 is for computing outer elements in the outer_core,
   !              iphase = 2 is for computing inner elements in the outer core (former icall parameter)
   integer :: iphase
+  integer :: it_tmp
   logical :: phase_is_inner
 
   ! checks
@@ -292,18 +293,31 @@
   !       as we start with saved wavefields b_displ( 1 ) <-> displ( NSTEP ) which correspond
   !       to a time (NSTEP - (it-1) - 1)*DT - t0
   !       for reconstructing the rotational contributions
+  if (UNDO_ATTENUATION) then
+    !valid for multiples only:
+    !it_tmp = iteration_on_subset * NT_DUMP_ATTENUATION - it_of_this_subset + 1
+    !
+    ! example: NSTEP is **NOT** a multiple of NT_DUMP_ATTENUATION
+    !          NT_DUMP_ATTENUATION = 301, NSTEP = 900, NSUBSET_ITERATIONS = 3, iteration_on_subset = 1 -> 3
+    !              1. subset, it_temp goes from (900 - 602) = 298 down to 1
+    !              2. subset, it_temp goes from (900 - 301) = 599 down to 299
+    !              3. subset, it_temp goes from (900 - 0)   = 900 down to 600
+    !works always:
+    it_tmp = NSTEP - (NSUBSET_ITERATIONS - iteration_on_subset)*NT_DUMP_ATTENUATION - it_of_this_subset + 1
+  else
+    it_tmp = it
+  endif
 
   ! current simulated time
   if (USE_LDDRK) then
-    b_timeval = real((dble(NSTEP-it)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    b_timeval = real((dble(NSTEP-it_tmp)*DT-dble(C_LDDRK(istage))*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   else
-    b_timeval = real((dble(NSTEP-it)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
+    b_timeval = real((dble(NSTEP-it_tmp)*DT-t0)*scale_t_inv, kind=CUSTOM_REAL)
   endif
 
-  if (UNDO_ATTENUATION) then
-    b_timeval = real((dble(NSTEP-(iteration_on_subset*NT_DUMP_ATTENUATION-it_of_this_subset+1))*DT-t0)*scale_t_inv, &
-                     kind=CUSTOM_REAL)
-  endif
+  !debug
+  !if (myrank == 0 ) print*,'compute_forces_acoustic_backward: it = ',it_tmp
+
 
   ! ****************************************************
   !   big loop over all spectral elements in the fluid

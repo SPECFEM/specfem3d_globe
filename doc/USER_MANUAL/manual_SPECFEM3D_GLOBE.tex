@@ -25,6 +25,7 @@
                       {\newcommand{\url}{\texttt}}
 \usepackage[authoryear]{natbib}
 
+
 \makeatletter
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% LyX specific LaTeX commands.
@@ -82,6 +83,10 @@
 % colors for the text
 \usepackage[dvipsnames,usenames]{color}
 \newcommand{\red}[1]{\textcolor{Red}{#1}}
+
+% Latex generated graphics
+\usepackage{tikz}
+\usetikzlibrary{trees}
 
 \usepackage{babel}
 \makeatother
@@ -216,8 +221,8 @@ The code is released open-source under the GNU version 2+ license, see the licen
 
 \chapter{Introduction}
 
-The software package SPECFEM3D\_GLOBE simulates three-dimensional
-global and regional seismic wave propagation based upon the spectral-element method (SEM).
+The software package SPECFEM3D\_GLOBE simulates three-dimensional global and regional seismic wave propagation
+and performs full waveform imaging (FWI) or adjoint tomography based upon the spectral-element method (SEM).
 The SEM is a continuous Galerkin technique \citep{TrKoLi08,PeKoLuMaLeCaLeMaLiBlNiBaTr11},
 which can easily be made discontinuous \citep{BeMaPa94,Ch00,KoWoHu02,ChCaVi03,LaWaBe05,Kop06,WiStBuGh10,AcKo11};
 it is then close to a particular case of the discontinuous Galerkin technique \citep{ReHi73,LeRa74,Arn82,JoPi86,BoMaHe91,FaRi99,HuHuRa99,CoKaSh00,GiHeWa02,RiWh03,MoRi05,GrScSc06,AiMoMu06,BeLaPi06,DuKa06,DeSeWh08,PuAmKa09,WiStBuGh10,DeSe10,EtChViGl10}, with optimized efficiency because of its tensorized basis functions \citep{WiStBuGh10,AcKo11}.
@@ -1062,6 +1067,59 @@ file. This feature is not used at the time of meshing.
 \item [{\texttt{PRINT\_SOURCE\_TIME\_FUNCTION}}] Turn this flag on to print
 information about the source time function in the file \texttt{OUTPUT\_FILES/plot\_source\_time\_function.txt}.
 This feature is not used at the time of meshing.
+%
+\item [{\texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS}}] adds the ability to run several calculations (several earthquakes)
+in an embarrassingly-parallel fashion from within the same run;
+this can be useful when using a very large supercomputer to compute
+many earthquakes in a catalog, in which case it can be better from
+a batch job submission point of view to start fewer and much larger jobs,
+each of them computing several earthquakes in parallel.
+To turn that option on, set parameter NUMBER\_OF\_SIMULTANEOUS\_RUNS to a value greater than 1.
+To implement that, we create NUMBER\_OF\_SIMULTANEOUS\_RUNS MPI sub-communicators,
+each of them being labeled "my\_local\_mpi\_comm\_world", and we use them
+in all the routines in "src/shared/parallel.f90", except in MPI\_ABORT() because in that case
+we need to kill the entire run.
+When that option is on, of course the number of processor cores used to start
+the code in the batch system must be a multiple of NUMBER\_OF\_SIMULTANEOUS\_RUNS,
+all the individual runs must use the same number of processor cores,
+which as usual is NPROC in the Par\_file,
+and thus the total number of processor cores to request from the batch system
+should be NUMBER\_OF\_SIMULTANEOUS\_RUNS * NPROC.
+All the runs to perform must be placed in directories called run0001, run0002, run0003 and so on
+(with exactly four digits).
+
+Imagine you have 10 independent calculations to do, each of them on 100 cores; you have three options:
+
+1/ submit 10 jobs to the batch system
+
+2/ submit a single job on 1000 cores to the batch, and in that script create a sub-array of jobs to start 10 jobs,
+each running on 100 cores (see e.g. http://www.schedmd.com/slurmdocs/job\_array.html )
+
+3/ submit a single job on 1000 cores to the batch, start SPECFEM3D on 1000 cores, create 10 sub-communicators,
+cd into one of 10 subdirectories (called e.g. run0001, run0002,... run0010) depending on the sub-communicator
+your MPI rank belongs to, and run normally on 100 cores using that sub-communicator.
+
+The option NUMBER\_OF\_SIMULTANEOUS\_RUNS implements 3/.
+
+\item [{\texttt{BROADCAST\_SAME\_MESH\_AND\_MODEL}}]:
+if we perform simultaneous runs in parallel, if only the source and receivers vary between these runs
+but not the mesh nor the model (velocity and density) then we can also read the mesh and model files
+from a single run in the beginning and broadcast them to all the others; for a large number of simultaneous
+runs for instance when solving inverse problems iteratively this can DRASTICALLY reduce I/Os to disk in the solver
+(by a factor equal to NUMBER\_OF\_SIMULTANEOUS\_RUNS), and reducing I/Os is crucial in the case of huge runs.
+Thus, always set this option to .true. if the mesh and the model are the same for all simultaneous runs.
+In that case there is no need to duplicate the mesh and model file database (the content of the DATABASES\_MPI
+directories) in each of the run0001, run0002,... directories, it is sufficient to have one in run0001
+and the code will broadcast it to the others).
+
+\item [{\texttt{USE\_FAILSAFE\_MECHANISM}}]:
+if one or a few of these simultaneous runs fail, kill all the runs or let the others finish using a fail-safe mechanism
+(in most cases, should be set to true).
+
+TODO / future work to do: currently the BROADCAST\_SAME\_MESH\_AND\_MODEL option assumes to have the (master) mesh files in run0001/DATABASES\_MPI or run0001/OUTPUT\_FILES/DATABASES\_MPI. However, for adjoint runs you still need a DATABASES\_MPI folder in each of the sub-runs directories, e.g. run0002/DATABASES\_MPI, etc. to store the forward wavefields, kernels etc. of each sub-run. This would not be needed for forward simulations.
+
+TODO / future work to do: the sensitivity kernel summing and smoothing tools in directory src/tomography are currently not ported to this new option to do many runs simultaneously, only the solver (src/specfem3d) is. Thus these tools should work, but in their current version will need to be run for each simulation result independently.
+More precisely, the current kernel summing and smoothing routines work fine, with the exception that you need to move out the mesh files (and also the parameters). This works because these routines consider multiple runs by design. You simply have to provide them the directories where the kernels are.
 \end{description}
 %
 \clearpage
@@ -1709,6 +1767,85 @@ to rerun the mesher. Of course it is best to include as many stations
 as possible, since this does not add significantly to the cost of
 the simulation.
 
+\section{Note on the simultaneous simulation of several earthquakes}
+
+\begin{figure}[H]
+\begin{centering}
+\tikzstyle{every node}=[draw=black,thick,anchor=west]
+\tikzstyle{selected}=[draw=red,fill=red!30]
+\tikzstyle{optional}=[dashed,fill=gray!50]
+\tikzstyle{missing}=[draw=white]
+\begin{tikzpicture}[%
+  grow via three points={one child at (0.5,-0.7) and
+  two children at (0.5,-0.7) and (0.5,-1.4)},
+  edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
+  \node {EXAMPLE\_ROOT\_DIR}
+    child { node {bin}}
+    child { node {DATA}}
+    child { node {DATABASES\_MPI}}
+    child { node {OUTPUT\_FILES}}
+    child { node [selected] {run0001}
+      child { node {DATA}}
+      child { node {DATABASES\_MPI}}
+      child { node {OUTPUT\_FILES}}
+      child { node [optional] {SEM}}
+    }
+    child [missing] {}
+    child [missing] {}
+    child [missing] {}
+    child [missing] {}
+    child { node [selected] {run0002}
+      child { node {DATA}}
+      child { node {DATABASES\_MPI}}
+      child { node {OUTPUT\_FILES}}
+      child { node [optional] {SEM}}
+    }
+    child [missing] {}
+    child [missing] {}
+    child [missing] {}
+    child [missing] {}
+    child { node [selected] {run....}
+      child { node {DATA}}
+      child { node {DATABASES\_MPI}}
+      child { node {OUTPUT\_FILES}}
+      child { node [optional] {SEM}}
+    };
+\end{tikzpicture}
+\par\end{centering}
+
+\caption{\textbf{\label{fig:simultaneous_dir_struct}}
+Directory structure when simulating several earthquakes at once.
+To improve readability, only directories have been drawn.}
+
+\end{figure}
+
+Figure~\ref{fig:simultaneous_dir_struct} shows what the directory structure
+should looks like when simulating multiple earthquakes at ones.
+
+\begin{itemize}
+\item The simulation is launched within the root directory \texttt{EXAMPLE\_ROOT\_DIR}
+(usually \texttt{mpirun -np N ./bin/xspecfem3D}).
+\item \texttt{DATA} should contain the \texttt{Par\_file} parameter file with
+\texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS} as explained in Chapter~\ref{cha:Running-the-Mesher}.
+\item \texttt{DATABASES\_MPI} and {OUTPUT\_FILES} directory may contain the mesher output but they
+are not required as they are superseded by the ones in the \texttt{runXXX} directories.
+\item \texttt{runXXXX} directories must be created beforehand. There should be be as many as
+\texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS} and the numbering should be contiguous, starting from \texttt{0001}.
+They all should have \texttt{DATA},
+\texttt{DATABASES\_MPI} and \texttt{OUTPUT\_FILES} directories. Additionally a \texttt{SEM} directory
+containing adjoint sources have to be created to perform adjoint simulations.
+\item \texttt{runXXXX/DATA} directories must all contain a \texttt{CMTSOLUTION} file,
+a \texttt{STATIONS} file along with an eventual \texttt{STATIONS\_ADJOINT} file.
+\item If \texttt{BROADCAST\_SAME\_MESH\_AND\_MODEL} is set to \texttt{.true.} in \texttt{DATA/Par\_file},
+only \texttt{run0001/OUTPUT\_FILES} and \texttt{run0001/DATABASES\_MPI} directories need to contain the files
+outputted by the mesher.
+\item If \texttt{BROADCAST\_SAME\_MESH\_AND\_MODEL} is set to \texttt{.false.} in \texttt{DATA/Par\_file},
+every \texttt{runXXXX/OUTPUT\_FILES} and \texttt{runXXXX/DATABASES\_MPI} directories need to contain the files
+outputted by the mesher. Note that while the meshes might have been created from different models and
+parameter sets, they should have been created using the same number of MPI processes.
+\end{itemize}
+
+
 
 \chapter{\label{cha:Regional-Simulations}Regional Simulations}
 
@@ -2165,8 +2302,22 @@ simulation. Solutions for this problem are provided in Chapter~\ref{cha:Running-
 Visualization of the finite-frequency kernels is discussed in Section~\ref{sec:Finite-Frequency-Kernels}.
 
 
-%<YANGL
+%------------------------------------------------------------------------------------------------%
+
+\chapter{Doing tomography, i.e., updating the model based on the sensitivity kernels obtained}
+
+%------------------------------------------------------------------------------------------------%
+
+The process is described in the same chapter of the manual of SPECFEM3D. Please refer to it.
+
+
+
+
+%------------------------------------------------------------------------------------------------%
+
 \chapter{Noise Cross-correlation Simulations}
+
+%------------------------------------------------------------------------------------------------%
 
 The new version of SPECFEM3D\_GLOBE includes functionality for seismic noise tomography.
 Users are recommended to familiarize themselves first with the procedures for running regular earthquake
@@ -2404,11 +2555,11 @@ You have to modify them to fit your own cluster.
 
 The three examples can be executed using (in directory \texttt{EXAMPLES/noise\_examples/}):\\
 
-\texttt{./pre-processing regional}
+\texttt{./run\_this\_example.sh regional}
 
-\texttt{./pre-processing global\_short}
+\texttt{./run\_this\_example.sh global\_short}
 
-\texttt{./pre-processing global\_long}\\
+\texttt{./run\_this\_example.sh global\_long}\\
 
 Each corresponds to one example, but they are pretty similar.
 
@@ -2417,11 +2568,29 @@ You may review the whole process described in the last section by following comm
 
 Finally, note again that those examples show only one contribution of the ensemble kernels!
 
-%>YANGL
 
+%------------------------------------------------------------------------------------------------%
+
+\chapter{Gravity integral calculations for the gravity field of the Earth}
+
+%------------------------------------------------------------------------------------------------%
+
+SPECFEM can now compute the gravity field as well as its derivatives (i.e., gravity gradiometry)
+generated by any given 3D Earth model at the height
+of an observation satellite, for instance GOCE\\
+(see e.g. en.wikipedia.org/wiki/Gravity\_Field\_and\_Steady-State\_Ocean\_Circulation\_Explorer).\\
+That feature is still experimental but should work just fine.\\
+
+To see how it is implemented and to use it, type this in the root directory of the code:\\
+
+\texttt{grep -i GRAVITY\_INTEGRALS src/*/*}
+
+
+%------------------------------------------------------------------------------------------------%
 
 \chapter{\label{cha:graphics}Graphics}
 
+%------------------------------------------------------------------------------------------------%
 
 \section{\label{sec:Meshes}Meshes}
 
@@ -3462,6 +3631,24 @@ Note that you need to supply \texttt{old\_jobid} and \texttt{new\_jobid(\%J)}
 which are the LSF job-IDs for the old and new run if your databases
 are stored in a sub-directory named after the jobid on the scratch
 disk.
+
+
+%============================================================
+
+\chapter{\label{cha:developers}Information for developers of the code, and for people who want to learn how the technique works}
+
+You can get a very simple 1D version of a demo code (there is one in Fortran and one in Python):\\
+
+git clone --recursive https://github.com/geodynamics/specfem1d.git\\
+
+\noindent We also have simple 3D demo source codes that implement the SEM in a single, small program, in directory\\
+utils/small\_SEM\_solvers\_in\_Fortran\_and\_C\_without\_MPI\_to\_learn of the specfem3d package.
+They are useful to learn how the spectral-element method works, and how to write or modify a code to implement it.
+Also useful to test new ideas by modifying these simple codes to run some tests.\\
+
+\noindent For information on how to contribute to the code, i.e., for how to make your modifications, additions or improvements part of the
+official package, see https://github.com/geodynamics/specfem3d/wiki .
+
 
 
 \chapter*{\label{cha:Bug-Reports-and}Bug Reports and Suggestions for Improvements}

@@ -31,7 +31,9 @@
                                       scale_factor, tau_s, vnspec)
 
   use constants_solver
-  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH
+  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH, &
+      NUMBER_OF_SIMULTANEOUS_RUNS
+
 
   implicit none
 
@@ -54,9 +56,11 @@
   double precision, dimension(N_SLS) :: tau_e, fc
   double precision :: omsb, Q_mu, sf, T_c_source, scale_t
   character(len=MAX_STRING_LEN) :: prname
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! checks if attenuation is on and anything to do
   if (.not. ATTENUATION_VAL) return
+  if (.not. I_should_read_the_database) return
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
@@ -67,6 +71,10 @@
 
     ! opens corresponding databases file
     call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
+    endif
     open(unit=IIN, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file attenuation.bin')
@@ -248,3 +256,26 @@
                   + deltat**3*tauinv(:)**2 / 24.d0
 
   end subroutine get_attenuation_memory_values
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_attenuation_model_3D(one_minus_sum_beta,factor_common,scale_factor,tau_s,vnspec)
+
+  use constants_solver
+
+  implicit none
+
+  integer :: vnspec
+
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta, scale_factor
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
+  double precision, dimension(N_SLS) :: tau_s
+
+  call bcast_all_cr_for_database(one_minus_sum_beta(1,1,1,1), size(one_minus_sum_beta))
+  call bcast_all_cr_for_database(scale_factor(1,1,1,1), size(scale_factor))
+  call bcast_all_cr_for_database(factor_common(1,1,1,1,1), size(factor_common))
+  call bcast_all_dp_for_database(tau_s(1), size(tau_s))
+
+  endsubroutine bcast_attenuation_model_3D

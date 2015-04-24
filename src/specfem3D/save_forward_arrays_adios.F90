@@ -55,7 +55,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=MAX_STRING_LEN) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname, path_to_add
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   integer                 :: adios_err
@@ -63,6 +63,10 @@
   integer(kind=8)         :: adios_totalsize
 
   outputname = trim(LOCAL_TMP_PATH) // "/dump_all_arrays_adios.bp"
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
+  endif
 
   call world_duplicate(comm)
 
@@ -126,7 +130,7 @@
   implicit none
   ! Local parameters
   integer :: comm
-  character(len=MAX_STRING_LEN) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname, path_to_add
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   integer                 :: adios_err
@@ -134,6 +138,10 @@
   integer(kind=8)         :: adios_totalsize
 
   outputname = trim(LOCAL_TMP_PATH) // "/save_forward_arrays.bp"
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
+  endif
 
   call world_duplicate(comm)
 
@@ -599,7 +607,7 @@
   implicit none
   ! Local parameters
   integer :: comm, iteration_on_subset_tmp
-  character(len=MAX_STRING_LEN) :: outputname
+  character(len=MAX_STRING_LEN) :: outputname, path_to_add
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   character(len=MAX_STRING_LEN) :: group_name
@@ -611,6 +619,10 @@
   iteration_on_subset_tmp = iteration_on_subset
 
   write(outputname,'(a, a, i6.6, a)') trim(LOCAL_PATH), '/save_frame_at', iteration_on_subset_tmp,'.bp'
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
+  endif
   write(group_name, '(a, i6)') "SPECFEM3D_GLOBE_FORWARD_ARRAYS", iteration_on_subset_tmp
 
   call world_duplicate(comm)

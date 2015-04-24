@@ -102,7 +102,7 @@
                                          eps_trace_over_3_crust_mantle, &
                                          epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                          epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                         nit_written, &
+                                         it_adj_written, &
                                          moment_der,sloc_der,stshift_der,shdur_der, &
                                          seismograms)
 
@@ -139,7 +139,7 @@
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  integer,intent(in) :: nit_written
+  integer,intent(in) :: it_adj_written
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NDIM,nrec_local),intent(inout) :: moment_der
   real(kind=CUSTOM_REAL), dimension(NDIM,nrec_local),intent(inout) :: sloc_der
@@ -251,13 +251,13 @@
     eps_loc_new(:,:) = matmul(matmul(nu_source(:,:,irec),eps_loc(:,:)), transpose(nu_source(:,:,irec)))
 
     ! distinguish between single and double precision for reals
-    seismograms(1,irec_local,it-nit_written) = real(eps_loc_new(1,1), kind=CUSTOM_REAL)
-    seismograms(2,irec_local,it-nit_written) = real(eps_loc_new(2,2), kind=CUSTOM_REAL)
-    seismograms(3,irec_local,it-nit_written) = real(eps_loc_new(3,3), kind=CUSTOM_REAL)
-    seismograms(4,irec_local,it-nit_written) = real(eps_loc_new(1,2), kind=CUSTOM_REAL)
-    seismograms(5,irec_local,it-nit_written) = real(eps_loc_new(1,3), kind=CUSTOM_REAL)
-    seismograms(6,irec_local,it-nit_written) = real(eps_loc_new(2,3), kind=CUSTOM_REAL)
-    seismograms(7:9,irec_local,it-nit_written) = real(scale_displ*(nu_source(:,1,irec)*uxd + &
+    seismograms(1,irec_local,it-it_adj_written) = real(eps_loc_new(1,1), kind=CUSTOM_REAL)
+    seismograms(2,irec_local,it-it_adj_written) = real(eps_loc_new(2,2), kind=CUSTOM_REAL)
+    seismograms(3,irec_local,it-it_adj_written) = real(eps_loc_new(3,3), kind=CUSTOM_REAL)
+    seismograms(4,irec_local,it-it_adj_written) = real(eps_loc_new(1,2), kind=CUSTOM_REAL)
+    seismograms(5,irec_local,it-it_adj_written) = real(eps_loc_new(1,3), kind=CUSTOM_REAL)
+    seismograms(6,irec_local,it-it_adj_written) = real(eps_loc_new(2,3), kind=CUSTOM_REAL)
+    seismograms(7:9,irec_local,it-it_adj_written) = real(scale_displ*(nu_source(:,1,irec)*uxd + &
                                                                    nu_source(:,2,irec)*uyd + &
                                                                    nu_source(:,3,irec)*uzd), &
                                                       kind=CUSTOM_REAL)

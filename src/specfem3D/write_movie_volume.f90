@@ -1127,7 +1127,7 @@
         do j = 1, NGLLY
           do i = 1, NGLLX
             iglob = ibool_inner_core(i,j,k,ispec)
-            ! norm of velocity
+            ! norm of acceleration
             tmp_data(i,j,k,ispec) = scale_accel * sqrt( accel_inner_core(1,iglob)**2 &
                                           + accel_inner_core(2,iglob)**2 &
                                           + accel_inner_core(3,iglob)**2 )
