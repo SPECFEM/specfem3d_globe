@@ -119,6 +119,17 @@ AC_ARG_WITH([adios],
 AM_CONDITIONAL([COND_ADIOS], [test x"$want_adios" != xno])
 
 ###
+### ASDF
+###
+
+AC_ARG_WITH([asdf],
+    [AC_HELP_STRING([--with-asdf],
+        [build ASDF enabled version @<:@default=no@:>@])],
+    [want_asdf="$withval"],
+    [want_asdf=no])
+AM_CONDITIONAL([COND_ASDF], [test x$"$want_asdf" != xno])
+
+###
 ### CEM
 ###
 
@@ -228,6 +239,15 @@ AC_LANG_POP(C)
 AS_IF([test x"$want_adios" != xno], [
     AS_BOX([ADIOS])
     CIT_ADIOS_CONFIG
+])
+
+###
+### ASDF
+###
+
+AS_IF([test x"$want_asdf" != xno], [
+    AS_BOX([ASDF])
+    CIT_ASDF_CONFIG
 ])
 
 #mpbl: adding flags to config.h.in through autoheader in order to save them into the adios file.

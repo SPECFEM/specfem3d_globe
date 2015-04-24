@@ -104,6 +104,7 @@ specfem3D_OBJECTS += \
 	$O/write_movie_surface.solverstatic.o \
 	$O/write_output_ASCII.solverstatic.o \
 	$O/write_output_SAC.solverstatic.o \
+	$O/write_output_ASDF.solverstatic.o \
 	$(EMPTY_MACRO)
 
 specfem3D_MODULES = \
@@ -177,7 +178,6 @@ adios_specfem3D_OBJECTS = \
 	$O/save_forward_arrays_adios.solverstatic_adios.o \
 	$O/save_kernels_adios.solverstatic_adios.o \
 	$O/write_specfem_adios_header.solverstatic_adios.o \
-	$O/write_output_ASDF.solverstatic_adios.o \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_SHARED_OBJECTS = \
@@ -264,7 +264,7 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 ### additional dependencies
 ###
 
-$O/write_output_ASDF.solverstatic_adios.o: $O/asdf_data.solverstatic_module.o
+$O/write_output_ASDF.solverstatic.o: $O/asdf_data.solverstatic_module.o
 
 $O/write_seismograms.solverstatic.o: $O/asdf_data.solverstatic_module.o
 

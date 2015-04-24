@@ -133,6 +133,3 @@ void FC_FUNC_(store_asdf_data,STORE_ASDF_DATA)
 void FC_FUNC_(close_asdf_data,CLOSE_ASDF_DATA)(void *my_asdf,
                                                int *total_seismos_local) {}
 
-void FC_FUNC_(write_asdf,WRITE_ASDF)(void* my_asdf) {}
-
-
