@@ -32,10 +32,12 @@ Thus the minimum number of processors required for a global simulation
 is 6 (although it is theoretically possible to run more than one slice
 per processor). %
 \begin{figure}
-\centerline{ \begin{tabular}{cc}
+%not supported by pandoc? \centerline{}
+\begin{center}
+\begin{tabular}{cc}
 \includegraphics[width=0.45\textwidth]{figures/mpi_slices.pdf}  & \includegraphics[width=0.45\textwidth]{figures/fullmesh_18.pdf} \tabularnewline
-\end{tabular}}
-
+\end{tabular}
+\end{center}
 \caption{Each of the 6~chunks that constitutes the cubed sphere is subdivided
 in terms of $n^{2}$~slices of elements, where $n\ge1$ is a positive
 integer, for a total of $6\times n^{2}$ slices (and therefore processors).
@@ -47,8 +49,6 @@ processors as indicated by the various colors. Regional simulations
 can be accommodated by using only 1, 2 or 3 chunks of the cubed sphere.
 One-chunk simulations may involve a mesh with lateral dimensions smaller
 than~$90^{\circ}$, thereby accommodating smaller-scale simulations. }
-
-
 \label{figure:mpi_slices}
 \end{figure}
 
