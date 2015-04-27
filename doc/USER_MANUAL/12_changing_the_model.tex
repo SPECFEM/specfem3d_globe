@@ -1,0 +1,384 @@
+\chapter{Changing the Model}\label{cha:-Changing-the}
+
+In this section we explain how to change the crustal, mantle, or inner
+core models. These changes involve contributing specific subroutines
+that replace existing subroutines in the \texttt{SPECFEM3D\_GLOBE}
+package.
+
+
+\section{Changing the Crustal Model}\label{sec:Changing-the-Crustal}
+
+The 3D crustal model Crust2.0 \citep{BaLaMa00} is superimposed onto
+the mesh by the subroutine \texttt{model\_crust}~\\
+\texttt{.f90}. To accomplish this, the flag \texttt{CRUSTAL}, set
+in the subroutine \texttt{get\_model\_parameters.f90}, is used
+to indicate a 3D crustal model. When this flag is set to \texttt{.true.},
+the crust on top of the 1D reference model (PREM, IASP91, or AK135F\_NO\_MUD)
+is removed and replaced by extending the mantle. The 3D crustal model
+is subsequently overprinted onto the crust-less 1D reference model.
+The call to the 3D crustal routine is of the form
+
+\begin{lyxcode}
+call~model\_crust(lat,lon,r,vp,vs,rho,moho,foundcrust,CM\_V,elem\_in\_crust)
+\end{lyxcode}
+Input to this routine consists of:
+
+\begin{description}
+\item [{\texttt{lat}}] Latitude in degrees.
+\item [{\texttt{lon}}] Longitude in degrees.
+\item [{\texttt{r}}] Non-dimensionalized radius ($0<\texttt{r}<1$).
+\end{description}
+Output from the routine consists of:
+
+\begin{description}
+\item [{\texttt{vp}}] Non-dimensionalized compressional wave speed at location
+(\texttt{lat},\texttt{lon},\texttt{r}).
+\item [{\texttt{vs}}] Non-dimensionalized shear wave speed.
+\item [{\texttt{rho}}] Non-dimensionalized density.
+\item [{\texttt{moho}}] Non-dimensionalized Moho depth.
+\item [{\texttt{found\_crust}}] Logical that is set to \texttt{.true.}
+only if crust exists at location (\texttt{lat},\texttt{lon},\texttt{r}),
+i.e., \texttt{.false.} for radii \texttt{r} in the mantle. This flags
+determines whether or not a particular location is in the crust and,
+if so, what parameters to assign to the mesh at this location.
+\item [{\texttt{CM\_V}}] Fortran structure that contains the parameters,
+variables and arrays that describe the model.
+\item [{\texttt{elem\_in\_crust}}] Logical that is used to force the
+routine to return crustal values, even if the location would
+be below the crust.
+\end{description}
+All output needs to be non-dimensionalized according to the convention
+summarized in Appendix~\ref{cha:Non-Dimensionalization-Conventions}.
+You can replace this subroutine by your own routine \textit{provided
+you do not change the call structure of the routine}, i.e., the new
+routine should take exactly the same input and produce the required,
+properly non-dimensionalized output.
+
+Part of the file \texttt{model\_crust.f90} is the subroutine \texttt{model\_crust\_broadcast}.
+The call to this routine takes argument \texttt{CM\_V} and is used
+to once-and-for-all read in the databases related to Crust2.0 and
+broadcast the model to all parallel processes. If
+you replace the file \texttt{model\_crust.f90} with your own implementation,
+you \textit{must} provide a \texttt{model\_crust\_broadcast} routine,
+even if it does nothing. Model constants and variables read by the
+routine \texttt{model\_crust\_broadcast} are passed to the subroutine
+\texttt{read\_crust\_model} through the structure \texttt{CM\_V}.
+An alternative crustal model could use the same construct. Please
+feel free to contribute subroutines for new models and send them to
+us so that they can be included in future releases of the software.
+
+\begin{quote}
+\textbf{NOTE:} If you decide to create your own version of file \texttt{model\_crust.f90},
+you must add calls to \texttt{MPI\_BCAST} in the subroutine \texttt{model\_crust\_broadcast}
+after the call to the \texttt{read\_crust\_model} subroutine that
+reads the isotropic mantle model once and for all in the mesher. This
+is done in order to read the (potentially large) model data files
+on the master node (which is the processor of rank 0 in our code)
+only and then send a copy to all the other nodes using an MPI broadcast,
+rather than using an implementation in which all the nodes would read
+the same model data files from a remotely-mounted home file system,
+which could create a bottleneck on the network in the case of a large
+number of nodes. For example, in the current call to that routine
+from \texttt{model\_crust.f90,} we write:
+\end{quote}
+\begin{lyxcode}
+{\footnotesize !~the~variables~read~are~declared~and~stored~in~structure~CM\_V~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~if(myrank~==~0)~call~read\_crust\_model(CM\_V)~}{\footnotesize \par}
+
+{\footnotesize !~broadcast~the~information~read~on~the~master~to~the~nodes~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%thlr,NKEYS\_CRUST{*}NLAYERS\_CRUST,MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%velocp,NKEYS\_CRUST{*}NLAYERS\_CRUST,MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%velocs,NKEYS\_CRUST{*}NLAYERS\_CRUST,MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%dens,NKEYS\_CRUST{*}NLAYERS\_CRUST,MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%abbreviation,NCAP\_CRUST{*}NCAP\_CRUST,MPI\_CHARACTER,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%code,2{*}NKEYS\_CRUST,MPI\_CHARACTER,0,MPI\_COMM\_WORLD,ier)~}{\footnotesize \par}
+\end{lyxcode}
+
+\section{Changing the Mantle Model}\label{sec:Changing-the-Mantle}
+
+This section discusses how to change isotropic and anisotropic 3D
+mantle models. Usually such changes go hand-in-hand with changing
+the 3D crustal model.
+
+
+\subsection{Isotropic Models}\label{sub:Isotropic-Models}
+
+The 3D mantle model S20RTS \citep{RiVaWo99} is superimposed onto
+the mantle mesh by the subroutine \texttt{model\_s20rts.f90}. The
+call to this subroutine is of the form
+
+\begin{lyxcode}
+call~model\_s20rts(radius,theta,phi,dvs,dvp,drho,D3MM\_V)~
+\end{lyxcode}
+Input to this routine consists of:
+
+\begin{description}
+\item [{\texttt{radius}}] Non-dimensionalized radius ($\texttt{RCMB/R\_ EARTH}<\texttt{r}<\texttt{RMOHO/R\_ EARTH}$;
+for a given 1D reference model, the constants \texttt{RCMB} and \texttt{RMOHO}
+are set in the \texttt{\small get\_model\_parameters}\texttt{.f90}
+file). The code expects the isotropic mantle model to be defined between
+the Moho (with radius \texttt{RMOHO} in m) and the core-mantle boundary
+(CMB; radius \texttt{RCMB} in m) of a 1D reference model. When a 3D
+crustal model is superimposed, as will usually be the case, the 3D
+mantle model is stretched to fill any potential gap between the radius
+of the Moho in the 1D reference model and the Moho in the 3D crustal
+model. Thus, when the Moho in the 3D crustal model is shallower than
+the Moho in the reference model, e.g., typically below the oceans,
+the mantle model is extended to fill this gap.
+\item [{\texttt{theta}}] Colatitude in radians.
+\item [{\texttt{phi}}] Longitude in radians.
+\end{description}
+Output from the routine are the following non-dimensional perturbations:
+
+\begin{description}
+\item [{\texttt{dvs}}] Relative shear-wave speed perturbations $\delta\beta/\beta$
+at location (\texttt{radius},\texttt{theta},\texttt{phi}).
+\item [{\texttt{dvp}}] Relative compressional-wave speed perturbations
+$\delta\alpha/\alpha$.
+\item [{\texttt{drho}}] Relative density perturbations $\delta\rho/\rho$.
+\item [{\texttt{D3MM\_V}}] Fortran structure that contains the parameters,
+variables and arrays that describe the model.
+\end{description}
+You can replace the \texttt{model\_s20rts.f90} file with your own
+version \textit{provided you do not change the call structure of the
+routine}, i.e., the new routine should take exactly the same input
+and produce the required relative output.
+
+Part of the file \texttt{model\_s20rts.f90} is the subroutine
+\texttt{model\_s20rts\_broadcast}.
+The call to this routine takes argument\texttt{ D3MM\_V} and is used
+to once-and-for-all read in the databases related to S20RTS. If you
+replace the file \texttt{model\_s20rts.f90} with your own implementation,
+you \textit{must} provide a \texttt{model\_s20rts\_broadcast} routine,
+even if it does nothing. Model constants and variables read by the
+routine \texttt{model\_s20rts\_broadcast} are passed to the subroutine
+\texttt{read\_model\_s20rts} through the structure \texttt{D3MM\_V.}
+An alternative mantle model should use the same construct.
+
+\begin{quote}
+\textbf{NOTE:} If you decide to create your own version of file \texttt{model\_s20rts.f90},
+you must add calls to \texttt{MPI\_BCAST} in the subroutine \texttt{model\_s20rts\_broadcast}
+after the call to the \texttt{read\_model\_s20rts} subroutine that
+reads the isotropic mantle model once and for all in the mesher. This
+is done in order to read the (potentially large) model data files
+on the master node (which is the processor of rank 0 in our code)
+only and then send a copy to all the other nodes using an MPI broadcast,
+rather than using an implementation in which all the nodes would read
+the same model data files from a remotely-mounted home file system,
+which could create a bottleneck on the network in the case of a large
+number of nodes. For example, in the current call to that routine
+from \texttt{model\_s20rts.f90,} we write:
+\end{quote}
+\begin{lyxcode}
+{\footnotesize !~the~variables~read~are~declared~and~stored~in~structure~D3MM\_V}{\footnotesize \par}
+
+{\footnotesize{}~~if(myrank~==~0)~call~read\_model\_s20rts(D3MM\_V)~}{\footnotesize \par}
+
+{\footnotesize !~broadcast~the~information~read~on~the~master~to~the~nodes~~~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%dvs\_a,(NK+1){*}(NS+1){*}(NS+1),MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%dvs\_b,(NK+1){*}(NS+1){*}(NS+1),MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%dvp\_a,(NK+1){*}(NS+1){*}(NS+1),MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%dvp\_b,(NK+1){*}(NS+1){*}(NS+1),MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
+
+{\footnotesize{}~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%spknt,NK+1,MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)~~~~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%qq0,(NK+1){*}(NK+1),MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%qq,3{*}(NK+1){*}(NK+1),MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)~}{\footnotesize \par}
+\end{lyxcode}
+
+\subsection{Anisotropic Models}\label{sub:Anisotropic-Models}
+
+Three-dimensional anisotropic mantle models may be superimposed on
+the mesh based upon the subroutine
+
+\begin{lyxcode}
+model\_aniso\_mantle.f90
+\end{lyxcode}
+The call to this subroutine is of the form
+
+\begin{lyxcode}
+call~model\_aniso\_mantle(r,theta,phi,rho,~\&~
+
+~~~~c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,~\&~
+
+~~~~c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,AMM\_V)~
+\end{lyxcode}
+Input to this routine consists of:
+
+\begin{description}
+\item [{\texttt{r}}] Non-dimensionalized radius ($\texttt{RCMB/R\_ EARTH}<\texttt{r}<\texttt{RMOHO/R\_ EARTH}$;
+for a given 1D reference model, the constants \texttt{RCMB} and \texttt{RMOHO}
+are set in the \texttt{\small get\_model\_parameters}\texttt{.f90}
+file). The code expects the anisotropic mantle model to be defined
+between the Moho and the core-mantle boundary (CMB). When a 3D crustal
+model is superimposed, as will usually be the case, the 3D mantle
+model is stretched to fill any potential gap between the radius of
+the Moho in the 1D reference model and the Moho in the 3D crustal
+model. Thus, when the Moho in the 3D crustal model is shallower than
+the Moho in the reference model, e.g., typically below the oceans,
+the mantle model is extended to fill this gap.
+\item [{\texttt{theta}}] Colatitude in radians.
+\item [{\texttt{phi}}] Longitude in radians.
+\end{description}
+Output from the routine consists of the following non-dimensional
+model parameters:
+
+\begin{description}
+\item [{\texttt{rho}}] Non-dimensionalized density $\rho$.
+\item [{\texttt{c11},}] \textbf{$\cdots$,} \texttt{\textbf{c66}} 21 non-dimensionalized
+anisotropic elastic parameters.
+\item [{\texttt{AMM\_V}}] Fortran structure that contains the parameters,
+variables and arrays that describe the model.
+\end{description}
+You can replace the \texttt{model\_aniso\_mantle.f90} file by
+your own version \textit{provided you do not change the call structure
+of the routine}, i.e., the new routine should take exactly the same
+input and produce the required relative output. Part of the file \texttt{model\_aniso\_mantle.f90}
+is the subroutine \texttt{model\_aniso\_mantle\_broadcast}. The call to
+this routine takes argument \texttt{AMM\_V} and is used to once-and-for-all
+read in the static databases related to the anisotropic model. When
+you choose to replace the file \texttt{model\_aniso\_mantle.f90}
+with your own implementation you \textit{must} provide a \texttt{model\_aniso\_mantle\_broadcast}
+routine, even if it does nothing. Model constants and variables read
+by the routine \texttt{model\_aniso\_mantle\_broadcast} are passed through the
+structure \texttt{AMM\_V}. An alternative anisotropic mantle model
+should use the same construct.
+
+\begin{quote}
+\textbf{NOTE:} If you decide to create your own version of file \texttt{model\_aniso\_mantle.f90},
+you must add calls to \texttt{MPI\_BCAST} in file \texttt{model\_aniso\_mantle.f90}
+after the call to the \texttt{read\_aniso\_mantle\_model} subroutine
+that reads the anisotropic mantle model once and for all in the mesher.
+This is done in order to read the (potentially large) model data files
+on the master node (which is the processor of rank 0 in our code)
+only and then send a copy to all the other nodes using an MPI broadcast,
+rather than using an implementation in which all the nodes would read
+the same model data files from a remotely-mounted home file system,
+which could create a bottleneck on the network in the case of a large
+number of nodes. For example, in the current call to that routine
+from \texttt{model\_aniso\_mantle.f90,} we write:
+\end{quote}
+\begin{lyxcode}
+{\footnotesize !~the~variables~read~are~declared~and~stored~in~structure~AMM\_V}{\footnotesize \par}
+
+{\footnotesize{}~~if(myrank~==~0)~call~read\_aniso\_mantle\_model(AMM\_V)}{\footnotesize \par}
+
+{\footnotesize !~broadcast~the~information~read~on~the~master~to~the~nodes}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(AMM\_V\%npar1,1,MPI\_INTEGER,0,MPI\_COMM\_WORLD,ier)~~~~}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(AMM\_V\%beta,14{*}34{*}37{*}73,MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
+
+{\footnotesize{}~~call~MPI\_BCAST(AMM\_V\%pro,47,MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
+\end{lyxcode}
+Rotation of the anisotropic tensor elements from one coordinate system
+to another coordinate system may be accomplished based upon the subroutine
+\texttt{rotate\_aniso\_tensor}. Use of this routine requires understanding
+the coordinate system used in \texttt{SPECFEM3D\_GLOBE}, as discussed
+in Appendix~\ref{cha:Reference-Frame-Convention}.
+
+
+\subsection{Point-Profile Models}\label{sub:Point-Profile-Models}
+
+In order to facilitate the use of your own specific mantle model, you can choose \texttt{PPM} as model in the \texttt{DATA/Par\_file} file
+and supply your own model as an ASCII-table file. These generic models are given as depth profiles at a specified lon/lat location
+and a perturbation (in percentage) with respect to the shear-wave speed values from PREM. The ASCII-file should have a format like:
+\begin{lyxcode}
+{\footnotesize \#lon(deg), lat(deg), depth(km), Vs-perturbation wrt PREM(\%), Vs-PREM (km/s)}{\footnotesize \par}
+{\footnotesize -10.00000       31.00000       40.00000      -1.775005       4.400000}{\footnotesize \par}
+{\footnotesize -10.00000       32.00000       40.00000      -1.056823       4.400000}{\footnotesize \par}
+{\footnotesize ...}{\footnotesize \par}
+\end{lyxcode}
+where the first line is a comment line and all following ones are specifying the Vs-perturbation at a lon/lat location and a given depth.
+The last entry on each line is specifying the absolute value of Vs (however this value is only given as a supplementary information
+and not used any further). The background model is PREM with a transverse isotropic layer between Moho and 220~km depth.
+The specified Vs-perturbations are added as isotropic perturbations. Please see the file \texttt{DATA/PPM/README}
+for more informations how to setup the directory \texttt{DATA/PPM} to use your own ASCII-file.
+
+
+
+To change the code behavior of these PPM-routines, please have a look at the implementation in the source code
+file \texttt{model\_ppm.f90} and set the flags and scaling factors as needed for your purposes.
+Perturbations in density and Vp may be scaled to the given Vs-perturbations with constant scaling factors by setting the appropriate
+values in this source code file. In case you want to change the format of the input ASCII-file, see more details in the Appendix \ref{cha:Troubleshooting}.
+
+
+
+
+\section{Anelastic Models}\label{sec:Anelastic-Models}
+
+Three-dimensional anelastic (attenuation) models may be superimposed
+onto the mesh based upon your subroutine .
+\texttt{model\_atten3D.f90}.
+The call to this routine would be as follows
+
+\begin{lyxcode}
+call~model\_atten3D(radius,~colatitude,~longitude,~Qmu,~QRFSI12\_Q,~idoubling)
+\end{lyxcode}
+Input to this routine consists of:
+
+\begin{description}
+\item [{\texttt{radius}}] scaled radius of the earth: $0\,(\mathrm{center})<=r\,<=1$(surface)
+\item [{\texttt{latitude}}] Colatitude in degrees: $0^{\circ}<=\theta<=180^{\circ}$
+\item [{\texttt{longitude}}] Longitude in degrees: $-180^{\circ}<=\phi<=180^{\circ}$
+\item [{\texttt{QRFSI12\_Q}}] Fortran structure that contains the parameters,
+variables and arrays that describe the model
+\item [{\texttt{idoubling}}] value of the doubling index flag in each radial region of the mesh
+\end{description}
+Output to this routine consists of:
+
+\begin{description}
+\item [{\texttt{Qmu}}] Shear wave quality factor: $0<Q_{\mu}<5000$
+\end{description}
+A 3-D attenuation model QRFSI12 \citep{DaEkDz08}
+is provided, as well as 1-D models with a PREM and a 1DREF
+attenuation structure. By default the PREM attenuation model is taken,
+using the routine \texttt{model\_attenuation\_1D\_PREM},
+found in \texttt{model\_attenuation.f90}.
+
+To create your own three-dimensional attenuation model, you add your model
+using a routine like the ~\\
+\texttt{model\_atten3D\_QRFSI12} subroutine
+and the example routine above as a guide and replace the call in file
+\texttt{meshfem3D\_models.f90} to your own subroutine.
+
+Note that the resolution and maximum value of anelastic models are
+truncated. This speeds the construction of the standard linear solids
+during the meshing stage. To change the resolution, currently at one
+significant figure following the decimal, or the maximum value (5000),
+consult \texttt{constants.h}. In order to prevent unexpected results,
+quality factors $Q_{\mu}$ should never be equal to 0 outside of the
+inner core.
+
+
+

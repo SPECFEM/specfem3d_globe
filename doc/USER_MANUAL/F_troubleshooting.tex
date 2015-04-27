@@ -1,0 +1,99 @@
+\chapter{Troubleshooting}\label{cha:Troubleshooting}
+
+\section*{FAQ}
+
+\begin{description}
+\item [configuration fails:]
+   Examine the log file 'config.log'. It contains detailed informations.
+   In many cases, the path's to these specific compiler commands F90,
+   CC and MPIF90 won't be correct if `./configure` fails.
+
+   Please make sure that you have a working installation of a Fortran compiler,
+   a C compiler and an MPI implementation. You should be able to compile this
+   little program code:
+\begin{lyxcode}
+{\footnotesize      program main }{\footnotesize \par}
+{\footnotesize        include 'mpif.h' }{\footnotesize \par}
+{\footnotesize        integer, parameter :: CUSTOM\_MPI\_TYPE = MPI\_REAL }{\footnotesize \par}
+{\footnotesize        integer ier }{\footnotesize \par}
+{\footnotesize        call MPI\_INIT(ier) }{\footnotesize \par}
+{\footnotesize        call MPI\_BARRIER(MPI\_COMM\_WORLD,ier) }{\footnotesize \par}
+{\footnotesize        call MPI\_FINALIZE(ier) }{\footnotesize \par}
+{\footnotesize      end}{\footnotesize \par}
+\end{lyxcode}
+
+
+\item [compilation fails:] In case a compilation error like the following occurs, stating
+\begin{lyxcode}
+{\footnotesize    ...  }{\footnotesize \par}
+{\footnotesize    obj/meshfem3D.o: In function `MAIN\_\_':  }{\footnotesize \par}
+{\footnotesize    meshfem3D.f90:(.text+0x14): undefined reference to `\_gfortran\_set\_std'  }{\footnotesize \par}
+{\footnotesize    ...  }{\footnotesize \par}
+\end{lyxcode}
+  make sure you're pointing to the right 'mpif90' wrapper command.
+
+  Normally, this message will appear when you are mixing two different Fortran
+  compilers. That is, using e.g. gfortran to compile non-MPI files
+  and mpif90, wrapper provided for e.g. ifort, to compile MPI-files.
+
+  fix: e.g. specify > ./configure FC=gfortran MPIF90=/usr/local/openmpi-gfortran/bin/mpif90
+
+
+\item [changing PPM model routines fails:]
+  In case you want to modify the PPM-routines in file \texttt{model\_ppm.f90}, please consider the following points:
+
+  \begin{enumerate}
+  \item Please check in file \texttt{get\_model\_parameter.f90} that the entry for PPM models looks like:
+  \begin{lyxcode}
+{\footnotesize  ... }{\footnotesize \par}
+{\footnotesize  else if(MODEL\_ROOT == 'PPM') then  }{\footnotesize \par}
+{\footnotesize   ! overimposed based on isotropic-prem  }{\footnotesize \par}
+{\footnotesize   CASE\_3D = .true.  }{\footnotesize \par}
+{\footnotesize   CRUSTAL = .true.  }{\footnotesize \par}
+{\footnotesize   ISOTROPIC\_3D\_MANTLE = .true.  }{\footnotesize \par}
+{\footnotesize   ONE\_CRUST = .true.  }{\footnotesize \par}
+{\footnotesize   THREE\_D\_MODEL = THREE\_D\_MODEL\_PPM  }{\footnotesize \par}
+{\footnotesize   TRANSVERSE\_ISOTROPY = .true. ! to use transverse-isotropic prem  }{\footnotesize \par}
+{\footnotesize  ...  }{\footnotesize \par}
+  \end{lyxcode}
+  You can set \texttt{TRANSVERSE\_ISOTROPY} to \texttt{.false.} in case you want to use the isotropic PREM
+  as 1D background model.
+
+  \item Transverse isotropy would mean different values for horizontal and vertically polarized wave speeds,
+  i.e. different for vph and   vpv, vsh and vsv, and it includes an additional parameter eta.
+  By default, we take these wave speeds from PREM and add your model perturbations to them.
+  For the moment, your model perturbations are added as isotropic perturbations, using the same dvp for vph and vpv,
+  and dvs for vsh   and vsv, see in \texttt{meshfem3D\_models.f90}:
+  \begin{lyxcode}
+{\footnotesize  ... }{\footnotesize \par}
+{\footnotesize     case(THREE\_D\_MODEL\_PPM ) }{\footnotesize \par}
+{\footnotesize       ! point profile model }{\footnotesize \par}
+{\footnotesize       call model\_PPM(r\_used,theta,phi,dvs,dvp,drho) }{\footnotesize \par}
+{\footnotesize       vpv=vpv*(1.0d0+dvp) }{\footnotesize \par}
+{\footnotesize       vph=vph*(1.0d0+dvp) }{\footnotesize \par}
+{\footnotesize       vsv=vsv*(1.0d0+dvs) }{\footnotesize \par}
+{\footnotesize       vsh=vsh*(1.0d0+dvs) }{\footnotesize \par}
+{\footnotesize       rho=rho*(1.0d0+drho) }{\footnotesize \par}
+{\footnotesize  ... }{\footnotesize \par}
+  \end{lyxcode}
+ You could modify this to add different perturbations for vph and vpv, resp. vsh and vsv.
+ This would basically mean that you add transverse isotropic perturbations.
+ You can see how this is done with e.g. the model \texttt{s362ani},
+ following the flag \texttt{THREE\_D\_MODEL\_S362ANI} on how to modify accordingly the file \texttt{meshfem3D\_models.f90}.
+
+  In case you want to add more specific model routines, follow the code sections starting with:
+  \begin{lyxcode}
+{\footnotesize  !--- }{\footnotesize \par}
+{\footnotesize  ! }{\footnotesize \par}
+{\footnotesize  ! ADD YOUR MODEL HERE }{\footnotesize \par}
+{\footnotesize  ! }{\footnotesize \par}
+{\footnotesize  !--- }{\footnotesize \par}
+  \end{lyxcode}
+  to see code sections sensitive to model updates.
+
+  \end{enumerate}
+
+\end{description}
+
+
+
