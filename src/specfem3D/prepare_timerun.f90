@@ -1461,7 +1461,6 @@
   integer :: nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm
   integer :: nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc,nabs_zmin_oc
   integer(kind=8) :: filesize
-  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! checks if anything to do
   if (.not. ABSORBING_CONDITIONS ) return
@@ -1475,10 +1474,6 @@
   ! crust_mantle
   ! create name of database
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   ! allocates buffers
   if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
@@ -1594,13 +1589,8 @@
 
 
   ! outer_core
-
   ! create name of database
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   ! allocates buffers
   ! xmin

@@ -64,6 +64,7 @@ shared_OBJECTS = \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/recompute_jacobian.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/save_header_file.shared.o \
