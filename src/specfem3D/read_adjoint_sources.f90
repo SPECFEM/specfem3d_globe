@@ -228,9 +228,9 @@
   ! loops over file components E/N/Z
   do icomp = 1,NDIM
 
+    ! opens adjoint source file for this component
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
 
-    ! opens adjoint source file for this component
     if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
       write(path_to_add,"('run',i4.4,'/')") mygroup + 1
       filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))

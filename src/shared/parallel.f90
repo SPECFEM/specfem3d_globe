@@ -1582,8 +1582,11 @@ end module my_mpi
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeval,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mod(sizeval,NUMBER_OF_SIMULTANEOUS_RUNS) /= 0) &
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mod(sizeval,NUMBER_OF_SIMULTANEOUS_RUNS) /= 0) then
+    if (myrank == 0) print*,'Error: the number of MPI processes ',sizeval, &
+                            ' is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS = ',NUMBER_OF_SIMULTANEOUS_RUNS
     stop 'the number of MPI processes is not a multiple of NUMBER_OF_SIMULTANEOUS_RUNS'
+  endif
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. IMAIN == ISTANDARD_OUTPUT) &
     stop 'must not have IMAIN == ISTANDARD_OUTPUT when NUMBER_OF_SIMULTANEOUS_RUNS > 1 otherwise output to screen is mingled'

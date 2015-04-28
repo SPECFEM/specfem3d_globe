@@ -48,7 +48,7 @@
   use specfem_par,only: &
     myrank,DT,NSTEP, &
     xigll,yigll,zigll, &
-    rec_filename,nrec,islice_selected_rec,ispec_selected_rec, &
+    STATIONS_FILE,nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
     stlat,stlon,stele,stbur,nu, &
     rspl,espl,espl2,nspl,ibathy_topo, &
@@ -213,7 +213,7 @@
     call flush_IMAIN()
 
     ! opens station file STATIONS or STATIONS_ADJOINT
-    open(unit=IIN,file=trim(rec_filename),status='old',action='read',iostat=ier)
+    open(unit=IIN,file=trim(STATIONS_FILE),status='old',action='read',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening STATIONS file')
 
     ! loop on all the stations to read station information

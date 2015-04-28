@@ -340,7 +340,8 @@
   ! indicates SEM synthetics
   KUSER0 = 'SY'          ! Network code assigned by IRIS for synthetic seismograms
   KUSER1 = 'SEM7.0.0'
-  KUSER2 = 'Horse'       ! year of the horse: jan 31, 2014 - feb 18, 2015 (chinese zodiac :)
+  KUSER2 = 'Horse'       ! most was done in year of the horse: jan 31, 2014 - feb 18, 2015
+                         ! (chinese zodiac http://en.wikipedia.org/wiki/Chinese_zodiac :)
 
   !KUSER0 = 'PDE_LAT_'          !  A8
   !KUSER1 = 'PDE_LON_'          !  A8

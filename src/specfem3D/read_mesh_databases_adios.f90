@@ -46,7 +46,7 @@ subroutine read_mesh_databases_coupling_adios()
   ! local parameters
   integer :: njunk1,njunk2,njunk3
   integer :: comm
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -58,10 +58,6 @@ subroutine read_mesh_databases_coupling_adios()
   call world_duplicate(comm)
 
   file_name = trim(LOCAL_PATH) // "/boundary.bp"
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   ! opens adios file
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
@@ -740,7 +736,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
 
   ! local parameters
   integer :: comm, ierr
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
@@ -755,10 +751,6 @@ subroutine read_mesh_databases_MPI_CM_adios()
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
   file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call world_duplicate(comm)
 
@@ -952,7 +944,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
 
   ! local parameters
   integer :: comm, ierr
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
@@ -967,10 +959,6 @@ subroutine read_mesh_databases_MPI_OC_adios()
   write(region_name,"('reg',i1, '/')") IREGION_OUTER_CORE
 
   file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call world_duplicate(comm)
 
@@ -1161,7 +1149,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
 
   ! local parameters
   integer :: comm, ierr
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
@@ -1176,10 +1164,6 @@ subroutine read_mesh_databases_MPI_IC_adios()
   write(region_name,"('reg',i1, '/')") IREGION_INNER_CORE
 
   file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call world_duplicate(comm)
 
@@ -1375,7 +1359,7 @@ subroutine read_mesh_databases_stacey_adios()
   ! local parameters
   integer :: comm, local_dim
   ! processor identification
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
   integer(kind=8)         :: adios_handle, sel
@@ -1386,13 +1370,8 @@ subroutine read_mesh_databases_stacey_adios()
   call world_duplicate(comm)
 
   file_name = trim(LOCAL_PATH) // "/stacey.bp"
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   ! crust and mantle
-
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
