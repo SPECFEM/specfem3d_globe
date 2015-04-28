@@ -149,9 +149,11 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
+  !----------------------
   ! debug file output
-  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
+  !----------------------
+  character(len=MAX_STRING_LEN) :: filename
 
   ! sets up MPI interfaces
   ! crust mantle region
@@ -279,9 +281,11 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
+  !----------------------
   ! debug file output
-  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
+  !----------------------
+  character(len=MAX_STRING_LEN) :: filename
 
   ! sets up MPI interfaces
   ! outer core region
@@ -412,9 +416,11 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer :: i,j,k,ispec,iglob,ier
   integer :: ndim_assemble
+  !----------------------
   ! debug file output
-  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
+  !----------------------
+  character(len=MAX_STRING_LEN) :: filename
 
   ! sets up MPI interfaces
   ! inner core
@@ -460,9 +466,8 @@
   if (DEBUG) then
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
     call write_VTK_data_elem_i(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                            xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                            ibool, &
-                            idoubling,filename)
+                               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                               ibool,idoubling,filename)
     call synchronize_all()
   endif
 

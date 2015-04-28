@@ -56,7 +56,7 @@ subroutine read_model_iso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -69,7 +69,7 @@ subroutine read_model_iso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -82,7 +82,7 @@ subroutine read_model_iso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -111,7 +111,7 @@ subroutine read_model_iso()
   call synchronize_all()
 
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown',action='write')
     write(IOUT,*) '#min_vs #max_vs #min_vp #max_vp #min_rho #max_rho'
     write(IOUT,'(6e24.12)') min_vs,max_vs,min_vp,max_vp,min_rho,max_rho
     close(IOUT)
@@ -164,7 +164,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -177,7 +177,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -190,7 +190,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -203,7 +203,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -216,7 +216,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -229,7 +229,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -270,7 +270,7 @@ subroutine read_model_tiso()
   call synchronize_all()
 
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown',action='write')
     write(IOUT,*) '#min_vsv #max_vsv #min_vsh #max_vsh #min_vpv #max_vpv #min_vph #max_vph ' &
                // '#min_eta #max_eta #min_rho #max_rho'
     write(IOUT,'(12e24.12)') min_vsv,max_vsv,min_vsh,max_vsh,min_vpv,max_vpv,min_vph,max_vph, &
@@ -301,7 +301,7 @@ subroutine read_model_database()
 
   ! global addressing
   write(m_file,'(a,i6.6,a)') trim(INPUT_DATABASES_DIR)//'proc',myrank,trim(REG)//'solver_data.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')

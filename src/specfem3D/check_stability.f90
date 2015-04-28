@@ -87,13 +87,12 @@
   ! compute maximum of norm of displacement in each slice
   if (.not. GPU_MODE) then
     ! on CPU
-    Usolidnorm = max( &
-        maxval(sqrt(displ_crust_mantle(1,:)**2 + &
-                    displ_crust_mantle(2,:)**2 + &
-                    displ_crust_mantle(3,:)**2)), &
-        maxval(sqrt(displ_inner_core(1,:)**2 + &
-                    displ_inner_core(2,:)**2 + &
-                    displ_inner_core(3,:)**2)))
+    Usolidnorm = max( maxval(sqrt(displ_crust_mantle(1,:)**2 + &
+                                  displ_crust_mantle(2,:)**2 + &
+                                  displ_crust_mantle(3,:)**2)), &
+                      maxval(sqrt(displ_inner_core(1,:)**2 + &
+                                  displ_inner_core(2,:)**2 + &
+                                  displ_inner_core(3,:)**2)))
 
     Ufluidnorm = maxval(abs(displ_outer_core))
   else
@@ -118,12 +117,12 @@
   if (SIMULATION_TYPE == 3) then
     if (.not. GPU_MODE) then
       ! on CPU
-      b_Usolidnorm = max( &
-             maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
-                          b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
-             maxval(sqrt(b_displ_inner_core(1,:)**2 &
-                        + b_displ_inner_core(2,:)**2 &
-                        + b_displ_inner_core(3,:)**2)))
+      b_Usolidnorm = max( maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
+                                      b_displ_crust_mantle(2,:)**2 + &
+                                      b_displ_crust_mantle(3,:)**2)), &
+                          maxval(sqrt(b_displ_inner_core(1,:)**2 + &
+                                      b_displ_inner_core(2,:)**2 + &
+                                      b_displ_inner_core(3,:)**2)))
 
       b_Ufluidnorm = maxval(abs(b_displ_outer_core))
     else

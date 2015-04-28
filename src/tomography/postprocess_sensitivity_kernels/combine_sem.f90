@@ -123,7 +123,7 @@ program combine_sem_globe
 
   ! parse paths from INPUT_FILE
   npath=0
-  open(unit = IIN, file = trim(input_file), status = 'old',iostat = ier)
+  open(unit=IIN,file=trim(input_file),status='old',action='read',iostat=ier)
   if (ier /= 0) then
      print *,'Error opening ',trim(input_file),myrank
      stop 1

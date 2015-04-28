@@ -69,7 +69,7 @@ program sum_kernels_globe
 
   ! reads in event list
   nker=0
-  open(unit = IIN, file = trim(kernel_file_list), status = 'old',iostat = ier)
+  open(unit=IIN,file=trim(kernel_file_list),status='old',action='read',iostat=ier)
   if (ier /= 0) then
      print *,'Error opening ',trim(kernel_file_list),myrank
      stop 1

@@ -164,7 +164,7 @@ module specfem_par
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
-  character(len=MAX_STRING_LEN) :: STATIONS,rec_filename
+  character(len=MAX_STRING_LEN) :: STATIONS_FILE
 
   ! Lagrange interpolators at receivers
   double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
@@ -739,8 +739,6 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: store_val_ux_all,store_val_uy_all,store_val_uz_all
 
   ! to save movie volume
-  double precision :: scalingval
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
     muvstore_crust_mantle_3dmovie
 

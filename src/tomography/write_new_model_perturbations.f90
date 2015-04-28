@@ -95,7 +95,7 @@ subroutine write_new_model_perturbations_iso()
 
   ! statistics output
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_relative_vs_vp_rho',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_relative_vs_vp_rho',status='unknown',action='write')
     write(IOUT,*) '#min_vs #max_vs #min_vp #max_vp #min_rho #max_rho'
     write(IOUT,'(6e24.12)') min_vs,max_vs,min_vp,max_vp,min_rho,max_rho
     close(IOUT)
@@ -219,7 +219,7 @@ subroutine write_new_model_perturbations_tiso()
 
   ! statistics output
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_relative_vs_vp_rho',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_relative_vs_vp_rho',status='unknown',action='write')
     write(IOUT,*) '#min_vsv #max_vsv #min_vsh #max_vsh #min_vpv #max_vpv #min_vph #max_vph ' &
                // '#min_eta #max_eta #min_rho #max_rho'
     write(IOUT,'(12e24.12)') min_vsv,max_vsv,min_vsh,max_vsh,min_vpv,max_vpv,min_vph,max_vph, &

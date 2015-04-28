@@ -314,7 +314,7 @@
   if (myrank == 0) then
     ! gets nspec/nglob
     write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',myrank,'_reg1_'//'solver_data.bin'
-    open(IIN,file=trim(solver_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(solver_file),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening file: ',trim(solver_file)
       stop 'Error opening old solver_data.bin file, please check arguments...'
@@ -327,7 +327,7 @@
     rank = 0
     do while (ier == 0)
       write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',rank,'_reg1_'//'solver_data.bin'
-      open(IIN,file=trim(solver_file),status='old',form='unformatted',iostat=ier)
+      open(IIN,file=trim(solver_file),status='old',action='read',form='unformatted',iostat=ier)
       if (ier == 0) then
         rank = rank + 1
         close(IIN)
@@ -412,7 +412,7 @@
   ! checks temporary file creation, to see if we could write out new model
   if (myrank == 0) then
     write(m_file,'(a,i6.6,a)') trim(output_model_dir)// '/proc',myrank,'_reg1_'//trim(fname(1))//'.tmp'
-    open(IOUT,file=trim(m_file),status='unknown',form='unformatted',iostat=ier)
+    open(IOUT,file=trim(m_file),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening file: ',trim(m_file)
       stop 'Error opening new output model file, please check if output directory exists...'
@@ -536,7 +536,7 @@
 
       ! old, source mesh locations
       write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',rank,'_reg1_'//'solver_data.bin'
-      open(IIN,file=solver_file,status='old',form='unformatted',iostat=ier)
+      open(IIN,file=solver_file,status='old',form='unformatted',action='read',iostat=ier)
       if (ier /= 0) then
         print*,'Error opening file: ',trim(solver_file)
         stop 'Error opening old solver_data.bin file'
@@ -597,7 +597,7 @@
         !if (myrank == 0) print *, '  for parameter: ',trim(fname(iker))
         ! opens model file
         write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
-        open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+        open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
         if (ier /= 0) then
           print*,'Error opening file: ',trim(m_file)
           stop 'Error opening old model file'
@@ -631,7 +631,7 @@
 
   ! checks new mesh locations
   write(solver_file,'(a,i6.6,a)') trim(dir_topo2)//'proc',rank,'_reg1_'//'solver_data.bin'
-  open(IIN,file=solver_file,status='old',form='unformatted',iostat=ier)
+  open(IIN,file=solver_file,status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening file: ',trim(solver_file)
     stop 'Error opening new solver_data.bin file'
@@ -904,7 +904,7 @@
     endif
 
     write(m_file,'(a,i6.6,a)') trim(output_model_dir) // '/proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
-    open(IOUT,file=trim(m_file),status='unknown',form='unformatted',iostat=ier)
+    open(IOUT,file=trim(m_file),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening file: ',trim(m_file)
       stop 'Error opening output model file'

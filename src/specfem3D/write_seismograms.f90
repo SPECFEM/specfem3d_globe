@@ -31,7 +31,13 @@ contains
 
   subroutine write_seismograms()
 
-  use specfem_par
+  use specfem_par,only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
+    nrec_local,number_receiver_global,ispec_selected_rec,ispec_selected_source, &
+    it,it_begin,it_end,seismo_current,seismo_offset, seismograms,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+    WRITE_SEISMOGRAMS_BY_MASTER,OUTPUT_SEISMOS_ASDF, &
+    it_adj_written,moment_der,sloc_der,shdur_der,stshift_der
+
+
   use specfem_par_crustmantle
 
   implicit none
@@ -141,7 +147,8 @@ contains
 ! write seismograms to files
   subroutine write_seismograms_to_file()
 
-  use constants_solver
+  use constants_solver,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,IMAIN,IOUT,itag
+
   use specfem_par,only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
           number_receiver_global,seismograms, &
@@ -153,6 +160,7 @@ contains
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           OUTPUT_FILES, &
           WRITE_SEISMOGRAMS_BY_MASTER
+
   use asdf_data,only: asdf_event
 
   implicit none
@@ -360,7 +368,9 @@ contains
 
   subroutine write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
 
-  use constants_solver
+  use constants_solver,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,DEGREES_TO_RADIANS, &
+    MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME
+
   use specfem_par,only: &
           myrank, &
           station_name,network_name,stlat,stlon, &
@@ -371,6 +381,7 @@ contains
 
   use specfem_par,only: &
           cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC
+
   use asdf_data,only: asdf_event
 
   implicit none
@@ -517,7 +528,8 @@ contains
 
   subroutine write_adj_seismograms(it_adj_written)
 
-  use constants
+  use constants,only: MAX_STRING_LEN,CUSTOM_REAL,IOUT
+
   use specfem_par,only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
     DT,t0,LOCAL_TMP_PATH, &
     seismograms,number_receiver_global,nrec_local, &

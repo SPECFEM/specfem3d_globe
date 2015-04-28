@@ -66,11 +66,11 @@ program smooth_sem_globe
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER,NGLLCUBE
+
   use postprocess_par,only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
     ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
-    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES
-  use specfem_par,only: LOCAL_PATH
+    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES,LOCAL_PATH
 
   use kdtree_search
 
@@ -377,7 +377,7 @@ program smooth_sem_globe
   ! read in the topology files of the current and neighboring slices
   ! point locations
   write(prname_lp,'(a,i6.6,a)') trim(topo_dir)//'/proc',myrank,trim(reg_name)//'solver_data.bin'
-  open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(prname_lp),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening file: ',trim(prname_lp)
     call exit_mpi(myrank,'Error opening solver_data.bin file')
@@ -536,7 +536,7 @@ program smooth_sem_globe
       ! read in the topology, kernel files, calculate center of elements
       ! point locations
       ! given in cartesian coordinates
-      open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
+      open(IIN,file=trim(prname_lp),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0) then
         print*,'Error could not open database file: ',trim(prname_lp)
         call exit_mpi(myrank,'Error opening slices in solver_data.bin file')
@@ -606,7 +606,7 @@ program smooth_sem_globe
     write(local_data_file,'(a,i6.6,a)') &
       trim(input_dir)//'/proc',iproc,trim(reg_name)//trim(kernel_name)//'.bin'
 
-    open(IIN,file=trim(local_data_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(local_data_file),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening data file: ',trim(local_data_file)
       call exit_mpi(myrank,'Error opening data file')
@@ -921,7 +921,7 @@ program smooth_sem_globe
   write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank, &
                               trim(reg_name)//trim(kernel_name)//'_smooth.bin'
 
-  open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',iostat=ier)
+  open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',action='write',iostat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
 
   ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes

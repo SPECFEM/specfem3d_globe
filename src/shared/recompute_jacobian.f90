@@ -30,7 +30,7 @@
   subroutine recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
-  use constants
+  use constants,only: NGNOD,NDIM,ZERO,HALF,ONE,TWO
 
   implicit none
 
