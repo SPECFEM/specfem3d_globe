@@ -25,8 +25,13 @@
 #
 #=====================================================================
 
+## compilation directories
+S := ${S_TOP}/src/tomography/postprocess_sensitivity_kernels
+$(tomography/postprocess_sensitivity_kernels_OBJECTS): S := ${S_TOP}/src/tomography/postprocess_sensitivity_kernels
 
-postprocess_TARGETS = \
+#######################################################################
+
+tomography/postprocess_sensitivity_kernels_TARGETS = \
 	$E/xaddition_sem \
 	$E/xclip_sem \
 	$E/xcombine_sem \
@@ -36,12 +41,12 @@ postprocess_TARGETS = \
 	$(EMPTY_MACRO)
 	
 ifeq ($(ADIOS),yes)
-postprocess_TARGETS += \
+tomography/postprocess_sensitivity_kernels_TARGETS += \
 	$E/xconvert_model_file_adios \
 	$(EMPTY_MACRO)
 endif
 
-postprocess_OBJECTS = \
+tomography/postprocess_sensitivity_kernels_OBJECTS = \
 	$(xaddition_sem_OBJECTS) \
 	$(xclip_sem_OBJECTS) \
 	$(xcombine_sem_OBJECTS) \
@@ -52,7 +57,7 @@ postprocess_OBJECTS = \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
-postprocess_SHARED_OBJECTS = \
+tomography/postprocess_sensitivity_kernels_SHARED_OBJECTS = \
 	$(xaddition_sem_SHARED_OBJECTS) \
 	$(xclip_sem_SHARED_OBJECTS) \
 	$(xcombine_sem_SHARED_OBJECTS) \
@@ -63,7 +68,7 @@ postprocess_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 
-postprocess_MODULES = \
+tomography/postprocess_sensitivity_kernels_MODULES = \
 	$(FC_MODDIR)/postprocess_par.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
@@ -73,7 +78,11 @@ postprocess_MODULES = \
 
 .PHONY: postprocess
 
-postprocess: $(postprocess_TARGETS)
+postprocess: $(tomography/postprocess_sensitivity_kernels_TARGETS)
+
+postprocess_sensitivity_kernels: postprocess
+
+tomography/postprocess_sensitivity_kernels: postprocess
 
 #######################################
 
@@ -249,10 +258,6 @@ ${E}/xsmooth_sem: $(xsmooth_sem_OBJECTS) $(xsmooth_sem_SHARED_OBJECTS)
 
 
 #######################################
-
-## compilation directories
-S := ${S_TOP}/src/postprocess
-$(postprocess_OBJECTS): S := ${S_TOP}/src/postprocess
 
 ###
 ### module dependencies
