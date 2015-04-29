@@ -30,13 +30,23 @@ of $n^{2}$ mesh slices, where $n\ge1$ is a positive integer, for
 a total of $6\times n^{2}$ slices (Figure~\ref{figure:mpi_slices}).
 Thus the minimum number of processors required for a global simulation
 is 6 (although it is theoretically possible to run more than one slice
-per processor). %
+per processor). 
+%
 \begin{figure}
 %not supported by pandoc? \centerline{}
 \begin{center}
-\begin{tabular}{cc}
-\includegraphics[width=0.45\textwidth]{figures/mpi_slices.pdf}  & \includegraphics[width=0.45\textwidth]{figures/fullmesh_18.pdf} \tabularnewline
-\end{tabular}
+%\begin{tabular}{cc}
+%\includegraphics[width=0.45\textwidth]{figures/mpi_slices.pdf}  & \includegraphics[width=0.45\textwidth]{figures/fullmesh_18.pdf} \\
+%\end{tabular}
+%\begin{minipage}[htp]{\textwidth}
+%\begin{minipage}{0.5\textwidth}
+\includegraphics[width=0.45\textwidth]{figures/mpi_slices.pdf} 
+%\end{minipage}
+\hfill
+%\begin{minipage}[htp]{0.5\textwidth}
+\includegraphics[width=0.45\textwidth]{figures/fullmesh_18.pdf} \\
+%\end{minipage}
+%\end{minipage}
 \end{center}
 \caption{Each of the 6~chunks that constitutes the cubed sphere is subdivided
 in terms of $n^{2}$~slices of elements, where $n\ge1$ is a positive
@@ -57,31 +67,36 @@ To run the mesher for a global simulation, the following parameters
 need to be set in the \texttt{Par\_file} (the list below might be slightly obsolete or incomplete; for an up-to-date
 version, see comments in the default \texttt{Par\_file} located in directory \texttt{DATA}:
 
+
 \begin{description}
 \item [{\texttt{SIMULATION\_TYPE}}] is set to 1 for forward simulations,
 2 for adjoint simulations for sources (see Section \ref{sec:Adjoint-simulation-sources})
 and 3 for kernel simulations (see Section \ref{sec:Finite-Frequency-Kernels}).
+%
 \item [{\texttt{SAVE\_FORWARD}}] is only set to \texttt{.true.} for a forward
 simulation with the last frame of the simulation saved, as part of
 the finite-frequency kernel calculations (see Section \ref{sec:Finite-Frequency-Kernels}).
 For a regular forward simulation, leave \texttt{SIMULATION\_TYPE}
 and \texttt{SAVE\_FORWARD} at their default values.
+%
 \item [{\texttt{NCHUNKS}}] must be set to 6 for global simulations.
+%
 \item [{\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}}] Not needed for a global
-simulation. (See Chapter~\ref{cha:Regional-Simulations} for regional
-simulations.)
+simulation. (See Chapter~\ref{cha:Regional-Simulations} for regional simulations.)
+%
 \item [{\texttt{ANGULAR\_WIDTH\_ETA\_IN\_DEGREES}}] Not needed for a global
-simulation. (See Chapter~\ref{cha:Regional-Simulations} for regional
-simulations.)
+simulation. (See Chapter~\ref{cha:Regional-Simulations} for regional simulations.)
+%
 \item [{\texttt{CENTER\_LATITUDE\_IN\_DEGREES}}] Not needed for a global
-simulation. (See Chapter~\ref{cha:Regional-Simulations} for regional
-simulations.)
+simulation. (See Chapter~\ref{cha:Regional-Simulations} for regional simulations.)
+%
 \item [{\texttt{CENTER\_LONGITUDE\_IN\_DEGREES}}] Not needed for a global
-simulation. (See Chapter~\ref{cha:Regional-Simulations} for regional
-simulations.)
+simulation. (See Chapter~\ref{cha:Regional-Simulations} for regional simulations.)
+%
 \item [{\texttt{GAMMA\_ROTATION\_AZIMUTH}}] Not needed for a global simulation.
 (See Chapter~\ref{cha:Regional-Simulations}  for regional simulations.)
-\item [{$\nexxi$}] The number of spectral elements along one side of a
+%
+\item [{\texttt{NEX\_XI}}] The number of spectral elements along one side of a
 chunk in the cubed sphere (see Figure~\ref{figure:mpi_slices});
 this number \textit{must} be a multiple of 16 and 8~$\times$~a
 multiple of $\nprocxi$ defined below. We do not recommend using $\nexxi$
@@ -98,33 +113,39 @@ that a $\nexxi=256$ run is accurate to a shortest period of roughly
 points per shortest wavelength, for any particular value of $\nexxi$
 the simulation will be accurate to a shortest period determined approximately
 by \begin{equation}
-\mbox{shortest period (s)}\simeq(256/\nexxi)\times17.\label{eq:shortest_period}\end{equation}
+\mbox{shortest period (s)}\simeq(256/\nexxi)\times17.\label{eq:shortest_period}
+\end{equation}
  The number of grid points in each orthogonal direction of the reference
 element, i.e., the number of Gauss-Lobatto-Legendre points, is determined
 by \texttt{NGLLX} in the \texttt{constants.h} file. In the globe we
 use $\mbox{\texttt{NGLLX}}=5$, for a total of $5^{3}=125$ points
 per elements. We suggest not to change this value.
-\item [{$\nexeta$}] For global simulations $\nexeta$ must be set to the
-same value as $\nexxi$.
-\item [{$\nprocxi$}] The number of processors or slices along one chunk
+%
+\item [{\texttt{NEX\_ETA}}] For global simulations $\nexeta$ must be set to the same value as $\nexxi$.
+%
+\item [{\texttt{NPROC\_XI}}] The number of processors or slices along one chunk
 of the cubed sphere (see Figure~\ref{figure:mpi_slices}); we must
 have $\nexxi=8\times c\times\nprocxi$, where $c\ge1$ is a positive
 integer. See Table~\ref{table:nex} for various suitable choices.
-\item [{$\nproceta$}] For global simulations $\nproceta$ must be set
-to the same value as $\nprocxi$.
+%
+\item [{\texttt{NPROC\_ETA}}] For global simulations $\nproceta$ must be set to the same value as $\nprocxi$.
+%
 \item [{\texttt{MODEL}}] Must be set to one of the following:
+%
 \item [{\textmd{1D~models~with~real~structure:}}]~
-
+%%
 \begin{description}
 \item [{\texttt{1D\_isotropic\_prem}}] Isotropic version of the spherically
 symmetric Preliminary Reference Earth Model (PREM) \citep{DzAn81}.
-\item [{\texttt{1D\_transversely\_isotropic\_prem}}] Transversely isotropic
-version of PREM.
-\item [{\texttt{1D\_iasp91}}] Spherically symmetric isotropic IASP91 model
-\citep{KeEn91}.
+%
+\item [{\texttt{1D\_transversely\_isotropic\_prem}}] Transversely isotropic version of PREM.
+%
+\item [{\texttt{1D\_iasp91}}] Spherically symmetric isotropic IASP91 model \citep{KeEn91}.
+%
 \item [{\texttt{1D\_1066a}}] Spherically symmetric earth model 1066A \citep{gilbertdziewonski1975}.
 When \texttt{\small ATTENTUATION} is on, it uses an unpublished 1D
 attenuation model from Scripps.
+%
 \item [{\texttt{1D\_ak135f\_no\_mud}}] Spherically symmetric isotropic AK135 model
 \citep{KeEnBu95} modified to use the density and Q attenuation models of \cite{MoKe95}.
 That modified model is traditionally called AK135-F,
@@ -132,10 +153,12 @@ see \url{http://rses.anu.edu.au/seismology/ak135/ak135f.html} for more details.
 As we do not want to use the 300~m-thick mud layer from that model nor the ocean layer,
 above the d120 discontinuity we switch back to the classical AK135 model of \cite{KeEnBu95},
 i.e., we use AK135-F below and AK135 above.
+%
 \item [{\texttt{1}D\_ref}] A recent 1D Earth model developed by \citet{KuDzEk06}.
 This model is the 1D background model for the 3D models s362ani, s362wmani,
 s362ani\_prem, and s29ea.
 \end{description}
+%%
 \end{description}
 For historical reasons and to provide benchmarks against normal-mode
 synthetics, the mesher accommodates versions of various 1D models
@@ -152,49 +175,59 @@ crust. These `one-crust' models are:
 
 \begin{description}
 \item [{\textmd{Fully~3D~models:}}]~
-
+%%
 \begin{description}
 \item [{\texttt{transversely\_isotropic\_prem\_plus\_3D\_crust\_2.0}}] This
 model has CRUST2.0 \citep{BaLaMa00} on top of a transversely isotropic
 PREM. We first extrapolate PREM mantle velocity up to the surface,
 then overwrite the model with CRUST2.0
+%
 \item [{\texttt{s20rts}}] By default, the code uses 3D mantle model S20RTS
 \citep{RiVaWo99} and 3D crustal model Crust2.0 \citep{BaLaMa00}.
 Note that S20RTS uses transversely isotropic PREM as a background
 model, and that we use the PREM radial attenuation model when \texttt{ATTENUATION}
 is incorporated. See Chapter~\ref{cha:-Changing-the} for a discussion
 on how to change 3D models.
+%
 \item [{\texttt{s40rts}}] A global 3D mantle model \citep{RiDeVaWo10} succeeding S20RTS
 with a higher resolution.
 S40RTS uses transversely isotropic PREM as a backgroun
 model and the 3D crustal model Crust2.0 \citep{BaLaMa00}.
 We use the PREM radial attenuation model when \texttt{ATTENUATION}
 is incorporated.
+%
 \item [{\texttt{\textcolor{black}{s362ani}}}] A global shear-wave speed
 model developed by \citet{KuDzEk06}. In this model, radial anisotropy
 is confined to the uppermost mantle. The model (and the corresponding
 mesh) incorporate tomography on the 650\textasciitilde{}km and 410\textasciitilde{}km
 discontinuities in the 1D reference model REF.
+%
 \item [{\texttt{\textcolor{black}{s362wmani}}}] A version of S362ANI with
 anisotropy allowed throughout the mantle.
+%
 \item [{\texttt{\textcolor{black}{s362ani\_prem}}}] A version of S362ANI
 calculated using PREM as the 1D reference model.
+%
 \item [{\texttt{\textcolor{black}{s29ea}}}] A global model with higher
 resolution in the upper mantle beneath Eurasia calculated using REF
 as the 1D reference model.
+%
 \item [{\texttt{3D\_anisotropic}}] See Chapter~\ref{cha:-Changing-the}
 for a discussion on how to specify your own 3D anisotropic model.
+%
 \item [{\texttt{3D\_attenuation}}] See Chapter~\ref{cha:-Changing-the}
 for a discussion on how to specify your own 3D attenuation model.
+%
 \item [{\texttt{PPM}}] For a user-specified 3D model (Point-Profile-Model)
 given as ASCII-table, specifying Vs-perturbations
 with respect to PREM. See Chapter~\ref{cha:-Changing-the}
 for a discussion on how to specify your own 3D model.
 \end{description}
+%%
 \item [{\textmd{NOTE:}}]~\\
 When a 3D mantle model is chosen in \texttt{Par\_file}, the simulations are performed together with the 3D crustal model Crust2.0. Alternatively, Crust2.0 can be combined with a higher resolution European crustal model EUCrust07 \citep{EUCrust07}. This can be done by setting the crustal type to \texttt{ICRUST\_CRUSTMAPS} in the \texttt{constant.h} file.
 It is also possible to run simulations using a 3D mantle model with a 1D crustal model on top. This can be done by setting the model in \texttt{Par\_file} to \texttt{<3D mantle>\_1Dcrust}, e.g., \texttt{s20rts\_1Dcrust, s362ani\_1Dcrust}, etc. In this case, the 1D crustal model will be the one that is used in the 3D mantle model as a reference model (e.g., transversely isotropic PREM for s20rts, REF for s362ani, etc.).
-
+%
 \item [{\texttt{OCEANS}}] Set to \texttt{.true.} if the effect of the oceans
 on seismic wave propagation should be incorporated based upon the
 approximate treatment discussed in \citet{KoTr02b}. This feature
@@ -203,6 +236,7 @@ requirements and CPU time. This approximation is accurate at periods
 of roughly 20~s and longer. At shorter periods the effect of water
 phases/reverberations is not taken into account, even when the flag
 is on.
+%
 \item [{\texttt{ELLIPTICITY}}] Set to \texttt{.true.} if the mesh should
 make the Earth model elliptical in shape according to Clairaut's equation
 \citep{DaTr98}. This feature adds no cost to the simulation.
@@ -222,28 +256,34 @@ As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 
 bathymetry should be incorporated based upon model ETOPO4 \citep{Etopo5}.
 This feature adds no cost to the simulation.
 It you want to use other topographic models, use the script download\_the\_whole\_topography\_database\_if\_you\_want\_other\_topographic\_models.bash provided in the root directory of the code and change the name of the topographic model to use in file \texttt{setup/constants.h.in} before configuring the code with the \texttt{configure} script.
+%
 \item [{\texttt{GRAVITY}}] Set to \texttt{.true.} if self-gravitation should
 be incorporated in the Cowling approximation \citep{KoTr02b,DaTr98}.
 Turning this feature on is relatively inexpensive, both from the perspective
 of memory requirements as well as in terms of computational speed.
+%
 \item [{\texttt{ROTATION}}] Set to \texttt{.true.} if the Coriolis effect
 should be incorporated. Turning this feature on is relatively cheap
 numerically.
+%
 \item [{\texttt{ATTENUATION}}] Set to \texttt{.true.} if attenuation should
 be incorporated. Turning this feature on increases the memory requirements
 significantly (roughly by a factor of~2), and is numerically fairly
 expensive. Of course for realistic simulations this flag should be
 turned on. See \citet{KoTr99,KoTr02a} for a discussion on the implementation
 of attenuation based upon standard linear solids.
+%
 \item [{\texttt{ABSORBING\_CONDITIONS}}] Set to \texttt{.false.} for global
 simulations. See Chapter~\ref{cha:Regional-Simulations} for regional
 simulations.
+%
 \item [{\texttt{RECORD\_LENGTH\_IN\_MINUTES}}] Choose the desired record
 length of the synthetic seismograms (in minutes). This controls the
 length of the numerical simulation, i.e., twice the record length
 requires twice as much CPU time. This feature is not used at the time
 of meshing but is required for the solver, i.e., you may change this
 parameter after running the mesher.
+%
 \item [{\texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY or UNDO\_ATTENUATION}}] To undo attenuation for sensitivity kernel calculations or forward runs with \texttt{SAVE\_FORWARD}
 use one (and only one) of the two flags below. \texttt{UNDO\_ATTENUATION} is much better (it is exact) and is simpler to use
 but it requires a significant amount of disk space for temporary storage. It has the advantage of requiring only two simulations for adjoint tomography instead
@@ -268,26 +308,31 @@ to create a movie of seismic wave propagation on the Earth's surface.
 Turning this option on generates large output files. See Section \ref{sec:Movies}
 for a discussion on the generation of movies. This feature is not
 used at the time of meshing but is relevant for the solver.
+%
 \item [{\texttt{MOVIE\_VOLUME}}] Set to \texttt{.false.}, unless you want
 to create a movie of seismic wave propagation in the Earth's interior.
 Turning this option on generates huge output files. See Section \ref{sec:Movies}
 for a discussion on the generation of movies. This feature is not
 used at the time of meshing but is relevant for the solver.
+%
 \item [{\texttt{NTSTEP\_BETWEEN\_FRAMES}}] Determines the number of timesteps
 between movie frames. Typically you want to save a snapshot every
 100 timesteps. The smaller you make this number the more output will
 be generated! See Section \ref{sec:Movies} for a discussion on the
 generation of movies. This feature is not used at the time of meshing
 but is relevant for the solver.
+%
 \item [{\texttt{HDUR\_MOVIE}}] determines the half duration of the source
 time function for the movie simulations. When this parameter is set
 to be 0, a default half duration that corresponds to the accuracy
 of the simulation is provided.
+%
 \item [{\texttt{SAVE\_MESH\_FILES}}] Set this flag to \texttt{.true}\texttt{\small .}
 to save AVS \urlwithparentheses{http://www.avs.com}, OpenDX \urlwithparentheses{http://www.opendx.org}, or ParaView \urlwithparentheses{http://www.paraview.org}
 mesh files for subsequent viewing. Turning the flag on generates large
 (distributed) files in the \texttt{LOCAL\_PATH} directory. See Section~\ref{sec:Meshes}
 for a discussion of mesh viewing features.
+%
 \item [{\texttt{NUMBER\_OF\_RUNS}}] On machines with a run-time limit,
 for instance for a batch/queue system, a simulation may need to be
 completed in stages. This option allows you to select the number of
@@ -301,10 +346,12 @@ next stage of the multi-stage run. Reading and writing the states
 can be very time consuming depending on the nature of the network
 and the file system (in this case writing to the local file system,
 i.e., the disk on a node, is preferable).
+%
 \item [{\texttt{NUMBER\_OF\_THIS\_RUN}}] If you choose to perform the run
 in stages, you need to tell the solver what stage run to perform.
 This feature is not used at the time of meshing but is required for
 the solver.
+%
 \item [{\texttt{LOCAL\_PATH}}] Directory in which the databases generated
 by the mesher will be written. Generally one uses a directory on the
 local disk of the compute nodes, although on some machines these databases
@@ -316,6 +363,7 @@ mesh (see Figure~\ref{figure:mpi_slices}). After the mesher finishes,
 you can log in to one of the compute nodes and view the contents of
 the \texttt{LOCAL\_PATH} directory to see the (many) files generated
 by the mesher.
+%
 \item [{\texttt{NTSTEP\_BETWEEN\_OUTPUT\_INFO}}] This parameter specifies
 the interval at which basic information about a run is written to
 the file system (\texttt{timestamp{*}} files in the \texttt{OUTPUT\_FILES}
@@ -325,6 +373,7 @@ to avoid writing output text files too often. This feature is not
 used at the time of meshing. One can set this parameter to a larger
 value than the number of time steps to avoid writing output during
 the run.
+%
 \item [{\texttt{NTSTEP\_BETWEEN\_OUTPUT\_SEISMOS}}] This parameter specifies
 the interval at which synthetic seismograms are written in the \texttt{LOCAL\_PATH}
 directory. The seismograms can be created in three different formats
@@ -338,42 +387,52 @@ than requested) seismograms in this directory. On a fast machine set
 \texttt{NTSTEP\_BETWEEN\_OUTPUT\_SEISMOS} to a relatively high value
 to avoid writing to the seismograms too often. This feature is not
 used at the time of meshing.
+%
 \item [{\texttt{NTSTEP\_BETWEEN\_READ\_ADJSRC}}] The number of adjoint
 sources read in each time for an adjoint simulation.
+%
 \item [{\texttt{OUTPUT\_SEISMOS\_ASCII\_TEXT}}] Set this flag to \texttt{.true.}
 if you want to have the synthetic seismograms written in two-column
 ASCII format (the first column contains time in seconds and the second
 column the displacement in meters of the recorded signal, no header
 information). Files will be named with extension \texttt{.ascii}, e.g., \texttt{NT.STA.?X?.sem.ascii}
 where NT and STA are the network and station codes given in \texttt{STATIONS} file, and \texttt{?X?} is the channel code (see Appendix~\ref{cha:channel-codes}).
+%
 \item [{\texttt{OUTPUT\_SEISMOS\_SAC\_ALPHANUM}}] Set this flag to \texttt{.true.}
 if you want to have the synthetic seismograms written in alphanumeric
 (human readable) SAC format, which includes header information on
 the source and receiver parameters (e.g., source/receiver coordinates,
 station name, etc., see Appendix~\ref{cha:SAC-headers}). For details on the format, please check the SAC webpage \urlwithparentheses{http://www.iris.edu/software/sac/}. Files will be named with extension \texttt{.sacan}.
+%
 \item [{\texttt{OUTPUT\_SEISMOS\_SAC\_BINARY}}] Set this flag to \texttt{.true.}
 if you want to have the synthetic seismograms written in binary SAC
 format. The header information included is the same as for the alphanumeric
 SAC format (see Appendix~\ref{cha:SAC-headers}). Using this format requires the least disk space, which may be particulary important if you have a large number of stations.
 For details on the binary format please also check the SAC webpage \urlwithparentheses{http://www.iris.edu/software/sac/} and Appendix~\ref{cha:SAC-headers}. Files will be named with extension \texttt{.sac}.
+%
 \item [{\texttt{ROTATE\_SEISMOGRAMS\_RT}}] Set this flag to \texttt{.true.}
 if you want to have radial (R) and transverse (T) horizontal components
 of the synthetic seismograms (default is \texttt{.false.} $\rightarrow$
 East (E) and North (N) components).
+%
 \item [{\texttt{WRITE\_SEISMOGRAMS\_BY\_MASTER}}] Set this flag to \texttt{.true.}
 if you want to have all the seismograms written by the master (no
 need to collect them on the nodes after the run).
+%
 \item [{\texttt{SAVE\_ALL\_SEISMOS\_IN\_ONE\_FILE}}] Set this flag to \texttt{.true.}
 if you want to have all the seismograms saved in one large combined
 file instead of one file per seismogram to avoid overloading shared
 non-local file systems such as GPFS for instance.
+%
 \item [{\texttt{USE\_BINARY\_FOR\_LARGE\_FILE}}] Set this flag to \texttt{.true.}
 if you want to use binary instead of ASCII for that large file (not
 used if SAVE\_ALL\_SEISMOS\_IN \_ONE\_FILE = .false.)
+%
 \item [{\texttt{RECEIVERS\_CAN\_BE\_BURIED}}] This flag accommodates stations
 with instruments that are buried, i.e., the solver will calculate
 seismograms at the burial depth specified in the \texttt{STATIONS}
 file. This feature is not used at the time of meshing.
+%
 \item [{\texttt{PRINT\_SOURCE\_TIME\_FUNCTION}}] Turn this flag on to print
 information about the source time function in the file \texttt{OUTPUT\_FILES/plot\_source\_time\_function.txt}.
 This feature is not used at the time of meshing.
@@ -403,7 +462,7 @@ Imagine you have 10 independent calculations to do, each of them on 100 cores; y
 1/ submit 10 jobs to the batch system
 
 2/ submit a single job on 1000 cores to the batch, and in that script create a sub-array of jobs to start 10 jobs,
-each running on 100 cores (see e.g. http://www.schedmd.com/slurmdocs/job\_array.html )
+each running on 100 cores (see e.g. \url{http://www.schedmd.com/slurmdocs/job_array.html} )
 
 3/ submit a single job on 1000 cores to the batch, start SPECFEM3D on 1000 cores, create 10 sub-communicators,
 cd into one of 10 subdirectories (called e.g. run0001, run0002,... run0010) depending on the sub-communicator
@@ -411,6 +470,7 @@ your MPI rank belongs to, and run normally on 100 cores using that sub-communica
 
 The option NUMBER\_OF\_SIMULTANEOUS\_RUNS implements 3/.
 
+%
 \item [{\texttt{BROADCAST\_SAME\_MESH\_AND\_MODEL}}]:
 if we perform simultaneous runs in parallel, if only the source and receivers vary between these runs
 but not the mesh nor the model (velocity and density) then we can also read the mesh and model files
@@ -421,7 +481,7 @@ Thus, always set this option to .true. if the mesh and the model are the same fo
 In that case there is no need to duplicate the mesh and model file database (the content of the DATABASES\_MPI
 directories) in each of the run0001, run0002,... directories, it is sufficient to have one in run0001
 and the code will broadcast it to the others).
-
+%
 \item [{\texttt{USE\_FAILSAFE\_MECHANISM}}]:
 if one or a few of these simultaneous runs fail, kill all the runs or let the others finish using a fail-safe mechanism
 (in most cases, should be set to true).
@@ -432,11 +492,15 @@ TODO / future work to do: the sensitivity kernel summing and smoothing tools in 
 More precisely, the current kernel summing and smoothing routines work fine, with the exception that you need to move out the mesh files (and also the parameters). This works because these routines consider multiple runs by design. You simply have to provide them the directories where the kernels are.
 \end{description}
 %
+
 \clearpage
 \noindent \begin{center}
-\label{table:nex} \begin{longtable}{|c|c|c|c|c|c|c|c|c|c|c|c|}
+\label{table:nex} 
+\begin{longtable}{|c|c|c|c|c|c|c|c|c|c|c|c|}
 \hline
-\nprocxi & processors & \multicolumn{10}{c|}{\nexxi}\tabularnewline
+%\nprocxi & processors & \multicolumn{10}{c|}{\nexxi}\tabularnewline
+%% better readability w/ pandoc
+{\texttt{NPROC\_XI}} & processors & \multicolumn{10}{c|}{{\texttt{NEX\_XI}}}\tabularnewline
 \hline
 \endhead
 \hline

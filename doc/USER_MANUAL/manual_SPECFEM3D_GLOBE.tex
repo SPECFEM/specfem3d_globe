@@ -14,6 +14,9 @@
 \usepackage{textcomp}
 \usepackage{amsmath}
 
+% tables
+\usepackage{booktabs}
+
 % figures
 \usepackage[pdftex]{graphicx}
 
@@ -52,11 +55,33 @@
 % date of last edit
 \date{\today}
 
+% colors for the text
+\usepackage[dvipsnames,usenames]{color}
+\newcommand{\red}[1]{\textcolor{Red}{#1}}
+\definecolor{light-gray}{rgb}{0.7,0.7,0.7}
+\definecolor{dark-gray}{rgb}{0.1,0.1,0.3}
+\definecolor{light-blue}{rgb}{0.7,0.7,0.9}
+\definecolor{dark-blue}{rgb}{0.2,0.2,0.5}
+
 % create thumbnails
 \usepackage[pdftex]{thumbpdf}
 
 % hyperlinks to sections and references
-\usepackage[pdftex,bookmarks=true,bookmarksnumbered=true,pdfpagemode=None,pdfstartview=FitH,pdfpagelayout=SinglePage,pdfborder={0 0 0}]{hyperref}
+\usepackage[pdftex]{hyperref}
+% more options
+\hypersetup{
+	bookmarks=true,
+	bookmarksnumbered=true,
+	pdfpagemode=UseNone,
+	pdfstartview=FitH,
+	pdfpagelayout=SinglePage,
+	pdfborder={0 0 0},
+	colorlinks=true,			% color links
+	citecolor=dark-gray,	% citation links
+	filecolor=dark-gray,	% file links
+	linkcolor=dark-gray, 	% internal link (rgb values)
+	urlcolor=dark-blue		% external weblinks		
+}
 
 \newcommand{\urlwithparentheses}[1]{(\url{#1})}
 
@@ -79,10 +104,6 @@
 \newcommand{\nprocxi}{\mbox{\texttt{NPROC\_XI}}}
 \newcommand{\nproceta}{\mbox{\texttt{NPROC\_ETA}}}
 \newcommand{\nchunks}{\mbox{\texttt{NCHUNKS}}}
-
-% colors for the text
-\usepackage[dvipsnames,usenames]{color}
-\newcommand{\red}[1]{\textcolor{Red}{#1}}
 
 % Latex generated graphics
 \usepackage{tikz}
@@ -160,6 +181,8 @@ Version 7.0}
 
 \include{14_informations_for_developers}
 
+\include{features}
+
 \include{bug_reports}
 
 \include{notes_and_acknowledgement}
@@ -170,9 +193,7 @@ Version 7.0}
 %% Bibliography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-{\small \bibliography{bibliography}
-}{\small \par}
-
+{\small \bibliography{bibliography}}{\small \par}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Appendix
