@@ -10,54 +10,54 @@ CUDA and OpenCL hardware support, respectively.
 \begin{center}
 \begin{tabular}{ l l c c c}
 \hline
-%{\bf Feature}		&		& \multicolumn{3}{c}{{\bf Code version}} \\
+%{\bf Feature}    &   & \multicolumn{3}{c}{{\bf Code version}} \\
 %\cmidrule(lr){3-5}
-%						& 		& {\it CPU}	& {\it CUDA}	& {\it OpenCL} \\
+%           &     & {\it CPU} & {\it CUDA}  & {\it OpenCL} \\
 %% to have proper title w/ pandoc
-{\bf Feature}		&		& {\it CPU}	& {\it CUDA}	& {\it OpenCL} \\
+{\bf Feature}   &   & {\it CPU} & {\it CUDA}  & {\it OpenCL} \\
 \hline
 & & & & \\
 %%
-{\bf Physics}				& Ocean load			& X		& X		& X \\
-								& Ellipticity             	& X		& X     	& X \\
-								& Topography   			& X     	& X     	& X \\
-								& Gravity            		& X     	& X     	& X \\
-								& Rotation             	& X     	& X     	& X \\
-								& Attenuation    		& X     	& X     	& X \\
+{\bf Physics}       & Ocean load      & X   & X   & X \\
+                & Ellipticity               & X   & X       & X \\
+                & Topography        & X       & X       & X \\
+                & Gravity               & X       & X       & X \\
+                & Rotation              & X       & X       & X \\
+                & Attenuation       & X       & X       & X \\
 \hline
 & & & & \\
 %%
-{\bf Simulation Setup}	& Global (6-chunks)			& X	& X	& X \\
-									& Regional (1,2-chunk)		& X	& X	& X \\
-									& Restart/Checkpointing	& X	& X	& X \\
-									& Simultaneous runs			& X	& X	& X \\
-									& ADIOS file I/O				& X	& X	& X \\
+{\bf Simulation Setup}  & Global (6-chunks)     & X & X & X \\
+                  & Regional (1,2-chunk)    & X & X & X \\
+                  & Restart/Checkpointing & X & X & X \\
+                  & Simultaneous runs     & X & X & X \\
+                  & ADIOS file I/O        & X & X & X \\
 \hline
 & & & & \\
 %%
-{\bf Sensitivity kernels}	& Partial physical dispersion			& X     & X     & X \\
-									& Undoing of attenuation    			& X     & X     & X \\
-									& Anisotropic kernels        				& X     & X     & X \\
-									& Transversely isotropic kernels  	& X     & X     & X \\
-									& Isotropic kernels 						& X     & X     & X \\
-									& Approximate Hessian     			& X     & X     & X \\
+{\bf Sensitivity kernels} & Partial physical dispersion     & X     & X     & X \\
+                  & Undoing of attenuation          & X     & X     & X \\
+                  & Anisotropic kernels               & X     & X     & X \\
+                  & Transversely isotropic kernels    & X     & X     & X \\
+                  & Isotropic kernels             & X     & X     & X \\
+                  & Approximate Hessian           & X     & X     & X \\
 \hline
 & & & & \\
 %%
-{\bf Time schemes}			& Newmark    	& X     & X     & X \\
-										& LDDRK			& X     & -     & - \\
+{\bf Time schemes}      & Newmark     & X     & X     & X \\
+                    & LDDRK     & X     & -     & - \\
 \hline
 & & & & \\
 %%
-{\bf Visualization}			& Surface movie		& X     & X     & X \\
-									& Volumetric movie	& X     & X     & X \\
+{\bf Visualization}     & Surface movie   & X     & X     & X \\
+                  & Volumetric movie  & X     & X     & X \\
 \hline
 & & & & \\
 %%
-{\bf Seismogram formats}	& Ascii        		& X 	& X 	& X \\
-										& SAC				& X	& X	& X \\
-										& ASDF			& X	& X	& X \\
-										& Binary			& X	& X	& X \\
+{\bf Seismogram formats}  & Ascii           & X   & X   & X \\
+                    & SAC       & X & X & X \\
+                    & ASDF      & X & X & X \\
+                    & Binary      & X & X & X \\
 %
 \hline
 & & & & \\ % to avoid clashes with pandoc
