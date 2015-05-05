@@ -24,7 +24,7 @@ For a one-chunk regional simulation the following parameters need
 to be set in the \texttt{Par\_file}:
 
 \begin{description}
-\item [{$\nchunks$}] Must be set to 1.
+\item [{\texttt{NCHUNKS}}] Must be set to 1.
 \item [{\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}}] Denotes the width of
 one side of the chunk ($90^{\circ}$ is a classical value, but you can make it more or less if you want).
 \item [{\texttt{ANGULAR\_WIDTH\_ETA\_IN\_DEGREES}}] Denotes the width of
@@ -44,33 +44,31 @@ can be changed in the \texttt{Par\_file} and the corners output \texttt{(}\textt
 }\texttt{\small xcreate\_header\_file}. It is important to note that
 the mesher or the solver does not need to be run to determine the
 limits of a 1-chunk simulation.
-\item [{$\nexxi$}] The number of spectral elements along the $\xi$ side
+\item [{\texttt{NEX\_XI}}] The number of spectral elements along the $\xi$ side
 of the chunk. This number \textit{must} be 8~$\times$~a multiple
 of $\nprocxi$ defined below. For a $90^{\circ}$ chunk, we do not
 recommend using $\nexxi$ less than~64 because the curvature of the
 Earth cannot be honored if one uses too few elements, which results
 in inaccurate and unstable simulations.
-\item [{$\nexeta$}] The number of spectral elements along the $\eta$
+\item [{\texttt{NEX\_ETA}}] The number of spectral elements along the $\eta$
 side of the chunk. This number \textit{must} be 8~$\times$~a multiple
 of $\nproceta$ defined below. Note that in order to get elements
 that are close to square on the Earth's surface, the following ratios
 should be similar:
-
-\begin{lyxcode}
-$\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}/\nexxi$
-
-$\texttt{ANGULAR\_WIDTH\_ETA\_IN\_DEGREES}/\nexeta$~
-\end{lyxcode}
+\begin{verbatim}
+ANGULAR_WIDTH_XI_IN_DEGREES / NEX_XI
+ANGULAR_WIDTH_ETA_IN_DEGREES / NEX_ETA
+\end{verbatim}
 Because of the geometry of the cubed sphere, the option of having
 different values for $\nexxi$ and $\nexeta$ is available only for
 regional simulations when $\nchunks=1$ (1/6th of the sphere).
 
-\item [{$\nprocxi$}] The number of processors or mesh slices along the
+\item [{\texttt{NPROC\_XI}}] The number of processors or mesh slices along the
 $\xi$ side of the chunk. To accommodate the mesh doubling layers,
 we must have $\nexxi=8\times c\times\nprocxi$, where $c\ge1$ is
 a positive integer. See Table~\ref{table:nex} for various suitable
 choices.
-\item [{$\nproceta$}] The number of processors or slices along the $\eta$
+\item [{\texttt{NPROC\_ETA}}] The number of processors or slices along the $\eta$
 side of the chunk; we must have $\nexeta=8\times c\times\nproceta$,
 where $c\ge1$ is a positive integer. $\nprocxi$ and $\nproceta$
 must be equal when $\nchunks=6$.
@@ -148,7 +146,8 @@ velocity/element width occurs. Again, see \texttt{\small read\_compute\_paramete
 for all the details.
 
 The approximate shortest period at which a regional simulation is
-accurate may be determined based upon the relation \begin{equation}
+accurate may be determined based upon the relation 
+\begin{equation}
 \mbox{shortest period (s)}\simeq(256/\nexxi)\times(\texttt{ANGULAR\_WIDTH\_XI\_IN\_DEGREES}/90)\times17.\label{eq:shortest_period_regional}\end{equation}
 
 

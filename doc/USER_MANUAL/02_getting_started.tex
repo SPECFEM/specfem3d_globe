@@ -3,10 +3,9 @@
 \section{Configuring and compiling the source code}
 
 To get the SPECFEM3D\_GLOBE software package, type this:
-
-\begin{lyxcode}
-git clone --recursive --branch devel https://github.com/geodynamics/specfem3d\_globe.git
-\end{lyxcode}
+\begin{verbatim}
+git clone --recursive --branch devel https://github.com/geodynamics/specfem3d_globe.git
+\end{verbatim}
 
 We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
 
@@ -16,10 +15,9 @@ values for your system. However, at a minimum, it is recommended that
 you explicitly specify the appropriate command names for your Fortran
 compiler and MPI package (another option is to define FC, CC and MPIF90 in your .bash\_profile
 or your .cshrc file):
-
-\begin{lyxcode}
-./configure~FC=ifort~MPIFC=mpif90
-\end{lyxcode}
+\begin{verbatim}
+./configure FC=ifort MPIFC=mpif90
+\end{verbatim}
 
 Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
 
@@ -30,9 +28,10 @@ Before running the \texttt{configure} script, you should probably edit file \tex
 \end{description}
 
 When compiling on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, we suggest running the \texttt{configure} script
-with the following options:\\
-
-\noindent\texttt{./configure FC=xlf90\_r MPIFC=mpif90 CC=xlc\_r CFLAGS="-O3 -q64" FCFLAGS="-O3 -q64"}.\\
+with the following options:
+\begin{verbatim}
+./configure FC=xlf90_r MPIFC=mpif90 CC=xlc_r CFLAGS="-O3 -q64" FCFLAGS="-O3 -q64"
+\end{verbatim}
 
 On SGI systems, \texttt{flags.guess} automatically informs \texttt{configure}
 to insert ``\texttt{TRAP\_FPE=OFF}'' into the generated \texttt{Makefile}
@@ -60,10 +59,10 @@ This must correspond to the same underlying compiler specified by
 when you attempt to build the code. If you are unsure about this,
 it is usually safe to set both \texttt{FC} and \texttt{MPIFC} to the
 MPI compiler command for your system:
+\begin{verbatim}
+./configure FC=mpif90 MPIFC=mpif90
+\end{verbatim}
 \end{description}
-\begin{lyxcode}
-./configure~FC=mpif90~MPIFC=mpif90
-\end{lyxcode}
 \begin{description}
 \item [{\texttt{FLAGS\_CHECK}}] Compiler flags.
 \item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}]
@@ -151,31 +150,28 @@ SPECFEM now supports OpenCL and NVidia Cuda GPU acceleration.
 
 OpenCL can be enabled with the \texttt{--with-opencl} flag, and the
 compilation can be controlled through three variables: \texttt{OCL\_LIB=},
-\texttt{OCL\_INC=} and \texttt{OCL\_GPU\_FLAGS=}.\\
-
-\noindent
-\texttt{./configure --with-opencl OCL\_LIB= OCL\_INC= OCL\_GPU\_FLAGS=
-..}\\
-
+\texttt{OCL\_INC=} and \texttt{OCL\_GPU\_FLAGS=}.
+\begin{verbatim}
+./configure --with-opencl OCL_LIB= OCL_INC= OCL_GPU_FLAGS=..
+\end{verbatim}
 
 Cuda configuration can be enabled with \texttt{--with-cuda} flag and
 \texttt{CUDA\_FLAGS=}, \texttt{CUDA\_LIB=}, \texttt{CUDA\_INC=}
-and \texttt{ MPI\_INC=} variables.\\
-
-\noindent
-\texttt{./configure --with-cuda=cuda5 CUDA\_FLAGS= CUDA\_LIB= CUDA\_INC= MPI\_INC= ..}\\
+and \texttt{ MPI\_INC=} variables.
+\begin{verbatim}
+./configure --with-cuda=cuda5 CUDA_FLAGS= CUDA_LIB= CUDA_INC= MPI_INC= ..
+\end{verbatim}
 
 Both environments can be compiled simultaneously by merging these two lines.
 
 For the runtime configuration, the \texttt{GPU\_MODE} flag must be set
 to \texttt{.true.}. In addition, we use three parameters to select the
-environments and GPU: \\
-
-\noindent
-\texttt{GPU\_RUNTIME = 0|1|2}\\
-\texttt{GPU\_PLATFORM = filter|*}\\
-\texttt{GPU\_DEVICE = filter|*}\\
-
+environments and GPU: 
+\begin{verbatim}
+GPU_RUNTIME = 0|1|2
+GPU_PLATFORM = filter|*
+GPU_DEVICE = filter|*
+\end{verbatim}
 
 \texttt{GPU\_RUNTIME} sets the runtime environments: $2$ for OpenCL,
 $1$ for Cuda and 0 for compile-time decision (hence, SPECFEM should
@@ -222,12 +218,11 @@ Proceedings of the 7th International Symposium on Embedded Multicore/Manycore Sy
 \underline{More recent installation instruction for IBM BlueGene, from October 2012:}\\
 
 \noindent
-Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK}:\\
-
-\noindent
-\texttt{-g -qfullpath -O2 -qsave -qstrict -qtune=qp -qarch=qp -qcache=auto -qhalt=w}\\
-\noindent
-\texttt{-qfree=f90 -qsuffix=f=f90 -qlanglvl=95pure -Q -Q+rank,swap\_all -Wl,-relax}\\
+Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK}:
+\begin{verbatim}
+-g -qfullpath -O2 -qsave -qstrict -qtune=qp -qarch=qp -qcache=auto -qhalt=w \
+  -qfree=f90 -qsuffix=f=f90 -qlanglvl=95pure -Q -Q+rank,swap_all -Wl,-relax
+\end{verbatim}
 
 \noindent
 The most relevant are the -qarch and -qtune flags, otherwise if these flags are set to ``auto'' then they are wrongly assigned to
@@ -243,20 +238,20 @@ Before running \texttt{configure}, select the XL Fortran compiler by typing \tex
 or \texttt{module load bgq-xl} (another, less efficient option is to load the GNU compilers using \texttt{module load bgq-gnu/4.4.6} or similar).\\
 
 \noindent
-Then, to configure the code, type this:\\
-
-\noindent
-\texttt{./configure FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r LOCAL\_PATH\_IS\_ALSO\_GLOBAL=true}\\
+Then, to configure the code, type this:
+\begin{verbatim}
+./configure FC=bgxlf90_r MPIFC=mpixlf90_r CC=bgxlc_r LOCAL_PATH_IS_ALSO_GLOBAL=true
+\end{verbatim}
 
 \noindent
 \underline{Older installation instruction for IBM BlueGene, from 2011:}\\
 
 \noindent
 To compile the code on an IBM BlueGene, Laurent L\'eger from IDRIS, France, suggests the following: compile the code with
-
-\noindent
-\texttt{   FLAGS\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \\}
-\texttt{   -qfree=f90 -qsuffix=f=f90 -g -qlanglvl=95pure -qhalt=w -Q -Q+rank,swap\_all -Wl,-relax"}
+\begin{verbatim}
+FLAGS\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \
+  -qfree=f90 -qsuffix=f=f90 -g -qlanglvl=95pure -qhalt=w -Q -Q+rank,swap_all -Wl,-relax"
+\end{verbatim}
 
 \noindent
 Option "-Wl,-relax" must be added on many (but not all) BlueGene systems to be able to link the binaries \texttt{xmeshfem3D}
@@ -266,20 +261,20 @@ On the contrary, on some BlueGene systems that use the native AIX linker option 
 
 \noindent
 One then just needs to pass the right commands to the \texttt{configure} script:
-
-\noindent
-\texttt{   ./configure --prefix=/path/to/SPECFEM3DG\_SP --host=Babel --build=BGP \\}
-\texttt{      FC=bgxlf90\_r MPIFC=mpixlf90\_r CC=bgxlc\_r  \\}
-\texttt{      LOCAL\_PATH\_IS\_ALSO\_GLOBAL=false}
+\begin{verbatim}
+./configure --prefix=/path/to/SPECFEM3DG_SP --host=Babel --build=BGP \
+      FC=bgxlf90_r MPIFC=mpixlf90_r CC=bgxlc_r  \
+      LOCAL_PATH_IS_ALSO_GLOBAL=false
+\end{verbatim}
 
 \noindent
 This trick can be useful for all hosts on which one needs to cross-compile.
 
 \noindent
 On BlueGene, one also needs to run the \texttt{xcreate\_header\_file} binary file manually rather than in the Makefile:
-
-\noindent
-   \texttt{bgrun -np 1 -mode VN -exe ./bin/xcreate\_header\_file}
+\begin{verbatim}
+bgrun -np 1 -mode VN -exe ./bin/xcreate_header_file
+\end{verbatim}
 
 \section{Using a cross compiler}
 

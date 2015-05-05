@@ -46,54 +46,41 @@ This script first sets the job queue to be `normal'. It then compiles
 the mesher and solver together, figures out the number of processors
 required for this simulation from \texttt{DATA/Par\_file}, and submits
 the LSF job.
+{\small
+\begin{verbatim}
+#!/bin/bash
+# use the normal queue unless otherwise directed queue="-q normal"
+if [ $# -eq 1 ]; then
+  echo"Setting the queue to $1"
+  queue="-q $1"
+fi
+# compile the mesher and the solver
+d=`date` 
+echo"Starting compilation $d"
 
-\begin{lyxcode}
-\#!/bin/bash
+make clean
+make meshfem3D
+make create_header_file
 
-\#~use~the~normal~queue~unless~otherwise~directed~queue=\char`\"{}-q~normal\char`\"{}~
+./bin/xcreate_header_file
 
-if~{[}~\$\#~-eq~1~];~then
+make specfem3D
 
-~~~~~~~~echo~\char`\"{}Setting~the~queue~to~\$1\char`\"{}
+d=`date`
+echo"Finished compilation $d"
 
-~~~~~~~~queue=\char`\"{}-q~\$1\char`\"{}~
+# compute total number of nodes needed
+NPROC_XI=`grep ^NPROC_XI DATA/Par_file | cut -c 34- `
+NPROC_ETA=`grep ^NPROC_ETA DATA/Par_file | cut -c 34- `
+NCHUNKS=`grep ^NCHUNKS DATA/Par_file | cut -c 34- `
 
-fi~\\
-~\\
-\#~compile~the~mesher~and~the~solver~
+# total number of nodes is the product of the values read
+numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
-d=`date'~echo~\char`\"{}Starting~compilation~\$d\char`\"{}~
-
-make~clean~
-
-make~meshfem3D~
-
-make~create\_header\_file~
-
-./bin/xcreate\_header\_file~
-
-make~specfem3D~
-
-d=`date'~
-
-echo~\char`\"{}Finished~compilation~\$d\char`\"{}~\\
-~\\
-\#~compute~total~number~of~nodes~needed~
-
-NPROC\_XI=`grep~NPROC\_XI~DATA/Par\_file~|~cut~-c~34-~'~
-
-NPROC\_ETA=`grep~NPROC\_ETA~DATA/Par\_file~|~cut~-c~34-~'~
-
-NCHUNKS=`grep~NCHUNKS~DATA/Par\_file~|~cut~-c~34-~'~\\
-~\\
-\#~total~number~of~nodes~is~the~product~of~the~values~read~
-
-numnodes=\$((~\$NCHUNKS~{*}~\$NPROC\_XI~{*}~\$NPROC\_ETA~))~\\
-~\\
-echo~\char`\"{}Submitting~job\char`\"{}~
-
-bsub~\$queue~-n~\$numnodes~-W~60~-K~<go\_mesher\_solver\_lsf\_globe.bash~
-\end{lyxcode}
+echo "Submitting job"
+bsub $queue -n $numnodes -W 60 -K <go_mesher_solver_lsf_globe.bash
+\end{verbatim}
+}
 
 \section{\texttt{go\_mesher\_solver\_lsf\_globe.bash}}
 
@@ -126,47 +113,37 @@ using \texttt{run\_lsf.bash}.
 \item The final portion of the script performs clean up on the nodes using
 the Perl script \texttt{cleanmulti.pl}
 \end{enumerate}
-\begin{lyxcode}
-\#!/bin/bash~-v
+{\small
+\begin{verbatim}
+#!/bin/bash -v
+#BSUB -o OUTPUT_FILES/%J.o
+#BSUB -a mpich_gm
+#BSUB -J go_mesher_solver_lsf
 
-\#BSUB~-o~OUTPUT\_FILES/\%J.o
+BASEMPIDIR=/scratch/$USER/DATABASES_MPI
+echo "$LSB_MCPU_HOSTS" > OUTPUT_FILES/lsf_machines
+echo "$LSB_JOBID" > OUTPUT_FILES/jobid
 
-\#BSUB~-a~mpich\_gm
+./remap_lsf_machines.pl OUTPUT_FILES/lsf_machines > OUTPUT_FILES/machines
 
-\#BSUB~-J~go\_mesher\_solver\_lsf
+# Modif : create a directory for this job
+shmux -M50 -Sall \
+ -c "mkdir -p /scratch/$USER;mkdir -p $BASEMPIDIR.$LSB_JOBID" - < OUTPUT_FILES/machines >/dev/null
 
-BASEMPIDIR=/scratch/\$USER/DATABASES\_MPI
+# Set the local path in Par_file
+sed -e "s:^LOCAL_PATH .*:LOCAL_PATH = $BASEMPIDIR.$LSB_JOBID:" < DATA/Par_file > DATA/Par_file.tmp
+mv DATA/Par_file.tmp DATA/Par_file
 
-echo~\char`\"{}\$LSB\_MCPU\_HOSTS\char`\"{}~>~OUTPUT\_FILES/lsf\_machines
+current_pwd=$PWD
 
-echo~\char`\"{}\$LSB\_JOBID\char`\"{}~>~OUTPUT\_FILES/jobid
+mpirun.lsf --gm-no-shmem --gm-copy-env $current_pwd/bin/xmeshfem3D
+mpirun.lsf --gm-no-shmem --gm-copy-env $current_pwd/bin/xspecfem3D
 
-./remap\_lsf\_machines.pl~OUTPUT\_FILES/lsf\_machines~>OUTPUT\_FILES/machines
+# clean up
+cleanbase_jobid.pl OUTPUT_FILES/machines DATA/Par_file
+\end{verbatim}
+}
 
-\#~Modif~:~create~a~directory~for~this~job
-
-shmux~-M50~-Sall~-c~\char`\"{}mkdir~-p~/scratch/\$USER;
-
-mkdir~-p~\$BASEMPIDIR.\$LSB\_JOBID\char`\"{}~-~<~OUTPUT\_FILES/machines~>/dev/null
-
-\#~Set~the~local~path~in~Par\_file
-
-sed~-e~\char`\"{}s:\textasciicircum{}LOCAL\_PATH~.{*}:LOCAL\_PATH~=~\$BASEMPIDIR.\$LSB\_JOBID:\char`\"{}
-
-<~DATA/Par\_file~>~DATA/Par\_file.tmp
-
-mv~DATA/Par\_file.tmp~DATA/Par\_file
-
-current\_pwd=\$PWD
-
-mpirun.lsf~~-{}-gm-no-shmem~-{}-gm-copy-env~\$current\_pwd/bin/xmeshfem3D
-
-mpirun.lsf~-{}-gm-no-shmem~-{}-gm-copy-env~\$current\_pwd/bin/xspecfem3D
-
-\#~clean~up
-
-cleanbase\_jobid.pl~OUTPUT\_FILES/machines~DATA/Par\_file
-\end{lyxcode}
 
 \section{\texttt{run\_lsf.kernel} and \texttt{go\_mesher\_solver\_globe.kernel}}
 

@@ -44,7 +44,7 @@ per processor).
 %\end{minipage}
 \hfill
 %\begin{minipage}[htp]{0.5\textwidth}
-\includegraphics[width=0.45\textwidth]{figures/fullmesh_18.pdf} \\
+\includegraphics[width=0.45\textwidth]{figures/fullmesh_18.pdf}\\
 %\end{minipage}
 %\end{minipage}
 \end{center}
@@ -112,7 +112,8 @@ that a $\nexxi=256$ run is accurate to a shortest period of roughly
 17~s. Therefore, since accuracy is determined by the number of grid
 points per shortest wavelength, for any particular value of $\nexxi$
 the simulation will be accurate to a shortest period determined approximately
-by \begin{equation}
+by 
+\begin{equation}
 \mbox{shortest period (s)}\simeq(256/\nexxi)\times17.\label{eq:shortest_period}
 \end{equation}
  The number of grid points in each orthogonal direction of the reference
@@ -154,7 +155,7 @@ As we do not want to use the 300~m-thick mud layer from that model nor the ocean
 above the d120 discontinuity we switch back to the classical AK135 model of \cite{KeEnBu95},
 i.e., we use AK135-F below and AK135 above.
 %
-\item [{\texttt{1}D\_ref}] A recent 1D Earth model developed by \citet{KuDzEk06}.
+\item [{\texttt{1D\_ref}}] A recent 1D Earth model developed by \citet{KuDzEk06}.
 This model is the 1D background model for the 3D models s362ani, s362wmani,
 s362ani\_prem, and s29ea.
 \end{description}
@@ -164,14 +165,13 @@ For historical reasons and to provide benchmarks against normal-mode
 synthetics, the mesher accommodates versions of various 1D models
 with a single crustal layer with the properties of the original upper
 crust. These `one-crust' models are:
-
-\texttt{1D\_isotropic\_prem\_onecrust}
-
-\texttt{1D\_transversely\_isotropic\_prem\_onecrust}
-
-\texttt{1D\_iasp91\_onecrust}, \texttt{1D\_1066a\_onecrust}
-
-\texttt{1D\_ak135f\_no\_mud\_onecrust}
+\begin{verbatim}
+1D_isotropic_prem_onecrust
+1D_transversely_isotropic_prem_onecrust
+1D_iasp91_onecrust
+1D_1066a_onecrust
+1D_ak135f_no_mud_onecrust
+\end{verbatim}
 
 \begin{description}
 \item [{\textmd{Fully~3D~models:}}]~
@@ -196,19 +196,19 @@ model and the 3D crustal model Crust2.0 \citep{BaLaMa00}.
 We use the PREM radial attenuation model when \texttt{ATTENUATION}
 is incorporated.
 %
-\item [{\texttt{\textcolor{black}{s362ani}}}] A global shear-wave speed
+\item [{\texttt{s362ani}}] A global shear-wave speed
 model developed by \citet{KuDzEk06}. In this model, radial anisotropy
 is confined to the uppermost mantle. The model (and the corresponding
 mesh) incorporate tomography on the 650\textasciitilde{}km and 410\textasciitilde{}km
 discontinuities in the 1D reference model REF.
 %
-\item [{\texttt{\textcolor{black}{s362wmani}}}] A version of S362ANI with
+\item [{\texttt{s362wmani}}] A version of S362ANI with
 anisotropy allowed throughout the mantle.
 %
-\item [{\texttt{\textcolor{black}{s362ani\_prem}}}] A version of S362ANI
+\item [{\texttt{s362ani\_prem}}] A version of S362ANI
 calculated using PREM as the 1D reference model.
 %
-\item [{\texttt{\textcolor{black}{s29ea}}}] A global model with higher
+\item [{\texttt{s29ea}}] A global model with higher
 resolution in the upper mantle beneath Eurasia calculated using REF
 as the 1D reference model.
 %
@@ -250,7 +250,7 @@ a corresponding dynamical flattening of .0033 (PREM). The actual ellipticty of t
 %
 Thus, flattening f = 1/299.8 is what is used in SPECFEM3D\_GLOBE, as it should. And thus eccentricity squared $e^2 = 1 - (1-f)^2 = 1 - (1 - 1/299.8)^2 = 0.00665998813529$, and the correction factor used in the code to convert geographic latitudes to geocentric is $1 - e^2 = (1-f)^2 = (1 - 1/299.8)^2 = 0.9933400118647$.
 %
-As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 (see e.g. en.wikipedia.org/wiki/World\_Geodetic\_System) has $f = 1/298.2572236$.
+As a comparison, the classical World Geodetic System reference ellipsoid WGS 84 (see e.g. \url{http://en.wikipedia.org/wiki/World_Geodetic_System}) has $f = 1/298.2572236$.
 %
 \item [{\texttt{TOPOGRAPHY}}] Set to \texttt{.true.} if topography and
 bathymetry should be incorporated based upon model ETOPO4 \citep{Etopo5}.
@@ -284,7 +284,7 @@ requires twice as much CPU time. This feature is not used at the time
 of meshing but is required for the solver, i.e., you may change this
 parameter after running the mesher.
 %
-\item [{\texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY or UNDO\_ATTENUATION}}] To undo attenuation for sensitivity kernel calculations or forward runs with \texttt{SAVE\_FORWARD}
+\item [{\texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY} or \texttt{UNDO\_ATTENUATION}}] To undo attenuation for sensitivity kernel calculations or forward runs with \texttt{SAVE\_FORWARD}
 use one (and only one) of the two flags below. \texttt{UNDO\_ATTENUATION} is much better (it is exact) and is simpler to use
 but it requires a significant amount of disk space for temporary storage. It has the advantage of requiring only two simulations for adjoint tomography instead
 of three in the case of \texttt{PARTIAL\_PHYS\_DISPERSION\_ONLY}, i.e. for adjoint tomography it is globally significantly less expensive (each run is slightly more
@@ -796,12 +796,10 @@ Mesher output is provided in the \texttt{OUTPUT\_FILES} directory
 in \texttt{output\_mesher.txt}; this file provides lots of details
 about the mesh that was generated. Alternatively, output can be directed
 to the screen instead by uncommenting a line in \texttt{constants.h}:
-
-\begin{lyxcode}
-!~uncomment~this~to~write~messages~to~the~screen~
-
-!~integer,~parameter~::~IMAIN~=~ISTANDARD\_OUTPUT~~
-\end{lyxcode}
+\begin{verbatim}
+! uncomment this to write messages to the screen
+! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+\end{verbatim}
 Note that on very fast machines, writing to the screen may slow down
 the code.
 

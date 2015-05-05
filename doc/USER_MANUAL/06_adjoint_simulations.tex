@@ -35,10 +35,9 @@ from the adjoint seismograms recorded at the original earthquake location.
 1} and \texttt{SAVE\_FORWARD = .false.}). You can automatically set
 these two variables using the \texttt{\small UTILS/change\_simulation\_type.pl}
 script:
-
-\begin{lyxcode}
-UTILS/change\_simulation\_type.pl~-f~
-\end{lyxcode}
+\begin{verbatim}
+UTILS/change_simulation_type.pl -f
+\end{verbatim}
 and then collect the recorded seismograms at all the stations given
 in \texttt{DATA/STATIONS}.
 
@@ -68,18 +67,18 @@ explicit time-reversing is needed for the preparation of the adjoint
 sources, i.e., the adjoint sources are in the same forward time sense
 as the original recorded seismograms.
 \end{enumerate}
+
 \item \textbf{Set the related parameters and run the adjoint simulation}\\
 In the \texttt{DATA/Par\_file}, set the two related parameters to
 be \texttt{SIMULATION\_TYPE = 2} and \texttt{SAVE\_FORWARD = .false.}.
 More conveniently, use the scripts \texttt{UTILS/change\_simulation\_type.pl}
 to modify the \texttt{Par\_file} automatically (\texttt{change\_simulation\_type.pl
 -a}). Then run the solver to launch the adjoint simulation.
-\item \textbf{Collect the seismograms at the original source location}
 
-
+\item \textbf{Collect the seismograms at the original source location}\\
 After the adjoint simulation has completed successfully, get the seismograms
 from directory \texttt{OUTPUT\_FILES}.
-
+%
 \begin{itemize}
 \item These adjoint seismograms are recorded at the locations of the original
 earthquake sources given by the \texttt{DATA/CMTSOLUTION} file, and
@@ -94,6 +93,8 @@ collected will start with \texttt{S00001}.
 of the gradient of the misfit function.
 \end{itemize}
 \end{enumerate}
+
+
 
 \section{Adjoint Simulations for Finite-Frequency Kernels (Kernel Simulation)}\label{sec:Adjoint-simulation-finite}
 
@@ -134,6 +135,8 @@ to be used for the subsequent simulation.
 contribution are also written to the \texttt{LOCAL\_PATH} when \texttt{SAVE\_FORWARD
 = .true.}.
 \end{itemize}
+
+
 \item \textbf{Prepare the adjoint sources}
 
 
@@ -181,6 +184,7 @@ NET.STA00.MXZ.adj
 i.e. suppress ".sem.ascii".
 
 You will also need to create a file called STATIONS\_ADJOINT in the "DATA" directory in the root directory of the code. That file can be identical to the DATA/STATIONS file if you had a single station in STATIONS.
+
 
 \item \textbf{Run the kernel simulation}
 

@@ -17,19 +17,19 @@ the crust on top of the 1D reference model (PREM, IASP91, or AK135F\_NO\_MUD)
 is removed and replaced by extending the mantle. The 3D crustal model
 is subsequently overprinted onto the crust-less 1D reference model.
 The call to the 3D crustal routine is of the form
+\begin{verbatim}
+call model_crust(lat,lon,r,vp,vs,rho,moho,foundcrust,CM_V,elem_in_crust)
+\end{verbatim}
 
-\begin{lyxcode}
-call~model\_crust(lat,lon,r,vp,vs,rho,moho,foundcrust,CM\_V,elem\_in\_crust)
-\end{lyxcode}
+\noindent
 Input to this routine consists of:
-
 \begin{description}
 \item [{\texttt{lat}}] Latitude in degrees.
 \item [{\texttt{lon}}] Longitude in degrees.
 \item [{\texttt{r}}] Non-dimensionalized radius ($0<\texttt{r}<1$).
 \end{description}
+%
 Output from the routine consists of:
-
 \begin{description}
 \item [{\texttt{vp}}] Non-dimensionalized compressional wave speed at location
 (\texttt{lat},\texttt{lon},\texttt{r}).
@@ -80,36 +80,22 @@ the same model data files from a remotely-mounted home file system,
 which could create a bottleneck on the network in the case of a large
 number of nodes. For example, in the current call to that routine
 from \texttt{model\_crust.f90,} we write:
+
+{\footnotesize
+\begin{verbatim}
+! the variables read are declared and stored in structure CM_V
+  if(myrank == 0) call read_crust_model(CM_V)
+  
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(CM_V%thlr,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(CM_V%velocp,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(CM_V%velocs,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(CM_V%dens,NKEYS_CRUST*NLAYERS_CRUST,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(CM_V%abbreviation,NCAP_CRUST*NCAP_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(CM_V%code,2*NKEYS_CRUST,MPI_CHARACTER,0,MPI_COMM_WORLD,ier)
+\end{verbatim}
+}
 \end{quote}
-\begin{lyxcode}
-{\footnotesize !~the~variables~read~are~declared~and~stored~in~structure~CM\_V~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~if(myrank~==~0)~call~read\_crust\_model(CM\_V)~}{\footnotesize \par}
-
-{\footnotesize !~broadcast~the~information~read~on~the~master~to~the~nodes~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%thlr,NKEYS\_CRUST{*}NLAYERS\_CRUST,MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%velocp,NKEYS\_CRUST{*}NLAYERS\_CRUST,MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%velocs,NKEYS\_CRUST{*}NLAYERS\_CRUST,MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%dens,NKEYS\_CRUST{*}NLAYERS\_CRUST,MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%abbreviation,NCAP\_CRUST{*}NCAP\_CRUST,MPI\_CHARACTER,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(CM\_V\%code,2{*}NKEYS\_CRUST,MPI\_CHARACTER,0,MPI\_COMM\_WORLD,ier)~}{\footnotesize \par}
-\end{lyxcode}
 
 \section{Changing the Mantle Model}\label{sec:Changing-the-Mantle}
 
@@ -123,12 +109,12 @@ the 3D crustal model.
 The 3D mantle model S20RTS \citep{RiVaWo99} is superimposed onto
 the mantle mesh by the subroutine \texttt{model\_s20rts.f90}. The
 call to this subroutine is of the form
+\begin{verbatim}
+call model_s20rts(radius,theta,phi,dvs,dvp,drho,D3MM_V)
+\end{verbatim}
 
-\begin{lyxcode}
-call~model\_s20rts(radius,theta,phi,dvs,dvp,drho,D3MM\_V)~
-\end{lyxcode}
+\noindent
 Input to this routine consists of:
-
 \begin{description}
 \item [{\texttt{radius}}] Non-dimensionalized radius ($\texttt{RCMB/R\_ EARTH}<\texttt{r}<\texttt{RMOHO/R\_ EARTH}$;
 for a given 1D reference model, the constants \texttt{RCMB} and \texttt{RMOHO}
@@ -145,8 +131,8 @@ the mantle model is extended to fill this gap.
 \item [{\texttt{theta}}] Colatitude in radians.
 \item [{\texttt{phi}}] Longitude in radians.
 \end{description}
+%
 Output from the routine are the following non-dimensional perturbations:
-
 \begin{description}
 \item [{\texttt{dvs}}] Relative shear-wave speed perturbations $\delta\beta/\beta$
 at location (\texttt{radius},\texttt{theta},\texttt{phi}).
@@ -185,56 +171,41 @@ the same model data files from a remotely-mounted home file system,
 which could create a bottleneck on the network in the case of a large
 number of nodes. For example, in the current call to that routine
 from \texttt{model\_s20rts.f90,} we write:
+
+{\footnotesize
+\begin{verbatim}
+! the variables read are declared and stored in structure D3MM_V
+  if(myrank == 0) call read_model_s20rts(D3MM_V)
+
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(D3MM_V%dvs_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%dvs_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%dvp_a,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%dvp_b,(NK+1)*(NS+1)*(NS+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%spknt,NK+1,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%qq0,(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(D3MM_V%qq,3*(NK+1)*(NK+1),MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+\end{verbatim}
+}
 \end{quote}
-\begin{lyxcode}
-{\footnotesize !~the~variables~read~are~declared~and~stored~in~structure~D3MM\_V}{\footnotesize \par}
 
-{\footnotesize{}~~if(myrank~==~0)~call~read\_model\_s20rts(D3MM\_V)~}{\footnotesize \par}
-
-{\footnotesize !~broadcast~the~information~read~on~the~master~to~the~nodes~~~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%dvs\_a,(NK+1){*}(NS+1){*}(NS+1),MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%dvs\_b,(NK+1){*}(NS+1){*}(NS+1),MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%dvp\_a,(NK+1){*}(NS+1){*}(NS+1),MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%dvp\_b,(NK+1){*}(NS+1){*}(NS+1),MPI\_DOUBLE\_PRECISION,}{\footnotesize \par}
-
-{\footnotesize{}~~~~~~~~~~0,MPI\_COMM\_WORLD,ier)~~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%spknt,NK+1,MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)~~~~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%qq0,(NK+1){*}(NK+1),MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(D3MM\_V\%qq,3{*}(NK+1){*}(NK+1),MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)~}{\footnotesize \par}
-\end{lyxcode}
 
 \subsection{Anisotropic Models}\label{sub:Anisotropic-Models}
 
 Three-dimensional anisotropic mantle models may be superimposed on
 the mesh based upon the subroutine
-
-\begin{lyxcode}
-model\_aniso\_mantle.f90
-\end{lyxcode}
+\begin{verbatim}
+model_aniso_mantle.f90
+\end{verbatim}
 The call to this subroutine is of the form
+\begin{verbatim}
+call model_aniso_mantle(r,theta,phi,rho, &
+         c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
+         c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,AMM_V)
+\end{verbatim}
 
-\begin{lyxcode}
-call~model\_aniso\_mantle(r,theta,phi,rho,~\&~
-
-~~~~c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,~\&~
-
-~~~~c33,c34,c35,c36,c44,c45,c46,c55,c56,c66,AMM\_V)~
-\end{lyxcode}
+\noindent
 Input to this routine consists of:
-
 \begin{description}
 \item [{\texttt{r}}] Non-dimensionalized radius ($\texttt{RCMB/R\_ EARTH}<\texttt{r}<\texttt{RMOHO/R\_ EARTH}$;
 for a given 1D reference model, the constants \texttt{RCMB} and \texttt{RMOHO}
@@ -250,9 +221,9 @@ the mantle model is extended to fill this gap.
 \item [{\texttt{theta}}] Colatitude in radians.
 \item [{\texttt{phi}}] Longitude in radians.
 \end{description}
+%
 Output from the routine consists of the following non-dimensional
 model parameters:
-
 \begin{description}
 \item [{\texttt{rho}}] Non-dimensionalized density $\rho$.
 \item [{\texttt{c11},}] \textbf{$\cdots$,} \texttt{\textbf{c66}} 21 non-dimensionalized
@@ -287,20 +258,20 @@ the same model data files from a remotely-mounted home file system,
 which could create a bottleneck on the network in the case of a large
 number of nodes. For example, in the current call to that routine
 from \texttt{model\_aniso\_mantle.f90,} we write:
+
+{\footnotesize
+\begin{verbatim}
+! the variables read are declared and stored in structure AMM_V
+  if(myrank == 0) call read_aniso_mantle_model(AMM_V)
+
+! broadcast the information read on the master to the nodes
+  call MPI_BCAST(AMM_V%npar1,1,MPI_INTEGER,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AMM_V%beta,14*34*37*73,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+  call MPI_BCAST(AMM_V%pro,47,MPI_DOUBLE_PRECISION,0,MPI_COMM_WORLD,ier)
+\end{verbatim}
+}
 \end{quote}
-\begin{lyxcode}
-{\footnotesize !~the~variables~read~are~declared~and~stored~in~structure~AMM\_V}{\footnotesize \par}
 
-{\footnotesize{}~~if(myrank~==~0)~call~read\_aniso\_mantle\_model(AMM\_V)}{\footnotesize \par}
-
-{\footnotesize !~broadcast~the~information~read~on~the~master~to~the~nodes}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(AMM\_V\%npar1,1,MPI\_INTEGER,0,MPI\_COMM\_WORLD,ier)~~~~}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(AMM\_V\%beta,14{*}34{*}37{*}73,MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
-
-{\footnotesize{}~~call~MPI\_BCAST(AMM\_V\%pro,47,MPI\_DOUBLE\_PRECISION,0,MPI\_COMM\_WORLD,ier)}{\footnotesize \par}
-\end{lyxcode}
 Rotation of the anisotropic tensor elements from one coordinate system
 to another coordinate system may be accomplished based upon the subroutine
 \texttt{rotate\_aniso\_tensor}. Use of this routine requires understanding
@@ -313,12 +284,16 @@ in Appendix~\ref{cha:Reference-Frame-Convention}.
 In order to facilitate the use of your own specific mantle model, you can choose \texttt{PPM} as model in the \texttt{DATA/Par\_file} file
 and supply your own model as an ASCII-table file. These generic models are given as depth profiles at a specified lon/lat location
 and a perturbation (in percentage) with respect to the shear-wave speed values from PREM. The ASCII-file should have a format like:
-\begin{lyxcode}
-{\footnotesize \#lon(deg), lat(deg), depth(km), Vs-perturbation wrt PREM(\%), Vs-PREM (km/s)}{\footnotesize \par}
-{\footnotesize -10.00000       31.00000       40.00000      -1.775005       4.400000}{\footnotesize \par}
-{\footnotesize -10.00000       32.00000       40.00000      -1.056823       4.400000}{\footnotesize \par}
-{\footnotesize ...}{\footnotesize \par}
-\end{lyxcode}
+
+{\footnotesize
+\begin{verbatim}
+#lon(deg), lat(deg), depth(km), Vs-perturbation wrt PREM(%), Vs-PREM (km/s)
+ -10.00000       31.00000       40.00000      -1.775005       4.400000
+ -10.00000       32.00000       40.00000      -1.056823       4.400000
+ ...
+\end{verbatim}
+}
+\noindent
 where the first line is a comment line and all following ones are specifying the Vs-perturbation at a lon/lat location and a given depth.
 The last entry on each line is specifying the absolute value of Vs (however this value is only given as a supplementary information
 and not used any further). The background model is PREM with a transverse isotropic layer between Moho and 220~km depth.
@@ -341,12 +316,12 @@ Three-dimensional anelastic (attenuation) models may be superimposed
 onto the mesh based upon your subroutine .
 \texttt{model\_atten3D.f90}.
 The call to this routine would be as follows
+\begin{verbatim}
+call model_atten3D(radius, colatitude, longitude, Qmu, QRFSI12_Q, idoubling)
+\end{verbatim}
 
-\begin{lyxcode}
-call~model\_atten3D(radius,~colatitude,~longitude,~Qmu,~QRFSI12\_Q,~idoubling)
-\end{lyxcode}
+\noindent
 Input to this routine consists of:
-
 \begin{description}
 \item [{\texttt{radius}}] scaled radius of the earth: $0\,(\mathrm{center})<=r\,<=1$(surface)
 \item [{\texttt{latitude}}] Colatitude in degrees: $0^{\circ}<=\theta<=180^{\circ}$
@@ -355,8 +330,8 @@ Input to this routine consists of:
 variables and arrays that describe the model
 \item [{\texttt{idoubling}}] value of the doubling index flag in each radial region of the mesh
 \end{description}
+%
 Output to this routine consists of:
-
 \begin{description}
 \item [{\texttt{Qmu}}] Shear wave quality factor: $0<Q_{\mu}<5000$
 \end{description}

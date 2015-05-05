@@ -24,11 +24,10 @@ and \texttt{SAVE\_FORWARD}
 and \texttt{NTSTEPS\_BETWEEN\_FRAMES}
 \item the multi-stage simulation parameters \texttt{NUMBER\_OF\_RUNS} and
 \texttt{NUMBER\_OF\_THIS\_RUN}
-\item the output information parameters \texttt{NTSTEP\_BETWEEN\_OUTPUT\_INFO,
-NTSTEP\_BETWEEN\_OUTPUT\_}~\\
-\texttt{SEISMOS, OUTPUT\_SEISMOS\_ASCII\_TEXT, OUTPUT\_SEISMOS\_SAC\_ALPHANUM,
-OUTPUT\_}~\\
-\texttt{SEISMOS\_SAC\_BINARY and ROTATE\_SEISMOGRAMS\_RT}
+\item the output information parameters \texttt{NTSTEP\_BETWEEN\_OUTPUT\_INFO},
+\texttt{NTSTEP\_BETWEEN\_OUTPUT\_SEISMOS}, \texttt{OUTPUT\_SEISMOS\_ASCII\_TEXT}, 
+\texttt{OUTPUT\_SEISMOS\_SAC\_ALPHANUM}, \texttt{OUTPUT\_SEISMOS\_SAC\_BINARY} 
+and \texttt{ROTATE\_SEISMOGRAMS\_RT}
 \item the \texttt{RECEIVERS\_CAN\_BE\_BURIED} and \texttt{PRINT\_SOURCE\_TIME\_FUNCTION}
 flags
 \end{itemize}
@@ -80,10 +79,9 @@ with the \texttt{-h} flag, or the serial code \texttt{convolve\_source\_timefunc
 and the script \texttt{UTILS/convolve\_source\_timefunction.csh} for
 this purpose, or alternatively use signal-processing software packages
 such as SAC \urlwithparentheses{http://www.iris.edu/software/sac/}. Type
-
-\begin{lyxcode}
-make~convolve\_source\_timefunction
-\end{lyxcode}
+\begin{verbatim}
+make convolve_source_timefunction
+\end{verbatim}
 to compile the code and then set the parameter \texttt{hdur} in \texttt{UTILS/convolve\_source\_timefunction.csh}
 to the desired half-duration.
 
@@ -148,50 +146,44 @@ simulations it is usually not advisable to use a zero half duration
 and convolve afterwards, since the half duration is generally fixed
 by the finite fault model.
 
-{\small }%
-\begin{figure}[H]
-\noindent \begin{centering}
-{\small \includegraphics[width=5in]{figures/source_timing.pdf} }
-\par\end{centering}{\small \par}
-
+%
+\begin{figure}[htp]
+\begin{centering}
+\includegraphics[width=5in]{figures/source_timing.pdf}
+\end{centering}
+%
 \caption{Example of timing for three sources. The center of the first source
 triangle is defined to be time zero. Note that this is NOT in general
 the hypocentral time, or the start time of the source (marked as tstart).
 The parameter \texttt{time shift} in the \texttt{CMTSOLUTION} file
-would be t1(=0), t2, t3 in this case, and the parameter \texttt{half
-duration} would be hdur1, hdur2, hdur3 for the sources 1, 2, 3 respectively.}
-
-
-{\small \label{fig:source_timing} }
+would be t1(=0), t2, t3 in this case, and the parameter \texttt{half duration} 
+would be hdur1, hdur2, hdur3 for the sources 1, 2, 3 respectively.}
+\label{fig:source_timing}
 \end{figure}
-{\small \par}
+
 
 The solver can calculate seismograms at any number of stations for
 basically the same numerical cost, so the user is encouraged to include
 as many stations as conceivably useful in the \texttt{STATIONS} file,
 which looks like this:
-
-{\small }%
-\begin{figure}[H]
-\noindent \begin{centering}
-{\small \includegraphics{figures/STATIONS_global_explained.pdf} }
-\par\end{centering}{\small \par}
-
+%
+\begin{figure}[htp]
+\begin{centering}
+\includegraphics{figures/STATIONS_global_explained.pdf}
+\end{centering}
+%
 \caption{Sample \texttt{STATIONS} file. Station latitude and longitude should
 be provided in geographical coordinates. The width of the station
 label should be no more than 32 characters (see \texttt{MAX\_LENGTH\_STATION\_NAME}
 in the \texttt{constants.h} file), and the network label should be
 no more than 8 characters (see \texttt{MAX\_LENGTH\_NETWORK\_NAME}
 in the \texttt{constants.h} file).}
-
 \end{figure}
-{\small \par}
 
 Each line represents one station in the following format:
-
-\begin{lyxcode}
-\noindent {\small Station~Network~Latitude~(degrees)~Longitude~(degrees)~Elevation~(m)~burial~(m)~}{\small \par}
-\end{lyxcode}
+\begin{verbatim}
+Station Network Latitude(degrees) Longitude(degrees) Elevation(m) burial(m)
+\end{verbatim}
 If you want to put a station on the ocean floor, just set
 elevation and burial depth in the STATIONS file to 0.
 Equivalently you can also set elevation to a negative value equal
@@ -200,46 +192,37 @@ to the ocean depth, and burial depth to 0.
 Solver output is provided in the \texttt{OUTPUT\_FILES} directory
 in the \texttt{output\_solver.txt} file. Output can be directed to
 the screen instead by uncommenting a line in \texttt{constants.h}:
-
-\begin{lyxcode}
-!~uncomment~this~to~write~messages~to~the~screen~
-
-!~integer,~parameter~::~IMAIN~=~ISTANDARD\_OUTPUT~
-\end{lyxcode}
+{\small
+\begin{verbatim}
+! uncomment this to write messages to the screen
+! integer, parameter :: IMAIN = ISTANDARD_OUTPUT
+\end{verbatim}
+}
 Note that on very fast machines, writing to the screen may slow down
 the code.
 
 While the solver is running, its progress may be tracked by monitoring
 the `\texttt{timestamp{*}}' files in the \texttt{OUTPUT\_FILES} directory.
 These tiny files look something like this:
-
-\begin{lyxcode}
-Time~step~\#~~~~~~~~~~~200~
-
-Time:~~~~0.6956667~~~~~~minutes~
-
-Elapsed~time~in~seconds~=~~~~~252.6748970000000~
-
-Elapsed~time~in~hh:mm:ss~=~~~~0~h~04~m~12~s~
-
-Mean~elapsed~time~per~time~step~in~seconds~=~~~~~1.263374485000000~
-
-Max~norm~displacement~vector~U~in~solid~in~all~slices~(m)~=~~~~1.9325~
-
-Max~non-dimensional~potential~Ufluid~in~fluid~in~all~slices~=~1.1058885E-22~
-\end{lyxcode}
+{\small
+\begin{verbatim}
+Time step #           200
+Time:    0.6956667      minutes
+Elapsed time in seconds =     252.6748970000000
+Elapsed time in hh:mm:ss =    0 h 04 m 12 s
+Mean elapsed time per time step in seconds =     1.263374485000000
+Max norm displacement vector U in solid in all slices (m) =    1.9325
+Max non-dimensional potential Ufluid in fluid in all slices = 1.1058885E-22
+\end{verbatim}
+}
 The \texttt{timestamp{*}} files provide the \texttt{Mean elapsed time
 per time step in seconds}, which may be used to assess performance
 on various machines (assuming you are the only user on a node), as
-well as the \texttt{\small Max}{\small{} }\texttt{\small norm}{\small{}
-}\texttt{\small displacement}{\small{} }\texttt{\small vector}{\small{}
-}\texttt{\small U}{\small{} }\texttt{\small in}{\small{} }\texttt{\small solid}{\small{}
-}\texttt{\small in}{\small{} }\texttt{\small all}{\small{} }\texttt{\small slices~(m)}{\small{}
-}\texttt{\small and}{\small{} }\texttt{\small Max}{\small{} }\texttt{\small non-dimensional}{\small{}
-}\texttt{\small potential}{\small{} }\texttt{\small Ufluid}{\small{}
-}\texttt{\small in}{\small{} }\texttt{\small fluid}{\small{} }\texttt{\small in}{\small{}
-}\texttt{\small all}{\small{} }\texttt{\small slices}. If something
-is wrong with the model, the mesh, or the source, you will see the
+well as the 
+\texttt{Max norm displacement vector U in solid in all slices (m)}
+and
+\texttt{Max non-dimensional potential Ufluid in fluid in all slices}. 
+If something is wrong with the model, the mesh, or the source, you will see the
 code become unstable through exponentionally growing values of the
 displacement and/or fluid potential with time, and ultimately the
 run will be terminated by the program when either of these values
@@ -320,7 +303,7 @@ the simulation.
     };
 \end{tikzpicture}
 \par\end{centering}
-
+%
 \caption{
 Directory structure when simulating several earthquakes at once.
 To improve readability, only directories have been drawn.}
