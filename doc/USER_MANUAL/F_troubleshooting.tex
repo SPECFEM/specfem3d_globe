@@ -11,12 +11,12 @@ CC and MPIF90 won't be correct if `./configure` fails.
 Please make sure that you have a working installation of a Fortran compiler,
 a C compiler and an MPI implementation. You should be able to compile this
 little program code:
-   
-{\footnotesize   
-\begin{verbatim}   
+
+{\footnotesize
+\begin{verbatim}
   program main
   include 'mpif.h'
-  integer, parameter :: CUSTOM_MPI_TYPE = MPI_REAL 
+  integer, parameter :: CUSTOM_MPI_TYPE = MPI_REAL
   integer ier
   call MPI_INIT(ier)
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
@@ -25,14 +25,14 @@ little program code:
 \end{verbatim}
 }
 
-\item [compilation fails:] 
+\item [compilation fails:]
 In case a compilation error like the following occurs, stating
 
 {\footnotesize
 \begin{verbatim}
   ...
-  obj/meshfem3D.o: In function `MAIN__': 
-  meshfem3D.f90:(.text+0x14): undefined reference to `_gfortran_set_std' 
+  obj/meshfem3D.o: In function `MAIN__':
+  meshfem3D.f90:(.text+0x14): undefined reference to `_gfortran_set_std'
   ...
 \end{verbatim}
 }

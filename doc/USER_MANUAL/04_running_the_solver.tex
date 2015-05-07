@@ -25,8 +25,8 @@ and \texttt{NTSTEPS\_BETWEEN\_FRAMES}
 \item the multi-stage simulation parameters \texttt{NUMBER\_OF\_RUNS} and
 \texttt{NUMBER\_OF\_THIS\_RUN}
 \item the output information parameters \texttt{NTSTEP\_BETWEEN\_OUTPUT\_INFO},
-\texttt{NTSTEP\_BETWEEN\_OUTPUT\_SEISMOS}, \texttt{OUTPUT\_SEISMOS\_ASCII\_TEXT}, 
-\texttt{OUTPUT\_SEISMOS\_SAC\_ALPHANUM}, \texttt{OUTPUT\_SEISMOS\_SAC\_BINARY} 
+\texttt{NTSTEP\_BETWEEN\_OUTPUT\_SEISMOS}, \texttt{OUTPUT\_SEISMOS\_ASCII\_TEXT},
+\texttt{OUTPUT\_SEISMOS\_SAC\_ALPHANUM}, \texttt{OUTPUT\_SEISMOS\_SAC\_BINARY}
 and \texttt{ROTATE\_SEISMOGRAMS\_RT}
 \item the \texttt{RECEIVERS\_CAN\_BE\_BURIED} and \texttt{PRINT\_SOURCE\_TIME\_FUNCTION}
 flags
@@ -156,7 +156,7 @@ by the finite fault model.
 triangle is defined to be time zero. Note that this is NOT in general
 the hypocentral time, or the start time of the source (marked as tstart).
 The parameter \texttt{time shift} in the \texttt{CMTSOLUTION} file
-would be t1(=0), t2, t3 in this case, and the parameter \texttt{half duration} 
+would be t1(=0), t2, t3 in this case, and the parameter \texttt{half duration}
 would be hdur1, hdur2, hdur3 for the sources 1, 2, 3 respectively.}
 \label{fig:source_timing}
 \end{figure}
@@ -218,10 +218,10 @@ Max non-dimensional potential Ufluid in fluid in all slices = 1.1058885E-22
 The \texttt{timestamp{*}} files provide the \texttt{Mean elapsed time
 per time step in seconds}, which may be used to assess performance
 on various machines (assuming you are the only user on a node), as
-well as the 
+well as the
 \texttt{Max norm displacement vector U in solid in all slices (m)}
 and
-\texttt{Max non-dimensional potential Ufluid in fluid in all slices}. 
+\texttt{Max non-dimensional potential Ufluid in fluid in all slices}.
 If something is wrong with the model, the mesh, or the source, you will see the
 code become unstable through exponentionally growing values of the
 displacement and/or fluid potential with time, and ultimately the
