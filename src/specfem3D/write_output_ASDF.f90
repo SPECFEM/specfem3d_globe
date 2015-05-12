@@ -108,7 +108,6 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
 
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
-
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
 
 end subroutine store_asdf_data
@@ -210,17 +209,17 @@ subroutine write_asdf(asdf_container)
   !--------------------------------------------------------
   ! Setup data on each process.
   !--------------------------------------------------------
+
   filename = "synthetic.h5"
   event_name = trim(event_name_SAC)
   quakeml = "<quakeml>"
   station_xml = "<station_xml>"
 
-  num_stations = nrec
-  num_channels_per_station = 3
+  num_stations = myrank+1
+  num_channels_per_station = 2
   sampling_rate = DT
   nsamples = seismo_current
   start_time = seismo_offset*DT-t0+t_cmt_SAC
-
   num_waveforms = num_stations * num_channels_per_station
 
   allocate(networks_names(num_stations), stat=ier)
@@ -234,15 +233,14 @@ subroutine write_asdf(asdf_container)
   enddo
 
   ! -- We do not care about seeding.
-  !call random_number(waveforms)
+  call random_number(waveforms)
 
   !--------------------------------------------------------
   ! ASDF variables
   !--------------------------------------------------------
   ! Find how many stations are managed by each allgatheress
   allocate(num_stations_gather(mysize))
-  call gather_all_singlei(num_stations, num_stations_gather, mysize)
-  call bcast_all_i(num_stations_gather, mysize)
+  call all_gather_all_i(num_stations, num_stations_gather, mysize)
   ! find the largest number of stations per allgatheress
   max_num_stations_gather = maxval(num_stations_gather)
 
@@ -258,33 +256,22 @@ subroutine write_asdf(asdf_container)
     displs(i) = (i-1) * max_num_stations_gather * max_string_length
     rcounts(i) = num_stations_gather(i) * max_string_length
   enddo
-
-  ! call gatherv_all_char(station_names, num_stations*MAX_STRING_LENGTH, &
-  !                       station_names_gather, rcounts, &
-  !                       displs, max_num_stations_gather, mysize)
-  ! call bcast_all_ch_array2(station_names_gather, max_num_stations_gather, mysize,num_stations*MAX_STRING_LENGTH) 
-  station_names_gather(1,1)="ANTO"
-  station_names_gather(2,1)="GRFO"
-  station_names_gather(1,2)="ANTO"
-  station_names_gather(2,2)="ANTO"
-  station_names_gather(1,3)="ANTO"
-  station_names_gather(2,3)="ANTO"
-  station_names_gather(1,4)="GRFO"
-  station_names_gather(2,4)="GRFO"
-
-  !call gatherv_all_char(network_names, num_stations*MAX_STRING_LENGTH, &
-  !                     network_names_gather, rcounts, &
-  !                     displs, max_num_stations_gather, mysize)
-  !call bcast_all_ch_array2(network_names_gather, max_num_stations_gather, mysize,num_stations*MAX_STRING_LENGTH)
-  network_names_gather(1,1)="IU"
-  network_names_gather(2,1)="IU"
-  network_names_gather(1,2)="IU"
-  network_names_gather(2,2)="IU"
-  network_names_gather(1,3)="IU"
-  network_names_gather(2,3)="IU"
-  network_names_gather(1,4)="IU"
-  network_names_gather(2,4)="IU"
-
+  call all_gather_all_ch(stations_names, &
+                         num_stations * MAX_STRING_LENGTH, &
+                         station_names_gather, &
+                         rcounts, &
+                         displs, &
+                         max_num_stations_gather, &
+                         MAX_STRING_LENGTH, &
+                         mysize)
+  call all_gather_all_ch(networks_names, &
+                         num_stations * MAX_STRING_LENGTH, &
+                         network_names_gather, &
+                         rcounts, &
+                         displs, &
+                         max_num_stations_gather, &
+                         MAX_STRING_LENGTH, &
+                         mysize)
   deallocate(displs)
   deallocate(rcounts)
 
@@ -297,6 +284,7 @@ subroutine write_asdf(asdf_container)
   !--------------------------------------------------------
   ! write ASDF 
   !--------------------------------------------------------
+print *, "initializing ASDF"
   call ASDF_initialize_hdf5_f(ier);
   call ASDF_create_new_file_f(trim(filename), comm, file_id)
 
@@ -311,8 +299,9 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-  do k = 1, 1
-    do j = 1, num_stations
+  print *, "defining waveforms"
+  do k = 1, mysize
+    do j = 1, num_stations_gather(k)
       call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
@@ -331,23 +320,24 @@ subroutine write_asdf(asdf_container)
              trim(event_name) // C_NULL_CHAR, &
              trim(waveform_name) // C_NULL_CHAR, &
              data_ids(i, j, k))
-        waveforms(:,i,j) = asdf_container%records(i)%record
+     !  waveforms(:, i, j) = asdf_container%records(i)%record
       enddo
     enddo
   enddo
 
-  !do j = 1, num_stations
-  !  do i = 1, num_channels_per_station
-  !    call ASDF_write_full_waveform_f(data_ids(i, j, 1), &
-  !                                    waveforms(:, i, j), ier)
-  !  enddo
-  !enddo
+  print *, "writing waveforms"
+  do j = 1, num_stations
+   do i = 1, num_channels_per_station
+      call ASDF_write_full_waveform_f(data_ids(i, j, myrank+1), &
+                                      waveforms(:, i, j), ier)
+    enddo
+  enddo
 
   !--------------------------------------------------------
   ! Clean up
   !--------------------------------------------------------
 
-  do k = 1, 1
+  do k = 1, mysize
     do j = 1, num_stations_gather(k)
       call ASDF_close_group_f(station_grps_gather(j, k), ier)
       do i = 1, num_channels_per_station
