@@ -215,8 +215,8 @@ subroutine write_asdf(asdf_container)
   quakeml = "<quakeml>"
   station_xml = "<station_xml>"
 
-  num_stations = myrank+1
-  num_channels_per_station = 2
+  num_stations = nrec_local
+  num_channels_per_station = 3
   sampling_rate = DT
   nsamples = seismo_current
   start_time = seismo_offset*DT-t0+t_cmt_SAC
@@ -320,7 +320,9 @@ print *, "initializing ASDF"
              trim(event_name) // C_NULL_CHAR, &
              trim(waveform_name) // C_NULL_CHAR, &
              data_ids(i, j, k))
-     !  waveforms(:, i, j) = asdf_container%records(i)%record
+        if (nrec_local > 0) then
+        waveforms(:, i, j) = asdf_container%records(i+j-1)%record
+        endif
       enddo
     enddo
   enddo
