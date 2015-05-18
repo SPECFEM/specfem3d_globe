@@ -1002,8 +1002,8 @@ void gpuInitialize_buffers (Mesh *mp);
 void gpuSynchronize ();
 void gpuReset ();
 
-void exit_on_gpu_error (char *kernel_name);
-void exit_on_error (char *info);
+void exit_on_gpu_error (const char *kernel_name);
+void exit_on_error (const char *info);
 void synchronize_mpi ();
 double get_time_val ();
 void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
