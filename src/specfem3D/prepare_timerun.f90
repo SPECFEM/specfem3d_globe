@@ -2167,9 +2167,9 @@
     ! allocates arrays with all global points on ocean surface
     npoin_oceans = ipoin
     allocate(ibool_ocean_load(npoin_oceans), &
-            normal_ocean_load(NDIM,npoin_oceans), &
-            rmass_ocean_load_selected(npoin_oceans), &
-            stat=ier)
+             normal_ocean_load(NDIM,npoin_oceans), &
+             rmass_ocean_load_selected(npoin_oceans), &
+             stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating oceans arrays')
 
     ! fills arrays for coupling surface at oceans
