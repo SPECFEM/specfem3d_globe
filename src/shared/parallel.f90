@@ -129,13 +129,13 @@ end module my_mpi
   subroutine abort_mpi()
 
   use my_mpi
-  use constants, only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN,mygroup
   use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FAILSAFE_MECHANISM
 
   implicit none
 
   integer :: my_local_rank,my_global_rank,ier
-
+  logical :: run_file_exists
   character(len=MAX_STRING_LEN) :: filename
 
   ! get my local rank and my global rank (in the case of simultaneous jobs, for which we split
@@ -145,15 +145,31 @@ end module my_mpi
 
   ! write a stamp file to disk to let the user know that the run failed
   if(NUMBER_OF_SIMULTANEOUS_RUNS > 1) then
+    ! notifies which run directory failed
+    write(filename,"('run',i4.4,'_failed')") mygroup + 1
+    inquire(file=trim(filename), exist=run_file_exists)
+    if (run_file_exists) then
+      open(unit=9765,file=trim(filename),status='old',position='append',action='write',iostat=ier)
+    else
+      open(unit=9765,file=trim(filename),status='new',action='write',iostat=ier)
+    endif
+    if (ier == 0) then
+      write(9765,*) 'run ',mygroup+1,' with local rank ',my_local_rank,' and global rank ',my_global_rank,' failed'
+      close(9765)
+    endif
+
+    ! notifies which rank failed
     write(filename,"('run_with_local_rank_',i8.8,'and_global_rank_',i8.8,'_failed')") my_local_rank,my_global_rank
-    open(unit=9765,file=filename,status='unknown',action='write')
+    open(unit=9765,file=trim(filename),status='unknown',action='write')
     write(9765,*) 'run with local rank ',my_local_rank,' and global rank ',my_global_rank,' failed'
     close(9765)
   else
-    write(filename,"('run_with_local_rank_',i8.8,'_failed')") my_local_rank
-    open(unit=9765,file=filename,status='unknown',action='write')
-    write(9765,*) 'run with local rank ',my_local_rank,' failed'
-    close(9765)
+    ! note: we already output an OUTPUT_FILES/error_message***.txt file for each failed rank (single runs)
+    ! debug
+    !write(filename,"('run_with_local_rank_',i8.8,'_failed')") my_local_rank
+    !open(unit=9765,file=filename,status='unknown',action='write')
+    !write(9765,*) 'run with local rank ',my_local_rank,' failed'
+    !close(9765)
   endif
 
   ! in case of a large number of simultaneous runs, if one fails we may want that one to just call MPI_FINALIZE() and wait
