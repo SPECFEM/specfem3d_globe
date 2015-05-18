@@ -118,7 +118,7 @@ end module my_mpi
 
 ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
-  if (ier /= 0 ) stop 'Error finalizing MPI'
+  if (ier /= 0) stop 'Error finalizing MPI'
 
   end subroutine finalize_mpi
 
@@ -129,14 +129,60 @@ end module my_mpi
   subroutine abort_mpi()
 
   use my_mpi
+  use constants, only: MAX_STRING_LEN,mygroup
+  use shared_input_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FAILSAFE_MECHANISM
 
   implicit none
 
-  integer :: ier
+  integer :: my_local_rank,my_global_rank,ier
+  logical :: run_file_exists
+  character(len=MAX_STRING_LEN) :: filename
 
-  ! note: MPI_ABORT does not return, and does exit the
-  !          program with an error code of 30
-  call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+  ! get my local rank and my global rank (in the case of simultaneous jobs, for which we split
+  ! the MPI communicator, they will be different; otherwise they are the same)
+  call world_rank(my_local_rank)
+  call MPI_COMM_RANK(MPI_COMM_WORLD,my_global_rank,ier)
+
+  ! write a stamp file to disk to let the user know that the run failed
+  if(NUMBER_OF_SIMULTANEOUS_RUNS > 1) then
+    ! notifies which run directory failed
+    write(filename,"('run',i4.4,'_failed')") mygroup + 1
+    inquire(file=trim(filename), exist=run_file_exists)
+    if (run_file_exists) then
+      open(unit=9765,file=trim(filename),status='old',position='append',action='write',iostat=ier)
+    else
+      open(unit=9765,file=trim(filename),status='new',action='write',iostat=ier)
+    endif
+    if (ier == 0) then
+      write(9765,*) 'run ',mygroup+1,' with local rank ',my_local_rank,' and global rank ',my_global_rank,' failed'
+      close(9765)
+    endif
+
+    ! notifies which rank failed
+    write(filename,"('run_with_local_rank_',i8.8,'and_global_rank_',i8.8,'_failed')") my_local_rank,my_global_rank
+    open(unit=9765,file=trim(filename),status='unknown',action='write')
+    write(9765,*) 'run with local rank ',my_local_rank,' and global rank ',my_global_rank,' failed'
+    close(9765)
+  else
+    ! note: we already output an OUTPUT_FILES/error_message***.txt file for each failed rank (single runs)
+    ! debug
+    !write(filename,"('run_with_local_rank_',i8.8,'_failed')") my_local_rank
+    !open(unit=9765,file=filename,status='unknown',action='write')
+    !write(9765,*) 'run with local rank ',my_local_rank,' failed'
+    !close(9765)
+  endif
+
+  ! in case of a large number of simultaneous runs, if one fails we may want that one to just call MPI_FINALIZE() and wait
+  ! until all the others are finished instead of calling MPI_ABORT(), which would instead kill all the runs,
+  ! including all the successful ones
+  if(USE_FAILSAFE_MECHANISM .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1) then
+    call MPI_FINALIZE(ier)
+    if (ier /= 0) stop 'Error finalizing MPI'
+  else
+    ! note: MPI_ABORT does not return, it makes the program exit with an error code of 30
+    call MPI_ABORT(MPI_COMM_WORLD,30,ier)
+    stop 'error, program ended in exit_MPI'
+  endif
 
   end subroutine abort_mpi
 

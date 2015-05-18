@@ -42,6 +42,9 @@
   !----
   !----  case prem_onecrust by default
   !----
+
+  ! to suppress the crustal layers
+  ! (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
   if (SUPPRESS_CRUSTAL_MESH) then
     multiplication_factor = 2
   else
@@ -440,6 +443,18 @@
       ! DT = DT*(1.d0 - 0.1d0) not working yet...
       stop 'anisotropic inner core - unstable feature, uncomment this line in get_timestep_and_layers.f90'
     endif
+
+    ! makes time step smaller for certain crustal models, otherwise becomes unstable in solid
+    ! CRUSTAL: indicates a 3D crustal model, like CRUST2.0 will be used
+    ! CASE_3D: indicates element stretching to honor e.g. moho depths and/or upper/lower crusts
+    if (CRUSTAL .and. CASE_3D) then
+      ! reduces time step size for CRUST1.0 crustal model
+      if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUST1) &
+        DT = DT*(1.d0 - 0.1d0)
+      ! reduces time step size for crustmaps crustal model
+      if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
+        DT = DT*(1.d0 - 0.3d0)
+    endif
   endif
 
   ! following models need special attention, regardless of number of chunks:
@@ -450,10 +465,6 @@
   ! reduces time step size for "no mud" version of AK135F model
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) &
     DT = DT*(1.d0 - 0.05d0)
-
-  ! reduces time step size for crustmaps crustal model
-  if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS ) &
-    DT = DT*(1.d0 - 0.3d0)
 
   !  decreases time step as otherwise the solution might become unstable for rougher/unsmoothed models
   if (.false.) then

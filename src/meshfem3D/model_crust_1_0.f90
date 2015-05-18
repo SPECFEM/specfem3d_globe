@@ -144,7 +144,7 @@
   call crust_1_0_CAPsmoothed(lat,lon,vps,vss,rhos,thicks)
 
   ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
-  ! note: but for Roland_Sylvain gravity calculations we include the ice
+  ! note: but for gravity integral calculations we include the ice
   if (INCLUDE_ICE_IN_CRUST) then
     thicks_2 = thicks(2)
   else

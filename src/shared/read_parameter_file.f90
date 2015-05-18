@@ -227,6 +227,8 @@
   if (ier /= 0) stop 'Error reading Par_file parameter NUMBER_OF_SIMULTANEOUS_RUNS'
   call read_value_logical(BROADCAST_SAME_MESH_AND_MODEL, 'BROADCAST_SAME_MESH_AND_MODEL', ier)
   if (ier /= 0) stop 'Error reading Par_file parameter BROADCAST_SAME_MESH_AND_MODEL'
+  call read_value_logical(USE_FAILSAFE_MECHANISM, 'USE_FAILSAFE_MECHANISM', ier)
+  if (ier /= 0) stop 'Error reading Par_file parameter USE_FAILSAFE_MECHANISM'
 
   ! GPU simulations
   call read_value_logical(GPU_MODE, 'GPU_MODE', ier)

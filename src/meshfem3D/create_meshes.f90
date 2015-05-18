@@ -40,7 +40,7 @@
   iproc_eta = iproc_eta_slice(myrank)
 
   ! volume of the final mesh, and Earth mass computed in the final mesh
-  ! and Roland_Sylvain integrals
+  ! and gravity integrals
   volume_total = ZERO
   Earth_mass_total = ZERO
   Earth_center_of_mass_x_total = ZERO

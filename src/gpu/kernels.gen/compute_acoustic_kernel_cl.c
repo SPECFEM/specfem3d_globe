@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99996
+//      this file has been generated automatically by BOAST version 1.0.1
 //      by: make boast_kernels
 
 /*
@@ -95,7 +95,10 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-static void compute_gradient_kernel(const int ijk, const int ispec, const __local float * scalar_field, float * vector_field_element, const __global float * hprime_xx, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz){\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+void compute_gradient_kernel(const int ijk, const int ispec, const __local float * scalar_field, float * vector_field_element, const __global float * hprime_xx, const __global float * d_xix, const __global float * d_xiy, const __global float * d_xiz, const __global float * d_etax, const __global float * d_etay, const __global float * d_etaz, const __global float * d_gammax, const __global float * d_gammay, const __global float * d_gammaz){\n\
   float temp1l;\n\
   float temp2l;\n\
   float temp3l;\n\

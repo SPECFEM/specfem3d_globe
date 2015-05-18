@@ -57,7 +57,7 @@
     ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
 
-    if (.not. ROLAND_SYLVAIN) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+    if (.not. GRAVITY_INTEGRALS) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
   endif
 
   ! broadcast the information read on the master to the nodes
@@ -204,7 +204,7 @@
     call read_topo_bathy_file(ibathy_topo)
 
     ! saves database topo file for next time
-    if (.not. ROLAND_SYLVAIN) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+    if (.not. GRAVITY_INTEGRALS) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
 
   else
     ! database topo file exists

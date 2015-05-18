@@ -128,13 +128,18 @@ BUILD_VERSION_TXT += support
 ### boast kernel generation
 ###
 
+# Reduce GPU-register pressure by limited the number of thread spread
+# (GPU for embedded devices are not powerful enough for big kernels)
+# Must match mesh_constants_gpu.h::GPU_ELEM_PER_THREAD
+GPU_ELEM_PER_THREAD := 1
+
 boast_kernels :
 	@echo ""
 	@echo "building boast kernels: in directory $(BOAST_DIR_NAME)"
 	@echo ""
 	cd src/gpu/boast ;\
 	mkdir -p ../$(BOAST_DIR_NAME);\
-	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME)
+	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME) --elem $(GPU_ELEM_PER_THREAD)
 	@echo ""
 
 test_boast_kernels :

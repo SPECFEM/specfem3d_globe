@@ -55,7 +55,7 @@ void get_free_memory(double* free_db, double* used_db, double* total_db) {
 
 /* ----------------------------------------------------------------------------------------------- */
 
-void exit_on_error(char* info) {
+void exit_on_error(const char* info) {
   printf("\nERROR: %s\n",info);
   fflush(stdout);
 
@@ -70,7 +70,7 @@ void exit_on_error(char* info) {
 
 /* ----------------------------------------------------------------------------------------------- */
 
-void exit_on_cuda_error(char* kernel_name) {
+void exit_on_cuda_error(const char* kernel_name) {
   // sync and check to catch errors from previous async operations
 #if CUDA_VERSION < 4000
   cudaThreadSynchronize();

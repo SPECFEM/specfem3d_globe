@@ -78,10 +78,10 @@
     call exit_MPI(myrank,'wrong number of MPI processes')
   endif
 
-!! DK DK for Roland_Sylvain
-  ! in the case of ROLAND_SYLVAIN we should always use double precision
-  if (ROLAND_SYLVAIN .and. CUSTOM_REAL /= SIZE_DOUBLE) &
-    call exit_MPI(myrank,'for ROLAND_SYLVAIN use double precision i.e. configure the code with --enable-double-precision')
+!! DK DK for gravity integrals
+  ! in the case of GRAVITY_INTEGRALS we should always use double precision
+  if (GRAVITY_INTEGRALS .and. CUSTOM_REAL /= SIZE_DOUBLE) &
+    call exit_MPI(myrank,'for GRAVITY_INTEGRALS use double precision i.e. configure the code with --enable-double-precision')
 
   ! synchronizes processes
   call synchronize_all()

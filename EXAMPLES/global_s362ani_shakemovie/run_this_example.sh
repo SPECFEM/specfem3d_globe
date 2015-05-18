@@ -4,14 +4,14 @@
 #
 # script runs mesher and solver
 # using batch scripts for a PBS queueing system
-# on 24 CPUs
+# on 384 MPI processes
 #
 #
 # modify accordingly for your own system specifics
 ##################################################
 # USER PARAMETER
 # source directory
-rootdir=~/SPECFEM3D_GLOBE_GPU
+rootdir=~/SPECFEM3D_GLOBE
 
 ##################################################
 

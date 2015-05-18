@@ -1,0 +1,33 @@
+\chapter{Non-Dimensionalization Conventions}\label{cha:Non-Dimensionalization-Conventions}
+
+All physical parameters used are non-dimensionalized internally in the code
+in order to work in a reference Earth of radius 1. In Table~{\small \ref{table:conventions} in the right column are the values by which
+we divide the parameters of the left column internally to perform the calculations.
+The values output and saved by the code (seismograms, sensitivity kernels...) are then
+scaled back to the right physical dimensions before being saved.
+}%
+\begin{table}[ht]
+\noindent
+\begin{centering}
+{\small }\begin{tabular}{|c|c|}
+\hline
+quantity (units)  & divided internally by \\
+\hline
+distance (m)  & \texttt{R\_EARTH} \\
+time (s)  & $1/\sqrt{\texttt{PI}\times\texttt{GRAV}\times\texttt{RHOAV}}$ \\
+density (kg/m$^{3}$)  & \texttt{RHOAV} \\
+\hline
+\end{tabular}
+\par
+\end{centering}{\small \par}
+
+\caption{Non-dimensionalization convention employed internally by the code. The constants \texttt{R\_EARTH}
+(the radius of the Earth), \texttt{PI} (the number $\pi$), \texttt{GRAV}
+(the universal gravitational constant), and \texttt{RHOAV} (the Earth's
+average density) are defined in the \texttt{constants.h} file. }
+
+{\small \label{table:conventions} }
+\end{table}
+{\small \par}
+
+

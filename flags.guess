@@ -74,7 +74,7 @@ case $FC in
 esac
 
 case $my_FC in
-    crayftn|*/crayftn)
+    ftn|*/ftn|crayftn|*/crayftn)
         #
         # Cray Fortran
         #
@@ -96,10 +96,10 @@ case $my_FC in
         # Intel ifort Fortran90 for Linux
         # check: http://software.intel.com/sites/products/documentation/hpc/compilerpro/en-us/fortran/lin/compiler_f/index.htm
         #
-# option "-assume buffered_io" is important especially on
-# parallel file systems like SFS 3.2 / Lustre 1.8. If omitted
-# I/O throughput lingers at 2.5 MB/s, with it it can increase to ~44 MB/s
-# However it does not make much of a difference on NFS mounted volumes or with SFS 3.1.1 / Lustre 1.6.7.1 
+        # option "-assume buffered_io" is important especially on
+        # parallel file systems like SFS 3.2 / Lustre 1.8. If omitted
+        # I/O throughput lingers at 2.5 MB/s, with it it can increase to ~44 MB/s
+        # However it does not make much of a difference on NFS mounted volumes or with SFS 3.1.1 / Lustre 1.6.7.1 
         DEF_FFLAGS="-xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -vec-report0 -std03 -diag-disable 6477 -implicitnone -gen-interfaces -warn all" # -mcmodel=medium -shared-intel
         OPT_FFLAGS="-O3 -check nobounds"
         DEBUG_FFLAGS="-check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv"
@@ -196,12 +196,14 @@ case $my_FC in
         # other compilers. There is a small decrease in performance, but generally
         # it is small or negligible compared to other issues like slow I/O.
         #
-        # On IBM BlueGene at IDRIS (France) use:
-        # -qtune=auto -qarch=450d -qsave     instead of -qtune=auto -qarch=auto
         DEF_FFLAGS="-qassert=contig -qhot -q64 -qtune=auto -qarch=auto -qcache=auto -qfree=f90 -qsuffix=f=f90 -qhalt=w -qlanglvl=2003std -g -qsuppress=1518-234 -qsuppress=1518-317 -qsuppress=1518-318 -qsuppress=1500-036"
         OPT_FFLAGS="-O4 -qstrict -Q -Wl,-relax"
         # Options -qreport -qsource -qlist create a *.lst file containing detailed information about vectorization.
         DEBUG_FFLAGS="-g -O0 -C -qddim -qfullpath -qflttrap=overflow:zerodivide:invalid:enable -qfloat=nans -qinitauto=7FBFFFFF"
+        #
+        # On IBM BlueGene at IDRIS (France) use:
+        # -qtune=auto -qarch=450d -qsave     instead of -qtune=auto -qarch=auto
+        #
         ;;
     pathf90|*/pathf90)
         #

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99996
+//      this file has been generated automatically by BOAST version 1.0.1
 //      by: make boast_kernels
 
 /*
@@ -450,9 +450,9 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #ifndef MANUALLY_UNROLLED_LOOPS
   int l;
 #endif
-  unsigned short active;
+  unsigned short active_1;
   int offset;
-  int iglob;
+  int iglob_1;
   int working_element;
   float tempx1l;
   float tempx2l;
@@ -502,17 +502,17 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   float sigma_zx;
   float sigma_zy;
   float sigma_zz;
-  float epsilondev_xx_loc;
-  float epsilondev_yy_loc;
-  float epsilondev_xy_loc;
-  float epsilondev_xz_loc;
-  float epsilondev_yz_loc;
+  float epsilondev_xx_loc_1;
+  float epsilondev_yy_loc_1;
+  float epsilondev_xy_loc_1;
+  float epsilondev_xz_loc_1;
+  float epsilondev_yz_loc_1;
   float sum_terms1;
   float sum_terms2;
   float sum_terms3;
-  float rho_s_H1;
-  float rho_s_H2;
-  float rho_s_H3;
+  float rho_s_H_1_1;
+  float rho_s_H_1_2;
+  float rho_s_H_1_3;
   __shared__ float s_dummyx_loc[(NGLL3)];
   __shared__ float s_dummyy_loc[(NGLL3)];
   __shared__ float s_dummyz_loc[(NGLL3)];
@@ -528,12 +528,9 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
   __shared__ float sh_hprime_xx[(NGLL2)];
   __shared__ float sh_hprimewgll_xx[(NGLL2)];
   bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
-  tx = threadIdx.x;
-  K = (tx) / (NGLL2);
-  J = (tx - ((K) * (NGLL2))) / (NGLLX);
-  I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
-  active = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);
-  if (active) {
+  tx = threadIdx.x + ((NGLL3_PADDED) * (0)) / (1);
+  active_1 = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);
+  if (active_1) {
 #ifdef USE_MESH_COLORING_GPU
     working_element = bx;
 #else
@@ -543,15 +540,15 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       working_element = d_phase_ispec_inner[bx + (num_phase_ispec) * (d_iphase - (1))] - (1);
     }
 #endif
-    iglob = d_ibool[(working_element) * (NGLL3) + tx] - (1);
+    iglob_1 = d_ibool[(working_element) * (NGLL3) + tx] - (1);
 #ifdef USE_TEXTURES_FIELDS
-    s_dummyx_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 0);
-    s_dummyy_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 1);
-    s_dummyz_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob) * (3) + 2);
+    s_dummyx_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 0);
+    s_dummyy_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 1);
+    s_dummyz_loc[tx] = tex1Dfetch(d_displ_cm_tex,(iglob_1) * (3) + 2);
 #else
-    s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob)];
-    s_dummyy_loc[tx] = d_displ[1 + (3) * (iglob)];
-    s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob)];
+    s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob_1)];
+    s_dummyy_loc[tx] = d_displ[1 + (3) * (iglob_1)];
+    s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob_1)];
 #endif
   }
   if (tx < NGLL2) {
@@ -564,7 +561,10 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif
   }
   __syncthreads();
-  if (active) {
+  K = (tx) / (NGLL2);
+  J = (tx - ((K) * (NGLL2))) / (NGLLX);
+  I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
+  if (active_1) {
     tempx1l = 0.0f;
     tempx2l = 0.0f;
     tempx3l = 0.0f;
@@ -678,11 +678,11 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     duzdyl_plus_duydzl = duzdyl + duydzl;
     if (COMPUTE_AND_STORE_STRAIN) {
       templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);
-      epsilondev_xx_loc = duxdxl - (templ);
-      epsilondev_yy_loc = duydyl - (templ);
-      epsilondev_xy_loc = (duxdyl_plus_duydxl) * (0.5f);
-      epsilondev_xz_loc = (duzdxl_plus_duxdzl) * (0.5f);
-      epsilondev_yz_loc = (duzdyl_plus_duydzl) * (0.5f);
+      epsilondev_xx_loc_1 = duxdxl - (templ);
+      epsilondev_yy_loc_1 = duydyl - (templ);
+      epsilondev_xy_loc_1 = (duxdyl_plus_duydxl) * (0.5f);
+      epsilondev_xz_loc_1 = (duzdxl_plus_duxdzl) * (0.5f);
+      epsilondev_yz_loc_1 = (duzdyl_plus_duydzl) * (0.5f);
       if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) {
         epsilon_trace_over_3[tx] = templ;
       } else {
@@ -702,7 +702,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       if ( ! d_ispec_is_tiso[working_element]) {
         compute_element_cm_iso(offset, d_kappavstore, d_muvstore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
       } else {
-        compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob, d_ystore, d_zstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
+        compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob_1, d_ystore, d_zstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
       }
     }
     if (ATTENUATION &&  ! PARTIAL_PHYS_DISPERSION_ONLY) {
@@ -713,7 +713,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     sigma_zy = sigma_yz;
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));
     if (GRAVITY) {
-      compute_element_cm_gravity(tx, iglob, d_xstore, d_ystore, d_zstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H1,  &rho_s_H2,  &rho_s_H3);
+      compute_element_cm_gravity(tx, iglob_1, d_xstore, d_ystore, d_zstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);
     }
     s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));
     s_tempy1[tx] = (jacobianl) * ((sigma_xy) * (xixl) + (sigma_yy) * (xiyl) + (sigma_zy) * (xizl));
@@ -726,7 +726,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     s_tempz3[tx] = (jacobianl) * ((sigma_xz) * (gammaxl) + (sigma_yz) * (gammayl) + (sigma_zz) * (gammazl));
   }
   __syncthreads();
-  if (active) {
+  if (active_1) {
     tempx1l = 0.0f;
     tempx2l = 0.0f;
     tempx3l = 0.0f;
@@ -838,46 +838,46 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     sum_terms2 =  -((fac1) * (tempy1l) + (fac2) * (tempy2l) + (fac3) * (tempy3l));
     sum_terms3 =  -((fac1) * (tempz1l) + (fac2) * (tempz2l) + (fac3) * (tempz3l));
     if (GRAVITY) {
-      sum_terms1 = sum_terms1 + rho_s_H1;
-      sum_terms2 = sum_terms2 + rho_s_H2;
-      sum_terms3 = sum_terms3 + rho_s_H3;
+      sum_terms1 = sum_terms1 + rho_s_H_1_1;
+      sum_terms2 = sum_terms2 + rho_s_H_1_2;
+      sum_terms3 = sum_terms3 + rho_s_H_1_3;
     }
 #ifdef USE_MESH_COLORING_GPU
 #ifdef USE_TEXTURES_FIELDS
-    d_accel[0 + (3) * (iglob)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 0) + sum_terms1;
-    d_accel[1 + (3) * (iglob)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 1) + sum_terms2;
-    d_accel[2 + (3) * (iglob)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 2) + sum_terms3;
+    d_accel[0 + (3) * (iglob_1)] = tex1Dfetch(d_accel_cm_tex,(iglob_1) * (3) + 0) + sum_terms1;
+    d_accel[1 + (3) * (iglob_1)] = tex1Dfetch(d_accel_cm_tex,(iglob_1) * (3) + 1) + sum_terms2;
+    d_accel[2 + (3) * (iglob_1)] = tex1Dfetch(d_accel_cm_tex,(iglob_1) * (3) + 2) + sum_terms3;
 #else
-    d_accel[0 + (3) * (iglob)] = d_accel[0 + (3) * (iglob)] + sum_terms1;
-    d_accel[1 + (3) * (iglob)] = d_accel[1 + (3) * (iglob)] + sum_terms2;
-    d_accel[2 + (3) * (iglob)] = d_accel[2 + (3) * (iglob)] + sum_terms3;
+    d_accel[0 + (3) * (iglob_1)] = d_accel[0 + (3) * (iglob_1)] + sum_terms1;
+    d_accel[1 + (3) * (iglob_1)] = d_accel[1 + (3) * (iglob_1)] + sum_terms2;
+    d_accel[2 + (3) * (iglob_1)] = d_accel[2 + (3) * (iglob_1)] + sum_terms3;
 #endif
 #else
     if (use_mesh_coloring_gpu) {
 #ifdef USE_TEXTURES_FIELDS
-      d_accel[0 + (3) * (iglob)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 0) + sum_terms1;
-      d_accel[1 + (3) * (iglob)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 1) + sum_terms2;
-      d_accel[2 + (3) * (iglob)] = tex1Dfetch(d_accel_cm_tex,(iglob) * (3) + 2) + sum_terms3;
+      d_accel[0 + (3) * (iglob_1)] = tex1Dfetch(d_accel_cm_tex,(iglob_1) * (3) + 0) + sum_terms1;
+      d_accel[1 + (3) * (iglob_1)] = tex1Dfetch(d_accel_cm_tex,(iglob_1) * (3) + 1) + sum_terms2;
+      d_accel[2 + (3) * (iglob_1)] = tex1Dfetch(d_accel_cm_tex,(iglob_1) * (3) + 2) + sum_terms3;
 #else
-      d_accel[0 + (3) * (iglob)] = d_accel[0 + (3) * (iglob)] + sum_terms1;
-      d_accel[1 + (3) * (iglob)] = d_accel[1 + (3) * (iglob)] + sum_terms2;
-      d_accel[2 + (3) * (iglob)] = d_accel[2 + (3) * (iglob)] + sum_terms3;
+      d_accel[0 + (3) * (iglob_1)] = d_accel[0 + (3) * (iglob_1)] + sum_terms1;
+      d_accel[1 + (3) * (iglob_1)] = d_accel[1 + (3) * (iglob_1)] + sum_terms2;
+      d_accel[2 + (3) * (iglob_1)] = d_accel[2 + (3) * (iglob_1)] + sum_terms3;
 #endif
     } else {
-      atomicAdd(d_accel + (iglob) * (3) + 0, sum_terms1);
-      atomicAdd(d_accel + (iglob) * (3) + 1, sum_terms2);
-      atomicAdd(d_accel + (iglob) * (3) + 2, sum_terms3);
+      atomicAdd(d_accel + (iglob_1) * (3) + 0, sum_terms1);
+      atomicAdd(d_accel + (iglob_1) * (3) + 1, sum_terms2);
+      atomicAdd(d_accel + (iglob_1) * (3) + 2, sum_terms3);
     }
 #endif
     if (ATTENUATION &&  ! PARTIAL_PHYS_DISPERSION_ONLY) {
-      compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc, epsilondev_yy_loc, epsilondev_xy_loc, epsilondev_xz_loc, epsilondev_yz_loc, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);
+      compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);
     }
     if (COMPUTE_AND_STORE_STRAIN) {
-      epsilondev_xx[tx + (working_element) * (NGLL3)] = epsilondev_xx_loc;
-      epsilondev_yy[tx + (working_element) * (NGLL3)] = epsilondev_yy_loc;
-      epsilondev_xy[tx + (working_element) * (NGLL3)] = epsilondev_xy_loc;
-      epsilondev_xz[tx + (working_element) * (NGLL3)] = epsilondev_xz_loc;
-      epsilondev_yz[tx + (working_element) * (NGLL3)] = epsilondev_yz_loc;
+      epsilondev_xx[tx + (working_element) * (NGLL3)] = epsilondev_xx_loc_1;
+      epsilondev_yy[tx + (working_element) * (NGLL3)] = epsilondev_yy_loc_1;
+      epsilondev_xy[tx + (working_element) * (NGLL3)] = epsilondev_xy_loc_1;
+      epsilondev_xz[tx + (working_element) * (NGLL3)] = epsilondev_xz_loc_1;
+      epsilondev_yz[tx + (working_element) * (NGLL3)] = epsilondev_yz_loc_1;
     }
   }
 }
