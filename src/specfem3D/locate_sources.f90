@@ -72,7 +72,7 @@
   double precision :: elevation
   double precision :: r0,dcost,p20
   double precision :: theta,phi
-  double precision :: dist,typical_size
+  double precision :: dist_squared,typical_size_squared
   double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta
 
   ! topology of the control points of the surface element
@@ -114,7 +114,7 @@
   double precision :: st,ct,sp,cp
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
   double precision :: colat_source
-  double precision :: distmin
+  double precision :: distmin_squared
 
   integer :: ix_initial_guess_source,iy_initial_guess_source,iz_initial_guess_source
   integer :: NSOURCES_SUBSET_current_size
@@ -168,10 +168,10 @@
   call hex_nodes(iaddx,iaddy,iaddr)
 
   ! compute typical size of elements at the surface
-  typical_size = TWO_PI * R_UNIT_SPHERE / (4.0 * NEX_XI_VAL)
+  typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.0 * NEX_XI_VAL)
 
   ! use 10 times the distance as a criterion for source detection
-  typical_size = 10.0 * typical_size
+  typical_size_squared = (10. * typical_size_squared)**2
 
   ! initializes source mask
   if (SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3) then
@@ -344,7 +344,7 @@
       z_target_source = r_target_source*dcos(theta)
 
       ! set distance to huge initial value
-      distmin = HUGEVAL
+      distmin_squared = HUGEVAL
 
       ! flag to check that we located at least one target element
       located_target = .false.
@@ -357,10 +357,11 @@
         ! exclude elements that are too far from target
         if (USE_DISTANCE_CRITERION) then
           iglob = ibool(MIDX,MIDY,MIDZ,ispec)
-          dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
-                     + (y_target_source - dble(ystore(iglob)))**2 &
-                     + (z_target_source - dble(zstore(iglob)))**2)
-          if (dist > typical_size) cycle
+          dist_squared = (x_target_source - dble(xstore(iglob)))**2 &
+               + (y_target_source - dble(ystore(iglob)))**2 &
+               + (z_target_source - dble(zstore(iglob)))**2
+          !  we compare squared distances instead of distances themselves to significantly speed up calculations
+          if (dist_squared > typical_size_squared) cycle
         endif
 
         ! define the interval in which we look for points
@@ -395,11 +396,11 @@
 
               ! keep this point if it is closer to the receiver
               iglob = ibool(i,j,k,ispec)
-              dist = dsqrt((x_target_source - dble(xstore(iglob)))**2 &
-                          +(y_target_source - dble(ystore(iglob)))**2 &
-                          +(z_target_source - dble(zstore(iglob)))**2)
-              if (dist < distmin) then
-                distmin = dist
+              dist_squared = (x_target_source - dble(xstore(iglob)))**2 &
+                           + (y_target_source - dble(ystore(iglob)))**2 &
+                           + (z_target_source - dble(zstore(iglob)))**2
+              !  we compare squared distances instead of distances themselves to significantly speed up calculations
+              if (dist_squared < distmin_squared) then
                 ispec_selected_source_subset(isource_in_this_subset) = ispec
                 ix_initial_guess_source = i
                 iy_initial_guess_source = j
@@ -413,7 +414,7 @@
 
         ! calculates a Gaussian mask around source point
         if (SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3) then
-          call calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
+          call calc_mask_source(mask_source,ispec,NSPEC,typical_size_squared, &
                                 x_target_source,y_target_source,z_target_source, &
                                 ibool,xstore,ystore,zstore,NGLOB)
         endif
@@ -610,11 +611,11 @@
         isource = isources_already_done + isource_in_this_subset
 
         ! loop on all the results to determine the best slice
-        distmin = HUGEVAL
+        distmin_squared = HUGEVAL
         do iprocloop = 0,NPROCTOT_VAL-1
-          if (final_distance_source_all(isource_in_this_subset,iprocloop) < distmin) then
+          if (final_distance_source_all(isource_in_this_subset,iprocloop) < distmin_squared) then
             ! stores this slice's info
-            distmin = final_distance_source_all(isource_in_this_subset,iprocloop)
+            distmin_squared = final_distance_source_all(isource_in_this_subset,iprocloop)
             islice_selected_source(isource) = iprocloop
             ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
             xi_source(isource) = xi_source_all(isource_in_this_subset,iprocloop)
@@ -625,7 +626,7 @@
             z_found_source(isource_in_this_subset) = z_found_source_all(isource_in_this_subset,iprocloop)
           endif
         enddo
-        final_distance_source(isource) = distmin
+        final_distance_source(isource) = distmin_squared
 
         write(IMAIN,*)
         write(IMAIN,*) '*************************************'
@@ -796,7 +797,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine calc_mask_source(mask_source,ispec,NSPEC,typical_size, &
+  subroutine calc_mask_source(mask_source,ispec,NSPEC,typical_size_squared, &
                             x_target_source,y_target_source,z_target_source, &
                             ibool,xstore,ystore,zstore,NGLOB)
 
@@ -813,7 +814,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB) :: xstore,ystore,zstore
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: ibool
 
-  double precision :: typical_size
+  double precision :: typical_size_squared
   double precision :: x_target_source,y_target_source,z_target_source
 
   ! local parameters
@@ -821,8 +822,8 @@
   double precision dist_sq,sigma_sq
 
   ! standard deviation for Gaussian
-  ! (removes factor 10 added for search radius from typical_size)
-  sigma_sq = typical_size * typical_size / 100.0
+  ! (removes factor of 100 added for search radius from typical_size_squared)
+  sigma_sq = typical_size_squared / 100.
 
   ! loops over GLL points within this ispec element
   do k = 1,NGLLZ

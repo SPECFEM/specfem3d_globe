@@ -27,8 +27,7 @@
 
   subroutine read_kl_regular_grid(GRID)
 
-  use constants,only: IIN, &
-    NM_KL_REG_LAYER,PATHNAME_KL_REG, &
+  use constants,only: IIN,NM_KL_REG_LAYER,PATHNAME_KL_REG, &
     KL_REG_MIN_LAT,KL_REG_MAX_LAT,KL_REG_MIN_LON,KL_REG_MAX_LON
 
   use specfem_par, only: myrank
@@ -219,7 +218,7 @@
   integer :: ispec_in, ispec, iter_loop, ia, ipoint
   double precision :: lat, lon, radius, th, ph, x,y,z
   double precision :: x_target, y_target, z_target
-  double precision :: distmin,dist,typical_size
+  double precision :: distmin_squared,dist_squared,typical_size_squared
   double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
   double precision :: xix,xiy,xiz
   double precision :: etax,etay,etaz
@@ -232,21 +231,15 @@
   double precision, dimension(NGLLY) :: hetar
   double precision, dimension(NGLLZ) :: hgammar
 
-  ! DEBUG
-  !real(kind=CUSTOM_REAL), dimension(npoints_slice) :: dist_final
-
   !---------------------------
 
   call hex_nodes2(iaddx,iaddy,iaddr)
 
   ! compute typical size of elements at the surface
-  typical_size = TWO_PI * R_UNIT_SPHERE / (4.*NEX_XI)
+  typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.*NEX_XI)
 
   ! use 10 times the distance as a criterion for source detection
-  typical_size = 10. * typical_size
-
-  ! DEBUG
-  !dist_final=HUGEVAL
+  typical_size_squared = (10. * typical_size_squared)**2
 
   do ipoint = 1, npoints_slice
     isp = points_slice(ipoint)
@@ -269,13 +262,16 @@
     z_target = radius * cos(th)
 
     ! first exclude elements too far away
-    locate_target = .false.;  distmin = HUGEVAL
+    locate_target = .false.
+    distmin_squared = HUGEVAL
+
     do ispec = 1,nspec
       iglob = ibool(1,1,1,ispec)
-      dist = dsqrt((x_target - xstore(iglob))**2 &
-                 + (y_target - ystore(iglob))**2 &
-                 + (z_target - zstore(iglob))**2)
-      if (dist > typical_size) cycle
+      dist_squared = (x_target - xstore(iglob))**2 &
+                   + (y_target - ystore(iglob))**2 &
+                   + (z_target - zstore(iglob))**2
+      !  we compare squared distances instead of distances themselves to significantly speed up calculations 
+      if (dist_squared > typical_size_squared) cycle
 
       locate_target = .true.
       ! loop only on points inside the element
@@ -288,11 +284,15 @@
         do j = 2, NGLLY-1
           do i = 2, NGLLX-1
             iglob = ibool(i,j,k,ispec)
-            dist = dsqrt((x_target - xstore(iglob))**2 &
-                        +(y_target - ystore(iglob))**2 &
-                        +(z_target - zstore(iglob))**2)
-            if (dist < distmin) then
-              ix_in=i; iy_in=j; iz_in=k; ispec_in=ispec; distmin=dist
+            dist_squared = (x_target - xstore(iglob))**2 &
+                         + (y_target - ystore(iglob))**2 &
+                         + (z_target - zstore(iglob))**2
+            if (dist_squared < distmin_squared) then
+              ix_in = i
+              iy_in = j
+              iz_in = k
+              ispec_in = ispec
+              distmin_squared = dist_squared
             endif
           enddo
         enddo
@@ -300,8 +300,7 @@
     enddo
 
     if (.not. locate_target) then
-      print *, 'Looking for point', isp, ilayer, ilat, ilon, lat, lon, &
-               x_target, y_target, z_target, myrank
+      print *, 'Looking for point', isp, ilayer, ilat, ilon, lat, lon, x_target, y_target, z_target, myrank
       call exit_MPI(myrank, 'Error in point_source() array')
     endif
 
@@ -340,13 +339,6 @@
       eta = eta + deta
       gamma = gamma + dgamma
 
-      ! Debugging
-      !if (abs(xi) > 1.d0+TINYVAL .or. abs(eta) > 1.d0+TINYVAL &
-      !     .or. abs(gamma) > 1.0d0+TINYVAL) then
-      !   print *, 'Outside the element ', myrank, ipoint,' : ', &
-      !        iter_loop,xi,eta,gamma
-      !endif
-
       ! impose that we stay in that element
       ! (useful if user gives a source outside the mesh for instance)
       if (xi > 1.d0) xi = 1.d0
@@ -358,10 +350,6 @@
 
     enddo
 
-    ! DEBUG: recompute Jacobian for the new point (can be commented after debug)
-    !call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z,xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
-    !dist_final(ipoint)=dsqrt((x_target-x)**2+(y_target-y)**2+(z_target-z)**2)
-
     ! store l(xi),l(eta),l(gamma)
     call lagrange_any2(xi, NGLLX, xigll, hxir)
     call lagrange_any2(eta, NGLLY, yigll, hetar)
@@ -371,9 +359,6 @@
     hgammar_reg(:,ipoint) = hgammar
 
   enddo ! ipoint
-
-! DEBUG
-!  print *, 'Maximum distance discrepancy ', maxval(dist_final(1:npoints_slice))
 
   end subroutine locate_regular_points
 
