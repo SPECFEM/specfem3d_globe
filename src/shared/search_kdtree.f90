@@ -171,11 +171,11 @@ contains
   points_data => kdtree_nodes_location(:,:)
 
   if (be_verbose) then
-    print*,'kd-tree:'
-    print*,'  total data points: ',npoints
-    !print*,'  box boundaries   : x min/max = ',minval(points_data(1,:)),maxval(points_data(1,:))
-    !print*,'                     y min/max = ',minval(points_data(2,:)),maxval(points_data(2,:))
-    !print*,'                     z min/max = ',minval(points_data(3,:)),maxval(points_data(3,:))
+    print *,'kd-tree:'
+    print *,'  total data points: ',npoints
+    !print *,'  box boundaries   : x min/max = ',minval(points_data(1,:)),maxval(points_data(1,:))
+    !print *,'                     y min/max = ',minval(points_data(2,:)),maxval(points_data(2,:))
+    !print *,'                     z min/max = ',minval(points_data(3,:)),maxval(points_data(3,:))
   endif
 
   ! theoretical number of node for totally balanced tree
@@ -188,8 +188,8 @@ contains
     if (numnodes > 2147483646 - i ) stop 'Error number of nodes might exceed integer limit'
   enddo
   if (be_verbose) then
-    print*,'  theoretical   number of nodes: ',numnodes
-    print*,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
+    print *,'  theoretical   number of nodes: ',numnodes
+    print *,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
   endif
 
   ! local ordering
@@ -214,15 +214,15 @@ contains
   if (.not. associated(kdtree) ) stop 'Error creation of kd-tree failed'
 
   if (be_verbose) then
-    print*,'  actual        number of nodes: ',numnodes
+    print *,'  actual        number of nodes: ',numnodes
     ! tree node size: 4 (idim) + 8 (cut_value) + 4 (ipoint) + 2*4 (ibound_**) + 2*4 (left,right) = 32 bytes
-    print*,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
-    print*,'  maximum depth   : ',maxdepth
+    print *,'               tree memory size: ',( numnodes * 32 )/1024./1024.,'MB'
+    print *,'  maximum depth   : ',maxdepth
 
     ! timing
     call cpu_time(ct_end)
-    print*,'  creation timing : ',ct_end - ct_start, '(s)'
-    print*
+    print *,'  creation timing : ',ct_end - ct_start, '(s)'
+    print *
   endif
 
 
@@ -235,12 +235,12 @@ contains
     endif
 
     ! test search
-    print*,'search tree:'
+    print *,'search tree:'
     xyz_target(1) = 0.13261298835277557
     xyz_target(2) = -8.4083788096904755E-002
     xyz_target(3) = 0.97641450166702271
 
-    print*,'search : ',xyz_target(:)
+    print *,'search : ',xyz_target(:)
 
     ipoint_min = -1
     dist_min = 1.d30
@@ -248,13 +248,13 @@ contains
     call find_nearest_node(npoints,points_data,kdtree,xyz_target,ipoint_min,dist_min)
 
     dist_min = sqrt(dist_min)
-    print*,'found : ',ipoint_min,'distance:',dist_min
+    print *,'found : ',ipoint_min,'distance:',dist_min
 
     if (ipoint_min < 1 ) stop 'Error search kd-tree found no point'
 
-    print*,'target  : ',xyz_target(:)
-    print*,'nearest : ',points_data(:,ipoint_min)
-    print*
+    print *,'target  : ',xyz_target(:)
+    print *,'nearest : ',points_data(:,ipoint_min)
+    print *
     ! safety stop
     stop 'kdtree_setup safety stop'
   endif
@@ -308,8 +308,8 @@ contains
 
   ! debug
   !if (be_verbose) then
-  !  print*,'target  : ',xyz_target(:)
-  !  print*,'nearest : ',kdtree_nodes_location(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
+  !  print *,'target  : ',xyz_target(:)
+  !  print *,'nearest : ',kdtree_nodes_location(:,ipoint_min),'distance:',dist_min*6371.,'(km)',ipoint_min,iglob_min
   !endif
 
   end subroutine kdtree_find_nearest_neighbor
@@ -464,7 +464,7 @@ contains
 
   ! checks if num_nodes_get limited by search array size
   if (kdtree_search_num_nodes < num_nodes_get) then
-    print*,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
+    print *,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
   endif
 
   ! initializes search results
@@ -583,7 +583,7 @@ contains
 
   ! checks if num_nodes_get limited by search array size
   if (kdtree_search_num_nodes < num_nodes_get) then
-    print*,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
+    print *,'Warning: Requested number of n-nodes bigger than actual number of search result kdtree_search_num_nodes'
   endif
 
   ! initializes search results
@@ -656,7 +656,7 @@ contains
   ! creates new node
   allocate(node,stat=ier)
   if (ier /= 0) then
-    print*,'Error creating node: ',numnodes
+    print *,'Error creating node: ',numnodes
     stop 'Error allocating kd-tree node'
   endif
 
@@ -724,9 +724,9 @@ contains
   node%cut_value = cut_value
 
   !debug
-  !print*,'index ',numnodes,'dim:',idim,'range:',ibound_lower,ibound_upper
-  !print*,'  data:',points_data(idim,points_index(ibound_lower)),points_data(idim,points_index(ibound_upper))
-  !print*,'  min/max:',min,max,'cut value:',cut_value
+  !print *,'index ',numnodes,'dim:',idim,'range:',ibound_lower,ibound_upper
+  !print *,'  data:',points_data(idim,points_index(ibound_lower)),points_data(idim,points_index(ibound_upper))
+  !print *,'  min/max:',min,max,'cut value:',cut_value
 
   ! temporary index array for sorting
   allocate(workindex(ibound_upper - ibound_lower + 1),stat=ier)
@@ -747,7 +747,7 @@ contains
     endif
   enddo
   !debug
-  !print*,'  ilower/iupper:',ilower,iupper
+  !print *,'  ilower/iupper:',ilower,iupper
 
   ! checks if we catched all
   if (ilower + iupper /= ibound_upper - ibound_lower + 1 ) stop 'Error sorting data points invalid'
@@ -808,26 +808,26 @@ contains
   ! statistics
   numnodes = numnodes + 1
   if (numnodes == 1) then
-    print*,'printing kd-tree: total number of points      = ',npoints
-    !print*,'         index array = ',points_index(:)
+    print *,'printing kd-tree: total number of points      = ',npoints
+    !print *,'         index array = ',points_index(:)
   endif
 
   ! outputs infos for a final node
   if (.not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks info
     if (node%idim /= 0) then
-      print*,'problem kd-tree node:',node%idim,node%ipoint,numnodes
-      print*,'point x/y/z: ',points_data(:,node%ipoint)
+      print *,'problem kd-tree node:',node%idim,node%ipoint,numnodes
+      print *,'point x/y/z: ',points_data(:,node%ipoint)
       stop 'Error kd-tree node not correct'
     endif
 
     ! outputs infos
     if (numnodes < OUTPUT_LENGTH) &
-      print*,'node:',numnodes,'index:',node%ipoint,' x/y/z = ',points_data(:,node%ipoint)
+      print *,'node:',numnodes,'index:',node%ipoint,' x/y/z = ',points_data(:,node%ipoint)
   else
     ! outputs infos
     if (numnodes < OUTPUT_LENGTH) &
-      print*,'node:',numnodes,'dim:',node%idim,'cut = ',node%cut_value
+      print *,'node:',numnodes,'dim:',node%idim,'cut = ',node%cut_value
   endif
 
   ! checks child nodes
@@ -906,12 +906,12 @@ contains
 
   ! debug
   !if (node%idim == 0) then
-  !  print*,'node',node%id,points_data(:,node%ipoint)
+  !  print *,'node',node%id,points_data(:,node%ipoint)
   !else
-  !  print*,'node',node%id,node%idim,node%cut_value
+  !  print *,'node',node%id,node%idim,node%cut_value
   !endif
   !if (ipoint_min > 0) &
-  !  print*,'node distance',node%id,ipoint_min,dist_min
+  !  print *,'node distance',node%id,ipoint_min,dist_min
 
   ! in case this is a final node
   if ( .not. associated(node%left) .and. .not. associated(node%right)) then
@@ -924,9 +924,9 @@ contains
     if (dist < dist_min) then
       ! debug
       !if (ipoint_min < 1) then
-      !  print*,'new node distance',node%id,node%ipoint,dist
+      !  print *,'new node distance',node%id,node%ipoint,dist
       !else
-      !  print*,'     new distance',node%id,node%ipoint,dist
+      !  print *,'     new distance',node%id,node%ipoint,dist
       !endif
       ! stores minimum point
       dist_min = dist
@@ -1037,7 +1037,7 @@ contains
     dist = get_distance_squared(xyz_target(:),xyz(:))
     if (dist <= r_squared) then
       ! debug
-      !print*,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
+      !print *,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
       ! counts point
       num_nodes = num_nodes + 1
 
@@ -1167,7 +1167,7 @@ contains
     call get_distance_ellip(xyz_target(:),xyz(:),dist_v,dist_h)
     if (dist_v <= r_squared_v .and. dist_h <= r_squared_h) then
       ! debug
-      !print*,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
+      !print *,'     new node: ',node%ipoint,'distance = ',dist,'radius = ',r_squared
       ! counts point
       num_nodes = num_nodes + 1
 

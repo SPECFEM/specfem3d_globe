@@ -315,7 +315,7 @@
   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
        status='old',action='read',form='unformatted',iostat=ierror)
   if (ierror /= 0) then
-    print*,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
+    print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
     stop 'Error opening moviedata file'
   endif
 
@@ -347,7 +347,7 @@
     open(unit=IOUT,file=trim(OUTPUT_FILES)//outputname, &
          status='old',action='read',form='unformatted',iostat=ierror)
     if (ierror /= 0) then
-      print*,'Error opening file: ',trim(OUTPUT_FILES)//outputname
+      print *,'Error opening file: ',trim(OUTPUT_FILES)//outputname
       stop 'Error opening moviedata file'
     endif
 

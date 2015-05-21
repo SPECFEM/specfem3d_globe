@@ -144,7 +144,7 @@ program convert_model_file_adios
 
   ! checks arguments
   if (convert_format /= 1 .and. convert_format /= 2) then
-    print*,'Error: invalid format type',convert_format
+    print *,'Error: invalid format type',convert_format
     stop ' Reenter format type in command line options'
   endif
 

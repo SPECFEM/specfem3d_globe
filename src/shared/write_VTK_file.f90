@@ -75,8 +75,8 @@
   do i = 1,num_points_globalindices
     iglob = points_globalindices(i)
     if (iglob <= 0 .or. iglob > nglob) then
-      print*,'Error: '//prname_file(1:len_trim(prname_file))//'.vtk'
-      print*,'Error global index: ',iglob,i
+      print *,'Error: '//prname_file(1:len_trim(prname_file))//'.vtk'
+      print *,'Error global index: ',iglob,i
       stop 'Error VTK points file'
     endif
 
@@ -674,8 +674,8 @@
   !--------------------------------------------------------------
 
   !debug
-  !print*, '  vtk file: '
-  !print*, '    ',prname_file(1:len_trim(prname_file))//'.vtk'
+  !print *, '  vtk file: '
+  !print *, '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
   open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
   if (ier /= 0) stop 'Error opening VTK file'

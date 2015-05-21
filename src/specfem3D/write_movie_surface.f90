@@ -50,7 +50,7 @@
 
   ! checks
   if (npoin /= nmovie_points) then
-    print*,'Error: movie points collected ',npoin,'not equal to calculated :',nmovie_points
+    print *,'Error: movie points collected ',npoin,'not equal to calculated :',nmovie_points
     call exit_mpi(myrank,'Error confusing number of movie points')
   endif
 

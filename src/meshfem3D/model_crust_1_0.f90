@@ -459,7 +459,7 @@
 
   ! checks latitude/longitude
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
-    print*,'Error in lat/lon:',lat,lon
+    print *,'Error in lat/lon:',lat,lon
     stop 'Error in latitude/longitude range in crust1.0'
   endif
 
@@ -501,7 +501,7 @@
 
     ! checks latitude/longitude value
     if (xlat(i) > 90.0d0 .or. xlat(i) < -90.0d0 .or. xlon(i) > 180.0d0 .or. xlon(i) < -180.0d0) then
-      print*,'Error in lat/lon range:',xlat(i),xlon(i)
+      print *,'Error in lat/lon range:',xlat(i),xlon(i)
       stop 'Error in latitude/longitude range in crust1.0'
     endif
 
@@ -509,7 +509,7 @@
     if (icolat == 181) icolat = 180
     ! checks
     if (icolat>180 .or. icolat<1) then
-      print*,'Error in lat/lon range: icolat = ',icolat
+      print *,'Error in lat/lon range: icolat = ',icolat
       stop 'Error in routine icolat/ilon crust1.0'
     endif
 
@@ -517,7 +517,7 @@
     if (ilon == 361) ilon = 1
     ! checks
     if (ilon<1 .or. ilon>360) then
-      print*,'Error in lat/lon range: ilon = ',ilon
+      print *,'Error in lat/lon range: ilon = ',ilon
       stop 'Error in routine icolat/ilon crust1.0'
     endif
 

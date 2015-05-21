@@ -426,7 +426,7 @@
 
   ! safety check of last time loop increment
   if (it /= it_end) then
-    print*,'Error time increments: it_end = ',it_end,' and last it = ',it,' do not match!'
+    print *,'Error time increments: it_end = ',it_end,' and last it = ',it,' do not match!'
     call exit_MPI(myrank,'Error invalid time increment ending')
   endif
 

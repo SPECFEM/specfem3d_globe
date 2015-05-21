@@ -65,7 +65,7 @@ subroutine read_mesh_databases_coupling_adios()
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -508,7 +508,7 @@ subroutine read_mesh_databases_coupling_adios()
 
     call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
     if (adios_err /= 0) then
-      print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+      print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
       call check_adios_err(myrank,adios_err)
     endif
 
@@ -759,7 +759,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -967,7 +967,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -1172,7 +1172,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -1379,7 +1379,7 @@ subroutine read_mesh_databases_stacey_adios()
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 

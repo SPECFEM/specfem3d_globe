@@ -289,7 +289,7 @@
 
         ! checks next index
         if (ivec_index < 1 .or. ivec_index > NTSTEP_BETWEEN_READ_ADJSRC) then
-          print*,'Error iadj_vec bounds: rank',myrank,' it = ',it,' index = ',ivec_index, &
+          print *,'Error iadj_vec bounds: rank',myrank,' it = ',it,' index = ',ivec_index, &
                  'out of bounds ',1,'to',NTSTEP_BETWEEN_READ_ADJSRC
           call exit_MPI(myrank,'Error iadj_vec index bounds')
         endif
@@ -352,7 +352,7 @@
   endif
 
   !debug
-  !if (myrank == 0 ) print*,'compute_add_sources_backward: it_tmp = ',it_tmp,it
+  !if (myrank == 0 ) print *,'compute_add_sources_backward: it_tmp = ',it_tmp,it
 
   if (.not. GPU_MODE) then
     ! on CPU

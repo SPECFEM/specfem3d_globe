@@ -444,7 +444,7 @@
 
 ! check theoretical value of elements at the bottom
   if (ispecb5 /= NSPEC2D_BOTTOM) then
-    print*,'Error ispecb5:',ispecb5,NSPEC2D_BOTTOM
+    print *,'Error ispecb5:',ispecb5,NSPEC2D_BOTTOM
     call exit_MPI(myrank,'ispecb5 should equal NSPEC2D_BOTTOM')
   endif
 

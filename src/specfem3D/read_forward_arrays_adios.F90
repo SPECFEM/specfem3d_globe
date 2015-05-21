@@ -68,7 +68,7 @@
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -249,7 +249,7 @@
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -437,7 +437,7 @@
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
