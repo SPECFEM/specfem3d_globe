@@ -126,7 +126,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -442,15 +442,15 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   ! checks dimensions
   if (lnspec /= nspec) then
-    print*,'Error file dimension: nspec in file = ',lnspec, &
+    print *,'Error file dimension: nspec in file = ',lnspec, &
         ' but nspec desired:',nspec
-    print*,'please check file ', file_name
+    print *,'please check file ', file_name
     call exit_mpi(myrank,'Error dimensions in solver_data.bp')
   endif
   if (lnglob /= nglob) then
-    print*,'Error file dimension: nglob in file = ',lnglob, &
+    print *,'Error file dimension: nglob in file = ',lnglob, &
         ' but nglob desired:',nglob
-    print*,'please check file ', file_name
+    print *,'please check file ', file_name
     call exit_mpi(myrank,'Error dimensions in solver_data.bp')
   endif
 

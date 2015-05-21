@@ -2854,7 +2854,7 @@
       ! multiple MPI processes
 
       ! user output
-      !if (myrank == 0 ) print*,"    gathering all MPI info... "
+      !if (myrank == 0 ) print *,"    gathering all MPI info... "
 
       ! number of volume points for all partitions together
       call sum_all_i(free_np,free_np_all)
@@ -2916,7 +2916,7 @@
 
       if (myrank == 0) then
         ! locations
-        !if (myrank == 0 ) print*,"    locations..."
+        !if (myrank == 0 ) print *,"    locations..."
         call gatherv_all_r(free_x,free_np, &
                             free_x_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
@@ -2928,7 +2928,7 @@
                             free_np_all,NPROC)
 
         ! connectivity
-        !if (myrank == 0 ) print*,"    connectivity..."
+        !if (myrank == 0 ) print *,"    connectivity..."
         call gatherv_all_i(free_conn,4*free_nspec, &
                            free_conn_all,free_conn_nspec_all,free_conn_offset_all, &
                            free_nspec_all,NPROC)
@@ -2943,7 +2943,7 @@
           enddo
         enddo
 
-        !if (myrank == 0 ) print*,"    preparing VTK field..."
+        !if (myrank == 0 ) print *,"    preparing VTK field..."
 
         ! adds free surface to VTK window
         call prepare_vtkfreesurface(free_np_all,free_x_all,free_y_all,free_z_all, &
@@ -3121,7 +3121,7 @@
       ! multiple MPI processes
 
       ! user output
-      !if (myrank == 0 ) print*,"    gathering all MPI info... "
+      !if (myrank == 0 ) print *,"    gathering all MPI info... "
 
       ! number of volume points for all partitions together
       call sum_all_i(vol_np,vtkdata_numpoints_all)
@@ -3191,7 +3191,7 @@
 
       if (myrank == 0) then
         ! locations
-        !if (myrank == 0 ) print*,"    locations..."
+        !if (myrank == 0 ) print *,"    locations..."
         call gatherv_all_r(vol_x,vol_np, &
                             vol_x_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
@@ -3203,7 +3203,7 @@
                             vtkdata_numpoints_all,NPROC)
 
         ! connectivity
-        !if (myrank == 0 ) print*,"    connectivity..."
+        !if (myrank == 0 ) print *,"    connectivity..."
         call gatherv_all_i(vol_conn,8*vol_nspec, &
                            vol_conn_all,vol_conn_nspec_all,vol_conn_offset_all, &
                            vol_nspec_all,NPROC)
@@ -3218,7 +3218,7 @@
           enddo
         enddo
 
-        !if (myrank == 0 ) print*,"    preparing VTK field..."
+        !if (myrank == 0 ) print *,"    preparing VTK field..."
 
         ! adds total volume wavefield to VTK window
         call prepare_vtkfield(vtkdata_numpoints_all,vol_x_all,vol_y_all,vol_z_all, &
@@ -3244,7 +3244,7 @@
 
     else
       ! serial run
-      !if (myrank == 0 ) print*,"    preparing VTK field..."
+      !if (myrank == 0 ) print *,"    preparing VTK field..."
 
       ! adds volume wavefield to VTK window
       call prepare_vtkfield(vol_np,vol_x,vol_y,vol_z,vol_nspec,vol_conn)

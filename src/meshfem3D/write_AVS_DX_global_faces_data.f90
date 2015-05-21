@@ -379,14 +379,14 @@
                      + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
 
              if (abs(rhostore(i,j,k,ispec))< 1.e-20) then
-               print*,' attention: rhostore close to zero',rhostore(i,j,k,ispec),r,i,j,k,ispec
+               print *,' attention: rhostore close to zero',rhostore(i,j,k,ispec),r,i,j,k,ispec
                dvp = 0.0
                dvs = 0.0
              else if (abs(sngl(vp))< 1.e-20) then
-               print*,' attention: vp close to zero',sngl(vp),r,i,j,k,ispec
+               print *,' attention: vp close to zero',sngl(vp),r,i,j,k,ispec
                dvp = 0.0
              else if (abs(sngl(vs))< 1.e-20) then
-               print*,' attention: vs close to zero',sngl(vs),r,i,j,k,ispec
+               print *,' attention: vs close to zero',sngl(vs),r,i,j,k,ispec
                dvs = 0.0
              else
                dvp = dvp + (sqrt((kappavstore(i,j,k,ispec)+4.*muvstore(i,j,k,ispec)/3.)/rhostore(i,j,k,ispec)) - sngl(vp))/sngl(vp)

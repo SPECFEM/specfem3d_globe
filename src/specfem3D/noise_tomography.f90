@@ -295,7 +295,7 @@
   if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM)) then
     print *,'reclen of noise surface_movie needed exceeds integer 4-byte limit: ',reclen
     print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP
-    print*,'bit size fortran: ',bit_size(NSPEC_TOP)
+    print *,'bit size fortran: ',bit_size(NSPEC_TOP)
     call exit_MPI(myrank,"error NSPEC_TOP integer limit")
   endif
 
@@ -362,7 +362,7 @@
   do itime  = 1,NSTEP
     read(IIN_NOISE,*,iostat=ier) junk, noise_src(itime)
     if (ier /= 0) then
-      print*,'Error noise source S_squared file length: NSTEP length required is ',NSTEP,' with time step size ',DT
+      print *,'Error noise source S_squared file length: NSTEP length required is ',NSTEP,' with time step size ',DT
       call exit_MPI(myrank,'file '//trim(filename)//' has wrong length, please check with your simulation duration')
     endif
   enddo
@@ -379,7 +379,7 @@
   do itime = 1,3
     read(IIN_NOISE,*,iostat=ier) nu_master(itime)
     if (ier /= 0) then
-      print*,'Error noise nu_master file length: number of required components is 3'
+      print *,'Error noise nu_master file length: number of required components is 3'
       call exit_MPI(myrank,&
                     'file '//trim(filename)//' has wrong length, the vector should have three components (NEZ)')
     endif

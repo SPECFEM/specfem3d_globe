@@ -84,7 +84,7 @@
         ! calls shell external command
         if (myrank == 0) then
           write(command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
-          !print*,trim(command)
+          !print *,trim(command)
           call system_command(command)
         endif
       endif
@@ -265,7 +265,7 @@
         ! calls shell external command
         if (myrank == 0) then
           write(command,"(a,1x,i6.6,' >& out.',i6.6,'.log &')") trim(MOVIE_SCRIPT_NAME),it,it
-          !print*,trim(command)
+          !print *,trim(command)
           call system_command(command)
         endif
       endif

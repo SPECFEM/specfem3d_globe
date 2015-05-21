@@ -282,25 +282,25 @@
 
   ! produces simulations compatible with old globe version 5.1.5
   if (USE_OLD_VERSION_5_1_5_FORMAT) then
-    print*
-    print*,'**************'
-    print*,'using globe version 5.1.5 compatible simulation parameters'
+    print *
+    print *,'**************'
+    print *,'using globe version 5.1.5 compatible simulation parameters'
     if (.not. ATTENUATION_1D_WITH_3D_STORAGE ) &
       stop 'ATTENUATION_1D_WITH_3D_STORAGE should be set to .true. for compatibility with globe version 5.1.5 '
     if (UNDO_ATTENUATION) then
-      print*,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
+      print *,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
       UNDO_ATTENUATION = .false.
     endif
     if (USE_LDDRK) then
-      print*,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
+      print *,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
       USE_LDDRK = .false.
     endif
     if (EXACT_MASS_MATRIX_FOR_ROTATION) then
-      print*,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
+      print *,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
       EXACT_MASS_MATRIX_FOR_ROTATION = .false.
     endif
-    print*,'**************'
-    print*
+    print *,'**************'
+    print *
   endif
 
   ! checks flags when perfect sphere is set

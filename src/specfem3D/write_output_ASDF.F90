@@ -352,7 +352,7 @@ subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, nproc, co
   ! Open the handle to file containing all the ADIOS variables
   call adios_open(adios_handle, "EVENTS", asdf_fn, "w", comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error: rank ',rank,' could not open adios file ',trim(asdf_fn)
+    print *,'Error: rank ',rank,' could not open adios file ',trim(asdf_fn)
     stop 'Error calling adios_open() routine failed for EVENTS'
   endif
 
@@ -590,7 +590,7 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
 !  if (ierr /= 0) call exit_MPI (rank, 'Allocate failed.')
   ! way 2: fortran 95
   if (6*asdf_container%nrecords > BUFFER_LENGTH) then
-    print*,'Error: buffer length too small - minimum length is ',6*asdf_container%nrecords
+    print *,'Error: buffer length too small - minimum length is ',6*asdf_container%nrecords
     stop 'Error in write_asdf_data_sub() routine, BUFFER_LENGTH too small'
   endif
 
@@ -637,7 +637,7 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
     ! way 2: fortran 95
     if (rn_len_total > BUFFER_LENGTH_TOTAL .or. nw_len_total > BUFFER_LENGTH_TOTAL .or. &
         rid_len_total > BUFFER_LENGTH_TOTAL .or. comp_len_total > BUFFER_LENGTH_TOTAL) then
-      print*,'Error: buffer length total too small - lengths are ',rn_len_total,nw_len_total,rid_len_total,comp_len_total
+      print *,'Error: buffer length total too small - lengths are ',rn_len_total,nw_len_total,rid_len_total,comp_len_total
       stop 'Error in write_asdf_data_sub() routine, BUFFER_LENGTH_TOTAL too small'
     endif
   else

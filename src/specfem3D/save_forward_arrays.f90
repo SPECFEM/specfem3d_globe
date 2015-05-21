@@ -214,7 +214,7 @@
     outputname = trim(LOCAL_PATH)//'/'//trim(outputname)
 
     ! debug
-    !if (myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//trim(outputname), iteration_on_subset_tmp,it
+    !if (myrank == 0 ) print *,'saving in: ',trim(LOCAL_PATH)//'/'//trim(outputname), iteration_on_subset_tmp,it
 
     open(unit=IOUT,file=trim(outputname), &
          status='unknown',form='unformatted',action='write',iostat=ier)

@@ -573,10 +573,10 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   ! debug daniel
   !call synchronize_all()
-  !print*,myrank,'nspec2d top      :',NSPEC2D_TOP,NSPEC2D_TOP_wmax
-  !print*,myrank,'nspec2d bottom   :',NSPEC2D_BOTTOM,NSPEC2D_BOTTOM_wmax
-  !print*,myrank,'nspec2d xmin_xmax:',NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_XMIN_XMAX_wmax
-  !print*,myrank,'nspec2d ymin_ymax:',NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_YMIN_YMAX_wmax
+  !print *,myrank,'nspec2d top      :',NSPEC2D_TOP,NSPEC2D_TOP_wmax
+  !print *,myrank,'nspec2d bottom   :',NSPEC2D_BOTTOM,NSPEC2D_BOTTOM_wmax
+  !print *,myrank,'nspec2d xmin_xmax:',NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_XMIN_XMAX_wmax
+  !print *,myrank,'nspec2d ymin_ymax:',NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_YMIN_YMAX_wmax
   !call synchronize_all()
 
   ! checks
@@ -584,7 +584,7 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
       NSPEC2D_BOTTOM /= NSPEC2D_BOTTOM_wmax .or. &
       NSPEC2DMAX_XMIN_XMAX /= NSPEC2DMAX_XMIN_XMAX_wmax .or. &
       NSPEC2DMAX_YMIN_YMAX /= NSPEC2DMAX_YMIN_YMAX_wmax) then
-    print*,myrank,'Error nspec2d for coupling surfaces'
+    print *,myrank,'Error nspec2d for coupling surfaces'
     call exit_mpi(myrank,'Error nspec2d for coupling surfaces in adios saved file')
   endif
 

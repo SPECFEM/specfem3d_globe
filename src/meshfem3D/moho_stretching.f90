@@ -109,11 +109,11 @@
     if (.not. USE_OLD_VERSION_5_1_5_FORMAT) then
       ! limits moho depth to a threshold value to avoid stretching problems
       if (moho < MOHO_MINIMUM) then
-        print*,'moho value exceeds minimum (in km): ',moho*R_EARTH_KM,MOHO_MINIMUM*R_EARTH_KM,'lat/lon:',lat,lon
+        print *,'moho value exceeds minimum (in km): ',moho*R_EARTH_KM,MOHO_MINIMUM*R_EARTH_KM,'lat/lon:',lat,lon
         moho = MOHO_MINIMUM
       endif
       if (moho > MOHO_MAXIMUM) then
-        print*,'moho value exceeds maximum (in km): ',moho*R_EARTH_KM,MOHO_MAXIMUM*R_EARTH_KM,'lat/lon:',lat,lon
+        print *,'moho value exceeds maximum (in km): ',moho*R_EARTH_KM,MOHO_MAXIMUM*R_EARTH_KM,'lat/lon:',lat,lon
         moho = MOHO_MAXIMUM
       endif
     endif
@@ -213,7 +213,7 @@
 
   ! small stretch check: stretching should affect only points above R220
   if (r*R_EARTH < R220) then
-    print*,'Error moho stretching: ',r*R_EARTH,R220,moho*R_EARTH
+    print *,'Error moho stretching: ',r*R_EARTH,R220,moho*R_EARTH
     call exit_mpi(myrank,'incorrect moho stretching')
   endif
 
@@ -338,7 +338,7 @@
 
   ! small stretch check: stretching should affect only points above R220
   if (r*R_EARTH < R220) then
-    print*,'Error moho stretching: ',r*R_EARTH,R220,moho*R_EARTH
+    print *,'Error moho stretching: ',r*R_EARTH,R220,moho*R_EARTH
     call exit_mpi(myrank,'incorrect moho stretching')
   endif
 

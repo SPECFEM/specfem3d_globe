@@ -192,7 +192,7 @@
       if (minval(perm) < 0) &
         call exit_MPI(myrank, 'minval(perm) should be at least 0')
       if (maxval(perm) > num_phase_ispec_inner_core) then
-        print*,'Error perm inner core:',minval(perm),maxval(perm),num_phase_ispec_inner_core
+        print *,'Error perm inner core:',minval(perm),maxval(perm),num_phase_ispec_inner_core
         call exit_MPI(myrank, 'maxval(perm) should be num_phase_ispec_inner_core')
       endif
 
@@ -352,7 +352,7 @@
 
   allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements),stat=ier)
   if (ier /= 0) then
-    print*,'Error',myrank,' allocating num_of_elems_in_this_color:',nb_colors_outer_elements,nb_colors_inner_elements, &
+    print *,'Error',myrank,' allocating num_of_elems_in_this_color:',nb_colors_outer_elements,nb_colors_inner_elements, &
           nb_colors_outer_elements + nb_colors_inner_elements
     call exit_MPI(myrank,'Error allocating num_of_elems_in_this_color array')
   endif
@@ -378,7 +378,7 @@
   if (sum(num_of_elems_in_this_color(1:nb_colors_outer_elements)) /= nspec_outer) then
     print *,'Error number of outer elements in this color:',idomain
     print *,'rank: ',myrank,' nspec_outer = ',nspec_outer
-    print*,'nb_colors_outer_elements = ',nb_colors_outer_elements
+    print *,'nb_colors_outer_elements = ',nb_colors_outer_elements
     print *,'total number of elements in all the colors of the mesh for outer elements = ', &
       sum(num_of_elems_in_this_color(1:nb_colors_outer_elements))
     call exit_MPI(myrank, 'incorrect total number of elements in all the colors of the mesh for outer elements')
@@ -430,7 +430,7 @@
     if (allocated(num_of_elems_in_this_color) ) deallocate(num_of_elems_in_this_color)
     allocate(num_of_elems_in_this_color(nb_colors_outer_elements + nb_colors_inner_elements),stat=ier)
     if (ier /= 0) then
-      print*,'Error',myrank,' allocating num_of_elems_in_this_color:',nb_colors_outer_elements,nb_colors_inner_elements, &
+      print *,'Error',myrank,' allocating num_of_elems_in_this_color:',nb_colors_outer_elements,nb_colors_inner_elements, &
           nb_colors_outer_elements + nb_colors_inner_elements
       call exit_MPI(myrank,'Error allocating num_of_elems_in_this_color array')
     endif
@@ -520,9 +520,9 @@
 
         ! checks
         if (ispec_outer < 1 .or. ispec_outer > num_phase_ispec_d) then
-          print*,'Error outer permutation:',idomain
-          print*,'rank:',myrank,'  ispec_outer = ',ispec_outer
-          print*,'num_phase_ispec_d = ',num_phase_ispec_d
+          print *,'Error outer permutation:',idomain
+          print *,'rank:',myrank,'  ispec_outer = ',ispec_outer
+          print *,'num_phase_ispec_d = ',num_phase_ispec_d
           call exit_MPI(myrank,'Error outer permutation')
         endif
 
@@ -534,9 +534,9 @@
 
         ! checks
         if (ispec_inner < 1 .or. ispec_inner > num_phase_ispec_d) then
-          print*,'Error inner permutation:',idomain
-          print*,'rank:',myrank,'  ispec_inner = ',ispec_inner
-          print*,'num_phase_ispec_d = ',num_phase_ispec_d
+          print *,'Error inner permutation:',idomain
+          print *,'rank:',myrank,'  ispec_inner = ',ispec_inner
+          print *,'num_phase_ispec_d = ',num_phase_ispec_d
           call exit_MPI(myrank,'Error inner permutation')
         endif
 
@@ -719,7 +719,7 @@
 
   ! checks counter
   if (icounter /= nspec) then
-    print*,'Error temp perm: ',icounter,nspec
+    print *,'Error temp perm: ',icounter,nspec
     stop 'Error temporary global permutation incomplete'
   endif
   ! checks values
@@ -738,7 +738,7 @@
     if (new_ispec < 1 .or. new_ispec > nspec ) call exit_MPI(myrank,'Error temp_perm_global ispec bounds')
     ! checks if already set
     if (mask_global(new_ispec)) then
-      print*,'Error temp_perm_global:',ispec,new_ispec,'element already set'
+      print *,'Error temp_perm_global:',ispec,new_ispec,'element already set'
       call exit_MPI(myrank,'Error global permutation')
     else
       mask_global(new_ispec) = .true.
@@ -749,7 +749,7 @@
 
   ! checks number of set elements
   if (count(mask_global(:)) /= nspec) then
-    print*,'Error temp_perm_global:',count(mask_global(:)),nspec,'permutation incomplete'
+    print *,'Error temp_perm_global:',count(mask_global(:)),nspec,'permutation incomplete'
     call exit_MPI(myrank,'Error global permutation incomplete')
   endif
   deallocate(mask_global)

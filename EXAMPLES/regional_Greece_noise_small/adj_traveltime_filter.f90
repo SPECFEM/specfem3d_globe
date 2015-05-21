@@ -69,14 +69,14 @@ program adj_traveltime
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! user output
-  print*,'noise adjoint source'
-  print*,''
-  print*,'station: ',trim(network)//'.'//trim(station)
-  print*,'  using filter flag : ',filter_flag,'(0 = no filter / 1 = bandpass)'
-  print*,'  using taper type  : ',taper_type ,'(0 = boxcar / 1 = cosine)'
-  print*,'  using measurement window length: ',sngl(length_time_window),'s'
-  print*,'  using cross-correlation branch : ',branch_type,'(0 = negative / 1 = positive branch)'
-  print*,''
+  print *,'noise adjoint source'
+  print *,''
+  print *,'station: ',trim(network)//'.'//trim(station)
+  print *,'  using filter flag : ',filter_flag,'(0 = no filter / 1 = bandpass)'
+  print *,'  using taper type  : ',taper_type ,'(0 = boxcar / 1 = cosine)'
+  print *,'  using measurement window length: ',sngl(length_time_window),'s'
+  print *,'  using cross-correlation branch : ',branch_type,'(0 = negative / 1 = positive branch)'
+  print *,''
 
   ! reads in number of steps (based on first trace)
   ! trace
@@ -104,11 +104,11 @@ program adj_traveltime
   close(1001)
 
   ! user output
-  print*,'data file: ',trim(file_data)
-  print*,'  number of time steps = ',nstep
-  print*,'  time step size       = ',sngl(dt),'s'
-  print*,'  trace length         = ',sngl(nstep * dt),'s'
-  print*,''
+  print *,'data file: ',trim(file_data)
+  print *,'  number of time steps = ',nstep
+  print *,'  time step size       = ',sngl(dt),'s'
+  print *,'  trace length         = ',sngl(nstep * dt),'s'
+  print *,''
 
   ! checks
   if (dt <= 0.d0) stop 'Error time step is zero, please check station trace'
@@ -157,8 +157,8 @@ program adj_traveltime
 
   ! maximum value
   trace_data_max = maxval(abs(data_trace(:)))
-  print*,'  vertical component: maximum value = ',sngl(trace_data_max)
-  print*,''
+  print *,'  vertical component: maximum value = ',sngl(trace_data_max)
+  print *,''
 
   ! shifts time line (to start at zero)
   do itime = 1,nstep
@@ -278,9 +278,9 @@ program adj_traveltime
     ! total misfit
     misfit_traveltime = misfit_traveltime + traveltime_delay * traveltime_delay / 2.d0
 
-    print*,'adjoint source norm     = ',sngl(Norm_adj_temp)
-    print*,'traveltime delay        = ',sngl(traveltime_delay)
-    print*,'misfit traveltime       = ',sngl(misfit_traveltime)
+    print *,'adjoint source norm     = ',sngl(Norm_adj_temp)
+    print *,'traveltime delay        = ',sngl(traveltime_delay)
+    print *,'misfit traveltime       = ',sngl(misfit_traveltime)
 
     ! data window output
     write(file_misfit,'(a,i1,a)') './SEM/misfit_measurement_window',ifreq,'.dat'
@@ -341,9 +341,9 @@ program adj_traveltime
   write(1001,*) misfit_traveltime, traveltime_delay
   close(1001)
 
-  print*,''
-  print*,'done, see adjoint traces in directory: SEM/'
-  print*,''
+  print *,''
+  print *,'done, see adjoint traces in directory: SEM/'
+  print *,''
 
 end program adj_traveltime
 

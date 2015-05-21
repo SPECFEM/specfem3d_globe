@@ -156,8 +156,8 @@
     open(unit=IIN,file=trim(outputname), &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print*,'Error: opening proc_****_save_forward_arrays.bin'
-      print*,'path: ',outputname
+      print *,'Error: opening proc_****_save_forward_arrays.bin'
+      print *,'path: ',outputname
       call exit_mpi(myrank,'Error open file save_forward_arrays.bin')
     endif
 
@@ -279,7 +279,7 @@
     outputname = trim(LOCAL_PATH) // '/' // outputname(1:len_trim(outputname))
 
     ! debug
-    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//trim(outputname),iteration_on_subset_tmp,iteration_on_subset,it
+    !if (myrank == 0 ) print *,'reading in: ',trim(LOCAL_PATH)//'/'//trim(outputname),iteration_on_subset_tmp,iteration_on_subset,it
 
     ! opens corresponding snapshot file for reading
     open(unit=IIN,file=trim(outputname), &

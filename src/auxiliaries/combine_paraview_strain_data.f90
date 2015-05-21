@@ -89,7 +89,7 @@ program combine_paraview_movie_data
     !   print *, 'reading: ',trim(dimension_file)
     open(unit = IIN,file = trim(dimension_file),status='old',action='read', iostat = ios)
     if (ios /= 0) then
-      print*, 'Error opening file: ',trim(dimension_file)
+      print *, 'Error opening file: ',trim(dimension_file)
       stop 'Error opening file'
     endif
     read(IIN,*) npoint(iproc),nelement(iproc)
@@ -156,7 +156,7 @@ program combine_paraview_movie_data
 
       open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
+        print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -170,7 +170,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
+        print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -182,7 +182,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
+        print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -194,7 +194,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
+        print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -206,7 +206,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
+        print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -218,7 +218,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
+        print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -230,7 +230,7 @@ program combine_paraview_movie_data
       !print *, 'reading from file:',local_data_file
       open(unit = IIN,file = trim(prname)//trim(local_data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-        print*,'Error opening file: ',trim(prname)//trim(local_data_file)
+        print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
       if (npoint(iproc)>0) then
@@ -301,7 +301,7 @@ program combine_paraview_movie_data
     do i = 1, nelement_local
       read(IIN,iostat=ios) n1, n2, n3, n4, n5, n6, n7, n8
       if (ios /= 0) then
-        print*,'Error reading file: ',trim(local_element_file)
+        print *,'Error reading file: ',trim(local_element_file)
         stop 'Error reading file movie3D_elements.bin, please check if number of elements is correct (MOVIE_COARSE?)'
       endif
       n1 = n1+np

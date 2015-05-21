@@ -432,8 +432,8 @@
     TRANSVERSE_ISOTROPY = .true.
 
   else
-    print*
-    print*,'Error model: ',trim(MODEL)
+    print *
+    print *,'Error model: ',trim(MODEL)
     stop 'model not implemented yet, edit get_model_parameters.f90, or ensure you have run ./configure correctly, and recompile'
   endif
 

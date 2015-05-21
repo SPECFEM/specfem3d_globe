@@ -101,7 +101,7 @@
       if ( topo650out < min_650 ) min_650 = topo650out
       if ( topo650out > max_650 ) max_650 = topo650out
       ! debug
-      !print*,'topo410 / topo650: ',r,xcolat,xlon,topo410out,topo650out
+      !print *,'topo410 / topo650: ',r,xcolat,xlon,topo410out,topo650out
     endif
 
     ! non-dimensionalize the topography, which is in km
@@ -142,12 +142,12 @@
     call max_all_cr(max_650,max_650_all)
     if (myrank == 0) then
       if (r <= R220/R_EARTH .and. r >= R771/R_EARTH) then
-        print*,'add_topography_410_650: min/max_410 = ',min_410_all,max_410_all,'min/max_650 = ',min_650_all,max_650_all
+        print *,'add_topography_410_650: min/max_410 = ',min_410_all,max_410_all,'min/max_650 = ',min_650_all,max_650_all
       endif
     endif
     !if (r <= R220/R_EARTH .and. r >= R771/R_EARTH) then
-    !  print*,myrank,'add_topography_410_650: min/max_410 = ',min_410,max_410,'min/max_650 = ',min_650,max_650
-    !  print*,myrank,'add_topography_410_650: depth = ',(1.d0 - r)*R_EARTH_KM,' 410-km = ',topo410out,' 650-km = ',topo650out
+    !  print *,myrank,'add_topography_410_650: min/max_410 = ',min_410,max_410,'min/max_650 = ',min_650,max_650
+    !  print *,myrank,'add_topography_410_650: depth = ',(1.d0 - r)*R_EARTH_KM,' 410-km = ',topo410out,' 650-km = ',topo650out
     !endif
   endif
 

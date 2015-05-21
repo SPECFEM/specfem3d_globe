@@ -184,10 +184,10 @@ subroutine read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob, nspec)
   call adios_selection_writeblock(sel, iproc)
   call adios_schedule_read(mesh_handle, sel, trim(reg_name) // "/nglob", 0, 1, nglob, ier)
   if (ier /= 0) then
-    print*
-    print* ,'Error adios: could not read parameter: ',trim(reg_name) // "/nglob"
-    print* ,'             please check if your input mesh file is correct...'
-    print*
+    print *
+    print * ,'Error adios: could not read parameter: ',trim(reg_name) // "/nglob"
+    print * ,'             please check if your input mesh file is correct...'
+    print *
     stop 'Error adios adios_schedule_read() for nglob'
   endif
 
@@ -225,10 +225,10 @@ subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
   call adios_schedule_read(mesh_handle, sel_scalar, trim(reg_name) // "ibool/offset", &
                            0, 1, offset_ibool, ier)
   if (ier /= 0) then
-    print*
-    print* ,'Error adios: could not read parameter: ',trim(reg_name) // "ibool/offset"
-    print* ,'             please check if your input mesh file is correct...'
-    print*
+    print *
+    print * ,'Error adios: could not read parameter: ',trim(reg_name) // "ibool/offset"
+    print * ,'             please check if your input mesh file is correct...'
+    print *
     stop 'Error adios adios_schedule_read() for ibool/offset'
   endif
 
@@ -331,10 +331,10 @@ subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
 
   call adios_schedule_read(value_handle, sel, trim(data_name) // "/offset", 0, 1, offset, ier)
   if (ier /= 0) then
-    print*
-    print* ,'Error adios: could not read parameter: ',trim(data_name) // "/offset"
-    print* ,'             please check if your input data file is correct...'
-    print*
+    print *
+    print * ,'Error adios: could not read parameter: ',trim(data_name) // "/offset"
+    print * ,'             please check if your input data file is correct...'
+    print *
     stop 'Error adios adios_schedule_read() for data offset'
   endif
 

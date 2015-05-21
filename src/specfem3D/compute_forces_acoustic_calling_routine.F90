@@ -316,7 +316,7 @@
   endif
 
   !debug
-  !if (myrank == 0 ) print*,'compute_forces_acoustic_backward: it = ',it_tmp
+  !if (myrank == 0 ) print *,'compute_forces_acoustic_backward: it = ',it_tmp
 
 
   ! ****************************************************

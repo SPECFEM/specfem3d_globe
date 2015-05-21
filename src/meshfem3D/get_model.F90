@@ -178,8 +178,8 @@
 
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then
-          print*,'Error vpv: ',vpv,' vph:',vph,' vsv: ',vsv,' vsh: ',vsh,' rho:',rho
-          print*,'radius:',r*R_EARTH_KM
+          print *,'Error vpv: ',vpv,' vph:',vph,' vsv: ',vsv,' vsh: ',vsh,' rho:',rho
+          print *,'radius:',r*R_EARTH_KM
           call exit_mpi(myrank,'Error get_model values')
         endif
 
@@ -305,8 +305,8 @@
   ! checks layers
   if (abs(rmax - rmin ) < TINYVAL) then
     ! there's probably an error
-    print*,'Error layer radius min/max:',rmin,rmax
-    print*,'  point radius: ',r_prem
+    print *,'Error layer radius min/max:',rmin,rmax
+    print *,'  point radius: ',r_prem
     call exit_mpi(myrank,'Error  in get_model_check_idoubling() layer radius')
   endif
 
@@ -324,8 +324,8 @@
        idoubling /= IFLAG_TOP_CENTRAL_CUBE .and. &
        idoubling /= IFLAG_IN_FICTITIOUS_CUBE) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
-      print*,'  idoubling/IFLAG: ',idoubling,IFLAG_INNER_CORE_NORMAL,'-to-',IFLAG_IN_FICTITIOUS_CUBE
+      print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print *,'  idoubling/IFLAG: ',idoubling,IFLAG_INNER_CORE_NORMAL,'-to-',IFLAG_IN_FICTITIOUS_CUBE
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for inner core point')
     endif
   !
@@ -334,8 +334,8 @@
   else if (r_m > RICB .and. r_m < RCMB) then
     if (idoubling /= IFLAG_OUTER_CORE_NORMAL) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
-      print*,'  idoubling/IFLAG: ',idoubling,IFLAG_OUTER_CORE_NORMAL
+      print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print *,'  idoubling/IFLAG: ',idoubling,IFLAG_OUTER_CORE_NORMAL
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for outer core point')
     endif
   !
@@ -344,9 +344,9 @@
   else if (r_m > RCMB .and. r_m < RTOPDDOUBLEPRIME) then
     if (idoubling /= IFLAG_MANTLE_NORMAL) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
-      print*,'  dprime radius/RCMB/RTOPDDOUBLEPRIME:',r_m, RCMB,RTOPDDOUBLEPRIME
-      print*,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
+      print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print *,'  dprime radius/RCMB/RTOPDDOUBLEPRIME:',r_m, RCMB,RTOPDDOUBLEPRIME
+      print *,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for D" point')
     endif
   !
@@ -355,8 +355,8 @@
   else if (r_m > RTOPDDOUBLEPRIME .and. r_m < R670) then
     if (idoubling /= IFLAG_MANTLE_NORMAL) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
-      print*,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
+      print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print *,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for top D" -> d670 point')
     endif
 
@@ -366,8 +366,8 @@
   else if (r_m > R670 .and. r_m < R220) then
     if (idoubling /= IFLAG_670_220) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
-      print*,'  idoubling/IFLAG: ',idoubling,IFLAG_670_220
+      print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print *,'  idoubling/IFLAG: ',idoubling,IFLAG_670_220
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d670 -> d220 point')
     endif
 
@@ -377,8 +377,8 @@
   else if (r_m > R220) then
     if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) then
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
-      print*,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
-      print*,'  idoubling/IFLAG: ',idoubling,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST
+      print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
+      print *,'  idoubling/IFLAG: ',idoubling,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST
       call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d220 -> Moho -> surface point')
     endif
 

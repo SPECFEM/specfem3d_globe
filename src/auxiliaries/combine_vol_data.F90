@@ -176,7 +176,7 @@ program combine_vol_data
   num_node = 0
   open(unit = IIN, file = trim(arg(1)), status = 'old',iostat = ier)
   if (ier /= 0) then
-    print*,'no file: ',trim(arg(1))
+    print *,'no file: ',trim(arg(1))
     stop 'Error opening slices file'
   endif
 
@@ -285,8 +285,8 @@ program combine_vol_data
       dimension_file = trim(prname_topo) //'solver_data.bin'
       open(unit = IIN,file = trim(dimension_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
-       print*,'Error ',ier
-       print*,'file:',trim(dimension_file)
+       print *,'Error ',ier
+       print *,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
       read(IIN) nspec(it)
@@ -370,14 +370,14 @@ program combine_vol_data
 
       open(unit = IIN,file = trim(data_file),status='old',action='read', iostat = ier,form ='unformatted')
       if (ier /= 0) then
-        print*,'Error ',ier
-        print*,'file:',trim(data_file)
+        print *,'Error ',ier
+        print *,'file:',trim(data_file)
         stop 'Error opening file'
       endif
       read(IIN,iostat=ier) data(:,:,:,1:nspec(it))
       if (ier /= 0) then
-        print*,'read error ',ier
-        print*,'file:',trim(data_file)
+        print *,'read error ',ier
+        print *,'file:',trim(data_file)
         stop 'Error reading data'
       endif
       close(IIN)
@@ -397,8 +397,8 @@ program combine_vol_data
       topo_file = trim(prname_topo) // 'solver_data.bin'
       open(unit = IIN,file = trim(topo_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
-        print*,'Error ',ier
-        print*,'file:',trim(topo_file)
+        print *,'Error ',ier
+        print *,'file:',trim(topo_file)
         stop 'Error opening file'
       endif
       xstore(:) = 0.0
@@ -538,8 +538,8 @@ program combine_vol_data
         if (ir == 3) then
           npoint(it) = numpoin
         else if (numpoin /= npoint(it)) then
-          print*,'region:',ir
-          print*,'Error number of points:',numpoin,npoint(it)
+          print *,'region:',ir
+          print *,'Error number of points:',numpoin,npoint(it)
           stop 'Error different number of points (high-res)'
         endif
       else if (.not. HIGH_RESOLUTION_MESH) then

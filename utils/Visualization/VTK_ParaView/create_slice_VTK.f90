@@ -82,7 +82,7 @@
       print *, '   - slice_list:    file containing slice/proc ids '
       print *, '   - filename:    looks for filename.bin must be array of (NGLLX,NGLLY,NGLLZ,nspec) '
       print *, '   - input_topo_dir:    includes "proc***_array_dims.txt '
-      print*,  '   - input_file_dir:    includes "proc****filename.bin '
+      print *,  '   - input_file_dir:    includes "proc****filename.bin '
       print *, '   - output_dir:    output mesh files go to here '
       print *, '   if region is not specified, all 3 regions will be collected, otherwise, only collect regions specified'
       print *, ' '
@@ -112,7 +112,7 @@
   num_node = 0
   open(unit = 20, file = trim(arg(1)), status = 'old',iostat = ios)
   if (ios /= 0) then
-    print*,'no file: ',trim(arg(1))
+    print *,'no file: ',trim(arg(1))
     stop 'Error opening slices file'
   endif
 
@@ -153,8 +153,8 @@
       dimension_file = trim(prname_topo) //'array_dims.txt'
       open(unit = 27,file = trim(dimension_file),status='old',action='read', iostat = ios)
       if (ios /= 0) then
-       print*,'error ',ios
-       print*,'file:',trim(dimension_file)
+       print *,'error ',ios
+       print *,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
       read(27,*) nspec(it)
@@ -185,8 +185,8 @@
       data_file = trim(prname_file) // trim(filename) // '.bin'
       open(unit = 27,file = trim(data_file),status='old',action='read', iostat = ios,form ='unformatted')
       if (ios /= 0) then
-       print*,'error ',ios
-       print*,'file:',trim(data_file)
+       print *,'error ',ios
+       print *,'file:',trim(data_file)
        stop 'Error opening file'
       endif
 
@@ -202,8 +202,8 @@
       topo_file = trim(prname_topo) // 'solver_data' // '.bin'
       open(unit = 28,file = trim(topo_file),status='old',action='read', iostat = ios, form='unformatted')
       if (ios /= 0) then
-       print*,'error ',ios
-       print*,'file:',trim(topo_file)
+       print *,'error ',ios
+       print *,'file:',trim(topo_file)
        stop 'Error opening file'
       endif
       xstore(:) = 0.0
