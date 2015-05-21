@@ -114,7 +114,7 @@
   double precision :: st,ct,sp,cp
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
   double precision :: colat_source
-  double precision :: distmin_squared
+  double precision :: distmin_squared,distmin_not_squared
 
   integer :: ix_initial_guess_source,iy_initial_guess_source,iz_initial_guess_source
   integer :: NSOURCES_SUBSET_current_size
@@ -611,11 +611,11 @@
         isource = isources_already_done + isource_in_this_subset
 
         ! loop on all the results to determine the best slice
-        distmin_squared = HUGEVAL
+        distmin_not_squared = HUGEVAL
         do iprocloop = 0,NPROCTOT_VAL-1
-          if (final_distance_source_all(isource_in_this_subset,iprocloop) < distmin_squared) then
+          if (final_distance_source_all(isource_in_this_subset,iprocloop) < distmin_not_squared) then
             ! stores this slice's info
-            distmin_squared = final_distance_source_all(isource_in_this_subset,iprocloop)
+            distmin_not_squared = final_distance_source_all(isource_in_this_subset,iprocloop)
             islice_selected_source(isource) = iprocloop
             ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
             xi_source(isource) = xi_source_all(isource_in_this_subset,iprocloop)
@@ -626,7 +626,7 @@
             z_found_source(isource_in_this_subset) = z_found_source_all(isource_in_this_subset,iprocloop)
           endif
         enddo
-        final_distance_source(isource) = distmin_squared
+        final_distance_source(isource) = distmin_not_squared
 
         write(IMAIN,*)
         write(IMAIN,*) '*************************************'
@@ -819,11 +819,11 @@
 
   ! local parameters
   integer i,j,k,iglob
-  double precision dist_sq,sigma_sq
+  double precision dist_squared,sigma_squared
 
   ! standard deviation for Gaussian
   ! (removes factor of 100 added for search radius from typical_size_squared)
-  sigma_sq = typical_size_squared / 100.
+  sigma_squared = typical_size_squared / 100.
 
   ! loops over GLL points within this ispec element
   do k = 1,NGLLZ
@@ -832,14 +832,14 @@
 
         ! gets distance (squared) to source
         iglob = ibool(i,j,k,ispec)
-        dist_sq = (x_target_source - dble(xstore(iglob)))**2 &
-                  +(y_target_source - dble(ystore(iglob)))**2 &
-                  +(z_target_source - dble(zstore(iglob)))**2
+        dist_squared = (x_target_source - dble(xstore(iglob)))**2 &
+                     + (y_target_source - dble(ystore(iglob)))**2 &
+                     + (z_target_source - dble(zstore(iglob)))**2
 
         ! adds Gaussian function value to mask
         ! (mask value becomes 0 closer to source location, 1 everywhere else )
         mask_source(i,j,k,ispec) = mask_source(i,j,k,ispec) &
-                  * ( 1.0_CUSTOM_REAL - exp( - dist_sq / sigma_sq ) )
+                  * ( 1.0_CUSTOM_REAL - exp( - dist_squared / sigma_squared ) )
 
       enddo
     enddo
