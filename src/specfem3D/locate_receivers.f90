@@ -452,7 +452,7 @@
           dist_squared = (x_target_rec - xyz_midpoints(1,ispec))*(x_target_rec - xyz_midpoints(1,ispec)) &
                        + (y_target_rec - xyz_midpoints(2,ispec))*(y_target_rec - xyz_midpoints(2,ispec)) &
                        + (z_target_rec - xyz_midpoints(3,ispec))*(z_target_rec - xyz_midpoints(3,ispec))
-          !  we compare squared distances instead of distances themselves to significantly speed up calculations 
+          !  we compare squared distances instead of distances themselves to significantly speed up calculations
           if (dist_squared > typical_size_squared) cycle
           ! loop only on points inside the element
           ! exclude edges to ensure this point is not shared with other elements
@@ -464,7 +464,7 @@
                              + (y_target_rec - dble(ystore(iglob)))*(y_target_rec - dble(ystore(iglob))) &
                              + (z_target_rec - dble(zstore(iglob)))*(z_target_rec - dble(zstore(iglob)))
                 !  keep this point if it is closer to the receiver
-                !  we compare squared distances instead of distances themselves to significantly speed up calculations 
+                !  we compare squared distances instead of distances themselves to significantly speed up calculations
                 if (dist_squared < distmin_squared) then
                   ispec_selected_rec(irec) = ispec
                   ix_initial_guess(irec) = i
@@ -803,7 +803,7 @@
 
         distmin_squared = HUGEVAL
         do iprocloop = 0,NPROCTOT_VAL-1
-          !  we compare squared distances instead of distances themselves to significantly speed up calculations 
+          !  we compare squared distances instead of distances themselves to significantly speed up calculations
           if (final_distance_all(irec_in_this_subset,iprocloop)**2 < distmin_squared) then
             distmin_squared = final_distance_all(irec_in_this_subset,iprocloop)**2
 

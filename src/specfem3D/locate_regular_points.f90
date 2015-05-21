@@ -270,7 +270,7 @@
       dist_squared = (x_target - xstore(iglob))**2 &
                    + (y_target - ystore(iglob))**2 &
                    + (z_target - zstore(iglob))**2
-      !  we compare squared distances instead of distances themselves to significantly speed up calculations 
+      !  we compare squared distances instead of distances themselves to significantly speed up calculations
       if (dist_squared > typical_size_squared) cycle
 
       locate_target = .true.
