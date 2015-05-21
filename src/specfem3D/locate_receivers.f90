@@ -117,7 +117,7 @@
   double precision, dimension(:), allocatable :: final_distance
   double precision, dimension(:,:), allocatable :: final_distance_all
 
-  double precision :: distmin_squared,final_distance_max
+  double precision :: distmin_squared,distmin_not_squared,final_distance_max
 
 ! receiver information
 ! timing information for the stations
@@ -801,11 +801,10 @@
         ! mapping from station number in current subset to real station number in all the subsets
         irec = irec_in_this_subset + irec_already_done
 
-        distmin_squared = HUGEVAL
+        distmin_not_squared = HUGEVAL
         do iprocloop = 0,NPROCTOT_VAL-1
-          !  we compare squared distances instead of distances themselves to significantly speed up calculations
-          if (final_distance_all(irec_in_this_subset,iprocloop)**2 < distmin_squared) then
-            distmin_squared = final_distance_all(irec_in_this_subset,iprocloop)**2
+          if (final_distance_all(irec_in_this_subset,iprocloop) < distmin_not_squared) then
+            distmin_not_squared = final_distance_all(irec_in_this_subset,iprocloop)
 
             islice_selected_rec(irec) = iprocloop
             ispec_selected_rec(irec) = ispec_selected_rec_all(irec_in_this_subset,iprocloop)
@@ -817,7 +816,7 @@
             z_found(irec) = z_found_all(irec_in_this_subset,iprocloop)
           endif
         enddo
-        final_distance(irec) = sqrt(distmin_squared)
+        final_distance(irec) = distmin_not_squared
       enddo
     endif ! end of section executed by main process only
 
