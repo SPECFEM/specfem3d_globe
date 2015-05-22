@@ -58,6 +58,13 @@ subroutine init_asdf_data(asdf_container,total_seismos_local)
 
   asdf_container%event = trim(event_name_SAC)
 
+  allocate (asdf_container%receiver_name_array(total_seismos_local), &
+            STAT=ier)
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+  allocate (asdf_container%network_array(total_seismos_local), STAT=ier)
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+  allocate (asdf_container%component_array(total_seismos_local), STAT=ier)
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%records(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
 
@@ -106,6 +113,12 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   ! trace index
   i = (irec_local-1)*(3) + (iorientation)
 
+  length_station_name = len_trim(station_name(irec))
+  length_network_name = len_trim(network_name(irec))
+  asdf_container%receiver_name_array(i) = station_name(irec)(1:length_station_name)
+  asdf_container%network_array(i) = network_name(irec)(1:length_network_name)
+  asdf_container%component_array(i) = chn
+
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
@@ -131,6 +144,9 @@ subroutine close_asdf_data(asdf_container, total_seismos_local)
   do i = 1, total_seismos_local
     deallocate(asdf_container%records(i)%record)
   enddo
+  deallocate (asdf_container%receiver_name_array)
+  deallocate (asdf_container%network_array)
+  deallocate (asdf_container%component_array)
 
 end subroutine close_asdf_data
 
@@ -228,8 +244,8 @@ subroutine write_asdf(asdf_container)
            stat=ier)
 
   do i = 1, num_stations
-    write(networks_names(i), '(a,i0.2)') "NTWK_", myrank
-    write(stations_names(i), '(a,i0.2,a,i0.2)') "STAT_", myrank, "_", i
+   write(networks_names(i), '(a)') asdf_container%network_array(i)
+   write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
   enddo
 
   ! -- We do not care about seeding.
@@ -312,7 +328,7 @@ print *, "initializing ASDF"
         ! Generate unique dummy waveform names
         write(waveform_name, '(a,i0.2)') &
            trim(network_names_gather(j,k)) // "." //      &
-           trim(station_names_gather(j,k)) // ".channel_", i
+           trim(station_names_gather(j,k)) // "." // "BH", myrank !trim(asdf_container%component_array(i))
 
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
@@ -320,9 +336,6 @@ print *, "initializing ASDF"
              trim(event_name) // C_NULL_CHAR, &
              trim(waveform_name) // C_NULL_CHAR, &
              data_ids(i, j, k))
-        if (nrec_local > 0) then
-        waveforms(:, i, j) = asdf_container%records(i+j-1)%record
-        endif
       enddo
     enddo
   enddo
