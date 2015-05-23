@@ -466,6 +466,7 @@
                 !  keep this point if it is closer to the receiver
                 !  we compare squared distances instead of distances themselves to significantly speed up calculations
                 if (dist_squared < distmin_squared) then
+                  distmin_squared = dist_squared
                   ispec_selected_rec(irec) = ispec
                   ix_initial_guess(irec) = i
                   iy_initial_guess(irec) = j
@@ -492,6 +493,7 @@
               !  keep this point if it is closer to the receiver
               !  we compare squared distances instead of distances themselves to significantly speed up calculations
               if (dist_squared < distmin_squared) then
+                distmin_squared = dist_squared
                 ispec_selected_rec(irec) = ispec
                 ix_initial_guess(irec) = i
                 iy_initial_guess(irec) = j

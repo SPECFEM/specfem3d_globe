@@ -358,8 +358,8 @@
         if (USE_DISTANCE_CRITERION) then
           iglob = ibool(MIDX,MIDY,MIDZ,ispec)
           dist_squared = (x_target_source - dble(xstore(iglob)))**2 &
-               + (y_target_source - dble(ystore(iglob)))**2 &
-               + (z_target_source - dble(zstore(iglob)))**2
+                       + (y_target_source - dble(ystore(iglob)))**2 &
+                       + (z_target_source - dble(zstore(iglob)))**2
           !  we compare squared distances instead of distances themselves to significantly speed up calculations
           if (dist_squared > typical_size_squared) cycle
         endif
@@ -401,6 +401,7 @@
                            + (z_target_source - dble(zstore(iglob)))**2
               !  we compare squared distances instead of distances themselves to significantly speed up calculations
               if (dist_squared < distmin_squared) then
+                distmin_squared = dist_squared
                 ispec_selected_source_subset(isource_in_this_subset) = ispec
                 ix_initial_guess_source = i
                 iy_initial_guess_source = j
