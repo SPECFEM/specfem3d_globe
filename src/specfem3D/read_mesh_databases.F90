@@ -286,8 +286,15 @@
   ! mass matrix corrections
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
-    ! mass matrices differ for rmassx,rmassy
-    ! continue
+    ! mass matrices differ for rmassx,rmassy in case Newmark time scheme is used
+    if (USE_LDDRK) then
+      ! uses single mass matrix without correction in case LDDRK time scheme is used
+      ! frees pointer memory
+      deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
+      ! re-associates with corresponding rmassz
+      rmassx_crust_mantle => rmassz_crust_mantle(:)
+      rmassy_crust_mantle => rmassz_crust_mantle(:)
+    endif
   else
     ! uses single mass matrix without correction
     ! frees pointer memory
@@ -303,8 +310,15 @@
     b_rmassz_crust_mantle => rmassz_crust_mantle
     ! checks if we can take rmassx and rmassy (only differs for rotation correction)
     if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-      ! mass matrices differ for b_rmassx,b_rmassy
-      ! continue
+      ! mass matrices differ for b_rmassx,b_rmassy in case Newmark time scheme is used
+      if (USE_LDDRK) then
+        ! mass matrices correction is not needed in case LDDRK time scheme is used
+        ! frees pointer memory
+        deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+        ! re-associates with corresponding rmassx,rmassy
+        b_rmassx_crust_mantle => rmassx_crust_mantle(:)
+        b_rmassy_crust_mantle => rmassy_crust_mantle(:)
+      endif
     else
       ! frees pointer memory
       deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
@@ -549,8 +563,15 @@
 
   ! mass matrix corrections
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-    ! uses corrected mass matrices
-    ! continue
+    ! uses corrected mass matrices in case Newmark time scheme is used
+    if (USE_LDDRK)  then
+      ! uses single mass matrix without correction in case LDDRK time scheme is used
+      ! frees pointer memory
+      deallocate(rmassx_inner_core,rmassy_inner_core)
+      ! re-associates with corresponding rmassz
+      rmassx_inner_core => rmassz_inner_core(:)
+      rmassy_inner_core => rmassz_inner_core(:)
+    endif
   else
     ! uses single mass matrix without correction
     ! frees pointer memory
@@ -566,8 +587,15 @@
     b_rmassz_inner_core => rmassz_inner_core
     ! checks if we can take rmassx and rmassy (only differs for rotation correction)
     if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-      ! uses corrected mass matrices
-      ! continue
+      ! uses corrected mass matrices in case Newmark time scheme is used
+      if (USE_LDDRK) then
+        ! uses single mass matrix without correction in case LDDRK time scheme is used
+        ! frees pointer memory
+        deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
+        ! re-associates with corresponding rmassx,rmassy
+        b_rmassx_inner_core => rmassx_inner_core
+        b_rmassy_inner_core => rmassy_inner_core
+      endif
     else
       ! frees pointer memory
       deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
