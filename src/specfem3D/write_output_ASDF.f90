@@ -323,12 +323,11 @@ print *, "initializing ASDF"
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
            trim(station_xml) // C_NULL_CHAR,             &
            station_grps_gather(j, k))
-
-      do  i = 1, num_channels_per_station
-        ! Generate unique dummy waveform names
+       do  i = 1, num_channels_per_station
+       ! Generate unique dummy waveform names
         write(waveform_name, '(a,i0.2)') &
            trim(network_names_gather(j,k)) // "." //      &
-           trim(station_names_gather(j,k)) // "." // "BH", myrank !trim(asdf_container%component_array(i))
+           trim(station_names_gather(j,k)) // ".", i !trim(asdf_container%component_array(i))
 
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
@@ -336,6 +335,9 @@ print *, "initializing ASDF"
              trim(event_name) // C_NULL_CHAR, &
              trim(waveform_name) // C_NULL_CHAR, &
              data_ids(i, j, k))
+        if (nrec_local > 0) then
+          waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
+        endif
       enddo
     enddo
   enddo
