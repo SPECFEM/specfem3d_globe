@@ -172,8 +172,8 @@ subroutine write_asdf(asdf_container)
 
   !--- Data to be written to the ASDF file
   character(len=MAX_STRING_LENGTH) :: event_name
-  character(len=MAX_STRING_LENGTH) :: station
   character(len=MAX_STRING_LENGTH) :: quakeml
+  character(len=MAX_STRING_LENGTH) :: provenance
   character(len=MAX_STRING_LENGTH) :: station_xml
 
   integer :: num_stations, num_channels_per_station
@@ -197,7 +197,6 @@ subroutine write_asdf(asdf_container)
   !   They have to be cleaned as soon as they become useless
   integer :: file_id   ! HDF5 file id, also root group "/"
   integer :: waveforms_grp  ! Group "/Waveforms/" 
-  integer, dimension(:), allocatable :: station_grps
   integer, dimension(:, :, :), allocatable :: data_ids
 
   !--- MPI variables
@@ -229,6 +228,7 @@ subroutine write_asdf(asdf_container)
 
   filename = "synthetic.h5"
   event_name = trim(event_name_SAC)
+  provenance = "<provenance>"
   quakeml = "<quakeml>"
   station_xml = "<station_xml>"
 
@@ -324,9 +324,9 @@ print *, "initializing ASDF"
   call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
                                      "0.0.2" // C_NULL_CHAR, ier)
 
-  call ASDF_write_auxiliary_data_f(file_id, ier)
-  call ASDF_write_provenance_data_f(file_id, ier)
   call ASDF_write_quakeml_f(file_id, trim(quakeml), ier)
+  call ASDF_write_provenance_data_f(file_id, trim(provenance), ier)
+  call ASDF_write_auxiliary_data_f(file_id, ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
