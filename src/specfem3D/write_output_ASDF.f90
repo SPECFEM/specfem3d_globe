@@ -187,6 +187,7 @@ subroutine write_asdf(asdf_container)
   ! network_names(i) is related to station_names(i)
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: networks_names
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: stations_names
+  character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: component_names
 
   ! data. dimension = nsamples * num_channels_per_station * num_stations
   real, dimension(:, :, :), allocatable :: waveforms
@@ -211,7 +212,7 @@ subroutine write_asdf(asdf_container)
   integer, dimension(:), allocatable :: num_stations_gather
   integer :: max_num_stations_gather
   character(len=MAX_STRING_LENGTH), dimension(:,:), allocatable :: &
-      station_names_gather, network_names_gather
+      station_names_gather, network_names_gather, component_names_gather
   integer, dimension(:,:), allocatable :: station_grps_gather
   integer, dimension(:), allocatable :: displs, rcounts
 
@@ -240,12 +241,17 @@ subroutine write_asdf(asdf_container)
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
+  allocate(component_names(num_stations*num_channels_per_station), stat=ier)
   allocate(waveforms(nsamples, num_channels_per_station, num_stations), &
            stat=ier)
 
   do i = 1, num_stations
    write(networks_names(i), '(a)') asdf_container%network_array(i)
    write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
+  enddo
+
+  do i = 1, num_stations*num_channels_per_station
+   write(component_names(i), '(a)') asdf_container%component_array(i)
   enddo
 
   ! -- We do not care about seeding.
@@ -266,6 +272,7 @@ subroutine write_asdf(asdf_container)
   ! Everyone should know about each and every station name
   allocate(station_names_gather(max_num_stations_gather, mysize))
   allocate(network_names_gather(max_num_stations_gather, mysize))
+  allocate(component_names_gather(max_num_stations_gather*3, mysize))
 
   ! The number of stations is not constant across processes
   do i = 1, mysize
@@ -288,6 +295,14 @@ subroutine write_asdf(asdf_container)
                          max_num_stations_gather, &
                          MAX_STRING_LENGTH, &
                          mysize)
+  call all_gather_all_ch(component_names, &
+                         num_stations*3*MAX_STRING_LENGTH, &
+                         component_names_gather, &
+                         rcounts*3, &
+                         displs*3, &
+                         max_num_stations_gather*3, &
+                         MAX_STRING_LENGTH, &
+                         mysize)
   deallocate(displs)
   deallocate(rcounts)
 
@@ -306,8 +321,8 @@ print *, "initializing ASDF"
 
   call ASDF_write_string_attribute_f(file_id, "file_format" // C_NULL_CHAR, &
                                      "ASDF" // C_NULL_CHAR, ier)
-  call ASDF_write_string_attribute_f(file_id, "file_version" // C_NULL_CHAR, &
-                                     "0.0.1.b" // C_NULL_CHAR, ier)
+  call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
+                                     "0.0.2" // C_NULL_CHAR, ier)
 
   call ASDF_write_auxiliary_data_f(file_id, ier)
   call ASDF_write_provenance_data_f(file_id, ier)
@@ -325,10 +340,9 @@ print *, "initializing ASDF"
            station_grps_gather(j, k))
        do  i = 1, num_channels_per_station
        ! Generate unique dummy waveform names
-        write(waveform_name, '(a,i0.2)') &
+        write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
-           trim(station_names_gather(j,k)) // ".", i !trim(asdf_container%component_array(i))
-
+           trim(station_names_gather(j,k)) // "." // trim(component_names_gather(i+(3*(j-1)),k))
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
              nsamples, start_time, sampling_rate, &
