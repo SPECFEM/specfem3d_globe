@@ -229,7 +229,7 @@ subroutine write_asdf(asdf_container)
   filename = "synthetic.h5"
   event_name = trim(event_name_SAC)
   provenance = "<provenance>"
-  quakeml = "<quakeml>"
+! CMT to quakeml converter
   station_xml = "<station_xml>"
 
   num_stations = nrec_local
@@ -238,6 +238,9 @@ subroutine write_asdf(asdf_container)
   nsamples = seismo_current
   start_time = seismo_offset*DT-t0+t_cmt_SAC
   num_waveforms = num_stations * num_channels_per_station
+
+  call cmt_to_quakeml(quakeml)
+  call generate_provenance(provenance)
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
@@ -333,6 +336,7 @@ print *, "initializing ASDF"
   print *, "defining waveforms"
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
+      call station_to_stationxml(station_names_gather(j,k), station_xml)
       call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
@@ -342,7 +346,8 @@ print *, "initializing ASDF"
        ! Generate unique dummy waveform names
         write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
-           trim(station_names_gather(j,k)) // "." // trim(component_names_gather(i+(3*(j-1)),k))
+           trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
+           // "__2014-04-04T01:33:37__2014-04-04T02:15:10__synthetic"
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
              nsamples, start_time, sampling_rate, &
@@ -391,3 +396,37 @@ print *, "initializing ASDF"
   deallocate(networks_names)
 
 end subroutine write_asdf
+
+subroutine cmt_to_quakeml(quakemlstring)
+
+  use specfem_par,only: &
+    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC, &
+    cmt_depth=>cmt_depth_SAC
+
+  implicit none
+  character(len=*) :: quakemlstring
+
+  quakemlstring = '<quakeml></quakeml>'
+
+end subroutine cmt_to_quakeml
+
+subroutine station_to_stationxml(station_name, stationxmlstring)
+
+  use specfem_par,only:&
+    stlat, stlon
+
+  implicit none
+  character(len=*) :: station_name, stationxmlstring
+
+  stationxmlstring = '<stationXML></stationXML>'
+
+end subroutine station_to_stationxml
+
+subroutine generate_provenance(provenance)
+
+  implicit none
+  character(len=*) :: provenance
+
+  provenance = '<proveanance>'
+
+end subroutine generate_provenance
