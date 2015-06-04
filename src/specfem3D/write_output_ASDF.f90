@@ -119,6 +119,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%network_array(i) = network_name(irec)(1:length_network_name)
   asdf_container%component_array(i) = chn
 
+  print *, phi
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
@@ -166,7 +167,7 @@ subroutine write_asdf(asdf_container)
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
 
-  integer, parameter :: MAX_STRING_LENGTH = 256
+  integer, parameter :: MAX_STRING_LENGTH = 1024
 
   character(len=MAX_STRING_LENGTH) :: filename
 
@@ -327,8 +328,10 @@ print *, "initializing ASDF"
   call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
                                      "0.0.2" // C_NULL_CHAR, ier)
 
-  call ASDF_write_quakeml_f(file_id, trim(quakeml), ier)
-  call ASDF_write_provenance_data_f(file_id, trim(provenance), ier)
+  print *, trim(quakeml)
+print *, "****************"
+  call ASDF_write_quakeml_f(file_id, quakeml, ier)
+  call ASDF_write_provenance_data_f(file_id, provenance, ier)
   call ASDF_write_auxiliary_data_f(file_id, ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
@@ -337,6 +340,7 @@ print *, "initializing ASDF"
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
       call station_to_stationxml(station_names_gather(j,k), station_xml)
+      print *, trim(station_xml)
       call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
@@ -406,7 +410,10 @@ subroutine cmt_to_quakeml(quakemlstring)
   implicit none
   character(len=*) :: quakemlstring
 
-  quakemlstring = '<quakeml></quakeml>'
+  quakemlstring = '<q:quakeml xsi:schemaLocation="http://quakeml.org/schema/xsd/QuakeML-1.2.xsd" '//&
+                  'xmlns="http://quakeml.org/xmlns/bed/1.2" xmlns:q="http://quakeml.org/xmlns/quakeml/1.2" xmlns:xsi="http://'//&
+                  'www.w3.org/2001/XMLSchema-instance">'//&
+                  '</q:quakeml>'
 
 end subroutine cmt_to_quakeml
 
@@ -418,7 +425,21 @@ subroutine station_to_stationxml(station_name, stationxmlstring)
   implicit none
   character(len=*) :: station_name, stationxmlstring
 
-  stationxmlstring = '<stationXML></stationXML>'
+  print *, trim(station_name)
+  stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
+                     '<Source>Erdbebendienst Bayern</Source>'//&
+                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
+                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
+                      '<Created>2014-03-03T11:07:06+00:00</Created>'//&
+                      '<Network code="IU">'//&
+                      '<Station code="ANTO" startDate="2006-12-16T00:00:00+00:00">'//&
+                      '<Latitude unit="DEGREES">48.162899</Latitude>'//&
+                      '<Longitude unit="DEGREES">11.2752</Longitude>'//&
+                      '<Elevation>565.0</Elevation>'//&
+                      '<Site><Name>Fuerstenfeldbruck, Bavaria, GR-Net</Name></Site>'//&
+                      '<CreationDate>2006-12-16T00:00:00+00:00</CreationDate>'//&
+                      '</Station></Network>'//&
+                      '</FDSNStationXML>'
 
 end subroutine station_to_stationxml
 
