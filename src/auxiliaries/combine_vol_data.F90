@@ -45,7 +45,7 @@ program combine_vol_data
   integer,parameter :: MAX_NUM_NODES = 2000
   integer :: ir, irs, ire, ires
   character(len=MAX_STRING_LEN) :: arg(7), filename, outdir
-  character(len=MAX_STRING_LEN) :: data_file, topo_file
+  character(len=MAX_STRING_LEN) :: data_file
   integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob
   integer, dimension(MAX_NUM_NODES) :: npoint, nelement
   integer :: iproc, num_node, i,j,k,ispec, it, di, dj, dk
@@ -393,12 +393,12 @@ program combine_vol_data
       ! topology file
       ! reads in mesh coordinates and local-to-global mapping (ibool)
 #ifndef ADIOS_INPUT
-      topo_file = trim(prname_topo) // 'solver_data.bin'
-      !print *, trim(topo_file)
+      data_file = trim(prname_topo) // 'solver_data.bin'
+      !print *, trim(data_file)
 
-      open(unit = IIN,file = trim(topo_file),status='old',action='read', iostat = ier, form='unformatted')
+      open(unit = IIN,file = trim(data_file),status='old',action='read', iostat = ier, form='unformatted')
       if (ier /= 0) then
-        print *,'Error opening file: ',trim(topo_file)
+        print *,'Error opening file: ',trim(data_file)
         stop 'Error opening topo file'
       endif
       xstore(:) = 0.0
