@@ -447,7 +447,17 @@ subroutine generate_provenance(provenance)
 
   implicit none
   character(len=*) :: provenance
+  integer :: prov_size
 
   provenance = '<proveanance>'
+
+  open(10, file="prov_par_file.txt", status='old')
+  inquire(unit=10, size=prov_size)
+  close(10)
+
+  open(10, file="prov_par_file.txt", status='old', &
+         recl=prov_size, form='unformatted', access='direct')
+  read (10, rec=1) provenance
+  close(10)
 
 end subroutine generate_provenance
