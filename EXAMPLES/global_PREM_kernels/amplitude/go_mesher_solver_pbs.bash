@@ -14,16 +14,16 @@
 
 ###########################################################
 
-cd $PBS_O_WORKDIR
+if [ "$PBS_O_WORKDIR" != "" ]; then cd $PBS_O_WORKDIR; fi
 
-BASEMPIDIR=`grep LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
+BASEMPIDIR=`grep ^LOCAL_PATH DATA/Par_file | cut -d = -f 2 `
 
 # script to run the mesher and the solver
 # read DATA/Par_file to get information about the run
 # compute total number of nodes needed
-NPROC_XI=`grep NPROC_XI DATA/Par_file | cut -d = -f 2 `
-NPROC_ETA=`grep NPROC_ETA DATA/Par_file | cut -d = -f 2`
-NCHUNKS=`grep NCHUNKS DATA/Par_file | cut -d = -f 2 `
+NPROC_XI=`grep ^NPROC_XI DATA/Par_file | cut -d = -f 2 `
+NPROC_ETA=`grep ^NPROC_ETA DATA/Par_file | cut -d = -f 2`
+NCHUNKS=`grep ^NCHUNKS DATA/Par_file | cut -d = -f 2 `
 
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
@@ -36,8 +36,10 @@ cp DATA/STATIONS OUTPUT_FILES/
 cp DATA/CMTSOLUTION OUTPUT_FILES/
 
 # obtain job information
-cat $PBS_NODEFILE > OUTPUT_FILES/compute_nodes
-echo "$PBS_JOBID" > OUTPUT_FILES/jobid
+if [ "$PBS_JOBID" != "" ]; then
+  cat $PBS_NODEFILE > OUTPUT_FILES/compute_nodes
+  echo "$PBS_JOBID" > OUTPUT_FILES/jobid
+fi
 
 ##
 ## mesh generation

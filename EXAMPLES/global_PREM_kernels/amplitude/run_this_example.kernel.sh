@@ -25,7 +25,7 @@ if [ ! -f SEM/STATIONS_ADJOINT  ]; then
   echo "must have adjoint source station files in directory: SEM/"
   exit
 fi
-cp SEM/STATIONS_ADJOINT DATA/
+cp -v SEM/STATIONS_ADJOINT DATA/
 
 mkdir -p DATABASES_MPI
 mkdir -p OUTPUT_FILES
@@ -35,15 +35,16 @@ rm -rf OUTPUT_FILES/*
 
 # compiles executables in root directory
 # using default configuration
-cd ../../
+cd ../../../
 # configures package with ifort compiler
-./configure F90=ifort MPIF90=mpif90 FLAGS_CHECK="-O3 -assume byterecl" > tmp.log
+#./configure F90=ifort MPIF90=mpif90 FLAGS_CHECK="-O3 -assume byterecl" > tmp.log
 
 # compiles for an adjoint simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
 sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:"  DATA/Par_file
-make >& tmp.log
-make xcombine_vol_data >& tmp.log
+make clean
+make all
+make xcombine_vol_data
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
@@ -54,29 +55,26 @@ cd $currentdir
 
 # copy executables
 mkdir -p bin
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/xspecfem3D.kernel
-cp ../../bin/xcombine_vol_data ./bin/
+cp ../../../bin/xmeshfem3D ./bin/
+cp ../../../bin/xspecfem3D ./bin/xspecfem3D.kernel
+cp ../../../bin/xcombine_vol_data ./bin/
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
-ln -s ../../../DATA/crust2.0
-ln -s ../../../DATA/s362ani
-ln -s ../../../DATA/QRFSI12
-ln -s ../../../DATA/topo_bathy
+ln -s ../../../../DATA/crust2.0
+ln -s ../../../../DATA/s362ani
+ln -s ../../../../DATA/QRFSI12
+ln -s ../../../../DATA/topo_bathy
 cd ../
 
 # copy useful script
-cp ../../UTILS/change_simulation_type.pl ./
+cp -v ../../../utils/change_simulation_type.pl ./
 
 
 # submits job to run mesher & solver
 echo
-echo "  submitting script..."
-echo
-first=`qsub go_mesher_solver_pbs.kernel.bash`
-echo "  submitted job: $first"
-
+echo "Please submit script:"
+echo "> qsub go_mesher_solver_pbs.kernel.bash"
 echo
 echo "after job completion, see results in directory: OUTPUT_FILES/"
 echo "done submission setup"
