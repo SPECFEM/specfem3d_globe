@@ -339,7 +339,7 @@ print *, "****************"
   print *, "defining waveforms"
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
-      call station_to_stationxml(station_names_gather(j,k), station_xml)
+      call station_to_stationxml(station_names_gather(j,k), k, station_xml)
       print *, trim(station_xml)
       call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
@@ -408,11 +408,11 @@ subroutine cmt_to_quakeml(quakemlstring)
 
   implicit none
   character(len=*) :: quakemlstring
-  character(len=8) :: lon_str, lat_str, dep_str
+  character(len=5) :: lon_str, lat_str, dep_str
 
-  write(lon_str, "(F8.2)") cmt_lat
-  write(lat_str, "(F8.2)") cmt_lon
-  write(dep_str, "(F8.2)") cmt_depth
+  write(lon_str, "(F5.2)") cmt_lat
+  write(lat_str, "(F5.2)") cmt_lon
+  write(dep_str, "(F5.2)") cmt_depth
 
   quakemlstring = '<q:quakeml xsi:schemaLocation="http://quakeml.org/schema/xsd/QuakeML-1.2.xsd" '//&
                   'xmlns="http://quakeml.org/xmlns/bed/1.2" xmlns:q="http://quakeml.org/xmlns/quakeml/1.2" xmlns:xsi="http://'//&
@@ -425,25 +425,25 @@ subroutine cmt_to_quakeml(quakemlstring)
 
 end subroutine cmt_to_quakeml
 
-subroutine station_to_stationxml(station_name, stationxmlstring)
+subroutine station_to_stationxml(station_name, irec, stationxmlstring)
 
   use specfem_par,only:&
     stlat, stlon
 
   implicit none
   character(len=*) :: station_name, stationxmlstring
-  character(len=8) :: station_lat, station_lon
+  character(len=5) :: station_lat, station_lon
+  integer, intent(in) :: irec
 
-  write(station_lat, "(F8.2)") stlat
-  write(station_lon, "(F8.2)") stlon 
+  write(station_lat, "(F5.2)") stlat(irec)
+  write(station_lon, "(F5.2)") stlon(irec) 
 
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
                      '<Source>Erdbebendienst Bayern</Source>'//&
                       '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
                       '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
                       '<Created>2014-03-03T11:07:06+00:00</Created>'//&
-                      '<Network code="IU">'//&
-                      '<Station code="ANTO" startDate="2006-12-16T00:00:00+00:00">'//&
+                      '<Network code="IU"><Station code="ANTO" startDate="2006-12-16T00:00:00+00:00">'//&
                       '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                       '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                       '<Elevation>565.0</Elevation>'//&
