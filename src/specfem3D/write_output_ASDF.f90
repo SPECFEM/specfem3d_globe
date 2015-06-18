@@ -167,7 +167,7 @@ subroutine write_asdf(asdf_container)
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
 
-  integer, parameter :: MAX_STRING_LENGTH = 1024
+  integer, parameter :: MAX_STRING_LENGTH = 7555
 
   character(len=MAX_STRING_LENGTH) :: filename
 
@@ -403,16 +403,24 @@ end subroutine write_asdf
 
 subroutine cmt_to_quakeml(quakemlstring)
 
-  use specfem_par,only: &
-    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC, &
-    cmt_depth=>cmt_depth_SAC
+  use specfem_par,only:&
+    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC
 
   implicit none
   character(len=*) :: quakemlstring
+  character(len=8) :: lon_str, lat_str, dep_str
+
+  write(lon_str, "(F8.2)") cmt_lat
+  write(lat_str, "(F8.2)") cmt_lon
+  write(dep_str, "(F8.2)") cmt_depth
 
   quakemlstring = '<q:quakeml xsi:schemaLocation="http://quakeml.org/schema/xsd/QuakeML-1.2.xsd" '//&
                   'xmlns="http://quakeml.org/xmlns/bed/1.2" xmlns:q="http://quakeml.org/xmlns/quakeml/1.2" xmlns:xsi="http://'//&
                   'www.w3.org/2001/XMLSchema-instance">'//&
+                  '<eventParameters publicID="smi:service.iris.edu/fdsnws/event/1/query">'//&
+                  '<longitude><value>'//trim(lon_str)//'</value></longitude><latitude><value>'//trim(lat_str)//&
+                  '</value></latitude><depth><value>'//trim(dep_str)//'</value></depth>'//&
+                  '</eventParameters>'//&
                   '</q:quakeml>'
 
 end subroutine cmt_to_quakeml
@@ -448,8 +456,6 @@ subroutine generate_provenance(provenance)
   implicit none
   character(len=*) :: provenance
   integer :: prov_size
-
-  provenance = '<proveanance>'
 
   open(10, file="prov_par_file.txt", status='old')
   inquire(unit=10, size=prov_size)
