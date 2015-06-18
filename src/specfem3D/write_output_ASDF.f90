@@ -432,8 +432,11 @@ subroutine station_to_stationxml(station_name, stationxmlstring)
 
   implicit none
   character(len=*) :: station_name, stationxmlstring
+  character(len=8) :: station_lat, station_lon
 
-  print *, trim(station_name)
+  write(station_lat, "(F8.2)") stlat
+  write(station_lon, "(F8.2)") stlon 
+
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
                      '<Source>Erdbebendienst Bayern</Source>'//&
                       '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
@@ -441,8 +444,8 @@ subroutine station_to_stationxml(station_name, stationxmlstring)
                       '<Created>2014-03-03T11:07:06+00:00</Created>'//&
                       '<Network code="IU">'//&
                       '<Station code="ANTO" startDate="2006-12-16T00:00:00+00:00">'//&
-                      '<Latitude unit="DEGREES">48.162899</Latitude>'//&
-                      '<Longitude unit="DEGREES">11.2752</Longitude>'//&
+                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
+                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                       '<Elevation>565.0</Elevation>'//&
                       '<Site><Name>Fuerstenfeldbruck, Bavaria, GR-Net</Name></Site>'//&
                       '<CreationDate>2006-12-16T00:00:00+00:00</CreationDate>'//&
