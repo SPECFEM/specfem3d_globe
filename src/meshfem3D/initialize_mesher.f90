@@ -32,6 +32,8 @@
 
   implicit none
 
+  include 'version.fh'
+
   ! local parameters
   integer :: sizeprocs
   ! timing
@@ -57,6 +59,8 @@
     write(IMAIN,*) '****************************'
     write(IMAIN,*) '*** Specfem3D MPI Mesher ***'
     write(IMAIN,*) '****************************'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Version: ', git_version
     write(IMAIN,*)
     call flush_IMAIN()
   endif

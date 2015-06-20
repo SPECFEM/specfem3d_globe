@@ -623,6 +623,7 @@ ac_includes_default="\
 
 ac_subst_vars='LTLIBOBJS
 LIBOBJS
+GIT_VERSION_DEPS
 CEM_LIBS
 CEM_FCFLAGS
 MPI_INCLUDES
@@ -7685,6 +7686,35 @@ $as_echo "## ----------------------------------- ##
 # Output results.
 ac_config_files="$ac_config_files Makefile setup/constants.h setup/constants_tomography.h setup/precision.h setup/config.fh"
 
+as_ac_File=`$as_echo "ac_cv_file_$srcdir/.git" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $srcdir/.git" >&5
+$as_echo_n "checking for $srcdir/.git... " >&6; }
+if eval \${$as_ac_File+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  test "$cross_compiling" = yes &&
+  as_fn_error $? "cannot check for file existence when cross compiling" "$LINENO" 5
+if test -r "$srcdir/.git"; then
+  eval "$as_ac_File=yes"
+else
+  eval "$as_ac_File=no"
+fi
+fi
+eval ac_res=\$$as_ac_File
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_File"\" = x"yes"; then :
+
+    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
+
+
+else
+
+        ac_config_files="$ac_config_files setup/version.fh"
+
+
+fi
+
 ac_config_files="$ac_config_files DATA/Par_file:DATA/Par_file DATA/CMTSOLUTION:DATA/CMTSOLUTION DATA/STATIONS:DATA/STATIONS"
 
 ac_config_links="$ac_config_links DATA/crust2.0:DATA/crust2.0 DATA/crustmap:DATA/crustmap DATA/epcrust:DATA/epcrust DATA/eucrust-07:DATA/eucrust-07 DATA/heterogen:DATA/heterogen DATA/Lebedev_sea99:DATA/Lebedev_sea99 DATA/Montagner_model:DATA/Montagner_model DATA/old:DATA/old DATA/PPM:DATA/PPM DATA/QRFSI12:DATA/QRFSI12 DATA/s20rts:DATA/s20rts DATA/s362ani:DATA/s362ani DATA/s40rts:DATA/s40rts DATA/Simons_model:DATA/Simons_model DATA/topo_bathy:DATA/topo_bathy DATA/Zhao_JP_model:DATA/Zhao_JP_model"
@@ -8437,6 +8467,7 @@ do
     "setup/constants_tomography.h") CONFIG_FILES="$CONFIG_FILES setup/constants_tomography.h" ;;
     "setup/precision.h") CONFIG_FILES="$CONFIG_FILES setup/precision.h" ;;
     "setup/config.fh") CONFIG_FILES="$CONFIG_FILES setup/config.fh" ;;
+    "setup/version.fh") CONFIG_FILES="$CONFIG_FILES setup/version.fh" ;;
     "DATA/Par_file") CONFIG_FILES="$CONFIG_FILES DATA/Par_file:DATA/Par_file" ;;
     "DATA/CMTSOLUTION") CONFIG_FILES="$CONFIG_FILES DATA/CMTSOLUTION:DATA/CMTSOLUTION" ;;
     "DATA/STATIONS") CONFIG_FILES="$CONFIG_FILES DATA/STATIONS:DATA/STATIONS" ;;

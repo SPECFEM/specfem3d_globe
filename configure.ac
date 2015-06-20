@@ -333,6 +333,13 @@ AC_CONFIG_FILES([
     setup/precision.h
     setup/config.fh
 ])
+AC_CHECK_FILE([$srcdir/.git], [
+    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
+    AC_SUBST(GIT_VERSION_DEPS)
+], [
+    dnl Only substitute if not in a git repository.
+    AC_CONFIG_FILES([setup/version.fh])
+])
 AC_CONFIG_FILES([
     DATA/Par_file:DATA/Par_file
     DATA/CMTSOLUTION:DATA/CMTSOLUTION

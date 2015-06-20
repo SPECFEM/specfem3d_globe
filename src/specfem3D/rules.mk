@@ -274,6 +274,9 @@ $O/iterate_time_undoatt.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/locate_receivers.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/read_adjoint_sources.solverstatic.o: $O/write_seismograms.solverstatic.o
 
+# Version file
+$O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh
+
 ###
 ### specfem3D - optimized flags and dependence on values from mesher here
 ###
