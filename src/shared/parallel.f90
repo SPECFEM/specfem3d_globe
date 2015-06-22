@@ -46,6 +46,12 @@
 ! All the runs to perform must be placed in directories called run0001, run0002, run0003 and so on
 ! (with exactly four digits).
 
+!-------------------------------------------------------------------------------------------------
+!
+! Parallel routines.  All MPI calls belong in this file!
+!
+!-------------------------------------------------------------------------------------------------
+
 module my_mpi
 
 ! main parameter module for specfem simulations
@@ -233,6 +239,20 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+  double precision function wtime()
+
+  use my_mpi
+
+  implicit none
+
+  wtime = MPI_WTIME()
+
+  end function wtime
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   integer function null_process()
 
   use my_mpi
@@ -266,92 +286,6 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
-
-  use constants
-  use my_mpi
-
-  implicit none
-
-  include "precision.h"
-
-  integer :: recvcount, dest, recvtag, req
-  real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
-
-  integer ier
-
-  call MPI_IRECV(recvbuf(1),recvcount,CUSTOM_MPI_TYPE,dest,recvtag, &
-                 my_local_mpi_comm_world,req,ier)
-
-  end subroutine irecv_cr
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine irecv_dp(recvbuf, recvcount, dest, recvtag, req)
-
-  use my_mpi
-
-  implicit none
-
-  integer :: recvcount, dest, recvtag, req
-  double precision, dimension(recvcount) :: recvbuf
-
-  integer :: ier
-
-  call MPI_IRECV(recvbuf(1),recvcount,MPI_DOUBLE_PRECISION,dest,recvtag, &
-                  my_local_mpi_comm_world,req,ier)
-
-  end subroutine irecv_dp
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
-
-  use constants
-  use my_mpi
-
-  implicit none
-
-  include "precision.h"
-
-  integer sendcount, dest, sendtag, req
-  real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
-
-  integer ier
-
-  call MPI_ISEND(sendbuf(1),sendcount,CUSTOM_MPI_TYPE,dest,sendtag, &
-                  my_local_mpi_comm_world,req,ier)
-
-  end subroutine isend_cr
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine isend_dp(sendbuf, sendcount, dest, sendtag, req)
-
-  use my_mpi
-
-  implicit none
-
-  integer :: sendcount, dest, sendtag, req
-  double precision, dimension(sendcount) :: sendbuf
-
-  integer :: ier
-
-  call MPI_ISEND(sendbuf(1),sendcount,MPI_DOUBLE_PRECISION,dest,sendtag, &
-                  my_local_mpi_comm_world,req,ier)
-
-  end subroutine isend_dp
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
   subroutine wait_req(req)
 
   use my_mpi
@@ -366,237 +300,15 @@ end module my_mpi
 
   end subroutine wait_req
 
-!
+
 !-------------------------------------------------------------------------------------------------
 !
-
-  double precision function wtime()
-
-  use my_mpi
-
-  implicit none
-
-  wtime = MPI_WTIME()
-
-  end function wtime
-
+! MPI broadcasting helper
 !
 !-------------------------------------------------------------------------------------------------
-!
-
-  subroutine min_all_i(sendbuf, recvbuf)
-
-  use my_mpi
-
-  implicit none
-
-  integer:: sendbuf, recvbuf
-  integer ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,my_local_mpi_comm_world,ier)
-
-  end subroutine min_all_i
 
 !
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine min_all_cr(sendbuf, recvbuf)
-
-  use constants
-  use my_mpi
-
-  implicit none
-
-  include "precision.h"
-
-  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MIN,0,my_local_mpi_comm_world,ier)
-
-  end subroutine min_all_cr
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine max_all_i(sendbuf, recvbuf)
-
-  use my_mpi
-
-  implicit none
-
-  integer :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,my_local_mpi_comm_world,ier)
-
-  end subroutine max_all_i
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine max_allreduce_i(buffer,countval)
-
-  use my_mpi
-
-  implicit none
-
-  integer :: countval
-  integer,dimension(countval),intent(inout) :: buffer
-
-  ! local parameters
-  integer :: ier
-  integer,dimension(countval) :: send
-
-  ! seems not to be supported on all kind of MPI implementations...
-  !! DK DK: yes, I confirm, using MPI_IN_PLACE is tricky
-  !! DK DK (see the answer at http://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
-  !! DK DK      for how to use it right)
-  !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
-
-  send(:) = buffer(:)
-
-  call MPI_ALLREDUCE(send, buffer, countval, MPI_INTEGER, MPI_MAX, my_local_mpi_comm_world, ier)
-  if (ier /= 0 ) stop 'Allreduce to get max values failed.'
-
-  end subroutine max_allreduce_i
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine max_all_cr(sendbuf, recvbuf)
-
-  use constants
-  use my_mpi
-
-  implicit none
-
-  include "precision.h"
-
-  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,0,my_local_mpi_comm_world,ier)
-
-  end subroutine max_all_cr
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine max_allreduce_cr(sendbuf, recvbuf)
-
-  use constants
-  use my_mpi
-
-  implicit none
-
-  include "precision.h"
-
-  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_ALLREDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,my_local_mpi_comm_world,ier)
-
-  end subroutine max_allreduce_cr
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine any_all_l(sendbuf, recvbuf)
-
-  use my_mpi
-
-  implicit none
-
-  logical :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_LOGICAL,MPI_LOR,my_local_mpi_comm_world,ier)
-
-  end subroutine any_all_l
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine sum_all_i(sendbuf, recvbuf)
-
-  use my_mpi
-
-  implicit none
-
-  integer :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_SUM,0,my_local_mpi_comm_world,ier)
-
-  end subroutine sum_all_i
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine sum_all_cr(sendbuf, recvbuf)
-
-  use constants
-  use my_mpi
-
-  implicit none
-
-  include "precision.h"
-
-  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_SUM,0,my_local_mpi_comm_world,ier)
-
-  end subroutine sum_all_cr
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine sum_all_dp(sendbuf, recvbuf)
-
-  use my_mpi
-
-  implicit none
-
-  double precision :: sendbuf, recvbuf
-  integer :: ier
-
-  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,my_local_mpi_comm_world,ier)
-
-  end subroutine sum_all_dp
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine sum_all_3Darray_dp(sendbuf, recvbuf, nx,ny,nz)
-
-  use my_mpi
-
-  implicit none
-
-  integer :: nx,ny,nz
-  double precision, dimension(nx,ny,nz) :: sendbuf, recvbuf
-  integer :: ier
-
-  ! this works only if the arrays are contiguous in memory (which is always the case for static arrays, as used in the code)
-  call MPI_REDUCE(sendbuf,recvbuf,nx*ny*nz,MPI_DOUBLE_PRECISION,MPI_SUM,0,my_local_mpi_comm_world,ier)
-
-  end subroutine sum_all_3Darray_dp
-
-!
-!-------------------------------------------------------------------------------------------------
+!---- broadcast using the default communicator for the whole run
 !
 
   subroutine bcast_iproc_i(buffer,iproc)
@@ -613,6 +325,25 @@ end module my_mpi
   call MPI_BCAST(buffer,1,MPI_INTEGER,iproc,my_local_mpi_comm_world,ier)
 
   end subroutine bcast_iproc_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_all_i(buffer, countval)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: countval
+  integer, dimension(countval) :: buffer
+
+  integer :: ier
+
+  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
+
+  end subroutine bcast_all_i
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -654,29 +385,10 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine bcast_all_i(buffer, countval)
-
-  use my_mpi
-
-  implicit none
-
-  integer :: countval
-  integer, dimension(countval) :: buffer
-
-  integer :: ier
-
-  call MPI_BCAST(buffer,countval,MPI_INTEGER,0,my_local_mpi_comm_world,ier)
-
-  end subroutine bcast_all_i
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
   subroutine bcast_all_cr(buffer, countval)
 
-  use constants
   use my_mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
@@ -691,15 +403,14 @@ end module my_mpi
 
   end subroutine bcast_all_cr
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
 
   subroutine bcast_all_singlecr(buffer)
 
-  use constants
   use my_mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
@@ -863,6 +574,7 @@ end module my_mpi
 
   end subroutine bcast_all_l
 
+
 !
 !---- broadcast using the communicator to send the mesh and model to other simultaneous runs
 !
@@ -992,46 +704,414 @@ end module my_mpi
   end subroutine bcast_all_r_for_database
 
 !
+!---- broadcast using MPI_COMM_WORLD
+!
+
+!  subroutine bcast_all_singlei_world(buffer)
+!  end subroutine bcast_all_singlei_world
+
+!
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine recv_singlei(recvbuf, dest, recvtag)
+!  subroutine bcast_all_singlel_world(buffer)
+!  end subroutine bcast_all_singlel_world
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine bcast_all_singledp_world(buffer)
+!  end subroutine bcast_all_singledp_world
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine bcast_all_string_world(buffer)
+!  end subroutine bcast_all_string_world
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! MPI math helper
+!
+!-------------------------------------------------------------------------------------------------
+
+  subroutine min_all_i(sendbuf, recvbuf)
 
   use my_mpi
 
   implicit none
 
-  integer :: dest,recvtag
-  integer :: recvbuf
+  integer:: sendbuf, recvbuf
+  integer ier
 
-  integer :: ier
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MIN,0,my_local_mpi_comm_world,ier)
 
-  call MPI_RECV(recvbuf,1,MPI_INTEGER,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
-
-  end subroutine recv_singlei
+  end subroutine min_all_i
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine recv_singlel(recvbuf, dest, recvtag)
+  subroutine max_all_i(sendbuf, recvbuf)
 
   use my_mpi
 
   implicit none
 
-  integer :: dest,recvtag
-  logical :: recvbuf
-
+  integer :: sendbuf, recvbuf
   integer :: ier
 
-  call MPI_RECV(recvbuf,1,MPI_LOGICAL,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_MAX,0,my_local_mpi_comm_world,ier)
 
-  end subroutine recv_singlel
+  end subroutine max_all_i
 
 !
 !-------------------------------------------------------------------------------------------------
 !
+
+  subroutine max_allreduce_i(buffer,countval)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: countval
+  integer,dimension(countval),intent(inout) :: buffer
+
+  ! local parameters
+  integer :: ier
+  integer,dimension(countval) :: send
+
+  ! seems not to be supported on all kind of MPI implementations...
+  !! DK DK: yes, I confirm, using MPI_IN_PLACE is tricky
+  !! DK DK (see the answer at http://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
+  !! DK DK      for how to use it right)
+  !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
+
+  send(:) = buffer(:)
+
+  call MPI_ALLREDUCE(send, buffer, countval, MPI_INTEGER, MPI_MAX, my_local_mpi_comm_world, ier)
+  if (ier /= 0 ) stop 'Allreduce to get max values failed.'
+
+  end subroutine max_allreduce_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine min_all_cr(sendbuf, recvbuf)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MIN,0,my_local_mpi_comm_world,ier)
+
+  end subroutine min_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine min_all_all_cr(sendbuf, recvbuf)
+!  end subroutine min_all_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine max_all_cr(sendbuf, recvbuf)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,0,my_local_mpi_comm_world,ier)
+
+  end subroutine max_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine max_allreduce_cr(sendbuf, recvbuf)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,my_local_mpi_comm_world,ier)
+
+  end subroutine max_allreduce_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine max_all_all_cr(sendbuf, recvbuf)
+!  end subroutine max_all_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine min_all_dp(sendbuf, recvbuf)
+!  end subroutine min_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine max_all_dp(sendbuf, recvbuf)
+!  end subroutine max_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine max_all_all_dp(sendbuf, recvbuf)
+!  end subroutine max_all_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine maxloc_all_dp(sendbuf, recvbuf)
+!  end subroutine maxloc_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine any_all_l(sendbuf, recvbuf)
+
+  use my_mpi
+
+  implicit none
+
+  logical :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,MPI_LOGICAL,MPI_LOR,my_local_mpi_comm_world,ier)
+
+  end subroutine any_all_l
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! MPI summations
+
+  subroutine sum_all_i(sendbuf, recvbuf)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_INTEGER,MPI_SUM,0,my_local_mpi_comm_world,ier)
+
+  end subroutine sum_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine sum_all_all_i(sendbuf, recvbuf)
+!  end subroutine sum_all_all_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_cr(sendbuf, recvbuf)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL) :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_SUM,0,my_local_mpi_comm_world,ier)
+
+  end subroutine sum_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine sum_all_all_cr(sendbuf, recvbuf)
+!  end subroutine sum_all_all_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_dp(sendbuf, recvbuf)
+
+  use my_mpi
+
+  implicit none
+
+  double precision :: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_REDUCE(sendbuf,recvbuf,1,MPI_DOUBLE_PRECISION,MPI_SUM,0,my_local_mpi_comm_world,ier)
+
+  end subroutine sum_all_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine sum_all_1Darray_dp(sendbuf, recvbuf, nx)
+!  end subroutine sum_all_1Darray_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine sum_all_3Darray_dp(sendbuf, recvbuf, nx,ny,nz)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: nx,ny,nz
+  double precision, dimension(nx,ny,nz) :: sendbuf, recvbuf
+  integer :: ier
+
+  ! this works only if the arrays are contiguous in memory (which is always the case for static arrays, as used in the code)
+  call MPI_REDUCE(sendbuf,recvbuf,nx*ny*nz,MPI_DOUBLE_PRECISION,MPI_SUM,0,my_local_mpi_comm_world,ier)
+
+  end subroutine sum_all_3Darray_dp
+
+
+!-------------------------------------------------------------------------------------------------
+!
+! Send/Receive MPI
+!
+!-------------------------------------------------------------------------------------------------
+
+! asynchronuous send/receive
+
+  subroutine isend_cr(sendbuf, sendcount, dest, sendtag, req)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+  include "precision.h"
+
+  integer :: sendcount, dest, sendtag, req
+  real(kind=CUSTOM_REAL), dimension(sendcount) :: sendbuf
+
+  integer :: ier
+
+  call MPI_ISEND(sendbuf,sendcount,CUSTOM_MPI_TYPE,dest,sendtag,my_local_mpi_comm_world,req,ier)
+
+  end subroutine isend_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!  subroutine isend_i(sendbuf, sendcount, dest, sendtag, req)
+!  end subroutine isend_i
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine isend_dp(sendbuf, sendcount, dest, sendtag, req)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: sendcount, dest, sendtag, req
+  double precision, dimension(sendcount) :: sendbuf
+
+  integer :: ier
+
+  call MPI_ISEND(sendbuf,sendcount,MPI_DOUBLE_PRECISION,dest,sendtag,my_local_mpi_comm_world,req,ier)
+
+  end subroutine isend_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine irecv_cr(recvbuf, recvcount, dest, recvtag, req)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+  include "precision.h"
+
+  integer :: recvcount, dest, recvtag, req
+  real(kind=CUSTOM_REAL), dimension(recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_IRECV(recvbuf,recvcount,CUSTOM_MPI_TYPE,dest,recvtag,my_local_mpi_comm_world,req,ier)
+
+  end subroutine irecv_cr
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine irecv_dp(recvbuf, recvcount, dest, recvtag, req)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: recvcount, dest, recvtag, req
+  double precision, dimension(recvcount) :: recvbuf
+
+  integer :: ier
+
+  call MPI_IRECV(recvbuf,recvcount,MPI_DOUBLE_PRECISION,dest,recvtag,my_local_mpi_comm_world,req,ier)
+
+  end subroutine irecv_dp
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+! synchronuous/blocking send/receive
 
   subroutine recv_i(recvbuf, recvcount, dest, recvtag)
 
@@ -1111,6 +1191,44 @@ end module my_mpi
   call MPI_RECV(recvbuf,recvcount,MPI_CHARACTER,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
 
   end subroutine recv_ch
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine recv_singlei(recvbuf, dest, recvtag)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  integer :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,1,MPI_INTEGER,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_singlei
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine recv_singlel(recvbuf, dest, recvtag)
+
+  use my_mpi
+
+  implicit none
+
+  integer :: dest,recvtag
+  logical :: recvbuf
+
+  integer :: ier
+
+  call MPI_RECV(recvbuf,1,MPI_LOGICAL,dest,recvtag,my_local_mpi_comm_world,MPI_STATUS_IGNORE,ier)
+
+  end subroutine recv_singlel
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -1281,9 +1399,11 @@ end module my_mpi
 
   end subroutine sendrecv_dp
 
-!
 !-------------------------------------------------------------------------------------------------
 !
+! MPI gather helper
+!
+!-------------------------------------------------------------------------------------------------
 
   subroutine gather_all_i(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
@@ -1331,8 +1451,8 @@ end module my_mpi
 
   subroutine gather_all_cr(sendbuf, sendcnt, recvbuf, recvcount, NPROC)
 
-  use constants
   use my_mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
@@ -1378,7 +1498,6 @@ end module my_mpi
 
   subroutine gatherv_all_i(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  use constants
   use my_mpi
 
   implicit none
@@ -1404,8 +1523,8 @@ end module my_mpi
 
   subroutine gatherv_all_cr(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  use constants
   use my_mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
@@ -1430,7 +1549,6 @@ end module my_mpi
 
   subroutine gatherv_all_r(sendbuf, sendcnt, recvbuf, recvcount, recvoffset,recvcounttot, NPROC)
 
-  use constants
   use my_mpi
 
   implicit none
@@ -1470,9 +1588,11 @@ end module my_mpi
 
   end subroutine scatter_all_singlei
 
-!
 !-------------------------------------------------------------------------------------------------
 !
+! MPI world helper
+!
+!-------------------------------------------------------------------------------------------------
 
   subroutine world_size(sizeval)
 
@@ -1589,7 +1709,7 @@ end module my_mpi
   use my_mpi
   use constants,only: MAX_STRING_LEN,OUTPUT_FILES_BASE, &
     IMAIN,ISTANDARD_OUTPUT,mygroup,I_should_read_the_database
-  use shared_input_parameters
+  use shared_parameters,only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL,OUTPUT_FILES
 
   implicit none
 
@@ -1636,7 +1756,8 @@ end module my_mpi
     call MPI_COMM_SPLIT(MPI_COMM_WORLD, mygroup, key, my_local_mpi_comm_world, ier)
     if (ier /= 0) stop 'error while trying to create the sub-communicators'
 
-!   add the right directory for that run (group numbers start at zero, but directory names start at run0001, thus we add one)
+!   add the right directory for that run
+!   (group numbers start at zero, but directory names start at run0001, thus we add one)
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
     OUTPUT_FILES = path_to_add(1:len_trim(path_to_add))//OUTPUT_FILES(1:len_trim(OUTPUT_FILES))
 

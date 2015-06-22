@@ -31,7 +31,7 @@ rm -rf OUTPUT_FILES/*
 
 # compiles executables in root directory
 # using default configuration
-cd ../../
+cd ../../../
 
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
@@ -47,24 +47,21 @@ cd $currentdir
 
 # copy executables
 mkdir -p bin
-cp ../../bin/xmeshfem3D ./bin/
-cp ../../bin/xspecfem3D ./bin/
+cp ../../../bin/xmeshfem3D ./bin/
+cp ../../../bin/xspecfem3D ./bin/
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
-ln -s ../../../DATA/crust2.0
-ln -s ../../../DATA/s362ani
-ln -s ../../../DATA/QRFSI12
-ln -s ../../../DATA/topo_bathy
+ln -s ../../../../DATA/crust2.0
+ln -s ../../../../DATA/s362ani
+ln -s ../../../../DATA/QRFSI12
+ln -s ../../../../DATA/topo_bathy
 cd ../
 
 # submits job to run mesher & solver
 echo
-echo "  submitting script..."
-echo
-first=`qsub go_mesher_solver_pbs.bash`
-echo "  submitted job: $first"
-
+echo "Please submit script:"
+echo "> qsub go_mesher_solver_pbs.bash"
 echo
 echo "after job completion, see results in directory: OUTPUT_FILES/"
 echo "done submission setup"

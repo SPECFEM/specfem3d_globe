@@ -3,18 +3,25 @@
 #
 # note: script requires executable 'mesh2vtu'
 ##############################################
+
 # partitions
 numCPUs=4
-# slice file
-echo "1" | awk '{for(i=0;i<numCPUs;i++)print i}' numCPUs=$numCPUs > slices_all.txt
-slice="slices_all.txt"
+
 # kernel directory
 dir="DATABASES_MPI/"
+
 # low (0) / high (1) resolution
 res="1"
 
+##############################################
+
+# slice file
+echo "1" | awk '{for(i=0;i<numCPUs;i++)print i}' numCPUs=$numCPUs > slices_all.txt
+slice="slices_all.txt"
+
 # for visualization
-cp ../../UTILS/Visualization/Paraview/AVS_continent_boundaries.inp ./
+cp -v ~/SPECFEM3D_GLOBE/utils/Visualization/VTK_ParaView/AVS_continent_boundaries.inp .
+cp -v ~/SPECFEM3D_GLOBE/utils/Visualization/VTK_ParaView/paraviewpython-example.py .
 
 echo
 echo "alpha_kernel"

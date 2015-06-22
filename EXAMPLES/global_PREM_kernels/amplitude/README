@@ -2,19 +2,19 @@
 README
 ----------------------------------------------------------
 
-This example creates a global mesh using model 1D_isotropic_prem
+This example creates a global mesh using model PREM
 and runs a spectral-element simulation.
 
 1. forward simulation:
 ----------------------
 
 type:
-./process.sh
+./run_this_example.sh
 
 to setup this directory for the simulation and to submit a corresponding
 PBS-job script "go_mesher_solver_pbs.bash".
 
-The simulation is accurate down to a shortest period of ~ 17 s.
+The simulation is accurate down to a shortest period of ~ 90 s.
 Reference seismograms for comparions are provided in the directory: REF_SEIS/
 
 
@@ -22,7 +22,7 @@ Reference seismograms for comparions are provided in the directory: REF_SEIS/
 ---------------------
 
 type:
-./process.kernel.sh
+./run_this_example.kernel.sh
 
 to setup this directory for the simulation and to submit a corresponding
 PBS-job script "go_mesher_solver_pbs.kernel.bash".

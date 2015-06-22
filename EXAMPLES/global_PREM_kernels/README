@@ -2,18 +2,20 @@
 README
 ------------------------------------
 
-Examples of cross-correlation traveltime and amplitude kernel
-simulations for a sample source-receiver pair under the directories
-'traveltime' and 'amplitude', respectively.
+Examples of sensitivity kernel calculations for
+- cross-correlation traveltime kernels and
+- amplitude kernels.
+
+The simulations are for a single source-receiver pair
+under the directories traveltime/ and amplitude/, respectively.
 
 
 Both examples make use of filtered adjoint sources. The basic steps involve:
 
 1. run a forward simulation:
 
-   use the scripts ./process.sh to run a single forward simulation and create synthetic
+   use the scripts ./run_this_example.sh to run a single forward simulation and create synthetic
    seismograms in the OUTPUT_FILES/ directory.
-
 
    You can compare the solutions obtained with the reference seismograms provided in
    directory REF_SEIS/.
@@ -23,17 +25,22 @@ Both examples make use of filtered adjoint sources. The basic steps involve:
 
    use the scripts SEM/create_adjoint_sources.sh to create filtered adjoint sources.
 
-   Filtering adjoint sources involves filtering twice, first the synthetics before
-   constructing the adjoint sources, then a second time filtering the adjoint sources
-   again. this leads to correctly computed adjoint sensitivity kernels for a band-passed
-   traveltime or amplitude measurement within a specified time window. 
+   Filtering adjoint sources involves filtering twice:
+   - first, filter the synthetics before constructing the adjoint sources, then
+   - second, filter the adjoint sources again.
+   This leads to correctly computed adjoint sensitivity kernels for a band-passed
+   traveltime or amplitude measurement within a specified time window.
 
 3. run a kernel simulation:
 
-   use the scripts ./process.kernel.sh to run a kernel simulation and create the corresponding
+   use the scripts ./run_this_example.kernel.sh to run a kernel simulation and create the corresponding
    sensitivity kernels in the DATABASES_MPI/ directory.
 
    Visualizations of kernels with Paraview involve creating VTK-files, using the script ./xcombine_vol_data.sh.
 
 
+Note: The example simulations here make use of simplified physics and coarse resolutions for faster calculations, 
+      e.g. we compute sensitivity kernels without taking topography, gravity, rotation, or attenuation into account.
+
+      For more realistic computations, please consider turning on the corresponding options in your Par_file following the user manual.
 
