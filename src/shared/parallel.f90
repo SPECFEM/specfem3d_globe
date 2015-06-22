@@ -1135,8 +1135,8 @@ end module my_mpi
 
   subroutine recv_cr(recvbuf, recvcount, dest, recvtag)
 
-  use constants
   use my_mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
@@ -1315,8 +1315,8 @@ end module my_mpi
 
   subroutine send_cr(sendbuf, sendcount, dest, sendtag)
 
-  use constants
   use my_mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
@@ -1357,8 +1357,8 @@ end module my_mpi
   subroutine sendrecv_cr(sendbuf, sendcount, dest, sendtag, &
                          recvbuf, recvcount, source, recvtag)
 
-  use constants
   use my_mpi
+  use constants,only: CUSTOM_REAL
 
   implicit none
 
@@ -1707,8 +1707,10 @@ end module my_mpi
   subroutine world_split()
 
   use my_mpi
+
   use constants,only: MAX_STRING_LEN,OUTPUT_FILES_BASE, &
     IMAIN,ISTANDARD_OUTPUT,mygroup,I_should_read_the_database
+
   use shared_parameters,only: NUMBER_OF_SIMULTANEOUS_RUNS,BROADCAST_SAME_MESH_AND_MODEL,OUTPUT_FILES
 
   implicit none
