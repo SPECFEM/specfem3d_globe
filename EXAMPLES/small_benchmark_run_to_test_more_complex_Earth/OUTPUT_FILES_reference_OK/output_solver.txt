@@ -1,33 +1,33 @@
- 
+
  ******************************
  **** Specfem3D MPI Solver ****
  ******************************
- 
- 
+
+
  Fixing slow underflow trapping problem using small initial field
- 
+
  There are  24  MPI processes
  Processes are numbered from 0 to  23
- 
+
  There are  80  elements along xi in each chunk
  There are  80  elements along eta in each chunk
- 
+
  There are  2  slices along xi in each chunk
  There are  2  slices along eta in each chunk
  There is a total of  4  slices in each chunk
  There are  6  chunks
  There is a total of  24  slices in all the chunks
- 
+
  NDIM =  3
- 
+
  NGLLX =  5
  NGLLY =  5
  NGLLZ =  5
- 
+
  using single precision for the calculations
- 
+
  smallest and largest possible floating-point numbers are:  1.175494351E-38,  3.402823466E+38
- 
+
  model: s362ani
    incorporating the oceans using equivalent load
    incorporating ellipticity
@@ -35,7 +35,7 @@
    incorporating self-gravitation (Cowling approximation)
    incorporating rotation
    incorporating attenuation using  3  standard linear solids
- 
+
    incorporating 3-D lateral variations
    no heterogeneities in the mantle
    incorporating crustal variations
@@ -43,8 +43,8 @@
    incorporating transverse isotropy
    no inner-core anisotropy
    no general mantle anisotropy
- 
- 
+
+
  mesh databases:
    reading in crust/mantle databases...
    reading in outer core databases...
@@ -54,91 +54,91 @@
  Spatial distribution of the slices
                         3    1
                         2    0
-  
+
     11    9       7    5      19   17
     10    8       6    4      18   16
-  
+
                        23   21
                        22   20
-  
+
                        15   13
                        14   12
-  
+
    reading in MPI databases...
    for overlapping of communications with calculations:
- 
+
    percentage of edge elements in crust/mantle  16.7769775 %
    percentage of volume elements in crust/mantle  83.2230225 %
- 
+
    percentage of edge elements in outer core  42.6046524 %
    percentage of volume elements in outer core  57.3953476 %
- 
+
    percentage of edge elements in inner core  40.3333359 %
    percentage of volume elements in inner core  59.6666641 %
- 
- 
+
+
  Elapsed time for reading mesh in seconds =  2.41075301
- 
+
  topography:
    topography/bathymetry: min/max =  -7747,  5507
- 
+
  Elapsed time for reading topo/bathy in seconds =  0.247261047
- 
- 
+
+
  sources:
- 
+
  *************************************
   locating source  1
  *************************************
- 
+
  source located in slice  4
                 in element  8970
- 
+
     xi coordinate of source in that element:  -0.19165949108169145
    eta coordinate of source in that element:  0.7777908622900167
  gamma coordinate of source in that element:  -0.38095926589568185
- 
+
   half duration:  40.  seconds
      time shift:  0.  seconds
- 
+
  magnitude of the source:
       scalar moment M0 =  2.62997300366372602E+28  dyne-cm
    moment magnitude Mw =  8.2466343844251071
- 
- 
+
+
  original (requested) position of the source:
- 
+
        latitude:  -13.82
       longitude:  -67.25
           depth:  647.10000000000002  km
- 
+
  position of the source that will be used:
- 
+
        latitude:  -13.820000000000006
       longitude:  -67.250000000000043
           depth:  647.0999999999998  km
- 
+
  Error in location of the source:  1.01581547E-12  km
- 
+
  maximum error in location of the sources:  1.01581547E-12  km
- 
- 
+
+
  Elapsed time for detection of sources in seconds =  5.52296638488769531E-3
- 
+
  End of source detection - done
- 
- 
+
+
  receivers:
- 
+
  Total number of receivers =  129
- 
- 
+
+
  ********************
   locating receivers
  ********************
- 
+
  reading receiver information...
- 
+
  Stations sorted by epicentral distance:
  Station #   105:                  IU.SAML    epicentral distance:      6.271346 degrees
  Station #    81:                   IU.LVC    epicentral distance:      8.886684 degrees
@@ -269,71 +269,71 @@
  Station #    59:                   IU.DAV    epicentral distance:    165.716248 degrees
  Station #    55:                  IU.CHTO    epicentral distance:    165.851028 degrees
  Station #   114:                  IU.TATO    epicentral distance:    166.180374 degrees
- 
+
  maximum error in location of all the receivers:  3.558650553E-12  km
- 
+
  Elapsed time for receiver detection in seconds =  0.13537979125976562
- 
+
  End of receiver detection - done
- 
- 
+
+
  found a total of  129  receivers in all slices
  this total is okay
- 
+
  source arrays:
    number of sources is  1
    size of source array                 =  1.430511475E-3 MB
                                         =  1.396983862E-6 GB
- 
+
  seismograms:
    seismograms written by master process only
    writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS =  2000
    maximum number of local receivers is  16  in slice  2
    size of maximum seismogram array       =  0.366210938 MB
                                           =  3.576278687E-4 GB
- 
- 
+
+
  Total number of samples for seismograms =  18300
- 
- 
+
+
  Reference radius of the Earth used is  6371.  km
- 
- 
+
+
  incorporating the oceans using equivalent load
- 
+
  incorporating ellipticity
- 
+
  incorporating surface topography
- 
+
  incorporating self-gravitation (Cowling approximation)
- 
+
  incorporating rotation
- 
+
  incorporating attenuation using  3  standard linear solids
- 
- 
- 
+
+
+
  preparing mass matrices
  preparing constants
  preparing gravity arrays
  preparing attenuation
  preparing wavefields
- 
+
  Elapsed time for preparing timerun in seconds =  1.57173705
- 
- 
+
+
  time loop:
- 
+
                scheme:         Newmark
             time step:  0.118749999  s
  number of time steps:  18300
  total simulated time:  35.2167702  minutes
  start time          : -60.  seconds
- 
+
  All processes are synchronized before time loop
- 
+
  Starting time iteration loop...
- 
+
  Time step #  5
  Time:  -0.992083311  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.391320166E-5
@@ -355,7 +355,7 @@
  **** BEWARE: the above time estimates are not reliable
  **** because fewer than 100 iterations have been performed
  ************************************************************
- 
+
  Time step #  500
  Time:  -1.239583362E-2  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  0.642515302
@@ -373,7 +373,7 @@
  Estimated total run time in hh:mm:ss =      1 h 27 m 51 s
  We have done  2.73224044 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:15
- 
+
  Time step #  1000
  Time:  0.977187514  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.36709511
@@ -391,7 +391,7 @@
  Estimated total run time in hh:mm:ss =      1 h 27 m 58 s
  We have done  5.46448088 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:16
- 
+
  Time step #  1500
  Time:  1.96677089  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37057686
@@ -409,7 +409,7 @@
  Estimated total run time in hh:mm:ss =      1 h 27 m 59 s
  We have done  8.19672108 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:16
- 
+
  Time step #  2000
  Time:  2.95635414  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37477863
@@ -427,15 +427,15 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 00 s
  We have done  10.9289618 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:15
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  2000
- 
+
  Writing the seismograms by master proc alone took  5.655785083770752  seconds
- 
+
  Time step #  2500
  Time:  3.9459374  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37346208
@@ -453,7 +453,7 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 42 s
  We have done  13.6612024 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  3000
  Time:  4.93552065  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37744796
@@ -471,7 +471,7 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 40 s
  We have done  16.3934422 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:16
- 
+
  Time step #  3500
  Time:  5.92510414  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37676775
@@ -489,7 +489,7 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 34 s
  We have done  19.1256828 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  4000
  Time:  6.91468763  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37778759
@@ -507,15 +507,15 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 30 s
  We have done  21.8579235 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:16
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  4000
- 
+
  Writing the seismograms by master proc alone took  5.2277600765228271  seconds
- 
+
  Time step #  4500
  Time:  7.90427065  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37819779
@@ -533,7 +533,7 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 49 s
  We have done  24.5901642 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  5000
  Time:  8.89385414  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37881505
@@ -551,7 +551,7 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 44 s
  We have done  27.3224049 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:16
- 
+
  Time step #  5500
  Time:  9.88343716  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37941837
@@ -569,7 +569,7 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 40 s
  We have done  30.0546455 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:16
- 
+
  Time step #  6000
  Time:  10.8730211  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37948632
@@ -587,15 +587,15 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 37 s
  We have done  32.7868843 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  6000
- 
+
  Writing the seismograms by master proc alone took  9.3949010372161865  seconds
- 
+
  Time step #  6500
  Time:  11.8626041  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38031936
@@ -613,7 +613,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 06 s
  We have done  35.5191269 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:16
- 
+
  Time step #  7000
  Time:  12.8521872  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38071609
@@ -631,7 +631,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 01 s
  We have done  38.2513657 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  7500
  Time:  13.8417711  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38101935
@@ -649,7 +649,7 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 57 s
  We have done  40.9836082 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  8000
  Time:  14.8313541  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38125181
@@ -667,15 +667,15 @@
  Estimated total run time in hh:mm:ss =      1 h 28 m 54 s
  We have done  43.715847 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  8000
- 
+
  Writing the seismograms by master proc alone took  18.942250967025757  seconds
- 
+
  Time step #  8500
  Time:  15.8209372  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38171661
@@ -693,7 +693,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 33 s
  We have done  46.4480858 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  9000
  Time:  16.8105202  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38179028
@@ -711,7 +711,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 28 s
  We have done  49.1803284 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  9500
  Time:  17.8001041  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.3819474
@@ -729,7 +729,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 23 s
  We have done  51.9125671 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  10000
  Time:  18.7896881  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38210022
@@ -747,15 +747,15 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 19 s
  We have done  54.6448097 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:18
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  10000
- 
+
  Writing the seismograms by master proc alone took  12.57525897026062  seconds
- 
+
  Time step #  10500
  Time:  19.7792702  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38250744
@@ -773,7 +773,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 37 s
  We have done  57.3770485 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  11000
  Time:  20.7688541  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.382447
@@ -791,7 +791,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 33 s
  We have done  60.1092911 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:18
- 
+
  Time step #  11500
  Time:  21.7584381  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38255656
@@ -809,7 +809,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 29 s
  We have done  62.8415298 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  12000
  Time:  22.7480202  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38268125
@@ -827,15 +827,15 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 25 s
  We have done  65.5737686 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  12000
- 
+
  Writing the seismograms by master proc alone took  10.25306510925293  seconds
- 
+
  Time step #  12500
  Time:  23.7376041  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.3827889
@@ -853,7 +853,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 37 s
  We have done  68.3060074 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  13000
  Time:  24.7271881  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38286304
@@ -871,7 +871,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 33 s
  We have done  71.0382538 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  13500
  Time:  25.7167702  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38301992
@@ -889,7 +889,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 32 s
  We have done  73.7704926 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  14000
  Time:  26.7063541  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38282454
@@ -907,15 +907,15 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 29 s
  We have done  76.5027313 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  14000
- 
+
  Writing the seismograms by master proc alone took  11.039379835128784  seconds
- 
+
  Time step #  14500
  Time:  27.6959381  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38316929
@@ -933,7 +933,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 40 s
  We have done  79.2349701 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:18
- 
+
  Time step #  15000
  Time:  28.6855202  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38320458
@@ -951,7 +951,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 37 s
  We have done  81.9672165 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  15500
  Time:  29.6751041  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38323808
@@ -969,7 +969,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 34 s
  We have done  84.6994553 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:18
- 
+
  Time step #  16000
  Time:  30.6646881  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38325179
@@ -987,15 +987,15 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 31 s
  We have done  87.431694 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  16000
- 
+
  Writing the seismograms by master proc alone took  11.064330101013184  seconds
- 
+
  Time step #  16500
  Time:  31.6542702  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38335824
@@ -1013,7 +1013,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 40 s
  We have done  90.1639328 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:18
- 
+
  Time step #  17000
  Time:  32.643856  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.3833195
@@ -1031,7 +1031,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 37 s
  We have done  92.8961716 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  17500
  Time:  33.6334381  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38331401
@@ -1049,7 +1049,7 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 34 s
  We have done  95.628418 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
+
  Time step #  18000
  Time:  34.6230202  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38332832
@@ -1067,15 +1067,15 @@
  Estimated total run time in hh:mm:ss =      1 h 29 m 32 s
  We have done  98.3606567 % of that
  The run will finish approximately on (in local time): Mon Jun 22, 2015 11:17
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  18000
- 
+
  Writing the seismograms by master proc alone took  23.064016103744507  seconds
- 
+
  Time step #  18300
  Time:  35.2167702  minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.38343596
@@ -1092,18 +1092,18 @@
  Estimated total run time in seconds =  5393.7648131847382
  Estimated total run time in hh:mm:ss =      1 h 29 m 53 s
  We have done  100. % of that
- 
- 
+
+
  Total number of receivers saved is  129  out of  129
- 
- 
+
+
  Total number of time steps written:  18300
- 
+
  Writing the seismograms by master proc alone took  22.757560014724731  seconds
- 
+
  Time-Loop Complete. Timing info:
  Total elapsed time in seconds =  5416.8025510311127
  Total elapsed time in hh:mm:ss =      1 h 30 m 16 s
- 
+
  End of the simulation
- 
+
