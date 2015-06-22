@@ -6,7 +6,7 @@ Example of a global shakemovie simulation (see http://global.shakemovie.princeto
 
 This example creates a global mesh, using a 3D shear-wave speed model S362ANI (Kustowski et al. [2006], 
 and runs a spectral-element simulation. The simulation is setup to use 384 CPU cores (MPI processes).
-
+The runtime is about 2h 30min.
 
 
 1. forward simulation:
