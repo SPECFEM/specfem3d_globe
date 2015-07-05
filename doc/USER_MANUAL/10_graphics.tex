@@ -10,7 +10,7 @@ output files showing the mesh, the MPI partition (slices), the $\nchunks$
 chunks, the source and receiver location, etc. Use the AVS UCD files
 \texttt{AVS\_continent\_boundaries.inp} and \texttt{AVS\_plate\_boundaries.inp}
 or the OpenDX files \texttt{DX\_continent\_boundaries.dx} and \texttt{DX\_plate\_boundaries.dx}
-(that can be created using Perl scripts located in \texttt{UTILS/Visualization/opendx\_AVS})
+(that can be created using Perl scripts located in \texttt{utils/Visualization/opendx\_AVS})
 for reference.
 
 
@@ -59,7 +59,7 @@ outputs ASCII xyz files, convenient for use with GMT. This codes uses
 significantly less memory than \texttt{create\_movie\_AVS\_DX.f90}
 and is therefore useful for high resolution runs.
 A README file and sample Perl scripts to create movies using GMT are provided in directory
-\texttt{UTILS/Visualization/GMT}.
+\texttt{utils/Visualization/GMT}.
 
 %
 \begin{figure}[H]
@@ -153,14 +153,14 @@ sensitivity kernels are the strongest along the source-receiver great
 circle path, it is sufficient to collect only the slices that are
 along or close to the great circle path.
 
-A Perl script \texttt{UTILS/Visualization/Paraview/global\_slice\_number.pl} can
+A Perl script \texttt{utils/Visualization/VTK\_Paraview/global\_slice\_number.pl} can
 help to figure out the slice numbers that lie along the great circle
 path (both the minor and major arcs), as well as the slice numbers
 required to produce a full picture of the inner core if your kernel
 also illuminates the inner core.
 
 \begin{enumerate}
-\item You need to first compile the utility programs provided in the \texttt{UTILS/Visualization/Paraview/}~\\
+\item You need to first compile the utility programs provided in the \texttt{utils/Visualization/VTK\_Paraview/}~\\
 \texttt{global\_slice\_util
 }directory. Then copy the \texttt{CMTSOLUTION} file, \texttt{STATIONS\_ADJOINT},
 and \texttt{Par\_file}, and run:
@@ -190,7 +190,7 @@ After obtaining the slice files, you can collect the corresponding
 kernel files from the given slices.
 
 \begin{enumerate}
-\item To accomplish this, you can use or modify the scripts in \texttt{UTILS/collect\_database
+\item To accomplish this, you can use or modify the scripts in \texttt{utils/collect\_database
 }directory:
 {\small
 \begin{verbatim}
@@ -275,7 +275,7 @@ mesh2vtu -i file.mesh -o file.vtu
 \end{verbatim}
 
 \item Notice that this program \texttt{mesh2vtu}, in the
-\texttt{UTILS/Visualization/Paraview/mesh2vtu} directory, uses the
+\texttt{utils/Visualization/VTK\_Paraview/mesh2vtu} directory, uses the
 VTK \urlwithparentheses{http://www.vtk.org} run-time library for its execution. Therefore,
 make sure you have it properly installed.
 \end{enumerate}
