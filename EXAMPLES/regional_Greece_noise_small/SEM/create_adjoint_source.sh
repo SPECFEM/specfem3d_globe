@@ -31,6 +31,7 @@ cd SEM/
 
 # create STATIONS_ADJOINT file with adjoint source location
 fgrep $station ../DATA/STATIONS > ./STATIONS_ADJOINT
+cp -v ./STATIONS_ADJOINT ../DATA/
 
 # returns
 echo
@@ -59,6 +60,7 @@ rename .sem.ascii.adj .adj $sta.MX*.adj
 
 # create STATIONS_ADJOINT file with adjoint source location
 fgrep $station ../DATA/STATIONS > ./STATIONS_ADJOINT
+cp -v ./STATIONS_ADJOINT ../DATA/
 
 echo
 echo "done"
