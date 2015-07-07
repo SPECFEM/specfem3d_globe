@@ -1,6 +1,6 @@
 \chapter{Post-Processing Scripts}
 
-Several post-processing scripts/programs are provided in the \texttt{UTILS/seis\_process}
+Several post-processing scripts/programs are provided in the \texttt{utils/seis\_process}
 directory, most of which need to be adjusted for different
 systems, for example, the path of the executable programs. Here we
 only list the available scripts and provide a brief description, and
@@ -15,7 +15,7 @@ After all the simulations are done, you may need to clean the local
 scratch disks for the next simulation. This is especially important
 in the case of 1- or 2-chunk kernel simulations, where very large files
 are generated for the absorbing boundaries to help with the reconstruction
-of the regular forward wavefield. A sample script is provided in \texttt{UTILS/Cluster/lsf}:
+of the regular forward wavefield. A sample script is provided in \texttt{utils/Cluster/lsf}:
 \begin{verbatim}
 cleanbase.pl machines
 \end{verbatim}
@@ -128,7 +128,7 @@ or \texttt{OUTPUT\_SEISMOS\_SAC\_BINARY} have been set to \texttt{.true.})
 are corrupted and cannot be used in SAC. If the simulation
 ran long enough so that the synthetic data may still be of use, you
 can run the script called \texttt{clean\_sac\_headers\_after\_crash.sh}
-(located in the \texttt{UTILS} directory) on the SAC files to correct
+(located in the \texttt{utils/} directory) on the SAC files to correct
 the header variable NPTS to the actually written number of time steps.
 The script must be called from the \texttt{SPECFEM3D} main directory,
 and the input argument to this script is simply a list of SAC seismogram

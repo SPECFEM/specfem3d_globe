@@ -76,13 +76,13 @@ time function may be safely filtered out afterward based upon a convolution
 with the desired source time function and/or low-pass filtering. Use
 the postprocessing script \texttt{process\_syn.pl} (see Section \ref{sub:process_syn.pl})
 with the \texttt{-h} flag, or the serial code \texttt{convolve\_source\_timefunction.f90}
-and the script \texttt{UTILS/convolve\_source\_timefunction.csh} for
+and the script \texttt{utils/convolve\_source\_timefunction.csh} for
 this purpose, or alternatively use signal-processing software packages
 such as SAC \urlwithparentheses{http://www.iris.edu/software/sac/}. Type
 \begin{verbatim}
 make convolve_source_timefunction
 \end{verbatim}
-to compile the code and then set the parameter \texttt{hdur} in \texttt{UTILS/convolve\_source\_timefunction.csh}
+to compile the code and then set the parameter \texttt{hdur} in \texttt{utils/convolve\_source\_timefunction.csh}
 to the desired half-duration.
 
 \item The zero time of the simulation corresponds to the center of the triangle/Gaussian,
