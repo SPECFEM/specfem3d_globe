@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# The script compares seismograms in two different directories 
+# The script compares seismograms in two different directories
 #
 ##################################################
 echo
