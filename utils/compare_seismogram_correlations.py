@@ -12,16 +12,18 @@ TOL_CORR = 0.8
 TOL_ERR = 0.01
 TOL_SHIFT = 0.01
 
-# directory with reference seismograms
-ref_dir = "OUTPUT_FILES_reference_OK/"
+###############################################################
+# USER PARAMETERS
 
 # computes correlations within a moving window
 # (set either to False or True)
 USE_SUB_WINDOW_CORR = False
 
+# for moving window correlations:
 # apprixomate minimum period of simulation
-# (NEX = 80 -> T_min = 256/80 * 17 s = 54.4 s)
+# (default: NEX = 80 -> T_min = 256/80 * 17 s = 54.4 s)
 TMIN = 54.4
+###############################################################
 
 def get_cross_correlation_timeshift(x,y,dt):
     """
@@ -80,7 +82,7 @@ def get_cross_correlation_timeshift(x,y,dt):
     return time_shift
 
 
-def plot_correlations(out_dir):
+def plot_correlations(out_dir,ref_dir):
     """
     plots correlation and L2-norm values between reference and output seismograms
     """
@@ -98,10 +100,10 @@ def plot_correlations(out_dir):
 
     # gets time step size from first file
     syn_file = files[0]
-    print "  checking file ",syn_file
+    print "  time step: reading from first file ",syn_file
     syn_time = np.loadtxt(syn_file)[:, 0]
     dt = syn_time[1] - syn_time[0]
-    print "  time step size: ",dt
+    print "  time step: size = ",dt
     # warning
     if dt <= 0.0:
         print "warning: invalid time step size for file ",files[0]
@@ -153,8 +155,12 @@ def plot_correlations(out_dir):
         syn_file = out_dir + '/' + fname
 
         # makes sure files are both available
-        if not os.path.isfile(ref_file): continue
-        if not os.path.isfile(syn_file): continue
+        if not os.path.isfile(ref_file):
+            print "  file " + ref_file + " not found"
+            continue
+        if not os.path.isfile(syn_file):
+            print "  file " + syn_file + " not found"
+            continue
 
         # numpy: reads in file data
         ref0 = np.loadtxt(ref_file)[:, 1]
@@ -248,15 +254,21 @@ def plot_correlations(out_dir):
 
 
 def usage():
-    print "usage: ./compare_seismogram_correlations.py OUTPUT_FILES/"
+    print "usage: ./compare_seismogram_correlations.py directory1/ directory2/"
+    print "  with"
+    print "     directory1 - directory holding seismogram files (***.sem.ascii),"
+    print "                    e.g. OUTPUT_FILES/"
+    print "     directory2 - directory holding corresponding reference seismogram files,"
+    print "                    e.g. OUTPUT_FILES_reference_OK/"
 
 if __name__ == '__main__':
     # gets arguments
-    if len(sys.argv) != 2:
+    if len(sys.argv) != 3:
         usage()
         sys.exit(1)
     else:
         out_dir = sys.argv[1]
+        ref_dir = sys.argv[2]
 
-    plot_correlations(out_dir)
+    plot_correlations(out_dir,ref_dir)
 

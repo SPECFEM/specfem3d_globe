@@ -1,0 +1,1 @@
+../small_benchmark_run_to_test_very_simple_Earth/compare_seismograms.sh
