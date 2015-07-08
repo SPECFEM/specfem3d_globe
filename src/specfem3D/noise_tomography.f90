@@ -303,7 +303,9 @@
   filesize = reclen
   filesize = filesize*NSTEP
 
-  write(outputname,"('/proc',i6.6,'_surface_movie')") myrank
+  ! noise surface array stored by each process
+  write(outputname,"('/proc',i6.6,'_surface_movie.bin')") myrank
+
   if (NOISE_TOMOGRAPHY == 1) call open_file_abs_w(9,trim(LOCAL_TMP_PATH)//trim(outputname), &
                                                   len_trim(trim(LOCAL_TMP_PATH)//trim(outputname)), filesize)
   if (NOISE_TOMOGRAPHY == 2) call open_file_abs_r(9,trim(LOCAL_TMP_PATH)//trim(outputname), &

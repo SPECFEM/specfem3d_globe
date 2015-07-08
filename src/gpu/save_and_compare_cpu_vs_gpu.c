@@ -114,7 +114,7 @@ void get_max_from_surface_file_ (int *nodes_per_iterationf, int *NSTEP) {
 #else
   procid = 0;
 #endif
-  sprintf (filename, "DATABASES_MPI/proc%06d_surface_movie", procid);
+  sprintf (filename, "DATABASES_MPI/proc%06d_surface_movie.bin", procid);
 
   FILE *fp; int it;
   printf ("Opening %s for analysis\n", filename);
@@ -183,8 +183,8 @@ void compare_two_vectors_ (int *sizef, float *vector1, float *vector2, int *num_
 }
 
 void compare_surface_files_ (int *bytes_per_iteration, int *number_of_iterations) {
-  const char *cpu_file = "DATABASES_MPI/cpu_proc000001_surface_movie";
-  const char *gpu_file = "DATABASES_MPI/cpu_v2_proc000001_surface_movie";
+  const char *cpu_file = "DATABASES_MPI/cpu_proc000001_surface_movie.bin";
+  const char *gpu_file = "DATABASES_MPI/cpu_v2_proc000001_surface_movie.bin";
   size_t res;
   FILE *fp_cpu;
 

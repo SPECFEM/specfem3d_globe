@@ -80,6 +80,9 @@ void FC_FUNC_ (noise_transfer_surface_to_host,
   }
 #endif
 
+  // note: the data copy here is blocking and waits for the operation to finish
+  //       to speed up noise simulations, one could try an asynchronuous/non-blocking copy to overlap computations
+
   // copies noise array to CPU
   gpuCopy_from_device_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle);
 
@@ -171,7 +174,9 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
   dim3 grid(num_blocks_x,num_blocks_y,1);
   dim3 threads(NGLL2,1,1);
 #endif
-
+  // note: the data copy here is blocking and waits for the operation to finish
+  //       to speed up noise simulations, one could try an asynchronuous/non-blocking copy to overlap computations
+  
   // copies surface movie to GPU
   gpuCopy_todevice_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM*NGLL2 *(mp->nspec2D_top_crust_mantle));
 

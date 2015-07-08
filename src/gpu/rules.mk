@@ -123,15 +123,13 @@ BUILD_VERSION_TXT += support
 ### building rules
 ###
 
+.PHONY: boast
+
+boast: boast_kernels
 
 ###
 ### boast kernel generation
 ###
-
-# Reduce GPU-register pressure by limited the number of thread spread
-# (GPU for embedded devices are not powerful enough for big kernels)
-# Must match mesh_constants_gpu.h::GPU_ELEM_PER_THREAD
-GPU_ELEM_PER_THREAD := 1
 
 boast_kernels :
 	@echo ""

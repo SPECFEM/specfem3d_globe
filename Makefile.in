@@ -61,16 +61,19 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 ####
 #######################################
 
+# Reduce GPU-register pressure by limited the number of thread spread
+# (GPU for embedded devices are not powerful enough for big kernels)
+# Must match mesh_constants_gpu.h::GPU_ELEM_PER_THREAD
+GPU_ELEM_PER_THREAD := 1
+
+##
+## CUDA
+##
 @COND_CUDA_TRUE@CUDA = yes
 @COND_CUDA_FALSE@CUDA = no
 
 @COND_CUDA5_TRUE@CUDA5 = yes
 @COND_CUDA5_FALSE@CUDA5 = no
-
-@COND_OCL_TRUE@OCL = yes
-@COND_OCL_FALSE@OCL = no
-
-MPI_INCLUDES = @MPI_INCLUDES@
 
 CUDA_FLAGS = @CUDA_FLAGS@
 CUDA_INC = @CUDA_CPPFLAGS@
@@ -80,30 +83,9 @@ CUDA_DEBUG = --cudart=shared
 @COND_CUDA_TRUE@NVCC = nvcc
 @COND_CUDA_FALSE@NVCC = @CC@
 
-OCL_CPU_FLAGS = @OCL_CPU_FLAGS@
-OCL_GPU_FLAGS = @OCL_GPU_FLAGS@
-
-OCL_INC = @OCL_CFLAGS@
-OCL_LINK = @OCL_LDFLAGS@ @OCL_LIBS@
-
-ifeq ($(OCL), yes)
-  ifeq ($(CUDA), yes)
-    GPU_CUDA_AND_OCL = yes
-  endif
-endif
-
-ifeq ($(OCL), no)
-  ifeq ($(CUDA), no)
-    NO_GPU = yes
-  endif
-endif
-
-ifneq ($(NO_GPU), yes)
-  HAS_GPU = yes
-endif
-
-# GPU architecture
-
+##
+## GPU architecture
+##
 # CUDA architecture / code version
 # Fermi: -gencode=arch=compute_10,code=sm_10 not supported
 # Tesla (default): -gencode=arch=compute_20,code=sm_20
@@ -129,6 +111,37 @@ GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
 
 @COND_CUDA_FALSE@NVCC_FLAGS =
 @COND_CUDA_FALSE@NVCCLINK = $(NVCC) $(NVCC_FLAGS)
+
+##
+## OpenCL
+##
+@COND_OCL_TRUE@OCL = yes
+@COND_OCL_FALSE@OCL = no
+
+OCL_CPU_FLAGS = @OCL_CPU_FLAGS@
+OCL_GPU_FLAGS = @OCL_GPU_FLAGS@
+
+OCL_INC = @OCL_CFLAGS@
+OCL_LINK = @OCL_LDFLAGS@ @OCL_LIBS@
+
+ifeq ($(OCL), yes)
+  ifeq ($(CUDA), yes)
+    GPU_CUDA_AND_OCL = yes
+  endif
+endif
+
+ifeq ($(OCL), no)
+  ifeq ($(CUDA), no)
+    NO_GPU = yes
+  endif
+endif
+
+ifneq ($(NO_GPU), yes)
+  HAS_GPU = yes
+endif
+
+## MPI directories for CUDA / OpenCL
+MPI_INCLUDES = @MPI_INCLUDES@
 
 #######################################
 ####

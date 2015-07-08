@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 1.0.1
+//      this file has been generated automatically by BOAST version 1.0.3
 //      by: make boast_kernels
 
 /*
@@ -100,8 +100,8 @@ __global__ void noise_transfer_surface_to_host_kernel(const int * ibelm_top, con
     j = (igll) / (NGLLX);
     i = igll - ((j) * (NGLLX));
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface)] = displ[(iglob) * (3)];
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)] = displ[(iglob) * (3)];
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)] = displ[(iglob) * (3)];
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface)] = displ[(iglob) * (3) + 0];
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)] = displ[(iglob) * (3) + 1];
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)] = displ[(iglob) * (3) + 2];
   }
 }
