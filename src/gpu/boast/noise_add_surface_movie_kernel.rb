@@ -62,7 +62,7 @@ module BOAST
             print eta === eta + noise_surface_movie[INDEX3(ndim,ngll2,indx,igll,iface)]*normal[indx]
           }
 
-          print jacobianw === wgllwgll[k*ngllx+i]*jacobian2D[igll+ngll2*iface]
+          print jacobianw === wgllwgll[j*ngllx+i]*jacobian2D[igll+ngll2*iface]
           
           (0..2).each { |indx|
             print atomicAdd(accel+ iglob*3 + indx, eta*mask_noise[ipoin]*normal[indx]*jacobianw)

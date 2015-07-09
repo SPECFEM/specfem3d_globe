@@ -4,7 +4,7 @@
 # USER PARAMETERS
 
 ## 4 CPUs
-CPUs=4
+NPROC=4
 
 ###########################################################
 
@@ -21,7 +21,7 @@ NCHUNKS=`grep ^NCHUNKS DATA/Par_file | cut -d = -f 2 `
 # total number of nodes is the product of the values read
 numnodes=$(( $NCHUNKS * $NPROC_XI * $NPROC_ETA ))
 
-if [ ! "$numnodes" == "$CPUs" ]; then
+if [ ! "$numnodes" == "$NPROC" ]; then
   echo "error: Par_file for $numnodes CPUs"
   exit 1
 fi

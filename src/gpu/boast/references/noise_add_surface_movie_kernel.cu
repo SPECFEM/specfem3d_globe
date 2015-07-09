@@ -43,7 +43,7 @@ __global__ void noise_add_surface_movie_kernel(realw* accel,
                  noise_surface_movie[INDEX3(NDIM,NGLL2,2,igll,iface)]*normal_z);
 
     // weighted jacobian
-    realw jacobianw = wgllwgll[k*NGLLX+i]*jacobian2D[igll+NGLL2*iface];
+    realw jacobianw = wgllwgll[j*NGLLX+i]*jacobian2D[igll+NGLL2*iface];
 
     // note: check error from cuda-memcheck and ddt seems "incorrect", because we
     //          are passing a __constant__ variable pointer around like it was
