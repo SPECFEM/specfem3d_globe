@@ -23,12 +23,8 @@ rm -rf DATABASES_MPI/*
 rm -rf OUTPUT_FILES/*
 
 # links data directories needed to run example in this current directory with s362ani
-rm -rf DATA
 mkdir -p DATA
 cd DATA/
-ln -s ../Par_file
-ln -s ../CMTSOLUTION
-ln -s ../STATIONS
 ln -s ../../../DATA/crust2.0
 ln -s ../../../DATA/s362ani
 ln -s ../../../DATA/QRFSI12

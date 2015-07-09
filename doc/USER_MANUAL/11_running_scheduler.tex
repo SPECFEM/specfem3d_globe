@@ -35,7 +35,7 @@ We consider the submission of a regular forward simulation. The two
 main scripts are \texttt{\small run\_lsf.bash}, which compiles the
 Fortran code and submits the job to the scheduler, and \texttt{\small go\_mesher\_solver\_lsf}~\\
 \texttt{\small .bash}, which contains the instructions that make up
-the job itself. These scripts can be found in \texttt{\small UTILS/Cluster/lsf}
+the job itself. These scripts can be found in \texttt{\small utils/Cluster/lsf}
 directory and can straightforwardly be modified and adapted to meet
 more specific running needs.
 
@@ -100,7 +100,7 @@ and how to name this job (\texttt{go\_mesher\_solver\_lsf}).
 \item The script then creates a list of the nodes allocated to this job
 by echoing the value of a dynamically set environment variable \texttt{LSB\_MCPU\_HOSTS}
 and parsing the output into a one-column list using the Perl script
-\texttt{UTILS/Cluster/lsf/remap\_lsf\_machines.pl}. It then creates a set of scratch
+\texttt{utils/Cluster/lsf/remap\_lsf\_machines.pl}. It then creates a set of scratch
 directories on these nodes (\texttt{\small /scratch/}~\\
 \texttt{\small \$USER/DATABASES\_MPI}) to be used as the \texttt{LOCAL\_PATH}
 for temporary storage of the database files. The scratch directories
@@ -149,7 +149,7 @@ cleanbase_jobid.pl OUTPUT_FILES/machines DATA/Par_file
 
 For kernel simulations, you can use the sample run scripts \texttt{run\_lsf.kernel}
 and \texttt{go\_mesher\_solver\_globe}~\\
-\texttt{.kernel} provided in \texttt{UTILS/Cluster} directory, and modify
+\texttt{.kernel} provided in \texttt{utils/Cluster} directory, and modify
 the command-line arguments of \texttt{xcreate\_adjsrc\_traveltime} in
 \texttt{go\_mesher\_solver\_globe.kernel} according to the start and end time
 of the specific portion of the forward seismograms you are interested

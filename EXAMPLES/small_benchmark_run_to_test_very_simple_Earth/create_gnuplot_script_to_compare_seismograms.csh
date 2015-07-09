@@ -1,5 +1,11 @@
 #!/bin/csh
 
+# uncompress seismograms
+if ( -e OUTPUT_FILES_reference_OK/AAE.IU.MXE.sem.ascii.bz2 ) then
+  bunzip2 OUTPUT_FILES_reference_OK/*.bz2
+endif
+
+# creates gnuplot file
 echo set term postscript color solid "Helvetica" 22
 echo set output \"all_seismograms_comparison.ps\"
 

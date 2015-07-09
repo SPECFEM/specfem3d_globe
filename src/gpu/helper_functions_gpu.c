@@ -672,7 +672,7 @@ void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop, char* info_str) {
 // exit functions
 /* ----------------------------------------------------------------------------------------------- */
 
-void exit_on_gpu_error (char *kernel_name) {
+void exit_on_gpu_error (const char *kernel_name) {
   //check to catch errors from previous operations
   // /!\ in opencl, we can't have information about the last ASYNC error
   int error = 0;
@@ -725,7 +725,7 @@ void exit_on_gpu_error (char *kernel_name) {
 
 /*----------------------------------------------------------------------------------------------- */
 
-void exit_on_error (char *info) {
+void exit_on_error (const char *info) {
   printf ("\nERROR: %s\n", info);
   fflush (stdout);
 

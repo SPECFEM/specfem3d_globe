@@ -1,0 +1,28 @@
+------------------------------------
+README
+------------------------------------
+
+Example of a global shakemovie simulation (see http://global.shakemovie.princeton.edu)
+
+This example creates a global mesh, using a 3D shear-wave speed model S362ANI (Kustowski et al. [2006], 
+and runs a spectral-element simulation. The simulation is setup to use 384 CPU cores (MPI processes).
+The runtime is about 2h 30min.
+
+
+1. forward simulation:
+----------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+The simulation is accurate down to a shortest period of ~ 17 s.
+(minimum period resolved ~ (256/NEX_XI) * 17)
+ 
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+
+
+Please modify the setup and scripts according to your specifics.
+
