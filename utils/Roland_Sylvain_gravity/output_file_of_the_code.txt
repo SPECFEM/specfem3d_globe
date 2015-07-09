@@ -1,28 +1,28 @@
- 
+
  ****************************
  *** Specfem3D MPI Mesher ***
  ****************************
- 
- 
+
+
  There are          600  MPI processes
  Processes are numbered from 0 to          599
- 
+
  There are          160  elements along xi in each chunk
  There are          160  elements along eta in each chunk
- 
+
  There are           10  slices along xi in each chunk
  There are           10  slices along eta in each chunk
  There is a total of          100  slices in each chunk
  There are            6  chunks in the global mesh
  There is a total of          600  slices in the global mesh
- 
+
  NGLLX =            5
  NGLLY =            5
  NGLLZ =            5
- 
+
  Shape functions defined by NGNOD =           27  control nodes
  Surface shape functions defined by NGNOD2D =            9  control nodes
- 
+
  model: s40rts
    no oceans
    incorporating ellipticity
@@ -30,7 +30,7 @@
    no self-gravitation
    no rotation
    no attenuation
- 
+
    incorporating 3-D lateral variations
    no heterogeneities in the mantle
    incorporating crustal variations
@@ -38,12 +38,12 @@
    incorporating anisotropy
    no inner-core anisotropy
    no general mantle anisotropy
- 
+
  Reference radius of the Earth used is    6371.00000000000       km
- 
+
  Central cube is at a radius of    950.000000000000       km
  creating global slice addressing
- 
+
  Spatial distribution of the slices
                        99   89   79   69   59   49   39   29   19    9
                        98   88   78   68   58   48   38   28   18    8
@@ -55,7 +55,7 @@
                        92   82   72   62   52   42   32   22   12    2
                        91   81   71   61   51   41   31   21   11    1
                        90   80   70   60   50   40   30   20   10    0
-  
+
    299  289  279  269  259  249  239  229  219  209     199  189  179  169  159  149  139  129  119  109     499  489  479  469  459  449  439  429  419  409
    298  288  278  268  258  248  238  228  218  208     198  188  178  168  158  148  138  128  118  108     498  488  478  468  458  448  438  428  418  408
    297  287  277  267  257  247  237  227  217  207     197  187  177  167  157  147  137  127  117  107     497  487  477  467  457  447  437  427  417  407
@@ -66,7 +66,7 @@
    292  282  272  262  252  242  232  222  212  202     192  182  172  162  152  142  132  122  112  102     492  482  472  462  452  442  432  422  412  402
    291  281  271  261  251  241  231  221  211  201     191  181  171  161  151  141  131  121  111  101     491  481  471  461  451  441  431  421  411  401
    290  280  270  260  250  240  230  220  210  200     190  180  170  160  150  140  130  120  110  100     490  480  470  460  450  440  430  420  410  400
-  
+
                       599  589  579  569  559  549  539  529  519  509
                       598  588  578  568  558  548  538  528  518  508
                       597  587  577  567  557  547  537  527  517  507
@@ -77,7 +77,7 @@
                       592  582  572  562  552  542  532  522  512  502
                       591  581  571  561  551  541  531  521  511  501
                       590  580  570  560  550  540  530  520  510  500
-  
+
                       399  389  379  369  359  349  339  329  319  309
                       398  388  378  368  358  348  338  328  318  308
                       397  387  377  367  357  347  337  327  317  307
@@ -88,29 +88,29 @@
                       392  382  372  362  352  342  332  322  312  302
                       391  381  371  361  351  341  331  321  311  301
                       390  380  370  360  350  340  330  320  310  300
-  
- 
+
+
  incorporating topography
    topography/bathymetry: min/max =       -10803        8333
- 
+
  incorporating crustal model: CRUST1.0
- 
- 
- 
- 
+
+
+
+
  *******************************************
  creating mesh in region            1
  this region is the crust and mantle
  *******************************************
- 
- 
+
+
  first pass
- 
-   ...allocating arrays 
- 
-   ...setting up layers 
- 
-   ...creating mesh elements 
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
    creating layer            1 out of           10
      10.0%    current clock (NOT elapsed) time is: 02h 24min 30sec
    creating layer            2 out of           10
@@ -131,19 +131,19 @@
      90.0%    current clock (NOT elapsed) time is: 02h 24min 31sec
    creating layer           10 out of           10
     100.0%    current clock (NOT elapsed) time is: 02h 24min 31sec
- 
- 
+
+
    ...creating global addressing
- 
+
    ...creating MPI buffers
- 
+
  second pass
- 
-   ...allocating arrays 
- 
-   ...setting up layers 
- 
-   ...creating mesh elements 
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
    creating layer            1 out of           10
      10.0%    current clock (NOT elapsed) time is: 02h 24min 39sec
    creating layer            2 out of           10
@@ -164,22 +164,22 @@
      90.0%    current clock (NOT elapsed) time is: 02h 25min 01sec
    creating layer           10 out of           10
     100.0%    current clock (NOT elapsed) time is: 02h 25min 11sec
- 
- 
+
+
    ...precomputing Jacobian
- 
+
    ...creating chunk buffers
- 
+
  ----- creating chunk buffers -----
- 
+
  There are           10  slices along xi in each chunk
  There are           10  slices along eta in each chunk
  There is a total of          100  slices in each chunk
  There are            6  chunks
  There is a total of          600  slices in all the chunks
- 
+
  There is a total of          120  messages to assemble faces between chunks
- 
+
  Generating message            1  for faces out of          120
  Generating message            2  for faces out of          120
  Generating message            3  for faces out of          120
@@ -300,9 +300,9 @@
  Generating message          118  for faces out of          120
  Generating message          119  for faces out of          120
  Generating message          120  for faces out of          120
- 
+
  all the messages for chunk faces have the right size
- 
+
  Generating message            1  for corners out of            8
  Generating message            2  for corners out of            8
  Generating message            3  for corners out of            8
@@ -311,141 +311,141 @@
  Generating message            6  for corners out of            8
  Generating message            7  for corners out of            8
  Generating message            8  for corners out of            8
- 
+
    ...preparing MPI interfaces
- 
+
  crust/mantle region:
    #max of points in MPI buffers along xi npoin2D_xi =         3669
    #max of array elements transferred npoin2D_xi*NDIM =        11007
- 
+
    #max of points in MPI buffers along eta npoin2D_eta =         3669
    #max of array elements transferred npoin2D_eta*NDIM =        11007
- 
+
  crust mantle MPI:
    maximum interfaces:           8
    MPI addressing maximum interfaces:           8
    MPI addressing : all interfaces okay
- 
+
    total MPI interface points :      9064584
    unique MPI interface points:      8544000
    maximum valence            :            3
    total unique MPI interface points:     8544000
- 
- 
-   ...element inner/outer separation 
- 
+
+
+   ...element inner/outer separation
+
  for overlapping of communications with calculations:
- 
+
  percentage of edge elements in crust/mantle    38.33333     %
  percentage of volume elements in crust/mantle    61.66667     %
- 
- 
-   ...element mesh coloring 
+
+
+   ...element mesh coloring
    mesh coloring:  F
- 
+
    ...creating mass matrix
- 
-    calculated top area:    12.5600450357667     
- calculated bottom area:    3.74933399372606     
- 
+
+    calculated top area:    12.5600450357667
+ calculated bottom area:    3.74933399372606
+
    ...computing Roland_Sylvain integrals
- for Roland_Sylvain integrals            1  elements computed out of 
+ for Roland_Sylvain integrals            1  elements computed out of
         2160
- for Roland_Sylvain integrals          100  elements computed out of 
+ for Roland_Sylvain integrals          100  elements computed out of
         2160
- for Roland_Sylvain integrals          200  elements computed out of 
+ for Roland_Sylvain integrals          200  elements computed out of
         2160
- for Roland_Sylvain integrals          300  elements computed out of 
+ for Roland_Sylvain integrals          300  elements computed out of
         2160
- for Roland_Sylvain integrals          400  elements computed out of 
+ for Roland_Sylvain integrals          400  elements computed out of
         2160
- for Roland_Sylvain integrals          500  elements computed out of 
+ for Roland_Sylvain integrals          500  elements computed out of
         2160
- for Roland_Sylvain integrals          600  elements computed out of 
+ for Roland_Sylvain integrals          600  elements computed out of
         2160
- for Roland_Sylvain integrals          700  elements computed out of 
+ for Roland_Sylvain integrals          700  elements computed out of
         2160
- for Roland_Sylvain integrals          800  elements computed out of 
+ for Roland_Sylvain integrals          800  elements computed out of
         2160
- for Roland_Sylvain integrals          900  elements computed out of 
+ for Roland_Sylvain integrals          900  elements computed out of
         2160
- for Roland_Sylvain integrals         1000  elements computed out of 
+ for Roland_Sylvain integrals         1000  elements computed out of
         2160
- for Roland_Sylvain integrals         1100  elements computed out of 
+ for Roland_Sylvain integrals         1100  elements computed out of
         2160
- for Roland_Sylvain integrals         1200  elements computed out of 
+ for Roland_Sylvain integrals         1200  elements computed out of
         2160
- for Roland_Sylvain integrals         1300  elements computed out of 
+ for Roland_Sylvain integrals         1300  elements computed out of
         2160
- for Roland_Sylvain integrals         1400  elements computed out of 
+ for Roland_Sylvain integrals         1400  elements computed out of
         2160
- for Roland_Sylvain integrals         1500  elements computed out of 
+ for Roland_Sylvain integrals         1500  elements computed out of
         2160
- for Roland_Sylvain integrals         1600  elements computed out of 
+ for Roland_Sylvain integrals         1600  elements computed out of
         2160
- for Roland_Sylvain integrals         1700  elements computed out of 
+ for Roland_Sylvain integrals         1700  elements computed out of
         2160
- for Roland_Sylvain integrals         1800  elements computed out of 
+ for Roland_Sylvain integrals         1800  elements computed out of
         2160
- for Roland_Sylvain integrals         1900  elements computed out of 
+ for Roland_Sylvain integrals         1900  elements computed out of
         2160
- for Roland_Sylvain integrals         2000  elements computed out of 
+ for Roland_Sylvain integrals         2000  elements computed out of
         2160
- for Roland_Sylvain integrals         2100  elements computed out of 
+ for Roland_Sylvain integrals         2100  elements computed out of
         2160
- for Roland_Sylvain integrals         2160  elements computed out of 
+ for Roland_Sylvain integrals         2160  elements computed out of
         2160
- 
+
  *******************************************
  creating mesh in region            2
  this region is the outer core
  *******************************************
- 
- 
+
+
  first pass
- 
-   ...allocating arrays 
- 
-   ...setting up layers 
- 
-   ...creating mesh elements 
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 06h 39min 17sec
    creating layer            2 out of            2
     100.0%    current clock (NOT elapsed) time is: 06h 39min 17sec
- 
- 
+
+
    ...creating global addressing
- 
+
    ...creating MPI buffers
- 
+
  second pass
- 
-   ...allocating arrays 
- 
-   ...setting up layers 
- 
-   ...creating mesh elements 
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 06h 39min 17sec
    creating layer            2 out of            2
     100.0%    current clock (NOT elapsed) time is: 06h 39min 17sec
- 
- 
+
+
    ...precomputing Jacobian
- 
+
    ...creating chunk buffers
- 
+
  ----- creating chunk buffers -----
- 
+
  There are           10  slices along xi in each chunk
  There are           10  slices along eta in each chunk
  There is a total of          100  slices in each chunk
  There are            6  chunks
  There is a total of          600  slices in all the chunks
- 
+
  There is a total of          120  messages to assemble faces between chunks
- 
+
  Generating message            1  for faces out of          120
  Generating message            2  for faces out of          120
  Generating message            3  for faces out of          120
@@ -566,9 +566,9 @@
  Generating message          118  for faces out of          120
  Generating message          119  for faces out of          120
  Generating message          120  for faces out of          120
- 
+
  all the messages for chunk faces have the right size
- 
+
  Generating message            1  for corners out of            8
  Generating message            2  for corners out of            8
  Generating message            3  for corners out of            8
@@ -577,96 +577,96 @@
  Generating message            6  for corners out of            8
  Generating message            7  for corners out of            8
  Generating message            8  for corners out of            8
- 
+
    ...preparing MPI interfaces
- 
+
  outer core region:
    #max of points in MPI buffers along xi npoin2D_xi =          877
    #max of array elements transferred npoin2D_xi*NDIM =         2631
- 
+
    #max of points in MPI buffers along eta npoin2D_eta =          877
    #max of array elements transferred npoin2D_eta*NDIM =         2631
- 
+
  outer core MPI:
    maximum interfaces:           8
    MPI addressing maximum interfaces:           8
    MPI addressing : all interfaces okay
- 
+
    total MPI interface points :      2259240
    unique MPI interface points:      1948800
    maximum valence            :            3
    total assembled MPI interface points:     1948800
- 
- 
-   ...element inner/outer separation 
+
+
+   ...element inner/outer separation
  percentage of edge elements in outer core    81.39535     %
  percentage of volume elements in outer core    18.60465     %
- 
- 
-   ...element mesh coloring 
+
+
+   ...element mesh coloring
    mesh coloring:  F
- 
+
    ...creating mass matrix
- 
-    calculated top area:    3.74933399372606     
- calculated bottom area:   0.461558583668424     
- 
+
+    calculated top area:    3.74933399372606
+ calculated bottom area:   0.461558583668424
+
    ...computing Roland_Sylvain integrals
- for Roland_Sylvain integrals            1  elements computed out of 
+ for Roland_Sylvain integrals            1  elements computed out of
          172
- for Roland_Sylvain integrals          100  elements computed out of 
+ for Roland_Sylvain integrals          100  elements computed out of
          172
- for Roland_Sylvain integrals          172  elements computed out of 
+ for Roland_Sylvain integrals          172  elements computed out of
          172
- 
+
  *******************************************
  creating mesh in region            3
  this region is the inner core
  *******************************************
- 
- 
+
+
  first pass
- 
-   ...allocating arrays 
- 
-   ...setting up layers 
- 
-   ...creating mesh elements 
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 06h 59min 31sec
- 
+
    creating central cube
- 
+
    ...creating global addressing
- 
+
    ...creating MPI buffers
- 
+
  second pass
- 
-   ...allocating arrays 
- 
-   ...setting up layers 
- 
-   ...creating mesh elements 
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 06h 59min 31sec
- 
+
    creating central cube
- 
+
    ...precomputing Jacobian
- 
+
    ...creating chunk buffers
- 
+
  ----- creating chunk buffers -----
- 
+
  There are           10  slices along xi in each chunk
  There are           10  slices along eta in each chunk
  There is a total of          100  slices in each chunk
  There are            6  chunks
  There is a total of          600  slices in all the chunks
- 
+
  There is a total of          120  messages to assemble faces between chunks
- 
+
  Generating message            1  for faces out of          120
  Generating message            2  for faces out of          120
  Generating message            3  for faces out of          120
@@ -787,9 +787,9 @@
  Generating message          118  for faces out of          120
  Generating message          119  for faces out of          120
  Generating message          120  for faces out of          120
- 
+
  all the messages for chunk faces have the right size
- 
+
  Generating message            1  for corners out of            8
  Generating message            2  for corners out of            8
  Generating message            3  for corners out of            8
@@ -798,155 +798,155 @@
  Generating message            6  for corners out of            8
  Generating message            7  for corners out of            8
  Generating message            8  for corners out of            8
- 
+
    ...preparing MPI interfaces
- 
+
  inner core region:
    #max of points in MPI buffers along xi npoin2D_xi =          801
    #max of array elements transferred npoin2D_xi*NDIM =         2403
- 
+
    #max of points in MPI buffers along eta npoin2D_eta =          801
    #max of array elements transferred npoin2D_eta*NDIM =         2403
- 
- 
+
+
  including central cube
- 
+
  inner core MPI:
  inner core with central cube MPI:
    maximum interfaces:          31
    MPI addressing maximum interfaces:          31
    MPI addressing : all interfaces okay
- 
+
    total MPI interface points :       601992
    unique MPI interface points:       458200
    maximum valence            :            7
    total assembled MPI interface points:      458200
- 
- 
-   ...element inner/outer separation 
+
+
+   ...element inner/outer separation
  percentage of edge elements in inner core    54.54546     %
  percentage of volume elements in inner core    45.45454     %
- 
- 
-   ...element mesh coloring 
+
+
+   ...element mesh coloring
    mesh coloring:  F
- 
+
    ...creating mass matrix
- 
-    calculated top area:   0.461558583668424     
- calculated bottom area:   0.211696672374717     
- 
+
+    calculated top area:   0.461558583668424
+ calculated bottom area:   0.211696672374717
+
    ...computing Roland_Sylvain integrals
- for Roland_Sylvain integrals            1  elements computed out of 
+ for Roland_Sylvain integrals            1  elements computed out of
           88
- for Roland_Sylvain integrals           88  elements computed out of 
+ for Roland_Sylvain integrals           88  elements computed out of
           88
- 
- calculated volume:    4.18410575573324     
- 
- computed total Earth mass for this density model and mesh: 
+
+ calculated volume:    4.18410575573324
+
+ computed total Earth mass for this density model and mesh:
   5.973928520702748E+024  kg
     (should be not too far from 5.974E+24 kg)
- 
+
  average density for this density model and mesh:    5521.21365725308       kg/m
  3
     (should be not too far from 5514 kg/m3)
- 
- position of the center of mass of the Earth for this density model and mesh: 
+
+ position of the center of mass of the Earth for this density model and mesh:
     x =  -4.252974378716729E-013  km
     y =   1.437719760222687E-012  km
     z =   2.087146141064491E-013  km
     distance to center =   1.513762798372517E-012  km
- 
- 
- minval of norm of g vector on whole observation surface = 
+
+
+ minval of norm of g vector on whole observation surface =
    9.07016969348020       m.s-2
- maxval of norm of g vector on whole observation surface = 
+ maxval of norm of g vector on whole observation surface =
    9.09813353875059       m.s-2
- 
+
  minval of G_xx on whole observation surface =   -1374.31671074432       Eotvos
  maxval of G_xx on whole observation surface =    2738.87372493946       Eotvos
- 
+
  minval of G_yy on whole observation surface =   -1373.67994555197       Eotvos
  maxval of G_yy on whole observation surface =    2742.06663652309       Eotvos
- 
+
  minval of G_zz on whole observation surface =   -1374.48230626873       Eotvos
  maxval of G_zz on whole observation surface =    2746.20413470664       Eotvos
- 
+
  minval of G_xy on whole observation surface =   -2056.96533920110       Eotvos
  maxval of G_xy on whole observation surface =    2053.69297111018       Eotvos
- 
+
  minval of G_xz on whole observation surface =   -2056.13544781585       Eotvos
  maxval of G_xz on whole observation surface =    2057.99063009606       Eotvos
- 
+
  minval of G_yz on whole observation surface =   -2058.48841667374       Eotvos
  maxval of G_yz on whole observation surface =    2056.65339660025       Eotvos
- 
+
  Minval and maxval of trace of G, which in principle should be zero:
- 
- minval of abs(G_xx + G_yy + G_zz) on whole observation surface = 
+
+ minval of abs(G_xx + G_yy + G_zz) on whole observation surface =
   0.000000000000000E+000  Eotvos
- maxval of abs(G_xx + G_yy + G_zz) on whole observation surface = 
+ maxval of abs(G_xx + G_yy + G_zz) on whole observation surface =
   7.725020623183809E-011  Eotvos
- 
+
  -----------------------------
- 
+
  displaying the fields computed at:
      ix_observation =          166  out of          500
      iy_observation =          125  out of          500
      of mesh chunk            3
- 
+
  computed g_x  =    8.11917857575563       m.s-2
  computed g_y  =    3.38656178001491       m.s-2
  computed g_z  =    2.21918985060483       m.s-2
- 
+
  computed norm of g vector =    9.07274297155466       m.s-2
    (should be not too far from    9.049929      m.s-2)
- 
+
  computed G_xx =    1919.19497952206       Eotvos
  computed G_yy =   -794.837027501745       Eotvos
  computed G_zz =   -1124.35795202034       Eotvos
- 
+
  G tensor should be traceless, G_xx + G_yy + G_zz = 0.
  Actual sum obtained =  -2.410160959698260E-011
   i.e.,   1.2558187E-12 % of max(abs(G_xx),abs(G_yy),abs(G_zz))
- 
+
  computed G_xy =    1370.96465913758       Eotvos
  computed G_xz =    900.313902022877       Eotvos
  computed G_yz =    376.174174998562       Eotvos
- 
+
  Repartition of elements in regions:
  ----------------------------------
- 
+
  total number of elements in each slice:         2420
- 
+
   - crust and mantle:    89.25620      %
   - outer core:    7.107438      %
   - inner core:    3.636364      %
- 
+
  for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.
  h
- 
+
  Load balancing = 100 % by definition
- 
- 
+
+
  total number of time steps in the solver will be:         1100
- 
- 
- time-stepping of the solver will be:   0.142500000000000     
- 
+
+
+ time-stepping of the solver will be:   0.142500000000000
+
  using double precision for the calculations
- 
- smallest and largest possible floating-point numbers are: 
+
+ smallest and largest possible floating-point numbers are:
   2.225073858507201E-308  1.797693134862316E+308
- 
- 
- Elapsed time for mesh generation and buffer creation in seconds = 
-   16986.0214519501     
+
+
+ Elapsed time for mesh generation and buffer creation in seconds =
+   16986.0214519501
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    4 h 43 m 06 s
- 
+
  End of mesh generation
- 
+
 ########## ########## ########## ########## ########## ########## ########## ##########
 Execution Sum Up
 ########## ########## ########## ########## ########## ########## ########## ##########
@@ -959,14 +959,14 @@ Date      : submit = 25/05/2014 02:22:48 , start = 25/05/2014 02:22:48
 Execution : partition = standard , QoS = normal , Comment = (null)
 Resources : ntasks = 608 , cpus/task = 1 , ncpus = 608 , nodes = 38
    Nodes=curie[3060-3064,3102-3115,3117-3119,5864,5866,5983,5986-5990,5992-5999] CPU_IDs=0-15 Mem=64000
- 
-Memory / step 
+
+Memory / step
 --------------
                         Resident Size (Mo)                     Virtual Size (Go)
 JobID          Max     (Node:Task)       AveTask    Max  (Node:Task)            AveTask
 -----------    ------------------------  -------    --------------------------  -------
 
-Accounting / step 
+Accounting / step
 ------------------
 
 JobID          JobName             Ntasks  Ncpus Nnodes     Layout       Elapsed   Ratio      CPusage    Eff  State

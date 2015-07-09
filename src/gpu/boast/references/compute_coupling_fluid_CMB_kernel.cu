@@ -30,7 +30,7 @@ __global__ void compute_coupling_fluid_CMB_kernel(realw* displ_crust_mantle,
   realw weight;
 
   // for surfaces elements exactly at the top of the outer core (crust mantle bottom)
-  if( iface < NSPEC2D_TOP_OC ){
+  if (iface < NSPEC2D_TOP_OC){
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = ibelm_top_outer_core[iface] - 1;

@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -163,6 +163,13 @@ typedef float realw;
 // Asynchronous memory copies between GPU and CPU
 // (set to 0 for synchronuous/blocking copies, set to 1 for asynchronuous copies)
 #define GPU_ASYNC_COPY 1
+
+// Reduce GPU-register pressure by limited the number of thread spread
+// (GPU for embedded devices are not powerful enough for big kernels)
+// Must match BOAST compiled value (--elem flag)
+#ifndef GPU_ELEM_PER_THREAD
+#define GPU_ELEM_PER_THREAD 1
+#endif
 
 /*----------------------------------------------------------------------------------------------- */
 
@@ -748,6 +755,9 @@ typedef struct mesh_ {
   realw *h_adj_sourcearrays_slice;
   gpu_int_mem d_pre_computed_irec;
 
+  // norm checking
+  gpu_realw_mem d_norm_max;
+
   // ------------------------------------------------------------------   //
   // assembly
   // ------------------------------------------------------------------   //
@@ -990,9 +1000,10 @@ void gpuSetConst (gpu_realw_mem *buffer, size_t size, realw *array);
 void gpuFree (void *d_array_addr_ptr);
 void gpuInitialize_buffers (Mesh *mp);
 void gpuSynchronize ();
+void gpuReset ();
 
-void exit_on_gpu_error (char *kernel_name);
-void exit_on_error (char *info);
+void exit_on_gpu_error (const char *kernel_name);
+void exit_on_error (const char *info);
 void synchronize_mpi ();
 double get_time_val ();
 void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
@@ -1002,6 +1013,8 @@ void get_free_memory (double *free_db, double *used_db, double *total_db);
 realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 
 /* ----------------------------------------------------------------------------------------------- */
+
+// OpenCL / CUDA macro definitions
 
 #ifndef TAKE_REF_OCL
 #define TAKE_REF_OCL(_buffer_)
@@ -1033,7 +1046,7 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #endif
 
 #define INIT_OFFSET(_buffer_, _offset_)         \
-  typeof(mp->_buffer_) _buffer_##_##_offset_;   \
+  __typeof__(mp->_buffer_) _buffer_##_##_offset_;   \
   INIT_OFFSET_OCL(_buffer_, _offset_);           \
   INIT_OFFSET_CUDA(_buffer_, _offset_);
 

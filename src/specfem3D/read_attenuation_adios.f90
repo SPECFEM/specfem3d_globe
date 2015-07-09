@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -35,7 +35,7 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   use constants_solver
   use adios_read_mod
   use adios_helpers_mod, only: check_adios_err
-  use specfem_par,       only: ATTENUATION_VAL, LOCAL_PATH
+  use specfem_par,       only: ATTENUATION_VAL,LOCAL_PATH
 
   implicit none
 

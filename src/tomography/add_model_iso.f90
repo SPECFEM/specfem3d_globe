@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -124,7 +124,7 @@ program add_model
   allocate(model_vp_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_vs_new(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_rho_new(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating model arrays'
+  if (ier /= 0) stop 'Error allocating model arrays'
 
   ! initializes arrays
   model_vp_new = 0.0_CUSTOM_REAL
@@ -211,8 +211,8 @@ subroutine initialize()
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  if (sizeprocs /= NPROCTOT_VAL ) then
-    if( myrank == 0 ) then
+  if (sizeprocs /= NPROCTOT_VAL) then
+    if (myrank == 0) then
       print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
       print*, 'Error number of MPI processors actually run on: ',sizeprocs
       print*

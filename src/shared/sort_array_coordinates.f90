@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -114,6 +114,13 @@
 
   end subroutine sort_array_coordinates
 
+!
+!--------------------
+!
+
+
+! sorting routine left here for inlining
+
 ! -------------------- library for sorting routine ------------------
 
   subroutine heap_sort_multi(N, dx, dy, dz, ia, ib)
@@ -221,3 +228,4 @@
     end subroutine heap_sort_siftdown
 
   end subroutine heap_sort_multi
+

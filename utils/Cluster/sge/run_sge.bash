@@ -1,8 +1,8 @@
 #!/bin/bash
 # use the normal queue unless otherwise directed
-# specific queue: 
-#     pe.q with 130 cpus, 
-#     all.q with 49 cpus 
+# specific queue:
+#     pe.q with 130 cpus,
+#     all.q with 49 cpus
 # can be added to qsub command at the end -p pe.q
 
 rm -f OUTPUT_FILES/*

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -39,7 +39,7 @@
 
   use constants
   use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
-  use meshfem3D_par, only: ADIOS_ENABLED,ADIOS_FOR_MODELS
+  use meshfem3D_par, only: ADIOS_FOR_MODELS
 
   implicit none
 
@@ -87,7 +87,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating rho_new,.. arrays')
 
   ! reads in model files for each process
-  if (ADIOS_ENABLED .and. ADIOS_FOR_MODELS) then
+  if (ADIOS_FOR_MODELS) then
     call read_gll_model_adios(myrank,MGLL_V,NSPEC)
   else
     call read_gll_model(myrank,MGLL_V,NSPEC)
@@ -261,86 +261,86 @@
   if (.not. TRANSVERSE_ISOTROPY) then
     ! isotropic model
     ! vp mesh
-    open(unit=27,file=prname(1:len_trim(prname))//'vp_new.bin',&
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vp.bin',&
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vp_new.bin'
+      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vp.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(27) MGLL_V%vp_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
-    close(27)
+    read(IIN) MGLL_V%vp_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    close(IIN)
 
     ! vs mesh
-    open(unit=27,file=prname(1:len_trim(prname))//'vs_new.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vs.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print*,'Error opening: ',prname(1:len_trim(prname))//'vs_new.bin'
+      print*,'Error opening: ',prname(1:len_trim(prname))//'vs.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(27) MGLL_V%vs_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
-    close(27)
+    read(IIN) MGLL_V%vs_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    close(IIN)
 
   else
 
     ! transverse isotropic model
     ! vp mesh
-    open(unit=27,file=prname(1:len_trim(prname))//'vpv_new.bin',&
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vpv.bin',&
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv_new.bin'
+      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(27) MGLL_V%vpv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
-    close(27)
+    read(IIN) MGLL_V%vpv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    close(IIN)
 
-    open(unit=27,file=prname(1:len_trim(prname))//'vph_new.bin',&
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vph.bin',&
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph_new.bin'
+      write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(27) MGLL_V%vph_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
-    close(27)
+    read(IIN) MGLL_V%vph_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    close(IIN)
 
     ! vs mesh
-    open(unit=27,file=prname(1:len_trim(prname))//'vsv_new.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vsv.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print*,'Error opening: ',prname(1:len_trim(prname))//'vsv_new.bin'
+      print*,'Error opening: ',prname(1:len_trim(prname))//'vsv.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(27) MGLL_V%vsv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
-    close(27)
+    read(IIN) MGLL_V%vsv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    close(IIN)
 
-    open(unit=27,file=prname(1:len_trim(prname))//'vsh_new.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vsh.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print*,'Error opening: ',prname(1:len_trim(prname))//'vsh_new.bin'
+      print*,'Error opening: ',prname(1:len_trim(prname))//'vsh.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(27) MGLL_V%vsh_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
-    close(27)
+    read(IIN) MGLL_V%vsh_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    close(IIN)
 
     ! eta mesh
-    open(unit=27,file=prname(1:len_trim(prname))//'eta_new.bin', &
+    open(unit=IIN,file=prname(1:len_trim(prname))//'eta.bin', &
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print*,'Error opening: ',prname(1:len_trim(prname))//'eta_new.bin'
+      print*,'Error opening: ',prname(1:len_trim(prname))//'eta.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(27) MGLL_V%eta_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
-    close(27)
+    read(IIN) MGLL_V%eta_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    close(IIN)
 
   endif
 
   ! rho mesh
-  open(unit=27,file=prname(1:len_trim(prname))//'rho_new.bin', &
+  open(unit=IIN,file=prname(1:len_trim(prname))//'rho.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
-    print*,'Error opening: ',prname(1:len_trim(prname))//'rho_new.bin'
+    print*,'Error opening: ',prname(1:len_trim(prname))//'rho.bin'
     call exit_MPI(myrank,'Error model GLL')
   endif
-  read(27) MGLL_V%rho_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
-  close(27)
+  read(IIN) MGLL_V%rho_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+  close(IIN)
 
   end subroutine read_gll_model

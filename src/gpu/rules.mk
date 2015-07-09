@@ -1,6 +1,6 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 #          --------------------------------------------------
 #
 #     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -123,7 +123,9 @@ BUILD_VERSION_TXT += support
 ### building rules
 ###
 
-CUDA_DEBUG := --cudart=shared
+.PHONY: boast
+
+boast: boast_kernels
 
 ###
 ### boast kernel generation
@@ -135,7 +137,7 @@ boast_kernels :
 	@echo ""
 	cd src/gpu/boast ;\
 	mkdir -p ../$(BOAST_DIR_NAME);\
-	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME)
+	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME) --elem $(GPU_ELEM_PER_THREAD)
 	@echo ""
 
 test_boast_kernels :
@@ -153,7 +155,7 @@ test_boast_kernels :
 
 ifeq ($(CUDA),yes)
 $O/%.cuda-kernel.o: $(BOAST_DIR)/%.cu $S/mesh_constants_gpu.h $S/mesh_constants_cuda.h
-	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG) $(CUDA_DEBUG) -include $(word 2,$^)
+	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG) -include $(word 2,$^)
 
 $(cuda_specfem3D_DEVICE_OBJ): $(subst $(cuda_specfem3D_DEVICE_OBJ), ,$(gpu_specfem3D_OBJECTS)) $(cuda_kernels_OBJS)
 	${NVCCLINK} -o $@ $^
@@ -166,7 +168,7 @@ $O/%.ocl.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h $S/mesh_constants_o
 	${CC} -c $< -o $@ $(OCL_CPU_FLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
 
 $O/%.cuda.o: $S/%.c ${SETUP}/config.h $S/mesh_constants_gpu.h
-	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG) $(CUDA_DEBUG)
+	$(NVCC) -c $< -o $@ $(NVCC_CFLAGS) -I${SETUP} -I$(BOAST_DIR) $(SELECTOR_CFLAG)
 
 print-%:
 	@echo '$*=$($*)'

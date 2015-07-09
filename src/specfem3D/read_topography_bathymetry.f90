@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -39,6 +39,7 @@
   ! timing
   double precision :: tCPU
   double precision, external :: wtime
+  character(len=MAX_STRING_LEN) :: topo_path
 
   ! get MPI starting time
   time_start = wtime()
@@ -59,18 +60,23 @@
     ! initializes
     ibathy_topo(:,:) = 0
 
-    ! master reads file
-    if (myrank == 0) then
-      ! user output
-      write(IMAIN,*) 'topography:'
-      call flush_IMAIN()
+    if (I_should_read_the_database) then
+      ! master reads file
+      if (myrank == 0) then
+        ! user output
+        write(IMAIN,*) 'topography:'
+        call flush_IMAIN()
 
-      ! reads topo file
-      call read_topo_bathy_database(ibathy_topo,LOCAL_PATH)
+        topo_path = LOCAL_PATH
+
+        ! reads topo file
+        call read_topo_bathy_database(ibathy_topo, topo_path)
+      endif
+
+      ! broadcast the information read on the master to the nodes
+      call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
     endif
-
-    ! broadcast the information read on the master to the nodes
-    call bcast_all_i(ibathy_topo,NX_BATHY*NY_BATHY)
+    call bcast_ibathy_topo()
   endif
 
   ! user output
@@ -85,3 +91,19 @@
   endif
 
   end subroutine read_topography_bathymetry
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_ibathy_topo()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
+
+  implicit none
+
+  call bcast_all_i_for_database(ibathy_topo(1,1), size(ibathy_topo))
+  end subroutine bcast_ibathy_topo

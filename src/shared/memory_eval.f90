@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -415,7 +415,7 @@
   static_memory_size = static_memory_size + &
       4.d0*NPROCTOT*dble(SIZE_INTEGER)
 
-  if (TOPOGRAPHY) then
+  if (TOPOGRAPHY .or. OCEANS) then
     ! ibathy_topo
     static_memory_size = static_memory_size + &
       NX_BATHY*NY_BATHY*dble(SIZE_INTEGER)
@@ -500,7 +500,7 @@
   static_memory_size = static_memory_size + &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_HESS*dble(CUSTOM_REAL)
 
-  ! Sigma_kl_crust_mantle
+  ! sigma_kl_crust_mantle
   if (NOISE_TOMOGRAPHY > 0) then
     NSPEC_CRUST_MANTLE_ADJOINT_NOISE = NSPEC_CRUST_MANTLE_ADJOINT
   else

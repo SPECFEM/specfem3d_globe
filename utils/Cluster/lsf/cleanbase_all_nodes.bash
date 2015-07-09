@@ -6,8 +6,8 @@
 # Dimitri Komatitsch, University of Pau, November 2007
 
 if [ -z $USER ]; then
-	echo "cannot run this script because no USER env is set"
-	exit 2
+  echo "cannot run this script because no USER env is set"
+  exit 2
 fi
 
 BASEMPIDIR=/scratch/$USER

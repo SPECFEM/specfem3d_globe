@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -116,7 +116,6 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   sel_num = 0
 
-  ! Append the actual file name.
   file_name= trim(LOCAL_PATH) // "/solver_data.bp"
 
   call world_duplicate(comm)

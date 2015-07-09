@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -68,52 +68,54 @@
   character(len=MAX_STRING_LEN) :: sisname_2
 
   ! SAC header variables
-  real DELTA
-  real DEPMIN
-  real DEPMAX
-  real SCALE_F
-  real ODELTA
-  real B,E,O,A
-  real STLA,STLO,STEL,STDP
-  real EVLA,EVLO,EVEL,EVDP
-  real MAG,DIST,AZ,BAZ,GCARC
-  real DEPMEN
-  real USER0,USER1,USER2,USER3,USER4
-  real CMPAZ,CMPINC
+  real :: DELTA
+  real :: DEPMIN
+  real :: DEPMAX
+  real :: SCALE_F
+  real :: ODELTA
+  real ::  B,E,O,A
+  real :: STLA,STLO,STEL,STDP
+  real :: EVLA,EVLO,EVEL,EVDP
+  real :: MAG,DIST,AZ,BAZ,GCARC
+  real :: DEPMEN
+  real :: USER0,USER1,USER2,USER3,USER4
+  real :: CMPAZ,CMPINC
 
-  integer NZYEAR,NZJDAY,NZHOUR,NZMIN,NZSEC
-  integer NZMSEC,NVHDR,NORID,NEVID
+  integer :: NZYEAR,NZJDAY,NZHOUR,NZMIN,NZSEC
+  integer :: NZMSEC,NVHDR,NORID,NEVID
   ! NUMBER of POINTS:
-  integer NPTS
-  integer IFTYPE,IMAGTYP
-  integer IDEP
-  integer IZTYPE
-  integer IEVTYP
-  integer IQUAL
-  integer ISYNTH
+  integer :: NPTS
+  integer :: IFTYPE,IMAGTYP
+  integer :: IDEP
+  integer :: IZTYPE
+  integer :: IEVTYP
+  integer :: IQUAL
+  integer :: ISYNTH
   ! permission flags:
-  integer LEVEN
-  integer LPSPOL
-  integer LOVROK
-  integer LCALDA
+  integer :: LEVEN
+  integer :: LPSPOL
+  integer :: LOVROK
+  integer :: LCALDA
 
-  character(len=8) KSTNM
-  character(len=16) KEVNM
-  character(len=8) KCMPNM
-  character(len=8) KNETWK
-  character(len=8) KHOLE
-  character(len=8) KUSER0,KUSER1,KUSER2
+  character(len=8) :: KSTNM
+  character(len=16) :: KEVNM
+  character(len=8) :: KCMPNM
+  character(len=8) :: KNETWK
+  character(len=8) :: KHOLE
+  character(len=8) :: KUSER0,KUSER1,KUSER2
   character(len=8), parameter :: str_undef='-12345  '
 
-  real UNUSED   ! header fields unused by SAC
-  real undef    ! undefined values
-  real INTERNAL ! SAC internal variables, always leave undefined
-  real BYSAC
+  real :: UNUSED   ! header fields unused by SAC
+  real :: undef    ! undefined values
+  real :: INTERNAL ! SAC internal variables, always leave undefined
+  real :: BYSAC
   ! end SAC header variables
 
   double precision :: shortest_period
   double precision :: value1,value2, value3,value4,value5
   logical, external :: is_leap_year
+
+  integer :: imodulo_5
 
   !----------------------------------------------------------------
 
@@ -185,7 +187,6 @@
   EVDP   = sngl(cmt_depth)
 
 
-  ! by Ebru
   ! SAC headers will have new format
   USER0  = sngl(cmt_hdur) !half duration from CMT file if not changed to t0 = 0.d0 (point source)
 
@@ -225,7 +226,6 @@
   !   or leave magnitude and use scalar moment (M0, but calculated by which convention, Harvard?)
   !
   ! it's confusing, and as a result, we will omit it.
-  ! by Ebru
   MAG     = undef
   IMAGTYP = int(undef)
 
@@ -263,7 +263,6 @@
   NZMIN  = mi
 
   ! adds time-shift to get the CMT time in the headers as origin time of events
-  ! by Ebru
   NZSEC  = int(sec+t_shift)
   NZMSEC = int((sec+t_shift-int(sec+t_shift))*1000)
 
@@ -317,7 +316,6 @@
   KSTNM  = station_name(irec)(1:8) ! A8
 
   ! writes out event id as event name
-  ! by Ebru
   KEVNM  = event_name(1:len_trim(event_name)) ! A16
 
   !if (NSOURCES == 1) then
@@ -340,10 +338,10 @@
   if (trim(MODEL(1:2)) == "1D") KHOLE = 'S1'
 
   ! indicates SEM synthetics
-  ! by Ebru
   KUSER0 = 'SY'          ! Network code assigned by IRIS for synthetic seismograms
-  KUSER1 = 'SEM5.1.2'
-  KUSER2 = 'Tiger'       ! year of the tiger version :)
+  KUSER1 = 'SEM7.0.0'
+  KUSER2 = 'Horse'       ! most was done in year of the horse: jan 31, 2014 - feb 18, 2015
+                         ! (chinese zodiac http://en.wikipedia.org/wiki/Chinese_zodiac :)
 
   !KUSER0 = 'PDE_LAT_'          !  A8
   !KUSER1 = 'PDE_LON_'          !  A8
@@ -441,20 +439,46 @@
 
     ! now write data - with five values per row:
     ! ---------------
-
-    do isample = 1+5,seismo_current+1,5
-
-      value1 = dble(seismogram_tmp(iorientation,isample-5))
-      value2 = dble(seismogram_tmp(iorientation,isample-4))
-      value3 = dble(seismogram_tmp(iorientation,isample-3))
-      value4 = dble(seismogram_tmp(iorientation,isample-2))
-      value5 = dble(seismogram_tmp(iorientation,isample-1))
-
-      write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
-
-    enddo
-
-    close(IOUT_SAC)
+    imodulo_5 = mod(seismo_current,5)
+    if (imodulo_5 == 0) then
+      ! five values per row
+      do isample = 1+5,seismo_current+1,5
+        value1 = dble(seismogram_tmp(iorientation,isample-5))
+        value2 = dble(seismogram_tmp(iorientation,isample-4))
+        value3 = dble(seismogram_tmp(iorientation,isample-3))
+        value4 = dble(seismogram_tmp(iorientation,isample-2))
+        value5 = dble(seismogram_tmp(iorientation,isample-1))
+        write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
+      enddo
+    else
+      ! five values per row as long as possible
+      do isample = 1+5,(seismo_current-imodulo_5)+1,5
+        value1 = dble(seismogram_tmp(iorientation,isample-5))
+        value2 = dble(seismogram_tmp(iorientation,isample-4))
+        value3 = dble(seismogram_tmp(iorientation,isample-3))
+        value4 = dble(seismogram_tmp(iorientation,isample-2))
+        value5 = dble(seismogram_tmp(iorientation,isample-1))
+        write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4),sngl(value5)
+      enddo
+      ! loads remaining values
+      if (imodulo_5 >= 1) value1 = dble(seismogram_tmp(iorientation,seismo_current-imodulo_5+1))
+      if (imodulo_5 >= 2) value2 = dble(seismogram_tmp(iorientation,seismo_current-imodulo_5+2))
+      if (imodulo_5 >= 3) value3 = dble(seismogram_tmp(iorientation,seismo_current-imodulo_5+3))
+      if (imodulo_5 >= 4) value4 = dble(seismogram_tmp(iorientation,seismo_current-imodulo_5+4))
+      ! writes out last data line
+      select case(imodulo_5)
+      case (1)
+        write(IOUT_SAC,510) sngl(value1)
+      case (2)
+        write(IOUT_SAC,510) sngl(value1),sngl(value2)
+      case (3)
+        write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3)
+      case (4)
+        write(IOUT_SAC,510) sngl(value1),sngl(value2),sngl(value3),sngl(value4)
+      case default
+        stop 'Error invalid SAC alphanumeric output'
+      end select
+    endif
 
   endif ! OUTPUT_SEISMOS_SAC_ALPHANUM
 

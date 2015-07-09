@@ -7,7 +7,7 @@ implicit none
 
   integer, parameter :: MAX_PROCS = 1000
   integer ier,sizeprocs,myrank,ios,i
-  character(len=150) old_machine_file,junk,junk2,junk3 
+  character(len=150) old_machine_file,junk,junk2,junk3
   character(len=150) slice_to_old_machine(MAX_PROCS),mymachine, &
   old_local_data_base, new_local_data_base,scp_outfile, command_string
 
@@ -25,7 +25,7 @@ implicit none
   call getarg(2,junk)
   if (trim(old_machine_file) == '' .or. trim(junk) == '') call exit_mpi(myrank,'Usage: remap old-mach num-slice [old-jobid new-jobid]')
   read(junk,*) num_slices
- 
+
   call getarg(3,junk2)
   if (trim(junk2) == '') then
      use_jobid=.false.
@@ -57,7 +57,7 @@ implicit none
   mymachine = slice_to_old_machine(myrank+1)
 
   if (use_jobid) then
-    write(old_local_data_base,'(a,i0)') '/scratch/lqy/DATABASES_MPI.',old_jobid 
+    write(old_local_data_base,'(a,i0)') '/scratch/lqy/DATABASES_MPI.',old_jobid
     write(new_local_data_base,'(a,i0)') '/scratch/lqy/DATABASES_MPI.',new_jobid
   else
     old_local_data_base = '/scratch/lqy/DATABASES_MPI'
@@ -70,11 +70,11 @@ implicit none
              myrank, '*  '//trim(new_local_data_base)
 
 !  call system('echo '//trim(command_string)//' > '//trim(scp_outfile))
-  
+
   call system(trim(command_string)) !//' >> '//trim(scp_outfile))
-           
+
 ! stop all the MPI processes, and exit
   call MPI_FINALIZE(ier)
 
 end program remap_databases
-          
+

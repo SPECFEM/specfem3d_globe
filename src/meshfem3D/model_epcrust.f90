@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -113,7 +113,7 @@
   write(IMAIN,*) 'incorporating crustal model: EPcrust 1.0'
   write(IMAIN,*)
 
-  open(unit=1001,file=trim(PATHNAME_EPCRUST),status='old',action='read',iostat=ier)
+  open(unit=IIN,file=trim(PATHNAME_EPCRUST),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(PATHNAME_EPCRUST), '": ', ier
     call flush_IMAIN()
@@ -121,11 +121,11 @@
     call exit_MPI(0, 'Error model epcrust')
   endif
 
-  read(1001,*) header
+  read(IIN,*) header
 
   do jlat = 1,EPCRUST_NLAT
     do ilon = 1,EPCRUST_NLON
-      read(1001,*) tmp
+      read(IIN,*) tmp
 
       lon_ep(ilon,jlat) = tmp(1)
       lat_ep(ilon,jlat) = tmp(2)
@@ -136,7 +136,7 @@
       rho_ep(ilon,jlat,1:3) = tmp(13:15)
     enddo
   enddo
-  close(1001)
+  close(IIN)
 
   end subroutine read_epcrust_model
 

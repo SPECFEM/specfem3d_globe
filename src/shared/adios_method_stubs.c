@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -117,6 +117,9 @@ void FC_FUNC_(write_kernels_boundary_kl_adios,WRITE_KERNELS_BOUNDARY_KL_ADIOS)(v
 void FC_FUNC_(write_kernels_source_derivatives_adios,WRITE_KERNELS_SOURCE_DERIVATIVES_ADIOS)(void) {}
 
 void FC_FUNC_(write_kernels_hessian_adios,WRITE_KERNELS_HESSIAN_ADIOS)(void) {}
+
+void FC_FUNC_(write_kernels_strength_noise_adios,WRITE_KERNELS_STRENGTH_NOISE_ADIOS)(void) {}
+
 
 // For xspecfem3d -- "ASDF" -- seismograms in ADIOS
 

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -85,7 +85,7 @@ subroutine read_parameters_tomo()
 
   ! statistics
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac',status='unknown',iostat=ier)
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac',status='unknown',action='write',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening file: ',trim(OUTPUT_STATISTICS_DIR)//'statistics_step_fac'
       print*,'Please make sure that directory '//trim(OUTPUT_STATISTICS_DIR)//' exists...'
@@ -102,7 +102,7 @@ contains
 
   implicit none
 
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*,'Usage: add_model step_factor [INPUT-KERNELS-DIR/] [OUTPUT-MODEL-DIR/]'
     print*
     print*,'with'

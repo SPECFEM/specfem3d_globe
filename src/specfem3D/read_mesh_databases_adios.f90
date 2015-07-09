@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -1372,7 +1372,6 @@ subroutine read_mesh_databases_stacey_adios()
   file_name = trim(LOCAL_PATH) // "/stacey.bp"
 
   ! crust and mantle
-
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)

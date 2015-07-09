@@ -1,11 +1,11 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99994
+//      this file has been generated automatically by BOAST version 1.0.3
 //      by: make boast_kernels
 
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -111,9 +111,9 @@ __kernel void noise_transfer_surface_to_host_kernel(const __global int * ibelm_t
     j = (igll) / (NGLLX);\n\
     i = igll - ((j) * (NGLLX));\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface)] = displ[(iglob) * (3)];\n\
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)] = displ[(iglob) * (3)];\n\
-    noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)] = displ[(iglob) * (3)];\n\
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface)] = displ[(iglob) * (3) + 0];\n\
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)] = displ[(iglob) * (3) + 1];\n\
+    noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)] = displ[(iglob) * (3) + 2];\n\
   }\n\
 }\n\
 ";

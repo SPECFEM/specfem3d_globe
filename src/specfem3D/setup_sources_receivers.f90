@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -178,8 +178,9 @@
   ! define t0 as the earliest start time
   t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
 
-  if ( EXTERNAL_SOURCE_TIME_FUNCTION ) then
-    hdur(:) = 0._CUSTOM_REAL
+  ! uses an external file for source time function, which starts at time 0.0
+  if (EXTERNAL_SOURCE_TIME_FUNCTION) then
+    hdur(:) = 0.d0
     t0      = 0.d0
   endif
 
@@ -267,6 +268,14 @@
                               elat_SAC,elon_SAC,depth_SAC,mb_SAC,cmt_lat_SAC,&
                               cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES)
 
+  ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
+  ! checks if anything to do for noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'noise simulation will ignore CMT sources'
+    endif
+  endif
+
   end subroutine setup_sources
 
 !
@@ -293,34 +302,48 @@
   !    NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
   !
   ! adds initial t0 time to update number of time steps and reach full record length
-  NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+  if (abs(t0) > 0.d0) then
+    NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+  endif
 
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-  ! noise tomography:
-  ! time steps needs to be doubled, due to +/- branches
-  if (NOISE_TOMOGRAPHY /= 0 )   NSTEP = 2*NSTEP-1
-
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
+  ! checks with undo_attenuation
+  if (UNDO_ATTENUATION) then
+    ! old:
+    !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
+    !if (mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
+    !  NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1) * NT_DUMP_ATTENUATION
+    !endif
+    ! makes sure buffer size is not too big for total time length
+    if (NSTEP < NT_DUMP_ATTENUATION) &
+      call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
   endif
+
+  ! checks length for symmetry in case of noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    if (mod(NSTEP+1,2) /= 0) then
+      print*,'Error noise simulation: invalid time steps = ',NSTEP,' -> NSTEP + 1 must be a multiple of 2 due to branch symmetry'
+      call exit_MPI(myrank,'Error noise simulation: number of timesteps must be symmetric, due to +/- branches')
+    endif
+  endif
+
+  ! time loop increments end
   it_end = NSTEP
 
   ! subsets used to save seismograms must not be larger than the whole time series,
   ! otherwise we waste memory
   if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP .or. is_initial_guess) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
 
-  ! re-checks output steps?
-  !if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5) /= 0)) &
-  !  stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
-
   ! subsets used to save adjoint sources must not be larger than the whole time series,
   ! otherwise we waste memory
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     if (NTSTEP_BETWEEN_READ_ADJSRC > NSTEP) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
   endif
+
+  ! debug
+  !if (myrank == 0 ) print*,'setup time steps = ',NSTEP,' t0 = ',t0,' DT = ',DT
 
   end subroutine setup_timesteps
 
@@ -337,6 +360,7 @@
 
   ! local parameters
   integer :: irec,isource,nrec_tot_found
+  integer :: nrec_simulation
   integer :: nadj_files_found,nadj_files_found_tot
   integer :: ier
   integer,dimension(:),allocatable :: tmp_rec_local_all
@@ -411,15 +435,16 @@
     ! temporary counter to check if any files are found at all
     nadj_files_found = 0
     do irec = 1,nrec
-      if (myrank == islice_selected_rec(irec)) then
-        ! adjoint receiver station in this process slice
-        if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) &
-          call exit_MPI(myrank,'something is wrong with the source slice number in adjoint simulation')
+      ! checks if slice is valid
+      if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) &
+        call exit_MPI(myrank,'something is wrong with the source slice number in adjoint simulation')
 
+      ! adjoint receiver station in this process slice
+      if (myrank == islice_selected_rec(irec)) then
         ! updates counter
         nadj_rec_local = nadj_rec_local + 1
 
-        ! checks **sta**.**net**.**MX**.adj files for correct number of time steps
+        ! checks **net**.**sta**.**MX**.adj files for correct number of time steps
         call check_adjoint_sources(irec,nadj_files_found)
       endif
     enddo
@@ -455,6 +480,7 @@
     if (myrank == 0 .and. nrec_tot_found /= nrec) &
       call exit_MPI(myrank,'total number of receivers is incorrect')
   endif
+  call synchronize_all()
 
   ! statistics about allocation memory for seismograms & adj_sourcearrays
   ! gathers info about receivers on master
@@ -508,6 +534,11 @@
     endif
     ! outputs info
     write(IMAIN,*) 'seismograms:'
+    if (WRITE_SEISMOGRAMS_BY_MASTER) then
+      write(IMAIN,*) '  seismograms written by master process only'
+    else
+      write(IMAIN,*) '  seismograms written by all processes'
+    endif
     write(IMAIN,*) '  writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS = ',NTSTEP_BETWEEN_OUTPUT_SEISMOS
     write(IMAIN,*) '  maximum number of local receivers is ',maxrec,' in slice ',maxproc(1)
     write(IMAIN,*) '  size of maximum seismogram array       = ', sngl(sizeval),'MB'
@@ -627,7 +658,11 @@
   if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
     ! source interpolated on all GLL points in source element
     allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating sourcearrays')
+    if (ier /= 0 ) then
+      print*,'Error rank ',myrank,': allocating sourcearrays failed! number of sources = ',NSOURCES
+      call exit_MPI(myrank,'Error allocating sourcearrays')
+    endif
+    ! initializes
     sourcearrays(:,:,:,:,:) = 0._CUSTOM_REAL
 
     ! stores source arrays
@@ -652,7 +687,12 @@
       ! allocate adjoint source arrays
       allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
                stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
+      if (ier /= 0 ) then
+        print*,'Error rank ',myrank,': allocating adjoint sourcearrays failed! Please check your memory usage...'
+        print*,'  failed number of local adjoint sources = ',nadj_rec_local,' steps = ',NTSTEP_BETWEEN_READ_ADJSRC
+        call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
+      endif
+      ! initializes
       adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
       ! additional buffer for asynchronous file i/o
@@ -855,6 +895,7 @@
 
   ! local parameters
   integer :: ier
+  integer :: nadj_hprec_local
 
   ! define local to global receiver numbering mapping
   ! needs to be allocated for subroutine calls (even if nrec_local == 0)
@@ -865,9 +906,12 @@
   if (nrec_local > 0) then
     ! allocates Lagrange interpolators for receivers
     allocate(hxir_store(nrec_local,NGLLX), &
-            hetar_store(nrec_local,NGLLY), &
-            hgammar_store(nrec_local,NGLLZ),stat=ier)
+             hetar_store(nrec_local,NGLLY), &
+             hgammar_store(nrec_local,NGLLZ),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating receiver interpolators')
+
+    allocate(hlagrange_store(NGLLX, NGLLY, NGLLZ, nrec_local), stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array hlagrange_store')
 
     ! defines and stores Lagrange interpolators at all the receivers
     if (SIMULATION_TYPE == 2) then
@@ -876,8 +920,8 @@
       nadj_hprec_local = 1
     endif
     allocate(hpxir_store(nadj_hprec_local,NGLLX), &
-            hpetar_store(nadj_hprec_local,NGLLY), &
-            hpgammar_store(nadj_hprec_local,NGLLZ),stat=ier)
+             hpetar_store(nadj_hprec_local,NGLLY), &
+             hpgammar_store(nadj_hprec_local,NGLLZ),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating derivative interpolators')
 
     ! stores interpolators for receiver positions
@@ -888,7 +932,7 @@
                       SIMULATION_TYPE,nrec,nrec_local, &
                       islice_selected_rec,number_receiver_global, &
                       xi_receiver,eta_receiver,gamma_receiver, &
-                      hxir_store,hetar_store,hgammar_store, &
+                      hxir_store,hetar_store,hgammar_store, hlagrange_store, &
                       nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
 
     ! allocates seismogram array
@@ -899,20 +943,23 @@
       ! adjoint seismograms
       allocate(seismograms(NDIM*NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
       if (ier /= 0) stop 'Error while allocating adjoint seismograms'
+
       ! allocates Frechet derivatives array
-      allocate(moment_der(NDIM,NDIM,nrec_local),sloc_der(NDIM,nrec_local), &
-              stshift_der(nrec_local),shdur_der(nrec_local),stat=ier)
+      allocate(moment_der(NDIM,NDIM,nrec_local), &
+               sloc_der(NDIM,nrec_local), &
+               stshift_der(nrec_local), &
+               shdur_der(nrec_local),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Frechet derivatives arrays')
 
       moment_der(:,:,:) = 0._CUSTOM_REAL
       sloc_der(:,:) = 0._CUSTOM_REAL
       stshift_der(:) = 0._CUSTOM_REAL
       shdur_der(:) = 0._CUSTOM_REAL
-
     endif
     ! initializes seismograms
     seismograms(:,:,:) = 0._CUSTOM_REAL
-    nit_written = 0
+    ! adjoint seismograms
+    it_adj_written = 0
   else
     ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
     ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...
@@ -933,14 +980,14 @@
                       SIMULATION_TYPE,nrec,nrec_local, &
                       islice_selected_rec,number_receiver_global, &
                       xi_receiver,eta_receiver,gamma_receiver, &
-                      hxir_store,hetar_store,hgammar_store, &
+                      hxir_store,hetar_store,hgammar_store, hlagrange_store, &
                       nadj_hprec_local,hpxir_store,hpetar_store,hpgammar_store)
 
   use constants
 
   implicit none
 
-  integer NSOURCES,myrank
+  integer :: NSOURCES,myrank
 
   integer, dimension(NSOURCES) :: islice_selected_source
 
@@ -950,9 +997,9 @@
   double precision, dimension(NGLLZ) :: zigll
 
 
-  integer SIMULATION_TYPE
+  integer :: SIMULATION_TYPE
 
-  integer nrec,nrec_local
+  integer :: nrec,nrec_local
   integer, dimension(nrec) :: islice_selected_rec
   integer, dimension(nrec_local) :: number_receiver_global
   double precision, dimension(nrec) :: xi_receiver,eta_receiver,gamma_receiver
@@ -960,15 +1007,16 @@
   double precision, dimension(nrec_local,NGLLX) :: hxir_store
   double precision, dimension(nrec_local,NGLLY) :: hetar_store
   double precision, dimension(nrec_local,NGLLZ) :: hgammar_store
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,nrec_local) :: hlagrange_store
 
-  integer nadj_hprec_local
+  integer :: nadj_hprec_local
   double precision, dimension(nadj_hprec_local,NGLLX) :: hpxir_store
   double precision, dimension(nadj_hprec_local,NGLLY) :: hpetar_store
   double precision, dimension(nadj_hprec_local,NGLLZ) :: hpgammar_store
 
 
   ! local parameters
-  integer :: isource,irec,irec_local
+  integer :: isource,irec,irec_local, i, j, k
   double precision, dimension(NGLLX) :: hxir,hpxir
   double precision, dimension(NGLLY) :: hpetar,hetar
   double precision, dimension(NGLLZ) :: hgammar,hpgammar
@@ -982,6 +1030,9 @@
     do irec = 1,nrec
       if (myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
+        ! checks counter
+        if (irec_local > nrec_local) call exit_MPI(myrank,'Error receiver interpolators: irec_local exceeds bounds')
+        ! stores local to global receiver ids
         number_receiver_global(irec_local) = irec
       endif
     enddo
@@ -989,36 +1040,52 @@
     do isource = 1,NSOURCES
       if (myrank == islice_selected_source(isource)) then
         irec_local = irec_local + 1
+        ! checks counter
+        if (irec_local > nrec_local) call exit_MPI(myrank,'Error adjoint source interpolators: irec_local exceeds bounds')
+        ! stores local to global receiver/source ids
         number_receiver_global(irec_local) = isource
       endif
     enddo
   endif
+  ! checks if all local receivers have been found
+  if (irec_local /= nrec_local) call exit_MPI(myrank,'Error number of local receivers do not match')
 
   ! define and store Lagrange interpolators at all the receivers
-  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
-    do irec_local = 1,nrec_local
-      irec = number_receiver_global(irec_local)
+  do irec_local = 1,nrec_local
+    irec = number_receiver_global(irec_local)
+
+    if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
+      ! receiver positions
       call lagrange_any(xi_receiver(irec),NGLLX,xigll,hxir,hpxir)
       call lagrange_any(eta_receiver(irec),NGLLY,yigll,hetar,hpetar)
       call lagrange_any(gamma_receiver(irec),NGLLZ,zigll,hgammar,hpgammar)
-      hxir_store(irec_local,:) = hxir(:)
-      hetar_store(irec_local,:) = hetar(:)
-      hgammar_store(irec_local,:) = hgammar(:)
-    enddo
-  else
-    do irec_local = 1,nrec_local
-      irec = number_receiver_global(irec_local)
+    else
+      ! source positions
       call lagrange_any(xi_source(irec),NGLLX,xigll,hxir,hpxir)
       call lagrange_any(eta_source(irec),NGLLY,yigll,hetar,hpetar)
       call lagrange_any(gamma_source(irec),NGLLZ,zigll,hgammar,hpgammar)
-      hxir_store(irec_local,:) = hxir(:)
-      hetar_store(irec_local,:) = hetar(:)
-      hgammar_store(irec_local,:) = hgammar(:)
+    endif
+
+    ! stores interpolators
+    hxir_store(irec_local,:) = hxir(:)
+    hetar_store(irec_local,:) = hetar(:)
+    hgammar_store(irec_local,:) = hgammar(:)
+
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          hlagrange_store(i,j,k,irec_local) = hxir_store(irec_local,i)*hetar_store(irec_local,j)*hgammar_store(irec_local,k)
+        enddo
+      enddo
+    enddo
+
+    ! stores derivatives
+    if (SIMULATION_TYPE == 2) then
       hpxir_store(irec_local,:) = hpxir(:)
       hpetar_store(irec_local,:) = hpetar(:)
       hpgammar_store(irec_local,:) = hpgammar(:)
-    enddo
-  endif
+    endif
+  enddo
 
   end subroutine setup_sources_receivers_intp
 

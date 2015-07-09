@@ -3,15 +3,15 @@
 # global simulation example
 #
 # script runs mesher and solver
-# using batch scripts for a PBS queueing system 
-# on 24 CPUs
+# using batch scripts for a PBS queueing system
+# on 384 MPI processes
 #
 #
 # modify accordingly for your own system specifics
 ##################################################
 # USER PARAMETER
 # source directory
-rootdir=~/SPECFEM3D_GLOBE_GPU
+rootdir=~/SPECFEM3D_GLOBE
 
 ##################################################
 
@@ -36,12 +36,10 @@ rm -rf OUTPUT_FILES/*
 # using default configuration
 
 cd $rootdir
-# configures package with ifort compiler
-#./configure F90=ifort MPIF90=mpif90 FLAGS_CHECK="-O3 -assume byterecl" FLAGS_NO_CHECK="-O3 -assume byterecl"
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
 make clean
-make 
+make all
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
@@ -70,7 +68,7 @@ echo
 echo "please submit job now manually: "
 echo "  meshing            : qsub go_mesher_pbs.bash"
 echo "  forward simulation : qsub go_solver_pbs.bash"
-echo 
+echo
 echo "after job completion, see results in directory: OUTPUT_FILES/"
 echo "done: `date`"
 

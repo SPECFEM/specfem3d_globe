@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -291,6 +291,16 @@
 ! Evolution of the code:
 ! ---------------------
 !
+! v. 7.0, many developers, January 2015:
+!     simultaneous MPI runs, ADIOS file I/O support, ASDF seismograms, new seismogram names, tomography tools,
+!     CUDA and OpenCL GPU support, CEM model support, updates AK135 model, binary topography files,
+!     fixes geocentric/geographic conversions, updates ellipticity and gravity factors, git versioning system.
+!
+! v. 6.0, Daniel Peter (ETH Z\"urich, Switzerland), Dimitri Komatitsch and Zhinan Xie (CNRS / University of Marseille, France),
+!     Elliott Sales de Andrade (University of Toronto, Canada), and many others, in particular from Princeton University, USA,
+!     April 2014:
+!     more flexible MPI implementation, GPU support, exact undoing of attenuation, LDDRK4-6 higher-order time scheme, etc...
+!
 ! v. 5.1, Dimitri Komatitsch, University of Toulouse, France and Ebru Bozdag, Princeton University, USA, February 2011:
 !     non blocking MPI for much better scaling on large clusters;
 !     new convention for the name of seismograms, to conform to the IRIS standard;
@@ -303,7 +313,7 @@
 !     slight changes in code structure (see also trivia at program start)
 !
 ! v. 4.0 David Michea and Dimitri Komatitsch, University of Pau, France, February 2008:
-!      new doubling brick in the mesh, new perfectly load-balanced mesh,
+!      first port to GPUs using CUDA, new doubling brick in the mesh, new perfectly load-balanced mesh,
 !      more flexible routines for mesh design, new inflated central cube
 !      with optimized shape, far fewer mesh files saved by the mesher,
 !      global arrays sorted to speed up the simulation, seismos can be

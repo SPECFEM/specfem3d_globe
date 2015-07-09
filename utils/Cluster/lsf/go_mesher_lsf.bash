@@ -50,11 +50,11 @@ echo "$LSB_JOBID" > OUTPUT_FILES/jobid
 echo starting MPI mesher on $numnodes processors
 echo " "
 
-sleep 2 
+sleep 2
 mpirun --hostfile $LSB_DJOB_HOSTFILE -n $numnodes $PWD/bin/xmeshfem3D
 #mpirun.lsf $PWD/bin/xmeshfem3D
 
-# backup important files addressing.txt and list*.txt 
+# backup important files addressing.txt and list*.txt
 cp OUTPUT_FILES/*.txt $BASEMPIDIR/
 
 echo "done"

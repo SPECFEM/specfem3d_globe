@@ -45,21 +45,21 @@ program make_az_stations
   call norm_rot(ths,phs,thn,phn,thn_new,phn_new)
   print *, 'After rotating the source to the N. Pole, old N. Pole become: '
   print *, thn_new*180/pi, phn_new *180/pi
- 
+
   phr = phn_new - azr ! here could be + azr as well
   write(filename,'(a,i3.3)') 'STATIONS_',floor(az)
   open(11,file=trim(filename),status='unknown')
 
   ! read in extra distance argument
   call getarg(4,ch_dist)
-  if (trim(ch_dist) .ne. '') then
+  if (trim(ch_dist) /= '') then
     read(ch_dist,*) dist
     np = 1
     thr_array(1) = dist / 180. * pi
   else
   ! discretize the receiver garc, and figure out the slice number for individual point
     np = 180
-  end if
+  endif
 
   do i = 1, np
     if (trim(ch_dist) == '') thr_array(i) = (i*1.) / np * pi
@@ -69,7 +69,7 @@ program make_az_stations
 
     write(11,'(a,i3.3,4x,a,4x,f10.3,4x,f10.3,4x,f5.2,4x,f5.2)') 'T',i,'NT',latr_new(i),lonr_new(i),0.,0.
 
-  end do
+  enddo
 
   close(11)
 

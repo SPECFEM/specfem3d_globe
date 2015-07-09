@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -389,6 +389,10 @@
   else if (MODEL_ROOT == 'CEM_ACCEPT') then
     CEM_ACCEPT          = .true.
     TRANSVERSE_ISOTROPY = .true.
+
+  else if (MODEL_ROOT == 'CEM_GLL') then
+    THREE_D_MODEL = THREE_D_MODEL_GLL
+    TRANSVERSE_ISOTROPY = .true.
 #endif
 
   else if (MODEL_ROOT == 'PPM') then
@@ -460,10 +464,10 @@
 
   ! checks that IASP91, AK135, 1066A, JP1D or SEA1D is isotropic
   if ((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
-      REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD .or. &
-      REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A .or. &
-      REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D .or. &
-      REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD .or. &
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A .or. &
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D .or. &
+       REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
 

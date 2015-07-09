@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -89,8 +89,7 @@
 
   if (DEBUG) then
     ! global point number and coordinates left MPI cut-plane
-    open(unit=10,file=prname(1:len_trim(prname))//'iboolleft_eta.txt', &
-          status='unknown')
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'iboolleft_eta.txt',status='unknown')
   endif
 
   ! erase the logical mask used to mark points already found
@@ -123,8 +122,8 @@
 
               ! debug file output
               if (DEBUG) then
-                write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                            ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+                write(IOUT,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                              ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
               endif
             endif
           enddo
@@ -134,10 +133,10 @@
 
   if (DEBUG) then
     ! put flag to indicate end of the list of points
-    write(10,*) '0 0  0.  0.  0.'
+    write(IOUT,*) '0 0  0.  0.  0.'
     ! write total number of points
-    write(10,*) npoin2D_eta
-    close(10)
+    write(IOUT,*) npoin2D_eta
+    close(IOUT)
   endif
 
 ! compare number of surface elements detected to analytical value
@@ -156,8 +155,7 @@
 
   if (DEBUG) then
     ! global point number and coordinates right MPI cut-plane
-    open(unit=10,file=prname(1:len_trim(prname))//'iboolright_eta.txt', &
-          status='unknown')
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'iboolright_eta.txt',status='unknown')
   endif
 
   ! erase the logical mask used to mark points already found
@@ -190,8 +188,8 @@
 
             ! debug file output
             if (DEBUG) then
-              write(10,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
-                          ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
+              write(IOUT,*) ibool(ix,iy,iz,ispec), xstore(ix,iy,iz,ispec), &
+                            ystore(ix,iy,iz,ispec),zstore(ix,iy,iz,ispec)
             endif
           endif
         enddo
@@ -201,10 +199,10 @@
 
   if (DEBUG) then
     ! put flag to indicate end of the list of points
-    write(10,*) '0 0  0.  0.  0.'
+    write(IOUT,*) '0 0  0.  0.  0.'
     ! write total number of points
-    write(10,*) npoin2D_eta
-    close(10)
+    write(IOUT,*) npoin2D_eta
+    close(IOUT)
   endif
 
   ! compare number of surface elements detected to analytical value

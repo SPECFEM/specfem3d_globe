@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -35,15 +35,12 @@
 !   - proc***_reg1_bulk_betah_kernel.bin
 !   - proc***_reg1_eta_kernel.bin
 !
-! this version uses the approximate Hessian stored as
-!   - proc***_reg1_hess_kernel.bin
-!          to precondition the transverse isotropic kernel files
-!
 ! input file: kernels_list.txt
 !   lists all event kernel directories which should be summed together
 !
 ! input directory:  INPUT_KERNELS/
-!    contains links to all event kernel directories (listed in "kernels_list.txt")
+!    contains links to all event kernel directories (listed in
+!    "kernels_list.txt")
 !
 ! output directory: OUTPUT_SUM/
 !    the resulting kernel files will be stored in this directory
@@ -55,7 +52,7 @@ program sum_preconditioned_kernels_globe
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_list(MAX_NUM_NODES), sline, kernel_name
+  character(len=MAX_STRING_LEN) :: kernel_list(MAX_KERNEL_PATHS), sline, kernel_name
   integer :: nker
   integer :: ier
 
@@ -74,7 +71,7 @@ program sum_preconditioned_kernels_globe
 
   ! reads in event list
   nker=0
-  open(unit = IIN, file = trim(kernel_file_list), status = 'old',iostat = ier)
+  open(unit=IIN,file=trim(kernel_file_list),status='old',action='read',iostat=ier)
   if (ier /= 0) then
      print *,'Error opening ',trim(kernel_file_list),myrank
      stop 1
@@ -83,18 +80,18 @@ program sum_preconditioned_kernels_globe
      read(IIN,'(a)',iostat=ier) sline
      if (ier /= 0) exit
      nker = nker+1
-     if (nker > MAX_NUM_NODES) stop 'Error number of kernels exceeds MAX_NUM_NODES'
+     if (nker > MAX_KERNEL_PATHS) stop 'Error number of kernels exceeds MAX_KERNEL_PATHS'
      kernel_list(nker) = sline
   enddo
   close(IIN)
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     write(*,*) '  ',nker,' events'
     write(*,*)
   endif
 
   ! checks if number of MPI process as specified
   if (sizeprocs /= NPROCTOT_VAL) then
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       print*,''
       print*,'Error: run xsum_kernels with the same number of MPI processes '
       print*,'       as specified when slices were created'
@@ -118,10 +115,10 @@ program sum_preconditioned_kernels_globe
   call synchronize_all()
 
   ! sums up kernels
-  if( USE_ISO_KERNELS ) then
+  if (USE_ISO_KERNELS) then
 
     !  isotropic kernels
-    if( myrank == 0 ) write(*,*) 'isotropic kernels: bulk_c, bulk_beta, rho'
+    if (myrank == 0) write(*,*) 'isotropic kernels: bulk_c, bulk_beta, rho'
 
     kernel_name = 'bulk_c_kernel'
     call sum_kernel_pre(kernel_name,kernel_list,nker)
@@ -132,10 +129,10 @@ program sum_preconditioned_kernels_globe
     kernel_name = 'rho_kernel'
     call sum_kernel_pre(kernel_name,kernel_list,nker)
 
-  else if( USE_ALPHA_BETA_RHO ) then
+  else if (USE_ALPHA_BETA_RHO) then
 
     ! isotropic kernels
-    if( myrank == 0 ) write(*,*) 'isotropic kernels: alpha, beta, rho'
+    if (myrank == 0) write(*,*) 'isotropic kernels: alpha, beta, rho'
 
     kernel_name = 'alpha_kernel'
     call sum_kernel_pre(kernel_name,kernel_list,nker)
@@ -149,7 +146,7 @@ program sum_preconditioned_kernels_globe
   else
 
     ! transverse isotropic kernels
-    if( myrank == 0 ) write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah,eta'
+    if (myrank == 0) write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah,eta'
 
     kernel_name = 'bulk_c_kernel'
     call sum_kernel_pre(kernel_name,kernel_list,nker)
@@ -182,7 +179,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
 
   implicit none
 
-  character(len=MAX_STRING_LEN) :: kernel_name,kernel_list(MAX_NUM_NODES)
+  character(len=MAX_STRING_LEN) :: kernel_name,kernel_list(MAX_KERNEL_PATHS)
   integer :: nker
 
   ! local parameters
@@ -198,12 +195,12 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
            total_kernel(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating kernel arrays'
 
-  if( USE_HESS_SUM ) then
+  if (USE_HESS_SUM) then
     allocate( total_hess(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
     total_hess(:,:,:,:) = 0.0_CUSTOM_REAL
   endif
 
-  if( USE_SOURCE_MASK ) then
+  if (USE_SOURCE_MASK) then
     allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
@@ -223,7 +220,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
                                //'/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
-    if( ier /= 0 ) then
+    if (ier /= 0) then
       write(*,*) '  kernel not found: ',trim(k_file)
       stop 'Error kernel file not found'
     endif
@@ -233,7 +230,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     ! outputs norm of kernel
     norm = sum( kernel * kernel )
     call sum_all_dp(norm,norm_sum)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       print*,'  norm kernel: ',sqrt(norm_sum)
     endif
 
@@ -242,7 +239,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
                                //'/proc',myrank,trim(REG)//'hess_kernel.bin'
     open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
-    if( ier /= 0 ) then
+    if (ier /= 0) then
       write(*,*) '  hessian kernel not found: ',trim(k_file)
       stop 'Error hess_kernel.bin files not found'
     endif
@@ -253,7 +250,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     ! outputs norm of preconditioner
     norm = sum( hess * hess )
     call sum_all_dp(norm,norm_sum)
-    if( myrank == 0 ) then
+    if (myrank == 0) then
       print*,'  norm preconditioner: ',sqrt(norm_sum)
     endif
 
@@ -261,12 +258,12 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     hess = abs(hess)
 
     ! source mask
-    if( USE_SOURCE_MASK ) then
+    if (USE_SOURCE_MASK) then
       ! reads in mask
       write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
                                  //'/proc',myrank,trim(REG)//'mask_source.bin'
       open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
-      if( ier /= 0 ) then
+      if (ier /= 0) then
         write(*,*) '  file not found: ',trim(k_file)
         stop 'Error source mask file not found'
       endif
@@ -278,7 +275,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     endif
 
     ! precondition
-    if( USE_HESS_SUM ) then
+    if (USE_HESS_SUM) then
 
       ! sums up hessians first
       total_hess = total_hess + hess
@@ -296,11 +293,11 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
     ! sums all kernels from each event
     total_kernel = total_kernel + kernel
 
-    if( myrank == 0 ) print*
+    if (myrank == 0) print*
   enddo
 
   ! preconditions summed kernels with summed hessians
-  if( USE_HESS_SUM ) then
+  if (USE_HESS_SUM) then
 
       ! inverts hessian matrix
       call invert_hess( total_hess )
@@ -316,7 +313,7 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
   ! outputs summed kernel
   write(k_file,'(a,i6.6,a)') 'OUTPUT_SUM/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
   open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ier)
-  if( ier /= 0 ) then
+  if (ier /= 0) then
     write(*,*) 'Error kernel not written: ',trim(k_file)
     stop 'Error kernel write'
   endif
@@ -324,11 +321,11 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
   close(IOUT)
 
   ! outputs summed hessian
-  if( USE_HESS_SUM ) then
+  if (USE_HESS_SUM) then
     if(myrank==0) write(*,*) 'writing out summed kernel for: ','hess_inv_kernel'
     write(k_file,'(a,i6.6,a)') 'OUTPUT_SUM/proc',myrank,trim(REG) // 'hess_inv_kernel' // '.bin'
     open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ier)
-    if( ier /= 0 ) then
+    if (ier /= 0) then
       write(*,*) 'Error kernel not written: ',trim(k_file)
       stop 'Error kernel write'
     endif
@@ -340,8 +337,8 @@ subroutine sum_kernel_pre(kernel_name,kernel_list,nker)
 
   ! frees memory
   deallocate(kernel,hess,total_kernel)
-  if( USE_HESS_SUM ) deallocate(total_hess)
-  if( USE_SOURCE_MASK ) deallocate(mask_source)
+  if (USE_HESS_SUM) deallocate(total_hess)
+  if (USE_SOURCE_MASK) deallocate(mask_source)
 
 end subroutine sum_kernel_pre
 
@@ -372,14 +369,14 @@ subroutine invert_hess( hess_matrix )
   call max_allreduce_cr(maxh,maxh_all)
 
   ! user output
-  if( myrank == 0 ) then
+  if (myrank == 0) then
     print*
     print*,'hessian maximum: ',maxh_all
     print*
   endif
 
   ! normalizes hessian
-  if( maxh_all < 1.e-18 ) then
+  if (maxh_all < 1.e-18) then
     ! hessian is zero, re-initializes
     hess_matrix = 1.0_CUSTOM_REAL
     !stop 'Error hessian too small'

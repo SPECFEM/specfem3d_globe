@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -36,10 +36,10 @@
 
   ! local parameters
   ! broadcast parameter arrays
-  integer, parameter :: nparam_i = 44
+  integer, parameter :: nparam_i = 45
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 59
+  integer, parameter :: nparam_l = 61
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 34
@@ -52,7 +52,7 @@
 
   ! master process prepares broadcasting arrays
   if (myrank == 0) then
-    ! funny way to pass parameters in arrays from master to all other processes
+    ! simple way to pass parameters in arrays from master to all other processes
     ! rather than single values one by one to reduce MPI communication calls:
     ! sets up broadcasting array
     bcast_integer = (/ &
@@ -75,7 +75,7 @@
             MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP, &
             NOISE_TOMOGRAPHY, &
             ATT1,ATT2,ATT3,ATT4,ATT5, &
-            GPU_RUNTIME /)
+            GPU_RUNTIME,NUMBER_OF_SIMULTANEOUS_RUNS /)
 
     bcast_logical = (/ &
             TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
@@ -99,9 +99,8 @@
             ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
             ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER, &
             ADIOS_FOR_SOLVER_MESHFILES,ADIOS_FOR_AVS_DX,&
-            ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS, ADIOS_FOR_UNDO_ATTENUATION, &
-            CEM_REQUEST, CEM_ACCEPT &
-            /)
+            ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION, &
+            CEM_REQUEST,CEM_ACCEPT,BROADCAST_SAME_MESH_AND_MODEL,USE_FAILSAFE_MECHANISM /)
 
     bcast_double_precision = (/ &
             DT,ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,CENTER_LONGITUDE_IN_DEGREES, &
@@ -124,8 +123,8 @@
   call bcast_all_ch(LOCAL_TMP_PATH,MAX_STRING_LEN)
   call bcast_all_ch(MODEL,MAX_STRING_LEN)
 
-  call bcast_all_ch(GPU_PLATFORM,11)
-  call bcast_all_ch(GPU_DEVICE,11)
+  call bcast_all_ch(GPU_PLATFORM,12)
+  call bcast_all_ch(GPU_DEVICE,12)
 
   call bcast_all_i(ner,MAX_NUMBER_OF_MESH_LAYERS)
   call bcast_all_i(ratio_sampling_array,MAX_NUMBER_OF_MESH_LAYERS)
@@ -153,10 +152,6 @@
   call bcast_all_i(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE)
   call bcast_all_i(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
   call bcast_all_i(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
-
-  ! debug
-  !print*,'rank:',myrank,'bcast_integer:',bcast_integer(:)
-  !print*
 
   ! non-master processes set their parameters
   if (myrank /= 0) then
@@ -207,6 +202,7 @@
     ATT4 = bcast_integer(42)
     ATT5 = bcast_integer(43)
     GPU_RUNTIME = bcast_integer(44)
+    NUMBER_OF_SIMULTANEOUS_RUNS = bcast_integer(45)
 
     ! logicals
     TRANSVERSE_ISOTROPY = bcast_logical(1)
@@ -268,6 +264,8 @@
     ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(57)
     CEM_REQUEST = bcast_logical(58)
     CEM_ACCEPT = bcast_logical(59)
+    BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(60)
+    USE_FAILSAFE_MECHANISM = bcast_logical(61)
 
     ! double precisions
     DT = bcast_double_precision(1)

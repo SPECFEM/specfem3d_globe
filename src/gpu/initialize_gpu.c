@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -86,6 +86,7 @@ int run_opencl = 0;
 
 static void initialize_cuda_device(const char *platform_filter, const char *device_filter, int myrank, int *nb_devices) {
   int device_count = 0;
+  cudaError_t err;
 
   // Gets number of GPU devices
   cudaGetDeviceCount(&device_count);
@@ -95,13 +96,12 @@ static void initialize_cuda_device(const char *platform_filter, const char *devi
   // when setting the device number. If MPS is enabled, some GPUs will silently not be used.
   //
   // being verbose and catches error from first call to CUDA runtime function, without synchronize call
-  cudaError_t err = cudaGetLastError();
+  err = cudaGetLastError();
   if (err != cudaSuccess) {
     fprintf(stderr,"Error after cudaGetDeviceCount: %s\n", cudaGetErrorString(err));
     exit_on_error("\
 CUDA runtime error: cudaGetDeviceCount failed\n\n\
-please check if driver and runtime libraries work together\n\
-or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multiple MPI processes\n\n");
+please check if driver and runtime libraries work together\n\n");
   }
 
   // returns device count to fortran
@@ -112,12 +112,9 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
   *nb_devices = device_count;
 
   // releases previous contexts
-#if CUDA_VERSION < 4000
-  cudaThreadExit();
-#else
-  cudaDeviceReset();
-#endif
+  gpuReset();
 
+  // determines device id for this process
   int *matchingDevices = (int *) malloc (sizeof(int) * device_count);
   int nbMatchingDevices = 0;
   struct cudaDeviceProp deviceProp;
@@ -129,18 +126,61 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
     if (!strcasestr(deviceProp.name, device_filter)) {
       continue;
     }
-    matchingDevices[nbMatchingDevices++] = i;
+    // debug
+    //printf("device match: %d match %d out of %d - filter platform = %s device = %s\n",
+    //        i,nbMatchingDevices,device_count,platform_filter, device_filter);
+
+    // adds match
+    matchingDevices[nbMatchingDevices] = i;
+    nbMatchingDevices++;
   }
 
   if (nbMatchingDevices == 0) {
     printf("Error: no matching devices for criteria %s/%s\n", platform_filter, device_filter);
-    exit(1);
+    exit_on_error("Error CUDA found no matching devices (for device filter set in Par_file)\n");
   }
 
   int myDevice = matchingDevices[myrank % nbMatchingDevices];
+
   free(matchingDevices);
 
-  cudaSetDevice(myDevice);
+  // user error info
+  const char* err_info = "\
+Please check GPU settings on your node \n\
+and/or check CUDA MPS setup to use a single GPU with multiple MPI processes,\n\
+e.g., on titan enable environment CRAY_CUDA_MPS=1 to use a single GPU with multiple MPI processes\n\n";
+
+  // sets CUDA device for this process
+  // note: setting/getting device ids seems to return success also for multiple processes setting the same GPU id
+  //       and even if the GPU mode is thread exclusive (only a single process would be allowed to use a single GPU).
+  //       we will have to catch the error later on...
+  err = cudaSetDevice(myDevice);
+  if (err != cudaSuccess) {
+    fprintf(stderr,"Error cudaSetDevice: %s\n", cudaGetErrorString(err));
+    if (err == cudaErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("CUDA runtime error: cudaSetDevice failed\n\n");
+  }
+
+  // checks if setting device was successful
+  int device;
+  cudaGetDevice(&device);
+
+  err = cudaGetLastError();
+  // debug
+  //printf("device set/get: rank %d set %d get %d\n - return %s",myrank,myDevice,device,cudaGetErrorString(err));
+  if (err != cudaSuccess) {
+    fprintf(stderr,"Error cudaGetDevice: %s\n", cudaGetErrorString(err));
+    if (err == cudaErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("CUDA runtime error: cudaGetDevice failed\n\n");
+  }
+
+  // checks device id
+  if ( device != myDevice){
+    fprintf(stderr,"Error cudaGetDevice: setting myDevice = %d is differnt to actual device = %d\n", myDevice,device);
+    exit_on_error("Error CUDA setting device failed\n");
+  }
+
+  // checks device properties
   cudaGetDeviceProperties(&deviceProp, myDevice);
 
   // exit if the machine has no CUDA-enabled device
@@ -255,6 +295,27 @@ or on titan enable environment: CRAY_CUDA_PROXY=1 to use single GPU with multipl
     }
   }
 #endif
+
+  // tests the device with a small memory allocation
+  int size = 128;
+  int* d_array;
+  err = cudaMalloc((void**)&d_array,size*sizeof(int));
+  if (err != cudaSuccess) {
+    fprintf(stderr,"Error testing memory allocation on device failed\n");
+    fprintf(stderr,"Error rank %d: cudaMalloc failed: %s\n", myrank,cudaGetErrorString(err));
+    if (err == cudaErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("CUDA runtime error: cudaMalloc failed\n\n");
+  }
+  err = cudaFree(d_array);
+  if (err != cudaSuccess) {
+    fprintf(stderr,"Error cudaFree failed: %s\n", cudaGetErrorString(err));
+    if (err == cudaErrorDevicesUnavailable){ fprintf(stderr,"\n%s\n", err_info); }
+    exit_on_error("CUDA runtime error: cudaFree failed\n\n");
+  }
+
+  // synchronizes
+  gpuSynchronize();
+
 }
 #endif
 
@@ -469,6 +530,9 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   cl_platform_id *platform_ids;
   cl_uint num_platforms;
 
+  // debugging
+  const int VERBOSE_OUTPUT = 0;
+
   // first OpenCL call
   // only gets number of platforms
   clCheck( clGetPlatformIDs(0, NULL, &num_platforms) );
@@ -530,6 +594,18 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         }
         // frees temporary array
         free(info);
+      }
+    }
+
+    // debug output
+    if (VERBOSE_OUTPUT){
+      if (myrank == 0) {
+        printf("\nAvailable platforms are:\n");
+        for (i = 0; i < num_platforms; i++) {
+          if (info_all[i][0]) { printf("  platform %i: vendor = %s , name = %s\n",i,info_all[i][0],info_all[i][1]);}
+        }
+        printf("\nMatching platforms: %i\n",found);
+        printf("\n");
       }
     }
 
@@ -618,6 +694,18 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
       free(info);
     }
 
+    // debug output
+    if (VERBOSE_OUTPUT){
+      if (myrank == 0) {
+        printf("\nAvailable devices are:\n");
+        for (i = 0; i < num_devices; i++) {
+          if (info_device_all[i]) { printf("  device %i: name = %s\n",i,info_device_all[i]);}
+        }
+        printf("\nMatching devices: %i\n",found);
+        printf("\n");
+      }
+    }
+
     if (!found) {
       // user output
       if (myrank == 0) {
@@ -697,7 +785,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
 #define isspace(c) ((c) == ' ')
 
-static char *trim_and_default(char *s)
+static char *trim_and_default(char *s, int max_string_length)
 {
   // trim before
   while (*s != '\0' && isspace(*s)) { s++; }
@@ -706,13 +794,15 @@ static char *trim_and_default(char *s)
     return s;
   }
 
-  // note: the platform_filter argument acts weird on apple platforms, giving a string "NVIDIA   Geforce", instead of just "NVIDIA" and "Geforce"
-  //       here we assume that maximum length of GPU_PLATFORM is 11 characters
-  //       todo - find better way to avoid this?
+  // note: the platform_filter argument acts weird on e.g. apple platforms,
+  //       giving a string "NVIDIA   Geforce", instead of just "NVIDIA" and "Geforce"
+  //       here we assume that maximum length of GPU_PLATFORM is 12 characters
+  // todo - find better way to avoid this?
   // debug
   //printf("string: %s has length %i \n",s,strlen(s));
+
   int len = strlen(s);
-  if (len > 11 ) len = 11;
+  if (len > max_string_length) len = max_string_length;
 
   // trim after
   char *back = s + len;
@@ -724,6 +814,9 @@ static char *trim_and_default(char *s)
     *s = '\0';
   }
 
+  // debug
+  //printf("new string: %s has length %i \n",s,strlen(s));
+
   return s;
 }
 
@@ -733,15 +826,24 @@ enum gpu_runtime_e {COMPILE, CUDA, OPENCL};
 
 extern EXTERN_LANG
 void FC_FUNC_ (initialize_gpu_device,
-               INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_filter, char *device_filter, int *myrank_f, int *nb_devices) {
+               INITIALIZE_GPU_DEVICE) (int *runtime_f, char *platform_f, char *device_f, int *myrank_f, int *nb_devices) {
 
   TRACE ("initialize_device");
 
-  enum gpu_runtime_e runtime_type = (enum gpu_runtime_e) *runtime_f;
+  const int STRING_LENGTH = 12; // GPU_PLATFORM and GPU_DEVICE string length (as defined in shared_par.f90 module)
 
-  // trims GPU_PLATFORM and GPU_DEVICE strings
-  platform_filter = trim_and_default(platform_filter);
-  device_filter = trim_and_default(device_filter);
+  char *platform_filter;
+  char *device_filter;
+
+  // copy strings (avoids buffer overflow)
+  platform_filter = strndup(platform_f, STRING_LENGTH);
+  device_filter = strndup(device_f, STRING_LENGTH);
+
+  // trims GPU_PLATFORM and GPU_DEVICE strings and replaces default "*" with empty string
+  platform_filter = trim_and_default(platform_filter,STRING_LENGTH);
+  device_filter = trim_and_default(device_filter,STRING_LENGTH);
+
+  enum gpu_runtime_e runtime_type = (enum gpu_runtime_e) *runtime_f;
 
   // sets and checks gpu runtime flags
 #if defined(USE_OPENCL) && defined(USE_CUDA)
@@ -788,4 +890,7 @@ This simulation will continue using the Cuda runtime...\n", runtime_type, CUDA, 
     initialize_cuda_device(platform_filter, device_filter, *myrank_f, nb_devices);
   }
 #endif
+
+  free(platform_filter);
+  free(device_filter);
 }

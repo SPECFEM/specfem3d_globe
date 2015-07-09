@@ -4,7 +4,7 @@ rm -f ./xconvolve
 
 gfortran -o ./xconvolve convolve_jeroen.f90
 
-foreach file ( PAS.CI.*.sem.ascii )
+foreach file ( CI.PAS.*.sem.ascii )
 
 ./xconvolve < $file > ${file}.convolved
 

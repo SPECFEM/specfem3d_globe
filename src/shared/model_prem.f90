@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -31,7 +31,7 @@
 !
 ! A. M. Dziewonski and D. L. Anderson.
 ! Preliminary reference Earth model.
-! Phys. Earth Planet. Inter., 25:297–356, 1981.
+! Phys. Earth Planet. Inter., 25:297-356, 1981.
 !
 ! Isotropic (iso) and transversely isotropic (aniso) version of the
 ! spherically symmetric Preliminary Reference Earth Model

@@ -3,7 +3,7 @@
 # regional simulation example
 #
 # script runs mesher and solver
-# using batch scripts for a PBS queueing system 
+# using batch scripts for a PBS queueing system
 # on 64 CPUs
 #
 # synthetics have an approximate shortest period ~ 17 s
@@ -32,12 +32,11 @@ rm -rf OUTPUT_FILES/*
 # compiles executables in root directory
 # using default configuration
 cd ../../
-# configures package with ifort compiler
-./configure F90=ifort MPIF90=mpif90 FLAGS_CHECK="-O3 -assume byterecl" > tmp.log
 
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
-make >& tmp.log
+make clean
+make all
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/

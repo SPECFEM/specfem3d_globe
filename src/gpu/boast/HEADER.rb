@@ -30,7 +30,7 @@ module BOAST
 /*\n\
 !=====================================================================\n\
 !\n\
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0\n\
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0\n\
 !          --------------------------------------------------\n\
 !\n\
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp\n\
@@ -82,6 +82,8 @@ module BOAST
     if BOAST::get_lang == CL then
       if BOAST::get_default_real_size == 8 or opts[:double] then
         BOAST::get_output.puts "#pragma OPENCL EXTENSION cl_khr_fp64: enable"
+      end
+      if BOAST::get_default_real_size == 8 then
         BOAST::get_output.puts "#pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable"
       end
       load "./atomicAdd_f.rb"

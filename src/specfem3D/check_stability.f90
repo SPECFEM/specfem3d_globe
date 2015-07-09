@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -87,13 +87,12 @@
   ! compute maximum of norm of displacement in each slice
   if (.not. GPU_MODE) then
     ! on CPU
-    Usolidnorm = max( &
-        maxval(sqrt(displ_crust_mantle(1,:)**2 + &
-                    displ_crust_mantle(2,:)**2 + &
-                    displ_crust_mantle(3,:)**2)), &
-        maxval(sqrt(displ_inner_core(1,:)**2 + &
-                    displ_inner_core(2,:)**2 + &
-                    displ_inner_core(3,:)**2)))
+    Usolidnorm = max( maxval(sqrt(displ_crust_mantle(1,:)**2 + &
+                                  displ_crust_mantle(2,:)**2 + &
+                                  displ_crust_mantle(3,:)**2)), &
+                      maxval(sqrt(displ_inner_core(1,:)**2 + &
+                                  displ_inner_core(2,:)**2 + &
+                                  displ_inner_core(3,:)**2)))
 
     Ufluidnorm = maxval(abs(displ_outer_core))
   else
@@ -118,12 +117,12 @@
   if (SIMULATION_TYPE == 3) then
     if (.not. GPU_MODE) then
       ! on CPU
-      b_Usolidnorm = max( &
-             maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
-                          b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
-             maxval(sqrt(b_displ_inner_core(1,:)**2 &
-                        + b_displ_inner_core(2,:)**2 &
-                        + b_displ_inner_core(3,:)**2)))
+      b_Usolidnorm = max( maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
+                                      b_displ_crust_mantle(2,:)**2 + &
+                                      b_displ_crust_mantle(3,:)**2)), &
+                          maxval(sqrt(b_displ_inner_core(1,:)**2 + &
+                                      b_displ_inner_core(2,:)**2 + &
+                                      b_displ_inner_core(3,:)**2)))
 
       b_Ufluidnorm = maxval(abs(b_displ_outer_core))
     else
@@ -639,8 +638,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
   subroutine print_elapsed_time()
+
+! outputs runtime at the completion of time loop
 
   use specfem_par,only: time_start,IMAIN,myrank
   implicit none
@@ -651,6 +651,10 @@
   double precision :: tCPU
   double precision, external :: wtime
 
+  ! synchronizes all processes
+  call synchronize_all()
+
+  ! user output
   if (myrank == 0) then
     ! elapsed time since beginning of the simulation
     tCPU = wtime() - time_start
@@ -664,6 +668,9 @@
     write(IMAIN,"(' Total elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     call flush_IMAIN()
   endif
+
+  ! synchronizes all processes
+  call synchronize_all()
 
   end subroutine print_elapsed_time
 

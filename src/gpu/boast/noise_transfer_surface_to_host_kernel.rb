@@ -39,7 +39,7 @@ module BOAST
           print i === igll-j*ngllx
           print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]-1
           (0..2).each { |indx|
-             print noise_surface_movie[INDEX3(ndim,ngll2,indx,igll,iface)] === displ[iglob*3]
+             print noise_surface_movie[INDEX3(ndim,ngll2,indx,igll,iface)] === displ[iglob*3 + indx]
           }
         }
       close p

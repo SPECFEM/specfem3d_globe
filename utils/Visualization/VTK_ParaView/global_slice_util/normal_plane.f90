@@ -26,10 +26,10 @@ program normal_plane
   call latlon2norm(lats,lons,latr,lonr,xs,ys,zs,nx,ny,nz,xc,yc,zc)
 
   write(*,'(3f10.3,a)') xs, ys, zs, '   --- source location'
-  
+
   write(*,'(3f10.3,a)') nx, ny, nz, '   --- normal of s-r plane'
 
   write(*,'(3f10.3,a)') xc, yc, zc, '   --- center of s-r gcarc'
 
-  
+
 end program normal_plane

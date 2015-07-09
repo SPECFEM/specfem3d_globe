@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -28,6 +28,16 @@
   module constants
 
   include "constants.h"
+
+  ! a negative initial value is a convention that indicates that groups
+  ! (i.e. sub-communicators, one per run) are off by default
+  integer :: mygroup = -1
+
+  ! if doing simultaneous runs for the same mesh and model, see who
+  ! should read the mesh and the model and broadcast it to others
+  ! we put a default value here
+  logical :: I_should_read_the_database = .true.
+
 
   end module constants
 
@@ -81,7 +91,9 @@
   logical :: ABSORBING_CONDITIONS
 
   ! file directories
-  character(len=MAX_STRING_LEN) :: OUTPUT_FILES,LOCAL_PATH,LOCAL_TMP_PATH,MODEL
+  character(len=MAX_STRING_LEN) :: OUTPUT_FILES
+  character(len=MAX_STRING_LEN) :: MODEL
+  character(len=MAX_STRING_LEN) :: LOCAL_PATH,LOCAL_TMP_PATH
 
   ! attenuation parameters
   logical :: UNDO_ATTENUATION,PARTIAL_PHYS_DISPERSION_ONLY
@@ -105,14 +117,19 @@
   logical :: SAVE_REGULAR_KL,ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY, &
              APPROXIMATE_HESS_KL,USE_FULL_TISO_MANTLE,SAVE_SOURCE_MASK
 
+  ! for simultaneous runs from the same batch job
+  integer :: NUMBER_OF_SIMULTANEOUS_RUNS
+  logical :: BROADCAST_SAME_MESH_AND_MODEL,USE_FAILSAFE_MECHANISM
+
   ! GPU simulations
-  logical :: GPU_MODE
   integer :: GPU_RUNTIME
-  character(len=11) :: GPU_PLATFORM
-  character(len=11) :: GPU_DEVICE
+  character(len=12) :: GPU_PLATFORM
+  character(len=12) :: GPU_DEVICE
+  logical :: GPU_MODE
 
   ! adios file output
-  logical :: ADIOS_ENABLED,ADIOS_FOR_FORWARD_ARRAYS, &
+  logical :: ADIOS_ENABLED
+  logical :: ADIOS_FOR_FORWARD_ARRAYS, &
              ADIOS_FOR_MPI_ARRAYS,ADIOS_FOR_ARRAYS_SOLVER,ADIOS_FOR_SOLVER_MESHFILES, &
              ADIOS_FOR_AVS_DX,ADIOS_FOR_KERNELS,ADIOS_FOR_MODELS,ADIOS_FOR_UNDO_ATTENUATION
 

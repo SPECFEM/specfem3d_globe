@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -64,11 +64,19 @@
 
   ! read files back from local disk or MT tape system if restart file
   if (NUMBER_OF_THIS_RUN > 1) then
-    if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
+    ! user output
+    if (myrank == 0) then
+      write(IMAIN,*) 'reading startup file for run = ',NUMBER_OF_THIS_RUN
+      call flush_IMAIN()
+    endif
+
+    if (ADIOS_FOR_FORWARD_ARRAYS) then
       call read_intermediate_forward_arrays_adios()
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
-      open(unit=IIN,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='old',action='read',form='unformatted',iostat=ier)
+      outputname = trim(LOCAL_TMP_PATH) // '/' // outputname(1:len_trim(outputname))
+
+      open(unit=IIN,file=trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for reading')
 
       read(IIN) displ_crust_mantle
@@ -139,15 +147,17 @@
   if (UNDO_ATTENUATION ) return
 
   ! reads in file data
-  if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
+  if (ADIOS_FOR_FORWARD_ARRAYS) then
     call read_forward_arrays_adios()
   else
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-    open(unit=IIN,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
+    outputname = trim(LOCAL_TMP_PATH) // '/' // outputname(1:len_trim(outputname))
+
+    open(unit=IIN,file=trim(outputname), &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print*,'Error: opening proc_****_save_forward_arrays.bin'
-      print*,'path: ',trim(LOCAL_TMP_PATH)//'/'//outputname
+      print*,'path: ',outputname
       call exit_mpi(myrank,'Error open file save_forward_arrays.bin')
     endif
 
@@ -259,19 +269,20 @@
   character(len=MAX_STRING_LEN) :: outputname
 
   ! current subset iteration
-  iteration_on_subset_tmp = NSTEP/NT_DUMP_ATTENUATION - iteration_on_subset + 1
+  iteration_on_subset_tmp = NSUBSET_ITERATIONS - iteration_on_subset + 1
 
-  if (ADIOS_ENABLED .and. ADIOS_FOR_UNDO_ATTENUATION) then
+  if (ADIOS_FOR_UNDO_ATTENUATION) then
     call read_forward_arrays_undoatt_adios(iteration_on_subset_tmp)
   else
     ! reads in saved wavefield
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
+    outputname = trim(LOCAL_PATH) // '/' // outputname(1:len_trim(outputname))
 
     ! debug
-    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION,iteration_on_subset
+    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//trim(outputname),iteration_on_subset_tmp,iteration_on_subset,it
 
     ! opens corresponding snapshot file for reading
-    open(unit=IIN,file=trim(LOCAL_PATH)//'/'//outputname, &
+    open(unit=IIN,file=trim(outputname), &
          status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for reading')
 

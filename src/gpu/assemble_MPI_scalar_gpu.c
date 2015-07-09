@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -140,7 +140,6 @@ void FC_FUNC_ (transfer_boun_pot_from_device,
                                                                                   mp->max_nibool_interfaces_oc,
                                                                                   mp->d_nibool_interfaces_outer_core.cuda,
                                                                                   mp->d_ibool_interfaces_outer_core.cuda);
-
 
     // copies buffer to CPU
     if (GPU_ASYNC_COPY) {

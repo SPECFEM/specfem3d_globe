@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -36,6 +36,7 @@
   integer :: sizeprocs
   integer :: ier
   character(len=MAX_STRING_LEN) :: dummystring
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
@@ -44,45 +45,12 @@
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-!! DK DK for Roland_Sylvain
-  if (ROLAND_SYLVAIN) call exit_MPI(myrank,'no need to run the solver to compute Roland_Sylvain integrals, only the mesher')
-
-  if (myrank == 0) then
-    ! read the parameter file and compute additional parameters
-    call read_compute_parameters()
-
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
-!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
-    if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-      NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
-      ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-      if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-    endif
-  endif
-
-  ! distributes parameters from master to all processes
-  call broadcast_computed_parameters(myrank)
-
-  ! check that the code is running with the requested nb of processes
-  if (sizeprocs /= NPROCTOT) then
-    print*,'Error: rank ',myrank,' - wrong number of MPI processes',sizeprocs,NPROCTOT
-    call exit_MPI(myrank,'wrong number of MPI processes in the initialization of SPECFEM')
-  endif
-
-  ! synchronizes processes
-  call synchronize_all()
-
-  ! set the base pathname for output files
-  OUTPUT_FILES = 'OUTPUT_FILES'
-
   ! open main output file, only written to by process 0
-  if (myrank == 0 .and. IMAIN /= ISTANDARD_OUTPUT) then
-    open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write',iostat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_solver.txt for writing output info')
-  endif
-
   if (myrank == 0) then
+    if (IMAIN /= ISTANDARD_OUTPUT) then
+      open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_solver.txt',status='unknown',action='write',iostat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_solver.txt for writing output info')
+    endif
 
     write(IMAIN,*)
     write(IMAIN,*) '******************************'
@@ -90,6 +58,30 @@
     write(IMAIN,*) '******************************'
     write(IMAIN,*)
     write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+!! DK DK for gravity integrals
+  if (GRAVITY_INTEGRALS) call exit_MPI(myrank,'no need to run the solver to compute gravity integrals, only the mesher')
+
+  if (myrank == 0) then
+    ! read the parameter file and compute additional parameters
+    call read_compute_parameters()
+  endif
+
+  ! broadcast parameters read from master to all processes
+  call broadcast_computed_parameters(myrank)
+
+  ! check that the code is running with the requested nb of processes
+  if (sizeprocs /= NPROCTOT) then
+    if (myrank == 0) print*,'Error wrong number of MPI processes ',sizeprocs,' should be ',NPROCTOT,', please check...'
+    call exit_MPI(myrank,'wrong number of MPI processes in the initialization of SPECFEM')
+  endif
+
+  ! synchronizes processes
+  call synchronize_all()
+
+  if (myrank == 0) then
 
     if (FIX_UNDERFLOW_PROBLEM) write(IMAIN,*) 'Fixing slow underflow trapping problem using small initial field'
 
@@ -220,15 +212,21 @@
 
   ! counts receiver stations
   if (SIMULATION_TYPE == 1) then
-    rec_filename = 'DATA/STATIONS'
+    STATIONS_FILE = 'DATA/STATIONS'
   else
-    rec_filename = 'DATA/STATIONS_ADJOINT'
+    STATIONS_FILE = 'DATA/STATIONS_ADJOINT'
   endif
-  STATIONS = rec_filename
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    STATIONS_FILE = path_to_add(1:len_trim(path_to_add))//STATIONS_FILE(1:len_trim(STATIONS_FILE))
+  endif
 
   ! get total number of receivers
   if (myrank == 0) then
-    open(unit=IIN,file=STATIONS,iostat=ier,status='old',action='read')
+    open(unit=IIN,file=trim(STATIONS_FILE),status='old',action='read',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Stations file '//trim(STATIONS_FILE)//' could not be found, please check your setup')
+    ! counts records
     nrec = 0
     do while(ier == 0)
       read(IIN,"(a)",iostat=ier) dummystring
@@ -244,7 +242,7 @@
   call bcast_all_singlei(nrec)
 
   ! checks number of total receivers
-  if (nrec < 1) call exit_MPI(myrank,trim(STATIONS)//': need at least one receiver')
+  if (nrec < 1) call exit_MPI(myrank,trim(STATIONS_FILE)//': need at least one receiver')
 
   ! initializes GPU cards
   call initialize_GPU()
@@ -375,6 +373,12 @@
   if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
     call exit_MPI(myrank, 'SIMULATION_TYPE can only be 1, 2, or 3')
 
+  ! checks number of sources for adjoint simulations
+  ! The limit below is somewhat arbitrary. For pure adjoint simulations (SIMULATION_TYPE == 2),
+  ! the code outputs displacement (NT.S00001.BXX.semd,..) and strains (NT.S00001.SEE.semd,..)
+  ! as well as source derivative kernels (src_frechet.00001,..) all for each point source.
+  ! The naming convention for these files uses (.., i6.6,..), which limits the number of sources to 999999.
+  ! If that is still too low, you can increase it further (if so, change all the occurrences of (.., i6.6,..) in the code).
   if (SIMULATION_TYPE /= 1 .and. NSOURCES > 999999) &
     call exit_MPI(myrank,'for adjoint simulations, NSOURCES <= 999999, if you need more change i6.6 in write_seismograms.f90')
 
@@ -536,6 +540,7 @@
 
   ! GPU_MODE now defined in Par_file
   if (GPU_MODE) then
+    ! user output
     if (myrank == 0) then
       write(IMAIN,*)
       write(IMAIN,*) "GPU_MODE Active."
@@ -556,7 +561,7 @@
     endif
 
     ! initializes GPU and outputs info to files for all processes
-    call initialize_gpu_device(GPU_RUNTIME, GPU_PLATFORM, GPU_DEVICE, myrank,ngpu_devices)
+    call initialize_gpu_device(GPU_RUNTIME,GPU_PLATFORM,GPU_DEVICE,myrank,ngpu_devices)
   endif
 
   ! collects min/max of local devices found for statistics

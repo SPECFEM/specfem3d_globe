@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -90,7 +90,7 @@ subroutine define_kernel_adios_variables(adios_handle)
   ! Type inference for define_adios_global_array1D. Avoid additional args.
   real(kind=CUSTOM_REAL), dimension(1,1,1,1) :: dummy_real4d
 
-  outputname = "OUTPUT_FILES/kernels.bp"
+  outputname = trim(OUTPUT_FILES)//"/kernels.bp"
   group_name = "SPECFEM3D_GLOBE_KERNELS"
 
   call world_duplicate(comm)
@@ -259,10 +259,10 @@ subroutine write_kernels_cm_adios(adios_handle, &
   ! number of MPI processes
   call world_size(sizeprocs)
 
+  local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
+
   ! For anisotropic kernels
   if (ANISOTROPIC_KL) then
-    local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
-
     ! outputs transverse isotropic kernels only
     if (SAVE_TRANSVERSE_KL_ONLY) then
       ! transverse isotropic kernels
@@ -303,8 +303,6 @@ subroutine write_kernels_cm_adios(adios_handle, &
                                        "cijkl_kl_crust_mantle",-cijkl_kl_crust_mantle)
     endif
   else
-    local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
-
     ! primary kernels: (rho,kappa,mu) parameterization
     call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, &
                                      STRINGIFY_VAR(rhonotprime_kl_crust_mantle))
@@ -529,8 +527,40 @@ subroutine write_kernels_hessian_adios(adios_handle)
   ! number of MPI processes
   call world_size(sizeprocs)
 
-  local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY * NGLLZ
+  local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
+
   ! stores into file
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(hess_kl_crust_mantle))
 
 end subroutine write_kernels_hessian_adios
+
+!==============================================================================
+!> Schedule ADIOS writes for kernel variables related to the noise strength kernel.
+!! \param[INOUT] adios_handle The handle pointing on the open ADIOS file
+!!                            intended to store kernels data.
+subroutine write_kernels_strength_noise_adios(adios_handle)
+
+  use adios_write_mod
+
+  use specfem_par
+  use specfem_par_crustmantle
+
+  use adios_helpers_mod
+
+  implicit none
+
+  ! Parameters
+  integer(kind=8), intent(INOUT) :: adios_handle
+  ! Variables
+  integer :: local_dim
+  integer :: sizeprocs
+
+  ! number of MPI processes
+  call world_size(sizeprocs)
+
+  local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
+
+  ! stores into file
+  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, local_dim, STRINGIFY_VAR(sigma_kl_crust_mantle))
+
+end subroutine write_kernels_strength_noise_adios

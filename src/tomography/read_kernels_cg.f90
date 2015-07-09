@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -47,7 +47,7 @@ subroutine read_kernels_cg_tiso_old()
            kernel_betav_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
            kernel_betah_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
            kernel_eta_old(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'error allocating kernel arrays'
+  if (ier /= 0) stop 'error allocating kernel arrays'
 
   ! initializes arrays
   kernel_bulk_old = 0.0_CUSTOM_REAL
@@ -75,7 +75,7 @@ subroutine read_kernels_cg_tiso_old()
   write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -88,7 +88,7 @@ subroutine read_kernels_cg_tiso_old()
   write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -101,7 +101,7 @@ subroutine read_kernels_cg_tiso_old()
   write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -114,7 +114,7 @@ subroutine read_kernels_cg_tiso_old()
   write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -147,7 +147,7 @@ subroutine read_kernels_cg_tiso_old()
 
   ! statistics output
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernels_minmax',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernels_minmax',status='unknown',action='write')
     write(IOUT,*) '#min_bulk #max_bulk #min_vsv #max_vsv #min_vsh #max_vsh #min_eta #max_eta'
     write(IOUT,'(4e24.12)') min_bulk, max_bulk, min_vsv, max_vsv, min_vsh, max_vsh, min_eta, max_eta
     close(IOUT)
@@ -193,7 +193,7 @@ subroutine read_kernels_cg_tiso_old()
              model_dbetav_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
              model_dbetah_old(NGLLX,NGLLY,NGLLZ,NSPEC), &
              model_deta_old(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-    if( ier /= 0 ) stop 'error allocating gradient arrays'
+    if (ier /= 0) stop 'error allocating gradient arrays'
 
     ! initializes arrays
     model_dbulk_old = 0.0_CUSTOM_REAL
@@ -206,7 +206,7 @@ subroutine read_kernels_cg_tiso_old()
     write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
     if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
       call exit_mpi(myrank,'file not found')
@@ -219,7 +219,7 @@ subroutine read_kernels_cg_tiso_old()
     write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
     if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
       call exit_mpi(myrank,'file not found')
@@ -232,7 +232,7 @@ subroutine read_kernels_cg_tiso_old()
     write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
     if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
       call exit_mpi(myrank,'file not found')
@@ -245,7 +245,7 @@ subroutine read_kernels_cg_tiso_old()
     write(m_file,'(a,i6.6,a)') trim(KERNEL_OLD_DIR)//'/proc',myrank,trim(REG)//trim(fname)//'.bin'
     if (myrank == 0) print*,'  '//trim(KERNEL_OLD_DIR)//'/proc**'//trim(REG)//trim(fname)//'.bin'
 
-    open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
     if (ier /= 0) then
       print*,'Error opening: ',trim(m_file)
       call exit_mpi(myrank,'file not found')
@@ -278,7 +278,7 @@ subroutine read_kernels_cg_tiso_old()
 
     ! statistics output
     if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-      open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernel_updates_minmax',status='unknown')
+      open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_kernel_updates_minmax',status='unknown',action='write')
       write(IOUT,*) '#min_bulk #max_bulk #min_vsv #max_vsv #min_vsh #max_vsh #min_eta #max_eta'
       write(IOUT,'(4e24.12)') min_bulk, max_bulk, min_vsv, max_vsv, min_vsh, max_vsh, min_eta, max_eta
       close(IOUT)

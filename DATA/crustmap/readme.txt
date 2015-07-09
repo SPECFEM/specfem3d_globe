@@ -28,7 +28,7 @@ density    crustmaps (e.g. eucrustr3.cmap - eucrustr7.cmap)
 
 these are simple ascii data files and you can change them easily. The current crustmap resolution
 is set to 1/4 degree.
-The Values are ordered on a grid that runs from 90° lat (0° lng to 180° lng ) to -90° lat.
+The Values are ordered on a grid that runs from 90 degrees lat (0 degrees lng to 180 degrees lng ) to -90 degrees lat.
 Every line in a crustmap files sets all values for one specific latitude:
 
 (length of one line = 360 * 4 entries)

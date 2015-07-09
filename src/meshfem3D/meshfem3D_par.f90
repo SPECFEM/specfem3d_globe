@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -157,7 +157,7 @@
   double precision :: Earth_mass_total
   double precision :: Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
 
-  ! arrays containing the positions of the observation points in non-dimensionalized value for Roland_Sylvain integrals
+  ! arrays containing the positions of the observation points in non-dimensionalized value for gravity integrals
   ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops
   double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: x_observation,y_observation,z_observation
   double precision, dimension(NTOTAL_OBSERVATION) :: x_observation1D,y_observation1D,z_observation1D
@@ -167,7 +167,7 @@
 
   double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: lon_observation,lat_observation
 
-  ! arrays containing the computed fields for Roland_Sylvain integrals at the observation points
+  ! arrays containing the computed fields for gravity integrals at the observation points
   ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops
   double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz, &
                                                                             temporary_array_for_sum
@@ -344,13 +344,12 @@
   double precision :: T_c_source
 
   ! element layers
-  integer :: NUMBER_OF_MESH_LAYERS,layer_shift,cpt, &
-    first_layer_aniso,last_layer_aniso,FIRST_ELT_NON_ANISO
+  integer :: NUMBER_OF_MESH_LAYERS,layer_shift, &
+    first_layer_aniso,last_layer_aniso
   logical :: USE_ONE_LAYER_SB
 
   ! layer stretching
   double precision, dimension(:,:), allocatable :: stretch_tab
-  integer :: nb_layer_above_aniso,FIRST_ELT_ABOVE_ANISO
 
   ! Boundary Mesh
   integer :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho

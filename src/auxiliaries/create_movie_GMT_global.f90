@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -126,14 +126,8 @@
 ! read the parameter file and compute additional parameters
   call read_compute_parameters()
 
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
-!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
-  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
-    ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-    if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-  endif
+! get the base pathname for output files
+  OUTPUT_FILES = OUTPUT_FILES_BASE
 
   if (.not. MOVIE_SURFACE) stop 'movie frames were not saved by the solver'
 
@@ -173,7 +167,7 @@
     ! used in specfem3D.f90
     ! and ilocnum = nmovie_points = 2 * 2 * NEX_XI * NEX_ETA / NPROC
     ilocnum = 2 * 2 * NEX_PER_PROC_XI*NEX_PER_PROC_ETA
-    NIT =NGLLX-1
+    NIT = NGLLX-1
   else
     ilocnum = NGLLX*NGLLY*NEX_PER_PROC_XI*NEX_PER_PROC_ETA
     NIT = 1
@@ -414,11 +408,11 @@
       print*,'simulation time: ',(it-1)*DT - t0,'(s)'
 
       ! muting radius grows/shrinks with time
-      if ((it-1)*DT - t0 > STARTTIME_TO_MUTE ) then
+      if ((it-1)*DT - t0 > STARTTIME_TO_MUTE) then
 
         ! approximate wavefront travel distance in degrees
         ! (~3.5 km/s wave speed for surface waves)
-        distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * RADIANS_TO_DEGREES
+        distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
 
         ! approximate distance to source (in degrees)
         ! (shrinks if waves travel back from antipode)
@@ -572,7 +566,7 @@
                   ! mutes source region values
                   if (distance < RADIUS_TO_MUTE) then
                     ! muting takes account of the event time
-                    if ((it-1)*DT-t0 > STARTTIME_TO_MUTE ) then
+                    if ((it-1)*DT-t0 > STARTTIME_TO_MUTE) then
                       ! wavefield will be tapered to mask out noise in source area
                       ! factor from 0 to 1
                       mute_factor = ( 0.5*(1.0 - cos(distance/RADIUS_TO_MUTE*PI)) )**6
@@ -612,33 +606,33 @@
                 if (MOVIE_COARSE) then
                   if (NCHUNKS == 6) then
                     ! chunks mapped such that element corners increase in long/lat
-                    select case(iproc/NPROC+1)
-                      case(CHUNK_AB)
+                    select case (iproc/NPROC+1)
+                      case (CHUNK_AB)
                         xp(ieoff) = dble(x(1,NGLLY))
                         yp(ieoff) = dble(y(1,NGLLY))
                         zp(ieoff) = dble(z(1,NGLLY))
                         field_display(ieoff) = dble(displn(1,NGLLY))
-                      case(CHUNK_AB_ANTIPODE)
+                      case (CHUNK_AB_ANTIPODE)
                         xp(ieoff) = dble(x(1,1))
                         yp(ieoff) = dble(y(1,1))
                         zp(ieoff) = dble(z(1,1))
                         field_display(ieoff) = dble(displn(1,1))
-                      case(CHUNK_AC)
+                      case (CHUNK_AC)
                         xp(ieoff) = dble(x(1,NGLLY))
                         yp(ieoff) = dble(y(1,NGLLY))
                         zp(ieoff) = dble(z(1,NGLLY))
                         field_display(ieoff) = dble(displn(1,NGLLY))
-                      case(CHUNK_AC_ANTIPODE)
+                      case (CHUNK_AC_ANTIPODE)
                         xp(ieoff) = dble(x(1,1))
                         yp(ieoff) = dble(y(1,1))
                         zp(ieoff) = dble(z(1,1))
                         field_display(ieoff) = dble(displn(1,1))
-                      case(CHUNK_BC)
+                      case (CHUNK_BC)
                         xp(ieoff) = dble(x(1,NGLLY))
                         yp(ieoff) = dble(y(1,NGLLY))
                         zp(ieoff) = dble(z(1,NGLLY))
                         field_display(ieoff) = dble(displn(1,NGLLY))
-                      case(CHUNK_BC_ANTIPODE)
+                      case (CHUNK_BC_ANTIPODE)
                         xp(ieoff) = dble(x(NGLLX,NGLLY))
                         yp(ieoff) = dble(y(NGLLX,NGLLY))
                         zp(ieoff) = dble(z(NGLLX,NGLLY))
@@ -732,12 +726,12 @@
 
         if (max_absol < max_average) then
           ! distance (in degree) of surface waves travelled
-          distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * RADIANS_TO_DEGREES
+          distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
           if (distance > 10.0 .and. distance <= 20.0) then
             ! smooth transition between 10 and 20 degrees
             ! sets positive and negative maximum
-            field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.0)/10.0
-            field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.0)/10.0 )
+            field_display(istamp1) = + max_absol + (max_average-max_absol) * (distance - 10.d0)/10.d0
+            field_display(istamp2) = - ( max_absol + (max_average-max_absol) * (distance - 10.d0)/10.d0 )
           else if (distance > 20.0) then
             ! sets positive and negative maximum
             field_display(istamp1) = + max_average
@@ -754,7 +748,7 @@
         ! updates current wavefield maxima
         min_field_current = minval(field_display(:))
         max_field_current = maxval(field_display(:))
-        max_absol = (abs(min_field_current)+abs(max_field_current))/2.0
+        max_absol = (abs(min_field_current)+abs(max_field_current))/2.d0
       endif
 
       ! scales field values up to match average

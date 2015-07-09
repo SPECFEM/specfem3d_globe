@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -449,13 +449,37 @@ void gpuInitialize_buffers(Mesh *mp) {
 }
 
 /* ----------------------------------------------------------------------------------------------- */
+// GPU reset
+/* ----------------------------------------------------------------------------------------------- */
+
+void gpuReset() {
+  // releases previous contexts
+
+  // opencl version
+#ifdef USE_OPENCL
+  if (run_opencl) clReleaseContext (mocl.context);
+#endif
+
+  // cuda version
+#ifdef USE_CUDA
+  if (run_cuda) {
+#if CUDA_VERSION < 4000
+    cudaThreadExit();
+#else
+    cudaDeviceReset();
+#endif
+  }
+#endif
+}
+
+/* ----------------------------------------------------------------------------------------------- */
 // GPU synchronization
 /* ----------------------------------------------------------------------------------------------- */
 
 void gpuSynchronize() {
   // synchronizes device
 
-  //opencl version
+  // opencl version
 #ifdef USE_OPENCL
   if (run_opencl) {
     clFinish (mocl.command_queue);
@@ -466,10 +490,10 @@ void gpuSynchronize() {
   // cuda version
 #ifdef USE_CUDA
   if (run_cuda) {
-#if CUDA_VERSION >= 4000
-    cudaDeviceSynchronize();
-#else
+#if CUDA_VERSION < 4000
     cudaThreadSynchronize();
+#else
+    cudaDeviceSynchronize();
 #endif
   }
 #endif
@@ -648,7 +672,7 @@ void stop_timing_cuda(cudaEvent_t* start,cudaEvent_t* stop, char* info_str) {
 // exit functions
 /* ----------------------------------------------------------------------------------------------- */
 
-void exit_on_gpu_error (char *kernel_name) {
+void exit_on_gpu_error (const char *kernel_name) {
   //check to catch errors from previous operations
   // /!\ in opencl, we can't have information about the last ASYNC error
   int error = 0;
@@ -701,7 +725,7 @@ void exit_on_gpu_error (char *kernel_name) {
 
 /*----------------------------------------------------------------------------------------------- */
 
-void exit_on_error (char *info) {
+void exit_on_error (const char *info) {
   printf ("\nERROR: %s\n", info);
   fflush (stdout);
 

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -119,6 +119,7 @@
 #else
   integer :: i,j,k
 #endif
+  real(kind=CUSTOM_REAL), dimension(NSTAGE) :: MYALPHA_LDDRK,MYBETA_LDDRK
 
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
@@ -137,6 +138,20 @@
     num_elements = nspec_inner
   endif
 
+  ! note: this is an OpenMP work-around for gfortran
+  ! gfortran has problems with parameters inside a DEFAULT(NONE) OpenMP block
+  ! for a fix see https://gcc.gnu.org/ml/fortran/2014-10/msg00064.html
+  !
+  ! we use local variables to cirumvent it, another possibility would be to use DEFAULT(SHARED)
+  !
+  ! FIRSTPRIVATE declaration is chosen based on suggestion for performance optimization:
+  ! see https://docs.oracle.com/cd/E19059-01/stud.10/819-0501/7_tuning.html
+
+  if (USE_LDDRK) then
+    MYALPHA_LDDRK(:) = ALPHA_LDDRK(:)
+    MYBETA_LDDRK(:) = BETA_LDDRK(:)
+  endif
+
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( &
 !$OMP num_elements, phase_ispec_inner, iphase, ibool, displfluid, xstore, ystore, zstore, &
@@ -144,7 +159,7 @@
 !$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation, &
 !$OMP minus_rho_g_over_kappa_fluid, wgll_cube, MOVIE_VOLUME, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accelfluid, USE_LDDRK, A_array_rotation_lddrk, &
-!$OMP istage, B_array_rotation_lddrk, div_displfluid, ALPHA_LDDRK, BETA_LDDRK ) &
+!$OMP istage, B_array_rotation_lddrk, div_displfluid ) &
 !$OMP PRIVATE( &
 !$OMP ispec_p, ispec, iglob, dummyx_loc, radius, theta, phi, &
 !$OMP cos_theta, sin_theta, cos_phi, sin_phi, int_radius, &
@@ -154,7 +169,8 @@
 !$OMP dpotentialdxl, tempx1, tempx3, dpotentialdyl, dpotentialdzl, two_omega_deltat, cos_two_omega_t, &
 !$OMP sin_two_omega_t, source_euler_A, source_euler_B, A_rotation, B_rotation, ux_rotation, uy_rotation, &
 !$OMP dpotentialdx_with_rot, dpotentialdy_with_rot, gxl, gyl, gzl, gravity_term, &
-!$OMP sum_terms, newtempx1, newtempx3, newtempx2 )
+!$OMP sum_terms, newtempx1, newtempx3, newtempx2 ) &
+!$OMP FIRSTPRIVATE( MYALPHA_LDDRK,MYBETA_LDDRK )
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
@@ -422,15 +438,15 @@
         ! use the source saved above
         DO_LOOP_IJK
 
-          A_array_rotation_lddrk(INDEX_IJK,ispec) = ALPHA_LDDRK(istage) * A_array_rotation_lddrk(INDEX_IJK,ispec) &
+          A_array_rotation_lddrk(INDEX_IJK,ispec) = MYALPHA_LDDRK(istage) * A_array_rotation_lddrk(INDEX_IJK,ispec) &
                                                     + source_euler_A(INDEX_IJK)
           A_array_rotation(INDEX_IJK,ispec) = A_array_rotation(INDEX_IJK,ispec) &
-                                              + BETA_LDDRK(istage) * A_array_rotation_lddrk(INDEX_IJK,ispec)
+                                              + MYBETA_LDDRK(istage) * A_array_rotation_lddrk(INDEX_IJK,ispec)
 
-          B_array_rotation_lddrk(INDEX_IJK,ispec) = ALPHA_LDDRK(istage) * B_array_rotation_lddrk(INDEX_IJK,ispec) &
+          B_array_rotation_lddrk(INDEX_IJK,ispec) = MYALPHA_LDDRK(istage) * B_array_rotation_lddrk(INDEX_IJK,ispec) &
                                                     + source_euler_B(INDEX_IJK)
           B_array_rotation(INDEX_IJK,ispec) = B_array_rotation(INDEX_IJK,ispec) &
-                                              + BETA_LDDRK(istage) * B_array_rotation_lddrk(INDEX_IJK,ispec)
+                                              + MYBETA_LDDRK(istage) * B_array_rotation_lddrk(INDEX_IJK,ispec)
 
         ENDDO_LOOP_IJK
 

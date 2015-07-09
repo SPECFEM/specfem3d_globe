@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -35,6 +35,7 @@
   subroutine exit_MPI(myrank,error_msg)
 
   use constants
+  use shared_input_parameters, only: OUTPUT_FILES
 
   implicit none
 
@@ -51,7 +52,7 @@
 
   ! write error message to file
   write(outputname,"('/error_message',i6.6,'.txt')") myrank
-  open(unit=IERROR,file='OUTPUT_FILES'//outputname,status='unknown')
+  open(unit=IERROR,file=trim(OUTPUT_FILES)//'/'//outputname,status='unknown')
   write(IERROR,*) error_msg(1:len(error_msg))
   write(IERROR,*) 'Error detected, aborting MPI... proc ',myrank
   close(IERROR)

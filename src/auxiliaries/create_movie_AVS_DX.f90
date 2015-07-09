@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -198,7 +198,7 @@
                             6*ilocnum*NPROCTOT*CUSTOM_REAL/1024./1024.,'MB'
   print *
 
-
+  ! allocates movie arrays
   allocate(store_val_x(ilocnum,0:NPROCTOT-1),stat=ierror)
   if (ierror /= 0) stop 'Error while allocating store_val_x'
 
@@ -548,6 +548,7 @@
       print *
       print *,'minimum amplitude in current snapshot = ',min_field_current
       print *,'maximum amplitude in current snapshot = ',max_field_current
+
       if (FIX_SCALING) then
         print *,'  to be normalized by : ',MAX_VALUE
         if (max_field_current > MAX_VALUE ) stop 'increase MAX_VALUE'
@@ -562,12 +563,12 @@
         field_display(:) = (field_display(:) - min_field_current) / (max_field_current - min_field_current)
       endif
       ! rescale to [-1,1]
-      field_display(:) = 2.*field_display(:) - 1.
+      field_display(:) = 2.d0 * field_display(:) - 1.d0
 
       ! apply threshold to normalized field
       if (APPLY_THRESHOLD) then
         print *,'thresholding... '
-        where(abs(field_display(:)) <= THRESHOLD) field_display = 0.
+        where(abs(field_display(:)) <= THRESHOLD) field_display = 0.d0
       endif
 
       ! apply non linear scaling to normalized field if needed
@@ -582,7 +583,7 @@
 
       print *,'color scaling... '
       ! map back to [0,1]
-      field_display(:) = (field_display(:) + 1.) / 2.
+      field_display(:) = (field_display(:) + 1.d0) / 2.d0
 
       ! map field to [0:255] for AVS color scale
       field_display(:) = 255. * field_display(:)
@@ -670,7 +671,6 @@
     endif
 
     if (USE_GMT) then
-
       ! output list of points
       mask_point = .false.
       do ispec = 1,nspectot_AVS_max
@@ -788,17 +788,17 @@
           if (.not. mask_point(ibool_number)) then
             if (.not. ALL_THRESHOLD_OFF) then
               if (USE_OPENDX) then
-                write(11,"(f11.4)") field_display(ilocnum+ieoff)
+                write(11,"(e18.6)") field_display(ilocnum+ieoff)
               else
-                write(11,"(i10,1x,f11.4)") ireorder(ibool_number),field_display(ilocnum+ieoff)
+                write(11,"(i10,1x,e18.6)") ireorder(ibool_number),field_display(ilocnum+ieoff)
               endif
             else
               if (USE_OPENDX) then
-                write(11,"(e11.4)") field_display(ilocnum+ieoff)
+                write(11,"(e18.6)") field_display(ilocnum+ieoff)
               else
-                ! format specifier has problems w/ very small values
-                !write(11,"(i10,1x,e7.4)") ireorder(ibool_number),field_display(ilocnum+ieoff)
-                write(11,*) ireorder(ibool_number),field_display(ilocnum+ieoff)
+                !write(11,*) ireorder(ibool_number),field_display(ilocnum+ieoff)
+                ! need format specifier (e.g. for Cray): note it might have problems w/ very small values
+                write(11,"(i10,1x,e18.6)") ireorder(ibool_number),field_display(ilocnum+ieoff)
               endif
             endif
           endif
@@ -857,14 +857,8 @@
   ! read the parameter file and compute additional parameters
   call read_compute_parameters()
 
-!! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-!! DK DK we cannot move this to inside read_compute_parameters because when read_compute_parameters
-!! DK DK is called from the beginning of create_header_file then the value of NT_DUMP_ATTENUATION is unknown
-  if (UNDO_ATTENUATION .and. mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1)*NT_DUMP_ATTENUATION
-    ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-    if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-  endif
+  ! get the base pathname for output files
+  OUTPUT_FILES = OUTPUT_FILES_BASE
 
   ! checks
   if (.not. MOVIE_SURFACE) stop 'movie surface frames were not saved by the solver'

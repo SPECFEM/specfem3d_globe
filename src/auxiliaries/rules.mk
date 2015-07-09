@@ -1,6 +1,6 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 #          --------------------------------------------------
 #
 #     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -29,6 +29,7 @@
 
 auxiliaries_TARGETS = \
 	$E/xconvolve_source_timefunction \
+	$E/xdetect_duplicates_stations_file \
 	$E/xcombine_AVS_DX \
 	$E/xcombine_paraview_strain_data \
 	$E/xcombine_vol_data \
@@ -48,6 +49,7 @@ endif
 
 auxiliaries_OBJECTS = \
 	$(xconvolve_source_timefunction_OBJECTS) \
+	$(xdetect_duplicates_stations_file_OBJECTS) \
 	$(xcombine_AVS_DX_OBJECTS) \
 	$(xcombine_paraview_strain_data_OBJECTS) \
 	$(xcombine_surf_data_OBJECTS) \
@@ -62,6 +64,7 @@ auxiliaries_OBJECTS = \
 # These files come from the shared directory
 auxiliaries_SHARED_OBJECTS = \
 	$(xconvolve_source_timefunction_SHARED_OBJECTS) \
+	$(xdetect_duplicates_stations_file_SHARED_OBJECTS) \
 	$(xcombine_AVS_DX_SHARED_OBJECTS) \
 	$(xcombine_paraview_strain_data_SHARED_OBJECTS) \
 	$(xcombine_surf_data_SHARED_OBJECTS) \
@@ -107,6 +110,19 @@ xconvolve_source_timefunction_SHARED_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ${E}/xconvolve_source_timefunction: $(xconvolve_source_timefunction_OBJECTS) $(xconvolve_source_timefunction_SHARED_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
+
+#######################################
+
+xdetect_duplicates_stations_file_OBJECTS = \
+	$O/detect_duplicates_stations_file.aux.o \
+	$(EMPTY_MACRO)
+
+xdetect_duplicates_stations_file_SHARED_OBJECTS = \
+	$O/shared_par.shared_module.o \
+	$(EMPTY_MACRO)
+
+${E}/xdetect_duplicates_stations_file: $(xdetect_duplicates_stations_file_OBJECTS) $(xdetect_duplicates_stations_file_SHARED_OBJECTS)
 	${FCCOMPILE_CHECK} -o $@ $+
 
 #######################################
@@ -182,6 +198,9 @@ xcombine_vol_data_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
@@ -206,6 +225,9 @@ xcombine_vol_data_adios_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
@@ -231,6 +253,9 @@ xcombine_vol_data_vtk_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
@@ -255,6 +280,9 @@ xcombine_vol_data_vtk_adios_SHARED_OBJECTS = \
 	$O/make_ellipticity.shared.o \
 	$O/model_prem.shared.o \
 	$O/parallel.sharedmpi.o \
+	$O/read_parameter_file.shared.o \
+	$O/read_value_parameters.shared.o \
+	$O/param_reader.cc.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \

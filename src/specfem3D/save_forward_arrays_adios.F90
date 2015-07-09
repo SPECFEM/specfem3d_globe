@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -611,6 +611,7 @@
   iteration_on_subset_tmp = iteration_on_subset
 
   write(outputname,'(a, a, i6.6, a)') trim(LOCAL_PATH), '/save_frame_at', iteration_on_subset_tmp,'.bp'
+
   write(group_name, '(a, i6)') "SPECFEM3D_GLOBE_FORWARD_ARRAYS", iteration_on_subset_tmp
 
   call world_duplicate(comm)
@@ -621,7 +622,8 @@
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD_UNDO_ATT, &
+                           ADIOS_METHOD_PARAMS_UNDO_ATT, "", adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -82,6 +82,8 @@
   integer:: i,j,k,i1,j1,k1
 
   ! test parameters which can be deleted
+  logical, parameter :: DEBUG = .false.
+
   double precision:: xmesh,ymesh,zmesh
   double precision:: sumshape,sumdershapexi,sumdershapeeta,sumdershapegamma
 
@@ -89,6 +91,15 @@
   do k = 1,NGLLZ
     do j = 1,NGLLY
       do i = 1,NGLLX
+
+        xi = xigll(i)
+        eta = yigll(j)
+        gamma = zigll(k)
+
+        ! calculate Lagrange polynomial and its derivative
+        call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
+        call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
+        call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
 
         xxi = ZERO
         xeta = ZERO
@@ -100,24 +111,17 @@
         zeta = ZERO
         zgamma = ZERO
 
-        xi = xigll(i)
-        eta = yigll(j)
-        gamma = zigll(k)
-
-        ! calculate Lagrange polynomial and its derivative
-        call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
-        call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
-        call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
-
         ! test parameters
-        sumshape = ZERO
-        sumdershapexi = ZERO
-        sumdershapeeta = ZERO
-        sumdershapegamma = ZERO
+        if (DEBUG) then
+          sumshape = ZERO
+          sumdershapexi = ZERO
+          sumdershapeeta = ZERO
+          sumdershapegamma = ZERO
 
-        xmesh = ZERO
-        ymesh = ZERO
-        zmesh = ZERO
+          xmesh = ZERO
+          ymesh = ZERO
+          zmesh = ZERO
+        endif
 
         do k1 = 1,NGLLZ
           do j1 = 1,NGLLY
@@ -145,36 +149,40 @@
               zgamma = zgamma + z * hlagrange_gamma
 
               ! test the Lagrange polynomial and its derivative
-              xmesh = xmesh + x * hlagrange
-              ymesh = ymesh + y * hlagrange
-              zmesh = zmesh + z * hlagrange
+              if (DEBUG) then
+                xmesh = xmesh + x * hlagrange
+                ymesh = ymesh + y * hlagrange
+                zmesh = zmesh + z * hlagrange
 
-              sumshape = sumshape + hlagrange
-              sumdershapexi = sumdershapexi + hlagrange_xi
-              sumdershapeeta = sumdershapeeta + hlagrange_eta
-              sumdershapegamma = sumdershapegamma + hlagrange_gamma
+                sumshape = sumshape + hlagrange
+                sumdershapexi = sumdershapexi + hlagrange_xi
+                sumdershapeeta = sumdershapeeta + hlagrange_eta
+                sumdershapegamma = sumdershapegamma + hlagrange_gamma
+              endif
 
             enddo
           enddo
         enddo
 
         ! Check the Lagrange polynomial and its derivative
-        if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
-          .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
-          .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL) then
-          call exit_MPI(myrank,'Error new mesh is wrong in recalc_jacobian_gll3D.f90')
-        endif
-        if (abs(sumshape-one) >  TINYVAL) then
-          call exit_MPI(myrank,'Error shape functions in recalc_jacobian_gll3D.f90')
-        endif
-        if (abs(sumdershapexi) >  TINYVAL) then
-          call exit_MPI(myrank,'Error derivative xi in recalc_jacobian_gll3D.f90')
-        endif
-        if (abs(sumdershapeeta) >  TINYVAL) then
-          call exit_MPI(myrank,'Error derivative eta in recalc_jacobian_gll3D.f90')
-        endif
-        if (abs(sumdershapegamma) >  TINYVAL) then
-          call exit_MPI(myrank,'Error derivative gamma in recalc_jacobian_gll3D.f90')
+        if (DEBUG) then
+          if (abs(xmesh - xstore(i,j,k,ispec)) > TINYVAL &
+            .or. abs(ymesh - ystore(i,j,k,ispec)) > TINYVAL &
+            .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL) then
+            call exit_MPI(myrank,'Error new mesh is wrong in recalc_jacobian_gll3D.f90')
+          endif
+          if (abs(sumshape-one) >  TINYVAL) then
+            call exit_MPI(myrank,'Error shape functions in recalc_jacobian_gll3D.f90')
+          endif
+          if (abs(sumdershapexi) >  TINYVAL) then
+            call exit_MPI(myrank,'Error derivative xi in recalc_jacobian_gll3D.f90')
+          endif
+          if (abs(sumdershapeeta) >  TINYVAL) then
+            call exit_MPI(myrank,'Error derivative eta in recalc_jacobian_gll3D.f90')
+          endif
+          if (abs(sumdershapegamma) >  TINYVAL) then
+            call exit_MPI(myrank,'Error derivative gamma in recalc_jacobian_gll3D.f90')
+          endif
         endif
 
         ! Jacobian calculation

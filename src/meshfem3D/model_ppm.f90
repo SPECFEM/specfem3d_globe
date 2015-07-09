@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -151,7 +151,7 @@
   !e.g. Mediterranean model
   ! counts entries
   counter = 0
-  open(unit=10,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
+  open(unit=IIN,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
     call flush_IMAIN()
@@ -160,17 +160,17 @@
   endif
 
   ! first line is text and will be ignored
-  read(10,'(a256)') line
+  read(IIN,'(a256)') line
 
   ! counts number of data lines
   ier = 0
   do while (ier == 0 )
-    read(10,*,iostat=ier) lon,lat,depth,dvs,vs
+    read(IIN,*,iostat=ier) lon,lat,depth,dvs,vs
     if (ier == 0) then
       counter = counter + 1
     endif
   enddo
-  close(10)
+  close(IIN)
 
   PPM_num_v = counter
   if (counter < 1) then
@@ -196,16 +196,16 @@
   PPM_dvs(:) = 0.0
 
   ! vs values
-  open(unit=10,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
+  open(unit=IIN,file=trim(PPM_file_path),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) ' error opening: ',trim(PPM_file_path)
     call exit_mpi(0,"Error opening model ppm")
   endif
-  read(10,'(a256)') line   ! first line is text
+  read(IIN,'(a256)') line   ! first line is text
   counter = 0
   ier = 0
   do while (ier == 0 )
-    read(10,*,iostat=ier) lon,lat,depth,dvs,vs
+    read(IIN,*,iostat=ier) lon,lat,depth,dvs,vs
     if (ier == 0) then
       counter = counter + 1
       PPM_lat(counter) = lat
@@ -217,7 +217,7 @@
       !if (abs(depth - 100.0) < 1.e-3) write(IMAIN,*) '  lon/lat/depth : ',lon,lat,depth,' dvs:',dvs
     endif
   enddo
-  close(10)
+  close(IIN)
   if (counter /= PPM_num_v) then
     write(IMAIN,*)
     write(IMAIN,*) '  model PPM:',PPM_file_path
@@ -901,16 +901,15 @@
 
         ! vector approximation
         call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
-                          cx(ispec2),cy(ispec2),cz(ispec2))
+                              cx(ispec2),cy(ispec2),cz(ispec2))
 
         ! note: distances and sigmah, sigmav are normalized by R_EARTH
 
         ! checks distance between centers of elements
-        if (dist_h > sigma_h3 .or. abs(dist_v) > sigma_v3 ) cycle
+        if (dist_h > sigma_h3 .or. dist_v > sigma_v3 ) cycle
 
-
-
-        factor(:,:,:) = jacobian(:,:,:,ispec2) * wgll_cube(:,:,:) ! integration factors
+        ! integration factors
+        factor(:,:,:) = jacobian(:,:,:,ispec2) * wgll_cube(:,:,:)
 
         ! loop over GLL points of the elements in current slice (ispec)
         do k = 1, NGLLZ
@@ -923,8 +922,8 @@
               z0 = zl(i,j,k,ispec)
 
               ! calculate weights based on Gaussian smoothing
-              call smoothing_weights_vec(x0,y0,z0,ispec2,sigma_h2,sigma_v2,exp_val,&
-                      xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
+              call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
+                                         xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
               ! adds GLL integration weights
               exp_val(:,:,:) = exp_val(:,:,:) * factor(:,:,:)

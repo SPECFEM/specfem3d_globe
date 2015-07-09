@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -37,7 +37,7 @@
   double precision :: tCPU
   double precision, external :: wtime
 
-  ! for Roland_Sylvain integrals
+  ! for gravity integrals
   ! take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
   ! for the gravity vector force, a distance is involved in the dimensions
   double precision, parameter :: nondimensionalizing_factor_gi  = RHOAV * R_EARTH
@@ -54,7 +54,7 @@
   integer :: NT_DUMP_ATTENUATION_optimal
   logical, parameter :: PRINT_INFO_TO_SCREEN = .false.
 
-  if (ROLAND_SYLVAIN) then
+  if (GRAVITY_INTEGRALS) then
 
     ! multiply by the gravitational constant in S.I. units i.e. in m3 kg-1 s-2
     ! and also take into account the fact that the density and the radius of the Earth have previously been non-dimensionalized
@@ -128,13 +128,13 @@
       distance_to_center_in_km = (sqrt(Earth_center_of_mass_x_total**2 + Earth_center_of_mass_y_total**2 + &
                                                       Earth_center_of_mass_z_total**2) / Earth_mass_total) / 1000.d0
       write(IMAIN,*) '   distance to center = ',distance_to_center_in_km,' km'
-      if (ROLAND_SYLVAIN .and. .not. ONLY_COMPUTE_CENTER_OF_MASS .and. distance_to_center_in_km > 0.01d0) &
-        stop 'Error: center of mass of the model is not located in zero for Roland_Sylvain integrals, aborting...'
+      if (GRAVITY_INTEGRALS .and. .not. ONLY_COMPUTE_CENTER_OF_MASS .and. distance_to_center_in_km > 0.01d0) &
+        stop 'Error: center of mass of the model is not located in zero for gravity integrals, aborting...'
       write(IMAIN,*)
     endif
 
-!! DK DK for Roland_Sylvain
-    if (ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (GRAVITY_INTEGRALS) then
 
       temporary_array_for_sum(:,:,:) = sqrt(g_x(:,:,:)**2 + g_y(:,:,:)**2 + g_z(:,:,:)**2)
       write(IMAIN,*)

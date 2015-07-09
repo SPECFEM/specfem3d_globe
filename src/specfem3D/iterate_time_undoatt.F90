@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -24,7 +24,8 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-
+!
+! United States and French Government Sponsorship Acknowledged.
 
   subroutine iterate_time_undoatt()
 
@@ -38,6 +39,7 @@
 
   ! local parameters
   integer :: it_temp,seismo_current_temp
+  integer :: it_subset_end
   integer :: i,j,ier
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_cm_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_ic_store_buffer
@@ -46,6 +48,31 @@
   ! timing
   double precision, external :: wtime
 
+  !----  create a Gnuplot script to display the energy curve in log scale
+  if (OUTPUT_ENERGY .and. myrank == 0) then
+    open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'plot_energy.gnu',status='unknown',action='write')
+    write(IOUT_ENERGY,*) 'set term wxt'
+    write(IOUT_ENERGY,*) '#set term postscript landscape color solid "Helvetica" 22'
+    write(IOUT_ENERGY,*) '#set output "energy.ps"'
+    write(IOUT_ENERGY,*) 'set logscale y'
+    write(IOUT_ENERGY,*) 'set xlabel "Time step number"'
+    write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
+    write(IOUT_ENERGY,'(a152)') '#plot "energy.dat" us 1:2 t ''Kinetic Energy'' w l lc 1, "energy.dat" us 1:3 &
+                         &t ''Potential Energy'' w l lc 2, "energy.dat" us 1:4 t ''Total Energy'' w l lc 4'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:2 t ''Kinetic Energy'' w l lc 1'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:3 t ''Potential Energy'' w l lc 2'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) 'plot "energy.dat" us 1:4 t ''Total Energy'' w l lc 4'
+    write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
+    close(IOUT_ENERGY)
+  endif
+
+  ! open the file in which we will store the energy curve
+  if (OUTPUT_ENERGY .and. myrank == 0) &
+    open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
+
 !
 !   s t a r t   t i m e   i t e r a t i o n s
 !
@@ -53,11 +80,19 @@
   ! checks
   if (.not. UNDO_ATTENUATION) return
 
+  ! number of time subsets for time loop
+  NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
+
+  ! checks
+  if (NSUBSET_ITERATIONS <= 0) call exit_MPI(myrank,'Error invalid number of time subsets for undoing attenuation')
+
   ! user output
   if (SAVE_FORWARD .or. SIMULATION_TYPE == 3) then
-    if (myrank == 0 ) then
+    if (myrank == 0) then
       write(IMAIN,*) 'undoing attenuation:'
+      write(IMAIN,*) '  total number of time subsets                     = ',NSUBSET_ITERATIONS
       write(IMAIN,*) '  wavefield snapshots at every NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
   endif
@@ -78,10 +113,11 @@
       ! buffer(NDIM,NGLOB_CRUST_MANTLE_ADJOINT,NT_DUMP_ATTENUATION) in MB
       sizeval = dble(NDIM) * dble(NGLOB_INNER_CORE_ADJOINT) * dble(NT_DUMP_ATTENUATION) * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
       write(IMAIN,*) '  size of   inner core wavefield buffer per slice = ', sngl(sizeval),'MB'
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
 
-    !! DK DK to Daniel, July 2013: in the case of GPU_MODE it will be *crucial* to leave these arrays on the host
+    !! DK DK to Daniel, July 2013: in the case of GPU_MODE it would probably be better to leave these arrays on the host
     !! i.e. on the CPU, in order to be able to use all the (unused) memory of the host for them, since they are
     !! (purposely) huge and designed to use almost all the memory available (by carefully optimizing the
     !! value of NT_DUMP_ATTENUATION); when writing to these buffers, it will then be OK to use non-blocking writes
@@ -102,24 +138,28 @@
 
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
+  if (myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
 
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Starting time iteration loop in undoing attenuation...'
+    write(IMAIN,*) 'Starting time iteration loop...'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
 
   ! create an empty file to monitor the start of the simulation
   if (myrank == 0) then
-    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop_undoatt.txt',status='unknown',action='write')
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/starttimeloop.txt',status='unknown',action='write')
     write(IOUT,*) 'hello, starting time loop'
     close(IOUT)
   endif
 
-  ! initialize variables for writing seismograms
+  ! initializes variables for writing seismograms
   seismo_offset = it_begin-1
   seismo_current = 0
+
+  ! initializes time increments
+  it = 0
 
   ! get MPI starting time
   time_start = wtime()
@@ -128,8 +168,10 @@
   ! ************* MAIN LOOP OVER THE TIME STEPS *************
   ! *********************************************************
 
-  it = 0
-  do iteration_on_subset = 1, NSTEP / NT_DUMP_ATTENUATION
+  if (EXACT_UNDOING_TO_DISK) call setup_exact_undoing_to_disk()
+
+  ! loops over time subsets
+  do iteration_on_subset = 1, NSUBSET_ITERATIONS
 
     ! wavefield storage
     if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
@@ -143,20 +185,28 @@
       ! note: after reading the restart files of displacement back from disk, recompute the strain from displacement;
       !       this is better than storing the strain to disk as well, which would drastically increase I/O volume
       ! computes strain based on current backward/reconstructed wavefield
-      if (COMPUTE_AND_STORE_STRAIN) call itu_compute_strain_att_backward()
-
-      ! intermediate storage of it and seismo_current positions
-      it_temp = it
-      seismo_current_temp = seismo_current
+      if (COMPUTE_AND_STORE_STRAIN) call it_compute_strain_att_backward()
     endif
 
     ! time loop within this iteration subset
-    select case( SIMULATION_TYPE )
-    case( 1, 2 )
+    select case (SIMULATION_TYPE)
+    case (1, 2)
       ! forward and adjoint simulations
 
+      ! increment end of this subset
+      if (iteration_on_subset < NSUBSET_ITERATIONS) then
+        ! takes full length of subset
+        it_subset_end = NT_DUMP_ATTENUATION
+      else
+        ! loops over remaining steps in last subset
+        it_subset_end = NSTEP - (iteration_on_subset-1)*NT_DUMP_ATTENUATION
+      endif
+      ! checks end index
+      if (it_subset_end > NT_DUMP_ATTENUATION) &
+        call exit_MPI(myrank,'Error invalid buffer index for undoing attenuation')
+
       ! subset loop
-      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
+      do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
 
@@ -185,11 +235,7 @@
         enddo ! istage
 
         ! write the seismograms with time shift
-        if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 )  .or. OUTPUT_SEISMOS_ASDF) then
-          ! note: ASDF uses adios that defines the MPI communicator group that the solver is
-          !       run with. this means every processor in the group is needed for write_seismograms
-          call write_seismograms()
-        endif
+        call write_seismograms()
 
         ! outputs movie files
         call write_movie_output()
@@ -207,16 +253,32 @@
 
       enddo ! subset loop
 
-    case( 3 )
+    case (3)
       ! kernel simulations
 
-      ! reconstructs forward wavefield based on last stored wavefield data
-      !
+      ! intermediate storage of it and seismo_current positions
+      it_temp = it
+      seismo_current_temp = seismo_current
+
+      ! increment end of this subset
+      if (iteration_on_subset == 1) then
+        ! loops over remaining steps in last forward subset
+        it_subset_end = NSTEP - (NSUBSET_ITERATIONS-1)*NT_DUMP_ATTENUATION
+      else
+        ! takes full length of subset
+        it_subset_end = NT_DUMP_ATTENUATION
+      endif
+      ! checks end index
+      if (it_subset_end > NT_DUMP_ATTENUATION) &
+        call exit_MPI(myrank,'Error invalid buffer index for undoing attenuation')
+
+      ! reconstructs forward wavefields based on last stored wavefield data
+
       ! note: we step forward in time here, starting from last snapshot.
       !       the newly computed, reconstructed forward wavefields (b_displ_..) get stored in buffers.
 
       ! subset loop
-      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
+      do it_of_this_subset = 1, it_subset_end
 
         it = it + 1
 
@@ -245,7 +307,7 @@
         enddo ! istage
 
         ! transfers wavefields from GPU to CPU for buffering
-        if (GPU_MODE ) then
+        if (GPU_MODE) then
           ! daniel debug: check if these transfers could be made async to overlap
           call transfer_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,Mesh_pointer)
           call transfer_b_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,Mesh_pointer)
@@ -261,37 +323,38 @@
 
       enddo ! subset loop
 
+      ! resets current it and seismo_current positions
       it = it_temp
       seismo_current = seismo_current_temp
 
       ! computes strain based on current adjoint wavefield
-      if (COMPUTE_AND_STORE_STRAIN) call itu_compute_strain_att()
+      if (COMPUTE_AND_STORE_STRAIN) call it_compute_strain_att()
 
       ! adjoint wavefield simulation
-      do it_of_this_subset = 1, NT_DUMP_ATTENUATION
+      do it_of_this_subset = 1, it_subset_end
 
         ! reads backward/reconstructed wavefield from buffers
         ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
         ! crust/mantle
         do j = 1,NGLOB_CRUST_MANTLE_ADJOINT
           do i = 1, NDIM
-            b_displ_crust_mantle(i,j) = b_displ_cm_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_displ_crust_mantle(i,j) = b_displ_cm_store_buffer(i,j,it_subset_end-it_of_this_subset+1)
           enddo
         enddo
         ! outer core
         do j = 1,NGLOB_OUTER_CORE_ADJOINT
-            b_displ_outer_core(j) = b_displ_oc_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
-            b_accel_outer_core(j) = b_accel_oc_store_buffer(j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_displ_outer_core(j) = b_displ_oc_store_buffer(j,it_subset_end-it_of_this_subset+1)
+            b_accel_outer_core(j) = b_accel_oc_store_buffer(j,it_subset_end-it_of_this_subset+1)
         enddo
         ! inner core
         do j = 1,NGLOB_INNER_CORE_ADJOINT
           do i = 1, NDIM
-            b_displ_inner_core(i,j) = b_displ_ic_store_buffer(i,j,NT_DUMP_ATTENUATION-it_of_this_subset+1)
+            b_displ_inner_core(i,j) = b_displ_ic_store_buffer(i,j,it_subset_end-it_of_this_subset+1)
           enddo
         enddo
 
         ! transfers wavefields from CPU to GPU
-        if (GPU_MODE ) then
+        if (GPU_MODE) then
           ! daniel debug: check if these transfers could be made async to overlap
           call transfer_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,Mesh_pointer)
           call transfer_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,Mesh_pointer)
@@ -326,11 +389,7 @@
         enddo ! istage
 
         ! write the seismograms with time shift
-        if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 )  .or. OUTPUT_SEISMOS_ASDF) then
-          ! note: ASDF uses adios that defines the MPI communicator group that the solver is
-          !       run with. this means every processor in the group is needed for write_seismograms
-          call write_seismograms()
-        endif
+        call write_seismograms()
 
         ! kernel computation
         ! adjoint simulations: kernels
@@ -340,11 +399,10 @@
 
     end select ! SIMULATION_TYPE
 
-  enddo   ! end of main time loop
-
   !
   !---- end of time iteration loop
   !
+  enddo   ! end of main time loop
 
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then
@@ -354,23 +412,35 @@
                b_displ_ic_store_buffer)
   endif
 
+  ! close the huge file that contains a dump of all the time steps to disk
+  if (EXACT_UNDOING_TO_DISK) call finish_exact_undoing_to_disk()
+
+  ! user output of runtime
   call print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
 
+!----  close energy file
+  if (OUTPUT_ENERGY .and. myrank == 0) close(IOUT_ENERGY)
+
+  ! safety check of last time loop increment
+  if (it /= it_end) then
+    print*,'Error time increments: it_end = ',it_end,' and last it = ',it,' do not match!'
+    call exit_MPI(myrank,'Error invalid time increment ending')
+  endif
+
   end subroutine iterate_time_undoatt
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+! compute the strain in the whole crust/mantle and inner core domains
+!
+!-------------------------------------------------------------------------------------------------
+!
 
-!
-!--------------------------------------------------------------------------------------------
-!
-! strain for whole domain crust/mantle and inner core
-!
-!--------------------------------------------------------------------------------------------
-!
-
-  subroutine itu_compute_strain_att()
+  subroutine it_compute_strain_att()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -465,19 +535,20 @@
 
   endif ! GPU_MODE
 
-  end subroutine itu_compute_strain_att
+  end subroutine it_compute_strain_att
 
 !
-!--------------------------------------------------------------------------------------------
+!-------------------------------------------------------------------------------------------------
 !
 
-  subroutine itu_compute_strain_att_backward()
+  subroutine it_compute_strain_att_backward()
 
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
 
   implicit none
+
   ! local parameters
   integer :: ispec
 
@@ -564,5 +635,5 @@
 
   endif ! GPU_MODE
 
-  end subroutine itu_compute_strain_att_backward
+  end subroutine it_compute_strain_att_backward
 

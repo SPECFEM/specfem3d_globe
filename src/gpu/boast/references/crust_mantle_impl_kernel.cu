@@ -118,7 +118,7 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
   int offset_sls;
 
   // shear moduli for common factor (only Q_mu attenuation)
-  if( ANISOTROPY ){
+  if (ANISOTROPY){
     fac = d_c44store[tx + NGLL3_PADDED * working_element];
   }else{
     fac = d_muvstore[tx + NGLL3_PADDED * working_element];
@@ -135,7 +135,7 @@ __device__ void compute_element_cm_att_memory(int tx,int working_element,
 
     // either mustore(i,j,k,ispec) * factor_common(i,j,k,i_sls,ispec)
     // or       factor_common(i_sls,:,:,:,ispec) * c44store(:,:,:,ispec)
-    if( USE_3D_ATTENUATION_ARRAYS ){
+    if (USE_3D_ATTENUATION_ARRAYS){
       // array dimension: factor_common(N_SLS,NGLLX,NGLLY,NGLLZ,NSPEC)
       factor_loc = fac * factor_common[offset_sls];
     }else{
@@ -230,7 +230,7 @@ __device__ void compute_element_cm_gravity(int tx,
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
 
-  if( sizeof( realw ) == sizeof( float ) ){
+  if (sizeof( realw ) == sizeof( float )){
     // float operations
     // sincos function return sinus and cosine for given value
     sincosf(theta, &sin_theta, &cos_theta);
@@ -351,7 +351,7 @@ __device__ void compute_element_cm_aniso(int offset,
   c66 = d_c66store[offset];
 
   // use unrelaxed parameters if attenuation
-  if( ATTENUATION){
+  if (ATTENUATION){
     minus_sum_beta = one_minus_sum_beta_use - 1.0f;
     mul = c44;
 
@@ -401,7 +401,7 @@ __device__ void compute_element_cm_iso(int offset,
   mul = d_muvstore[offset];
 
   // use unrelaxed parameters if attenuation
-  if( ATTENUATION ){
+  if (ATTENUATION ){
     mul = mul * one_minus_sum_beta_use;
   }
 
@@ -460,7 +460,7 @@ __device__ void compute_element_cm_tiso(int offset,
 
   // use unrelaxed parameters if attenuation
   // eta does not need to be shifted since it is a ratio
-  if( ATTENUATION ){
+  if (ATTENUATION ){
     muvl = muvl * one_minus_sum_beta_use;
     muhl = muhl * one_minus_sum_beta_use;
   }
@@ -478,7 +478,7 @@ __device__ void compute_element_cm_tiso(int offset,
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
 
-  if( sizeof( realw ) == sizeof( float ) ){
+  if (sizeof( realw ) == sizeof( float )){
     // float operations
 
     // sincos function return sinus and cosine for given value
@@ -889,12 +889,12 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
   active = (tx < NGLL3 && bx < nb_blocks_to_compute) ? 1:0;
 
   // determines spectral element to work on
-  if( active ) {
+  if (active) {
 #ifdef USE_MESH_COLORING_GPU
     working_element = bx;
 #else
     //mesh coloring
-    if( use_mesh_coloring_gpu ){
+    if (use_mesh_coloring_gpu){
       working_element = bx;
     }else{
       // iphase-1 and working_element-1 for Fortran->C array conventions
@@ -912,7 +912,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
   } // active
 
   // loads hprime's into shared memory
-  if( tx < NGLL2 ) {
+  if (tx < NGLL2) {
     // copy hprime from global memory to shared memory
     load_shared_memory_hprime(&tx,d_hprime_xx,sh_hprime_xx);
     // copy hprime from global memory to shared memory
@@ -924,7 +924,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
 // to be able to compute the matrix products along cut planes of the 3D element below
   __syncthreads();
 
-  if( active ) {
+  if (active) {
 
 #ifdef MANUALLY_UNROLLED_LOOPS
     tempx1l = s_dummyx_loc[K*NGLL2+J*NGLLX]*sh_hprime_xx[I]
@@ -1063,7 +1063,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
     // attenuation
     if(ATTENUATION){
       // use unrelaxed parameters if attenuation
-      if( USE_3D_ATTENUATION_ARRAYS ){
+      if (USE_3D_ATTENUATION_ARRAYS){
         one_minus_sum_beta_use = one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
       }else{
         one_minus_sum_beta_use = one_minus_sum_beta[working_element]; // (1,1,1,ispec)
@@ -1085,7 +1085,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
                             &sigma_xy,&sigma_xz,&sigma_yz);
 
     }else{
-      if( ! d_ispec_is_tiso[working_element] ){
+      if (! d_ispec_is_tiso[working_element]){
         // isotropic case
         compute_element_cm_iso(offset,
                             d_kappavstore,d_muvstore,
@@ -1131,7 +1131,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
                       - xiyl*(etaxl*gammazl-etazl*gammaxl)
                       + xizl*(etaxl*gammayl-etayl*gammaxl));
 
-    if( GRAVITY ){
+    if (GRAVITY){
       //  computes non-symmetric terms for gravity
       compute_element_cm_gravity(tx,iglob,
                                  d_xstore,d_ystore,d_zstore,
@@ -1162,7 +1162,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
 // to be able to compute the matrix products along cut planes of the 3D element below
   __syncthreads();
 
-  if( active ) {
+  if (active) {
 
 #ifdef MANUALLY_UNROLLED_LOOPS
     tempx1l = s_tempx1[K*NGLL2+J*NGLLX]*sh_hprimewgll_xx[I*NGLLX]
@@ -1259,7 +1259,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
     sum_terms3 = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l);
 
     // adds gravity term
-    if( GRAVITY ){
+    if (GRAVITY){
       sum_terms1 += rho_s_H1;
       sum_terms2 += rho_s_H2;
       sum_terms3 += rho_s_H3;
@@ -1281,7 +1281,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
 #else // MESH_COLORING
 
     //mesh coloring
-    if( use_mesh_coloring_gpu ){
+    if (use_mesh_coloring_gpu){
 
       // no atomic operation needed, colors don't share global points between elements
 #ifdef USE_TEXTURES_FIELDS
@@ -1309,7 +1309,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
 #endif // MESH_COLORING
 
     // update memory variables based upon the Runge-Kutta scheme
-    if( ATTENUATION && ( ! PARTIAL_PHYS_DISPERSION_ONLY ) ){
+    if (ATTENUATION && ( ! PARTIAL_PHYS_DISPERSION_ONLY ) ){
       compute_element_cm_att_memory(tx,working_element,
                                     d_muvstore,
                                     factor_common,alphaval,betaval,gammaval,
@@ -1322,7 +1322,7 @@ crust_mantle_impl_kernel( int nb_blocks_to_compute,
     }
 
     // save deviatoric strain for Runge-Kutta scheme
-    if( COMPUTE_AND_STORE_STRAIN ){
+    if (COMPUTE_AND_STORE_STRAIN){
       // fortran: epsilondev_xx(:,:,:,ispec) = epsilondev_xx_loc(:,:,:)
       epsilondev_xx[tx + working_element*NGLL3] = epsilondev_xx_loc;
       epsilondev_yy[tx + working_element*NGLL3] = epsilondev_yy_loc;

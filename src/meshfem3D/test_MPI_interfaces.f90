@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,9 +27,9 @@
 
 
   subroutine test_MPI_neighbours(iregion_code, &
-                                     num_interfaces,max_nibool_interfaces, &
-                                     my_neighbours,nibool_interfaces, &
-                                     ibool_interfaces)
+                                 num_interfaces,max_nibool_interfaces, &
+                                 my_neighbours,nibool_interfaces, &
+                                 ibool_interfaces)
 
   use constants
   use meshfem3D_par,only: NPROCTOT,myrank
@@ -71,13 +71,16 @@
   endif
 
   ! allocates global mask
-  select case(iregion_code)
-  case( IREGION_CRUST_MANTLE )
-    allocate(mask(NGLOB_CRUST_MANTLE))
-  case( IREGION_OUTER_CORE )
-    allocate(mask(NGLOB_OUTER_CORE))
-  case( IREGION_INNER_CORE )
-    allocate(mask(NGLOB_INNER_CORE))
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
+    allocate(mask(NGLOB_CRUST_MANTLE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
+  case (IREGION_OUTER_CORE)
+    allocate(mask(NGLOB_OUTER_CORE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
+  case (IREGION_INNER_CORE)
+    allocate(mask(NGLOB_INNER_CORE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
   case default
     call exit_mpi(myrank,'Error test MPI: iregion_code not recognized')
   end select
@@ -253,7 +256,7 @@
 
   ! crust mantle
   allocate(test_flag_vector(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
-  if (ier /= 0 ) stop 'Error allocating array test_flag etc.'
+  if (ier /= 0 ) stop 'Error allocating array test_flag crust/mantle'
   allocate(valence(NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array valence'
 
@@ -369,7 +372,7 @@
 
   ! outer core
   allocate(test_flag(NGLOB_OUTER_CORE),stat=ier)
-  if (ier /= 0 ) stop 'Error allocating array test_flag etc.'
+  if (ier /= 0 ) stop 'Error allocating array test_flag outer core'
   allocate(valence(NGLOB_OUTER_CORE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array valence'
 
@@ -478,7 +481,7 @@
 
   ! inner core
   allocate(test_flag_vector(NDIM,NGLOB_INNER_CORE),stat=ier)
-  if (ier /= 0 ) stop 'Error allocating array test_flag etc.'
+  if (ier /= 0 ) stop 'Error allocating array test_flag inner core'
   allocate(valence(NGLOB_INNER_CORE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating array valence'
 

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -27,18 +27,31 @@
 
   subroutine write_movie_output()
 
-  use specfem_par
-  use specfem_par_crustmantle
-  use specfem_par_innercore
-  use specfem_par_outercore
+  use specfem_par,only: deltat,it,myrank,Mesh_pointer, &
+    GPU_MODE,NTSTEP_BETWEEN_FRAMES,LOCAL_TMP_PATH, &
+    MOVIE_COARSE,MOVIE_START,MOVIE_STOP,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_TYPE, &
+    scale_displ,scale_veloc
+
+  use specfem_par_crustmantle,only: displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+    eps_trace_over_3_crust_mantle,epsilondev_xx_crust_mantle,epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+    epsilondev_yy_crust_mantle,epsilondev_yz_crust_mantle, &
+    ibool_crust_mantle
+
+  use specfem_par_innercore,only: displ_inner_core,veloc_inner_core,accel_inner_core, &
+    eps_trace_over_3_inner_core,epsilondev_xx_inner_core,epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
+    epsilondev_yy_inner_core,epsilondev_yz_inner_core, &
+    ibool_inner_core
+
+  use specfem_par_outercore,only: displ_outer_core,veloc_outer_core,accel_outer_core, &
+    ibool_outer_core,kappavstore_outer_core,rhostore_outer_core
+
   use specfem_par_movie
   implicit none
 
   ! local parameters
-  ! debugging
-  character(len=MAX_STRING_LEN) :: filename
-  integer,dimension(:),allocatable :: dummy_i
+  double precision :: scalingval
 
+  ! debugging
   !-----------------------------------------------------------------------------
   ! user parameters
   ! outputs volume snapshot VTK files of displacement in crust/mantle region for debugging
@@ -109,8 +122,8 @@
     if (mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 &
       .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
 
-      select case( MOVIE_VOLUME_TYPE )
-      case( 1 )
+      select case (MOVIE_VOLUME_TYPE)
+      case (1)
         ! output strains
 
         ! gets resulting array values onto CPU
@@ -130,7 +143,7 @@
                     muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-      case( 2, 3 )
+      case (2, 3)
         ! output the Time Integral of Strain, or \mu*TIS
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
@@ -140,7 +153,7 @@
                     muvstore_crust_mantle_3dmovie, &
                     mask_3dmovie,nu_3dmovie)
 
-      case( 4 )
+      case (4)
         ! output divergence and curl in whole volume
 
         ! gets resulting array values onto CPU
@@ -171,7 +184,7 @@
                         epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
                         LOCAL_TMP_PATH)
 
-      case( 5 )
+      case (5)
         !output displacement
         if (GPU_MODE) then
           call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
@@ -183,7 +196,7 @@
                                        displ_crust_mantle, &
                                        scalingval,mask_3dmovie,nu_3dmovie)
 
-      case( 6 )
+      case (6)
         !output velocity
         if (GPU_MODE) then
           call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
@@ -195,7 +208,7 @@
                                        veloc_crust_mantle, &
                                        scalingval,mask_3dmovie,nu_3dmovie)
 
-      case( 7 )
+      case (7)
         ! output norm of displacement
 
         ! gets resulting array values onto CPU
@@ -210,7 +223,7 @@
                         displ_crust_mantle,displ_inner_core,displ_outer_core, &
                         ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
-      case( 8 )
+      case (8)
         ! output norm of velocity
 
         ! gets resulting array values onto CPU
@@ -225,7 +238,7 @@
                         veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
                         ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
-      case( 9 )
+      case (9)
         ! output norm of acceleration
 
         ! gets resulting array values onto CPU
@@ -261,63 +274,64 @@
   endif ! MOVIE_VOLUME
 
   ! debugging
-  if (DEBUG_SNAPSHOT) then
-    if (mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 &
-      .and. it >= MOVIE_START .and. it <= MOVIE_STOP) then
-
-      !output displacement
-      if (GPU_MODE) then
-        call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
-        call transfer_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,displ_inner_core,Mesh_pointer)
-      endif
-
-      write(prname,'(a,i6.6,a)') 'OUTPUT_FILES/snapshot_proc',myrank,'_'
-
-      ! VTK file output
-      ! displacement values
-
-      ! crust mantle
-      allocate(dummy_i(NSPEC_CRUST_MANTLE))
-      dummy_i(:) = IFLAG_CRUST
-
-      ! one file per process
-      write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it
-      call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                          xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
-                          displ_crust_mantle,filename)
-
-      ! backward/reconstructed field
-      if (SIMULATION_TYPE == 3) then
-        write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_b_displ_',it
-        call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
-                            b_displ_crust_mantle,filename)
-      endif
-
-      ! single file for all
-      !write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
-      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_1_displ_',it
-      !call write_VTK_data_cr_all(myrank,NPROCTOT_VAL,dummy_i, &
-      !                    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-      !                    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle, &
-      !                    displ_crust_mantle,filename)
-      deallocate(dummy_i)
-
-      ! inner core
-      ! one file per process
-      !write(prname,'(a,i6.6,a)') trim(LOCAL_TMP_PATH)//'/'//'proc',myrank,'_'
-      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-      !call write_VTK_data_cr(idoubling_inner_core,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-      !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-      !                    displ_inner_core,filename)
-      ! single file for all
-      !write(prname,'(a)') 'OUTPUT_FILES/snapshot_all_'
-      !write(filename,'(a,a,i6.6)') prname(1:len_trim(prname)),'reg_3_displ_',it
-      !call write_VTK_data_cr_all(myrank,NPROCTOT_VAL,idoubling_inner_core, &
-      !                    NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-      !                    xstore_inner_core,ystore_inner_core,zstore_inner_core,ibool_inner_core, &
-      !                    displ_inner_core,filename)
-    endif
-  endif
+  if (DEBUG_SNAPSHOT) call write_movie_VTK_snapshot()
 
   end subroutine write_movie_output
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_movie_VTK_snapshot()
+
+  use specfem_par,only: it,myrank,Mesh_pointer, &
+    GPU_MODE,SIMULATION_TYPE, &
+    NTSTEP_BETWEEN_FRAMES,MOVIE_START,MOVIE_STOP, &
+    MAX_STRING_LEN,IFLAG_CRUST,NDIM, &
+    NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE
+
+  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
+    ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+
+  implicit none
+
+  character(len=MAX_STRING_LEN) :: filename
+  integer,dimension(:),allocatable :: dummy_i
+  integer :: ier
+
+  ! checks if anything to do
+  if (.not. (mod(it-MOVIE_START,NTSTEP_BETWEEN_FRAMES) == 0 .and. it >= MOVIE_START .and. it <= MOVIE_STOP)) return
+
+  ! crust mantle
+  allocate(dummy_i(NSPEC_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating dummy array for snapshot'
+  dummy_i(:) = IFLAG_CRUST
+
+  !output displacement
+  if (GPU_MODE) then
+    call transfer_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,displ_crust_mantle,Mesh_pointer)
+  endif
+
+  ! VTK file output
+  ! one file per process
+  write(filename,'(a,i6.6,a,i6.6)') 'OUTPUT_FILES/snapshot_proc',myrank,'_reg_1_displ_',it
+  call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                         xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                         ibool_crust_mantle,displ_crust_mantle,filename)
+
+  ! backward/reconstructed field
+  if (SIMULATION_TYPE == 3) then
+    if (GPU_MODE) then
+      call transfer_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,Mesh_pointer)
+    endif
+
+    write(filename,'(a,i6.6,a,i6.6)') 'OUTPUT_FILES/snapshot_proc',myrank,'_reg_1_b_displ_',it
+    call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
+                           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                           ibool_crust_mantle,b_displ_crust_mantle,filename)
+  endif
+
+  deallocate(dummy_i)
+
+  end subroutine write_movie_VTK_snapshot
+

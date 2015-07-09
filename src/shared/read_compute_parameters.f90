@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -102,35 +102,46 @@
                             R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
                             CEM_REQUEST,CEM_ACCEPT)
 
+  ! checks parameters
+  call rcp_check_parameters()
+
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX
   NEX_MAX = max(NEX_XI,NEX_ETA)
   call get_timestep_and_layers(NEX_MAX)
 
+  ! time steps: this is an initial estimate based on the record length.
+  !             we will need to add additional time steps for reaching the start time at -t0,
+  !             which is only known when reading in the CMT source(s).
+  !             (see also routine setup_timesteps() in setup_sources_receivers.f90)
+  !
   ! initial guess : compute total number of time steps, rounded to next multiple of 100
   NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
+
+  ! noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    ! time steps needs to be doubled, due to +/- branches (symmetric around zero)
+    NSTEP = 2 * NSTEP - 1
+  endif
 
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-  ! noise simulations
-  if (NOISE_TOMOGRAPHY /= 0) then
-    ! time steps needs to be doubled, due to +/- branches
-    NSTEP = 2*NSTEP-1
-  endif
+  ! debug
+  !print*,'initial time steps = ',NSTEP,' record length = ',RECORD_LENGTH_IN_MINUTES,' DT = ',DT
 
-  ! subsets used to save seismograms must not be larger than the whole time series, otherwise we waste memory
-  if (NTSTEP_BETWEEN_OUTPUT_SEISMOS > NSTEP) NTSTEP_BETWEEN_OUTPUT_SEISMOS = NSTEP
-
+  ! half-time duration
+  !
   ! computes a default hdur_movie that creates nice looking movies.
   ! Sets HDUR_MOVIE as the minimum period the mesh can resolve
   if (HDUR_MOVIE <= TINYVAL) then
     HDUR_MOVIE = 1.2d0*max(240.d0/NEX_XI*18.d0*ANGULAR_WIDTH_XI_IN_DEGREES/90.d0, &
                            240.d0/NEX_ETA*18.d0*ANGULAR_WIDTH_ETA_IN_DEGREES/90.d0)
   endif
-
-  ! checks parameters
-  call rcp_check_parameters()
+  ! noise simulations require MOVIE_SURFACE flag to output wavefield at Earth's surface;
+  ! however they don't need to convolve the source time function with any HDUR_MOVIE
+  ! since they employ a separate noise-spectrum source S_squared
+  if (NOISE_TOMOGRAPHY /= 0) HDUR_MOVIE = 0.d0
 
   ! check that mesh can be coarsened in depth three or four times
   CUT_SUPERBRICK_XI=.false.
@@ -255,13 +266,19 @@
 
   use constants,only: &
     CUSTOM_REAL,SIZE_REAL,SIZE_DOUBLE,NUMFACES_SHARED,NUMCORNERS_SHARED, &
-    N_SLS,NGNOD,NGNOD2D
+    N_SLS,NGNOD,NGNOD2D,NGLLX,NGLLY
 
   use shared_parameters
 
   implicit none
 
 ! checks parameters
+
+  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
+    stop 'SIMULATION_TYPE must be either 1, 2 or 3'
+
+  if (NOISE_TOMOGRAPHY < 0 .or. NOISE_TOMOGRAPHY > 3) &
+    stop 'NOISE_TOMOGRAPHY must be either 0, 1, 2 or 3'
 
   if (NCHUNKS /= 1 .and. NCHUNKS /= 2 .and. NCHUNKS /= 3 .and. NCHUNKS /= 6) &
     stop 'NCHUNKS must be either 1, 2, 3 or 6'
@@ -289,6 +306,7 @@
   if (PARTIAL_PHYS_DISPERSION_ONLY .and. UNDO_ATTENUATION) &
     stop 'cannot have both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION, they are mutually exclusive'
 
+  ! simulations with undoing attenuation
   if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'MOVIE_VOLUME_TYPE == 4 is not implemented for UNDO_ATTENUATION in order to save memory'
 
@@ -299,9 +317,6 @@
   !! DK DK this should not be difficult to fix and test, but not done yet by lack of time
   if (UNDO_ATTENUATION .and. NUMBER_OF_THIS_RUN > 1) &
     stop 'we currently do not support NUMBER_OF_THIS_RUN > 1 in the case of UNDO_ATTENUATION'
-
-  if (OUTPUT_SEISMOS_SAC_ALPHANUM .and. (mod(NTSTEP_BETWEEN_OUTPUT_SEISMOS,5) /= 0)) &
-    stop 'if OUTPUT_SEISMOS_SAC_ALPHANUM = .true. then NTSTEP_BETWEEN_OUTPUT_SEISMOS must be a multiple of 5, check the Par_file'
 
   ! check that reals are either 4 or 8 bytes
   if (CUSTOM_REAL /= SIZE_REAL .and. CUSTOM_REAL /= SIZE_DOUBLE) &
@@ -356,116 +371,29 @@
       stop 'NPROC_XI,NPROC_ETA == 1: please set in constants.h NUMFACES_SHARED and NUMCORNERS_SHARED equal to 4 and recompile'
   endif
 
-  end subroutine rcp_check_parameters
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-! compute the optimal interval at which to dump restart files to disk to undo attenuation in an exact way
-
-! Dimitri Komatitsch and Zhinan Xie, CNRS Marseille, France, June 2013.
-
-  subroutine compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
-                 static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
-
-  use shared_parameters
-  use constants
-
-  implicit none
-
-  double precision, intent(in) :: static_memory_size
-  integer, intent(out) :: NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do
-  double precision, intent(out) :: static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping
-
-  double precision :: what_we_can_use_in_GB
-
-  if (MEMORY_INSTALLED_PER_CORE_IN_GB < 0.1d0) &
-       stop 'less than 100 MB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
-!! DK DK the value below will probably need to be increased one day, on future machines
-  if (MEMORY_INSTALLED_PER_CORE_IN_GB > 512.d0) &
-       stop 'more than 512 GB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
-
-  if (PERCENT_OF_MEM_TO_USE_PER_CORE < 50.d0) &
-       stop 'less than 50% for PERCENT_OF_MEM_TO_USE_PER_CORE does not seem realistic; exiting...'
-  if (PERCENT_OF_MEM_TO_USE_PER_CORE > 100.d0) &
-       stop 'more than 100% for PERCENT_OF_MEM_TO_USE_PER_CORE makes no sense; exiting...'
-!! DK DK will need to remove the ".and. .not. GPU_MODE" test here
-!! DK DK if the undo_attenuation buffers are stored on the GPU instead of on the host
-  if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
-       stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'
-
-  what_we_can_use_in_GB = MEMORY_INSTALLED_PER_CORE_IN_GB * PERCENT_OF_MEM_TO_USE_PER_CORE / 100.d0
-
-! convert static memory size to GB
-  static_memory_size_GB = static_memory_size / 1.d9
-
-!! DK DK June 2014: TODO  this comment is true but the statement is commented out for now
-!! DK DK June 2014: TODO  because there is no GPU support for UNDO_ATTENUATION yet
-!! DK DK June 2014:
-! in the case of GPUs, the buffers remain on the host i.e. on the CPU, thus static_memory_size_GB could be set to zero here
-! because the solver uses almost no permanent host memory, since all calculations are performed and stored on the device;
-! however we prefer not to do that here because we probably have some temporary copies of all the arrays created on the host first,
-! and it is not clear if they are then suppressed when the time loop of the solver starts because static memory allocation
-! is used for big arrays on the host rather than dynamic, thus there is no way of freeing it dynamically.
-! Thus for now we prefer not to set static_memory_size_GB to zero here.
-!
-! if (GPU_MODE) static_memory_size_GB = 0.d0
-
-  if (static_memory_size_GB >= MEMORY_INSTALLED_PER_CORE_IN_GB) &
-    stop 'you are using more memory than what you told us is installed!!! there is an error'
-
-  if (static_memory_size_GB >= what_we_can_use_in_GB) &
-    stop 'you are using more memory than what you allowed us to use!!! there is an error'
-
-! compute the size to store in memory at each time step
-  size_to_store_at_each_time_step = 0
-
-! displ_crust_mantle
-  size_to_store_at_each_time_step = size_to_store_at_each_time_step + dble(NDIM)*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
-
-! displ_inner_core
-  size_to_store_at_each_time_step = size_to_store_at_each_time_step + dble(NDIM)*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
-
-! displ_outer_core and accel_outer_core (both being scalar arrays)
-  size_to_store_at_each_time_step = size_to_store_at_each_time_step + 2.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
-
-! convert to GB
-  size_to_store_at_each_time_step = size_to_store_at_each_time_step / 1.d9
-
-  NT_DUMP_ATTENUATION_optimal = int((what_we_can_use_in_GB - static_memory_size_GB) / size_to_store_at_each_time_step)
-
-! compute the size of files to dump to disk
-  disk_size_of_each_dumping = 0
-
-! displ_crust_mantle, veloc_crust_mantle, accel_crust_mantle
-  disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
-
-! displ_inner_core, veloc_inner_core, accel_inner_core
-  disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*dble(NDIM)*NGLOB(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
-
-! displ_outer_core, veloc_outer_core, accel_outer_core (all scalar arrays)
-  disk_size_of_each_dumping = disk_size_of_each_dumping + 3.d0*NGLOB(IREGION_OUTER_CORE)*dble(CUSTOM_REAL)
-
-! A_array_rotation,B_array_rotation
-  if (ROTATION) disk_size_of_each_dumping = disk_size_of_each_dumping + &
-      dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_OUTER_CORE)*2.d0*dble(CUSTOM_REAL)
-
-  if (ATTENUATION) then
-! R_memory_crust_mantle
-    disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
-      dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_CRUST_MANTLE)*dble(CUSTOM_REAL)
-
-! R_memory_inner_core
-    disk_size_of_each_dumping = disk_size_of_each_dumping + 5.d0*dble(N_SLS)*dble(NGLLX)* &
-      dble(NGLLY)*dble(NGLLZ)*NSPEC(IREGION_INNER_CORE)*dble(CUSTOM_REAL)
+  ! checks movie setup
+  if (MOVIE_SURFACE) then
+    if (MOVIE_COARSE .and. NGLLX /= NGLLY) &
+      stop 'MOVIE_COARSE together with MOVIE_SURFACE requires NGLLX == NGLLY'
+  endif
+  if (MOVIE_VOLUME) then
+    if (MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
+      stop 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9'
   endif
 
-! convert to GB
-  disk_size_of_each_dumping = disk_size_of_each_dumping / 1.d9
+  ! noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    if ((NOISE_TOMOGRAPHY == 1 .or. NOISE_TOMOGRAPHY == 2) .and. SIMULATION_TYPE /= 1) &
+      stop 'Noise simulations with NOISE_TOMOGRAPHY == 1 / 2 must have SIMULATION_TYPE == 1'
+    if (NOISE_TOMOGRAPHY == 3 .and. SIMULATION_TYPE /= 3) &
+      stop 'Noise simulations with NOISE_TOMOGRAPHY == 3 must have SIMULATION_TYPE == 3'
+    if (NUMBER_OF_RUNS /= 1 .or. NUMBER_OF_THIS_RUN /= 1) &
+      stop 'NUMBER_OF_RUNS and NUMBER_OF_THIS_RUN must be 1 for NOISE TOMOGRAPHY simulation'
+    if (ROTATE_SEISMOGRAMS_RT) &
+      stop 'Do NOT rotate seismograms in the code, change ROTATE_SEISMOGRAMS_RT in Par_file for noise simulation'
+    if (SAVE_ALL_SEISMOS_IN_ONE_FILE .OR. USE_BINARY_FOR_LARGE_FILE) &
+      stop 'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false. for noise simulation'
+  endif
 
-!! DK DK this formula could be made more precise; currently in some cases it can probably be off by +1 or -1; does not matter much
-  number_of_dumpings_to_do = nint(NSTEP / dble(NT_DUMP_ATTENUATION_optimal))
-
-  end subroutine compute_optimized_dumping
+  end subroutine rcp_check_parameters
 

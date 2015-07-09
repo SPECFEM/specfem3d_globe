@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -151,9 +151,9 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_oc_tex));
     }
 #endif
-    local_work_size[0] = blocksize;
+    local_work_size[0] = blocksize / GPU_ELEM_PER_THREAD;
     local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
+    global_work_size[0] = num_blocks_x * blocksize / GPU_ELEM_PER_THREAD;
     global_work_size[1] = num_blocks_y;
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *outer_core_kernel_p, 2, NULL,
@@ -163,7 +163,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
 #ifdef USE_CUDA
   if (run_cuda) {
     dim3 grid(num_blocks_x,num_blocks_y);
-    dim3 threads(blocksize,1,1);
+    dim3 threads(blocksize / GPU_ELEM_PER_THREAD,1,1);
 
     if (FORWARD_OR_ADJOINT == 1) {
       // forward wavefields -> FORWARD_OR_ADJOINT == 1

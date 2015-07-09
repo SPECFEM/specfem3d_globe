@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -116,6 +116,7 @@
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
   use constants
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
@@ -141,10 +142,18 @@
   character(len=5) :: datasource
   character(len=256) :: string
 
+  character(len=MAX_STRING_LEN) :: CMTSOLUTION_FILE, path_to_add
+
 !
 !---- read hypocenter info
+  CMTSOLUTION_FILE = 'DATA/CMTSOLUTION'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    CMTSOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//CMTSOLUTION_FILE(1:len_trim(CMTSOLUTION_FILE))
+  endif
 !
-  open(unit=IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ios)
+  open(unit=IIN,file=trim(CMTSOLUTION_FILE),status='old',action='read',iostat=ios)
   if (ios /= 0) stop 'Error opening DATA/CMTSOLUTION file (in get_event_info_serial)'
 
   ! example header line of CMTSOLUTION file

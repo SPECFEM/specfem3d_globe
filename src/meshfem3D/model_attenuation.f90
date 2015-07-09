@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -275,33 +275,33 @@
 
   ! sets up attenuation storage (for all possible Qmu values defined in the 1D models)
   allocate(AM_V%Qr(AM_V%Qn), &
-          AM_V%Qmu(AM_V%Qn), &
-          AM_V%interval_Q(AM_V%Qn), &
-          AM_V%Qtau_e(N_SLS,AM_V%Qn), &
-          stat=ier)
+           AM_V%Qmu(AM_V%Qn), &
+           AM_V%interval_Q(AM_V%Qn), &
+           AM_V%Qtau_e(N_SLS,AM_V%Qn), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating AM_V arrays')
 
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_PREM) then
-     AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
-     AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,   R220,    R220,    R80,     R80, R_EARTH /)
+    AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91) then
-     AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
-     AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
+    AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
-     AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
-     AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
+    AM_V%Qr(:)     = Mak135_V_radius_ak135(:)
+    AM_V%Qmu(:)    = Mak135_V_Qmu_ak135(:)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-     AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
-     AM_V%Qmu(:)    = M1066a_V_Qmu_1066a(:)
+    AM_V%Qr(:)     = M1066a_V_radius_1066a(:)
+    AM_V%Qmu(:)    = M1066a_V_Qmu_1066a(:)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-     AM_V%Qr(:)     = Mref_V_radius_ref(:)
-     AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
+    AM_V%Qr(:)     = Mref_V_radius_ref(:)
+    AM_V%Qmu(:)    = Mref_V_Qmu_ref(:)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-     AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
-     AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
+    AM_V%Qr(:)     = (/    0.0d0,     RICB,  RICB,  RCMB,    RCMB,    R670,    R670,    R220,   R220,   R120,    R120, R_EARTH /)
+    AM_V%Qmu(:)    = (/   84.6d0,   84.6d0, 0.0d0, 0.0d0, 312.0d0, 312.0d0, 143.0d0, 143.0d0, 80.0d0, 80.0d0, 600.0d0, 600.0d0 /)
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
-     AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
-     AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
+    AM_V%Qr(:)     = SEA1DM_V_radius_sea1d(:)
+    AM_V%Qmu(:)    = SEA1DM_V_Qmu_sea1d(:)
   endif
 
   do i = 1, AM_V%Qn
@@ -482,21 +482,21 @@
   Qmu_new = dble(Qtmp) / dble(AM_S%Q_resolution)
 
   if (rw > 0) then
-     ! READ
-     if (AM_S%Qmu_storage(Qtmp) > 0) then
-        ! READ SUCCESSFUL
-        tau_e(:)   = AM_S%tau_e_storage(:, Qtmp)
-        Qmu        = AM_S%Qmu_storage(Qtmp)
-        rw = 1
-     else
-        ! READ NOT SUCCESSFUL
-        rw = -1
-     endif
+    ! READ
+    if (AM_S%Qmu_storage(Qtmp) > 0) then
+      ! READ SUCCESSFUL
+      tau_e(:)   = AM_S%tau_e_storage(:, Qtmp)
+      Qmu        = AM_S%Qmu_storage(Qtmp)
+      rw = 1
+    else
+      ! READ NOT SUCCESSFUL
+      rw = -1
+    endif
   else
-     ! WRITE SUCCESSFUL
-     AM_S%tau_e_storage(:,Qtmp)    = tau_e(:)
-     AM_S%Qmu_storage(Qtmp)        = Qmu
-     rw = 1
+    ! WRITE SUCCESSFUL
+    AM_S%tau_e_storage(:,Qtmp)    = tau_e(:)
+    AM_S%Qmu_storage(Qtmp)        = Qmu
+    rw = 1
   endif
 
   end subroutine model_attenuation_storage
@@ -549,7 +549,7 @@
 
   dexpval = (exp2-exp1) / ((n*1.0d0) - 1)
   do i = 1,n
-     tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexpval))
+    tau_s(i) = 1.0 / (PI * 2.0d0 * 10**(exp1 + (i - 1)* 1.0d0 *dexpval))
   enddo
 
   end subroutine attenuation_tau_sigma
@@ -1202,104 +1202,3 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   end function max_size_simplex
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-!    - Implementation of a Heap Sort Routine
-!    Input
-!      n = Input
-!         Length of arrays
-!      X = Input/Output
-!         Vector to be sorted
-!         dimension(n)
-!      Y = Output
-!         Sorted Indices of vector X
-!
-!      Example:
-!         X = [ 4 3 1 2 ] on Input
-!         Y = [ 1 2 3 4 ] Computed Internally (in order)
-!
-!         X = [ 1 2 3 4 ] on Output
-!         Y = [ 3 4 2 1 ] on Output
-!
-  subroutine heap_sort_local(N, X, Y)
-
-  implicit none
-  integer, intent(in) :: N
-  double precision, dimension(N), intent(inout) :: X
-  integer, dimension(N), intent(out) :: Y
-
-  ! local parameters
-  double precision :: tmp
-  integer :: itmp
-  integer :: i
-
-  do i = 1,N
-     Y(i) = i
-  enddo
-
-  ! checks if anything to do
-  if (N < 2) return
-
-  ! builds heap
-  do i = N/2, 1, -1
-    call heap_sort_siftdown(i, N)
-  enddo
-
-  ! sorts array
-  do i = N, 2, -1
-    ! swaps last and first entry in this section
-    tmp = X(1)
-    X(1) = X(i)
-    X(i) = tmp
-    itmp = Y(1)
-    Y(1) = Y(i)
-    Y(i) = itmp
-
-    call heap_sort_siftdown(1, i - 1)
-  enddo
-
-!
-!----
-!
-
-  contains
-
-    subroutine heap_sort_siftdown(start, bottom)
-
-    implicit none
-
-    integer, intent(in) :: start, bottom
-
-    ! local parameters
-    integer :: i, j
-    double precision :: xtmp
-    integer :: ytmp
-
-    i = start
-    xtmp = X(i)
-    ytmp = Y(i)
-
-    j = 2 * i
-    do while (j <= bottom)
-      ! chooses larger value first in this section
-      if (j < bottom) then
-        if (X(j) <= X(j+1)) j = j + 1
-      endif
-
-      ! checks if section already smaller than initial value
-      if (X(j) < xtmp) exit
-
-      X(i) = X(j)
-      Y(i) = Y(j)
-      i = j
-      j = 2 * i
-    enddo
-
-    X(i) = xtmp
-    Y(i) = ytmp
-
-    end subroutine heap_sort_siftdown
-
-  end subroutine heap_sort_local

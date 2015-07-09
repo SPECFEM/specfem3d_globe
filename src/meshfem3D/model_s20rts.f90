@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -114,23 +114,23 @@
   character(len=*), parameter :: P12 = 'DATA/s20rts/P12.dat'
 
   ! S20RTS degree 20 S model from Ritsema
-  open(unit=10,file=S20RTS,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=S20RTS,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening file S20RTS.dat')
 
   do k = 0,NK_20
     do l = 0,NS_20
-      read(10,*) S20RTS_V_dvs_a(k,l,0),(S20RTS_V_dvs_a(k,l,m),S20RTS_V_dvs_b(k,l,m),m = 1,l)
+      read(IIN,*) S20RTS_V_dvs_a(k,l,0),(S20RTS_V_dvs_a(k,l,m),S20RTS_V_dvs_b(k,l,m),m = 1,l)
     enddo
   enddo
-  close(10)
+  close(IIN)
 
   ! P12 degree 12 P model from Ritsema
-  open(unit=10,file=P12,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=P12,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening file P12.dat')
 
   do k = 0,NK_20
     do l=0,12
-      read(10,*) S20RTS_V_dvp_a(k,l,0),(S20RTS_V_dvp_a(k,l,m),S20RTS_V_dvp_b(k,l,m),m = 1,l)
+      read(IIN,*) S20RTS_V_dvp_a(k,l,0),(S20RTS_V_dvp_a(k,l,m),S20RTS_V_dvp_b(k,l,m),m = 1,l)
     enddo
     do l=13,NS_20
       S20RTS_V_dvp_a(k,l,0) = 0.0d0
@@ -140,7 +140,7 @@
       enddo
     enddo
   enddo
-  close(10)
+  close(IIN)
 
   ! set up the splines used as radial basis functions by Ritsema
   call s20rts_splhsetup()
@@ -162,9 +162,9 @@
   ! factor to convert perturbations in shear speed to perturbations in density
   double precision, parameter :: SCALE_RHO = 0.40d0
 
-  double precision, parameter :: RMOHO_ = 6346600.d0
+  double precision, parameter :: R_EARTH_ = R_EARTH ! 6371000.d0
+  double precision, parameter :: RMOHO_ = R_EARTH - 24400.0 ! 6346600.d0
   double precision, parameter :: RCMB_ = 3480000.d0
-  double precision, parameter :: R_EARTH_ = 6371000.d0
   double precision, parameter :: ZERO_ = 0.d0
 
   integer :: l,m,k

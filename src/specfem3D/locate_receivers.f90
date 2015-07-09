@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -43,10 +43,12 @@
     HUGEVAL,IMAIN,IIN,IOUT,IOUT_VTK,MIDX,MIDY,MIDZ, &
     DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,TWO_PI,R_UNIT_SPHERE,R_EARTH,R_EARTH_KM
 
+  use shared_input_parameters, only: OUTPUT_FILES
+
   use specfem_par,only: &
     myrank,DT,NSTEP, &
     xigll,yigll,zigll, &
-    rec_filename,nrec,islice_selected_rec,ispec_selected_rec, &
+    STATIONS_FILE,nrec,islice_selected_rec,ispec_selected_rec, &
     xi_receiver,eta_receiver,gamma_receiver,station_name,network_name, &
     stlat,stlon,stele,stbur,nu, &
     rspl,espl,espl2,nspl,ibathy_topo, &
@@ -136,7 +138,6 @@
   double precision :: x_target_rec,y_target_rec,z_target_rec
 
   double precision :: typical_size
-  logical :: located_target
 
   character(len=2) :: bic
   character(len=256) :: string
@@ -212,7 +213,7 @@
     call flush_IMAIN()
 
     ! opens station file STATIONS or STATIONS_ADJOINT
-    open(unit=IIN,file=trim(rec_filename),status='old',action='read',iostat=ier)
+    open(unit=IIN,file=trim(STATIONS_FILE),status='old',action='read',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening STATIONS file')
 
     ! loop on all the stations to read station information
@@ -274,7 +275,7 @@
             if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then
               write(station_name(irec),"(a,'_',i2.2)") trim(station_name(irec)),station_duplet(i)+1
             else
-              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at least 3')
+              call exit_MPI(myrank,'Please increase MAX_LENGTH_STATION_NAME by at least 3 to name station duplets')
             endif
 
         endif
@@ -431,8 +432,14 @@
     ! would write out desired target locations of receivers
     !if (myrank == 0) write(IOUT_VTK,*) sngl(x_target(irec)), sngl(y_target(irec)), sngl(z_target(irec))
 
-    ! flag to check that we located at least one target element
-    located_target = .false.
+    ! initializes located target
+    ! if we have not located a target element, the receiver is not in this slice
+    ! therefore use first element only for fictitious iterative search
+    ispec_selected_rec(irec) = 1
+    ix_initial_guess(irec) = MIDX
+    iy_initial_guess(irec) = MIDY
+    iz_initial_guess(irec) = MIDZ
+    distmin = HUGEVAL
 
     ! searches closest GLL point
     if (USE_DISTANCE_CRITERION) then
@@ -462,7 +469,6 @@
                   ix_initial_guess(irec) = i
                   iy_initial_guess(irec) = j
                   iz_initial_guess(irec) = k
-                  located_target = .true.
                 endif
               enddo
             enddo
@@ -489,7 +495,6 @@
                 ix_initial_guess(irec) = i
                 iy_initial_guess(irec) = j
                 iz_initial_guess(irec) = k
-                located_target = .true.
               endif
             enddo
           enddo
@@ -497,15 +502,6 @@
       ! end of loop on all the spectral elements in current slice
       enddo
     endif ! USE_DISTANCE_CRITERION
-
-    ! if we have not located a target element, the receiver is not in this slice
-    ! therefore use first element only for fictitious iterative search
-    if (.not. located_target) then
-      ispec_selected_rec(irec) = 1
-      ix_initial_guess(irec) = MIDX
-      iy_initial_guess(irec) = MIDY
-      iz_initial_guess(irec) = MIDZ
-    endif
 
   ! end of loop on all the stations
   enddo
@@ -525,8 +521,9 @@
     write(IMAIN,*) 'Stations sorted by epicentral distance:'
     do i = 1,nrec
       irec = irec_dist_ordered(i)
-      write(IMAIN,'(a,i6,a,a24,a,f12.6,a)') ' Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec)), &
-                                          '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
+      write(IMAIN,'(a,i6,a,a24,a,f12.6,a)') ' Station #',irec,': ', &
+        trim(network_name(irec))//'.'//trim(station_name(irec)), &
+        '    epicentral distance:  ',sngl(epidist(irec)),' degrees'
     enddo
 
     deallocate(irec_dist_ordered)
@@ -543,7 +540,7 @@
     ! Harvard format does not support the network name
     ! therefore only the station name is included below
     ! compute total number of samples for normal modes with 1 sample per second
-    open(unit=IOUT,file='OUTPUT_FILES/RECORDHEADERS', &
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/RECORDHEADERS', &
           status='unknown',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file RECORDHEADERS')
 
@@ -696,15 +693,15 @@
       eta = yigll(iy_initial_guess(irec))
       gamma = zigll(iz_initial_guess(irec))
 
+      ! impose receiver exactly at the surface
+      if (.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
+
       x_target_rec = x_target(irec)
       y_target_rec = y_target(irec)
       z_target_rec = z_target(irec)
 
       ! iterate to solve the non linear system
       do iter_loop = 1,NUM_ITER
-
-        ! impose receiver exactly at the surface
-        if (.not. RECEIVERS_CAN_BE_BURIED) gamma = 1.d0
 
         ! recompute Jacobian for the new point
         call recompute_jacobian(xelm,yelm,zelm,xi,eta,gamma,x,y,z, &
@@ -845,7 +842,7 @@
   if (myrank == 0) then
 
     ! appends receiver locations to sr.vtk file
-    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk',position='append',status='old',iostat=ier)
+    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk',position='append',status='old',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending receivers to file sr_tmp.vtk')
 
     ! chooses best receivers locations
@@ -857,7 +854,7 @@
 
       if (DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0) then
         write(IMAIN,*)
-        write(IMAIN,*) 'Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec))
+        write(IMAIN,*) 'Station #',irec,': ',trim(network_name(irec))//'.'//trim(station_name(irec))
         write(IMAIN,*) '     original latitude: ',sngl(stlat(irec))
         write(IMAIN,*) '    original longitude: ',sngl(stlon(irec))
         write(IMAIN,*) '   epicentral distance: ',sngl(epidist(irec))
@@ -869,7 +866,7 @@
       ! add warning if estimate is poor
       ! (usually means receiver outside the mesh given by the user)
       if (final_distance(irec) > THRESHOLD_EXCLUDE_STATION) then
-        write(IMAIN,*) 'Station #',irec,': ',trim(station_name(irec))//'.'//trim(network_name(irec))
+        write(IMAIN,*) 'Station #',irec,': ',trim(network_name(irec))//'.'//trim(station_name(irec))
         write(IMAIN,*) '*****************************************************************'
         if (NCHUNKS_VAL == 6) then
           write(IMAIN,*) '***** WARNING: receiver location estimate is poor, therefore receiver excluded *****'
@@ -938,29 +935,28 @@
     epidist(1:nrec) = epidist_found(1:nrec)
 
     ! write the list of stations and associated epicentral distance
-    open(unit=IOUT,file='OUTPUT_FILES/output_list_stations.txt', &
+    open(unit=IOUT,file=trim(OUTPUT_FILES)//'/output_list_stations.txt', &
           status='unknown',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file output_list_stations.txt')
     write(IOUT,*)
     write(IOUT,*) 'total number of stations: ',nrec
     write(IOUT,*)
     do irec = 1,nrec
-      write(IOUT,*) station_name(irec)(1:len_trim(station_name(irec))), &
-                  '.',network_name(irec)(1:len_trim(network_name(irec))), &
-                  ' epicentral distance ',sngl(epidist(irec)),' deg'
+      write(IOUT,*) &
+        network_name(irec)(1:len_trim(network_name(irec))),'.',station_name(irec)(1:len_trim(station_name(irec))), &
+        ' epicentral distance ',sngl(epidist(irec)),' deg'
     enddo
     close(IOUT)
 
     ! write out a filtered station list
     if (NCHUNKS_VAL /= 6) then
-      open(unit=IOUT,file='OUTPUT_FILES/STATIONS_FILTERED', &
+      open(unit=IOUT,file=trim(OUTPUT_FILES)//'/STATIONS_FILTERED', &
             status='unknown',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file STATIONS_FILTERED')
       ! loop on all the stations to read station information
       do irec = 1,nrec
-        write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),&
-                  trim(network_name(irec)),sngl(stlat(irec)),&
-                  sngl(stlon(irec)),sngl(stele(irec)),sngl(stbur(irec))
+        write(IOUT,'(a8,1x,a3,6x,f8.4,1x,f9.4,1x,f6.1,1x,f6.1)') trim(station_name(irec)),trim(network_name(irec)), &
+          sngl(stlat(irec)),sngl(stlon(irec)),sngl(stele(irec)),sngl(stbur(irec))
       enddo
       ! close receiver file
       close(IOUT)
@@ -1009,6 +1005,10 @@
   call synchronize_all()
 
   end subroutine locate_receivers
+
+!
+!--------------------
+!
 
 ! sorting routine left here for inlining
 !

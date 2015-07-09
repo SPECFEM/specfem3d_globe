@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -107,17 +107,17 @@
   integer :: i,j,ier
 
   ! open heterogen.dat
-  open(unit=10,file='./DATA/heterogen/heterogen.dat',access='direct',&
+  open(unit=IIN,file='./DATA/heterogen/heterogen.dat',access='direct',&
        form='formatted',recl=20,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening model file heterogen.dat')
 
   j = N_R*N_THETA*N_PHI
 
   do i = 1,j
-    read(10,rec=i,fmt='(F20.15)') HMM_rho_in(i)
+    read(IIN,rec=i,fmt='(F20.15)') HMM_rho_in(i)
   enddo
 
-  close(10)
+  close(IIN)
 
   end subroutine read_heterogen_mantle_model
 

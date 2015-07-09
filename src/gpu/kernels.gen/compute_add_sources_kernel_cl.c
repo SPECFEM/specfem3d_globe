@@ -1,11 +1,11 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99994
+//      this file has been generated automatically by BOAST version 1.0.3
 //      by: make boast_kernels
 
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -33,7 +33,6 @@
 
 const char * compute_add_sources_kernel_program = "\
 #pragma OPENCL EXTENSION cl_khr_fp64: enable\n\
-#pragma OPENCL EXTENSION cl_khr_int64_base_atomics: enable\n\
 inline void atomicAdd(volatile __global float *source, const float val) {\n\
   union {\n\
     unsigned int iVal;\n\

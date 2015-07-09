@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -52,11 +52,11 @@
 
   ! save files to local disk or tape system if restart file
   if (NUMBER_OF_RUNS > 1 .and. NUMBER_OF_THIS_RUN < NUMBER_OF_RUNS) then
-    if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
+    if (ADIOS_FOR_FORWARD_ARRAYS) then
       call save_intermediate_forward_arrays_adios()
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
-      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname, &
+      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//trim(outputname), &
           status='unknown',form='unformatted',action='write',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for writing')
 
@@ -105,11 +105,13 @@
 
   ! save last frame of the forward simulation
   if (SIMULATION_TYPE == 1 .and. SAVE_FORWARD) then
-    if (ADIOS_ENABLED .and. ADIOS_FOR_FORWARD_ARRAYS) then
+    if (ADIOS_FOR_FORWARD_ARRAYS) then
       call save_forward_arrays_adios()
     else
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
-      open(unit=IOUT,file=trim(LOCAL_TMP_PATH)//'/'//outputname,status='unknown', &
+      outputname = trim(LOCAL_TMP_PATH)//'/'//trim(outputname)
+
+      open(unit=IOUT,file=trim(outputname),status='unknown', &
           form='unformatted',action='write',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_forward_arrays** for writing')
 
@@ -200,7 +202,7 @@
     endif
   endif
 
-  if (ADIOS_ENABLED .and. ADIOS_FOR_UNDO_ATTENUATION) then
+  if (ADIOS_FOR_UNDO_ATTENUATION) then
     call save_forward_arrays_undoatt_adios()
   else
     ! current subset iteration
@@ -209,10 +211,12 @@
     ! saves frame of the forward simulation
 
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
+    outputname = trim(LOCAL_PATH)//'/'//trim(outputname)
 
     ! debug
-    !if (myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//outputname, NSTEP/NT_DUMP_ATTENUATION
-    open(unit=IOUT,file=trim(LOCAL_PATH)//'/'//outputname, &
+    !if (myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//trim(outputname), iteration_on_subset_tmp,it
+
+    open(unit=IOUT,file=trim(outputname), &
          status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file proc***_save_frame_at** for writing')
 

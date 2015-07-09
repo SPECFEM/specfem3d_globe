@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -58,6 +58,51 @@
                                   MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
                                   R80,R220,R670,RCMB,RICB, &
                                   LOCAL_PATH)
+
+  ! infos about additional mesh optimizations
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'additional mesh optimizations'
+    write(IMAIN,*)
+
+    ! moho stretching
+    write(IMAIN,*) 'moho:'
+    if (CRUSTAL .and. CASE_3D) then
+      if (REGIONAL_MOHO_MESH) then
+        write(IMAIN,*) '  enforcing regional 3-layer crust'
+        if (SUPPRESS_MOHO_STRETCHING) then
+          write(IMAIN,*) '  no element stretching for 3-D moho surface'
+        else
+          if (HONOR_DEEP_MOHO) then
+            write(IMAIN,*) '  incorporating element stretching for 3-D moho surface with deep moho'
+          else
+            write(IMAIN,*) '  incorporating element stretching for 3-D moho surface'
+          endif
+        endif
+      else
+        write(IMAIN,'(a,i1,a)') '   default ',NER_CRUST,'-layer crust'
+        if (SUPPRESS_MOHO_STRETCHING .or. (.not. TOPOGRAPHY)) then
+          write(IMAIN,*) '  no element stretching for 3-D moho surface'
+        else
+          write(IMAIN,*) '  incorporating element stretching for 3-D moho surface'
+        endif
+      endif
+    else
+      write(IMAIN,*) '  no element stretching for 3-D moho surface'
+    endif
+    write(IMAIN,*)
+
+    ! internal topography
+    write(IMAIN,*) 'internal topography 410/660:'
+    if ((.not. SUPPRESS_INTERNAL_TOPOGRAPHY) .and. &
+        (THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
+         .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA)) then
+      write(IMAIN,*) '  incorporating element stretching for 3-D internal surfaces'
+    else
+      write(IMAIN,*) '  no element stretching for 3-D internal surfaces'
+    endif
+    call flush_IMAIN()
+  endif
 
   ! user output
   if (myrank == 0) then
@@ -176,6 +221,7 @@
     write(IMAIN,*) '  no general mantle anisotropy'
   endif
   write(IMAIN,*)
+
   write(IMAIN,*) 'Reference radius of the Earth used is ',R_EARTH_KM,' km'
   write(IMAIN,*)
   write(IMAIN,*) 'Central cube is at a radius of ',R_CENTRAL_CUBE/1000.d0,' km'

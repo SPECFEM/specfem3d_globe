@@ -3,63 +3,92 @@
 #
 # note: script requires executable 'mesh2vtu'
 ##############################################
+# USER PARAMETERS
+
 # partitions
-numCPUs=150
-# slice file
-echo "1" | awk '{for(i=0;i<numCPUs;i++)print i}' numCPUs=$numCPUs > slices_all.txt
-slice="slices_all.txt"
+numCPUs=24
+
 # kernel directory
-dir="DATABASES_MPI/"
+dir=DATABASES_MPI/
+
 # low (0) / high (1) resolution
-res="0"
+res=$1
+
+# colorbar maximum value
+maxcolor=2e-07
+
+# combines all partitions
+do_all=0
+
+##############################################
+
+if [ "$res" == "" ]; then echo "usage: ./xcombine_vol_data.sh res[0=low/1=high-resolution/2=mid-resolution]"; exit 1; fi
+
+echo
+echo "plotting sensitivity kernels (for crust/mantle region)"
+echo
+
+# creates slice file
+slice=slices_all.txt
+if [ "$do_all" == "1" ]; then
+  echo "1" | awk '{for(i=0;i<numCPUs;i++)print i}' numCPUs=$numCPUs > $slice
+else
+  # only for slices on minor arc: source (slice 4), receiver (slice 7)
+  echo "4" > $slice
+  echo "5" >> $slice
+  echo "7" >> $slice
+fi
 
 # for visualization
-cp ../../UTILS/Visualization/Paraview/AVS_continent_boundaries.inp ./
+cp -v ~/SPECFEM3D_GLOBE/utils/Visualization/VTK_ParaView/AVS_continent_boundaries.inp .
+cp -v ~/SPECFEM3D_GLOBE/utils/Visualization/VTK_ParaView/paraviewpython-example.py .
 
-echo
-echo "alpha_kernel"
-echo
-./bin/xcombine_vol_data $slice alpha_kernel $dir $dir OUTPUT_FILES/ $res > tmp.log
-mesh2vtu OUTPUT_FILES/reg_1_alpha_kernel.mesh OUTPUT_FILES/reg_1_alpha_kernel.vtu >> tmp.log
-mesh2vtu OUTPUT_FILES/reg_2_alpha_kernel.mesh OUTPUT_FILES/reg_2_alpha_kernel.vtu >> tmp.log
-mesh2vtu OUTPUT_FILES/reg_3_alpha_kernel.mesh OUTPUT_FILES/reg_3_alpha_kernel.vtu >> tmp.log
-rm -f OUTPUT_FILES/reg_*alpha*.mesh
-min=`grep "min/max" tmp.log | awk '{print $3 }' | sort | head -n 1`
-max=`grep "min/max" tmp.log | awk '{print $4 }' | sort | tail -n 1`
-echo "  alpha_kernel min/max: $min $max"
-./paraviewpython-example.py state_alpha_kernel.pvsm
-mv image.jpg image_alpha_kernel.jpg
-./paraviewpython-example.py state_alpha_kernel2.pvsm
-mv image.jpg image_alpha_kernel2.jpg
-
-echo
-echo "beta_kernel"
-echo
 # only for crust_mantle region
-./bin/xcombine_vol_data $slice beta_kernel $dir $dir OUTPUT_FILES/ $res 1 > tmp.log
-mesh2vtu OUTPUT_FILES/reg_1_beta_kernel.mesh OUTPUT_FILES/reg_1_beta_kernel.vtu >> tmp.log
+echo
+echo "alpha kernel"
+echo
+./bin/xcombine_vol_data $slice alpha_kernel $dir $dir OUTPUT_FILES/ $res 1
+echo ""
+mesh2vtu OUTPUT_FILES/reg_1_alpha_kernel.mesh OUTPUT_FILES/reg_1_alpha_kernel.vtu
+echo ""
+rm -f OUTPUT_FILES/reg_*alpha*.mesh
+
+# colorbar
+# see RGBPoints section
+echo "maximum color value = $maxcolor"
+echo
+sed "s:1e-09:$maxcolor:g" state_alpha_kernel.pvsm > tmp_alpha.pvsm
+
+./paraviewpython-example.py tmp_alpha.pvsm
+mv -v image.jpg image_alpha_kernel.jpg
+
+echo
+echo "beta kernel"
+echo
+./bin/xcombine_vol_data $slice beta_kernel $dir $dir OUTPUT_FILES/ $res 1
+echo ""
+mesh2vtu OUTPUT_FILES/reg_1_beta_kernel.mesh OUTPUT_FILES/reg_1_beta_kernel.vtu
+echo ""
 rm -f OUTPUT_FILES/reg_*beta*.mesh
-min=`grep "min/max" tmp.log | awk '{print $3 }' | sort | head -n 1`
-max=`grep "min/max" tmp.log | awk '{print $4 }' | sort | tail -n 1`
-echo "  beta_kernel min/max: $min $max"
-./paraviewpython-example.py state_beta_kernel.pvsm
-mv image.jpg image_beta_kernel.jpg
+
+sed "s:alpha:beta:g" tmp_alpha.pvsm > tmp_beta.pvsm
+./paraviewpython-example.py tmp_beta.pvsm
+mv -v image.jpg image_beta_kernel.jpg
 
 echo
-echo "rho_kernel"
+echo "rho kernel"
 echo
-./bin/xcombine_vol_data $slice rho_kernel $dir $dir OUTPUT_FILES/ $res > tmp.log
-mesh2vtu OUTPUT_FILES/reg_1_rho_kernel.mesh OUTPUT_FILES/reg_1_rho_kernel.vtu >> tmp.log
-mesh2vtu OUTPUT_FILES/reg_2_rho_kernel.mesh OUTPUT_FILES/reg_2_rho_kernel.vtu >> tmp.log
-mesh2vtu OUTPUT_FILES/reg_3_rho_kernel.mesh OUTPUT_FILES/reg_3_rho_kernel.vtu >> tmp.log
+./bin/xcombine_vol_data $slice rho_kernel $dir $dir OUTPUT_FILES/ $res 1
+echo ""
+mesh2vtu OUTPUT_FILES/reg_1_rho_kernel.mesh OUTPUT_FILES/reg_1_rho_kernel.vtu
+echo ""
 rm -f OUTPUT_FILES/reg_*rho*.mesh
-min=`grep "min/max" tmp.log | awk '{print $3 }' | sort | head -n 1`
-max=`grep "min/max" tmp.log | awk '{print $4 }' | sort | tail -n 1`
-echo "  rho_kernel min/max: $min $max"
-./paraviewpython-example.py state_rho_kernel.pvsm
-mv image.jpg image_rho_kernel.jpg
 
-echo 
+sed "s:alpha:rho:g" tmp_alpha.pvsm > tmp_rho.pvsm
+./paraviewpython-example.py tmp_rho.pvsm
+mv -v image.jpg image_rho_kernel.jpg
+
+echo
 echo "visualize kernel vtu files in directory: OUTPUT_FILES/ using e.g. Paraview"
 echo "done"
 

@@ -30,7 +30,7 @@ __global__ void compute_coupling_fluid_ICB_kernel(realw* displ_inner_core,
   realw weight;
 
   // for surfaces elements exactly at the bottom of the outer core (inner core top)
-  if( iface < NSPEC2D_BOTTOM_OC ){
+  if (iface < NSPEC2D_BOTTOM_OC ){
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = ibelm_bottom_outer_core[iface] - 1;

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -34,6 +34,8 @@
                             ELLIPTICITY,min_tshift_cmt_original)
 
   use constants_solver
+
+  use shared_input_parameters, only: OUTPUT_FILES
 
   use specfem_par,only: &
     NSOURCES,myrank, &
@@ -180,7 +182,7 @@
 
   ! appends receiver locations to sr.vtk file
   if (myrank == 0) then
-    open(IOUT_VTK,file='OUTPUT_FILES/sr_tmp.vtk', &
+    open(IOUT_VTK,file=trim(OUTPUT_FILES)//'/sr_tmp.vtk', &
           position='append',status='old',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening and appending sources to file sr_tmp.vtk')
   endif
@@ -886,6 +888,7 @@
 ! prints source time function
 
   use constants
+  use shared_input_parameters
 
   implicit none
 
@@ -935,7 +938,7 @@
   endif
 
   ! output file
-  open(unit=IOUT,file='OUTPUT_FILES'//plot_file, &
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
         status='unknown',iostat=ier)
   if (ier /= 0 ) call exit_mpi(0,'Error opening plot_source_time_function file')
 
@@ -993,7 +996,7 @@
     endif
   endif
 
-  open(unit=IOUT,file='OUTPUT_FILES'//plot_file, &
+  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
         status='unknown',iostat=ier)
   if (ier /= 0 ) call exit_mpi(0,'Error opening plot_source_spectrum file')
 

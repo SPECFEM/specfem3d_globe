@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -226,12 +226,16 @@
 
   implicit none
 
-  OPEN(2,FILE="DATA/Zhao_JP_model/m3d1341")
-  OPEN(3,FILE="DATA/Zhao_JP_model/datadis")
+  open(2,FILE="DATA/Zhao_JP_model/m3d1341")
+  open(3,FILE="DATA/Zhao_JP_model/datadis")
 
-  CALL INPUTJP()
-  CALL INPUT1()
-  CALL INPUT2()
+  call INPUTJP()
+
+  call INPUT1()
+  call INPUT2()
+
+  close(2)
+  close(3)
 
   end subroutine read_jp3d_iso_zhao_model
 

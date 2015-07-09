@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -31,7 +31,7 @@
                                       scale_factor, tau_s, vnspec)
 
   use constants_solver
-  use specfem_par,only: ATTENUATION_VAL,ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH
+  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH
 
   implicit none
 
@@ -57,16 +57,18 @@
 
   ! checks if attenuation is on and anything to do
   if (.not. ATTENUATION_VAL) return
+  if (.not. I_should_read_the_database) return
 
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
-  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
     call read_attenuation_adios(myrank, iregion_code, &
                                 factor_common, scale_factor, tau_s, vnspec, T_c_source)
   else
 
     ! opens corresponding databases file
     call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
+
     open(unit=IIN, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file attenuation.bin')
@@ -87,12 +89,10 @@
 
   ! loops over elements
   do ispec = 1, vnspec
-
     ! loops over GLL points
     do k = 1, ATT3_VAL
       do j = 1, ATT2_VAL
         do i = 1, ATT1_VAL
-
           ! gets relaxation times for each standard linear solid
           do i_sls = 1,N_SLS
             tau_e(i_sls) = factor_common(i,j,k,i_sls,ispec)
@@ -217,8 +217,8 @@
 
   !--- check that the correction factor is close to one
   if (scale_factor < 0.8d0 .or. scale_factor > 1.2d0) then
-     print*,'Error: incorrect scale factor: ', scale_factor
-     call exit_MPI(myrank,'incorrect correction factor in attenuation model')
+    print*,'Error: incorrect scale factor: ', scale_factor
+    call exit_MPI(myrank,'incorrect correction factor in attenuation model')
   endif
 
   end subroutine get_attenuation_scale_factor
@@ -242,11 +242,34 @@
 
   tauinv(:) = - 1.d0 / tau_s(:)
 
-  alphaval(:)  = 1.d0 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2.d0 + &
-                    deltat**3*tauinv(:)**3 / 6.d0 + deltat**4*tauinv(:)**4 / 24.d0
-  betaval(:)   = deltat / 2.d0 + deltat**2*tauinv(:) / 3.d0 &
-                + deltat**3*tauinv(:)**2 / 8.d0 + deltat**4*tauinv(:)**3 / 24.d0
-  gammaval(:)  = deltat / 2.d0 + deltat**2*tauinv(:) / 6.d0 &
-                + deltat**3*tauinv(:)**2 / 24.d0
+  alphaval(:) = 1.d0 + deltat*tauinv(:) + deltat**2*tauinv(:)**2 / 2.d0 &
+                  + deltat**3*tauinv(:)**3 / 6.d0 + deltat**4*tauinv(:)**4 / 24.d0
+  betaval(:)  = deltat / 2.d0 + deltat**2*tauinv(:) / 3.d0 &
+                  + deltat**3*tauinv(:)**2 / 8.d0 + deltat**4*tauinv(:)**3 / 24.d0
+  gammaval(:) = deltat / 2.d0 + deltat**2*tauinv(:) / 6.d0 &
+                  + deltat**3*tauinv(:)**2 / 24.d0
 
   end subroutine get_attenuation_memory_values
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine bcast_attenuation_model_3D(one_minus_sum_beta,factor_common,scale_factor,tau_s,vnspec)
+
+  use constants_solver
+
+  implicit none
+
+  integer :: vnspec
+
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta, scale_factor
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
+  double precision, dimension(N_SLS) :: tau_s
+
+  call bcast_all_cr_for_database(one_minus_sum_beta(1,1,1,1), size(one_minus_sum_beta))
+  call bcast_all_cr_for_database(scale_factor(1,1,1,1), size(scale_factor))
+  call bcast_all_cr_for_database(factor_common(1,1,1,1,1), size(factor_common))
+  call bcast_all_dp_for_database(tau_s(1), size(tau_s))
+
+  endsubroutine bcast_attenuation_model_3D

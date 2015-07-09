@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -164,17 +164,18 @@ module specfem_par
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
-  character(len=MAX_STRING_LEN) :: STATIONS,rec_filename
+  character(len=MAX_STRING_LEN) :: STATIONS_FILE
 
   ! Lagrange interpolators at receivers
   double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
+  double precision, dimension(:,:,:,:), allocatable :: hlagrange_store
 
   ! ADJOINT sources
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: adj_sourcearrays
   ! asynchronous read buffer when IO_ASYNC_COPY is set
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: buffer_sourcearrays
 
-  integer :: nrec_simulation, nadj_rec_local
+  integer :: nadj_rec_local
   integer :: NSTEP_SUB_ADJ  ! to read input in chunks
 
   integer, dimension(:,:), allocatable :: iadjsrc ! to read input in chunks
@@ -185,7 +186,6 @@ module specfem_par
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: sloc_der
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: stshift_der, shdur_der
   double precision, dimension(:,:), allocatable :: hpxir_store,hpetar_store,hpgammar_store
-  integer :: nadj_hprec_local
 
 
   !-----------------------------------------------------------------
@@ -193,9 +193,11 @@ module specfem_par
   !-----------------------------------------------------------------
 
   ! seismograms
-  integer :: it_begin,it_end,nit_written
+  integer :: it_begin,it_end
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: seismograms
   integer :: seismo_offset, seismo_current
+  ! adjoint seismograms
+  integer :: it_adj_written
 
   ! for SAC headers for seismograms
   integer :: yr_SAC,jda_SAC,ho_SAC,mi_SAC
@@ -297,6 +299,7 @@ module specfem_par
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
   ! undo_attenuation
+  integer :: NSUBSET_ITERATIONS
   integer :: iteration_on_subset,it_of_this_subset
 
   ! serial i/o mesh reading
@@ -304,6 +307,9 @@ module specfem_par
   logical :: you_can_start_doing_IOs
 #endif
 
+  ! for EXACT_UNDOING_TO_DISK
+  integer, dimension(:), allocatable :: integer_mask_ibool_exact_undo
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
 
 
 end module specfem_par
@@ -441,7 +447,7 @@ module specfem_par_crustmantle
     rho_kl_crust_mantle,beta_kl_crust_mantle,alpha_kl_crust_mantle
 
   ! noise strength kernel
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: Sigma_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sigma_kl_crust_mantle
   ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: cijkl_kl_crust_mantle
   ! approximate hessian
@@ -473,6 +479,7 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
+  integer :: num_noise_surface_points
   integer :: irec_master_noise
   integer :: NSPEC_TOP
 
@@ -732,8 +739,6 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: store_val_ux_all,store_val_uy_all,store_val_uz_all
 
   ! to save movie volume
-  double precision :: scalingval
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
     muvstore_crust_mantle_3dmovie
 

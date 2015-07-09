@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -172,9 +172,7 @@
 !$OMP iphase, &
 !$OMP phase_ispec_inner, &
 !$OMP num_elements, USE_LDDRK, &
-#ifdef FORCE_VECTORIZATION
 !$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
-#endif
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP deltat, COMPUTE_AND_STORE_STRAIN ) &
 !$OMP PRIVATE(ispec,fac1,fac2,fac3,sum_terms,ispec_p, &

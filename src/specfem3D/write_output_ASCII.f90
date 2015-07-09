@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -60,7 +60,7 @@
   write(sisname_2,"('/',a,'.ascii')") trim(sisname)
 
   ! save all seismograms in one large combined file instead of one file per seismogram
-  ! to avoid overloading shared non-local file systems such as GPFS for instance
+  ! to avoid overloading shared non-local file systems
 
   ! create one large file instead of one small file per station to avoid file system overload
   if (SAVE_ALL_SEISMOS_IN_ONE_FILE) then
@@ -77,7 +77,7 @@
       open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname_2), &
             status='old',position='append',action='write',iostat=ier)
     endif
-    if (ier /= 0 ) call exit_mpi(myrank,'Error opening file:'//trim(OUTPUT_FILES)//trim(sisname_2))
+    if (ier /= 0) call exit_mpi(myrank,'Error opening file:'//trim(OUTPUT_FILES)//trim(sisname_2))
   endif
 
   ! subtract half duration of the source to make sure travel time is correct

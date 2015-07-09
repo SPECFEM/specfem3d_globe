@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -31,7 +31,7 @@
 
   use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,nrec_local, &
     APPROXIMATE_HESS_KL,SAVE_REGULAR_KL, &
-    current_adios_handle,ADIOS_ENABLED,ADIOS_FOR_KERNELS
+    current_adios_handle,ADIOS_FOR_KERNELS
 
   use specfem_par_innercore, only: rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
     rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core
@@ -41,9 +41,9 @@
   implicit none
 
   ! Open an handler to the ADIOS file in which kernel variables are written.
-  if (((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      .and. ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
-    call define_kernel_adios_variables(current_adios_handle)
+  if (ADIOS_FOR_KERNELS) then
+    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
+      call define_kernel_adios_variables(current_adios_handle)
   endif
 
   ! dump kernel arrays
@@ -57,7 +57,7 @@
 
     ! noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
-       call save_kernels_strength_noise()
+      call save_kernels_strength_noise()
     endif
 
     ! outer core
@@ -84,9 +84,9 @@
   endif
 
   ! Write ADIOS defined variables to disk.
-  if (((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      .and. ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
-    call perform_write_adios_kernels(current_adios_handle)
+  if (ADIOS_FOR_KERNELS) then
+    if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
+      call perform_write_adios_kernels(current_adios_handle)
   endif
 
   end subroutine save_kernels
@@ -125,7 +125,10 @@
   real(kind=CUSTOM_REAL) :: muvl,kappavl,muhl,kappahl
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
 
-  ! scaling factors
+  ! scaling factors: note that this scaling has been introduced by Qinya Liu (2006)
+  !                  with the intent to dimensionalize kernel values to [ s km^(-3) ]
+  !
+  ! kernel unit [ s / km^3 ]
   scale_kl = scale_t/scale_displ * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
@@ -397,14 +400,14 @@
   enddo
 
   ! writes out kernels to files
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_cm_adios(current_adios_handle, &
-                                          mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
-                                          alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-                                          betav_kl_crust_mantle,betah_kl_crust_mantle, &
-                                          eta_kl_crust_mantle, &
-                                          bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                          bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+                                mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                                alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+                                betav_kl_crust_mantle,betah_kl_crust_mantle, &
+                                eta_kl_crust_mantle, &
+                                bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+                                bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
   else
 
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -437,16 +440,14 @@
 
         ! Output these kernels as netcdf files -- one per processor.
 #ifdef CEM
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/betavKernelCrustMantle.nc',  betav_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/betahKernelCrustMantle.nc',  betah_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/etaKernelCrustMantle.nc',    eta_kl_crust_mantle)
+        call write_kernel_netcdf(trim(OUTPUT_FILES)//'/rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
 
-        call write_kernel_netcdf('./OUTPUT_FILES/alphavKernelCrustMantle.nc', alphav_kl_crust_mantle)
-        call write_kernel_netcdf('./OUTPUT_FILES/alphahKernelCrustMantle.nc', alphah_kl_crust_mantle)
-        call write_kernel_netcdf('./OUTPUT_FILES/betavKernelCrustMantle.nc',  betav_kl_crust_mantle)
-        call write_kernel_netcdf('./OUTPUT_FILES/betahKernelCrustMantle.nc',  betah_kl_crust_mantle)
-        call write_kernel_netcdf('./OUTPUT_FILES/etaKernelCrustMantle.nc',    eta_kl_crust_mantle)
-        call write_kernel_netcdf('./OUTPUT_FILES/rhoKernelCrustMantle.nc',    rho_kl_crust_mantle)
-
-        call write_coordinates_netcdf('./OUTPUT_FILES/xyzCrustMantle.nc')
-
+        call write_coordinates_netcdf(trim(OUTPUT_FILES)//'/xyzCrustMantle.nc')
 #endif
 
         ! in case one is interested in primary kernel K_rho
@@ -576,7 +577,7 @@
   enddo
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_oc_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
@@ -619,6 +620,7 @@
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   integer :: ispec,i,j,k
 
+  ! scaling to units
   scale_kl = scale_t / scale_displ * 1.d9
 
   ! inner_core
@@ -632,18 +634,18 @@
 
           rho_kl = -rhol * rho_kl_inner_core(i,j,k,ispec)
           alpha_kl = -kappal * alpha_kl_inner_core(i,j,k,ispec)
-          beta_kl =  - 2 * mul * beta_kl_inner_core(i,j,k,ispec)
+          beta_kl =  - 2._CUSTOM_REAL * mul * beta_kl_inner_core(i,j,k,ispec)
 
           rho_kl_inner_core(i,j,k,ispec) = (rho_kl + alpha_kl + beta_kl) * scale_kl
-          beta_kl_inner_core(i,j,k,ispec) = 2 * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
-          alpha_kl_inner_core(i,j,k,ispec) = 2 * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
+          beta_kl_inner_core(i,j,k,ispec) = 2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl
+          alpha_kl_inner_core(i,j,k,ispec) = 2._CUSTOM_REAL * (1._CUSTOM_REAL +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl
         enddo
       enddo
     enddo
   enddo
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_ic_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
@@ -676,6 +678,7 @@
   ! local parameters
   real(kind=CUSTOM_REAL):: scale_kl
 
+  ! kernel unit [ s / km^3 ]
   scale_kl = scale_t/scale_displ * 1.d9
 
   ! scale the boundary kernels properly: *scale_kl gives s/km^3 and 1.d3 gives
@@ -687,7 +690,7 @@
   icb_kl = icb_kl * scale_kl * 1.d3
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_boundary_kl_adios(current_adios_handle)
   else
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -732,10 +735,11 @@
   ! local parameters
   real(kind=CUSTOM_REAL),parameter :: scale_mass = RHOAV * (R_EARTH**3)
   integer :: irec_local
-  character(len=MAX_STRING_LEN) outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   !scale_mass = RHOAV * (R_EARTH**3)
 
+  ! computes derivatives
   do irec_local = 1, nrec_local
     ! rotate and scale the location derivatives to correspond to dn,de,dz
     sloc_der(:,irec_local) = matmul(transpose(nu_source(:,:,irec_local)),sloc_der(:,irec_local)) &
@@ -748,10 +752,15 @@
     ! derivatives for time shift and hduration
     stshift_der(irec_local) = stshift_der(irec_local) * scale_displ**2
     shdur_der(irec_local) = shdur_der(irec_local) * scale_displ**2
+  enddo
 
-    ! writes out kernels to file
-    if (.not. ( ADIOS_ENABLED .and. ADIOS_FOR_KERNELS )) then
-      write(outputname,'(a,i5.5)') 'OUTPUT_FILES/src_frechet.',number_receiver_global(irec_local)
+  ! writes out kernels to file
+  if (ADIOS_FOR_KERNELS) then
+    call write_kernels_source_derivatives_adios(current_adios_handle)
+  else
+    ! kernel file output
+    do irec_local = 1, nrec_local
+      write(outputname,'(a,i6.6)') trim(OUTPUT_FILES)//'/src_frechet.',number_receiver_global(irec_local)
       open(unit=IOUT,file=trim(outputname),status='unknown',action='write')
       !
       ! r -> z, theta -> -n, phi -> e, plus factor 2 for Mrt,Mrp,Mtp, and 1e-7 to dyne.cm
@@ -772,15 +781,12 @@
       write(IOUT,'(g16.5)') sloc_der(2,irec_local)
       write(IOUT,'(g16.5)') sloc_der(1,irec_local)
       write(IOUT,'(g16.5)') -sloc_der(3,irec_local)
+
       write(IOUT,'(g16.5)') stshift_der(irec_local)
       write(IOUT,'(g16.5)') shdur_der(irec_local)
-      close(IOUT)
-    endif
-  enddo
 
-  ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
-    call write_kernels_source_derivatives_adios(current_adios_handle)
+      close(IOUT)
+    enddo
   endif
 
   end subroutine save_kernels_source_derivatives
@@ -806,7 +812,7 @@
   hess_kl_crust_mantle(:,:,:,:) = 2._CUSTOM_REAL * hess_kl_crust_mantle(:,:,:,:) * scale_kl
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     call write_kernels_hessian_adios(current_adios_handle)
   else
     ! stores into file

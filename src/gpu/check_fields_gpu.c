@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -182,7 +182,6 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   realw max;
-  gpu_realw_mem d_max;
   realw *h_max;
 
   // initializes
@@ -207,9 +206,6 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if (h_max == NULL) { exit_on_error("Error allocating h_max array in check_norm_acoustic_from_device() routine"); }
 
-  // creates array on GPU
-  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
-
   // sets gpu arrays
   gpu_realw_mem displ;
   if (*FORWARD_OR_ADJOINT == 1) {
@@ -231,7 +227,7 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
 
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
@@ -242,12 +238,12 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize,1,1);
 
-    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,d_max.cuda);
+    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,mp->d_norm_max.cuda);
   }
 #endif
 
   // copies to CPU
-  gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
+  gpuCopy_from_device_realw (&mp->d_norm_max, h_max, num_blocks_x*num_blocks_y);
 
   //debug
   if (DEBUG_FIELDS) {
@@ -268,7 +264,6 @@ void FC_FUNC_ (check_norm_acoustic_from_device,
   }
 
   // frees arrays
-  gpuFree (&d_max);
   free (h_max);
 
   // return result
@@ -294,7 +289,6 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   realw max, max_crust_mantle, max_inner_core;
 
   int size, size_padded;
-  gpu_realw_mem d_max;
   realw *h_max;
 
   // initializes
@@ -319,9 +313,6 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if (h_max == NULL) { exit_on_error("Error allocating h_max array in check_norm_elastic_from_device() routine"); }
 
-  // creates array on GPU
-  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
-
   // sets gpu arrays
   gpu_realw_mem displ;
   if (*FORWARD_OR_ADJOINT == 1) {
@@ -343,7 +334,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
@@ -355,12 +346,12 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,d_max.cuda);
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,mp->d_norm_max.cuda);
   }
 #endif
 
   // copies to CPU
-  gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
+  gpuCopy_from_device_realw (&mp->d_norm_max, h_max, num_blocks_x*num_blocks_y);
 
   //debug
   if (DEBUG_FIELDS) {
@@ -382,7 +373,6 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   max_crust_mantle = max;
 
   // frees arrays
-  gpuFree (&d_max);
   free (h_max);
 
   // inner_core
@@ -392,12 +382,8 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
   get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
 
-
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if (h_max == NULL) { exit_on_error("Error allocating h_max array for inner core in check_norm_elastic_from_device() routine"); }
-
-  // creates array on GPU
-  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
   // sets gpu arrays
   if (*FORWARD_OR_ADJOINT == 1) {
@@ -417,7 +403,7 @@ void FC_FUNC_ (check_norm_elastic_from_device,
 
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &displ.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (int), (void *) &size));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_vector_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_vector_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
@@ -428,12 +414,12 @@ void FC_FUNC_ (check_norm_elastic_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
 
-    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,d_max.cuda);
+    get_maximum_vector_kernel<<<grid,threads,0,mp->compute_stream>>>(displ.cuda,size,mp->d_norm_max.cuda);
   }
 #endif
 
   // copies to CPU
-  gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
+  gpuCopy_from_device_realw (&mp->d_norm_max, h_max, num_blocks_x*num_blocks_y);
 
   //debug
   if (DEBUG_FIELDS) {
@@ -453,7 +439,6 @@ void FC_FUNC_ (check_norm_elastic_from_device,
   max_inner_core = max;
 
   // frees arrays
-  gpuFree (&d_max);
   free (h_max);
 
   //debug
@@ -484,7 +469,6 @@ void FC_FUNC_ (check_norm_strain_from_device,
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
   realw max, max_eps;
-  gpu_realw_mem d_max;
   int num_blocks_x, num_blocks_y;
   int size, size_padded;
 
@@ -499,12 +483,8 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
   get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
 
-
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if (h_max == NULL) { exit_on_error("Error allocating h_max array in check_norm_strain_from_device() routine"); }
-
-  // creates array on GPU
-  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
   // determines max for: eps_trace_over_3_crust_mantle
 #ifdef USE_OPENCL
@@ -521,7 +501,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
     idx = 0;
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_eps_trace_over_3_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size));
-    clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                      global_work_size, local_work_size, 0, NULL, NULL));
@@ -533,12 +513,12 @@ void FC_FUNC_ (check_norm_strain_from_device,
     grid = dim3(num_blocks_x,num_blocks_y);
     threads = dim3(blocksize,1,1);
     // reduction kernel
-    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_eps_trace_over_3_crust_mantle.cuda,size,d_max.cuda);
+    get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(mp->d_eps_trace_over_3_crust_mantle.cuda,size,mp->d_norm_max.cuda);
   }
 #endif
 
   // copies to CPU
-  gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x*num_blocks_y);
+  gpuCopy_from_device_realw (&mp->d_norm_max, h_max, num_blocks_x*num_blocks_y);
 
   // determines maximum
   max = h_max[0];
@@ -551,7 +531,6 @@ void FC_FUNC_ (check_norm_strain_from_device,
   *strain_norm = max;
 
   // frees arrays
-  gpuFree (&d_max);
   free (h_max);
 
   // initializes
@@ -562,14 +541,10 @@ void FC_FUNC_ (check_norm_strain_from_device,
 
   get_blocks_xy (size_padded / blocksize, &num_blocks_x, &num_blocks_y);
 
-
   h_max = (realw *) calloc (num_blocks_x * num_blocks_y, sizeof (realw));
   if (h_max == NULL) { exit_on_error("Error allocating h_max array in check_norm_strain_from_device() routine"); }
 
   max_eps = 0.0f;
-
-  // creates array on GPU
-  gpuMalloc_realw (&d_max, num_blocks_x * num_blocks_y);
 
   // determines max for: epsilondev_xx_crust_mantle,..
   int loop;
@@ -593,7 +568,7 @@ void FC_FUNC_ (check_norm_strain_from_device,
       idx = 0;
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_epsilondev_HH_crust_mantle[loop].ocl));
       clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (int), (void *) &size));
-      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &d_max.ocl));
+      clCheck (clSetKernelArg (mocl.kernels.get_maximum_scalar_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_norm_max.ocl));
 
       clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.get_maximum_scalar_kernel, 2, NULL,
                                        global_work_size, local_work_size, 0, NULL, NULL));
@@ -605,11 +580,11 @@ void FC_FUNC_ (check_norm_strain_from_device,
       threads = dim3(blocksize,1,1);
 
       // determines max for: epsilondev_xx_crust_mantle
-      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(d_epsilondev_HH_crust_mantle[loop].cuda,size,d_max.cuda);
+      get_maximum_scalar_kernel<<<grid,threads,0,mp->compute_stream>>>(d_epsilondev_HH_crust_mantle[loop].cuda,size,mp->d_norm_max.cuda);
     }
 #endif
     // copies array to CPU
-    gpuCopy_from_device_realw (&d_max, h_max, num_blocks_x * num_blocks_y);
+    gpuCopy_from_device_realw (&mp->d_norm_max, h_max, num_blocks_x * num_blocks_y);
 
     // determines maximum
     max = h_max[0];
@@ -623,7 +598,6 @@ void FC_FUNC_ (check_norm_strain_from_device,
   *strain_norm2 = max_eps;
 
   // frees arrays
-  gpuFree (&d_max);
   free (h_max);
 
   GPU_ERROR_CHECKING ("after check_norm_strain_from_device");

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !          Main authors: Dimitri Komatitsch and Jeroen Tromp
@@ -312,8 +312,8 @@
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
         ! gets the 3-D crustal model
-        if( CRUSTAL ) then
-          if( .not. elem_in_mantle) &
+        if (CRUSTAL) then
+          if (.not. elem_in_mantle) &
             call meshfem3D_models_get3Dcrust_val(iregion_code,xmesh,ymesh,zmesh,r, &
                               vpv,vph,vsv,vsh,rho,eta_aniso,dvp, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25, &
@@ -327,7 +327,7 @@
 !                                        myrank,iregion_code,ispec,i,j,k)
 
         ! checks vpv: if close to zero then there is probably an error
-        if( vpv < TINYVAL ) then
+        if (vpv < TINYVAL) then
           print*,'error vpv: ',vpv,vph,vsv,vsh,rho
           print*,'radius:',r*R_EARTH_KM
           call exit_mpi(myrank,'error get_model values')
@@ -339,7 +339,7 @@
         ! and before TOPOGRAPHY/ELLIPCITY
         !
         !note:  only Qmu attenuation considered, Qkappa attenuation not used so far...
-        if( ATTENUATION ) then
+        if (ATTENUATION) then
           call meshfem3D_models_getatten_val(idoubling,xmesh,ymesh,zmesh,r_prem, &
                               tau_e,tau_s,T_c_source, &
                               moho,Qmu,Qkappa,elem_in_crust) ! R80

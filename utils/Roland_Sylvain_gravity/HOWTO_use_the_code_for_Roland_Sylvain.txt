@@ -4,26 +4,26 @@ From: Dimitri Komatitsch
 Organization: CNRS, Marseille, France
 To: Roland Martin, Sylvain Bonvalot, Sean Bruinsma
 
-Bonjour Roland, bonjour à tous,
+Bonjour Roland, bonjour a tous,
 
 voici le code complet, pour que tu puisses maintenant faire des modifications et des tests :
 
-- pour le télécharger :
+- pour le telecharger :
 git clone --recursive --branch devel
 https://github.com/geodynamics/specfem3d_globe.git
 
-- dans le répertoire "utils/Roland_Sylvain_gravity" tu trouveras tous
-les fichiers d'entrée, les scripts pour lancer le code sur la machine
-CURIE à Paris, et les scripts GMT pour dessiner les résultats de sortie
+- dans le repertoire "utils/Roland_Sylvain_gravity" tu trouveras tous
+les fichiers d'entree, les scripts pour lancer le code sur la machine
+CURIE a Paris, et les scripts GMT pour dessiner les resultats de sortie
 
-- il te faudra juste déplacer le fichier Par_file de
-"utils/Roland_Sylvain_gravity" dans le répertoire "DATA", le fichier
-constants.h.in dans le répertoire "setup", et décompresser le fichier
+- il te faudra juste deplacer le fichier Par_file de
+"utils/Roland_Sylvain_gravity" dans le repertoire "DATA", le fichier
+constants.h.in dans le repertoire "setup", et decompresser le fichier
 saved_observation_grid_real_x_y_z_used_by_the_code.txt.bz2
 
-- ensuite, déplacer les trois fichiers
+- ensuite, deplacer les trois fichiers
 saved_observation_grid_real_x_y_z_used_by_the_code.txt,
-script_MPI_128.sh et submit_all_MPI_128.sh dans le répertoire principal
+script_MPI_128.sh et submit_all_MPI_128.sh dans le repertoire principal
 (racine) du code
 
 - taper ceci sur CURIE :
@@ -47,6 +47,6 @@ et
 grep -i -n --color=always roland_sylvain setup/*.in
 
 
-Amitiés,
+Amities,
 Dimitri.
 

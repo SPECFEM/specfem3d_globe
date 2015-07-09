@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -36,8 +36,8 @@
   double precision, external :: netlib_specfun_erf
   double precision, external :: comp_source_time_function_ext
 
-  if ( EXTERNAL_SOURCE_TIME_FUNCTION ) then
-    comp_source_time_function = comp_source_time_function_ext ()
+  if (EXTERNAL_SOURCE_TIME_FUNCTION) then
+    comp_source_time_function = comp_source_time_function_ext()
   else
     ! quasi Heaviside
     comp_source_time_function = 0.5d0*(1.0d0 + netlib_specfun_erf(t/hdur))
@@ -72,17 +72,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  double precision function comp_source_time_function_ext ( )
+  double precision function comp_source_time_function_ext()
 
   use specfem_par, only: it, stfArray_external
   implicit none
 
   ! On the first iteration, go get the ASCII file.
-  if ( .not. allocated (stfArray_external) ) then
+  if (.not. allocated (stfArray_external)) then
     call get_external_stf()
   endif
 
-  comp_source_time_function_ext = stfArray_external (it)
+  comp_source_time_function_ext = stfArray_external(it)
 
   end function comp_source_time_function_ext
 
@@ -92,35 +92,38 @@
 
   subroutine get_external_stf()
 
-  use specfem_par, only: NSTEP, stfArray_external
+  use specfem_par, only: NSTEP, stfArray_external, IIN
   implicit none
 
-  integer :: RetCode, iterator
+  integer :: iterator,ier
   character(len=256) :: line
 
   ! Allocate the source time function array to the number of time steps.
-  allocate ( stfArray_external (NSTEP) )
+  allocate( stfArray_external(NSTEP),stat=ier)
+  if (ier /= 0 ) stop 'Error allocating external source time function array'
+
   print *, NSTEP
 
   ! Read in source time function.
-  open (unit=10, file='DATA/stf', status='old', form='formatted')
+  open(unit=IIN, file='DATA/stf', status='old', form='formatted',iostat=ier)
+  if (ier /= 0 ) stop 'Error opening file DATA/stf'
 
   read_loop: do iterator=1,NSTEP
 
-    read (10, '(A)', iostat = RetCode) line
+    read(IIN, '(A)', iostat = ier) line
 
-    if ( RetCode /= 0 ) then
+    if (ier /= 0) then
       print *, "ERROR IN SOURCE TIME FUNCTION."
-      stop
+      stop 'Error reading external stf file'
     endif
 
     ! Ignore lines with a hash (comments)
-    if ( index (line, "#") /= 0 ) cycle read_loop
+    if (index(line, "#") /= 0) cycle read_loop
 
-    read (line, *) stfArray_external(iterator)
+    read(line, *) stfArray_external(iterator)
 
   enddo read_loop
 
-  close (10)
+  close(IIN)
 
   end subroutine get_external_stf

@@ -1,0 +1,396 @@
+ 
+ ******************************
+ **** Specfem3D MPI Solver ****
+ ******************************
+ 
+ 
+ Fixing slow underflow trapping problem using small initial field
+ 
+ There are  4  MPI processes
+ Processes are numbered from 0 to  3
+ 
+ There are  48  elements along xi in each chunk
+ There are  48  elements along eta in each chunk
+ 
+ There are  2  slices along xi in each chunk
+ There are  2  slices along eta in each chunk
+ There is a total of  4  slices in each chunk
+ There are  1  chunks
+ There is a total of  4  slices in all the chunks
+ 
+ NDIM =  3
+ 
+ NGLLX =  5
+ NGLLY =  5
+ NGLLZ =  5
+ 
+ using single precision for the calculations
+ 
+ smallest and largest possible floating-point numbers are:  1.175494351E-38,  3.402823466E+38
+ 
+ model: 1D_isotropic_prem
+   incorporating the oceans using equivalent load
+   incorporating ellipticity
+   incorporating surface topography
+   incorporating self-gravitation (Cowling approximation)
+   incorporating rotation
+   incorporating attenuation using  3  standard linear solids
+ 
+   no 3-D lateral variations
+   no heterogeneities in the mantle
+   no crustal variations
+   using unmodified 1D crustal model with two layers
+   no transverse isotropy
+   no inner-core anisotropy
+   no general mantle anisotropy
+ 
+ 
+ incorporates ATTENUATION for time-reversed simulation
+ 
+ mesh databases:
+   reading in crust/mantle databases...
+   reading in outer core databases...
+   reading in inner core databases...
+   reading in coupling surface databases...
+   reading in addressing...
+   reading in MPI databases...
+   for overlapping of communications with calculations:
+ 
+   percentage of edge elements in crust/mantle  14.714715 %
+   percentage of volume elements in crust/mantle  85.2852859 %
+ 
+   percentage of edge elements in outer core  36.625515 %
+   percentage of volume elements in outer core  63.374485 %
+ 
+   percentage of edge elements in inner core  55.5555534 %
+   percentage of volume elements in inner core  44.4444466 %
+ 
+   reading in Stacey databases...
+ 
+ Elapsed time for reading mesh in seconds =  1.33758903
+ 
+ topography:
+   topography/bathymetry: min/max =  -7747,  5507
+ 
+ Elapsed time for reading topo/bathy in seconds =  0.242967129
+ 
+ 
+ sources:
+ 
+ *************************************
+  locating source  1
+ *************************************
+ 
+ source located in slice  0
+                in element  1
+ 
+    xi coordinate of source in that element:  -1.1000000000000001
+   eta coordinate of source in that element:  -1.1000000000000001
+ gamma coordinate of source in that element:  -1.1000000000000001
+ 
+ Source time function is a Heaviside, convolve later
+ 
+ 
+  half duration:  0.  seconds
+     time shift:  0.  seconds
+ 
+ magnitude of the source:
+      scalar moment M0 =  0.  dyne-cm
+   moment magnitude Mw =  0.
+ 
+ 
+ original (requested) position of the source:
+ 
+       latitude:  0.
+      longitude:  0.
+          depth:  0.  km
+ 
+ position of the source that will be used:
+ 
+       latitude:  30.591150190349605
+      longitude:  14.94375064121698
+          depth:  43.256340245358423  km
+ 
+ Error in location of the source:  3669.39478  km
+ 
+ *****************************************************
+ *****************************************************
+ ***** WARNING: source location estimate is poor *****
+ *****************************************************
+ *****************************************************
+ 
+ maximum error in location of the sources:  3669.39478  km
+ 
+ 
+ Elapsed time for detection of sources in seconds =  4.1599273681640625E-3
+ 
+ End of source detection - done
+ 
+ noise simulation will ignore CMT sources
+ 
+ receivers:
+ 
+ Total number of receivers =  2
+ 
+ 
+ ********************
+  locating receivers
+ ********************
+ 
+ reading receiver information...
+ 
+ Stations sorted by epicentral distance:
+ Station #     2:                  XS.S001    epicentral distance:      8.727949 degrees
+ Station #     1:                   GE.ZKR    epicentral distance:     10.497499 degrees
+ 
+ maximum error in location of all the receivers:  3.336436379E-12  km
+ 
+ Elapsed time for receiver detection in seconds =  0.63722109794616699
+ 
+ End of receiver detection - done
+ 
+ 
+ found a total of  2  receivers in all slices
+ this total is okay
+ 
+ source arrays:
+   number of sources is  1
+   size of source array                 =  1.430511475E-3 MB
+                                        =  1.396983862E-6 GB
+ 
+ seismograms:
+   seismograms written by all processes
+   writing out seismograms at every NTSTEP_BETWEEN_OUTPUT_SEISMOS =  3599
+   maximum number of local receivers is  1  in slice  1
+   size of maximum seismogram array       =  4.118728638E-2 MB
+                                          =  4.022195935E-5 GB
+ 
+ 
+ Total number of samples for seismograms =  3599
+ 
+ 
+ Reference radius of the Earth used is  6371.  km
+ 
+ 
+ incorporating the oceans using equivalent load
+ 
+ incorporating ellipticity
+ 
+ incorporating surface topography
+ 
+ incorporating self-gravitation (Cowling approximation)
+ 
+ incorporating rotation
+ 
+ incorporating attenuation using  3  standard linear solids
+ mimicking effects on velocity only
+ 
+ 
+ 
+ preparing mass matrices
+ preparing constants
+ preparing gravity arrays
+ preparing attenuation
+ preparing wavefields
+ preparing absorbing boundaries
+ preparing noise arrays
+   NOISE_TOMOGRAPHY =  2
+   timing:
+     start time           =  0.  seconds
+     time step            =  0.169376865  s
+     number of time steps =  3599
+   ignoring CMT sources
+   noise source uses ensemble forward source
+ 
+ 
+ Elapsed time for preparing timerun in seconds =  1.53071213
+ 
+ 
+ time loop:
+ 
+               scheme:         Newmark
+            time step:  0.169376865  s
+ number of time steps:  3599
+ total simulated time:  10.1569653  minutes
+ start time          : 0.  seconds
+ 
+ All processes are synchronized before time loop
+ 
+ Starting time iteration loop...
+ 
+ Time step #  5
+ Time:  1.129179075E-2  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  9.322264315E-12
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  1.00047945E-24
+ Max of strain, eps_trace_over_3_crust_mantle = 1.628955742E-15
+ Max of strain, epsilondev_crust_mantle  = 1.978126864E-15
+ Elapsed time in seconds =  0.55861592292785645
+ Elapsed time in hh:mm:ss =      0 h 00 m 00 s
+ Mean elapsed time per time step in seconds =  0.11172318458557129
+ Time steps done =  5  out of  3599
+ Time steps remaining =  3594
+ Estimated remaining time in seconds =  401.53312540054321
+ Estimated remaining time in hh:mm:ss =      0 h 06 m 41 s
+ Estimated total run time in seconds =  402.09174132347107
+ Estimated total run time in hh:mm:ss =      0 h 06 m 42 s
+ We have done  0.138927475 % of that
+ The run will finish approximately on (in local time): Sun Jul 05, 2015 22:41
+ ************************************************************
+ **** BEWARE: the above time estimates are not reliable
+ **** because fewer than 100 iterations have been performed
+ ************************************************************
+ 
+ Time step #  500
+ Time:  1.40865088  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  4.810078447E-10
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  1.092080598E-24
+ Max of strain, eps_trace_over_3_crust_mantle = 1.037899455E-14
+ Max of strain, epsilondev_crust_mantle  = 3.112254513E-14
+ Elapsed time in seconds =  84.956916093826294
+ Elapsed time in hh:mm:ss =      0 h 01 m 24 s
+ Mean elapsed time per time step in seconds =  0.1699138321876526
+ Time steps done =  500  out of  3599
+ Time steps remaining =  3099
+ Estimated remaining time in seconds =  526.56296594953528
+ Estimated remaining time in hh:mm:ss =      0 h 08 m 46 s
+ Estimated total run time in seconds =  611.51988204336158
+ Estimated total run time in hh:mm:ss =      0 h 10 m 11 s
+ We have done  13.8927479 % of that
+ The run will finish approximately on (in local time): Sun Jul 05, 2015 22:44
+ 
+ Time step #  1000
+ Time:  2.82012463  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.37311762E-9
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  1.183453567E-24
+ Max of strain, eps_trace_over_3_crust_mantle = 3.110439152E-14
+ Max of strain, epsilondev_crust_mantle  = 8.774758535E-14
+ Elapsed time in seconds =  183.42746806144714
+ Elapsed time in hh:mm:ss =      0 h 03 m 03 s
+ Mean elapsed time per time step in seconds =  0.18342746806144714
+ Time steps done =  1000  out of  3599
+ Time steps remaining =  2599
+ Estimated remaining time in seconds =  476.72798949170112
+ Estimated remaining time in hh:mm:ss =      0 h 07 m 56 s
+ Estimated total run time in seconds =  660.15545755314827
+ Estimated total run time in hh:mm:ss =      0 h 11 m 00 s
+ We have done  27.7854958 % of that
+ The run will finish approximately on (in local time): Sun Jul 05, 2015 22:45
+ 
+ Time step #  1500
+ Time:  4.23159838  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  3.366569246E-9
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  1.485938041E-24
+ Max of strain, eps_trace_over_3_crust_mantle = 9.470971506E-14
+ Max of strain, epsilondev_crust_mantle  = 2.372655024E-13
+ Elapsed time in seconds =  271.71732401847839
+ Elapsed time in hh:mm:ss =      0 h 04 m 31 s
+ Mean elapsed time per time step in seconds =  0.1811448826789856
+ Time steps done =  1500  out of  3599
+ Time steps remaining =  2099
+ Estimated remaining time in seconds =  380.22310874319078
+ Estimated remaining time in hh:mm:ss =      0 h 06 m 20 s
+ Estimated total run time in seconds =  651.94043276166917
+ Estimated total run time in hh:mm:ss =      0 h 10 m 51 s
+ We have done  41.6782455 % of that
+ The run will finish approximately on (in local time): Sun Jul 05, 2015 22:44
+ 
+ Time step #  2000
+ Time:  5.64307261  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  4.891794081E-9
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  4.052815499E-23
+ Max of strain, eps_trace_over_3_crust_mantle = 1.23501876E-13
+ Max of strain, epsilondev_crust_mantle  = 2.598028129E-13
+ Elapsed time in seconds =  357.27548909187317
+ Elapsed time in hh:mm:ss =      0 h 05 m 57 s
+ Mean elapsed time per time step in seconds =  0.17863774454593659
+ Time steps done =  2000  out of  3599
+ Time steps remaining =  1599
+ Estimated remaining time in seconds =  285.64175352895262
+ Estimated remaining time in hh:mm:ss =      0 h 04 m 45 s
+ Estimated total run time in seconds =  642.91724262082585
+ Estimated total run time in hh:mm:ss =      0 h 10 m 42 s
+ We have done  55.5709915 % of that
+ The run will finish approximately on (in local time): Sun Jul 05, 2015 22:45
+ 
+ Time step #  2500
+ Time:  7.05454636  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  2.453673931E-9
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  6.647425401E-23
+ Max of strain, eps_trace_over_3_crust_mantle = 7.024177247E-14
+ Max of strain, epsilondev_crust_mantle  = 1.800558265E-13
+ Elapsed time in seconds =  444.11991810798645
+ Elapsed time in hh:mm:ss =      0 h 07 m 24 s
+ Mean elapsed time per time step in seconds =  0.17764796724319459
+ Time steps done =  2500  out of  3599
+ Time steps remaining =  1099
+ Estimated remaining time in seconds =  195.23511600027086
+ Estimated remaining time in hh:mm:ss =      0 h 03 m 15 s
+ Estimated total run time in seconds =  639.35503410825731
+ Estimated total run time in hh:mm:ss =      0 h 10 m 39 s
+ We have done  69.4637375 % of that
+ The run will finish approximately on (in local time): Sun Jul 05, 2015 22:44
+ 
+ Time step #  3000
+ Time:  8.46601963  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.778998282E-9
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  7.706154991E-23
+ Max of strain, eps_trace_over_3_crust_mantle = 4.183258557E-14
+ Max of strain, epsilondev_crust_mantle  = 1.206852137E-13
+ Elapsed time in seconds =  533.78839302062988
+ Elapsed time in hh:mm:ss =      0 h 08 m 53 s
+ Mean elapsed time per time step in seconds =  0.17792946434020995
+ Time steps done =  3000  out of  3599
+ Time steps remaining =  599
+ Estimated remaining time in seconds =  106.57974913978576
+ Estimated remaining time in hh:mm:ss =      0 h 01 m 46 s
+ Estimated total run time in seconds =  640.36814216041569
+ Estimated total run time in hh:mm:ss =      0 h 10 m 40 s
+ We have done  83.3564911 % of that
+ The run will finish approximately on (in local time): Sun Jul 05, 2015 22:45
+ 
+ Time step #  3500
+ Time:  9.87749386  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.458371535E-9
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  2.318209008E-22
+ Max of strain, eps_trace_over_3_crust_mantle = 3.320151974E-14
+ Max of strain, epsilondev_crust_mantle  = 1.044933725E-13
+ Elapsed time in seconds =  622.3624439239502
+ Elapsed time in hh:mm:ss =      0 h 10 m 22 s
+ Mean elapsed time per time step in seconds =  0.17781784112112864
+ Time steps done =  3500  out of  3599
+ Time steps remaining =  99
+ Estimated remaining time in seconds =  17.603966270991734
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 17 s
+ Estimated total run time in seconds =  639.96641019494189
+ Estimated total run time in hh:mm:ss =      0 h 10 m 39 s
+ We have done  97.2492371 % of that
+ The run will finish approximately on (in local time): Sun Jul 05, 2015 22:44
+ 
+ Time step #  3599
+ Time:  10.1569653  minutes
+ Max norm displacement vector U in solid in all slices for forward prop. (m) =  1.431154195E-9
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =  2.412468419E-22
+ Max of strain, eps_trace_over_3_crust_mantle = 3.133919922E-14
+ Max of strain, epsilondev_crust_mantle  = 9.592238841E-14
+ Elapsed time in seconds =  636.25626111030579
+ Elapsed time in hh:mm:ss =      0 h 10 m 36 s
+ Mean elapsed time per time step in seconds =  0.17678695779669512
+ Time steps done =  3599  out of  3599
+ Time steps remaining =  0
+ Estimated remaining time in seconds =  0.
+ Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
+ Estimated total run time in seconds =  636.25626111030579
+ Estimated total run time in hh:mm:ss =      0 h 10 m 36 s
+ We have done  100. % of that
+ 
+ 
+ Total number of time steps written:  3599
+ 
+ Writing the seismograms in parallel took  0.44351005554199219  seconds
+ 
+ Time-Loop Complete. Timing info:
+ Total elapsed time in seconds =  637.05462408065796
+ Total elapsed time in hh:mm:ss =      0 h 10 m 37 s
+ 
+ End of the simulation
+ 

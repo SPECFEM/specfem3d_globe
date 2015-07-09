@@ -104,7 +104,7 @@ __global__ void compute_acoustic_kernel(int* ibool,
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
 
   // handles case when there is 1 extra block (due to rectangular grid)
-  if( ispec < NSPEC ){
+  if (ispec < NSPEC){
 
     int ijk = threadIdx.x;
 

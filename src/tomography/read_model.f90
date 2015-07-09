@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -43,7 +43,7 @@ subroutine read_model_iso()
   allocate(model_vp(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_vs(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_rho(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating model arrays'
+  if (ier /= 0) stop 'Error allocating model arrays'
 
   ! initializes arrays
   model_vp = 0.0_CUSTOM_REAL
@@ -56,7 +56,7 @@ subroutine read_model_iso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -69,7 +69,7 @@ subroutine read_model_iso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -82,7 +82,7 @@ subroutine read_model_iso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -111,7 +111,7 @@ subroutine read_model_iso()
   call synchronize_all()
 
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown',action='write')
     write(IOUT,*) '#min_vs #max_vs #min_vp #max_vp #min_rho #max_rho'
     write(IOUT,'(6e24.12)') min_vs,max_vs,min_vp,max_vp,min_rho,max_rho
     close(IOUT)
@@ -148,7 +148,7 @@ subroutine read_model_tiso()
            model_vsh(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_eta(NGLLX,NGLLY,NGLLZ,NSPEC), &
            model_rho(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating model arrays'
+  if (ier /= 0) stop 'Error allocating model arrays'
 
   ! initializes arrays
   model_vpv = 0.0_CUSTOM_REAL
@@ -164,7 +164,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -177,7 +177,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -190,7 +190,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -203,7 +203,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -216,7 +216,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -229,7 +229,7 @@ subroutine read_model_tiso()
   write(m_file,'(a,i6.6,a)') trim(INPUT_MODEL_DIR)//'proc',myrank,trim(REG)//trim(fname)//'.bin'
   if (myrank == 0) print*,'  ',trim(INPUT_MODEL_DIR)//'proc**'//trim(REG)//trim(fname)//'.bin'
 
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -270,7 +270,7 @@ subroutine read_model_tiso()
   call synchronize_all()
 
   if (PRINT_STATISTICS_FILES .and. myrank == 0) then
-    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown')
+    open(IOUT,file=trim(OUTPUT_STATISTICS_DIR)//'statistics_vs_vp_rho_new_minmax',status='unknown',action='write')
     write(IOUT,*) '#min_vsv #max_vsv #min_vsh #max_vsh #min_vpv #max_vpv #min_vph #max_vph ' &
                // '#min_eta #max_eta #min_rho #max_rho'
     write(IOUT,'(12e24.12)') min_vsv,max_vsv,min_vsh,max_vsh,min_vpv,max_vpv,min_vph,max_vph, &
@@ -301,7 +301,7 @@ subroutine read_model_database()
 
   ! global addressing
   write(m_file,'(a,i6.6,a)') trim(INPUT_DATABASES_DIR)//'proc',myrank,trim(REG)//'solver_data.bin'
-  open(IIN,file=trim(m_file),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
     print*,'Error opening: ',trim(m_file)
     call exit_mpi(myrank,'file not found')
@@ -314,16 +314,16 @@ subroutine read_model_database()
 
   ! allocate arrays for storing the databases
   allocate(ibool(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating ibool array for databases'
+  if (ier /= 0) stop 'Error allocating ibool array for databases'
   allocate(ispec_is_tiso(NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating ispec_is_tiso array for databases'
+  if (ier /= 0) stop 'Error allocating ispec_is_tiso array for databases'
 
   ! mesh node locations
   allocate(x(NGLOB),y(NGLOB),z(NGLOB),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating x/y/z arrays for mesh nodes'
+  if (ier /= 0) stop 'Error allocating x/y/z arrays for mesh nodes'
 
   allocate(dummy_idoubling(NSPEC),stat=ier)
-  if( ier /= 0 ) stop 'Error allocating idoubling array for databases'
+  if (ier /= 0) stop 'Error allocating idoubling array for databases'
 
   read(IIN) x(1:nglob)
   read(IIN) y(1:nglob)

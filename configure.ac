@@ -2,14 +2,14 @@ dnl                                               -*- Autoconf -*-
 dnl
 dnl Process this file with autoconf to produce the 'configure' script:
 dnl
-dnl autoreconf -I m4
+dnl autoreconf -i
 dnl
 dnl You must have recent versions of Autoconf and Automake installed.
 
 ############################################################
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D_Globe], [6.0.0], [see the wiki], [Specfem3DGlobe])
+AC_INIT([Specfem3D_Globe], [7.0.0], [see the wiki], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 
 AC_CONFIG_HEADER([setup/config.h])
@@ -148,7 +148,12 @@ fi
 AC_PROG_FC
 export FC
 export MPIFC
+F77="$FC"
+FFLAGS="$FCFLAGS"
+
+AC_PROVIDE([AC_PROG_F77])
 AC_SUBST([FCENV])
+AC_SUBST(srcdir)
 
 flags_guess="$SHELL $srcdir/flags.guess"
 AC_MSG_NOTICE([running $flags_guess])
@@ -160,6 +165,7 @@ AC_FC_WRAPPERS
 AC_LANG(Fortran)
 AC_FC_SRCEXT(f90)
 AC_FC_FREEFORM()
+
 AC_FC_PP_DEFINE()
 AC_SUBST([FC_DEFINE])
 AC_FC_PP_SRCEXT(F90)dnl Because AC_FC_PP_DEFINE messes with things.

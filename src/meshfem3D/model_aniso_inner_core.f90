@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -67,9 +67,9 @@
   vs = vs * scale_fac
   rho = rho * RHOAV/1000.d0
 
-  select case(REFERENCE_1D_MODEL)
+  select case (REFERENCE_1D_MODEL)
 
-    case(REFERENCE_MODEL_IASP91)
+    case (REFERENCE_MODEL_IASP91)
       vpc=11.24094d0-4.09689d0*x*x
       vsc=3.56454d0-3.45241d0*x*x
       rhoc=13.0885d0-8.8381d0*x*x
@@ -83,7 +83,7 @@
       vs0=3.56454d0
       rho0=13.0885d0
 
-    case(REFERENCE_MODEL_PREM)
+    case (REFERENCE_MODEL_PREM)
       vpc=11.2622d0-6.3640d0*x*x
       vsc=3.6678d0-4.4475d0*x*x
       rhoc=13.0885d0-8.8381d0*x*x
@@ -97,31 +97,31 @@
       vs0=3.6678d0
       rho0=13.0885d0
 
-    case(REFERENCE_MODEL_1DREF)
+    case (REFERENCE_MODEL_1DREF)
       ! values at center
       vp0 = 11262.20 / 1000.0d0
       vs0 = 3667.800 / 1000.0d0
       rho0 = 13088.480 / 1000.0d0
 
-    case(REFERENCE_MODEL_1066A)
+    case (REFERENCE_MODEL_1066A)
       ! values at center
       vp0 = 11.33830
       vs0 = 3.62980
       rho0 = 13.429030
 
-    case(REFERENCE_MODEL_AK135F_NO_MUD)
+    case (REFERENCE_MODEL_AK135F_NO_MUD)
       ! values at center
       vp0 = 11.26220
       vs0 = 3.667800
       rho0 = 13.01220
 
-    case(REFERENCE_MODEL_JP1D)
+    case (REFERENCE_MODEL_JP1D)
       ! values at center
       vp0 = 11.24094
       vs0 = 3.56454
       rho0 = 13.0885d0
 
-    case(REFERENCE_MODEL_SEA1D)
+    case (REFERENCE_MODEL_SEA1D)
       ! values at center
       vp0 = 11.240940
       vs0 = 3.564540

@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -143,7 +143,7 @@
                         code,crust_thickness,crust_vp,crust_vs,crust_rho)
 
   ! note: for seismic wave propagation in general we ignore the water and ice sheets (oceans are re-added later as an ocean load)
-  ! note: but for Roland_Sylvain gravity calculations we include the ice
+  ! note: but for gravity integral calculations we include the ice
   if (INCLUDE_ICE_IN_CRUST) then
     thicks_1 = thicks(1)
   else
@@ -250,7 +250,7 @@
   write(IMAIN,*) 'incorporating crustal model: CRUST2.0'
   write(IMAIN,*)
 
-  open(unit = 1,file=CNtype2,status='old',action='read',iostat=ier)
+  open(unit = IIN,file=CNtype2,status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(CNtype2), '": ', ier
     call flush_IMAIN()
@@ -259,11 +259,11 @@
   endif
 
   do ila = 1,CRUST_NLA/2
-    read(1,*) icolat,(abbreviation(ila,i),i = 1,CRUST_NLA)
+    read(IIN,*) icolat,(abbreviation(ila,i),i = 1,CRUST_NLA)
   enddo
-  close(1)
+  close(IIN)
 
-  open(unit = 1,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
+  open(unit = IIN,file=CNtype2_key_modif,status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(CNtype2_key_modif), '": ', ier
     call exit_MPI(0,'Error model crust2.0')
@@ -273,17 +273,17 @@
   h_moho_max = -HUGEVAL
 
   do ikey = 1,CRUST_NLO
-    read (1,"(a2)") code(ikey)
-    read (1,*) (crust_vp(i,ikey),i = 1,CRUST_NP)
-    read (1,*) (crust_vs(i,ikey),i = 1,CRUST_NP)
-    read (1,*) (crust_rho(i,ikey),i = 1,CRUST_NP)
-    read (1,*) (crust_thickness(i,ikey),i = 1,CRUST_NP-1),crust_thickness(CRUST_NP,ikey)
+    read(IIN,"(a2)") code(ikey)
+    read(IIN,*) (crust_vp(i,ikey),i = 1,CRUST_NP)
+    read(IIN,*) (crust_vs(i,ikey),i = 1,CRUST_NP)
+    read(IIN,*) (crust_rho(i,ikey),i = 1,CRUST_NP)
+    read(IIN,*) (crust_thickness(i,ikey),i = 1,CRUST_NP-1),crust_thickness(CRUST_NP,ikey)
 
     ! limit moho thickness
     if (crust_thickness(CRUST_NP,ikey) > h_moho_max) h_moho_max = crust_thickness(CRUST_NP,ikey)
     if (crust_thickness(CRUST_NP,ikey) < h_moho_min) h_moho_min = crust_thickness(CRUST_NP,ikey)
   enddo
-  close(1)
+  close(IIN)
 
   if (h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_2_0_model'
 

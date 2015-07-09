@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -32,7 +32,7 @@
 ! Stacey, define flags for absorbing boundaries
 
   use constants
-  use meshfem3D_par, only: ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER
+  use meshfem3D_par, only: ADIOS_FOR_ARRAYS_SOLVER
 
   implicit none
 
@@ -137,21 +137,21 @@
   ! save these temporary arrays for the solver for Stacey conditions
   ! This files will be saved with the help of ADIOS if the
   ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+  if (ADIOS_FOR_ARRAYS_SOLVER) then
     call get_absorb_adios(myrank, iregion, &
                           nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
                           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
   else
-    open(unit=27,file=prname(1:len_trim(prname))//'stacey.bin', &
+    open(unit=IOUT,file=prname(1:len_trim(prname))//'stacey.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening stacey.bin file')
-    write(27) nimin
-    write(27) nimax
-    write(27) njmin
-    write(27) njmax
-    write(27) nkmin_xi
-    write(27) nkmin_eta
-    close(27)
+    write(IOUT) nimin
+    write(IOUT) nimax
+    write(IOUT) njmin
+    write(IOUT) njmax
+    write(IOUT) nkmin_xi
+    write(IOUT) nkmin_eta
+    close(IOUT)
   endif
 
   end subroutine get_absorb

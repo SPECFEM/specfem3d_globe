@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -500,26 +500,24 @@
 ! Internally, we use variable "jyear" that does not have a jump
 ! from -1 (for 1 BC) to +1 (for 1 AD).
   if (abs(ioptn) <= 3) then
-   if (iyear > 0) then
+    if (iyear > 0) then
       jyear = iyear
-   else if (iyear == 0) then
+    else if (iyear == 0) then
       write(*,*) 'For calndr(), you specified the nonexistent year 0'
       stop
-   else
+    else
       jyear = iyear + 1
-   endif
-!
-!        Set "leap" equal to 0 if "jyear" is not a leap year
-!        and equal to 1 if it is a leap year.
-   leap = 0
-   if ((jyear/4)*4 == jyear) then
+    endif
+    !
+    !        Set "leap" equal to 0 if "jyear" is not a leap year
+    !        and equal to 1 if it is a leap year.
+    leap = 0
+    if ((jyear/4)*4 == jyear) then
       leap = 1
-   endif
-   if ((ioptn > 0)               .and. &
-         ((jyear/100)*100 == jyear) .and. &
-         ((jyear/400)*400 /= jyear)     ) then
-         leap = 0
-   endif
+    endif
+    if ((ioptn > 0) .and. ((jyear/100)*100 == jyear) .and. ((jyear/400)*400 /= jyear)) then
+      leap = 0
+    endif
   endif
 !
 ! Options 3-5 involve Julian Day numbers, which need a reference year
@@ -724,12 +722,10 @@
 !        We need to determine whether this is a leap year.
    leap = 0
    if ((jyear/4)*4 == jyear) then
-      leap = 1
+     leap = 1
    endif
-   if ((ioptn > 0)               .and. &
-      ((jyear/100)*100 == jyear) .and. &
-      ((jyear/400)*400 /= jyear)     ) then
-         leap = 0
+   if ((ioptn > 0) .and. ((jyear/100)*100 == jyear) .and. ((jyear/400)*400 /= jyear)) then
+     leap = 0
    endif
 !
 !        Now find the day number "iday".

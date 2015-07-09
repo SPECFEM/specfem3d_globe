@@ -14,7 +14,7 @@ dir="DATABASES_MPI/"
 res="1"
 
 # for visualization
-cp ../../UTILS/Visualization/Paraview/AVS_continent_boundaries.inp ./
+cp ../../utils/Visualization/Paraview/AVS_continent_boundaries.inp ./
 
 echo
 echo "alpha_kernel"
@@ -57,7 +57,7 @@ echo "  rho_kernel min/max: $min $max"
 ./paraviewpython-example.py state_rho_kernel.pvsm
 mv image.jpg image_rho_kernel.jpg
 
-echo 
+echo
 echo "visualize kernel vtu files in directory: OUTPUT_FILES/ using e.g. Paraview"
 echo "done"
 

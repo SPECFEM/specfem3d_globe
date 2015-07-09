@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -55,8 +55,8 @@
     MAX_NUMBER_OF_MESH_LAYERS,MAX_NUM_REGIONS,NB_SQUARE_CORNERS, &
     NGLOB1D_RADIAL_CORNER, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
-    ADIOS_ENABLED,ADIOS_FOR_ARRAYS_SOLVER, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,ROLAND_SYLVAIN
+    ADIOS_FOR_ARRAYS_SOLVER, &
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,GRAVITY_INTEGRALS
 
   use meshfem3D_models_par,only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
@@ -108,10 +108,10 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    select case(ipass)
-    case(1)
+    select case (ipass)
+    case (1)
       write(IMAIN,*) 'first pass'
-    case(2)
+    case (2)
       write(IMAIN,*) 'second pass'
     case default
       call exit_MPI(myrank,'Error ipass value in create_regions_mesh')
@@ -155,10 +155,10 @@
                           offset_proc_xi,offset_proc_eta)
 
 
-  select case(ipass)
+  select case (ipass)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  case( 1 ) !!!!!!!!!!! first pass of the mesher
+  case (1) !!!!!!!!!!! first pass of the mesher
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! only create global addressing and the MPI buffers in the first pass
@@ -208,7 +208,7 @@
 
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  case( 2 ) !!!!!!!!!!! second pass of the mesher
+  case (2) !!!!!!!!!!! second pass of the mesher
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
   ! only create mass matrix and save all the final arrays in the second pass
@@ -234,9 +234,9 @@
                                  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
                                  xigll,yigll,zigll)
 
-!! DK DK for Roland_Sylvain
+!! DK DK for gravity integrals
 ! creation of the top observation surface if region is the crust_mantle
-    if (ROLAND_SYLVAIN .and. iregion_code == IREGION_CRUST_MANTLE) call compute_observation_surface()
+    if (GRAVITY_INTEGRALS .and. iregion_code == IREGION_CRUST_MANTLE) call compute_observation_surface()
 
     ! create chunk buffers if more than one chunk
     call synchronize_all()
@@ -293,12 +293,12 @@
     call setup_color_perm(iregion_code)
 
     ! frees allocated mesh memory
-    select case( iregion_code )
-    case( IREGION_CRUST_MANTLE )
+    select case (iregion_code)
+    case (IREGION_CRUST_MANTLE)
       deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
-    case( IREGION_OUTER_CORE )
+    case (IREGION_OUTER_CORE)
       deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
-    case( IREGION_INNER_CORE )
+    case (IREGION_INNER_CORE)
       deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
     end select
 
@@ -336,23 +336,23 @@
     nglob = nglob_theor
 
     if (NCHUNKS /= 6 .and. ABSORBING_CONDITIONS) then
-      select case(iregion_code)
-      case( IREGION_CRUST_MANTLE )
+      select case (iregion_code)
+      case (IREGION_CRUST_MANTLE)
         nglob_xy = nglob
-      case( IREGION_INNER_CORE, IREGION_OUTER_CORE )
+      case (IREGION_INNER_CORE, IREGION_OUTER_CORE)
         nglob_xy = 1
-      endselect
+      end select
     else
        nglob_xy = 1
     endif
 
     if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-      select case(iregion_code)
-      case( IREGION_CRUST_MANTLE,IREGION_INNER_CORE )
+      select case (iregion_code)
+      case (IREGION_CRUST_MANTLE,IREGION_INNER_CORE)
          nglob_xy = nglob
-      case( IREGION_OUTER_CORE )
+      case (IREGION_OUTER_CORE)
          nglob_xy = 1
-      endselect
+      end select
     endif
 
     allocate(rmassx(nglob_xy), &
@@ -388,15 +388,15 @@
 
     ! save the binary files
     call synchronize_all()
-!! DK DK for Roland_Sylvain
-    if (.not. ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (.not. GRAVITY_INTEGRALS) then
       if (myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) '  ...saving binary files'
         call flush_IMAIN()
       endif
       ! saves mesh and model parameters
-      if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+      if (ADIOS_FOR_ARRAYS_SOLVER) then
         if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
         call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                                       iregion_code,xstore,ystore,zstore, &
@@ -415,15 +415,15 @@
     deallocate(rmass_ocean_load)
 
     ! saves MPI interface info
-!! DK DK for Roland_Sylvain
-    if (.not. ROLAND_SYLVAIN) call save_arrays_solver_MPI(iregion_code)
+!! DK DK for gravity integrals
+    if (.not. GRAVITY_INTEGRALS) call save_arrays_solver_MPI(iregion_code)
 
     ! frees MPI arrays memory
     call crm_free_MPI_arrays(iregion_code)
 
     ! boundary mesh for MOHO, 400 and 670 discontinuities
-!! DK DK for Roland_Sylvain
-    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. GRAVITY_INTEGRALS) then
       ! user output
       call synchronize_all()
       if (myrank == 0) then
@@ -432,7 +432,7 @@
         call flush_IMAIN()
       endif
       ! saves boundary file
-      if (ADIOS_ENABLED .and. ADIOS_FOR_ARRAYS_SOLVER) then
+      if (ADIOS_FOR_ARRAYS_SOLVER) then
         if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
         call save_arrays_boundary_adios()
       else
@@ -453,24 +453,24 @@
         nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
         etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
-!! DK DK for Roland_Sylvain
-    if (ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (GRAVITY_INTEGRALS) then
       call synchronize_all()
       if (myrank == 0) then
         write(IMAIN,*)
-        write(IMAIN,*) '  ...computing Roland_Sylvain integrals'
+        write(IMAIN,*) '  ...computing gravity integrals'
         call flush_IMAIN()
       endif
 
-      ! compute Roland_Sylvain integrals of that part of the slice, and then total integrals for the whole Earth
-      call compute_Roland_Sylvain_integr(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
+      ! compute gravity integrals of that part of the slice, and then total integrals for the whole Earth
+      call compute_gravity_integrals(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
           xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
     endif
 
     ! create AVS or DX mesh data for the slices
-!! DK DK for Roland_Sylvain
-    if (SAVE_MESH_FILES .and. .not. ROLAND_SYLVAIN) then
+!! DK DK for gravity integrals
+    if (SAVE_MESH_FILES .and. .not. GRAVITY_INTEGRALS) then
       ! user output
       call synchronize_all()
       if (myrank == 0) then
@@ -847,6 +847,7 @@
   integer :: NEX_PER_PROC_ETA
 
   ! local parameters
+  integer :: cpt
   integer :: i,ier
 
   ! initializes element layers
@@ -859,7 +860,7 @@
                         NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
                         ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
                         iregion_code,ifirst_region,ilast_region, &
-                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso,is_on_a_slice_edge)
+                        first_layer_aniso,last_layer_aniso,is_on_a_slice_edge)
 
   ! to consider anisotropic elements first and to build the mesh from the bottom to the top of the region
   allocate (perm_layer(ifirst_region:ilast_region),stat=ier)
@@ -981,14 +982,6 @@
     ! determine the radii that define the shell
     rmin = rmins(ilayer)
     rmax = rmaxs(ilayer)
-
-    if (iregion_code == IREGION_CRUST_MANTLE .and. ilayer_loop == 3) then
-      FIRST_ELT_NON_ANISO = ispec+1
-    endif
-    if (iregion_code == IREGION_CRUST_MANTLE &
-      .and. ilayer_loop==(ilast_region-nb_layer_above_aniso+1)) then
-      FIRST_ELT_ABOVE_ANISO = ispec+1
-    endif
 
     ner_without_doubling = ner(ilayer)
 
@@ -1318,7 +1311,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
     myrank,NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
     RMIDDLE_CRUST,ROCEAN, &
-    ADIOS_ENABLED,ADIOS_FOR_AVS_DX
+    ADIOS_FOR_AVS_DX
 
 
   use meshfem3D_models_par,only: &
@@ -1354,7 +1347,7 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
           stat=ier)
   if (ier /= 0) stop 'Error in allocate 21'
 
-  if (ADIOS_ENABLED .and. ADIOS_FOR_AVS_DX) then
+  if (ADIOS_FOR_AVS_DX) then
     call crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
                                    num_ibool_AVS_DX, mask_ibool)
   else
@@ -1408,16 +1401,16 @@ end subroutine crm_save_mesh_files
   integer,intent(in):: iregion_code
 
   ! free memory
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust mantle
     deallocate(phase_ispec_inner_crust_mantle)
     deallocate(num_elem_colors_crust_mantle)
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     deallocate(phase_ispec_inner_outer_core)
     deallocate(num_elem_colors_outer_core)
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     deallocate(phase_ispec_inner_inner_core)
     deallocate(num_elem_colors_inner_core)

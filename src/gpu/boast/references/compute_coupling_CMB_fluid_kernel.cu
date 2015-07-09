@@ -33,7 +33,7 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
   realw weight;
 
   // for surfaces elements exactly at the bottom of the crust mantle (outer core top)
-  if( iface < NSPEC2D_BOTTOM_CM ){
+  if (iface < NSPEC2D_BOTTOM_CM){
 
     // "-1" from index values to convert from Fortran-> C indexing
     ispec = ibelm_bottom_crust_mantle[iface] - 1;
@@ -55,7 +55,7 @@ __global__ void compute_coupling_CMB_fluid_kernel(realw* displ_crust_mantle,
     iglob_cm = ibool_crust_mantle[INDEX4(NGLLX,NGLLX,NGLLX,i,j,k,ispec)] - 1;
 
     // compute pressure, taking gravity into account
-    if( GRAVITY ){
+    if (GRAVITY){
       pressure = RHO_TOP_OC * ( - accel_outer_core[iglob_oc]
         + minus_g_cmb * (displ_crust_mantle[iglob_cm*3]*nx
                          + displ_crust_mantle[iglob_cm*3+1]*ny

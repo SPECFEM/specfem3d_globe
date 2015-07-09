@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -40,7 +40,7 @@
   iproc_eta = iproc_eta_slice(myrank)
 
   ! volume of the final mesh, and Earth mass computed in the final mesh
-  ! and Roland_Sylvain integrals
+  ! and gravity integrals
   volume_total = ZERO
   Earth_mass_total = ZERO
   Earth_center_of_mass_x_total = ZERO
@@ -72,12 +72,12 @@
       write(IMAIN,*)
       write(IMAIN,*) '*******************************************'
       write(IMAIN,*) 'creating mesh in region ',iregion_code
-      select case(iregion_code)
-        case(IREGION_CRUST_MANTLE)
+      select case (iregion_code)
+        case (IREGION_CRUST_MANTLE)
           write(IMAIN,*) 'this region is the crust and mantle'
-        case(IREGION_OUTER_CORE)
+        case (IREGION_OUTER_CORE)
           write(IMAIN,*) 'this region is the outer core'
-        case(IREGION_INNER_CORE)
+        case (IREGION_INNER_CORE)
           write(IMAIN,*) 'this region is the inner core'
         case default
           call exit_MPI(myrank,'incorrect region code')
@@ -92,11 +92,11 @@
 
     ! use dynamic allocation to allocate memory for arrays
     allocate(idoubling(NSPEC(iregion_code)), &
-            ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-            xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-            ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-            zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-            stat=ier)
+             ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+             xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+             ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+             zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
 
     ! this for non blocking MPI

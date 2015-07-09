@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -114,32 +114,33 @@
 ! relative anomaly
 
 
-  open(1,file='DATA/Lebedev_sea99/sea99_dvsvs',status='old',action='read',iostat=ier)
+  open(IIN,file='DATA/Lebedev_sea99/sea99_dvsvs',status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening file sea99_dvsvs')
 
 !----------------------- read input file:  ------------------
 
   do i = 1, 6
-     read(1,*)
+     read(IIN,*)
   enddo
-  read(1,*) sea99_ndep
-  read(1,*) (sea99_depth(i), i = 1, sea99_ndep)
-  read(1,*)
-  read(1,*) alatmin, alatmax
-  read(1,*) alonmin, alonmax
-  read(1,*) sea99_ddeg,sea99_nlat,sea99_nlon
+  read(IIN,*) sea99_ndep
+  read(IIN,*) (sea99_depth(i), i = 1, sea99_ndep)
+  read(IIN,*)
+  read(IIN,*) alatmin, alatmax
+  read(IIN,*) alonmin, alonmax
+  read(IIN,*) sea99_ddeg,sea99_nlat,sea99_nlon
   if (sea99_nlat /= nint((alatmax-alatmin)/sea99_ddeg)+1) then
      stop 'alatmin,alatmax,sea99_nlat'
   endif
   if (sea99_nlon /= nint((alonmax-alonmin)/sea99_ddeg)+1) then
      stop 'alonmin,alonmax,sea99_nlon'
   endif
-  read(1,*)
+  read(IIN,*)
   do j = 1, sea99_ndep
      do ia = 1, sea99_nlat
-        read (1,*) (sea99_vs(ia,io,j), io = 1, sea99_nlon)
+        read(IIN,*) (sea99_vs(ia,io,j), io = 1, sea99_nlon)
      enddo
   enddo
+  close(IIN)
 
   end subroutine read_sea99_s_model
 

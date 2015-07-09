@@ -94,7 +94,7 @@ __device__ void compute_element_ic_att_memory(int tx,int working_element,
     // index for R_xx(i,j,k,i_sls,ispec),..
     offset_sls = tx + NGLL3*(i_sls + N_SLS*working_element);
 
-    if( USE_3D_ATTENUATION_ARRAYS ){
+    if (USE_3D_ATTENUATION_ARRAYS){
       //mustore(i,j,k,ispec) * factor_common(i,j,k,i_sls,ispec)
       factor_loc = mul * factor_common[offset_sls];
     }else{
@@ -193,7 +193,7 @@ __device__ void compute_element_ic_gravity(int tx,int working_element,
   theta = d_ystore[iglob];
   phi = d_zstore[iglob];
 
-  if( sizeof( theta ) == sizeof( float ) ){
+  if (sizeof( theta ) == sizeof( float )){
     // float operations
     // sincos function return sinus and cosine for given value
     sincosf(theta, &sin_theta, &cos_theta);
@@ -210,7 +210,7 @@ __device__ void compute_element_ic_gravity(int tx,int working_element,
   //          and arrays in C start from 0, thus we need to subtract -1
   int int_radius = rint(radius * R_EARTH_KM * 10.0f ) - 1;
   //make sure we never use below zero for point exactly at the center of the Earth
-  if( int_radius < 0 ){int_radius = 0;}
+  if (int_radius < 0){int_radius = 0;}
 
   // get g, rho and dg/dr=dg
   // spherical components of the gravitational acceleration
@@ -403,7 +403,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
     working_element = bx;
 #else
     //mesh coloring
-    if( use_mesh_coloring_gpu ){
+    if (use_mesh_coloring_gpu){
       working_element = bx;
     }else{
       // iphase-1 and working_element-1 for Fortran->C array conventions
@@ -412,7 +412,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
 #endif
 
     // exclude fictitious elements in central cube
-    if( d_idoubling[working_element] == IFLAG_IN_FICTITIOUS_CUBE ){
+    if (d_idoubling[working_element] == IFLAG_IN_FICTITIOUS_CUBE){
       active = 0;
     }else{
       // iglob = d_ibool[working_element*NGLL3_PADDED + tx]-1;
@@ -591,7 +591,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
     // attenuation
     if(ATTENUATION){
       // use unrelaxed parameters if attenuation
-      if( USE_3D_ATTENUATION_ARRAYS ){
+      if (USE_3D_ATTENUATION_ARRAYS){
         mul_iso  = mul * one_minus_sum_beta[tx+working_element*NGLL3]; // (i,j,k,ispec)
         mul_aniso = mul *( one_minus_sum_beta[tx+working_element*NGLL3] - 1.0f );
       }else{
@@ -629,7 +629,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
       c44 = d_c44store[offset];
 
       // use unrelaxed parameters if attenuation
-      if( ATTENUATION){
+      if (ATTENUATION){
         c11 = c11 + 1.33333333333333333333f * mul_aniso; // FOUR_THIRDS = 1.33333
         c12 = c12 - 0.66666666666666666666f * mul_aniso; // TWO_THIRDS = 0.66666666666666666666f
         c13 = c13 - 0.66666666666666666666f * mul_aniso;
@@ -678,7 +678,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
                         -xiyl*(etaxl*gammazl-etazl*gammaxl)
                         +xizl*(etaxl*gammayl-etayl*gammaxl));
 
-    if( GRAVITY ){
+    if (GRAVITY){
       //  computes non-symmetric terms for gravity
       compute_element_ic_gravity(tx,working_element,
                                  d_ibool,d_xstore,d_ystore,d_zstore,
@@ -812,7 +812,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
     sum_terms3 = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l);
 
     // adds gravity term
-    if( GRAVITY ){
+    if (GRAVITY){
       sum_terms1 += rho_s_H1;
       sum_terms2 += rho_s_H2;
       sum_terms3 += rho_s_H3;
@@ -835,9 +835,9 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
 #else // MESH_COLORING
 
     //mesh coloring
-    if( use_mesh_coloring_gpu ){
+    if (use_mesh_coloring_gpu){
 
-      if( NSPEC_INNER_CORE > COLORING_MIN_NSPEC_INNER_CORE ){
+      if (NSPEC_INNER_CORE > COLORING_MIN_NSPEC_INNER_CORE){
         // no atomic operation needed, colors don't share global points between elements
 #ifdef USE_TEXTURES_FIELDS
         d_accel[iglob*3]     = texfetch_accel_ic<FORWARD_OR_ADJOINT>(iglob*3) + sum_terms1;
@@ -871,7 +871,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
 #endif // MESH_COLORING
 
     // update memory variables based upon the Runge-Kutta scheme
-    if( ATTENUATION && ! PARTIAL_PHYS_DISPERSION_ONLY ){
+    if (ATTENUATION && ! PARTIAL_PHYS_DISPERSION_ONLY ){
       compute_element_ic_att_memory(tx,working_element,
                                 d_muv,
                                 factor_common,alphaval,betaval,gammaval,
@@ -882,7 +882,7 @@ inner_core_impl_kernel(int nb_blocks_to_compute,
     }
 
     // save deviatoric strain for Runge-Kutta scheme
-    if( COMPUTE_AND_STORE_STRAIN ){
+    if (COMPUTE_AND_STORE_STRAIN){
       // fortran: epsilondev_xx(:,:,:,ispec) = epsilondev_xx_loc(:,:,:)
       epsilondev_xx[tx + working_element*NGLL3] = epsilondev_xx_loc;
       epsilondev_yy[tx + working_element*NGLL3] = epsilondev_yy_loc;

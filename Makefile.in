@@ -1,6 +1,6 @@
 #=====================================================================
 #
-#          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+#          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 #          --------------------------------------------------
 #
 #     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -61,22 +61,62 @@ FCLINK = $(MPIFCCOMPILE_CHECK)
 ####
 #######################################
 
+# Reduce GPU-register pressure by limited the number of thread spread
+# (GPU for embedded devices are not powerful enough for big kernels)
+# Must match mesh_constants_gpu.h::GPU_ELEM_PER_THREAD
+GPU_ELEM_PER_THREAD := 1
+
+##
+## CUDA
+##
 @COND_CUDA_TRUE@CUDA = yes
 @COND_CUDA_FALSE@CUDA = no
 
 @COND_CUDA5_TRUE@CUDA5 = yes
 @COND_CUDA5_FALSE@CUDA5 = no
 
-@COND_OCL_TRUE@OCL = yes
-@COND_OCL_FALSE@OCL = no
-
-MPI_INCLUDES = @MPI_INCLUDES@
 CUDA_FLAGS = @CUDA_FLAGS@
 CUDA_INC = @CUDA_CPPFLAGS@
 CUDA_LINK = @CUDA_LDFLAGS@ @CUDA_LIBS@
+CUDA_DEBUG = --cudart=shared
 
 @COND_CUDA_TRUE@NVCC = nvcc
 @COND_CUDA_FALSE@NVCC = @CC@
+
+##
+## GPU architecture
+##
+# CUDA architecture / code version
+# Fermi: -gencode=arch=compute_10,code=sm_10 not supported
+# Tesla (default): -gencode=arch=compute_20,code=sm_20
+# Geforce GT 650m: -gencode=arch=compute_30,code=sm_30
+# Kepler (cuda5) : -gencode=arch=compute_35,code=sm_35
+GENCODE_20 = -gencode=arch=compute_20,code=\"sm_20,compute_20\"
+GENCODE_30 = -gencode=arch=compute_30,code=\"sm_30,compute_30\"
+GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
+
+# CUDA version 5.x
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@GENCODE = $(GENCODE_35)
+# CUDA version 4.x
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@GENCODE = $(GENCODE_20)
+
+# CUDA flags and linking
+@COND_CUDA_TRUE@NVCC_FLAGS_BASE = $(CUDA_FLAGS) $(CUDA_INC) $(CUDA_DEBUG) $(MPI_INCLUDES)
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -dc $(GENCODE)
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
+
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK_BASE = $(NVCC) $(CUDA_INC) $(MPI_INCLUDES)
+@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK = $(NVCCLINK_BASE) -dlink $(GENCODE)
+@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCCLINK = $(NVCCLINK_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
+
+@COND_CUDA_FALSE@NVCC_FLAGS =
+@COND_CUDA_FALSE@NVCCLINK = $(NVCC) $(NVCC_FLAGS)
+
+##
+## OpenCL
+##
+@COND_OCL_TRUE@OCL = yes
+@COND_OCL_FALSE@OCL = no
 
 OCL_CPU_FLAGS = @OCL_CPU_FLAGS@
 OCL_GPU_FLAGS = @OCL_GPU_FLAGS@
@@ -100,33 +140,8 @@ ifneq ($(NO_GPU), yes)
   HAS_GPU = yes
 endif
 
-# GPU architecture
-
-# CUDA architecture / code version
-# Fermi: -gencode=arch=compute_10,code=sm_10 not supported
-# Tesla (default): -gencode=arch=compute_20,code=sm_20
-# Geforce GT 650m: -gencode=arch=compute_30,code=sm_30
-# Kepler (cuda5) : -gencode=arch=compute_35,code=sm_35
-GENCODE_20 = -gencode=arch=compute_20,code=\"sm_20,compute_20\"
-GENCODE_30 = -gencode=arch=compute_30,code=\"sm_30,compute_30\"
-GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
-
-# CUDA version 5.x
-@COND_CUDA_TRUE@@COND_CUDA5_TRUE@GENCODE = $(GENCODE_35)
-# CUDA version 4.x
-@COND_CUDA_TRUE@@COND_CUDA5_FALSE@GENCODE = $(GENCODE_20)
-
-# CUDA flags and linking
-@COND_CUDA_TRUE@NVCC_FLAGS_BASE = $(CUDA_FLAGS) $(CUDA_INC) $(MPI_INCLUDES)
-@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -dc $(GENCODE)
-@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCC_FLAGS = $(NVCC_FLAGS_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
-
-@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK_BASE = $(NVCC) $(CUDA_INC) $(MPI_INCLUDES)
-@COND_CUDA_TRUE@@COND_CUDA5_TRUE@NVCCLINK = $(NVCCLINK_BASE) -dlink $(GENCODE)
-@COND_CUDA_TRUE@@COND_CUDA5_FALSE@NVCCLINK = $(NVCCLINK_BASE) -DUSE_OLDER_CUDA4_GPU $(GENCODE)
-
-@COND_CUDA_FALSE@NVCC_FLAGS =
-@COND_CUDA_FALSE@NVCCLINK = $(NVCC) $(NVCC_FLAGS)
+## MPI directories for CUDA / OpenCL
+MPI_INCLUDES = @MPI_INCLUDES@
 
 #######################################
 ####
@@ -215,6 +230,7 @@ SUBDIRS = \
 	meshfem3D \
 	specfem3D \
 	auxiliaries \
+	tomography/postprocess_sensitivity_kernels \
 	tomography \
 	$(EMPTY_MACRO)
 
@@ -243,7 +259,7 @@ DEFAULT += 	\
 	$(EMPTY_MACRO)
 endif
 
-all: default
+all: default aux movies postprocess tomography
 
 default: $(DEFAULT)
 
@@ -296,18 +312,24 @@ endif
 	@echo "    xcreate_movie_GMT_global"
 	@echo "    xcombine_paraview_strain_data"
 	@echo ""
+	@echo "- sensitivity kernel postprocessing tools: [make postprocess]"
+	@echo "    xaddition_sem"
+	@echo "    xclip_sem"
+	@echo "    xcombine_sem"
+	@echo "    xdifference_sem"
+	@echo "    xinterpolate_model"
+	@echo "    xsmooth_sem"
+ifeq ($(ADIOS), yes)
+	@echo "    xconvert_model_file_adios"
+endif
+	@echo ""
 	@echo "- tomography tools: [make tomography]"
 	@echo "    xadd_model_iso"
 	@echo "    xadd_model_tiso"
 	@echo "    xadd_model_tiso_cg"
 	@echo "    xadd_model_tiso_iso"
-	@echo "    xinterpolate_model"
-	@echo "    xsmooth_sem"
 	@echo "    xsum_kernels"
 	@echo "    xsum_preconditioned_kernels"
-ifeq ($(ADIOS), yes)
-	@echo "    xconvert_model_file_adios"
-endif
 	@echo ""
 
 .PHONY: all default clean help

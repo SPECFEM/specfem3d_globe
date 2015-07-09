@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -130,24 +130,24 @@
   QRFSI12_ref='DATA/QRFSI12/ref_QRFSI12'
 
 ! get the dq model coefficients
-  open(unit=10,file=QRFSI12,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=QRFSI12,status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(QRFSI12), '": ', ier
     call exit_MPI(0, 'Error model QRFSI12')
   endif
 
   do k = 1,NKQ
-    read(10,*) indexval
+    read(IIN,*) indexval
     j = 0
     do l = 0,MAXL_Q
       do m = 0,l
         if (m == 0) then
           j=j+1
-          read(10,*)ll,mm,v1
+          read(IIN,*)ll,mm,v1
           QRFSI12_Q_dqmu(k,j)=v1
         else
           j=j+2
-          read(10,*)ll,mm,v1,v2
+          read(IIN,*)ll,mm,v1,v2
   !       write(*,*) 'k,l,m,ll,mm:',k,l,m,ll,mm,v1
           QRFSI12_Q_dqmu(k,j-1)=2.*v1
           QRFSI12_Q_dqmu(k,j)=-2.*v2
@@ -155,7 +155,7 @@
       enddo
     enddo
   enddo
-  close(10)
+  close(IIN)
 
 ! get the depths (km) of the spline knots
   QRFSI12_Q_spknt(1) = 24.4d0
@@ -168,16 +168,16 @@
   QRFSI12_Q_spknt(8) = 650.d0
 
 ! get the depths and 1/Q values of the reference model
-  open(11,file=QRFSI12_ref,status='old',action='read',iostat=ier)
+  open(IIN,file=QRFSI12_ref,status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(QRFSI12_ref), '": ', ier
     call exit_MPI(0, 'Error model QRFSI12')
   endif
 
   do j = 1,NDEPTHS_REFQ
-    read(11,*)QRFSI12_Q_refdepth(j),QRFSI12_Q_refqmu(j)
+    read(IIN,*)QRFSI12_Q_refdepth(j),QRFSI12_Q_refqmu(j)
   enddo
-  close(11)
+  close(IIN)
 
 
   end subroutine read_atten_model_3D_QRFSI12
@@ -206,7 +206,7 @@
   real(kind=4) :: wk1(NSQ),wk2(NSQ),wk3(NSQ)
   real(kind=4) :: xlmvec(NSQ**2)
 
-  double precision, parameter :: rmoho_prem = 6371.0d0 - 24.4d0
+  double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
   double precision, parameter :: rcmb = 3480.0d0
 
   ! in Colleen's original code theta refers to the latitude.  Here we have redefined theta to be colatitude
@@ -248,7 +248,7 @@
 
     ! we are in the mantle
 
-    depth = 6371.-radius
+    depth = R_EARTH_KM - radius
 
     !debug
     !   print *,'QRFSI12: we are in the mantle at depth',depth

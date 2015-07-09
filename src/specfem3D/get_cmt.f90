@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -29,7 +29,9 @@
                      DT,NSOURCES,min_tshift_cmt_original)
 
   use constants,only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
-    RHOAV,R_EARTH,PI,GRAV,TINYVAL
+    RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
+
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
 
   implicit none
 
@@ -45,11 +47,12 @@
 
   ! local variables below
   integer :: mo,da,julian_day,isource
-  integer :: i,itype,istart,iend,ier
+  integer :: i,itype,istart,iend,ier, ios
   double precision :: scaleM
   double precision :: t_shift(NSOURCES)
   !character(len=5) :: datasource
   character(len=256) :: string
+  character(len=MAX_STRING_LEN) :: CMTSOLUTION_FILE, path_to_add
 
   ! initializes
   lat(:) = 0.d0
@@ -63,8 +66,15 @@
 !
 !---- read hypocenter info
 !
-  open(unit = IIN,file='DATA/CMTSOLUTION',status='old',action='read',iostat=ier)
-  if (ier /= 0) stop 'Error opening DATA/CMTSOLUTION file'
+  CMTSOLUTION_FILE = 'DATA/CMTSOLUTION'
+
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    CMTSOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//CMTSOLUTION_FILE(1:len_trim(CMTSOLUTION_FILE))
+  endif
+
+  open(unit=IIN,file=trim(CMTSOLUTION_FILE),status='old',action='read',iostat=ios)
+  if (ios /= 0) stop 'Error opening CMTSOLUTION file (get_cmt)'
 
 ! read source number isource
   do isource = 1,NSOURCES
@@ -88,7 +98,7 @@
       read(IIN,"(a256)",iostat=ier) string
       if (ier /= 0) then
         write(IMAIN,*) 'Error reading header line in source ',isource
-        stop 'Error reading header line in station in CMTSOLUTION file'
+        stop 'Error reading header blank lines in station in CMTSOLUTION file'
       endif
     enddo
 
@@ -110,7 +120,7 @@
     do itype = 1,6
       ! determines where first number starts
       do i = istart,len_trim(string)
-        if (is_numeric(string(i:i)) ) then
+        if (is_numeric(string(i:i))) then
           istart = i
           exit
         endif
@@ -121,7 +131,7 @@
       ! determines end and length of number
       iend = istart
       do i = istart,len_trim(string)
-        if (itype /= 6 ) then
+        if (itype /= 6) then
           ! integer values
           if (.not. is_numeric(string(i:i))) then
             iend = i
@@ -144,23 +154,23 @@
       !print*,itype,'line ----',string(istart:iend),'----'
 
       ! reads in event time information
-      select case( itype )
-      case( 1 )
+      select case (itype)
+      case (1)
         ! year (as integer value)
         read(string(istart:iend),*) yr
-      case( 2 )
+      case (2)
         ! month (as integer value)
         read(string(istart:iend),*) mo
-      case( 3 )
+      case (3)
         ! day (as integer value)
         read(string(istart:iend),*) da
-      case( 4 )
+      case (4)
         ! hour (as integer value)
         read(string(istart:iend),*) ho
-      case( 5 )
+      case (5)
         ! minutes (as integer value)
         read(string(istart:iend),*) mi
-      case( 6 )
+      case (6)
         ! seconds (as float value)
         read(string(istart:iend),*) sec
       end select
@@ -311,6 +321,9 @@
     endif
 
   enddo
+
+  ! noise simulations don't use the CMTSOLUTION source but a noise-spectrum source defined in S_squared
+  if (NOISE_TOMOGRAPHY /= 0) hdur(:) = 0.d0
 
   ! If we're using external stf, don't worry about hdur.
   if (EXTERNAL_SOURCE_TIME_FUNCTION) then
@@ -463,7 +476,11 @@
   !  for converting from scalar moment M0 to moment magnitude. (..)"
   ! see: http://earthquake.usgs.gov/aboutus/docs/020204mag_policy.php
 
-  Mw = 2.d0/3.d0 * log10( M0 ) - 10.7
+  if (M0 > 0.d0) then
+    Mw = 2.d0/3.d0 * log10( M0 ) - 10.7
+  else
+    Mw = 0.d0
+  endif
 
   ! return value
   get_cmt_moment_magnitude = Mw

@@ -1,4 +1,4 @@
-#!/bin/sh 
+#!/bin/sh
 # sun grid engine cluster @ oxford
 
 # use current working directory
@@ -55,7 +55,7 @@ cp $BASEMPIDIR/list*.txt OUTPUT_FILES/
 
 /opt/SUNWhpc/bin/mprun -x sge ./bin/xmeshfem3D
 
-# or using mpiexec 
+# or using mpiexec
 #/opt/mpich/bin/mpiexec -np $numnodes ./bin/xmeshfem3D
 
 

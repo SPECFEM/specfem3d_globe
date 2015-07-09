@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -113,23 +113,23 @@
     do iface = 1, 6
 
       ! chooses a point inside face
-      select case( iface )
-      case( 1 )
+      select case (iface)
+      case (1)
         ! face I == 1
         iglob = ibool(1,MID,MID,ispec)
-      case( 2 )
+      case (2)
         ! face I == NGLLX
         iglob = ibool(NGLLX,MID,MID,ispec)
-      case( 3 )
+      case (3)
         ! face J == 1
         iglob = ibool(MID,1,MID,ispec)
-      case( 4 )
+      case (4)
         ! face J == NGLLY
         iglob = ibool(MID,NGLLY,MID,ispec)
-      case( 5 )
+      case (5)
         ! face K == 1
         iglob = ibool(MID,MID,1,ispec)
-      case( 6 )
+      case (6)
         ! face K == NGLLZ
         iglob = ibool(MID,MID,NGLLZ,ispec)
       end select
@@ -178,23 +178,23 @@
         ! assumes NGLLX == NGLLY == NGLLZ
         do k = 1,NGLLX
           do j = 1,NGLLX
-            select case( iface )
-            case( 1 )
+            select case (iface)
+            case (1)
               ! face I == 1
               iglob = ibool(1,j,k,ispec)
-            case( 2 )
+            case (2)
               ! face I == NGLLX
               iglob = ibool(NGLLX,j,k,ispec)
-            case( 3 )
+            case (3)
               ! face J == 1
               iglob = ibool(j,1,k,ispec)
-            case( 4 )
+            case (4)
               ! face J == NGLLY
               iglob = ibool(j,NGLLY,k,ispec)
-            case( 5 )
+            case (5)
               ! face K == 1
               iglob = ibool(j,k,1,ispec)
-            case( 6 )
+            case (6)
               ! face K == NGLLZ
               iglob = ibool(j,k,NGLLZ,ispec)
             end select
@@ -231,41 +231,41 @@
     do iedge = 1, 12
 
       ! chooses a point inside edge but not corner
-      select case( iedge )
-      case( 1 )
+      select case (iedge)
+      case (1)
         ! face I == 1, J == 1
         iglob = ibool(1,1,MID,ispec)
-      case( 2 )
+      case (2)
         ! face I == 1, J == NGLLY
         iglob = ibool(1,NGLLY,MID,ispec)
-      case( 3 )
+      case (3)
         ! face I == 1, K == 1
         iglob = ibool(1,MID,1,ispec)
-      case( 4 )
+      case (4)
         ! face I == 1, K == NGLLZ
         iglob = ibool(1,MID,NGLLZ,ispec)
-      case( 5 )
+      case (5)
         ! face I == NGLLX, J == 1
         iglob = ibool(NGLLX,1,MID,ispec)
-      case( 6 )
+      case (6)
         ! face I == NGLLX, J == NGLLY
         iglob = ibool(NGLLX,NGLLY,MID,ispec)
-      case( 7 )
+      case (7)
         ! face I == NGLLX, K == 1
         iglob = ibool(NGLLX,MID,1,ispec)
-      case( 8 )
+      case (8)
         ! face I == NGLLX, K == NGLLZ
         iglob = ibool(NGLLX,MID,NGLLZ,ispec)
-      case( 9 )
+      case (9)
         ! face J == 1, K == 1
         iglob = ibool(MID,1,1,ispec)
-      case( 10 )
+      case (10)
         ! face J == 1, K == NGLLZ
         iglob = ibool(MID,1,NGLLZ,ispec)
-      case( 11 )
+      case (11)
         ! face J == NGLLY, K == 1
         iglob = ibool(MID,NGLLY,1,ispec)
-      case( 12 )
+      case (12)
         ! face J == NGLLY, K == NGLLZ
         iglob = ibool(MID,NGLLY,NGLLZ,ispec)
       end select
@@ -313,41 +313,41 @@
         ! adds interface points and removes neighbor flag from edge
         ! assumes NGLLX == NGLLY == NGLLZ
         do k = 1,NGLLX
-          select case( iedge )
-          case( 1 )
+          select case (iedge)
+          case (1)
             ! face I == 1, J == 1
             iglob = ibool(1,1,k,ispec)
-          case( 2 )
+          case (2)
             ! face I == 1, J == NGLLY
             iglob = ibool(1,NGLLY,k,ispec)
-          case( 3 )
+          case (3)
             ! face I == 1, K == 1
             iglob = ibool(1,k,1,ispec)
-          case( 4 )
+          case (4)
             ! face I == 1, K == NGLLZ
             iglob = ibool(1,k,NGLLZ,ispec)
-          case( 5 )
+          case (5)
             ! face I == NGLLX, J == 1
             iglob = ibool(NGLLX,1,k,ispec)
-          case( 6 )
+          case (6)
             ! face I == NGLLX, J == NGLLY
             iglob = ibool(NGLLX,NGLLY,k,ispec)
-          case( 7 )
+          case (7)
             ! face I == NGLLX, K == 1
             iglob = ibool(NGLLX,k,1,ispec)
-          case( 8 )
+          case (8)
             ! face I == NGLLX, K == NGLLZ
             iglob = ibool(NGLLX,k,NGLLZ,ispec)
-          case( 9 )
+          case (9)
             ! face J == 1, K == 1
             iglob = ibool(k,1,1,ispec)
-          case( 10 )
+          case (10)
             ! face J == 1, K == NGLLZ
             iglob = ibool(k,1,NGLLZ,ispec)
-          case( 11 )
+          case (11)
             ! face J == NGLLY, K == 1
             iglob = ibool(k,NGLLY,1,ispec)
-          case( 12 )
+          case (12)
             ! face J == NGLLY, K == NGLLZ
             iglob = ibool(k,NGLLY,NGLLZ,ispec)
           end select
@@ -385,29 +385,29 @@
     do icorner = 1, 8
 
       ! chooses a corner point
-      select case( icorner )
-      case( 1 )
+      select case (icorner)
+      case (1)
         ! face I == 1
         iglob = ibool(1,1,1,ispec)
-      case( 2 )
+      case (2)
         ! face I == 1
         iglob = ibool(1,NGLLY,1,ispec)
-      case( 3 )
+      case (3)
         ! face I == 1
         iglob = ibool(1,1,NGLLZ,ispec)
-      case( 4 )
+      case (4)
         ! face I == 1
         iglob = ibool(1,NGLLY,NGLLZ,ispec)
-      case( 5 )
+      case (5)
         ! face I == NGLLX
         iglob = ibool(NGLLX,1,1,ispec)
-      case( 6 )
+      case (6)
         ! face I == NGLLX
         iglob = ibool(NGLLX,NGLLY,1,ispec)
-      case( 7 )
+      case (7)
         ! face I == NGLLX
         iglob = ibool(NGLLX,1,NGLLZ,ispec)
-      case( 8 )
+      case (8)
         ! face I == NGLLX
         iglob = ibool(NGLLX,NGLLY,NGLLZ,ispec)
       end select

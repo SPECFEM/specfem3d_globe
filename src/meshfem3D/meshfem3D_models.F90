@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -71,17 +71,17 @@
   ! re-defines/initializes models 1066a and ak135 and ref
   ! ( with possible external crustal model: if CRUSTAL is set to true
   !    it strips the 1-D crustal profile and replaces it with mantle properties)
-  select case( REFERENCE_1D_MODEL )
-    case(REFERENCE_MODEL_1066A)
+  select case (REFERENCE_1D_MODEL)
+    case (REFERENCE_MODEL_1066A)
       call model_1066a_broadcast(myrank,CRUSTAL)
 
-    case( REFERENCE_MODEL_AK135F_NO_MUD)
+    case (REFERENCE_MODEL_AK135F_NO_MUD)
       call model_ak135_broadcast(myrank,CRUSTAL)
 
-    case(REFERENCE_MODEL_1DREF)
+    case (REFERENCE_MODEL_1DREF)
       call model_1dref_broadcast(CRUSTAL)
 
-    case(REFERENCE_MODEL_SEA1D)
+    case (REFERENCE_MODEL_SEA1D)
       call model_sea1d_broadcast(myrank,CRUSTAL)
   end select
 
@@ -89,33 +89,33 @@
   ! reads in 3D mantle models
   if (ISOTROPIC_3D_MANTLE) then
 
-    select case( THREE_D_MODEL )
+    select case (THREE_D_MODEL)
 
-      case(THREE_D_MODEL_S20RTS)
+      case (THREE_D_MODEL_S20RTS)
         call model_s20rts_broadcast(myrank)
 
-      case(THREE_D_MODEL_S40RTS)
+      case (THREE_D_MODEL_S40RTS)
         call model_s40rts_broadcast(myrank)
 
-      case(THREE_D_MODEL_SEA99_JP3D)
+      case (THREE_D_MODEL_SEA99_JP3D)
         ! the variables read are declared and stored in structure model_sea99_s_par and model_jp3d_par
         call model_sea99_s_broadcast(myrank)
         call model_jp3d_broadcast(myrank)
 
-      case(THREE_D_MODEL_SEA99)
+      case (THREE_D_MODEL_SEA99)
         ! the variables read are declared and stored in structure model_sea99_s_par
         call model_sea99_s_broadcast(myrank)
 
-      case(THREE_D_MODEL_JP3D)
+      case (THREE_D_MODEL_JP3D)
         ! the variables read are declared and stored in structure model_jp3d_par
         call model_jp3d_broadcast(myrank)
 
-      case(THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-           THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+      case (THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
+            THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
         ! the variables read are declared and stored in structure model_s362ani_par
         call model_s362ani_broadcast(myrank,THREE_D_MODEL)
 
-      case(THREE_D_MODEL_PPM)
+      case (THREE_D_MODEL_PPM)
         ! Point Profile Models
         ! the variables read are declared and stored in structure model_ppm_par
         call model_ppm_broadcast(myrank)
@@ -123,7 +123,7 @@
         ! could use EUcrust07 Vp crustal structure
         !call model_eucrust_broadcast(myrank)
 
-      case(THREE_D_MODEL_GAPP2)
+      case (THREE_D_MODEL_GAPP2)
         ! GAP model
         call model_gapp2_broadcast(myrank)
 
@@ -198,22 +198,22 @@
 !
 !---
 
-  select case(ITYPE_CRUSTAL_MODEL )
+  select case (ITYPE_CRUSTAL_MODEL)
 
-    case(ICRUST_CRUST1)
+    case (ICRUST_CRUST1)
       ! crust 1.0
       call model_crust_1_0_broadcast(myrank)
 
-    case(ICRUST_CRUST2)
+    case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
       call model_crust_2_0_broadcast(myrank)
 
-    case(ICRUST_CRUSTMAPS)
+    case (ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps_broadcast(myrank)
 
-    case(ICRUST_EPCRUST)
+    case (ICRUST_EPCRUST)
       ! EPcrust
       call model_epcrust_broadcast(myrank)
 
@@ -266,9 +266,9 @@
 !---
 
   ! gets 1-D reference model parameters
-  select case( REFERENCE_1D_MODEL )
+  select case (REFERENCE_1D_MODEL)
 
-    case(REFERENCE_MODEL_PREM)
+    case (REFERENCE_MODEL_PREM)
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
       if (TRANSVERSE_ISOTROPY) then
         ! get the anisotropic PREM parameters
@@ -282,7 +282,7 @@
                   R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
       endif
 
-    case(REFERENCE_MODEL_1DREF)
+    case (REFERENCE_MODEL_1DREF)
       ! 1D-REF also known as STW105 (by Kustowski et al.) - used also as background for 3D models
       call model_1dref(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu,iregion_code,CRUSTAL)
       if (.not. TRANSVERSE_ISOTROPY) then
@@ -296,27 +296,27 @@
         endif
       endif
 
-    case(REFERENCE_MODEL_1066A)
+    case (REFERENCE_MODEL_1066A)
       ! 1066A (by Gilbert & Dziewonski) - pure isotropic model, used in 1D model mode only
       call model_1066a(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
-    case(REFERENCE_MODEL_AK135F_NO_MUD)
+    case (REFERENCE_MODEL_AK135F_NO_MUD)
       ! AK135 (by Kennett et al. ) - pure isotropic model, used in 1D model mode only
       call model_ak135(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
-    case(REFERENCE_MODEL_IASP91)
+    case (REFERENCE_MODEL_IASP91)
       ! IASP91 (by Kennett & Engdahl) - pure isotropic model, used in 1D model mode only
       call model_iasp91(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
                     ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                     R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
-    case(REFERENCE_MODEL_JP1D)
+    case (REFERENCE_MODEL_JP1D)
       !JP1D (by Zhao et al.) - pure isotropic model, used also as background for 3D models
       call model_jp1d(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
                       .true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                       R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
 
-    case(REFERENCE_MODEL_SEA1D)
+    case (REFERENCE_MODEL_SEA1D)
       ! SEA1D (by Lebedev & Nolet) - pure isotropic model, used also as background for 3D models
       call model_sea1d(r_prem,rho,vp,vs,Qkappa,Qmu,iregion_code)
 
@@ -431,9 +431,9 @@
     endif
 
     ! gets model parameters
-    select case( THREE_D_MODEL )
+    select case (THREE_D_MODEL)
 
-      case(THREE_D_MODEL_S20RTS)
+      case (THREE_D_MODEL_S20RTS)
         ! s20rts
         call mantle_s20rts(r_used,theta,phi,dvs,dvp,drho)
         vpv=vpv*(1.0d0+dvp)
@@ -442,7 +442,7 @@
         vsh=vsh*(1.0d0+dvs)
         rho=rho*(1.0d0+drho)
 
-      case(THREE_D_MODEL_S40RTS)
+      case (THREE_D_MODEL_S40RTS)
         ! s40rts
         call mantle_s40rts(r_used,theta,phi,dvs,dvp,drho)
         vpv=vpv*(1.0d0+dvp)
@@ -451,7 +451,7 @@
         vsh=vsh*(1.0d0+dvs)
         rho=rho*(1.0d0+drho)
 
-      case(THREE_D_MODEL_SEA99_JP3D)
+      case (THREE_D_MODEL_SEA99_JP3D)
         ! sea99 + jp3d1994
         call model_sea99_s(r_used,theta,phi,dvs)
         vsv=vsv*(1.0d0+dvs)
@@ -469,13 +469,13 @@
           endif
         endif
 
-      case(THREE_D_MODEL_SEA99)
+      case (THREE_D_MODEL_SEA99)
         ! sea99 Vs-only
         call model_sea99_s(r_used,theta,phi,dvs)
         vsv=vsv*(1.0d0+dvs)
         vsh=vsh*(1.0d0+dvs)
 
-      case(THREE_D_MODEL_JP3D)
+      case (THREE_D_MODEL_JP3D)
         ! jp3d1994
         if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
             .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
@@ -488,8 +488,8 @@
           endif
         endif
 
-      case(THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
-           THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
+      case (THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
+            THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
         ! 3D Harvard models s362ani, s362wmani, s362ani_prem and s2.9ea
         xcolat = sngl(theta*180.0d0/PI)
         xlon = sngl(phi*180.0d0/PI)
@@ -526,7 +526,7 @@
           eta_aniso=1.0d0
         endif
 
-      case(THREE_D_MODEL_PPM )
+      case (THREE_D_MODEL_PPM )
         ! point profile model
         call model_PPM(r_used,theta,phi,dvs,dvp,drho)
         vpv=vpv*(1.0d0+dvp)
@@ -535,7 +535,7 @@
         vsh=vsh*(1.0d0+dvs)
         rho=rho*(1.0d0+drho)
 
-      case(THREE_D_MODEL_GAPP2 )
+      case (THREE_D_MODEL_GAPP2 )
         ! 3D GAP model (Obayashi)
         call mantle_gapmodel(r_used,theta,phi,dvs,dvp,drho)
         vpv=vpv*(1.0d0+dvp)
@@ -690,9 +690,9 @@
   found_crust = .false.
 
   ! crustal model can vary for different 3-D models
-  select case(THREE_D_MODEL )
+  select case (THREE_D_MODEL)
 
-    case(THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
+    case (THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
       ! tries to use Zhao's model of the crust
       if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
         .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
@@ -705,7 +705,7 @@
         call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
       endif
 
-    case( THREE_D_MODEL_PPM )
+    case (THREE_D_MODEL_PPM)
       ! takes vs,rho from default crust
       call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
@@ -790,22 +790,22 @@
 !
 !---
 
-  select case(ITYPE_CRUSTAL_MODEL )
+  select case (ITYPE_CRUSTAL_MODEL)
 
-    case(ICRUST_CRUST1)
+    case (ICRUST_CRUST1)
       ! crust 1.0
       call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case(ICRUST_CRUST2)
+    case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
       call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case(ICRUST_CRUSTMAPS)
+    case (ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
-    case(ICRUST_EPCRUST)
+    case (ICRUST_EPCRUST)
       call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
 
     case default
@@ -849,7 +849,7 @@
   ! local parameters
   double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees
   double precision :: r_used
-  double precision, parameter :: rmoho_prem = 6371.d0 - 24.4d0
+  double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
 
   ! initializes
   tau_e(:)   = 0.0d0
@@ -890,13 +890,13 @@
 
   else
 
-    select case(REFERENCE_1D_MODEL)
+    select case (REFERENCE_1D_MODEL)
 
-      ! case(REFERENCE_MODEL_PREM)
+      ! case (REFERENCE_MODEL_PREM)
       ! this case is probably not needed since Qmu is 600. between R80 and surface
       !   call model_attenuation_1D_PREM(r_prem, Qmu)
 
-      case(REFERENCE_MODEL_1DREF)
+      case (REFERENCE_MODEL_1DREF)
         ! 1D Ref changes Qmu at moho depth of 24.4km
         ! we take the crustal value and assign it to points only inside actual crust,
         ! otherwise the mantle values is taken
@@ -910,7 +910,7 @@
           endif
         endif ! CRUSTAL
 
-      case(REFERENCE_MODEL_SEA1D)
+      case (REFERENCE_MODEL_SEA1D)
         ! SEA1D changes Qmu at 25km (moho) depth. we take the crustal value
         ! for points only inside actual crust
         if (CRUSTAL) then

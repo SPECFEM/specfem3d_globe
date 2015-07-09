@@ -54,7 +54,7 @@ __device__ void compute_element_oc_rotation(int tx,int working_element,
   realw source_euler_A,source_euler_B;
 
   // store the source for the Euler scheme for A_rotation and B_rotation
-  if( sizeof( sin_two_omega_t ) == sizeof( float ) ){
+  if (sizeof( sin_two_omega_t ) == sizeof( float )){
     // float operations
     // sincos function return sinus and cosine for given value
     sincosf(two_omega_earth*time, &sin_two_omega_t, &cos_two_omega_t);
@@ -169,7 +169,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
     working_element = bx;
 #else
     //mesh coloring
-    if( use_mesh_coloring_gpu ){
+    if (use_mesh_coloring_gpu){
       working_element = bx;
     }else{
       // iphase-1 and working_element-1 for Fortran->C array conventions
@@ -257,7 +257,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
 
     // compute contribution of rotation and add to gradient of potential
     // this term has no Z component
-    if( ROTATION ){
+    if (ROTATION){
       compute_element_oc_rotation(tx,working_element,
                                   time,two_omega_earth,deltat,
                                   d_A_array_rotation,d_B_array_rotation,
@@ -276,7 +276,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
     theta = d_ystore[iglob];
     phi = d_zstore[iglob];
 
-    if( sizeof( theta ) == sizeof( float ) ){
+    if (sizeof( theta ) == sizeof( float )){
       // float operations
       // sincos function return sinus and cosine for given value
       sincosf(theta, &sin_theta, &cos_theta);
@@ -294,12 +294,12 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
     int_radius = rint(radius * R_EARTH_KM * 10.0f ) - 1;
 
     //debug: checks bounds NRAD_GRAVITY == 70000
-    //if( int_radius < 0 || int_radius >= 70000 ){
+    //if (int_radius < 0 || int_radius >= 70000){
     //  printf("gravity: in_radius out of bounds %d radius=%e\n",int_radius,radius);
     //}
 
     // depending on gravity or not, different potential definitions are used
-    if( ! GRAVITY ){
+    if (! GRAVITY){
       // add (chi/rho)grad(rho) term in no gravity case
 
       // grad(rho)/rho in Cartesian components
@@ -391,7 +391,7 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
                   + wgllwgll_xz[K*NGLLX+I]*temp2l
                   + wgllwgll_xy[J*NGLLX+I]*temp3l);
 
-    if( GRAVITY ) sum_terms += gravity_term;
+    if (GRAVITY) sum_terms += gravity_term;
 
     //iglob = d_ibool[working_element*NGLL3 + tx]-1;
 
@@ -407,9 +407,9 @@ template<int FORWARD_OR_ADJOINT> __global__ void outer_core_impl_kernel(int nb_b
 #else // MESH_COLORING
 
     //mesh coloring
-    if( use_mesh_coloring_gpu ){
+    if (use_mesh_coloring_gpu){
 
-      if( NSPEC_OUTER_CORE > COLORING_MIN_NSPEC_OUTER_CORE ){
+      if (NSPEC_OUTER_CORE > COLORING_MIN_NSPEC_OUTER_CORE){
         // no atomic operation needed, colors don't share global points between elements
 #ifdef USE_TEXTURES_FIELDS
     d_potential_dot_dot[iglob] = texfetch_accel_oc<FORWARD_OR_ADJOINT>(iglob) + sum_terms;

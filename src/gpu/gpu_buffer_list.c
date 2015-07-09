@@ -1,7 +1,7 @@
 /*
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -334,6 +334,8 @@ GPU_INT_BUFFER (d_islice_selected_rec);
 GPU_REALW_BUFFER (d_station_seismo_field);
 GPU_REALW_BUFFER (d_adj_sourcearrays);
 GPU_INT_BUFFER (d_pre_computed_irec);
+
+GPU_REALW_BUFFER (d_norm_max);
 
   // ------------------------------------------------------------------   //
   // assembly

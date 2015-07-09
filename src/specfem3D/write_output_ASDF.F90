@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -118,6 +118,9 @@ subroutine init_asdf_data(asdf_container,total_seismos_local)
 
 end subroutine init_asdf_data
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Stores the records into the ASDF structure
 !! \param asdf_container The ASDF data structure
@@ -218,6 +221,9 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
 
 end subroutine store_asdf_data
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Closes the ASDF data structure by deallocating all arrays
 !! \param asdf_container The ASDF data structure
@@ -267,6 +273,9 @@ subroutine close_asdf_data(asdf_container, total_seismos_local)
 
 end subroutine close_asdf_data
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Writes the ASDF data structure to the file
 !! \param asdf_container The ASDF data structure
@@ -276,7 +285,7 @@ subroutine write_asdf(asdf_container)
 
   use asdf_data,only: asdf_event
 
-  use specfem_par, only : event_name_SAC,myrank,ADIOS_TRANSPORT_METHOD
+  use specfem_par, only : event_name_SAC,myrank,ADIOS_TRANSPORT_METHOD, OUTPUT_FILES
 
   implicit none
   ! Parameters
@@ -300,12 +309,15 @@ subroutine write_asdf(asdf_container)
   !call check_adios_err(myrank,adios_err)
 
   ! output file name
-  ASDF_FN="OUTPUT_FILES/"//trim(event_name_SAC)//"_sem.bp"
+  ASDF_FN=trim(OUTPUT_FILES)//"/"//trim(event_name_SAC)//"_sem.bp"
 
   call write_asdf_data (ASDF_FN, asdf_container, adios_group, myrank, sizeprocs, comm)
 
 end subroutine write_asdf
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Writes the ASDF data structure to asdf_fn using parallel write
 !! \param asdf_fn The file name for ASDF
@@ -356,6 +368,9 @@ subroutine write_asdf_data(asdf_fn, asdf_container, adios_group, rank, nproc, co
 
 end subroutine write_asdf_data
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Defines the ASDF structure using adios
 !! \param adios_group The adios group
@@ -510,6 +525,9 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, n
 
 end subroutine define_asdf_data
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Writes the ASDF data structure to the adios arrays
 !! \param asdf_container The ASDF data structure
@@ -754,6 +772,9 @@ subroutine write_asdf_data_sub(asdf_container, adios_handle, rank, nproc)
 
 end subroutine write_asdf_data_sub
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Gets offset values for arrays
 !! \param local_dim The local dimension on the processor
@@ -803,6 +824,9 @@ subroutine gather_offset_info(local_dim, global_dim, offset, rank, nproc)
 
 end subroutine gather_offset_info
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Gets total length of strings from each processor
 !! \param local_dim The local dimension on the processor
@@ -838,6 +862,9 @@ subroutine gather_string_total_length(local_dim, global_dim, rank, nproc)
 
 end subroutine gather_string_total_length
 
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !> Gets offset values for strings
 !! \param local_dim The local dimension on the processor

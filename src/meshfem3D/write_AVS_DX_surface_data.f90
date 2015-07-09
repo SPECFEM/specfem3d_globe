@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -84,7 +84,7 @@
   integer iregion_code
 
 ! writing points
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='unknown')
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXpointssurface.txt',status='unknown')
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -115,7 +115,7 @@
   npoin = count(mask_ibool(:))
 
 ! number of points in AVS or DX file
-  write(10,*) npoin
+  write(IOUT,*) npoin
 
 ! erase the logical mask used to mark points already found
   mask_ibool(:) = .false.
@@ -137,29 +137,29 @@
     if (.not. mask_ibool(iglobval(5))) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(5)) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
-              sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,1,NGLLZ,ispec)), &
+                    sngl(ystore(1,1,NGLLZ,ispec)),sngl(zstore(1,1,NGLLZ,ispec))
     endif
 
     if (.not. mask_ibool(iglobval(6))) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(6)) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,1,NGLLZ,ispec)), &
+                    sngl(ystore(NGLLX,1,NGLLZ,ispec)),sngl(zstore(NGLLX,1,NGLLZ,ispec))
     endif
 
     if (.not. mask_ibool(iglobval(7))) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(7)) = numpoin
-      write(10,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(NGLLX,NGLLY,NGLLZ,ispec)), &
+                    sngl(ystore(NGLLX,NGLLY,NGLLZ,ispec)),sngl(zstore(NGLLX,NGLLY,NGLLZ,ispec))
     endif
 
     if (.not. mask_ibool(iglobval(8))) then
       numpoin = numpoin + 1
       num_ibool_AVS_DX(iglobval(8)) = numpoin
-      write(10,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
-              sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
+      write(IOUT,*) numpoin,sngl(xstore(1,NGLLY,NGLLZ,ispec)), &
+                    sngl(ystore(1,NGLLY,NGLLZ,ispec)),sngl(zstore(1,NGLLY,NGLLZ,ispec))
     endif
 
     mask_ibool(iglobval(5)) = .true.
@@ -176,17 +176,17 @@
   if (numpoin /= npoin) &
     call exit_MPI(myrank,'incorrect number of global points in AVS or DX file creation')
 
-  close(10)
+  close(IOUT)
 
 ! output global AVS or DX elements
 
 ! writing elements
-  open(unit=10,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='unknown')
+  open(unit=IOUT,file=prname(1:len_trim(prname))//'AVS_DXelementssurface.txt',status='unknown')
   if (ISOTROPIC_3D_MANTLE) &
        open(unit=11,file=prname(1:len_trim(prname))//'AVS_DXelementssurface_dvp_dvs.txt',status='unknown')
 
 ! number of elements in AVS or DX file
-  write(10,*) nspecface
+  write(IOUT,*) nspecface
 
   ispecface = 0
   do ispec = 1,nspec
@@ -271,9 +271,9 @@
 
         ! top face
         ispecface = ispecface + 1
-        write(10,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(5)), &
-             num_ibool_AVS_DX(iglobval(6)),num_ibool_AVS_DX(iglobval(7)), &
-             num_ibool_AVS_DX(iglobval(8))
+        write(IOUT,*) ispecface,idoubling(ispec),num_ibool_AVS_DX(iglobval(5)), &
+                      num_ibool_AVS_DX(iglobval(6)),num_ibool_AVS_DX(iglobval(7)), &
+                      num_ibool_AVS_DX(iglobval(8))
         if (ISOTROPIC_3D_MANTLE) write(11,*) ispecface,dvp,dvs
 
      endif
@@ -283,7 +283,7 @@
   if (ispecface /= nspecface) &
     call exit_MPI(myrank,'incorrect number of surface elements in AVS or DX file creation')
 
-  close(10)
+  close(IOUT)
   if (ISOTROPIC_3D_MANTLE) close(11)
 
   end subroutine write_AVS_DX_surface_data

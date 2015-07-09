@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -47,6 +47,13 @@
   integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
 
 !*********************************************************************************************************
+
+!! DK DK added this temporarily here to make SPECFEM3D and SPECFEM3D_GLOBE much more similar
+!! DK DK in terms of the structure of their main time iteration loop; these are future features
+!! DK DK that are missing in this code but implemented in the other and that could thus be cut and pasted one day
+  logical, parameter :: OUTPUT_ENERGY = .false.
+  integer, parameter :: IOUT_ENERGY = 937  ! file number for the energy file
+  logical, parameter :: GRAVITY_SIMULATION = .false.
 
 ! if files on a local path on each node are also seen as global with same path
 ! set to .true. typically on a machine with a common (shared) file system, e.g. LUSTRE, GPFS or NFS-mounted /home
@@ -196,7 +203,7 @@
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
-  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for Roland_Sylvain gravity calculations
+  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for gravity integral calculations
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
 
 ! default crustal model
@@ -299,6 +306,13 @@
 ! the mesher) and use them for the computation of boundary kernel (in the solver)
   logical, parameter :: SAVE_BOUNDARY_MESH = .false.
 
+! to suppress element stretching for 3D moho surface
+  logical,parameter :: SUPPRESS_MOHO_STRETCHING = .false.
+
+! to suppress element stretching at 410/660 internal topography
+! (i.e. creates mesh without 410/660 topography for Harvard model (s362ani,..))
+  logical,parameter :: SUPPRESS_INTERNAL_TOPOGRAPHY = .false.
+
 !!-----------------------------------------------------------
 !!
 !! GPU optimization
@@ -311,6 +325,9 @@
 
 ! mesh coloring
 ! add mesh coloring for the GPU + MPI implementation
+! this is needed on NVIDIA hardware up to FERMI boards, included.
+! Starting on KEPLER boards you can leave it off because on KEPLER hardware
+! or higher atomic reduction operations have become as fast as resorting to mesh coloring.
   logical, parameter :: USE_MESH_COLORING_GPU = .false.
   integer, parameter :: MAX_NUMBER_OF_COLORS = 1000
 ! enhanced coloring:
@@ -330,8 +347,10 @@
 !!-----------------------------------------------------------
 
   integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
-  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = 'MPI'
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
 
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "POSIX"
+  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ""
 
 !!-----------------------------------------------------------
 !!
@@ -380,6 +399,16 @@
 
 !!-----------------------------------------------------------
 !!
+!! directory structure
+!!
+!!-----------------------------------------------------------
+
+! paths for inputs and outputs files
+  character(len=*), parameter :: OUTPUT_FILES_BASE = './OUTPUT_FILES/'
+
+
+!!-----------------------------------------------------------
+!!
 !! movie outputs
 !!
 !!-----------------------------------------------------------
@@ -392,11 +421,11 @@
 
 !!-----------------------------------------------------------
 !!
-!! for Roland_Sylvain integrals
+!! for gravity integrals
 !!
 !!-----------------------------------------------------------
 
-  logical, parameter :: ROLAND_SYLVAIN = .false.
+  logical, parameter :: GRAVITY_INTEGRALS = .false.
 
 ! reuse an existing observation surface created in another run and stored to disk,
 ! so that we are sure that they are exactly the same (for instance when comparing results for a reference ellipsoidal Earth
@@ -432,7 +461,7 @@
 
 ! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
 ! at the altitude of the observation point
-!! DK DK 4 is a fictitious value used to save memory when the ROLAND_SYLVAIN option is off
+!! DK DK 4 is a fictitious value used to save memory when the GRAVITY_INTEGRALS option is off
   integer, parameter :: NX_OBSERVATION = 4 ! 500
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
@@ -715,8 +744,10 @@
 ! number of lines per source in CMTSOLUTION file
   integer, parameter :: NLINES_PER_CMTSOLUTION_SOURCE = 13
 
-! number of iterations to solve the non linear system for xi and eta
-  integer, parameter :: NUM_ITER = 4
+! number of iterations to solve the system for xi and eta
+! setting it to 5 instead of 4 ensures that the result obtained is not compiler dependent
+! (when using 4 only some small discrepancies were observed)
+  integer, parameter :: NUM_ITER = 5
 
 ! number of hours per day for rotation rate of the Earth
   double precision, parameter :: HOURS_PER_DAY = 24.d0
@@ -754,6 +785,10 @@
 ! to create a reference model based on 1D_REF but with 3D crust and 410/660 topography
   logical,parameter :: USE_1D_REFERENCE = .false.
 
+!!-- uncomment for using PREM as reference model (used in CEM inversion)
+!  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+!  integer, parameter :: GLL_REFERENCE_MODEL = REFERENCE_MODEL_PREM
+
 !!-- uncomment for using S362ANI as reference model
   integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
   integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S362ANI
@@ -761,7 +796,6 @@
 !!-- uncomment for using S29EA as reference model
 !  integer, parameter :: GLL_REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
 !  integer, parameter :: GLL_REFERENCE_MODEL = THREE_D_MODEL_S29EA
-
 
 !!-----------------------------------------------------------
 !!
@@ -835,15 +869,15 @@
 !!-----------------------------------------------------------
   integer, parameter :: NSTAGE = 6
 
-  real(kind=CUSTOM_REAL), dimension(NSTAGE) :: ALPHA_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: ALPHA_LDDRK = &
     (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
       -0.744739003780_CUSTOM_REAL,-1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/)
 
-  real(kind=CUSTOM_REAL), dimension(NSTAGE) :: BETA_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: BETA_LDDRK = &
     (/0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,0.381530948900_CUSTOM_REAL,&
       0.200092213184_CUSTOM_REAL,1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/)
 
-  real(kind=CUSTOM_REAL), dimension(NSTAGE) :: C_LDDRK = &
+  real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: C_LDDRK = &
     (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL,&
       0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
 

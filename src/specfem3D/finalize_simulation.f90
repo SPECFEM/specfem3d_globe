@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -239,14 +239,15 @@
 
   ! receivers
   deallocate(islice_selected_rec,ispec_selected_rec, &
-            xi_receiver,eta_receiver,gamma_receiver)
+             xi_receiver,eta_receiver,gamma_receiver)
   deallocate(station_name,network_name, &
-            stlat,stlon,stele,stbur)
+             stlat,stlon,stele,stbur)
   deallocate(nu,number_receiver_global)
   if (nrec_local > 0) then
     deallocate(hxir_store, &
-              hetar_store, &
-              hgammar_store)
+               hetar_store, &
+               hgammar_store)
+    deallocate(hlagrange_store)
     if (SIMULATION_TYPE == 2) then
       deallocate(moment_der,stshift_der)
     endif
@@ -273,8 +274,8 @@
   ! noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
     deallocate(noise_sourcearray, &
-              normal_x_noise,normal_y_noise,normal_z_noise, &
-              mask_noise,noise_surface_movie)
+               normal_x_noise,normal_y_noise,normal_z_noise, &
+               mask_noise,noise_surface_movie)
   endif
 
   ! VTK visualization

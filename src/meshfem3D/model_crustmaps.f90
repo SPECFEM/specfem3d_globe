@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -203,7 +203,7 @@
 
   write(eucrust,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
 
-  open(unit = 1,file=trim(eucrust),status='old',action='read',iostat=ier)
+  open(unit = IIN,file=trim(eucrust),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(eucrust), '": ', ier
     call flush_IMAIN()
@@ -212,9 +212,9 @@
   endif
 
   do ila=1,180*CRUSTMAP_RESOLUTION
-    read(1,*) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
+    read(IIN,*) (var(ila,iln),iln=1,360*CRUSTMAP_RESOLUTION)
   enddo
-  close(1)
+  close(IIN)
 
   end subroutine read_general_crustmap_layer
 
@@ -357,6 +357,11 @@
 
   ! by defaults uses only 1 point location
   num_points = 1
+
+  ! initializes cap arrays (to avoid compiler warning)
+  xlat(:) = 0.d0
+  xlon(:) = 0.d0
+  weight(:) = 0.d0
 
   ! checks if inside/outside of critical region for mesh stretching
   if (SMOOTH_CRUST_EVEN_MORE) then

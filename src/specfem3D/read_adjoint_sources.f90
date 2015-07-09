@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -161,10 +161,10 @@
       ! increases counter
       irec_local = irec_local + 1
 
-      ! adjoint source file name **sta**.**net**
-      adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
+      ! adjoint source file name **net**.**sta**
+      adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
 
-      ! reads in **sta**.**net**.**.adj files
+      ! reads in *.adj files
       call compute_arrays_source_adjoint(myrank,adj_source_file, &
                                          xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
                                          nu(:,:,irec),tmp_sourcearray, &
@@ -211,15 +211,15 @@
   double precision :: junk
   integer :: icomp,itime
   integer :: ier
-  character(len=MAX_STRING_LEN) :: filename,adj_source_file
+  character(len=MAX_STRING_LEN) :: filename,adj_source_file,path_to_add
   character(len=3),dimension(NDIM) :: comp
   character(len=2) :: bic
 
+  ! checks **net**.**sta**.**MX**.adj files for correct number of time steps
   ! root file name
-  adj_source_file = trim(station_name(irec))//'.'//trim(network_name(irec))
+  adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
 
   ! bandwidth code
-  ! by Ebru
   call band_instrument_code(DT,bic)
   comp(1) = bic(1:2)//'N'
   comp(2) = bic(1:2)//'E'
@@ -230,6 +230,12 @@
 
     ! opens adjoint source file for this component
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
+    endif
+
     open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
 
     ! checks if file opens/exists

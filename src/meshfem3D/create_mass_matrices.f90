@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -128,15 +128,15 @@
                           + xizl*(etaxl*gammayl-etayl*gammaxl))
 
           ! definition depends if region is fluid or solid
-          select case( iregion_code)
+          select case (iregion_code)
 
-          case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
+          case (IREGION_CRUST_MANTLE, IREGION_INNER_CORE)
             ! distinguish between single and double precision for reals
             rmassz(iglob) = rmassz(iglob) + &
                    real(dble(rhostore(i,j,k,ispec)) * dble(jacobianl) * weight, kind=CUSTOM_REAL)
 
           ! fluid in outer core
-          case( IREGION_OUTER_CORE )
+          case (IREGION_OUTER_CORE)
 
             ! no anisotropy in the fluid, use kappav
 
@@ -262,9 +262,9 @@
   b_two_omega_earth_dt = - real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat, kind=CUSTOM_REAL)
 
   ! definition depends if region is fluid or solid
-  select case( iregion_code)
+  select case (iregion_code)
 
-  case( IREGION_CRUST_MANTLE, IREGION_INNER_CORE )
+  case (IREGION_CRUST_MANTLE, IREGION_INNER_CORE)
 
     do ispec = 1,nspec
 
@@ -398,8 +398,8 @@
   enddo
 
   ! adds contributions to mass matrix to stabilize Stacey conditions
-  select case(iregion_code)
-  case(IREGION_CRUST_MANTLE)
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
 
     rmassx(:) = rmassz(:)
     rmassy(:) = rmassz(:)
@@ -562,7 +562,7 @@
     if (minval(rmassx(:)) <= 0.) call exit_MPI(myrank,'negative rmassx matrix term')
     if (minval(rmassy(:)) <= 0.) call exit_MPI(myrank,'negative rmassy matrix term')
 
-  case(IREGION_OUTER_CORE)
+  case (IREGION_OUTER_CORE)
 
     !   xmin
     ! if two chunks exclude this face for one of them
@@ -681,7 +681,7 @@
        enddo
     enddo
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     continue
 
   case default

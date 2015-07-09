@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -37,10 +37,14 @@
 
   ! local variables
   integer :: multiplication_factor
+  double precision :: min_chunk_width_in_degrees
 
   !----
   !----  case prem_onecrust by default
   !----
+
+  ! to suppress the crustal layers
+  ! (replaced by an extension of the mantle: R_EARTH is not modified, but no more crustal doubling)
   if (SUPPRESS_CRUSTAL_MESH) then
     multiplication_factor = 2
   else
@@ -347,26 +351,34 @@
     endif
   endif
 
+  ! minimum width of chunk
+  min_chunk_width_in_degrees = min(ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES)
+
+  ! gets attenuation min/max range
   if (.not. ATTENUATION_RANGE_PREDEFINED) then
-     call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-                          MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+     call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, &
+                                   MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
   endif
 
+  ! adapts number of layer elements and time step size
   if (ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. &
-     ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
-     NEX_MAX > 1248) then
+      ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
+      NEX_MAX > 1248) then
 
-    call auto_ner(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-                NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
-                NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-                NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-                R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
-                HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
+    ! gets number of element-layers
+    call auto_ner(min_chunk_width_in_degrees, NEX_MAX, &
+                  NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
+                  NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
+                  NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
+                  R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
+                  HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
-    call auto_attenuation_periods(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, &
-                        MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+    ! gets attenuation min/max range
+    call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, &
+                                  MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-    call auto_time_stepping(ANGULAR_WIDTH_XI_IN_DEGREES, NEX_MAX, DT)
+    ! gets time step size
+    call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, DT)
 
     !! DK DK suppressed because this routine should not write anything to the screen
     !    write(*,*)'##############################################################'
@@ -376,7 +388,7 @@
     !    write(*,*)' This should only be invoked for chunks less than 90 degrees'
     !    write(*,*)' and for chunks greater than 1248 elements wide'
     !    write(*,*)
-    !    write(*,*)'CHUNK WIDTH:              ', ANGULAR_WIDTH_XI_IN_DEGREES
+    !    write(*,*)'CHUNK WIDTH:              ', min_chunk_width_in_degrees
     !    write(*,*)'NEX:                      ', NEX_MAX
     !    write(*,*)'NER_CRUST:                ', NER_CRUST
     !    write(*,*)'NER_80_MOHO:              ', NER_80_MOHO
@@ -398,6 +410,7 @@
     !    write(*,*)
     !    write(*,*)'##############################################################'
 
+    ! checks minimum number of element-layers in crust
     if (HONOR_1D_SPHERICAL_MOHO) then
       if (.not. ONE_CRUST) then
         ! case 1D + two crustal layers
@@ -430,6 +443,18 @@
       ! DT = DT*(1.d0 - 0.1d0) not working yet...
       stop 'anisotropic inner core - unstable feature, uncomment this line in get_timestep_and_layers.f90'
     endif
+
+    ! makes time step smaller for certain crustal models, otherwise becomes unstable in solid
+    ! CRUSTAL: indicates a 3D crustal model, like CRUST2.0 will be used
+    ! CASE_3D: indicates element stretching to honor e.g. moho depths and/or upper/lower crusts
+    if (CRUSTAL .and. CASE_3D) then
+      ! reduces time step size for CRUST1.0 crustal model
+      if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUST1) &
+        DT = DT*(1.d0 - 0.1d0)
+      ! reduces time step size for crustmaps crustal model
+      if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
+        DT = DT*(1.d0 - 0.3d0)
+    endif
   endif
 
   ! following models need special attention, regardless of number of chunks:
@@ -440,10 +465,6 @@
   ! reduces time step size for "no mud" version of AK135F model
   if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) &
     DT = DT*(1.d0 - 0.05d0)
-
-  ! reduces time step size for crustmaps crustal model
-  if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS ) &
-    DT = DT*(1.d0 - 0.3d0)
 
   !  decreases time step as otherwise the solution might become unstable for rougher/unsmoothed models
   if (.false.) then

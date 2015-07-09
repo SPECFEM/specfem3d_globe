@@ -1226,7 +1226,7 @@ contains
   integer(I4P), intent(IN):: cell_type(1:NC) ! VTK cell type
   integer(I4P)::             E_IO            ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
   character(len=maxlen)::    s_buffer        ! buffer string
-  integer(I4P)::             ncon            ! dimension of connectivity vector 
+  integer(I4P)::             ncon            ! dimension of connectivity vector
   !!The VTK\_CON variables have the following meaning:
   !!
   !!\begin{description}
@@ -1254,22 +1254,22 @@ contains
   !!\begin{boxred}{Connectivity vector example for VTK legacy standard}
   !!\begin{verbatim}
   !!! first cell
-  !!connect(1)  = 8  => number of vertices of 1° cell
-  !!connect(2)  = 0  => identification flag of 1° vertex of 1° cell
-  !!connect(3)  = 1  => identification flag of 2° vertex of 1° cell
-  !!connect(4)  = 2  => identification flag of 3° vertex of 1° cell
-  !!connect(5)  = 3  => identification flag of 4° vertex of 1° cell
-  !!connect(6)  = 4  => identification flag of 5° vertex of 1° cell
-  !!connect(7)  = 5  => identification flag of 6° vertex of 1° cell
-  !!connect(8)  = 6  => identification flag of 7° vertex of 1° cell
-  !!connect(9)  = 7  => identification flag of 8° vertex of 1° cell
+  !!connect(1)  = 8  => number of vertices of 1? cell
+  !!connect(2)  = 0  => identification flag of 1? vertex of 1? cell
+  !!connect(3)  = 1  => identification flag of 2? vertex of 1? cell
+  !!connect(4)  = 2  => identification flag of 3? vertex of 1? cell
+  !!connect(5)  = 3  => identification flag of 4? vertex of 1? cell
+  !!connect(6)  = 4  => identification flag of 5? vertex of 1? cell
+  !!connect(7)  = 5  => identification flag of 6? vertex of 1? cell
+  !!connect(8)  = 6  => identification flag of 7? vertex of 1? cell
+  !!connect(9)  = 7  => identification flag of 8? vertex of 1? cell
   !!! second cell
-  !!connect(10) = 5  => number of vertices of 2° cell
-  !!connect(11) = 0  => identification flag of 1° vertex of 2° cell
-  !!connect(12) = 1  => identification flag of 2° vertex of 2° cell
-  !!connect(13) = 2  => identification flag of 3° vertex of 2° cell
-  !!connect(14) = 3  => identification flag of 4° vertex of 2° cell
-  !!connect(15) = 8  => identification flag of 5° vertex of 2° cell
+  !!connect(10) = 5  => number of vertices of 2? cell
+  !!connect(11) = 0  => identification flag of 1? vertex of 2? cell
+  !!connect(12) = 1  => identification flag of 2? vertex of 2? cell
+  !!connect(13) = 2  => identification flag of 3? vertex of 2? cell
+  !!connect(14) = 3  => identification flag of 4? vertex of 2? cell
+  !!connect(15) = 8  => identification flag of 5? vertex of 2? cell
   !!\end{verbatim}
   !!\end{boxred}
   !!
@@ -1284,8 +1284,8 @@ contains
   !!
   !!\begin{boxred}{Cell-Type vector example for VTK legacy standard}
   !!\begin{verbatim}
-  !!tipo(1) = 12  => VTK hexahedron type of 1° cell
-  !!tipo(2) = 14  => VTK pyramid type of 2° cell
+  !!tipo(1) = 12  => VTK hexahedron type of 1? cell
+  !!tipo(2) = 14  => VTK pyramid type of 2? cell
   !!\end{verbatim}
   !!\end{boxred}
   !!
@@ -2686,20 +2686,20 @@ contains
   !!\begin{boxred}{Connectivity vector example for VTK XML standard}
   !!\begin{verbatim}
   !!! first cell
-  !!connect(1)  = 0  => identification flag of 1° vertex of 1° cell
-  !!connect(2)  = 1  => identification flag of 2° vertex of 1° cell
-  !!connect(3)  = 2  => identification flag of 3° vertex of 1° cell
-  !!connect(4)  = 3  => identification flag of 4° vertex of 1° cell
-  !!connect(5)  = 4  => identification flag of 5° vertex of 1° cell
-  !!connect(6)  = 5  => identification flag of 6° vertex of 1° cell
-  !!connect(7)  = 6  => identification flag of 7° vertex of 1° cell
-  !!connect(8)  = 7  => identification flag of 8° vertex of 1° cell
+  !!connect(1)  = 0  => identification flag of 1? vertex of 1? cell
+  !!connect(2)  = 1  => identification flag of 2? vertex of 1? cell
+  !!connect(3)  = 2  => identification flag of 3? vertex of 1? cell
+  !!connect(4)  = 3  => identification flag of 4? vertex of 1? cell
+  !!connect(5)  = 4  => identification flag of 5? vertex of 1? cell
+  !!connect(6)  = 5  => identification flag of 6? vertex of 1? cell
+  !!connect(7)  = 6  => identification flag of 7? vertex of 1? cell
+  !!connect(8)  = 7  => identification flag of 8? vertex of 1? cell
   !!! second cell
-  !!connect(9)  = 0  => identification flag of 1° vertex of 2° cell
-  !!connect(10) = 1  => identification flag of 2° vertex of 2° cell
-  !!connect(11) = 2  => identification flag of 3° vertex of 2° cell
-  !!connect(12) = 3  => identification flag of 4° vertex of 2° cell
-  !!connect(13) = 8  => identification flag of 5° vertex of 2° cell
+  !!connect(9)  = 0  => identification flag of 1? vertex of 2? cell
+  !!connect(10) = 1  => identification flag of 2? vertex of 2? cell
+  !!connect(11) = 2  => identification flag of 3? vertex of 2? cell
+  !!connect(12) = 3  => identification flag of 4? vertex of 2? cell
+  !!connect(13) = 8  => identification flag of 5? vertex of 2? cell
   !!\end{verbatim}
   !!\end{boxred}
   !!
@@ -2710,9 +2710,9 @@ contains
   !!\begin{boxred}{Offset vector example for VTK XML standard}
   !!\begin{verbatim}
   !!! first cell
-  !!offset(1) = 8  => summ of nodes of 1° cell
+  !!offset(1) = 8  => summ of nodes of 1? cell
   !!! second cell
-  !!offset(2) = 13 => summ of nodes of 1° and 2° cells
+  !!offset(2) = 13 => summ of nodes of 1? and 2? cells
   !!\end{verbatim}
   !!\end{boxred}
   !!
@@ -2735,8 +2735,8 @@ contains
   !!
   !!\begin{boxred}{Cell-Type vector example for VTK legacy standard}
   !!\begin{verbatim}
-  !!tipo(1) = 12  => VTK hexahedron type of 1° cell
-  !!tipo(2) = 14  => VTK pyramid type of 2° cell
+  !!tipo(1) = 12  => VTK hexahedron type of 1? cell
+  !!tipo(2) = 14  => VTK pyramid type of 2? cell
   !!\end{verbatim}
   !!\end{boxred}
   !!

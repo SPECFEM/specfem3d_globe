@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -332,7 +332,7 @@
             beta_kl_crust_mantle_reg(ipoint) = beta_kl_crust_mantle_reg(ipoint) + &
               2._CUSTOM_REAL * (beta_kl - FOUR_THIRDS * mul * alpha_kl / kappal) * scale_kl * hlagrange
             alpha_kl_crust_mantle_reg(ipoint) = alpha_kl_crust_mantle_reg(ipoint) + &
-              2._CUSTOM_REAL * (1 +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl * hlagrange
+              2._CUSTOM_REAL * (1._CUSTOM_REAL +  FOUR_THIRDS * mul / kappal) * alpha_kl * scale_kl * hlagrange
 
             ! for a parameterization: (rho,bulk, beta)
             ! where bulk wave speed is c = sqrt( kappa / rho)
@@ -377,12 +377,11 @@
   enddo
 
   ! writes out kernels to file
-  if (ADIOS_ENABLED .and. ADIOS_FOR_KERNELS) then
+  if (ADIOS_FOR_KERNELS) then
     ! check implementation
     call exit_mpi(myrank,'saving regular kernels in ADIOS file format is not supported yet')
-
   else
-
+    ! sets up database name
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
     ! For anisotropic kernels

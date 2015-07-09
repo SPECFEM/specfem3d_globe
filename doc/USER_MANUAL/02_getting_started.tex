@@ -1,0 +1,364 @@
+\chapter{Getting Started}\label{cha:Getting-Started}
+
+\section{Configuring and compiling the source code}
+
+To get the SPECFEM3D\_GLOBE software package, type this:
+\begin{verbatim}
+git clone --recursive --branch devel https://github.com/geodynamics/specfem3d_globe.git
+\end{verbatim}
+
+We recommend that you add {\texttt{ulimit -S -s unlimited}} to your {\texttt{.bash\_profile}} file and/or {\texttt{limit stacksize unlimited }} to your {\texttt{.cshrc}} file to suppress any potential limit to the size of the Unix stack.\\
+
+Then, to configure the software for your system, run the \texttt{configure}
+shell script. This script will attempt to guess the appropriate configuration
+values for your system. However, at a minimum, it is recommended that
+you explicitly specify the appropriate command names for your Fortran
+compiler and MPI package (another option is to define FC, CC and MPIF90 in your .bash\_profile
+or your .cshrc file):
+\begin{verbatim}
+./configure FC=ifort MPIFC=mpif90
+\end{verbatim}
+
+Before running the \texttt{configure} script, you should probably edit file \texttt{flags.guess} to make sure that it contains the best compiler options for your system. Known issues or things to check are:
+
+\begin{description}
+\item [{\texttt{Intel ifort compiler}}] See if you need to add \texttt{-assume byterecl} for your machine. \textbf{In the case of that compiler, we have noticed that versions dot zero sometimes have bugs or issues that can lead to wrong results when running the code, thus we \emph{strongly} recommend using versions dot one or above (for instance version 13.1 instead of 13.0, version 14.1 instead of 14.0 and so on)}.
+\item [{\texttt{IBM compiler}}] See if you need to add \texttt{-qsave} or \texttt{-qnosave} for your machine.
+\item [{\texttt{Mac OS}}] You will probably need to install \texttt{XCODE}.
+\end{description}
+
+When compiling on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, we suggest running the \texttt{configure} script
+with the following options:
+\begin{verbatim}
+./configure FC=xlf90_r MPIFC=mpif90 CC=xlc_r CFLAGS="-O3 -q64" FCFLAGS="-O3 -q64"
+\end{verbatim}
+
+On SGI systems, \texttt{flags.guess} automatically informs \texttt{configure}
+to insert ``\texttt{TRAP\_FPE=OFF}'' into the generated \texttt{Makefile}
+in order to turn underflow trapping off.\\
+
+If you run very large meshes on a relatively small number
+of processors, the static memory size needed on each processor might become
+greater than 2 gigabytes, which is the upper limit for 32-bit addressing
+(dynamic memory allocation is always OK, even beyond the 2 GB limit; only static memory has a problem).
+In this case, on some compilers you may need to add \texttt{``-mcmodel=medium}'' (if you do not use the Intel ifort / icc compiler)
+or \texttt{``-mcmodel=medium -shared-intel}'' (if you use the Intel ifort / icc compiler)
+to the configure options of CFLAGS, FCFLAGS and LDFLAGS otherwise the compiler will display an error
+message (for instance \texttt{``relocation truncated to fit: R\_X86\_64\_PC32 against .bss''} or something similar);
+on an IBM machine with the \texttt{xlf} and \texttt{xlc} compilers, using \texttt{-q64} is usually sufficient.\\
+
+A summary of the most important configuration variables follows.
+
+\begin{description}
+\item [{\texttt{FC}}] Fortran compiler command name. By default, \texttt{configure}
+will execute the command names of various well-known Fortran compilers
+in succession, picking the first one it finds that works.
+\item [{\texttt{MPIFC}}] MPI Fortran command name. The default is \texttt{mpif90}.
+This must correspond to the same underlying compiler specified by
+\texttt{FC}; otherwise, you will encounter compilation or link errors
+when you attempt to build the code. If you are unsure about this,
+it is usually safe to set both \texttt{FC} and \texttt{MPIFC} to the
+MPI compiler command for your system:
+\begin{verbatim}
+./configure FC=mpif90 MPIFC=mpif90
+\end{verbatim}
+\end{description}
+\begin{description}
+\item [{\texttt{FLAGS\_CHECK}}] Compiler flags.
+\item [{\texttt{LOCAL\_PATH\_IS\_ALSO\_GLOBAL}}]
+If you want the parallel mesher to write a parallel (i.e., split) database for the solver on the
+local disks of each of the compute nodes, set this flag to \texttt{.false.}.
+Some systems have no local disks
+(e.g., BlueGene) and other systems have a fast
+parallel file system (LUSTRE, GPFS) that is easy and reliable to use, in which case this variable should be set to
+\texttt{.true.}. Note that this flag is not used by the mesher nor
+the solver; it is only used for some of the (optional) post-processing.
+If you do not know what is best on your system, setting it to \texttt{.true.} is usually fine; or else, ask your system administrator.
+\end{description}
+In addition to reading configuration variables, \texttt{configure}
+accepts the following options:
+
+\begin{description}
+\item [{\texttt{-{}-enable-double-precision}}] The package can run either
+in single or in double precision mode. The default is single precision
+because for almost all calculations performed using the spectral-element method
+using single precision is sufficient and gives the same results (i.e. the same seismograms);
+and the single precision code is faster and requires exactly half as much memory. To specify
+double precision mode, simply provide \texttt{-{}-enable-double-precision}
+as a command-line argument to \texttt{configure}.
+On many current processors (e.g., Intel, AMD, IBM Power), single precision calculations
+are significantly faster; the difference can typically be 10\%
+to 25\%. It is therefore better to use single precision.
+What you can do once for the physical problem you want to study is run the same calculation in single precision
+and in double precision on your system and compare the seismograms.
+If they are identical (and in most cases they will), you can select single precision for your future runs.
+\item [{\texttt{-{}-help}}] Directs \texttt{configure} to print a usage
+screen which provides a short description of all configuration variables
+and options. Note that the options relating to installation directories
+(e.g., \texttt{-{}-prefix}) do not apply to SPECFEM3D\_GLOBE.
+\end{description}
+The \texttt{configure} script runs a brief series of checks. Upon
+successful completion, it generates the files \texttt{Makefile}, \texttt{constants.h},
+and \texttt{precision.h} in the working directory.
+
+\begin{description}
+\item [{Note:}] If the \texttt{configure} script fails, and you don't know
+what went wrong, examine the log file \texttt{config.log}. This file
+contains a detailed transcript of all the checks \texttt{configure}
+performed. Most importantly, it includes the error output (if any)
+from your compiler.
+\end{description}
+The \texttt{configure} script automatically runs the script \texttt{flags.guess}.
+This helper script contains a number of suggested flags for various
+compilers; e.g., Portland, Intel, Absoft, NAG, Lahey, NEC, IBM and
+SGI. The software has run on a wide variety of compute platforms,
+e.g., various PC clusters and machines from Sun, SGI, IBM, Compaq,
+and NEC. The \texttt{flags.guess} script attempts to guess which compiler
+you are using (based upon the compiler command name) and choose the
+related optimization flags. The \texttt{configure} script then automatically
+inserts the suggested flags into \texttt{Makefile}. Note that \texttt{flags.guess}
+may fail to identify your compiler; and in any event, the default
+flags chosen by \texttt{flags.guess} are undoubtedly not optimal for
+your system. So, we encourage you to experiment with these flags (by
+editing the generated \texttt{Makefile} by hand) and to solicit advice
+from your system administrator. Selecting the right compiler and compiler
+flags can make a tremendous difference in terms of performance. We
+welcome feedback on your experience with various compilers and flags.\\
+
+When using a slow or not too powerful shared disk system or when running extremely large simulations
+(on tens of thousands of processor cores), one can add \texttt{-DUSE\_SERIAL\_CASCADE\_FOR\_IOs} to the compiler flags
+in file \texttt{flags.guess} before running \texttt{configure} to make the mesher output mesh data
+to the disk for one MPI slice after the other, and to make the solver do the same thing when reading the files back from disk.
+Do not use this option if you do not need it because it will slow down the mesher and the beginning of the solver if your
+shared file system is fast and reliable.
+
+If you run scaling benchmarks of the code, for instance to measure its performance on a new machine, and are not interested in the physical results
+(the seismograms) for these runs, you can set \texttt{DO\_BENCHMARK\_RUN\_ONLY} to \texttt{.true.} in file \texttt{setup/constants.h.in} before running the \texttt{configure} script.
+
+If your compiler has problems with the \texttt{use mpi} statements that are used in the code, use the script called
+\texttt{replace\_use\_mpi\_with\_include\_mpif\_dot\_h.pl} in the root directory to replace all of them with \texttt{include 'mpif.h'} automatically.
+
+We recommend that you ask for exclusive use of the compute nodes when running on a cluster or a supercomputer, i.e., make sure that no other users
+are running on the same nodes at the same time. Otherwise your run could run out of memory if the memory of some nodes is used by other users, in particular
+when undoing attenuation using the UNDO\_ATTENUATION option in DATA/Par\_file.
+To do so, ask your system administrator for the option to add to your batch submission script; it is for instance
+\texttt{\#BSUB -x} with SLURM and \texttt{\#\$ -l exclusive=TRUE} with Sun Grid Engine (SGE).
+
+\section{Using the GPU version of the code}
+
+SPECFEM3D\_GLOBE now supports OpenCL and NVIDIA CUDA GPU acceleration.
+OpenCL can be enabled with the \texttt{--with-opencl} flag, and the
+compilation can be controlled through three variables: \texttt{OCL\_LIB=},
+\texttt{OCL\_INC=} and \texttt{OCL\_GPU\_FLAGS=}.
+\begin{verbatim}
+./configure --with-opencl OCL_LIB= OCL_INC= OCL_GPU_FLAGS=..
+\end{verbatim}
+
+CUDA configuration can be enabled with \texttt{--with-cuda} flag and
+\texttt{CUDA\_FLAGS=}, \texttt{CUDA\_LIB=}, \texttt{CUDA\_INC=}
+and \texttt{ MPI\_INC=} variables.
+\begin{verbatim}
+./configure --with-cuda=cuda5 CUDA_FLAGS= CUDA_LIB= CUDA_INC= MPI_INC= ..
+\end{verbatim}
+
+Both environments can be compiled simultaneously by merging these two lines.
+For the runtime configuration, the \texttt{GPU\_MODE} flag must be set
+to \texttt{.true.}. In addition, we use three parameters to select the
+environments and GPU:
+\begin{verbatim}
+GPU_RUNTIME = 0|1|2
+GPU_PLATFORM = filter|*
+GPU_DEVICE = filter|*
+\end{verbatim}
+
+\begin{description}
+\item[\texttt{GPU\_RUNTIME}] sets the runtime environments: $2$ for OpenCL,
+$1$ for CUDA and 0 for compile-time decision (hence, SPECFEM should
+have been compiled with only one of \texttt{--with-opencl} or \texttt{--with-cuda}).
+
+\item[\texttt{GPU\_PLATFORM} and \texttt{GPU\_DEVICE}] are both (case-insensitive)
+filters on the platform and device name in OpenCL, device name only in
+CUDA. In multiprocessor (MPI)runs, each process will pick a GPU in
+this filtered subset, in round-robin. The star filter (\texttt{*})
+will match the first platform and all its devices.
+\end{description}
+
+\texttt{GPU\_RUNTIME}, \texttt{GPU\_PLATFORM} and \texttt{GPU\_DEVICE}
+are not read if \texttt{GPU\_MODE} is not activated.
+%Regarding the filesystem structure, directory \texttt{src/cuda}  is now called
+%\texttt{src/gpu} and, likewise, Fortran/C wrappers are now suffixed
+%with \texttt{\_gpu} instead of \texttt{\_cuda}.
+Regarding the code, \texttt{--with-opencl} defines the
+macro-processor flag \texttt{USE\_OPENCL} and \texttt{--with-cuda}
+defines \texttt{USE\_CUDA}; and \texttt{GPU\_RUNTIME} set the global
+variable \texttt{run\_opencl} or \texttt{run\_cuda}.
+Texture support has not been validated in OpenCL, but works as
+expected in CUDA.
+
+%The code was written and compiles, but the debugging
+%phase remains, until we have access to an OpenCL 1.2 enabled platform.
+%
+%We tested the execution on examples \texttt{regional\_Greece\_small}
+%and \texttt{global\_s362ani\_small} from the git tree, and the
+%seismographs are identical the one generated by the original version.
+
+Note about the OpenCL version: the OpenCL calculation kernels were
+created by Brice Videau and Kevin Pouget from Grenoble, France, using
+their software package called BOAST \citep{Videau2013}.
+
+
+
+\section{Compiling on an IBM BlueGene}
+
+\underline{More recent installation instruction for IBM BlueGene, from October 2012:}\\
+
+\noindent
+Edit file \texttt{flags.guess} and put this for \texttt{FLAGS\_CHECK}:
+\begin{verbatim}
+-g -qfullpath -O2 -qsave -qstrict -qtune=qp -qarch=qp -qcache=auto -qhalt=w \
+  -qfree=f90 -qsuffix=f=f90 -qlanglvl=95pure -Q -Q+rank,swap_all -Wl,-relax
+\end{verbatim}
+
+\noindent
+The most relevant are the -qarch and -qtune flags, otherwise if these flags are set to ``auto'' then they are wrongly assigned to
+the architecture of the frond-end node, which is different from that on the compute nodes.
+You will need to set these flags to the right architecture for your BlueGene compute nodes, which is not necessarily ``qp'';
+ask your system administrator.
+On some machines if is necessary to use -O2 in these flags instead of -O3 due to a compiler bug of the XLF version installed.
+We thus suggest to first try -O3, and then if the code does not compile or does not run fine then switch back to -O2.
+The debug flags (-g, -qfullpath) do not influence performance but are useful to get at least some insights in case of problems.\\
+
+\noindent
+Before running \texttt{configure}, select the XL Fortran compiler by typing \texttt{module load bgq-xl/1.0}
+or \texttt{module load bgq-xl} (another, less efficient option is to load the GNU compilers using \texttt{module load bgq-gnu/4.4.6} or similar).\\
+
+\noindent
+Then, to configure the code, type this:
+\begin{verbatim}
+./configure FC=bgxlf90_r MPIFC=mpixlf90_r CC=bgxlc_r LOCAL_PATH_IS_ALSO_GLOBAL=true
+\end{verbatim}
+
+\noindent
+\underline{Older installation instruction for IBM BlueGene, from 2011:}\\
+
+\noindent
+To compile the code on an IBM BlueGene, Laurent L\'eger from IDRIS, France, suggests the following: compile the code with
+\begin{verbatim}
+FLAGS\_CHECK="-O3 -qsave -qstrict -qtune=auto -qarch=450d -qcache=auto \
+  -qfree=f90 -qsuffix=f=f90 -g -qlanglvl=95pure -qhalt=w -Q -Q+rank,swap_all -Wl,-relax"
+\end{verbatim}
+
+\noindent
+Option "-Wl,-relax" must be added on many (but not all) BlueGene systems to be able to link the binaries \texttt{xmeshfem3D}
+and \texttt{xspecfem3D} because the final link step is done by the GNU \texttt{ld} linker even if
+one uses \texttt{FC=bgxlf90\_r, MPIFC=mpixlf90\_r} and \texttt{CC=bgxlc\_r} to create all the object files.
+On the contrary, on some BlueGene systems that use the native AIX linker option "-Wl,-relax" can lead to problems and must be suppressed from \texttt{flags.guess}.
+
+\noindent
+One then just needs to pass the right commands to the \texttt{configure} script:
+\begin{verbatim}
+./configure --prefix=/path/to/SPECFEM3DG_SP --host=Babel --build=BGP \
+      FC=bgxlf90_r MPIFC=mpixlf90_r CC=bgxlc_r  \
+      LOCAL_PATH_IS_ALSO_GLOBAL=false
+\end{verbatim}
+
+\noindent
+This trick can be useful for all hosts on which one needs to cross-compile.
+
+\noindent
+On BlueGene, one also needs to run the \texttt{xcreate\_header\_file} binary file manually rather than in the Makefile:
+\begin{verbatim}
+bgrun -np 1 -mode VN -exe ./bin/xcreate_header_file
+\end{verbatim}
+
+\section{Using a cross compiler}
+
+The \texttt{``configure''} script assumes that you will compile the code on the same kind of hardware
+as the machine on which you will run it. On some systems (for instance IBM BlueGene, see also the previous section) this might not be the case
+and you may compile the code using a cross compiler on a frontend computer that does not have the same
+architecture. In such a case, typing \texttt{``make all''} on the frontend will fail, but you can use one of these two solutions: \\
+
+\noindent
+1/ create a script that runs \texttt{``make all''} on a node instead of on the frontend, if the compiler is also installed on the nodes \\
+
+\noindent
+2/ after running the \texttt{``configure''} script, create two copies of the Makefiles:
+\\
+\red{TODO: this has not been tested out yet, any feedback is welcome}
+\\
+
+\noindent
+In \texttt{src/create\_header\_file/Makefile} put this instead of the current values:
+
+\begin{verbatim}
+FLAGS_CHECK = -O0
+\end{verbatim}
+
+\noindent
+and replace
+
+\begin{verbatim}
+create_header_file: $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
+ ${FCCOMPILE_CHECK} -o ${E}/xcreate_header_file $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
+\end{verbatim}
+
+\noindent
+with
+
+\begin{verbatim}
+xcreate_header_file: $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
+  ${MPIFCCOMPILE_CHECK} -o ${E}/xcreate_header_file $O/create_header_file.o $(XCREATE_HEADER_OBJECTS)
+\end{verbatim}
+
+\noindent
+In \texttt{src/specfem3D/Makefile} comment out these last two lines:
+
+\begin{verbatim}
+#${OUTPUT}/values_from_mesher.h: reqheader
+#       (mkdir -p ${OUTPUT}; cd ${S_TOP}/; ./bin/xcreate_header_file)
+\end{verbatim}
+
+\noindent
+Then:
+
+\begin{verbatim}
+ make clean
+ make create_header_file
+ ./bin/xcreate_header_file
+ make clean
+ make meshfem3D
+ make specfem3D
+\end{verbatim}
+
+\noindent
+should work.
+
+\section{Adding OpenMP support in addition to MPI}
+
+OpenMP support can be enabled in addition to MPI. However, in many cases performance will not improve
+because our pure MPI implementation is already heavily optimized and thus the resulting code will in fact
+be slightly slower. A possible exception could be IBM BlueGene-type architectures.
+
+To enable OpenMP, uncomment the OpenMP compiler option in two lines in file \texttt{src/specfem3D/Makefile.in}
+(before running \texttt{configure}) and also uncomment the \texttt{\#define USE\_OPENMP} statement in file\\
+\texttt{src/specfem3D/specfem3D.F90}.
+
+The DO-loop using OpenMP threads has a SCHEDULE property. The OMP\_SCHEDULE
+environment variable can set the scheduling policy of that DO-loop.
+Tests performed by Marcin Zielinski at SARA (The Netherlands) showed that often
+the best scheduling policy is DYNAMIC with the size of the chunk equal to the number of
+OpenMP threads, but most preferably being twice as the number of
+OpenMP threads (thus chunk size = 8 for 4 OpenMP threads etc).
+If OMP\_SCHEDULE is not set or is empty, the DO-loop will assume generic
+scheduling policy, which will slow down the job quite a bit.
+
+\section{Visualizing the subroutine calling tree of the source code}
+
+Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
+\texttt{Doxywizard} is a GUI front-end for configuring and running \texttt{doxygen}.
+
+\section{Becoming a developer of the code, or making small modifications in the source code}
+
+If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there is a robot called BuildBot that is in charge of checking and validating all new contributions and changes), please visit this Web page: \url{https://github.com/geodynamics/specfem3d/wiki}.
+
+

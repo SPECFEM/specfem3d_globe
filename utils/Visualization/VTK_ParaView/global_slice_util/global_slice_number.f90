@@ -172,14 +172,14 @@ program global_slice_number
       xi1 = xi(i)/xi_width * 2; eta1 = eta(i) /eta_width * 2
       nproc_xi = floor((xi1+1)/2 * nproc);  nproc_eta = floor((eta1+1)/2 * nproc)
       j = j + 1; slices(j) = nproc * nproc * (chunk(i)-1) + nproc * nproc_eta + nproc_xi
-    end do
-  end do
+    enddo
+  enddo
 
   ! compact the slice numbers into an array
   np = np * nt
   call compact_int_array(slices,np,slices_short,np_short)
 
-  ! write the result out          
+  ! write the result out
   do i = 1, np_short
     print *, slices_short(i)
   enddo

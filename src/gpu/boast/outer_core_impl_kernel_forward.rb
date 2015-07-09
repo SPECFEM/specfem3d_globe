@@ -53,11 +53,11 @@ module BOAST
     return p
   end
 
-  def BOAST::outer_core_impl_kernel_forward(ref = true, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, r_earth_km = 6371.0, coloring_min_nspec_outer_core = 1000)
-    return BOAST::outer_core_impl_kernel(true, ref, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, r_earth_km, coloring_min_nspec_outer_core)
+  def BOAST::outer_core_impl_kernel_forward(ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, r_earth_km = 6371.0, coloring_min_nspec_outer_core = 1000)
+    return BOAST::outer_core_impl_kernel(true, ref, elem_per_thread, mesh_coloring, textures_fields, textures_constants, unroll_loops, n_gllx, n_gll2, n_gll3, n_gll3_padded, r_earth_km, coloring_min_nspec_outer_core)
   end
 
-  def BOAST::outer_core_impl_kernel(forward, ref = true, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, r_earth_km = 6371.0, coloring_min_nspec_outer_core = 1000)
+  def BOAST::outer_core_impl_kernel(forward, ref = true, elem_per_thread = 1, mesh_coloring = false, textures_fields = false, textures_constants = false, unroll_loops = false, n_gllx = 5, n_gll2 = 25, n_gll3 = 125, n_gll3_padded = 128, r_earth_km = 6371.0, coloring_min_nspec_outer_core = 1000)
     push_env( :array_start => 0 )
     kernel = CKernel::new
     v = []
@@ -184,10 +184,12 @@ module BOAST
         get_output.puts "#ifndef #{manually_unrolled_loops}"
           decl l = Int("l")
         get_output.puts "#endif"
-        decl active = Int("active", :size => 2, :signed => false)
-        decl offset = Int("offset"), iglob = Int("iglob")
+        active = (1..elem_per_thread).collect { |e_i| Int("active_#{e_i}", :size => 2, :signed => false) }
+        decl *active
+        decl offset = Int("offset")
+        iglob = (1..elem_per_thread).collect { |e_i| Int("iglob_#{e_i}") }
+        decl *iglob
         decl working_element = Int("working_element")
-  
         decl *templ = [ Real("temp1l"), Real("temp2l"), Real("temp3l") ]
         decl *xil   = [ Real("xixl"),   Real("xiyl"),   Real("xizl")   ]
         decl *etal  = [ Real("etaxl"),  Real("etayl"),  Real("etazl")  ]
@@ -198,7 +200,8 @@ module BOAST
         decl dpotentialdy_with_rot = Real("dpotentialdy_with_rot")
   
         decl sum_terms = Real("sum_terms")
-        decl gravity_term = Real("gravity_term")
+        gravity_term = (1..elem_per_thread).collect { |e_i| Real("gravity_term_#{e_i}") }
+        decl *gravity_term
         decl *gl   = [ Real("gxl"),   Real("gyl"),   Real("gzl")   ]
         
         decl radius = Real("radius"), theta = Real("theta"), phi = Real("phi")
@@ -216,14 +219,12 @@ module BOAST
         decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
   
         print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
-        print tx === get_local_id(0)
+elem_per_thread.times { |elem_index| 
+        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+        print active[elem_index] === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
   
-        print k === tx/ngll2
-        print j === (tx-k*ngll2)/ngllx
-        print i === tx - k*ngll2 - j*ngllx
-  
-        print active === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
-        print If(active) {
+        print If(active[elem_index]) {
+  if elem_index == 0 then
           get_output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
           get_output.puts "#else"
@@ -233,13 +234,13 @@ module BOAST
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
             })
           get_output.puts "#endif"
-  
-          print iglob === d_ibool[working_element*ngll3 + tx]-1
+  end
+          print iglob[elem_index] === d_ibool[working_element*ngll3 + tx]-1
   
           get_output.puts "#ifdef #{use_textures_fields}"
-            print s_dummy_loc[tx] === d_displ_oc_tex[iglob]
+            print s_dummy_loc[tx] === d_displ_oc_tex[iglob[elem_index]]
           get_output.puts "#else"
-            print s_dummy_loc[tx] === d_potential[iglob]
+            print s_dummy_loc[tx] === d_potential[iglob[elem_index]]
           get_output.puts "#endif"
         }
         print If(tx < ngll2) {
@@ -252,9 +253,18 @@ module BOAST
           get_output.puts "#endif"
   
         }
+}
         print barrier(:local)
   
-        print If(active) {
+elem_per_thread.times { |elem_index|
+  if elem_per_thread > 1 then
+        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+  end
+        print k === tx/ngll2
+        print j === (tx-k*ngll2)/ngllx
+        print i === tx - k*ngll2 - j*ngllx
+  
+        print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
              print templ[0] === templ[0] + s_dummy_loc[k*ngll2+j*ngllx+l]*sh_hprime_xx[l*ngllx+i]
@@ -292,9 +302,9 @@ module BOAST
             print dpotentialdy_with_rot === dpotentialdl[1]
           })
   
-          print radius === d_store[0][iglob]
-          print theta  === d_store[1][iglob]
-          print phi    === d_store[2][iglob]
+          print radius === d_store[0][iglob[elem_index]]
+          print theta  === d_store[1][iglob[elem_index]]
+          print phi    === d_store[2][iglob[elem_index]]
           if (get_lang == CL) then
             print sin_theta === sincos(theta, cos_theta.address)
             print sin_phi   === sincos(phi,   cos_phi.address)
@@ -323,7 +333,7 @@ module BOAST
             print gl[1] === sin_theta*sin_phi
             print gl[2] === cos_theta
   
-            print gravity_term === d_minus_rho_g_over_kappa_fluid[int_radius] * jacobianl * wgll_cube[tx] * \
+            print gravity_term[elem_index] === d_minus_rho_g_over_kappa_fluid[int_radius] * jacobianl * wgll_cube[tx] * \
                                    (dpotentialdx_with_rot*gl[0] + dpotentialdy_with_rot*gl[1] + dpotentialdl[2]*gl[2])
           })
   
@@ -331,8 +341,17 @@ module BOAST
           print s_temp[1][tx] === jacobianl*(  etal[0]*dpotentialdx_with_rot +   etal[1]*dpotentialdy_with_rot +   etal[2]*dpotentialdl[2])
           print s_temp[2][tx] === jacobianl*(gammal[0]*dpotentialdx_with_rot + gammal[1]*dpotentialdy_with_rot + gammal[2]*dpotentialdl[2])
         }
+}
         print barrier(:local)
-        print If(active) {
+
+elem_per_thread.times { |elem_index| 
+  if elem_per_thread > 1 then
+        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+        print k === tx/ngll2
+        print j === (tx-k*ngll2)/ngllx
+        print i === tx - k*ngll2 - j*ngllx
+  end 
+        print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
              print templ[0] === templ[0] + s_temp[0][k*ngll2+j*ngllx+l]*sh_hprimewgll_xx[i*ngllx+l]
@@ -347,30 +366,31 @@ module BOAST
           print sum_terms === -(wgllwgll_yz[k*ngllx+j]*templ[0] + wgllwgll_xz[k*ngllx+i]*templ[1] + wgllwgll_xy[j*ngllx+i]*templ[2])
   
           print If(gravity) {
-            print  sum_terms === sum_terms + gravity_term
+            print  sum_terms === sum_terms + gravity_term[elem_index]
           }
           get_output.puts "#ifdef #{use_mesh_coloring}"
             get_output.puts "#ifdef #{use_textures_fields}"
-              print d_potential_dot_dot[iglob] === d_accel_oc_tex[iglob] + sum_terms
+              print d_potential_dot_dot[iglob[elem_index]] === d_accel_oc_tex[iglob[elem_index]] + sum_terms
             get_output.puts "#else"
-              print d_potential_dot_dot[iglob] === d_potential_dot_dot[iglob] + sum_terms
+              print d_potential_dot_dot[iglob[elem_index]] === d_potential_dot_dot[iglob[elem_index]] + sum_terms
             get_output.puts "#endif"
           get_output.puts "#else"
             print If(use_mesh_coloring_gpu, lambda {
               print If(nspec_outer_core > coloring_min_nspec_outer_core, lambda {
                 get_output.puts "#ifdef #{use_textures_fields}"
-                  print d_potential_dot_dot[iglob] === d_accel_oc_tex[iglob] + sum_terms
+                  print d_potential_dot_dot[iglob[elem_index]] === d_accel_oc_tex[iglob[elem_index]] + sum_terms
                 get_output.puts "#else"
-                  print d_potential_dot_dot[iglob] === d_potential_dot_dot[iglob] + sum_terms
+                  print d_potential_dot_dot[iglob[elem_index]] === d_potential_dot_dot[iglob[elem_index]] + sum_terms
                 get_output.puts "#endif"
               }, lambda{
-                print atomicAdd(d_potential_dot_dot+iglob,sum_terms)
+                print atomicAdd(d_potential_dot_dot+iglob[elem_index],sum_terms)
               })
             }, lambda {
-              print atomicAdd(d_potential_dot_dot+iglob,sum_terms)
+              print atomicAdd(d_potential_dot_dot+iglob[elem_index],sum_terms)
             })
           get_output.puts "#endif"
         }
+}
       close p
     else
       raise "Unsupported language!"

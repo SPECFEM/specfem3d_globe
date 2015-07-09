@@ -18,7 +18,7 @@ The time window is taken from 500.0 to 600.0 s. According to phtimes:
 
   
 note: the adjoint stations file STATIONS_ADJOINT must be copied over into directory DATA/
-      for the setup of the kernel simulation. the script "process.kernel.sh" does this for you.
+      for the setup of the kernel simulation. the script "run_this_example.kernel.sh" does this for you.
 
       Keep in mind that these adjoint source files are setup specifically for this
       default example and must match the duration length of the forward simulation. 

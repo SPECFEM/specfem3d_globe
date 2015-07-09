@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -66,18 +66,18 @@
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating ibool_neighbours')
 
   ! sets up MPI interfaces between different processes
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust/mantle
     call setup_MPI_interfaces_cm(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
 
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     call setup_MPI_interfaces_oc(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
 
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     call setup_MPI_interfaces_ic(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                 max_nibool,ibool_neighbours)
@@ -92,20 +92,21 @@
   deallocate(iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners)
   deallocate(buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar)
   deallocate(buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector)
-  select case( iregion_code )
-  case( IREGION_CRUST_MANTLE )
+
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
     ! crust mantle
     deallocate(iboolcorner_crust_mantle)
     deallocate(iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle)
     deallocate(iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle)
     deallocate(iboolfaces_crust_mantle)
-  case( IREGION_OUTER_CORE )
+  case (IREGION_OUTER_CORE)
     ! outer core
     deallocate(iboolcorner_outer_core)
     deallocate(iboolleft_xi_outer_core,iboolright_xi_outer_core)
     deallocate(iboolleft_eta_outer_core,iboolright_eta_outer_core)
     deallocate(iboolfaces_outer_core)
-  case( IREGION_INNER_CORE )
+  case (IREGION_INNER_CORE)
     ! inner core
     deallocate(iboolcorner_inner_core)
     deallocate(iboolleft_xi_inner_core,iboolright_xi_inner_core)
@@ -148,9 +149,11 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
+  !----------------------
   ! debug file output
-  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
+  !----------------------
+  character(len=MAX_STRING_LEN) :: filename
 
   ! sets up MPI interfaces
   ! crust mantle region
@@ -198,18 +201,18 @@
 
   ! stores MPI interfaces information
   allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
-          nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
-          stat=ier)
+           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
+           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbours_crust_mantle etc.')
-  my_neighbours_crust_mantle = -1
-  nibool_interfaces_crust_mantle = 0
+  my_neighbours_crust_mantle(:) = -1
+  nibool_interfaces_crust_mantle(:) = 0
 
   ! copies interfaces arrays
   if (num_interfaces_crust_mantle > 0) then
     allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm,num_interfaces_crust_mantle), &
-           stat=ier)
+             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
-    ibool_interfaces_crust_mantle = 0
+    ibool_interfaces_crust_mantle(:,:) = 0
 
     ! ranks of neighbour processes
     my_neighbours_crust_mantle(:) = my_neighbours(1:num_interfaces_crust_mantle)
@@ -221,6 +224,7 @@
     ! dummy allocation (fortran90 should allow allocate statement with zero array size)
     max_nibool_interfaces_cm = 0
     allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy array ibool_interfaces_crust_mantle')
   endif
 
   ! debug: outputs MPI interface
@@ -238,9 +242,9 @@
 
   ! checks addressing
   call test_MPI_neighbours(IREGION_CRUST_MANTLE, &
-                              num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                              my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
-                              ibool_interfaces_crust_mantle)
+                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                           my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
+                           ibool_interfaces_crust_mantle)
 
   ! checks with assembly of test fields
   call test_MPI_cm()
@@ -277,9 +281,11 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer,dimension(:),allocatable :: dummy_i
   integer :: i,ier
+  !----------------------
   ! debug file output
-  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
+  !----------------------
+  character(len=MAX_STRING_LEN) :: filename
 
   ! sets up MPI interfaces
   ! outer core region
@@ -294,19 +300,20 @@
 
   ! assembles values
   call assemble_MPI_scalar_block(myrank,test_flag, &
-            NGLOB_OUTER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_outer_core,iboolright_xi_outer_core,iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-            npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-            iboolfaces_outer_core,iboolcorner_outer_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
-            NGLOB2DMAX_XY,NCHUNKS)
+                                 NGLOB_OUTER_CORE, &
+                                 iproc_xi,iproc_eta,ichunk,addressing, &
+                                 iboolleft_xi_outer_core,iboolright_xi_outer_core, &
+                                 iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+                                 npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+                                 iboolfaces_outer_core,iboolcorner_outer_core, &
+                                 iprocfrom_faces,iprocto_faces,imsg_type, &
+                                 iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                 buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                 buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                 NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                 NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+                                 NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
+                                 NGLOB2DMAX_XY,NCHUNKS)
 
 
   ! removes own myrank id (+1)
@@ -317,12 +324,12 @@
 
   ! determines neighbor rank for shared faces
   call get_MPI_interfaces(myrank,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
-                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                            max_nibool,MAX_NEIGHBOURS, &
-                            ibool,is_on_a_slice_edge, &
-                            IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                            xstore_outer_core,ystore_outer_core,zstore_outer_core,NPROCTOT)
+                          test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
+                          num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                          max_nibool,MAX_NEIGHBOURS, &
+                          ibool,is_on_a_slice_edge, &
+                          IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
+                          xstore_outer_core,ystore_outer_core,zstore_outer_core,NPROCTOT)
 
   deallocate(test_flag)
   deallocate(dummy_i)
@@ -409,9 +416,11 @@
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: test_flag
   integer :: i,j,k,ispec,iglob,ier
   integer :: ndim_assemble
+  !----------------------
   ! debug file output
-  character(len=MAX_STRING_LEN) :: filename
   logical,parameter :: DEBUG = .false.
+  !----------------------
+  character(len=MAX_STRING_LEN) :: filename
 
   ! sets up MPI interfaces
   ! inner core
@@ -457,9 +466,8 @@
   if (DEBUG) then
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
     call write_VTK_data_elem_i(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                            xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                            ibool, &
-                            idoubling,filename)
+                               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                               ibool,idoubling,filename)
     call synchronize_all()
   endif
 

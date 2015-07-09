@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -208,6 +208,8 @@
 
   subroutine evradker(depth,string,nker,vercof,dvercof,ierror)
 
+  use constants,only: R_EARTH_KM
+
   implicit none
 
   integer :: nker,ierror
@@ -223,10 +225,10 @@
   logical upper,upper_650
   logical lower,lower_650
 
-  real(kind=4), parameter :: r0 = 6371.0
-  real(kind=4), parameter :: rmoho = 6371.0 - 24.4  ! subtracting the thickness here
-  real(kind=4), parameter :: r670 = 6371.0 - 670.0    ! subtracting the thickness here
-  real(kind=4), parameter :: r650 = 6371.0 - 650.0    ! subtracting the thickness here
+  real(kind=4), parameter :: r0 = R_EARTH_KM ! 6371.0
+  real(kind=4), parameter :: rmoho = r0 - 24.4  ! subtracting the thickness here
+  real(kind=4), parameter :: r670 = r0 - 670.0    ! subtracting the thickness here
+  real(kind=4), parameter :: r650 = r0 - 650.0    ! subtracting the thickness here
   real(kind=4), parameter :: rcmb = 3480.0
 
   integer :: i,nspl,nskip,nlower,nupper,iker,lstr
@@ -1152,6 +1154,7 @@
   subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
 
   use model_s362ani_par
+  use constants,only: R_EARTH_KM
 
   implicit none
 
@@ -1178,11 +1181,13 @@
 
   double precision, dimension(maxcoe) :: dd
 
+  real(kind=4), parameter :: r0 = R_EARTH_KM ! 6371.0
+
   ! initializes
   vsv3drel = 0.0
   vsh3drel = 0.0
 
-  depth=6371.0-xrad
+  depth = r0 - xrad
   call evradker (depth,kerstr,numker,vercof,vercofd,ierror)
   if (ierror /= 0) stop 'ierror evradker'
 

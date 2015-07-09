@@ -71,8 +71,8 @@ sub match_data_and_syn{
   foreach $data (@data_files) {
     my($tmp) = sac_files_get_values("kstnm knetwk kcmpnm",$data);
     ($sta,$net,$comp) = split (" ",$tmp);
-    $syn = "$syn_dir/$sta.$net.$comp${syn_suff}";
-    if ($new_syn_info) {$new_syn = "$new_syn_dir/$sta.$net.$comp${new_syn_suff}";}
+    $syn = "$syn_dir/$net.$sta.$comp${syn_suff}";
+    if ($new_syn_info) {$new_syn = "$new_syn_dir/$net.$sta.$comp${new_syn_suff}";}
     if (-f $syn and -f $data) {
       if ($new_syn_info) { 
           if (-f $new_syn) {

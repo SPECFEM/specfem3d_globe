@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -24,6 +24,8 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
+!
+! United States and French Government Sponsorship Acknowledged.
 
   subroutine iterate_time()
 
@@ -39,11 +41,32 @@
   double precision, external :: wtime
 
   ! for EXACT_UNDOING_TO_DISK
-  integer :: ispec,iglob,i,j,k,counter,record_length
-  real(kind=CUSTOM_REAL) :: radius
-  integer, dimension(:), allocatable :: integer_mask_ibool_exact_undo
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
-  character(len=MAX_STRING_LEN) outputname
+  integer :: ispec,iglob,i,j,k
+
+  !----  create a Gnuplot script to display the energy curve in log scale
+  if (OUTPUT_ENERGY .and. myrank == 0) then
+    open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'plot_energy.gnu',status='unknown',action='write')
+    write(IOUT_ENERGY,*) 'set term wxt'
+    write(IOUT_ENERGY,*) '#set term postscript landscape color solid "Helvetica" 22'
+    write(IOUT_ENERGY,*) '#set output "energy.ps"'
+    write(IOUT_ENERGY,*) 'set logscale y'
+    write(IOUT_ENERGY,*) 'set xlabel "Time step number"'
+    write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
+    write(IOUT_ENERGY,'(a152)') '#plot "energy.dat" us 1:2 t ''Kinetic Energy'' w l lc 1, "energy.dat" us 1:3 &
+                         &t ''Potential Energy'' w l lc 2, "energy.dat" us 1:4 t ''Total Energy'' w l lc 4'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:2 t ''Kinetic Energy'' w l lc 1'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:3 t ''Potential Energy'' w l lc 2'
+    write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
+    write(IOUT_ENERGY,*) 'plot "energy.dat" us 1:4 t ''Total Energy'' w l lc 4'
+    write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
+    close(IOUT_ENERGY)
+  endif
+
+  ! open the file in which we will store the energy curve
+  if (OUTPUT_ENERGY .and. myrank == 0) &
+    open(unit=IOUT_ENERGY,file=trim(OUTPUT_FILES)//'energy.dat',status='unknown',action='write')
 
 !
 !   s t a r t   t i m e   i t e r a t i o n s
@@ -51,6 +74,7 @@
 
   ! synchronize all processes to make sure everybody is ready to start time loop
   call synchronize_all()
+  if (myrank == 0) write(IMAIN,*) 'All processes are synchronized before time loop'
 
   if (myrank == 0) then
     write(IMAIN,*)
@@ -77,65 +101,9 @@
   ! ************* MAIN LOOP OVER THE TIME STEPS *************
   ! *********************************************************
 
-  if (EXACT_UNDOING_TO_DISK) then
+  if (EXACT_UNDOING_TO_DISK) call setup_exact_undoing_to_disk()
 
-    if (GPU_MODE) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK not supported for GPUs')
-
-    if (UNDO_ATTENUATION) &
-      call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK needs UNDO_ATTENUATION to be off because it computes the kernel directly instead')
-
-    if (SIMULATION_TYPE == 1 .and. .not. SAVE_FORWARD) &
-      call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires SAVE_FORWARD if SIMULATION_TYPE == 1')
-
-    if (ANISOTROPIC_KL) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires ANISOTROPIC_KL to be turned off')
-
-!! DK DK determine the largest value of iglob that we need to save to disk,
-!! DK DK since we save the upper mantle only in the case of surface-wave kernels
-    ! crust_mantle
-    allocate(integer_mask_ibool_exact_undo(NGLOB_CRUST_MANTLE))
-    integer_mask_ibool_exact_undo(:) = -1
-
-    counter = 0
-    do ispec = 1, NSPEC_CRUST_MANTLE
-      do k = 1, NGLLZ
-        do j = 1, NGLLY
-          do i = 1, NGLLX
-            iglob = ibool_crust_mantle(i,j,k,ispec)
-            ! xstore ystore zstore have previously been converted to r theta phi, thus xstore now stores the radius
-            radius = xstore_crust_mantle(iglob) ! <- radius r (normalized)
-            ! save that element only if it is in the upper mantle
-            if (radius >= R670 / R_EARTH) then
-              ! if this point has not yet been found before
-              if (integer_mask_ibool_exact_undo(iglob) == -1) then
-                ! create a new unique point
-                counter = counter + 1
-                integer_mask_ibool_exact_undo(iglob) = counter
-              endif
-            endif
-          enddo
-        enddo
-      enddo
-    enddo
-
-    ! allocate the buffer used to dump a single time step
-    allocate(buffer_for_disk(counter))
-
-    ! open the file in which we will dump all the time steps (in a single file)
-    write(outputname,"('huge_dumps/proc',i6.6,'_huge_dump_of_all_time_steps.bin')") myrank
-    inquire(iolength=record_length) buffer_for_disk
-    ! we write to or read from the file depending on the simulation type
-    if (SIMULATION_TYPE == 1) then
-      open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='write', status='unknown', &
-                      form='unformatted', access='direct', recl=record_length)
-    else if (SIMULATION_TYPE == 3) then
-      open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='read', status='old', &
-                      form='unformatted', access='direct', recl=record_length)
-    else
-      call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK can only be used with SIMULATION_TYPE == 1 or SIMULATION_TYPE == 3')
-    endif
-
-  endif ! of if (EXACT_UNDOING_TO_DISK)
-
+  ! time loop
   do it = it_begin,it_end
 
     ! simulation status output and stability check
@@ -182,36 +150,37 @@
     if (SIMULATION_TYPE == 3) then
 
       if (.not. EXACT_UNDOING_TO_DISK) then
-      ! note: we step back in time (using time steps - DT ), i.e. wavefields b_displ_..() are time-reversed here
+        ! note: we step back in time (using time steps - DT ), i.e. wavefields b_displ_..() are time-reversed here
 
-      ! reconstructs forward wavefields based on last stored wavefield data
-      ! note: NSTAGE_TIME_SCHEME is equal to 1 if Newmark because only one stage then
-      do istage = 1, NSTAGE_TIME_SCHEME
+        ! reconstructs forward wavefields based on last stored wavefield data
 
-        if (USE_LDDRK) then
-          ! update displacement using Runge-Kutta time scheme
-          call update_displ_lddrk_backward()
-        else
-          ! update displacement using Newmark time scheme
-          call update_displ_Newmark_backward()
+        ! note: NSTAGE_TIME_SCHEME is equal to 1 if Newmark because only one stage then
+        do istage = 1, NSTAGE_TIME_SCHEME
+
+          if (USE_LDDRK) then
+            ! update displacement using Runge-Kutta time scheme
+            call update_displ_lddrk_backward()
+          else
+            ! update displacement using Newmark time scheme
+            call update_displ_Newmark_backward()
+          endif
+
+          ! acoustic solver for outer core
+          ! (needs to be done first, before elastic one)
+          call compute_forces_acoustic_backward()
+
+          ! elastic solver for crust/mantle and inner core
+          call compute_forces_viscoelastic_backward()
+
+        enddo
+
+        ! restores last time snapshot saved for backward/reconstruction of wavefields
+        ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
+        !          and adjoint sources will become more complicated
+        !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
+        if (it == 1) then
+          call read_forward_arrays()
         endif
-
-        ! acoustic solver for outer core
-        ! (needs to be done first, before elastic one)
-        call compute_forces_acoustic_backward()
-
-        ! elastic solver for crust/mantle and inner core
-        call compute_forces_viscoelastic_backward()
-
-      enddo
-
-      ! restores last time snapshot saved for backward/reconstruction of wavefields
-      ! note: this is done here after the Newmark time scheme, otherwise the indexing for sources
-      !          and adjoint sources will become more complicated
-      !          that is, index it for adjoint sources will match index NSTEP - 1 for backward/reconstructed wavefields
-      if (it == 1) then
-        call read_forward_arrays()
-      endif
 
       else ! of if (.not. EXACT_UNDOING_TO_DISK)
 
@@ -232,16 +201,17 @@
 
       endif ! of if (.not. EXACT_UNDOING_TO_DISK)
 
-      ! adjoint simulations: kernels
-      call compute_kernels()
-
     endif ! kernel simulations
 
-    ! write the seismograms with time shift
-    if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) .or. OUTPUT_SEISMOS_ASDF) then
-      ! note: ASDF uses adios that defines the MPI communicator group that the solver is
-      !       run with. this means every processor in the group is needed for write_seismograms
-      call write_seismograms()
+    ! calculating gravity field at current timestep
+    if (GRAVITY_SIMULATION) call gravity_timeseries()
+
+    ! write the seismograms with time shift (GPU_MODE transfer included)
+    call write_seismograms()
+
+    ! adjoint simulations: kernels
+    if (SIMULATION_TYPE == 3) then
+      call compute_kernels()
     endif
 
     ! outputs movie files
@@ -258,22 +228,24 @@
       call it_update_vtkwindow()
     endif
 
-  enddo   ! end of main time loop
-
-  ! close the huge file that contains a dump of all the time steps to disk
-  if (EXACT_UNDOING_TO_DISK) close(IFILE_FOR_EXACT_UNDOING)
-
   !
   !---- end of time iteration loop
   !
+  enddo   ! end of main time loop
 
+  ! close the huge file that contains a dump of all the time steps to disk
+  if (EXACT_UNDOING_TO_DISK) call finish_exact_undoing_to_disk()
+
+  ! user output of runtime
   call print_elapsed_time()
 
   ! Transfer fields from GPU card to host for further analysis
   if (GPU_MODE) call it_transfer_from_GPU()
 
-  end subroutine iterate_time
+!----  close energy file
+  if (OUTPUT_ENERGY .and. myrank == 0) close(IOUT_ENERGY)
 
+  end subroutine iterate_time
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -287,6 +259,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+
   implicit none
 
   ! to store forward wave fields
@@ -315,6 +288,8 @@
       call transfer_rotation_from_device(Mesh_pointer,A_array_rotation,B_array_rotation)
     endif
 
+  else if (SIMULATION_TYPE == 3) then
+
     ! note: for kernel simulations (SIMULATION_TYPE == 3), attenuation is
     !          only mimicking effects on phase shifts, but not on amplitudes.
     !          flag PARTIAL_PHYS_DISPERSION_ONLY will have to be set to true in this case.
@@ -324,7 +299,6 @@
     !if (ATTENUATION) then
     !endif
 
-  else if (SIMULATION_TYPE == 3) then
     ! to store kernels
     ! inner core
     call transfer_kernels_ic_to_host(Mesh_pointer, &
@@ -346,13 +320,14 @@
 
     ! specific noise strength kernel
     if (NOISE_TOMOGRAPHY == 3) then
-      call transfer_kernels_noise_to_host(Mesh_pointer,Sigma_kl_crust_mantle,NSPEC_CRUST_MANTLE)
+      call transfer_kernels_noise_to_host(Mesh_pointer,sigma_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
 
     ! approximative hessian for preconditioning kernels
     if (APPROXIMATE_HESS_KL) then
       call transfer_kernels_hess_cm_tohost(Mesh_pointer,hess_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
+
   endif
 
   ! from here on, no gpu data is needed anymore
@@ -361,11 +336,9 @@
 
   end subroutine it_transfer_from_GPU
 
-
 !
 !-------------------------------------------------------------------------------------------------
 !
-
 
   subroutine it_update_vtkwindow()
 
@@ -433,4 +406,120 @@
   endif
 
   end subroutine it_update_vtkwindow
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine gravity_timeseries()
+
+  implicit none
+
+  stop 'gravity_timeseries() not implemented in this code yet'
+
+  end subroutine gravity_timeseries
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_exact_undoing_to_disk()
+
+  use specfem_par
+  use specfem_par_crustmantle
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec,iglob,i,j,k
+  integer :: counter,record_length
+  real(kind=CUSTOM_REAL) :: radius
+  character(len=MAX_STRING_LEN) :: outputname
+
+  ! checks if anything to do
+  if (.not. EXACT_UNDOING_TO_DISK) return
+
+  ! checks flags
+  if (GPU_MODE) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK not supported for GPUs')
+
+  if (UNDO_ATTENUATION) &
+    call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK needs UNDO_ATTENUATION to be off because it computes the kernel directly instead')
+
+  if (SIMULATION_TYPE == 1 .and. .not. SAVE_FORWARD) &
+    call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires SAVE_FORWARD if SIMULATION_TYPE == 1')
+
+  if (ANISOTROPIC_KL) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires ANISOTROPIC_KL to be turned off')
+
+  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /=3) &
+    call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK can only be used with SIMULATION_TYPE == 1 or SIMULATION_TYPE == 3')
+
+
+!! DK DK determine the largest value of iglob that we need to save to disk,
+!! DK DK since we save the upper part of the mesh only in the case of surface-wave kernels
+  ! crust_mantle
+  allocate(integer_mask_ibool_exact_undo(NGLOB_CRUST_MANTLE))
+  integer_mask_ibool_exact_undo(:) = -1
+
+  counter = 0
+  do ispec = 1, NSPEC_CRUST_MANTLE
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          iglob = ibool_crust_mantle(i,j,k,ispec)
+          ! xstore ystore zstore have previously been converted to r theta phi, thus xstore now stores the radius
+          radius = xstore_crust_mantle(iglob) ! <- radius r (normalized)
+          ! save that element only if it is in the upper part of the mesh
+          if (radius >= R670 / R_EARTH) then
+            ! if this point has not yet been found before
+            if (integer_mask_ibool_exact_undo(iglob) == -1) then
+              ! create a new unique point
+              counter = counter + 1
+              integer_mask_ibool_exact_undo(iglob) = counter
+            endif
+          endif
+        enddo
+      enddo
+    enddo
+  enddo
+
+  ! allocate the buffer used to dump a single time step
+  allocate(buffer_for_disk(counter))
+
+  ! open the file in which we will dump all the time steps (in a single file)
+  write(outputname,"('huge_dumps/proc',i6.6,'_huge_dump_of_all_time_steps.bin')") myrank
+  inquire(iolength=record_length) buffer_for_disk
+  ! we write to or read from the file depending on the simulation type
+  if (SIMULATION_TYPE == 1) then
+    open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='write', status='unknown', &
+                    form='unformatted', access='direct', recl=record_length)
+  else if (SIMULATION_TYPE == 3) then
+    open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='read', status='old', &
+                    form='unformatted', access='direct', recl=record_length)
+  endif
+
+  end subroutine setup_exact_undoing_to_disk
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine finish_exact_undoing_to_disk()
+
+  use specfem_par
+  use specfem_par_crustmantle
+
+  implicit none
+
+  ! checks if anything to do
+  if (.not. EXACT_UNDOING_TO_DISK) return
+
+  ! frees memory
+  deallocate(integer_mask_ibool_exact_undo)
+  deallocate(buffer_for_disk)
+
+  ! close the huge file that contains a dump of all the time steps to disk
+  close(IFILE_FOR_EXACT_UNDOING)
+
+  end subroutine finish_exact_undoing_to_disk
 

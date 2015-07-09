@@ -50,10 +50,10 @@ echo "$PBS_JOBID" > OUTPUT_FILES/jobid
 echo starting MPI mesher on $numnodes processors
 echo " "
 
-sleep 2 
+sleep 2
 mpiexec -np $numnodes $PWD/bin/xmeshfem3D
 
-# backup important files addressing.txt and list*.txt 
+# backup important files addressing.txt and list*.txt
 cp OUTPUT_FILES/*.txt $BASEMPIDIR/
 
 

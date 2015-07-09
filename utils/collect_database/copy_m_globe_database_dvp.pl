@@ -1,15 +1,15 @@
 #!/usr/bin/perl -w
 
-# this script collects the required mantle database files to prepare mesh 
+# this script collects the required mantle database files to prepare mesh
 # files for Paraview
 #   array_dims.txt, solver_data_2.bin and kernel_filename/solver_data_1.bin
-#   you need to supply the actual lsf_machine_file 
+#   you need to supply the actual lsf_machine_file
 #   (1 line, node name and number of procs used)
 #   so that the correct machine file can be selected for the given slices (in slice_file)
-# if you are collecting anything other than kernel files, solver_data_1.bin is 
+# if you are collecting anything other than kernel files, solver_data_1.bin is
 #   collected instead
 
-# Qinya Liu, Caltech, May 2007 
+# Qinya Liu, Caltech, May 2007
 
 
 use POSIX;

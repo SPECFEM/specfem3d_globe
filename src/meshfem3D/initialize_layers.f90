@@ -1,6 +1,6 @@
 !=====================================================================
 !
-!          S p e c f e m 3 D  G l o b e  V e r s i o n  6 . 0
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
 !          --------------------------------------------------
 !
 !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
@@ -34,7 +34,7 @@
                         NEX_PER_PROC_ETA,nex_eta_moho,RMOHO,R400,R670,r_moho,r_400,r_670, &
                         ONE_CRUST,NUMBER_OF_MESH_LAYERS,layer_shift, &
                         iregion_code,ifirst_region,ilast_region, &
-                        first_layer_aniso,last_layer_aniso,nb_layer_above_aniso,is_on_a_slice_edge)
+                        first_layer_aniso,last_layer_aniso,is_on_a_slice_edge)
 
 ! create the different regions of the mesh
 
@@ -77,7 +77,7 @@
 
   ! code for the four regions of the mesh
   integer iregion_code,ifirst_region,ilast_region
-  integer first_layer_aniso,last_layer_aniso,nb_layer_above_aniso
+  integer first_layer_aniso,last_layer_aniso
 
 ! this for non blocking MPI
   logical, dimension(nspec) :: is_on_a_slice_edge
@@ -136,11 +136,9 @@
   if (ONE_CRUST) then
     first_layer_aniso = 2
     last_layer_aniso = 3
-    nb_layer_above_aniso = 1
   else
     first_layer_aniso = 3
     last_layer_aniso = 4
-    nb_layer_above_aniso = 2
   endif
 
 ! initialize mesh arrays
