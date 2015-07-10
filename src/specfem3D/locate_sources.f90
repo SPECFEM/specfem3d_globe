@@ -579,8 +579,8 @@
     ! checks that the gather operation went well
     if (myrank == 0) then
       if (minval(ispec_selected_source_all(:,:)) <= 0) then
-        print*,'Error ispec all: procs = ',NPROCTOT_VAL,'sources subset size = ',NSOURCES_SUBSET_current_size
-        print*,ispec_selected_source_all(:,:)
+        print *,'Error ispec all: procs = ',NPROCTOT_VAL,'sources subset size = ',NSOURCES_SUBSET_current_size
+        print *,ispec_selected_source_all(:,:)
         call exit_MPI(myrank,'gather operation failed for source')
       endif
     endif

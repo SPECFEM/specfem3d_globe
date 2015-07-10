@@ -89,17 +89,17 @@ program add_model
 
   ! user output
   if (myrank == 0) then
-    print*
-    print*,'***********'
-    print*,'program add_model_tiso: '
-    print*,'  NPROC_XI , NPROC_ETA: ',nproc_xi_val,nproc_eta_val
-    print*,'  NCHUNKS: ',nchunks_val
-    print*
-    print*,'model update for vsv,vsh,vpv,vph,eta,rho:'
-    print*,'  step_fac = ',step_fac
-    print*
-    print*,'***********'
-    print*
+    print *
+    print *,'***********'
+    print *,'program add_model_tiso: '
+    print *,'  NPROC_XI , NPROC_ETA: ',nproc_xi_val,nproc_eta_val
+    print *,'  NCHUNKS: ',nchunks_val
+    print *
+    print *,'model update for vsv,vsh,vpv,vph,eta,rho:'
+    print *,'  step_fac = ',step_fac
+    print *
+    print *,'***********'
+    print *
   endif
 
   ! reads in current transverse isotropic model files: vpv.. & vsv.. & eta & rho
@@ -262,10 +262,10 @@ subroutine initialize()
 
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
-      print*, 'Error number of MPI processors actually run on: ',sizeprocs
-      print*
-      print*, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xadd_model .. '
+      print *, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
+      print *, 'Error number of MPI processors actually run on: ',sizeprocs
+      print *
+      print *, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xadd_model .. '
     endif
     call exit_MPI(myrank,'Error wrong number of MPI processes')
   endif

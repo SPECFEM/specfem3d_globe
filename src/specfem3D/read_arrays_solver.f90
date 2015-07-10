@@ -114,14 +114,14 @@
   ! checks dimensions
   if (lnspec /= nspec) then
     close(IIN)
-    print*,'Error file dimension: nspec in file = ',lnspec,' but nspec desired:',nspec
-    print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
+    print *,'Error file dimension: nspec in file = ',lnspec,' but nspec desired:',nspec
+    print *,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
     call exit_mpi(myrank,'Error dimensions in solver_data.bin')
   endif
   if (lnglob /= nglob) then
     close(IIN)
-    print*,'Error file dimension: nglob in file = ',lnglob,' but nglob desired:',nglob
-    print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
+    print *,'Error file dimension: nglob in file = ',lnglob,' but nglob desired:',nglob
+    print *,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
     call exit_mpi(myrank,'Error dimensions in solver_data.bin')
   endif
 

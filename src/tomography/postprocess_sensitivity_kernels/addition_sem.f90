@@ -69,10 +69,10 @@ program addition_sem
   ! checks compilation setup
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
-      print*, 'Error number of MPI processors actually run on: ',sizeprocs
-      print*
-      print*, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xaddition_sem .. '
+      print *, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
+      print *, 'Error number of MPI processors actually run on: ',sizeprocs
+      print *
+      print *, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xaddition_sem .. '
     endif
     call exit_MPI(myrank,'Error wrong number of MPI processes')
   endif

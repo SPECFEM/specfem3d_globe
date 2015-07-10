@@ -217,7 +217,7 @@
 
   !--- check that the correction factor is close to one
   if (scale_factor < 0.8d0 .or. scale_factor > 1.2d0) then
-    print*,'Error: incorrect scale factor: ', scale_factor
+    print *,'Error: incorrect scale factor: ', scale_factor
     call exit_MPI(myrank,'incorrect correction factor in attenuation model')
   endif
 

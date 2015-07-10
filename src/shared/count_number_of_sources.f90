@@ -51,7 +51,7 @@
 
   open(unit=IIN,file=trim(CMTSOLUTION_FILE),status='old',action='read',iostat=ios)
   if (ios /= 0) then
-    print*,'Error opening CMTSOLUTION file: ',trim(CMTSOLUTION_FILE)
+    print *,'Error opening CMTSOLUTION file: ',trim(CMTSOLUTION_FILE)
     stop 'Error opening CMTSOLUTION file'
   endif
 

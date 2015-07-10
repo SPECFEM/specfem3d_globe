@@ -74,7 +74,7 @@
 
   ! check that the code is running with the requested nb of processes
   if (sizeprocs /= NPROCTOT) then
-    if (myrank == 0) print*,'Error wrong number of MPI processes ',sizeprocs,' should be ',NPROCTOT,', please check...'
+    if (myrank == 0) print *,'Error wrong number of MPI processes ',sizeprocs,' should be ',NPROCTOT,', please check...'
     call exit_MPI(myrank,'wrong number of MPI processes in the initialization of SPECFEM')
   endif
 
@@ -524,11 +524,11 @@
     endif
 
     ! user output
-    if (myrank == 0 ) print*,'Hybrid CPU-GPU computation:'
+    if (myrank == 0 ) print *,'Hybrid CPU-GPU computation:'
     do iproc = 0, NPROCTOT_VAL-1
       if (myrank == iproc) then
         if (myrank < TOTAL_PROCESSES_PER_NODE) then
-          print*,'rank ',myrank,' has GPU_MODE set to ',GPU_MODE
+          print *,'rank ',myrank,' has GPU_MODE set to ',GPU_MODE
         endif
       endif
       call synchronize_all()

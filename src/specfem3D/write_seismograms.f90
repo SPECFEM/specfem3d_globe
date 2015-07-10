@@ -283,7 +283,7 @@ contains
         iproc = islice_selected_rec(irec)
         ! checks iproc value
         if (iproc < 0 .or. iproc >= NPROCTOT_VAL) then
-          print*,'Error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
+          print *,'Error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
           call exit_mpi(myrank,'Error iproc in islice_selected_rec')
         endif
         ! sums number of receivers for each slice

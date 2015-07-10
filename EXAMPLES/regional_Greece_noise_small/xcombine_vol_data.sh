@@ -31,7 +31,7 @@ mesh2vtu.pl -i OUTPUT_FILES/reg_1_alpha_kernel.mesh -o OUTPUT_FILES/reg_1_alpha_
 rm -f OUTPUT_FILES/reg_*alpha*.mesh
 min=`grep "min/max" tmp.log | awk '{print $3 }' | sort | head -n 1`
 max=`grep "min/max" tmp.log | awk '{print $4 }' | sort | tail -n 1`
-echo 
+echo
 echo "statistics:"
 echo "  alpha_kernel min/max: $min $max"
 echo

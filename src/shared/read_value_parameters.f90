@@ -94,7 +94,7 @@
   ! checks for string length (buffer overflow)
   length = len(value_to_read)
   if (len_trim(string_read) > length) then
-    print*,'Error reading parameter ',name,': string length ',length,' is too long, please check your Par_file'
+    print *,'Error reading parameter ',name,': string length ',length,' is too long, please check your Par_file'
     stop 'Error reading parameter string value'
   endif
 

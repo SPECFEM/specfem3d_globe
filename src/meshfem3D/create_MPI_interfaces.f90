@@ -637,13 +637,13 @@
       icount_faces = icount_faces + 1
 
       if (icount_faces > NUMFACES_SHARED) then
-        print*,'Error ',myrank,' icount_faces: ',icount_faces,'NUMFACES_SHARED:',NUMFACES_SHARED
-        print*,'iregion_code:',iregion_code
+        print *,'Error ',myrank,' icount_faces: ',icount_faces,'NUMFACES_SHARED:',NUMFACES_SHARED
+        print *,'iregion_code:',iregion_code
         call exit_MPI(myrank,'more than NUMFACES_SHARED faces for this slice')
       endif
       if (icount_faces > 2 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) then
-        print*,'Error ',myrank,' icount_faces: ',icount_faces,'NPROC_XI:',NPROC_XI,'NPROC_ETA:',NPROC_ETA
-        print*,'iregion_code:',iregion_code
+        print *,'Error ',myrank,' icount_faces: ',icount_faces,'NPROC_XI:',NPROC_XI,'NPROC_ETA:',NPROC_ETA
+        print *,'iregion_code:',iregion_code
         call exit_MPI(myrank,'more than two faces for this slice')
       endif
     endif

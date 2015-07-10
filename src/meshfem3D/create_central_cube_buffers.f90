@@ -183,7 +183,7 @@
 
     ! check that total number of faces found is correct
     if (imsg /= nb_msgs_theor_in_cube) then
-      print*,'Error ',myrank,'nb_msgs_theor_in_cube:',nb_msgs_theor_in_cube,imsg
+      print *,'Error ',myrank,'nb_msgs_theor_in_cube:',nb_msgs_theor_in_cube,imsg
       call exit_MPI(myrank,'wrong number of faces found for central cube')
     endif
 
@@ -258,7 +258,7 @@
 
     ! check that total number of faces found is correct
     if (imsg /= nb_msgs_theor_in_cube) then
-      print*,'Error ',myrank,'nb_msgs_theor_in_cube:',nb_msgs_theor_in_cube,imsg
+      print *,'Error ',myrank,'nb_msgs_theor_in_cube:',nb_msgs_theor_in_cube,imsg
       call exit_MPI(myrank,'wrong number of faces found for central cube')
     endif
 
@@ -336,7 +336,7 @@
       endif
     enddo
     if (ipoin /= npoin2D_cube_from_slices) then
-      print*,'Error',myrank,'bottom points:',npoin2D_cube_from_slices,ipoin
+      print *,'Error',myrank,'bottom points:',npoin2D_cube_from_slices,ipoin
       call exit_MPI(myrank,'wrong number of points found for bottom CC AB or !AB')
     endif
 

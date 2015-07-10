@@ -353,7 +353,7 @@
 
   ! checks latitude/longitude
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) then
-    print*,'Error in lat/lon:',lat,lon
+    print *,'Error in lat/lon:',lat,lon
     stop 'Error in latitude/longitude range in crust2.0'
   endif
 

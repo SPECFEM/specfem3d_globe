@@ -912,7 +912,7 @@
 
   ! checks error
   if (ierror /= 0) then
-    print*,'Error: reading model in get3dmodel() routine failed with error code ',ierror
+    print *,'Error: reading model in get3dmodel() routine failed with error code ',ierror
     stop 'Error in model s362ani in get3dmodl() routine'
   endif
 

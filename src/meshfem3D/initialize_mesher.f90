@@ -74,7 +74,7 @@
 
   ! check that the code is running with the requested number of processes
   if (sizeprocs /= NPROCTOT) then
-    if (myrank == 0) print*,'Error wrong number of MPI processes ',sizeprocs,' should be ',NPROCTOT,', please check...'
+    if (myrank == 0) print *,'Error wrong number of MPI processes ',sizeprocs,' should be ',NPROCTOT,', please check...'
     call exit_MPI(myrank,'wrong number of MPI processes')
   endif
 

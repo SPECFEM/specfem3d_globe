@@ -484,8 +484,8 @@
     if (HONOR_1D_SPHERICAL_MOHO ) return
 
     ! original values
-    !print*,'NER:',NER_CRUST
-    !print*,'DT:',DT
+    !print *,'NER:',NER_CRUST
+    !print *,'DT:',DT
 
     ! enforce 3 element layers
     NER_CRUST = 3

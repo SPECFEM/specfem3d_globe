@@ -103,7 +103,7 @@
     enddo
 
     ! debug
-    !print*,'line ----',string,'----'
+    !print *,'line ----',string,'----'
 
     ! reads header line with event information (assumes fixed format)
     ! old line: read(string,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource,yr,mo,da,ho,mi,sec
@@ -151,7 +151,7 @@
       if ( iend < istart ) stop 'Error determining number with negative length in header line in CMTSOLUTION file'
 
       ! debug
-      !print*,itype,'line ----',string(istart:iend),'----'
+      !print *,itype,'line ----',string(istart:iend),'----'
 
       ! reads in event time information
       select case (itype)
