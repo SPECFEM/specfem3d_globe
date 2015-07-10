@@ -52,42 +52,120 @@
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
 
-  use constants,only: DEGREES_TO_RADIANS
+  use constants,only: DEGREES_TO_RADIANS, NGLLX, &
+    REFERENCE_MODEL_PREM,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
+    REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D
+  use shared_compute_parameters, only: REFERENCE_1D_MODEL
 
   implicit none
 
-  integer NEX_MAX
-  double precision DT, WIDTH
+  integer,intent(in) :: NEX_MAX
+  double precision, intent(in) :: WIDTH
+  double precision, intent(out) :: DT
 
   ! local parameters
-  double precision RADIAL_LEN_RATIO_CENTRAL_CUBE
-  double precision RADIUS_INNER_CORE
-  double precision DOUBLING_INNER_CORE
-  double precision P_VELOCITY_MAX     ! Located Near the inner Core Boundary
-  double precision MAXIMUM_STABILITY_CONDITION
-  double precision MIN_GLL_POINT_SPACING_5
-  double precision elem_size,min_grid_dx
+  double precision :: RADIAL_LEN_RATIO_CENTRAL_CUBE
+  double precision :: RADIUS_INNER_CORE
+  double precision :: DOUBLING_INNER_CORE
+  double precision :: P_VELOCITY_MAX     ! Located Near the inner Core Boundary
+  double precision :: MAXIMUM_STABILITY_CONDITION
+  double precision :: MIN_GLL_POINT_SPACING
+  double precision :: elem_size,min_grid_dx
 
+  ! initializes defaults
   RADIAL_LEN_RATIO_CENTRAL_CUBE   =     0.40d0
   MAXIMUM_STABILITY_CONDITION     =     0.40d0
-  RADIUS_INNER_CORE               =   1221.0d0
+
   DOUBLING_INNER_CORE             =      8.0d0
-  P_VELOCITY_MAX                  = 11.02827d0
-  MIN_GLL_POINT_SPACING_5         =   0.1730d0
+
+  ! default for PREM (near inner core boundary)
+  RADIUS_INNER_CORE               =   1221.0d0 ! RICB in km
+  P_VELOCITY_MAX                  = 11.02827d0 ! in km/s
+
+  ! default for NGLLX == 5
+  MIN_GLL_POINT_SPACING         =   0.1730d0
+
+  ! modifies maximum velocity according to reference 1D model
+  select case (REFERENCE_1D_MODEL)
+  case (REFERENCE_MODEL_PREM)
+    RADIUS_INNER_CORE = 1221.0d0
+    P_VELOCITY_MAX = 11.02827d0 ! vp: 11.26220 - 6.36400 * (1221.49/6371.)**2
+
+  case (REFERENCE_MODEL_IASP91)
+    RADIUS_INNER_CORE = 1217.0d0
+    P_VELOCITY_MAX = 11.09147d0 ! vp: 11.24094 - 4.09689 * (1216.9/6371.)**2
+
+  case (REFERENCE_MODEL_AK135F_NO_MUD)
+    RADIUS_INNER_CORE = 1217.5d0
+    P_VELOCITY_MAX = 11.0427d0 ! vp
+
+  case (REFERENCE_MODEL_1066A)
+    RADIUS_INNER_CORE = 1229.48d0
+    P_VELOCITY_MAX = 10.9687d0 ! vp
+
+  case (REFERENCE_MODEL_1DREF)
+    RADIUS_INNER_CORE = 1221.491d0
+    P_VELOCITY_MAX = 11.02827d0  ! vpv (PREM)
+
+  case (REFERENCE_MODEL_JP1D)
+    RADIUS_INNER_CORE = 1217.0d0
+    P_VELOCITY_MAX = 11.09147d0 ! vp: 11.24094 - 4.09689 * x**2 (IASP91)
+
+  case (REFERENCE_MODEL_SEA1D)
+    RADIUS_INNER_CORE = 1217.1d0
+    P_VELOCITY_MAX = 11.09142d0 ! vp
+
+  end select
+
+  ! relative minimum distance between two GLL points
+  ! the roots x_i are given by the first derivative of the Legendre Polynomial: P_n-1'(x_i) = 0
+  !
+  ! note: the x_i interval is between [-1,1], thus relative to the full length, we divide by 2
+  !
+  ! formulas:
+  ! see: https://en.wikipedia.org/wiki/Gaussian_quadrature  -> section Gauss-Lobatto rules
+  !      http://mathworld.wolfram.com/LobattoQuadrature.html
+  !
+  ! numerical values:
+  ! see: http://keisan.casio.com/exec/system/1280801905
+
+  select case (NGLLX)
+  case (3)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.0 ) ! 0.5
+
+  case (4)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - sqrt(1.d0 / 5.d0) ) ! 0.2764
+
+  case (5)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - sqrt(3.d0 / 7.d0) ) ! 0.1726
+
+  case (6)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - sqrt(1.d0/21.d0*(7.d0 + 2.d0 * sqrt(7.d0))) ) !0.117472
+
+  case (7)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.830223896278566929872 ) ! 0.084888
+
+  case (8)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.8717401485096066153374 ) ! 0.0641299
+
+  case (9)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.8997579954114601573123 ) ! 0.050121
+
+  case (10)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.9195339081664588138289 ) ! 0.040233
+
+  end select
+
 
   ! element at inner core
   elem_size = RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS) * RADIUS_INNER_CORE) / &
                 ( dble(NEX_MAX) / DOUBLING_INNER_CORE )
 
   ! minimum grid point spacing
-  min_grid_dx = elem_size * MIN_GLL_POINT_SPACING_5
+  min_grid_dx = elem_size * MIN_GLL_POINT_SPACING
 
   ! estimated time step
   DT = min_grid_dx / P_VELOCITY_MAX * MAXIMUM_STABILITY_CONDITION
-
-  !DT = ( RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS ) * RADIUS_INNER_CORE) / &
-  !     ( dble(NEX_MAX) / DOUBLING_INNER_CORE ) / P_VELOCITY_MAX) * &
-  !     MIN_GLL_POINT_SPACING_5 * MAXIMUM_STABILITY_CONDITION
 
   end subroutine auto_time_stepping
 
