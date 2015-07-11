@@ -349,8 +349,15 @@ ${E}/xcreate_movie_GMT_global: $(xcreate_movie_GMT_global_OBJECTS) $(xcreate_mov
 
 #######################################
 
-${E}/xextract_database: $(S_TOP)/utils/extract_database/extract_database.f90 ${OUTPUT}/values_from_mesher.h
-	${FCCOMPILE_CHECK} -o ${E}/xextract_database ${FCFLAGS_f90} $(S_TOP)/utils/extract_database/extract_database.f90
+xextract_database_OBJECTS = \
+	$O/extract_database.aux.o \
+	$(EMPTY_MACRO)
+
+xextract_database_SHARED_OBJECTS = \
+	$(EMPTY_MACRO)
+
+${E}/xextract_database: $(xextract_database_OBJECTS) $(xextract_database_SHARED_OBJECTS)
+	${FCCOMPILE_CHECK} -o $@ $+
 
 #######################################
 
