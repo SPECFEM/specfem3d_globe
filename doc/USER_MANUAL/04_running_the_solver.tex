@@ -262,46 +262,7 @@ the simulation.
 
 \begin{figure}[H]
 \begin{centering}
-\tikzstyle{every node}=[draw=black,thick,anchor=west]
-\tikzstyle{selected}=[draw=red,fill=red!30]
-\tikzstyle{optional}=[dashed,fill=gray!50]
-\tikzstyle{missing}=[draw=white]
-\begin{tikzpicture}[%
-  grow via three points={one child at (0.5,-0.7) and
-  two children at (0.5,-0.7) and (0.5,-1.4)},
-  edge from parent path={(\tikzparentnode.south) |- (\tikzchildnode.west)}]
-  \node {EXAMPLE\_ROOT\_DIR}
-    child { node {bin}}
-    child { node {DATA}}
-    child { node {DATABASES\_MPI}}
-    child { node {OUTPUT\_FILES}}
-    child { node [selected] {run0001}
-      child { node {DATA}}
-      child { node {DATABASES\_MPI}}
-      child { node {OUTPUT\_FILES}}
-      child { node [optional] {SEM}}
-    }
-    child [missing] {}
-    child [missing] {}
-    child [missing] {}
-    child [missing] {}
-    child { node [selected] {run0002}
-      child { node {DATA}}
-      child { node {DATABASES\_MPI}}
-      child { node {OUTPUT\_FILES}}
-      child { node [optional] {SEM}}
-    }
-    child [missing] {}
-    child [missing] {}
-    child [missing] {}
-    child [missing] {}
-    child { node [selected] {run....}
-      child { node {DATA}}
-      child { node {DATABASES\_MPI}}
-      child { node {OUTPUT\_FILES}}
-      child { node [optional] {SEM}}
-    };
-\end{tikzpicture}
+\includegraphics[width=2.2in]{figures/simultaneous_dir_struct.pdf}
 \par\end{centering}
 %
 \caption{
@@ -314,7 +275,7 @@ Figure~\ref{fig:simultaneous_dir_struct} shows what the directory structure
 should looks like when simulating multiple earthquakes at ones.
 
 \begin{itemize}
-\item The simulation is launched within the root directory \texttt{EXAMPLE\_ROOT\_DIR}
+\item The simulation is launched within the root directory \texttt{EXAMPLE\_ROOT\_DIR}\\
 (usually \texttt{mpirun -np N ./bin/xspecfem3D}).
 \item \texttt{DATA} should contain the \texttt{Par\_file} parameter file with
 \texttt{NUMBER\_OF\_SIMULTANEOUS\_RUNS} as explained in Chapter~\ref{cha:Running-the-Mesher}.
