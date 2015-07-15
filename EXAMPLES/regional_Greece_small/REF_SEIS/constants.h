@@ -203,7 +203,7 @@
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
-  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for Roland_Sylvain gravity calculations
+  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for gravity integral calculations
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
 
 ! default crustal model
@@ -421,11 +421,11 @@
 
 !!-----------------------------------------------------------
 !!
-!! for Roland_Sylvain integrals
+!! for gravity integrals
 !!
 !!-----------------------------------------------------------
 
-  logical, parameter :: ROLAND_SYLVAIN = .false.
+  logical, parameter :: GRAVITY_INTEGRALS = .false.
 
 ! reuse an existing observation surface created in another run and stored to disk,
 ! so that we are sure that they are exactly the same (for instance when comparing results for a reference ellipsoidal Earth
@@ -461,7 +461,7 @@
 
 ! number of points in each horizontal direction of the observation grid of each cubed-sphere chunk
 ! at the altitude of the observation point
-!! DK DK 4 is a fictitious value used to save memory when the ROLAND_SYLVAIN option is off
+!! DK DK 4 is a fictitious value used to save memory when the GRAVITY_INTEGRALS option is off
   integer, parameter :: NX_OBSERVATION = 4 ! 500
   integer, parameter :: NY_OBSERVATION = NX_OBSERVATION
 
