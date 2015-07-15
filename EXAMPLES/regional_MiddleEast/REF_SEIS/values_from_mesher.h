@@ -1,4 +1,4 @@
-
+ 
  !
  ! this is the parameter file for static compilation of the solver
  !
@@ -20,16 +20,16 @@
  ! total elements per slice =  3108
  ! total points per slice =  214855
  !
- ! the time step of the solver will be DT =  0.127032652
+ ! the time step of the solver will be DT =  0.126843646
  !
  ! total for full 1-chunk mesh:
  ! ---------------------------
  !
- ! exact total number of spectral elements in entire mesh =
+ ! exact total number of spectral elements in entire mesh = 
  !  198912.
- ! approximate total number of points in entire mesh =
+ ! approximate total number of points in entire mesh = 
  !  13750720.
- ! approximate total number of degrees of freedom in entire mesh =
+ ! approximate total number of degrees of freedom in entire mesh = 
  !  38576320.
  !
  ! position of the mesh chunk at the surface:
@@ -68,7 +68,7 @@
  ! average distance between points in km =  9.77299118
  ! average size of a spectral element in km =  39.0919647
  !
-
+ 
  ! approximate static memory needed by the solver:
  ! ----------------------------------------------
  !
@@ -97,36 +97,36 @@
  !                                      =  9.22136729599999996E-3  TB
  !                                      =  8.38678469881415367E-3  TiB
  !
-
+ 
  integer, parameter :: NEX_XI_VAL =  128
  integer, parameter :: NEX_ETA_VAL =  128
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE =  2816
  integer, parameter :: NSPEC_OUTER_CORE =  280
  integer, parameter :: NSPEC_INNER_CORE =  12
-
+ 
  integer, parameter :: NGLOB_CRUST_MANTLE =  192897
  integer, parameter :: NGLOB_OUTER_CORE =  20905
  integer, parameter :: NGLOB_INNER_CORE =  1053
-
+ 
  integer, parameter :: NSPECMAX_ANISO_IC =  1
-
+ 
  integer, parameter :: NSPECMAX_ISO_MANTLE =  2816
  integer, parameter :: NSPECMAX_TISO_MANTLE =  2816
  integer, parameter :: NSPECMAX_ANISO_MANTLE =  1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUATION =  2816
  integer, parameter :: NSPEC_INNER_CORE_ATTENUATION =  12
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_STR_OR_ATT =  2816
  integer, parameter :: NSPEC_INNER_CORE_STR_OR_ATT =  12
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_STR_AND_ATT =  1
  integer, parameter :: NSPEC_INNER_CORE_STR_AND_ATT =  1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_STRAIN_ONLY =  1
  integer, parameter :: NSPEC_INNER_CORE_STRAIN_ONLY =  1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_ADJOINT =  1
  integer, parameter :: NSPEC_OUTER_CORE_ADJOINT =  1
  integer, parameter :: NSPEC_INNER_CORE_ADJOINT =  1
@@ -134,47 +134,47 @@
  integer, parameter :: NGLOB_OUTER_CORE_ADJOINT =  1
  integer, parameter :: NGLOB_INNER_CORE_ADJOINT =  1
  integer, parameter :: NSPEC_OUTER_CORE_ROT_ADJOINT =  1
-
+ 
  integer, parameter :: NSPEC_CRUST_MANTLE_STACEY =  2816
  integer, parameter :: NSPEC_OUTER_CORE_STACEY =  280
-
+ 
  integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS =  192897
-
+ 
  logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.
-
+ 
  logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .false.
-
+ 
  logical, parameter :: ANISOTROPIC_INNER_CORE_VAL = .false.
-
+ 
  logical, parameter :: ATTENUATION_VAL = .true.
-
+ 
  logical, parameter :: ATTENUATION_3D_VAL = .false.
-
+ 
  logical, parameter :: ELLIPTICITY_VAL = .true.
-
+ 
  logical, parameter :: GRAVITY_VAL = .true.
-
+ 
  logical, parameter :: OCEANS_VAL = .true.
-
+ 
  integer, parameter :: NX_BATHY_VAL =  5400
  integer, parameter :: NY_BATHY_VAL =  2700
-
+ 
  logical, parameter :: ROTATION_VAL = .true.
  integer, parameter :: NSPEC_OUTER_CORE_ROTATION =  280
-
+ 
  logical, parameter :: PARTIAL_PHYS_DISPERSION_ONLY_VAL = .true.
-
+ 
  integer, parameter :: NPROC_XI_VAL =  8
  integer, parameter :: NPROC_ETA_VAL =  8
  integer, parameter :: NCHUNKS_VAL =  1
  integer, parameter :: NPROCTOT_VAL =  64
-
+ 
  integer, parameter :: ATT1_VAL =  5
  integer, parameter :: ATT2_VAL =  5
  integer, parameter :: ATT3_VAL =  5
  integer, parameter :: ATT4_VAL =  2816
  integer, parameter :: ATT5_VAL =  12
-
+ 
  integer, parameter :: NSPEC2DMAX_XMIN_XMAX_CM =  320
  integer, parameter :: NSPEC2DMAX_YMIN_YMAX_CM =  320
  integer, parameter :: NSPEC2D_BOTTOM_CM =  16
@@ -192,26 +192,26 @@
  integer, parameter :: NSPEC2D_670 =  1
  integer, parameter :: NSPEC2D_CMB =  1
  integer, parameter :: NSPEC2D_ICB =  1
-
+ 
  logical, parameter :: USE_DEVILLE_PRODUCTS_VAL = .true.
  integer, parameter :: NSPEC_CRUST_MANTLE_3DMOVIE = 1
  integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1
-
+ 
  integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 1
  integer, parameter :: NM_KL_REG_PTS_VAL = 1
-
+ 
  integer, parameter :: NGLOB_XY_CM =  192897
  integer, parameter :: NGLOB_XY_IC =  1
-
+ 
  logical, parameter :: ATTENUATION_1D_WITH_3D_STORAGE_VAL = .true.
-
+ 
  logical, parameter :: FORCE_VECTORIZATION_VAL = .true.
-
+ 
  integer, parameter :: NT_DUMP_ATTENUATION =  100000000
-
+ 
  double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL =    40.000000
  double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL =    45.000000
  double precision, parameter :: CENTER_LATITUDE_IN_DEGREES_VAL =    29.000000
  double precision, parameter :: CENTER_LONGITUDE_IN_DEGREES_VAL =    55.000000
  double precision, parameter :: GAMMA_ROTATION_AZIMUTH_VAL =     0.000000
-
+ 
