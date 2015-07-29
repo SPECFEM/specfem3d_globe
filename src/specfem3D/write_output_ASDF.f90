@@ -176,6 +176,7 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_STRING_LENGTH) :: quakeml
   character(len=MAX_STRING_LENGTH) :: provenance
   character(len=MAX_STRING_LENGTH) :: station_xml
+  character(len=MAX_STRING_LENGTH) :: sf_constants, sf_parfile
 
   integer :: num_stations, num_channels_per_station
   integer :: num_waveforms  ! == num_stations * num_channels_per_station
@@ -334,7 +335,7 @@ subroutine write_asdf(asdf_container)
   !--------------------------------------------------------
   ! write ASDF 
   !--------------------------------------------------------
-print *, "initializing ASDF"
+
   call ASDF_initialize_hdf5_f(ier);
   call ASDF_create_new_file_f(trim(filename), comm, file_id)
 
@@ -343,11 +344,12 @@ print *, "initializing ASDF"
   call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
                                      "0.0.2" // C_NULL_CHAR, ier)
 
-  print *, trim(quakeml)
-print *, "****************"
+
   call ASDF_write_quakeml_f(file_id, quakeml, ier)
   call ASDF_write_provenance_data_f(file_id, provenance, ier)
-  !call ASDF_write_auxiliary_data_f(file_id, "test1", "test2", ier)
+  call read_file("setup/constants.h", sf_constants)
+  call read_file("DATA/Par_file", sf_parfile)
+  call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants), trim(sf_parfile), ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
@@ -468,3 +470,21 @@ subroutine station_to_stationxml(station_name, irec, stationxmlstring)
                       '</FDSNStationXML>'
 
 end subroutine station_to_stationxml
+
+subroutine read_file(filename, filestring)
+
+  implicit none
+  character(len=*) :: filestring
+  character(len=*) :: filename
+  integer :: file_size
+
+  open(10, file=filename, status='old')
+  inquire(unit=10, size=file_size)
+  close(10)
+
+  open(10, file=filename, status='old', &
+         recl=file_size, form='unformatted', access='direct')
+  read (10, rec=1) filestring
+  close(10)
+
+end subroutine read_file
