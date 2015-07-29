@@ -41,133 +41,163 @@
 ! limitations under the License.
 !==============================================================================
 
-!> Initializes the data structure for ASDF
-!! \param asdf_container The ASDF data structure
-!! \param total_seismos_local The number of records on the local processor
-subroutine init_asdf_data(asdf_container,total_seismos_local)
-
-  use asdf_data
-  use specfem_par, only : event_name_SAC,myrank
-
-  ! Parameters
-  type(asdf_event),intent(inout) :: asdf_container
-  integer,intent(in) :: total_seismos_local
-
-  ! Variables
-  integer :: ier
-
-  asdf_container%event = trim(event_name_SAC)
-
-  allocate (asdf_container%receiver_name_array(total_seismos_local), &
-            STAT=ier)
-  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
-  allocate (asdf_container%network_array(total_seismos_local), STAT=ier)
-  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
-  allocate (asdf_container%component_array(total_seismos_local), STAT=ier)
-  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
-  allocate (asdf_container%records(total_seismos_local), STAT=ier)
-  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
-
-end subroutine init_asdf_data
-
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-!> Stores the records into the ASDF structure
-!! \param asdf_container The ASDF data structure
-!! \param seismogram_tmp The current seismogram to store
-!! \param irec_local The local index of the receivers on the local processor
-!! \param irec The global index of the receiver
-!! \param chn The broadband channel simulated
-!! \param iorientation The recorded seismogram's orientation direction
-!! \param phi The angle used for calculating azimuth and incident angle
-subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
-                           irec, chn, iorientation, phi)
+!> Read the ASDF file
+subroutine read_asdf()
 
-  use asdf_data
-  use specfem_par,only: &
-    station_name,network_name,stlat,stlon,stele,stbur, &
-    DT,t0, seismo_offset,seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC, &
-    tshift_cmt=>t_cmt_SAC, &
-    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC, &
-    cmt_depth=>cmt_depth_SAC
-
-  use specfem_par, only: myrank
-  use constants
-
-  implicit none
-
-  ! Parameters
-  type(asdf_event),intent(inout) :: asdf_container
-  character(len=4),intent(in) :: chn
-  integer,intent(in) :: irec_local, irec
-  real(kind=CUSTOM_REAL),dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS),intent(in) :: seismogram_tmp
-  integer,intent(in) :: iorientation
-  double precision,intent(in) :: phi
-  ! local Variables
-  integer :: length_station_name, length_network_name
-  integer :: ier, i
-
-  ! trace index
-  i = (irec_local-1)*(3) + (iorientation)
-
-  length_station_name = len_trim(station_name(irec))
-  length_network_name = len_trim(network_name(irec))
-  asdf_container%receiver_name_array(i) = station_name(irec)(1:length_station_name)
-  asdf_container%network_array(i) = network_name(irec)(1:length_network_name)
-  asdf_container%component_array(i) = chn
-
-  print *, phi
-  allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
-  if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
-  asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
-
-end subroutine store_asdf_data
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-!> Closes the ASDF data structure by deallocating all arrays
-!! \param asdf_container The ASDF data structure
-!! \param total_seismos_local The number of seismograms on the local processor
-subroutine close_asdf_data(asdf_container, total_seismos_local)
-
-  use asdf_data
-  ! Parameters
-  type(asdf_event),intent(inout) :: asdf_container
-  integer,intent(in) :: total_seismos_local
-  !Variables
-  integer :: i
-
-  do i = 1, total_seismos_local
-    deallocate(asdf_container%records(i)%record)
-  enddo
-  deallocate (asdf_container%receiver_name_array)
-  deallocate (asdf_container%network_array)
-  deallocate (asdf_container%component_array)
-
-end subroutine close_asdf_data
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-!> Writes the ASDF data structure to the file
-!! \param asdf_container The ASDF data structure
-subroutine write_asdf(asdf_container)
-
-  use asdf_data
   use iso_c_binding
   use specfem_par
 
   implicit none
+
+  integer, parameter :: MAX_STRING_LENGTH = 256
+
+  character(len=MAX_STRING_LENGTH) :: filename
+
+  integer :: num_stations, num_channels_per_station
+  integer :: num_waveforms  ! == num_stations * num_channels_per_station
+  ! The number of channels per station is constant, as in SPECFEM
+  integer :: start_time, nsamples  ! constant, as in SPECFEM
+  ! Network names and station names are two different beast, as in SPECFEM
+  ! network_names(i) is related to station_names(i)
+  character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: network_names
+  character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: station_names
+  ! data. dimension = nsamples * num_channels_per_station * num_stations
+  real, dimension(:, :, :), allocatable :: waveforms
+
+  character(len=MAX_STRING_LENGTH) :: station_name, waveform_name, path
+
+  !-- ASDF variables 
+  integer :: file_id   ! HDF5 file id, also root group "/"
+  integer :: station_exists, waveform_exists
+  integer :: nsamples_infered
+
+  !--- MPI variables
+  integer :: myrank, mysize, comm
+  !--- Loop variables
+  integer :: i, j, k
+  !--- Error variable
+  integer :: ier
+
+  ! alias mpi communicator
+  call world_duplicate(comm)
+  call world_size(mysize)
+
+  !--------------------------------------------------------
+  ! Setup data on each process.
+  !--------------------------------------------------------
+  filename = "synthetic.h5"
+
+  num_stations = nrec_local
+  num_channels_per_station = 3
+  nsamples = seismo_current
+  num_waveforms = num_stations * num_channels_per_station
+
+  allocate(network_names(num_stations), stat=ier)
+  allocate(station_names(num_stations), stat=ier)
+  allocate(waveforms(nsamples, num_channels_per_station, num_stations), &
+           stat=ier)
+
+  do i = 1, num_stations
+    write(network_names(i), '(a,i0.2)') "NTWK_", myrank
+    write(station_names(i), '(a,i0.2,a,i0.2)') "STAT_", myrank, "_", i
+  enddo
+
+  !--------------------------------------------------------
+  ! Read the ASDF file.
+  !--------------------------------------------------------
+print *, "initalizing ASDF"
+  call ASDF_initialize_hdf5_f(ier);
+  call ASDF_open_read_only_f(trim(filename) // C_NULL_CHAR, comm, file_id)
+
+  do j = 1, num_stations
+    station_name = trim(network_names(j)) // '.' // &
+                   trim(station_names(j))
+    call ASDF_station_exists_f(file_id, &
+                               trim(station_name) // C_NULL_CHAR, &
+                               station_exists)
+    if (station_exists > 0) then
+      do  i = 1, num_channels_per_station
+        ! Generate dummy waveform names to match write_example.f90 output
+        ! Note to fortran users:
+        !   be sure to trim your strings and to append '\0' (i.e
+        !   C_NULL_CHAR) to them.
+        write(waveform_name, '(a,i0.2)') &
+            trim(network_names(j)) // "." //      &
+            trim(station_names(j)) // ".channel_", i
+        call ASDF_waveform_exists_f(file_id, &
+                                    trim(station_name) // C_NULL_CHAR, &
+                                    trim(waveform_name) // C_NULL_CHAR, &
+                                    waveform_exists)
+        path = "/Waveforms/" // trim(station_name) // "/" &
+            // trim(waveform_name) //  C_NULL_CHAR
+        call ASDF_get_num_elements_from_path_f(file_id, path, nsamples_infered)
+        if (nsamples_infered == nsamples) then
+          call ASDF_read_full_waveform_f(file_id, &
+                                         trim(path) // C_NULL_CHAR, &
+                                         waveforms(:, i, j), ier)
+          if (myrank == mysize-1) then
+            print *, "-------------------------------------------------"
+            print *, trim(waveform_name)
+            print *, "-------------------------------------------------"
+            print *, waveforms(:, i, j)
+            print *, ""
+            !call flush()
+          endif
+        endif
+      enddo
+    endif
+  enddo
+
+  !--------------------------------------------------------
+  ! Clean up
+  !--------------------------------------------------------
+  call ASDF_finalize_hdf5_f(ier);
+  call MPI_Finalize(ier)
+
+end subroutine read_asdf
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
 
-  integer, parameter :: MAX_STRING_LENGTH = 7555
+  integer, parameter :: MAX_STRING_LENGTH = 256
 
   character(len=MAX_STRING_LENGTH) :: filename
 
@@ -218,13 +248,6 @@ subroutine write_asdf(asdf_container)
 
   ! temporary name built from network, station and channel names.
   character(len=MAX_STRING_LENGTH) :: waveform_name
-  character(len=5) :: startTime, endTime
-
-  ! C/Fortran interop for C-allocated strings
-  integer :: len
-
-  type(c_ptr) :: cptr
-  character, pointer :: fptr(:)
 
   ! alias mpi communicator for ADIOS
   call world_duplicate(comm)
@@ -236,9 +259,9 @@ subroutine write_asdf(asdf_container)
 
   filename = "synthetic.h5"
   event_name = trim(event_name_SAC)
+  provenance = "<provenance>"
 ! CMT to quakeml converter
   station_xml = "<station_xml>"
-  provenance = "provenance"
 
   num_stations = nrec_local
   num_channels_per_station = 3
@@ -248,15 +271,7 @@ subroutine write_asdf(asdf_container)
   num_waveforms = num_stations * num_channels_per_station
 
   call cmt_to_quakeml(quakeml)
-
-  write(startTime, "(F5.2)") start_time
-  write(endTime, "(F5.2)") start_time
-
-  call ASDF_clean_provenance_f(cptr)
-  call ASDF_generate_sf_provenance_f(startTime//C_NULL_CHAR, endTime//C_NULL_CHAR, cptr, len)
-  call c_f_pointer(cptr, fptr, [len])
-  print *, fptr
-
+  call generate_provenance(provenance)
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
@@ -343,19 +358,16 @@ print *, "initializing ASDF"
   call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
                                      "0.0.2" // C_NULL_CHAR, ier)
 
-  print *, trim(quakeml)
-print *, "****************"
-  call ASDF_write_quakeml_f(file_id, quakeml, ier)
-  call ASDF_write_provenance_data_f(file_id, provenance, ier)
-  !call ASDF_write_auxiliary_data_f(file_id, "test1", "test2", ier)
+  call ASDF_write_quakeml_f(file_id, trim(quakeml), ier)
+  call ASDF_write_provenance_data_f(file_id, trim(provenance), ier)
+  call ASDF_write_auxiliary_data_f(file_id, ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
   print *, "defining waveforms"
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
-      call station_to_stationxml(station_names_gather(j,k), k, station_xml)
-      print *, trim(station_xml)
+      call station_to_stationxml(station_names_gather(j,k), station_xml)
       call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
@@ -414,57 +426,4 @@ print *, "****************"
   deallocate(stations_names)
   deallocate(networks_names)
 
-end subroutine write_asdf
-
-subroutine cmt_to_quakeml(quakemlstring)
-
-  use specfem_par,only:&
-    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC
-
-  implicit none
-  character(len=*) :: quakemlstring
-  character(len=5) :: lon_str, lat_str, dep_str
-
-  write(lon_str, "(F5.2)") cmt_lat
-  write(lat_str, "(F5.2)") cmt_lon
-  write(dep_str, "(F5.2)") cmt_depth
-
-  quakemlstring = '<q:quakeml xsi:schemaLocation="http://quakeml.org/schema/xsd/QuakeML-1.2.xsd" '//&
-                  'xmlns="http://quakeml.org/xmlns/bed/1.2" xmlns:q="http://quakeml.org/xmlns/quakeml/1.2" xmlns:xsi="http://'//&
-                  'www.w3.org/2001/XMLSchema-instance">'//&
-                  '<eventParameters publicID="smi:service.iris.edu/fdsnws/event/1/query">'//&
-                  '<longitude><value>'//trim(lon_str)//'</value></longitude><latitude><value>'//trim(lat_str)//&
-                  '</value></latitude><depth><value>'//trim(dep_str)//'</value></depth>'//&
-                  '</eventParameters>'//&
-                  '</q:quakeml>'
-
-end subroutine cmt_to_quakeml
-
-subroutine station_to_stationxml(station_name, irec, stationxmlstring)
-
-  use specfem_par,only:&
-    stlat, stlon
-
-  implicit none
-  character(len=*) :: station_name, stationxmlstring
-  character(len=5) :: station_lat, station_lon
-  integer, intent(in) :: irec
-
-  write(station_lat, "(F5.2)") stlat(irec)
-  write(station_lon, "(F5.2)") stlon(irec) 
-
-  stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
-                     '<Source>Erdbebendienst Bayern</Source>'//&
-                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
-                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
-                      '<Created>2014-03-03T11:07:06+00:00</Created>'//&
-                      '<Network code="IU"><Station code="ANTO" startDate="2006-12-16T00:00:00+00:00">'//&
-                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
-                      '<Elevation>565.0</Elevation>'//&
-                      '<Site><Name>Fuerstenfeldbruck, Bavaria, GR-Net</Name></Site>'//&
-                      '<CreationDate>2006-12-16T00:00:00+00:00</CreationDate>'//&
-                      '</Station></Network>'//&
-                      '</FDSNStationXML>'
-
-end subroutine station_to_stationxml
+end subroutine read_asdf
