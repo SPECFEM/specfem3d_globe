@@ -1769,7 +1769,7 @@
   ! (needed for better performance on clusters, otherwise i/o will become a serious bottleneck)
   ! size of a single noise movie snapshot at surface (in MB)
   sizeval = dble(CUSTOM_REAL) * dble(NDIM) * dble(NGLLX) * dble(NGLLY) * dble(NSPEC_TOP) / 1024.d0 / 1024.d0
-  ! sets file i/o buffer size 
+  ! sets file i/o buffer size
   if (NOISE_TOMOGRAPHY == 3 .and. UNDO_ATTENUATION) then
     ! needs to align with attenuation buffer size, otherwise things will get very complicated
     NT_DUMP_NOISE_BUFFER = NT_DUMP_ATTENUATION
@@ -1786,7 +1786,7 @@
     write(IMAIN,*) "    start time           = ",sngl(-t0)," seconds"
     write(IMAIN,*) "    time step            = ",sngl(DT)," s"
     write(IMAIN,*) "    number of time steps = ",NSTEP
-    ! noise surface movie array size 
+    ! noise surface movie array size
     ! (holds displacement at surface for a single time step)
     write(IMAIN,*) "  arrays:"
     write(IMAIN,*) "    size of noise surface movie array = ",sngl(sizeval),"MB"

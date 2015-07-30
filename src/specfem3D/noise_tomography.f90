@@ -658,7 +658,7 @@
   !call write_abs(9,noise_surface_movie,reclen_noise,it)
   !
   ! note: due to heavy file i/o, the output of the noise surface movie at every timestep will heavily hit the file servers;
-  !       we will be using chunks of multiple time steps to alleviate this. 
+  !       we will be using chunks of multiple time steps to alleviate this.
   !
   !       however, performance of writing will be almost the same, since it only appends data (for binary i/o, not map i/o)
   !       without the need of repositioning the file head. Repositioing will be use for reading in reverse order in
@@ -686,7 +686,7 @@
 
   ! debug
   !if (myrank == 0) &
-  !  print*,'buffer step:',it,'index:',it,'counter:',icounter_noise_buffer,'buffer index:',it_buffer
+  !  print *,'buffer step:',it,'index:',it,'counter:',icounter_noise_buffer,'buffer index:',it_buffer
 
   ! save current step to buffer
   noise_buffer(:,:,:,:,it_buffer) = noise_surface_movie(:,:,:,:)
@@ -699,7 +699,7 @@
 
     ! writes out buffer to file
     ! debug
-    !if (myrank == 0) print*,'  write i/o steps:',nstep_subset_noise_buffer,'index:',it_write_index
+    !if (myrank == 0) print *,'  write i/o steps:',nstep_subset_noise_buffer,'index:',it_write_index
 
     ! reads in buffer
     call write_abs_buffer(9,noise_buffer,reclen_noise * nstep_subset_noise_buffer,it_write_index,reclen_noise)
@@ -739,7 +739,7 @@
   use specfem_par,only: CUSTOM_REAL,NDIM,NOISE_TOMOGRAPHY,GPU_MODE,UNDO_ATTENUATION, &
     myrank,Mesh_pointer,wgllwgll_xy,it,it_end, &
     NSTEP,NSUBSET_ITERATIONS,NT_DUMP_ATTENUATION,iteration_on_subset,it_subset_end,it_of_this_subset
-    
+
   use specfem_par_crustmantle,only: NSPEC_TOP,ibelm_top_crust_mantle,ibool_crust_mantle,jacobian2D_top_crust_mantle
   use specfem_par_noise
 
@@ -768,7 +768,7 @@
       ! this is called from compute_forces_viscoelastic_backward() routine by
       ! > call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,it)
       !
-      ! time step here should be (reversal of reverse): NSTEP - (NSTEP - it + 1) + 1 = it 
+      ! time step here should be (reversal of reverse): NSTEP - (NSTEP - it + 1) + 1 = it
       ! for "normal" case of it = 1,..,NSTEP
       !
       ! special case reconstructs wavefield in chunks, going forward from last saved snapshots
@@ -806,7 +806,7 @@
       nstep_subset_noise_buffer = it_end - it + 1
     endif
 
-    ! special case 
+    ! special case
     if (NOISE_TOMOGRAPHY == 3 .and. UNDO_ATTENUATION) then
       ! note that buffer size NT_DUMP_NOISE_BUFFER will match attenuation buffer size NT_DUMP_ATTENUATION
       nstep_subset_noise_buffer = it_subset_end
@@ -831,7 +831,7 @@
     endif
 
     ! debug
-    !if (myrank == 0) print*,'  read i/o steps:',nstep_subset_noise_buffer,'index:',it_read_index,it_index_tmp
+    !if (myrank == 0) print *,'  read i/o steps:',nstep_subset_noise_buffer,'index:',it_read_index,it_index_tmp
 
     ! reads in buffer
     call read_abs_buffer(9,noise_buffer,reclen_noise * nstep_subset_noise_buffer,it_read_index,reclen_noise)
@@ -848,7 +848,7 @@
 
   ! debug
   !if (myrank == 0) &
-  !  print*,'buffer step:',it,'index:',it_index_tmp,'counter:',icounter_noise_buffer,'buffer index:',it_buffer
+  !  print *,'buffer step:',it,'index:',it_index_tmp,'counter:',icounter_noise_buffer,'buffer index:',it_buffer
 
   ! takes current step from buffer
   noise_surface_movie(:,:,:,:) = noise_buffer(:,:,:,:,it_buffer)
