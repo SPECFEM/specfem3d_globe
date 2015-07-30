@@ -284,7 +284,8 @@ void close_file_abs_fbin(int * fid) {
 
 void write_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 // writes binary file data in chunks of MAX_B
-
+//
+// note: index not used, data will be appended
   FILE *ft;
   int itemlen,remlen,donelen,ret;
 
@@ -310,6 +311,38 @@ void write_abs_fbin(int *fid, char *buffer, int *length, int *index) {
   }
 }
 
+void write_abs_buffer_fbin(int *fid, char *buffer, int *length, int *index, int *unit_length) {
+// writes binary file data in chunks of MAX_B
+//
+// note: index not used, data will be appended
+//       unit_length not used as well
+//       (given for similar function call as for write_abs_**_map() functions)
+  FILE *ft;
+  int itemlen,remlen,donelen,ret;
+
+  // file pointer
+  ft = fp_abs[*fid];
+
+  donelen = 0;
+  remlen = *length;
+
+  // writes items of maximum MAX_B to the file
+  while (remlen > 0) {
+
+    itemlen = MIN(remlen,MAX_B);
+    ret = fwrite(buffer,1,itemlen,ft);
+    if (ret > 0) {
+      donelen = donelen + ret;
+      remlen = remlen - MAX_B;
+      buffer += MAX_B;
+    }
+    else{
+      remlen = 0;
+    }
+  }
+}
+
+
 void read_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 // reads binary file data in chunks of MAX_B
 
@@ -322,6 +355,53 @@ void read_abs_fbin(int *fid, char *buffer, int *length, int *index) {
 
   // positions file pointer (for reverse time access)
   pos = ((long long)*length) * (*index -1 );
+
+  ret = fseek(ft, pos , SEEK_SET);
+  if (ret != 0 ) {
+    perror("Error fseek");
+    exit(EXIT_FAILURE);
+  }
+
+  donelen = 0;
+  remlen = *length;
+
+  // reads items of maximum MAX_B to the file
+  while (remlen > 0) {
+
+    // checks end of file
+    if (ferror(ft) || feof(ft)) return;
+
+    itemlen = MIN(remlen,MAX_B);
+    ret = fread(buffer,1,itemlen,ft);
+
+    if (ferror(ft) || feof(ft)) return;
+
+    if (ret > 0) {
+      donelen = donelen + ret;
+      remlen = remlen - MAX_B;
+      buffer += MAX_B;
+    }
+    else{
+      remlen = 0;
+    }
+  }
+}
+
+void read_abs_buffer_fbin(int *fid, char *buffer, int *length, int *index, int *unit_length) {
+// reads binary file data in chunks of MAX_B
+//
+// note: positioning the file head here uses strides of a given unit_length
+//       (opposite to read_abs_fbin which assumes to have same unit_length and buffer length)
+
+  FILE *ft;
+  int ret,itemlen,remlen,donelen;
+  long long pos;
+
+  // file pointer
+  ft = fp_abs[*fid];
+
+  // positions file pointer (for reverse time access)
+  pos = ((long long)*unit_length) * (*index -1 );
 
   ret = fseek(ft, pos , SEEK_SET);
   if (ret != 0 ) {
@@ -543,6 +623,21 @@ void write_abs_map(int *fid, char *buffer, int *length , int *index) {
   memcpy( &map[offset], buffer, *length );
 }
 
+void write_abs_buffer_map(int *fid, char *buffer, int *length , int *index, int* unit_length) {
+  char *map;
+  long long offset;
+
+  map = map_abs[*fid];
+
+  // offset in bytes
+  // uses strides of unit length
+  offset =  ((long long)*index -1 ) * (*unit_length) ;
+
+  // copies buffer to map
+  memcpy( &map[offset], buffer, *length );
+}
+
+
 void read_abs_map(int *fid, char *buffer, int *length , int *index) {
   char *map;
   long long offset;
@@ -551,6 +646,20 @@ void read_abs_map(int *fid, char *buffer, int *length , int *index) {
 
   // offset in bytes
   offset =  ((long long)*index -1 ) * (*length) ;
+
+  // copies map to buffer
+  memcpy( buffer, &map[offset], *length );
+}
+
+void read_abs_buffer_map(int *fid, char *buffer, int *length , int *index, int *unit_length) {
+  char *map;
+  long long offset;
+
+  map = map_abs[*fid];
+
+  // offset in bytes
+  // note: positioning uses strides of unit_length; buffer length can be larger than unit_length
+  offset =  ((long long)*index -1 ) * (*unit_length) ;
 
   // copies map to buffer
   memcpy( buffer, &map[offset], *length );
@@ -604,6 +713,7 @@ FC_FUNC_(close_file_abs,CLOSE_FILES_ABS)(int *fid)
 #endif
 }
 
+// read/write wrappers
 void
 FC_FUNC_(write_abs,WRITE_ABS)(int *fid, char *buffer, int *length , int *index)
 {
@@ -623,4 +733,26 @@ FC_FUNC_(read_abs,READ_ABS)(int *fid, char *buffer, int *length , int *index)
   read_abs_fbin(fid,buffer,length,index);
 #endif
 }
+
+// buffered read/write wrappers
+void
+FC_FUNC_(write_abs_buffer,WRITE_ABS_BUFFER)(int *fid, char *buffer, int *length , int *index, int *unit_length)
+{
+#ifdef USE_MAP_FUNCTION
+  write_abs_buffer_map(fid,buffer,length,index,unit_length);
+#else
+  write_abs_buffer_fbin(fid,buffer,length,index,unit_length);
+#endif
+}
+
+void
+FC_FUNC_(read_abs_buffer,READ_ABS_BUFFER)(int *fid, char *buffer, int *length , int *index, int *unit_length)
+{
+#ifdef USE_MAP_FUNCTION
+  read_abs_buffer_map(fid,buffer,length,index,unit_length);
+#else
+  read_abs_buffer_fbin(fid,buffer,length,index,unit_length);
+#endif
+}
+
 

@@ -289,6 +289,18 @@
 
 !!-----------------------------------------------------------
 !!
+!! noise simulations
+!!
+!!-----------------------------------------------------------
+
+! noise buffer for file i/o
+! maximum noise buffer size in MB (will be used to evaluate number of steps for buffer, when UNDO_ATTENUATION == .false.)
+! good performance results obtained for buffer sizes ~ 150 MB
+  double precision,parameter :: MAXIMUM_NOISE_BUFFER_SIZE_IN_MB = 150.d0
+
+
+!!-----------------------------------------------------------
+!!
 !! mesh optimization
 !!
 !!-----------------------------------------------------------

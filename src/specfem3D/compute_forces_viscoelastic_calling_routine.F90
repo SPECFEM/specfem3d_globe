@@ -660,7 +660,8 @@
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
         ! the ensemble adjoint wavefield is done as usual
-        ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
+        !
+        ! note instead of "NSTEP-it+1", now we use "it", since reconstruction is a reversal of reversal
         call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,it)
 
       end select

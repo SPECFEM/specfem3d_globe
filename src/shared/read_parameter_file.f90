@@ -340,8 +340,6 @@
   if (USE_LDDRK .and. GPU_MODE ) &
     stop 'USE_LDDRK support not implemented yet for GPU simulations'
 
-  if (UNDO_ATTENUATION .and. NOISE_TOMOGRAPHY > 0 ) &
-    stop 'UNDO_ATTENUATION support not implemented yet for noise simulations'
   if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
   if (UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &

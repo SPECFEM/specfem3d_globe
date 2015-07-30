@@ -1011,6 +1011,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
   use specfem_par_movie
   implicit none
 
@@ -1521,7 +1522,7 @@
 
     ! total file size
     filesize = reclen_xmin_crust_mantle
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(0,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_xmin.bin'), &
@@ -1539,7 +1540,7 @@
 
     ! total file size
     filesize = reclen_xmax_crust_mantle
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(1,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
@@ -1557,7 +1558,7 @@
 
     ! total file size
     filesize = reclen_ymin_crust_mantle
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
 
     if (SIMULATION_TYPE == 3) then
@@ -1576,7 +1577,7 @@
 
     ! total file size
     filesize = reclen_ymax_crust_mantle
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(3,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
@@ -1647,7 +1648,7 @@
 
     ! total file size
     filesize = reclen_xmin_outer_core
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(4,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
@@ -1665,7 +1666,7 @@
 
     ! total file size
     filesize = reclen_xmax_outer_core
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(5,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
@@ -1683,7 +1684,7 @@
 
     ! total file size
     filesize = reclen_ymin_outer_core
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(6,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
@@ -1701,7 +1702,7 @@
 
     ! total file size
     filesize = reclen_ymax_outer_core
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(7,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
@@ -1719,7 +1720,7 @@
 
     ! total file size
     filesize = reclen_zmin
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(8,trim(prname)//'absorb_zmin.bin',len_trim(trim(prname)//'absorb_zmin.bin'), &
@@ -1742,11 +1743,13 @@
   subroutine prepare_timerun_noise()
 
   use specfem_par
-  use specfem_par_crustmantle
+  use specfem_par_crustmantle,only: NSPEC_TOP
+  use specfem_par_noise
 
   implicit none
   ! local parameters
   integer :: ier
+  double precision :: sizeval
 
   ! NOISE TOMOGRAPHY
   ! checks if anything to do
@@ -1756,21 +1759,48 @@
   if (myrank == 0) then
     write(IMAIN,*) "preparing noise arrays"
     write(IMAIN,*) "  NOISE_TOMOGRAPHY = ",NOISE_TOMOGRAPHY
+    call flush_IMAIN()
+  endif
+
+  ! checks noise setup
+  call check_parameters_noise()
+
+  ! determines file i/o buffer size for surface movies
+  ! (needed for better performance on clusters, otherwise i/o will become a serious bottleneck)
+  ! size of a single noise movie snapshot at surface (in MB)
+  sizeval = dble(CUSTOM_REAL) * dble(NDIM) * dble(NGLLX) * dble(NGLLY) * dble(NSPEC_TOP) / 1024.d0 / 1024.d0
+  ! sets file i/o buffer size 
+  if (NOISE_TOMOGRAPHY == 3 .and. UNDO_ATTENUATION) then
+    ! needs to align with attenuation buffer size, otherwise things will get very complicated
+    NT_DUMP_NOISE_BUFFER = NT_DUMP_ATTENUATION
+  else
+    ! sets a user specified maximum size (given in MB)
+    NT_DUMP_NOISE_BUFFER = int(MAXIMUM_NOISE_BUFFER_SIZE_IN_MB / sizeval)
+    ! limits size
+    if (NT_DUMP_NOISE_BUFFER > NSTEP) NT_DUMP_NOISE_BUFFER = NSTEP
+  endif
+
+  ! user info
+  if (myrank == 0) then
     write(IMAIN,*) "  timing:"
     write(IMAIN,*) "    start time           = ",sngl(-t0)," seconds"
     write(IMAIN,*) "    time step            = ",sngl(DT)," s"
     write(IMAIN,*) "    number of time steps = ",NSTEP
-    ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
-    write(IMAIN,*) "  ignoring CMT sources"
+    ! noise surface movie array size 
+    ! (holds displacement at surface for a single time step)
+    write(IMAIN,*) "  arrays:"
+    write(IMAIN,*) "    size of noise surface movie array = ",sngl(sizeval),"MB"
+    write(IMAIN,*) "                                      = ",sngl(sizeval / 1024.d0),"GB"
+    ! buffer size for file i/o
+    write(IMAIN,*) "  noise buffer: "
+    write(IMAIN,*) "    number of buffered time steps = ",NT_DUMP_NOISE_BUFFER
+    write(IMAIN,*) "    size of noise buffer array for each slice = ",sngl(sizeval * dble(NT_DUMP_NOISE_BUFFER)),"MB"
+    write(IMAIN,*) "                                              = ",sngl(sizeval * dble(NT_DUMP_NOISE_BUFFER) / 1024.d0),"GB"
     call flush_IMAIN()
   endif
 
   ! synchronizes processes
   call synchronize_all()
-
-  ! checks that number of spectral elements at surface is set (from read_mesh_databases_CM() routine)
-  if (NSPEC_TOP /= NSPEC2D_TOP(IREGION_CRUST_MANTLE)) &
-    call exit_MPI(myrank,'Error invalid number of NSPEC_TOP for noise simulation')
 
   ! for noise tomography, number of surface (movie) points needed for 'surface movie';
   ! surface output must NOT be coarse (have to be saved on all GLL points)
@@ -1778,8 +1808,20 @@
   num_noise_surface_points = NGLLX * NGLLY * NSPEC_TOP
 
   ! allocates noise arrays
-  allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
-           normal_x_noise(num_noise_surface_points), &
+  if (NOISE_TOMOGRAPHY == 1) then
+    ! master noise source (only needed for 1. step)
+    allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise source array')
+  else
+    ! dummy
+    allocate(noise_sourcearray(1,1,1,1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise source array')
+  endif
+  ! initializes
+  noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
+
+  ! ensemble surface noise
+  allocate(normal_x_noise(num_noise_surface_points), &
            normal_y_noise(num_noise_surface_points), &
            normal_z_noise(num_noise_surface_points), &
            mask_noise(num_noise_surface_points), &
@@ -1787,21 +1829,39 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise arrays')
 
   ! initializes
-  noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
   normal_x_noise(:)            = 0._CUSTOM_REAL
   normal_y_noise(:)            = 0._CUSTOM_REAL
   normal_z_noise(:)            = 0._CUSTOM_REAL
   mask_noise(:)                = 0._CUSTOM_REAL
   noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
 
-  ! gets noise parameters
-  call read_parameters_noise()
+  ! file i/o buffer
+  ! checks integer size limit: size of buffer must fit onto an 4-byte integer (<2 GB)
+  if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM * NT_DUMP_NOISE_BUFFER)) then
+    print *,'buffer of noise surface_movie needed exceeds integer 4-byte limit: ',dble(reclen_noise) * dble(NT_DUMP_NOISE_BUFFER)
+    print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP,NT_DUMP_NOISE_BUFFER
+    print *,'bit size fortran: ',bit_size(NSPEC_TOP)
+    print *,'NT_DUMP_NOISE_BUFFER: ',NT_DUMP_NOISE_BUFFER
+    print *,'Please reduce size of noise buffer for file i/o ...'
+    call exit_MPI(myrank,"Error NT_DUMP_NOISE_BUFFER leads to buffer length exceeding integer limit (2 GB)")
+  endif
 
-  ! checks noise setup
-  call check_parameters_noise()
+  ! allocates buffer memory
+  allocate(noise_buffer(NDIM,NGLLX,NGLLY,NSPEC_TOP,NT_DUMP_NOISE_BUFFER),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise buffer array')
+
+  ! initializes buffer and counters
+  noise_buffer(:,:,:,:,:) = 0._CUSTOM_REAL
+  icounter_noise_buffer = 0
+  nstep_subset_noise_buffer = 0
+
+  ! gets noise parameters and sets up arrays
+  call read_parameters_noise()
 
   ! user output
   if(myrank == 0) then
+    ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
+    write(IMAIN,*) "  ignoring CMT sources"
     select case (NOISE_TOMOGRAPHY)
     case (1)
       write(IMAIN,*) "  noise source uses master record id = ",irec_master_noise
@@ -1815,6 +1875,9 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! user output of distances to master station
+  if (NOISE_TOMOGRAPHY == 1) call print_master_distances_noise()
 
   ! synchronizes processes
   call synchronize_all()
@@ -1831,6 +1894,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
   use specfem_par_movie
 
   implicit none

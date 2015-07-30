@@ -156,7 +156,7 @@
   logical :: ibool_read_adj_arrays
 
   ! note: we check if nadj_rec_local > 0 before calling this routine, but better be safe...
-  if (nadj_rec_local == 0 ) return
+  if (nadj_rec_local == 0) return
 
   ! figure out if we need to read in a chunk of the adjoint source at this timestep
   ibool_read_adj_arrays = ( (it == it_begin) .or. (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) )

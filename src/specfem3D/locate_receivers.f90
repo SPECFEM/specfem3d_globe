@@ -357,7 +357,6 @@
 
     ! record three components for each station
     do iorientation = 1,3
-
       !     North
       if (iorientation == 1) then
         stazi = 0.d0
@@ -395,7 +394,6 @@
       nu(iorientation,1,irec) = n(1)*sint*cosp+n(2)*cost*cosp-n(3)*sinp
       nu(iorientation,2,irec) = n(1)*sint*sinp+n(2)*cost*sinp+n(3)*cosp
       nu(iorientation,3,irec) = n(1)*cost-n(2)*sint
-
     enddo
 
     ! normalized receiver radius
@@ -409,11 +407,12 @@
     ! ellipticity
     if (ELLIPTICITY_VAL) then
       cost=cos(theta)
-! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
+      ! this is the Legendre polynomial of degree two, P2(cos(theta)),
+      ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
       p20=0.5d0*(3.0d0*cost*cost-1.0d0)
-! get ellipticity using spline evaluation
+      ! get ellipticity using spline evaluation
       call spline_evaluation(rspl,espl,espl2,nspl,r0,ell)
-! this is eq (14.4) in Dahlen and Tromp (1998)
+      ! this is eq (14.4) in Dahlen and Tromp (1998)
       r0=r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
     endif
 

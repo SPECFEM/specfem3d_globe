@@ -147,6 +147,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
   use specfem_par_movie
   implicit none
 
@@ -276,6 +277,8 @@
     deallocate(noise_sourcearray, &
                normal_x_noise,normal_y_noise,normal_z_noise, &
                mask_noise,noise_surface_movie)
+    ! file i/o buffer
+    deallocate(noise_buffer)
   endif
 
   ! VTK visualization

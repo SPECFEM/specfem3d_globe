@@ -259,6 +259,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
 
   implicit none
 

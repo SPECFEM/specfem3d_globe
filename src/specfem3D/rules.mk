@@ -112,6 +112,7 @@ specfem3D_MODULES = \
 	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_outercore.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_noise.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
 	$(FC_MODDIR)/write_seismograms_mod.$(FC_MODEXT) \
 	$(EMPTY_MACRO)

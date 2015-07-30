@@ -45,10 +45,13 @@ function [ ] = NOISE_TOMOGRAPHY(NSTEP,dt,Tmin,Tmax,NOISE_MODEL)
 % ./NOISE_TOMOGRAPHY/ in the SPECFEM3D package
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% USER PARAMETERS
+%% figure plotting
+show_figures = false;
 
 %% taper option
-taper_type=1;      % cosine type (1=on/0==off
-taper_length=40;   % number of steps for tapering ends
+taper_type = 1;      % cosine type (1=on/0==off
+taper_length_percentage = 0.1; % taper length as a percentage of full length
+taper_length_min = 40;         % minimum number of steps for tapering ends
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
@@ -92,6 +95,11 @@ filter_array=zeros(size(f)); % for constraining frequencies within ranges
 
 %% taper
 if taper_type==1
+  % determines taper length
+  taper_length = round(taper_length_percentage * NSTEP);
+  if taper_length < taper_length_min
+    taper_length = taper_length_min;
+  end
   fprintf('\n  using taper (cosine) length: %i \n',taper_length);
   % check size
   if NSTEP <= 2*taper_length
@@ -113,32 +121,42 @@ if taper_type==1
   window(NSTEP-taper_length+1:NSTEP) = taper(taper_length+2:2*taper_length+1);
 
   % plots figure
-  figure(2);
-  subplot(2,1,1);
-  plot(taper);hold on;
-  xlabel('steps','fontsize',fontsize);ylabel('Taper','fontsize',fontsize);
-  title('Taper','fontsize',fontsize);
-  subplot(2,1,2);
-  plot(window);
-  xlabel('steps','fontsize',fontsize);ylabel('Taper window','fontsize',fontsize);
-  title('Window','fontsize',fontsize);
+  if show_figures
+    fprintf('  plotting figure: Taper and Taper window \n');
+    figure(2);
+    subplot(2,1,1);
+    plot(taper);hold on;
+    xlabel('steps','fontsize',fontsize);ylabel('Taper','fontsize',fontsize);
+    title('Taper','fontsize',fontsize);
+    subplot(2,1,2);
+    plot(window);
+    xlabel('steps','fontsize',fontsize);ylabel('Taper window','fontsize',fontsize);
+    title('Window','fontsize',fontsize);
+    drawnow;
+  end
 end
 
 %% calculate the power spectrum of noise from Peterson's model (1993)
+fprintf('\n  calculating noise power spectrum: number of positive frequencies = %i \n',N_mid);
 % only calculate for positive frequencies
 % the negative frequencies will be updated later using symmetry
 for l=1:N_mid
     [accel(l) veloc(l) displ(l)]=PetersonNoiseModel(1/f(l),NOISE_MODEL);
 end
-figure(1);
-subplot(2,2,1);
-semilogx(f(1:N_mid),accel(1:N_mid),'b');hold on;
-semilogx(f(1:N_mid),veloc(1:N_mid),'g');hold on;
-semilogx(f(1:N_mid),displ(1:N_mid),'r');hold on;
-legend('acceleration','velocity','displacement');
-xlabel('Frequency (Hz)','fontsize',fontsize);ylabel('Amplitude (dB)','fontsize',fontsize);
-title('Power Spectrum of Peterson''s Noise Model in dB','fontsize',fontsize);
-xlim([1e-4 1e1]);ylim([-250 -50]);
+
+% plots figure
+if show_figures
+  fprintf('  plotting figure: Power spectrum\n');
+  figure(1);
+  subplot(2,2,1);
+  semilogx(f(1:N_mid),accel(1:N_mid),'b');hold on;
+  semilogx(f(1:N_mid),veloc(1:N_mid),'g');hold on;
+  semilogx(f(1:N_mid),displ(1:N_mid),'r');hold on;
+  legend('acceleration','velocity','displacement');
+  xlabel('Frequency (Hz)','fontsize',fontsize);ylabel('Amplitude (dB)','fontsize',fontsize);
+  title('Power Spectrum of Peterson''s Noise Model in dB','fontsize',fontsize);
+  xlim([1e-4 1e1]);ylim([-250 -50]);
+end
 
 %% change power spectrum from dB to real physical unit
 for l=1:N_mid
@@ -146,7 +164,9 @@ for l=1:N_mid
         veloc(l)=10.^(veloc(l)/10);
         displ(l)=10.^(displ(l)/10);
 end
+
 %% constrain the power spectrum only within the range [Tmin Tmax]
+fprintf('\n  filtering power spectrum:\n    period     min/max = %f / %f\n    frequency min/max = %f / %f \n',Tmin,Tmax,1/Tmax,1/Tmin);
 for l=1:N_mid
     if abs(f(l))>=1/Tmax && abs(f(l))<=1/Tmin
         filter_array(l)=sin((f(l)-1/Tmax)/(1/Tmin-1/Tmax)*pi);
@@ -156,16 +176,20 @@ accel=accel.*filter_array;
 veloc=veloc.*filter_array;
 displ=displ.*filter_array;
 
-subplot(2,2,2);
-plot(f(1:N_mid),accel(1:N_mid)/max(abs(accel)),'b');hold on;
-plot(f(1:N_mid),veloc(1:N_mid)/max(abs(veloc)),'g');hold on;
-plot(f(1:N_mid),displ(1:N_mid)/max(abs(displ)),'r');hold on;
-xlabel('Frequency (Hz)','fontsize',fontsize);ylabel('Amplitude','fontsize',fontsize);
-title(['Power Spectrum filtered between [' num2str(Tmin) ' ' num2str(Tmax) '] s'],'fontsize',fontsize);
-legend(['accleration, scaled by ', num2str(max(abs(accel))), ' m^2/s^4/Hz'], ...
-       ['velocity, scaled by ', num2str(max(abs(veloc))), ' m^2/s^2/Hz'],     ...
-       ['displacement, scaled by ', num2str(max(abs(displ))), ' m^2/Hz']);
-xlim([0.8/Tmax 1.2/Tmin]);ylim([-0.1 1.5]);
+% plots figure
+if show_figures
+  fprintf('  plotting figure: Filtered Power spectrum\n');
+  subplot(2,2,2);
+  plot(f(1:N_mid),accel(1:N_mid)/max(abs(accel)),'b');hold on;
+  plot(f(1:N_mid),veloc(1:N_mid)/max(abs(veloc)),'g');hold on;
+  plot(f(1:N_mid),displ(1:N_mid)/max(abs(displ)),'r');hold on;
+  xlabel('Frequency (Hz)','fontsize',fontsize);ylabel('Amplitude','fontsize',fontsize);
+  title(['Power Spectrum filtered between [' num2str(Tmin) ' ' num2str(Tmax) '] s'],'fontsize',fontsize);
+  legend(['accleration, scaled by ', num2str(max(abs(accel))), ' m^2/s^4/Hz'], ...
+         ['velocity, scaled by ', num2str(max(abs(veloc))), ' m^2/s^2/Hz'],     ...
+         ['displacement, scaled by ', num2str(max(abs(displ))), ' m^2/Hz']);
+  xlim([0.8/Tmax 1.2/Tmin]);ylim([-0.1 1.5]);
+end
 
 %% update power spectrum in the negative frequencies, using symmetry
 % note the power spectrum is always REAL, instead of COMPLEX
@@ -176,6 +200,8 @@ for l=N_mid+1:NSTEP
 end
 
 %% prepare source time function for ensemble forward source -- S_squared
+fprintf('\n  preparing source time function S_squared: NSTEP = %i / dt = %f \n',NSTEP,dt);
+
 % the file S_squared should be put into directory ./NOISE_TOMOGRAPHY/
 % together with other two files: irec_master_noise & nu_master
 S_squared=zeros(NSTEP,2); % first column: time (not used in SPECFEM3D package)
@@ -191,6 +217,7 @@ temp(1:N_mid-1)  =S_squared(N_mid+1:NSTEP,2);
 
 % tapers ends
 if taper_type==1
+  fprintf('\n  tapering source time function S_squared\n');
   for l=1:NSTEP
     temp(l) = temp(l) * window(l);
   end
@@ -203,19 +230,26 @@ S_squared(:,2)=temp;
 % Wn=[1/Tmax 1/Tmin]/fmax;
 % [B,A] = butter(4,Wn);
 % S_squared(:,2)=filter(B,A,S_squared(:,2));
-subplot(2,2,3);
-plot(S_squared(:,1)/60,S_squared(:,2),'r');
-xlabel('Time (min)','fontsize',fontsize); ylabel('Amplitude','fontsize',fontsize);
-xlim([-T/2 T/2]/60);
-title('Source Time Function for Ensemble Forward Source','fontsize',fontsize);
 
-subplot(2,2,4);
-plot(S_squared(:,1)/60,S_squared(:,2),'r');
-xlabel('Time (min)','fontsize',fontsize); ylabel('Amplitude','fontsize',fontsize);
-xlim([-Tmax Tmax]*0.10/60);
-title('Zoom-in of the Source Time Function','fontsize',fontsize);
+% plots figure
+if show_figures
+  fprintf('  plotting figure: Source time function S_squared \n');
+  subplot(2,2,3);
+  plot(S_squared(:,1)/60,S_squared(:,2),'r');
+  xlabel('Time (min)','fontsize',fontsize); ylabel('Amplitude','fontsize',fontsize);
+  xlim([-T/2 T/2]/60);
+  title('Source Time Function for Ensemble Forward Source','fontsize',fontsize);
+
+  subplot(2,2,4);
+  plot(S_squared(:,1)/60,S_squared(:,2),'r');
+  xlabel('Time (min)','fontsize',fontsize); ylabel('Amplitude','fontsize',fontsize);
+  xlim([-Tmax Tmax]*0.10/60);
+  title('Zoom-in of the Source Time Function','fontsize',fontsize);
+  drawnow;
+end
 
 %% output the source time function
+fprintf('\n  saving S_squared as ASCII file\n');
 save S_squared S_squared -ASCII
 
 %% user output
@@ -223,8 +257,11 @@ DIR=pwd;
 fprintf('\n*************************************************************\n');
 fprintf('the source time function has been saved in:\n');
 fprintf([DIR '/S_squared\n']);
-fprintf('S_squared should be put into directory:\n');
+fprintf('\nS_squared should be put into directory:\n');
 fprintf('./NOISE_TOMOGRAPHY/ in the SPECFEM3D package\n');
 fprintf('*************************************************************\n');
+
+% stop execution
+%quit force;
 
 
