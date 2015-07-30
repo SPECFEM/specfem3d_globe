@@ -509,6 +509,14 @@
   static_memory_size = static_memory_size + &
       dble(NGLLX)*dble(NGLLY)*dble(NGLLZ)*NSPEC_CRUST_MANTLE_ADJOINT_NOISE*dble(CUSTOM_REAL)
 
+  ! noise_surface_movie_buffer
+  if (NOISE_TOMOGRAPHY > 0) then
+    ! noise_surface_movie_buffer
+    static_memory_size = static_memory_size + &
+        dble(NDIM)*dble(NGLLX)*dble(NGLLY)*dble(NSPEC2D_TOP(IREGION_CRUST_MANTLE))*dble(CUSTOM_REAL)
+    ! noise buffer size not known yet
+  endif
+
   ! in the case of Stacey boundary conditions, add C*delta/2 contribution to the mass matrix
   ! on the Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
   ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix

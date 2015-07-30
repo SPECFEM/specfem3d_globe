@@ -311,14 +311,13 @@
 
   ! checks with undo_attenuation
   if (UNDO_ATTENUATION) then
-    ! old:
-    !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-    !if (mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    !  NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1) * NT_DUMP_ATTENUATION
-    !endif
+    ! note: NSTEP must not be a multiple of NT_DUMP_ATTENUATION, but should be larger
     ! makes sure buffer size is not too big for total time length
-    if (NSTEP < NT_DUMP_ATTENUATION) &
+    if (NSTEP < NT_DUMP_ATTENUATION) then
+      print *,'Error undoing attenuation: time steps ',NSTEP,' smaller than buffer size ',NT_DUMP_ATTENUATION
+      print *,'Please recompile the solver with your updated parameter set in Par_file.'
       call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
+    endif
   endif
 
   ! checks length for symmetry in case of noise simulations

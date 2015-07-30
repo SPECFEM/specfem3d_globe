@@ -33,17 +33,19 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
   use specfem_par_movie
   use write_seismograms_mod, only: write_seismograms
   implicit none
 
   ! local parameters
   integer :: it_temp,seismo_current_temp
-  integer :: it_subset_end
   integer :: i,j,ier
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_cm_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_ic_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_oc_store_buffer,b_accel_oc_store_buffer
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: b_noise_surface_movie_buffer
+
   double precision :: sizeval
   ! timing
   double precision, external :: wtime
@@ -134,6 +136,13 @@
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_accel_oc_store_buffer')
     allocate(b_displ_ic_store_buffer(NDIM,NGLOB_INNER_CORE_ADJOINT,NT_DUMP_ATTENUATION),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_displ_ic_store_buffer')
+
+    ! noise kernel for source strength (sigma_kernel) needs buffer for reconstructed noise_surface_movie array,
+    ! otherwise we need file i/o which will considerably slow down performance
+    if (NOISE_TOMOGRAPHY == 3) then
+      allocate(b_noise_surface_movie_buffer(NDIM,NGLLX,NGLLY,NSPEC_TOP,NT_DUMP_ATTENUATION),stat=ier)
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating b_noise_surface_movie_buffer')
+    endif
   endif
 
   ! synchronize all processes to make sure everybody is ready to start time loop
@@ -321,6 +330,10 @@
         b_accel_oc_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
         b_displ_ic_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
 
+        ! for noise kernel
+        if (NOISE_TOMOGRAPHY == 3) then
+          b_noise_surface_movie_buffer(:,:,:,:,it_of_this_subset) = noise_surface_movie(:,:,:,:)
+        endif
       enddo ! subset loop
 
       ! resets current it and seismo_current positions
@@ -353,6 +366,11 @@
           enddo
         enddo
 
+        ! for noise kernel
+        if (NOISE_TOMOGRAPHY == 3) then
+          noise_surface_movie(:,:,:,:) = b_noise_surface_movie_buffer(:,:,:,:,it_subset_end-it_of_this_subset+1)
+        endif
+
         ! transfers wavefields from CPU to GPU
         if (GPU_MODE) then
           ! daniel debug: check if these transfers could be made async to overlap
@@ -369,6 +387,7 @@
           call check_stability()
         endif
 
+        ! computes adjoint wavefield
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
 
           if (USE_LDDRK) then
@@ -410,6 +429,10 @@
                b_displ_oc_store_buffer, &
                b_accel_oc_store_buffer, &
                b_displ_ic_store_buffer)
+    ! noise simulations
+    if (NOISE_TOMOGRAPHY == 3) then
+      deallocate(b_noise_surface_movie_buffer)
+    endif
   endif
 
   ! close the huge file that contains a dump of all the time steps to disk

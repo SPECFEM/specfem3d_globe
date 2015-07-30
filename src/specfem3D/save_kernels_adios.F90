@@ -75,7 +75,7 @@ subroutine define_kernel_adios_variables(adios_handle)
   use specfem_par_crustmantle
   use specfem_par_outercore
   use specfem_par_innercore
-
+  use specfem_par_noise
   use adios_helpers_mod
 
   implicit none
@@ -544,6 +544,7 @@ subroutine write_kernels_strength_noise_adios(adios_handle)
 
   use specfem_par
   use specfem_par_crustmantle
+  use specfem_par_noise
 
   use adios_helpers_mod
 

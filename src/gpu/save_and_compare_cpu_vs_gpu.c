@@ -39,6 +39,16 @@
 
 #define MAX(a, b) (((a) > (b)) ? (a) : (b))
 
+/************************************************************************
+
+helper functions for debugging
+
+please uncomment if needed...
+
+*************************************************************************/
+
+
+/*
 void save_to_max_surface_file_ (float *maxval) {
   int rank;
   char filename[BUFSIZ];
@@ -58,7 +68,9 @@ void save_to_max_surface_file_ (float *maxval) {
   fprintf (fp, "%e\n", *maxval);
   fclose (fp);
 }
+*/
 
+/*
 void save_fvector_ (float *vector, int *size, int *id, int *cpu_or_gpu) {
   FILE *fp;
   char filename[BUFSIZ];
@@ -79,7 +91,9 @@ void save_fvector_ (float *vector, int *size, int *id, int *cpu_or_gpu) {
   fwrite (vector, sizeof (float), *size, fp);
   fclose (fp);
 }
+*/
 
+/*
 void save_ivector_ (int *vector, int *size, int *id, int *cpu_or_gpu) {
   FILE *fp;
   char filename[BUFSIZ];
@@ -101,8 +115,10 @@ void save_ivector_ (int *vector, int *size, int *id, int *cpu_or_gpu) {
   fclose (fp);
 
 }
+*/
 
 
+/*
 void get_max_from_surface_file_ (int *nodes_per_iterationf, int *NSTEP) {
   int nodes_per_iteration = *nodes_per_iterationf;
   char filename[BUFSIZ];
@@ -114,7 +130,7 @@ void get_max_from_surface_file_ (int *nodes_per_iterationf, int *NSTEP) {
 #else
   procid = 0;
 #endif
-  sprintf (filename, "DATABASES_MPI/proc%06d_surface_movie.bin", procid);
+  sprintf (filename, "DATABASES_MPI/proc%06d_noise_surface.bin", procid);
 
   FILE *fp; int it;
   printf ("Opening %s for analysis\n", filename);
@@ -143,7 +159,9 @@ void get_max_from_surface_file_ (int *nodes_per_iterationf, int *NSTEP) {
   }
   printf ("max_val=%e\n", max_val);
 }
+*/
 
+/*
 void compare_two_vectors_exact_ (int *sizef, float *vector1, float *vector2, int *num_errors) {
   int size = *sizef;
   int i;
@@ -160,7 +178,9 @@ void compare_two_vectors_exact_ (int *sizef, float *vector1, float *vector2, int
   printf ("** **Error Count: %d ****\n", error_count);
   *num_errors = error_count;
 }
+*/
 
+/*
 void compare_two_vectors_ (int *sizef, float *vector1, float *vector2, int *num_errors) {
   int size = *sizef;
   int i;
@@ -181,10 +201,12 @@ void compare_two_vectors_ (int *sizef, float *vector1, float *vector2, int *num_
   printf ("** **Error Count: %d ****\n", error_count);
   *num_errors = error_count;
 }
+*/
 
+/*
 void compare_surface_files_ (int *bytes_per_iteration, int *number_of_iterations) {
-  const char *cpu_file = "DATABASES_MPI/cpu_proc000001_surface_movie.bin";
-  const char *gpu_file = "DATABASES_MPI/cpu_v2_proc000001_surface_movie.bin";
+  const char *cpu_file = "DATABASES_MPI/cpu_proc000001_noise_surface.bin";
+  const char *gpu_file = "DATABASES_MPI/cpu_v2_proc000001_noise_surface.bin";
   size_t res;
   FILE *fp_cpu;
 
@@ -252,8 +274,9 @@ void compare_surface_files_ (int *bytes_per_iteration, int *number_of_iterations
   printf ("End of Surface Compare\n");
   exit (1);
 }
+*/
 
-
+/*
 void compare_fvector_ (float *vector, int *size, int *id, int *cpu_or_gpu) {
   FILE *fp;
   char cmp_filename[BUFSIZ];
@@ -268,7 +291,7 @@ void compare_fvector_ (float *vector, int *size, int *id, int *cpu_or_gpu) {
   }
 
   fp = fopen (cmp_filename, "rb");
-  /*read the values */
+  // read the values
   if (fp == NULL) {
     printf ("Cannot open comparison file %s.\n", cmp_filename);
     exit (1);
@@ -296,7 +319,9 @@ void compare_fvector_ (float *vector, int *size, int *id, int *cpu_or_gpu) {
   printf ("%d Total Errors\n", error_count);
   printf ("size:%d\n", *size);
 }
+*/
 
+/*
 void compare_ivector_ (int *vector, int *size, int *id, int *cpu_or_gpu) {
   FILE *fp;
   char cmp_filename[BUFSIZ];
@@ -309,7 +334,7 @@ void compare_ivector_ (int *vector, int *size, int *id, int *cpu_or_gpu) {
     sprintf (cmp_filename, "debug_output_cpu_%d.dat", *id);
   }
 
-  /*read the values */
+  // read the values
   fp = fopen (cmp_filename, "rb");
   if (fp == NULL) {
     printf ("Cannot open comparison file %s.\n", cmp_filename);
@@ -336,3 +361,5 @@ void compare_ivector_ (int *vector, int *size, int *id, int *cpu_or_gpu) {
   }
   printf ("%d Total Errors\n", error_count);
 }
+*/
+

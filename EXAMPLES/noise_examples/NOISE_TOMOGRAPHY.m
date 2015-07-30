@@ -113,6 +113,7 @@ if taper_type==1
   window(NSTEP-taper_length+1:NSTEP) = taper(taper_length+2:2*taper_length+1);
 
   % plots figure
+  fprintf('  plotting figure: Taper and Taper window \n');
   figure(2);
   subplot(2,1,1);
   plot(taper);hold on;
@@ -122,14 +123,19 @@ if taper_type==1
   plot(window);
   xlabel('steps','fontsize',fontsize);ylabel('Taper window','fontsize',fontsize);
   title('Window','fontsize',fontsize);
+  drawnow;
 end
 
 %% calculate the power spectrum of noise from Peterson's model (1993)
+fprintf('\n  calculating noise power spectrum: number of positive frequencies = %i \n',N_mid);
 % only calculate for positive frequencies
 % the negative frequencies will be updated later using symmetry
 for l=1:N_mid
     [accel(l) veloc(l) displ(l)]=PetersonNoiseModel(1/f(l),NOISE_MODEL);
 end
+
+% plots figure
+fprintf('  plotting figure: Power spectrum\n');
 figure(1);
 subplot(2,2,1);
 semilogx(f(1:N_mid),accel(1:N_mid),'b');hold on;
@@ -146,7 +152,9 @@ for l=1:N_mid
         veloc(l)=10.^(veloc(l)/10);
         displ(l)=10.^(displ(l)/10);
 end
+
 %% constrain the power spectrum only within the range [Tmin Tmax]
+fprintf('\n  filtering power spectrum:\n    period     min/max = %f / %f\n    frequency min/max = %f / %f \n',Tmin,Tmax,1/Tmax,1/Tmin);
 for l=1:N_mid
     if abs(f(l))>=1/Tmax && abs(f(l))<=1/Tmin
         filter_array(l)=sin((f(l)-1/Tmax)/(1/Tmin-1/Tmax)*pi);
@@ -156,6 +164,8 @@ accel=accel.*filter_array;
 veloc=veloc.*filter_array;
 displ=displ.*filter_array;
 
+% plots figure
+fprintf('  plotting figure: Filtered Power spectrum\n');
 subplot(2,2,2);
 plot(f(1:N_mid),accel(1:N_mid)/max(abs(accel)),'b');hold on;
 plot(f(1:N_mid),veloc(1:N_mid)/max(abs(veloc)),'g');hold on;
@@ -176,6 +186,8 @@ for l=N_mid+1:NSTEP
 end
 
 %% prepare source time function for ensemble forward source -- S_squared
+fprintf('\n  preparing source time function S_squared: NSTEP = %i / dt = %f \n',NSTEP,dt);
+
 % the file S_squared should be put into directory ./NOISE_TOMOGRAPHY/
 % together with other two files: irec_master_noise & nu_master
 S_squared=zeros(NSTEP,2); % first column: time (not used in SPECFEM3D package)
@@ -191,6 +203,7 @@ temp(1:N_mid-1)  =S_squared(N_mid+1:NSTEP,2);
 
 % tapers ends
 if taper_type==1
+  fprintf('\n  tapering source time function S_squared\n');
   for l=1:NSTEP
     temp(l) = temp(l) * window(l);
   end
@@ -199,10 +212,12 @@ end
 % stores source time function values
 S_squared(:,2)=temp;
 
+% plots figure
 % % filter the source time function if needed
 % Wn=[1/Tmax 1/Tmin]/fmax;
 % [B,A] = butter(4,Wn);
 % S_squared(:,2)=filter(B,A,S_squared(:,2));
+fprintf('  plotting figure: Source time function S_squared \n');
 subplot(2,2,3);
 plot(S_squared(:,1)/60,S_squared(:,2),'r');
 xlabel('Time (min)','fontsize',fontsize); ylabel('Amplitude','fontsize',fontsize);
@@ -214,8 +229,10 @@ plot(S_squared(:,1)/60,S_squared(:,2),'r');
 xlabel('Time (min)','fontsize',fontsize); ylabel('Amplitude','fontsize',fontsize);
 xlim([-Tmax Tmax]*0.10/60);
 title('Zoom-in of the Source Time Function','fontsize',fontsize);
+drawnow;
 
 %% output the source time function
+fprintf('\n  saving S_squared as ASCII file\n');
 save S_squared S_squared -ASCII
 
 %% user output
@@ -223,8 +240,11 @@ DIR=pwd;
 fprintf('\n*************************************************************\n');
 fprintf('the source time function has been saved in:\n');
 fprintf([DIR '/S_squared\n']);
-fprintf('S_squared should be put into directory:\n');
+fprintf('\nS_squared should be put into directory:\n');
 fprintf('./NOISE_TOMOGRAPHY/ in the SPECFEM3D package\n');
 fprintf('*************************************************************\n');
+
+% stop execution
+%quit force;
 
 

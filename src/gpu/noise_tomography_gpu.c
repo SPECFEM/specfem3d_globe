@@ -108,44 +108,45 @@ void FC_FUNC_ (noise_add_source_master_rec_gpu,
   int it = *it_f - 1;   // -1 for Fortran -> C indexing differences
   int irec_master_noise = *irec_master_noise_f-1;
 
+  // checks if we are in slice with master station
+  if (mp->myrank /= islice_selected_rec[irec_master_noise]) return;
+
   // adds noise source at master location
-  if (mp->myrank == islice_selected_rec[irec_master_noise]) {
 #ifdef USE_OPENCL
-    if (run_opencl) {
-      size_t global_work_size[2];
-      size_t local_work_size[2];
-      cl_uint idx = 0;
+  if (run_opencl) {
+    size_t global_work_size[2];
+    size_t local_work_size[2];
+    cl_uint idx = 0;
 
-      clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_rec.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (int), (void *) &irec_master_noise));
-      clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_noise_sourcearray.ocl));
-      clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (int), (void *) &it));
+    clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ispec_selected_rec.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (int), (void *) &irec_master_noise));
+    clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_accel_crust_mantle.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_noise_sourcearray.ocl));
+    clCheck (clSetKernelArg (mocl.kernels.noise_add_source_master_rec_kernel, idx++, sizeof (int), (void *) &it));
 
-      local_work_size[0] = NGLL3;
-      local_work_size[1] = 1;
-      global_work_size[0] = 1 * NGLL3;
-      global_work_size[1] = 1;
+    local_work_size[0] = NGLL3;
+    local_work_size[1] = 1;
+    global_work_size[0] = 1 * NGLL3;
+    global_work_size[1] = 1;
 
-      clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_add_source_master_rec_kernel, 2, NULL,
-                                       global_work_size, local_work_size, 0, NULL, NULL));
-    }
+    clCheck (clEnqueueNDRangeKernel (mocl.command_queue, mocl.kernels.noise_add_source_master_rec_kernel, 2, NULL,
+                                     global_work_size, local_work_size, 0, NULL, NULL));
+  }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda) {
-      dim3 grid(1,1,1);
-      dim3 threads(NGLL3,1,1);
+  if (run_cuda) {
+    dim3 grid(1,1,1);
+    dim3 threads(NGLL3,1,1);
 
-      noise_add_source_master_rec_kernel<<<grid,threads>>>(mp->d_ibool_crust_mantle.cuda,
-                                                           mp->d_ispec_selected_rec.cuda,
-                                                           irec_master_noise,
-                                                           mp->d_accel_crust_mantle.cuda,
-                                                           mp->d_noise_sourcearray.cuda,
-                                                           it);
-    }
-#endif
+    noise_add_source_master_rec_kernel<<<grid,threads>>>(mp->d_ibool_crust_mantle.cuda,
+                                                         mp->d_ispec_selected_rec.cuda,
+                                                         irec_master_noise,
+                                                         mp->d_accel_crust_mantle.cuda,
+                                                         mp->d_noise_sourcearray.cuda,
+                                                         it);
   }
+#endif
 
   GPU_ERROR_CHECKING ("noise_add_source_master_rec_kernel");
 }
@@ -178,7 +179,7 @@ void FC_FUNC_ (noise_add_surface_movie_gpu,
   //       to speed up noise simulations, one could try an asynchronuous/non-blocking copy to overlap computations
 
   // copies surface movie to GPU
-  gpuCopy_todevice_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM*NGLL2 *(mp->nspec2D_top_crust_mantle));
+  gpuCopy_todevice_realw (&mp->d_noise_surface_movie, h_noise_surface_movie, NDIM * NGLL2 * mp->nspec2D_top_crust_mantle);
 
   switch (mp->noise_tomography) {
   case 2:
