@@ -180,7 +180,7 @@
     write(IMAIN,*)
     if (ROTATION_VAL) then
       write(IMAIN,*) 'incorporating rotation'
-      if (EXACT_MASS_MATRIX_FOR_ROTATION ) &
+      if (EXACT_MASS_MATRIX_FOR_ROTATION_VAL ) &
         write(IMAIN,*) 'using exact mass matrix for rotation'
     else
       write(IMAIN,*) 'no rotation'
@@ -298,19 +298,19 @@
   ! mass matrices on Stacey edges
   ! crust/mantle
   if (((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION))) then
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL))) then
      rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
      rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
   endif
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       b_rmassx_crust_mantle = 1._CUSTOM_REAL / b_rmassx_crust_mantle
       b_rmassy_crust_mantle = 1._CUSTOM_REAL / b_rmassy_crust_mantle
     endif
   endif
   rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
   ! inner core
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
      rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
      rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
      if (SIMULATION_TYPE == 3) then
@@ -358,7 +358,7 @@
                            my_neighbours_crust_mantle)
 
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -373,7 +373,7 @@
   endif
 
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -404,7 +404,7 @@
                            nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
                            my_neighbours_inner_core)
 
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                              rmassx_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
@@ -438,7 +438,7 @@
     ! because the slices do not compute all their spectral elements in the cube
     where(rmassz_inner_core(:) <= 0.0_CUSTOM_REAL) rmassz_inner_core = 1.0_CUSTOM_REAL
 
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       where(rmassx_inner_core(:) <= 0.0_CUSTOM_REAL) rmassx_inner_core = 1.0_CUSTOM_REAL
       where(rmassy_inner_core(:) <= 0.0_CUSTOM_REAL) rmassy_inner_core = 1.0_CUSTOM_REAL
     endif
@@ -1950,7 +1950,7 @@
                                 SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
                                 SAVE_FORWARD,ABSORBING_CONDITIONS, &
                                 OCEANS_VAL,GRAVITY_VAL, &
-                                ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION, &
+                                ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION_VAL, &
                                 ATTENUATION_VAL,UNDO_ATTENUATION, &
                                 PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
                                 COMPUTE_AND_STORE_STRAIN, &
@@ -2674,11 +2674,11 @@
     ! d_rmassz
     memory_size = memory_size + NGLOB_AB * dble(CUSTOM_REAL)
     ! d_rmassx,..
-    if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+    if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
       memory_size = memory_size + 2.d0 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
     endif
     ! inner core
-    if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+    if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
       ! d_rmassx,..
       memory_size = memory_size + 2.d0 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
     endif

@@ -45,8 +45,7 @@
   use constants_solver
   use specfem_par,only: &
     ABSORBING_CONDITIONS, &
-    LOCAL_PATH,ABSORBING_CONDITIONS,&
-    EXACT_MASS_MATRIX_FOR_ROTATION
+    LOCAL_PATH,ABSORBING_CONDITIONS
 
   implicit none
 
@@ -209,16 +208,16 @@
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   if (((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) .and. iregion_code == IREGION_INNER_CORE)) then
     read(IIN) rmassx
     read(IIN) rmassy
   endif
 
   read(IIN) rmassz
 
-  if (((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
+  if (((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) .and. iregion_code == IREGION_INNER_CORE)) then
     read(IIN) b_rmassx
     read(IIN) b_rmassy
   endif

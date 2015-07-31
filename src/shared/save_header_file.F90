@@ -655,6 +655,12 @@
   else
     write(IOUT,*) 'logical, parameter :: ROTATION_VAL = .false.'
   endif
+  if (EXACT_MASS_MATRIX_FOR_ROTATION) then
+    write(IOUT,*) 'logical, parameter :: EXACT_MASS_MATRIX_FOR_ROTATION_VAL = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: EXACT_MASS_MATRIX_FOR_ROTATION_VAL = .false.'
+  endif
+  write(IOUT,*)
   write(IOUT,*) 'integer, parameter :: NSPEC_OUTER_CORE_ROTATION = ',NSPEC_OUTER_CORE_ROTATION
   write(IOUT,*)
 
@@ -763,7 +769,6 @@
     NGLOB_XY_CM = NGLOB(IREGION_CRUST_MANTLE)
     NGLOB_XY_IC = NGLOB(IREGION_INNER_CORE)
   endif
-
   write(IOUT,*) 'integer, parameter :: NGLOB_XY_CM = ',NGLOB_XY_CM
   write(IOUT,*) 'integer, parameter :: NGLOB_XY_IC = ',NGLOB_XY_IC
   write(IOUT,*)

@@ -316,6 +316,13 @@
       write(*,*) 'ROTATION:', ROTATION, ROTATION_VAL
       call exit_MPI(myrank,'Error in compiled parameters ROTATION, please recompile solver')
   endif
+  if (EXACT_MASS_MATRIX_FOR_ROTATION .NEQV. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
+      if (myrank == 0) write(IMAIN,*) 'EXACT_MASS_MATRIX_FOR_ROTATION:', &
+                                      EXACT_MASS_MATRIX_FOR_ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION_VAL
+      write(*,*) 'EXACT_MASS_MATRIX_FOR_ROTATION:', &
+                  EXACT_MASS_MATRIX_FOR_ROTATION, EXACT_MASS_MATRIX_FOR_ROTATION_VAL
+      call exit_MPI(myrank,'Error in compiled parameters EXACT_MASS_MATRIX_FOR_ROTATION, please recompile solver')
+  endif
   if (ATTENUATION .NEQV. ATTENUATION_VAL) then
       if (myrank == 0) write(IMAIN,*) 'ATTENUATION:',ATTENUATION,ATTENUATION_VAL
       write(*,*) 'ATTENUATION:', ATTENUATION, ATTENUATION_VAL

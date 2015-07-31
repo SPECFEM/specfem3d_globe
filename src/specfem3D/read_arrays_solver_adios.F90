@@ -48,8 +48,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   use constants_solver
   use specfem_par,only: &
     ABSORBING_CONDITIONS, &
-    LOCAL_PATH,ABSORBING_CONDITIONS,&
-    EXACT_MASS_MATRIX_FOR_ROTATION
+    LOCAL_PATH,ABSORBING_CONDITIONS
 
   implicit none
 
@@ -368,8 +367,8 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   ! is needed for the sake of performance, only "rmassz" array will be filled
   ! and "rmassx" & "rmassy" will be obsolete
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_INNER_CORE)) then
 
     local_dim = nglob_xy
     start(1) = local_dim*myrank; count(1) = local_dim
@@ -396,8 +395,8 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call check_adios_err(myrank,adios_err)
 
 
-  if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+  if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_INNER_CORE)) then
     local_dim = nglob_xy
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1

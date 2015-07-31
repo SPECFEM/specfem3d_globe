@@ -285,7 +285,7 @@
 
   ! mass matrix corrections
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
     ! mass matrices differ for rmassx,rmassy in case Newmark time scheme is used
     if (USE_LDDRK) then
       ! uses single mass matrix without correction in case LDDRK time scheme is used
@@ -309,7 +309,7 @@
     ! associates mass matrix used for backward/reconstructed wavefields
     b_rmassz_crust_mantle => rmassz_crust_mantle
     ! checks if we can take rmassx and rmassy (only differs for rotation correction)
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       ! mass matrices differ for b_rmassx,b_rmassy in case Newmark time scheme is used
       if (USE_LDDRK) then
         ! mass matrices correction is not needed in case LDDRK time scheme is used
@@ -562,7 +562,7 @@
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
   ! mass matrix corrections
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
     ! uses corrected mass matrices in case Newmark time scheme is used
     if (USE_LDDRK)  then
       ! uses single mass matrix without correction in case LDDRK time scheme is used
@@ -586,7 +586,7 @@
     ! associates mass matrix used for backward/reconstructed wavefields
     b_rmassz_inner_core => rmassz_inner_core
     ! checks if we can take rmassx and rmassy (only differs for rotation correction)
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       ! uses corrected mass matrices in case Newmark time scheme is used
       if (USE_LDDRK) then
         ! uses single mass matrix without correction in case LDDRK time scheme is used
