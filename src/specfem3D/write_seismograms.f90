@@ -447,16 +447,22 @@ contains
 
       ! BS BS calculate backazimuth needed to rotate East and North
       ! components to Radial and Transverse components
-      !  call get_backazimuth(elat,elon,stlat(irec),stlon(irec),backaz)
+      ! (back-azimuth returned in degrees between [0,360])
       call get_backazimuth(cmt_lat,cmt_lon,stlat(irec),stlon(irec),backaz)
 
       phi = backaz
+
+      ! back azimuth is the incoming direction of a raypath to a receiving station, i.e. the angle of
+      ! the incoming wave front arriving at the station measured between north and the direction to the epicenter in degrees.
+      ! (north corresponds to zero degrees)
+
+      ! rotation angle phi takes opposite direction; to have radial direction pointing in outgoing direction
       if (phi>180.d0) then
          phi = phi-180.d0
       else if (phi<180.d0) then
          phi = phi+180.d0
       else if (phi==180.d0) then
-         phi = backaz
+         phi = 0.d0
       endif
 
       cphi=cos(phi*DEGREES_TO_RADIANS)
