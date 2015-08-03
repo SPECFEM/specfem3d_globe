@@ -237,9 +237,11 @@ subroutine write_asdf(asdf_container)
 
   filename = "synthetic.h5"
   event_name = trim(event_name_SAC)
-! CMT to quakeml converter
   station_xml = "<station_xml>"
-  provenance = "provenance"
+  provenance = '<prov:document xmlns:prov="http://www.w3.org/ns/prov#" xmlns:seis_prov="http://seisprov.org/seis_prov/0.1/#"'//&
+               ' xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'//&
+               '<prov:activity prov:id="seis_prov:sp001_ws_910a6ce"><prov:label>Waveform Simulation</prov:label>' //&
+               '<prov:type xsi:type="xsd:string">seis_prov:waveform_simulation</prov:type></prov:activity></prov:document>'
 
   num_stations = nrec_local
   num_channels_per_station = 3
@@ -250,11 +252,10 @@ subroutine write_asdf(asdf_container)
 
   call cmt_to_quakeml(quakeml)
 
-  write(startTime, "(F5.2)") start_time
-  write(endTime, "(F5.2)") start_time
-
+  !write(startTime, "(F5.2)") starddt_time
+  !write(endTime, "(F5.2)") start_time
   call ASDF_clean_provenance_f(cptr)
-  call ASDF_generate_sf_provenance_f(startTime//C_NULL_CHAR, endTime//C_NULL_CHAR, cptr, len)
+  call ASDF_generate_sf_provenance_f("2014-01-01T12:15:03", "2014-01-01T02:15:03", cptr, len)
   call c_f_pointer(cptr, fptr, [len])
   print *, fptr
 
@@ -346,7 +347,7 @@ subroutine write_asdf(asdf_container)
 
 
   call ASDF_write_quakeml_f(file_id, quakeml, ier)
-  call ASDF_write_provenance_data_f(file_id, provenance, ier)
+  call ASDF_write_provenance_data_f(file_id, trim(provenance), ier)
   call read_file("setup/constants.h", sf_constants)
   call read_file("DATA/Par_file", sf_parfile)
   call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants), trim(sf_parfile), ier)
@@ -434,10 +435,10 @@ subroutine cmt_to_quakeml(quakemlstring)
   quakemlstring = '<q:quakeml xsi:schemaLocation="http://quakeml.org/schema/xsd/QuakeML-1.2.xsd" '//&
                   'xmlns="http://quakeml.org/xmlns/bed/1.2" xmlns:q="http://quakeml.org/xmlns/quakeml/1.2" xmlns:xsi="http://'//&
                   'www.w3.org/2001/XMLSchema-instance">'//&
-                  '<eventParameters publicID="smi:service.iris.edu/fdsnws/event/1/query">'//&
-                  '<longitude><value>'//trim(lon_str)//'</value></longitude><latitude><value>'//trim(lat_str)//&
-                  '</value></latitude><depth><value>'//trim(dep_str)//'</value></depth>'//&
-                  '</eventParameters>'//&
+                  !'<eventParameters publicID="smi:service.iris.edu/fdsnws/event/1/query">'//&
+                  !'<longitude><value>'//trim(lon_str)//'</value></longitude><latitude><value>'//trim(lat_str)//&
+                  !'</value></latitude><depth><value>'//trim(dep_str)//'</value></depth>'//&
+                  !'</eventParameters>'//&
                   '</q:quakeml>'
 
 end subroutine cmt_to_quakeml
@@ -486,5 +487,7 @@ subroutine read_file(filename, filestring)
          recl=file_size, form='unformatted', access='direct')
   read (10, rec=1) filestring
   close(10)
+
+  print *, trim(filestring)
 
 end subroutine read_file
