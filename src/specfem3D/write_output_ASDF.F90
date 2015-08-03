@@ -414,6 +414,43 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, n
   integer,parameter :: nparam_desc = 32
   character(len=200),dimension(2,nparam_desc) :: description
 
+  ! defines attributes descriptions
+
+  DATA description  / &
+    "nreceivers", "Number of receivers ", &
+    "nrecords"  , "Number of records ", &
+    "min_period", "Low pass filter in Hz (0 if none applied)  ", &
+    "max_period", "High pass filter in Hz (0 if none applied)  ", &
+    "event_lat" , "Event CMT latitude (degrees, north positive) ", &
+    "event_lo"  , "Event CMT longitude (degrees, east positive) ", &
+    "event_dpt" , "Event CMT depth (km) ", &
+    "event_dpt" , "Event CMT depth (km) ", &
+    "component" , "Record component ", &
+    "gmt_year"  , "GMT year corresponding to reference (zero) time in file. ", &
+    "gmt_day"   , "GMT julian day corresponding to reference (zero) time in file. ", &
+    "gmt_hour"  , "GMT hour corresponding to reference (zero) time in file. ", &
+    "gmt_min"   , "GMT minute corresponding to reference (zero) time in file. ", &
+    "gmt_sec"   , "GMT second corresponding to reference (zero) time in file. ", &
+    "gmt_msec"  , "GMT millisecond corresponding to reference (zero) time in file. ", &
+    "receiver_lat", "Receiver latitude (degrees, north positive)  ", &
+    "receiver_lo" , "Receiver longitude (degrees, east positive) ", &
+    "receiver_dpt", "Receiver depth below surface (meters) ", &
+    "receiver_el" , "Receiver elevation (meters) ", &
+    "begin_value" , "Beginning value of time array ", &
+    "end_value"   , "End value of time array ", &
+    "cmp_azimuth" , "Component azimuth (degrees clockwise from north) ", &
+    "cmp_incident_ang", "Component incident angle (degrees from vertical) ", &
+    "sample_rate"     , "Sampling rate (s) ", &
+    "scale_factor"    , "Scale factor to convert the unit of synthetics from meters to nanometer ", &
+    "ev_to_sta_AZ"    , "Event to station azimuth (degrees) ", &
+    "sta_to_ev_AZ"    , "Station to event azimuth (backazimuth, degrees) ", &
+    "great_circle_dist" , "Great circle distance between event and station (degrees) ", &
+    "receiver_name"     , "Receiver name ", &
+    "network"           , "Receiver network name ", &
+    "receiver_id"       , "Receiver number ", &
+    "component"         , "Receiver component name " &
+  /
+
   !gather info. Here, we only need nrecords_total
   nrecords=asdf_container%nrecords
   call gather_offset_info(nrecords,nrecords_total,offset,rank,nproc)
@@ -479,43 +516,6 @@ subroutine define_asdf_data (adios_group, my_group_size, asdf_container, rank, n
     call define_adios_global_real_1d_array (adios_group, my_group_size,&
                                             asdf_container%npoints(i), "", trim(str_record), real_array)
   enddo
-
-  ! defines attributes descriptions
-
-  DATA description  / &
-    "nreceivers", "Number of receivers ", &
-    "nrecords"  , "Number of records ", &
-    "min_period", "Low pass filter in Hz (0 if none applied)  ", &
-    "max_period", "High pass filter in Hz (0 if none applied)  ", &
-    "event_lat" , "Event CMT latitude (degrees, north positive) ", &
-    "event_lo"  , "Event CMT longitude (degrees, east positive) ", &
-    "event_dpt" , "Event CMT depth (km) ", &
-    "event_dpt" , "Event CMT depth (km) ", &
-    "component" , "Record component ", &
-    "gmt_year"  , "GMT year corresponding to reference (zero) time in file. ", &
-    "gmt_day"   , "GMT julian day corresponding to reference (zero) time in file. ", &
-    "gmt_hour"  , "GMT hour corresponding to reference (zero) time in file. ", &
-    "gmt_min"   , "GMT minute corresponding to reference (zero) time in file. ", &
-    "gmt_sec"   , "GMT second corresponding to reference (zero) time in file. ", &
-    "gmt_msec"  , "GMT millisecond corresponding to reference (zero) time in file. ", &
-    "receiver_lat", "Receiver latitude (degrees, north positive)  ", &
-    "receiver_lo" , "Receiver longitude (degrees, east positive) ", &
-    "receiver_dpt", "Receiver depth below surface (meters) ", &
-    "receiver_el" , "Receiver elevation (meters) ", &
-    "begin_value" , "Beginning value of time array ", &
-    "end_value"   , "End value of time array ", &
-    "cmp_azimuth" , "Component azimuth (degrees clockwise from north) ", &
-    "cmp_incident_ang", "Component incident angle (degrees from vertical) ", &
-    "sample_rate"     , "Sampling rate (s) ", &
-    "scale_factor"    , "Scale factor to convert the unit of synthetics from meters to nanometer ", &
-    "ev_to_sta_AZ"    , "Event to station azimuth (degrees) ", &
-    "sta_to_ev_AZ"    , "Station to event azimuth (backazimuth, degrees) ", &
-    "great_circle_dist" , "Great circle distance between event and station (degrees) ", &
-    "receiver_name"     , "Receiver name ", &
-    "network"           , "Receiver network name ", &
-    "receiver_id"       , "Receiver number ", &
-    "component"         , "Receiver component name " &
-  /
 
   do i = 1,nparam_desc
     call adios_define_attribute(adios_group,trim(description(1,i)),"desc",adios_string,trim(description(2,i)),"",adios_err)
