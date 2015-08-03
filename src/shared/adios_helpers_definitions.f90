@@ -54,6 +54,7 @@ module adios_helpers_definitions_mod
     module procedure define_adios_double_scalar
     module procedure define_adios_float_scalar
     module procedure define_adios_integer_scalar
+    module procedure define_adios_long_scalar
     module procedure define_adios_byte_scalar
   end interface define_adios_scalar
 
@@ -274,6 +275,49 @@ subroutine define_adios_integer_scalar(adios_group, group_size_inc, path, name, 
 
 end subroutine define_adios_integer_scalar
 
+
+!===============================================================================
+!> Define an ADIOS scalar long integer variable and autoincrement the adios
+!! group size by (8).
+!! \param adios_group The adios group where the variables belongs
+!! \param group_size_inc The inout adios group size to increment
+!!                       with the size of the variable
+!! \param path The logical path structuring the data and containing
+!!             the variable
+!! \param name The variable name in the ADIOS file.
+!! \param var The variable to be defined. Used for type inference. Can be
+!             ignored.
+!!
+!! \note See define_adios_double_scalar()
+subroutine define_adios_long_scalar(adios_group, group_size_inc, path, name, var)
+
+  use adios_write_mod,only: adios_define_var, adios_long
+
+  implicit none
+  ! Arguments
+  integer(kind=8),  intent(in)     :: adios_group
+  character(len=*), intent(in)     :: name, path
+  integer(kind=8),  intent(inout)  :: group_size_inc
+  integer(kind=8),     intent(in)  :: var
+  ! Local Variables
+  integer(kind=8)                  :: varid ! dummy variable, adios use var name
+  ! Local vars
+  !character(len=256) :: full_name
+  integer(kind=4) :: idummy
+
+  !full_name = trim(path) // trim(name)
+
+  ! adios: 2 ~ integer(kind=4)
+  call adios_define_var (adios_group, trim(name), trim(path), adios_long, &
+                         "", "", "", varid)
+
+  group_size_inc = group_size_inc + 8
+
+  ! to avoid compiler warnings
+  idummy = var
+
+end subroutine define_adios_long_scalar
+
 !===============================================================================
 !> Define an ADIOS scalar byte variable and autoincrement the adios
 !! group size by (1).
@@ -332,7 +376,7 @@ subroutine define_adios_global_dims_1d(adios_group, group_size_inc, array_name, 
   integer(kind=8), intent(inout) :: group_size_inc
 
   call define_adios_integer_scalar (adios_group, group_size_inc, trim(array_name), "local_dim", local_dim)
-  call define_adios_integer_scalar (adios_group, group_size_inc, trim(array_name), "global_dim", local_dim)
+  call define_adios_long_scalar(adios_group, group_size_inc, trim(array_name), "global_dim", int(local_dim, 8))
   call define_adios_integer_scalar (adios_group, group_size_inc, trim(array_name), "offset", local_dim)
 
 end subroutine define_adios_global_dims_1d
