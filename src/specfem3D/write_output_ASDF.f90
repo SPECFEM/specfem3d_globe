@@ -438,11 +438,30 @@ subroutine cmt_to_quakeml(quakemlstring)
                   '<eventParameters publicID="smi:local/592edbfc-2482-481e-80fd-03810308104b">'//&
                   '<event publicID="smi:service.iris.edu/fdsnws/event/1/query?eventid=656970">'//&
                   '<preferredOriginID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin</preferredOriginID>'//&
-'<preferredFocalMechanismID>smi:ds.iris.edu/spudservice/momenttensor/'//&
-                'gcmtid/B090198B/quakeml#focalmechanism</preferredFocalMechanismID>'//&
-      '<type>earthquake</type>'//&
-                 '</event>'//&
-                 '</eventParameters>'//&
+                  '<preferredFocalMechanismID>smi:ds.iris.edu/spudservice/momenttensor/'//&
+                  'gcmtid/B090198B/quakeml#focalmechanism</preferredFocalMechanismID>'//&
+                  '<type>earthquake</type>'//&
+                  '<description>'//&
+                  '<text>SOUTH SANDWICH ISLANDS R</text>'//&
+                  '<type>region name</type>'//&
+                  '</description>'//&
+      '<origin publicID="smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin">'//&
+        '<time><value>1998-09-01T10:29:54.500000Z</value>'//&
+        '</time>'//&
+        '<latitude>'//&
+          '<value>-58.5</value>'//&
+        '</latitude>'//&
+        '<longitude>'//&
+          '<value>-26.1</value>'//&
+        '</longitude>'//&
+        '<depth>'//&
+          '<value>158200.0</value>'//&
+        '</depth>'//&
+        '<timeFixed>false</timeFixed>'//&
+        '<epicenterFixed>false</epicenterFixed>'//&
+      '</origin>'//&
+                  '</event>'//&
+                  '</eventParameters>'//&
                   '</q:quakeml>'
 
 end subroutine cmt_to_quakeml
