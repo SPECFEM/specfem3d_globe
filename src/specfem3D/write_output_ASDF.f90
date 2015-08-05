@@ -119,7 +119,6 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   asdf_container%network_array(i) = network_name(irec)(1:length_network_name)
   asdf_container%component_array(i) = chn
 
-  print *, phi
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
@@ -161,6 +160,7 @@ subroutine write_asdf(asdf_container)
 
   use asdf_data
   use iso_c_binding
+  use iso_fortran_env
   use specfem_par
 
   implicit none
@@ -227,6 +227,8 @@ subroutine write_asdf(asdf_container)
   type(c_ptr) :: cptr
   character, pointer :: fptr(:)
 
+  integer(int64) :: start = 1396572170000000000
+
   ! alias mpi communicator for ADIOS
   call world_duplicate(comm)
   call world_size(mysize)
@@ -255,10 +257,9 @@ subroutine write_asdf(asdf_container)
   !write(startTime, "(F5.2)") starddt_time
   !write(endTime, "(F5.2)") start_time
   call ASDF_clean_provenance_f(cptr)
-  call ASDF_generate_sf_provenance_f("2014-01-01T12:15:03", "2014-01-01T02:15:03", cptr, len)
-  call c_f_pointer(cptr, fptr, [len])
-  print *, fptr
 
+  call ASDF_generate_sf_provenance_f("2014-04-04T01:33:37", "2014-04-04T02:15:10", cptr, len)
+  call c_f_pointer(cptr, fptr, [len])
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
@@ -354,11 +355,10 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-  print *, "defining waveforms"
+  sampling_rate = 0.1
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
       call station_to_stationxml(station_names_gather(j,k), k, station_xml)
-      print *, trim(station_xml)
       call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
@@ -371,25 +371,26 @@ subroutine write_asdf(asdf_container)
            trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
            // "__2014-04-04T01:33:37__2014-04-04T02:15:10__synthetic"
         ! Create the dataset where waveform will be written later on.
+        print *, "fortran:, ", start
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
-             nsamples, start_time, sampling_rate, &
+             nsamples, start, sampling_rate, &
              trim(event_name) // C_NULL_CHAR, &
              trim(waveform_name) // C_NULL_CHAR, &
              data_ids(i, j, k))
-        if (nrec_local > 0) then
-          waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
-        endif
+        !if (nrec_local > 0) then
+        !  waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
+        !endif
       enddo
     enddo
   enddo
 
-  print *, "writing waveforms"
-  do j = 1, num_stations
-   do i = 1, num_channels_per_station
-      call ASDF_write_full_waveform_f(data_ids(i, j, myrank+1), &
-                                      waveforms(:, i, j), ier)
-    enddo
-  enddo
+  !print *, "writing waveforms"
+  !do j = 1, num_stations
+  ! do i = 1, num_channels_per_station
+  !    call ASDF_write_full_waveform_f(data_ids(i, j, myrank+1), &
+  !                                    waveforms(:, i, j), ier)
+  !  enddo
+  !enddo
 
   !--------------------------------------------------------
   ! Clean up
@@ -462,8 +463,8 @@ subroutine station_to_stationxml(station_name, irec, stationxmlstring)
                       '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
                       '<Created>2014-03-03T11:07:06+00:00</Created>'//&
                       '<Network code="IU"><Station code="ANTO" startDate="2006-12-16T00:00:00+00:00">'//&
-                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
+                      '<Latitude unit="DEGREES">49.69</Latitude>'//&
+                      '<Longitude unit="DEGREES">11.22</Longitude>'//&
                       '<Elevation>565.0</Elevation>'//&
                       '<Site><Name>Fuerstenfeldbruck, Bavaria, GR-Net</Name></Site>'//&
                       '<CreationDate>2006-12-16T00:00:00+00:00</CreationDate>'//&
@@ -487,7 +488,5 @@ subroutine read_file(filename, filestring)
          recl=file_size, form='unformatted', access='direct')
   read (10, rec=1) filestring
   close(10)
-
-  print *, trim(filestring)
 
 end subroutine read_file
