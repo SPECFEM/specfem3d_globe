@@ -347,7 +347,8 @@ subroutine write_asdf(asdf_container)
                                      "0.0.2" // C_NULL_CHAR, ier)
 
 
-  call ASDF_write_quakeml_f(file_id, quakeml, ier)
+  !call read_file("quake.xml", quakeml)
+  call ASDF_write_quakeml_f(file_id, trim(quakeml), ier)
   call ASDF_write_provenance_data_f(file_id, trim(provenance), ier)
   call read_file("setup/constants.h", sf_constants)
   call read_file("DATA/Par_file", sf_parfile)
@@ -377,20 +378,19 @@ subroutine write_asdf(asdf_container)
              trim(event_name) // C_NULL_CHAR, &
              trim(waveform_name) // C_NULL_CHAR, &
              data_ids(i, j, k))
-        !if (nrec_local > 0) then
-        !  waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
-        !endif
+        if (nrec_local > 0) then
+          waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
+        endif
       enddo
     enddo
   enddo
 
-  !print *, "writing waveforms"
-  !do j = 1, num_stations
-  ! do i = 1, num_channels_per_station
-  !    call ASDF_write_full_waveform_f(data_ids(i, j, myrank+1), &
-  !                                    waveforms(:, i, j), ier)
-  !  enddo
-  !enddo
+  do j = 1, num_stations
+   do i = 1, num_channels_per_station
+      call ASDF_write_full_waveform_f(data_ids(i, j, myrank+1), &
+                                      waveforms(:, i, j), ier)
+    enddo
+  enddo
 
   !--------------------------------------------------------
   ! Clean up
@@ -433,13 +433,16 @@ subroutine cmt_to_quakeml(quakemlstring)
   write(lat_str, "(F5.2)") cmt_lon
   write(dep_str, "(F5.2)") cmt_depth
 
-  quakemlstring = '<q:quakeml xsi:schemaLocation="http://quakeml.org/schema/xsd/QuakeML-1.2.xsd" '//&
-                  'xmlns="http://quakeml.org/xmlns/bed/1.2" xmlns:q="http://quakeml.org/xmlns/quakeml/1.2" xmlns:xsi="http://'//&
-                  'www.w3.org/2001/XMLSchema-instance">'//&
-                  !'<eventParameters publicID="smi:service.iris.edu/fdsnws/event/1/query">'//&
-                  !'<longitude><value>'//trim(lon_str)//'</value></longitude><latitude><value>'//trim(lat_str)//&
-                  !'</value></latitude><depth><value>'//trim(dep_str)//'</value></depth>'//&
-                  !'</eventParameters>'//&
+  quakemlstring = '<q:quakeml xmlns="http://quakeml.org/xmlns/bed/1.2"'//&
+                  ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
+                  '<eventParameters publicID="smi:local/592edbfc-2482-481e-80fd-03810308104b">'//&
+                  '<event publicID="smi:service.iris.edu/fdsnws/event/1/query?eventid=656970">'//&
+                  '<preferredOriginID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin</preferredOriginID>'//&
+'<preferredFocalMechanismID>smi:ds.iris.edu/spudservice/momenttensor/'//&
+                'gcmtid/B090198B/quakeml#focalmechanism</preferredFocalMechanismID>'//&
+      '<type>earthquake</type>'//&
+                 '</event>'//&
+                 '</eventParameters>'//&
                   '</q:quakeml>'
 
 end subroutine cmt_to_quakeml
