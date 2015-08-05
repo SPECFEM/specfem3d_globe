@@ -258,7 +258,7 @@ subroutine write_asdf(asdf_container)
   !write(endTime, "(F5.2)") start_time
   call ASDF_clean_provenance_f(cptr)
 
-  call ASDF_generate_sf_provenance_f("2014-04-04T01:33:37", "2014-04-04T02:15:10", cptr, len)
+  call ASDF_generate_sf_provenance_f("2014-04-04T00:42:50", "2014-04-04T02:15:10", cptr, len)
   call c_f_pointer(cptr, fptr, [len])
 
   allocate(networks_names(num_stations), stat=ier)
@@ -369,7 +369,7 @@ subroutine write_asdf(asdf_container)
         write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
            trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
-           // "__2014-04-04T01:33:37__2014-04-04T02:15:10__synthetic"
+           // "__2014-04-04T00:42:50__2014-04-04T01:49:20__synthetic"
         ! Create the dataset where waveform will be written later on.
         print *, "fortran:, ", start
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
