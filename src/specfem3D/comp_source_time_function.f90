@@ -27,12 +27,13 @@
 
   double precision function comp_source_time_function(t,hdur)
 
-  use constants
+  use constants,only: EXTERNAL_SOURCE_TIME_FUNCTION
 
   implicit none
 
-  double precision t,hdur
+  double precision,intent(in) :: t,hdur
 
+  ! local parameters
   double precision, external :: netlib_specfun_erf
   double precision, external :: comp_source_time_function_ext
 
@@ -51,11 +52,11 @@
 
   double precision function comp_source_time_function_rickr(t,f0)
 
-  use constants
+  use constants,only: PI
 
   implicit none
 
-  double precision t,f0
+  double precision,intent(in) :: t,f0
 
   ! Ricker
   comp_source_time_function_rickr = (1.d0 - 2.d0*PI*PI*f0*f0*t*t ) &

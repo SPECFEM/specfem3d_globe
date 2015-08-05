@@ -38,12 +38,21 @@
   integer :: isource,i,j,k,iglob,ispec
   double precision :: f0
   double precision, dimension(NSOURCES) :: stf_pre_compute
+  double precision :: timeval,time_t
 
   double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
 
   ! checks if anything to do for noise simulation
   if (NOISE_TOMOGRAPHY /= 0) return
+
+  ! sets current initial time
+  if (USE_LDDRK) then
+    time_t = dble(it-1)*DT + dble(C_LDDRK(istage))*DT - t0
+  else
+    time_t = dble(it-1)*DT - t0
+  endif
+
 
   if (.not. GPU_MODE) then
     ! on CPU
@@ -52,6 +61,10 @@
       ! add only if this proc carries the source
       if (myrank == islice_selected_source(isource)) then
 
+        ! sets current time for this source
+        timeval = time_t - tshift_cmt(isource)
+
+        ! adds source contribution
         if (USE_FORCE_POINT_SOURCE) then
 
           ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
@@ -64,12 +77,7 @@
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-          if (USE_LDDRK) then
-            stf_used = FACTOR_FORCE_SOURCE * &
-                     comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
-          else
-            stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
-          endif
+          stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
 
           ! we use a force in a single direction along one of the components:
           !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
@@ -78,12 +86,8 @@
                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
         else
-          if (USE_LDDRK) then
-            stf = comp_source_time_function(dble(it-1)*DT + &
-                                            dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
-          else
-            stf = comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
-          endif
+          ! source time function value
+          stf = comp_source_time_function(timeval,hdur_gaussian(isource))
 
           !     distinguish between single and double precision for reals
           stf_used = real(stf, kind=CUSTOM_REAL)
@@ -113,23 +117,19 @@
     ! prepares buffer with source time function values, to be copied onto GPU
     if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
-        if (USE_LDDRK) then
-          stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * &
-                     comp_source_time_function_rickr(dble(it-1)*DT + dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),f0)
-        else
-          stf_pre_compute(isource) = &
-                      FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(it-1)*DT-t0-tshift_cmt(isource),f0)
-        endif
+        ! sets current time for this source
+        timeval = time_t - tshift_cmt(isource)
+
+        ! source time function value
+        stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
       enddo
     else
       do isource = 1,NSOURCES
-        if (USE_LDDRK) then
-          stf_pre_compute(isource) = comp_source_time_function(dble(it-1)*DT + &
-                                            dble(C_LDDRK(istage))*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
-        else
-          stf_pre_compute(isource) = &
-            comp_source_time_function(dble(it-1)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
-        endif
+        ! sets current time for this source
+        timeval = time_t - tshift_cmt(isource)
+
+        ! source time function value
+        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=1 and NOISE_TOM = 0
@@ -320,6 +320,7 @@
   integer :: isource,i,j,k,iglob,ispec
   double precision :: f0
   double precision, dimension(NSOURCES) :: stf_pre_compute
+  double precision :: timeval,time_t
 
   double precision, external :: comp_source_time_function
   double precision, external :: comp_source_time_function_rickr
@@ -354,6 +355,26 @@
   !debug
   !if (myrank == 0 ) print *,'compute_add_sources_backward: it_tmp = ',it_tmp,it
 
+  ! note on backward/reconstructed wavefields:
+  !       time for b_displ( it ) corresponds to (NSTEP - (it-1) - 1 )*DT - t0  ...
+  !       as we start with saved wavefields b_displ( 1 ) = displ( NSTEP ) which correspond
+  !       to a time (NSTEP - 1)*DT - t0
+  !       (see sources for simulation_type 1 and seismograms)
+  !
+  !       now, at the beginning of the time loop, the numerical Newmark time scheme updates
+  !       the wavefields, that is b_displ( it=1) would correspond to time (NSTEP -1 - 1)*DT - t0.
+  !       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
+  !       in the first (it=1) time loop.
+  !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
+  !
+  ! sets current initial time
+  if (USE_LDDRK) then
+    time_t = dble(NSTEP-it_tmp)*DT - dble(C_LDDRK(istage))*DT - t0
+  else
+    time_t = dble(NSTEP-it_tmp)*DT - t0
+  endif
+
+
   if (.not. GPU_MODE) then
     ! on CPU
     do isource = 1,NSOURCES
@@ -361,17 +382,8 @@
       !   add the source (only if this proc carries the source)
       if (myrank == islice_selected_source(isource)) then
 
-        ! note on backward/reconstructed wavefields:
-        !       time for b_displ( it ) corresponds to (NSTEP - (it-1) - 1 )*DT - t0  ...
-        !       as we start with saved wavefields b_displ( 1 ) = displ( NSTEP ) which correspond
-        !       to a time (NSTEP - 1)*DT - t0
-        !       (see sources for simulation_type 1 and seismograms)
-        !
-        !       now, at the beginning of the time loop, the numerical Newmark time scheme updates
-        !       the wavefields, that is b_displ( it=1) would correspond to time (NSTEP -1 - 1)*DT - t0.
-        !       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
-        !       in the first (it=1) time loop.
-        !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
+        ! sets current time for this source
+        timeval = time_t - tshift_cmt(isource)
 
         if (USE_FORCE_POINT_SOURCE) then
 
@@ -391,7 +403,7 @@
            !endif
 
            ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-           stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),f0)
+           stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
 
            ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
            ! note: time step is now at NSTEP-it
@@ -401,7 +413,7 @@
         else
 
           ! see note above: time step corresponds now to NSTEP-it
-          stf = comp_source_time_function(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+          stf = comp_source_time_function(timeval,hdur_gaussian(isource))
 
           !     distinguish between single and double precision for reals
           stf_used = real(stf, kind=CUSTOM_REAL)
@@ -431,13 +443,17 @@
     ! prepares buffer with source time function values, to be copied onto GPU
     if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
-        stf_pre_compute(isource) = &
-          FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),f0)
+        ! sets current time for this source
+        timeval = time_t - tshift_cmt(isource)
+        ! source time function contribution
+        stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
       enddo
     else
       do isource = 1,NSOURCES
-        stf_pre_compute(isource) = &
-          comp_source_time_function(dble(NSTEP-it_tmp)*DT-t0-tshift_cmt(isource),hdur_gaussian(isource))
+        ! sets current time for this source
+        timeval = time_t - tshift_cmt(isource)
+        ! source time function contribution
+        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM = 0)
