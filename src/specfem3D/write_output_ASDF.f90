@@ -219,13 +219,13 @@ subroutine write_asdf(asdf_container)
 
   ! temporary name built from network, station and channel names.
   character(len=MAX_STRING_LENGTH) :: waveform_name
-  character(len=5) :: startTime, endTime
 
   ! C/Fortran interop for C-allocated strings
   integer :: len
 
   type(c_ptr) :: cptr
   character, pointer :: fptr(:)
+  character, dimension(:), allocatable, TARGET :: prov
 
   integer(int64) :: start = 1396572170000000000
 
@@ -260,6 +260,8 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_generate_sf_provenance_f("2014-04-04T00:42:50", "2014-04-04T02:15:10", cptr, len)
   call c_f_pointer(cptr, fptr, [len])
+  allocate(prov(len))
+  prov(1:len) = fptr(1:len)
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
@@ -347,16 +349,16 @@ subroutine write_asdf(asdf_container)
                                      "0.0.2" // C_NULL_CHAR, ier)
 
 
-  !call read_file("quake.xml", quakeml)
   call ASDF_write_quakeml_f(file_id, trim(quakeml), ier)
-  call ASDF_write_provenance_data_f(file_id, trim(provenance), ier)
+  call ASDF_write_provenance_data_f(file_id, prov(1:len), ier)
   call read_file("setup/constants.h", sf_constants)
   call read_file("DATA/Par_file", sf_parfile)
   call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants), trim(sf_parfile), ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-  sampling_rate = 0.1
+  start_time = 1396572170000000000
+  sampling_rate = DT
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
       call station_to_stationxml(station_names_gather(j,k), k, station_xml)
@@ -372,7 +374,6 @@ subroutine write_asdf(asdf_container)
            trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
            // "__2014-04-04T00:42:50__2014-04-04T01:49:20__synthetic"
         ! Create the dataset where waveform will be written later on.
-        print *, "fortran:, ", start
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
              nsamples, start, sampling_rate, &
              trim(event_name) // C_NULL_CHAR, &
@@ -427,11 +428,12 @@ subroutine cmt_to_quakeml(quakemlstring)
 
   implicit none
   character(len=*) :: quakemlstring
-  character(len=5) :: lon_str, lat_str, dep_str
+  character(len=25) :: lon_str, lat_str, dep_str
 
-  write(lon_str, "(F5.2)") cmt_lat
-  write(lat_str, "(F5.2)") cmt_lon
-  write(dep_str, "(F5.2)") cmt_depth
+
+  write(lon_str, "(g12.5)") cmt_lat
+  write(lat_str, "(g12.5)") cmt_lon
+  write(dep_str, "(g12.5)") cmt_depth
 
   quakemlstring = '<q:quakeml xmlns="http://quakeml.org/xmlns/bed/1.2"'//&
                   ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
@@ -445,21 +447,20 @@ subroutine cmt_to_quakeml(quakemlstring)
                   '<text>SOUTH SANDWICH ISLANDS R</text>'//&
                   '<type>region name</type>'//&
                   '</description>'//&
-      '<origin publicID="smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin">'//&
-        '<time><value>1998-09-01T10:29:54.500000Z</value>'//&
-        '</time>'//&
-        '<latitude>'//&
-          '<value>-58.5</value>'//&
-        '</latitude>'//&
-        '<longitude>'//&
-          '<value>-26.1</value>'//&
-        '</longitude>'//&
-        '<depth>'//&
-          '<value>158200.0</value>'//&
-        '</depth>'//&
-        '<timeFixed>false</timeFixed>'//&
-        '<epicenterFixed>false</epicenterFixed>'//&
-      '</origin>'//&
+                  '<origin publicID="smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin">'//&
+                  '<time><value>1998-09-01T10:29:54.500000Z</value></time>'//&
+                  '<latitude>'//&
+                  '<value>'//trim(lat_str)//'</value>'//&
+                  '</latitude>'//&
+                  '<longitude>'//&
+                  '<value>'//trim(lon_str)//'</value>'//&
+                  '</longitude>'//&
+                  '<depth>'//&
+                  '<value>'//trim(dep_str)//'</value>'//&
+                  '</depth>'//&
+                  '<timeFixed>false</timeFixed>'//&
+                  '<epicenterFixed>false</epicenterFixed>'//&
+                  '</origin>'//&
                   '</event>'//&
                   '</eventParameters>'//&
                   '</q:quakeml>'
@@ -469,24 +470,25 @@ end subroutine cmt_to_quakeml
 subroutine station_to_stationxml(station_name, irec, stationxmlstring)
 
   use specfem_par,only:&
-    stlat, stlon
+    stlat, stlon, network_name
 
   implicit none
   character(len=*) :: station_name, stationxmlstring
-  character(len=5) :: station_lat, station_lon
+  character(len=25) :: station_lat, station_lon
   integer, intent(in) :: irec
 
-  write(station_lat, "(F5.2)") stlat(irec)
-  write(station_lon, "(F5.2)") stlon(irec) 
+  write(station_lat, "(g12.5)") stlat(irec)
+  write(station_lon, "(g12.5)") stlon(irec) 
 
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
                      '<Source>Erdbebendienst Bayern</Source>'//&
                       '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
                       '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
                       '<Created>2014-03-03T11:07:06+00:00</Created>'//&
-                      '<Network code="IU"><Station code="ANTO" startDate="2006-12-16T00:00:00+00:00">'//&
-                      '<Latitude unit="DEGREES">49.69</Latitude>'//&
-                      '<Longitude unit="DEGREES">11.22</Longitude>'//&
+                      '<Network code="IU"><Station code="'//trim(station_name)//'"'//&
+                      ' startDate="2006-12-16T00:00:00+00:00">'//&
+                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
+                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                       '<Elevation>565.0</Elevation>'//&
                       '<Site><Name>Fuerstenfeldbruck, Bavaria, GR-Net</Name></Site>'//&
                       '<CreationDate>2006-12-16T00:00:00+00:00</CreationDate>'//&
