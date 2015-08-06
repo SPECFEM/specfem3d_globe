@@ -260,8 +260,9 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_generate_sf_provenance_f("2014-04-04T00:42:50", "2014-04-04T02:15:10", cptr, len)
   call c_f_pointer(cptr, fptr, [len])
-  allocate(prov(len))
+  allocate(prov(len+1))
   prov(1:len) = fptr(1:len)
+  prov(len+1) = C_NULL_CHAR
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
@@ -359,6 +360,7 @@ subroutine write_asdf(asdf_container)
 
   start_time = 1396572170000000000
   sampling_rate = DT
+
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
       call station_to_stationxml(station_names_gather(j,k), k, station_xml)
