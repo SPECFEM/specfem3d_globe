@@ -81,7 +81,7 @@ module BOAST
       print If(attenuation) {
         print minus_sum_beta === one_minus_sum_beta_use - 1.0
         print mul === c[3][3] * minus_sum_beta
-        
+
         print c[0][0] === c[0][0] + mul * 1.33333333333333333333
         print c[0][1] === c[0][1] - mul * 0.66666666666666666666
         print c[0][2] === c[0][2] - mul * 0.66666666666666666666
@@ -93,19 +93,19 @@ module BOAST
         print c[5][5] === c[5][5] + mul
       }
       print sigma_xx.dereference === c[0][0]*dudl[0][0] + c[0][5]*duxdyl_plus_duydxl + c[0][1]*dudl[1][1] \
-                                   + c[0][4]*duzdxl_plus_duxdzl + c[0][3]*duzdyl_plus_duydzl + c[0][2]*dudl[2][2] 
+                                   + c[0][4]*duzdxl_plus_duxdzl + c[0][3]*duzdyl_plus_duydzl + c[0][2]*dudl[2][2]
       print sigma_yy.dereference === c[0][1]*dudl[0][0] + c[1][5]*duxdyl_plus_duydxl + c[1][1]*dudl[1][1] \
-                                   + c[1][4]*duzdxl_plus_duxdzl + c[1][3]*duzdyl_plus_duydzl + c[1][2]*dudl[2][2] 
+                                   + c[1][4]*duzdxl_plus_duxdzl + c[1][3]*duzdyl_plus_duydzl + c[1][2]*dudl[2][2]
       print sigma_zz.dereference === c[0][2]*dudl[0][0] + c[2][5]*duxdyl_plus_duydxl + c[1][2]*dudl[1][1] \
-                                   + c[2][4]*duzdxl_plus_duxdzl + c[2][3]*duzdyl_plus_duydzl + c[2][2]*dudl[2][2] 
+                                   + c[2][4]*duzdxl_plus_duxdzl + c[2][3]*duzdyl_plus_duydzl + c[2][2]*dudl[2][2]
       print sigma_xy.dereference === c[0][5]*dudl[0][0] + c[5][5]*duxdyl_plus_duydxl + c[1][5]*dudl[1][1] \
-                                   + c[4][5]*duzdxl_plus_duxdzl + c[3][5]*duzdyl_plus_duydzl + c[2][5]*dudl[2][2] 
+                                   + c[4][5]*duzdxl_plus_duxdzl + c[3][5]*duzdyl_plus_duydzl + c[2][5]*dudl[2][2]
       print sigma_xz.dereference === c[0][4]*dudl[0][0] + c[4][5]*duxdyl_plus_duydxl + c[1][4]*dudl[1][1] \
-                                   + c[4][4]*duzdxl_plus_duxdzl + c[3][4]*duzdyl_plus_duydzl + c[2][4]*dudl[2][2] 
+                                   + c[4][4]*duzdxl_plus_duxdzl + c[3][4]*duzdyl_plus_duydzl + c[2][4]*dudl[2][2]
       print sigma_yz.dereference === c[0][3]*dudl[0][0] + c[3][5]*duxdyl_plus_duydxl + c[1][3]*dudl[1][1] \
-                                   + c[3][4]*duzdxl_plus_duxdzl + c[3][3]*duzdyl_plus_duydzl + c[2][3]*dudl[2][2] 
+                                   + c[3][4]*duzdxl_plus_duxdzl + c[3][3]*duzdyl_plus_duydzl + c[2][3]*dudl[2][2]
     }
-    return p 
+    return p
   end
 
   def BOAST::compute_element_cm_iso
@@ -404,7 +404,7 @@ module BOAST
       print sigma_xz.dereference === c[0][4]*dudl[0][0] + c[4][5]*duxdyl_plus_duydxl + c[1][4]*dudl[1][1] +
                                      c[4][4]*duzdxl_plus_duxdzl + c[3][4]*duzdyl_plus_duydzl + c[2][4]*dudl[2][2]
       print sigma_yz.dereference === c[0][3]*dudl[0][0] + c[3][5]*duxdyl_plus_duydxl + c[1][3]*dudl[1][1] +
-                                     c[3][4]*duzdxl_plus_duxdzl + c[3][3]*duzdyl_plus_duydzl + c[2][3]*dudl[2][2] 
+                                     c[3][4]*duzdxl_plus_duxdzl + c[3][3]*duzdyl_plus_duydzl + c[2][3]*dudl[2][2]
     }
     return p
   end
@@ -534,7 +534,7 @@ module BOAST
     if type == :inner_core then
       d_displ_tex = Real("d_#{forward ? "":"b_"}displ_ic_tex", :texture => true, :dir => :in, :dim => [Dim()] )
       d_accel_tex = Real("d_#{forward ? "":"b_"}accel_ic_tex", :texture => true, :dir => :in, :dim => [Dim()] )
-    elsif type == :crust_mantle then        
+    elsif type == :crust_mantle then
       d_displ_tex = Real("d_#{forward ? "":"b_"}displ_cm_tex", :texture => true, :dir => :in, :dim => [Dim()] )
       d_accel_tex = Real("d_#{forward ? "":"b_"}accel_cm_tex", :texture => true, :dir => :in, :dim => [Dim()] )
     end
@@ -710,23 +710,23 @@ module BOAST
           }
         }
         decl *(rho_s_H.flatten)
-  
+
         decl *s_dummy_loc = ["x", "y", "z"].collect { |a|
           Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
         }
-  
+
         s_temp = ["x", "y", "z"].collect { |a|
           [ 1, 2, 3 ].collect { |n|
             Real("s_temp#{a}#{n}", :local => true, :dim => [Dim(ngll3)] )
           }
         }
         decl *(s_temp.flatten)
-  
+
         decl sh_hprime_xx     = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
         decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
-  
+
         print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
-elem_per_thread.times { |elem_index| 
+elem_per_thread.times { |elem_index|
         print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
         print active[elem_index] === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
 
@@ -775,7 +775,7 @@ elem_per_thread.times { |elem_index|
         }
 }
         print barrier(:local)
-  
+
 elem_per_thread.times { |elem_index|
   if elem_per_thread > 1 then
         print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
@@ -819,7 +819,7 @@ elem_per_thread.times { |elem_index|
             print etal[indx]   === d_eta[indx][offset]
             print gammal[indx] === d_gamma[indx][offset]
           }
-  
+
           (0..2).each { |indx1|
             (0..2).each { |indx2|
               print dudl[indx1][indx2] === xil[indx2]*tempanl[indx1][0] + etal[indx2]*tempanl[indx1][1] + gammal[indx2]*tempanl[indx1][2]
@@ -831,7 +831,7 @@ elem_per_thread.times { |elem_index|
           print duxdyl_plus_duydxl === dudl[0][1] + dudl[1][0]
           print duzdxl_plus_duxdzl === dudl[2][0] + dudl[0][2]
           print duzdyl_plus_duydzl === dudl[2][1] + dudl[1][2]
-  
+
           print If(compute_and_store_strain) {
             print templ === (dudl[0][0] + dudl[1][1] + dudl[2][2])*0.33333333333333333333333333
             print epsilondev_xx_loc[elem_index] === dudl[0][0] - templ
@@ -845,7 +845,7 @@ elem_per_thread.times { |elem_index|
               print epsilon_trace_over_3[tx + working_element*ngll3] === templ
             })
           }
-  
+
           if type == :inner_core then
             print kappal === d_kappavstore[offset]
             print mul === d_muvstore[offset]
@@ -882,11 +882,11 @@ elem_per_thread.times { |elem_index|
             }, lambda {
               print lambdalplus2mul === kappal + mul_iso * 1.33333333333333333333
               print lambdal === lambdalplus2mul - mul_iso * 2.0
-    
+
               print sigma[0][0] === lambdalplus2mul*dudl[0][0] + lambdal*duydyl_plus_duzdzl
               print sigma[1][1] === lambdalplus2mul*dudl[1][1] + lambdal*duxdxl_plus_duzdzl
               print sigma[2][2] === lambdalplus2mul*dudl[2][2] + lambdal*duxdxl_plus_duydyl
-    
+
               print sigma[0][1] === mul*duxdyl_plus_duydxl
               print sigma[0][2] === mul*duzdxl_plus_duxdzl
               print sigma[1][2] === mul*duzdyl_plus_duydzl
@@ -936,7 +936,7 @@ elem_per_thread.times { |elem_index|
           end
 
 
-  
+
           print If(Expression("&&", attenuation, !partial_phys_dispersion_only)) {
             print sub_compute_element_att_stress.call(tx, working_element,\
                                    r_xx, r_yy, r_xy, r_xz, r_yz,\
@@ -946,7 +946,7 @@ elem_per_thread.times { |elem_index|
           print sigma[1][0] === sigma[0][1]
           print sigma[2][0] === sigma[0][2]
           print sigma[2][1] === sigma[1][2]
-  
+
           print jacobianl === Expression("/", 1.0, xil[0]*(etal[1]*gammal[2] - etal[2]*gammal[1])\
                                                  - xil[1]*(etal[0]*gammal[2] - etal[2]*gammal[0])\
                                                  + xil[2]*(etal[0]*gammal[1] - etal[1]*gammal[0]))
@@ -1015,7 +1015,7 @@ elem_per_thread.times { |elem_index|
           (0..2).each { |indx|
             print sum_terms[indx] === -(fac[0]*tempanl[indx][0] + fac[1]*tempanl[indx][1] + fac[2]*tempanl[indx][2])
           }
-  
+
           print If(gravity) {
             (0..2).each { |indx|
               print sum_terms[indx] === sum_terms[indx] + rho_s_H[elem_index][indx]

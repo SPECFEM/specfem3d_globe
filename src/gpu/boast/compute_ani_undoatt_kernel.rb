@@ -29,7 +29,7 @@ module BOAST
     elsif type == :iso then
       v.push mu_kl                = Real("mu_kl",                :dir => :inout,:dim => [Dim()] )
       v.push kappa_kl             = Real("kappa_kl",             :dir => :inout,:dim => [Dim()] )
-    end      
+    end
     v.push nspec                  = Int( "NSPEC",                :dir => :in)
     v.push deltat                 = Real("deltat",               :dir => :in)
     v.push d_ibool                = Int( "d_ibool",              :dir => :in, :dim => [Dim()] )
@@ -68,7 +68,7 @@ module BOAST
 
       decl eps_trace_over_3 = Real("eps_trace_over_3")
       decl b_eps_trace_over_3 = Real("b_eps_trace_over_3")
-      if type == :ani then 
+      if type == :ani then
         decl prod = Real("prod", :dim => [Dim(21)], :allocate => true)
         decl i = Int("i")
       end
@@ -79,7 +79,7 @@ module BOAST
         Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
       }
       decl sh_hprime_xx = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
-      
+
       print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
       print ijk_ispec === get_local_id(0) + ngll3*ispec
       print tx === get_local_id(0)

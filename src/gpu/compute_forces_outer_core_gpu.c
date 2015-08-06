@@ -54,7 +54,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_gammax,
                  gpu_realw_mem d_gammay,
                  gpu_realw_mem d_gammaz,
-                 realw time,
+                 realw timeval,
                  gpu_realw_mem d_A_array_rotation,
                  gpu_realw_mem d_B_array_rotation,
                  gpu_realw_mem d_b_A_array_rotation,
@@ -129,7 +129,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_rho_g_over_kappa_fluid.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->rotation));
-    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &time));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &timeval));
     if (FORWARD_OR_ADJOINT == 1) {
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->two_omega_earth));
       clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->deltat));
@@ -189,7 +189,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                             mp->d_minus_rho_g_over_kappa_fluid.cuda,
                                                                             mp->d_wgll_cube.cuda,
                                                                             mp->rotation,
-                                                                            time,
+                                                                            timeval,
                                                                             mp->two_omega_earth,
                                                                             mp->deltat,
                                                                             d_A_array_rotation.cuda,
@@ -222,7 +222,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                                                                             mp->d_minus_rho_g_over_kappa_fluid.cuda,
                                                                             mp->d_wgll_cube.cuda,
                                                                             mp->rotation,
-                                                                            time,
+                                                                            timeval,
                                                                             mp->b_two_omega_earth,
                                                                             mp->b_deltat,
                                                                             d_b_A_array_rotation.cuda,
@@ -245,14 +245,14 @@ extern EXTERN_LANG
 void FC_FUNC_ (compute_forces_outer_core_gpu,
                COMPUTE_FORCES_OUTER_CORE_GPU) (long *Mesh_pointer_f,
                                                int *iphase,
-                                               realw *time_f,
+                                               realw *timeval_f,
                                                int *FORWARD_OR_ADJOINT_f) {
 
   TRACE ("compute_forces_outer_core_gpu");
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
-  realw time = *time_f;
+  realw timeval = *timeval_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check
@@ -366,7 +366,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                   PASS_OFFSET(d_gammax_outer_core, offset),
                   PASS_OFFSET(d_gammay_outer_core, offset),
                   PASS_OFFSET(d_gammaz_outer_core, offset),
-                  time,
+                  timeval,
                   PASS_OFFSET(d_A_array_rotation, offset_nonpadded),
                   PASS_OFFSET(d_B_array_rotation, offset_nonpadded),
                   PASS_OFFSET(d_b_A_array_rotation, offset_nonpadded),
@@ -409,7 +409,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                 mp->d_gammax_outer_core,
                 mp->d_gammay_outer_core,
                 mp->d_gammaz_outer_core,
-                time,
+                timeval,
                 mp->d_A_array_rotation,
                 mp->d_B_array_rotation,
                 mp->d_b_A_array_rotation,

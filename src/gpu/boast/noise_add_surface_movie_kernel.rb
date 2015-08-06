@@ -5,7 +5,7 @@ module BOAST
     kernel = CKernel::new
 
     function_name = "noise_add_surface_movie_kernel"
- 
+
     accel =               Real("accel",               :dir => :inout,:dim => [Dim()] )
     ibool =               Int( "ibool",               :dir => :in,   :dim => [Dim()] )
     ibelm_top =           Int( "ibelm_top",           :dir => :in,   :dim => [Dim()] )
@@ -19,7 +19,7 @@ module BOAST
     wgllwgll   =          Real("wgllwgll",            :dir => :in,   :dim => [Dim()] )
 
     normal_noise = [normal_x_noise, normal_y_noise, normal_z_noise]
-    
+
     ndim =  Int("NDIM",  :const => n_dim)
     ngllx = Int("NGLLX", :const => n_gllx)
     ngll2 = Int("NGLL2", :const => n_gll2)
@@ -57,13 +57,13 @@ module BOAST
           }
 
           print eta === 0.0
-          
-          (0..2).each { |indx| 
+
+          (0..2).each { |indx|
             print eta === eta + noise_surface_movie[INDEX3(ndim,ngll2,indx,igll,iface)]*normal[indx]
           }
 
           print jacobianw === wgllwgll[j*ngllx+i]*jacobian2D[igll+ngll2*iface]
-          
+
           (0..2).each { |indx|
             print atomicAdd(accel+ iglob*3 + indx, eta*mask_noise[ipoin]*normal[indx]*jacobianw)
           }

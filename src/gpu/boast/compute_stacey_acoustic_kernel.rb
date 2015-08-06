@@ -43,7 +43,7 @@ module BOAST
     elsif type == :acoustic_backward then
       variables += [ ibool ]
     end
-    
+
     ngllx = Int("NGLLX", :const => n_gllx)
     ngll2 = Int("NGLL2", :const => n_gll2)
 
@@ -61,7 +61,7 @@ module BOAST
       decl sn = Real("sn") if type == :acoustic_forward
       decl jacobianw = Real("jacobianw") if type == :acoustic_forward
       decl fac1 = Real("fac1") if type == :acoustic_forward
-      
+
       print igll === get_local_id(0)
       print iface === get_group_id(0)+get_group_id(1)*get_num_groups(0)
 

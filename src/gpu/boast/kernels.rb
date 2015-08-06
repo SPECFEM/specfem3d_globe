@@ -161,10 +161,10 @@ kerns.each { |kern|
 
     # file name
     f = File::new("#{$options[:output_dir]}/#{filename}", "w+")
-    
+
     # writes out specfem3d_globe info text at beginning of file
     v = BOAST::specfem3d_globe_header_info()
-    
+
     # writes out generate kernel
     if lang == :CUDA then
       k_s = "#{v}" + k.to_s
@@ -187,7 +187,7 @@ kerns.each { |kern|
         k.build(:verbose => $options[:verbose], :platform_vendor => $options[:platform] )
       end
     end
-    
+
     # regression testing
     if $options[:check] then
       puts "  testing kernel with ../kernels.test/ cases"
@@ -229,12 +229,12 @@ langs.each { |lang|
     suffix = "_cl.c"
     kern_inc_f = File::new("#{$options[:output_dir]}/kernel_inc"+suffix, "w+")
   end
-  
+
   kern_list_f = File::new("#{$options[:output_dir]}/kernel_list.h", "w+")
 
   kernels.each { |kern|
     kern_list_f.puts "BOAST_KERNEL(#{kern.to_s});"
-    
+
     if lang == :CUDA then
       require "./#{kern.to_s}.rb"
       BOAST::set_lang( BOAST::const_get(lang))
@@ -256,7 +256,7 @@ langs.each { |lang|
   elsif lang == :CL
     kern_inc_f.puts elem_thread_check
   end
-  
+
   kern_list_f.close
   if lang == :CUDA then
     kern_proto_f.close
