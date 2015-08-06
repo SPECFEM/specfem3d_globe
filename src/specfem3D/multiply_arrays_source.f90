@@ -46,7 +46,7 @@
 
 ! multiplies acceleration with inverse of mass matrices in crust/mantle,solid inner core region
 
-  use constants_solver,only: CUSTOM_REAL,NDIM
+  use constants_solver,only: CUSTOM_REAL,NDIM,ROTATION_VAL
 
   implicit none
 
@@ -75,17 +75,35 @@
   ! updates acceleration w/ rotation in elastic region
 
   ! see input call, differs for corrected mass matrices for rmassx,rmassy,rmassz
+
+  ! divides by mass matrix
+  ! (rmassx holds inverted mass matrix; numerically multiplication is faster than division)
+  if (ROTATION_VAL) then
+    ! adds contributions due to rotation
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED(NGLOB, accel, rmassx, rmassy, rmassz, two_omega_earth, veloc) &
 !$OMP PRIVATE(i)
 !$OMP DO SCHEDULE(GUIDED)
-  do i = 1,NGLOB
-    accel(1,i) = accel(1,i)*rmassx(i) + two_omega_earth*veloc(2,i)
-    accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
-    accel(3,i) = accel(3,i)*rmassz(i)
-  enddo
+    do i = 1,NGLOB
+      accel(1,i) = accel(1,i)*rmassx(i) + two_omega_earth*veloc(2,i)
+      accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
+      accel(3,i) = accel(3,i)*rmassz(i)
+    enddo
 !$OMP enddo
 !$OMP END PARALLEL
+  else
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED(NGLOB, accel, rmassx, rmassy, rmassz) &
+!$OMP PRIVATE(i)
+!$OMP DO SCHEDULE(GUIDED)
+    do i = 1,NGLOB
+      accel(1,i) = accel(1,i)*rmassx(i)
+      accel(2,i) = accel(2,i)*rmassy(i)
+      accel(3,i) = accel(3,i)*rmassz(i)
+    enddo
+!$OMP enddo
+!$OMP END PARALLEL
+  endif
 
   end subroutine multiply_accel_elastic
 
