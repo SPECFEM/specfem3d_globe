@@ -508,7 +508,7 @@ contains
 
     ! ASDF output format
     if (OUTPUT_SEISMOS_ASDF) &
-      call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation,phi)
+      call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation)
 
   enddo ! do iorientation
 

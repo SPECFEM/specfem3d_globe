@@ -81,18 +81,13 @@ end subroutine init_asdf_data
 !! \param irec The global index of the receiver
 !! \param chn The broadband channel simulated
 !! \param iorientation The recorded seismogram's orientation direction
-!! \param phi The angle used for calculating azimuth and incident angle
 subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
-                           irec, chn, iorientation, phi)
+                           irec, chn, iorientation)
 
   use asdf_data
   use specfem_par,only: &
-    station_name,network_name,stlat,stlon,stele,stbur, &
-    DT,t0, seismo_offset,seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC, &
-    tshift_cmt=>t_cmt_SAC, &
-    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC, &
-    cmt_depth=>cmt_depth_SAC
+    station_name,network_name, &
+    seismo_offset,seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
   use specfem_par, only: myrank
   use constants
@@ -105,7 +100,6 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   integer,intent(in) :: irec_local, irec
   real(kind=CUSTOM_REAL),dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS),intent(in) :: seismogram_tmp
   integer,intent(in) :: iorientation
-  double precision,intent(in) :: phi
   ! local Variables
   integer :: length_station_name, length_network_name
   integer :: ier, i
@@ -174,7 +168,6 @@ subroutine write_asdf(asdf_container)
   !--- Data to be written to the ASDF file
   character(len=MAX_STRING_LENGTH) :: event_name
   character(len=MAX_STRING_LENGTH) :: quakeml
-  character(len=MAX_STRING_LENGTH) :: provenance
   character(len=MAX_STRING_LENGTH) :: station_xml
   character(len=MAX_STRING_LENGTH) :: sf_constants, sf_parfile
 
@@ -239,12 +232,6 @@ subroutine write_asdf(asdf_container)
 
   filename = "synthetic.h5"
   event_name = trim(event_name_SAC)
-  station_xml = "<station_xml>"
-  provenance = '<prov:document xmlns:prov="http://www.w3.org/ns/prov#" xmlns:seis_prov="http://seisprov.org/seis_prov/0.1/#"'//&
-               ' xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">'//&
-               '<prov:activity prov:id="seis_prov:sp001_ws_910a6ce"><prov:label>Waveform Simulation</prov:label>' //&
-               '<prov:type xsi:type="xsd:string">seis_prov:waveform_simulation</prov:type></prov:activity></prov:document>'
-
   num_stations = nrec_local
   num_channels_per_station = 3
   sampling_rate = DT
@@ -275,9 +262,6 @@ subroutine write_asdf(asdf_container)
   do i = 1, num_stations*num_channels_per_station
    write(component_names(i), '(a)') asdf_container%component_array(i)
   enddo
-
-  ! -- We do not care about seeding.
-  !call random_number(waveforms)
 
   !--------------------------------------------------------
   ! ASDF variables
