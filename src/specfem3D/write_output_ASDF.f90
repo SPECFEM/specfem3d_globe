@@ -87,7 +87,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   use asdf_data
   use specfem_par,only: &
     station_name,network_name, &
-    seismo_offset,seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
+    seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
   use specfem_par, only: myrank
   use constants
@@ -149,7 +149,7 @@ end subroutine close_asdf_data
 !
 
 !> Writes the ASDF data structure to the file
-!! \param asdf_container The ASDF data structure
+!! \param asdf_container The ASDF data container for the waveforms
 subroutine write_asdf(asdf_container)
 
   use asdf_data
@@ -158,27 +158,26 @@ subroutine write_asdf(asdf_container)
   use specfem_par
 
   implicit none
-  ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
 
+  ! Parameters
   integer, parameter :: MAX_STRING_LENGTH = 7555
 
-  character(len=MAX_STRING_LENGTH) :: filename
-
-  !--- Data to be written to the ASDF file
-  character(len=MAX_STRING_LENGTH) :: event_name
+  !--- Character strings to be written to the ASDF file
   character(len=MAX_STRING_LENGTH) :: quakeml
-  character(len=MAX_STRING_LENGTH) :: station_xml
-  character(len=MAX_STRING_LENGTH) :: sf_constants, sf_parfile
+  character(len=MAX_STRING_LENGTH) :: stationxml
+  character(len=MAX_STRING_LENGTH) :: sf_constants
+  character(len=MAX_StRING_LENGTH) :: sf_parfile
 
   integer :: num_stations, num_channels_per_station
   integer :: num_waveforms  ! == num_stations * num_channels_per_station
   ! The number of channels per station is constant, as in SPECFEM
 
-  integer :: start_time, nsamples  ! constant, as in SPECFEM
-  double precision :: sampling_rate  ! idem
+  integer :: nsamples  ! constant, as in SPECFEM
+  integer(int64) :: start_time
+  double precision :: sampling_rate
 
-  ! Network names and station names are two different beast, as in SPECFEM
+  ! Network names and station names are two different beasts, as in SPECFEM
   ! network_names(i) is related to station_names(i)
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: networks_names
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: stations_names
@@ -215,14 +214,12 @@ subroutine write_asdf(asdf_container)
 
   ! C/Fortran interop for C-allocated strings
   integer :: len
-
   type(c_ptr) :: cptr
   character, pointer :: fptr(:)
-  character, dimension(:), allocatable, TARGET :: prov
+  character, dimension(:), allocatable, TARGET :: provenance
+  integer :: count, count_rate, count_max
 
-  integer(int64) :: start = 1396572170000000000
-
-  ! alias mpi communicator for ADIOS
+  ! alias mpi communicator
   call world_duplicate(comm)
   call world_size(mysize)
 
@@ -230,13 +227,10 @@ subroutine write_asdf(asdf_container)
   ! Setup data on each process.
   !--------------------------------------------------------
 
-  filename = "synthetic.h5"
-  event_name = trim(event_name_SAC)
   num_stations = nrec_local
   num_channels_per_station = 3
   sampling_rate = DT
   nsamples = seismo_current
-  start_time = seismo_offset*DT-t0+t_cmt_SAC
   num_waveforms = num_stations * num_channels_per_station
 
   call cmt_to_quakeml(quakeml)
@@ -244,9 +238,9 @@ subroutine write_asdf(asdf_container)
   call ASDF_clean_provenance_f(cptr)
   call ASDF_generate_sf_provenance_f("2014-04-04T00:42:50", "2014-04-04T02:15:10", cptr, len)
   call c_f_pointer(cptr, fptr, [len])
-  allocate(prov(len+1))
-  prov(1:len) = fptr(1:len)
-  prov(len+1) = C_NULL_CHAR
+  allocate(provenance(len+1))
+  provenance(1:len) = fptr(1:len)
+  provenance(len+1) = C_NULL_CHAR
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
@@ -323,7 +317,7 @@ subroutine write_asdf(asdf_container)
   !--------------------------------------------------------
 
   call ASDF_initialize_hdf5_f(ier);
-  call ASDF_create_new_file_f(trim(filename), comm, file_id)
+  call ASDF_create_new_file_f("synthetic.h5", comm, file_id)
 
   call ASDF_write_string_attribute_f(file_id, "file_format" // C_NULL_CHAR, &
                                      "ASDF" // C_NULL_CHAR, ier)
@@ -331,22 +325,28 @@ subroutine write_asdf(asdf_container)
                                      "0.0.2" // C_NULL_CHAR, ier)
 
   call ASDF_write_quakeml_f(file_id, trim(quakeml), ier)
-  call ASDF_write_provenance_data_f(file_id, prov(1:len), ier)
+  call ASDF_write_provenance_data_f(file_id, provenance(1:len), ier)
   call read_file("setup/constants.h", sf_constants)
   call read_file("DATA/Par_file", sf_parfile)
   call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants), trim(sf_parfile), ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
+  call system_clock(count, count_rate, count_max)
+  ! convert count to nanoseconds
+  write(*,*) count
+
+  !start_time = seismo_offset*DT-t0+t_cmt_SAC
+  start_time = 1396572170000000000_int64
   sampling_rate = DT
 
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
-      call station_to_stationxml(station_names_gather(j,k), k, station_xml)
+      call station_to_stationxml(station_names_gather(j,k), k, stationxml)
       call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
-           trim(station_xml) // C_NULL_CHAR,             &
+           trim(stationxml) // C_NULL_CHAR,             &
            station_grps_gather(j, k))
        do  i = 1, num_channels_per_station
        ! Generate unique dummy waveform names
@@ -356,8 +356,8 @@ subroutine write_asdf(asdf_container)
            // "__2014-04-04T00:42:50__2014-04-04T01:35:10__synthetic"
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
-             nsamples, start, sampling_rate, &
-             trim(event_name) // C_NULL_CHAR, &
+             nsamples, start_time, sampling_rate, &
+             trim(event_name_SAC) // C_NULL_CHAR, &
              trim(waveform_name) // C_NULL_CHAR, &
              data_ids(i, j, k))
         if (nrec_local > 0) then

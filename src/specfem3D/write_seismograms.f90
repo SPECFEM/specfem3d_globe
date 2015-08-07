@@ -221,9 +221,7 @@ contains
       if (OUTPUT_SEISMOS_ASDF) then
         ! note: ASDF data structure is passed as an argument
         ! stores all traces into ASDF container
-        print *, "writing one seismogram"
         call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
-        print *, "done writing one"
       else
         call write_one_seismogram(one_seismogram,irec,irec_local)
       endif
@@ -231,12 +229,9 @@ contains
 
     ! writes out ASDF container to the file
     if (OUTPUT_SEISMOS_ASDF) then
-      print *, "writing ASDF"
       call write_asdf(asdf_container)
-      print *, "written ASDF"
       ! deallocate the container
       call close_asdf_data(asdf_container, total_seismos_local)
-      print *, "closed ASDF"
     endif
 
     ! create one large file instead of one small file per station to avoid file system overload
