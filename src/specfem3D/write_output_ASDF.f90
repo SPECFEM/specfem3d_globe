@@ -254,10 +254,7 @@ subroutine write_asdf(asdf_container)
 
   call cmt_to_quakeml(quakeml)
 
-  !write(startTime, "(F5.2)") starddt_time
-  !write(endTime, "(F5.2)") start_time
   call ASDF_clean_provenance_f(cptr)
-
   call ASDF_generate_sf_provenance_f("2014-04-04T00:42:50", "2014-04-04T02:15:10", cptr, len)
   call c_f_pointer(cptr, fptr, [len])
   allocate(prov(len+1))
@@ -280,7 +277,7 @@ subroutine write_asdf(asdf_container)
   enddo
 
   ! -- We do not care about seeding.
-  call random_number(waveforms)
+  !call random_number(waveforms)
 
   !--------------------------------------------------------
   ! ASDF variables
@@ -349,7 +346,6 @@ subroutine write_asdf(asdf_container)
   call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
                                      "0.0.2" // C_NULL_CHAR, ier)
 
-
   call ASDF_write_quakeml_f(file_id, trim(quakeml), ier)
   call ASDF_write_provenance_data_f(file_id, prov(1:len), ier)
   call read_file("setup/constants.h", sf_constants)
@@ -358,7 +354,6 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-  start_time = 1396572170000000000
   sampling_rate = DT
 
   do k = 1, mysize
@@ -374,7 +369,7 @@ subroutine write_asdf(asdf_container)
         write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
            trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
-           // "__2014-04-04T00:42:50__2014-04-04T01:49:20__synthetic"
+           // "__2014-04-04T00:42:50__2014-04-04T01:35:10__synthetic"
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
              nsamples, start, sampling_rate, &
