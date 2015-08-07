@@ -206,7 +206,6 @@ contains
         enddo
       enddo
       call init_asdf_data(asdf_container, total_seismos_local)
-      print *, "Inital ASDF part"
     endif
 
     ! loop on all the local receivers

@@ -169,9 +169,7 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_STRING_LENGTH) :: sf_constants
   character(len=MAX_StRING_LENGTH) :: sf_parfile
 
-  integer :: num_stations, num_channels_per_station
-  integer :: num_waveforms  ! == num_stations * num_channels_per_station
-  ! The number of channels per station is constant, as in SPECFEM
+  integer :: num_stations
 
   integer :: nsamples  ! constant, as in SPECFEM
   integer(int64) :: start_time
@@ -217,7 +215,12 @@ subroutine write_asdf(asdf_container)
   type(c_ptr) :: cptr
   character, pointer :: fptr(:)
   character, dimension(:), allocatable, TARGET :: provenance
-  integer :: count, count_rate, count_max
+
+  ! Date and time to calculate start time variables
+  character(8)  :: date
+  character(10) :: time
+  character(5)  :: zone
+  integer,dimension(8) :: values
 
   ! alias mpi communicator
   call world_duplicate(comm)
@@ -228,10 +231,8 @@ subroutine write_asdf(asdf_container)
   !--------------------------------------------------------
 
   num_stations = nrec_local
-  num_channels_per_station = 3
   sampling_rate = DT
   nsamples = seismo_current
-  num_waveforms = num_stations * num_channels_per_station
 
   call cmt_to_quakeml(quakeml)
 
@@ -244,8 +245,8 @@ subroutine write_asdf(asdf_container)
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
-  allocate(component_names(num_stations*num_channels_per_station), stat=ier)
-  allocate(waveforms(nsamples, num_channels_per_station, num_stations), &
+  allocate(component_names(num_stations*3), stat=ier)
+  allocate(waveforms(nsamples, 3, num_stations), &
            stat=ier)
 
   do i = 1, num_stations
@@ -253,7 +254,7 @@ subroutine write_asdf(asdf_container)
    write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
   enddo
 
-  do i = 1, num_stations*num_channels_per_station
+  do i = 1, num_stations*3
    write(component_names(i), '(a)') asdf_container%component_array(i)
   enddo
 
@@ -308,7 +309,7 @@ subroutine write_asdf(asdf_container)
 
   allocate(station_grps_gather(max_num_stations_gather, mysize))
 
-  allocate(data_ids(num_channels_per_station, &
+  allocate(data_ids(3, &
                     max_num_stations_gather, &
                     mysize))
 
@@ -332,11 +333,14 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-  call system_clock(count, count_rate, count_max)
-  ! convert count to nanoseconds
-  write(*,*) count
+  ! using keyword arguments
+  call date_and_time(date,time,zone,values)
+  call date_and_time(DATE=date,ZONE=zone)
+  call date_and_time(TIME=time)
+  call date_and_time(VALUES=values)
+  print *, values
 
-  !start_time = seismo_offset*DT-t0+t_cmt_SAC
+  start_time = seismo_offset*DT-t0+t_cmt_SAC
   start_time = 1396572170000000000_int64
   sampling_rate = DT
 
@@ -348,7 +352,7 @@ subroutine write_asdf(asdf_container)
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
            trim(stationxml) // C_NULL_CHAR,             &
            station_grps_gather(j, k))
-       do  i = 1, num_channels_per_station
+       do  i = 1, 3
        ! Generate unique dummy waveform names
         write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
@@ -368,7 +372,7 @@ subroutine write_asdf(asdf_container)
   enddo
 
   do j = 1, num_stations
-   do i = 1, num_channels_per_station
+   do i = 1, 3
       call ASDF_write_full_waveform_f(data_ids(i, j, myrank+1), &
                                       waveforms(:, i, j), ier)
     enddo
@@ -381,7 +385,7 @@ subroutine write_asdf(asdf_container)
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
       call ASDF_close_group_f(station_grps_gather(j, k), ier)
-      do i = 1, num_channels_per_station
+      do i = 1, 3
         call ASDF_close_dataset_f(data_ids(i, j, k), ier)
       enddo
     enddo
@@ -420,14 +424,7 @@ subroutine cmt_to_quakeml(quakemlstring)
                   ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
                   '<eventParameters publicID="smi:local/592edbfc-2482-481e-80fd-03810308104b">'//&
                   '<event publicID="smi:service.iris.edu/fdsnws/event/1/query?eventid=656970">'//&
-                  '<preferredOriginID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin</preferredOriginID>'//&
-                  '<preferredFocalMechanismID>smi:ds.iris.edu/spudservice/momenttensor/'//&
-                  'gcmtid/B090198B/quakeml#focalmechanism</preferredFocalMechanismID>'//&
                   '<type>earthquake</type>'//&
-                  '<description>'//&
-                  '<text>SOUTH SANDWICH ISLANDS R</text>'//&
-                  '<type>region name</type>'//&
-                  '</description>'//&
                   '<origin publicID="smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin">'//&
                   '<time><value>1998-09-01T10:29:54.500000Z</value></time>'//&
                   '<latitude>'//&
@@ -439,8 +436,6 @@ subroutine cmt_to_quakeml(quakemlstring)
                   '<depth>'//&
                   '<value>'//trim(dep_str)//'</value>'//&
                   '</depth>'//&
-                  '<timeFixed>false</timeFixed>'//&
-                  '<epicenterFixed>false</epicenterFixed>'//&
                   '</origin>'//&
                   '</event>'//&
                   '</eventParameters>'//&
@@ -471,7 +466,7 @@ subroutine station_to_stationxml(station_name, irec, stationxmlstring)
                       '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                       '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                       '<Elevation>565.0</Elevation>'//&
-                      '<Site><Name>Fuerstenfeldbruck, Bavaria, GR-Net</Name></Site>'//&
+                      '<Site><Name>SPECFEM3D_GLOBE</Name></Site>'//&
                       '<CreationDate>2006-12-16T00:00:00+00:00</CreationDate>'//&
                       '</Station></Network>'//&
                       '</FDSNStationXML>'
