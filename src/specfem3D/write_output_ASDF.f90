@@ -47,7 +47,7 @@
 subroutine init_asdf_data(asdf_container,total_seismos_local)
 
   use asdf_data
-  use specfem_par, only : event_name_SAC,myrank
+  use specfem_par, only : event_name_SAC, myrank
 
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
@@ -58,8 +58,7 @@ subroutine init_asdf_data(asdf_container,total_seismos_local)
 
   asdf_container%event = trim(event_name_SAC)
 
-  allocate (asdf_container%receiver_name_array(total_seismos_local), &
-            STAT=ier)
+  allocate (asdf_container%receiver_name_array(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%network_array(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
@@ -169,8 +168,7 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_STRING_LENGTH) :: sf_constants
   character(len=MAX_StRING_LENGTH) :: sf_parfile
 
-  integer :: num_stations
-
+  integer :: num_stations !
   integer :: nsamples  ! constant, as in SPECFEM
   integer(int64) :: start_time
   double precision :: sampling_rate
@@ -216,11 +214,7 @@ subroutine write_asdf(asdf_container)
   character, pointer :: fptr(:)
   character, dimension(:), allocatable, TARGET :: provenance
 
-  ! Date and time to calculate start time variables
-  character(8)  :: date
-  character(10) :: time
-  character(5)  :: zone
-  integer,dimension(8) :: values
+  double precision :: time_epoch
 
   ! alias mpi communicator
   call world_duplicate(comm)
@@ -234,6 +228,7 @@ subroutine write_asdf(asdf_container)
   sampling_rate = DT
   nsamples = seismo_current
 
+  ! Generate minimal QuakeML for SPECFEM3D_GLOBE
   call cmt_to_quakeml(quakeml)
 
   call ASDF_clean_provenance_f(cptr)
@@ -333,16 +328,8 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-  ! using keyword arguments
-  call date_and_time(date,time,zone,values)
-  call date_and_time(DATE=date,ZONE=zone)
-  call date_and_time(TIME=time)
-  call date_and_time(VALUES=values)
-  print *, values
-
-  start_time = seismo_offset*DT-t0+t_cmt_SAC
-  start_time = 1396572170000000000_int64
-  sampling_rate = DT
+  time_epoch =(yr_SAC-1970)*365.25d0*24*60*60+(jda_SAC-1.0d0)*24*60*60+ho_SAC*(60.0d0*60)+mi_SAC*60.0d0+sec_SAC
+  start_time = time_epoch*1000000000_int64
 
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
@@ -357,7 +344,7 @@ subroutine write_asdf(asdf_container)
         write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
            trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
-           // "__2014-04-04T00:42:50__2014-04-04T01:35:10__synthetic"
+           // "__1994-06-09T00:33:16__1994-06-09T01:25:37__synthetic"
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
              nsamples, start_time, sampling_rate, &
@@ -415,7 +402,6 @@ subroutine cmt_to_quakeml(quakemlstring)
   character(len=*) :: quakemlstring
   character(len=25) :: lon_str, lat_str, dep_str
 
-
   write(lon_str, "(g12.5)") cmt_lat
   write(lat_str, "(g12.5)") cmt_lon
   write(dep_str, "(g12.5)") cmt_depth
@@ -426,7 +412,7 @@ subroutine cmt_to_quakeml(quakemlstring)
                   '<event publicID="smi:service.iris.edu/fdsnws/event/1/query?eventid=656970">'//&
                   '<type>earthquake</type>'//&
                   '<origin publicID="smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin">'//&
-                  '<time><value>1998-09-01T10:29:54.500000Z</value></time>'//&
+                  '<time><value>2014-09-01T10:29:54.500000Z</value></time>'//&
                   '<latitude>'//&
                   '<value>'//trim(lat_str)//'</value>'//&
                   '</latitude>'//&
