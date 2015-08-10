@@ -207,6 +207,10 @@ subroutine write_asdf(asdf_container)
 
   ! temporary name built from network, station and channel names.
   character(len=MAX_STRING_LENGTH) :: waveform_name
+  character(len=25) :: start_time_string, end_time_string
+  character(len=4) :: yr
+  character(len=2) :: hr, minute
+  character(len=15) :: second
 
   ! C/Fortran interop for C-allocated strings
   integer :: len
@@ -328,7 +332,17 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-  time_epoch =(yr_SAC-1970)*365.25d0*24*60*60+(jda_SAC-1.0d0)*24*60*60+ho_SAC*(60.0d0*60)+mi_SAC*60.0d0+sec_SAC
+  write(yr, "(I4.4)") yr_SAC
+  write(hr, "(I2.2)") ho_SAC
+  write(minute, "(I2.2)") mi_SAC
+  write(second, "(F5.2)") sec_SAC
+  start_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second)
+  print *, start_time_string
+
+  !todo: fix end_time so if it rolls over to a new year the date is correct 
+  end_time_string = trim(yr)//"-06-09T01:25:37"
+
+  time_epoch =(yr_SAC-1970)*365.25*24*60*60.0d0+(jda_SAC-1.0)*24*60*60.0d0+ho_SAC*(60.0d0*60.0d0)+mi_SAC*60.0d0+sec_SAC
   start_time = time_epoch*1000000000_int64
 
   do k = 1, mysize
@@ -344,7 +358,7 @@ subroutine write_asdf(asdf_container)
         write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
            trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
-           // "__1994-06-09T00:33:16__1994-06-09T01:25:37__synthetic"
+           // "__"//trim(start_time_string(1:19))//"__"//trim(end_time_string)//"__synthetic"
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
              nsamples, start_time, sampling_rate, &
