@@ -172,6 +172,7 @@ subroutine write_asdf(asdf_container)
   integer :: nsamples  ! constant, as in SPECFEM
   integer(int64) :: start_time
   double precision :: sampling_rate
+  double precision :: startTime
 
   ! Network names and station names are two different beasts, as in SPECFEM
   ! network_names(i) is related to station_names(i)
@@ -207,10 +208,6 @@ subroutine write_asdf(asdf_container)
 
   ! temporary name built from network, station and channel names.
   character(len=MAX_STRING_LENGTH) :: waveform_name
-  character(len=25) :: start_time_string, end_time_string
-  character(len=4) :: yr
-  character(len=2) :: hr, minute
-  character(len=15) :: second
 
   ! C/Fortran interop for C-allocated strings
   integer :: len
@@ -218,8 +215,8 @@ subroutine write_asdf(asdf_container)
   character, pointer :: fptr(:)
   character, dimension(:), allocatable, TARGET :: provenance
 
-  double precision :: time_epoch, end_time_sec, end_sec
-  integer :: end_min, end_ho
+  ! Time variables
+  character(len=25) :: start_time_string, end_time_string
 
   ! alias mpi communicator
   call world_duplicate(comm)
@@ -235,6 +232,10 @@ subroutine write_asdf(asdf_container)
 
   ! Generate minimal QuakeML for SPECFEM3D_GLOBE
   call cmt_to_quakeml(quakeml)
+
+  ! Calculate start_time based on SAC header values
+  call get_time(startTime, start_time_string, end_time_string)
+  start_time = startTime*1000000000_int64 ! convert to nanoseconds
 
   call ASDF_clean_provenance_f(cptr)
   call ASDF_generate_sf_provenance_f("2014-04-04T00:42:50", "2014-04-04T02:15:10", cptr, len)
@@ -333,40 +334,6 @@ subroutine write_asdf(asdf_container)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-  write(yr, "(I4.4)") yr_SAC
-  write(hr, "(I2.2)") ho_SAC
-  write(minute, "(I2.2)") mi_SAC
-  write(second, "(F5.2)") sec_SAC
-  start_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second)
-  time_epoch =(yr_SAC-1970)*365.25*24*60*60.0d0+(jda_SAC-1.0)*24*60*60.0d0+ho_SAC*(60.0d0*60.0d0)+mi_SAC*60.0d0+sec_SAC
-  start_time = time_epoch*1000000000_int64
-
-  end_time_sec = (nsamples-1)/DT
-  end_ho = ho_SAC
-  end_min = mi_SAC
-  end_sec = sec_SAC
-
-  ! add end_time_sec to the start time
-  do
-    if (end_time_sec/60.0 > 1.0) then
-      i = end_min + int(end_time_sec/60.0)
-      end_min = (i-60.0)
-      end_ho = end_ho + 1
-      end_sec = end_sec + i
-      end_sec = 60.0*(end_time_sec/60.0-int(end_time_sec/60.0))+sec_SAC
-      exit
-    else
-      end_sec = end_sec + end_time_sec
-      exit
-    endif
-  enddo 
-
-  !todo: fix end_time so if it rolls over to a new year the date is correct 
-  write(yr, "(I4.4)") yr_SAC
-  write(hr, "(I2.2)") end_ho
-  write(minute, "(I2.2)") end_min
-  write(second, "(F5.2)") end_sec
-  end_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second(1:2))
 
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
@@ -381,7 +348,7 @@ subroutine write_asdf(asdf_container)
         write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
            trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
-           // "__"//trim(start_time_string(1:19))//"__"//trim(end_time_string)//"__synthetic"
+           // "__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
         ! Create the dataset where waveform will be written later on.
         call ASDF_define_waveform_f(station_grps_gather(j,k), &
              nsamples, start_time, sampling_rate, &
@@ -465,6 +432,58 @@ subroutine cmt_to_quakeml(quakemlstring)
                   '</q:quakeml>'
 
 end subroutine cmt_to_quakeml
+
+subroutine get_time(startTime, start_time_string, end_time_string)
+
+  use specfem_par,only:&
+    yr_SAC, jda_SAC, ho_SAC, mi_SAC, sec_SAC, DT, seismo_current
+
+  implicit none
+  character(len=*) :: start_time_string, end_time_string
+  double precision, intent(inout) :: startTime
+  character(len=4) :: yr
+  character(len=2) :: hr, minute
+  character(len=15) :: second
+  double precision :: end_time_sec, end_sec
+  integer :: end_min, end_ho, temp
+
+  write(yr, "(I4.4)") yr_SAC
+  write(hr, "(I2.2)") ho_SAC
+  write(minute, "(I2.2)") mi_SAC
+  write(second, "(F5.2)") sec_SAC
+
+  start_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second)
+  startTime =(yr_SAC-1970)*365.25*24*60*60.0d0+(jda_SAC-1.0)*24*60*60.0d0+ho_SAC*(60.0d0*60.0d0)+mi_SAC*60.0d0+sec_SAC
+    
+  end_time_sec = (seismo_current-1)/DT
+  end_ho = ho_SAC
+  end_min = mi_SAC
+  end_sec = sec_SAC
+
+  ! add end_time_sec to the start time
+  do
+    if (end_time_sec/60.0 > 1.0) then
+      temp = end_min + int(end_time_sec/60.0)
+      end_min = (temp-60.0)
+      end_ho = end_ho + 1
+      end_sec = end_sec + temp
+      end_sec = 60.0*(end_time_sec/60.0-int(end_time_sec/60.0))+sec_SAC
+      exit
+    else
+      end_sec = end_sec + end_time_sec
+      exit
+    endif
+  enddo 
+
+  !todo: fix end_time so if it rolls over to a new year the date is correct 
+  write(yr, "(I4.4)") yr_SAC
+  write(hr, "(I2.2)") end_ho
+  write(minute, "(I2.2)") end_min
+  write(second, "(F5.2)") end_sec
+
+  end_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second(1:2))
+
+end subroutine get_time
 
 subroutine station_to_stationxml(station_name, irec, stationxmlstring)
 
