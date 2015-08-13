@@ -238,7 +238,9 @@ subroutine write_asdf(asdf_container)
   start_time = startTime*1000000000_int64 ! convert to nanoseconds
 
   call ASDF_clean_provenance_f(cptr)
-  call ASDF_generate_sf_provenance_f("2014-04-04T00:42:50", "2014-04-04T02:15:10", cptr, len)
+print *, start_time_string(1:19)
+print *, end_time_string(1:19)
+  call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR, end_time_string(1:19)//C_NULL_CHAR, cptr, len)
   call c_f_pointer(cptr, fptr, [len])
   allocate(provenance(len+1))
   provenance(1:len) = fptr(1:len)
