@@ -218,7 +218,8 @@ subroutine write_asdf(asdf_container)
   character, pointer :: fptr(:)
   character, dimension(:), allocatable, TARGET :: provenance
 
-  double precision :: time_epoch
+  double precision :: time_epoch, end_time_sec, end_sec
+  integer :: end_min, end_ho
 
   ! alias mpi communicator
   call world_duplicate(comm)
@@ -337,13 +338,35 @@ subroutine write_asdf(asdf_container)
   write(minute, "(I2.2)") mi_SAC
   write(second, "(F5.2)") sec_SAC
   start_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second)
-  print *, start_time_string
-
-  !todo: fix end_time so if it rolls over to a new year the date is correct 
-  end_time_string = trim(yr)//"-06-09T01:25:37"
-
   time_epoch =(yr_SAC-1970)*365.25*24*60*60.0d0+(jda_SAC-1.0)*24*60*60.0d0+ho_SAC*(60.0d0*60.0d0)+mi_SAC*60.0d0+sec_SAC
   start_time = time_epoch*1000000000_int64
+
+  end_time_sec = (nsamples-1)/DT
+  end_ho = ho_SAC
+  end_min = mi_SAC
+  end_sec = sec_SAC
+
+  ! add end_time_sec to the start time
+  do
+    if (end_time_sec/60.0 > 1.0) then
+      i = end_min + int(end_time_sec/60.0)
+      end_min = (i-60.0)
+      end_ho = end_ho + 1
+      end_sec = end_sec + i
+      end_sec = 60.0*(end_time_sec/60.0-int(end_time_sec/60.0))+sec_SAC
+      exit
+    else
+      end_sec = end_sec + end_time_sec
+      exit
+    endif
+  enddo 
+
+  !todo: fix end_time so if it rolls over to a new year the date is correct 
+  write(yr, "(I4.4)") yr_SAC
+  write(hr, "(I2.2)") end_ho
+  write(minute, "(I2.2)") end_min
+  write(second, "(F5.2)") end_sec
+  end_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second(1:2))
 
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
