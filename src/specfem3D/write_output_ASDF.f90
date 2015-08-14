@@ -158,8 +158,8 @@ subroutine write_asdf(asdf_container)
   ! Parameters
   integer, parameter :: MAX_STRING_LENGTH = 1024
   integer, parameter :: MAX_QUAKEML_LENGTH = 4096
-  integer, parameter :: MAX_PARFILE_LENGTH = 15259
-  integer, parameter :: MAX_CONSTANTS_LENGTH = 39735
+  integer, parameter :: MAX_PARFILE_LENGTH = 20000
+  integer, parameter :: MAX_CONSTANTS_LENGTH = 45000
 
   !--- Character strings to be written to the ASDF file
   character(len=MAX_STRING_LENGTH) :: quakeml
@@ -396,6 +396,12 @@ subroutine write_asdf(asdf_container)
 
 end subroutine write_asdf
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!> Converts the CMT file read by SPECFEM to a QuakeML file for the ASDF container
+!! \param quakemlstring The QuakeML string to store in the ASDF file
 subroutine cmt_to_quakeml(quakemlstring)
 
   use specfem_par,only:&
@@ -432,6 +438,14 @@ subroutine cmt_to_quakeml(quakemlstring)
 
 end subroutine cmt_to_quakeml
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!> Converts the CMT file read by SPECFEM to a QuakeML file for the ASDF container
+!! \param startTime The start time of the simulation from the epoch
+!! \param start_time_string A string for defining the waveform name start time
+!! \param end_time_string A string for defining the waveform name end time
 subroutine get_time(startTime, start_time_string, end_time_string)
 
   use specfem_par,only:&
@@ -484,6 +498,15 @@ subroutine get_time(startTime, start_time_string, end_time_string)
 
 end subroutine get_time
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!> Converts the Station information to a StationXML string
+!! \param station_name The name of the station based on SEED
+!! \param network_name The name of the network based on SEED
+!! \param irec The receiver counter
+!! \param stationxmlstring The StationXML string written to the ASDF file
 subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstring)
 
   use specfem_par,only:&
@@ -517,6 +540,13 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
 
 end subroutine station_to_stationxml
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+!> Reads an external file and stores it in filestring
+!! \param filename The name of the file to read
+!! \param filestring The string that the file is stored
 subroutine read_file(filename, filestring)
 
   implicit none
@@ -530,7 +560,7 @@ subroutine read_file(filename, filestring)
 
   open(10, file=filename, status='old', &
          recl=file_size, form='unformatted', access='direct')
-  read (10, rec=1) filestring
+  read (10, rec=1) filestring(1:file_size)
   close(10)
 
 end subroutine read_file
