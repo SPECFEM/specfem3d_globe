@@ -47,7 +47,7 @@
 subroutine init_asdf_data(asdf_container,total_seismos_local)
 
   use asdf_data
-  use specfem_par, only : event_name_SAC, myrank
+  use specfem_par, only : myrank
 
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
@@ -55,8 +55,6 @@ subroutine init_asdf_data(asdf_container,total_seismos_local)
 
   ! Variables
   integer :: ier
-
-  asdf_container%event = trim(event_name_SAC)
 
   allocate (asdf_container%receiver_name_array(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
@@ -74,7 +72,7 @@ end subroutine init_asdf_data
 !
 
 !> Stores the records into the ASDF structure
-!! \param asdf_container The ASDF data structure
+!! \param asdf_container The ASDF data container 
 !! \param seismogram_tmp The current seismogram to store
 !! \param irec_local The local index of the receivers on the local processor
 !! \param irec The global index of the receiver
@@ -86,9 +84,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   use asdf_data
   use specfem_par,only: &
     station_name,network_name, &
-    seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS
-
-  use specfem_par, only: myrank
+    seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS, myrank
   use constants
 
   implicit none
@@ -160,19 +156,20 @@ subroutine write_asdf(asdf_container)
   type(asdf_event),intent(inout) :: asdf_container
 
   ! Parameters
-  integer, parameter :: MAX_STRING_LENGTH = 7555
+  integer, parameter :: MAX_STRING_LENGTH = 1024
+  integer, parameter :: MAX_QUAKEML_LENGTH = 4096
+  integer, parameter :: MAX_PARFILE_LENGTH = 15259
+  integer, parameter :: MAX_CONSTANTS_LENGTH = 39735
 
   !--- Character strings to be written to the ASDF file
   character(len=MAX_STRING_LENGTH) :: quakeml
   character(len=MAX_STRING_LENGTH) :: stationxml
-  character(len=MAX_STRING_LENGTH) :: sf_constants
-  character(len=MAX_StRING_LENGTH) :: sf_parfile
 
   integer :: num_stations !
   integer :: nsamples  ! constant, as in SPECFEM
-  integer(int64) :: start_time
   double precision :: sampling_rate
   double precision :: startTime
+  integer(int64) :: start_time
 
   ! Network names and station names are two different beasts, as in SPECFEM
   ! network_names(i) is related to station_names(i)
@@ -214,9 +211,11 @@ subroutine write_asdf(asdf_container)
   type(c_ptr) :: cptr
   character, pointer :: fptr(:)
   character, dimension(:), allocatable, TARGET :: provenance
+  character(len=MAX_CONSTANTS_LENGTH) :: sf_constants
+  character(len=MAX_PARFILE_LENGTH) :: sf_parfile
 
   ! Time variables
-  character(len=25) :: start_time_string, end_time_string
+  character(len=MAX_STRING_LENGTH) :: start_time_string, end_time_string
 
   ! alias mpi communicator
   call world_duplicate(comm)
@@ -238,9 +237,8 @@ subroutine write_asdf(asdf_container)
   start_time = startTime*1000000000_int64 ! convert to nanoseconds
 
   call ASDF_clean_provenance_f(cptr)
-print *, start_time_string(1:19)
-print *, end_time_string(1:19)
-  call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR, end_time_string(1:19)//C_NULL_CHAR, cptr, len)
+  call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
+                                     end_time_string(1:19)//C_NULL_CHAR, cptr, len)
   call c_f_pointer(cptr, fptr, [len])
   allocate(provenance(len+1))
   provenance(1:len) = fptr(1:len)
@@ -283,6 +281,7 @@ print *, end_time_string(1:19)
     displs(i) = (i-1) * max_num_stations_gather * max_string_length
     rcounts(i) = num_stations_gather(i) * max_string_length
   enddo
+
   call all_gather_all_ch(stations_names, &
                          num_stations * MAX_STRING_LENGTH, &
                          station_names_gather, &
@@ -332,35 +331,33 @@ print *, end_time_string(1:19)
   call ASDF_write_provenance_data_f(file_id, provenance(1:len), ier)
   call read_file("setup/constants.h", sf_constants)
   call read_file("DATA/Par_file", sf_parfile)
-  call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants), trim(sf_parfile), ier)
+  call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants)//C_NULL_CHAR,&
+                                    trim(sf_parfile)//C_NULL_CHAR, ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
-
   do k = 1, mysize
     do j = 1, num_stations_gather(k)
-      call station_to_stationxml(station_names_gather(j,k), k, stationxml)
+      call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, stationxml)
       call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j,k)) // C_NULL_CHAR, &
            trim(stationxml) // C_NULL_CHAR,             &
            station_grps_gather(j, k))
        do  i = 1, 3
-       ! Generate unique dummy waveform names
-        write(waveform_name, '(a)') &
+         ! Generate unique dummy waveform names
+         write(waveform_name, '(a)') &
            trim(network_names_gather(j,k)) // "." //      &
            trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
-           // "__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
-        ! Create the dataset where waveform will be written later on.
-        call ASDF_define_waveform_f(station_grps_gather(j,k), &
+            // "__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
+         ! Create the dataset where waveform will be written later on.
+         call ASDF_define_waveform_f(station_grps_gather(j,k), &
              nsamples, start_time, sampling_rate, &
-             trim(event_name_SAC) // C_NULL_CHAR, &
-             trim(waveform_name) // C_NULL_CHAR, &
-             data_ids(i, j, k))
-        if (nrec_local > 0) then
-          waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
-        endif
-      enddo
+           trim(event_name_SAC) // C_NULL_CHAR, &
+           trim(waveform_name) // C_NULL_CHAR, &
+          data_ids(i, j, k))
+         if (nrec_local > 0) waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
+       enddo
     enddo
   enddo
 
@@ -487,33 +484,36 @@ subroutine get_time(startTime, start_time_string, end_time_string)
 
 end subroutine get_time
 
-subroutine station_to_stationxml(station_name, irec, stationxmlstring)
+subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstring)
 
   use specfem_par,only:&
-    stlat, stlon, network_name
+    stlat, stlon, stele
 
   implicit none
-  character(len=*) :: station_name, stationxmlstring
-  character(len=25) :: station_lat, station_lon
+  character(len=*) :: station_name, network_name, stationxmlstring
+  character(len=25) :: station_lat, station_lon, station_ele
   integer, intent(in) :: irec
 
   write(station_lat, "(g12.5)") stlat(irec)
   write(station_lon, "(g12.5)") stlon(irec) 
+  write(station_ele, "(g12.5)") stele(irec)
 
+  !todo: fix network code (validator sees extra content if a variable)
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
                      '<Source>Erdbebendienst Bayern</Source>'//&
-                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
-                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
-                      '<Created>2014-03-03T11:07:06+00:00</Created>'//&
-                      '<Network code="IU"><Station code="'//trim(station_name)//'"'//&
-                      ' startDate="2006-12-16T00:00:00+00:00">'//&
-                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
-                      '<Elevation>565.0</Elevation>'//&
-                      '<Site><Name>SPECFEM3D_GLOBE</Name></Site>'//&
-                      '<CreationDate>2006-12-16T00:00:00+00:00</CreationDate>'//&
-                      '</Station></Network>'//&
-                      '</FDSNStationXML>'
+                     '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
+                     '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
+                     '<Created>2014-03-03T11:07:06+00:00</Created>'//&
+                     '<Network code="IU"'//&
+                     '><Station code="'//trim(station_name)//'"'//&
+                     ' startDate="2006-12-16T00:00:00+00:00">'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
+                     '<Site><Name>SPECFEM3D_GLOBE</Name></Site>'//&
+                     '<CreationDate>2015-10-12T00:00:00</CreationDate>'//&
+                     '</Station></Network>'//&
+                     '</FDSNStationXML>'
 
 end subroutine station_to_stationxml
 
