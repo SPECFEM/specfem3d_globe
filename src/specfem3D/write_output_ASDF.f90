@@ -327,7 +327,7 @@ subroutine write_asdf(asdf_container)
   call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
                                      "0.0.2" // C_NULL_CHAR, ier)
 
-  call ASDF_write_quakeml_f(file_id, trim(quakeml), ier)
+  call ASDF_write_quakeml_f(file_id, trim(quakeml)//C_NULL_CHAR, ier)
   call ASDF_write_provenance_data_f(file_id, provenance(1:len), ier)
   call read_file("setup/constants.h", sf_constants)
   call read_file("DATA/Par_file", sf_parfile)
@@ -521,13 +521,12 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
   write(station_lon, "(g12.5)") stlon(irec) 
   write(station_ele, "(g12.5)") stele(irec)
 
-  !todo: fix network code (validator sees extra content if a variable)
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
                      '<Source>Erdbebendienst Bayern</Source>'//&
                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
                      '<Created>2014-03-03T11:07:06+00:00</Created>'//&
-                     '<Network code="IU"'//&
+                     '<Network code="'//trim(network_name)//'"'//&
                      '><Station code="'//trim(station_name)//'"'//&
                      ' startDate="2006-12-16T00:00:00+00:00">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
