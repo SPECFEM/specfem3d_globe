@@ -33,7 +33,7 @@
 ! Also, t_shift is added as a new parameter to be written on sac headers!
 ! by Ebru Bozdag
 
-  subroutine get_event_info_parallel(myrank,yr,jda,ho,mi,sec,&
+  subroutine get_event_info_parallel(myrank,yr,jda,mo,da,ho,mi,sec,&
                                     event_name,tshift_cmt,t_shift, &
                                     elat,elon,depth,mb,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
@@ -47,7 +47,7 @@
   integer, intent(in) :: myrank
   integer, intent(in) :: NSOURCES ! must be given
 
-  integer, intent(out) :: yr,jda,ho,mi
+  integer, intent(out) :: yr,mo,da,jda,ho,mi
   double precision, intent(out) :: sec
   real, intent(out) :: mb
   double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
@@ -61,7 +61,7 @@
     ! note: mb as (body wave) moment magnitude is not used any further,
     !       see comment in write_output_SAC() routine
 
-    call get_event_info_serial(yr,jda,ho,mi,sec,event_name,tshift_cmt,t_shift, &
+    call get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift, &
                         elat,elon,depth,mb, &
                         cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
@@ -78,6 +78,8 @@
   ! broadcast the information read on the master to the nodes
   call bcast_all_singlei(yr)
   call bcast_all_singlei(jda)
+  call bcast_all_singlei(mo)
+  call bcast_all_singlei(da)
   call bcast_all_singlei(ho)
   call bcast_all_singlei(mi)
 
@@ -111,7 +113,7 @@
 ! Time-shifts of all sources can be read and the minimum t_shift is taken to be written in sac headers!
 ! by Ebru
 
-  subroutine get_event_info_serial(yr,jda,ho,mi,sec,event_name,tshift_cmt,t_shift,&
+  subroutine get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift,&
                             elat_pde,elon_pde,depth_pde,mb,&
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
 
@@ -124,7 +126,7 @@
 
   integer, intent(in) :: NSOURCES
 
-  integer, intent(out) :: yr,jda,ho,mi
+  integer, intent(out) :: yr,jda,mo,da,ho,mi
   double precision, intent(out) :: sec
   double precision, intent(out) :: tshift_cmt,t_shift
   double precision, intent(out) :: elat_pde,elon_pde,depth_pde
@@ -134,7 +136,7 @@
   character(len=20), intent(out) :: event_name ! event name for SAC header
 
   ! local parameters
-  integer :: ios,mo,da,julian_day
+  integer :: ios,julian_day
   integer :: isource
   double precision, dimension(NSOURCES) :: t_s,hdur,lat,lon,depth
   character(len=20), dimension(NSOURCES) :: e_n
