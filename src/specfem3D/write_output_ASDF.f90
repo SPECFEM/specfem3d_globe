@@ -421,7 +421,9 @@ subroutine cmt_to_quakeml(quakemlstring)
                   '<event publicID="smi:service.iris.edu/fdsnws/event/1/query?eventid=656970">'//&
                   '<type>earthquake</type>'//&
                   '<origin publicID="smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin">'//&
-                  '<time><value>2014-09-01T10:29:54.500000Z</value></time>'//&
+                  '<time>'//&
+                  '<value>2014-09-01T10:29:54.500000Z</value>'//&
+                  '</time>'//&
                   '<latitude>'//&
                   '<value>'//trim(lat_str)//'</value>'//&
                   '</latitude>'//&
@@ -449,52 +451,49 @@ end subroutine cmt_to_quakeml
 subroutine get_time(startTime, start_time_string, end_time_string)
 
   use specfem_par,only:&
-    yr_SAC, jda_SAC, ho_SAC, mi_SAC, sec_SAC, DT, seismo_current
+    yr_SAC, mo_SAC, da_SAC, jda_SAC, ho_SAC, mi_SAC, sec_SAC, DT, seismo_current
 
   implicit none
   character(len=*) :: start_time_string, end_time_string
   double precision, intent(inout) :: startTime
   character(len=4) :: yr
-  character(len=2) :: hr, minute
+  character(len=2) :: mo, da, hr, minute
   character(len=15) :: second
-  double precision :: end_time_sec, end_sec
-  integer :: end_min, end_ho, temp
+  double precision :: end_time_sec
+  integer :: iatime(9), year
 
   write(yr, "(I4.4)") yr_SAC
+  write(mo, "(I2.2)") mo_SAC
+  write(da, "(I2.2)") da_SAC
   write(hr, "(I2.2)") ho_SAC
   write(minute, "(I2.2)") mi_SAC
   write(second, "(F5.2)") sec_SAC
 
-  start_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second)
-  startTime =(yr_SAC-1970)*365.25*24*60*60.0d0+(jda_SAC-1.0)*24*60*60.0d0+ho_SAC*(60.0d0*60.0d0)+mi_SAC*60.0d0+sec_SAC
+  start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
+                      trim(hr)//':'//trim(minute)//':'//trim(second)
+
+  year = yr_SAC-1900
+  startTime =(year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
+              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC
     
   end_time_sec = (seismo_current-1)/DT
-  end_ho = ho_SAC
-  end_min = mi_SAC
-  end_sec = sec_SAC
+  end_time_sec = startTime + end_time_sec
 
-  ! add end_time_sec to the start time
-  do
-    if (end_time_sec/60.0 > 1.0) then
-      temp = end_min + int(end_time_sec/60.0)
-      end_min = (temp-60.0)
-      end_ho = end_ho + 1
-      end_sec = end_sec + temp
-      end_sec = 60.0*(end_time_sec/60.0-int(end_time_sec/60.0))+sec_SAC
-      exit
-    else
-      end_sec = end_sec + end_time_sec
-      exit
-    endif
-  enddo 
+  !call gmtime(int(startTime), iatime)
+  !print *,'Time: ',IATIME(3),':',IATIME(2),':',IATIME(1)
+  !print *,'Date: ',IATIME(4),'.',IATIME(5)+1,'.',IATIME(6)
 
-  !todo: fix end_time so if it rolls over to a new year the date is correct 
-  write(yr, "(I4.4)") yr_SAC
-  write(hr, "(I2.2)") end_ho
-  write(minute, "(I2.2)") end_min
-  write(second, "(F5.2)") end_sec
+  call gmtime(int(end_time_sec), iatime)
 
-  end_time_string = trim(yr)//"-06-09T"//trim(hr)//':'//trim(minute)//':'//trim(second(1:2))
+  write(yr, "(I4.4)") iatime(6)+1900
+  write(mo, "(I2.2)") iatime(5)+1
+  write(da, "(I2.2)") iatime(4)
+  write(hr, "(I2.2)") iatime(3)
+  write(minute, "(I2.2)") iatime(2)
+  write(second, "(I2.2)") iatime(1)
+
+  end_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
+                      trim(hr)//':'//trim(minute)//':'//trim(second)
 
 end subroutine get_time
 
@@ -522,7 +521,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
   write(station_ele, "(g12.5)") stele(irec)
 
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
-                     '<Source>Erdbebendienst Bayern</Source>'//&
+                     '<Source>SPECFEM3D_GLOBE</Source>'//&
                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
                      '<Created>2014-03-03T11:07:06+00:00</Created>'//&
