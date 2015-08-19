@@ -248,7 +248,7 @@ subroutine write_asdf(asdf_container)
   allocate(waveforms(nsamples, 3, num_stations), &
            stat=ier)
 
-  call random(waveforms)
+print *, num_stations, myrank
   do i = 1, num_stations
     write(networks_names(i), '(a)') asdf_container%network_array(i)
     write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
@@ -257,6 +257,7 @@ subroutine write_asdf(asdf_container)
   do i = 1, num_stations*3
     write(component_names(i), '(a)') asdf_container%component_array(i)
   enddo
+print *, "c, ", myrank
 
   !--------------------------------------------------------
   ! ASDF variables
@@ -266,6 +267,7 @@ subroutine write_asdf(asdf_container)
   call all_gather_all_i(num_stations, num_stations_gather, mysize)
   ! find the largest number of stations per allgatheress
   max_num_stations_gather = maxval(num_stations_gather)
+print *, "d, ", myrank
 
   allocate(displs(mysize))
   allocate(rcounts(mysize))
@@ -349,7 +351,7 @@ subroutine write_asdf(asdf_container)
           trim(network_names_gather(j,k)) // "." //      &
           trim(station_names_gather(j,k)) // ".." //trim(component_names_gather(i+(3*(j-1)),k)) &
             //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
-          print *, trim(waveform_name)
+print *, trim(waveform_name), myrank
           call ASDF_define_waveform_f(station_grps_gather(j,k), &
             nsamples, start_time, sampling_rate, &
             trim(event_name_SAC) // C_NULL_CHAR, &
@@ -374,13 +376,16 @@ subroutine write_asdf(asdf_container)
 
   do k = 1, mysize
   do j = 1, num_stations_gather(k)
+print *, "cloxing group", myrank
     call ASDF_close_group_f(station_grps_gather(j, k), ier)
     do i = 1, 3
+print *, "clsoign data", myrank
       call ASDF_close_dataset_f(data_ids(i, j, k), ier)
     enddo
   enddo
   enddo
 
+print *, "closed", myrank
   call ASDF_close_group_f(waveforms_grp, ier)
   call ASDF_finalize_hdf5_f(ier);
 
