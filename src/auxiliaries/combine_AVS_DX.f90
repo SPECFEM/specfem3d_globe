@@ -64,7 +64,7 @@
   logical USE_OPENDX
 
 ! for source location
-  integer yr,jda,ho,mi
+  integer yr,jda,mo,da,ho,mi
   double precision x_target_source,y_target_source,z_target_source
   double precision r_target_source
   double precision x_source_trgl1,y_source_trgl1,z_source_trgl1
@@ -440,7 +440,7 @@
 
 ! get source information for frequency for number of points per lambda
   print *,'reading source duration from the CMTSOLUTION file'
-  call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
+  call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                DT,1,min_tshift_cmt_original)
 
 ! set global element and point offsets to zero
@@ -944,7 +944,7 @@
 
 !   get source information
     print *,'reading position of the source from the CMTSOLUTION file'
-    call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
+    call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                  DT,1,min_tshift_cmt_original)
 
 !   convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)

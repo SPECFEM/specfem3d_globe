@@ -33,6 +33,7 @@
   use specfem_par_outercore
   use specfem_par_movie
   implicit none
+  integer ierr
 
   ! synchronize all processes, waits until all processes have written their seismograms
   call synchronize_all()
@@ -116,7 +117,7 @@
   endif
 
   ! adios finalizes
-  if (ADIOS_ENABLED .or. OUTPUT_SEISMOS_ASDF) then
+  if (ADIOS_ENABLED) then
     call adios_cleanup()
   endif
 

@@ -43,22 +43,24 @@
 
 !> Initializes the data structure for ASDF
 !! \param asdf_container The ASDF data structure
-!! \param total_seismos_local The number of records on the local processor
-subroutine init_asdf_data(asdf_container,total_seismos_local)
+!! \param nrec_local The number of receivers on the local processor
+subroutine init_asdf_data(asdf_container, nrec_local)
 
   use asdf_data
   use specfem_par, only : myrank
 
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
-  integer,intent(in) :: total_seismos_local
+  integer,intent(in) :: nrec_local
 
   ! Variables
-  integer :: ier
+  integer :: total_seismos_local, ier
 
-  allocate (asdf_container%receiver_name_array(total_seismos_local), STAT=ier)
+  total_seismos_local = nrec_local*3 ! 3 components
+
+  allocate (asdf_container%receiver_name_array(nrec_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
-  allocate (asdf_container%network_array(total_seismos_local), STAT=ier)
+  allocate (asdf_container%network_array(nrec_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%component_array(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
@@ -74,12 +76,11 @@ end subroutine init_asdf_data
 !> Stores the records into the ASDF structure
 !! \param asdf_container The ASDF data container 
 !! \param seismogram_tmp The current seismogram to store
-!! \param irec_local The local index of the receivers on the local processor
+!! \param irec_local The local index of the receiver
 !! \param irec The global index of the receiver
 !! \param chn The broadband channel simulated
 !! \param iorientation The recorded seismogram's orientation direction
-subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
-                           irec, chn, iorientation)
+subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, irec, chn, iorientation)
 
   use asdf_data
   use specfem_par,only: &
@@ -92,20 +93,18 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, &
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
   character(len=4),intent(in) :: chn
-  integer,intent(in) :: irec_local, irec
+  integer,intent(in) :: irec_local, irec, iorientation
   real(kind=CUSTOM_REAL),dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS),intent(in) :: seismogram_tmp
-  integer,intent(in) :: iorientation
   ! local Variables
   integer :: length_station_name, length_network_name
   integer :: ier, i
-
   ! trace index
   i = (irec_local-1)*(3) + (iorientation)
 
   length_station_name = len_trim(station_name(irec))
   length_network_name = len_trim(network_name(irec))
-  asdf_container%receiver_name_array(i) = station_name(irec)(1:length_station_name)
-  asdf_container%network_array(i) = network_name(irec)(1:length_network_name)
+  asdf_container%receiver_name_array(irec_local) = station_name(irec)(1:length_station_name)
+  asdf_container%network_array(irec_local) = network_name(irec)(1:length_network_name)
   asdf_container%component_array(i) = chn
 
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
@@ -120,17 +119,17 @@ end subroutine store_asdf_data
 
 !> Closes the ASDF data structure by deallocating all arrays
 !! \param asdf_container The ASDF data structure
-!! \param total_seismos_local The number of seismograms on the local processor
-subroutine close_asdf_data(asdf_container, total_seismos_local)
+!! \param nrec_local The number of receivers on the local processor
+subroutine close_asdf_data(asdf_container, nrec_local)
 
   use asdf_data
   ! Parameters
   type(asdf_event),intent(inout) :: asdf_container
-  integer,intent(in) :: total_seismos_local
+  integer,intent(in) :: nrec_local
   !Variables
   integer :: i
 
-  do i = 1, total_seismos_local
+  do i = 1, nrec_local*3 ! 3 components
     deallocate(asdf_container%records(i)%record)
   enddo
   deallocate (asdf_container%receiver_name_array)
@@ -171,7 +170,7 @@ subroutine write_asdf(asdf_container)
   double precision :: startTime
   integer(int64) :: start_time
 
-  ! Network names and station names are two different beasts, as in SPECFEM
+  ! Network names and station names are two different beast, as in SPECFEM
   ! network_names(i) is related to station_names(i)
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: networks_names
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: stations_names
@@ -236,7 +235,6 @@ subroutine write_asdf(asdf_container)
   call get_time(startTime, start_time_string, end_time_string)
   start_time = startTime*1000000000_int64 ! convert to nanoseconds
 
-  call ASDF_clean_provenance_f(cptr)
   call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
                                      end_time_string(1:19)//C_NULL_CHAR, cptr, len)
   call c_f_pointer(cptr, fptr, [len])
@@ -250,13 +248,14 @@ subroutine write_asdf(asdf_container)
   allocate(waveforms(nsamples, 3, num_stations), &
            stat=ier)
 
+  call random(waveforms)
   do i = 1, num_stations
-   write(networks_names(i), '(a)') asdf_container%network_array(i)
-   write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
+    write(networks_names(i), '(a)') asdf_container%network_array(i)
+    write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
   enddo
 
   do i = 1, num_stations*3
-   write(component_names(i), '(a)') asdf_container%component_array(i)
+    write(component_names(i), '(a)') asdf_container%component_array(i)
   enddo
 
   !--------------------------------------------------------
@@ -337,34 +336,34 @@ subroutine write_asdf(asdf_container)
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
   do k = 1, mysize
-    do j = 1, num_stations_gather(k)
+    do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
       call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, stationxml)
       call ASDF_create_stations_group_f(waveforms_grp,   &
-           trim(network_names_gather(j, k)) // "." //      &
-           trim(station_names_gather(j,k)) // C_NULL_CHAR, &
-           trim(stationxml) // C_NULL_CHAR,             &
-           station_grps_gather(j, k))
-       do  i = 1, 3
-         ! Generate unique dummy waveform names
-         write(waveform_name, '(a)') &
-           trim(network_names_gather(j,k)) // "." //      &
-           trim(station_names_gather(j,k)) // ".." // trim(component_names_gather(i+(3*(j-1)),k)) &
-            // "__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
-         ! Create the dataset where waveform will be written later on.
-         call ASDF_define_waveform_f(station_grps_gather(j,k), &
-             nsamples, start_time, sampling_rate, &
-           trim(event_name_SAC) // C_NULL_CHAR, &
-           trim(waveform_name) // C_NULL_CHAR, &
-          data_ids(i, j, k))
-         if (nrec_local > 0) waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
-       enddo
+         trim(network_names_gather(j, k)) // "." //      &
+         trim(station_names_gather(j, k)) // C_NULL_CHAR, &
+         trim(stationxml)//C_NULL_CHAR,             &
+         station_grps_gather(j, k))
+      do  i = 1, 3 ! loop over each component
+        ! Generate unique waveform name
+        write(waveform_name, '(a)') &
+          trim(network_names_gather(j,k)) // "." //      &
+          trim(station_names_gather(j,k)) // ".." //trim(component_names_gather(i+(3*(j-1)),k)) &
+            //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
+          print *, trim(waveform_name)
+          call ASDF_define_waveform_f(station_grps_gather(j,k), &
+            nsamples, start_time, sampling_rate, &
+            trim(event_name_SAC) // C_NULL_CHAR, &
+            trim(waveform_name) // C_NULL_CHAR, &
+            data_ids(i, j, k))
+      enddo
     enddo
   enddo
 
   do j = 1, num_stations
-   do i = 1, 3
+    do i = 1, 3
+      waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
       call ASDF_write_full_waveform_f(data_ids(i, j, myrank+1), &
-                                      waveforms(:, i, j), ier)
+                                      waveforms(:,i,j), ier)
     enddo
   enddo
 
@@ -372,13 +371,14 @@ subroutine write_asdf(asdf_container)
   ! Clean up
   !--------------------------------------------------------
 
+
   do k = 1, mysize
-    do j = 1, num_stations_gather(k)
-      call ASDF_close_group_f(station_grps_gather(j, k), ier)
-      do i = 1, 3
-        call ASDF_close_dataset_f(data_ids(i, j, k), ier)
-      enddo
+  do j = 1, num_stations_gather(k)
+    call ASDF_close_group_f(station_grps_gather(j, k), ier)
+    do i = 1, 3
+      call ASDF_close_dataset_f(data_ids(i, j, k), ier)
     enddo
+  enddo
   enddo
 
   call ASDF_close_group_f(waveforms_grp, ier)
@@ -391,8 +391,6 @@ subroutine write_asdf(asdf_container)
   deallocate(num_stations_gather)
 
   deallocate(waveforms)
-  deallocate(stations_names)
-  deallocate(networks_names)
 
 end subroutine write_asdf
 
@@ -479,10 +477,6 @@ subroutine get_time(startTime, start_time_string, end_time_string)
   end_time_sec = (seismo_current-1)/DT
   end_time_sec = startTime + end_time_sec
 
-  !call gmtime(int(startTime), iatime)
-  !print *,'Time: ',IATIME(3),':',IATIME(2),':',IATIME(1)
-  !print *,'Date: ',IATIME(4),'.',IATIME(5)+1,'.',IATIME(6)
-
   call gmtime(int(end_time_sec), iatime)
 
   write(yr, "(I4.4)") iatime(6)+1900
@@ -525,12 +519,12 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
                      '<Created>2014-03-03T11:07:06+00:00</Created>'//&
-                     '<Network code="'//trim(network_name)//'"'//&
-                     '><Station code="'//trim(station_name)//'"'//&
+                     '<Network code="'//trim(network_name(1:2))//'"'//&
+                     '><Station code="'//trim(station_name(1:3))//'"'//&
                      ' startDate="2006-12-16T00:00:00+00:00">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat(1:4))//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon(1:4))//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele(1:4))//'</Elevation>'//&
                      '<Site><Name>SPECFEM3D_GLOBE</Name></Site>'//&
                      '<CreationDate>2015-10-12T00:00:00</CreationDate>'//&
                      '</Station></Network>'//&

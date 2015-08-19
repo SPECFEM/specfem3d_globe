@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
+  subroutine get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                      DT,NSOURCES,min_tshift_cmt_original)
 
   use constants,only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
@@ -40,13 +40,13 @@
   integer, intent(in) :: NSOURCES
   double precision, intent(in) :: DT
 
-  integer, intent(out) :: yr,jda,ho,mi
+  integer, intent(out) :: yr,jda,ho,mi,mo,da
   double precision, intent(out) :: sec,min_tshift_cmt_original
   double precision, dimension(NSOURCES), intent(out) :: tshift_cmt,hdur,lat,long,depth
   double precision, dimension(6,NSOURCES), intent(out) :: moment_tensor
 
   ! local variables below
-  integer :: mo,da,julian_day,isource
+  integer :: julian_day,isource
   integer :: i,itype,istart,iend,ier, ios
   double precision :: scaleM
   double precision :: t_shift(NSOURCES)
