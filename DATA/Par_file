@@ -5,14 +5,14 @@ NOISE_TOMOGRAPHY                = 0        # flag of noise tomography, three ste
 SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
-NCHUNKS                         = 6
+NCHUNKS                         = 1
 
 # angular width of the first chunk (not used if full sphere with six chunks)
-ANGULAR_WIDTH_XI_IN_DEGREES   = 90.d0      # angular size of a chunk
-ANGULAR_WIDTH_ETA_IN_DEGREES  = 90.d0
+ANGULAR_WIDTH_XI_IN_DEGREES   = 20.d0      # angular size of a chunk
+ANGULAR_WIDTH_ETA_IN_DEGREES  = 20.d0
 CENTER_LATITUDE_IN_DEGREES    = 40.d0
-CENTER_LONGITUDE_IN_DEGREES   = 10.d0
-GAMMA_ROTATION_AZIMUTH        = 20.d0
+CENTER_LONGITUDE_IN_DEGREES   = 25.d0
+GAMMA_ROTATION_AZIMUTH        = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
@@ -38,7 +38,7 @@ NPROC_ETA                       = 2
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = s362ani
+MODEL                           = 1D_transversely_isotropic_prem
 
 # parameters describing the Earth model
 OCEANS                          = .true.
@@ -49,7 +49,7 @@ ROTATION                        = .true.
 ATTENUATION                     = .true.
 
 # absorbing boundary conditions for a regional simulation
-ABSORBING_CONDITIONS            = .false.
+ABSORBING_CONDITIONS            = .true.
 
 # record length in minutes
 RECORD_LENGTH_IN_MINUTES        = 0.1d0
@@ -116,7 +116,7 @@ RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
 MOVIE_SURFACE                   = .false.
 MOVIE_VOLUME                    = .false.
 MOVIE_COARSE                    = .true.
-NTSTEP_BETWEEN_FRAMES           = 100
+NTSTEP_BETWEEN_FRAMES           = 50
 HDUR_MOVIE                      = 0.d0
 
 # save movie in volume.  Will save element if center of element is in prescribed volume
@@ -148,7 +148,7 @@ LOCAL_PATH                      = ./DATABASES_MPI
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 1000
+NTSTEP_BETWEEN_OUTPUT_INFO      = 200
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000

@@ -398,21 +398,22 @@ end subroutine write_asdf
 !-------------------------------------------------------------------------------------------------
 !
 
-!> Converts the CMT file read by SPECFEM to a QuakeML file for the ASDF container
+!> Converts the CMT source file read by SPECFEM to a QuakeML file for the ASDF container
 !! \param quakemlstring The QuakeML string to store in the ASDF file
+!! \start_time_string The start date stored as a character string
 subroutine cmt_to_quakeml(quakemlstring, start_time_string)
 
   use specfem_par,only:&
     cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
-    Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
+    Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC
     
-
   implicit none
   character(len=*) :: quakemlstring
   character(len=*) :: start_time_string
   character(len=13) :: lon_str, lat_str, dep_str
   character(len=25) :: Mrr_str, Mtt_str, Mpp_str, Mrt_str, Mrp_str, Mtp_str
 
+  ! Convert the CMT values to strings for the QuakeML string
   write(lon_str, "(g12.5)") cmt_lat
   write(lat_str, "(g12.5)") cmt_lon
   write(dep_str, "(g12.5)") cmt_depth
@@ -429,45 +430,40 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '<event publicID="smi:service.iris.edu/fdsnws/event/1/query?eventid=656970">'//&
                   '<type>earthquake</type>'//&
                   '<focalMechanism publicID="smi:ds.iris.edu/spudservice/momenttensor/gcmtid/'//&
-                  'C201305240544A/quakeml#focalmechanism">'//&
+                  'C'//trim(event_name_SAC)//'/quakeml#focalmechanism">'//&
                   '<momentTensor publicID="smi:ds.iris.edu/spudservice/momenttensor/gcmtid/'//&
-                  'C201305240544A/quakeml#momenttensor">'//&
-                  '<dataUsed><waveType>body waves</waveType>'//&
-                  '<stationCount>147</stationCount>'//&
-                  '<componentCount>405</componentCount>'//&
-                  '<shortestPeriod>50.0</shortestPeriod>'//&
-                  '</dataUsed>'//&
+                  'C'//trim(event_name_SAC)//'/quakeml#momenttensor">'//&
                   '<derivedOriginID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/'//&
-                  'C201305240544A#reforigin</derivedOriginID>'//&
+                  'C'//trim(event_name_SAC)//'#reforigin</derivedOriginID>'//&
                   '<momentMagnitudeID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/'//&
-                  'C201305240544A/quakeml#magnitude</momentMagnitudeID>'//&
+                  'C'//trim(event_name_SAC)//'/quakeml#magnitude</momentMagnitudeID>'//&
                   '<scalarMoment>'//&
                   '<value>394600000000000000</value>'//&
                   '</scalarMoment>'//&
                   '<tensor>'//&
                   '<Mrr>'//&
                   '<value>'//trim(Mrr_str)//'</value>'//&
-                  '<uncertainty>10000000000000000000</uncertainty>'//&
+                  '<uncertainty>0</uncertainty>'//&
                   '</Mrr>'//&
                   '<Mtt>'//&
                   '<value>'//trim(Mtt_str)//'</value>'//&
-                  '<uncertainty>10000000000000000000</uncertainty>'//&
+                  '<uncertainty>0</uncertainty>'//&
                   '</Mtt>'//&
                   '<Mpp>'//&
                   '<value>'//trim(Mpp_str)//'</value>'//&
-                  '<uncertainty>14000000000000000000</uncertainty>'//&
+                  '<uncertainty>0</uncertainty>'//&
                   '</Mpp>'//&
                   '<Mrt>'//&
                   '<value>'//trim(Mrt_str)//'</value>'//&
-                  '<uncertainty>7000000000000000000</uncertainty>'//&
+                  '<uncertainty>0</uncertainty>'//&
                   '</Mrt>'//&
                   '<Mrp>'//&
                   '<value>'//trim(Mrp_str)//'</value>'//&
-                  '<uncertainty>8000000000000000000</uncertainty>'//&
+                  '<uncertainty>0</uncertainty>'//&
                   '</Mrp>'//&
                   '<Mtp>'//&
                   '<value>'//trim(Mtp_str)//'</value>'//&
-                  '<uncertainty>14000000000000000000</uncertainty>'//&
+                  '<uncertainty>0</uncertainty>'//&
                   '</Mtp>'//&
                   '</tensor>'//&
                   '<sourceTimeFunction>'//&
@@ -500,7 +496,7 @@ end subroutine cmt_to_quakeml
 !-------------------------------------------------------------------------------------------------
 !
 
-!> Converts the CMT file read by SPECFEM to a QuakeML file for the ASDF container
+!> Uses the time in the CMTSOLUTION file to calculate the number of seconds since the epoch
 !! \param startTime The start time of the simulation from the epoch
 !! \param start_time_string A string for defining the waveform name start time
 !! \param end_time_string A string for defining the waveform name end time
@@ -518,6 +514,7 @@ subroutine get_time(startTime, start_time_string, end_time_string)
   double precision :: end_time_sec
   integer :: iatime(9), year
 
+  ! Converts the CMTSOLUTION time values to strings
   write(yr, "(I4.4)") yr_SAC
   write(mo, "(I2.2)") mo_SAC
   write(da, "(I2.2)") da_SAC
@@ -528,13 +525,18 @@ subroutine get_time(startTime, start_time_string, end_time_string)
   start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
                       trim(hr)//':'//trim(minute)//':'//trim(second)
 
+  ! Calculates the start time since the epoch in seconds
+  ! Reference:
+  ! http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap04.html#tag_04_14
   year = yr_SAC-1900
   startTime =(year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
               ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC
     
+  ! Calculates the number of seconds to add to the start_time
   end_time_sec = (seismo_current-1)/DT
   end_time_sec = startTime + end_time_sec
 
+  ! Converts seconds to a human-readable date
   call gmtime(int(end_time_sec), iatime)
 
   write(yr, "(I4.4)") iatime(6)+1900
@@ -556,8 +558,8 @@ end subroutine get_time
 !> Converts the Station information to a StationXML string
 !! \param station_name The name of the station based on SEED
 !! \param network_name The name of the network based on SEED
-!! \param irec The receiver counter
-!! \param stationxmlstring The StationXML string written to the ASDF file
+!! \param irec The receiver count
+!! \param stationxmlstring The StationXML string that will be written to the ASDF file
 subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstring)
 
   use specfem_par,only:&
@@ -568,6 +570,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
   character(len=25) :: station_lat, station_lon, station_ele
   integer, intent(in) :: irec
 
+  ! Convert double precision to character strings for the StationXML string
   write(station_lat, "(g12.5)") stlat(irec)
   write(station_lon, "(g12.5)") stlon(irec) 
   write(station_ele, "(g12.5)") stele(irec)
@@ -583,9 +586,12 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Latitude unit="DEGREES">'//trim(station_lat(1:4))//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon(1:4))//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele(1:4))//'</Elevation>'//&
-                     '<Site><Name>SPECFEM3D_GLOBE</Name></Site>'//&
+                     '<Site>'//&
+                     '<Name>SPECFEM3D_GLOBE</Name>'//&
+                     '</Site>'//&
                      '<CreationDate>2015-10-12T00:00:00</CreationDate>'//&
-                     '</Station></Network>'//&
+                     '</Station>'//&
+                     '</Network>'//&
                      '</FDSNStationXML>'
 
 end subroutine station_to_stationxml
@@ -604,10 +610,12 @@ subroutine read_file(filename, filestring)
   character(len=*) :: filename
   integer :: file_size
 
+  ! Get the size of the file using Fortran2003 feature
   open(10, file=filename, status='old')
   inquire(unit=10, size=file_size)
   close(10)
 
+  ! Read in the size of the file using direct access
   open(10, file=filename, status='old', &
          recl=file_size, form='unformatted', access='direct')
   read (10, rec=1) filestring(1:file_size)
