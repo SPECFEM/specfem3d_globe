@@ -36,7 +36,8 @@
   subroutine get_event_info_parallel(myrank,yr,jda,mo,da,ho,mi,sec,&
                                     event_name,tshift_cmt,t_shift, &
                                     elat,elon,depth,mb,cmt_lat, &
-                                    cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
+                                    cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
+                                    Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
   use constants
 
@@ -51,6 +52,7 @@
   double precision, intent(out) :: sec
   real, intent(out) :: mb
   double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
+  double precision, intent(out) :: Mrr, Mtt, Mpp, Mrt, Mrp, Mtp
   double precision, intent(out) :: t_shift
 
   character(len=20), intent(out) :: event_name
@@ -63,7 +65,8 @@
 
     call get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift, &
                         elat,elon,depth,mb, &
-                        cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
+                        cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
+                        Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
     ! create the event name
     !write(ename(1:12),'(a12)') region(1:12)
@@ -99,6 +102,14 @@
   call bcast_all_singledp(cmt_depth)
   call bcast_all_singledp(cmt_hdur)
 
+  ! moment tensor given in CMT file
+  call bcast_all_singledp(Mrr)
+  call bcast_all_singledp(Mtt)
+  call bcast_all_singledp(Mpp)
+  call bcast_all_singledp(Mrt)
+  call bcast_all_singledp(Mrp)
+  call bcast_all_singledp(Mtp)
+  
   call bcast_all_ch(event_name,20)
 
   end subroutine get_event_info_parallel
@@ -115,7 +126,8 @@
 
   subroutine get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift,&
                             elat_pde,elon_pde,depth_pde,mb,&
-                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES)
+                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,&
+                            Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
 
   use constants
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
@@ -132,6 +144,7 @@
   double precision, intent(out) :: elat_pde,elon_pde,depth_pde
   real, intent(out) :: mb
   double precision, intent(out) :: cmt_lat,cmt_lon,cmt_depth,cmt_hdur
+  double precision, intent(out) :: Mrr, Mtt, Mpp, Mrt, Mrp, Mtp
 
   character(len=20), intent(out) :: event_name ! event name for SAC header
 
@@ -169,7 +182,7 @@
     read(IIN,*) datasource,yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
     jda=julian_day(yr,mo,da)
 
-    ! ignore line with event name
+    ! read line with event name
     read(IIN,"(a)") string
     read(string(12:len_trim(string)),*) e_n(isource)
 
@@ -193,13 +206,20 @@
     read(IIN,"(a)") string
     read(string(7:len_trim(string)),*) depth(isource)
 
-    ! ignore the last 6 lines with moment tensor info
+    ! read the last 6 lines with moment tensor info
     read(IIN,"(a)") string
+    read(string(5:len_trim(string)),*) Mrr
     read(IIN,"(a)") string
+    read(string(5:len_trim(string)),*) Mtt
     read(IIN,"(a)") string
+    read(string(5:len_trim(string)),*) Mpp
     read(IIN,"(a)") string
+    read(string(5:len_trim(string)),*) Mrt
     read(IIN,"(a)") string
+    read(string(5:len_trim(string)),*) Mrp
     read(IIN,"(a)") string
+    read(string(5:len_trim(string)),*) Mtp
+
   enddo
 
   ! sets tshift_cmt to zero

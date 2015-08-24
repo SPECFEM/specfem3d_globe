@@ -403,16 +403,25 @@ end subroutine write_asdf
 subroutine cmt_to_quakeml(quakemlstring, start_time_string)
 
   use specfem_par,only:&
-    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC
+    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
+    Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
+    
 
   implicit none
   character(len=*) :: quakemlstring
   character(len=*) :: start_time_string
   character(len=13) :: lon_str, lat_str, dep_str
+  character(len=25) :: Mrr_str, Mtt_str, Mpp_str, Mrt_str, Mrp_str, Mtp_str
 
   write(lon_str, "(g12.5)") cmt_lat
   write(lat_str, "(g12.5)") cmt_lon
   write(dep_str, "(g12.5)") cmt_depth
+  write(Mrr_str, "(g12.5)") Mrr
+  write(Mtt_str, "(g12.5)") Mtt
+  write(Mpp_str, "(g12.5)") Mpp
+  write(Mrt_str, "(g12.5)") Mrt
+  write(Mrp_str, "(g12.5)") Mrp
+  write(Mtp_str, "(g12.5)") Mtp
 
   quakemlstring = '<q:quakeml xmlns="http://quakeml.org/xmlns/bed/1.2"'//&
                   ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
@@ -437,27 +446,27 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '</scalarMoment>'//&
                   '<tensor>'//&
                   '<Mrr>'//&
-                  '<value>-1750000000000000000000</value>'//&
+                  '<value>'//trim(Mrr_str)//'</value>'//&
                   '<uncertainty>10000000000000000000</uncertainty>'//&
                   '</Mrr>'//&
                   '<Mtt>'//&
-                  '<value>411000000000000000000</value>'//&
+                  '<value>'//trim(Mtt_str)//'</value>'//&
                   '<uncertainty>10000000000000000000</uncertainty>'//&
                   '</Mtt>'//&
                   '<Mpp>'//&
-                  '<value>1340000000000000000000</value>'//&
+                  '<value>'//trim(Mpp_str)//'</value>'//&
                   '<uncertainty>14000000000000000000</uncertainty>'//&
                   '</Mpp>'//&
                   '<Mrt>'//&
-                  '<value>-896000000000000000000</value>'//&
+                  '<value>'//trim(Mrt_str)//'</value>'//&
                   '<uncertainty>7000000000000000000</uncertainty>'//&
                   '</Mrt>'//&
                   '<Mrp>'//&
-                  '<value>-3690000000000000000000</value>'//&
+                  '<value>'//trim(Mrp_str)//'</value>'//&
                   '<uncertainty>8000000000000000000</uncertainty>'//&
                   '</Mrp>'//&
                   '<Mtp>'//&
-                  '<value>199000000000000000000</value>'//&
+                  '<value>'//trim(Mtp_str)//'</value>'//&
                   '<uncertainty>14000000000000000000</uncertainty>'//&
                   '</Mtp>'//&
                   '</tensor>'//&

@@ -162,6 +162,7 @@
   call bcast_all_dp(depth,NSOURCES)
 
   call bcast_all_dp(moment_tensor,6*NSOURCES)
+
   call bcast_all_singledp(min_tshift_cmt_original)
 
   ! define topology of the control element

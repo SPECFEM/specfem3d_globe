@@ -146,6 +146,7 @@ module specfem_par
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: tshift_cmt,hdur,hdur_gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
+  double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
   double precision :: t0
 
   ! External source time function.
