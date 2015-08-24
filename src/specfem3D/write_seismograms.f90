@@ -160,14 +160,13 @@ contains
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: one_seismogram
 
-  integer :: iproc,sender,irec_local,iorientation,irec,ier,receiver
+  integer :: iproc,sender,irec_local,irec,ier,receiver
   integer :: nrec_local_received
   integer :: total_seismos
   integer,dimension(:),allocatable:: islice_num_rec_local
   character(len=MAX_STRING_LEN) :: sisname
   ! ASDF
   type(asdf_event) :: asdf_container
-  integer :: total_seismos_local
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
