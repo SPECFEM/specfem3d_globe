@@ -39,31 +39,9 @@ module asdf_data
   type asdf_event
     !scalars
     character(len=13)     :: event
-    real, pointer     :: event_lat(:), event_lo(:), event_dpt(:)
-
-    !processing info
-    real              :: min_period, max_period
 
     !size info
-    integer           :: nrecords
     integer           :: nreceivers
-
-    !time info
-    integer, pointer    :: gmt_year(:), gmt_day(:), gmt_hour(:)
-    integer, pointer    :: gmt_min(:), gmt_sec(:), gmt_msec(:)
-
-    !seismic record info
-    integer, pointer    :: npoints(:)
-    real, pointer       :: receiver_lat(:), receiver_lo(:)
-    real, pointer       :: receiver_el(:),  receiver_dpt(:)
-    real, pointer       :: begin_value(:),  end_value(:)
-    real, pointer       :: cmp_azimuth(:),  cmp_incident_ang(:)
-    real, pointer       :: sample_rate(:),  scale_factor(:)
-
-    real, pointer       :: ev_to_sta_AZ(:), sta_to_ev_AZ(:)
-    real, pointer       :: great_circle_arc(:)
-    real, pointer       :: dist(:)
-    real, pointer       :: P_pick(:), S_pick(:)
 
     character(len=20),pointer :: receiver_name_array(:), network_array(:)
     character(len=20),pointer :: component_array(:)
