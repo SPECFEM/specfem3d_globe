@@ -133,7 +133,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
 
   ! event time
-  integer :: yr,jda,ho,mi
+  integer :: yr,jda,mo,da,ho,mi
   double precision :: sec
 
   ! timer MPI
@@ -150,7 +150,7 @@
   ! read all the sources
   if (myrank == 0) then
     ! only master process reads in CMTSOLUTION file
-    call get_cmt(yr,jda,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
+    call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                  DT,NSOURCES,min_tshift_cmt_original)
   endif
 
@@ -162,6 +162,7 @@
   call bcast_all_dp(depth,NSOURCES)
 
   call bcast_all_dp(moment_tensor,6*NSOURCES)
+
   call bcast_all_singledp(min_tshift_cmt_original)
 
   ! define topology of the control element

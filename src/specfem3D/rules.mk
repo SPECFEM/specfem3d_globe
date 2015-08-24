@@ -104,6 +104,7 @@ specfem3D_OBJECTS += \
 	$O/write_movie_surface.solverstatic.o \
 	$O/write_output_ASCII.solverstatic.o \
 	$O/write_output_SAC.solverstatic.o \
+	$O/write_output_ASDF.solverstatic.o \
 	$(EMPTY_MACRO)
 
 specfem3D_MODULES = \
@@ -177,7 +178,6 @@ adios_specfem3D_OBJECTS = \
 	$O/save_forward_arrays_adios.solverstatic_adios.o \
 	$O/save_kernels_adios.solverstatic_adios.o \
 	$O/write_specfem_adios_header.solverstatic_adios.o \
-	$O/write_output_ASDF.solverstatic_adios.o \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_SHARED_OBJECTS = \
@@ -246,7 +246,7 @@ else # non cuda (non-gpu or opencl)
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
 #	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
-	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS) libasdf.a -I/usr/local/hdf5/intel-13.0/openmpi-1.6.3/1.8.10/include -L/usr/local/hdf5/intel-13.0/openmpi-1.6.3/1.8.10/lib64 -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -Wl,--build-id -lz -lm -lgpfs -Wl,-rpath -Wl,/usr/local/hdf5/intel-13.0/openmpi-1.6.3/1.8.10/lib64 -lstdc++
 	@echo ""
 endif
 
@@ -260,11 +260,13 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 #### rule for each .o file below
 ####
 
+$O/write_output_ASDF.o: /tigress/jas11/packages/specfem3d_globe_asdf/libasdf.a
+
 ###
 ### additional dependencies
 ###
 
-$O/write_output_ASDF.solverstatic_adios.o: $O/asdf_data.solverstatic_module.o
+$O/write_output_ASDF.solverstatic.o: $O/asdf_data.solverstatic_module.o
 
 $O/write_seismograms.solverstatic.o: $O/asdf_data.solverstatic_module.o
 

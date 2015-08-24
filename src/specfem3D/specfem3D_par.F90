@@ -146,6 +146,7 @@ module specfem_par
   double precision, dimension(:), allocatable :: xi_source,eta_source,gamma_source
   double precision, dimension(:), allocatable :: tshift_cmt,hdur,hdur_gaussian
   double precision, dimension(:), allocatable :: theta_source,phi_source
+  double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
   double precision :: t0
 
   ! External source time function.
@@ -200,13 +201,17 @@ module specfem_par
   integer :: it_adj_written
 
   ! for SAC headers for seismograms
-  integer :: yr_SAC,jda_SAC,ho_SAC,mi_SAC
+  integer :: yr_SAC,jda_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC
   double precision :: sec_SAC
   real :: mb_SAC
   double precision :: t_cmt_SAC,t_shift_SAC
   double precision :: elat_SAC,elon_SAC,depth_SAC, &
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC
   character(len=20) :: event_name_SAC
+
+  ! for ASDF start time
+  integer :: yr, jda, mo, da, ho, mi
+  double precision :: sec
 
   ! strain flag
   logical :: COMPUTE_AND_STORE_STRAIN

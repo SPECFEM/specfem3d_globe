@@ -1,13 +1,13 @@
-PDE 1994  6  9  0 33 16.40 -13.8300  -67.5600 637.0 6.9 6.8 NORTHERN BOLIVIA                        
-event name:     060994A        
-time shift:     29.0000
-half duration:  20.0000
-latitude:      -13.8200
-longitude:     -67.2500
-depth:         647.1000
-Mrr:      -7.590000e+27
-Mtt:       7.750000e+27
-Mpp:      -1.600000e+26
-Mrt:      -2.503000e+28
-Mrp:       4.200000e+26
-Mtp:      -2.480000e+27
+PDEW 2008  1  6  5 14 23.70  37.2200   22.6900  75.0 6.1 6.2 SOUTHERN GREECE
+event name:     200801060514A
+time shift:      0.000
+half duration:   3.0000
+latitude:       36.9800
+longitude:      22.8700
+depth:          92.3900
+Mrr:       7.740000e+24
+Mtt:      -1.830000e+25
+Mpp:       1.060000e+25
+Mrt:       1.290000e+25
+Mrp:      -8.450000e+24
+Mtp:      -4.430000e+24

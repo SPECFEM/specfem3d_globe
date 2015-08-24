@@ -198,15 +198,7 @@ contains
     endif
 
     ! initializes the ASDF data structure by allocating arrays
-    if (OUTPUT_SEISMOS_ASDF) then
-      total_seismos_local = 0
-      do irec_local = 1, nrec_local
-        do iorientation = 1, 3
-          total_seismos_local = total_seismos_local + 1
-        enddo
-      enddo
-      call init_asdf_data(asdf_container, total_seismos_local)
-    endif
+    if (OUTPUT_SEISMOS_ASDF) call init_asdf_data(asdf_container, nrec_local)
 
     ! loop on all the local receivers
     do irec_local = 1,nrec_local
@@ -229,9 +221,8 @@ contains
     ! writes out ASDF container to the file
     if (OUTPUT_SEISMOS_ASDF) then
       call write_asdf(asdf_container)
-
       ! deallocate the container
-      call close_asdf_data(asdf_container, total_seismos_local)
+      call close_asdf_data(asdf_container, nrec_local)
     endif
 
     ! create one large file instead of one small file per station to avoid file system overload
@@ -503,7 +494,7 @@ contains
 
     ! ASDF output format
     if (OUTPUT_SEISMOS_ASDF) &
-      call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation,phi)
+      call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation)
 
   enddo ! do iorientation
 

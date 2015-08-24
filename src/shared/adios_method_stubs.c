@@ -119,20 +119,3 @@ void FC_FUNC_(write_kernels_source_derivatives_adios,WRITE_KERNELS_SOURCE_DERIVA
 void FC_FUNC_(write_kernels_hessian_adios,WRITE_KERNELS_HESSIAN_ADIOS)(void) {}
 
 void FC_FUNC_(write_kernels_strength_noise_adios,WRITE_KERNELS_STRENGTH_NOISE_ADIOS)(void) {}
-
-
-// For xspecfem3d -- "ASDF" -- seismograms in ADIOS
-
-void FC_FUNC_(init_asdf_data,INIT_ASDF_DATA)(void* asdf_event,
-                                             int* total_seismos_local) {}
-
-void FC_FUNC_(store_asdf_data,STORE_ASDF_DATA)
-    (void* my_asdf, realw* seismogram_tmp, int* irec_local, int *irec,
-     char* chn, int* iorientation) {}
-
-void FC_FUNC_(close_asdf_data,CLOSE_ASDF_DATA)(void *my_asdf,
-                                               int *total_seismos_local) {}
-
-void FC_FUNC_(write_asdf,WRITE_ASDF)(void* my_asdf) {}
-
-

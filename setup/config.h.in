@@ -20,9 +20,6 @@
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
-/* Define to 1 if you have the `vtkIO' library (-lvtkIO). */
-#undef HAVE_LIBVTKIO
-
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
 
@@ -47,9 +44,6 @@
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
 
-/* define if the VTK library is available */
-#undef HAVE_VTK
-
 /* Define if xmmintrin.h */
 #undef HAVE_XMMINTRIN
 
@@ -64,9 +58,6 @@
 
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
-
-/* Define to the home page for this package. */
-#undef PACKAGE_URL
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
