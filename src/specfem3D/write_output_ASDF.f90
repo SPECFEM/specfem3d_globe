@@ -156,12 +156,12 @@ subroutine write_asdf(asdf_container)
 
   ! Parameters
   integer, parameter :: MAX_STRING_LENGTH = 1024
-  integer, parameter :: MAX_QUAKEML_LENGTH = 4096
+  integer, parameter :: MAX_QUAKEML_LENGTH = 8096
   integer, parameter :: MAX_PARFILE_LENGTH = 20000
   integer, parameter :: MAX_CONSTANTS_LENGTH = 45000
 
   !--- Character strings to be written to the ASDF file
-  character(len=MAX_STRING_LENGTH) :: quakeml
+  character(len=MAX_QUAKEML_LENGTH) :: quakeml
   character(len=MAX_STRING_LENGTH) :: stationxml
 
   integer :: num_stations !
@@ -228,13 +228,14 @@ subroutine write_asdf(asdf_container)
   sampling_rate = DT
   nsamples = seismo_current
 
-  ! Generate minimal QuakeML for SPECFEM3D_GLOBE
-  call cmt_to_quakeml(quakeml)
-
-  ! Calculate start_time based on SAC header values
+  ! Calculate start_time
   call get_time(startTime, start_time_string, end_time_string)
   start_time = startTime*1000000000_int64 ! convert to nanoseconds
 
+  ! Generate minimal QuakeML for SPECFEM3D_GLOBE
+  call cmt_to_quakeml(quakeml, start_time_string) 
+
+  ! Generate specfem provenance string
   call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
                                      end_time_string(1:19)//C_NULL_CHAR, cptr, len)
   call c_f_pointer(cptr, fptr, [len])
@@ -248,7 +249,6 @@ subroutine write_asdf(asdf_container)
   allocate(waveforms(nsamples, 3, num_stations), &
            stat=ier)
 
-print *, num_stations, myrank
   do i = 1, num_stations
     write(networks_names(i), '(a)') asdf_container%network_array(i)
     write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
@@ -257,7 +257,6 @@ print *, num_stations, myrank
   do i = 1, num_stations*3
     write(component_names(i), '(a)') asdf_container%component_array(i)
   enddo
-print *, "c, ", myrank
 
   !--------------------------------------------------------
   ! ASDF variables
@@ -267,7 +266,6 @@ print *, "c, ", myrank
   call all_gather_all_i(num_stations, num_stations_gather, mysize)
   ! find the largest number of stations per allgatheress
   max_num_stations_gather = maxval(num_stations_gather)
-print *, "d, ", myrank
 
   allocate(displs(mysize))
   allocate(rcounts(mysize))
@@ -328,12 +326,12 @@ print *, "d, ", myrank
   call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
                                      "0.0.2" // C_NULL_CHAR, ier)
 
-  call ASDF_write_quakeml_f(file_id, trim(quakeml)//C_NULL_CHAR, ier)
+  call ASDF_write_quakeml_f(file_id, trim(quakeml) // C_NULL_CHAR, ier)
   call ASDF_write_provenance_data_f(file_id, provenance(1:len), ier)
   call read_file("setup/constants.h", sf_constants)
   call read_file("DATA/Par_file", sf_parfile)
-  call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants)//C_NULL_CHAR,&
-                                    trim(sf_parfile)//C_NULL_CHAR, ier)
+  call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants) // C_NULL_CHAR,&
+                                    trim(sf_parfile) // C_NULL_CHAR, ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
@@ -351,7 +349,7 @@ print *, "d, ", myrank
           trim(network_names_gather(j,k)) // "." //      &
           trim(station_names_gather(j,k)) // ".." //trim(component_names_gather(i+(3*(j-1)),k)) &
             //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
-print *, trim(waveform_name), myrank
+          ! print *, trim(waveform_name), myrank
           call ASDF_define_waveform_f(station_grps_gather(j,k), &
             nsamples, start_time, sampling_rate, &
             trim(event_name_SAC) // C_NULL_CHAR, &
@@ -376,16 +374,13 @@ print *, trim(waveform_name), myrank
 
   do k = 1, mysize
   do j = 1, num_stations_gather(k)
-print *, "cloxing group", myrank
     call ASDF_close_group_f(station_grps_gather(j, k), ier)
     do i = 1, 3
-print *, "clsoign data", myrank
       call ASDF_close_dataset_f(data_ids(i, j, k), ier)
     enddo
   enddo
   enddo
 
-print *, "closed", myrank
   call ASDF_close_group_f(waveforms_grp, ier)
   call ASDF_finalize_hdf5_f(ier);
 
@@ -405,14 +400,15 @@ end subroutine write_asdf
 
 !> Converts the CMT file read by SPECFEM to a QuakeML file for the ASDF container
 !! \param quakemlstring The QuakeML string to store in the ASDF file
-subroutine cmt_to_quakeml(quakemlstring)
+subroutine cmt_to_quakeml(quakemlstring, start_time_string)
 
   use specfem_par,only:&
     cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC
 
   implicit none
   character(len=*) :: quakemlstring
-  character(len=25) :: lon_str, lat_str, dep_str
+  character(len=*) :: start_time_string
+  character(len=13) :: lon_str, lat_str, dep_str
 
   write(lon_str, "(g12.5)") cmt_lat
   write(lat_str, "(g12.5)") cmt_lon
@@ -423,9 +419,57 @@ subroutine cmt_to_quakeml(quakemlstring)
                   '<eventParameters publicID="smi:local/592edbfc-2482-481e-80fd-03810308104b">'//&
                   '<event publicID="smi:service.iris.edu/fdsnws/event/1/query?eventid=656970">'//&
                   '<type>earthquake</type>'//&
+                  '<focalMechanism publicID="smi:ds.iris.edu/spudservice/momenttensor/gcmtid/'//&
+                  'C201305240544A/quakeml#focalmechanism">'//&
+                  '<momentTensor publicID="smi:ds.iris.edu/spudservice/momenttensor/gcmtid/'//&
+                  'C201305240544A/quakeml#momenttensor">'//&
+                  '<dataUsed><waveType>body waves</waveType>'//&
+                  '<stationCount>147</stationCount>'//&
+                  '<componentCount>405</componentCount>'//&
+                  '<shortestPeriod>50.0</shortestPeriod>'//&
+                  '</dataUsed>'//&
+                  '<derivedOriginID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/'//&
+                  'C201305240544A#reforigin</derivedOriginID>'//&
+                  '<momentMagnitudeID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/'//&
+                  'C201305240544A/quakeml#magnitude</momentMagnitudeID>'//&
+                  '<scalarMoment>'//&
+                  '<value>394600000000000000</value>'//&
+                  '</scalarMoment>'//&
+                  '<tensor>'//&
+                  '<Mrr>'//&
+                  '<value>-1750000000000000000000</value>'//&
+                  '<uncertainty>10000000000000000000</uncertainty>'//&
+                  '</Mrr>'//&
+                  '<Mtt>'//&
+                  '<value>411000000000000000000</value>'//&
+                  '<uncertainty>10000000000000000000</uncertainty>'//&
+                  '</Mtt>'//&
+                  '<Mpp>'//&
+                  '<value>1340000000000000000000</value>'//&
+                  '<uncertainty>14000000000000000000</uncertainty>'//&
+                  '</Mpp>'//&
+                  '<Mrt>'//&
+                  '<value>-896000000000000000000</value>'//&
+                  '<uncertainty>7000000000000000000</uncertainty>'//&
+                  '</Mrt>'//&
+                  '<Mrp>'//&
+                  '<value>-3690000000000000000000</value>'//&
+                  '<uncertainty>8000000000000000000</uncertainty>'//&
+                  '</Mrp>'//&
+                  '<Mtp>'//&
+                  '<value>199000000000000000000</value>'//&
+                  '<uncertainty>14000000000000000000</uncertainty>'//&
+                  '</Mtp>'//&
+                  '</tensor>'//&
+                  '<sourceTimeFunction>'//&
+                  '<type>triangle</type>'//&
+                  '<duration>72.4</duration>'//&
+                  '</sourceTimeFunction>'//&
+                  '</momentTensor>'//&
+                  '</focalMechanism>'//&
                   '<origin publicID="smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin">'//&
                   '<time>'//&
-                  '<value>2014-09-01T10:29:54.500000Z</value>'//&
+                  '<value>'//trim(start_time_string(1:19))//'</value>'//&
                   '</time>'//&
                   '<latitude>'//&
                   '<value>'//trim(lat_str)//'</value>'//&
