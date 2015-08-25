@@ -40,7 +40,7 @@
   use specfem_par,only: &
     NSOURCES,myrank, &
     tshift_cmt,theta_source,phi_source, &
-    DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
+    DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
     rspl,espl,espl2,nspl,ibathy_topo, &
     LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
     xigll,yigll,zigll, &
@@ -676,11 +676,12 @@
         write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
         write(IMAIN,*)
         write(IMAIN,*) 'magnitude of the source:'
-        write(IMAIN,*) '     scalar moment M0 = ', &
-          get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource)),' dyne-cm'
-        write(IMAIN,*) '  moment magnitude Mw = ', &
-          get_cmt_moment_magnitude(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
+        M0 = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
+        write(IMAIN,*) '     scalar moment M0 = ', M0,' dyne-cm'
+        Mw =  get_cmt_moment_magnitude(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
+        write(IMAIN,*) '  moment magnitude Mw = ', Mw
         write(IMAIN,*)
+
 
         ! writes out actual source position to VTK file
         write(IOUT_VTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
@@ -772,6 +773,10 @@
   call bcast_all_dp(xi_source,NSOURCES)
   call bcast_all_dp(eta_source,NSOURCES)
   call bcast_all_dp(gamma_source,NSOURCES)
+
+  ! Broadcast mantitude and scalar moment to all processers
+  call bcast_all_singledp(M0)
+  call bcast_all_singledp(Mw)
 
   ! stores source mask
   if (SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3) then
