@@ -5,7 +5,7 @@
 *~
 
 # Configure time
-Makefile
+/Makefile
 aclocal.m4
 autom4te.cache
 config.log
@@ -15,6 +15,7 @@ setup/config.h
 setup/constants.h
 setup/constants_tomography.h
 setup/precision.h
+setup/version.fh
 
 # Build time
 bin/

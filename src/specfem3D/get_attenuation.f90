@@ -31,9 +31,7 @@
                                       scale_factor, tau_s, vnspec)
 
   use constants_solver
-  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH, &
-      NUMBER_OF_SIMULTANEOUS_RUNS
-
+  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH
 
   implicit none
 
@@ -56,7 +54,6 @@
   double precision, dimension(N_SLS) :: tau_e, fc
   double precision :: omsb, Q_mu, sf, T_c_source, scale_t
   character(len=MAX_STRING_LEN) :: prname
-  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! checks if attenuation is on and anything to do
   if (.not. ATTENUATION_VAL) return
@@ -71,10 +68,7 @@
 
     ! opens corresponding databases file
     call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
-    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-      prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-    endif
+
     open(unit=IIN, file=prname(1:len_trim(prname))//'attenuation.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file attenuation.bin')
@@ -223,7 +217,7 @@
 
   !--- check that the correction factor is close to one
   if (scale_factor < 0.8d0 .or. scale_factor > 1.2d0) then
-    print*,'Error: incorrect scale factor: ', scale_factor
+    print *,'Error: incorrect scale factor: ', scale_factor
     call exit_MPI(myrank,'incorrect correction factor in attenuation model')
   endif
 

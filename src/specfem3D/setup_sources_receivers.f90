@@ -312,20 +312,19 @@
 
   ! checks with undo_attenuation
   if (UNDO_ATTENUATION) then
-    ! old:
-    !! DK DK make sure NSTEP is a multiple of NT_DUMP_ATTENUATION
-    !if (mod(NSTEP,NT_DUMP_ATTENUATION) /= 0) then
-    !  NSTEP = (NSTEP/NT_DUMP_ATTENUATION + 1) * NT_DUMP_ATTENUATION
-    !endif
+    ! note: NSTEP must not be a multiple of NT_DUMP_ATTENUATION, but should be larger
     ! makes sure buffer size is not too big for total time length
-    if (NSTEP < NT_DUMP_ATTENUATION) &
+    if (NSTEP < NT_DUMP_ATTENUATION) then
+      print *,'Error undoing attenuation: time steps ',NSTEP,' smaller than buffer size ',NT_DUMP_ATTENUATION
+      print *,'Please recompile the solver with your updated parameter set in Par_file.'
       call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
+    endif
   endif
 
   ! checks length for symmetry in case of noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
     if (mod(NSTEP+1,2) /= 0) then
-      print*,'Error noise simulation: invalid time steps = ',NSTEP,' -> NSTEP + 1 must be a multiple of 2 due to branch symmetry'
+      print *,'Error noise simulation: invalid time steps = ',NSTEP,' -> NSTEP + 1 must be a multiple of 2 due to branch symmetry'
       call exit_MPI(myrank,'Error noise simulation: number of timesteps must be symmetric, due to +/- branches')
     endif
   endif
@@ -344,7 +343,7 @@
   endif
 
   ! debug
-  !if (myrank == 0 ) print*,'setup time steps = ',NSTEP,' t0 = ',t0,' DT = ',DT
+  !if (myrank == 0 ) print *,'setup time steps = ',NSTEP,' t0 = ',t0,' DT = ',DT
 
   end subroutine setup_timesteps
 
@@ -660,7 +659,7 @@
     ! source interpolated on all GLL points in source element
     allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
     if (ier /= 0 ) then
-      print*,'Error rank ',myrank,': allocating sourcearrays failed! number of sources = ',NSOURCES
+      print *,'Error rank ',myrank,': allocating sourcearrays failed! number of sources = ',NSOURCES
       call exit_MPI(myrank,'Error allocating sourcearrays')
     endif
     ! initializes
@@ -689,8 +688,8 @@
       allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
                stat=ier)
       if (ier /= 0 ) then
-        print*,'Error rank ',myrank,': allocating adjoint sourcearrays failed! Please check your memory usage...'
-        print*,'  failed number of local adjoint sources = ',nadj_rec_local,' steps = ',NTSTEP_BETWEEN_READ_ADJSRC
+        print *,'Error rank ',myrank,': allocating adjoint sourcearrays failed! Please check your memory usage...'
+        print *,'  failed number of local adjoint sources = ',nadj_rec_local,' steps = ',NTSTEP_BETWEEN_READ_ADJSRC
         call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
       endif
       ! initializes
@@ -708,7 +707,7 @@
         arraysize = arraysize * nadj_rec_local * NTSTEP_BETWEEN_READ_ADJSRC
 
         ! debug
-        !print*,'buffer_sourcearrays: size = ',arraysize,' Bytes = ',arraysize/1024./1024.,'MB'
+        !print *,'buffer_sourcearrays: size = ',arraysize,' Bytes = ',arraysize/1024./1024.,'MB'
 
         ! initializes io thread
         call prepare_adj_io_thread(buffer_sourcearrays,arraysize,nadj_rec_local)

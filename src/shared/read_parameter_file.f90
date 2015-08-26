@@ -42,6 +42,7 @@
 
 ! local variables
   integer :: ier
+  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! opens the parameter file: DATA/Par_file
   call open_parameter_file(ier)
@@ -281,25 +282,25 @@
 
   ! produces simulations compatible with old globe version 5.1.5
   if (USE_OLD_VERSION_5_1_5_FORMAT) then
-    print*
-    print*,'**************'
-    print*,'using globe version 5.1.5 compatible simulation parameters'
+    print *
+    print *,'**************'
+    print *,'using globe version 5.1.5 compatible simulation parameters'
     if (.not. ATTENUATION_1D_WITH_3D_STORAGE ) &
       stop 'ATTENUATION_1D_WITH_3D_STORAGE should be set to .true. for compatibility with globe version 5.1.5 '
     if (UNDO_ATTENUATION) then
-      print*,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
+      print *,'setting UNDO_ATTENUATION to .false. for compatibility with globe version 5.1.5 '
       UNDO_ATTENUATION = .false.
     endif
     if (USE_LDDRK) then
-      print*,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
+      print *,'setting USE_LDDRK to .false. for compatibility with globe version 5.1.5 '
       USE_LDDRK = .false.
     endif
     if (EXACT_MASS_MATRIX_FOR_ROTATION) then
-      print*,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
+      print *,'setting EXACT_MASS_MATRIX_FOR_ROTATION to .false. for compatibility with globe version 5.1.5 '
       EXACT_MASS_MATRIX_FOR_ROTATION = .false.
     endif
-    print*,'**************'
-    print*
+    print *,'**************'
+    print *
   endif
 
   ! checks flags when perfect sphere is set
@@ -311,6 +312,16 @@
       stop 'TOPOGRAPHY not supported when ASSUME_PERFECT_SPHERE is set .true. in constants.h, please check...'
     endif
   endif
+
+  ! see if we are running several independent runs in parallel
+  ! if so, add the right directory for that run (group numbers start at zero, but directory names start at run0001, thus we add one)
+  ! a negative value for "mygroup" is a convention that indicates that groups (i.e. sub-communicators, one per run) are off
+  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+    LOCAL_PATH = path_to_add(1:len_trim(path_to_add))//LOCAL_PATH(1:len_trim(LOCAL_PATH))
+    LOCAL_TMP_PATH = path_to_add(1:len_trim(path_to_add))//LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))
+  endif
+
 
 !----------------------------------------------
 !
@@ -329,8 +340,6 @@
   if (USE_LDDRK .and. GPU_MODE ) &
     stop 'USE_LDDRK support not implemented yet for GPU simulations'
 
-  if (UNDO_ATTENUATION .and. NOISE_TOMOGRAPHY > 0 ) &
-    stop 'UNDO_ATTENUATION support not implemented yet for noise simulations'
   if (UNDO_ATTENUATION .and. MOVIE_VOLUME .and. MOVIE_VOLUME_TYPE == 4 ) &
     stop 'UNDO_ATTENUATION support not implemented yet for MOVIE_VOLUME_TYPE == 4 simulations'
   if (UNDO_ATTENUATION .and. SIMULATION_TYPE == 3 .and. (MOVIE_VOLUME .or. MOVIE_SURFACE) ) &

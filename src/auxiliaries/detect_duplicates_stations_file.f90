@@ -18,7 +18,7 @@
   implicit none
 
 ! input station file to filter
-  character(len=150), parameter :: STATIONS_FILE = '../../DATA/STATIONS'
+  character(len=150), parameter :: STATIONS_FILE = 'DATA/STATIONS'
 ! character(len=150), parameter :: STATIONS_FILE = 'STATIONS_all_20June2008'
 ! character(len=150), parameter :: STATIONS_FILE = 'STATIONS_SUBSET_35'
 ! character(len=150), parameter :: STATIONS_FILE = 'STATIONS_FULL_758'
@@ -35,7 +35,7 @@
   character(len=150) :: dummystring
 
 ! read the number of receivers
-  open(unit=IIN,file=STATIONS_FILE,iostat=ios,status='old',action='read')
+  open(unit=IIN,file=trim(STATIONS_FILE),iostat=ios,status='old',action='read')
   nrec = 0
   do while(ios == 0)
     read(IIN,"(a)",iostat=ios) dummystring
@@ -57,7 +57,7 @@
 
   is_a_duplicate(:) = .false.
 
-  open(unit=IIN,file=STATIONS_FILE,status='old',action='read')
+  open(unit=IIN,file=trim(STATIONS_FILE),status='old',action='read')
 ! loop on all the stations to read station information
   do irec = 1,nrec
     read(IIN,*) station_name(irec),network_name(irec),stlat(irec),stlon(irec),stele(irec),stbur(irec)

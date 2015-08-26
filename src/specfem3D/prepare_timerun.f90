@@ -180,7 +180,7 @@
     write(IMAIN,*)
     if (ROTATION_VAL) then
       write(IMAIN,*) 'incorporating rotation'
-      if (EXACT_MASS_MATRIX_FOR_ROTATION ) &
+      if (EXACT_MASS_MATRIX_FOR_ROTATION_VAL ) &
         write(IMAIN,*) 'using exact mass matrix for rotation'
     else
       write(IMAIN,*) 'no rotation'
@@ -298,19 +298,19 @@
   ! mass matrices on Stacey edges
   ! crust/mantle
   if (((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION))) then
+       (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL))) then
      rmassx_crust_mantle = 1._CUSTOM_REAL / rmassx_crust_mantle
      rmassy_crust_mantle = 1._CUSTOM_REAL / rmassy_crust_mantle
   endif
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       b_rmassx_crust_mantle = 1._CUSTOM_REAL / b_rmassx_crust_mantle
       b_rmassy_crust_mantle = 1._CUSTOM_REAL / b_rmassy_crust_mantle
     endif
   endif
   rmassz_crust_mantle = 1._CUSTOM_REAL / rmassz_crust_mantle
   ! inner core
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
      rmassx_inner_core = 1._CUSTOM_REAL / rmassx_inner_core
      rmassy_inner_core = 1._CUSTOM_REAL / rmassy_inner_core
      if (SIMULATION_TYPE == 3) then
@@ -358,7 +358,7 @@
                            my_neighbours_crust_mantle)
 
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -373,7 +373,7 @@
   endif
 
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
@@ -404,7 +404,7 @@
                            nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
                            my_neighbours_inner_core)
 
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                              rmassx_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
@@ -438,7 +438,7 @@
     ! because the slices do not compute all their spectral elements in the cube
     where(rmassz_inner_core(:) <= 0.0_CUSTOM_REAL) rmassz_inner_core = 1.0_CUSTOM_REAL
 
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       where(rmassx_inner_core(:) <= 0.0_CUSTOM_REAL) rmassx_inner_core = 1.0_CUSTOM_REAL
       where(rmassy_inner_core(:) <= 0.0_CUSTOM_REAL) rmassy_inner_core = 1.0_CUSTOM_REAL
     endif
@@ -1011,6 +1011,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
   use specfem_par_movie
   implicit none
 
@@ -1461,7 +1462,6 @@
   integer :: nabs_xmin_cm,nabs_xmax_cm,nabs_ymin_cm,nabs_ymax_cm
   integer :: nabs_xmin_oc,nabs_xmax_oc,nabs_ymin_oc,nabs_ymax_oc,nabs_zmin_oc
   integer(kind=8) :: filesize
-  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! checks if anything to do
   if (.not. ABSORBING_CONDITIONS ) return
@@ -1475,10 +1475,6 @@
   ! crust_mantle
   ! create name of database
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   ! allocates buffers
   if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
@@ -1526,7 +1522,7 @@
 
     ! total file size
     filesize = reclen_xmin_crust_mantle
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(0,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_xmin.bin'), &
@@ -1544,7 +1540,7 @@
 
     ! total file size
     filesize = reclen_xmax_crust_mantle
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(1,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
@@ -1562,7 +1558,7 @@
 
     ! total file size
     filesize = reclen_ymin_crust_mantle
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
 
     if (SIMULATION_TYPE == 3) then
@@ -1581,7 +1577,7 @@
 
     ! total file size
     filesize = reclen_ymax_crust_mantle
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(3,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
@@ -1594,13 +1590,8 @@
 
 
   ! outer_core
-
   ! create name of database
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   ! allocates buffers
   ! xmin
@@ -1657,7 +1648,7 @@
 
     ! total file size
     filesize = reclen_xmin_outer_core
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(4,trim(prname)//'absorb_xmin.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
@@ -1675,7 +1666,7 @@
 
     ! total file size
     filesize = reclen_xmax_outer_core
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(5,trim(prname)//'absorb_xmax.bin',len_trim(trim(prname)//'absorb_xmax.bin'), &
@@ -1693,7 +1684,7 @@
 
     ! total file size
     filesize = reclen_ymin_outer_core
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(6,trim(prname)//'absorb_ymin.bin',len_trim(trim(prname)//'absorb_ymin.bin'), &
@@ -1711,7 +1702,7 @@
 
     ! total file size
     filesize = reclen_ymax_outer_core
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(7,trim(prname)//'absorb_ymax.bin',len_trim(trim(prname)//'absorb_ymax.bin'), &
@@ -1729,7 +1720,7 @@
 
     ! total file size
     filesize = reclen_zmin
-    filesize = filesize*NSTEP
+    filesize = filesize * NSTEP
 
     if (SIMULATION_TYPE == 3) then
       call open_file_abs_r(8,trim(prname)//'absorb_zmin.bin',len_trim(trim(prname)//'absorb_zmin.bin'), &
@@ -1752,11 +1743,13 @@
   subroutine prepare_timerun_noise()
 
   use specfem_par
-  use specfem_par_crustmantle
+  use specfem_par_crustmantle,only: NSPEC_TOP
+  use specfem_par_noise
 
   implicit none
   ! local parameters
   integer :: ier
+  double precision :: sizeval
 
   ! NOISE TOMOGRAPHY
   ! checks if anything to do
@@ -1766,21 +1759,48 @@
   if (myrank == 0) then
     write(IMAIN,*) "preparing noise arrays"
     write(IMAIN,*) "  NOISE_TOMOGRAPHY = ",NOISE_TOMOGRAPHY
+    call flush_IMAIN()
+  endif
+
+  ! checks noise setup
+  call check_parameters_noise()
+
+  ! determines file i/o buffer size for surface movies
+  ! (needed for better performance on clusters, otherwise i/o will become a serious bottleneck)
+  ! size of a single noise movie snapshot at surface (in MB)
+  sizeval = dble(CUSTOM_REAL) * dble(NDIM) * dble(NGLLX) * dble(NGLLY) * dble(NSPEC_TOP) / 1024.d0 / 1024.d0
+  ! sets file i/o buffer size
+  if (NOISE_TOMOGRAPHY == 3 .and. UNDO_ATTENUATION) then
+    ! needs to align with attenuation buffer size, otherwise things will get very complicated
+    NT_DUMP_NOISE_BUFFER = NT_DUMP_ATTENUATION
+  else
+    ! sets a user specified maximum size (given in MB)
+    NT_DUMP_NOISE_BUFFER = int(MAXIMUM_NOISE_BUFFER_SIZE_IN_MB / sizeval)
+    ! limits size
+    if (NT_DUMP_NOISE_BUFFER > NSTEP) NT_DUMP_NOISE_BUFFER = NSTEP
+  endif
+
+  ! user info
+  if (myrank == 0) then
     write(IMAIN,*) "  timing:"
     write(IMAIN,*) "    start time           = ",sngl(-t0)," seconds"
     write(IMAIN,*) "    time step            = ",sngl(DT)," s"
     write(IMAIN,*) "    number of time steps = ",NSTEP
-    ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
-    write(IMAIN,*) "  ignoring CMT sources"
+    ! noise surface movie array size
+    ! (holds displacement at surface for a single time step)
+    write(IMAIN,*) "  arrays:"
+    write(IMAIN,*) "    size of noise surface movie array = ",sngl(sizeval),"MB"
+    write(IMAIN,*) "                                      = ",sngl(sizeval / 1024.d0),"GB"
+    ! buffer size for file i/o
+    write(IMAIN,*) "  noise buffer: "
+    write(IMAIN,*) "    number of buffered time steps = ",NT_DUMP_NOISE_BUFFER
+    write(IMAIN,*) "    size of noise buffer array for each slice = ",sngl(sizeval * dble(NT_DUMP_NOISE_BUFFER)),"MB"
+    write(IMAIN,*) "                                              = ",sngl(sizeval * dble(NT_DUMP_NOISE_BUFFER) / 1024.d0),"GB"
     call flush_IMAIN()
   endif
 
   ! synchronizes processes
   call synchronize_all()
-
-  ! checks that number of spectral elements at surface is set (from read_mesh_databases_CM() routine)
-  if (NSPEC_TOP /= NSPEC2D_TOP(IREGION_CRUST_MANTLE)) &
-    call exit_MPI(myrank,'Error invalid number of NSPEC_TOP for noise simulation')
 
   ! for noise tomography, number of surface (movie) points needed for 'surface movie';
   ! surface output must NOT be coarse (have to be saved on all GLL points)
@@ -1788,8 +1808,20 @@
   num_noise_surface_points = NGLLX * NGLLY * NSPEC_TOP
 
   ! allocates noise arrays
-  allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP), &
-           normal_x_noise(num_noise_surface_points), &
+  if (NOISE_TOMOGRAPHY == 1) then
+    ! master noise source (only needed for 1. step)
+    allocate(noise_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NSTEP),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise source array')
+  else
+    ! dummy
+    allocate(noise_sourcearray(1,1,1,1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise source array')
+  endif
+  ! initializes
+  noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
+
+  ! ensemble surface noise
+  allocate(normal_x_noise(num_noise_surface_points), &
            normal_y_noise(num_noise_surface_points), &
            normal_z_noise(num_noise_surface_points), &
            mask_noise(num_noise_surface_points), &
@@ -1797,21 +1829,39 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise arrays')
 
   ! initializes
-  noise_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
   normal_x_noise(:)            = 0._CUSTOM_REAL
   normal_y_noise(:)            = 0._CUSTOM_REAL
   normal_z_noise(:)            = 0._CUSTOM_REAL
   mask_noise(:)                = 0._CUSTOM_REAL
   noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
 
-  ! gets noise parameters
-  call read_parameters_noise()
+  ! file i/o buffer
+  ! checks integer size limit: size of buffer must fit onto an 4-byte integer (<2 GB)
+  if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM * NT_DUMP_NOISE_BUFFER)) then
+    print *,'buffer of noise surface_movie needed exceeds integer 4-byte limit: ',dble(reclen_noise) * dble(NT_DUMP_NOISE_BUFFER)
+    print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP,NT_DUMP_NOISE_BUFFER
+    print *,'bit size fortran: ',bit_size(NSPEC_TOP)
+    print *,'NT_DUMP_NOISE_BUFFER: ',NT_DUMP_NOISE_BUFFER
+    print *,'Please reduce size of noise buffer for file i/o ...'
+    call exit_MPI(myrank,"Error NT_DUMP_NOISE_BUFFER leads to buffer length exceeding integer limit (2 GB)")
+  endif
 
-  ! checks noise setup
-  call check_parameters_noise()
+  ! allocates buffer memory
+  allocate(noise_buffer(NDIM,NGLLX,NGLLY,NSPEC_TOP,NT_DUMP_NOISE_BUFFER),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating noise buffer array')
+
+  ! initializes buffer and counters
+  noise_buffer(:,:,:,:,:) = 0._CUSTOM_REAL
+  icounter_noise_buffer = 0
+  nstep_subset_noise_buffer = 0
+
+  ! gets noise parameters and sets up arrays
+  call read_parameters_noise()
 
   ! user output
   if(myrank == 0) then
+    ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
+    write(IMAIN,*) "  ignoring CMT sources"
     select case (NOISE_TOMOGRAPHY)
     case (1)
       write(IMAIN,*) "  noise source uses master record id = ",irec_master_noise
@@ -1825,6 +1875,9 @@
     write(IMAIN,*)
     call flush_IMAIN()
   endif
+
+  ! user output of distances to master station
+  if (NOISE_TOMOGRAPHY == 1) call print_master_distances_noise()
 
   ! synchronizes processes
   call synchronize_all()
@@ -1841,6 +1894,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
   use specfem_par_movie
 
   implicit none
@@ -1896,7 +1950,7 @@
                                 SIMULATION_TYPE,NOISE_TOMOGRAPHY, &
                                 SAVE_FORWARD,ABSORBING_CONDITIONS, &
                                 OCEANS_VAL,GRAVITY_VAL, &
-                                ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION, &
+                                ROTATION_VAL,EXACT_MASS_MATRIX_FOR_ROTATION_VAL, &
                                 ATTENUATION_VAL,UNDO_ATTENUATION, &
                                 PARTIAL_PHYS_DISPERSION_ONLY,USE_3D_ATTENUATION_ARRAYS, &
                                 COMPUTE_AND_STORE_STRAIN, &
@@ -2177,9 +2231,9 @@
     ! allocates arrays with all global points on ocean surface
     npoin_oceans = ipoin
     allocate(ibool_ocean_load(npoin_oceans), &
-            normal_ocean_load(NDIM,npoin_oceans), &
-            rmass_ocean_load_selected(npoin_oceans), &
-            stat=ier)
+             normal_ocean_load(NDIM,npoin_oceans), &
+             rmass_ocean_load_selected(npoin_oceans), &
+             stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating oceans arrays')
 
     ! fills arrays for coupling surface at oceans
@@ -2620,11 +2674,11 @@
     ! d_rmassz
     memory_size = memory_size + NGLOB_AB * dble(CUSTOM_REAL)
     ! d_rmassx,..
-    if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+    if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
       memory_size = memory_size + 2.d0 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
     endif
     ! inner core
-    if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+    if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
       ! d_rmassx,..
       memory_size = memory_size + 2.d0 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
     endif
@@ -2864,7 +2918,7 @@
       ! multiple MPI processes
 
       ! user output
-      !if (myrank == 0 ) print*,"    gathering all MPI info... "
+      !if (myrank == 0 ) print *,"    gathering all MPI info... "
 
       ! number of volume points for all partitions together
       call sum_all_i(free_np,free_np_all)
@@ -2926,7 +2980,7 @@
 
       if (myrank == 0) then
         ! locations
-        !if (myrank == 0 ) print*,"    locations..."
+        !if (myrank == 0 ) print *,"    locations..."
         call gatherv_all_r(free_x,free_np, &
                             free_x_all,free_points_all,free_offset_all, &
                             free_np_all,NPROC)
@@ -2938,7 +2992,7 @@
                             free_np_all,NPROC)
 
         ! connectivity
-        !if (myrank == 0 ) print*,"    connectivity..."
+        !if (myrank == 0 ) print *,"    connectivity..."
         call gatherv_all_i(free_conn,4*free_nspec, &
                            free_conn_all,free_conn_nspec_all,free_conn_offset_all, &
                            free_nspec_all,NPROC)
@@ -2953,7 +3007,7 @@
           enddo
         enddo
 
-        !if (myrank == 0 ) print*,"    preparing VTK field..."
+        !if (myrank == 0 ) print *,"    preparing VTK field..."
 
         ! adds free surface to VTK window
         call prepare_vtkfreesurface(free_np_all,free_x_all,free_y_all,free_z_all, &
@@ -3131,7 +3185,7 @@
       ! multiple MPI processes
 
       ! user output
-      !if (myrank == 0 ) print*,"    gathering all MPI info... "
+      !if (myrank == 0 ) print *,"    gathering all MPI info... "
 
       ! number of volume points for all partitions together
       call sum_all_i(vol_np,vtkdata_numpoints_all)
@@ -3201,7 +3255,7 @@
 
       if (myrank == 0) then
         ! locations
-        !if (myrank == 0 ) print*,"    locations..."
+        !if (myrank == 0 ) print *,"    locations..."
         call gatherv_all_r(vol_x,vol_np, &
                             vol_x_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROC)
@@ -3213,7 +3267,7 @@
                             vtkdata_numpoints_all,NPROC)
 
         ! connectivity
-        !if (myrank == 0 ) print*,"    connectivity..."
+        !if (myrank == 0 ) print *,"    connectivity..."
         call gatherv_all_i(vol_conn,8*vol_nspec, &
                            vol_conn_all,vol_conn_nspec_all,vol_conn_offset_all, &
                            vol_nspec_all,NPROC)
@@ -3228,7 +3282,7 @@
           enddo
         enddo
 
-        !if (myrank == 0 ) print*,"    preparing VTK field..."
+        !if (myrank == 0 ) print *,"    preparing VTK field..."
 
         ! adds total volume wavefield to VTK window
         call prepare_vtkfield(vtkdata_numpoints_all,vol_x_all,vol_y_all,vol_z_all, &
@@ -3254,7 +3308,7 @@
 
     else
       ! serial run
-      !if (myrank == 0 ) print*,"    preparing VTK field..."
+      !if (myrank == 0 ) print *,"    preparing VTK field..."
 
       ! adds volume wavefield to VTK window
       call prepare_vtkfield(vol_np,vol_x,vol_y,vol_z,vol_nspec,vol_conn)

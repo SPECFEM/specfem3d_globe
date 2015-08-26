@@ -69,10 +69,10 @@ program addition_sem
   ! checks compilation setup
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
-      print*, 'Error number of MPI processors actually run on: ',sizeprocs
-      print*
-      print*, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xaddition_sem .. '
+      print *, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
+      print *, 'Error number of MPI processors actually run on: ',sizeprocs
+      print *
+      print *, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xaddition_sem .. '
     endif
     call exit_MPI(myrank,'Error wrong number of MPI processes')
   endif
@@ -180,7 +180,7 @@ program addition_sem
 
     ! reads in file from first directory
     if(myrank==0) write(*,*) '  data_1: ',trim(file1name)
-    open(IIN,file=trim(file1name),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(file1name),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening first data file'
@@ -190,7 +190,7 @@ program addition_sem
 
     ! reads in file from second directory
     if (myrank == 0) write(*,*) '  data_2: ',trim(file2name)
-    open(IIN,file=trim(file2name),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(file2name),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file2name)
       stop 'Error opening second data file'
@@ -211,7 +211,7 @@ program addition_sem
     ! absolute values
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_add.bin'
     if (myrank == 0) write(*,*) '  file: ',trim(file1name)
-    open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
+    open(IOUT,file=trim(file1name),form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening output data file'
@@ -232,7 +232,7 @@ program addition_sem
     ! stores relative addition (k1 + k2)/ k2 with respect to second input file
     write(file1name,'(a,i6.6,a)') trim(outputdir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'_add_relative.bin'
     if (myrank == 0) write(*,*) '  file: ',trim(file1name)
-    open(IOUT,file=trim(file1name),form='unformatted',iostat=ier)
+    open(IOUT,file=trim(file1name),form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)
       stop 'Error opening output data file'

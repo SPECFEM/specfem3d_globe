@@ -87,13 +87,12 @@
   ! compute maximum of norm of displacement in each slice
   if (.not. GPU_MODE) then
     ! on CPU
-    Usolidnorm = max( &
-        maxval(sqrt(displ_crust_mantle(1,:)**2 + &
-                    displ_crust_mantle(2,:)**2 + &
-                    displ_crust_mantle(3,:)**2)), &
-        maxval(sqrt(displ_inner_core(1,:)**2 + &
-                    displ_inner_core(2,:)**2 + &
-                    displ_inner_core(3,:)**2)))
+    Usolidnorm = max( maxval(sqrt(displ_crust_mantle(1,:)**2 + &
+                                  displ_crust_mantle(2,:)**2 + &
+                                  displ_crust_mantle(3,:)**2)), &
+                      maxval(sqrt(displ_inner_core(1,:)**2 + &
+                                  displ_inner_core(2,:)**2 + &
+                                  displ_inner_core(3,:)**2)))
 
     Ufluidnorm = maxval(abs(displ_outer_core))
   else
@@ -118,12 +117,12 @@
   if (SIMULATION_TYPE == 3) then
     if (.not. GPU_MODE) then
       ! on CPU
-      b_Usolidnorm = max( &
-             maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
-                          b_displ_crust_mantle(2,:)**2 + b_displ_crust_mantle(3,:)**2)), &
-             maxval(sqrt(b_displ_inner_core(1,:)**2 &
-                        + b_displ_inner_core(2,:)**2 &
-                        + b_displ_inner_core(3,:)**2)))
+      b_Usolidnorm = max( maxval(sqrt(b_displ_crust_mantle(1,:)**2 + &
+                                      b_displ_crust_mantle(2,:)**2 + &
+                                      b_displ_crust_mantle(3,:)**2)), &
+                          maxval(sqrt(b_displ_inner_core(1,:)**2 + &
+                                      b_displ_inner_core(2,:)**2 + &
+                                      b_displ_inner_core(3,:)**2)))
 
       b_Ufluidnorm = maxval(abs(b_displ_outer_core))
     else
@@ -346,26 +345,6 @@
     endif
 
   endif
-
-  ! debug output
-  !if (maxval(displ_crust_mantle(1,:)**2 + &
-  !                displ_crust_mantle(2,:)**2 + displ_crust_mantle(3,:)**2) > 1.e4) then
-  !  print*,'slice',myrank
-  !  print*,'  crust_mantle displ:', maxval(displ_crust_mantle(1,:)), &
-  !           maxval(displ_crust_mantle(2,:)),maxval(displ_crust_mantle(3,:))
-  !  print*,'  indxs: ',maxloc( displ_crust_mantle(1,:)),maxloc( displ_crust_mantle(2,:)),maxloc( displ_crust_mantle(3,:))
-  !  indx = maxloc( displ_crust_mantle(3,:) )
-  !  rval = xstore_crust_mantle(indx(1))
-  !  thetaval = ystore_crust_mantle(indx(1))
-  !  phival = zstore_crust_mantle(indx(1))
-  !
-  !  !call geocentric_2_geographic_cr(thetaval,thetaval)
-  !  print*,'r/lat/lon:',rval*R_EARTH_KM,90.0-thetaval*180./PI,phival*180./PI
-  !  call rthetaphi_2_xyz(rval,thetaval,phival,xstore_crust_mantle(indx(1)),&
-  !                     ystore_crust_mantle(indx(1)),zstore_crust_mantle(indx(1)))
-  !  print*,'x/y/z:',rval,thetaval,phival
-  !  call exit_MPI(myrank,'Error stability')
-  !endif
 
   end subroutine check_stability
 

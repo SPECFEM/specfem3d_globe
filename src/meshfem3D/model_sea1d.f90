@@ -63,12 +63,12 @@
 
   ! allocates arrays
   allocate(SEA1DM_V_radius_sea1d(NR_SEA1D), &
-          SEA1DM_V_density_sea1d(NR_SEA1D), &
-          SEA1DM_V_vp_sea1d(NR_SEA1D), &
-          SEA1DM_V_vs_sea1d(NR_SEA1D), &
-          SEA1DM_V_Qkappa_sea1d(NR_SEA1D), &
-          SEA1DM_V_Qmu_sea1d(NR_SEA1D), &
-          stat=ier)
+           SEA1DM_V_density_sea1d(NR_SEA1D), &
+           SEA1DM_V_vp_sea1d(NR_SEA1D), &
+           SEA1DM_V_vs_sea1d(NR_SEA1D), &
+           SEA1DM_V_Qkappa_sea1d(NR_SEA1D), &
+           SEA1DM_V_Qmu_sea1d(NR_SEA1D), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating SEA1DM_V arrays')
 
   ! all processes will define same parameters

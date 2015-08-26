@@ -195,10 +195,12 @@
 
     ! opens adjoint component file
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+
     if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
       write(path_to_add,"('run',i4.4,'/')") mygroup + 1
       filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
     endif
+
     open(unit=IIN_ADJ,file=trim(filename),status='old',action='read',iostat=ios)
 
     ! note: adjoint source files must be available for all three components E/N/Z, even
@@ -236,9 +238,9 @@
       read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,index_i)
 
       if (ios /= 0) then
-        print*,'Error reading adjoint source: ',trim(filename)
-        print*,'rank ',myrank,' - time step: ',itime,' index_start: ',index_start,' index_end: ',index_end
-        print*,'  ',trim(filename)//'has wrong length, please check with your simulation duration'
+        print *,'Error reading adjoint source: ',trim(filename)
+        print *,'rank ',myrank,' - time step: ',itime,' index_start: ',index_start,' index_end: ',index_end
+        print *,'  ',trim(filename)//'has wrong length, please check with your simulation duration'
         call exit_MPI(myrank,'file '//trim(filename)//' has wrong length, please check with your simulation duration')
       endif
     enddo

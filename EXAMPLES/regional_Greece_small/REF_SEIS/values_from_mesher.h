@@ -20,7 +20,7 @@
  ! total elements per slice =  12432
  ! total points per slice =  832031
  !
- ! the time step of the solver will be DT =  0.127032652
+ ! the time step of the solver will be DT =  0.126792654
  !
  ! total for full 1-chunk mesh:
  ! ---------------------------

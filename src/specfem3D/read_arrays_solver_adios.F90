@@ -48,8 +48,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   use constants_solver
   use specfem_par,only: &
     ABSORBING_CONDITIONS, &
-    LOCAL_PATH,ABSORBING_CONDITIONS,&
-    EXACT_MASS_MATRIX_FOR_ROTATION, NUMBER_OF_SIMULTANEOUS_RUNS, mygroup
+    LOCAL_PATH,ABSORBING_CONDITIONS
 
   implicit none
 
@@ -96,7 +95,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   ! flags to know if we should read Vs and anisotropy arrays
   logical :: READ_KAPPA_MU,READ_TISO
 
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
 
   ! local parameters
   integer :: comm, lnspec, lnglob, local_dim
@@ -117,11 +116,6 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   sel_num = 0
 
   file_name= trim(LOCAL_PATH) // "/solver_data.bp"
-  ! Append the actual file name.
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call world_duplicate(comm)
 
@@ -131,7 +125,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 
@@ -373,8 +367,8 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   ! is needed for the sake of performance, only "rmassz" array will be filled
   ! and "rmassx" & "rmassy" will be obsolete
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_INNER_CORE)) then
 
     local_dim = nglob_xy
     start(1) = local_dim*myrank; count(1) = local_dim
@@ -401,8 +395,8 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
   call check_adios_err(myrank,adios_err)
 
 
-  if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+  if ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL .and. iregion_code == IREGION_INNER_CORE)) then
     local_dim = nglob_xy
     start(1) = local_dim*myrank; count(1) = local_dim
     sel_num = sel_num+1
@@ -447,15 +441,15 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
   ! checks dimensions
   if (lnspec /= nspec) then
-    print*,'Error file dimension: nspec in file = ',lnspec, &
+    print *,'Error file dimension: nspec in file = ',lnspec, &
         ' but nspec desired:',nspec
-    print*,'please check file ', file_name
+    print *,'please check file ', file_name
     call exit_mpi(myrank,'Error dimensions in solver_data.bp')
   endif
   if (lnglob /= nglob) then
-    print*,'Error file dimension: nglob in file = ',lnglob, &
+    print *,'Error file dimension: nglob in file = ',lnglob, &
         ' but nglob desired:',nglob
-    print*,'please check file ', file_name
+    print *,'please check file ', file_name
     call exit_mpi(myrank,'Error dimensions in solver_data.bp')
   endif
 

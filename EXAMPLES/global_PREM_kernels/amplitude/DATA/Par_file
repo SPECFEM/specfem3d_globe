@@ -1,8 +1,8 @@
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 3        # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
+SIMULATION_TYPE                 = 1        # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
 NOISE_TOMOGRAPHY                = 0        # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
-SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
+SAVE_FORWARD                    = .true.   # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
 NCHUNKS                         = 6
@@ -16,12 +16,12 @@ GAMMA_ROTATION_AZIMUTH        = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 256
-NEX_ETA                         = 256
+NEX_XI                          = 48
+NEX_ETA                         = 48
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 8
-NPROC_ETA                       = 8
+NPROC_XI                        = 2
+NPROC_ETA                       = 2
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135f_no_mud, 1D_ref, 1D_ref_iso, 1D_jp3d,1D_sea99
@@ -38,26 +38,26 @@ NPROC_ETA                       = 8
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = 1D_isotropic_prem
+MODEL                           = 1D_transversely_isotropic_prem
 
 # parameters describing the Earth model
-OCEANS                          = .true.
-ELLIPTICITY                     = .true.
+OCEANS                          = .false.
+ELLIPTICITY                     = .false.
 TOPOGRAPHY                      = .false.
-GRAVITY                         = .true.
-ROTATION                        = .true.
-ATTENUATION                     = .true.
+GRAVITY                         = .false.
+ROTATION                        = .false.
+ATTENUATION                     = .false.
 
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 30.0d0
+RECORD_LENGTH_IN_MINUTES        = 15.0d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
-PARTIAL_PHYS_DISPERSION_ONLY    = .true.
+PARTIAL_PHYS_DISPERSION_ONLY    = .false.
 UNDO_ATTENUATION                = .false.
 # How much memory (in GB) is installed on your machine per CPU core (only used for UNDO_ATTENUATION, can be ignored otherwise)
 #         (or per GPU card or per INTEL MIC Phi board)
@@ -152,7 +152,7 @@ NTSTEP_BETWEEN_OUTPUT_INFO      = 1000
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
-NTSTEP_BETWEEN_READ_ADJSRC      = 1000
+NTSTEP_BETWEEN_READ_ADJSRC      = 10000
 
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
@@ -164,7 +164,7 @@ OUTPUT_SEISMOS_ASDF             = .false.
 ROTATE_SEISMOGRAMS_RT           = .false.
 
 # decide if master process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MASTER     = .true.
+WRITE_SEISMOGRAMS_BY_MASTER     = .false.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as LUSTRE or GPFS for instance
@@ -259,8 +259,8 @@ NUMBER_OF_SIMULTANEOUS_RUNS     = 1
 BROADCAST_SAME_MESH_AND_MODEL   = .false.
 
 # if one or a few of these simultaneous runs fail, kill all the runs or let the others finish using a fail-safe mechanism
-# (in most cases, should be set to true)
-USE_FAILSAFE_MECHANISM          = .true.
+# (in most cases, should be set to false)
+USE_FAILSAFE_MECHANISM          = .false.
 
 #-----------------------------------------------------------
 

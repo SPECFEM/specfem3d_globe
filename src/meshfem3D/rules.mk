@@ -267,6 +267,9 @@ $O/model_attenuation.check.o: \
 	$O/model_1066a.check.o \
 	$O/model_sea1d.check.o
 
+# Version file
+$O/initialize_mesher.check.o: ${SETUP}/version.fh
+
 ## general rules
 
 $O/%.check_module.o: $S/%.f90 $O/shared_par.shared_module.o

@@ -471,28 +471,28 @@
 !    iglob = ibool_crust_mantle(1,1,1,100)
 !    if (SIMULATION_TYPE == 1) then
 !      if (it == NSTEP .and. myrank == 0) then
-!        print*,'last step',it,'Rxx:',R_xx_crust_mantle(1,1,1,1,100),epsilondev_xx_crust_mantle(1,1,1,100), &
+!        print *,'last step',it,'Rxx:',R_xx_crust_mantle(1,1,1,1,100),epsilondev_xx_crust_mantle(1,1,1,100), &
 !          displ_crust_mantle(1,iglob),displ_crust_mantle(2,iglob),displ_crust_mantle(3,iglob)
 !      endif
 !      if (it == NSTEP-1 .and. myrank == 0) then
-!        print*,'second last step',it,'Rxx:',R_xx_crust_mantle(1,1,1,1,100),epsilondev_xx_crust_mantle(1,1,1,100), &
+!        print *,'second last step',it,'Rxx:',R_xx_crust_mantle(1,1,1,1,100),epsilondev_xx_crust_mantle(1,1,1,100), &
 !          displ_crust_mantle(1,iglob),displ_crust_mantle(2,iglob),displ_crust_mantle(3,iglob)
 !      endif
 !      if (it == NSTEP-2 .and. myrank == 0) then
-!        print*,'third last step',it,'Rxx:',R_xx_crust_mantle(1,1,1,1,100),epsilondev_xx_crust_mantle(1,1,1,100), &
+!        print *,'third last step',it,'Rxx:',R_xx_crust_mantle(1,1,1,1,100),epsilondev_xx_crust_mantle(1,1,1,100), &
 !          displ_crust_mantle(1,iglob),displ_crust_mantle(2,iglob),displ_crust_mantle(3,iglob)
 !      endif
 !    else if (SIMULATION_TYPE == 3) then
 !      if (it == 1 .and. myrank == 0) then
-!        print*,'first step',it,'Rxx:',b_R_xx_crust_mantle(1,1,1,1,100),b_epsilondev_xx_crust_mantle(1,1,1,100), &
+!        print *,'first step',it,'Rxx:',b_R_xx_crust_mantle(1,1,1,1,100),b_epsilondev_xx_crust_mantle(1,1,1,100), &
 !          b_displ_crust_mantle(1,iglob),b_displ_crust_mantle(2,iglob),b_displ_crust_mantle(3,iglob)
 !      endif
 !      if (it == 2 .and. myrank == 0) then
-!        print*,'second step',it,'Rxx:',b_R_xx_crust_mantle(1,1,1,1,100),b_epsilondev_xx_crust_mantle(1,1,1,100), &
+!        print *,'second step',it,'Rxx:',b_R_xx_crust_mantle(1,1,1,1,100),b_epsilondev_xx_crust_mantle(1,1,1,100), &
 !          b_displ_crust_mantle(1,iglob),b_displ_crust_mantle(2,iglob),b_displ_crust_mantle(3,iglob)
 !      endif
 !      if (it == 3 .and. myrank == 0) then
-!        print*,'third step',it,'Rxx:',b_R_xx_crust_mantle(1,1,1,1,100),b_epsilondev_xx_crust_mantle(1,1,1,100), &
+!        print *,'third step',it,'Rxx:',b_R_xx_crust_mantle(1,1,1,1,100),b_epsilondev_xx_crust_mantle(1,1,1,100), &
 !          b_displ_crust_mantle(1,iglob),b_displ_crust_mantle(2,iglob),b_displ_crust_mantle(3,iglob)
 !      endif
 !    endif
@@ -660,7 +660,8 @@
         ! third step of noise tomography, i.e., read the surface movie saved at every timestep
         ! use the movie to reconstruct the ensemble forward wavefield
         ! the ensemble adjoint wavefield is done as usual
-        ! note instead of "NSTEP-it+1", now we us "it", since reconstruction is a reversal of reversal
+        !
+        ! note instead of "NSTEP-it+1", now we use "it", since reconstruction is a reversal of reversal
         call noise_read_add_surface_movie(NGLOB_CRUST_MANTLE_ADJOINT,b_accel_crust_mantle,it)
 
       end select
@@ -878,11 +879,11 @@
 !  if (DEBUG) then
 !    if (SIMULATION_TYPE == 1) then
 !      if (it > NSTEP - 1000 .and. myrank == 0) then
-!        print*,'it',it,'Rxx:',R_xx_crust_mantle(1,1,1,1,100),epsilondev_xx_crust_mantle(1,1,1,100)
+!        print *,'it',it,'Rxx:',R_xx_crust_mantle(1,1,1,1,100),epsilondev_xx_crust_mantle(1,1,1,100)
 !      endif
 !    else if (SIMULATION_TYPE == 3) then
 !      if (it <= 1000 .and. myrank == 0) then
-!        print*,'it',it,'Rxx:',b_R_xx_crust_mantle(1,1,1,1,100),b_epsilondev_xx_crust_mantle(1,1,1,100)
+!        print *,'it',it,'Rxx:',b_R_xx_crust_mantle(1,1,1,1,100),b_epsilondev_xx_crust_mantle(1,1,1,100)
 !      endif
 !    endif
 !  endif

@@ -730,8 +730,8 @@
 
             ! checks bounds
             if (npoin2D_faces(icount_faces) > NGLOB2DMAX_XY) then
-              print*,'Error ',myrank,' npoin2D_faces: ',npoin2D_faces(icount_faces),icount_faces
-              print*,'iregion_code:',iregion_code
+              print *,'Error ',myrank,' npoin2D_faces: ',npoin2D_faces(icount_faces),icount_faces
+              print *,'iregion_code:',iregion_code
               call exit_MPI(myrank,'incorrect nb of points in face buffer')
             endif
 
@@ -1020,8 +1020,8 @@
 
         ! check that no duplicates have been found
         if (nglob /= NGLOB1D_RADIAL) then
-          print*,'Error ',myrank,' npoin1D_corner: ',nglob,'NGLOB1D_RADIAL:',NGLOB1D_RADIAL
-          print*,'iregion_code:',iregion_code
+          print *,'Error ',myrank,' npoin1D_corner: ',nglob,'NGLOB1D_RADIAL:',NGLOB1D_RADIAL
+          print *,'iregion_code:',iregion_code
           call exit_MPI(myrank,'duplicates found for corners')
         endif
 
@@ -1030,8 +1030,8 @@
 
         ! checks counter
         if (icount_corners > 1 .and. (NPROC_XI > 1 .or. NPROC_ETA > 1)) then
-          print*,'Error ',myrank,'icount_corners:',icount_corners
-          print*,'iregion_code:',iregion_code
+          print *,'Error ',myrank,'icount_corners:',icount_corners
+          print *,'iregion_code:',iregion_code
           call exit_MPI(myrank,'more than one corner for this slice')
         endif
         if (icount_corners > 4) call exit_MPI(myrank,'more than four corners for this slice')

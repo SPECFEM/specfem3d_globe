@@ -285,9 +285,16 @@
 
   ! mass matrix corrections
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
-    ! mass matrices differ for rmassx,rmassy
-    ! continue
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
+    ! mass matrices differ for rmassx,rmassy in case Newmark time scheme is used
+    if (USE_LDDRK) then
+      ! uses single mass matrix without correction in case LDDRK time scheme is used
+      ! frees pointer memory
+      deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
+      ! re-associates with corresponding rmassz
+      rmassx_crust_mantle => rmassz_crust_mantle(:)
+      rmassy_crust_mantle => rmassz_crust_mantle(:)
+    endif
   else
     ! uses single mass matrix without correction
     ! frees pointer memory
@@ -302,9 +309,16 @@
     ! associates mass matrix used for backward/reconstructed wavefields
     b_rmassz_crust_mantle => rmassz_crust_mantle
     ! checks if we can take rmassx and rmassy (only differs for rotation correction)
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-      ! mass matrices differ for b_rmassx,b_rmassy
-      ! continue
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
+      ! mass matrices differ for b_rmassx,b_rmassy in case Newmark time scheme is used
+      if (USE_LDDRK) then
+        ! mass matrices correction is not needed in case LDDRK time scheme is used
+        ! frees pointer memory
+        deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
+        ! re-associates with corresponding rmassx,rmassy
+        b_rmassx_crust_mantle => rmassx_crust_mantle(:)
+        b_rmassy_crust_mantle => rmassy_crust_mantle(:)
+      endif
     else
       ! frees pointer memory
       deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
@@ -548,9 +562,16 @@
     call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
 
   ! mass matrix corrections
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-    ! uses corrected mass matrices
-    ! continue
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
+    ! uses corrected mass matrices in case Newmark time scheme is used
+    if (USE_LDDRK)  then
+      ! uses single mass matrix without correction in case LDDRK time scheme is used
+      ! frees pointer memory
+      deallocate(rmassx_inner_core,rmassy_inner_core)
+      ! re-associates with corresponding rmassz
+      rmassx_inner_core => rmassz_inner_core(:)
+      rmassy_inner_core => rmassz_inner_core(:)
+    endif
   else
     ! uses single mass matrix without correction
     ! frees pointer memory
@@ -565,9 +586,16 @@
     ! associates mass matrix used for backward/reconstructed wavefields
     b_rmassz_inner_core => rmassz_inner_core
     ! checks if we can take rmassx and rmassy (only differs for rotation correction)
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
-      ! uses corrected mass matrices
-      ! continue
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
+      ! uses corrected mass matrices in case Newmark time scheme is used
+      if (USE_LDDRK) then
+        ! uses single mass matrix without correction in case LDDRK time scheme is used
+        ! frees pointer memory
+        deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
+        ! re-associates with corresponding rmassx,rmassy
+        b_rmassx_inner_core => rmassx_inner_core
+        b_rmassy_inner_core => rmassy_inner_core
+      endif
     else
       ! frees pointer memory
       deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
@@ -607,7 +635,6 @@
   ! local parameters
   integer :: njunk1,njunk2,njunk3
   integer :: ier
-  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! reads in arrays
   if (I_should_read_the_database) then
@@ -617,10 +644,6 @@
       ! crust and mantle
       ! create name of database
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-      endif
 
       ! Stacey put back
       open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
@@ -663,10 +686,6 @@
 
       ! create name of database
       call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-      endif
 
       ! boundary parameters
 
@@ -712,10 +731,6 @@
 
       ! create name of database
       call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
-      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-      endif
 
       ! read info for vertical edges for central cube matching in inner core
       open(unit=IIN,file=prname(1:len_trim(prname))//'boundary.bin', &
@@ -741,10 +756,6 @@
       ! -- Boundary Mesh for crust and mantle ---
       if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
         call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-        if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-          write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-          prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-        endif
 
         open(unit=IIN,file=prname(1:len_trim(prname))//'boundary_disc.bin', &
               status='old',form='unformatted',action='read',iostat=ier)
@@ -1046,17 +1057,12 @@
   implicit none
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: path_to_add
   integer :: ier
 
   ! crust mantle region
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
@@ -1136,17 +1142,12 @@
   implicit none
 
   ! local parameters
-  character(len=MAX_STRING_LEN) :: path_to_add
   integer :: ier
 
   ! crust mantle region
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
@@ -1226,16 +1227,11 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! crust mantle region
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data_mpi.bin', &
        status='old',action='read',form='unformatted',iostat=ier)
@@ -1319,7 +1315,6 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) :: path_to_add
 
   ! reads in arrays
   if (I_should_read_the_database) then
@@ -1327,13 +1322,8 @@
       call read_mesh_databases_stacey_adios()
     else
       ! crust and mantle
-
       ! create name of database
       call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
-      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-      endif
 
       ! read arrays for Stacey conditions
       open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &
@@ -1349,13 +1339,8 @@
       close(IIN)
 
       ! outer core
-
       ! create name of database
       call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_PATH)
-      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-        prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-      endif
 
       ! read arrays for Stacey conditions
       open(unit=IIN,file=prname(1:len_trim(prname))//'stacey.bin', &

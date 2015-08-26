@@ -2,14 +2,14 @@ dnl                                               -*- Autoconf -*-
 dnl
 dnl Process this file with autoconf to produce the 'configure' script:
 dnl
-dnl autoreconf -I m4
+dnl autoreconf -i
 dnl
 dnl You must have recent versions of Autoconf and Automake installed.
 
 ############################################################
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D_Globe], [7.0.0], [see the wiki], [Specfem3DGlobe])
+AC_INIT([Specfem3D_Globe], [7.0.1], [see the wiki], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 
 AC_CONFIG_HEADER([setup/config.h])
@@ -64,7 +64,7 @@ AC_ARG_ENABLE([vectorization],
     [AC_HELP_STRING([--enable-vectorization],
         [build FORCE_VECTORIZATION enabled version @<:@default=auto@:>@])],
     [want_vec="$enableval"],
-    [want_vec=auto])
+    [want_vec=no])
 if test x"$want_vec" == xauto; then
     if test x"$want_debug" != xno; then
         want_vec=no
@@ -352,6 +352,13 @@ AC_CONFIG_FILES([
     setup/constants_tomography.h
     setup/precision.h
     setup/config.fh
+])
+AC_CHECK_FILE([$srcdir/.git], [
+    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
+    AC_SUBST(GIT_VERSION_DEPS)
+], [
+    dnl Only substitute if not in a git repository.
+    AC_CONFIG_FILES([setup/version.fh])
 ])
 AC_CONFIG_FILES([
     DATA/Par_file:DATA/Par_file

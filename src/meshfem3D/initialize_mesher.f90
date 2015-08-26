@@ -32,6 +32,8 @@
 
   implicit none
 
+  include 'version.fh'
+
   ! local parameters
   integer :: sizeprocs
   ! timing
@@ -58,6 +60,8 @@
     write(IMAIN,*) '*** Specfem3D MPI Mesher ***'
     write(IMAIN,*) '****************************'
     write(IMAIN,*)
+    write(IMAIN,*) 'Version: ', git_version
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -73,7 +77,10 @@
   call broadcast_computed_parameters(myrank)
 
   ! check that the code is running with the requested number of processes
-  if (sizeprocs /= NPROCTOT) call exit_MPI(myrank,'wrong number of MPI processes')
+  if (sizeprocs /= NPROCTOT) then
+    if (myrank == 0) print *,'Error wrong number of MPI processes ',sizeprocs,' should be ',NPROCTOT,', please check...'
+    call exit_MPI(myrank,'wrong number of MPI processes')
+  endif
 
 !! DK DK for gravity integrals
   ! in the case of GRAVITY_INTEGRALS we should always use double precision

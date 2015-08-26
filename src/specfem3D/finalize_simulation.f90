@@ -148,19 +148,20 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
   use specfem_par_movie
   implicit none
 
   ! mass matrices
   ! crust/mantle
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
-      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION)) then
+      (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL)) then
     deallocate(rmassx_crust_mantle,rmassy_crust_mantle)
   else
     nullify(rmassx_crust_mantle,rmassy_crust_mantle)
   endif
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       deallocate(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     else
       nullify(b_rmassx_crust_mantle,b_rmassy_crust_mantle)
@@ -172,13 +173,13 @@
   if (SIMULATION_TYPE == 3 ) nullify(b_rmass_outer_core)
 
   ! inner core
-  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+  if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
     deallocate(rmassx_inner_core,rmassy_inner_core)
   else
     nullify(rmassx_inner_core,rmassy_inner_core)
   endif
   if (SIMULATION_TYPE == 3) then
-    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
     else
       nullify(b_rmassx_inner_core,b_rmassy_inner_core)
@@ -277,6 +278,8 @@
     deallocate(noise_sourcearray, &
                normal_x_noise,normal_y_noise,normal_z_noise, &
                mask_noise,noise_surface_movie)
+    ! file i/o buffer
+    deallocate(noise_buffer)
   endif
 
   ! VTK visualization

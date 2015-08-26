@@ -156,7 +156,7 @@
   logical :: ibool_read_adj_arrays
 
   ! note: we check if nadj_rec_local > 0 before calling this routine, but better be safe...
-  if (nadj_rec_local == 0 ) return
+  if (nadj_rec_local == 0) return
 
   ! figure out if we need to read in a chunk of the adjoint source at this timestep
   ibool_read_adj_arrays = ( (it == it_begin) .or. (mod(it-1,NTSTEP_BETWEEN_READ_ADJSRC) == 0) )
@@ -289,7 +289,7 @@
 
         ! checks next index
         if (ivec_index < 1 .or. ivec_index > NTSTEP_BETWEEN_READ_ADJSRC) then
-          print*,'Error iadj_vec bounds: rank',myrank,' it = ',it,' index = ',ivec_index, &
+          print *,'Error iadj_vec bounds: rank',myrank,' it = ',it,' index = ',ivec_index, &
                  'out of bounds ',1,'to',NTSTEP_BETWEEN_READ_ADJSRC
           call exit_MPI(myrank,'Error iadj_vec index bounds')
         endif
@@ -352,7 +352,7 @@
   endif
 
   !debug
-  !if (myrank == 0 ) print*,'compute_add_sources_backward: it_tmp = ',it_tmp,it
+  !if (myrank == 0 ) print *,'compute_add_sources_backward: it_tmp = ',it_tmp,it
 
   if (.not. GPU_MODE) then
     ! on CPU

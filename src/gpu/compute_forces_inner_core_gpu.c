@@ -230,9 +230,9 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
       clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_ic_tex));
     }
 #endif
-    local_work_size[0] = blocksize;
+    local_work_size[0] = blocksize / GPU_ELEM_PER_THREAD;
     local_work_size[1] = 1;
-    global_work_size[0] = num_blocks_x * blocksize;
+    global_work_size[0] = num_blocks_x * blocksize / GPU_ELEM_PER_THREAD;
     global_work_size[1] = num_blocks_y;
 
     clCheck (clEnqueueNDRangeKernel (mocl.command_queue, *inner_core_kernel_p, 2, NULL,
@@ -242,7 +242,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
 #ifdef USE_CUDA
   if (run_cuda) {
     dim3 grid(num_blocks_x,num_blocks_y);
-    dim3 threads(blocksize,1,1);
+    dim3 threads(blocksize / GPU_ELEM_PER_THREAD,1,1);
 
     if (FORWARD_OR_ADJOINT == 1) {
       inner_core_impl_kernel_forward<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,

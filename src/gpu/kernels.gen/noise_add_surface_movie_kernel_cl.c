@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99996
+//      this file has been generated automatically by BOAST version 1.0.3
 //      by: make boast_kernels
 
 /*
@@ -125,7 +125,7 @@ __kernel void noise_add_surface_movie_kernel(__global float * accel, const __glo
     eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 0, igll, iface)]) * (normal_x);\n\
     eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 1, igll, iface)]) * (normal_y);\n\
     eta = eta + (noise_surface_movie[INDEX3(NDIM, NGLL2, 2, igll, iface)]) * (normal_z);\n\
-    jacobianw = (wgllwgll[(k) * (NGLLX) + i]) * (jacobian2D[igll + (NGLL2) * (iface)]);\n\
+    jacobianw = (wgllwgll[(j) * (NGLLX) + i]) * (jacobian2D[igll + (NGLL2) * (iface)]);\n\
     atomicAdd(accel + (iglob) * (3) + 0, (((eta) * (mask_noise[ipoin])) * (normal_x)) * (jacobianw));\n\
     atomicAdd(accel + (iglob) * (3) + 1, (((eta) * (mask_noise[ipoin])) * (normal_y)) * (jacobianw));\n\
     atomicAdd(accel + (iglob) * (3) + 2, (((eta) * (mask_noise[ipoin])) * (normal_z)) * (jacobianw));\n\

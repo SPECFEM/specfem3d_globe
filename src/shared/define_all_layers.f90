@@ -273,7 +273,7 @@
     else if (ONE_CRUST) then
 
       ! 1D models:
-      ! in order to increase stability and therefore to allow cheaper
+      ! in order to increase CFL stability of the time scheme and therefore to allow cheaper
       ! simulations (larger time step), 1D models can be run with just one average crustal
       ! layer instead of two.
 
@@ -677,7 +677,7 @@
     else if (ONE_CRUST) then
 
       ! 1D models:
-      ! in order to increase stability and therefore to allow cheaper
+      ! in order to increase CFL stability of the time scheme and therefore to allow cheaper
       ! simulations (larger time step), 1D models can be run with just one average crustal
       ! layer instead of two.
 

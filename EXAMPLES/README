@@ -15,23 +15,23 @@ The following examples are provided:
 
   contains an example for a small regional simulation and an event located in southern Greece;
   the example can be run as a small test on a single desktop machine
-  (4 CPUs, forward simulation lasts ~15min, kernel simulation lasts ~40min) 
+  (4 CPUs, forward simulation lasts ~5min, kernel simulation lasts ~10min) 
 
   * regional_MiddleEast/
 
   contains an example for a regional simulation for the Middle East region
-  (64 CPUs, forward simulation lasts ~15min, kernel simulation lasts ~40min)
+  (64 CPUs, forward simulation lasts ~7min, kernel simulation lasts ~15min)
 
-  * global_s362ani/
+  * global_s362ani_shakemovie/
 
-  contains an example for a global simulation using S362ANI as 3-D background model
-  (150 CPUs, forward simulation lasts ~1h 55min, kernel simulation lasts ~4h 35min)
+  contains an example for a global shakemovie simulation using S362ANI as 3-D background model
+  (384 CPUs, forward simulation lasts ~1h 55min)
 
   * global_PREM_kernels/
 
   contains examples for amplitude and traveltime kernels using PREM as background model;
   both examples focus on how adjoint sources for filtered measurements would be constructed and used.
-  (384 CPUs, forward simulations last ~1h 12min, kernel simulations last ~2h 13min)
+  (24 CPUs, forward simulations last ~5min, kernel simulations last ~10min)
 
 
 - PREM benchmark solutions:

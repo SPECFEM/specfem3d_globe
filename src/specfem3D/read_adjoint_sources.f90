@@ -59,7 +59,7 @@
   it_sub_adj = ceiling( dble(it)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
   ! debug
-  !print*,'read adjoint sources: it_sub_adj = ',it_sub_adj
+  !print *,'read adjoint sources: it_sub_adj = ',it_sub_adj
 
   ! asynchronously reads in adjoint source files
   if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1) then
@@ -97,8 +97,8 @@
   endif
 
   ! debug timing
-  !print*,'read adjoint sources: elapsed time = ',wtime() - tstart
-  !print*
+  !print *,'read adjoint sources: elapsed time = ',wtime() - tstart
+  !print *
 
   end subroutine read_adjoint_sources
 
@@ -128,12 +128,12 @@
   character(len=MAX_STRING_LEN) :: adj_source_file
 
   ! debug
-  !print*,'reading adjoint sources local:',myrank,' - chunk ',it_sub_adj,'out of ',NSTEP_SUB_ADJ, &
+  !print *,'reading adjoint sources local:',myrank,' - chunk ',it_sub_adj,'out of ',NSTEP_SUB_ADJ, &
   !       ' for local adjoint sources = ',nadj_rec_local
 
   ! checks chunk number
   if (it_sub_adj < 1 .or. it_sub_adj > NSTEP_SUB_ADJ) then
-    print*,'Error reading adjoint sources: chunk number ',it_sub_adj,'is invalid'
+    print *,'Error reading adjoint sources: chunk number ',it_sub_adj,'is invalid'
     call exit_MPI(myrank,'Error reading adjoint sources with invalid chunk number')
   endif
 
@@ -151,7 +151,7 @@
   do irec = 1, nrec
     ! checks that the source slice number is okay
     if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) then
-      print*,'Error rank ',myrank,': adjoint source slice index ',islice_selected_rec(irec),&
+      print *,'Error rank ',myrank,': adjoint source slice index ',islice_selected_rec(irec),&
              ' is out of bounds ',NPROCTOT_VAL-1
       call exit_MPI(myrank,'Error adjoint source has wrong source slice number in adjoint simulation')
     endif
@@ -228,9 +228,9 @@
   ! loops over file components E/N/Z
   do icomp = 1,NDIM
 
+    ! opens adjoint source file for this component
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
 
-    ! opens adjoint source file for this component
     if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
       write(path_to_add,"('run',i4.4,'/')") mygroup + 1
       filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
@@ -255,7 +255,7 @@
 
     ! checks length
     if (itime /= NSTEP) then
-      print*,'adjoint source error: ',trim(filename),' has length',itime,' but should be',NSTEP
+      print *,'adjoint source error: ',trim(filename),' has length',itime,' but should be',NSTEP
       call exit_MPI(myrank,&
         'file '//trim(filename)//' length is wrong, please check your adjoint sources and your simulation duration')
     endif

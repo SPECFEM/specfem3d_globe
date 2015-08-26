@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 0.99996
+//      this file has been generated automatically by BOAST version 1.0.3
 //      by: make boast_kernels
 
 /*
@@ -98,7 +98,10 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
 #undef USE_TEXTURES_CONSTANTS\n\
 #endif\n\
-static void compute_element_ic_att_stress(const int tx, const int working_element, const __global float * R_xx, const __global float * R_yy, const __global float * R_xy, const __global float * R_xz, const __global float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+void compute_element_ic_att_stress(const int tx, const int working_element, const __global float * R_xx, const __global float * R_yy, const __global float * R_xy, const __global float * R_xz, const __global float * R_yz, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_xz, float * sigma_yz){\n\
   int offset;\n\
   int i_sls;\n\
   float R_xx_val;\n\
@@ -115,7 +118,10 @@ static void compute_element_ic_att_stress(const int tx, const int working_elemen
     sigma_yz[0] = sigma_yz[0] - (R_yz[offset]);\n\
   }\n\
 }\n\
-static void compute_element_ic_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+void compute_element_ic_att_memory(const int tx, const int working_element, const __global float * d_muv, const __global float * factor_common, const __global float * alphaval, const __global float * betaval, const __global float * gammaval, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const float epsilondev_xx_loc, const float epsilondev_yy_loc, const float epsilondev_xy_loc, const float epsilondev_xz_loc, const float epsilondev_yz_loc, const int USE_3D_ATTENUATION_ARRAYS){\n\
   int offset;\n\
   int i_sls;\n\
   float mul;\n\
@@ -153,7 +159,10 @@ static void compute_element_ic_att_memory(const int tx, const int working_elemen
     R_yz[offset] = (alphaval_loc) * (R_yz[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
   }\n\
 }\n\
-static void compute_element_ic_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
+#if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
+static\n\
+#endif\n\
+void compute_element_ic_gravity(const int tx, const int iglob, const __global float * restrict d_xstore, const __global float * restrict d_ystore, const __global float * restrict d_zstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const float jacobianl, const __local float * s_dummyx_loc, const __local float * s_dummyy_loc, const __local float * s_dummyz_loc, float * sigma_xx, float * sigma_yy, float * sigma_zz, float * sigma_xy, float * sigma_yx, float * sigma_xz, float * sigma_zx, float * sigma_yz, float * sigma_zy, float * rho_s_H1, float * rho_s_H2, float * rho_s_H3){\n\
   float radius;\n\
   float theta;\n\
   float phi;\n\
@@ -260,9 +269,9 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
 #ifndef MANUALLY_UNROLLED_LOOPS\n\
   int l;\n\
 #endif\n\
-  ushort active;\n\
+  ushort active_1;\n\
   int offset;\n\
-  int iglob;\n\
+  int iglob_1;\n\
   int working_element;\n\
   float tempx1l;\n\
   float tempx2l;\n\
@@ -317,11 +326,11 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
   float sigma_zx;\n\
   float sigma_zy;\n\
   float sigma_zz;\n\
-  float epsilondev_xx_loc;\n\
-  float epsilondev_yy_loc;\n\
-  float epsilondev_xy_loc;\n\
-  float epsilondev_xz_loc;\n\
-  float epsilondev_yz_loc;\n\
+  float epsilondev_xx_loc_1;\n\
+  float epsilondev_yy_loc_1;\n\
+  float epsilondev_xy_loc_1;\n\
+  float epsilondev_xz_loc_1;\n\
+  float epsilondev_yz_loc_1;\n\
   float c11;\n\
   float c12;\n\
   float c13;\n\
@@ -330,9 +339,9 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
   float sum_terms1;\n\
   float sum_terms2;\n\
   float sum_terms3;\n\
-  float rho_s_H1;\n\
-  float rho_s_H2;\n\
-  float rho_s_H3;\n\
+  float rho_s_H_1_1;\n\
+  float rho_s_H_1_2;\n\
+  float rho_s_H_1_3;\n\
   __local float s_dummyx_loc[(NGLL3)];\n\
   __local float s_dummyy_loc[(NGLL3)];\n\
   __local float s_dummyz_loc[(NGLL3)];\n\
@@ -348,12 +357,9 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
   __local float sh_hprime_xx[(NGLL2)];\n\
   __local float sh_hprimewgll_xx[(NGLL2)];\n\
   bx = (get_group_id(1)) * (get_num_groups(0)) + get_group_id(0);\n\
-  tx = get_local_id(0);\n\
-  K = (tx) / (NGLL2);\n\
-  J = (tx - ((K) * (NGLL2))) / (NGLLX);\n\
-  I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));\n\
-  active = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);\n\
-  if (active) {\n\
+  tx = get_local_id(0) + ((NGLL3_PADDED) * (0)) / (1);\n\
+  active_1 = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);\n\
+  if (active_1) {\n\
 #ifdef USE_MESH_COLORING_GPU\n\
     working_element = bx;\n\
 #else\n\
@@ -364,17 +370,17 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
     }\n\
 #endif\n\
     if (d_idoubling[working_element] == IFLAG_IN_FICTITIOUS_CUBE) {\n\
-      active = 0;\n\
+      active_1 = 0;\n\
     } else {\n\
-      iglob = d_ibool[(working_element) * (NGLL3) + tx] - (1);\n\
+      iglob_1 = d_ibool[(working_element) * (NGLL3) + tx] - (1);\n\
 #ifdef USE_TEXTURES_FIELDS\n\
-      s_dummyx_loc[tx] = as_float(read_imageui(d_displ_ic_tex, sampler_d_displ_ic_tex, int2((iglob) * (3) + 0,0)).x);\n\
-      s_dummyy_loc[tx] = as_float(read_imageui(d_displ_ic_tex, sampler_d_displ_ic_tex, int2((iglob) * (3) + 1,0)).x);\n\
-      s_dummyz_loc[tx] = as_float(read_imageui(d_displ_ic_tex, sampler_d_displ_ic_tex, int2((iglob) * (3) + 2,0)).x);\n\
+      s_dummyx_loc[tx] = as_float(read_imageui(d_displ_ic_tex, sampler_d_displ_ic_tex, int2((iglob_1) * (3) + 0,0)).x);\n\
+      s_dummyy_loc[tx] = as_float(read_imageui(d_displ_ic_tex, sampler_d_displ_ic_tex, int2((iglob_1) * (3) + 1,0)).x);\n\
+      s_dummyz_loc[tx] = as_float(read_imageui(d_displ_ic_tex, sampler_d_displ_ic_tex, int2((iglob_1) * (3) + 2,0)).x);\n\
 #else\n\
-      s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob)];\n\
-      s_dummyy_loc[tx] = d_displ[1 + (3) * (iglob)];\n\
-      s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob)];\n\
+      s_dummyx_loc[tx] = d_displ[0 + (3) * (iglob_1)];\n\
+      s_dummyy_loc[tx] = d_displ[1 + (3) * (iglob_1)];\n\
+      s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob_1)];\n\
 #endif\n\
     }\n\
   }\n\
@@ -388,7 +394,10 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
 #endif\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
-  if (active) {\n\
+  K = (tx) / (NGLL2);\n\
+  J = (tx - ((K) * (NGLL2))) / (NGLLX);\n\
+  I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));\n\
+  if (active_1) {\n\
     tempx1l = 0.0f;\n\
     tempx2l = 0.0f;\n\
     tempx3l = 0.0f;\n\
@@ -502,11 +511,11 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
     duzdyl_plus_duydzl = duzdyl + duydzl;\n\
     if (COMPUTE_AND_STORE_STRAIN) {\n\
       templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);\n\
-      epsilondev_xx_loc = duxdxl - (templ);\n\
-      epsilondev_yy_loc = duydyl - (templ);\n\
-      epsilondev_xy_loc = (duxdyl_plus_duydxl) * (0.5f);\n\
-      epsilondev_xz_loc = (duzdxl_plus_duxdzl) * (0.5f);\n\
-      epsilondev_yz_loc = (duzdyl_plus_duydzl) * (0.5f);\n\
+      epsilondev_xx_loc_1 = duxdxl - (templ);\n\
+      epsilondev_yy_loc_1 = duydyl - (templ);\n\
+      epsilondev_xy_loc_1 = (duxdyl_plus_duydxl) * (0.5f);\n\
+      epsilondev_xz_loc_1 = (duzdxl_plus_duxdzl) * (0.5f);\n\
+      epsilondev_yz_loc_1 = (duzdyl_plus_duydzl) * (0.5f);\n\
       if (NSPEC_INNER_CORE_STRAIN_ONLY == 1) {\n\
         epsilon_trace_over_3[tx] = templ;\n\
       } else {\n\
@@ -563,7 +572,7 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
     sigma_zy = sigma_yz;\n\
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));\n\
     if (GRAVITY) {\n\
-      compute_element_ic_gravity(tx, iglob, d_xstore, d_ystore, d_zstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H1,  &rho_s_H2,  &rho_s_H3);\n\
+      compute_element_ic_gravity(tx, iglob_1, d_xstore, d_ystore, d_zstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);\n\
     }\n\
     s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));\n\
     s_tempy1[tx] = (jacobianl) * ((sigma_xy) * (xixl) + (sigma_yy) * (xiyl) + (sigma_zy) * (xizl));\n\
@@ -576,7 +585,7 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
     s_tempz3[tx] = (jacobianl) * ((sigma_xz) * (gammaxl) + (sigma_yz) * (gammayl) + (sigma_zz) * (gammazl));\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
-  if (active) {\n\
+  if (active_1) {\n\
     tempx1l = 0.0f;\n\
     tempx2l = 0.0f;\n\
     tempx3l = 0.0f;\n\
@@ -688,52 +697,52 @@ __kernel  void inner_core_impl_kernel_forward(const int nb_blocks_to_compute, co
     sum_terms2 =  -((fac1) * (tempy1l) + (fac2) * (tempy2l) + (fac3) * (tempy3l));\n\
     sum_terms3 =  -((fac1) * (tempz1l) + (fac2) * (tempz2l) + (fac3) * (tempz3l));\n\
     if (GRAVITY) {\n\
-      sum_terms1 = sum_terms1 + rho_s_H1;\n\
-      sum_terms2 = sum_terms2 + rho_s_H2;\n\
-      sum_terms3 = sum_terms3 + rho_s_H3;\n\
+      sum_terms1 = sum_terms1 + rho_s_H_1_1;\n\
+      sum_terms2 = sum_terms2 + rho_s_H_1_2;\n\
+      sum_terms3 = sum_terms3 + rho_s_H_1_3;\n\
     }\n\
 #ifdef USE_MESH_COLORING_GPU\n\
 #ifdef USE_TEXTURES_FIELDS\n\
-    d_accel[0 + (3) * (iglob)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob) * (3) + 0,0)).x) + sum_terms1;\n\
-    d_accel[1 + (3) * (iglob)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob) * (3) + 1,0)).x) + sum_terms2;\n\
-    d_accel[2 + (3) * (iglob)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob) * (3) + 2,0)).x) + sum_terms3;\n\
+    d_accel[0 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob_1) * (3) + 0,0)).x) + sum_terms1;\n\
+    d_accel[1 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob_1) * (3) + 1,0)).x) + sum_terms2;\n\
+    d_accel[2 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob_1) * (3) + 2,0)).x) + sum_terms3;\n\
 #else\n\
-    d_accel[0 + (3) * (iglob)] = d_accel[0 + (3) * (iglob)] + sum_terms1;\n\
-    d_accel[1 + (3) * (iglob)] = d_accel[1 + (3) * (iglob)] + sum_terms2;\n\
-    d_accel[2 + (3) * (iglob)] = d_accel[2 + (3) * (iglob)] + sum_terms3;\n\
+    d_accel[0 + (3) * (iglob_1)] = d_accel[0 + (3) * (iglob_1)] + sum_terms1;\n\
+    d_accel[1 + (3) * (iglob_1)] = d_accel[1 + (3) * (iglob_1)] + sum_terms2;\n\
+    d_accel[2 + (3) * (iglob_1)] = d_accel[2 + (3) * (iglob_1)] + sum_terms3;\n\
 #endif\n\
 #else\n\
     if (use_mesh_coloring_gpu) {\n\
       if (NSPEC_INNER_CORE > 1000) {\n\
 #ifdef USE_TEXTURES_FIELDS\n\
-        d_accel[0 + (3) * (iglob)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob) * (3) + 0,0)).x) + sum_terms1;\n\
-        d_accel[1 + (3) * (iglob)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob) * (3) + 1,0)).x) + sum_terms2;\n\
-        d_accel[2 + (3) * (iglob)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob) * (3) + 2,0)).x) + sum_terms3;\n\
+        d_accel[0 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob_1) * (3) + 0,0)).x) + sum_terms1;\n\
+        d_accel[1 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob_1) * (3) + 1,0)).x) + sum_terms2;\n\
+        d_accel[2 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_ic_tex, sampler_d_accel_ic_tex, int2((iglob_1) * (3) + 2,0)).x) + sum_terms3;\n\
 #else\n\
-        d_accel[0 + (3) * (iglob)] = d_accel[0 + (3) * (iglob)] + sum_terms1;\n\
-        d_accel[1 + (3) * (iglob)] = d_accel[1 + (3) * (iglob)] + sum_terms2;\n\
-        d_accel[2 + (3) * (iglob)] = d_accel[2 + (3) * (iglob)] + sum_terms3;\n\
+        d_accel[0 + (3) * (iglob_1)] = d_accel[0 + (3) * (iglob_1)] + sum_terms1;\n\
+        d_accel[1 + (3) * (iglob_1)] = d_accel[1 + (3) * (iglob_1)] + sum_terms2;\n\
+        d_accel[2 + (3) * (iglob_1)] = d_accel[2 + (3) * (iglob_1)] + sum_terms3;\n\
 #endif\n\
       } else {\n\
-        atomicAdd(d_accel + (iglob) * (3) + 0, sum_terms1);\n\
-        atomicAdd(d_accel + (iglob) * (3) + 1, sum_terms2);\n\
-        atomicAdd(d_accel + (iglob) * (3) + 2, sum_terms3);\n\
+        atomicAdd(d_accel + (iglob_1) * (3) + 0, sum_terms1);\n\
+        atomicAdd(d_accel + (iglob_1) * (3) + 1, sum_terms2);\n\
+        atomicAdd(d_accel + (iglob_1) * (3) + 2, sum_terms3);\n\
       }\n\
     } else {\n\
-      atomicAdd(d_accel + (iglob) * (3) + 0, sum_terms1);\n\
-      atomicAdd(d_accel + (iglob) * (3) + 1, sum_terms2);\n\
-      atomicAdd(d_accel + (iglob) * (3) + 2, sum_terms3);\n\
+      atomicAdd(d_accel + (iglob_1) * (3) + 0, sum_terms1);\n\
+      atomicAdd(d_accel + (iglob_1) * (3) + 1, sum_terms2);\n\
+      atomicAdd(d_accel + (iglob_1) * (3) + 2, sum_terms3);\n\
     }\n\
 #endif\n\
     if (ATTENUATION &&  ! PARTIAL_PHYS_DISPERSION_ONLY) {\n\
-      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc, epsilondev_yy_loc, epsilondev_xy_loc, epsilondev_xz_loc, epsilondev_yz_loc, USE_3D_ATTENUATION_ARRAYS);\n\
+      compute_element_ic_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, USE_3D_ATTENUATION_ARRAYS);\n\
     }\n\
     if (COMPUTE_AND_STORE_STRAIN) {\n\
-      epsilondev_xx[tx + (working_element) * (NGLL3)] = epsilondev_xx_loc;\n\
-      epsilondev_yy[tx + (working_element) * (NGLL3)] = epsilondev_yy_loc;\n\
-      epsilondev_xy[tx + (working_element) * (NGLL3)] = epsilondev_xy_loc;\n\
-      epsilondev_xz[tx + (working_element) * (NGLL3)] = epsilondev_xz_loc;\n\
-      epsilondev_yz[tx + (working_element) * (NGLL3)] = epsilondev_yz_loc;\n\
+      epsilondev_xx[tx + (working_element) * (NGLL3)] = epsilondev_xx_loc_1;\n\
+      epsilondev_yy[tx + (working_element) * (NGLL3)] = epsilondev_yy_loc_1;\n\
+      epsilondev_xy[tx + (working_element) * (NGLL3)] = epsilondev_xy_loc_1;\n\
+      epsilondev_xz[tx + (working_element) * (NGLL3)] = epsilondev_xz_loc_1;\n\
+      epsilondev_yz[tx + (working_element) * (NGLL3)] = epsilondev_yz_loc_1;\n\
     }\n\
   }\n\
 }\n\

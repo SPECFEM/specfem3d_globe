@@ -31,7 +31,13 @@ contains
 
   subroutine write_seismograms()
 
-  use specfem_par
+  use specfem_par,only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
+    nrec_local,number_receiver_global,ispec_selected_rec,ispec_selected_source, &
+    it,it_begin,it_end,seismo_current,seismo_offset, seismograms,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+    WRITE_SEISMOGRAMS_BY_MASTER,OUTPUT_SEISMOS_ASDF, &
+    it_adj_written,moment_der,sloc_der,shdur_der,stshift_der
+
+
   use specfem_par_crustmantle
 
   implicit none
@@ -141,7 +147,8 @@ contains
 ! write seismograms to files
   subroutine write_seismograms_to_file()
 
-  use constants_solver
+  use constants_solver,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,IMAIN,IOUT,itag
+
   use specfem_par,only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
           number_receiver_global,seismograms, &
@@ -153,6 +160,7 @@ contains
           SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE, &
           OUTPUT_FILES, &
           WRITE_SEISMOGRAMS_BY_MASTER
+
   use asdf_data,only: asdf_event
 
   implicit none
@@ -265,7 +273,7 @@ contains
         iproc = islice_selected_rec(irec)
         ! checks iproc value
         if (iproc < 0 .or. iproc >= NPROCTOT_VAL) then
-          print*,'Error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
+          print *,'Error :',myrank,'iproc = ',iproc,'NPROCTOT = ',NPROCTOT_VAL
           call exit_mpi(myrank,'Error iproc in islice_selected_rec')
         endif
         ! sums number of receivers for each slice
@@ -350,7 +358,9 @@ contains
 
   subroutine write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
 
-  use constants_solver
+  use constants_solver,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,DEGREES_TO_RADIANS, &
+    MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME
+
   use specfem_par,only: &
           myrank, &
           station_name,network_name,stlat,stlon, &
@@ -361,6 +371,7 @@ contains
 
   use specfem_par,only: &
           cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC
+
   use asdf_data,only: asdf_event
 
   implicit none
@@ -426,16 +437,22 @@ contains
 
       ! BS BS calculate backazimuth needed to rotate East and North
       ! components to Radial and Transverse components
-      !  call get_backazimuth(elat,elon,stlat(irec),stlon(irec),backaz)
+      ! (back-azimuth returned in degrees between [0,360])
       call get_backazimuth(cmt_lat,cmt_lon,stlat(irec),stlon(irec),backaz)
 
       phi = backaz
+
+      ! back azimuth is the incoming direction of a raypath to a receiving station, i.e. the angle of
+      ! the incoming wave front arriving at the station measured between north and the direction to the epicenter in degrees.
+      ! (north corresponds to zero degrees)
+
+      ! rotation angle phi takes opposite direction; to have radial direction pointing in outgoing direction
       if (phi>180.d0) then
          phi = phi-180.d0
       else if (phi<180.d0) then
          phi = phi+180.d0
       else if (phi==180.d0) then
-         phi = backaz
+         phi = 0.d0
       endif
 
       cphi=cos(phi*DEGREES_TO_RADIANS)
@@ -507,7 +524,8 @@ contains
 
   subroutine write_adj_seismograms(it_adj_written)
 
-  use constants
+  use constants,only: MAX_STRING_LEN,CUSTOM_REAL,IOUT
+
   use specfem_par,only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
     DT,t0,LOCAL_TMP_PATH, &
     seismograms,number_receiver_global,nrec_local, &

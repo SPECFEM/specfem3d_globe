@@ -259,6 +259,7 @@
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+  use specfem_par_noise
 
   implicit none
 
@@ -356,19 +357,19 @@
   if (mod(it,NTSTEP_BETWEEN_FRAMES) == 0) then
 
     ! user output
-    !if (myrank == 0 ) print*,"  VTK rendering..."
+    !if (myrank == 0 ) print *,"  VTK rendering..."
 
     ! updates time
     currenttime = sngl((it-1)*DT-t0)
 
     ! transfers fields from GPU to host
     if (GPU_MODE) then
-      !if (myrank == 0 ) print*,"  VTK: transferring velocity from GPU"
+      !if (myrank == 0 ) print *,"  VTK: transferring velocity from GPU"
       call transfer_veloc_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,veloc_crust_mantle,Mesh_pointer)
     endif
 
     ! updates wavefield
-    !if (myrank == 0 ) print*,"  VTK: it = ",it," out of ",it_end," - norm of velocity field"
+    !if (myrank == 0 ) print *,"  VTK: it = ",it," out of ",it_end," - norm of velocity field"
     inum = 0
     vtkdata(:) = 0.0
     do iglob = 1,NGLOB_CRUST_MANTLE

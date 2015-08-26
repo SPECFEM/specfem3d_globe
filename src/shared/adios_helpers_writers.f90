@@ -170,10 +170,10 @@ subroutine write_1D_global_array_adios_dims(adios_handle, myrank, local_dim, siz
 
   integer :: adios_err
   integer :: offset
-  integer :: global_dim
+  integer(kind=8) :: global_dim ! should be long for large cases.
 
   ! global dimension
-  global_dim = local_dim * sizeprocs
+  global_dim = int(local_dim, 8) * int(sizeprocs, 8)
 
   ! process offset
   ! note: assumes that myrank starts is within [0,sizeprocs-1]

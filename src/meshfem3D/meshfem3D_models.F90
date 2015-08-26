@@ -849,7 +849,7 @@
   ! local parameters
   double precision :: r_dummy,theta,phi,theta_degrees,phi_degrees
   double precision :: r_used
-  double precision, parameter :: rmoho_prem = 6371.d0 - 24.4d0
+  double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
 
   ! initializes
   tau_e(:)   = 0.0d0

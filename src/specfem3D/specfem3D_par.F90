@@ -165,7 +165,7 @@ module specfem_par
   double precision, allocatable, dimension(:) :: stlat,stlon,stele,stbur
   character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable  :: station_name
   character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: network_name
-  character(len=MAX_STRING_LEN) :: STATIONS,rec_filename
+  character(len=MAX_STRING_LEN) :: STATIONS_FILE
 
   ! Lagrange interpolators at receivers
   double precision, dimension(:,:), allocatable :: hxir_store,hetar_store,hgammar_store
@@ -303,9 +303,10 @@ module specfem_par
   integer :: NSTAGE_TIME_SCHEME,istage
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
-  ! undo_attenuation
+  ! UNDO_ATTENUATION
   integer :: NSUBSET_ITERATIONS
   integer :: iteration_on_subset,it_of_this_subset
+  integer :: it_subset_end
 
   ! serial i/o mesh reading
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
@@ -450,9 +451,6 @@ module specfem_par_crustmantle
   ! kernels
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
     rho_kl_crust_mantle,beta_kl_crust_mantle,alpha_kl_crust_mantle
-
-  ! noise strength kernel
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sigma_kl_crust_mantle
   ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: cijkl_kl_crust_mantle
   ! approximate hessian
@@ -479,19 +477,13 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(NGLLY, NM_KL_REG_PTS_VAL) :: hetar_reg
   real(kind=CUSTOM_REAL), dimension(NGLLZ, NM_KL_REG_PTS_VAL) :: hgammar_reg
 
-  ! NOISE_TOMOGRAPHY
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
-    normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
-  integer :: num_noise_surface_points
-  integer :: irec_master_noise
-  integer :: NSPEC_TOP
-
   ! inner / outer elements crust/mantle region
   integer :: num_phase_ispec_crust_mantle
   integer :: nspec_inner_crust_mantle,nspec_outer_crust_mantle
   integer, dimension(:,:), allocatable :: phase_ispec_inner_crust_mantle
+
+  ! number of surface elements
+  integer :: NSPEC_TOP
 
   ! mesh coloring
   integer :: num_colors_outer_crust_mantle,num_colors_inner_crust_mantle
@@ -729,6 +721,38 @@ end module specfem_par_outercore
 
 !=====================================================================
 
+module specfem_par_noise
+
+! parameter module for noise simulations
+
+  use constants_solver
+
+  implicit none
+
+  ! NOISE_TOMOGRAPHY
+  integer :: reclen_noise
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_sourcearray
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
+    normal_x_noise,normal_y_noise,normal_z_noise, mask_noise
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: noise_surface_movie
+
+  integer :: num_noise_surface_points
+  integer :: irec_master_noise
+  integer :: nsources_local_noise
+
+  ! noise buffer for file i/o
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: noise_buffer
+  integer :: NT_DUMP_NOISE_BUFFER
+  integer :: icounter_noise_buffer,nstep_subset_noise_buffer
+
+  ! noise strength kernel
+  ! crust/mantle region
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sigma_kl_crust_mantle
+
+end module specfem_par_noise
+
+!=====================================================================
+
 module specfem_par_movie
 
 ! parameter module for movies/shakemovies
@@ -744,8 +768,6 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: store_val_ux_all,store_val_uy_all,store_val_uz_all
 
   ! to save movie volume
-  double precision :: scalingval
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
     muvstore_crust_mantle_3dmovie
 

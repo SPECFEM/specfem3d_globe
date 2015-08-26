@@ -52,7 +52,7 @@
   double precision :: t_shift(NSOURCES)
   !character(len=5) :: datasource
   character(len=256) :: string
-  character(len=MAX_STRING_LEN) :: CMTSOLUTION, path_to_add
+  character(len=MAX_STRING_LEN) :: CMTSOLUTION_FILE, path_to_add
 
   ! initializes
   lat(:) = 0.d0
@@ -66,13 +66,14 @@
 !
 !---- read hypocenter info
 !
-  CMTSOLUTION = 'DATA/CMTSOLUTION'
+  CMTSOLUTION_FILE = 'DATA/CMTSOLUTION'
+
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    CMTSOLUTION=path_to_add(1:len_trim(path_to_add))//CMTSOLUTION(1:len_trim(CMTSOLUTION))
+    CMTSOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//CMTSOLUTION_FILE(1:len_trim(CMTSOLUTION_FILE))
   endif
 
-  open(unit=IIN,file=trim(CMTSOLUTION),status='old',action='read',iostat=ios)
+  open(unit=IIN,file=trim(CMTSOLUTION_FILE),status='old',action='read',iostat=ios)
   if (ios /= 0) stop 'Error opening CMTSOLUTION file (get_cmt)'
 
 ! read source number isource
@@ -102,7 +103,7 @@
     enddo
 
     ! debug
-    !print*,'line ----',string,'----'
+    !print *,'line ----',string,'----'
 
     ! reads header line with event information (assumes fixed format)
     ! old line: read(string,"(a4,i5,i3,i3,i3,i3,f6.2)") datasource,yr,mo,da,ho,mi,sec
@@ -150,7 +151,7 @@
       if ( iend < istart ) stop 'Error determining number with negative length in header line in CMTSOLUTION file'
 
       ! debug
-      !print*,itype,'line ----',string(istart:iend),'----'
+      !print *,itype,'line ----',string(istart:iend),'----'
 
       ! reads in event time information
       select case (itype)

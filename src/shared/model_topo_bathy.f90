@@ -108,8 +108,8 @@
 
       ! checks values
       if (ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM) then
-        print*,'Error read topo_bathy: ival = ',ival,'ix,iy = ',itopo_x,itopo_y
-        print*,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
+        print *,'Error read topo_bathy: ival = ',ival,'ix,iy = ',itopo_x,itopo_y
+        print *,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
         call exit_mpi(0,'Error reading topo_bathy file')
       endif
 
@@ -155,9 +155,9 @@
 
   if (ier /= 0) then
     ! inform about missing database topo file
-    print*,'TOPOGRAPHY problem:'
-    print*,'Error opening file: ',prname(1:len_trim(prname))//'topo.bin'
-    print*,'please check if path exists and rerun mesher'
+    print *,'TOPOGRAPHY problem:'
+    print *,'Error opening file: ',prname(1:len_trim(prname))//'topo.bin'
+    print *,'please check if path exists and rerun mesher'
     call exit_mpi(0,'Error opening file for database topo')
   endif
 
@@ -194,13 +194,13 @@
 
   if (ier /= 0) then
     ! inform user
-    print*,'TOPOGRAPHY problem:'
-    print*,'Error opening file: ',prname(1:len_trim(prname))//'topo.bin'
-    !print*,'please check if file exists and rerun solver'
+    print *,'TOPOGRAPHY problem:'
+    print *,'Error opening file: ',prname(1:len_trim(prname))//'topo.bin'
+    !print *,'please check if file exists and rerun solver'
     !call exit_mpi(0,'Error opening file for database topo')
 
     ! read by original file
-    print*,'trying original topography file...'
+    print *,'trying original topography file...'
     call read_topo_bathy_file(ibathy_topo)
 
     ! saves database topo file for next time

@@ -3,6 +3,8 @@
  *** Specfem3D MPI Mesher ***
  ****************************
 
+ Version: 7.0.0
+
 
  There are  64  MPI processes
  Processes are numbered from 0 to  63
@@ -76,25 +78,25 @@
 
    ...creating mesh elements
    creating layer  1 out of  10
-     10.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     10.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  2 out of  10
-     20.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     20.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  3 out of  10
-     30.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     30.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  4 out of  10
-     40.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     40.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  5 out of  10
-     50.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     50.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  6 out of  10
-     60.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     60.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  7 out of  10
-     70.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     70.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  8 out of  10
-     80.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     80.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  9 out of  10
-     90.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+     90.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
    creating layer  10 out of  10
-    100.0%    current clock (NOT elapsed) time is: 13h 58min 22sec
+    100.0%    current clock (NOT elapsed) time is: 09h 00min 30sec
 
 
    ...creating global addressing
@@ -109,25 +111,25 @@
 
    ...creating mesh elements
    creating layer  1 out of  10
-     10.0%    current clock (NOT elapsed) time is: 13h 58min 25sec
+     10.0%    current clock (NOT elapsed) time is: 09h 00min 33sec
    creating layer  2 out of  10
-     20.0%    current clock (NOT elapsed) time is: 13h 58min 26sec
+     20.0%    current clock (NOT elapsed) time is: 09h 00min 34sec
    creating layer  3 out of  10
-     30.0%    current clock (NOT elapsed) time is: 13h 58min 26sec
+     30.0%    current clock (NOT elapsed) time is: 09h 00min 34sec
    creating layer  4 out of  10
-     40.0%    current clock (NOT elapsed) time is: 13h 58min 28sec
+     40.0%    current clock (NOT elapsed) time is: 09h 00min 36sec
    creating layer  5 out of  10
-     50.0%    current clock (NOT elapsed) time is: 13h 58min 31sec
+     50.0%    current clock (NOT elapsed) time is: 09h 00min 40sec
    creating layer  6 out of  10
-     60.0%    current clock (NOT elapsed) time is: 13h 58min 32sec
+     60.0%    current clock (NOT elapsed) time is: 09h 00min 40sec
    creating layer  7 out of  10
-     70.0%    current clock (NOT elapsed) time is: 13h 58min 32sec
+     70.0%    current clock (NOT elapsed) time is: 09h 00min 41sec
    creating layer  8 out of  10
-     80.0%    current clock (NOT elapsed) time is: 13h 58min 33sec
+     80.0%    current clock (NOT elapsed) time is: 09h 00min 42sec
    creating layer  9 out of  10
-     90.0%    current clock (NOT elapsed) time is: 13h 58min 34sec
+     90.0%    current clock (NOT elapsed) time is: 09h 00min 43sec
    creating layer  10 out of  10
-    100.0%    current clock (NOT elapsed) time is: 13h 58min 38sec
+    100.0%    current clock (NOT elapsed) time is: 09h 00min 46sec
 
 
    ...precomputing Jacobian
@@ -202,9 +204,9 @@
 
    ...creating mesh elements
    creating layer  1 out of  2
-     50.0%    current clock (NOT elapsed) time is: 13h 58min 41sec
+     50.0%    current clock (NOT elapsed) time is: 09h 00min 50sec
    creating layer  2 out of  2
-    100.0%    current clock (NOT elapsed) time is: 13h 58min 41sec
+    100.0%    current clock (NOT elapsed) time is: 09h 00min 50sec
 
 
    ...creating global addressing
@@ -219,9 +221,9 @@
 
    ...creating mesh elements
    creating layer  1 out of  2
-     50.0%    current clock (NOT elapsed) time is: 13h 58min 41sec
+     50.0%    current clock (NOT elapsed) time is: 09h 00min 51sec
    creating layer  2 out of  2
-    100.0%    current clock (NOT elapsed) time is: 13h 58min 41sec
+    100.0%    current clock (NOT elapsed) time is: 09h 00min 51sec
 
 
    ...precomputing Jacobian
@@ -292,7 +294,7 @@
 
    ...creating mesh elements
    creating layer  1 out of  1
-    100.0%    current clock (NOT elapsed) time is: 13h 58min 42sec
+    100.0%    current clock (NOT elapsed) time is: 09h 00min 52sec
 
 
    ...creating global addressing
@@ -307,7 +309,7 @@
 
    ...creating mesh elements
    creating layer  1 out of  1
-    100.0%    current clock (NOT elapsed) time is: 13h 58min 42sec
+    100.0%    current clock (NOT elapsed) time is: 09h 00min 53sec
 
 
    ...precomputing Jacobian
@@ -380,15 +382,15 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =  0.127032652
+ the time step of the solver will be DT =  0.126843646
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:  1.175494351E-38,  3.402823466E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =  25.396641969680786
- Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 25 s
+ Elapsed time for mesh generation and buffer creation in seconds =  30.074504852294922
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 30 s
 
  End of mesh generation
 

@@ -277,8 +277,8 @@
   weight(:)=ZERO
 
   if (cap_degree_EP < TINYVAL) then
-          print*, 'Error cap:', cap_degree_EP
-          print*, 'lat/lon:', x,y
+          print *, 'Error cap:', cap_degree_EP
+          print *, 'lat/lon:', x,y
           stop 'Error cap_degree too small'
   endif
 
@@ -342,7 +342,7 @@
   enddo
 
   if (abs(total-1.0d0) > 0.001d0) then
-    print*,'Error cap:',total,cap_degree_EP
+    print *,'Error cap:',total,cap_degree_EP
     stop
   endif
 

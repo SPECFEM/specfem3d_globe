@@ -45,7 +45,6 @@ specfem3D_OBJECTS = \
 	$O/get_event_info.solver.o \
 	$O/make_gravity.solver.o \
 	$O/netlib_specfun_erf.solver.o \
-	$O/recompute_jacobian.solver.o \
 	$(EMPTY_MACRO)
 
 # solver objects with statically allocated arrays; dependent upon
@@ -114,6 +113,7 @@ specfem3D_MODULES = \
 	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_outercore.$(FC_MODEXT) \
+	$(FC_MODDIR)/specfem_par_noise.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
 	$(FC_MODDIR)/write_seismograms_mod.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
@@ -146,6 +146,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/read_compute_parameters.shared.o \
 	$O/read_parameter_file.shared.o \
 	$O/read_value_parameters.shared.o \
+	$O/recompute_jacobian.shared.o \
 	$O/reduce.shared.o \
 	$O/rthetaphi_xyz.shared.o \
 	$O/spline_routines.shared.o \
@@ -275,6 +276,9 @@ $O/iterate_time.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/iterate_time_undoatt.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/locate_receivers.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/read_adjoint_sources.solverstatic.o: $O/write_seismograms.solverstatic.o
+
+# Version file
+$O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh
 
 ###
 ### specfem3D - optimized flags and dependence on values from mesher here

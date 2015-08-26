@@ -35,7 +35,7 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   use constants_solver
   use adios_read_mod
   use adios_helpers_mod, only: check_adios_err
-  use specfem_par,       only: ATTENUATION_VAL,LOCAL_PATH,NUMBER_OF_SIMULTANEOUS_RUNS,mygroup
+  use specfem_par,       only: ATTENUATION_VAL,LOCAL_PATH
 
   implicit none
 
@@ -51,7 +51,7 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   ! local parameters
   double precision :: T_c_source
   integer :: comm
-  character(len=MAX_STRING_LEN) :: file_name, path_to_add
+  character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
@@ -71,17 +71,13 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   ! All of the following reads use the output parameters as their temporary arrays
   ! use the filename to determine the actual contents of the read
   file_name= trim(LOCAL_PATH) // "/attenuation.bp"
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    file_name = path_to_add(1:len_trim(path_to_add))//file_name(1:len_trim(file_name))
-  endif
 
   call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
   call check_adios_err(myrank,adios_err)
 
   call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
   if (adios_err /= 0) then
-    print*,'Error rank ',myrank,' opening adios file: ',trim(file_name)
+    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
     call check_adios_err(myrank,adios_err)
   endif
 

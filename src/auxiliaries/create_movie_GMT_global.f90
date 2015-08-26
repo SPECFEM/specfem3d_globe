@@ -347,7 +347,7 @@
   open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
        status='old',action='read',form='unformatted',iostat=ierror)
   if (ierror /= 0) then
-    print*,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
+    print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
     stop 'Error opening moviedata file'
   endif
 
@@ -381,7 +381,7 @@
     open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(outputname), &
         status='old',action='read',form='unformatted',iostat=ierror)
     if (ierror /= 0) then
-      print*,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
+      print *,'Error opening file: ',trim(OUTPUT_FILES)//trim(outputname)
       stop 'Error opening moviedata file'
     endif
 
@@ -405,14 +405,14 @@
       ! initialize factor
       mute_factor = 1.0
 
-      print*,'simulation time: ',(it-1)*DT - t0,'(s)'
+      print *,'simulation time: ',(it-1)*DT - t0,'(s)'
 
       ! muting radius grows/shrinks with time
       if ((it-1)*DT - t0 > STARTTIME_TO_MUTE) then
 
         ! approximate wavefront travel distance in degrees
         ! (~3.5 km/s wave speed for surface waves)
-        distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * RADIANS_TO_DEGREES
+        distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
 
         ! approximate distance to source (in degrees)
         ! (shrinks if waves travel back from antipode)
@@ -430,7 +430,7 @@
         if (distance < 0.0 ) distance = 0.0
         if (distance > 80.0 ) distance = 80.0
 
-        print*,'muting radius: ',0.7 * distance,'(degrees)'
+        print *,'muting radius: ',0.7 * distance,'(degrees)'
 
         ! new radius of mute area (in rad)
         RADIUS_TO_MUTE = 0.7 * distance * DEGREES_TO_RADIANS
@@ -663,7 +663,7 @@
                   if (zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
                   thetaval = atan2(sqrt(xmesh*xmesh+ymesh*ymesh),zmesh)
                   ! thetaval between 0 and PI / 2
-                  !print*,'thetaval:',thetaval * 180. / PI
+                  !print *,'thetaval:',thetaval * 180. / PI
                   ! close to north pole
                   if (thetaval >= 0.495 * PI ) istamp1 = ieoff
                   ! close to south pole
@@ -726,7 +726,7 @@
 
         if (max_absol < max_average) then
           ! distance (in degree) of surface waves travelled
-          distance = 3.5 * ((it-1)*DT-t0) / 6371.0 * RADIANS_TO_DEGREES
+          distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
           if (distance > 10.0 .and. distance <= 20.0) then
             ! smooth transition between 10 and 20 degrees
             ! sets positive and negative maximum

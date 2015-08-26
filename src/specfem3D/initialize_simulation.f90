@@ -32,6 +32,8 @@
 
   implicit none
 
+  include 'version.fh'
+
   ! local parameters
   integer :: sizeprocs
   integer :: ier
@@ -57,6 +59,7 @@
     write(IMAIN,*) '**** Specfem3D MPI Solver ****'
     write(IMAIN,*) '******************************'
     write(IMAIN,*)
+    write(IMAIN,*) 'Version: ', git_version
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -74,7 +77,7 @@
 
   ! check that the code is running with the requested nb of processes
   if (sizeprocs /= NPROCTOT) then
-    print*,'Error: rank ',myrank,' - wrong number of MPI processes',sizeprocs,NPROCTOT
+    if (myrank == 0) print *,'Error wrong number of MPI processes ',sizeprocs,' should be ',NPROCTOT,', please check...'
     call exit_MPI(myrank,'wrong number of MPI processes in the initialization of SPECFEM')
   endif
 
@@ -212,20 +215,20 @@
 
   ! counts receiver stations
   if (SIMULATION_TYPE == 1) then
-    rec_filename = 'DATA/STATIONS'
+    STATIONS_FILE = 'DATA/STATIONS'
   else
-    rec_filename = 'DATA/STATIONS_ADJOINT'
+    STATIONS_FILE = 'DATA/STATIONS_ADJOINT'
   endif
+
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    rec_filename=path_to_add(1:len_trim(path_to_add))//rec_filename(1:len_trim(rec_filename))
+    STATIONS_FILE = path_to_add(1:len_trim(path_to_add))//STATIONS_FILE(1:len_trim(STATIONS_FILE))
   endif
-  STATIONS = rec_filename
 
   ! get total number of receivers
   if (myrank == 0) then
-    open(unit=IIN,file=trim(STATIONS),status='old',action='read',iostat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Stations file '//trim(STATIONS)//' could not be found, please check your setup')
+    open(unit=IIN,file=trim(STATIONS_FILE),status='old',action='read',iostat=ier)
+    if (ier /= 0) call exit_MPI(myrank,'Stations file '//trim(STATIONS_FILE)//' could not be found, please check your setup')
     ! counts records
     nrec = 0
     do while(ier == 0)
@@ -242,7 +245,7 @@
   call bcast_all_singlei(nrec)
 
   ! checks number of total receivers
-  if (nrec < 1) call exit_MPI(myrank,trim(STATIONS)//': need at least one receiver')
+  if (nrec < 1) call exit_MPI(myrank,trim(STATIONS_FILE)//': need at least one receiver')
 
   ! initializes GPU cards
   call initialize_GPU()
@@ -312,6 +315,13 @@
       if (myrank == 0) write(IMAIN,*) 'ROTATION:',ROTATION,ROTATION_VAL
       write(*,*) 'ROTATION:', ROTATION, ROTATION_VAL
       call exit_MPI(myrank,'Error in compiled parameters ROTATION, please recompile solver')
+  endif
+  if (EXACT_MASS_MATRIX_FOR_ROTATION .NEQV. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
+      if (myrank == 0) write(IMAIN,*) 'EXACT_MASS_MATRIX_FOR_ROTATION:', &
+                                      EXACT_MASS_MATRIX_FOR_ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION_VAL
+      write(*,*) 'EXACT_MASS_MATRIX_FOR_ROTATION:', &
+                  EXACT_MASS_MATRIX_FOR_ROTATION, EXACT_MASS_MATRIX_FOR_ROTATION_VAL
+      call exit_MPI(myrank,'Error in compiled parameters EXACT_MASS_MATRIX_FOR_ROTATION, please recompile solver')
   endif
   if (ATTENUATION .NEQV. ATTENUATION_VAL) then
       if (myrank == 0) write(IMAIN,*) 'ATTENUATION:',ATTENUATION,ATTENUATION_VAL
@@ -524,11 +534,11 @@
     endif
 
     ! user output
-    if (myrank == 0 ) print*,'Hybrid CPU-GPU computation:'
+    if (myrank == 0 ) print *,'Hybrid CPU-GPU computation:'
     do iproc = 0, NPROCTOT_VAL-1
       if (myrank == iproc) then
         if (myrank < TOTAL_PROCESSES_PER_NODE) then
-          print*,'rank ',myrank,' has GPU_MODE set to ',GPU_MODE
+          print *,'rank ',myrank,' has GPU_MODE set to ',GPU_MODE
         endif
       endif
       call synchronize_all()

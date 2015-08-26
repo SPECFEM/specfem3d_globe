@@ -38,7 +38,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) outputname, path_to_add
+  character(len=MAX_STRING_LEN) outputname
 
   ! checks run/checkpoint number
   if (NUMBER_OF_RUNS < 1 .or. NUMBER_OF_RUNS > NSTEP) &
@@ -75,11 +75,6 @@
     else
       write(outputname,"('dump_all_arrays',i6.6)") myrank
       outputname = trim(LOCAL_TMP_PATH) // '/' // outputname(1:len_trim(outputname))
-
-      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-        outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
-      endif
 
       open(unit=IIN,file=trim(outputname),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error opening file dump_all_arrays*** for reading')
@@ -146,7 +141,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) outputname, path_to_add
+  character(len=MAX_STRING_LEN) outputname
 
   ! checks if anything to do
   if (UNDO_ATTENUATION ) return
@@ -158,16 +153,11 @@
     write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
     outputname = trim(LOCAL_TMP_PATH) // '/' // outputname(1:len_trim(outputname))
 
-    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-      outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
-    endif
-
     open(unit=IIN,file=trim(outputname), &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
-      print*,'Error: opening proc_****_save_forward_arrays.bin'
-      print*,'path: ',outputname
+      print *,'Error: opening proc_****_save_forward_arrays.bin'
+      print *,'path: ',outputname
       call exit_mpi(myrank,'Error open file save_forward_arrays.bin')
     endif
 
@@ -276,7 +266,7 @@
   ! local parameters
   integer :: iteration_on_subset_tmp
   integer :: ier
-  character(len=MAX_STRING_LEN) :: outputname, path_to_add
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! current subset iteration
   iteration_on_subset_tmp = NSUBSET_ITERATIONS - iteration_on_subset + 1
@@ -288,13 +278,8 @@
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
     outputname = trim(LOCAL_PATH) // '/' // outputname(1:len_trim(outputname))
 
-    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-      outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
-    endif
-
     ! debug
-    !if (myrank == 0 ) print*,'reading in: ',trim(LOCAL_PATH)//'/'//trim(outputname),iteration_on_subset_tmp,iteration_on_subset,it
+    !if (myrank == 0 ) print *,'reading in: ',trim(LOCAL_PATH)//'/'//trim(outputname),iteration_on_subset_tmp,iteration_on_subset,it
 
     ! opens corresponding snapshot file for reading
     open(unit=IIN,file=trim(outputname), &

@@ -146,7 +146,7 @@
 
 ! converts geocentric colatitude (theta) to geographic colatitude (theta_prime) (in radians)
 
-! see: Dahlen & Tromp, 1998: chapter 14.1.5 Geographic versus geocentric colatitude
+! see the book of Dahlen and Tromp, 1998: chapter 14.1.5 Geographic versus geocentric colatitude
 
 ! (see also in file geographic_versus_geocentric_coordinates_from_Dahlen_Tromp_1998.pdf in the "doc" directory of the code)
 
@@ -161,8 +161,8 @@
 !
 ! @jeroen:
 ! "
-! The conversion is given by D & T (14.32), and using the observed ellipticity given by (14.24)
-! this gives 1.00670466 (not 1.006760466).
+! The conversion is given in the book of Dahlen and Tromp, 1998 (equation 14.32),
+! and using the observed ellipticity given by (14.24) this gives 1.00670466 (not 1.006760466).
 ! If you use the hydrostatic value given by (14.23),
 ! you would get 1.0066711.
 ! One could argue for either one, but I prefer to use the best fitting observed value.

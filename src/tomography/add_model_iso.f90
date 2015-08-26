@@ -85,27 +85,27 @@ program add_model
 
   ! user output
   if (myrank == 0) then
-    print*
-    print*,'***********'
-    print*,'program add_model_iso: '
-    print*,'  NPROC_XI , NPROC_ETA: ',nproc_xi_val,nproc_eta_val
-    print*,'  NCHUNKS: ',nchunks_val
-    print*
-    print*,'model update for vs & vp & rho'
-    print*,'  step_fac = ',step_fac
-    print*
+    print *
+    print *,'***********'
+    print *,'program add_model_iso: '
+    print *,'  NPROC_XI , NPROC_ETA: ',nproc_xi_val,nproc_eta_val
+    print *,'  NCHUNKS: ',nchunks_val
+    print *
+    print *,'model update for vs & vp & rho'
+    print *,'  step_fac = ',step_fac
+    print *
     if (USE_ALPHA_BETA_RHO) then
-      print*,'kernel parameterization: (alpha,beta,rho)'
+      print *,'kernel parameterization: (alpha,beta,rho)'
     else
-      print*,'kernel parameterization: (bulk,beta,rho)'
+      print *,'kernel parameterization: (bulk,beta,rho)'
     endif
-    print*
+    print *
     if (USE_RHO_SCALING) then
-      print*,'scaling rho perturbations'
-      print*
+      print *,'scaling rho perturbations'
+      print *
     endif
-    print*,'***********'
-    print*
+    print *,'***********'
+    print *
   endif
 
   ! reads in current isotropic model files: vp & vs & rho
@@ -213,10 +213,10 @@ subroutine initialize()
 
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print*, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
-      print*, 'Error number of MPI processors actually run on: ',sizeprocs
-      print*
-      print*, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xadd_model .. '
+      print *, 'Error number of processors supposed to run on : ',NPROCTOT_VAL
+      print *, 'Error number of MPI processors actually run on: ',sizeprocs
+      print *
+      print *, 'please rerun with: mpirun -np ',NPROCTOT_VAL,' bin/xadd_model .. '
     endif
     call exit_MPI(myrank,'Error wrong number of MPI processes')
   endif

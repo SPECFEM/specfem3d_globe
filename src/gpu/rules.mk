@@ -123,6 +123,9 @@ BUILD_VERSION_TXT += support
 ### building rules
 ###
 
+.PHONY: boast
+
+boast: boast_kernels
 
 ###
 ### boast kernel generation
@@ -134,7 +137,7 @@ boast_kernels :
 	@echo ""
 	cd src/gpu/boast ;\
 	mkdir -p ../$(BOAST_DIR_NAME);\
-	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME)
+	ruby kernels.rb --output-dir ../$(BOAST_DIR_NAME) --elem $(GPU_ELEM_PER_THREAD)
 	@echo ""
 
 test_boast_kernels :

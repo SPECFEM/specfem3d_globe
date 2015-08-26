@@ -66,11 +66,11 @@ program smooth_sem_globe
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER,NGLLCUBE
+
   use postprocess_par,only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
     ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
-    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES
-  use specfem_par,only: LOCAL_PATH
+    NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES,LOCAL_PATH
 
   use kdtree_search
 
@@ -274,21 +274,21 @@ program smooth_sem_globe
 
   ! user output
   if (myrank == 0) then
-    print*,"defaults:"
-    print*,"  NPROC_XI , NPROC_ETA        : ",NPROC_XI,NPROC_ETA
-    print*,"  NCHUNKS                     : ",NCHUNKS
-    print*,"  element size on surface (km): ",element_size
-    print*
-    print*,"  smoothing sigma_h , sigma_v (km)                : ",sigma_h,sigma_v
+    print *,"defaults:"
+    print *,"  NPROC_XI , NPROC_ETA        : ",NPROC_XI,NPROC_ETA
+    print *,"  NCHUNKS                     : ",NCHUNKS
+    print *,"  element size on surface (km): ",element_size
+    print *
+    print *,"  smoothing sigma_h , sigma_v (km)                : ",sigma_h,sigma_v
     ! scalelength: approximately S ~ sigma * sqrt(8.0) for a gaussian smoothing
-    print*,"  smoothing scalelengths horizontal, vertical (km): ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
-    print*
-    print*,"  data name      : ",trim(kernel_name)
-    print*,"  input dir      : ",trim(input_dir)
-    print*,"  output dir     : ",trim(output_dir)
-    print*
-    print*,"number of elements per slice: ",NSPEC_AB
-    print*
+    print *,"  smoothing scalelengths horizontal, vertical (km): ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
+    print *
+    print *,"  data name      : ",trim(kernel_name)
+    print *,"  input dir      : ",trim(input_dir)
+    print *,"  output dir     : ",trim(output_dir)
+    print *
+    print *,"number of elements per slice: ",NSPEC_AB
+    print *
   endif
   ! synchronizes
   call synchronize_all()
@@ -377,9 +377,9 @@ program smooth_sem_globe
   ! read in the topology files of the current and neighboring slices
   ! point locations
   write(prname_lp,'(a,i6.6,a)') trim(topo_dir)//'/proc',myrank,trim(reg_name)//'solver_data.bin'
-  open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
+  open(IIN,file=trim(prname_lp),status='old',action='read',form='unformatted',iostat=ier)
   if (ier /= 0) then
-    print*,'Error opening file: ',trim(prname_lp)
+    print *,'Error opening file: ',trim(prname_lp)
     call exit_mpi(myrank,'Error opening solver_data.bin file')
   endif
 
@@ -454,14 +454,14 @@ program smooth_sem_globe
     ! search by kd-tree
     ! user output
     if (myrank == 0) then
-      print*,'using kd-tree search:'
+      print *,'using kd-tree search:'
       if (DO_SEARCH_ELLIP) then
-        print*,'  search radius horizontal: ',r_search_dist_h * R_EARTH_KM,'km'
-        print*,'  search radius vertical  : ',r_search_dist_v * R_EARTH_KM,'km'
+        print *,'  search radius horizontal: ',r_search_dist_h * R_EARTH_KM,'km'
+        print *,'  search radius vertical  : ',r_search_dist_v * R_EARTH_KM,'km'
       else
-        print*,'  search sphere radius: ',r_search * R_EARTH_KM,'km'
+        print *,'  search sphere radius: ',r_search * R_EARTH_KM,'km'
       endif
-      print*
+      print *
     endif
 
     ! set number of tree nodes
@@ -483,17 +483,17 @@ program smooth_sem_globe
     ! brute-force search
     ! user output
     if (myrank == 0) then
-      print*,'using brute-force search:'
-      print*,'  search radius horizontal: ',sigma_h3 * R_EARTH_KM,'km'
-      print*,'  search radius vertical  : ',sigma_v3 * R_EARTH_KM,'km'
-      print*
+      print *,'using brute-force search:'
+      print *,'  search radius horizontal: ',sigma_h3 * R_EARTH_KM,'km'
+      print *,'  search radius vertical  : ',sigma_v3 * R_EARTH_KM,'km'
+      print *
     endif
   endif
 
   ! synchronizes
   call synchronize_all()
 
-  if (myrank == 0) print*, 'start looping over elements and points for smoothing ...'
+  if (myrank == 0) print *, 'start looping over elements and points for smoothing ...'
 
   ! synchronizes
   call synchronize_all()
@@ -510,7 +510,7 @@ program smooth_sem_globe
 
     iproc = islice(inum)
 
-    if (myrank == 0) print*,'  reading slice:',iproc
+    if (myrank == 0) print *,'  reading slice:',iproc
 
     ! debugging
     if (DEBUG .and. myrank == 0) then
@@ -536,9 +536,9 @@ program smooth_sem_globe
       ! read in the topology, kernel files, calculate center of elements
       ! point locations
       ! given in cartesian coordinates
-      open(IIN,file=trim(prname_lp),status='old',form='unformatted',iostat=ier)
+      open(IIN,file=trim(prname_lp),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0) then
-        print*,'Error could not open database file: ',trim(prname_lp)
+        print *,'Error could not open database file: ',trim(prname_lp)
         call exit_mpi(myrank,'Error opening slices in solver_data.bin file')
       endif
 
@@ -600,13 +600,13 @@ program smooth_sem_globe
     endif
 
     ! user output
-    if (myrank == 0) print*,'  reading data file:',iproc,trim(kernel_name)
+    if (myrank == 0) print *,'  reading data file:',iproc,trim(kernel_name)
 
     ! data file
     write(local_data_file,'(a,i6.6,a)') &
       trim(input_dir)//'/proc',iproc,trim(reg_name)//trim(kernel_name)//'.bin'
 
-    open(IIN,file=trim(local_data_file),status='old',form='unformatted',iostat=ier)
+    open(IIN,file=trim(local_data_file),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening data file: ',trim(local_data_file)
       call exit_mpi(myrank,'Error opening data file')
@@ -621,7 +621,7 @@ program smooth_sem_globe
       min_old = minval(kernel)
       max_old = maxval(kernel)
     endif
-    if (myrank == 0) print*
+    if (myrank == 0) print *
 
     ! search setup
     if (.not. DO_BRUTE_FORCE_SEARCH) then
@@ -653,11 +653,11 @@ program smooth_sem_globe
       if (myrank == 0) then
         tCPU = wtime() - time_start
         if (mod(ispec-1,NSPEC_AB/NSTEP_PERCENT_INFO) == 0 .and. ispec < (NSPEC_AB - 0.5*NSPEC_AB/NSTEP_PERCENT_INFO)) then
-          print*,'    ',int((ispec-1) / (NSPEC_AB/NSTEP_PERCENT_INFO)) * (100.0 / NSTEP_PERCENT_INFO), &
+          print *,'    ',int((ispec-1) / (NSPEC_AB/NSTEP_PERCENT_INFO)) * (100.0 / NSTEP_PERCENT_INFO), &
                  ' % elements done - Elapsed time in seconds = ',tCPU
         endif
         if (ispec == NSPEC_AB) then
-          print*,'    ',100.0,' % elements done - Elapsed time in seconds = ',tCPU
+          print *,'    ',100.0,' % elements done - Elapsed time in seconds = ',tCPU
         endif
       endif
 
@@ -711,7 +711,7 @@ program smooth_sem_globe
         if (DEBUG .and. myrank == 0) then
           ! user info
           if (ispec < 10) then
-            print*,'  total number of search elements: ',num_elem_local,'ispec',ispec
+            print *,'  total number of search elements: ',num_elem_local,'ispec',ispec
           endif
           ! file output
           if (ispec == tmp_ispec_dbg) then
@@ -726,7 +726,7 @@ program smooth_sem_globe
             write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_proc',iproc
             call write_VTK_data_elem_i(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore, &
                                        ibool,ispec_flag,filename)
-            print*,'file written: ',trim(filename)//'.vtk'
+            print *,'file written: ',trim(filename)//'.vtk'
             deallocate(ispec_flag)
           endif
         endif
@@ -787,9 +787,9 @@ program smooth_sem_globe
               if (i == 2 .and. j == 3 .and. k == 4) then
 #endif
                 tmp_bk(:,:,:,ispec2) = exp_val(:,:,:)
-                print*,'debug',myrank,'ispec',ispec,'ispec2',ispec2,'dist:',dist_h,dist_v
-                print*,'debug exp',minval(exp_val),maxval(exp_val)
-                print*,'debug kernel',minval(kernel(:,:,:,ispec2)),maxval(kernel(:,:,:,ispec2))
+                print *,'debug',myrank,'ispec',ispec,'ispec2',ispec2,'dist:',dist_h,dist_v
+                print *,'debug exp',minval(exp_val),maxval(exp_val)
+                print *,'debug kernel',minval(kernel(:,:,:,ispec2)),maxval(kernel(:,:,:,ispec2))
               endif
             endif
           endif
@@ -805,12 +805,12 @@ program smooth_sem_globe
 
           ! checks number
           !if (isNaN(tk(INDEX_IJK,ispec))) then
-          !  print*,'Error tk NaN: ',tk(INDEX_IJK,ispec)
-          !  print*,'rank:',myrank
-          !  print*,'INDEX_IJK,ispec:',INDEX_IJK,ispec
-          !  print*,'tk: ',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
-          !  print*,'sum exp_val: ',sum(exp_val(:,:,:)),'sum factor:',sum(factor(:,:,:))
-          !  print*,'sum kernel:',sum(kernel(:,:,:,ispec2))
+          !  print *,'Error tk NaN: ',tk(INDEX_IJK,ispec)
+          !  print *,'rank:',myrank
+          !  print *,'INDEX_IJK,ispec:',INDEX_IJK,ispec
+          !  print *,'tk: ',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
+          !  print *,'sum exp_val: ',sum(exp_val(:,:,:)),'sum factor:',sum(factor(:,:,:))
+          !  print *,'sum kernel:',sum(kernel(:,:,:,ispec2))
           !  call exit_mpi(myrank, 'Error NaN')
           !endif
 
@@ -833,7 +833,7 @@ program smooth_sem_globe
           ! outputs gaussian weighting function
           write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_gaussian_proc',iproc
           call write_VTK_data_elem_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
-          print*,'file written: ',trim(filename)//'.vtk'
+          print *,'file written: ',trim(filename)//'.vtk'
         endif
       endif
 
@@ -865,11 +865,11 @@ program smooth_sem_globe
 
   ! normalizes/scaling factor
   if (myrank == 0) then
-    print*, 'Scaling values:'
-    print*, '  tk min/max = ',minval(tk),maxval(tk)
-    print*, '  bk min/max = ',minval(bk),maxval(bk)
-    print*, '  theoretical norm = ',norm
-    print*
+    print *, 'Scaling values:'
+    print *, '  tk min/max = ',minval(tk),maxval(tk)
+    print *, '  bk min/max = ',minval(bk),maxval(bk)
+    print *, '  theoretical norm = ',norm
+    print *
   endif
 
   ! compute the smoothed kernel values
@@ -889,7 +889,7 @@ program smooth_sem_globe
 
       !debug
       !if (tk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL .and. myrank == 0) then
-      !  print*,myrank,'zero tk: ',INDEX_IJK,ispec,'tk:',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
+      !  print *,myrank,'zero tk: ',INDEX_IJK,ispec,'tk:',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec)
       !endif
 
 
@@ -901,10 +901,10 @@ program smooth_sem_globe
 
       ! checks number (isNaN check)
       if (kernel_smooth(INDEX_IJK,ispec) /= kernel_smooth(INDEX_IJK,ispec)) then
-        print*,'Error kernel_smooth value not a number: ',kernel_smooth(INDEX_IJK,ispec)
-        print*,'rank:',myrank
-        print*,'INDEX_IJK,ispec:',INDEX_IJK,ispec
-        print*,'tk: ',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec),'norm:',norm
+        print *,'Error kernel_smooth value not a number: ',kernel_smooth(INDEX_IJK,ispec)
+        print *,'rank:',myrank
+        print *,'INDEX_IJK,ispec:',INDEX_IJK,ispec
+        print *,'tk: ',tk(INDEX_IJK,ispec),'bk:',bk(INDEX_IJK,ispec),'norm:',norm
         call exit_mpi(myrank, 'Error kernel value is NaN')
       endif
 
@@ -921,7 +921,7 @@ program smooth_sem_globe
   write(ks_file,'(a,i6.6,a)') trim(output_dir)//'/proc',myrank, &
                               trim(reg_name)//trim(kernel_name)//'_smooth.bin'
 
-  open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',iostat=ier)
+  open(IOUT,file=trim(ks_file),status='unknown',form='unformatted',action='write',iostat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error opening smoothed kernel file')
 
   ! Note: output the following instead of kernel_smooth(:,:,:,1:NSPEC_AB) to create files of the same sizes

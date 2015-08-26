@@ -128,7 +128,7 @@
 
     ! debug
     !if (debug) then
-    !  print*,INDEX_IJK,'smoothing:',dist_v,dist_h,sigma_h2,sigma_v2,ratio,theta,'val',- dist_h/sigma_h2 - dist_v/sigma_v2
+    !  print *,INDEX_IJK,'smoothing:',dist_v,dist_h,sigma_h2,sigma_v2,ratio,theta,'val',- dist_h/sigma_h2 - dist_v/sigma_v2
     !endif
 
   ENDDO_LOOP_IJK

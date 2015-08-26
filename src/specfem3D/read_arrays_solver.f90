@@ -45,8 +45,7 @@
   use constants_solver
   use specfem_par,only: &
     ABSORBING_CONDITIONS, &
-    LOCAL_PATH,ABSORBING_CONDITIONS,&
-    EXACT_MASS_MATRIX_FOR_ROTATION, NUMBER_OF_SIMULTANEOUS_RUNS
+    LOCAL_PATH,ABSORBING_CONDITIONS
 
   implicit none
 
@@ -97,14 +96,10 @@
   ! local parameters
   integer :: ier,lnspec,lnglob
   ! processor identification
-  character(len=MAX_STRING_LEN) :: prname, path_to_add
+  character(len=MAX_STRING_LEN) :: prname
 
   ! create the name for the database of the current slide and region
   call create_name_database(prname,myrank,iregion_code,LOCAL_PATH)
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    prname = path_to_add(1:len_trim(path_to_add))//prname(1:len_trim(prname))
-  endif
 
   open(unit=IIN,file=prname(1:len_trim(prname))//'solver_data.bin', &
         status='old',action='read',form='unformatted',iostat=ier)
@@ -118,14 +113,14 @@
   ! checks dimensions
   if (lnspec /= nspec) then
     close(IIN)
-    print*,'Error file dimension: nspec in file = ',lnspec,' but nspec desired:',nspec
-    print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
+    print *,'Error file dimension: nspec in file = ',lnspec,' but nspec desired:',nspec
+    print *,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
     call exit_mpi(myrank,'Error dimensions in solver_data.bin')
   endif
   if (lnglob /= nglob) then
     close(IIN)
-    print*,'Error file dimension: nglob in file = ',lnglob,' but nglob desired:',nglob
-    print*,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
+    print *,'Error file dimension: nglob in file = ',lnglob,' but nglob desired:',nglob
+    print *,'please check file ',prname(1:len_trim(prname))//'solver_data.bin'
     call exit_mpi(myrank,'Error dimensions in solver_data.bin')
   endif
 
@@ -213,16 +208,16 @@
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   if (((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) .and. iregion_code == IREGION_INNER_CORE)) then
     read(IIN) rmassx
     read(IIN) rmassy
   endif
 
   read(IIN) rmassz
 
-  if (((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION) .and. iregion_code == IREGION_INNER_CORE)) then
+  if (((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
+      ((ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) .and. iregion_code == IREGION_INNER_CORE)) then
     read(IIN) b_rmassx
     read(IIN) b_rmassy
   endif

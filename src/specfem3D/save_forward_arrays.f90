@@ -45,7 +45,7 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) outputname, path_to_add
+  character(len=MAX_STRING_LEN) outputname
 
   ! checks if anything to do
   if (UNDO_ATTENUATION ) return
@@ -110,11 +110,6 @@
     else
       write(outputname,'(a,i6.6,a)') 'proc',myrank,'_save_forward_arrays.bin'
       outputname = trim(LOCAL_TMP_PATH)//'/'//trim(outputname)
-
-      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-        outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
-      endif
 
       open(unit=IOUT,file=trim(outputname),status='unknown', &
           form='unformatted',action='write',iostat=ier)
@@ -185,7 +180,7 @@
   ! local parameters
   integer :: iteration_on_subset_tmp
   integer :: ier
-  character(len=MAX_STRING_LEN) :: outputname, path_to_add
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! transfers wavefields from GPU device to CPU host
   if (GPU_MODE) then
@@ -218,13 +213,8 @@
     write(outputname,'(a,i6.6,a,i6.6,a)') 'proc',myrank,'_save_frame_at',iteration_on_subset_tmp,'.bin'
     outputname = trim(LOCAL_PATH)//'/'//trim(outputname)
 
-    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-      outputname = path_to_add(1:len_trim(path_to_add))//outputname(1:len_trim(outputname))
-    endif
-
     ! debug
-    !if (myrank == 0 ) print*,'saving in: ',trim(LOCAL_PATH)//'/'//trim(outputname), iteration_on_subset_tmp,it
+    !if (myrank == 0 ) print *,'saving in: ',trim(LOCAL_PATH)//'/'//trim(outputname), iteration_on_subset_tmp,it
 
     open(unit=IOUT,file=trim(outputname), &
          status='unknown',form='unformatted',action='write',iostat=ier)

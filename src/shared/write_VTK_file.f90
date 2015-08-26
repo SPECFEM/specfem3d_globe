@@ -25,11 +25,18 @@
 !
 !=====================================================================
 
+! note: this might be a possible bug in gfortran with -mcmodel=medium on cray,
+!       but the write statement
+!         write(IOUT_VTK,*) ""
+!       produces errors, relocation truncated to fit: R_X86_64_32 against `.lrodata'
+!       this can be fixed by using
+!         write(IOUT_VTK,*)
+!       without quotes to add a newline.
 
   subroutine write_VTK_data_points(nglob, &
-                                  xstore_dummy,ystore_dummy,zstore_dummy, &
-                                  points_globalindices,num_points_globalindices, &
-                                  prname_file)
+                                   xstore_dummy,ystore_dummy,zstore_dummy, &
+                                   points_globalindices,num_points_globalindices, &
+                                   prname_file)
 
 ! external mesh routine for saving VTK files for points locations
 
@@ -49,6 +56,7 @@
   ! file name
   character(len=MAX_STRING_LEN),intent(in) :: prname_file
 
+  ! local parameters
   integer :: i,iglob,ier
 
   ! write source and receiver VTK files for Paraview
@@ -56,7 +64,7 @@
   !write(IMAIN,*) '  VTK file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
   if (ier /= 0) stop 'Error opening VTK file'
 
   write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
@@ -67,15 +75,14 @@
   do i = 1,num_points_globalindices
     iglob = points_globalindices(i)
     if (iglob <= 0 .or. iglob > nglob) then
-      print*,'Error: '//prname_file(1:len_trim(prname_file))//'.vtk'
-      print*,'Error global index: ',iglob,i
-      close(IOUT_VTK)
+      print *,'Error: '//prname_file(1:len_trim(prname_file))//'.vtk'
+      print *,'Error global index: ',iglob,i
       stop 'Error VTK points file'
     endif
 
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   close(IOUT_VTK)
 
@@ -84,66 +91,66 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
-
-  subroutine write_VTK_glob_points(nglob, &
-                                  xstore_dummy,ystore_dummy,zstore_dummy, &
-                                  glob_values, &
-                                  prname_file)
-
-! external mesh routine for saving VTK files for points locations
-
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
-
-  implicit none
-
-  integer,intent(in) :: nglob
-
-  ! global coordinates
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
-
-  ! GLL data values array
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: glob_values
-
-  ! file name
-  character(len=MAX_STRING_LEN),intent(in) :: prname_file
-
-  ! local parameters
-  integer :: iglob,ier
-
-  ! write source and receiver VTK files for Paraview
-  !debug
-  !write(IMAIN,*) '  VTK file: '
-  !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
-
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
-  if (ier /= 0) stop 'Error opening VTK file'
-
-  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
-  write(IOUT_VTK,'(a)') 'material model VTK file'
-  write(IOUT_VTK,'(a)') 'ASCII'
-  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
-  do iglob = 1,nglob
-    write(IOUT_VTK,*) xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
-  enddo
-  write(IOUT_VTK,*) ""
-
-  ! writes out GLL data (velocity) for each element point
-  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob
-  write(IOUT_VTK,'(a)') "SCALARS glob_data float"
-  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-  do iglob = 1,nglob
-    write(IOUT_VTK,*) glob_values(iglob)
-  enddo
-  write(IOUT_VTK,*) ""
-
-  close(IOUT_VTK)
-
-  end subroutine write_VTK_glob_points
-
-
-
+!
+! used routine, may be used for debugging...
+!
+!  subroutine write_VTK_glob_points(nglob, &
+!                                  xstore_dummy,ystore_dummy,zstore_dummy, &
+!                                  glob_values, &
+!                                  prname_file)
+!
+!! external mesh routine for saving VTK files for points locations
+!
+!  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
+!
+!  implicit none
+!
+!  integer,intent(in) :: nglob
+!
+!  ! global coordinates
+!  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+!
+!  ! GLL data values array
+!  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: glob_values
+!
+!  ! file name
+!  character(len=MAX_STRING_LEN),intent(in) :: prname_file
+!
+!  ! local parameters
+!  integer :: iglob,ier
+!
+!  ! write source and receiver VTK files for Paraview
+!  !debug
+!  !write(IMAIN,*) '  VTK file: '
+!  !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
+!
+!  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
+!  if (ier /= 0) stop 'Error opening VTK file'
+!
+!  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+!  write(IOUT_VTK,'(a)') 'material model VTK file'
+!  write(IOUT_VTK,'(a)') 'ASCII'
+!  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+!  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
+!  do iglob = 1,nglob
+!    write(IOUT_VTK,*) xstore_dummy(iglob),ystore_dummy(iglob),zstore_dummy(iglob)
+!  enddo
+!  write(IOUT_VTK,*)
+!
+!  ! writes out GLL data (velocity) for each element point
+!  write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob
+!  write(IOUT_VTK,'(a)') "SCALARS glob_data float"
+!  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+!  do iglob = 1,nglob
+!    write(IOUT_VTK,*) glob_values(iglob)
+!  enddo
+!  write(IOUT_VTK,*)
+!
+!  close(IOUT_VTK)
+!
+!  end subroutine write_VTK_glob_points
+!
+!
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -179,7 +186,7 @@
   !write(IMAIN,*) '  VTK file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
   if (ier /= 0) stop 'Error opening VTK file'
 
   write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
@@ -190,7 +197,7 @@
   do i = 1,nglob
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! note: indices for VTK start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
@@ -199,12 +206,12 @@
           ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! type: hexahedrons
   write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOUT_VTK,'(6i12)') (12,ispec = 1,nspec)
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   write(IOUT_VTK,'(a,i12)') "CELL_DATA ",nspec
   write(IOUT_VTK,'(a)') "SCALARS elem_flag integer"
@@ -216,9 +223,8 @@
       write(IOUT_VTK,*) 0
     endif
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
   close(IOUT_VTK)
-
 
   end subroutine write_VTK_data_elem_l
 
@@ -229,8 +235,8 @@
 
 
   subroutine write_VTK_data_elem_i(nspec,nglob, &
-                        xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
-                        elem_flag,prname_file)
+                                   xstore_dummy,ystore_dummy,zstore_dummy, &
+                                   ibool,elem_flag,prname_file)
 
 
 ! routine for saving VTK file holding integer value on each spectral element
@@ -259,7 +265,7 @@
   !write(IMAIN,*) '  VTK file: '
   !write(IMAIN,*) '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
   if (ier /= 0) stop 'Error opening VTK file'
 
   write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
@@ -270,7 +276,7 @@
   do i = 1,nglob
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! note: indices for VTK start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
@@ -279,12 +285,12 @@
           ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! type: hexahedrons
   write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOUT_VTK,'(6i12)') (12,ispec = 1,nspec)
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   write(IOUT_VTK,'(a,i12)') "CELL_DATA ",nspec
   write(IOUT_VTK,'(a)') "SCALARS elem_val integer"
@@ -292,7 +298,7 @@
   do ispec = 1,nspec
     write(IOUT_VTK,*) elem_flag(ispec)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
   close(IOUT_VTK)
 
   end subroutine write_VTK_data_elem_i
@@ -304,8 +310,8 @@
 ! external mesh routine for saving VTK files for custom_real values on global points
 
   subroutine write_VTK_data_cr(idoubling,nspec,nglob, &
-                              xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
-                              glob_data,prname_file)
+                               xstore_dummy,ystore_dummy,zstore_dummy, &
+                               ibool,glob_data,prname_file)
 
 ! outputs single file for each process
 
@@ -332,7 +338,7 @@
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval
 
   ! write source and receiver VTK files for Paraview
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
   if (ier /= 0) stop 'Error opening VTK file'
 
   write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
@@ -350,7 +356,7 @@
 
     write(IOUT_VTK,'(3e18.6)') xval,yval,zval
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! defines cell on coarse corner points
   ! note: indices for VTK start at 0
@@ -383,12 +389,12 @@
     endif
 
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! type: hexahedrons
   write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOUT_VTK,'(6i12)') (12,ispec = 1,nspec)
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! x components
   write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob
@@ -417,7 +423,7 @@
                         + glob_data(2,i)*glob_data(2,i) &
                         + glob_data(3,i)*glob_data(3,i))
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   close(IOUT_VTK)
 
@@ -427,207 +433,209 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-
-! external mesh routine for saving VTK files for custom_real values on global points
-
-  subroutine write_VTK_data_cr_all(myrank,NPROCTOT,idoubling, &
-                              nspec,nglob, &
-                              xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
-                              glob_data,prname_file)
-
-! outputs single file for all processes
-
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
-
-  implicit none
-
-  integer,intent(in) :: myrank,NPROCTOT
-
-  integer,intent(in) ::nspec,nglob
-
-  integer, dimension(nspec),intent(in) :: idoubling
-
-  ! global coordinates
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
-
-  ! global data values array
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: glob_data
-
-  ! file name
-  character(len=MAX_STRING_LEN),intent(in) :: prname_file
-
-  ! local parameters
-  integer :: ispec,i,iproc,ier
-  real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval
-
-  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: &
-      store_val_x_all,store_val_y_all,store_val_z_all, &
-      store_val_ux_all,store_val_uy_all,store_val_uz_all
-  integer, dimension(:,:,:,:,:),allocatable :: ibool_all
-  integer, dimension(:,:),allocatable :: idoubling_all
-  real(kind=CUSTOM_REAL), dimension(nglob) :: tmp
-
-  ! master collect arrays
-  if (myrank == 0) then
-    allocate(store_val_x_all(nglob,0:NPROCTOT-1), &
-            store_val_y_all(nglob,0:NPROCTOT-1), &
-            store_val_z_all(nglob,0:NPROCTOT-1), &
-            store_val_ux_all(nglob,0:NPROCTOT-1), &
-            store_val_uy_all(nglob,0:NPROCTOT-1), &
-            store_val_uz_all(nglob,0:NPROCTOT-1), &
-            idoubling_all(nspec,0:NPROCTOT-1), &
-            ibool_all(NGLLX,NGLLY,NGLLZ,nspec,0:NPROCTOT-1),stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating stores')
-  else
-    ! dummy arrays
-    allocate(store_val_x_all(1,1), &
-            store_val_y_all(1,1), &
-            store_val_z_all(1,1), &
-            store_val_ux_all(1,1), &
-            store_val_uy_all(1,1), &
-            store_val_uz_all(1,1), &
-            idoubling_all(1,1), &
-            ibool_all(1,1,1,1,1),stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy stores')
-  endif
-
-  ! gather info on master proc
-  call gather_all_cr(xstore_dummy,nglob,store_val_x_all,nglob,NPROCTOT)
-  call gather_all_cr(ystore_dummy,nglob,store_val_y_all,nglob,NPROCTOT)
-  call gather_all_cr(zstore_dummy,nglob,store_val_z_all,nglob,NPROCTOT)
-
-  ! attention: these calls produce copies of the glob_data array
-  ! x-component
-  tmp(:) = glob_data(1,:)
-  call gather_all_cr(tmp,nglob,store_val_ux_all,nglob,NPROCTOT)
-  ! y-component
-  tmp(:) = glob_data(2,:)
-  call gather_all_cr(tmp,nglob,store_val_uy_all,nglob,NPROCTOT)
-  ! z-component
-  tmp(:) = glob_data(3,:)
-  call gather_all_cr(tmp,nglob,store_val_uz_all,nglob,NPROCTOT)
-
-  call gather_all_i(ibool,NGLLX*NGLLY*NGLLZ*nspec,ibool_all,NGLLX*NGLLY*NGLLZ*nspec,NPROCTOT)
-  call gather_all_i(idoubling,nspec,idoubling_all,nspec,NPROCTOT)
-
-
-  if (myrank == 0) then
-
-    ! write source and receiver VTK files for Paraview
-    open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
-    if (ier /= 0) stop 'Error opening VTK file'
-
-    write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
-    write(IOUT_VTK,'(a)') 'material model VTK file'
-    write(IOUT_VTK,'(a)') 'ASCII'
-    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
-    write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob*NPROCTOT, ' float'
-    do iproc = 0, NPROCTOT-1
-      do i = 1,nglob
-
-        !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
-        rval = store_val_x_all(i,iproc)
-        thetaval = store_val_y_all(i,iproc)
-        phival = store_val_z_all(i,iproc)
-        call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
-
-        write(IOUT_VTK,'(3e18.6)') xval,yval,zval
-      enddo
-    enddo
-    write(IOUT_VTK,*) ""
-
-    ! defines cell on coarse corner points
-    ! note: indices for VTK start at 0
-    write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec*NPROCTOT,nspec*NPROCTOT*9
-    do iproc = 0, NPROCTOT-1
-      do ispec = 1,nspec
-
-        ! note: central cube elements are only shared and used in CHUNK_AB and CHUNK_AB_ANTIPODE
-        !          all other chunks ignore those elements
-
-        ! specific to inner core elements
-        ! exclude fictitious elements in central cube
-        if (idoubling_all(ispec,iproc) /= IFLAG_IN_FICTITIOUS_CUBE) then
-          ! valid cell
-          ! cell corner ids
-          write(IOUT_VTK,'(9i12)') 8,ibool_all(1,1,1,ispec,iproc)-1+iproc*nglob, &
-                            ibool_all(NGLLX,1,1,ispec,iproc)-1+iproc*nglob, &
-                            ibool_all(NGLLX,NGLLY,1,ispec,iproc)-1+iproc*nglob, &
-                            ibool_all(1,NGLLY,1,ispec,iproc)-1+iproc*nglob, &
-                            ibool_all(1,1,NGLLZ,ispec,iproc)-1+iproc*nglob, &
-                            ibool_all(NGLLX,1,NGLLZ,ispec,iproc)-1+iproc*nglob, &
-                            ibool_all(NGLLX,NGLLY,NGLLZ,ispec,iproc)-1+iproc*nglob, &
-                            ibool_all(1,NGLLY,NGLLZ,ispec,iproc)-1+iproc*nglob
-        else
-          ! fictitious elements in central cube
-          ! maps cell onto a randomly chosen point
-          write(IOUT_VTK,'(9i12)') 8,ibool_all(1,1,1,1,iproc)-1, &
-                            ibool_all(1,1,1,1,iproc)-1, &
-                            ibool_all(1,1,1,1,iproc)-1, &
-                            ibool_all(1,1,1,1,iproc)-1, &
-                            ibool_all(1,1,1,1,iproc)-1, &
-                            ibool_all(1,1,1,1,iproc)-1, &
-                            ibool_all(1,1,1,1,iproc)-1, &
-                            ibool_all(1,1,1,1,iproc)-1
-        endif
-
-      enddo
-    enddo
-    write(IOUT_VTK,*) ""
-
-    ! type: hexahedrons
-    write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec*NPROCTOT
-    write(IOUT_VTK,'(6i12)') (12,ispec = 1,nspec*NPROCTOT)
-    write(IOUT_VTK,*) ""
-
-    ! x components
-    write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob*NPROCTOT
-    write(IOUT_VTK,'(a)') "SCALARS x_comp float"
-    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-    do iproc = 0, NPROCTOT-1
-      do i = 1,nglob
-        write(IOUT_VTK,*) store_val_ux_all(i,iproc)
-      enddo
-    enddo
-    ! y components
-    write(IOUT_VTK,'(a)') "SCALARS y_comp float"
-    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-    do iproc = 0, NPROCTOT-1
-      do i = 1,nglob
-        write(IOUT_VTK,*) store_val_uy_all(i,iproc)
-      enddo
-    enddo
-    ! z components
-    write(IOUT_VTK,'(a)') "SCALARS z_comp float"
-    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-    do iproc = 0, NPROCTOT-1
-      do i = 1,nglob
-        write(IOUT_VTK,*) store_val_uz_all(i,iproc)
-      enddo
-    enddo
-    ! norm
-    write(IOUT_VTK,'(a)') "SCALARS norm float"
-    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-    do iproc = 0, NPROCTOT-1
-      do i = 1,nglob
-        write(IOUT_VTK,*) sqrt( store_val_ux_all(i,iproc)**2 &
-                          + store_val_uy_all(i,iproc)**2 &
-                          + store_val_uz_all(i,iproc)**2 )
-      enddo
-    enddo
-    write(IOUT_VTK,*) ""
-
-    close(IOUT_VTK)
-
-  endif
-
-  deallocate(store_val_x_all,store_val_y_all,store_val_z_all, &
-            store_val_ux_all,store_val_uy_all,store_val_uz_all, &
-            ibool_all)
-
-  end subroutine write_VTK_data_cr_all
-
+!
+! unused routine, may be used for debugging...
+!
+!! external mesh routine for saving VTK files for custom_real values on global points
+!
+!  subroutine write_VTK_data_cr_all(myrank,NPROCTOT,idoubling, &
+!                              nspec,nglob, &
+!                              xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
+!                              glob_data,prname_file)
+!
+!! outputs single file for all processes
+!
+!  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
+!
+!  implicit none
+!
+!  integer,intent(in) :: myrank,NPROCTOT
+!
+!  integer,intent(in) ::nspec,nglob
+!
+!  integer, dimension(nspec),intent(in) :: idoubling
+!
+!  ! global coordinates
+!  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+!  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+!
+!  ! global data values array
+!  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: glob_data
+!
+!  ! file name
+!  character(len=MAX_STRING_LEN),intent(in) :: prname_file
+!
+!  ! local parameters
+!  integer :: ispec,i,iproc,ier
+!  real(kind=CUSTOM_REAL) :: rval,thetaval,phival,xval,yval,zval
+!
+!  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: &
+!      store_val_x_all,store_val_y_all,store_val_z_all, &
+!      store_val_ux_all,store_val_uy_all,store_val_uz_all
+!  integer, dimension(:,:,:,:,:),allocatable :: ibool_all
+!  integer, dimension(:,:),allocatable :: idoubling_all
+!  real(kind=CUSTOM_REAL), dimension(nglob) :: tmp
+!
+!  ! master collect arrays
+!  if (myrank == 0) then
+!    allocate(store_val_x_all(nglob,0:NPROCTOT-1), &
+!            store_val_y_all(nglob,0:NPROCTOT-1), &
+!            store_val_z_all(nglob,0:NPROCTOT-1), &
+!            store_val_ux_all(nglob,0:NPROCTOT-1), &
+!            store_val_uy_all(nglob,0:NPROCTOT-1), &
+!            store_val_uz_all(nglob,0:NPROCTOT-1), &
+!            idoubling_all(nspec,0:NPROCTOT-1), &
+!            ibool_all(NGLLX,NGLLY,NGLLZ,nspec,0:NPROCTOT-1),stat=ier)
+!    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating stores')
+!  else
+!    ! dummy arrays
+!    allocate(store_val_x_all(1,1), &
+!            store_val_y_all(1,1), &
+!            store_val_z_all(1,1), &
+!            store_val_ux_all(1,1), &
+!            store_val_uy_all(1,1), &
+!            store_val_uz_all(1,1), &
+!            idoubling_all(1,1), &
+!            ibool_all(1,1,1,1,1),stat=ier)
+!    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy stores')
+!  endif
+!
+!  ! gather info on master proc
+!  call gather_all_cr(xstore_dummy,nglob,store_val_x_all,nglob,NPROCTOT)
+!  call gather_all_cr(ystore_dummy,nglob,store_val_y_all,nglob,NPROCTOT)
+!  call gather_all_cr(zstore_dummy,nglob,store_val_z_all,nglob,NPROCTOT)
+!
+!  ! attention: these calls produce copies of the glob_data array
+!  ! x-component
+!  tmp(:) = glob_data(1,:)
+!  call gather_all_cr(tmp,nglob,store_val_ux_all,nglob,NPROCTOT)
+!  ! y-component
+!  tmp(:) = glob_data(2,:)
+!  call gather_all_cr(tmp,nglob,store_val_uy_all,nglob,NPROCTOT)
+!  ! z-component
+!  tmp(:) = glob_data(3,:)
+!  call gather_all_cr(tmp,nglob,store_val_uz_all,nglob,NPROCTOT)
+!
+!  call gather_all_i(ibool,NGLLX*NGLLY*NGLLZ*nspec,ibool_all,NGLLX*NGLLY*NGLLZ*nspec,NPROCTOT)
+!  call gather_all_i(idoubling,nspec,idoubling_all,nspec,NPROCTOT)
+!
+!
+!  if (myrank == 0) then
+!
+!    ! write source and receiver VTK files for Paraview
+!    open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
+!    if (ier /= 0) stop 'Error opening VTK file'
+!
+!    write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+!    write(IOUT_VTK,'(a)') 'material model VTK file'
+!    write(IOUT_VTK,'(a)') 'ASCII'
+!    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+!    write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob*NPROCTOT, ' float'
+!    do iproc = 0, NPROCTOT-1
+!      do i = 1,nglob
+!
+!        !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
+!        rval = store_val_x_all(i,iproc)
+!        thetaval = store_val_y_all(i,iproc)
+!        phival = store_val_z_all(i,iproc)
+!        call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
+!
+!        write(IOUT_VTK,'(3e18.6)') xval,yval,zval
+!      enddo
+!    enddo
+!    write(IOUT_VTK,*)
+!
+!    ! defines cell on coarse corner points
+!    ! note: indices for VTK start at 0
+!    write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec*NPROCTOT,nspec*NPROCTOT*9
+!    do iproc = 0, NPROCTOT-1
+!      do ispec = 1,nspec
+!
+!        ! note: central cube elements are only shared and used in CHUNK_AB and CHUNK_AB_ANTIPODE
+!        !          all other chunks ignore those elements
+!
+!        ! specific to inner core elements
+!        ! exclude fictitious elements in central cube
+!        if (idoubling_all(ispec,iproc) /= IFLAG_IN_FICTITIOUS_CUBE) then
+!          ! valid cell
+!          ! cell corner ids
+!          write(IOUT_VTK,'(9i12)') 8,ibool_all(1,1,1,ispec,iproc)-1+iproc*nglob, &
+!                            ibool_all(NGLLX,1,1,ispec,iproc)-1+iproc*nglob, &
+!                            ibool_all(NGLLX,NGLLY,1,ispec,iproc)-1+iproc*nglob, &
+!                            ibool_all(1,NGLLY,1,ispec,iproc)-1+iproc*nglob, &
+!                            ibool_all(1,1,NGLLZ,ispec,iproc)-1+iproc*nglob, &
+!                            ibool_all(NGLLX,1,NGLLZ,ispec,iproc)-1+iproc*nglob, &
+!                            ibool_all(NGLLX,NGLLY,NGLLZ,ispec,iproc)-1+iproc*nglob, &
+!                            ibool_all(1,NGLLY,NGLLZ,ispec,iproc)-1+iproc*nglob
+!        else
+!          ! fictitious elements in central cube
+!          ! maps cell onto a randomly chosen point
+!          write(IOUT_VTK,'(9i12)') 8,ibool_all(1,1,1,1,iproc)-1, &
+!                            ibool_all(1,1,1,1,iproc)-1, &
+!                            ibool_all(1,1,1,1,iproc)-1, &
+!                            ibool_all(1,1,1,1,iproc)-1, &
+!                            ibool_all(1,1,1,1,iproc)-1, &
+!                            ibool_all(1,1,1,1,iproc)-1, &
+!                            ibool_all(1,1,1,1,iproc)-1, &
+!                            ibool_all(1,1,1,1,iproc)-1
+!        endif
+!
+!      enddo
+!    enddo
+!    write(IOUT_VTK,*)
+!
+!    ! type: hexahedrons
+!    write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec*NPROCTOT
+!    write(IOUT_VTK,'(6i12)') (12,ispec = 1,nspec*NPROCTOT)
+!    write(IOUT_VTK,*)
+!
+!    ! x components
+!    write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nglob*NPROCTOT
+!    write(IOUT_VTK,'(a)') "SCALARS x_comp float"
+!    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+!    do iproc = 0, NPROCTOT-1
+!      do i = 1,nglob
+!        write(IOUT_VTK,*) store_val_ux_all(i,iproc)
+!      enddo
+!    enddo
+!    ! y components
+!    write(IOUT_VTK,'(a)') "SCALARS y_comp float"
+!    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+!    do iproc = 0, NPROCTOT-1
+!      do i = 1,nglob
+!        write(IOUT_VTK,*) store_val_uy_all(i,iproc)
+!      enddo
+!    enddo
+!    ! z components
+!    write(IOUT_VTK,'(a)') "SCALARS z_comp float"
+!    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+!    do iproc = 0, NPROCTOT-1
+!      do i = 1,nglob
+!        write(IOUT_VTK,*) store_val_uz_all(i,iproc)
+!      enddo
+!    enddo
+!    ! norm
+!    write(IOUT_VTK,'(a)') "SCALARS norm float"
+!    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+!    do iproc = 0, NPROCTOT-1
+!      do i = 1,nglob
+!        write(IOUT_VTK,*) sqrt( store_val_ux_all(i,iproc)**2 &
+!                          + store_val_uy_all(i,iproc)**2 &
+!                          + store_val_uz_all(i,iproc)**2 )
+!      enddo
+!    enddo
+!    write(IOUT_VTK,*)
+!
+!    close(IOUT_VTK)
+!
+!  endif
+!
+!  deallocate(store_val_x_all,store_val_y_all,store_val_z_all, &
+!            store_val_ux_all,store_val_uy_all,store_val_uz_all, &
+!            ibool_all)
+!
+!  end subroutine write_VTK_data_cr_all
+!
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -666,10 +674,10 @@
   !--------------------------------------------------------------
 
   !debug
-  !print*, '  vtk file: '
-  !print*, '    ',prname_file(1:len_trim(prname_file))//'.vtk'
+  !print *, '  vtk file: '
+  !print *, '    ',prname_file(1:len_trim(prname_file))//'.vtk'
 
-  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',iostat=ier)
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
   if (ier /= 0) stop 'Error opening VTK file'
 
   write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
@@ -718,7 +726,7 @@
       enddo
     enddo
   endif
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! note: indices for vtk start at 0
   if (USE_CORNERS) then
@@ -748,7 +756,7 @@
       enddo
     enddo
   endif
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! type: hexahedrons
   if (USE_CORNERS) then
@@ -758,7 +766,7 @@
     write(IOUT_VTK,'(a,i16)') "CELL_TYPES ",(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)*nspec
     write(IOUT_VTK,'(6i16)') (12,ispec=1,(NGLLX-1)*(NGLLY-1)*(NGLLZ-1)*nspec)
   endif
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   ! writes out gll-data (velocity) for each element point
   if (USE_CORNERS) then
@@ -805,7 +813,7 @@
       enddo
     enddo
   endif
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*)
 
   close(IOUT_VTK)
 

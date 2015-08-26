@@ -120,9 +120,9 @@
 
   ! checks bounds
   if (nnr /= mr .or. no /= mo .or. na /= ma) then
-    print*,'Error GAPP2 model bounds: '
-    print*,'  file dimensions: nnr,no,na = ',nnr,no,na
-    print*,'  module dimensions: mr,mo,ma = ',mr,mo,ma
+    print *,'Error GAPP2 model bounds: '
+    print *,'  file dimensions: nnr,no,na = ',nnr,no,na
+    print *,'  module dimensions: mr,mo,ma = ',mr,mo,ma
     close(IIN)
     call exit_MPI(0,'please check GAPP2 model dimensions, and update model_gapp2.f90')
   endif
@@ -133,9 +133,9 @@
   ! checks bounds
   write(IMAIN,*) "             nr1 = ",nr1
   if (nr1 /= mr1) then
-    print*,'Error GAPP2 model bounds: '
-    print*,'  file dimensions: nr1 = ',nr1
-    print*,'  module dimensions: mr1 = ',mr1
+    print *,'Error GAPP2 model bounds: '
+    print *,'  file dimensions: nr1 = ',nr1
+    print *,'  module dimensions: mr1 = ',mr1
     close(IIN)
     call exit_MPI(0,'please check GAPP2 model dimensions, and update model_gapp2.f90')
   endif
@@ -153,7 +153,7 @@
       !read(IIN,*,iostat=ier) (vp3(ia,io,ir),io=no/2,no)
 
       if (ier /= 0) then
-        print*,'Error GAPP2 read: ia,ir = ',ia,ir
+        print *,'Error GAPP2 read: ia,ir = ',ia,ir
         call exit_MPI(0,'Error GAPP2 read')
       endif
     enddo
@@ -188,7 +188,7 @@
   double precision, parameter :: SCALE_VS =  1.40d0
   double precision, parameter :: SCALE_RHO = 0.0d0
 
-  double precision, parameter :: R_EARTH_ = 6371.d0
+  double precision, parameter :: R_EARTH_ = R_EARTH_KM
   double precision, parameter :: ZERO_ = 0.d0
 
 !.....................................

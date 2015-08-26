@@ -639,8 +639,8 @@
   ! checks cap degree size
   if (CAP_DEGREE < TINYVAL) then
     ! no cap smoothing
-    print*,'Error cap:',CAP_DEGREE
-    print*,'  lat/lon:',lat,lon
+    print *,'Error cap:',CAP_DEGREE
+    print *,'  lat/lon:',lat,lon
     stop 'Error cap_degree too small'
   endif
 
@@ -719,7 +719,7 @@
 
   enddo
   if (abs(total - ONE) > 0.001d0) then
-    print*,'Error cap:',total,CAP_DEGREE
+    print *,'Error cap:',total,CAP_DEGREE
     stop 'Error in cap integration for variable degree'
   endif
 

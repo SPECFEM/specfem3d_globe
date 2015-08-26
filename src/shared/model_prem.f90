@@ -320,7 +320,7 @@
 !
   else if (r > RCMB .and. r < RTOPDDOUBLEPRIME) then
     if (idoubling /= IFLAG_MANTLE_NORMAL) then
-      print*,'Error dprime point:',r, RCMB,RTOPDDOUBLEPRIME,idoubling,IFLAG_MANTLE_NORMAL
+      print *,'Error dprime point:',r, RCMB,RTOPDDOUBLEPRIME,idoubling,IFLAG_MANTLE_NORMAL
       call exit_MPI(myrank,'wrong doubling flag for D" point in model_prem_aniso()')
     endif
 !
