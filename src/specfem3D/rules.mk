@@ -103,7 +103,6 @@ specfem3D_OBJECTS += \
 	$O/write_movie_surface.solverstatic.o \
 	$O/write_output_ASCII.solverstatic.o \
 	$O/write_output_SAC.solverstatic.o \
-	$O/write_output_ASDF.solverstatic.o \
 	$(EMPTY_MACRO)
 
 specfem3D_MODULES = \
@@ -204,6 +203,30 @@ specfem3D_OBJECTS += $(adios_specfem3D_STUBS)
 specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
 endif
 
+###
+### ASDF
+###
+
+asdf_specfem3D_OBJECTS = \
+	$O/write_output_ASDF.solverstatic.o \
+	$(EMPTY_MACRO)
+
+asdf_specfem3D_STUBS = \
+	$(EMPTY_MACRO)
+
+asdf_specfem3D_SHARED_STUBS = \
+	$O/asdf_method_stubs.cc.o \
+	$(EMPTY_MACRO)
+
+# conditional asdf linking
+ifeq ($(ASDF),yes)
+specfem3D_OBJECTS += $(asdf_specfem3D_OBJECTS)
+else
+specfem3D_OBJECTS += $(asdf_specfem3D_STUBS)
+specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
+endif
+
+#
 # conditional CEM model
 ifeq ($(CEM),yes)
 specfem3D_OBJECTS += $O/read_write_netcdf.checknetcdf.o
@@ -241,13 +264,19 @@ ${E}/xspecfem3D: $(specfem3D_ALL_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D $(BUILD_VERSION_TXT)"
 	@echo ""
+
 ifeq ($(CUDA),yes)
 	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)	
-else # non cuda (non-gpu or opencl)
+endif
+
+# non-gpu or opencl
+ifeq ($(ASDF),yes)
+	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS) -lhdf5hl_fortran -lhdf5_hl -lhdf5 -Wl -lstdc++
+else
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
 #	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
-	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS) libasdf.a -I/usr/local/hdf5/intel-13.0/openmpi-1.6.3/1.8.10/include -L/usr/local/hdf5/intel-13.0/openmpi-1.6.3/1.8.10/lib64 -lhdf5hl_fortran -lhdf5_hl -lhdf5_fortran -lhdf5 -Wl,--build-id -lz -lm -lgpfs -Wl,-rpath -Wl,/usr/local/hdf5/intel-13.0/openmpi-1.6.3/1.8.10/lib64 -lstdc++
+	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
 	@echo ""
 endif
 
@@ -257,20 +286,12 @@ endif
 S := ${S_TOP}/src/specfem3D
 $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 
-####
-#### rule for each .o file below
-####
-
-$O/write_output_ASDF.o: /tigress/jas11/packages/specfem3d_globe_asdf/libasdf.a
-
 ###
 ### additional dependencies
 ###
 
-$O/write_output_ASDF.solverstatic.o: $O/asdf_data.solverstatic_module.o
-
 $O/write_seismograms.solverstatic.o: $O/asdf_data.solverstatic_module.o
-
+$O/write_output_ASDF.solverstatic.o: $O/asdf_data.solverstatic_module.o
 $O/compute_arrays_source.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/iterate_time.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/iterate_time_undoatt.solverstatic.o: $O/write_seismograms.solverstatic.o

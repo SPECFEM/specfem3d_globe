@@ -33,7 +33,6 @@
   use specfem_par_outercore
   use specfem_par_movie
   implicit none
-  integer ierr
 
   ! synchronize all processes, waits until all processes have written their seismograms
   call synchronize_all()

@@ -38,7 +38,7 @@ NPROC_ETA                       = 2
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = 1D_transversely_isotropic_prem
+MODEL                           = 1D_isotropic_prem
 
 # parameters describing the Earth model
 OCEANS                          = .true.
@@ -52,7 +52,7 @@ ATTENUATION                     = .true.
 ABSORBING_CONDITIONS            = .true.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 0.1d0
+RECORD_LENGTH_IN_MINUTES        = 2.5d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
@@ -148,7 +148,7 @@ LOCAL_PATH                      = ./DATABASES_MPI
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 200
+NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000

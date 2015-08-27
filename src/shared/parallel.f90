@@ -1577,7 +1577,7 @@ end module my_mpi
 
   implicit none
 
-  integer :: recvcount,NPROC
+  integer :: NPROC
   integer :: sendbuf
   integer, dimension(NPROC) :: recvbuf
 
