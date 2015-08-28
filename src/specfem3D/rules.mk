@@ -260,25 +260,29 @@ endif
 
 specfem3D_ALL_OBJECTS = $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 
+ifeq ($(CUDA),yes)
+SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)	
+else
+SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(LIBS)
+endif
+
+# non-gpu or opencl
+ifeq ($(ASDF),yes)
+SPECFEM_LINK_FLAGS += $(ASDF_LIBS) -lhdf5hl_fortran -lhdf5_hl -lhdf5 -Wl -lstdc++
+endif
+
+
 ${E}/xspecfem3D: $(specfem3D_ALL_OBJECTS)
 	@echo ""
 	@echo "building xspecfem3D $(BUILD_VERSION_TXT)"
 	@echo ""
 
-ifeq ($(CUDA),yes)
-	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)	
-endif
 
-# non-gpu or opencl
-ifeq ($(ASDF),yes)
-	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS) -lhdf5hl_fortran -lhdf5_hl -lhdf5 -Wl -lstdc++
-else
 ## use MPI here
 ## DK DK add OpenMP compiler flag here if needed
 #	${MPIFCCOMPILE_CHECK} -qsmp=omp -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
-	${MPIFCCOMPILE_CHECK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(LDFLAGS) $(MPILIBS) $(LIBS)
+	${FCLINK} -o ${E}/xspecfem3D $(specfem3D_ALL_OBJECTS) $(SPECFEM_LINK_FLAGS)
 	@echo ""
-endif
 
 #######################################
 

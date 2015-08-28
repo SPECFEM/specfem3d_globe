@@ -168,8 +168,8 @@ MPILIBS += @VTK_LIBS@
 @COND_ADIOS_TRUE@ADIOS = yes
 @COND_ADIOS_FALSE@ADIOS = no
 
-#FCFLAGS += @ADIOS_FCFLAGS@
-#MPILIBS += @ADIOS_LIBS@
+FCFLAGS += @ADIOS_FCFLAGS@
+MPILIBS += @ADIOS_LIBS@
 
 #######################################
 ####

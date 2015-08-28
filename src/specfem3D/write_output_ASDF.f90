@@ -168,7 +168,7 @@ subroutine write_asdf(asdf_container)
   integer :: nsamples  ! constant, as in SPECFEM
   double precision :: sampling_rate
   double precision :: startTime
-  integer(int64) :: start_time
+  integer(kind=8) :: start_time
 
   ! Network names and station names are two different beast, as in SPECFEM
   ! network_names(i) is related to station_names(i)
@@ -230,7 +230,7 @@ subroutine write_asdf(asdf_container)
 
   ! Calculate start_time
   call get_time(startTime, start_time_string, end_time_string)
-  start_time = startTime*1000000000_int64 ! convert to nanoseconds
+  start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
 
   ! Generate minimal QuakeML for SPECFEM3D_GLOBE
   call cmt_to_quakeml(quakeml, start_time_string) 
