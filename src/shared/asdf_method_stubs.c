@@ -38,3 +38,7 @@ void FC_FUNC_(init_asdf_data,INIT_ASDF_DATA)(void) {}
 void FC_FUNC_(store_asdf_data,STORE_ASDF_DATA)(void) {}
 void FC_FUNC_(close_asdf_data,CLOSE_ASDF_DATA)(void) {}
 void FC_FUNC_(write_asdf,WRITE_ASDF)(void) {}
+
+// for reading adjoint sources
+
+void FC_FUNC_(read_adjoint_sources_asdf,READ_ADJOINT_SOURCES_ASDF)(void) {}

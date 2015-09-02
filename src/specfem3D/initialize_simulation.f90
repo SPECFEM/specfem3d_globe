@@ -40,6 +40,9 @@
   character(len=MAX_STRING_LEN) :: dummystring
   character(len=MAX_STRING_LEN) :: path_to_add
 
+  ! asdf file handle
+  integer :: file_id
+
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
   ! as usual in MPI, process 0 is in charge of coordinating everything
@@ -258,6 +261,11 @@
   if (ADIOS_ENABLED) then
     call adios_setup()
   endif
+
+  if (READ_ADJSRC_ASDF) then
+    call asdf_setup(file_id)
+  endif
+
   !if (ADIOS_ENABLED) then
     ! TODO use only one ADIOS group to write simulation parameters
     !      i.e. merge write_solver... write_par_... into
