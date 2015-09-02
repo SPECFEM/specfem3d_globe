@@ -118,7 +118,7 @@
 
   use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
   use write_seismograms_mod, only: band_instrument_code
-  use specfem_par, only: NUMBER_OF_SIMULTANEOUS_RUNS, mygroup
+  use specfem_par, only: NUMBER_OF_SIMULTANEOUS_RUNS, mygroup, READ_ADJSRC_ASDF
 
   implicit none
 

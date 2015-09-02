@@ -61,6 +61,7 @@
   ! debug
   !print *,'read adjoint sources: it_sub_adj = ',it_sub_adj
 
+  call read_adjoint_sources_asdf()
   ! asynchronously reads in adjoint source files
   if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1) then
     ! handles file input/output thread
@@ -128,8 +129,8 @@
   character(len=MAX_STRING_LEN) :: adj_source_file
 
   ! debug
-  !print *,'reading adjoint sources local:',myrank,' - chunk ',it_sub_adj,'out of ',NSTEP_SUB_ADJ, &
-  !       ' for local adjoint sources = ',nadj_rec_local
+  print *,'reading adjoint sources local:',myrank,' - chunk ',it_sub_adj,'out of ',NSTEP_SUB_ADJ, &
+         ' for local adjoint sources = ',nadj_rec_local
 
   ! checks chunk number
   if (it_sub_adj < 1 .or. it_sub_adj > NSTEP_SUB_ADJ) then
@@ -171,6 +172,7 @@
                                          xigll,yigll,zigll, &
                                          iadjsrc_len(it_sub_adj),iadjsrc,it_sub_adj, &
                                          NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,DT)
+
 
       ! stores source array
       ! note: the adj_sourcearrays has a time stepping from 1 to NTSTEP_BETWEEN_READ_ADJSRC
