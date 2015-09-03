@@ -27,9 +27,10 @@
 
 !==============================================================================
 !> Open the ASDF file for reading adjoint sources
-subroutine asdf_setup(file_id)
+subroutine asdf_setup()
 
   use iso_c_binding
+  use specfem_par, only: asdf_file_handle
 
   implicit none
 
@@ -40,14 +41,11 @@ subroutine asdf_setup(file_id)
   ! local parameters
   integer :: comm
 
-  ! ASDF variables
-  integer,intent(inout) :: file_id ! HDF5 file id
-
   call world_get_comm(comm)
 
   filename = "synthetic.h5"
 
-  call ASDF_open_read_only_f(trim(filename) // C_NULL_CHAR, comm, file_id)
+  call ASDF_open_read_only_f(trim(filename) // C_NULL_CHAR, comm, asdf_file_handle)
 
 end subroutine asdf_setup
 

@@ -61,7 +61,6 @@
   ! debug
   !print *,'read adjoint sources: it_sub_adj = ',it_sub_adj
 
-  call read_adjoint_sources_asdf()
   ! asynchronously reads in adjoint source files
   if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1) then
     ! handles file input/output thread

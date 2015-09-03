@@ -15,36 +15,21 @@
 ! limitations under the License.
 !==============================================================================
 
-subroutine read_adjoint_sources_asdf(file_id)
+subroutine read_adjoint_sources_asdf(filename, index_start, index_end, icomp, index_i, adj_src)
 
+  use constants,only: CUSTOM_REAL, MAX_STRING_LEN
   use iso_c_binding
-  use specfem_par, only : asdf_file_handle
+  use specfem_par, only : asdf_file_handle, NDIM
 
   implicit none
 
-  integer, parameter :: MAX_STRING_LENGTH = 256
+  integer, intent(inout) :: icomp, index_start, index_end,index_i
+  real(kind=CUSTOM_REAL), dimension(NDIM,*),intent(inout) :: adj_src
 
-  character(len=MAX_STRING_LENGTH) :: filename
-
-  integer :: num_stations, num_channels_per_station
-  integer :: num_waveforms  ! == num_stations * num_channels_per_station
-  ! The number of channels per station is constant, as in SPECFEM
-  integer :: nsamples  ! constant, as in SPECFEM
-  ! Network names and station names are two different beast, as in
-  ! SPECFEM
-  ! network_names(i) is related to station_names(i)
-  character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: network_names
-  character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: station_names
-  ! data. dimension = nsamples * num_channels_per_station * num_stations
-  real, dimension(:, :, :), allocatable :: waveforms
-  real, dimension(:,:,:), allocatable :: adjoint
-
-  character(len=MAX_STRING_LENGTH) :: station_name, waveform_name, path
-  character(len=MAX_STRING_LENGTH) :: file_format
+  character(len=MAX_STRING_LEN) :: filename
 
   !-- ASDF variables
-  integer,intent(in) :: file_id   ! HDF5 file id, also root group "/"
-  integer :: station_exists, waveform_exists
+  integer :: station_exists
   integer :: nsamples_infered
 
   ! C/Fortran interop for C-allocated strings
@@ -52,52 +37,38 @@ subroutine read_adjoint_sources_asdf(file_id)
   type(c_ptr) :: cptr
   character, pointer :: fptr(:)
 
-  !--- MPI variables
-  integer :: myrank, mysize, comm
-  !--- Loop variables
   integer :: i, j
   !--- Error variable
   integer :: ier
-
-  ! alias mpi communicator
-  call world_get_comm(comm)
-  call world_size(mysize)
 
   !--------------------------------------------------------
   ! Read the ASDF file.
   !--------------------------------------------------------
 
-print *, "b"
-
+print *, asdf_file_handle
   call ASDF_read_str_attr_f(asdf_file_handle, "/", "file_format", cptr, ier)
-print *, "c"
   call c_f_pointer(cptr, fptr, [4])
-print *, "d"
-  ! print "ASDF" on each processer
-  print *, fptr
+print *, fptr
+stop
+  ! get station name
+  !station_name = "BW_ALFO" ! read from adjoint station list in files
 
-  !allocate(adjoint(20000, 3, 1), &
-   !        stat=ier)
-
-    ! get station name
-    !station_name = "BW_ALFO" ! read from adjoint station list in files
-
-    !call ASDF_adjoint_source_exists_f(file_id, &
-    !                            trim(station_name)//C_NULL_CHAR, &
+  !call ASDF_adjoint_source_exists_f(file_id, &
+  !                            trim(station_name)//C_NULL_CHAR, &
   !                              station_exists)
-   ! if (station_exists) > 0) then
+  ! if (station_exists) > 0) then
   !do j = 1, num_channels_per_station
 
-   ! write(adjoint_source_name, '(a)') &
+  ! write(adjoint_source_name, '(a)') &
   !      trim(station_name)//"_"//trim(component_name(j))
- !     "BW_ALFO
-   ! call ASDF_get_num_elements_from_path_f(file_id, "/AuxiliaryData/&
-   !       AdjointSource/"//trim(station_name)//"_EHE"//C_NULL_CHAR,nsamples_infered)
-   ! print *, nsamples_infered
-   ! allocate(adjoint(nsamples_infered, 1, 1), stat=ier)
-   ! call ASDF_read_full_waveform_f(file_id, "/AuxiliaryData/&
-   !       AdjointSource/"//trim(station_name)//"_EHE"//C_NULL_CHAR,adjoint(:,j,1), ier)
-   ! endif
+  !     "BW_ALFO
+  ! call ASDF_get_num_elements_from_path_f(file_id, "/AuxiliaryData/&
+  !       AdjointSource/"//trim(station_name)//"_EHE"//C_NULL_CHAR,nsamples_infered)
+  ! print *, nsamples_infered
+  ! allocate(adjoint(nsamples_infered, 1, 1), stat=ier)
+  ! call ASDF_read_full_waveform_f(file_id, "/AuxiliaryData/&
+  !       AdjointSource/"//trim(station_name)//"_EHE"//C_NULL_CHAR,adjoint(:,j,1), ier)
+  ! endif
 
  ! enddo
 
