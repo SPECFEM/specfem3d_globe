@@ -27,14 +27,14 @@
 
 !==============================================================================
 !> Open the ASDF file for reading adjoint sources
-subroutine asdf_setup()
+subroutine asdf_setup(asdf_file_handle)
 
   use iso_c_binding
-  use specfem_par, only: asdf_file_handle
 
   implicit none
 
   integer, parameter :: MAX_STRING_LENGTH = 256
+  integer, intent(inout) :: asdf_file_handle
 
   character(len=MAX_STRING_LENGTH) :: filename
 

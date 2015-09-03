@@ -193,16 +193,15 @@
   adj_src = 0._CUSTOM_REAL
   do icomp = 1, NDIM
 
+    if (.not. READ_ADJSRC_ASDF) then
     ! opens adjoint component file
     filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
-print *, filename
 
     if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
       write(path_to_add,"('run',i4.4,'/')") mygroup + 1
       filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
     endif
 
-    if (.not. READ_ADJSRC_ASDF) then
       open(unit=IIN_ADJ,file=trim(filename),status='old',action='read',iostat=ios)
   
        ! note: adjoint source files must be available for all three components E/N/Z, even
@@ -250,7 +249,8 @@ print *, filename
      enddo
     close(IIN_ADJ)
    else
-      call read_adjoint_sources_asdf(filename, index_start, index_end, icomp, index_i, adj_src)
+      filename = trim(adj_source_file)//'.'//comp(icomp)
+      call read_adjoint_sources_asdf(trim(filename), index_start, index_end, icomp, index_i, adj_src)
    endif
   enddo
 
