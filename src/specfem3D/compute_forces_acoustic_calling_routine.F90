@@ -75,23 +75,12 @@
 
     if (.not. GPU_MODE) then
       ! on CPU
-      if (USE_DEVILLE_PRODUCTS_VAL) then
-        ! uses Deville et al. (2002) routine
-        call compute_forces_outer_core_Dev(timeval,deltat,two_omega_earth, &
-                                           NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
-                                           A_array_rotation,B_array_rotation, &
-                                           A_array_rotation_lddrk,B_array_rotation_lddrk, &
-                                           displ_outer_core,accel_outer_core, &
-                                           div_displ_outer_core,phase_is_inner)
-      else
-        ! div_displ_outer_core is initialized to zero in the following subroutine.
-        call compute_forces_outer_core(timeval,deltat,two_omega_earth, &
-                                       NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
-                                       A_array_rotation,B_array_rotation, &
-                                       A_array_rotation_lddrk,B_array_rotation_lddrk, &
-                                       displ_outer_core,accel_outer_core, &
-                                       div_displ_outer_core,phase_is_inner)
-      endif
+      call compute_forces_outer_core(timeval,deltat,two_omega_earth, &
+                                         NSPEC_OUTER_CORE_ROTATION,NGLOB_OUTER_CORE, &
+                                         A_array_rotation,B_array_rotation, &
+                                         A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                         displ_outer_core,accel_outer_core, &
+                                         div_displ_outer_core,phase_is_inner)
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 1
@@ -340,22 +329,12 @@
     if (.not. GPU_MODE) then
       ! on CPU
       ! adjoint / kernel runs
-      if (USE_DEVILLE_PRODUCTS_VAL) then
-        ! uses Deville et al. (2002) routine
-        call compute_forces_outer_core_Dev(b_timeval,b_deltat,b_two_omega_earth, &
-                                           NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                                           b_A_array_rotation,b_B_array_rotation, &
-                                           b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
-                                           b_displ_outer_core,b_accel_outer_core, &
-                                           div_displ_outer_core,phase_is_inner)
-      else
-        call compute_forces_outer_core(b_timeval,b_deltat,b_two_omega_earth, &
-                                       NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
-                                       b_A_array_rotation,b_B_array_rotation, &
-                                       b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
-                                       b_displ_outer_core,b_accel_outer_core, &
-                                       div_displ_outer_core,phase_is_inner)
-      endif
+      call compute_forces_outer_core(b_timeval,b_deltat,b_two_omega_earth, &
+                                     NSPEC_OUTER_CORE_ROT_ADJOINT,NGLOB_OUTER_CORE_ADJOINT, &
+                                     b_A_array_rotation,b_B_array_rotation, &
+                                     b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
+                                     b_displ_outer_core,b_accel_outer_core, &
+                                     div_displ_outer_core,phase_is_inner)
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 3
@@ -526,4 +505,63 @@
 
   end subroutine compute_forces_acoustic_backward
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine compute_forces_outer_core(timeval,deltat,two_omega_earth, &
+                                       NSPEC,NGLOB, &
+                                       A_array_rotation,B_array_rotation, &
+                                       A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                       displfluid,accelfluid, &
+                                       div_displfluid,phase_is_inner)
+
+! wrapper function, decides about Deville optimization
+!
+! (left in this file to let compiler decide about inlining)
+
+  use constants_solver,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE,USE_DEVILLE_PRODUCTS_VAL
+
+  implicit none
+
+  integer,intent(in) :: NSPEC,NGLOB
+
+  ! for the Euler scheme for rotation
+  real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+    A_array_rotation,B_array_rotation
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+    A_array_rotation_lddrk,B_array_rotation_lddrk
+
+  ! displacement and acceleration
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: displfluid
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(inout) :: accelfluid
+
+  ! divergence of displacement
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),intent(out) :: div_displfluid
+
+  ! inner/outer element run flag
+  logical,intent(in) :: phase_is_inner
+
+
+  if (USE_DEVILLE_PRODUCTS_VAL) then
+    ! uses Deville et al. (2002) routine
+    call compute_forces_outer_core_Dev(timeval,deltat,two_omega_earth, &
+                                       NSPEC,NGLOB, &
+                                       A_array_rotation,B_array_rotation, &
+                                       A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                       displfluid,accelfluid, &
+                                       div_displfluid,phase_is_inner)
+  else
+    ! div_displ_outer_core is initialized to zero in the following subroutine.
+    call compute_forces_outer_core_noDev(timeval,deltat,two_omega_earth, &
+                                         NSPEC,NGLOB, &
+                                         A_array_rotation,B_array_rotation, &
+                                         A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                         displfluid,accelfluid, &
+                                         div_displfluid,phase_is_inner)
+  endif
+
+  end subroutine compute_forces_outer_core
 
