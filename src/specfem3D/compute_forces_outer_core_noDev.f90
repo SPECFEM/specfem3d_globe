@@ -25,12 +25,12 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_outer_core(timeval,deltat,two_omega_earth, &
-                                       NSPEC,NGLOB, &
-                                       A_array_rotation,B_array_rotation, &
-                                       A_array_rotation_lddrk,B_array_rotation_lddrk, &
-                                       displfluid,accelfluid, &
-                                       div_displfluid,phase_is_inner)
+  subroutine compute_forces_outer_core_noDev(timeval,deltat,two_omega_earth, &
+                                             NSPEC,NGLOB, &
+                                             A_array_rotation,B_array_rotation, &
+                                             A_array_rotation_lddrk,B_array_rotation_lddrk, &
+                                             displfluid,accelfluid, &
+                                             div_displfluid,phase_is_inner)
 
   use constants_solver
 
@@ -53,27 +53,27 @@
 
   implicit none
 
-  integer :: NSPEC,NGLOB
+  integer,intent(in) :: NSPEC,NGLOB
 
   ! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL) timeval,deltat,two_omega_earth
+  real(kind=CUSTOM_REAL),intent(in) :: timeval,deltat,two_omega_earth
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
     A_array_rotation,B_array_rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
     A_array_rotation_lddrk,B_array_rotation_lddrk
 
   ! displacement and acceleration
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: displfluid,accelfluid
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(in) :: displfluid
+  real(kind=CUSTOM_REAL), dimension(NGLOB),intent(inout) :: accelfluid
 
   ! divergence of displacement
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: div_displfluid
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),intent(out) :: div_displfluid
 
   ! inner/outer element run flag
-  logical :: phase_is_inner
+  logical,intent(in) :: phase_is_inner
 
   ! local parameters
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
   ! for gravity
   integer int_radius
@@ -347,5 +347,5 @@
 
   enddo   ! spectral element loop
 
-  end subroutine compute_forces_outer_core
+  end subroutine compute_forces_outer_core_noDev
 

@@ -25,6 +25,8 @@ module BOAST
       decl source_euler_A = Real("source_euler_A")
       decl source_euler_B = Real("source_euler_B")
 
+      comment()
+      comment("  // store the source for the Euler scheme for A_rotation and B_rotation")
       if (get_lang == CL) then
         print sin_two_omega_t === sincos(two_omega_earth*time, cos_two_omega_t.address)
       else
@@ -36,6 +38,8 @@ module BOAST
         end
       end
 
+      comment()
+      comment("  // time step deltat of Euler scheme is included in the source")
       print two_omega_deltat === deltat * two_omega_earth
 
       print source_euler_A === two_omega_deltat * (cos_two_omega_t * dpotentialdyl + sin_two_omega_t * dpotentialdxl)
@@ -47,6 +51,8 @@ module BOAST
       print dpotentialdx_with_rot[0] === dpotentialdxl + ( a_rotation*cos_two_omega_t + b_rotation*sin_two_omega_t)
       print dpotentialdy_with_rot[0] === dpotentialdyl + (-a_rotation*sin_two_omega_t + b_rotation*cos_two_omega_t)
 
+      comment()
+      comment("  // updates rotation term with Euler scheme (non-padded offset)")
       print d_A_array_rotation[tx + working_element*ngll3] === d_A_array_rotation[tx + working_element*ngll3] + source_euler_A
       print d_B_array_rotation[tx + working_element*ngll3] === d_B_array_rotation[tx + working_element*ngll3] + source_euler_B
     }
@@ -75,18 +81,26 @@ module BOAST
     v.push use_mesh_coloring_gpu   = Int("use_mesh_coloring_gpu",    :dir => :in)
     v.push d_potential             = Real("d_potential",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_potential_dot_dot     = Real("d_potential_dot_dot",     :dir => :inout, :dim => [Dim()] )
-    v.push *d_xi = [d_xix          = Real("d_xix",                   :dir => :in, :restrict => true, :dim => [Dim()] ), d_xiy = Real("d_xiy",:dir => :in, :restrict => true, :dim => [Dim()] ), d_xiz = Real("d_xiz",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
-    v.push *d_eta = [d_etax        = Real("d_etax",                  :dir => :in, :restrict => true, :dim => [Dim()] ), d_etay = Real("d_etay",:dir => :in, :restrict => true, :dim => [Dim()] ), d_etaz = Real("d_etaz",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
-    v.push *d_gamma = [d_gammax    = Real("d_gammax",                :dir => :in, :restrict => true, :dim => [Dim()] ), d_gammay = Real("d_gammay",:dir => :in, :restrict => true, :dim => [Dim()] ), d_gammaz = Real("d_gammaz",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push *d_xi = [d_xix          = Real("d_xix",                   :dir => :in, :restrict => true, :dim => [Dim()] ),
+                    d_xiy          = Real("d_xiy",                   :dir => :in, :restrict => true, :dim => [Dim()] ),
+                    d_xiz          = Real("d_xiz",                   :dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push *d_eta = [d_etax        = Real("d_etax",                  :dir => :in, :restrict => true, :dim => [Dim()] ),
+                     d_etay        = Real("d_etay",                  :dir => :in, :restrict => true, :dim => [Dim()] ),
+                     d_etaz        = Real("d_etaz",                  :dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push *d_gamma = [d_gammax    = Real("d_gammax",                :dir => :in, :restrict => true, :dim => [Dim()] ),
+                       d_gammay    = Real("d_gammay",                :dir => :in, :restrict => true, :dim => [Dim()] ),
+                       d_gammaz    = Real("d_gammaz",                :dir => :in, :restrict => true, :dim => [Dim()] ) ]
     v.push d_hprime_xx             = Real("d_hprime_xx",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_hprimewgll_xx         = Real("d_hprimewgll_xx",         :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgllwgll_xy             = Real("wgllwgll_xy",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgllwgll_xz             = Real("wgllwgll_xz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgllwgll_yz             = Real("wgllwgll_yz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :restrict => true, :dim => [Dim()] ), d_ystore = Real("d_ystore",:dir => :in, :restrict => true, :dim => [Dim()] ), d_zstore = Real("d_zstore",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :restrict => true, :dim => [Dim()] ),
+                       d_ystore    = Real("d_ystore",                :dir => :in, :restrict => true, :dim => [Dim()] ),
+                       d_zstore    = Real("d_zstore",                :dir => :in, :restrict => true, :dim => [Dim()] ) ]
     v.push d_d_ln_density_dr_table = Real("d_d_ln_density_dr_table", :dir => :in, :restrict => true, :dim => [Dim()] )
-    v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :restrict => true, :dim => [Dim()] )  
+    v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push rotation                = Int( "ROTATION",                :dir => :in)
     v.push time                    = Real("time",                    :dir => :in)
@@ -126,7 +140,10 @@ module BOAST
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu".gsub("_forward","").gsub("_adjoint",""))
     elsif(get_lang == CL or get_lang == CUDA) then
-      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :r_earth_km => r_earth_km, :coloring_min_nspec_outer_core => coloring_min_nspec_outer_core)
+      # header
+      make_specfem3d_header(:ngllx => n_gllx, :ngll2 => n_gll2, :ngll3 => n_gll3, :ngll3_padded => n_gll3_padded, :r_earth_km => r_earth_km,
+                            :coloring_min_nspec_outer_core => coloring_min_nspec_outer_core)
+
       #DEACTIVATE USE TEXTURES CONSTANTS
       get_output.puts "#ifdef #{use_textures_constants}"
       get_output.puts "#undef #{use_textures_constants}"
@@ -141,8 +158,19 @@ module BOAST
 #          decl d_hprime_xx_oc_tex
 #        get_output.puts "#endif"
 #      end
+
+      comment()
+      comment("// fluid rotation")
+      comment()
+
       sub_kernel =  compute_element_oc_rotation(n_gll3)
       print sub_kernel
+
+      comment()
+      comment("// KERNEL 2")
+      comment("//")
+      comment("// for outer core ( acoustic domain )")
+      comment()
 
       if get_lang == CL then
         get_output.puts "#ifdef #{use_textures_fields}"
@@ -178,53 +206,70 @@ module BOAST
         p = Procedure(function_name, v, constants)
         open p
       end
-        decl bx = Int("bx")
-        decl tx = Int("tx")
-        decl k  = Int("K"), j = Int("J"), i = Int("I")
-        get_output.puts "#ifndef #{manually_unrolled_loops}"
-          decl l = Int("l")
-        get_output.puts "#endif"
-        active = (1..elem_per_thread).collect { |e_i| Int("active_#{e_i}", :size => 2, :signed => false) }
-        decl *active
-        decl offset = Int("offset")
-        iglob = (1..elem_per_thread).collect { |e_i| Int("iglob_#{e_i}") }
-        decl *iglob
-        decl working_element = Int("working_element")
-        decl *templ = [ Real("temp1l"), Real("temp2l"), Real("temp3l") ]
-        decl *xil   = [ Real("xixl"),   Real("xiyl"),   Real("xizl")   ]
-        decl *etal  = [ Real("etaxl"),  Real("etayl"),  Real("etazl")  ]
-        decl *gammal= [ Real("gammaxl"),Real("gammayl"),Real("gammazl")]
-        decl jacobianl= Real("jacobianl")
-        decl *dpotentialdl = [ Real("dpotentialdxl"), Real("dpotentialdyl"), Real("dpotentialdzl") ]
-        decl dpotentialdx_with_rot = Real("dpotentialdx_with_rot")
-        decl dpotentialdy_with_rot = Real("dpotentialdy_with_rot")
-  
-        decl sum_terms = Real("sum_terms")
-        gravity_term = (1..elem_per_thread).collect { |e_i| Real("gravity_term_#{e_i}") }
-        decl *gravity_term
-        decl *gl   = [ Real("gxl"),   Real("gyl"),   Real("gzl")   ]
-        
-        decl radius = Real("radius"), theta = Real("theta"), phi = Real("phi")
-        decl cos_theta = Real("cos_theta"), sin_theta = Real("sin_theta")
-        decl cos_phi   = Real("cos_phi"),   sin_phi   = Real("sin_phi")
-        decl *grad_ln_rho = [ Real("grad_x_ln_rho"), Real("grad_y_ln_rho"), Real("grad_z_ln_rho") ]
-  
-        decl int_radius = Int("int_radius")
-  
-        decl s_dummy_loc = Real("s_dummy_loc", :local => true, :dim => [Dim(ngll3)] )
-  
-        decl *s_temp = [ Real("s_temp1", :local => true, :dim => [Dim(ngll3)]), Real("s_temp2", :local => true, :dim => [Dim(ngll3)]), Real("s_temp3", :local => true, :dim => [Dim(ngll3)])]
-  
-        decl sh_hprime_xx     = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
-        decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
-  
-        print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
-elem_per_thread.times { |elem_index| 
+      decl bx = Int("bx")
+      decl tx = Int("tx")
+      decl k  = Int("K"), j = Int("J"), i = Int("I")
+
+      get_output.puts "#ifndef #{manually_unrolled_loops}"
+        decl l = Int("l")
+      get_output.puts "#endif"
+
+      active = (1..elem_per_thread).collect { |e_i| Int("active_#{e_i}", :size => 2, :signed => false) }
+      decl *active
+
+      decl offset = Int("offset")
+      iglob = (1..elem_per_thread).collect { |e_i| Int("iglob_#{e_i}") }
+
+      decl *iglob
+      decl working_element = Int("working_element")
+      decl *templ = [ Real("temp1l"), Real("temp2l"), Real("temp3l") ]
+      decl *xil   = [ Real("xixl"),   Real("xiyl"),   Real("xizl")   ]
+      decl *etal  = [ Real("etaxl"),  Real("etayl"),  Real("etazl")  ]
+      decl *gammal= [ Real("gammaxl"),Real("gammayl"),Real("gammazl")]
+      decl jacobianl= Real("jacobianl")
+      decl *dpotentialdl = [ Real("dpotentialdxl"), Real("dpotentialdyl"), Real("dpotentialdzl") ]
+      decl dpotentialdx_with_rot = Real("dpotentialdx_with_rot")
+      decl dpotentialdy_with_rot = Real("dpotentialdy_with_rot")
+
+      decl sum_terms = Real("sum_terms")
+      gravity_term = (1..elem_per_thread).collect { |e_i| Real("gravity_term_#{e_i}") }
+      decl *gravity_term
+      decl *gl   = [ Real("gxl"),   Real("gyl"),   Real("gzl")   ]
+
+      decl radius = Real("radius"), theta = Real("theta"), phi = Real("phi")
+      decl cos_theta = Real("cos_theta"), sin_theta = Real("sin_theta")
+      decl cos_phi   = Real("cos_phi"),   sin_phi   = Real("sin_phi")
+      decl *grad_ln_rho = [ Real("grad_x_ln_rho"), Real("grad_y_ln_rho"), Real("grad_z_ln_rho") ]
+
+      decl int_radius = Int("int_radius")
+
+      decl s_dummy_loc = Real("s_dummy_loc", :local => true, :dim => [Dim(ngll3)] )
+
+      decl *s_temp = [ Real("s_temp1", :local => true, :dim => [Dim(ngll3)]),
+                       Real("s_temp2", :local => true, :dim => [Dim(ngll3)]),
+                       Real("s_temp3", :local => true, :dim => [Dim(ngll3)])]
+
+      decl sh_hprime_xx     = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
+      decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
+
+      print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
+
+      elem_per_thread.times { |elem_index|
         print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+
+        comment()
+        comment("  // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,")
+        comment("  // because we used memory padding from NGLL^3 = 125 to 128 to get coalescent memory accesses")
+
         print active[elem_index] === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
-  
+
+        comment()
+        comment("  // copy from global memory to shared memory")
+        comment("  // each thread writes one of the NGLL^3 = 125 data points")
+
         print If(active[elem_index]) {
-  if elem_index == 0 then
+
+        if elem_index == 0 then
           get_output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
           get_output.puts "#else"
@@ -234,9 +279,9 @@ elem_per_thread.times { |elem_index|
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
             })
           get_output.puts "#endif"
-  end
+        end
           print iglob[elem_index] === d_ibool[working_element*ngll3 + tx]-1
-  
+
           get_output.puts "#ifdef #{use_textures_fields}"
             print s_dummy_loc[tx] === d_displ_oc_tex[iglob[elem_index]]
           get_output.puts "#else"
@@ -251,11 +296,12 @@ elem_per_thread.times { |elem_index|
             print sh_hprime_xx[tx] === d_hprime_xx[tx]
             print sh_hprimewgll_xx[tx] === d_hprimewgll_xx[tx]
           get_output.puts "#endif"
-  
+
         }
-}
-        print barrier(:local)
-  
+      }
+      print barrier(:local)
+
+
 elem_per_thread.times { |elem_index|
   if elem_per_thread > 1 then
         print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
@@ -263,7 +309,7 @@ elem_per_thread.times { |elem_index|
         print k === tx/ngll2
         print j === (tx-k*ngll2)/ngllx
         print i === tx - k*ngll2 - j*ngllx
-  
+
         print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
@@ -282,12 +328,12 @@ elem_per_thread.times { |elem_index|
             print etal[indx]   === d_eta[indx][offset]
             print gammal[indx] === d_gamma[indx][offset]
           }
-  
+
           print jacobianl === Expression("/", 1.0, xil[0]*(etal[1]*gammal[2] - etal[2]*gammal[1]) - xil[1]*(etal[0]*gammal[2] - etal[2]*gammal[0]) + xil[2]*(etal[0]*gammal[1] - etal[1]*gammal[0]))
           (0..2).each { |indx|
             print dpotentialdl[indx] === xil[indx]*templ[0] + etal[indx]*templ[1] + gammal[indx]*templ[2]
           }
-  
+
           print If(rotation , lambda {
             print sub_kernel.call(tx,working_element,\
                                   time,two_omega_earth,deltat,\
@@ -301,7 +347,7 @@ elem_per_thread.times { |elem_index|
             print dpotentialdx_with_rot === dpotentialdl[0]
             print dpotentialdy_with_rot === dpotentialdl[1]
           })
-  
+
           print radius === d_store[0][iglob[elem_index]]
           print theta  === d_store[1][iglob[elem_index]]
           print phi    === d_store[2][iglob[elem_index]]
@@ -324,7 +370,7 @@ elem_per_thread.times { |elem_index|
             print grad_ln_rho[0] === sin_theta * cos_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[1] === sin_theta * sin_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[2] ===           cos_theta * d_d_ln_density_dr_table[int_radius]
-  
+
             print dpotentialdx_with_rot === dpotentialdx_with_rot + s_dummy_loc[tx] * grad_ln_rho[0]
             print dpotentialdy_with_rot === dpotentialdy_with_rot + s_dummy_loc[tx] * grad_ln_rho[1]
             print dpotentialdl[2]       === dpotentialdl[2] +       s_dummy_loc[tx] * grad_ln_rho[2]
@@ -332,11 +378,11 @@ elem_per_thread.times { |elem_index|
             print gl[0] === sin_theta*cos_phi
             print gl[1] === sin_theta*sin_phi
             print gl[2] === cos_theta
-  
+
             print gravity_term[elem_index] === d_minus_rho_g_over_kappa_fluid[int_radius] * jacobianl * wgll_cube[tx] * \
                                    (dpotentialdx_with_rot*gl[0] + dpotentialdy_with_rot*gl[1] + dpotentialdl[2]*gl[2])
           })
-  
+
           print s_temp[0][tx] === jacobianl*(   xil[0]*dpotentialdx_with_rot +    xil[1]*dpotentialdy_with_rot +    xil[2]*dpotentialdl[2])
           print s_temp[1][tx] === jacobianl*(  etal[0]*dpotentialdx_with_rot +   etal[1]*dpotentialdy_with_rot +   etal[2]*dpotentialdl[2])
           print s_temp[2][tx] === jacobianl*(gammal[0]*dpotentialdx_with_rot + gammal[1]*dpotentialdy_with_rot + gammal[2]*dpotentialdl[2])
@@ -344,13 +390,13 @@ elem_per_thread.times { |elem_index|
 }
         print barrier(:local)
 
-elem_per_thread.times { |elem_index| 
+elem_per_thread.times { |elem_index|
   if elem_per_thread > 1 then
         print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
         print k === tx/ngll2
         print j === (tx-k*ngll2)/ngllx
         print i === tx - k*ngll2 - j*ngllx
-  end 
+  end
         print If(active[elem_index]) {
           (0..2).each { |indx| print templ[indx] === 0.0 }
           for_loop = For(l, 0, ngllx-1) {
@@ -364,7 +410,7 @@ elem_per_thread.times { |elem_index|
             print for_loop
           get_output.puts "#endif"
           print sum_terms === -(wgllwgll_yz[k*ngllx+j]*templ[0] + wgllwgll_xz[k*ngllx+i]*templ[1] + wgllwgll_xy[j*ngllx+i]*templ[2])
-  
+
           print If(gravity) {
             print  sum_terms === sum_terms + gravity_term[elem_index]
           }

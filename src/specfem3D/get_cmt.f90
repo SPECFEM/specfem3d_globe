@@ -422,7 +422,7 @@
   !   Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
   !
   ! euclidean (or Frobenius) norm of a matrix: M0**2 = sum( Mij**2 )
-  scalar_moment = Mxx**2 + Myy**2 + Mzz**2 + 2.d0 * Mxy**2 + 2.d0 * Mxz**2 + 2.d0 * Myz**2
+  scalar_moment = Mxx**2 + Myy**2 + Mzz**2 + 2.d0 * ( Mxy**2 + Mxz**2 + Myz**2 )
 
   ! adds 1/2 to be coherent with double couple or point sources
   scalar_moment = dsqrt(scalar_moment/2.0d0)
@@ -448,7 +448,7 @@
 
   double precision function get_cmt_moment_magnitude(Mxx,Myy,Mzz,Mxy,Mxz,Myz)
 
-  ! calculates scalar moment (M0)
+  ! calculates moment magnitude (Mw)
 
   implicit none
 

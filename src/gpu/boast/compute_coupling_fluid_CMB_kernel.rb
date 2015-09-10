@@ -2,7 +2,7 @@ module BOAST
   def BOAST::compute_coupling_fluid_CMB_kernel(ref = true, n_dim = 3, n_gllx = 5)
     BOAST::compute_coupling_kernel(ref, :fluid_CMB, n_dim, n_gllx)
   end
- 
+
   def BOAST::compute_coupling_kernel(ref = true, type = :fluid_CMB, n_dim = 3, n_gllx = 5)
     push_env( :array_start => 0 )
     kernel = CKernel::new

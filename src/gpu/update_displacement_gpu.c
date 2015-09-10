@@ -62,7 +62,7 @@ void FC_FUNC_ (update_displacement_ic_gpu,
 #endif
 
   int blocksize = BLOCKSIZE_KERNEL1;
-  int size_padded = ( (int)ceil ( ( (double)size)/ ( (double)blocksize)))*blocksize;
+  int size_padded = ((int)ceil ( ( (double)size) / ( (double)blocksize)))*blocksize;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
@@ -164,7 +164,7 @@ void FC_FUNC_ (update_displacement_cm_gpu,
 #endif
 
   int blocksize = BLOCKSIZE_KERNEL1;
-  int size_padded = ( (int)ceil ( ( (double)size)/ ( (double)blocksize)))*blocksize;
+  int size_padded = ((int)ceil ( ( (double)size) / ( (double)blocksize)))*blocksize;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
@@ -263,7 +263,7 @@ void FC_FUNC_ (update_displacement_oc_gpu,
 #endif
 
   int blocksize = BLOCKSIZE_KERNEL1;
-  int size_padded = ( (int)ceil ( ( (double)size)/ ( (double)blocksize)))*blocksize;
+  int size_padded = ((int)ceil ( ( (double)size) / ( (double)blocksize)))*blocksize;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
@@ -351,7 +351,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
   //multiplies accel with inverse of mass matrix
 
   //crust/mantle region
-  size_padded = ( (int)ceil ( ( (double)mp->NGLOB_CRUST_MANTLE)/ ( (double)blocksize)))*blocksize;
+  size_padded = ((int)ceil ( ( (double)mp->NGLOB_CRUST_MANTLE) / ( (double)blocksize)))*blocksize;
 
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
@@ -419,7 +419,7 @@ void FC_FUNC_ (multiply_accel_elastic_gpu,
 #endif
 
   //inner core region
-  size_padded = ( (int)ceil ( ( (double)mp->NGLOB_INNER_CORE)/ ( (double)blocksize)))*blocksize;
+  size_padded = ((int)ceil ( ( (double)mp->NGLOB_INNER_CORE) / ( (double)blocksize)))*blocksize;
 
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
@@ -507,7 +507,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
   //updates velocity
 
   //crust/mantle region
-  size_padded = ( (int)ceil ( ( (double)mp->NGLOB_CRUST_MANTLE)/ ( (double)blocksize)))*blocksize;
+  size_padded = ((int)ceil ( ( (double)mp->NGLOB_CRUST_MANTLE) / ( (double)blocksize)))*blocksize;
 
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
@@ -560,7 +560,7 @@ void FC_FUNC_ (update_veloc_elastic_gpu,
 #endif
 
   //inner core region
-  size_padded = ((int) ceil (((double) mp->NGLOB_INNER_CORE) / ((double) blocksize))) * blocksize;
+  size_padded = ((int)ceil ( ( (double)mp->NGLOB_INNER_CORE) / ((double)blocksize))) * blocksize;
 
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
 
@@ -629,7 +629,7 @@ void FC_FUNC_ (multiply_accel_acoustic_gpu,
   int blocksize = BLOCKSIZE_KERNEL3;
 
   // outer core
-  int size_padded = ( (int)ceil ( ( (double)mp->NGLOB_OUTER_CORE)/ ( (double)blocksize)))*blocksize;
+  int size_padded = ((int)ceil ( ( (double)mp->NGLOB_OUTER_CORE) / ( (double)blocksize)))*blocksize;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);
@@ -705,7 +705,7 @@ void FC_FUNC_ (update_veloc_acoustic_gpu,
   int blocksize = BLOCKSIZE_KERNEL3;
 
   // outer core
-  int size_padded = ((int)ceil (((double)mp->NGLOB_OUTER_CORE)/ ( (double)blocksize)))*blocksize;
+  int size_padded = ((int)ceil ( ( (double)mp->NGLOB_OUTER_CORE) / ( (double)blocksize)))*blocksize;
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (size_padded/blocksize, &num_blocks_x, &num_blocks_y);

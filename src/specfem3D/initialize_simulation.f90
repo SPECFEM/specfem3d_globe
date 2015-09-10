@@ -488,6 +488,15 @@
     endif
   endif
 
+  ! checks rotation w/ exact mass matrix: changes mass matrix
+  if (EXACT_MASS_MATRIX_FOR_ROTATION .and. SIMULATION_TYPE == 3) then
+    if (UNDO_ATTENUATION .NEQV. UNDO_ATTENUATION_VAL) then
+      if (myrank == 0) write(IMAIN,*) 'UNDO_ATTENUATION:',UNDO_ATTENUATION,UNDO_ATTENUATION_VAL
+      write(*,*) 'UNDO_ATTENUATION:', UNDO_ATTENUATION, UNDO_ATTENUATION_VAL
+      call exit_MPI(myrank,'Error in compiled parameters, please recompile solver 21')
+    endif
+  endif
+
   end subroutine initialize_simulation_check
 
 !

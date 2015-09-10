@@ -17,7 +17,7 @@ module BOAST
     else
       raise "Unsupported maximum type: #{type}!"
     end
-    
+
     d_max = Real("d_max", :dir => :out, :dim => [ Dim()])
     blocksize_transfer = Int("BLOCKSIZE_TRANSFER", :const => block_size_transfer)
     p = Procedure(function_name, [array, size, d_max])
