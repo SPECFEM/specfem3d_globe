@@ -880,12 +880,12 @@
 !!
 !!-----------------------------------------------------------
 
-! Low-dissipation and low-dispersion fourth-order Runge–Kutta algorithm
+! Low-dissipation and low-dispersion fourth-order Runge-Kutta algorithm
 !
 ! reference:
 ! J. Berland, C. Bogey, and C. Bailly.
 ! Low-dissipation and low-dispersion fourth-order Runge-Kutta algorithm.
-! Computers and Fluids, 35:1459–1463, 2006
+! Computers and Fluids, 35:1459-1463, 2006
 !
 ! see: http://www.sciencedirect.com/science/article/pii/S0045793005000575?np=y
 
