@@ -43,7 +43,7 @@
 !   - topo files from target mesh           e.g. topo_2/proc000001_reg1_solver_data.bin
 !
 !
-! usage: ./xinterpolate_model vsv MODEL_M10/
+! usage: xinterpolate_model old-topo-dir/ old-model-dir/ new-topo-dir/ model-output-dir/ (midpoint-search)
 !
 ! note on mid-point search option:
 !  - mid-point-search == 1: looking for mid-points only is a good approach when changing number of processes (NPROC) only,

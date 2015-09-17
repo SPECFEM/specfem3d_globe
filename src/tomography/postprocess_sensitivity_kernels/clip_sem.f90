@@ -65,10 +65,13 @@ program clip_sem_globe
   use postprocess_par
 
   implicit none
-
+  !-------------------------------------------------------------
+  ! number of command-line arguments
   integer, parameter :: NARGS = 5
 
+  ! region code (reg1 == crust/mantle, reg2 == outer core, reg3 == inner core)
   character(len=*) ,parameter :: reg = '_reg1_'
+  !-------------------------------------------------------------
 
   character(len=MAX_STRING_LEN) :: input_dir,output_dir,kernel_names_comma_delimited
   character(len=MAX_STRING_LEN) :: filename, kernel_name
@@ -80,6 +83,12 @@ program clip_sem_globe
 
   double precision :: min_val, max_val
 
+  ! statistics
+  real(kind=CUSTOM_REAL) :: val
+  real(kind=CUSTOM_REAL) :: data_min,data_max
+  real(kind=CUSTOM_REAL) :: data_min_all,data_max_all
+
+  ! mpi initialization
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
@@ -127,10 +136,15 @@ program clip_sem_globe
 
   ! user output
   if (myrank == 0) then
+    print *,'kernel names        : ',(trim(kernel_names(i))//' ',i=1,nker)
+    print *,'input directory     : ',trim(input_dir)
+    print *,'output directory    : ',trim(output_dir)
     print *,'clip values min/max : ',min_val,max_val
-    print *,'kernel names     : ',(trim(kernel_names(i))//' ',i=1,nker)
-    print *,'input directory  : ',trim(input_dir)
-    print *,'output directory : ',trim(output_dir)
+    print *,''
+    print *,'SEM array size = ',NGLLX,'x',NGLLY,'x',NGLLZ,'x',NSPEC_CRUST_MANTLE
+    print *,'total number of points in SEM array = ',NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
+    print *,''
+    print *,'region code uses format: ','proc'//'***'//reg//'*'//'.bin'
     print *,''
   endif
 
@@ -155,13 +169,29 @@ program clip_sem_globe
     read(IIN) sem_array
     close(IIN)
 
+    ! statistics
+    data_min = minval(sem_array)
+    data_max = maxval(sem_array)
+    call min_all_cr(data_min,data_min_all)
+    call max_all_cr(data_max,data_max_all)
+    if (myrank == 0) then
+        print *,'  before min/max value = ',data_min_all,data_max_all
+    endif
+
+    !debug
+    !if (myrank == 0) print *,'first data values = ',sem_array(:,1,1,1)
+
     ! apply thresholds
     do ispec = 1,NSPEC_CRUST_MANTLE
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            if (sem_array(i,j,k,ispec) < min_val) sem_array(i,j,k,ispec) = min_val
-            if (sem_array(i,j,k,ispec) > max_val) sem_array(i,j,k,ispec) = max_val
+            ! array value
+            val = sem_array(i,j,k,ispec)
+
+            ! clipping values
+            if (val < min_val) sem_array(i,j,k,ispec) = min_val
+            if (val > max_val) sem_array(i,j,k,ispec) = max_val
           enddo
         enddo
       enddo
@@ -179,6 +209,16 @@ program clip_sem_globe
     write(IOUT) sem_array
     close(IOUT)
 
+    ! statistics
+    data_min = minval(sem_array)
+    data_max = maxval(sem_array)
+    call min_all_cr(data_min,data_min_all)
+    call max_all_cr(data_max,data_max_all)
+    if (myrank == 0) then
+        print *,'  after  min/max value = ',data_min_all,data_max_all
+        print *,''
+    endif
+
   enddo
 
   ! frees memory
@@ -194,4 +234,6 @@ program clip_sem_globe
   call finalize_mpi()
 
 end program clip_sem_globe
+
+
 
