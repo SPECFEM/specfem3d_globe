@@ -176,6 +176,10 @@
 ! minimum thickness in meters to include the effect of the oceans and topo
   double precision, parameter :: MINIMUM_THICKNESS_3D_OCEANS = 50.d0
 
+! plots pnm-image (showing used topography)
+! file can become fairly big for large topo-files, e.g. ETOPO1 creates a ~2.7 GB pnm-image
+  logical,parameter :: PLOT_PNM_IMAGE_TOPO_BATHY = .false.
+
 
 !!-----------------------------------------------------------
 !!

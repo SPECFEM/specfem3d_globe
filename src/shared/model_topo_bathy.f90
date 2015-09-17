@@ -57,6 +57,10 @@
     ! read/save topo file on master
     call read_topo_bathy_file(ibathy_topo)
 
+    ! user output
+    write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
+    call flush_IMAIN()
+
     if (.not. GRAVITY_INTEGRALS) call save_topo_bathy_database(ibathy_topo,LOCAL_PATH)
   endif
 
@@ -108,9 +112,9 @@
 
       ! checks values
       if (ival < TOPO_MINIMUM .or. ival > TOPO_MAXIMUM) then
-        print *,'Error read topo_bathy: ival = ',ival,'ix,iy = ',itopo_x,itopo_y
+        print *,'Error read topo_bathy: ival = ',ival,'at ix/iy = ',itopo_x,itopo_y,'exceeds min/max topography bounds'
         print *,'topo_bathy dimension: nx,ny = ',NX_BATHY,NY_BATHY
-        call exit_mpi(0,'Error reading topo_bathy file')
+        call exit_mpi(0,'Error reading topo_bathy file value exceeds min/max bounds')
       endif
 
       ! stores in array
@@ -119,11 +123,8 @@
   enddo
   call close_file_abs(10)
 
-  ! user output
-  write(IMAIN,*) "  topography/bathymetry: min/max = ",minval(ibathy_topo),maxval(ibathy_topo)
-
   ! plots image
-  call plot_topo_bathy_pnm(ibathy_topo)
+  if (PLOT_PNM_IMAGE_TOPO_BATHY) call plot_topo_bathy_pnm(ibathy_topo)
 
   end subroutine read_topo_bathy_file
 
@@ -218,7 +219,7 @@
   endif
 
   ! plots image
-  call plot_topo_bathy_pnm(ibathy_topo)
+  if (PLOT_PNM_IMAGE_TOPO_BATHY) call plot_topo_bathy_pnm(ibathy_topo)
 
   end subroutine read_topo_bathy_database
 
@@ -316,7 +317,7 @@
 
 ! stores topo_bathy image in PNM format with grey levels
 
-  use constants,only: NX_BATHY,NY_BATHY,IOUT,IMAIN
+  use constants,only: NX_BATHY,NY_BATHY,IOUT,IMAIN,PLOT_PNM_IMAGE_TOPO_BATHY
   use shared_input_parameters, only: OUTPUT_FILES
 
   implicit none
@@ -328,16 +329,8 @@
   integer :: ix,iy,ival,ier
   integer :: minvalue,maxvalue
 
-  !----------------------------------------------------------------------
-
-  ! for debugging: plots pnm-image showing used topography
-  !                file can become fairly big for large topo-files, e.g. ETOPO1 creates a ~2.7 GB pnm-image
-  logical,parameter :: DO_IMAGE_PLOT = .false.
-
-  !----------------------------------------------------------------------
-
   ! checks if anything to do
-  if (.not. DO_IMAGE_PLOT) return
+  if (.not. PLOT_PNM_IMAGE_TOPO_BATHY) return
 
   ! gets min and max
   minvalue = minval(ibathy_topo)
@@ -346,6 +339,7 @@
   ! creates the PNM image
   write(IMAIN,*) '  plotting PNM image ',trim(OUTPUT_FILES)//'/'//'image_topo_bathy.pnm'
   write(IMAIN,*)
+  call flush_IMAIN()
 
   ! creating the header
   open(unit=IOUT,file=trim(OUTPUT_FILES)//'/'//'image_topo_bathy.pnm',status='unknown',iostat=ier)
