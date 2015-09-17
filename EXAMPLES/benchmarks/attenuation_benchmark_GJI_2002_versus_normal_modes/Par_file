@@ -1,17 +1,18 @@
+
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1        # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
-NOISE_TOMOGRAPHY                = 0        # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
-SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
+SIMULATION_TYPE                 = 1   # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
+NOISE_TOMOGRAPHY                = 0   # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
+SAVE_FORWARD                    = .false.   # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
 NCHUNKS                         = 6
 
 # angular width of the first chunk (not used if full sphere with six chunks)
-ANGULAR_WIDTH_XI_IN_DEGREES   = 90.d0      # angular size of a chunk
-ANGULAR_WIDTH_ETA_IN_DEGREES  = 90.d0
-CENTER_LATITUDE_IN_DEGREES    = 40.d0
-CENTER_LONGITUDE_IN_DEGREES   = 10.d0
-GAMMA_ROTATION_AZIMUTH        = 20.d0
+ANGULAR_WIDTH_XI_IN_DEGREES     = 90.d0   # angular size of a chunk
+ANGULAR_WIDTH_ETA_IN_DEGREES    = 90.d0
+CENTER_LATITUDE_IN_DEGREES      = 40.d0
+CENTER_LONGITUDE_IN_DEGREES     = 10.d0
+GAMMA_ROTATION_AZIMUTH          = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
@@ -281,3 +282,4 @@ ADIOS_FOR_AVS_DX                = .true.
 ADIOS_FOR_KERNELS               = .true.
 ADIOS_FOR_MODELS                = .true.
 ADIOS_FOR_UNDO_ATTENUATION      = .true.
+

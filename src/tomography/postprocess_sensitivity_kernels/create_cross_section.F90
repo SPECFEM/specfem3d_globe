@@ -47,7 +47,7 @@
 !
 !   > mpirun -np 24 ./bin/xcreate_cross_section vpv -H 100.0,1.0 DATABASES_MPI/ DATABASES_MPI/ OUTPUT_FILES/ 1 1
 !
-!   creates a horizontal cross-section for mesh file proc**_vpv.bin at 100 km depth, 
+!   creates a horizontal cross-section for mesh file proc**_vpv.bin at 100 km depth,
 !   with a 1 x 1 degree regular latitude-longitude grid, taking into account topography and ellipticity
 !
 !------------------------------------------------------------------------------
@@ -1805,7 +1805,7 @@
 
   subroutine get_area_spherical_cell(r,phi1,phi2,theta1,theta2,area)
 
-! returns the surface area of a grid cell at radius r included 
+! returns the surface area of a grid cell at radius r included
 ! between phi1/phi2 longitudes [0,2*PI] and theta1/theta2 latitudes [-PI/2,PI/2] (given in radians)
 !
 ! see: https://badc.nerc.ac.uk/help/coordinates/cell-surf-area.html
@@ -1849,9 +1849,9 @@
 
   subroutine get_area_spherical_cap(r,theta,area)
 
-! returns the surface area of a spherical cap between closest pole and given latitude, 
+! returns the surface area of a spherical cap between closest pole and given latitude,
 ! e.g. north pole at PI/2 and lat between [0,PI/2],
-! of a sphere with radius r 
+! of a sphere with radius r
 !
 ! see: http://mathforum.org/library/drmath/view/63767.html
 
