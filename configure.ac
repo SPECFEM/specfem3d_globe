@@ -355,11 +355,13 @@ AC_CONFIG_FILES([
     setup/precision.h
     setup/config.fh
 ])
-AC_CHECK_FILE([$srcdir/.git], [
+AS_IF([test -d $srcdir/.git], [
     GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
+    AC_MSG_NOTICE([building from git repository])
     AC_SUBST(GIT_VERSION_DEPS)
 ], [
     dnl Only substitute if not in a git repository.
+    AC_MSG_NOTICE([not a git repository])
     AC_CONFIG_FILES([setup/version.fh])
 ])
 AC_CONFIG_FILES([
