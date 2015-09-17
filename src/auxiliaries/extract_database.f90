@@ -11,15 +11,20 @@ program extract_databases
   include "OUTPUT_FILES/values_from_mesher.h"
 
   character(len=150) :: infile, s_num, outfile, s_ireg
-  integer :: num, i, nspec, ireg
+  integer :: num, i, nspec, nglob, ireg
 
-  !integer :: idummy
-  !integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
-  !integer,dimension(NSPEC_CRUST_MANTLE) :: idoubling
-  !logical,dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso
+  integer :: ier
+  integer :: idummy
+
+  ! uses nspec_crust_mantle for allocation as this is the maximum possible size
+  integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: idummy_sem ! ibool
+  integer,dimension(NSPEC_CRUST_MANTLE) :: idummy_arr  !idoubling
+  logical,dimension(NSPEC_CRUST_MANTLE) :: ldummy_arr  ! ispec_is_tiso
+
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: junk
-  real(kind=CUSTOM_REAL) :: junk2
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: junk1
+  !real(kind=CUSTOM_REAL) :: junk2
 
   call get_command_argument(1,infile)
   call get_command_argument(2,s_ireg)
@@ -35,23 +40,45 @@ program extract_databases
 
   read(s_ireg,*) ireg
   if (ireg == 1) then
-    nspec=NSPEC_CRUST_MANTLE
+    nspec = NSPEC_CRUST_MANTLE
+    nglob = NGLOB_CRUST_MANTLE
   else if (ireg == 2) then
-    nspec=NSPEC_OUTER_CORE
+    nspec = NSPEC_OUTER_CORE
+    nglob = NGLOB_OUTER_CORE
   else if (ireg == 3) then
-    nspec=NSPEC_INNER_CORE
+    nspec = NSPEC_INNER_CORE
+    nglob = NGLOB_INNER_CORE
   else
     stop 'Error: ireg has to be 1, 2 or 3'
   endif
 
   read(s_num,*) num
+  if (num < 10 .or. num > 12) then
+    stop 'Error: num has to be 10, 11 or 12'
+  endif
 
-  ! note: routine below works with old solver_data_1.bin file
-  !       remove this stop if you're sure about it..
-  stop 'Error extracting from new solver_data.bin files not implemented yet'
+  ! user output
+  print *,"Extracting database values:"
+  print *,"  database file : ",trim(infile)
+  print *,"  region code   : ",ireg
 
+  print *,"  array number  : ",num
+  if (num == 10) then
+    print *,"  extracting for: ","rhostore"
+  else if (num == 11) then
+    print *,"  extracting for: ","kappavstore"
+  else if (num == 12) then
+    print *,"  extracting for: ","muvstore"
+  else
+    print *,"  extracting for: ","unknown store"
+  endif
+  print *,""
+  print *,"  output to file: ",trim(outfile)
+  print *,""
 
-  open(11,file=trim(infile),status='old',form='unformatted')
+  ! opens solver_data file
+  open(11,file=trim(infile),status='old',form='unformatted',iostat=ier)
+  if (ier /= 0) stop 'Error opening input file'
 
   ! new solver_data.bin: ordering see save_arrays_solver.f90
   ! 0.a nspec
@@ -75,20 +102,60 @@ program extract_databases
   ! 17. kappavstore
 
   ! skipps nspec
-  !read(11) idummy
-  !if (idummy /= NSPEC_CRUST_MANTLE) stop 'Error invalid nspec in input file (solver_data.bin)'
+  read(11) idummy
+  if (idummy /= nspec) stop 'Error invalid nspec in input file (solver_data.bin)'
   ! skipps nglob
-  !read(11) idummy
+  read(11) idummy
+  if (idummy /= nglob) stop 'Error invalid nglob in input file (solver_data.bin)'
 
+  ! user output
+  print *,"solver data:"
+  print *,"  number of spectral elements = ",nspec
+  print *,"  number of global points = ",nglob
+  print *,""
+
+  ! xstore,ystore,zstore
+  read(11) junk1(1:nglob)
+  print *,"  xstore = ",junk1(1:5),".."
+
+  read(11) junk1(1:nglob)
+  print *,"  ystore = ",junk1(1:5),".."
+
+  read(11) junk1(1:nglob)
+  print *,"  zstore = ",junk1(1:5),".."
+
+  ! ibool
+  read(11) idummy_sem(:,:,:,1:nspec)
+
+  ! idoubling
+  read(11) idummy_arr(1:nspec)
+
+  ! ispec_is_tiso
+  read(11) ldummy_arr(1:nspec)
+
+  ! skipps arrays, i.e. xixstore,..
   do i = 1, num-1
-    read(11) junk2
+    read(11) junk(:,:,:,1:nspec)
   enddo
+
+  ! reads desired data array, e.g. rhostore,..
   read(11) junk(:,:,:,1:nspec)
+  print *,""
+  print *,"  desired data = ",junk(:,1,1,1),".."
+
+  ! closes file
   close(11)
 
-  open(12,file=outfile,status='unknown',form='unformatted')
+  ! writes out data
+  open(12,file=trim(outfile),status='unknown',form='unformatted',iostat=ier)
+  if (ier /= 0) stop 'Error opening output file'
   write(12) junk(:,:,:,1:nspec)
   close(12)
+
+  ! user output
+  print *,""
+  print *,"done extracting, see file: ",trim(outfile)
+  print *,""
 
 end program extract_databases
 
