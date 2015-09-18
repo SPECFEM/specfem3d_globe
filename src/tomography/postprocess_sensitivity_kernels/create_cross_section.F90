@@ -558,9 +558,10 @@
 
   ! gets model values
   ! kdtree search
-  call get_model_values_kdtree(nglob_target,x2,y2,z2,model2,model_distance2, &
-                               NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool,xstore,ystore,zstore,model, &
-                               iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff)
+  call get_model_values_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
+                                      NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool,xstore,ystore,zstore,model, &
+                                      iaddx,iaddy,iaddr,xigll,yigll,zigll, &
+                                      typical_size,myrank,model_maxdiff)
 
   ! frees tree memory
   ! deletes tree arrays
@@ -894,9 +895,10 @@
 !
 
 
-  subroutine get_model_values_kdtree(nglob_target,x2,y2,z2,model2,model_distance2, &
-                                     nspec,nglob,ibool,xstore,ystore,zstore,model, &
-                                     iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff)
+  subroutine get_model_values_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
+                                            nspec,nglob,ibool,xstore,ystore,zstore,model, &
+                                            iaddx,iaddy,iaddr,xigll,yigll,zigll, &
+                                            typical_size,myrank,model_maxdiff)
 
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM,R_EARTH,HUGEVAL
@@ -1041,13 +1043,13 @@
     z_target = z2(iglob)
 
     ! gets interpolated position within selected element
-    call locate_single(x_target,y_target,z_target, &
-                       xi,eta,gamma,&
-                       ispec_selected,nspec,nglob, &
-                       ibool,xstore,ystore,zstore, &
-                       iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
-                       i_selected,j_selected,k_selected,dist_min, &
-                       is_inside_element,element_size)
+    call locate_single_point(x_target,y_target,z_target, &
+                             xi,eta,gamma,&
+                             ispec_selected,nspec,nglob, &
+                             ibool,xstore,ystore,zstore, &
+                             iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
+                             i_selected,j_selected,k_selected,dist_min, &
+                             is_inside_element,element_size)
 
     ! checks closest gll point
     iglob_min = ibool(i_selected,j_selected,k_selected,ispec_selected)
@@ -1167,21 +1169,21 @@
 
     end subroutine check_point_result
 
-  end subroutine get_model_values_kdtree
+  end subroutine get_model_values_cross_section
 
 !
 !------------------------------------------------------------------------------
 !
 
 
-  subroutine locate_single(x_target,y_target,z_target, &
-                           xi_target,eta_target,gamma_target, &
-                           ispec_selected,nspec,nglob, &
-                           ibool,xstore,ystore,zstore, &
-                           iaddx,iaddy,iaddr, &
-                           xigll,yigll,zigll,typical_size, &
-                           i_selected,j_selected,k_selected,dist_min, &
-                           is_inside_element,element_size)
+  subroutine locate_single_point(x_target,y_target,z_target, &
+                                 xi_target,eta_target,gamma_target, &
+                                 ispec_selected,nspec,nglob, &
+                                 ibool,xstore,ystore,zstore, &
+                                 iaddx,iaddy,iaddr, &
+                                 xigll,yigll,zigll,typical_size, &
+                                 i_selected,j_selected,k_selected,dist_min, &
+                                 is_inside_element,element_size)
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
 
@@ -1247,7 +1249,7 @@
   logical,parameter :: DO_WARNING = .false.
 
   ! checks
-  if (ispec_selected < 1 ) stop 'Error locate_single: specifying closest ispec element'
+  if (ispec_selected < 1 ) stop 'Error locating: specifying closest ispec element'
 
   ! set distance to huge initial value
   dist_min = HUGEVAL
@@ -1285,7 +1287,7 @@
 
   ! checks
   if (ix_initial_guess == 0 .or. iy_initial_guess == 0 .or. iz_initial_guess == 0 ) &
-    stop 'Error locate_single: no initial guess'
+    stop 'Error locating: no initial guess'
 
   ! initial minimum distance (still normalized)
   dist_min = sqrt(dist_min)
@@ -1459,56 +1461,8 @@
 
   endif
 
-  end subroutine locate_single
+  end subroutine locate_single_point
 
-
-!
-!------------------------------------------------------------------------------
-!
-
-  subroutine interpolate(xi,eta,gamma,ielem, &
-                         nspec,model, &
-                         val,xigll,yigll,zigll)
-
-
-  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
-
-  implicit none
-
-  double precision,intent(in):: xi,eta,gamma
-  integer,intent(in):: ielem
-
-  integer,intent(in):: nspec
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
-
-  real(kind=CUSTOM_REAL),intent(out) :: val
-
-  ! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX),intent(in) :: xigll
-  double precision, dimension(NGLLY),intent(in) :: yigll
-  double precision, dimension(NGLLZ),intent(in) :: zigll
-
-  ! local parameters
-  double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
-                      hgammar(NGLLZ), hpgammar(NGLLZ)
-  integer:: i,j,k
-
-  ! interpolation weights
-  call lagrange_any(xi,NGLLX,xigll,hxir,hpxir)
-  call lagrange_any(eta,NGLLY,yigll,hetar,hpetar)
-  call lagrange_any(gamma,NGLLZ,zigll,hgammar,hpgammar)
-
-  ! interpolates value
-  val = 0.0
-  do k = 1, NGLLZ
-    do j = 1, NGLLY
-      do i = 1, NGLLX
-          val = val +  hxir(i) * hetar(j) * hgammar(k) * model(i,j,k,ielem)
-      enddo
-    enddo
-  enddo
-
-  end subroutine interpolate
 
 
 !
@@ -1528,8 +1482,8 @@
   implicit none
 
   integer,intent(in) :: nglob_target
-  real(kind=CUSTOM_REAL), dimension(nglob_target),intent(out) :: x2, y2, z2
-  real(kind=CUSTOM_REAL), dimension(nglob_target),intent(out) :: model2,model_distance2
+  real(kind=CUSTOM_REAL), dimension(nglob_target),intent(inout) :: x2, y2, z2
+  real(kind=CUSTOM_REAL), dimension(nglob_target),intent(in) :: model2,model_distance2
 
   double precision,intent(in) :: typical_size
   double precision,intent(in) :: dlat,dlon,lat0,depth0

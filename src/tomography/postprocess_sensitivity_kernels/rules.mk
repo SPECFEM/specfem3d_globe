@@ -213,6 +213,7 @@ xinterpolate_model_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
+	$O/interpolate.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/recompute_jacobian.shared.o \
 	$O/search_kdtree.shared.o \
@@ -280,6 +281,7 @@ xcreate_cross_section_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
+	$O/interpolate.shared.o \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
