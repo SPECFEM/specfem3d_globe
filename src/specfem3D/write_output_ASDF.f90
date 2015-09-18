@@ -206,7 +206,7 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_STRING_LENGTH) :: waveform_name
 
   ! C/Fortran interop for C-allocated strings
-  integer :: len
+  integer :: len_prov, len_constants, len_Parfile
   type(c_ptr) :: cptr
   character, pointer :: fptr(:)
   character, dimension(:), allocatable, TARGET :: provenance
@@ -237,11 +237,11 @@ subroutine write_asdf(asdf_container)
 
   ! Generate specfem provenance string
   call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
-                                     end_time_string(1:19)//C_NULL_CHAR, cptr, len)
-  call c_f_pointer(cptr, fptr, [len])
-  allocate(provenance(len+1))
-  provenance(1:len) = fptr(1:len)
-  provenance(len+1) = C_NULL_CHAR
+                                     end_time_string(1:19)//C_NULL_CHAR, cptr, len_prov)
+  call c_f_pointer(cptr, fptr, [len_prov])
+  allocate(provenance(len_prov+1))
+  provenance(1:len_prov) = fptr(1:len_prov)
+  provenance(len_prov+1) = C_NULL_CHAR
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
@@ -319,7 +319,7 @@ subroutine write_asdf(asdf_container)
   !--------------------------------------------------------
 
   call ASDF_initialize_hdf5_f(ier);
-  call ASDF_create_new_file_f("synthetic.h5", comm, file_id)
+  call ASDF_create_new_file_f("synthetic.h5" // C_NULL_CHAR, comm, file_id)
 
   call ASDF_write_string_attribute_f(file_id, "file_format" // C_NULL_CHAR, &
                                      "ASDF" // C_NULL_CHAR, ier)
@@ -327,11 +327,11 @@ subroutine write_asdf(asdf_container)
                                      "0.0.2" // C_NULL_CHAR, ier)
 
   call ASDF_write_quakeml_f(file_id, trim(quakeml) // C_NULL_CHAR, ier)
-  call ASDF_write_provenance_data_f(file_id, provenance(1:len), ier)
-  call read_file("setup/constants.h", sf_constants)
-  call read_file("DATA/Par_file", sf_parfile)
-  call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants) // C_NULL_CHAR,&
-                                    trim(sf_parfile) // C_NULL_CHAR, ier)
+  call ASDF_write_provenance_data_f(file_id, provenance(1:len_prov+1), ier)
+  call read_file("setup/constants.h", sf_constants, len_constants)
+  call read_file("DATA/Par_file", sf_parfile, len_Parfile)
+  call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants(1:len_constants)) // C_NULL_CHAR,&
+                                    trim(sf_parfile(1:len_Parfile)) // C_NULL_CHAR, ier)
 
   call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
 
@@ -382,7 +382,8 @@ subroutine write_asdf(asdf_container)
   enddo
 
   call ASDF_close_group_f(waveforms_grp, ier)
-  call ASDF_finalize_hdf5_f(ier);
+  call ASDF_close_file_f(file_id, ier)
+  call ASDF_finalize_hdf5_f(ier)
 
   deallocate(data_ids)
   deallocate(station_grps_gather)
@@ -613,22 +614,22 @@ end subroutine station_to_stationxml
 !> Reads an external file and stores it in filestring
 !! \param filename The name of the file to read
 !! \param filestring The string that the file is stored
-subroutine read_file(filename, filestring)
+subroutine read_file(filename, filestring, filesize)
 
   implicit none
   character(len=*) :: filestring
   character(len=*) :: filename
-  integer :: file_size
+  integer,intent(out) :: filesize
 
   ! Get the size of the file using Fortran2003 feature
   open(10, file=filename, status='old')
-  inquire(unit=10, size=file_size)
+  inquire(unit=10, size=filesize)
   close(10)
 
   ! Read in the size of the file using direct access
   open(10, file=filename, status='old', &
-         recl=file_size, form='unformatted', access='direct')
-  read (10, rec=1) filestring(1:file_size)
+         recl=filesize, form='unformatted', access='direct')
+  read (10, rec=1) filestring(1:filesize)
   close(10)
 
 end subroutine read_file

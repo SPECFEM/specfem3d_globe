@@ -115,6 +115,11 @@
     if (myrank == 0 ) call finish_vtkwindow()
   endif
 
+  ! asdf finalizes
+  if (READ_ADJSRC_ASDF) then
+    call asdf_cleanup()
+  endif
+
   ! adios finalizes
   if (ADIOS_ENABLED) then
     call adios_cleanup()

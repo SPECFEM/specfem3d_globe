@@ -258,6 +258,11 @@
   if (ADIOS_ENABLED) then
     call adios_setup()
   endif
+
+  if (READ_ADJSRC_ASDF) then
+    call asdf_setup(asdf_file_handle)
+  endif
+
   !if (ADIOS_ENABLED) then
     ! TODO use only one ADIOS group to write simulation parameters
     !      i.e. merge write_solver... write_par_... into

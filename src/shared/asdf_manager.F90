@@ -1,4 +1,3 @@
-/*
 !=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
@@ -25,20 +24,45 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-*/
 
-#include <stdio.h>
-#include <stdlib.h>
+!==============================================================================
+!> Open the ASDF file for reading adjoint sources
+subroutine asdf_setup(asdf_file_handle)
 
-#include "config.h"
+  use iso_c_binding
 
-// for xspecfem3D compilation
+  implicit none
 
-void FC_FUNC_(init_asdf_data,INIT_ASDF_DATA)(void) {}
-void FC_FUNC_(store_asdf_data,STORE_ASDF_DATA)(void) {}
-void FC_FUNC_(close_asdf_data,CLOSE_ASDF_DATA)(void) {}
-void FC_FUNC_(write_asdf,WRITE_ASDF)(void) {}
+  integer, parameter :: MAX_STRING_LENGTH = 256
+  integer, intent(inout) :: asdf_file_handle
 
-// for reading adjoint sources
+  character(len=MAX_STRING_LENGTH) :: filename
 
-void FC_FUNC_(read_adjoint_sources_asdf,READ_ADJOINT_SOURCES_ASDF)(void) {}
+  ! local parameters
+  integer :: comm
+
+  call world_get_comm(comm)
+
+  filename = "synthetic.h5"
+
+  call ASDF_open_read_only_f(trim(filename) // C_NULL_CHAR, comm, asdf_file_handle)
+
+end subroutine asdf_setup
+
+!==============================================================================
+!> Close the ASDF file for reading adjoint sources
+subroutine asdf_cleanup()
+
+  implicit none
+
+  ! local parameters
+  integer :: myrank
+  integer :: ier
+
+  call world_rank(myrank)
+  call synchronize_all()
+
+  call ASDF_finalize_hdf5_f(ier)
+  if (ier /= 0 ) stop 'Error cleaning up ASDF: calling asdf_finalize() routine failed'
+
+end subroutine asdf_cleanup
