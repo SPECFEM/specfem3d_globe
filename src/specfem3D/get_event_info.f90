@@ -109,7 +109,7 @@
   call bcast_all_singledp(Mrt)
   call bcast_all_singledp(Mrp)
   call bcast_all_singledp(Mtp)
-  
+
   call bcast_all_ch(event_name,20)
 
   end subroutine get_event_info_parallel

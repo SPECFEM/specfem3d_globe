@@ -688,33 +688,43 @@
   deltatsqover2 = 0.5d0*deltat*deltat
 
   if (SIMULATION_TYPE == 3) then
-    b_deltat = - real(DT*scale_t_inv, kind=CUSTOM_REAL)
-    b_deltatover2 = 0.5d0*b_deltat
-    b_deltatsqover2 = 0.5d0*b_deltat*b_deltat
+    if (UNDO_ATTENUATION) then
+      ! moves forward
+      b_deltat = deltat
+      b_deltatover2 = deltatover2
+      b_deltatsqover2 = deltatsqover2
+    else
+      ! reconstructed wavefield moves backward in time from last snapshot
+      b_deltat = - real(DT*scale_t_inv, kind=CUSTOM_REAL)
+      b_deltatover2 = 0.5d0*b_deltat
+      b_deltatsqover2 = 0.5d0*b_deltat*b_deltat
+    endif
+  else
+    ! will not be used, but initialized
+    b_deltat = 0._CUSTOM_REAL
+    b_deltatover2 = 0._CUSTOM_REAL
+    b_deltatsqover2 = 0._CUSTOM_REAL
   endif
 
   ! non-dimensionalized rotation rate of the Earth times two
   if (ROTATION_VAL) then
     ! distinguish between single and double precision for reals
     if (SIMULATION_TYPE == 1) then
+      ! spinning forward
       two_omega_earth = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv), kind=CUSTOM_REAL)
     else
+      ! adjoint wavefield (time-reversed) spins backward
       two_omega_earth = - real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv), kind=CUSTOM_REAL)
     endif
 
     if (SIMULATION_TYPE == 3) then
+      ! reconstructed wavefield together with +/- b_deltat will spin backward/forward
       b_two_omega_earth = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv), kind=CUSTOM_REAL)
     endif
   else
+    ! will still be used (e.g. in GPU calculations), so initializes to zero
     two_omega_earth = 0._CUSTOM_REAL
     if (SIMULATION_TYPE == 3) b_two_omega_earth = 0._CUSTOM_REAL
-  endif
-
-  if (UNDO_ATTENUATION) then
-   b_deltat = deltat
-   b_deltatover2 = deltatover2
-   b_deltatsqover2 = deltatsqover2
-   b_two_omega_earth = two_omega_earth
   endif
 
   ! synchronizes processes

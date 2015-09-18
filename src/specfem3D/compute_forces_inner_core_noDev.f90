@@ -25,18 +25,18 @@
 !
 !=====================================================================
 
-  subroutine compute_forces_inner_core( NSPEC,NGLOB,NSPEC_ATT, &
-                                        deltat, &
-                                        displ_inner_core, &
-                                        accel_inner_core, &
-                                        phase_is_inner, &
-                                        R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                        R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
-                                        epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-                                        epsilondev_xz,epsilondev_yz, &
-                                        epsilon_trace_over_3,&
-                                        alphaval,betaval,gammaval,factor_common, &
-                                        vnspec)
+  subroutine compute_forces_inner_core_noDev( NSPEC,NGLOB,NSPEC_ATT, &
+                                              deltat, &
+                                              displ_inner_core, &
+                                              accel_inner_core, &
+                                              phase_is_inner, &
+                                              R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                              R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                              epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                              epsilondev_xz,epsilondev_yz, &
+                                              epsilon_trace_over_3,&
+                                              alphaval,betaval,gammaval, &
+                                              factor_common,vnspec)
 
   use constants_solver
 
@@ -89,7 +89,8 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: epsilon_trace_over_3
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: epsilon_trace_over_3
 
   ! inner/outer element run flag
   logical :: phase_is_inner
@@ -567,5 +568,5 @@
 
   enddo ! spectral element loop
 
-  end subroutine compute_forces_inner_core
+  end subroutine compute_forces_inner_core_noDev
 

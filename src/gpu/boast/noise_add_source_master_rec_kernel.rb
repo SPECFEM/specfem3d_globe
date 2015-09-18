@@ -32,7 +32,7 @@ module BOAST
         (0..2).each { |i|
           print atomicAdd(accel + iglob*3 + i, noise_sourcearray[tx*3 + ngll3*3*it + i])
         }
-        
+
       close p
     else
       raise "Unsupported language!"

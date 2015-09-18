@@ -54,7 +54,7 @@ module BOAST
         Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
       }
       decl sh_hprime_xx = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
-      
+
       print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
       print ijk_ispec === get_local_id(0) + ngll3*ispec
       print tx === get_local_id(0)
@@ -85,11 +85,11 @@ module BOAST
         }, lambda {
           print epsilon_trace_over_3[ijk_ispec] === eps_trace_over_3
         })
-        
+
         (0..4).each { |indx|
           print epsilondev[indx][ijk_ispec] === epsdev[indx]
         }
-        
+
       }
 
       close p

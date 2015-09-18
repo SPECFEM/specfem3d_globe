@@ -74,7 +74,7 @@ end subroutine init_asdf_data
 !
 
 !> Stores the records into the ASDF structure
-!! \param asdf_container The ASDF data container 
+!! \param asdf_container The ASDF data container
 !! \param seismogram_tmp The current seismogram to store
 !! \param irec_local The local index of the receiver
 !! \param irec The global index of the receiver
@@ -179,11 +179,11 @@ subroutine write_asdf(asdf_container)
   ! data. dimension = nsamples * num_channels_per_station * num_stations
   real, dimension(:, :, :), allocatable :: waveforms
 
-  !-- ASDF variables 
+  !-- ASDF variables
   !   These variables are used to know where further writes should be done.
   !   They have to be cleaned as soon as they become useless
   integer :: file_id   ! HDF5 file id, also root group "/"
-  integer :: waveforms_grp  ! Group "/Waveforms/" 
+  integer :: waveforms_grp  ! Group "/Waveforms/"
   integer, dimension(:, :, :), allocatable :: data_ids
 
   !--- MPI variables
@@ -233,7 +233,7 @@ subroutine write_asdf(asdf_container)
   start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
 
   ! Generate minimal QuakeML for SPECFEM3D_GLOBE
-  call cmt_to_quakeml(quakeml, start_time_string) 
+  call cmt_to_quakeml(quakeml, start_time_string)
 
   ! Generate specfem provenance string
   call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
@@ -315,7 +315,7 @@ subroutine write_asdf(asdf_container)
                     mysize))
 
   !--------------------------------------------------------
-  ! write ASDF 
+  ! write ASDF
   !--------------------------------------------------------
 
   call ASDF_initialize_hdf5_f(ier);
@@ -407,7 +407,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
   use specfem_par,only:&
     cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
     M0,Mw,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC
-    
+
   implicit none
   character(len=*) :: quakemlstring
   character(len=*) :: start_time_string
@@ -542,7 +542,7 @@ subroutine get_time(startTime, start_time_string, end_time_string)
   year = yr_SAC-1900
   startTime =(year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
               ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC
-    
+
   ! Calculates the number of seconds to add to the start_time
   end_time_sec = (seismo_current-1)/DT
   end_time_sec = startTime + end_time_sec
@@ -583,7 +583,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
 
   ! Convert double precision to character strings for the StationXML string
   write(station_lat, "(g12.5)") stlat(irec)
-  write(station_lon, "(g12.5)") stlon(irec) 
+  write(station_lon, "(g12.5)") stlon(irec)
   write(station_ele, "(g12.5)") stele(irec)
 
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&

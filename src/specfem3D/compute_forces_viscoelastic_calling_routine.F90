@@ -78,75 +78,39 @@
     ! note: for anisotropy and gravity, x y and z contain r theta and phi
     if (.not. GPU_MODE) then
       ! on CPU
-      if (USE_DEVILLE_PRODUCTS_VAL) then
-        ! uses Deville (2002) optimizations
-        ! crust/mantle region
-        call compute_forces_crust_mantle_Dev(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-                                             NSPEC_CRUST_MANTLE_ATTENUATION, &
-                                             deltat, &
-                                             displ_crust_mantle, &
-                                             accel_crust_mantle, &
-                                             phase_is_inner, &
-                                             R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
-                                             R_xz_crust_mantle,R_yz_crust_mantle, &
-                                             R_xx_crust_mantle_lddrk,R_yy_crust_mantle_lddrk,R_xy_crust_mantle_lddrk, &
-                                             R_xz_crust_mantle_lddrk,R_yz_crust_mantle_lddrk, &
-                                             epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                                             epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                             eps_trace_over_3_crust_mantle, &
-                                             alphaval,betaval,gammaval, &
-                                             factor_common_crust_mantle,ATT4_VAL)
-        ! inner core region
-        call compute_forces_inner_core_Dev(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
-                                           NSPEC_INNER_CORE_ATTENUATION, &
-                                           deltat, &
-                                           displ_inner_core, &
-                                           accel_inner_core, &
-                                           phase_is_inner, &
-                                           R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
-                                           R_xz_inner_core,R_yz_inner_core, &
-                                           R_xx_inner_core_lddrk,R_yy_inner_core_lddrk,R_xy_inner_core_lddrk, &
-                                           R_xz_inner_core_lddrk,R_yz_inner_core_lddrk, &
-                                           epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
-                                           epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                                           eps_trace_over_3_inner_core,&
-                                           alphaval,betaval,gammaval, &
-                                           factor_common_inner_core,ATT5_VAL)
-      else
-        ! no Deville optimization
-        ! crust/mantle region
-        call compute_forces_crust_mantle(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
-                                         NSPEC_CRUST_MANTLE_ATTENUATION, &
-                                         deltat, &
-                                         displ_crust_mantle, &
-                                         accel_crust_mantle, &
-                                         phase_is_inner, &
-                                         R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
-                                         R_xz_crust_mantle,R_yz_crust_mantle, &
-                                         R_xx_crust_mantle_lddrk,R_yy_crust_mantle_lddrk,R_xy_crust_mantle_lddrk, &
-                                         R_xz_crust_mantle_lddrk,R_yz_crust_mantle_lddrk, &
-                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                         eps_trace_over_3_crust_mantle, &
-                                         alphaval,betaval,gammaval, &
-                                         factor_common_crust_mantle,ATT4_VAL)
-        ! inner core region
-        call compute_forces_inner_core(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
-                                       NSPEC_INNER_CORE_ATTENUATION, &
+      ! crust/mantle region
+      call compute_forces_crust_mantle(NSPEC_CRUST_MANTLE_STR_OR_ATT,NGLOB_CRUST_MANTLE, &
+                                       NSPEC_CRUST_MANTLE_ATTENUATION, &
                                        deltat, &
-                                       displ_inner_core, &
-                                       accel_inner_core, &
+                                       displ_crust_mantle, &
+                                       accel_crust_mantle, &
                                        phase_is_inner, &
-                                       R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
-                                       R_xz_inner_core,R_yz_inner_core, &
-                                       R_xx_inner_core_lddrk,R_yy_inner_core_lddrk,R_xy_inner_core_lddrk, &
-                                       R_xz_inner_core_lddrk,R_yz_inner_core_lddrk, &
-                                       epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
-                                       epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
-                                       eps_trace_over_3_inner_core,&
+                                       R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
+                                       R_xz_crust_mantle,R_yz_crust_mantle, &
+                                       R_xx_crust_mantle_lddrk,R_yy_crust_mantle_lddrk,R_xy_crust_mantle_lddrk, &
+                                       R_xz_crust_mantle_lddrk,R_yz_crust_mantle_lddrk, &
+                                       epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                       eps_trace_over_3_crust_mantle, &
                                        alphaval,betaval,gammaval, &
-                                       factor_common_inner_core,ATT5_VAL)
-      endif
+                                       factor_common_crust_mantle,ATT4_VAL)
+
+      ! inner core region
+      call compute_forces_inner_core(NSPEC_INNER_CORE_STR_OR_ATT,NGLOB_INNER_CORE, &
+                                     NSPEC_INNER_CORE_ATTENUATION, &
+                                     deltat, &
+                                     displ_inner_core, &
+                                     accel_inner_core, &
+                                     phase_is_inner, &
+                                     R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
+                                     R_xz_inner_core,R_yz_inner_core, &
+                                     R_xx_inner_core_lddrk,R_yy_inner_core_lddrk,R_xy_inner_core_lddrk, &
+                                     R_xz_inner_core_lddrk,R_yz_inner_core_lddrk, &
+                                     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
+                                     epsilondev_xz_inner_core,epsilondev_yz_inner_core, &
+                                     eps_trace_over_3_inner_core,&
+                                     alphaval,betaval,gammaval, &
+                                     factor_common_inner_core,ATT5_VAL)
     else
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 1
@@ -525,77 +489,39 @@
     if (.not. GPU_MODE) then
       ! on CPU
       ! adjoint / kernel runs
-      if (USE_DEVILLE_PRODUCTS_VAL) then
-        ! uses Deville (2002) optimizations
-        ! crust/mantle region
-        call compute_forces_crust_mantle_Dev(NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
-                                             NSPEC_CRUST_MANTLE_STR_AND_ATT, &
-                                             b_deltat, &
-                                             b_displ_crust_mantle, &
-                                             b_accel_crust_mantle, &
-                                             phase_is_inner, &
-                                             b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
-                                             b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
-                                             b_R_xx_crust_mantle_lddrk,b_R_yy_crust_mantle_lddrk,b_R_xy_crust_mantle_lddrk, &
-                                             b_R_xz_crust_mantle_lddrk,b_R_yz_crust_mantle_lddrk, &
-                                             b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,&
-                                             b_epsilondev_xy_crust_mantle, &
-                                             b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
-                                             b_eps_trace_over_3_crust_mantle, &
-                                             b_alphaval,b_betaval,b_gammaval, &
-                                             factor_common_crust_mantle,ATT4_VAL)
-        ! inner core region
-        call compute_forces_inner_core_Dev(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
-                                           NSPEC_INNER_CORE_STR_AND_ATT, &
-                                           b_deltat, &
-                                           b_displ_inner_core, &
-                                           b_accel_inner_core, &
-                                           phase_is_inner, &
-                                           b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
-                                           b_R_xz_inner_core,b_R_yz_inner_core, &
-                                           b_R_xx_inner_core_lddrk,b_R_yy_inner_core_lddrk,b_R_xy_inner_core_lddrk, &
-                                           b_R_xz_inner_core_lddrk,b_R_yz_inner_core_lddrk, &
-                                           b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
-                                           b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
-                                           b_eps_trace_over_3_inner_core,&
-                                           b_alphaval,b_betaval,b_gammaval, &
-                                           factor_common_inner_core,ATT5_VAL)
-      else
-        ! no Deville optimization
-        ! crust/mantle region
-        call compute_forces_crust_mantle(NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
-                                         NSPEC_CRUST_MANTLE_STR_AND_ATT, &
-                                         b_deltat, &
-                                         b_displ_crust_mantle, &
-                                         b_accel_crust_mantle, &
-                                         phase_is_inner, &
-                                         b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
-                                         b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
-                                         b_R_xx_crust_mantle_lddrk,b_R_yy_crust_mantle_lddrk,b_R_xy_crust_mantle_lddrk, &
-                                         b_R_xz_crust_mantle_lddrk,b_R_yz_crust_mantle_lddrk, &
-                                         b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,&
-                                         b_epsilondev_xy_crust_mantle, &
-                                         b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
-                                         b_eps_trace_over_3_crust_mantle, &
-                                         b_alphaval,b_betaval,b_gammaval, &
-                                         factor_common_crust_mantle,ATT4_VAL)
-        ! inner core region
-        call compute_forces_inner_core(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
-                                       NSPEC_INNER_CORE_STR_AND_ATT, &
+      ! crust/mantle region
+      call compute_forces_crust_mantle(NSPEC_CRUST_MANTLE_ADJOINT,NGLOB_CRUST_MANTLE_ADJOINT, &
+                                       NSPEC_CRUST_MANTLE_STR_AND_ATT, &
                                        b_deltat, &
-                                       b_displ_inner_core, &
-                                       b_accel_inner_core, &
+                                       b_displ_crust_mantle, &
+                                       b_accel_crust_mantle, &
                                        phase_is_inner, &
-                                       b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
-                                       b_R_xz_inner_core,b_R_yz_inner_core, &
-                                       b_R_xx_inner_core_lddrk,b_R_yy_inner_core_lddrk,b_R_xy_inner_core_lddrk, &
-                                       b_R_xz_inner_core_lddrk,b_R_yz_inner_core_lddrk, &
-                                       b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
-                                       b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
-                                       b_eps_trace_over_3_inner_core,&
+                                       b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
+                                       b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
+                                       b_R_xx_crust_mantle_lddrk,b_R_yy_crust_mantle_lddrk,b_R_xy_crust_mantle_lddrk, &
+                                       b_R_xz_crust_mantle_lddrk,b_R_yz_crust_mantle_lddrk, &
+                                       b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,&
+                                       b_epsilondev_xy_crust_mantle, &
+                                       b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle, &
+                                       b_eps_trace_over_3_crust_mantle, &
                                        b_alphaval,b_betaval,b_gammaval, &
-                                       factor_common_inner_core,ATT5_VAL)
-      endif
+                                       factor_common_crust_mantle,ATT4_VAL)
+      ! inner core region
+      call compute_forces_inner_core(NSPEC_INNER_CORE_ADJOINT,NGLOB_INNER_CORE_ADJOINT, &
+                                     NSPEC_INNER_CORE_STR_AND_ATT, &
+                                     b_deltat, &
+                                     b_displ_inner_core, &
+                                     b_accel_inner_core, &
+                                     phase_is_inner, &
+                                     b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
+                                     b_R_xz_inner_core,b_R_yz_inner_core, &
+                                     b_R_xx_inner_core_lddrk,b_R_yy_inner_core_lddrk,b_R_xy_inner_core_lddrk, &
+                                     b_R_xz_inner_core_lddrk,b_R_yz_inner_core_lddrk, &
+                                     b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
+                                     b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core, &
+                                     b_eps_trace_over_3_inner_core,&
+                                     b_alphaval,b_betaval,b_gammaval, &
+                                     factor_common_inner_core,ATT5_VAL)
     else
       ! on GPU
       ! contains forward FORWARD_OR_ADJOINT == 3
@@ -889,4 +815,180 @@
 !  endif
 
   end subroutine compute_forces_viscoelastic_backward
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine compute_forces_crust_mantle( NSPEC,NGLOB,NSPEC_ATT, &
+                                          deltat, &
+                                          displ_crust_mantle, &
+                                          accel_crust_mantle, &
+                                          phase_is_inner, &
+                                          R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                          R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                          epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                          epsilondev_xz,epsilondev_yz, &
+                                          epsilon_trace_over_3, &
+                                          alphaval,betaval,gammaval, &
+                                          factor_common,vnspec )
+
+! wrapper function, decides about Deville optimization
+!
+! (left in this file to let compiler decide about inlining)
+
+  use constants_solver,only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY
+
+  implicit none
+
+  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+
+  ! time step
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
+
+  ! displacement, velocity and acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: displ_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel_crust_mantle
+
+  ! variable sized array variables
+  integer,intent(in) :: vnspec
+
+  ! memory variables for attenuation
+  ! memory variables R_ij are stored at the local rather than global level
+  ! to allow for optimization of cache access by compiler
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
+    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+    epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
+
+  ! [alpha,beta,gamma]val reduced to N_SLS and factor_common to N_SLS*NUM_NODES
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
+
+  ! inner/outer element run flag
+  logical,intent(in) :: phase_is_inner
+
+  if (USE_DEVILLE_PRODUCTS_VAL) then
+    ! uses Deville (2002) optimizations
+    call compute_forces_crust_mantle_Dev(NSPEC,NGLOB,NSPEC_ATT, &
+                                         deltat, &
+                                         displ_crust_mantle, &
+                                         accel_crust_mantle, &
+                                         phase_is_inner, &
+                                         R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                         R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                         epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+                                         epsilon_trace_over_3, &
+                                         alphaval,betaval,gammaval, &
+                                         factor_common,vnspec)
+  else
+    ! no Deville optimization
+    call compute_forces_crust_mantle_noDev(NSPEC,NGLOB,NSPEC_ATT, &
+                                           deltat, &
+                                           displ_crust_mantle, &
+                                           accel_crust_mantle, &
+                                           phase_is_inner, &
+                                           R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                           R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                           epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+                                           epsilon_trace_over_3, &
+                                           alphaval,betaval,gammaval, &
+                                           factor_common,vnspec)
+  endif
+
+  end subroutine compute_forces_crust_mantle
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine compute_forces_inner_core( NSPEC,NGLOB,NSPEC_ATT, &
+                                        deltat, &
+                                        displ_inner_core, &
+                                        accel_inner_core, &
+                                        phase_is_inner, &
+                                        R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                        R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                        epsilondev_xx,epsilondev_yy,epsilondev_xy, &
+                                        epsilondev_xz,epsilondev_yz, &
+                                        epsilon_trace_over_3,&
+                                        alphaval,betaval,gammaval, &
+                                        factor_common,vnspec)
+
+! wrapper function, decides about Deville optimization
+!
+! (left in this file to let compiler decide about inlining)
+
+  use constants_solver,only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY
+
+  implicit none
+
+  integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
+
+  ! time step
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
+
+  ! displacement and acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: displ_inner_core
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(inout) :: accel_inner_core
+
+  ! for attenuation
+  ! memory variables R_ij are stored at the local rather than global level
+  ! to allow for optimization of cache access by compiler
+  ! variable lengths for factor_common and one_minus_sum_beta
+  integer,intent(in) :: vnspec
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
+  real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: R_xx,R_yy,R_xy,R_xz,R_yz
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATT),intent(inout) :: &
+    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(inout) :: &
+    epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
+
+  ! inner/outer element run flag
+  logical,intent(in) :: phase_is_inner
+
+  if (USE_DEVILLE_PRODUCTS_VAL) then
+    ! uses Deville (2002) optimizations
+    call compute_forces_inner_core_Dev(NSPEC,NGLOB,NSPEC_ATT, &
+                                       deltat, &
+                                       displ_inner_core, &
+                                       accel_inner_core, &
+                                       phase_is_inner, &
+                                       R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                       R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                       epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+                                       epsilon_trace_over_3,&
+                                       alphaval,betaval,gammaval, &
+                                       factor_common,vnspec)
+  else
+    ! no Deville optimization
+    call compute_forces_inner_core_noDev(NSPEC,NGLOB,NSPEC_ATT, &
+                                         deltat, &
+                                         displ_inner_core, &
+                                         accel_inner_core, &
+                                         phase_is_inner, &
+                                         R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                         R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+                                         epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
+                                         epsilon_trace_over_3,&
+                                         alphaval,betaval,gammaval, &
+                                         factor_common,vnspec)
+  endif
+
+
+  end subroutine compute_forces_inner_core
 

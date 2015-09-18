@@ -44,9 +44,12 @@
 
   if (zmesh > -SMALL_VAL_ANGLE .and. zmesh <= ZERO) zmesh = -SMALL_VAL_ANGLE
   if (zmesh < SMALL_VAL_ANGLE .and. zmesh >= ZERO) zmesh = SMALL_VAL_ANGLE
+
   theta = real(datan2(dsqrt(xmesh*xmesh+ymesh*ymesh),zmesh), kind=CUSTOM_REAL)
+
   if (xmesh > -SMALL_VAL_ANGLE .and. xmesh <= ZERO) xmesh = -SMALL_VAL_ANGLE
   if (xmesh < SMALL_VAL_ANGLE .and. xmesh >= ZERO) xmesh = SMALL_VAL_ANGLE
+
   phi = real(datan2(ymesh,xmesh), kind=CUSTOM_REAL)
 
   r = real(dsqrt(xmesh*xmesh + ymesh*ymesh + zmesh*zmesh), kind=CUSTOM_REAL)

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 1.0.3
+//      this file has been generated automatically by BOAST version 1.0.4
 //      by: make boast_kernels
 
 /*
@@ -87,6 +87,9 @@
 #ifdef USE_TEXTURES_CONSTANTS
 #undef USE_TEXTURES_CONSTANTS
 #endif
+
+// fluid rotation
+
 static __device__ void compute_element_oc_rotation(const int tx, const int working_element, const float time, const float two_omega_earth, const float deltat, float * d_A_array_rotation, float * d_B_array_rotation, const float dpotentialdxl, const float dpotentialdyl, float * dpotentialdx_with_rot, float * dpotentialdy_with_rot){
   float two_omega_deltat;
   float cos_two_omega_t;
@@ -95,7 +98,11 @@ static __device__ void compute_element_oc_rotation(const int tx, const int worki
   float B_rotation;
   float source_euler_A;
   float source_euler_B;
+
+  // store the source for the Euler scheme for A_rotation and B_rotation
   sincosf((two_omega_earth) * (time),  &sin_two_omega_t,  &cos_two_omega_t);
+
+  // time step deltat of Euler scheme is included in the source
   two_omega_deltat = (deltat) * (two_omega_earth);
   source_euler_A = (two_omega_deltat) * ((cos_two_omega_t) * (dpotentialdyl) + (sin_two_omega_t) * (dpotentialdxl));
   source_euler_B = (two_omega_deltat) * ((sin_two_omega_t) * (dpotentialdyl) - ((cos_two_omega_t) * (dpotentialdxl)));
@@ -103,9 +110,16 @@ static __device__ void compute_element_oc_rotation(const int tx, const int worki
   B_rotation = d_B_array_rotation[tx + (working_element) * (NGLL3)];
   dpotentialdx_with_rot[0] = dpotentialdxl + (A_rotation) * (cos_two_omega_t) + (B_rotation) * (sin_two_omega_t);
   dpotentialdy_with_rot[0] = dpotentialdyl + ( -(A_rotation)) * (sin_two_omega_t) + (B_rotation) * (cos_two_omega_t);
+
+  // updates rotation term with Euler scheme (non-padded offset)
   d_A_array_rotation[tx + (working_element) * (NGLL3)] = d_A_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_A;
   d_B_array_rotation[tx + (working_element) * (NGLL3)] = d_B_array_rotation[tx + (working_element) * (NGLL3)] + source_euler_B;
 }
+
+// KERNEL 2
+//
+// for outer core ( acoustic domain )
+
 __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, const int * d_ibool, const int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const int use_mesh_coloring_gpu, const float * __restrict__ d_potential, float * d_potential_dot_dot, const float * __restrict__ d_xix, const float * __restrict__ d_xiy, const float * __restrict__ d_xiz, const float * __restrict__ d_etax, const float * __restrict__ d_etay, const float * __restrict__ d_etaz, const float * __restrict__ d_gammax, const float * __restrict__ d_gammay, const float * __restrict__ d_gammaz, const float * __restrict__ d_hprime_xx, const float * __restrict__ d_hprimewgll_xx, const float * __restrict__ wgllwgll_xy, const float * __restrict__ wgllwgll_xz, const float * __restrict__ wgllwgll_yz, const int GRAVITY, const float * __restrict__ d_xstore, const float * __restrict__ d_ystore, const float * __restrict__ d_zstore, const float * __restrict__ d_d_ln_density_dr_table, const float * __restrict__ d_minus_rho_g_over_kappa_fluid, const float * __restrict__ wgll_cube, const int ROTATION, const float time, const float two_omega_earth, const float deltat, float * d_A_array_rotation, float * d_B_array_rotation, const int NSPEC_OUTER_CORE){
   int bx;
   int tx;
@@ -161,7 +175,13 @@ __global__ void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, c
   __shared__ float sh_hprimewgll_xx[(NGLL2)];
   bx = (blockIdx.y) * (gridDim.x) + blockIdx.x;
   tx = threadIdx.x + ((NGLL3_PADDED) * (0)) / (1);
+
+  // use only NGLL^3 = 125 active threads, plus 3 inactive/ghost threads,
+  // because we used memory padding from NGLL^3 = 125 to 128 to get coalescent memory accesses
   active_1 = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);
+
+  // copy from global memory to shared memory
+  // each thread writes one of the NGLL^3 = 125 data points
   if (active_1) {
 #ifdef USE_MESH_COLORING_GPU
     working_element = bx;

@@ -788,7 +788,12 @@
 #endif
   write(IOUT,*)
 
-!! DK DK for UNDO_ATTENUATION
+  ! for UNDO_ATTENUATION
+  if (UNDO_ATTENUATION) then
+    write(IOUT,*) 'logical, parameter :: UNDO_ATTENUATION_VAL = .true.'
+  else
+    write(IOUT,*) 'logical, parameter :: UNDO_ATTENUATION_VAL = .false.'
+  endif
   write(IOUT,*) 'integer, parameter :: NT_DUMP_ATTENUATION = ',NT_DUMP_ATTENUATION_optimal
   write(IOUT,*)
 

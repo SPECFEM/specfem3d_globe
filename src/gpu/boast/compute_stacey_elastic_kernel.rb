@@ -45,7 +45,7 @@ module BOAST
     elsif type == :backward then
       variables += [ ibool ]
      end
-    
+
     ndim  = Int("NDIM",  :const => n_dim)
     ngllx = Int("NGLLX", :const => n_gllx)
     ngll2 = Int("NGLL2", :const => n_gll2)
@@ -71,7 +71,7 @@ module BOAST
         decl jacobianw = Real("jacobianw")
         decl fac1 = Real("fac1")
       end
-      
+
       print igll === get_local_id(0)
       print iface === get_group_id(0)+get_group_id(1)*get_num_groups(0)
 

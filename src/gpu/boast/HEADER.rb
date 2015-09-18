@@ -1,7 +1,7 @@
 module BOAST
 
   # gets version number
-  def BOAST::get_boast_version
+  def BOAST::get_boast_version()
     # note: function latest_spec_for() only works if internet connection available
     #       spec = Gem.latest_spec_for('BOAST')
     # looks for actually installed version
@@ -13,7 +13,7 @@ module BOAST
     end
     return v
   end
-  
+
   # automatic generation notice
   def BOAST::automatic_notice()
     v = get_boast_version()
@@ -69,7 +69,7 @@ module BOAST
     info += specfem_header_text()
     return info
   end
-  
+
   def BOAST::protect(name,val)
     BOAST::get_output.puts "#ifndef #{name}"
     BOAST::get_output.puts "#define #{name} #{val}"
@@ -95,7 +95,7 @@ module BOAST
     load "./INDEX4.rb"
     load "./INDEX5.rb"
 
-    BOAST::get_output.puts "\n"      
+    BOAST::get_output.puts "\n"
 
     # constants defaults
     ndim = opts[:ndim].nil? ? 3 : opts[:ndim]
@@ -104,11 +104,11 @@ module BOAST
     ngll3 = opts[:ngll3].nil? ? 125 : opts[:ngll3]
     ngll3_padded = opts[:ngll3_padded].nil? ? 128 : opts[:ngll3_padded]
     n_sls = opts[:n_sls].nil? ? 3 : opts[:n_sls]
-    
+
     iregion_crust_mantle = opts[:iregion_crust_mantle].nil? ? 1 : opts[:iregion_crust_mantle]
     iregion_inner_core = opts[:iregion_inner_core].nil? ? 3 : opts[:iregion_inner_core]
     iflag_in_fictitious_cube = opts[:iflag_in_fictitious_cube].nil? ? 11 : opts[:iflag_in_fictitious_cube]
-    
+
     r_earth_km = opts[:r_earth_km].nil? ? 6371.0 : opts[:r_earth_km]
     coloring_min_nspec_inner_core = opts[:coloring_min_nspec_inner_core].nil? ? 1000 : opts[:coloring_min_nspec_inner_core]
     coloring_min_nspec_outer_core = opts[:coloring_min_nspec_outer_core].nil? ? 1000 : opts[:coloring_min_nspec_outer_core]
@@ -129,7 +129,13 @@ module BOAST
     protect("COLORING_MIN_NSPEC_INNER_CORE", coloring_min_nspec_inner_core)
     protect("COLORING_MIN_NSPEC_OUTER_CORE", coloring_min_nspec_outer_core)
     protect("BLOCKSIZE_TRANSFER", blocksize_transfer)
-    
+
     BOAST::get_output.puts "\n"
   end
+
+  # puts comments into generated sources
+  def BOAST::comment(str = "")
+    BOAST::get_output.puts str
+  end
+
 end

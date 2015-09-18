@@ -215,7 +215,8 @@
 ! in the case of Stacey boundary conditions, add C*deltat/2 contribution to the mass matrix
 ! on Stacey edges for the crust_mantle and outer_core regions but not for the inner_core region
 ! thus the mass matrix must be replaced by three mass matrices including the "C" damping matrix
-
+!
+! only called in case of (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)
   use constants
 
   use meshfem3D_par,only: &
@@ -228,6 +229,8 @@
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
     rmassx,rmassy,b_rmassx,b_rmassy
+
+  use shared_parameters,only: UNDO_ATTENUATION
 
   implicit none
 
@@ -259,7 +262,15 @@
 
   ! distinguish between single and double precision for reals
   two_omega_earth_dt = real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat, kind=CUSTOM_REAL)
-  b_two_omega_earth_dt = - real(2.d0 * TWO_PI / (HOURS_PER_DAY * SECONDS_PER_HOUR * scale_t_inv) * deltat, kind=CUSTOM_REAL)
+
+  ! reconstructed wavefield
+  if (UNDO_ATTENUATION) then
+    ! spinning forward
+    b_two_omega_earth_dt = two_omega_earth_dt
+  else
+    ! spinning backward to reconstruct wavefield
+    b_two_omega_earth_dt = - two_omega_earth_dt
+  endif
 
   ! definition depends if region is fluid or solid
   select case (iregion_code)

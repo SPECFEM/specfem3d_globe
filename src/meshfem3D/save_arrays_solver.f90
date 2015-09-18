@@ -241,9 +241,8 @@
   write(IOUT) rmassz
 
   ! mass matrices for backward simulation when ROTATION is .true.
-  if (EXACT_MASS_MATRIX_FOR_ROTATION) then
-    if ((ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
-       (ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
+  if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
+    if (iregion_code == IREGION_CRUST_MANTLE .or. iregion_code == IREGION_INNER_CORE) then
        write(IOUT) b_rmassx
        write(IOUT) b_rmassy
     endif

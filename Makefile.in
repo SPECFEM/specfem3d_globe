@@ -328,6 +328,7 @@ endif
 	@echo "    xaddition_sem"
 	@echo "    xclip_sem"
 	@echo "    xcombine_sem"
+	@echo "    xcreate_cross_section"
 	@echo "    xdifference_sem"
 	@echo "    xinterpolate_model"
 	@echo "    xsmooth_sem"

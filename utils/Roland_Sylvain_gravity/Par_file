@@ -1,18 +1,18 @@
 
 # forward or adjoint simulation
-SIMULATION_TYPE                 = 1        # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
-NOISE_TOMOGRAPHY                = 0        # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
-SAVE_FORWARD                    = .false.  # save last frame of forward simulation or not
+SIMULATION_TYPE                 = 1   # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
+NOISE_TOMOGRAPHY                = 0   # flag of noise tomography, three steps (1,2,3). If earthquake simulation, set it to 0.
+SAVE_FORWARD                    = .false.   # save last frame of forward simulation or not
 
 # number of chunks (1,2,3 or 6)
 NCHUNKS                         = 6
 
 # angular width of the first chunk (not used if full sphere with six chunks)
-ANGULAR_WIDTH_XI_IN_DEGREES   = 20.d0      # angular size of a chunk
-ANGULAR_WIDTH_ETA_IN_DEGREES  = 20.d0
-CENTER_LATITUDE_IN_DEGREES    = 40.d0
-CENTER_LONGITUDE_IN_DEGREES   = 25.d0
-GAMMA_ROTATION_AZIMUTH        = 0.d0
+ANGULAR_WIDTH_XI_IN_DEGREES     = 20.d0   # angular size of a chunk
+ANGULAR_WIDTH_ETA_IN_DEGREES    = 20.d0
+CENTER_LATITUDE_IN_DEGREES      = 40.d0
+CENTER_LONGITUDE_IN_DEGREES     = 25.d0
+GAMMA_ROTATION_AZIMUTH          = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
@@ -38,12 +38,12 @@ NPROC_ETA                       = 10
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = s40rts # 1D_isotropic_prem
+MODEL                           = s40rts
 
 # parameters describing the Earth model
 OCEANS                          = .false.
-ELLIPTICITY                     = .true. # .false.
-TOPOGRAPHY                      = .true. # .false.
+ELLIPTICITY                     = .true.
+TOPOGRAPHY                      = .true.
 GRAVITY                         = .false.
 ROTATION                        = .false.
 ATTENUATION                     = .false.
@@ -167,7 +167,7 @@ ROTATE_SEISMOGRAMS_RT           = .false.
 WRITE_SEISMOGRAMS_BY_MASTER     = .false.
 
 # save all seismograms in one large combined file instead of one file per seismogram
-# to avoid overloading shared non-local file systems such as GPFS for instance
+# to avoid overloading shared non-local file systems such as LUSTRE or GPFS for instance
 SAVE_ALL_SEISMOS_IN_ONE_FILE    = .false.
 USE_BINARY_FOR_LARGE_FILE       = .false.
 
@@ -258,6 +258,10 @@ NUMBER_OF_SIMULTANEOUS_RUNS     = 1
 # and the code will broadcast it to the others)
 BROADCAST_SAME_MESH_AND_MODEL   = .false.
 
+# if one or a few of these simultaneous runs fail, kill all the runs or let the others finish using a fail-safe mechanism
+# (in most cases, should be set to false)
+USE_FAILSAFE_MECHANISM          = .false.
+
 #-----------------------------------------------------------
 
 # set to true to use GPUs
@@ -278,3 +282,4 @@ ADIOS_FOR_AVS_DX                = .true.
 ADIOS_FOR_KERNELS               = .true.
 ADIOS_FOR_MODELS                = .true.
 ADIOS_FOR_UNDO_ATTENUATION      = .true.
+

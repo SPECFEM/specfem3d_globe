@@ -3,15 +3,28 @@
 #
 # note: script requires executable 'mesh2vtu'
 ##############################################
+# USER PARAMETERS
+
 # partitions
 numCPUs=4
-# slice file
-echo "1" | awk '{for(i=0;i<numCPUs;i++)print i}' numCPUs=$numCPUs > slices_all.txt
-slice="slices_all.txt"
+
 # kernel directory
-dir="DATABASES_MPI/"
+dir=DATABASES_MPI/
+
 # low (0) / high (1) resolution
-res="1"
+res=$1
+
+##############################################
+
+if [ "$res" == "" ]; then echo "usage: ./xcombine_vol_data.sh res[0=low/1=high-resolution/2=mid-resolution]"; exit 1; fi
+
+echo
+echo "plotting sensitivity kernels"
+echo
+
+# creates slice file
+slice=slices_all.txt
+echo "1" | awk '{for(i=0;i<numCPUs;i++)print i}' numCPUs=$numCPUs > $slice
 
 # for visualization
 cp ../../utils/Visualization/VTK_ParaView/AVS_continent_boundaries.inp ./

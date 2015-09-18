@@ -27,7 +27,7 @@ module BOAST
       raise "Unsupported type : #{type}!"
     end
     variables += [num_interfaces,max_nibool_interfaces,d_nibool_interfaces,d_ibool_interfaces]
-    
+
     p = Procedure(function_name, variables)
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")

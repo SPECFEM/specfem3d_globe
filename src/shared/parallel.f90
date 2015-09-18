@@ -1604,7 +1604,7 @@ end module my_mpi
 
   character(len=dim2), dimension(NPROC) :: sendbuf
   character(len=dim2), dimension(dim1, NPROC) :: recvbuf
-  
+
   integer, dimension(NPROC) :: recvoffset, recvcnt
 
   integer :: ier

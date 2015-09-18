@@ -119,13 +119,13 @@ puts "-------------------------------"
 
 # checks output directory
 if File.exists? "#{$options[:output_dir]}/" then
-puts "directory exists: #{$options[:output_dir]}/"
+  puts "directory exists: #{$options[:output_dir]}/"
 else
-puts "directory does not exist: #{$options[:output_dir]}/"
-puts "please check your output-directory (--output-dir)"
-puts ""
-puts "exiting now..."
-abort "Error: output directory does not exist"
+  puts "directory does not exist: #{$options[:output_dir]}/"
+  puts "please check your output-directory (--output-dir)"
+  puts ""
+  puts "exiting now..."
+  abort "Error: output directory does not exist"
 end
 
 # loops over all kernels
@@ -161,10 +161,10 @@ kerns.each { |kern|
 
     # file name
     f = File::new("#{$options[:output_dir]}/#{filename}", "w+")
-    
+
     # writes out specfem3d_globe info text at beginning of file
     v = BOAST::specfem3d_globe_header_info()
-    
+
     # writes out generate kernel
     if lang == :CUDA then
       k_s = "#{v}" + k.to_s
@@ -187,7 +187,7 @@ kerns.each { |kern|
         k.build(:verbose => $options[:verbose], :platform_vendor => $options[:platform] )
       end
     end
-    
+
     # regression testing
     if $options[:check] then
       puts "  testing kernel with ../kernels.test/ cases"
@@ -229,12 +229,12 @@ langs.each { |lang|
     suffix = "_cl.c"
     kern_inc_f = File::new("#{$options[:output_dir]}/kernel_inc"+suffix, "w+")
   end
-  
+
   kern_list_f = File::new("#{$options[:output_dir]}/kernel_list.h", "w+")
 
   kernels.each { |kern|
     kern_list_f.puts "BOAST_KERNEL(#{kern.to_s});"
-    
+
     if lang == :CUDA then
       require "./#{kern.to_s}.rb"
       BOAST::set_lang( BOAST::const_get(lang))
@@ -256,7 +256,93 @@ langs.each { |lang|
   elsif lang == :CL
     kern_inc_f.puts elem_thread_check
   end
-  
+
+
+  # adds typedef-definitions for CUDA function pointers
+  if lang == :CUDA then
+    # array holding typedef-definitions for CUDA function pointers to **_forward and **_adjoint kernels
+    proto_defs_cuda = []
+
+    # loops over big kernels only
+    big_kernels.each { |kern|
+      require "./#{kern.to_s}.rb"
+      BOAST::set_lang( BOAST::const_get(lang))
+      k = BOAST::method(kern).call(false)
+
+      # get procedure declaration as string
+      my_typedef = ""
+      pointer_name = ""
+      proto = k.procedure.decl.to_s
+
+      # typedefs for big kernels
+      # kernel name string
+      kernel_name = "#{kern.to_s}"
+
+      # gets only function definition string, stripping leading __global__ .. declarations
+      istart = proto.index(kernel_name)
+      iend = proto.length
+      function = proto[istart..iend]
+
+      # gets arguments starting at "("
+      istart = function.index("(")
+      iend = function.length
+      arguments = function[istart..iend]
+
+      # makes pointer name string, e.g. outer_core_impl_kernel_forward -> (*outer_core_impl_kernel)
+      istart = kernel_name.index("_impl_kernel")
+      if istart then
+        pointer_name = "(*" + kernel_name[0..istart] + "impl_kernel" + ")"
+      else
+        puts "pointer name not recognized in kernel: ",kernel_name
+        abort "Error: kernel name invalid"
+      end
+
+      # declares typedef for function pointer, e.g. typedef void (*outer_core_impl_kernel) (...) ;
+      my_typedef = "typedef void " + pointer_name + " " + arguments + " ;"
+
+      # adds new typedef entries to list
+      if my_typedef.length > 1 then
+        #puts ""
+        #puts "typedef: ",my_typedef
+        #puts ""
+        #puts "listed: ",proto_defs_cuda.any? { |s| s.include?(pointer_name)}
+        #puts "index:",proto_defs.index(my_typedef)
+        # checks if pointer already listed
+        index = proto_defs_cuda.index { |s| s.include?(pointer_name) }
+        if index then
+          # already contained in list
+          #puts "  #{kern.to_s} already listed: " + index.to_s
+          # checks that arguments match
+          if proto_defs_cuda[index] != my_typedef then
+            puts "typedef-definition does not match for " + kernel_name
+            puts "Please make sure that **_impl_kernel_forward and **_impl_kernel_adjoint have the same arguments"
+            puts ""
+            abort "Error: invalid arguments for forward and adjoint kernel call of " + kernel_name
+          end
+        else
+          # adds new definition to list
+          puts "  created typedef-definition for function pointer: " + pointer_name
+          proto_defs_cuda.push(my_typedef)
+        end
+      end
+    }
+
+    # adds typedef-definitions
+    if proto_defs_cuda.length > 0 then
+      puts "  adding #{proto_defs_cuda.length.to_s} typedef-definitions for CUDA function pointers to file kernel_proto.cu.h"
+      #puts proto_defs_cuda
+      kern_proto_f.puts ""
+      kern_proto_f.puts "// typedef-definitions for function pointers"
+      kern_proto_f.puts ""
+      # lists each definition
+      proto_defs_cuda.each{ |mydef|
+        kern_proto_f.puts mydef
+        kern_proto_f.puts ""
+      }
+    end
+  end
+
+  # closing files
   kern_list_f.close
   if lang == :CUDA then
     kern_proto_f.close

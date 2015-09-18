@@ -54,7 +54,7 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
                  gpu_realw_mem d_gammax,
                  gpu_realw_mem d_gammay,
                  gpu_realw_mem d_gammaz,
-                 realw time,
+                 realw timeval,
                  gpu_realw_mem d_A_array_rotation,
                  gpu_realw_mem d_B_array_rotation,
                  gpu_realw_mem d_b_A_array_rotation,
@@ -75,6 +75,29 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
 
   int num_blocks_x, num_blocks_y;
   get_blocks_xy (nb_blocks_to_compute, &num_blocks_x, &num_blocks_y);
+
+  // defines local parameters for forward/adjoint function calls
+  realw deltat,two_omega_earth;
+  gpu_realw_mem displ,accel;
+  gpu_realw_mem A_array_rotation, B_array_rotation;
+
+  // sets gpu arrays
+  if (FORWARD_OR_ADJOINT == 1) {
+    displ = mp->d_displ_outer_core;
+    accel = mp->d_accel_outer_core;
+    deltat = mp->deltat;
+    two_omega_earth = mp->two_omega_earth;
+    A_array_rotation = d_A_array_rotation;
+    B_array_rotation = d_B_array_rotation;
+  } else {
+    // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
+    displ = mp->d_b_displ_outer_core;
+    accel = mp->d_b_accel_outer_core;
+    deltat = mp->b_deltat;
+    two_omega_earth = mp->b_two_omega_earth;
+    A_array_rotation = d_b_A_array_rotation;
+    B_array_rotation = d_b_B_array_rotation;
+  }
 
 #ifdef USE_OPENCL
   if (run_opencl) {
@@ -100,13 +123,8 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->num_phase_ispec_outer_core));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &iphase));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->use_mesh_coloring_gpu));
-    if (FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_displ_outer_core.ocl));
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_accel_outer_core.ocl));
-    } else {
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_displ_outer_core.ocl));
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_b_accel_outer_core.ocl));
-    }
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &displ.ocl));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &accel.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xix.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiy.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_xiz.ocl));
@@ -129,18 +147,11 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_rho_g_over_kappa_fluid.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_wgll_cube.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->rotation));
-    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &time));
-    if (FORWARD_OR_ADJOINT == 1) {
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->two_omega_earth));
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->deltat));
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_A_array_rotation.ocl));
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_B_array_rotation.ocl));
-    } else {
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->b_two_omega_earth));
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &mp->b_deltat));
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_A_array_rotation.ocl));
-      clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_b_B_array_rotation.ocl));
-    }
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &timeval));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &two_omega_earth));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (realw), (void *) &deltat));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &A_array_rotation.ocl));
+    clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (cl_mem), (void *) &B_array_rotation.ocl));
     clCheck (clSetKernelArg (*outer_core_kernel_p, idx++, sizeof (int), (void *) &mp->NSPEC_OUTER_CORE));
 #ifdef USE_TEXTURES_FIELDS
     if (FORWARD_OR_ADJOINT == 1) {
@@ -165,70 +176,48 @@ void outer_core (int nb_blocks_to_compute, Mesh *mp,
     dim3 grid(num_blocks_x,num_blocks_y);
     dim3 threads(blocksize / GPU_ELEM_PER_THREAD,1,1);
 
+    // defines function pointer to __global__ function (taken from definition in file kernel_proto.cu.h)
+    // since forward and adjoint function calls are identical and only the passed arrays change
+    outer_core_impl_kernel outer_core_kernel_p;
+
+    // selects function call
     if (FORWARD_OR_ADJOINT == 1) {
       // forward wavefields -> FORWARD_OR_ADJOINT == 1
-      outer_core_impl_kernel_forward<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                            d_ibool.cuda,
-                                                                            mp->d_phase_ispec_inner_outer_core.cuda,
-                                                                            mp->num_phase_ispec_outer_core,
-                                                                            iphase,
-                                                                            mp->use_mesh_coloring_gpu,
-                                                                            mp->d_displ_outer_core.cuda,
-                                                                            mp->d_accel_outer_core.cuda,
-                                                                            d_xix.cuda,d_xiy.cuda,d_xiz.cuda,
-                                                                            d_etax.cuda,d_etay.cuda,d_etaz.cuda,
-                                                                            d_gammax.cuda,d_gammay.cuda,d_gammaz.cuda,
-                                                                            mp->d_hprime_xx.cuda,
-                                                                            mp->d_hprimewgll_xx.cuda,
-                                                                            mp->d_wgllwgll_xy.cuda,mp->d_wgllwgll_xz.cuda,mp->d_wgllwgll_yz.cuda,
-                                                                            mp->gravity,
-                                                                            mp->d_xstore_outer_core.cuda,
-                                                                            mp->d_ystore_outer_core.cuda,
-                                                                            mp->d_zstore_outer_core.cuda,
-                                                                            mp->d_d_ln_density_dr_table.cuda,
-                                                                            mp->d_minus_rho_g_over_kappa_fluid.cuda,
-                                                                            mp->d_wgll_cube.cuda,
-                                                                            mp->rotation,
-                                                                            time,
-                                                                            mp->two_omega_earth,
-                                                                            mp->deltat,
-                                                                            d_A_array_rotation.cuda,
-                                                                            d_B_array_rotation.cuda,
-                                                                            mp->NSPEC_OUTER_CORE);
+      outer_core_kernel_p = &outer_core_impl_kernel_forward;
     } else {
       // backward/reconstructed wavefields -> FORWARD_OR_ADJOINT == 3
-      // debug
       DEBUG_BACKWARD_FORCES();
-
-      outer_core_impl_kernel_adjoint<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
-                                                                            d_ibool.cuda,
-                                                                            mp->d_phase_ispec_inner_outer_core.cuda,
-                                                                            mp->num_phase_ispec_outer_core,
-                                                                            iphase,
-                                                                            mp->use_mesh_coloring_gpu,
-                                                                            mp->d_b_displ_outer_core.cuda,
-                                                                            mp->d_b_accel_outer_core.cuda,
-                                                                            d_xix.cuda, d_xiy.cuda, d_xiz.cuda,
-                                                                            d_etax.cuda, d_etay.cuda, d_etaz.cuda,
-                                                                            d_gammax.cuda, d_gammay.cuda, d_gammaz.cuda,
-                                                                            mp->d_hprime_xx.cuda,
-                                                                            mp->d_hprimewgll_xx.cuda,
-                                                                            mp->d_wgllwgll_xy.cuda, mp->d_wgllwgll_xz.cuda, mp->d_wgllwgll_yz.cuda,
-                                                                            mp->gravity,
-                                                                            mp->d_xstore_outer_core.cuda,
-                                                                            mp->d_ystore_outer_core.cuda,
-                                                                            mp->d_zstore_outer_core.cuda,
-                                                                            mp->d_d_ln_density_dr_table.cuda,
-                                                                            mp->d_minus_rho_g_over_kappa_fluid.cuda,
-                                                                            mp->d_wgll_cube.cuda,
-                                                                            mp->rotation,
-                                                                            time,
-                                                                            mp->b_two_omega_earth,
-                                                                            mp->b_deltat,
-                                                                            d_b_A_array_rotation.cuda,
-                                                                            d_b_B_array_rotation.cuda,
-                                                                            mp->NSPEC_OUTER_CORE);
+      outer_core_kernel_p = &outer_core_impl_kernel_adjoint;
     }
+
+    outer_core_kernel_p<<<grid,threads,0,mp->compute_stream>>>(nb_blocks_to_compute,
+                                                               d_ibool.cuda,
+                                                               mp->d_phase_ispec_inner_outer_core.cuda,
+                                                               mp->num_phase_ispec_outer_core,
+                                                               iphase,
+                                                               mp->use_mesh_coloring_gpu,
+                                                               displ.cuda,
+                                                               accel.cuda,
+                                                               d_xix.cuda,d_xiy.cuda,d_xiz.cuda,
+                                                               d_etax.cuda,d_etay.cuda,d_etaz.cuda,
+                                                               d_gammax.cuda,d_gammay.cuda,d_gammaz.cuda,
+                                                               mp->d_hprime_xx.cuda,
+                                                               mp->d_hprimewgll_xx.cuda,
+                                                               mp->d_wgllwgll_xy.cuda,mp->d_wgllwgll_xz.cuda,mp->d_wgllwgll_yz.cuda,
+                                                               mp->gravity,
+                                                               mp->d_xstore_outer_core.cuda,
+                                                               mp->d_ystore_outer_core.cuda,
+                                                               mp->d_zstore_outer_core.cuda,
+                                                               mp->d_d_ln_density_dr_table.cuda,
+                                                               mp->d_minus_rho_g_over_kappa_fluid.cuda,
+                                                               mp->d_wgll_cube.cuda,
+                                                               mp->rotation,
+                                                               timeval,
+                                                               two_omega_earth,
+                                                               deltat,
+                                                               A_array_rotation.cuda,
+                                                               B_array_rotation.cuda,
+                                                               mp->NSPEC_OUTER_CORE);
   }
 #endif
 
@@ -245,14 +234,14 @@ extern EXTERN_LANG
 void FC_FUNC_ (compute_forces_outer_core_gpu,
                COMPUTE_FORCES_OUTER_CORE_GPU) (long *Mesh_pointer_f,
                                                int *iphase,
-                                               realw *time_f,
+                                               realw *timeval_f,
                                                int *FORWARD_OR_ADJOINT_f) {
 
   TRACE ("compute_forces_outer_core_gpu");
 
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
-  realw time = *time_f;
+  realw timeval = *timeval_f;
   int FORWARD_OR_ADJOINT = *FORWARD_OR_ADJOINT_f;
 
   // safety check
@@ -366,7 +355,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                   PASS_OFFSET(d_gammax_outer_core, offset),
                   PASS_OFFSET(d_gammay_outer_core, offset),
                   PASS_OFFSET(d_gammaz_outer_core, offset),
-                  time,
+                  timeval,
                   PASS_OFFSET(d_A_array_rotation, offset_nonpadded),
                   PASS_OFFSET(d_B_array_rotation, offset_nonpadded),
                   PASS_OFFSET(d_b_A_array_rotation, offset_nonpadded),
@@ -409,7 +398,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
                 mp->d_gammax_outer_core,
                 mp->d_gammay_outer_core,
                 mp->d_gammaz_outer_core,
-                time,
+                timeval,
                 mp->d_A_array_rotation,
                 mp->d_B_array_rotation,
                 mp->d_b_A_array_rotation,
