@@ -319,7 +319,7 @@ subroutine write_asdf(asdf_container)
   !--------------------------------------------------------
 
   call ASDF_initialize_hdf5_f(ier);
-  call ASDF_create_new_file_f("OUTPUT_FILES/synthetic.h5"//C_NULL_CHAR, comm, file_id)
+  call ASDF_create_new_file_f(OUTPUT_FILES_BASE/"synthetic.h5"//C_NULL_CHAR, comm, file_id)
 
   call ASDF_write_string_attribute_f(file_id, "file_format" // C_NULL_CHAR, &
                                      "ASDF" // C_NULL_CHAR, ier)
