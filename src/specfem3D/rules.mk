@@ -176,7 +176,6 @@ adios_specfem3D_OBJECTS = \
 	$O/read_mesh_databases_adios.solverstatic_adios.o \
 	$O/save_forward_arrays_adios.solverstatic_adios.o \
 	$O/save_kernels_adios.solverstatic_adios.o \
-	$O/write_specfem_adios_header.solverstatic_adios.o \
 	$O/write_output_ASDF.solverstatic_adios.o \
 	$(EMPTY_MACRO)
 
