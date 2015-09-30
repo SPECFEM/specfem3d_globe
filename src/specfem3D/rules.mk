@@ -160,7 +160,7 @@ gpu_specfem3D_STUBS = \
 	$O/specfem3D_gpu_method_stubs.cc.o \
 	$(EMPTY_MACRO)
 
-ifdef NO_GPU  
+ifdef NO_GPU
 specfem3D_OBJECTS += $(gpu_specfem3D_STUBS)
 else
 specfem3D_OBJECTS += $(gpu_specfem3D_OBJECTS)
@@ -177,7 +177,6 @@ adios_specfem3D_OBJECTS = \
 	$O/read_mesh_databases_adios.solverstatic_adios.o \
 	$O/save_forward_arrays_adios.solverstatic_adios.o \
 	$O/save_kernels_adios.solverstatic_adios.o \
-	$O/write_specfem_adios_header.solverstatic_adios.o \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_SHARED_OBJECTS = \
@@ -261,7 +260,7 @@ endif
 specfem3D_ALL_OBJECTS = $(specfem3D_OBJECTS) $(specfem3D_SHARED_OBJECTS)
 
 ifeq ($(CUDA),yes)
-SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)	
+SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(CUDA_LINK) $(LIBS)
 else
 SPECFEM_LINK_FLAGS = $(LDFLAGS) $(MPILIBS) $(LIBS)
 endif
@@ -342,7 +341,7 @@ $O/%.solver.o: $S/%.F90 $O/shared_par.shared_module.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $< 
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<
 
 ###
 ### VTK compilation
