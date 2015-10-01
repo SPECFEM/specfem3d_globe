@@ -262,8 +262,7 @@
       if (section_type == 0) then
         ! horizontal cross-section
         if (nsection_params /= 2) &
-          stop 'Error horizontal section parameters must have format: ' // &
-               '-H depth,delta-incr'
+          stop 'Error horizontal section format: -H depth,delta-incr'
         read(param_args(1),*) depth0
         read(param_args(2),*) dincr
         ! check
@@ -272,8 +271,7 @@
       else
         ! vertical cross-section
         if (nsection_params /= 6 .and. nsection_params /= 8) &
-          stop 'Error vertical section parameters must have format: ' // &
-               '-V lat1,lon1,lat2,lon2,delta-incr,depth-incr,(depth_min),(depth_max)'
+          stop 'Error vertical section format: -V lat1,lon1,lat2,lon2,delta-incr,depth-incr,(depth_min),(depth_max)'
         read(param_args(1),*) v_lat1
         read(param_args(2),*) v_lon1
         read(param_args(3),*) v_lat2
