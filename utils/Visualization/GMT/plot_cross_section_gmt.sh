@@ -150,7 +150,7 @@ T=-T$min/$max/$din
 echo "color range: $T"
 makecpt -Cseis $T -Z -V > $file.cpt
 
-# get start and end points for projection 
+# get start and end points for projection
 # first point
 lon1=$lon_min
 lat1=$lat_min
@@ -159,7 +159,7 @@ lon2=$lon_max
 lat2=$lat_max
 echo
 echo "point locations (lon/lat): ($lon1/$lat1) to ($lon2/$lat2)"
-echo 
+echo
 
 
 # GMT
@@ -202,7 +202,7 @@ EOF
 EOF
     # text annotation
     pstext -J -R -K -O -V <<EOF >> $ps_file
-    $lon1 $lat1 15 0 1 RT A\030 
+    $lon1 $lat1 15 0 1 RT A\030
     $lon2 $lat2 15 0 1 RT B\030
 EOF
   else
@@ -225,7 +225,7 @@ fi
 # base map
 psbasemap $R $J $B -K -O -V -P  >> $ps_file
 
-# plot data points 
+# plot data points
 if [ "$plot_vert" == "1" ]; then
   # simple dot plot
   psxy $file.gmt3 $R $J -C$file.cpt -Sc $B -K -O -V -P >> $ps_file
@@ -268,7 +268,7 @@ else
   pscoast -J -R -W0.1 -Dh -A1000 -K -O -V >> $ps_file
 fi
 
-# scale 
+# scale
 da=`echo "scale=0; ($val_max - $val_min) / 3" | bc`
 echo "scale increment: $da"
 echo
