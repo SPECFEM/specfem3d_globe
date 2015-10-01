@@ -381,7 +381,7 @@
       cap_degree = cap_degree + dist
 
       ! gets smoothing points and weights
-      call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+      call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
     endif
 
@@ -400,7 +400,7 @@
       cap_degree = cap_degree + dist
 
       ! gets smoothing points and weights
-      call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+      call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
     endif
 
@@ -526,7 +526,7 @@
   integer ileftlng
 
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lng > 180.0d0 .or. lng < -180.0d0) &
-    stop 'Error in latitude/longitude range in icolat_ilon'
+    stop 'Error in latitude/longitude range in ibilinearmap'
 
 ! map longitudes to [0,360]
   if (lng<0) then
@@ -551,177 +551,4 @@
   if (ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
 
   end subroutine ibilinearmap
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-! hash table to define the crustal type using an integer instead of characters
-! because working with integers in the rest of the routines results in much faster code
-  subroutine hash_crustal_type(crustaltype, ihash)
-
-    implicit none
-
-    character(len=2), intent(in) :: crustaltype
-    integer, intent(out) :: ihash
-
-    ihash = iachar(crustaltype(1:1)) + 128*iachar(crustaltype(2:2)) + 1
-
-  end subroutine hash_crustal_type
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine icolat_ilon(xlat,xlon,icolat,ilon)
-
-  implicit none
-
-! argument variables
-  double precision :: xlat,xlon
-  integer :: icolat,ilon
-
-  if (xlat > 90.0d0 .or. xlat < -90.0d0 .or. xlon > 180.0d0 .or. xlon < -180.0d0) &
-    stop 'Error in latitude/longitude range in icolat_ilon'
-
-  icolat = int(1+( (90.d0-xlat)*0.5d0 ))
-  if (icolat == 91) icolat = 90
-
-  ilon = int(1+( (180.d0+xlon)*0.5d0 ))
-  if (ilon == 181) ilon = 1
-
-  if (icolat>90 .or. icolat<1) stop 'Error in routine icolat_ilon'
-  if (ilon<1 .or. ilon>180) stop 'Error in routine icolat_ilon'
-
-  end subroutine icolat_ilon
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine CAP_vardegree(lon,lat,xlon,xlat,weight,CAP_DEGREE,NTHETA,NPHI)
-
-! calculates weighting points to smooth around lon/lat location with
-! a smoothing range of CAP_DEGREE
-!
-! The cap is rotated to the North Pole.
-!
-! returns: xlon,xlat,weight
-
-  use constants
-
-  implicit none
-
-  ! sampling rate
-  integer :: NTHETA
-  integer :: NPHI
-
-  ! smoothing size (in degrees)
-  double precision :: CAP_DEGREE
-
-  ! argument variables
-  double precision :: lat,lon
-  double precision,dimension(NTHETA*NPHI) :: xlon,xlat,weight
-
-  ! local variables
-  double precision :: CAP
-  double precision :: theta,phi,sint,cost,sinp,cosp,wght,total
-  double precision :: r_rot,theta_rot,phi_rot
-  double precision :: rotation_matrix(3,3),x(3),xc(3)
-  double precision :: dtheta,dphi,cap_area,dweight,pi_over_nphi
-  integer :: i,j,k,itheta,iphi
-
-  ! initializes
-  xlon(:) = ZERO
-  xlat(:) = ZERO
-  weight(:) = ZERO
-
-  ! checks cap degree size
-  if (CAP_DEGREE < TINYVAL) then
-    ! no cap smoothing
-    print *,'Error cap:',CAP_DEGREE
-    print *,'  lat/lon:',lat,lon
-    stop 'Error cap_degree too small'
-  endif
-
-  ! pre-compute parameters
-  CAP = CAP_DEGREE * DEGREES_TO_RADIANS
-  dtheta = 0.5d0 * CAP / dble(NTHETA)
-  dphi = TWO_PI / dble(NPHI)
-
-  cap_area = TWO_PI * ( ONE - dcos(CAP) )
-  dweight = CAP / dble(NTHETA) * dphi / cap_area
-  pi_over_nphi = PI/dble(NPHI)
-
-  ! colatitude/longitude in radian
-  theta = (90.0d0 - lat ) * DEGREES_TO_RADIANS
-  phi = lon * DEGREES_TO_RADIANS
-
-  sint = dsin(theta)
-  cost = dcos(theta)
-  sinp = dsin(phi)
-  cosp = dcos(phi)
-
-  ! set up rotation matrix to go from cap at North pole to cap around point of interest
-  rotation_matrix(1,1) = cosp*cost
-  rotation_matrix(1,2) = -sinp
-  rotation_matrix(1,3) = cosp*sint
-  rotation_matrix(2,1) = sinp*cost
-  rotation_matrix(2,2) = cosp
-  rotation_matrix(2,3) = sinp*sint
-  rotation_matrix(3,1) = -sint
-  rotation_matrix(3,2) = ZERO
-  rotation_matrix(3,3) = cost
-
-  ! calculates points over a cap at the North pole and rotates them to specified lat/lon point
-  i = 0
-  total = ZERO
-  do itheta = 1,NTHETA
-
-    theta = dble(2*itheta-1)*dtheta
-    cost = dcos(theta)
-    sint = dsin(theta)
-    wght = sint*dweight
-
-    do iphi = 1,NPHI
-
-      i = i+1
-
-      ! get the weight associated with this integration point (same for all phi)
-      weight(i) = wght
-
-      total = total + weight(i)
-      phi = dble(2*iphi-1)*pi_over_nphi
-      cosp = dcos(phi)
-      sinp = dsin(phi)
-
-      ! x,y,z coordinates of integration point in cap at North pole
-      xc(1) = sint*cosp
-      xc(2) = sint*sinp
-      xc(3) = cost
-
-      ! get x,y,z coordinates in cap around point of interest
-      do j=1,3
-        x(j) = ZERO
-        do k=1,3
-          x(j) = x(j)+rotation_matrix(j,k)*xc(k)
-        enddo
-      enddo
-
-      ! get latitude and longitude (degrees) of integration point
-      call xyz_2_rthetaphi_dble(x(1),x(2),x(3),r_rot,theta_rot,phi_rot)
-      call reduce(theta_rot,phi_rot)
-      xlat(i) = (PI_OVER_TWO - theta_rot) * RADIANS_TO_DEGREES
-      xlon(i) = phi_rot * RADIANS_TO_DEGREES
-      if (xlon(i) > 180.0d0) xlon(i) = xlon(i) - 360.0d0
-
-    enddo
-
-  enddo
-  if (abs(total - ONE) > 0.001d0) then
-    print *,'Error cap:',total,CAP_DEGREE
-    stop 'Error in cap integration for variable degree'
-  endif
-
-  end subroutine CAP_vardegree
 

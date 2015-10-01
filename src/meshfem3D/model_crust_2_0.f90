@@ -240,6 +240,7 @@
   ! local variables
   integer :: i,ila,icolat,ikey,ier
 
+  double precision :: moho
   double precision :: h_moho_min,h_moho_max
 
   character(len=*), parameter :: CNtype2 = 'DATA/crust2.0/CNtype2.txt'
@@ -249,6 +250,7 @@
   write(IMAIN,*)
   write(IMAIN,*) 'incorporating crustal model: CRUST2.0'
   write(IMAIN,*)
+  call flush_IMAIN()
 
   open(unit = IIN,file=CNtype2,status='old',action='read',iostat=ier)
   if (ier /= 0) then
@@ -279,12 +281,26 @@
     read(IIN,*) (crust_rho(i,ikey),i = 1,CRUST_NP)
     read(IIN,*) (crust_thickness(i,ikey),i = 1,CRUST_NP-1),crust_thickness(CRUST_NP,ikey)
 
+    ! thickness = ice (layer index 1) + sediment (index 3+4) + crystalline crust (index 5+6+7)
+    ! crustal thickness without ice
+    ! note: etopo1 has topography including ice ("ice surface" version) and at base of ice sheets ("bedrock" version)
+    !       see: http://www.ngdc.noaa.gov/mgg/global/global.html
+    moho = crust_thickness(3,ikey) + crust_thickness(4,ikey) &
+           + crust_thickness(5,ikey) + crust_thickness(6,ikey) + crust_thickness(7,ikey)
+
     ! limit moho thickness
-    if (crust_thickness(CRUST_NP,ikey) > h_moho_max) h_moho_max = crust_thickness(CRUST_NP,ikey)
-    if (crust_thickness(CRUST_NP,ikey) < h_moho_min) h_moho_min = crust_thickness(CRUST_NP,ikey)
+    if (moho > h_moho_max) h_moho_max = moho
+    if (moho < h_moho_min) h_moho_min = moho
+
   enddo
   close(IIN)
 
+  ! user output
+  write(IMAIN,*) '  Moho crustal thickness (without ice) min/max = ',sngl(h_moho_min),sngl(h_moho_max),' km'
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  ! checks
   if (h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_2_0_model'
 
   end subroutine read_crust_2_0_model
@@ -344,7 +360,7 @@
   integer :: ihash, crustalkey
 
   ! fill in the hash table
-  crustalhash_to_key = -1
+  crustalhash_to_key(:) = -1
   do i = 1,CRUST_NLO
     call hash_crustal_type(code(i), ihash)
     if (crustalhash_to_key(ihash) /= -1) stop 'Error in crust_2_0_CAPsmoothed: hash table collision'
@@ -381,7 +397,7 @@
   endif
 
   ! gets smoothing points and weights
-  call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+  call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
 
   ! initializes
   velp(:) = ZERO
@@ -435,6 +451,24 @@
 !-------------------------------------------------------------------------------------------------
 !
 
+! hash table to define the crustal type using an integer instead of characters
+! because working with integers in the rest of the routines results in much faster code
+
+  subroutine hash_crustal_type(crustaltype, ihash)
+
+    implicit none
+
+    character(len=2), intent(in) :: crustaltype
+    integer, intent(out) :: ihash
+
+    ihash = iachar(crustaltype(1:1)) + 128*iachar(crustaltype(2:2)) + 1
+
+  end subroutine hash_crustal_type
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine get_crust_2_0_structure(ikey,vptyp,vstyp,rhtyp,thtp,crust_thickness,crust_vp,crust_vs,crust_rho)
 
   use model_crust_2_0_par,only: CRUST_NP,CRUST_NLO
@@ -465,3 +499,28 @@
 
   end subroutine get_crust_2_0_structure
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine icolat_ilon(xlat,xlon,icolat,ilon)
+
+  implicit none
+
+! argument variables
+  double precision :: xlat,xlon
+  integer :: icolat,ilon
+
+  if (xlat > 90.0d0 .or. xlat < -90.0d0 .or. xlon > 180.0d0 .or. xlon < -180.0d0) &
+    stop 'Error in latitude/longitude range in icolat_ilon'
+
+  icolat = int(1+( (90.d0-xlat)*0.5d0 ))
+  if (icolat == 91) icolat = 90
+
+  ilon = int(1+( (180.d0+xlon)*0.5d0 ))
+  if (ilon == 181) ilon = 1
+
+  if (icolat>90 .or. icolat<1) stop 'Error in routine icolat_ilon'
+  if (ilon<1 .or. ilon>180) stop 'Error in routine icolat_ilon'
+
+  end subroutine icolat_ilon

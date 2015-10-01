@@ -266,6 +266,7 @@
   write(IMAIN,*)
   write(IMAIN,*) 'incorporating crustal model: CRUST1.0'
   write(IMAIN,*)
+  call flush_IMAIN()
 
   ! allocates temporary array
   allocate(bnd(CRUST_NP,CRUST_NLA,CRUST_NLO),stat=ier)
@@ -315,17 +316,40 @@
   close(53)
   close(54)
 
+  h_moho_min = HUGEVAL
+  h_moho_max = -HUGEVAL
+
   ! determines layer thickness
   do j = 1,CRUST_NLA
     do i = 1,CRUST_NLO
       do k = 1,CRUST_NP - 1
         crust_thickness(k,j,i) = - (bnd(k+1,j,i) - bnd(k,j,i))
       enddo
+
+      ! thickness = ice (layer index 2) + sediment (index 3+4+5) + crystalline crust (index 6+7+8)
+      ! crustal thickness without ice
+      ! note: etopo1 has topography including ice ("ice surface" version) and at base of ice sheets ("bedrock" version)
+      !       see: http://www.ngdc.noaa.gov/mgg/global/global.html
+      moho = crust_thickness(3,j,i) + crust_thickness(4,j,i) + crust_thickness(5,j,i) &
+             + crust_thickness(6,j,i) + crust_thickness(7,j,i) + crust_thickness(8,j,i)
+
+      ! limit moho thickness
+      if (moho > h_moho_max) h_moho_max = moho
+      if (moho < h_moho_min) h_moho_min = moho
+
     enddo
   enddo
 
   ! frees memory
   deallocate(bnd)
+
+  ! user output
+  write(IMAIN,*) '  Moho crustal thickness (without ice) min/max = ',sngl(h_moho_min),sngl(h_moho_max),' km'
+  write(IMAIN,*)
+  call flush_IMAIN()
+
+  ! checks min/max
+  if (h_moho_min == HUGEVAL .or. h_moho_max == -HUGEVAL) stop 'incorrect moho depths in read_crust_1_0_model'
 
   ! output debug info if needed
   if (DEBUG_FILE_OUTPUT) then
@@ -342,9 +366,6 @@
     ! debug: file output for original data
     open(77,file='tmp-crust1.0.dat',status='unknown')
     write(77,*)'#crustal thickness: #lat (degree) #lon (degree) #crust (km) (including ice) #crust (w/out ice) #sediment #ice'
-
-    h_moho_min = HUGEVAL
-    h_moho_max = -HUGEVAL
 
     ! crustal thickness
     ! thickness = ice (layer index 2) + sediment (index 3+4+5) + crystalline crust (index 6+7+8)
@@ -487,7 +508,7 @@
   endif
 
   ! gets smoothing points and weights
-  call CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+  call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
 
   ! initializes
   velp(:) = ZERO
