@@ -2571,7 +2571,7 @@
 
   subroutine set_thetaphi_range(theta,phi,use_positive_lon)
 
-! returns co-latitude and longitude in range [0,PI] 
+! returns co-latitude and longitude in range [0,PI]
 ! and [0,2PI] (use_positive_lon == true) / [-PI,PI] (use_positive_lon == false)
 
   use constants,only: PI,TWO_PI
