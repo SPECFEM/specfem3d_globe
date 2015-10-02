@@ -209,6 +209,8 @@
   if (ier /= 0) stop 'an error occurred while reading the parameter file: PRINT_SOURCE_TIME_FUNCTION'
 
   ! adjoint kernels
+  call read_value_logical(READ_ADJSRC_ASDF, 'READ_ADJSRC_ASDF', ier)
+  if (ier /= 0) stop 'an error occured while reading the parameter file: READ_ADJSRC_ASDF'
   call read_value_logical(ANISOTROPIC_KL, 'ANISOTROPIC_KL', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ANISOTROPIC_KL'
   call read_value_logical(SAVE_TRANSVERSE_KL_ONLY, 'SAVE_TRANSVERSE_KL_ONLY', ier)

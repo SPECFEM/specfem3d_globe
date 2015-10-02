@@ -39,7 +39,7 @@
   integer, parameter :: nparam_i = 45
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 61
+  integer, parameter :: nparam_l = 62
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 34
@@ -89,7 +89,7 @@
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY,&
             OUTPUT_SEISMOS_ASDF, &
             ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
-            SAVE_REGULAR_KL, &
+            READ_ADJSRC_ASDF,SAVE_REGULAR_KL, &
             PARTIAL_PHYS_DISPERSION_ONLY,UNDO_ATTENUATION, &
             USE_LDDRK,INCREASE_CFL_FOR_LDDRK, &
             ANISOTROPIC_KL,SAVE_TRANSVERSE_KL_ONLY,APPROXIMATE_HESS_KL, &
@@ -241,31 +241,32 @@
     ROTATE_SEISMOGRAMS_RT= bcast_logical(34)
     WRITE_SEISMOGRAMS_BY_MASTER= bcast_logical(35)
     USE_BINARY_FOR_LARGE_FILE= bcast_logical(36)
-    SAVE_REGULAR_KL = bcast_logical(37)
-    PARTIAL_PHYS_DISPERSION_ONLY = bcast_logical(38)
-    UNDO_ATTENUATION = bcast_logical(39)
-    USE_LDDRK = bcast_logical(40)
-    INCREASE_CFL_FOR_LDDRK = bcast_logical(41)
-    ANISOTROPIC_KL = bcast_logical(42)
-    SAVE_TRANSVERSE_KL_ONLY = bcast_logical(43)
-    APPROXIMATE_HESS_KL = bcast_logical(44)
-    USE_FULL_TISO_MANTLE = bcast_logical(45)
-    SAVE_SOURCE_MASK = bcast_logical(46)
-    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(47)
-    GPU_MODE = bcast_logical(48)
-    ADIOS_ENABLED = bcast_logical(49)
-    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(50)
-    ADIOS_FOR_MPI_ARRAYS = bcast_logical(51)
-    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(52)
-    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(53)
-    ADIOS_FOR_AVS_DX = bcast_logical(54)
-    ADIOS_FOR_KERNELS = bcast_logical(55)
-    ADIOS_FOR_MODELS = bcast_logical(56)
-    ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(57)
-    CEM_REQUEST = bcast_logical(58)
-    CEM_ACCEPT = bcast_logical(59)
-    BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(60)
-    USE_FAILSAFE_MECHANISM = bcast_logical(61)
+    READ_ADJSRC_ASDF = bcast_logical(37)
+    SAVE_REGULAR_KL = bcast_logical(38)
+    PARTIAL_PHYS_DISPERSION_ONLY = bcast_logical(39)
+    UNDO_ATTENUATION = bcast_logical(40)
+    USE_LDDRK = bcast_logical(41)
+    INCREASE_CFL_FOR_LDDRK = bcast_logical(42)
+    ANISOTROPIC_KL = bcast_logical(43)
+    SAVE_TRANSVERSE_KL_ONLY = bcast_logical(44)
+    APPROXIMATE_HESS_KL = bcast_logical(45)
+    USE_FULL_TISO_MANTLE = bcast_logical(46)
+    SAVE_SOURCE_MASK = bcast_logical(47)
+    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(48)
+    GPU_MODE = bcast_logical(49)
+    ADIOS_ENABLED = bcast_logical(50)
+    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(51)
+    ADIOS_FOR_MPI_ARRAYS = bcast_logical(52)
+    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(53)
+    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(54)
+    ADIOS_FOR_AVS_DX = bcast_logical(55)
+    ADIOS_FOR_KERNELS = bcast_logical(56)
+    ADIOS_FOR_MODELS = bcast_logical(57)
+    ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(58)
+    CEM_REQUEST = bcast_logical(59)
+    CEM_ACCEPT = bcast_logical(60)
+    BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(61)
+    USE_FAILSAFE_MECHANISM = bcast_logical(62)
 
     ! double precisions
     DT = bcast_double_precision(1)
