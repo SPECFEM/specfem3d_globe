@@ -688,6 +688,9 @@
 !DIR$ IVDEP
       do ijk = 1,NGLLCUBE
 #else
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
@@ -718,6 +721,9 @@
           enddo
         enddo
       enddo
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP END CRITICAL
+#endif
 #endif
 
       ! use Runge-Kutta scheme to march memory variables in time

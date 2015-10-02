@@ -406,12 +406,12 @@
   !   - inner core region
   !         needs both, acceleration update & velocity corrector terms
 
+  if (FORCE_VECTORIZATION_VAL) then
+
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( NGLOB_CM, veloc_crust_mantle, deltatover2, &
 !$OMP accel_crust_mantle, NGLOB_IC, veloc_inner_core, accel_inner_core) &
 !$OMP PRIVATE(i)
-
-  if (FORCE_VECTORIZATION_VAL) then
 
     ! crust/mantle
 !$OMP DO SCHEDULE(GUIDED)
@@ -427,6 +427,8 @@
     enddo
 !$OMP enddo
 
+!$OMP END PARALLEL
+
   else
 
     ! crust/mantle
@@ -440,8 +442,6 @@
     enddo
 
   endif
-
-!$OMP END PARALLEL
 
   end subroutine update_veloc_elastic
 
