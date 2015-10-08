@@ -445,7 +445,11 @@
         nadj_rec_local = nadj_rec_local + 1
 
         ! checks **net**.**sta**.**MX**.adj files for correct number of time steps
-        call check_adjoint_sources(irec,nadj_files_found)
+        if (READ_ADJSRC_ASDF) then
+          call check_adjoint_sources_asdf(irec,nadj_files_found)
+        else
+          call check_adjoint_sources(irec,nadj_files_found)
+        endif
       endif
     enddo
 

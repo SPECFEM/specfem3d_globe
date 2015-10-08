@@ -266,6 +266,10 @@
     !call write_specfem_header_adios()
   !endif
 
+  if (READ_ADJSRC_ASDF) then
+    call asdf_setup(current_asdf_handle)
+  endif
+
   ! synchronizes processes
   call synchronize_all()
 
