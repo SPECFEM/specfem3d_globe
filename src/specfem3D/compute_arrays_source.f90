@@ -209,11 +209,14 @@
       print *, adj_source_name
 
       call read_adjoint_sources_ASDF(adj_source_name, adj_source_asdf, index_start, index_end)
-print *, adj_source_asdf(1:10)
+print *, adj_source_asdf(1:100)
 print *, "***********************************************************"
+       adj_src(icomp,:) = adj_source_asdf(1:1200)
 
     enddo
 
+print *, "ending"
+stop
   else
 
     do icomp = 1, NDIM
