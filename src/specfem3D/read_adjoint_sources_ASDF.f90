@@ -50,7 +50,7 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
 
   integer :: itime
   integer :: index_start, index_end
-  real,dimension(20000),intent(out) :: adj_source
+  real,dimension(*),intent(out) :: adj_source
   character(len=*) :: adj_source_name
   !--- Error variable
   integer ier
@@ -92,12 +92,9 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
   ! bandwidth code
   call band_instrument_code(DT,bic)
-  !comp(1) = bic(1:2)//'N'
-  !comp(2) = bic(1:2)//'E'
-  !comp(3) = bic(1:2)//'Z'
-  comp(1) = 'EHE'
-  comp(2) = 'EHN'
-  comp(3) = 'EHZ'
+  comp(1) = bic(1:2)//'N'
+  comp(2) = bic(1:2)//'E'
+  comp(3) = bic(1:2)//'Z'
 
   ! loops over file components E/N/Z
   do icomp = 1,NDIM
@@ -119,7 +116,6 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
        "AuxiliaryData/AdjointSource/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
 
     ! checks length
-    NSTEP = 20000 ! actually 400, fix later
     if (nsamples_infered /= NSTEP) then
       print *,'adjoint source error: ',trim(adj_filename),' has length',nsamples_infered,' but should be',NSTEP
       call exit_MPI(myrank,&
