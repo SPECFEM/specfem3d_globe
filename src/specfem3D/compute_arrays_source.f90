@@ -153,6 +153,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NSTEP_BLOCK) :: adj_trace
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP_BLOCK) :: adj_src
+  real, dimension(20000) :: adj_source_asdf ! temp way to test the read for asdf
   double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
   integer icomp, itime, ios
@@ -196,6 +197,9 @@
 
   if (READ_ADJSRC_ASDF) then
 
+    comp(1) = 'EHE'
+    comp(2) = 'EHN'
+    comp(3) = 'EHZ'
     do icomp = 1, NDIM ! 3 components
 
       print *, "READING ADJOINT SOURCES USING ASDF"
@@ -204,7 +208,9 @@
      
       print *, adj_source_name
 
-      call read_adjoint_sources_ASDF(adj_source_name, adj_src(icomp,index_i), index_start, index_end)
+      call read_adjoint_sources_ASDF(adj_source_name, adj_source_asdf, index_start, index_end)
+print *, adj_source_asdf(1:10)
+print *, "***********************************************************"
 
     enddo
 
