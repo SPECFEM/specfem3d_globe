@@ -120,6 +120,11 @@
     call adios_cleanup()
   endif
 
+  ! asdf finalizes
+  if (READ_ADJSRC_ASDF) then
+    call asdf_cleanup()
+  endif
+
   ! frees dynamically allocated memory
   call finalize_simulation_cleanup()
 

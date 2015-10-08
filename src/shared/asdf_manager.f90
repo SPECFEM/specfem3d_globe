@@ -1,4 +1,3 @@
-/*
 !=====================================================================
 !
 !          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
@@ -25,25 +24,42 @@
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
 !=====================================================================
-*/
 
-#include <stdio.h>
-#include <stdlib.h>
+!==============================================================================
+!> Initialize ASDF for reading the adjoint sources
+subroutine asdf_setup(file_id)
 
-#include "config.h"
+  use iso_c_binding, only: C_NULL_CHAR
+  implicit none
 
-// for ASDF reader setup
+  ! asdf file handle
+  integer,intent(inout) :: file_id
 
-void FC_FUNC_(asdf_setup,ASDF_SETUP)(void) {}
-void FC_FUNC_(asdf_cleanup,ASDF_CLEANUP)(void) {}
+  ! local parameters
+  integer :: comm
+  integer :: ier
 
-// for ASDF writer
+  call world_duplicate(comm)
+  call ASDF_initialize_hdf5_f(ier)
+  call ASDF_open_read_only_f("SEM/asdf_example.h5" // C_NULL_CHAR, comm, file_id) 
 
-void FC_FUNC_(init_asdf_data,INIT_ASDF_DATA)(void) {}
-void FC_FUNC_(store_asdf_data,STORE_ASDF_DATA)(void) {}
-void FC_FUNC_(close_asdf_data,CLOSE_ASDF_DATA)(void) {}
-void FC_FUNC_(write_asdf,WRITE_ASDF)(void) {}
+end subroutine asdf_setup
 
-// for ASDF reader
+!==============================================================================
+!> Finalize ASDF. Called once all adjoint sources have been read from the file
+subroutine asdf_cleanup()
 
-void FC_FUNC_(read_adjoint_sources_ASDF,READ_ADJOINT_SOURCES_ASDF)(void) {}
+  implicit none
+
+  ! local parameters
+  integer :: myrank
+  integer :: ier
+
+  call world_rank(myrank)
+  call synchronize_all()
+
+  call ASDF_finalize_hdf5_f(ier);
+
+  if (ier /= 0 ) stop 'Error cleaning up ASDF: calling ASDF_finalize_hdf5_f() routine failed'
+
+end subroutine asdf_cleanup

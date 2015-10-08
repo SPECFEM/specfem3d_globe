@@ -114,7 +114,7 @@
     nrec,islice_selected_rec,station_name,network_name, &
     xi_receiver,eta_receiver,gamma_receiver,nu,xigll,yigll,zigll, &
     iadjsrc_len,iadjsrc,NSTEP_SUB_ADJ, &
-    DT,CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC,MAX_STRING_LEN
+    DT,CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC,MAX_STRING_LEN,READ_ADJSRC_ASDF
 
   implicit none
 
@@ -162,7 +162,11 @@
       irec_local = irec_local + 1
 
       ! adjoint source file name **net**.**sta**
-      adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
+      if (READ_ADJSRC_ASDF) then
+        adj_source_file = trim(network_name(irec))//'_'//trim(station_name(irec))
+      else
+        adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
+      endif
 
       ! reads in *.adj files
       call compute_arrays_source_adjoint(myrank,adj_source_file, &
@@ -216,8 +220,8 @@
   character(len=2) :: bic
 
   ! checks **net**.**sta**.**MX**.adj files for correct number of time steps
-  ! root file name
   adj_source_file = trim(network_name(irec))//'.'//trim(station_name(irec))
+  ! adjoint source file name **net**.**sta**
 
   ! bandwidth code
   call band_instrument_code(DT,bic)
