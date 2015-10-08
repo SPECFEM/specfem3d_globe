@@ -41,23 +41,29 @@
 ! limitations under the License.
 !==============================================================================
 
-subroutine read_adjoint_sources_ASDF(adj_source_name, adj_trace, index_start, index_end)
+subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, index_end)
 
   use iso_c_binding, only: C_NULL_CHAR
   use specfem_par, only: CUSTOM_REAL, myrank, current_asdf_handle
 
   implicit none
 
+  integer :: itime
   integer :: index_start, index_end
-  real(kind=CUSTOM_REAL), dimension(*) :: adj_trace
-  real,dimension(20000) :: adj_waveform
+  real,dimension(20000),intent(out) :: adj_source
   character(len=*) :: adj_source_name
   !--- Error variable
   integer ier
 
   call ASDF_read_full_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//trim(adj_source_name) // C_NULL_CHAR, &
-        adj_waveform, ier)
-  print *, adj_waveform(1:10)
+        adj_source, ier)
+
+  if (ier /= 0) then
+    print *,'Error reading adjoint source: ',trim(adj_source_name)
+    print *,'rank ',myrank,' - time step: ',itime,' index_start:',index_start,' index_end: ',index_end
+    print *,'  ',trim(adj_source_name)//'has wrong length, please check with your simulation duration'
+    call exit_MPI(myrank,'Adjoint source '//trim(adj_source_name)//' has wrong length, please check with your simulation duration')
+  endif
 
 end subroutine read_adjoint_sources_ASDF
 
@@ -86,9 +92,12 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
   ! bandwidth code
   call band_instrument_code(DT,bic)
-  comp(1) = bic(1:2)//'N'
-  comp(2) = bic(1:2)//'E'
-  comp(3) = bic(1:2)//'Z'
+  !comp(1) = bic(1:2)//'N'
+  !comp(2) = bic(1:2)//'E'
+  !comp(3) = bic(1:2)//'Z'
+  comp(1) = 'EHE'
+  comp(2) = 'EHN'
+  comp(3) = 'EHZ'
 
   ! loops over file components E/N/Z
   do icomp = 1,NDIM
@@ -97,26 +106,24 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
     adj_filename = trim(adj_source_file) // '_'// comp(icomp)
 
     ! checks if adjoint source exists in ASDF file
-    call ASDF_adjoint_source_exists_f(current_asdf_handle, "BW_ALFO_EHE" // C_NULL_CHAR, ier)
+    call ASDF_adjoint_source_exists_f(current_asdf_handle, trim(adj_filename) // C_NULL_CHAR, ier)
    
     if (ier /= 0) then
       ! adjoint source not found
       ! stops simulation
-      call exit_MPI(myrank,'adjoint source '//trim(adj_filename)//' not found, &
-           please check STATIONS_ADJOINT file')
+      call exit_MPI(myrank,'adjoint source '//trim(adj_filename)//' not found, please check STATIONS_ADJOINT file')
     endif
 
     ! checks length of file
     call ASDF_get_num_elements_from_path_f(current_asdf_handle,&
-       "AuxiliaryData/AdjointSource/BW_ALFO_EHE" // C_NULL_CHAR, nsamples_infered, ier)
+       "AuxiliaryData/AdjointSource/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
 
     ! checks length
+    NSTEP = 20000 ! actually 400, fix later
     if (nsamples_infered /= NSTEP) then
-      print *,'adjoint source error: ',trim(adj_filename),' has length',nsamples_infered,' but &
-       should be',NSTEP
+      print *,'adjoint source error: ',trim(adj_filename),' has length',nsamples_infered,' but should be',NSTEP
       call exit_MPI(myrank,&
-        'file '//trim(adj_filename)//' length is wrong, please check your adjoint &
-          sources and your simulation duration')
+        'file '//trim(adj_filename)//' length is wrong, please check your adjoint sources and your simulation duration')
     endif
 
     ! updates counter for found files
