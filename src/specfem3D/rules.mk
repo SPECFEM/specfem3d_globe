@@ -273,7 +273,7 @@ endif
 
 # non-gpu or opencl
 ifeq ($(ASDF),yes)
-SPECFEM_LINK_FLAGS += $(ASDF_LIBS) -lhdf5hl_fortran -lhdf5_hl -lhdf5 -Wl -lstdc++
+SPECFEM_LINK_FLAGS += $(ASDF_LIBS) -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
 endif
 
 
