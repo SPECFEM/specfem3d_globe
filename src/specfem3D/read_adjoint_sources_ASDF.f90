@@ -48,14 +48,14 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
 
   implicit none
 
-  integer :: itime
+  integer :: itime, offset, nsamples
   integer :: index_start, index_end
   real,dimension(*),intent(out) :: adj_source
   character(len=*) :: adj_source_name
   !--- Error variable
   integer ier
 
-  call ASDF_read_full_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//trim(adj_source_name) // C_NULL_CHAR, &
+  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, &
         adj_source, ier)
 
   if (ier /= 0) then
