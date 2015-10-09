@@ -152,7 +152,7 @@
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP_BLOCK) :: adj_src
-  real, dimension(20000) :: adj_source_asdf ! temp way to test the read for asdf
+  real(kind=CUSTOM_REAL), dimension(NSTEP_BLOCK) :: adj_source_asdf
   double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
   integer icomp, itime, ios
@@ -199,8 +199,14 @@
     do icomp = 1, NDIM ! 3 components
 
       print *, "READING ADJOINT SOURCES USING ASDF"
-     
+
       adj_source_name = trim(adj_source_file) // '_' // comp(icomp)
+
+      ! would skip read and set source artificially to zero if out of bounds, see comments above
+      if (index_start == 0 .and. itime == 0) then
+        adj_src(icomp,1) = 0._CUSTOM_REAL
+        cycle
+      endif
 
       call read_adjoint_sources_ASDF(adj_source_name, adj_source_asdf, index_start, index_end)
 

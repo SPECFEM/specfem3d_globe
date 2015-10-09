@@ -41,7 +41,7 @@ subroutine asdf_setup(file_id)
 
   call world_duplicate(comm)
   call ASDF_initialize_hdf5_f(ier)
-  call ASDF_open_read_only_f("SEM/asdf_example.h5" // C_NULL_CHAR, comm, file_id) 
+  call ASDF_open_read_only_f("SEM/synthetic.h5" // C_NULL_CHAR, comm, file_id) 
 
 end subroutine asdf_setup
 
