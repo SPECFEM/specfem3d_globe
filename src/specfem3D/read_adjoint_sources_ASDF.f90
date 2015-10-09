@@ -50,15 +50,19 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
 
   integer :: itime, offset, nsamples
   integer :: index_start, index_end
-  real,dimension(*),intent(out) :: adj_source
+  real(kind=CUSTOM_REAL),dimension(*),intent(out) :: adj_source
   character(len=*) :: adj_source_name
   !--- Error variable
   integer ier
 
-  offset = index_start
+  offset = index_start ! the value to start reading from
   nsamples = index_end - index_start ! this is how many points we want to read in from the adjoint source
+
   call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//&
         trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
+
+  !call ASDF_read_full_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//&
+  !        trim(adj_source_name) // C_NULL_CHAR, adj_source, ier)
 
   if (ier /= 0) then
     print *,'Error reading adjoint source: ',trim(adj_source_name)
@@ -101,7 +105,7 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
   ! loops over file components E/N/Z
   do icomp = 1,NDIM
 
-    ! opens adjoint source file for this component
+    ! name of adjoint source file for this component
     adj_filename = trim(adj_source_file) // '_'// comp(icomp)
 
     ! checks if adjoint source exists in ASDF file
