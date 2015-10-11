@@ -182,7 +182,6 @@ subroutine write_asdf(asdf_container)
   !-- ASDF variables
   !   These variables are used to know where further writes should be done.
   !   They have to be cleaned as soon as they become useless
-  integer :: file_id   ! HDF5 file id, also root group "/"
   integer :: waveforms_grp  ! Group "/Waveforms/"
   integer, dimension(:, :, :), allocatable :: data_ids
 
@@ -226,7 +225,7 @@ subroutine write_asdf(asdf_container)
 
   num_stations = nrec_local
   sampling_rate = DT
-  nsamples = seismo_current
+  nsamples = seismo_current * (NSTEP / NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
   ! Calculate start_time
   call get_time(startTime, start_time_string, end_time_string)
@@ -317,23 +316,23 @@ subroutine write_asdf(asdf_container)
   !--------------------------------------------------------
   ! write ASDF
   !--------------------------------------------------------
-
+ 
   call ASDF_initialize_hdf5_f(ier);
-  call ASDF_create_new_file_f(OUTPUT_FILES_BASE // "synthetic.h5" // C_NULL_CHAR, comm, file_id)
+  call ASDF_create_new_file_f(OUTPUT_FILES_BASE // "synthetic.h5" // C_NULL_CHAR, comm, current_asdf_handle)
 
-  call ASDF_write_string_attribute_f(file_id, "file_format" // C_NULL_CHAR, &
-                                     "ASDF" // C_NULL_CHAR, ier)
-  call ASDF_write_string_attribute_f(file_id, "file_format_version" // C_NULL_CHAR, &
-                                     "0.0.2" // C_NULL_CHAR, ier)
+  call ASDF_write_string_attribute_f(current_asdf_handle, "file_format" // C_NULL_CHAR, &
+                                       "ASDF" // C_NULL_CHAR, ier)
+  call ASDF_write_string_attribute_f(current_asdf_handle, "file_format_version" // C_NULL_CHAR, &
+                                       "0.0.2" // C_NULL_CHAR, ier)
 
-  call ASDF_write_quakeml_f(file_id, trim(quakeml) // C_NULL_CHAR, ier)
-  call ASDF_write_provenance_data_f(file_id, provenance(1:len_prov+1), ier)
+  call ASDF_write_quakeml_f(current_asdf_handle, trim(quakeml) // C_NULL_CHAR, ier)
+  call ASDF_write_provenance_data_f(current_asdf_handle, provenance(1:len_prov+1), ier)
   call read_file("setup/constants.h", sf_constants, len_constants)
   call read_file("DATA/Par_file", sf_parfile, len_Parfile)
-  call ASDF_write_auxiliary_data_f(file_id, trim(sf_constants) // C_NULL_CHAR,&
+  call ASDF_write_auxiliary_data_f(current_asdf_handle, trim(sf_constants) // C_NULL_CHAR,&
                                     trim(sf_parfile(1:len_Parfile)) // C_NULL_CHAR, ier)
 
-  call ASDF_create_waveforms_group_f(file_id, waveforms_grp)
+  call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
 
   do k = 1, mysize
     do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
@@ -361,28 +360,27 @@ subroutine write_asdf(asdf_container)
 
   do j = 1, num_stations
     do i = 1, 3
-      waveforms(:,i,j) = asdf_container%records(i+(3*(j-1)))%record
-      call ASDF_write_full_waveform_f(data_ids(i, j, myrank+1), &
-                                      waveforms(:,i,j), ier)
+      call ASDF_write_partial_waveform_f(data_ids(i, j, myrank+1), &
+                                      seismograms(i,j,:), seismo_offset, NTSTEP_BETWEEN_OUTPUT_SEISMOS, ier)
     enddo
   enddo
+
 
   !--------------------------------------------------------
   ! Clean up
   !--------------------------------------------------------
 
-
   do k = 1, mysize
-  do j = 1, num_stations_gather(k)
-    call ASDF_close_group_f(station_grps_gather(j, k), ier)
-    do i = 1, 3
-      call ASDF_close_dataset_f(data_ids(i, j, k), ier)
+    do j = 1, num_stations_gather(k)
+      call ASDF_close_group_f(station_grps_gather(j, k), ier)
+      do i = 1, 3
+        call ASDF_close_dataset_f(data_ids(i, j, k), ier)
+      enddo
     enddo
-  enddo
   enddo
 
   call ASDF_close_group_f(waveforms_grp, ier)
-  call ASDF_close_file_f(file_id, ier)
+  call ASDF_close_file_f(current_asdf_handle, ier)
   call ASDF_finalize_hdf5_f(ier)
 
   deallocate(data_ids)
