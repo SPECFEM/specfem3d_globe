@@ -223,15 +223,15 @@ subroutine write_asdf(asdf_container)
   sampling_rate = 1.0/DT
   nsamples = seismo_current * (NSTEP / NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
+  ! Calculate start_time
+  call get_time(startTime, start_time_string, end_time_string)
+  start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
+
   ! we only want to do these steps one time
   if (seismo_offset == 0) then
     !--------------------------------------------------------
     ! Setup data on each process.
     !--------------------------------------------------------
-
-    ! Calculate start_time
-    call get_time(startTime, start_time_string, end_time_string)
-    start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
 
     ! Generate minimal QuakeML for SPECFEM3D_GLOBE
     call cmt_to_quakeml(quakeml, start_time_string)
@@ -519,7 +519,7 @@ end subroutine cmt_to_quakeml
 subroutine get_time(startTime, start_time_string, end_time_string)
 
   use specfem_par,only:&
-    yr_SAC, mo_SAC, da_SAC, jda_SAC, ho_SAC, mi_SAC, sec_SAC, DT, seismo_current
+    yr_SAC, mo_SAC, da_SAC, jda_SAC, ho_SAC, mi_SAC, sec_SAC, DT, NSTEP
 
   implicit none
   character(len=*) :: start_time_string, end_time_string
@@ -549,7 +549,7 @@ subroutine get_time(startTime, start_time_string, end_time_string)
               ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC
 
   ! Calculates the number of seconds to add to the start_time
-  end_time_sec = (seismo_current-1)/DT
+  end_time_sec = DT*NSTEP
   end_time_sec = startTime + end_time_sec
 
   ! Converts seconds to a human-readable date
@@ -564,6 +564,7 @@ subroutine get_time(startTime, start_time_string, end_time_string)
 
   end_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
                       trim(hr)//':'//trim(minute)//':'//trim(second)
+print *, trim(end_time_string)
 
 end subroutine get_time
 
@@ -579,11 +580,11 @@ end subroutine get_time
 subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstring)
 
   use specfem_par,only:&
-    stlat, stlon, stele
+    stlat, stlon, stele, stbur
 
   implicit none
   character(len=*) :: station_name, network_name, stationxmlstring
-  character(len=15) :: station_lat, station_lon, station_ele
+  character(len=15) :: station_lat, station_lon, station_ele, station_depth
   integer, intent(in) :: irec
   integer :: len_station_name, len_network_name
 
@@ -591,6 +592,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
   write(station_lat, "(g12.5)") stlat(irec)
   write(station_lon, "(g12.5)") stlon(irec)
   write(station_ele, "(g12.5)") stele(irec)
+  write(station_depth, "(g12.5)") stbur(irec)
 
   len_network_name = len(network_name)
   len_station_name = len(station_name)
@@ -610,6 +612,32 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Name>Synthetic</Name>'//&
                      '</Site>'//&
                      '<CreationDate>2015-10-12T00:00:00</CreationDate>'//&
+                     '<TotalNumberChannels>3</TotalNumberChannels>'//&
+                     '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
+                     '<Channel locationCode="" code="BHN">'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
+                     '<Depth>'//trim(station_depth)//'</Depth>'//&
+                     '<Azimuth>0.0</Azimuth>'//&
+                     '<Dip>90.0</Dip>'//&
+                     '</Channel>'//&
+                     '<Channel locationCode="" code="BHE">'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
+                     '<Depth>'//trim(station_depth)//'</Depth>'//&
+                     '<Azimuth>90.0</Azimuth>'//&
+                     '<Dip>0.0</Dip>'//&
+                     '</Channel>'//&
+                     '<Channel locationCode="" code="BHZ">'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
+                     '<Depth>'//trim(station_depth)//'</Depth>'//&
+                     '<Azimuth>90.0</Azimuth>'//&
+                     '<Dip>0.0</Dip>'//&
+                     '</Channel>'//&
                      '</Station>'//&
                      '</Network>'//&
                      '</FDSNStationXML>'
