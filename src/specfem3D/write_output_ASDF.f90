@@ -219,68 +219,70 @@ subroutine write_asdf(asdf_container)
   call world_duplicate(comm)
   call world_size(mysize)
 
-  !--------------------------------------------------------
-  ! Setup data on each process.
-  !--------------------------------------------------------
+  ! we only want to do these steps one time
+  if (seismo_offset == 0) then
+    !--------------------------------------------------------
+    ! Setup data on each process.
+    !--------------------------------------------------------
 
-  num_stations = nrec_local
-  sampling_rate = DT
-  nsamples = seismo_current * (NSTEP / NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+    num_stations = nrec_local
+    sampling_rate = DT
+    nsamples = seismo_current * (NSTEP / NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
-  ! Calculate start_time
-  call get_time(startTime, start_time_string, end_time_string)
-  start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
+    ! Calculate start_time
+    call get_time(startTime, start_time_string, end_time_string)
+    start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
 
-  ! Generate minimal QuakeML for SPECFEM3D_GLOBE
-  call cmt_to_quakeml(quakeml, start_time_string)
+    ! Generate minimal QuakeML for SPECFEM3D_GLOBE
+    call cmt_to_quakeml(quakeml, start_time_string)
 
-  ! Generate specfem provenance string
-  call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
+    ! Generate specfem provenance string
+    call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
                                      end_time_string(1:19)//C_NULL_CHAR, cptr, len_prov)
-  call c_f_pointer(cptr, fptr, [len_prov])
-  allocate(provenance(len_prov+1))
-  provenance(1:len_prov) = fptr(1:len_prov)
-  provenance(len_prov+1) = C_NULL_CHAR
+    call c_f_pointer(cptr, fptr, [len_prov])
+    allocate(provenance(len_prov+1))
+    provenance(1:len_prov) = fptr(1:len_prov)
+    provenance(len_prov+1) = C_NULL_CHAR
 
-  allocate(networks_names(num_stations), stat=ier)
-  allocate(stations_names(num_stations), stat=ier)
-  allocate(component_names(num_stations*3), stat=ier)
-  allocate(waveforms(nsamples, 3, num_stations), &
+    allocate(networks_names(num_stations), stat=ier)
+    allocate(stations_names(num_stations), stat=ier)
+    allocate(component_names(num_stations*3), stat=ier)
+    allocate(waveforms(nsamples, 3, num_stations), &
            stat=ier)
 
-  do i = 1, num_stations
-    write(networks_names(i), '(a)') asdf_container%network_array(i)
-    write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
-  enddo
+    do i = 1, num_stations
+      write(networks_names(i), '(a)') asdf_container%network_array(i)
+      write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
+    enddo
 
-  do i = 1, num_stations*3
-    write(component_names(i), '(a)') asdf_container%component_array(i)
-  enddo
+    do i = 1, num_stations*3
+      write(component_names(i), '(a)') asdf_container%component_array(i)
+    enddo
 
-  !--------------------------------------------------------
-  ! ASDF variables
-  !--------------------------------------------------------
-  ! Find how many stations are managed by each allgatheress
-  allocate(num_stations_gather(mysize))
-  call all_gather_all_i(num_stations, num_stations_gather, mysize)
-  ! find the largest number of stations per allgatheress
-  max_num_stations_gather = maxval(num_stations_gather)
+    !--------------------------------------------------------
+    ! ASDF variables
+    !--------------------------------------------------------
+    ! Find how many stations are managed by each allgatheress
+    allocate(num_stations_gather(mysize))
+    call all_gather_all_i(num_stations, num_stations_gather, mysize)
+    ! find the largest number of stations per allgatheress
+    max_num_stations_gather = maxval(num_stations_gather)
 
-  allocate(displs(mysize))
-  allocate(rcounts(mysize))
+    allocate(displs(mysize))
+    allocate(rcounts(mysize))
 
-  ! Everyone should know about each and every station name
-  allocate(station_names_gather(max_num_stations_gather, mysize))
-  allocate(network_names_gather(max_num_stations_gather, mysize))
-  allocate(component_names_gather(max_num_stations_gather*3, mysize))
+    ! Everyone should know about each and every station name
+    allocate(station_names_gather(max_num_stations_gather, mysize))
+    allocate(network_names_gather(max_num_stations_gather, mysize))
+    allocate(component_names_gather(max_num_stations_gather*3, mysize))
 
-  ! The number of stations is not constant across processes
-  do i = 1, mysize
-    displs(i) = (i-1) * max_num_stations_gather * max_string_length
-    rcounts(i) = num_stations_gather(i) * max_string_length
-  enddo
+    ! The number of stations is not constant across processes
+    do i = 1, mysize
+      displs(i) = (i-1) * max_num_stations_gather * max_string_length
+      rcounts(i) = num_stations_gather(i) * max_string_length
+    enddo
 
-  call all_gather_all_ch(stations_names, &
+    call all_gather_all_ch(stations_names, &
                          num_stations * MAX_STRING_LENGTH, &
                          station_names_gather, &
                          rcounts, &
@@ -288,7 +290,7 @@ subroutine write_asdf(asdf_container)
                          max_num_stations_gather, &
                          MAX_STRING_LENGTH, &
                          mysize)
-  call all_gather_all_ch(networks_names, &
+    call all_gather_all_ch(networks_names, &
                          num_stations * MAX_STRING_LENGTH, &
                          network_names_gather, &
                          rcounts, &
@@ -296,7 +298,7 @@ subroutine write_asdf(asdf_container)
                          max_num_stations_gather, &
                          MAX_STRING_LENGTH, &
                          mysize)
-  call all_gather_all_ch(component_names, &
+    call all_gather_all_ch(component_names, &
                          num_stations*3*MAX_STRING_LENGTH, &
                          component_names_gather, &
                          rcounts*3, &
@@ -304,59 +306,61 @@ subroutine write_asdf(asdf_container)
                          max_num_stations_gather*3, &
                          MAX_STRING_LENGTH, &
                          mysize)
-  deallocate(displs)
-  deallocate(rcounts)
+    deallocate(displs)
+    deallocate(rcounts)
 
-  allocate(station_grps_gather(max_num_stations_gather, mysize))
+    allocate(station_grps_gather(max_num_stations_gather, mysize))
 
-  allocate(data_ids(3, &
+    allocate(data_ids(3, &
                     max_num_stations_gather, &
                     mysize))
 
-  !--------------------------------------------------------
-  ! write ASDF
-  !--------------------------------------------------------
+    !--------------------------------------------------------
+    ! write ASDF
+    !--------------------------------------------------------
  
-  call ASDF_initialize_hdf5_f(ier);
-  call ASDF_create_new_file_f(OUTPUT_FILES_BASE // "synthetic.h5" // C_NULL_CHAR, comm, current_asdf_handle)
+    call ASDF_initialize_hdf5_f(ier);
+    call ASDF_create_new_file_f(OUTPUT_FILES_BASE // "synthetic.h5" // C_NULL_CHAR, comm, current_asdf_handle)
 
-  call ASDF_write_string_attribute_f(current_asdf_handle, "file_format" // C_NULL_CHAR, &
+    call ASDF_write_string_attribute_f(current_asdf_handle, "file_format" // C_NULL_CHAR, &
                                        "ASDF" // C_NULL_CHAR, ier)
-  call ASDF_write_string_attribute_f(current_asdf_handle, "file_format_version" // C_NULL_CHAR, &
+    call ASDF_write_string_attribute_f(current_asdf_handle, "file_format_version" // C_NULL_CHAR, &
                                        "0.0.2" // C_NULL_CHAR, ier)
 
-  call ASDF_write_quakeml_f(current_asdf_handle, trim(quakeml) // C_NULL_CHAR, ier)
-  call ASDF_write_provenance_data_f(current_asdf_handle, provenance(1:len_prov+1), ier)
-  call read_file("setup/constants.h", sf_constants, len_constants)
-  call read_file("DATA/Par_file", sf_parfile, len_Parfile)
-  call ASDF_write_auxiliary_data_f(current_asdf_handle, trim(sf_constants) // C_NULL_CHAR,&
+    call ASDF_write_quakeml_f(current_asdf_handle, trim(quakeml) // C_NULL_CHAR, ier)
+    call ASDF_write_provenance_data_f(current_asdf_handle, provenance(1:len_prov+1), ier)
+    call read_file("setup/constants.h", sf_constants, len_constants)
+    call read_file("DATA/Par_file", sf_parfile, len_Parfile)
+    call ASDF_write_auxiliary_data_f(current_asdf_handle, trim(sf_constants) // C_NULL_CHAR,&
                                     trim(sf_parfile(1:len_Parfile)) // C_NULL_CHAR, ier)
 
-  call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
+    call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
 
-  do k = 1, mysize
-    do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
-      call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, stationxml)
-      call ASDF_create_stations_group_f(waveforms_grp,   &
-         trim(network_names_gather(j, k)) // "." //      &
-         trim(station_names_gather(j, k)) // C_NULL_CHAR, &
-         trim(stationxml)//C_NULL_CHAR,             &
-         station_grps_gather(j, k))
-      do  i = 1, 3 ! loop over each component
-        ! Generate unique waveform name
-        write(waveform_name, '(a)') &
-          trim(network_names_gather(j,k)) // "." //      &
-          trim(station_names_gather(j,k)) // ".." //trim(component_names_gather(i+(3*(j-1)),k)) &
-            //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
-          ! print *, trim(waveform_name), myrank
-          call ASDF_define_waveform_f(station_grps_gather(j,k), &
-            nsamples, start_time, sampling_rate, &
-            trim(event_name_SAC) // C_NULL_CHAR, &
-            trim(waveform_name) // C_NULL_CHAR, &
-            data_ids(i, j, k))
+    do k = 1, mysize
+      do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
+        call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, stationxml)
+        call ASDF_create_stations_group_f(waveforms_grp,   &
+           trim(network_names_gather(j, k)) // "." //      &
+           trim(station_names_gather(j, k)) // C_NULL_CHAR, &
+           trim(stationxml)//C_NULL_CHAR,             &
+             station_grps_gather(j, k))
+        do  i = 1, 3 ! loop over each component
+          ! Generate unique waveform name
+          write(waveform_name, '(a)') &
+            trim(network_names_gather(j,k)) // "." //      &
+            trim(station_names_gather(j,k)) // ".." //trim(component_names_gather(i+(3*(j-1)),k)) &
+              //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
+            ! print *, trim(waveform_name), myrank
+            call ASDF_define_waveform_f(station_grps_gather(j,k), &
+              nsamples, start_time, sampling_rate, &
+              trim(event_name_SAC) // C_NULL_CHAR, &
+              trim(waveform_name) // C_NULL_CHAR, &
+              data_ids(i, j, k))
+        enddo
       enddo
     enddo
-  enddo
+  
+  endif ! end (seismo_offset == 0) steps
 
   do j = 1, num_stations
     do i = 1, 3
@@ -370,18 +374,21 @@ subroutine write_asdf(asdf_container)
   ! Clean up
   !--------------------------------------------------------
 
-  do k = 1, mysize
-    do j = 1, num_stations_gather(k)
-      call ASDF_close_group_f(station_grps_gather(j, k), ier)
-      do i = 1, 3
-        call ASDF_close_dataset_f(data_ids(i, j, k), ier)
+  ! Only close if we are done outputting all seismograms
+  if (it == it_end) then
+    do k = 1, mysize
+      do j = 1, num_stations_gather(k)
+        call ASDF_close_group_f(station_grps_gather(j, k), ier)
+        do i = 1, 3
+          call ASDF_close_dataset_f(data_ids(i, j, k), ier)
+        enddo
       enddo
     enddo
-  enddo
 
-  call ASDF_close_group_f(waveforms_grp, ier)
-  call ASDF_close_file_f(current_asdf_handle, ier)
-  call ASDF_finalize_hdf5_f(ier)
+    call ASDF_close_group_f(waveforms_grp, ier)
+    call ASDF_close_file_f(current_asdf_handle, ier)
+    call ASDF_finalize_hdf5_f(ier)
+  endif
 
   deallocate(data_ids)
   deallocate(station_grps_gather)
