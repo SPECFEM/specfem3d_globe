@@ -219,15 +219,15 @@ subroutine write_asdf(asdf_container)
   call world_duplicate(comm)
   call world_size(mysize)
 
+  num_stations = nrec_local
+  sampling_rate = 1.0/DT
+  nsamples = seismo_current * (NSTEP / NTSTEP_BETWEEN_OUTPUT_SEISMOS)
+
   ! we only want to do these steps one time
   if (seismo_offset == 0) then
     !--------------------------------------------------------
     ! Setup data on each process.
     !--------------------------------------------------------
-
-    num_stations = nrec_local
-    sampling_rate = 1.0/DT
-    nsamples = seismo_current * (NSTEP / NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
     ! Calculate start_time
     call get_time(startTime, start_time_string, end_time_string)
