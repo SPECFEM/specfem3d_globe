@@ -157,12 +157,13 @@ subroutine write_asdf(asdf_container)
   ! Parameters
   integer, parameter :: MAX_STRING_LENGTH = 1024
   integer, parameter :: MAX_QUAKEML_LENGTH = 8096
+  integer, parameter :: MAX_STATIONXML_LENGTH = 16182
   integer, parameter :: MAX_PARFILE_LENGTH = 20000
   integer, parameter :: MAX_CONSTANTS_LENGTH = 45000
 
   !--- Character strings to be written to the ASDF file
   character(len=MAX_QUAKEML_LENGTH) :: quakeml
-  character(len=MAX_STRING_LENGTH) :: stationxml
+  character(len=MAX_STATIONXML_LENGTH) :: stationxml
 
   integer :: num_stations !
   integer :: nsamples  ! constant, as in SPECFEM
@@ -609,12 +610,12 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
                      '<Site>'//&
-                     '<Name>Synthetic</Name>'//&
+                     '<Name>N/A</Name>'//&
                      '</Site>'//&
                      '<CreationDate>2015-10-12T00:00:00</CreationDate>'//&
                      '<TotalNumberChannels>3</TotalNumberChannels>'//&
                      '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
-                     '<Channel locationCode="" code="BHN">'//&
+                     '<Channel locationCode="00" startDate="1999-02-28T13:10:00" code="BHN">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -622,7 +623,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>90.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" code="BHE">'//&
+                     '<Channel locationCode="00" startDate="1999-02-28T13:10:00" code="BHE">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -630,7 +631,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Azimuth>90.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" code="BHZ">'//&
+                     '<Channel locationCode="00" startDate="1999-02-28T13:10:00" code="BHZ">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
