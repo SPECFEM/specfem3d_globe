@@ -340,6 +340,7 @@ subroutine write_asdf(asdf_container)
     do k = 1, mysize
       do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
         call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, stationxml)
+        print *, len(stationxml)
         call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
@@ -584,7 +585,9 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
     stlat, stlon, stele, stbur
 
   implicit none
-  character(len=*) :: station_name, network_name, stationxmlstring
+  character(len=*) :: stationxmlstring
+  character(len=*) :: station_name
+  character(len=*) :: network_name
   character(len=15) :: station_lat, station_lon, station_ele, station_depth
   integer, intent(in) :: irec
   integer :: len_station_name, len_network_name
