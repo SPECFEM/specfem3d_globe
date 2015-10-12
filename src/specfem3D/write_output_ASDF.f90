@@ -226,7 +226,7 @@ subroutine write_asdf(asdf_container)
     !--------------------------------------------------------
 
     num_stations = nrec_local
-    sampling_rate = DT
+    sampling_rate = 1.0/DT
     nsamples = seismo_current * (NSTEP / NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
     ! Calculate start_time
@@ -607,7 +607,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
                      '<Site>'//&
-                     '<Name>SPECFEM3D_GLOBE</Name>'//&
+                     '<Name>Synthetic</Name>'//&
                      '</Site>'//&
                      '<CreationDate>2015-10-12T00:00:00</CreationDate>'//&
                      '</Station>'//&
