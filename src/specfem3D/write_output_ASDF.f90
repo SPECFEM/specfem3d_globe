@@ -583,25 +583,29 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
 
   implicit none
   character(len=*) :: station_name, network_name, stationxmlstring
-  character(len=25) :: station_lat, station_lon, station_ele
+  character(len=15) :: station_lat, station_lon, station_ele
   integer, intent(in) :: irec
+  integer :: len_station_name, len_network_name
 
   ! Convert double precision to character strings for the StationXML string
   write(station_lat, "(g12.5)") stlat(irec)
   write(station_lon, "(g12.5)") stlon(irec)
   write(station_ele, "(g12.5)") stele(irec)
 
+  len_network_name = len(network_name)
+  len_station_name = len(station_name)
+
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
                      '<Source>SPECFEM3D_GLOBE</Source>'//&
                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
                      '<Created>2014-03-03T11:07:06+00:00</Created>'//&
-                     '<Network code="'//trim(network_name(1:2))//'"'//&
-                     '><Station code="'//trim(station_name(1:3))//'"'//&
+                     '<Network code="'//trim(network_name(1:len(network_name)))//'"'//&
+                     '><Station code="'//trim(station_name(1:len(station_name)))//'"'//&
                      ' startDate="2006-12-16T00:00:00+00:00">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat(1:4))//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon(1:4))//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele(1:4))//'</Elevation>'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
                      '<Site>'//&
                      '<Name>SPECFEM3D_GLOBE</Name>'//&
                      '</Site>'//&
