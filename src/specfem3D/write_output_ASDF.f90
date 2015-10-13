@@ -412,12 +412,12 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
 
   use specfem_par,only:&
     cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
-    M0,Mw,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC
+    hdur=>cmt_hdur_SAC, M0,Mw,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC
 
   implicit none
   character(len=*) :: quakemlstring
   character(len=*) :: start_time_string
-  character(len=13) :: lon_str, lat_str, dep_str
+  character(len=13) :: lon_str, lat_str, dep_str, hdur_str
   character(len=25) :: M0_str, Mw_str
   character(len=25) :: Mrr_str, Mtt_str, Mpp_str, Mrt_str, Mrp_str, Mtp_str
 
@@ -425,6 +425,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
   write(lon_str, "(g12.5)") cmt_lat
   write(lat_str, "(g12.5)") cmt_lon
   write(dep_str, "(g12.5)") cmt_depth
+  write(hdur_str, "(g12.5)") hdur
   write(M0_str, "(g12.5)") M0
   write(Mw_str, "(g12.5)") Mw
   write(Mrr_str, "(g12.5)") Mrr
@@ -476,7 +477,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '</tensor>'//&
                   '<sourceTimeFunction>'//&
                   '<type>triangle</type>'//&
-                  '<duration>0.0</duration>'//&
+                  '<duration>'//trim(hdur_str)//'</duration>'//&
                   '</sourceTimeFunction>'//&
                   '</momentTensor>'//&
                   '</focalMechanism>'//&
@@ -486,7 +487,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '</mag>'//&
                   '<type>Mwc</type>'//&
                   '</magnitude>'//&
-                  '<origin publicID="smi:www.iris.edu/spudservice/momenttensor/gcmtid/B090198B#cmtorigin">'//&
+                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'#cmtorigin">'//&
                   '<time>'//&
                   '<value>'//trim(start_time_string(1:19))//'</value>'//&
                   '</time>'//&
