@@ -614,7 +614,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<CreationDate>2015-10-12T00:00:00</CreationDate>'//&
                      '<TotalNumberChannels>3</TotalNumberChannels>'//&
                      '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
-                     '<Channel locationCode="00" startDate="1999-02-28T13:10:00" code="BHN">'//&
+                     '<Channel locationCode="" startDate="1999-02-28T13:10:00" code="BHN">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -622,7 +622,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Azimuth>90.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="00" startDate="1999-02-28T13:10:00" code="BHE">'//&
+                     '<Channel locationCode="" startDate="1999-02-28T13:10:00" code="BHE">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -630,7 +630,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="00" startDate="1999-02-28T13:10:00" code="BHZ">'//&
+                     '<Channel locationCode="" startDate="1999-02-28T13:10:00" code="BHZ">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
