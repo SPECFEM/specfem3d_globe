@@ -441,10 +441,10 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '<event publicID="smi:local/'//trim(event_name_SAC)//'#eventID">'//&
                   '<type>earthquake</type>'//&
                   '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'#focalmechanism">'//&
-                  '<momentTensor publicID="smi:ds.local/'//trim(event_name_SAC)//'#momenttensor">'//&
+                  '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'#momenttensor">'//&
                   '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'#reforigin'//&
                   '</derivedOriginID>'//&
-                  '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//trim(event_name_SAC)//'#magnitude'//&
+                  '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'#magnitude'//&
                   '</momentMagnitudeID>'//&
                   '<scalarMoment>'//&
                   '<value>'//trim(M0_str)//'</value>'//&
@@ -481,7 +481,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '</sourceTimeFunction>'//&
                   '</momentTensor>'//&
                   '</focalMechanism>'//&
-                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'#magnitude">'//&
+                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'#Mwc">'//&
                   '<mag>'//&
                   '<value>'//trim(Mw_str)//'</value>'//&
                   '</mag>'//&
@@ -619,15 +619,15 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
                      '<Depth>'//trim(station_depth)//'</Depth>'//&
-                     '<Azimuth>0.0</Azimuth>'//&
-                     '<Dip>90.0</Dip>'//&
+                     '<Azimuth>90.0</Azimuth>'//&
+                     '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
                      '<Channel locationCode="00" startDate="1999-02-28T13:10:00" code="BHE">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
                      '<Depth>'//trim(station_depth)//'</Depth>'//&
-                     '<Azimuth>90.0</Azimuth>'//&
+                     '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
                      '<Channel locationCode="00" startDate="1999-02-28T13:10:00" code="BHZ">'//&
@@ -635,8 +635,8 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
                      '<Depth>'//trim(station_depth)//'</Depth>'//&
-                     '<Azimuth>90.0</Azimuth>'//&
-                     '<Dip>0.0</Dip>'//&
+                     '<Azimuth>0.0</Azimuth>'//&
+                     '<Dip>90.0</Dip>'//&
                      '</Channel>'//&
                      '</Station>'//&
                      '</Network>'//&
