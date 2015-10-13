@@ -340,7 +340,6 @@ subroutine write_asdf(asdf_container)
     do k = 1, mysize
       do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
         call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, stationxml)
-        print *, len(stationxml)
         call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
@@ -437,8 +436,8 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
 
   quakemlstring = '<q:quakeml xmlns="http://quakeml.org/xmlns/bed/1.2"'//&
                   ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
-                  '<eventParameters publicID="smi:local/592edbfc-2482-481e-80fd-03810308104b">'//&
-                  '<event publicID="smi:service.iris.edu/fdsnws/event/1/query?eventid=656970">'//&
+                  '<eventParameters publicID="smi:local/'//trim(event_name_SAC)//'#evtprm">'//&
+                  '<event publicID="smi:local/'//trim(event_name_SAC)//'#evt_ID">'//&
                   '<type>earthquake</type>'//&
                   '<focalMechanism publicID="smi:ds.iris.edu/spudservice/momenttensor/gcmtid/'//&
                   'C'//trim(event_name_SAC)//'/quakeml#focalmechanism">'//&
@@ -566,7 +565,6 @@ subroutine get_time(startTime, start_time_string, end_time_string)
 
   end_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
                       trim(hr)//':'//trim(minute)//':'//trim(second)
-print *, trim(end_time_string)
 
 end subroutine get_time
 
