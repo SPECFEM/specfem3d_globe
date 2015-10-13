@@ -436,17 +436,15 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
 
   quakemlstring = '<q:quakeml xmlns="http://quakeml.org/xmlns/bed/1.2"'//&
                   ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
-                  '<eventParameters publicID="smi:local/'//trim(event_name_SAC)//'#evtprm">'//&
-                  '<event publicID="smi:local/'//trim(event_name_SAC)//'#evt_ID">'//&
+                  '<eventParameters publicID="smi:local/'//trim(event_name_SAC)//'#eventPrm">'//&
+                  '<event publicID="smi:local/'//trim(event_name_SAC)//'#eventID">'//&
                   '<type>earthquake</type>'//&
-                  '<focalMechanism publicID="smi:ds.iris.edu/spudservice/momenttensor/gcmtid/'//&
-                  'C'//trim(event_name_SAC)//'/quakeml#focalmechanism">'//&
-                  '<momentTensor publicID="smi:ds.iris.edu/spudservice/momenttensor/gcmtid/'//&
-                  'C'//trim(event_name_SAC)//'/quakeml#momenttensor">'//&
-                  '<derivedOriginID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/'//&
-                  'C'//trim(event_name_SAC)//'#reforigin</derivedOriginID>'//&
-                  '<momentMagnitudeID>smi:www.iris.edu/spudservice/momenttensor/gcmtid/'//&
-                  'C'//trim(event_name_SAC)//'/quakeml#magnitude</momentMagnitudeID>'//&
+                  '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'#focalmechanism">'//&
+                  '<momentTensor publicID="smi:ds.local/'//trim(event_name_SAC)//'#momenttensor">'//&
+                  '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'#reforigin'//&
+                  '</derivedOriginID>'//&
+                  '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//trim(event_name_SAC)//'#magnitude'//&
+                  '</momentMagnitudeID>'//&
                   '<scalarMoment>'//&
                   '<value>'//trim(M0_str)//'</value>'//&
                   '</scalarMoment>'//&
@@ -482,8 +480,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '</sourceTimeFunction>'//&
                   '</momentTensor>'//&
                   '</focalMechanism>'//&
-                  '<magnitude publicID="smi:www.iris.edu/spudservice/momenttenosr/gcmtid/'//&
-                  'C'//trim(event_name_SAC)//'/quakeml#magnitude">'//&
+                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'#magnitude">'//&
                   '<mag>'//&
                   '<value>'//trim(Mw_str)//'</value>'//&
                   '</mag>'//&
