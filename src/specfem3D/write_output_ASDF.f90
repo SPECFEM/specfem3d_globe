@@ -339,7 +339,7 @@ subroutine write_asdf(asdf_container)
 
     do k = 1, mysize
       do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
-        call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, stationxml)
+        call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, start_time_string, stationxml)
         call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
@@ -575,7 +575,7 @@ end subroutine get_time
 !! \param network_name The name of the network based on SEED
 !! \param irec The receiver count
 !! \param stationxmlstring The StationXML string that will be written to the ASDF file
-subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstring)
+subroutine station_to_stationxml(station_name, network_name, irec, start_time_string, stationxmlstring)
 
   use specfem_par,only:&
     stlat, stlon, stele, stbur
@@ -584,6 +584,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
   character(len=*) :: stationxmlstring
   character(len=*) :: station_name
   character(len=*) :: network_name
+  character(len=*) :: start_time_string
   character(len=15) :: station_lat, station_lon, station_ele, station_depth
   integer, intent(in) :: irec
   integer :: len_station_name, len_network_name
@@ -601,20 +602,19 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Source>SPECFEM3D_GLOBE</Source>'//&
                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
-                     '<Created>2014-03-03T11:07:06+00:00</Created>'//&
+                     '<Created>'//trim(start_time_string(1:19))//'</Created>'//&
                      '<Network code="'//trim(network_name(1:len(network_name)))//'"'//&
-                     '><Station code="'//trim(station_name(1:len(station_name)))//'"'//&
-                     ' startDate="2006-12-16T00:00:00+00:00">'//&
+                     '><Station code="'//trim(station_name(1:len(station_name)))//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
                      '<Site>'//&
                      '<Name>N/A</Name>'//&
                      '</Site>'//&
-                     '<CreationDate>2015-10-12T00:00:00</CreationDate>'//&
+                     '<CreationDate>'//trim(start_time_string(1:19))//'</CreationDate>'//&
                      '<TotalNumberChannels>3</TotalNumberChannels>'//&
                      '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
-                     '<Channel locationCode="" startDate="1999-02-28T13:10:00" code="BHN">'//&
+                     '<Channel locationCode="" code="BHN">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -622,7 +622,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Azimuth>90.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" startDate="1999-02-28T13:10:00" code="BHE">'//&
+                     '<Channel locationCode="" code="BHE">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -630,7 +630,7 @@ subroutine station_to_stationxml(station_name, network_name, irec, stationxmlstr
                      '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" startDate="1999-02-28T13:10:00" code="BHZ">'//&
+                     '<Channel locationCode="" code="BHZ">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
