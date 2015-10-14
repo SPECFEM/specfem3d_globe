@@ -412,19 +412,24 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
 
   use specfem_par,only:&
     cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
-    hdur=>cmt_hdur_SAC, M0,Mw,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC
+    hdur=>cmt_hdur_SAC, M0,Mw,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC,&
+    pde_lat=>elat_SAC,pde_lon=>elon_SAC,pde_depth=>depth_SAC
 
   implicit none
   character(len=*) :: quakemlstring
   character(len=*) :: start_time_string
-  character(len=13) :: lon_str, lat_str, dep_str, hdur_str
+  character(len=13) :: cmt_lon_str, cmt_lat_str, cmt_depth_str, hdur_str
+  character(len=13) :: pde_lat_str, pde_lon_str, pde_depth_str
   character(len=25) :: M0_str, Mw_str
   character(len=25) :: Mrr_str, Mtt_str, Mpp_str, Mrt_str, Mrp_str, Mtp_str
 
   ! Convert the CMT values to strings for the QuakeML string
-  write(lon_str, "(g12.5)") cmt_lat
-  write(lat_str, "(g12.5)") cmt_lon
-  write(dep_str, "(g12.5)") cmt_depth
+  write(pde_lat_str, "(g12.5)") pde_lat
+  write(pde_lon_str, "(g12.5)") pde_lon
+  write(pde_depth_str, "(g12.5)") pde_depth
+  write(cmt_lat_str, "(g12.5)") cmt_lat
+  write(cmt_lon_str, "(g12.5)") cmt_lon
+  write(cmt_depth_str, "(g12.5)") cmt_depth
   write(hdur_str, "(g12.5)") hdur
   write(M0_str, "(g12.5)") M0
   write(Mw_str, "(g12.5)") Mw
@@ -440,11 +445,43 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '<eventParameters publicID="smi:local/'//trim(event_name_SAC)//'#eventPrm">'//&
                   '<event publicID="smi:local/'//trim(event_name_SAC)//'#eventID">'//&
                   '<type>earthquake</type>'//&
-                  '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'#focalmechanism">'//&
+                  '<typeCertainty>known</typeCertainty>'//&
+                  '<description>'//&
+                  '<text>'//trim(event_name_SAC)//'</text>'//&
+                  '</description>'//&
+                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'#pdeorigin">'//&
+                  '<time>'//&
+                  '<value>'//trim(start_time_string(1:19))//'</value>'//&
+                  '</time>'//&
+                  '<latitude>'//&
+                  '<value>'//trim(pde_lat_str)//'</value>'//&
+                  '</latitude>'//&
+                  '<longitude>'//&
+                  '<value>'//trim(pde_lon_str)//'</value>'//&
+                  '</longitude>'//&
+                  '<depth>'//&
+                  '<value>'//trim(pde_depth_str)//'</value>'//&
+                  '</depth>'//&
+                  '</origin>'//&
+                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'#cmtorigin">'//&
+                  '<time>'//&
+                  '<value>'//trim(start_time_string(1:19))//'</value>'//&
+                  '</time>'//&
+                  '<latitude>'//&
+                  '<value>'//trim(cmt_lat_str)//'</value>'//&
+                  '</latitude>'//&
+                  '<longitude>'//&
+                  '<value>'//trim(cmt_lon_str)//'</value>'//&
+                  '</longitude>'//&
+                  '<depth>'//&
+                  '<value>'//trim(cmt_depth_str)//'</value>'//&
+                  '</depth>'//&
+                  '</origin>'//&
+                  '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'#focal_mechanism">'//&
                   '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'#momenttensor">'//&
                   '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'#reforigin'//&
                   '</derivedOriginID>'//&
-                  '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'#magnitude'//&
+                  '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'magnitude#magnitude'//&
                   '</momentMagnitudeID>'//&
                   '<scalarMoment>'//&
                   '<value>'//trim(M0_str)//'</value>'//&
@@ -487,20 +524,12 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '</mag>'//&
                   '<type>Mwc</type>'//&
                   '</magnitude>'//&
-                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'#cmtorigin">'//&
-                  '<time>'//&
-                  '<value>'//trim(start_time_string(1:19))//'</value>'//&
-                  '</time>'//&
-                  '<latitude>'//&
-                  '<value>'//trim(lat_str)//'</value>'//&
-                  '</latitude>'//&
-                  '<longitude>'//&
-                  '<value>'//trim(lon_str)//'</value>'//&
-                  '</longitude>'//&
-                  '<depth>'//&
-                  '<value>'//trim(dep_str)//'</value>'//&
-                  '</depth>'//&
-                  '</origin>'//&
+                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'test#Mwc">'//&
+                  '<mag>'//&
+                  '<value>'//trim(Mw_str)//'</value>'//&
+                  '</mag>'//&
+                  '<type>Mw</type>'//&
+                  '</magnitude>'//&
                   '</event>'//&
                   '</eventParameters>'//&
                   '</q:quakeml>'
