@@ -114,7 +114,7 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
     if (ier /= 0) then
       ! adjoint source not found
       ! stops simulation
-      call exit_MPI(myrank,'adjoint source '//trim(adj_filename)//' not found, please check STATIONS_ADJOINT file')
+      call exit_MPI(myrank,'adjoint source '//trim(adj_filename)//' not found, please check STATIONS_ADJOINT file and ASDF file')
     endif
 
     ! checks length of file
