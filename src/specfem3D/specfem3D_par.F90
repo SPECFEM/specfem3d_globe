@@ -213,6 +213,9 @@ module specfem_par
   integer :: yr, jda, mo, da, ho, mi
   double precision :: sec
 
+  ! for ASDF QuakeML file
+  real :: ms
+
   ! strain flag
   logical :: COMPUTE_AND_STORE_STRAIN
 

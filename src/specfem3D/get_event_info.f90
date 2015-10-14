@@ -35,7 +35,7 @@
 
   subroutine get_event_info_parallel(myrank,yr,jda,mo,da,ho,mi,sec,&
                                     event_name,tshift_cmt,t_shift, &
-                                    elat,elon,depth,mb,cmt_lat, &
+                                    elat,elon,depth,mb,ms,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
                                     Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
@@ -50,7 +50,7 @@
 
   integer, intent(out) :: yr,mo,da,jda,ho,mi
   double precision, intent(out) :: sec
-  real, intent(out) :: mb
+  real, intent(out) :: mb,ms
   double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
   double precision, intent(out) :: Mrr, Mtt, Mpp, Mrt, Mrp, Mtp
   double precision, intent(out) :: t_shift
@@ -64,7 +64,7 @@
     !       see comment in write_output_SAC() routine
 
     call get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift, &
-                        elat,elon,depth,mb, &
+                        elat,elon,depth,mb,ms, &
                         cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
                         Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
@@ -96,6 +96,10 @@
   call bcast_all_singledp(elon)
   call bcast_all_singledp(depth)
 
+  ! body and surfaace wave magnitude given on first line
+  call bcast_all_singler(mb)
+  call bcast_all_singler(ms)
+
   ! cmt location given in CMT file
   call bcast_all_singledp(cmt_lat)
   call bcast_all_singledp(cmt_lon)
@@ -125,7 +129,7 @@
 ! by Ebru
 
   subroutine get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift,&
-                            elat_pde,elon_pde,depth_pde,mb,&
+                            elat_pde,elon_pde,depth_pde,mb,ms,&
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,&
                             Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
 
@@ -142,7 +146,7 @@
   double precision, intent(out) :: sec
   double precision, intent(out) :: tshift_cmt,t_shift
   double precision, intent(out) :: elat_pde,elon_pde,depth_pde
-  real, intent(out) :: mb
+  real, intent(out) :: mb, ms
   double precision, intent(out) :: cmt_lat,cmt_lon,cmt_depth,cmt_hdur
   double precision, intent(out) :: Mrr, Mtt, Mpp, Mrt, Mrp, Mtp
 
@@ -153,7 +157,6 @@
   integer :: isource
   double precision, dimension(NSOURCES) :: t_s,hdur,lat,lon,depth
   character(len=20), dimension(NSOURCES) :: e_n
-  real :: ms
   character(len=5) :: datasource
   character(len=256) :: string
 
