@@ -265,7 +265,7 @@
   ! I did changes, e.g., adding/removing parameters. by Ebru Bozdag
   call get_event_info_parallel(myrank,yr_SAC,jda_SAC,mo_SAC, da_SAC, ho_SAC,mi_SAC,sec_SAC,&
                               event_name_SAC,t_cmt_SAC,t_shift_SAC, &
-                              elat_SAC,elon_SAC,depth_SAC,mb_SAC,cmt_lat_SAC,&
+                              elat_SAC,elon_SAC,depth_SAC,mb_SAC,ms,cmt_lat_SAC,&
                               cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES,&
                               Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
 
