@@ -76,7 +76,6 @@ shared_OBJECTS = \
 	$(EMPTY_MACRO)
 
 shared_MODULES = \
- 	$(FC_MODDIR)/asdf_var.$(FC_MODEXT) \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_compute_parameters.$(FC_MODEXT) \
@@ -161,9 +160,6 @@ $O/%.shared_adios.o: $S/%.F90 $O/adios_helpers_writers.shared_adios_module.o $O/
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 ## asdf
-
-$O/%.shared_asdf_module.o: $S/%.f90
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.shared_asdf.o: $S/%.f90
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<

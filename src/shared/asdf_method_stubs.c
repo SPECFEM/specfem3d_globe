@@ -46,4 +46,5 @@ void FC_FUNC_(write_asdf,WRITE_ASDF)(void) {}
 
 // for ASDF reader
 
-void FC_FUNC_(read_adjoint_sources_ASDF,READ_ADJOINT_SOURCES_ASDF)(void) {}
+void FC_FUNC_(read_adjoint_sources_asdf,READ_ADJOINT_SOURCES_ASDF)(void) {}
+void FC_FUNC_(check_adjoint_sources_asdf,CHECK_ADJOINT_SOURCES_ASDF)(void) {}

@@ -207,8 +207,8 @@ endif
 ###
 
 asdf_specfem3D_OBJECTS = \
-	$O/read_adjoint_sources_ASDF.solverstatic.o \
 	$O/write_output_ASDF.solverstatic.o \
+	$O/read_adjoint_sources_ASDF.solverstatic.o \
 	$(EMPTY_MACRO)
 
 asdf_specfem3D_SHARED_OBJECTS = \
