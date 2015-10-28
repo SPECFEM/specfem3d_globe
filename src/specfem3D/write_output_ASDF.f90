@@ -339,6 +339,9 @@ subroutine write_asdf(asdf_container)
 
     do k = 1, mysize
       do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
+print *, station_names_gather(j,k)
+print *, network_names_gather(j,k)
+print *, k
         call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, start_time_string, stationxml)
         call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
@@ -609,7 +612,7 @@ end subroutine get_time
 subroutine station_to_stationxml(station_name, network_name, irec, start_time_string, stationxmlstring)
 
   use specfem_par,only:&
-    stlat, stlon, stele, stbur
+    stlat, stlon, stele, stbur, myrank
 
   implicit none
   character(len=*) :: stationxmlstring
@@ -621,6 +624,9 @@ subroutine station_to_stationxml(station_name, network_name, irec, start_time_st
   integer :: len_station_name, len_network_name
 
   ! Convert double precision to character strings for the StationXML string
+print *, stlat(irec), myrank
+print *, stlon(irec), " ******"
+
   write(station_lat, "(g12.5)") stlat(irec)
   write(station_lon, "(g12.5)") stlon(irec)
   write(station_ele, "(g12.5)") stele(irec)
@@ -645,15 +651,8 @@ subroutine station_to_stationxml(station_name, network_name, irec, start_time_st
                      '<CreationDate>'//trim(start_time_string(1:19))//'</CreationDate>'//&
                      '<TotalNumberChannels>3</TotalNumberChannels>'//&
                      '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
-                     '<Channel locationCode="" code="BHN">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
-                     '<Depth>'//trim(station_depth)//'</Depth>'//&
-                     '<Azimuth>90.0</Azimuth>'//&
-                     '<Dip>0.0</Dip>'//&
-                     '</Channel>'//&
-                     '<Channel locationCode="" code="BHE">'//&
+                     '<Channel locationCode="" code="BHN"'//&
+                     ' startDate="'//trim(start_time_string(1:19))//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -661,7 +660,17 @@ subroutine station_to_stationxml(station_name, network_name, irec, start_time_st
                      '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" code="BHZ">'//&
+                     '<Channel locationCode="" code="BHE"'//&
+                     ' startDate="'//trim(start_time_string(1:19))//'">'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
+                     '<Depth>'//trim(station_depth)//'</Depth>'//&
+                     '<Azimuth>90.0</Azimuth>'//&
+                     '<Dip>0.0</Dip>'//&
+                     '</Channel>'//&
+                     '<Channel locationCode="" code="BHZ"'//&
+                     ' startDate="'//trim(start_time_string(1:19))//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
