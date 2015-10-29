@@ -64,6 +64,14 @@ subroutine init_asdf_data(asdf_container, nrec_local)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%component_array(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+  allocate (asdf_container%receiver_lat(nrec_local), STAT=ier)
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+  allocate (asdf_container%receiver_lo(nrec_local), STAT=ier)
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+  allocate (asdf_container%receiver_el(nrec_local), STAT=ier)
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
+  allocate (asdf_container%receiver_dpt(nrec_local), STAT=ier)
+  if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
   allocate (asdf_container%records(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
 
@@ -85,7 +93,8 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, irec, chn
   use asdf_data
   use specfem_par,only: &
     station_name,network_name, &
-    seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS, myrank
+    seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS, myrank, &
+    stlat, stlon, stele, stbur
   use constants
 
   implicit none
@@ -106,6 +115,10 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, irec, chn
   asdf_container%receiver_name_array(irec_local) = station_name(irec)(1:length_station_name)
   asdf_container%network_array(irec_local) = network_name(irec)(1:length_network_name)
   asdf_container%component_array(i) = chn
+  asdf_container%receiver_lat(irec_local) = stlat(irec)
+  asdf_container%receiver_lo(irec_local) = stlon(irec)
+  asdf_container%receiver_el(irec_local) = stele(irec)
+  asdf_container%receiver_dpt(irec_local) = stbur(irec)
 
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
@@ -167,6 +180,7 @@ subroutine write_asdf(asdf_container)
 
   integer :: num_stations !
   integer :: nsamples  ! constant, as in SPECFEM
+  real :: station_latitude, station_longitude, station_elevation, station_burial_depth
   double precision :: sampling_rate
   double precision :: startTime
   integer(kind=8) :: start_time
@@ -176,6 +190,12 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: networks_names
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: stations_names
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: component_names
+
+  ! Station coordinates
+  real, dimension(:), allocatable :: station_lats
+  real, dimension(:), allocatable :: station_longs
+  real, dimension(:), allocatable :: station_elevs
+  real, dimension(:), allocatable :: station_depths
 
   ! data. dimension = nsamples * num_channels_per_station * num_stations
   real, dimension(:, :, :), allocatable :: waveforms
@@ -199,6 +219,8 @@ subroutine write_asdf(asdf_container)
   integer :: max_num_stations_gather
   character(len=MAX_STRING_LENGTH), dimension(:,:), allocatable :: &
       station_names_gather, network_names_gather, component_names_gather
+  real, dimension(:,:), allocatable :: &
+      station_lats_gather, station_longs_gather, station_elevs_gather, station_depths_gather
   integer, dimension(:,:), allocatable :: station_grps_gather
   integer, dimension(:), allocatable :: displs, rcounts
 
@@ -247,6 +269,10 @@ subroutine write_asdf(asdf_container)
 
     allocate(networks_names(num_stations), stat=ier)
     allocate(stations_names(num_stations), stat=ier)
+    allocate(station_lats(num_stations), stat=ier)
+    allocate(station_longs(num_stations), stat=ier)
+    allocate(station_elevs(num_stations), stat=ier)
+    allocate(station_depths(num_stations), stat=ier)
     allocate(component_names(num_stations*3), stat=ier)
     allocate(waveforms(nsamples, 3, num_stations), &
            stat=ier)
@@ -254,6 +280,10 @@ subroutine write_asdf(asdf_container)
     do i = 1, num_stations
       write(networks_names(i), '(a)') asdf_container%network_array(i)
       write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
+      station_lats(i) = asdf_container%receiver_lat(i)
+      station_longs(i) = asdf_container%receiver_lo(i)
+      station_elevs(i) = asdf_container%receiver_el(i)
+      station_depths(i) = asdf_container%receiver_dpt(i)
     enddo
 
     do i = 1, num_stations*3
@@ -272,9 +302,13 @@ subroutine write_asdf(asdf_container)
     allocate(displs(mysize))
     allocate(rcounts(mysize))
 
-    ! Everyone should know about each and every station name
+    ! Everyone should know about each and every station name and its coordinates
     allocate(station_names_gather(max_num_stations_gather, mysize))
     allocate(network_names_gather(max_num_stations_gather, mysize))
+    allocate(station_lats_gather(max_num_stations_gather, mysize))
+    allocate(station_longs_gather(max_num_stations_gather, mysize))
+    allocate(station_elevs_gather(max_num_stations_gather, mysize))
+    allocate(station_depths_gather(max_num_stations_gather, mysize))
     allocate(component_names_gather(max_num_stations_gather*3, mysize))
 
     ! The number of stations is not constant across processes
@@ -299,6 +333,25 @@ subroutine write_asdf(asdf_container)
                          max_num_stations_gather, &
                          MAX_STRING_LENGTH, &
                          mysize)
+    !call all_gather_all_r(station_lats, &
+    !                     num_stations, &
+    !                     station_lats_gather, &
+    !                     rcounts, &
+    !                     displs, &
+    !                     max_num_stations_gather, &
+    !                     mysize)
+    !call all_gather_all_r(station_longs, &
+    !                     station_longs_gather, &
+    !                     max_num_stations_gather, &
+    !                     mysize)
+    !call all_gather_all_r(station_elevs, &
+    !                     station_elevs_gather, &
+    !                     max_num_stations_gather, &
+    !                     mysize)
+    !call all_gather_all_r(station_depths, &
+    !                     station_depths_gather, &
+    !                     max_num_stations_gather, &
+    !                     mysize)
     call all_gather_all_ch(component_names, &
                          num_stations*3*MAX_STRING_LENGTH, &
                          component_names_gather, &
@@ -337,12 +390,15 @@ subroutine write_asdf(asdf_container)
 
     call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
 
-    do k = 1, mysize
+    station_latitude = 1.0 ! Not working!!!
+    station_longitude = 1.0
+    station_elevation = 2.0
+    station_burial_depth = 1.0
+    do k = 1, mysize ! Need to set up ASDF container on all processers
       do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
-print *, station_names_gather(j,k)
-print *, network_names_gather(j,k)
-print *, k
-        call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), k, start_time_string, stationxml)
+        call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), &
+                                   station_latitude, station_longitude, station_elevation, &
+                                   station_burial_depth, start_time_string, stationxml)
         call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
@@ -398,6 +454,10 @@ print *, k
   deallocate(station_grps_gather)
   deallocate(station_names_gather)
   deallocate(network_names_gather)
+  deallocate(station_lats_gather)
+  deallocate(station_longs_gather)
+  deallocate(station_elevs_gather)
+  deallocate(station_depths_gather)
   deallocate(num_stations_gather)
 
   deallocate(waveforms)
@@ -552,7 +612,8 @@ end subroutine cmt_to_quakeml
 subroutine get_time(startTime, start_time_string, end_time_string)
 
   use specfem_par,only:&
-    yr_SAC, mo_SAC, da_SAC, jda_SAC, ho_SAC, mi_SAC, sec_SAC, DT, NSTEP
+    NSTEP,t0,DT,seismo_offset,&
+    yr_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC,sec_SAC,jda_SAC,tshift_CMT
 
   implicit none
   character(len=*) :: start_time_string, end_time_string
@@ -569,7 +630,7 @@ subroutine get_time(startTime, start_time_string, end_time_string)
   write(da, "(I2.2)") da_SAC
   write(hr, "(I2.2)") ho_SAC
   write(minute, "(I2.2)") mi_SAC
-  write(second, "(F5.2)") sec_SAC
+  write(second, "(F5.2)") sec_SAC+t0
 
   start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
                       trim(hr)//':'//trim(minute)//':'//trim(second)
@@ -579,7 +640,7 @@ subroutine get_time(startTime, start_time_string, end_time_string)
   ! http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap04.html#tag_04_14
   year = yr_SAC-1900
   startTime =(year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
-              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC
+              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC+t0
 
   ! Calculates the number of seconds to add to the start_time
   end_time_sec = DT*NSTEP
@@ -607,12 +668,9 @@ end subroutine get_time
 !> Converts the Station information to a StationXML string
 !! \param station_name The name of the station based on SEED
 !! \param network_name The name of the network based on SEED
-!! \param irec The receiver count
 !! \param stationxmlstring The StationXML string that will be written to the ASDF file
-subroutine station_to_stationxml(station_name, network_name, irec, start_time_string, stationxmlstring)
-
-  use specfem_par,only:&
-    stlat, stlon, stele, stbur, myrank
+subroutine station_to_stationxml(station_name, network_name, latitude, longitude, elevation, &
+                                 burial_depth, start_time_string, stationxmlstring)
 
   implicit none
   character(len=*) :: stationxmlstring
@@ -620,17 +678,15 @@ subroutine station_to_stationxml(station_name, network_name, irec, start_time_st
   character(len=*) :: network_name
   character(len=*) :: start_time_string
   character(len=15) :: station_lat, station_lon, station_ele, station_depth
-  integer, intent(in) :: irec
   integer :: len_station_name, len_network_name
+  real, intent(in) :: latitude, longitude, elevation, burial_depth
 
   ! Convert double precision to character strings for the StationXML string
-print *, stlat(irec), myrank
-print *, stlon(irec), " ******"
 
-  write(station_lat, "(g12.5)") stlat(irec)
-  write(station_lon, "(g12.5)") stlon(irec)
-  write(station_ele, "(g12.5)") stele(irec)
-  write(station_depth, "(g12.5)") stbur(irec)
+  write(station_lat, "(g12.5)") latitude
+  write(station_lon, "(g12.5)") longitude
+  write(station_ele, "(g12.5)") elevation
+  write(station_depth, "(g12.5)") burial_depth
 
   len_network_name = len(network_name)
   len_station_name = len(station_name)
@@ -651,7 +707,7 @@ print *, stlon(irec), " ******"
                      '<CreationDate>'//trim(start_time_string(1:19))//'</CreationDate>'//&
                      '<TotalNumberChannels>3</TotalNumberChannels>'//&
                      '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
-                     '<Channel locationCode="" code="BHN"'//&
+                     '<Channel locationCode="" code="MXN"'//&
                      ' startDate="'//trim(start_time_string(1:19))//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
@@ -660,7 +716,7 @@ print *, stlon(irec), " ******"
                      '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" code="BHE"'//&
+                     '<Channel locationCode="" code="MXE"'//&
                      ' startDate="'//trim(start_time_string(1:19))//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
@@ -669,7 +725,7 @@ print *, stlon(irec), " ******"
                      '<Azimuth>90.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" code="BHZ"'//&
+                     '<Channel locationCode="" code="MXZ"'//&
                      ' startDate="'//trim(start_time_string(1:19))//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
