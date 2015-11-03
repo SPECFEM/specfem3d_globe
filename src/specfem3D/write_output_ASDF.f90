@@ -180,7 +180,6 @@ subroutine write_asdf(asdf_container)
 
   integer :: num_stations !
   integer :: nsamples  ! constant, as in SPECFEM
-  real :: station_latitude, station_longitude, station_elevation, station_burial_depth
   double precision :: sampling_rate
   double precision :: startTime
   integer(kind=8) :: start_time
@@ -190,12 +189,6 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: networks_names
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: stations_names
   character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: component_names
-
-  ! Station coordinates
-  real, dimension(:), allocatable :: station_lats
-  real, dimension(:), allocatable :: station_longs
-  real, dimension(:), allocatable :: station_elevs
-  real, dimension(:), allocatable :: station_depths
 
   ! data. dimension = nsamples * num_channels_per_station * num_stations
   real, dimension(:, :, :), allocatable :: waveforms
@@ -220,7 +213,8 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_STRING_LENGTH), dimension(:,:), allocatable :: &
       station_names_gather, network_names_gather, component_names_gather
   real, dimension(:,:), allocatable :: &
-      station_lats_gather, station_longs_gather, station_elevs_gather, station_depths_gather
+      station_lats_gather, station_longs_gather, station_elevs_gather, &
+      station_depths_gather
   integer, dimension(:,:), allocatable :: station_grps_gather
   integer, dimension(:), allocatable :: displs, rcounts
 
@@ -269,10 +263,6 @@ subroutine write_asdf(asdf_container)
 
     allocate(networks_names(num_stations), stat=ier)
     allocate(stations_names(num_stations), stat=ier)
-    allocate(station_lats(num_stations), stat=ier)
-    allocate(station_longs(num_stations), stat=ier)
-    allocate(station_elevs(num_stations), stat=ier)
-    allocate(station_depths(num_stations), stat=ier)
     allocate(component_names(num_stations*3), stat=ier)
     allocate(waveforms(nsamples, 3, num_stations), &
            stat=ier)
@@ -280,10 +270,6 @@ subroutine write_asdf(asdf_container)
     do i = 1, num_stations
       write(networks_names(i), '(a)') asdf_container%network_array(i)
       write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
-      station_lats(i) = asdf_container%receiver_lat(i)
-      station_longs(i) = asdf_container%receiver_lo(i)
-      station_elevs(i) = asdf_container%receiver_el(i)
-      station_depths(i) = asdf_container%receiver_dpt(i)
     enddo
 
     do i = 1, num_stations*3
@@ -305,10 +291,10 @@ subroutine write_asdf(asdf_container)
     ! Everyone should know about each and every station name and its coordinates
     allocate(station_names_gather(max_num_stations_gather, mysize))
     allocate(network_names_gather(max_num_stations_gather, mysize))
-    allocate(station_lats_gather(max_num_stations_gather, mysize))
-    allocate(station_longs_gather(max_num_stations_gather, mysize))
-    allocate(station_elevs_gather(max_num_stations_gather, mysize))
-    allocate(station_depths_gather(max_num_stations_gather, mysize))
+    allocate(station_lats_gather(max_num_stations_gather,mysize))
+    allocate(station_longs_gather(max_num_stations_gather,mysize))
+    allocate(station_elevs_gather(max_num_stations_gather,mysize))
+    allocate(station_depths_gather(max_num_stations_gather,mysize))
     allocate(component_names_gather(max_num_stations_gather*3, mysize))
 
     ! The number of stations is not constant across processes
@@ -333,25 +319,6 @@ subroutine write_asdf(asdf_container)
                          max_num_stations_gather, &
                          MAX_STRING_LENGTH, &
                          mysize)
-    !call all_gather_all_r(station_lats, &
-    !                     num_stations, &
-    !                     station_lats_gather, &
-    !                     rcounts, &
-    !                     displs, &
-    !                     max_num_stations_gather, &
-    !                     mysize)
-    !call all_gather_all_r(station_longs, &
-    !                     station_longs_gather, &
-    !                     max_num_stations_gather, &
-    !                     mysize)
-    !call all_gather_all_r(station_elevs, &
-    !                     station_elevs_gather, &
-    !                     max_num_stations_gather, &
-    !                     mysize)
-    !call all_gather_all_r(station_depths, &
-    !                     station_depths_gather, &
-    !                     max_num_stations_gather, &
-    !                     mysize)
     call all_gather_all_ch(component_names, &
                          num_stations*3*MAX_STRING_LENGTH, &
                          component_names_gather, &
@@ -359,6 +326,41 @@ subroutine write_asdf(asdf_container)
                          displs*3, &
                          max_num_stations_gather*3, &
                          MAX_STRING_LENGTH, &
+                         mysize)
+
+    ! Now gather all the coordiante information for these stations
+    do i = 1, mysize
+      displs(i) = (i-1) * max_num_stations_gather
+      rcounts(i) = num_stations_gather(i)
+    enddo
+
+    call all_gather_all_r(asdf_container%receiver_lat, &
+                         num_stations, &
+                         station_lats_gather, &
+                         rcounts, &
+                         displs, &
+                         max_num_stations_gather, &
+                         mysize)
+    call all_gather_all_r(asdf_container%receiver_lo, &
+                         num_stations, &
+                         station_longs_gather, &
+                         rcounts, &
+                         displs, &
+                         max_num_stations_gather, &
+                         mysize)
+    call all_gather_all_r(asdf_container%receiver_el, &
+                         num_stations, &
+                         station_elevs_gather, &
+                         rcounts, &
+                         displs, &
+                         max_num_stations_gather, &
+                         mysize)
+    call all_gather_all_r(asdf_container%receiver_lat, &
+                         num_stations, &
+                         station_depths_gather, &
+                         rcounts, &
+                         displs, &
+                         max_num_stations_gather, &
                          mysize)
     deallocate(displs)
     deallocate(rcounts)
@@ -372,7 +374,7 @@ subroutine write_asdf(asdf_container)
     !--------------------------------------------------------
     ! write ASDF
     !--------------------------------------------------------
- 
+
     call ASDF_initialize_hdf5_f(ier);
     call ASDF_create_new_file_f(OUTPUT_FILES_BASE // "synthetic.h5" // C_NULL_CHAR, comm, current_asdf_handle)
 
@@ -390,15 +392,12 @@ subroutine write_asdf(asdf_container)
 
     call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
 
-    station_latitude = 1.0 ! Not working!!!
-    station_longitude = 1.0
-    station_elevation = 2.0
-    station_burial_depth = 1.0
     do k = 1, mysize ! Need to set up ASDF container on all processers
       do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
         call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), &
-                                   station_latitude, station_longitude, station_elevation, &
-                                   station_burial_depth, start_time_string, stationxml)
+                                   station_lats_gather(j,k), station_longs_gather(j,k), &
+                                   station_elevs_gather(j,k), station_depths_gather(j,k), &
+                                   start_time_string, stationxml)
         call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
