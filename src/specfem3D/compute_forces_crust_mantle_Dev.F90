@@ -68,8 +68,10 @@
     c44store => c44store_crust_mantle,c45store => c45store_crust_mantle,c46store => c46store_crust_mantle, &
     c55store => c55store_crust_mantle,c56store => c56store_crust_mantle,c66store => c66store_crust_mantle, &
     ibool => ibool_crust_mantle, &
-    ibool_inv_st => ibool_inv_st_crust_mantle, &
     ibool_inv_tbl => ibool_inv_tbl_crust_mantle, &
+    ibool_inv_st => ibool_inv_st_crust_mantle, &
+    num_globs => num_globs_crust_mantle, &
+    phase_iglob => phase_iglob_crust_mantle, &
     ispec_is_tiso => ispec_is_tiso_crust_mantle, &
     one_minus_sum_beta => one_minus_sum_beta_crust_mantle, &
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
@@ -144,7 +146,7 @@
   integer :: i,j,k
 #endif
 
-  integer :: i_inv_tbl, ijk_spec
+  integer :: ijk_spec,ip,iglob_p
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -158,18 +160,6 @@
     iphase = 2
     num_elements = nspec_inner
   endif
-
-  do ispec=1,NSPEC_CRUST_MANTLE
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          sum_terms(1,i,j,k,ispec) = 0.0
-          sum_terms(2,i,j,k,ispec) = 0.0
-          sum_terms(3,i,j,k,ispec) = 0.0
-        enddo
-      enddo
-    enddo
-  enddo
 
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
@@ -192,7 +182,7 @@
 !$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP sum_terms, &
-!$OMP ibool_inv_st, ibool_inv_tbl, &
+!$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
 !$OMP deltat, COMPUTE_AND_STORE_STRAIN ) &
 !$OMP PRIVATE(ispec,fac1,fac2,fac3,ispec_p, &
 #ifdef FORCE_VECTORIZATION
@@ -203,7 +193,7 @@
 !$OMP tempx1,tempx2,tempx3, &
 !$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
 !$OMP dummyx_loc,dummyy_loc,dummyz_loc,rho_s_H,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-!$OMP i_inv_tbl, ijk_spec, &
+!$OMP ijk_spec, ip, &
 !$OMP iglob,epsilondev_loc)
 
 !$OMP DO SCHEDULE(GUIDED)
@@ -381,16 +371,16 @@
 
   ! updates acceleration
 !$OMP DO  
-  do iglob=1,NGLOB_CRUST_MANTLE
-    do i_inv_tbl=ibool_inv_st(iglob),ibool_inv_st(iglob+1)-1
-      ijk_spec = ibool_inv_tbl(i_inv_tbl)
+  do iglob_p=1,num_globs(iphase)
+    iglob = phase_iglob(iglob_p,iphase)
+    do ip=ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+      ijk_spec = ibool_inv_tbl(ip,iphase)
 
       ! do NOT use array syntax ":" for the three statements below otherwise most compilers
       ! will not be able to vectorize the outer loop
       accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,ijk_spec,1,1,1)
       accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,ijk_spec,1,1,1)
       accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
-
     enddo
   enddo
 !$OMP END DO

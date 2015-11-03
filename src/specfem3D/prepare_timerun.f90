@@ -3357,13 +3357,7 @@
   use specfem_par_crustmantle
   implicit none
 
-  ! local parameters
-  integer, dimension(:),   allocatable :: ibool_inv_num
-  integer, dimension(:,:), allocatable :: ibool_inv_tbl
-  integer :: num_alloc_ibool_inv_tbl
-  integer :: num_used_ibool_inv_tbl
-  integer ip, iglob, i
-  integer, parameter :: N_TOL = 20
+  integer :: iphase
 
   ! user output
   if (myrank == 0) then
@@ -3371,44 +3365,23 @@
     call flush_IMAIN()
   endif
 
-!#define N_TOL 20
-  !---- for crust mantle ----------------------
-  allocate( ibool_inv_num(NGLOB_CRUST_MANTLE) )
-  num_alloc_ibool_inv_tbl = N_TOL*(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE/NGLOB_CRUST_MANTLE+1)
-  allocate( ibool_inv_tbl(num_alloc_ibool_inv_tbl,NGLOB_CRUST_MANTLE) )
-  
-  do iglob = 1, NGLOB_CRUST_MANTLE
-    ibool_inv_num(iglob) = 0
-  enddo
+  !---- make inv. table ----------------------
 
-  do i = 1, NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE
-    iglob = ibool_crust_mantle(i,1,1,1)
-    ibool_inv_num(iglob) = ibool_inv_num(iglob) + 1
-    ibool_inv_tbl(ibool_inv_num(iglob),iglob) = i
-  enddo
-  !---- packing : ibool_inv_tbl -> ibool_inv_tbl_crust_mantle
-  ip    = 0
-  num_used_ibool_inv_tbl = 0
-  do iglob = 1, NGLOB_CRUST_MANTLE
-    ibool_inv_st_crust_mantle(iglob) = ip + 1
-    if( ibool_inv_num(iglob) > num_used_ibool_inv_tbl ) then
-       num_used_ibool_inv_tbl = ibool_inv_num(iglob)
-    endif
-    do i = 1, ibool_inv_num(iglob)
-        ip = ip + 1
-        ibool_inv_tbl_crust_mantle(ip) = ibool_inv_tbl(i,iglob)
-    enddo
-  enddo
-  ibool_inv_st_crust_mantle(NGLOB_CRUST_MANTLE+1) = ip + 1
-  if( num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl )  then
-    write(6,*) "   num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
-    write(6,*) "   num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
-    write(6,*) "#### crust mantle: num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl  #####"
-    write(6,*) "#### Program sttoped ##########"
-    call flush(6)
-  endif
-  deallocate( ibool_inv_num )
-  deallocate( ibool_inv_tbl )
+  !---- crust mantle : outer elements (iphase=1)
+  iphase=1 
+  call make_inv_table(iphase,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                      nspec_outer_crust_mantle,phase_ispec_inner_crust_mantle, &
+                      ibool_crust_mantle,phase_iglob_crust_mantle, &
+                      ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
+                      num_globs_crust_mantle)
+
+  !---- crust mantle : inner elements (iphase=2)
+  iphase=2
+  call make_inv_table(iphase,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                      nspec_inner_crust_mantle,phase_ispec_inner_crust_mantle, &
+                      ibool_crust_mantle,phase_iglob_crust_mantle, &
+                      ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
+                      num_globs_crust_mantle)
 
   ! user output
   if (myrank == 0) then
@@ -3418,6 +3391,85 @@
 
   ! synchronizes processes
   call synchronize_all()
+
+  contains
+
+    subroutine make_inv_table(iphase,nglob,nspec,phase_nspec,phase_ispec,ibool,phase_iglob, &
+                              ibool_inv_tbl,ibool_inv_st,num_globs)
+
+    implicit none
+
+    ! arguments
+    integer :: iphase
+    integer :: nglob
+    integer :: nspec
+    integer :: phase_nspec
+    integer, dimension(:,:) :: phase_ispec
+    integer, dimension(:,:,:,:) :: ibool
+    integer, dimension(:,:) :: phase_iglob
+    integer, dimension(:,:) :: ibool_inv_tbl
+    integer, dimension(:,:) :: ibool_inv_st
+    integer, dimension(:) :: num_globs
+
+    ! local parameters
+    integer, dimension(:),   allocatable :: ibool_inv_num
+    integer, dimension(:,:), allocatable :: ibool_inv_tbl_tmp
+    integer :: num_alloc_ibool_inv_tbl
+    integer :: num_used_ibool_inv_tbl
+    integer ip, iglob, i, ispec_p, ispec, iglob_p
+    integer, parameter :: N_TOL = 20
+
+    allocate( ibool_inv_num(nglob) )
+    num_alloc_ibool_inv_tbl = N_TOL*(NGLLX*NGLLY*NGLLZ*nspec/nglob+1)
+    allocate( ibool_inv_tbl_tmp(num_alloc_ibool_inv_tbl,nglob) )
+
+    !---- make temporary array of inv. table : ibool_inv_tbl_tmp
+    do iglob = 1, nglob
+      ibool_inv_num(iglob) = 0
+    enddo
+
+    do ispec_p = 1,phase_nspec
+      ispec = phase_ispec(ispec_p,iphase)
+      do i = 1, NGLLX*NGLLY*NGLLZ
+        iglob = ibool(i,1,1,ispec)
+        ibool_inv_num(iglob) = ibool_inv_num(iglob) + 1
+        ibool_inv_tbl_tmp(ibool_inv_num(iglob),iglob) = i+NGLLX*NGLLY*NGLLZ*(ispec-1)
+      enddo
+    enddo
+
+    !---- packing : ibool_inv_tbl_tmp -> ibool_inv_tbl
+    ip    = 0
+    iglob_p = 0
+    num_used_ibool_inv_tbl = 0
+    do iglob = 1, nglob
+      if( ibool_inv_num(iglob) /= 0 ) then
+        iglob_p = iglob_p + 1
+        phase_iglob(iglob_p,iphase) = iglob
+        ibool_inv_st(iglob_p,iphase) = ip + 1
+        if( ibool_inv_num(iglob) > num_used_ibool_inv_tbl ) then
+           num_used_ibool_inv_tbl = ibool_inv_num(iglob)
+        endif
+        do i = 1, ibool_inv_num(iglob)
+          ip = ip + 1
+          ibool_inv_tbl(ip,iphase) = ibool_inv_tbl_tmp(i,iglob)
+        enddo
+      endif
+    enddo
+    ibool_inv_st(iglob_p+1,iphase) = ip + 1
+    num_globs(iphase) = iglob_p
+    if( num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl )  then
+      write(6,*) "   num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
+      write(6,*) "   num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
+      write(6,*) "#### num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl  #####"
+      write(6,*) "#### Program sttoped ##########"
+      call flush(6)
+    endif
+
+    deallocate( ibool_inv_num )
+    deallocate( ibool_inv_tbl_tmp )
+
+    end subroutine make_inv_table
+
 
   end subroutine prepare_timerun_ibool_inv_tbl
 
