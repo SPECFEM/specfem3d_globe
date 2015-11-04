@@ -611,7 +611,7 @@ end subroutine cmt_to_quakeml
 subroutine get_time(startTime, start_time_string, end_time_string)
 
   use specfem_par,only:&
-    NSTEP,t0,DT,&
+    NSTEP,t0,DT,t_shift_SAC,&
     yr_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC,sec_SAC,jda_SAC
 
   implicit none
@@ -629,17 +629,19 @@ subroutine get_time(startTime, start_time_string, end_time_string)
   write(da, "(I2.2)") da_SAC
   write(hr, "(I2.2)") ho_SAC
   write(minute, "(I2.2)") mi_SAC
-  write(second, "(F5.2)") sec_SAC+t0
+  write(second, "(F5.2)") sec_SAC+t_shift_SAC-t0
 
   start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
                       trim(hr)//':'//trim(minute)//':'//trim(second)
+
+print *, start_time_string
 
   ! Calculates the start time since the epoch in seconds
   ! Reference:
   ! http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap04.html#tag_04_14
   year = yr_SAC-1900
   startTime =(year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
-              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC+t0
+              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC+t_shift_SAC-t0
 
   ! Calculates the number of seconds to add to the start_time
   end_time_sec = DT*NSTEP
