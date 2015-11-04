@@ -611,8 +611,8 @@ end subroutine cmt_to_quakeml
 subroutine get_time(startTime, start_time_string, end_time_string)
 
   use specfem_par,only:&
-    NSTEP,t0,DT,seismo_offset,&
-    yr_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC,sec_SAC,jda_SAC,tshift_CMT
+    NSTEP,t0,DT,&
+    yr_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC,sec_SAC,jda_SAC
 
   implicit none
   character(len=*) :: start_time_string, end_time_string
