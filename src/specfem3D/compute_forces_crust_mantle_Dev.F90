@@ -68,6 +68,8 @@
     c44store => c44store_crust_mantle,c45store => c45store_crust_mantle,c46store => c46store_crust_mantle, &
     c55store => c55store_crust_mantle,c56store => c56store_crust_mantle,c66store => c66store_crust_mantle, &
     ibool => ibool_crust_mantle, &
+    ibool_inv_st => ibool_inv_st_crust_mantle, &
+    ibool_inv_tbl => ibool_inv_tbl_crust_mantle, &
     ispec_is_tiso => ispec_is_tiso_crust_mantle, &
     one_minus_sum_beta => one_minus_sum_beta_crust_mantle, &
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
@@ -124,7 +126,7 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: sum_terms
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
@@ -142,6 +144,8 @@
   integer :: i,j,k
 #endif
 
+  integer :: i_inv_tbl, ijk_spec
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -154,6 +158,18 @@
     iphase = 2
     num_elements = nspec_inner
   endif
+
+  do ispec=1,NSPEC_CRUST_MANTLE
+    do k = 1,NGLLZ
+      do j = 1,NGLLY
+        do i = 1,NGLLX
+          sum_terms(1,i,j,k,ispec) = 0.0
+          sum_terms(2,i,j,k,ispec) = 0.0
+          sum_terms(3,i,j,k,ispec) = 0.0
+        enddo
+      enddo
+    enddo
+  enddo
 
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
@@ -175,8 +191,10 @@
 !$OMP num_elements, USE_LDDRK, &
 !$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
+!$OMP sum_terms, &
+!$OMP ibool_inv_st, ibool_inv_tbl, &
 !$OMP deltat, COMPUTE_AND_STORE_STRAIN ) &
-!$OMP PRIVATE(ispec,fac1,fac2,fac3,sum_terms,ispec_p, &
+!$OMP PRIVATE(ispec,fac1,fac2,fac3,ispec_p, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ijk, &
 #else
@@ -185,6 +203,7 @@
 !$OMP tempx1,tempx2,tempx3, &
 !$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
 !$OMP dummyx_loc,dummyy_loc,dummyz_loc,rho_s_H,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+!$OMP i_inv_tbl, ijk_spec, &
 !$OMP iglob,epsilondev_loc)
 
 !$OMP DO SCHEDULE(GUIDED)
@@ -286,9 +305,9 @@
       fac1 = wgllwgll_yz_3D(INDEX_IJK)
       fac2 = wgllwgll_xz_3D(INDEX_IJK)
       fac3 = wgllwgll_xy_3D(INDEX_IJK)
-      sum_terms(INDEX_IJK,1) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
-      sum_terms(INDEX_IJK,2) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
-      sum_terms(INDEX_IJK,3) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
+      sum_terms(1,INDEX_IJK,ispec) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
+      sum_terms(2,INDEX_IJK,ispec) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
+      sum_terms(3,INDEX_IJK,ispec) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
 
     ENDDO_LOOP_IJK
 
@@ -297,15 +316,15 @@
 
 #ifdef FORCE_VECTORIZATION
       do ijk = 1,NDIM*NGLLCUBE
-        sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
+        sum_terms(1,ijk,1,1,ispec) = sum_terms(1,ijk,1,1,ispec) + rho_s_H(ijk,1,1,1)
       enddo
 #else
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            sum_terms(INDEX_IJK,1) = sum_terms(INDEX_IJK,1) + rho_s_H(INDEX_IJK,1)
-            sum_terms(INDEX_IJK,2) = sum_terms(INDEX_IJK,2) + rho_s_H(INDEX_IJK,2)
-            sum_terms(INDEX_IJK,3) = sum_terms(INDEX_IJK,3) + rho_s_H(INDEX_IJK,3)
+            sum_terms(1,INDEX_IJK,ispec) = sum_terms(1,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,1)
+            sum_terms(2,INDEX_IJK,ispec) = sum_terms(2,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,2)
+            sum_terms(3,INDEX_IJK,ispec) = sum_terms(3,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,3)
           enddo
         enddo
       enddo
@@ -313,60 +332,6 @@
 
     endif
 
-
-    ! updates acceleration
-
-#ifdef FORCE_VECTORIZATION
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP CRITICAL
-#endif
-! we can force vectorization using a compiler directive here because we know that there is no dependency
-! inside a given spectral element, since all the global points of a local elements are different by definition
-! (only common points between different elements can be the same)
-! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
-!IBM* ASSERT (NODEPS)
-!pgi$ ivdep
-!DIR$ IVDEP
-    do ijk = 1,NGLLCUBE
-#else
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP CRITICAL
-#endif
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-#endif
-
-          iglob = ibool(INDEX_IJK,ispec)
-
-          ! do NOT use array syntax ":" for the three statements below otherwise most compilers
-          ! will not be able to vectorize the outer loop
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(INDEX_IJK,1)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(INDEX_IJK,2)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(INDEX_IJK,3)
-
-#ifdef FORCE_VECTORIZATION
-    enddo
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP END CRITICAL
-#endif
-#else
-        enddo
-      enddo
-    enddo
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP END CRITICAL
-#endif
-#endif
     ! update memory variables based upon the Runge-Kutta scheme
     ! convention for attenuation
     ! term in xx = 1
@@ -413,6 +378,23 @@
 
   enddo ! of spectral element loop NSPEC_CRUST_MANTLE
 !$OMP enddo
+
+  ! updates acceleration
+!$OMP DO  
+  do iglob=1,NGLOB_CRUST_MANTLE
+    do i_inv_tbl=ibool_inv_st(iglob),ibool_inv_st(iglob+1)-1
+      ijk_spec = ibool_inv_tbl(i_inv_tbl)
+
+      ! do NOT use array syntax ":" for the three statements below otherwise most compilers
+      ! will not be able to vectorize the outer loop
+      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,ijk_spec,1,1,1)
+      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,ijk_spec,1,1,1)
+      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
+
+    enddo
+  enddo
+!$OMP END DO
+
 !$OMP END PARALLEL
 
   contains

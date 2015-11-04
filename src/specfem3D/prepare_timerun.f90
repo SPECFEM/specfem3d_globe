@@ -85,6 +85,9 @@
   ! prepares VTK window visualization
   call prepare_vtk_window()
 
+  ! precomputes inverse table of ibool
+  call prepare_timerun_ibool_inv_tbl()
+
   ! synchronize all the processes
   call synchronize_all()
 
@@ -3341,4 +3344,81 @@
   call synchronize_all()
 
   end subroutine prepare_vtk_window
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_timerun_ibool_inv_tbl()
+
+! precomputes inverse table of ibool
+
+  use specfem_par
+  use specfem_par_crustmantle
+  implicit none
+
+  ! local parameters
+  integer, dimension(:),   allocatable :: ibool_inv_num
+  integer, dimension(:,:), allocatable :: ibool_inv_tbl
+  integer :: num_alloc_ibool_inv_tbl
+  integer :: num_used_ibool_inv_tbl
+  integer ip, iglob, i
+  integer, parameter :: N_TOL = 20
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing inverse table of ibool"
+    call flush_IMAIN()
+  endif
+
+!#define N_TOL 20
+  !---- for crust mantle ----------------------
+  allocate( ibool_inv_num(NGLOB_CRUST_MANTLE) )
+  num_alloc_ibool_inv_tbl = N_TOL*(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE/NGLOB_CRUST_MANTLE+1)
+  allocate( ibool_inv_tbl(num_alloc_ibool_inv_tbl,NGLOB_CRUST_MANTLE) )
+  
+  do iglob = 1, NGLOB_CRUST_MANTLE
+    ibool_inv_num(iglob) = 0
+  enddo
+
+  do i = 1, NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE
+    iglob = ibool_crust_mantle(i,1,1,1)
+    ibool_inv_num(iglob) = ibool_inv_num(iglob) + 1
+    ibool_inv_tbl(ibool_inv_num(iglob),iglob) = i
+  enddo
+  !---- packing : ibool_inv_tbl -> ibool_inv_tbl_crust_mantle
+  ip    = 0
+  num_used_ibool_inv_tbl = 0
+  do iglob = 1, NGLOB_CRUST_MANTLE
+    ibool_inv_st_crust_mantle(iglob) = ip + 1
+    if( ibool_inv_num(iglob) > num_used_ibool_inv_tbl ) then
+       num_used_ibool_inv_tbl = ibool_inv_num(iglob)
+    endif
+    do i = 1, ibool_inv_num(iglob)
+        ip = ip + 1
+        ibool_inv_tbl_crust_mantle(ip) = ibool_inv_tbl(i,iglob)
+    enddo
+  enddo
+  ibool_inv_st_crust_mantle(NGLOB_CRUST_MANTLE+1) = ip + 1
+  if( num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl )  then
+    write(6,*) "   num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
+    write(6,*) "   num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
+    write(6,*) "#### crust mantle: num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl  #####"
+    write(6,*) "#### Program sttoped ##########"
+    call flush(6)
+  endif
+  deallocate( ibool_inv_num )
+  deallocate( ibool_inv_tbl )
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)"  inverse table of ibool preparation done"
+    call flush_IMAIN()
+  endif
+
+  ! synchronizes processes
+  call synchronize_all()
+
+  end subroutine prepare_timerun_ibool_inv_tbl
+
 

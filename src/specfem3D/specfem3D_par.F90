@@ -334,6 +334,9 @@ module specfem_par_crustmantle
   ! mesh parameters
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
+  integer, dimension(NGLOB_CRUST_MANTLE+1) :: ibool_inv_st_crust_mantle
+  integer, dimension(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE) :: ibool_inv_tbl_crust_mantle
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
