@@ -520,6 +520,11 @@ module specfem_par_innercore
   ! mesh parameters
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
 
+  integer, dimension(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2) :: ibool_inv_tbl_inner_core
+  integer, dimension(NGLOB_CRUST_MANTLE+1,2) :: ibool_inv_st_inner_core
+  integer, dimension(2) :: num_globs_inner_core
+  integer, dimension(NGLOB_CRUST_MANTLE,2) :: phase_iglob_inner_core
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
     xix_inner_core,xiy_inner_core,xiz_inner_core,&
     etax_inner_core,etay_inner_core,etaz_inner_core, &
@@ -631,6 +636,11 @@ module specfem_par_outercore
   ! ----------------- outer core ---------------------
   ! mesh parameters
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
+
+  integer, dimension(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2) :: ibool_inv_tbl_outer_core
+  integer, dimension(NGLOB_CRUST_MANTLE+1,2) :: ibool_inv_st_outer_core
+  integer, dimension(2) :: num_globs_outer_core
+  integer, dimension(NGLOB_CRUST_MANTLE,2) :: phase_iglob_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
     xix_outer_core,xiy_outer_core,xiz_outer_core,&

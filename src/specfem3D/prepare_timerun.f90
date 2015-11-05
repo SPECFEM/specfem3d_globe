@@ -3355,6 +3355,8 @@
 
   use specfem_par
   use specfem_par_crustmantle
+  use specfem_par_innercore
+  use specfem_par_outercore
   implicit none
 
   integer :: iphase
@@ -3382,6 +3384,38 @@
                       ibool_crust_mantle,phase_iglob_crust_mantle, &
                       ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
                       num_globs_crust_mantle)
+
+  !---- inner core : outer elements (iphase=1)
+  iphase=1 
+  call make_inv_table(iphase,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                      nspec_outer_inner_core,phase_ispec_inner_inner_core, &
+                      ibool_inner_core,phase_iglob_inner_core, &
+                      ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
+                      num_globs_inner_core)
+
+  !---- inner core : inner elements (iphase=2)
+  iphase=2
+  call make_inv_table(iphase,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                      nspec_inner_inner_core,phase_ispec_inner_inner_core, &
+                      ibool_inner_core,phase_iglob_inner_core, &
+                      ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
+                      num_globs_inner_core)
+
+  !---- outer core : outer elements (iphase=1)
+  iphase=1 
+  call make_inv_table(iphase,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
+                      nspec_outer_outer_core,phase_ispec_inner_outer_core, &
+                      ibool_outer_core,phase_iglob_outer_core, &
+                      ibool_inv_tbl_outer_core, ibool_inv_st_outer_core, &
+                      num_globs_outer_core)
+
+  !---- outer core : inner elements (iphase=2)
+  iphase=2
+  call make_inv_table(iphase,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
+                      nspec_inner_outer_core,phase_ispec_inner_outer_core, &
+                      ibool_outer_core,phase_iglob_outer_core, &
+                      ibool_inv_tbl_outer_core, ibool_inv_st_outer_core, &
+                      num_globs_outer_core)
 
   ! user output
   if (myrank == 0) then

@@ -62,6 +62,10 @@
     c11store => c11store_inner_core,c12store => c12store_inner_core,c13store => c13store_inner_core, &
     c33store => c33store_inner_core,c44store => c44store_inner_core, &
     ibool => ibool_inner_core,idoubling => idoubling_inner_core, &
+    ibool_inv_tbl => ibool_inv_tbl_inner_core, &
+    ibool_inv_st => ibool_inv_st_inner_core, &
+    num_globs => num_globs_inner_core, &
+    phase_iglob => phase_iglob_inner_core, &
     one_minus_sum_beta => one_minus_sum_beta_inner_core, &
     phase_ispec_inner => phase_ispec_inner_inner_core, &
     nspec_outer => nspec_outer_inner_core, &
@@ -109,7 +113,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: sum_terms
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
 
   real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
@@ -153,6 +157,8 @@
   integer :: i,j,k
 #endif
 
+  integer :: ijk_spec, ip, iglob_p
+
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
@@ -174,7 +180,7 @@
 !$OMP minus_gravity_table, minus_deriv_gravity_table, density_table, wgll_cube, hprimewgll_xxT, hprimewgll_xx, wgllwgll_yz_3D, &
 !$OMP wgllwgll_xz_3D, wgllwgll_xy_3D, accel_inner_core, USE_LDDRK, R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP vnspec, factor_common, deltat, alphaval,betaval,gammaval, epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-!$OMP epsilondev_xz,epsilondev_yz, epsilon_trace_over_3 ) &
+!$OMP sum_terms, ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, epsilondev_xz,epsilondev_yz, epsilon_trace_over_3 ) &
 !$OMP PRIVATE( ispec_p, ispec, iglob, dummyx_loc, dummyy_loc, dummyz_loc, tempx2, tempy2, tempz2, xixl, xiyl, xizl, &
 !$OMP etaxl, etayl, etazl, gammaxl, gammayl, gammazl, jacobianl, duxdxl, tempx1, tempx3, duxdyl, duxdzl, duydxl, &
 !$OMP tempy1, tempy3, duydyl, duydzl, tempz1, tempz3, duzdxl, duzdyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, &
@@ -183,11 +189,11 @@
 !$OMP kappal, lambdalplus2mul, lambdal, sigma_yx, sigma_zx, sigma_zy, radius, theta, phi, cos_theta, sin_theta, cos_phi, &
 !$OMP sin_phi, cos_theta_sq, sin_theta_sq, cos_phi_sq, sin_phi_sq, int_radius, minus_g, rho, gxl, gyl, gzl, minus_dg, &
 !$OMP minus_g_over_radius, minus_dg_plus_g_over_radius, Hxxl, Hyyl, Hzzl, Hxyl, Hxzl, Hyzl, sx_l, sy_l, sz_l, &
-!$OMP factor, rho_s_H, newtempx2, newtempy2, newtempz2, fac1, fac2, fac3, sum_terms, newtempx1, newtempx3 , newtempy1, &
+!$OMP factor, rho_s_H, newtempx2, newtempy2, newtempz2, fac1, fac2, fac3, newtempx1, newtempx3 , newtempy1, &
 #ifdef FORCE_VECTORIZATION
 !$OMP R_xx_val, R_yy_val, &
 #endif
-!$OMP newtempy3, newtempz1, newtempz3)
+!$OMP ijk_spec, ip, newtempy3, newtempz1, newtempz3)
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
@@ -646,9 +652,9 @@
         fac1 = wgllwgll_yz_3D(INDEX_IJK)
         fac2 = wgllwgll_xz_3D(INDEX_IJK)
         fac3 = wgllwgll_xy_3D(INDEX_IJK)
-        sum_terms(INDEX_IJK,1) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
-        sum_terms(INDEX_IJK,2) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
-        sum_terms(INDEX_IJK,3) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
+        sum_terms(1,INDEX_IJK,ispec) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
+        sum_terms(2,INDEX_IJK,ispec) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
+        sum_terms(3,INDEX_IJK,ispec) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
 
       ENDDO_LOOP_IJK
 
@@ -657,15 +663,15 @@
 
 #ifdef FORCE_VECTORIZATION
         do ijk = 1,NDIM*NGLLCUBE
-          sum_terms(ijk,1,1,1) = sum_terms(ijk,1,1,1) + rho_s_H(ijk,1,1,1)
+          sum_terms(1,ijk,1,1,ispec) = sum_terms(1,ijk,1,1,ispec) + rho_s_H(ijk,1,1,1)
         enddo
 #else
         do k = 1,NGLLZ
           do j = 1,NGLLY
             do i = 1,NGLLX
-              sum_terms(INDEX_IJK,1) = sum_terms(INDEX_IJK,1) + rho_s_H(INDEX_IJK,1)
-              sum_terms(INDEX_IJK,2) = sum_terms(INDEX_IJK,2) + rho_s_H(INDEX_IJK,2)
-              sum_terms(INDEX_IJK,3) = sum_terms(INDEX_IJK,3) + rho_s_H(INDEX_IJK,3)
+              sum_terms(1,INDEX_IJK,ispec) = sum_terms(1,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,1)
+              sum_terms(2,INDEX_IJK,ispec) = sum_terms(2,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,2)
+              sum_terms(3,INDEX_IJK,ispec) = sum_terms(3,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,3)
             enddo
           enddo
         enddo
@@ -673,58 +679,6 @@
 
       endif
 
-
-      ! sum contributions from each element to the global mesh and add gravity terms
-#ifdef FORCE_VECTORIZATION
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP CRITICAL
-#endif
-! we can force vectorization using a compiler directive here because we know that there is no dependency
-! inside a given spectral element, since all the global points of a local elements are different by definition
-! (only common points between different elements can be the same)
-! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
-!IBM* ASSERT (NODEPS)
-!pgi$ ivdep
-!DIR$ IVDEP
-      do ijk = 1,NGLLCUBE
-#else
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP CRITICAL
-#endif
-      do k = 1,NGLLZ
-        do j = 1,NGLLY
-          do i = 1,NGLLX
-#endif
-
-            iglob = ibool(INDEX_IJK,ispec)
-            ! do NOT use array syntax ":" for the three statements below
-            ! otherwise most compilers will not be able to vectorize the outer loop
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-            accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(INDEX_IJK,1)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-            accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(INDEX_IJK,2)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-            accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(INDEX_IJK,3)
-
-#ifdef FORCE_VECTORIZATION
-      enddo
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP END CRITICAL
-#endif
-#else
-          enddo
-        enddo
-      enddo
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP END CRITICAL
-#endif
-#endif
 
       ! use Runge-Kutta scheme to march memory variables in time
       ! convention for attenuation
@@ -773,6 +727,24 @@
 
   enddo ! of spectral element loop
 !$OMP enddo
+
+  ! sum contributions from each element to the global mesh and add gravity terms
+!$OMP DO
+  do iglob_p=1,num_globs(iphase)
+    iglob = phase_iglob(iglob_p,iphase)
+    do ip=ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+      ijk_spec = ibool_inv_tbl(ip,iphase)
+
+      ! do NOT use array syntax ":" for the three statements below
+      ! otherwise most compilers will not be able to vectorize the outer loop
+      accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,ijk_spec,1,1,1)
+      accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,ijk_spec,1,1,1)
+      accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
+    enddo
+  enddo
+!$OMP END DO
+
+
 !$OMP END PARALLEL
 
   contains
