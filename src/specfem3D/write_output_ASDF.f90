@@ -230,7 +230,8 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_PARFILE_LENGTH) :: sf_parfile
 
   ! Time variables
-  character(len=MAX_STRING_LENGTH) :: start_time_string, end_time_string
+  character(len=MAX_STRING_LENGTH) :: start_time_string, end_time_string, &
+                                      cmt_start_time_string, pde_start_time_string
 
   ! alias mpi communicator
   call world_duplicate(comm)
@@ -241,7 +242,7 @@ subroutine write_asdf(asdf_container)
   nsamples = seismo_current * (NSTEP / NTSTEP_BETWEEN_OUTPUT_SEISMOS)
 
   ! Calculate start_time
-  call get_time(startTime, start_time_string, end_time_string)
+  call get_time(startTime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
   start_time = startTime*(int(1000000000,kind=8)) ! convert to nanoseconds
 
   ! we only want to do these steps one time
@@ -251,7 +252,7 @@ subroutine write_asdf(asdf_container)
     !--------------------------------------------------------
 
     ! Generate minimal QuakeML for SPECFEM3D_GLOBE
-    call cmt_to_quakeml(quakeml, start_time_string)
+    call cmt_to_quakeml(quakeml, pde_start_time_string, cmt_start_time_string)
 
     ! Generate specfem provenance string
     call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
@@ -471,7 +472,7 @@ end subroutine write_asdf
 !> Converts the CMT source file read by SPECFEM to a QuakeML file for the ASDF container
 !! \param quakemlstring The QuakeML string to store in the ASDF file
 !! \start_time_string The start date stored as a character string
-subroutine cmt_to_quakeml(quakemlstring, start_time_string)
+subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_string)
 
   use specfem_par,only:&
     cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
@@ -481,7 +482,8 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
 
   implicit none
   character(len=*) :: quakemlstring
-  character(len=*) :: start_time_string
+  character(len=*) :: pde_start_time_string
+  character(len=*) :: cmt_start_time_string
   character(len=13) :: cmt_lon_str, cmt_lat_str, cmt_depth_str, hdur_str
   character(len=13) :: pde_lat_str, pde_lon_str, pde_depth_str
   character(len=25) :: M0_str, mb_str, ms_str
@@ -516,7 +518,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '</description>'//&
                   '<origin publicID="smi:local/'//trim(event_name_SAC)//'#pdeorigin">'//&
                   '<time>'//&
-                  '<value>'//trim(start_time_string(1:19))//'</value>'//&
+                  '<value>'//trim(pde_start_time_string(1:19))//'</value>'//&
                   '</time>'//&
                   '<latitude>'//&
                   '<value>'//trim(pde_lat_str)//'</value>'//&
@@ -530,7 +532,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '</origin>'//&
                   '<origin publicID="smi:local/'//trim(event_name_SAC)//'#cmtorigin">'//&
                   '<time>'//&
-                  '<value>'//trim(start_time_string(1:19))//'</value>'//&
+                  '<value>'//trim(cmt_start_time_string(1:19))//'</value>'//&
                   '</time>'//&
                   '<latitude>'//&
                   '<value>'//trim(cmt_lat_str)//'</value>'//&
@@ -608,33 +610,63 @@ end subroutine cmt_to_quakeml
 !> Uses the time in the CMTSOLUTION file to calculate the number of seconds since the epoch
 !! \param startTime The start time of the simulation from the epoch
 !! \param start_time_string A string for defining the waveform name start time
+!! \param pde_start_time_string A string for defining the waveform name start time using PDE
+!! \param cmt_start_time_string A string for defining the waveform name start time using CMT
 !! \param end_time_string A string for defining the waveform name end time
-subroutine get_time(startTime, start_time_string, end_time_string)
+subroutine get_time(startTime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
 
   use specfem_par,only:&
-    NSTEP,t0,DT,t_shift_SAC,&
+    NSTEP,t0,DT,t_shift_SAC,tshift_cmt,hdur,&
     yr_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC,sec_SAC,jda_SAC
 
   implicit none
-  character(len=*) :: start_time_string, end_time_string
+  character(len=*) :: start_time_string
+  character(len=*) :: end_time_string
+  character(len=*) :: cmt_start_time_string
+  character(len=*) :: pde_start_time_string
   double precision, intent(inout) :: startTime
   character(len=4) :: yr
   character(len=2) :: mo, da, hr, minute
   character(len=15) :: second
   double precision :: end_time_sec
+  real :: fraction_sec
   integer :: iatime(9), year
 
-  ! Converts the CMTSOLUTION time values to strings
-  write(yr, "(I4.4)") yr_SAC
-  write(mo, "(I2.2)") mo_SAC
-  write(da, "(I2.2)") da_SAC
-  write(hr, "(I2.2)") ho_SAC
-  write(minute, "(I2.2)") mi_SAC
-  write(second, "(F5.2)") sec_SAC+t_shift_SAC-t0
+  ! Calculates the start time since the epoch in seconds
+  ! Reference:
+  ! http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap04.html#tag_04_14
+  year = yr_SAC-1900
+  startTime =(year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
+              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC
 
-  start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
+  fraction_sec = sec_SAC - int(sec_SAC)
+
+  ! Converts seconds to a human-readable date
+  call gmtime(int(startTime), iatime)
+
+  write(yr, "(I4.4)") iatime(6)+1900
+  write(mo, "(I2.2)") iatime(5)+1
+  write(da, "(I2.2)") iatime(4)
+  write(hr, "(I2.2)") iatime(3)
+  write(minute, "(I2.2)") iatime(2)
+  write(second, "(F5.2)") iatime(1)+fraction_sec
+
+  ! PDE start time string
+
+  pde_start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
                       trim(hr)//':'//trim(minute)//':'//trim(second)
 
+  write(second, "(F5.2)") iatime(1)+t_shift_SAC+fraction_sec
+
+  ! CMT start time string Used for QuakeML
+  cmt_start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
+                      trim(hr)//':'//trim(minute)//':'//trim(second)
+
+  write(second, "(F5.2)") iatime(1)+t_shift_SAC-1.5*hdur+fraction_sec
+
+  ! start time of trace
+  start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
+                      trim(hr)//':'//trim(minute)//':'//trim(second)
 
   ! Calculates the start time since the epoch in seconds
   ! Reference:
