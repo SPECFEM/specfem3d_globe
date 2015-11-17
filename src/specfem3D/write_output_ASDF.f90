@@ -355,13 +355,14 @@ subroutine write_asdf(asdf_container)
                          displs, &
                          max_num_stations_gather, &
                          mysize)
-    call all_gather_all_r(asdf_container%receiver_lat, &
+    call all_gather_all_r(asdf_container%receiver_dpt, &
                          num_stations, &
                          station_depths_gather, &
                          rcounts, &
                          displs, &
                          max_num_stations_gather, &
                          mysize)
+
     deallocate(displs)
     deallocate(rcounts)
 
