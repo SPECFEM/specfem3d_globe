@@ -592,7 +592,7 @@ subroutine cmt_to_quakeml(quakemlstring, start_time_string)
                   '<mag>'//&
                   '<value>'//trim(ms_str)//'</value>'//&
                   '</mag>'//&
-                  '<type>Mw</type>'//&
+                  '<type>Ms</type>'//&
                   '</magnitude>'//&
                   '</event>'//&
                   '</eventParameters>'//&
@@ -634,7 +634,6 @@ subroutine get_time(startTime, start_time_string, end_time_string)
   start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
                       trim(hr)//':'//trim(minute)//':'//trim(second)
 
-print *, start_time_string
 
   ! Calculates the start time since the epoch in seconds
   ! Reference:
