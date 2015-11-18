@@ -173,6 +173,7 @@ subroutine write_asdf(asdf_container)
   integer, parameter :: MAX_STATIONXML_LENGTH = 16182
   integer, parameter :: MAX_PARFILE_LENGTH = 20000
   integer, parameter :: MAX_CONSTANTS_LENGTH = 45000
+  integer, parameter :: MAX_TIME_STRING_LENGTH = 19
 
   !--- Character strings to be written to the ASDF file
   character(len=MAX_QUAKEML_LENGTH) :: quakeml
@@ -230,7 +231,7 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_PARFILE_LENGTH) :: sf_parfile
 
   ! Time variables
-  character(len=19) :: start_time_string, end_time_string, &
+  character(len=MAX_TIME_STRING_LENGTH) :: start_time_string, end_time_string, &
                        cmt_start_time_string, pde_start_time_string
 
   ! alias mpi communicator
@@ -515,6 +516,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '<typeCertainty>known</typeCertainty>'//&
                   '<description>'//&
                   '<text>'//trim(event_name_SAC)//'</text>'//&
+                  '<type>earthquake name</type>'//&
                   '</description>'//&
                   '<origin publicID="smi:local/'//trim(event_name_SAC)//'#pdeorigin">'//&
                   '<time>'//&
@@ -544,6 +546,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '<value>'//trim(cmt_depth_str)//'</value>'//&
                   '</depth>'//&
                   '</origin>'//&
+                  '<preferredOriginID>smi:local/'//trim(event_name_SAC)//'#cmtorigin</preferredOriginID>'//&
                   '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'#focal_mechanism">'//&
                   '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'#momenttensor">'//&
                   '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'#reforigin'//&
