@@ -411,11 +411,11 @@
     ! latitudes range [-90,90]
     lat0 = -90.d0
     dlat = dincr
-    nlat = 180.d0 / dlat + 1
+    nlat = int(180.d0 / dlat) + 1
     ! longitudes range [0,360[
     lon0 = 0.d0
     dlon = dincr
-    nlon = 360.d0 / dlon
+    nlon = int(360.d0 / dlon)
     ! depths (in km)
     depth0 = depth0
     ddepth = 10.d0
@@ -450,7 +450,7 @@
     ! number of depths between min/max radius (by default, surface down to CMB)
     r_top = R_EARTH_KM - depth_min
     r_bottom = R_EARTH_KM - depth_max
-    ndepth = (r_top - r_bottom)/ddepth + 1
+    ndepth = int((r_top - r_bottom)/ddepth) + 1
 
     ! starting depth
     depth0 = depth_min
@@ -469,9 +469,9 @@
     ! determines number of steps along great-circle arc
     if (NCHUNKS_VAL == 6) then
       ! full circle
-      nsec = 360.d0 / dincr
+      nsec = int(360.d0 / dincr)
     else
-      nsec = epidist / dincr + 1
+      nsec = int(epidist / dincr) + 1
     endif
 
     ! total number of points
