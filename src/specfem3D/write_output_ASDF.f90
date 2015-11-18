@@ -255,8 +255,8 @@ subroutine write_asdf(asdf_container)
     call cmt_to_quakeml(quakeml, pde_start_time_string, cmt_start_time_string)
 
     ! Generate specfem provenance string
-    call ASDF_generate_sf_provenance_f(start_time_string(1:19)//C_NULL_CHAR,&
-                                     end_time_string(1:19)//C_NULL_CHAR, cptr, len_prov)
+    call ASDF_generate_sf_provenance_f(trim(start_time_string)//C_NULL_CHAR,&
+                                     trim(end_time_string)//C_NULL_CHAR, cptr, len_prov)
     call c_f_pointer(cptr, fptr, [len_prov])
     allocate(provenance(len_prov+1))
     provenance(1:len_prov) = fptr(1:len_prov)
@@ -410,7 +410,7 @@ subroutine write_asdf(asdf_container)
           write(waveform_name, '(a)') &
             trim(network_names_gather(j,k)) // "." //      &
             trim(station_names_gather(j,k)) // ".." //trim(component_names_gather(i+(3*(j-1)),k)) &
-              //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
+              //"__"//trim(start_time_string)//"__"//trim(end_time_string)//"__synthetic"
             ! print *, trim(waveform_name), myrank
             call ASDF_define_waveform_f(station_grps_gather(j,k), &
               nsamples, start_time, sampling_rate, &
@@ -518,7 +518,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '</description>'//&
                   '<origin publicID="smi:local/'//trim(event_name_SAC)//'#pdeorigin">'//&
                   '<time>'//&
-                  '<value>'//trim(pde_start_time_string(1:19))//'</value>'//&
+                  '<value>'//trim(pde_start_time_string)//'</value>'//&
                   '</time>'//&
                   '<latitude>'//&
                   '<value>'//trim(pde_lat_str)//'</value>'//&
@@ -532,7 +532,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '</origin>'//&
                   '<origin publicID="smi:local/'//trim(event_name_SAC)//'#cmtorigin">'//&
                   '<time>'//&
-                  '<value>'//trim(cmt_start_time_string(1:19))//'</value>'//&
+                  '<value>'//trim(cmt_start_time_string)//'</value>'//&
                   '</time>'//&
                   '<latitude>'//&
                   '<value>'//trim(cmt_lat_str)//'</value>'//&
@@ -607,90 +607,85 @@ end subroutine cmt_to_quakeml
 !-------------------------------------------------------------------------------------------------
 !
 
+! Convert system time into a string
+!! \param time system time
+!! \param time_string a string representation of the input time
+subroutine convert_systime_to_string(time, time_string) 
+
+  double precision, intent(in) :: time
+  character(len=*), intent(out) :: time_string
+  real :: fraction_sec
+  integer :: iatime(9)
+  character(len=4) :: yr
+  character(len=2) :: mo, da, hr, minute
+  character(len=15) :: second
+  real :: real_sec
+
+  ! extract msec
+  fraction_sec = time - int(time)
+
+  call gmtime(int(time), iatime)
+  write(yr, "(I4.4)") iatime(6) + 1900
+  write(mo, "(I2.2)") iatime(5) + 1
+  write(da, "(I2.2)") iatime(4)
+  write(hr, "(I2.2)") iatime(3)
+  write(minute, "(I2.2)") iatime(2)
+
+  real_sec = iatime(1) + fraction_sec
+  write(second, "(I2.2, F0.4)") int(real_sec), real_sec-int(real_sec)
+
+  time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
+                  trim(hr)//':'//trim(minute)//':'//trim(second)
+
+end subroutine convert_systime_to_string
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
 !> Uses the time in the CMTSOLUTION file to calculate the number of seconds since the epoch
-!! \param startTime The start time of the simulation from the epoch
+!! \param starttime The start time of the simulation from the epoch
 !! \param start_time_string A string for defining the waveform name start time
 !! \param pde_start_time_string A string for defining the waveform name start time using PDE
 !! \param cmt_start_time_string A string for defining the waveform name start time using CMT
 !! \param end_time_string A string for defining the waveform name end time
-subroutine get_time(startTime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
+subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
 
   use specfem_par,only:&
-    NSTEP,t0,DT,t_shift_SAC,tshift_cmt,hdur,&
-    yr_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC,sec_SAC,jda_SAC
+    NSTEP,DT,t_shift_SAC,hdur,&
+    yr_SAC,ho_SAC,mi_SAC,sec_SAC,jda_SAC
 
   implicit none
   character(len=*) :: start_time_string
   character(len=*) :: end_time_string
   character(len=*) :: cmt_start_time_string
   character(len=*) :: pde_start_time_string
-  double precision, intent(inout) :: startTime
-  character(len=4) :: yr
-  character(len=2) :: mo, da, hr, minute
-  character(len=15) :: second
-  double precision :: end_time_sec
-  real :: fraction_sec
-  integer :: iatime(9), year
+  double precision, intent(inout) :: starttime
+  double precision :: trace_length_in_sec
+  integer :: year
+  double precision :: pdetime, cmttime, endtime
 
   ! Calculates the start time since the epoch in seconds
   ! Reference:
   ! http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap04.html#tag_04_14
   year = yr_SAC-1900
-  startTime =(year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
-              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC
+  pdetime = (year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
+              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+&
+              mi_SAC*60.0d0+sec_SAC
+  call convert_systime_to_string(pdetime, pde_start_time_string)
 
-  fraction_sec = sec_SAC - int(sec_SAC)
+  ! cmt centroid time
+  cmttime = pdetime + t_shift_SAC
+  call convert_systime_to_string(cmttime, cmt_start_time_string)
 
-  ! Converts seconds to a human-readable date
-  call gmtime(int(startTime), iatime)
-
-  write(yr, "(I4.4)") iatime(6)+1900
-  write(mo, "(I2.2)") iatime(5)+1
-  write(da, "(I2.2)") iatime(4)
-  write(hr, "(I2.2)") iatime(3)
-  write(minute, "(I2.2)") iatime(2)
-  write(second, "(F5.2)") iatime(1)+fraction_sec
-
-  ! PDE start time string
-
-  pde_start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
-                      trim(hr)//':'//trim(minute)//':'//trim(second)
-
-  write(second, "(F5.2)") iatime(1)+t_shift_SAC+fraction_sec
-
-  ! CMT start time string Used for QuakeML
-  cmt_start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
-                      trim(hr)//':'//trim(minute)//':'//trim(second)
-
-  write(second, "(F5.2)") iatime(1)+t_shift_SAC-1.5*hdur+fraction_sec
-
-  ! start time of trace
-  start_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
-                      trim(hr)//':'//trim(minute)//':'//trim(second)
-
-  ! Calculates the start time since the epoch in seconds
-  ! Reference:
-  ! http://pubs.opengroup.org/onlinepubs/009695399/basedefs/xbd_chap04.html#tag_04_14
-  year = yr_SAC-1900
-  startTime =(year-70)*31536000.0d0+((year-69)/4)*86400.0d0 -((year-1)/100)*86400.0d0+&
-              ((year+299)/400)*86400.0d0+(jda_SAC-1)*86400.0d0+ho_SAC*(3600.0d0)+mi_SAC*60.0d0+sec_SAC+t_shift_SAC-t0
+  ! trace start time
+  starttime = cmttime - 1.5*hdur(1)
+  call convert_systime_to_string(starttime, start_time_string)
 
   ! Calculates the number of seconds to add to the start_time
-  end_time_sec = DT*NSTEP
-  end_time_sec = startTime + end_time_sec
-
-  ! Converts seconds to a human-readable date
-  call gmtime(int(end_time_sec), iatime)
-
-  write(yr, "(I4.4)") iatime(6)+1900
-  write(mo, "(I2.2)") iatime(5)+1
-  write(da, "(I2.2)") iatime(4)
-  write(hr, "(I2.2)") iatime(3)
-  write(minute, "(I2.2)") iatime(2)
-  write(second, "(I2.2)") iatime(1)
-
-  end_time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
-                      trim(hr)//':'//trim(minute)//':'//trim(second)
+  trace_length_in_sec = DT*NSTEP
+  endtime = starttime + trace_length_in_sec
+  call convert_systime_to_string(endtime, end_time_string)
 
 end subroutine get_time
 
@@ -728,7 +723,7 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<Source>SPECFEM3D_GLOBE</Source>'//&
                      '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
                      '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
-                     '<Created>'//trim(start_time_string(1:19))//'</Created>'//&
+                     '<Created>'//trim(start_time_string)//'</Created>'//&
                      '<Network code="'//trim(network_name(1:len(network_name)))//'"'//&
                      '><Station code="'//trim(station_name(1:len(station_name)))//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
@@ -737,11 +732,11 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<Site>'//&
                      '<Name>N/A</Name>'//&
                      '</Site>'//&
-                     '<CreationDate>'//trim(start_time_string(1:19))//'</CreationDate>'//&
+                     '<CreationDate>'//trim(start_time_string)//'</CreationDate>'//&
                      '<TotalNumberChannels>3</TotalNumberChannels>'//&
                      '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
                      '<Channel locationCode="" code="MXN"'//&
-                     ' startDate="'//trim(start_time_string(1:19))//'">'//&
+                     ' startDate="'//trim(start_time_string)//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -750,7 +745,7 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
                      '<Channel locationCode="" code="MXE"'//&
-                     ' startDate="'//trim(start_time_string(1:19))//'">'//&
+                     ' startDate="'//trim(start_time_string)//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
@@ -759,7 +754,7 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
                      '<Channel locationCode="" code="MXZ"'//&
-                     ' startDate="'//trim(start_time_string(1:19))//'">'//&
+                     ' startDate="'//trim(start_time_string)//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
                      '<Elevation>'//trim(station_ele)//'</Elevation>'//&
