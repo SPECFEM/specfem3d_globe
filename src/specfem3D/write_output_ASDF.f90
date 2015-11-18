@@ -230,8 +230,8 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_PARFILE_LENGTH) :: sf_parfile
 
   ! Time variables
-  character(len=MAX_STRING_LENGTH) :: start_time_string, end_time_string, &
-                                      cmt_start_time_string, pde_start_time_string
+  character(len=19) :: start_time_string, end_time_string, &
+                       cmt_start_time_string, pde_start_time_string
 
   ! alias mpi communicator
   call world_duplicate(comm)
