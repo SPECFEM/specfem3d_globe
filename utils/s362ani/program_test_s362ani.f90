@@ -106,7 +106,7 @@
   double precision theta,phi,sint,cost,x(2*NL_OCEAN_CONTINENT+1),dx(2*NL_OCEAN_CONTINENT+1)
   double precision ocf
 
-!  call define_model_ref(.FALSE.,Mref_V)
+!  call define_model_ref(.false.,Mref_V)
 !
 !  scaleval=dsqrt(PI*GRAV*RHOAV)
 !  do i=1,NR_REF

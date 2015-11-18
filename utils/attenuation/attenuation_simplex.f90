@@ -54,7 +54,7 @@ subroutine attenuation_simplex(t1, t2, n, Q_real, omega_not, tau_s, tau_e)
   exp1 = log10(f1);
   exp2 = log10(f2);
 
-  if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
+  if(f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
      write(*,*)'bad parameters'
      call exit(-1)
   endif
@@ -378,12 +378,12 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      write(*,*)'evals: ',func_evals
   endif
 
-  do while (func_evals < maxfun .AND. itercount < maxiter)
+  do while (func_evals < maxfun .and. itercount < maxiter)
 
-!     if(max(max(abs(v(:,2:n+1) - v(:,1)))) <= tolx .AND. &
+!     if(max(max(abs(v(:,2:n+1) - v(:,1)))) <= tolx .and. &
 !          max(abs(fv(1) - fv(2:n+1))) <= tolf) then
 
-     if(max_size_simplex(v,n) <= tolx .AND. &
+     if(max_size_simplex(v,n) <= tolx .and. &
           max_value(fv,n+1) <= tolf) then
         goto 666
      endif

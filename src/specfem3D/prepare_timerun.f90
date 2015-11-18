@@ -3370,7 +3370,7 @@
   !---- make inv. table ----------------------
 
   !---- crust mantle : outer elements (iphase=1)
-  iphase=1 
+  iphase=1
   call make_inv_table(iphase,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
                       nspec_outer_crust_mantle,phase_ispec_inner_crust_mantle, &
                       ibool_crust_mantle,phase_iglob_crust_mantle, &
@@ -3386,7 +3386,7 @@
                       num_globs_crust_mantle)
 
   !---- inner core : outer elements (iphase=1)
-  iphase=1 
+  iphase=1
   call make_inv_table(iphase,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
                       nspec_outer_inner_core,phase_ispec_inner_inner_core, &
                       ibool_inner_core,phase_iglob_inner_core, &
@@ -3402,7 +3402,7 @@
                       num_globs_inner_core)
 
   !---- outer core : outer elements (iphase=1)
-  iphase=1 
+  iphase=1
   call make_inv_table(iphase,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
                       nspec_outer_outer_core,phase_ispec_inner_outer_core, &
                       ibool_outer_core,phase_iglob_outer_core, &

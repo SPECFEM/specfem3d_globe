@@ -530,10 +530,10 @@ contains
   Free_Unit = -1_I4P                                      ! initializing free logic unit
   n1=1_I4P                                                ! initializing counter
   do
-    if ((n1/=5_I4P).AND.(n1/=6_I4P).AND.(n1/=9_I4P)) then
+    if ((n1/=5_I4P).and.(n1/=6_I4P).and.(n1/=9_I4P)) then
       inquire (unit=n1,opened=lopen,iostat=ios)           ! verify logic units
       if (ios==0_I4P) then
-        if (.NOT.lopen) then
+        if (.not.lopen) then
           Free_Unit = n1                                  ! assignment of free logic
           return
         endif

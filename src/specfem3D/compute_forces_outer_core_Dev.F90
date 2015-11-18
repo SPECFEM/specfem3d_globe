@@ -450,7 +450,7 @@
       accelfluid(iglob) = accelfluid(iglob) + sum_terms(ijk_spec,1,1,1)
     enddo
   enddo
-!OMP END DO
+!OMP enddo
 
 !$OMP END PARALLEL
 

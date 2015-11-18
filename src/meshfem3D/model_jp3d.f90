@@ -273,10 +273,10 @@
   if (HE<=H1) THEN
      LAY = 1
      found_crust = .true.
-  ELSE if (HE>H1.AND.HE<=H2) THEN
+  ELSE if (HE>H1.and.HE<=H2) THEN
      LAY = 2
      found_crust = .true.
-  ELSE if (HE>H2.AND.HE<=H3) THEN
+  ELSE if (HE>H2.and.HE<=H3) THEN
      LAY = 3
   ELSE
      LAY = 4
@@ -596,12 +596,12 @@
 
         DO 1 I = 1,50
            I1     = I+1
-           if (P>=JP3DM_PN(I).AND.P<JP3DM_PN(I1)) GO TO 11
+           if (P>=JP3DM_PN(I).and.P<JP3DM_PN(I1)) GO TO 11
 1          CONTINUE
 11         CONTINUE
            DO 2 J = 1,62
               J1     = J+1
-              if (R>=JP3DM_RRN(J).AND.R<JP3DM_RRN(J1)) GO TO 22
+              if (R>=JP3DM_RRN(J).and.R<JP3DM_RRN(J1)) GO TO 22
 2             CONTINUE
 22            CONTINUE
               PF    = (P-JP3DM_PN(I))/(JP3DM_PN(I1)-JP3DM_PN(I))
@@ -731,7 +731,7 @@
       K1     = K+1
       H1     = JP3DM_DEPJ(K)
       H2     = JP3DM_DEPJ(K1)
-      if (H>=H1.AND.H<H2) GO TO 3
+      if (H>=H1.and.H<H2) GO TO 3
 2     CONTINUE
 3     CONTINUE
 

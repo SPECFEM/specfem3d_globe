@@ -253,21 +253,21 @@
     AM_V%Qn = 12
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD) then
     ! redefines "pure" 1D model without crustal modification
-    call define_model_ak135(.FALSE.)
+    call define_model_ak135(.false.)
     AM_V%Qn = NR_AK135F_NO_MUD
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
     ! redefines "pure" 1D model without crustal modification
-    call define_model_1066a(.FALSE.)
+    call define_model_1066a(.false.)
     AM_V%Qn = NR_1066A
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     ! redefines "pure" 1D model without crustal modification
-    call define_model_1dref(.FALSE.)
+    call define_model_1dref(.false.)
     AM_V%Qn = NR_REF
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
     AM_V%Qn = 12
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) then
     ! redefines "pure" 1D model without crustal modification
-    call define_model_sea1d(.FALSE.)
+    call define_model_sea1d(.false.)
     AM_V%Qn = NR_SEA1D
   else
     call exit_MPI(myrank, 'Reference 1D Model Not recognized')
@@ -453,7 +453,7 @@
      AM_S%Qmu_storage(:) = -1
   endif
 
-  if (Qmu < 0.0d0 .OR. Qmu > AM_S%Q_max) then
+  if (Qmu < 0.0d0 .or. Qmu > AM_S%Q_max) then
     write(IMAIN,*) 'Error attenuation_storage()'
     write(IMAIN,*) 'Attenuation Value out of Range: ', Qmu
     write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
@@ -463,7 +463,7 @@
     call exit_MPI(myrank, 'Attenuation Value out of Range')
   endif
 
-  if (rw > 0 .AND. Qmu == 0.0d0) then
+  if (rw > 0 .and. Qmu == 0.0d0) then
      Qmu = 0.0d0;
      tau_e(:) = 0.0d0;
      return
@@ -611,7 +611,7 @@
   exp1 = log10(f1)
   exp2 = log10(f2)
 
-  if (f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
+  if (f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
     call world_rank(myrank)
     call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
@@ -1011,9 +1011,9 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
      write(*,*)'evals: ',func_evals
   endif
 
-  do while (func_evals < maxfun .AND. itercount < maxiter)
+  do while (func_evals < maxfun .and. itercount < maxiter)
 
-     if (max_size_simplex(v,n) <= tolx .AND. &
+     if (max_size_simplex(v,n) <= tolx .and. &
           max_value(fv,n+1) <= tolf) then
         goto 666
      endif

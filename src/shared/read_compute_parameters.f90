@@ -402,7 +402,7 @@
       stop 'NUMBER_OF_RUNS and NUMBER_OF_THIS_RUN must be 1 for NOISE TOMOGRAPHY simulation'
     if (ROTATE_SEISMOGRAMS_RT) &
       stop 'Do NOT rotate seismograms in the code, change ROTATE_SEISMOGRAMS_RT in Par_file for noise simulation'
-    if (SAVE_ALL_SEISMOS_IN_ONE_FILE .OR. USE_BINARY_FOR_LARGE_FILE) &
+    if (SAVE_ALL_SEISMOS_IN_ONE_FILE .or. USE_BINARY_FOR_LARGE_FILE) &
       stop 'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false. for noise simulation'
   endif
 

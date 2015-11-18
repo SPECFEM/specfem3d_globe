@@ -251,7 +251,7 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   f1 = 1.0d0/t1
   f2 = 1.0d0/t2
 
-  if(f2 < f1 .OR. Q_real < 0.0d0 .OR. n < 1) then
+  if(f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
      write(*,*)'bad parameters'
      call exit(-1)
   endif

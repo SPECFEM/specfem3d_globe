@@ -370,7 +370,7 @@
 !$OMP enddo
 
   ! updates acceleration
-!$OMP DO  
+!$OMP DO
   do iglob_p=1,num_globs(iphase)
     iglob = phase_iglob(iglob_p,iphase)
     do ip=ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
@@ -383,7 +383,7 @@
       accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
     enddo
   enddo
-!$OMP END DO
+!$OMP enddo
 
 !$OMP END PARALLEL
 

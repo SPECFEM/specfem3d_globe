@@ -742,7 +742,7 @@
       accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
     enddo
   enddo
-!$OMP END DO
+!$OMP enddo
 
 
 !$OMP END PARALLEL
