@@ -411,7 +411,7 @@ subroutine write_asdf(asdf_container)
           write(waveform_name, '(a)') &
             trim(network_names_gather(j,k)) // "." //      &
             trim(station_names_gather(j,k)) // ".S3." //trim(component_names_gather(i+(3*(j-1)),k)) &
-              //"__"//trim(start_time_string)//"__"//trim(end_time_string)//"__synthetic"
+              //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
             ! print *, trim(waveform_name), myrank
             call ASDF_define_waveform_f(station_grps_gather(j,k), &
               nsamples, start_time, sampling_rate, &
@@ -513,14 +513,16 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
                   '<eventParameters publicID="smi:local/'//trim(event_name_SAC)//'#eventPrm">'//&
                   '<event publicID="smi:local/'//trim(event_name_SAC)//'#eventID">'//&
+                  '<preferredOriginID>smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin</preferredOriginID>'//&
                   '<preferredMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag</preferredMagnitudeID>'//&
+                  '<preferredFocalMechanismID>smi:local/'//trim(event_name_SAC)//'/focal_mechanism</preferredFocalMechanismID>'//&
                   '<type>earthquake</type>'//&
                   '<typeCertainty>known</typeCertainty>'//&
                   '<description>'//&
                   '<text>'//trim(event_name_SAC)//'</text>'//&
                   '<type>earthquake name</type>'//&
                   '</description>'//&
-                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'#reforigin">'//&
+                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'/origin#reforigin">'//&
                   '<time>'//&
                   '<value>'//trim(pde_start_time_string)//'</value>'//&
                   '</time>'//&
@@ -533,8 +535,12 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '<depth>'//&
                   '<value>'//trim(pde_depth_str)//'</value>'//&
                   '</depth>'//&
+                  '<type>hypocenter</type>'//&
+                  '<comment id="smi:local/'//trim(event_name_SAC)//'/comment#ref_origin">'//&
+                  '<text>Hypocenter catalog: PDE</text>'//&
+                  '</comment>'//&
                   '</origin>'//&
-                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'#cmtorigin">'//&
+                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin">'//&
                   '<time>'//&
                   '<value>'//trim(cmt_start_time_string)//'</value>'//&
                   '</time>'//&
@@ -548,12 +554,11 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '<value>'//trim(cmt_depth_str)//'</value>'//&
                   '</depth>'//&
                   '</origin>'//&
-                  '<preferredOriginID>smi:local/'//trim(event_name_SAC)//'#cmtorigin</preferredOriginID>'//&
-                  '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'#focal_mechanism">'//&
-                  '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'#momenttensor">'//&
-                  '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'#cmtorigin'//&
+                  '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'/focal_mechanism">'//&
+                  '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'/momenttensor">'//&
+                  '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'/origin#cmtorigin'//&
                   '</derivedOriginID>'//&
-                  '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'magnitude#magnitude'//&
+                  '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag'//&
                   '</momentMagnitudeID>'//&
                   '<scalarMoment>'//&
                   '<value>'//trim(M0_str)//'</value>'//&
@@ -596,13 +601,13 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '</mag>'//&
                   '<type>Mwc</type>'//&
                   '</magnitude>'//&
-                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'magnitude#mb">'//&
+                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#mb">'//&
                   '<mag>'//&
                   '<value>'//trim(mb_str)//'</value>'//&
                   '</mag>'//&
                   '<type>mb</type>'//&
                   '</magnitude>'//&
-                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'magnitude#MS">'//&
+                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#MS">'//&
                   '<mag>'//&
                   '<value>'//trim(ms_str)//'</value>'//&
                   '</mag>'//&
