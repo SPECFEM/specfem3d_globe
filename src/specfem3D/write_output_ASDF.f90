@@ -173,7 +173,7 @@ subroutine write_asdf(asdf_container)
   integer, parameter :: MAX_STATIONXML_LENGTH = 16182
   integer, parameter :: MAX_PARFILE_LENGTH = 20000
   integer, parameter :: MAX_CONSTANTS_LENGTH = 45000
-  integer, parameter :: MAX_TIME_STRING_LENGTH = 19
+  integer, parameter :: MAX_TIME_STRING_LENGTH = 22
 
   !--- Character strings to be written to the ASDF file
   character(len=MAX_QUAKEML_LENGTH) :: quakeml
@@ -410,7 +410,7 @@ subroutine write_asdf(asdf_container)
           ! Generate unique waveform name
           write(waveform_name, '(a)') &
             trim(network_names_gather(j,k)) // "." //      &
-            trim(station_names_gather(j,k)) // ".." //trim(component_names_gather(i+(3*(j-1)),k)) &
+            trim(station_names_gather(j,k)) // ".S3." //trim(component_names_gather(i+(3*(j-1)),k)) &
               //"__"//trim(start_time_string)//"__"//trim(end_time_string)//"__synthetic"
             ! print *, trim(waveform_name), myrank
             call ASDF_define_waveform_f(station_grps_gather(j,k), &
@@ -479,7 +479,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
     cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
     hdur=>cmt_hdur_SAC,M0,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC,&
     pde_lat=>elat_SAC,pde_lon=>elon_SAC,pde_depth=>depth_SAC,&
-    mb=>mb_SAC,ms
+    mb=>mb_SAC,ms,Mw
 
   implicit none
   character(len=*) :: quakemlstring
@@ -487,7 +487,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
   character(len=*) :: cmt_start_time_string
   character(len=13) :: cmt_lon_str, cmt_lat_str, cmt_depth_str, hdur_str
   character(len=13) :: pde_lat_str, pde_lon_str, pde_depth_str
-  character(len=25) :: M0_str, mb_str, ms_str
+  character(len=25) :: M0_str, mb_str, ms_str, Mw_str
   character(len=25) :: Mrr_str, Mtt_str, Mpp_str, Mrt_str, Mrp_str, Mtp_str
 
   ! Convert the CMT values to strings for the QuakeML string
@@ -501,6 +501,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
   write(M0_str, "(g12.5)") M0
   write(mb_str, "(g12.5)") mb
   write(ms_str, "(g12.5)") ms
+  write(Mw_str, "(g12.5)") Mw
   write(Mrr_str, "(g12.5)") Mrr
   write(Mtt_str, "(g12.5)") Mtt
   write(Mpp_str, "(g12.5)") Mpp
@@ -512,6 +513,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
                   '<eventParameters publicID="smi:local/'//trim(event_name_SAC)//'#eventPrm">'//&
                   '<event publicID="smi:local/'//trim(event_name_SAC)//'#eventID">'//&
+                  '<preferredMagnitudeID>smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag</preferredMagnitudeID>'//&
                   '<type>earthquake</type>'//&
                   '<typeCertainty>known</typeCertainty>'//&
                   '<description>'//&
@@ -588,6 +590,12 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '</sourceTimeFunction>'//&
                   '</momentTensor>'//&
                   '</focalMechanism>'//&
+                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag">'//&
+                  '<mag>'//&
+                  '<value>'//trim(Mw_str)//'</value>'//&
+                  '</mag>'//&
+                  '<type>Mwc</type>'//&
+                  '</magnitude>'//&
                   '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'magnitude#mb">'//&
                   '<mag>'//&
                   '<value>'//trim(mb_str)//'</value>'//&
