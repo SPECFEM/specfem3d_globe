@@ -518,7 +518,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '<text>'//trim(event_name_SAC)//'</text>'//&
                   '<type>earthquake name</type>'//&
                   '</description>'//&
-                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'#pdeorigin">'//&
+                  '<origin publicID="smi:local/'//trim(event_name_SAC)//'#reforigin">'//&
                   '<time>'//&
                   '<value>'//trim(pde_start_time_string)//'</value>'//&
                   '</time>'//&
@@ -549,7 +549,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '<preferredOriginID>smi:local/'//trim(event_name_SAC)//'#cmtorigin</preferredOriginID>'//&
                   '<focalMechanism publicID="smi:local/'//trim(event_name_SAC)//'#focal_mechanism">'//&
                   '<momentTensor publicID="smi:local/'//trim(event_name_SAC)//'#momenttensor">'//&
-                  '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'#reforigin'//&
+                  '<derivedOriginID>smi:local/'//trim(event_name_SAC)//'#cmtorigin'//&
                   '</derivedOriginID>'//&
                   '<momentMagnitudeID>smi:local/'//trim(event_name_SAC)//'magnitude#magnitude'//&
                   '</momentMagnitudeID>'//&
