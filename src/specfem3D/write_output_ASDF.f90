@@ -588,17 +588,17 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '</sourceTimeFunction>'//&
                   '</momentTensor>'//&
                   '</focalMechanism>'//&
-                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'#Mwc">'//&
+                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'magnitude#mb">'//&
                   '<mag>'//&
                   '<value>'//trim(mb_str)//'</value>'//&
                   '</mag>'//&
                   '<type>mb</type>'//&
                   '</magnitude>'//&
-                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'test#Mwc">'//&
+                  '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'magnitude#MS">'//&
                   '<mag>'//&
                   '<value>'//trim(ms_str)//'</value>'//&
                   '</mag>'//&
-                  '<type>Ms</type>'//&
+                  '<type>MS</type>'//&
                   '</magnitude>'//&
                   '</event>'//&
                   '</eventParameters>'//&
