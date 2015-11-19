@@ -738,7 +738,7 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<CreationDate>'//trim(start_time_string)//'</CreationDate>'//&
                      '<TotalNumberChannels>3</TotalNumberChannels>'//&
                      '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
-                     '<Channel locationCode="" code="MXN"'//&
+                     '<Channel locationCode="S3" code="MXN"'//&
                      ' startDate="'//trim(start_time_string)//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
@@ -747,7 +747,7 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" code="MXE"'//&
+                     '<Channel locationCode="S3" code="MXE"'//&
                      ' startDate="'//trim(start_time_string)//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
@@ -756,7 +756,7 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<Azimuth>90.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
-                     '<Channel locationCode="" code="MXZ"'//&
+                     '<Channel locationCode="S3" code="MXZ"'//&
                      ' startDate="'//trim(start_time_string)//'">'//&
                      '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
                      '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
