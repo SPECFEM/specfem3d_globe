@@ -498,16 +498,16 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
   write(cmt_lon_str, "(g12.5)") cmt_lon
   write(cmt_depth_str, "(g12.5)") cmt_depth*1000 ! km to m conversion
   write(hdur_str, "(g12.5)") hdur
-  write(M0_str, "(g12.5)") M0
+  write(M0_str, "(g12.5)") M0*1e-7 ! dyn-cm to N-m conversion
   write(mb_str, "(g12.5)") mb
   write(ms_str, "(g12.5)") ms
   write(Mw_str, "(g12.5)") Mw
-  write(Mrr_str, "(g12.5)") Mrr
-  write(Mtt_str, "(g12.5)") Mtt
-  write(Mpp_str, "(g12.5)") Mpp
-  write(Mrt_str, "(g12.5)") Mrt
-  write(Mrp_str, "(g12.5)") Mrp
-  write(Mtp_str, "(g12.5)") Mtp
+  write(Mrr_str, "(g12.5)") Mrr*1e-7
+  write(Mtt_str, "(g12.5)") Mtt*1e-7
+  write(Mpp_str, "(g12.5)") Mpp*1e-7
+  write(Mrt_str, "(g12.5)") Mrt*1e-7
+  write(Mrp_str, "(g12.5)") Mrp*1e-7
+  write(Mtp_str, "(g12.5)") Mtp*1e-7
 
   quakemlstring = '<q:quakeml xmlns="http://quakeml.org/xmlns/bed/1.2"'//&
                   ' xmlns:q="http://quakeml.org/xmlns/quakeml/1.2">'//&
