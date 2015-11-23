@@ -493,10 +493,10 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
   ! Convert the CMT values to strings for the QuakeML string
   write(pde_lat_str, "(g12.5)") pde_lat
   write(pde_lon_str, "(g12.5)") pde_lon
-  write(pde_depth_str, "(g12.5)") pde_depth
+  write(pde_depth_str, "(g12.5)") pde_depth*1000 ! km to m conversion
   write(cmt_lat_str, "(g12.5)") cmt_lat
   write(cmt_lon_str, "(g12.5)") cmt_lon
-  write(cmt_depth_str, "(g12.5)") cmt_depth
+  write(cmt_depth_str, "(g12.5)") cmt_depth*1000 ! km to m conversion
   write(hdur_str, "(g12.5)") hdur
   write(M0_str, "(g12.5)") M0
   write(mb_str, "(g12.5)") mb
