@@ -4,18 +4,30 @@
 %% DK DK we do not accept accented letters, use the old LaTeX syntax
 %% DK DK for them instead: \'e \`e  \"e \^e and so on.
 %% DK DK \usepackage[latin1]{inputenc}
-\usepackage{geometry}
-\geometry{letterpaper,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+\usepackage[letterpaper]{geometry}
+\geometry{verbose,tmargin=1in,bmargin=1in,lmargin=1in,rmargin=1in}
+
+% table of contents and numbering
+\usepackage{tocbibind}
 \setcounter{secnumdepth}{3}
 \setcounter{tocdepth}{3}
-\usepackage{longtable}
-\usepackage{varioref}
+
+\usepackage{babel}
 \usepackage{float}
 \usepackage{textcomp}
 \usepackage{amsmath}
+\usepackage{amssymb}
 
-% tables
-\usepackage{booktabs}
+\IfFileExists{url.sty}{\usepackage{url}}
+                      {\newcommand{\url}{\texttt}}
+
+% biblio
+\usepackage[authoryear]{natbib}
+% biblio GJI
+\bibliographystyle{abbrvnat}
+
+% fonts
+\usepackage{times}
 
 % figures
 \usepackage[pdftex]{graphicx}
@@ -23,11 +35,42 @@
 % we are running pdflatex, so convert .eps files to .pdf
 %\usepackage{epstopdf}
 
-\usepackage{amssymb}
-\IfFileExists{url.sty}{\usepackage{url}}
-                      {\newcommand{\url}{\texttt}}
-\usepackage[authoryear]{natbib}
+% colors to show the corrections
+\usepackage[dvipsnames,usenames]{xcolor}
+\definecolor{light-gray}{rgb}{0.7,0.7,0.7}
+\definecolor{dark-gray}{rgb}{0.1,0.1,0.3}
+\definecolor{light-blue}{rgb}{0.7,0.7,0.9}
+\definecolor{dark-blue}{rgb}{0.2,0.2,0.5}
 
+% hyperlinks to sections and references
+\usepackage[pdftex]{hyperref}
+% more options
+\hypersetup{
+  bookmarks=true,
+  bookmarksnumbered=true,
+  pdfpagemode=UseNone,
+  pdfstartview=FitH,
+  pdfpagelayout=SinglePage,
+  pdfborder={0 0 0},
+  colorlinks=true,      % color links
+  citecolor=dark-gray,  % citation links
+  filecolor=dark-gray,  % file links
+  linkcolor=dark-gray,  % internal link (rgb values)
+  urlcolor=dark-blue    % external weblinks
+}
+
+% tables
+\usepackage{longtable}
+
+\usepackage{varioref}
+\usepackage{booktabs}
+
+% Latex generated graphics
+\usepackage{tikz}
+\usetikzlibrary{trees}
+
+% create thumbnails
+%\usepackage[pdftex]{thumbpdf}
 
 \makeatletter
 
@@ -48,45 +91,12 @@
 {\end{list}}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%% User specified LaTeX commands.
-% fonts
-\usepackage{times}
-\usepackage{natbib}
-
-% date of last edit
-\date{\today}
 
 % colors for the text
-\usepackage[dvipsnames,usenames]{xcolor}
 \newcommand{\red}[1]{\textcolor{Red}{#1}}
-\definecolor{light-gray}{rgb}{0.7,0.7,0.7}
-\definecolor{dark-gray}{rgb}{0.1,0.1,0.3}
-\definecolor{light-blue}{rgb}{0.7,0.7,0.9}
-\definecolor{dark-blue}{rgb}{0.2,0.2,0.5}
-
-% create thumbnails
-\usepackage[pdftex]{thumbpdf}
 
 % hyperlinks to sections and references
-\usepackage[pdftex]{hyperref}
-% more options
-\hypersetup{
-  bookmarks=true,
-  bookmarksnumbered=true,
-  pdfpagemode=UseNone,
-  pdfstartview=FitH,
-  pdfpagelayout=SinglePage,
-  pdfborder={0 0 0},
-  colorlinks=true,      % color links
-  citecolor=dark-gray,  % citation links
-  filecolor=dark-gray,  % file links
-  linkcolor=dark-gray,  % internal link (rgb values)
-  urlcolor=dark-blue    % external weblinks
-}
-
 \newcommand{\urlwithparentheses}[1]{(\url{#1})}
-
-% biblio GJI
-\bibliographystyle{abbrvnat}
 
 \newcommand{\toall}[1]{\textbf{*** All: #1 ***}}
 \newcommand{\tojeroen}[1]{\textbf{*** Jeroen: #1 ***}}
@@ -105,12 +115,9 @@
 \newcommand{\nproceta}{\mbox{\texttt{NPROC\_ETA}}}
 \newcommand{\nchunks}{\mbox{\texttt{NCHUNKS}}}
 
-% Latex generated graphics
-\usepackage{tikz}
-\usetikzlibrary{trees}
-
-\usepackage{babel}
 \makeatother
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% Start of document.
 
 \begin{document}
 
@@ -131,7 +138,8 @@
 ETH Z\"urich (Switzerland),\\
 Version 7.0}
 
-\date{\noindent \today}
+% date of last edit
+\date{\today}
 
 \maketitle
 
@@ -193,13 +201,14 @@ Version 7.0}
 %% Bibliography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-{\small \bibliography{bibliography}}{\small \par}
+\bibliography{bibliography}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Appendix
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \appendix
+%dummy comment inserted by tex2lyx to ensure that this paragraph is not empty
 
 \include{A_reference_frame}
 
