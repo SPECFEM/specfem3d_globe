@@ -330,6 +330,10 @@ subroutine write_asdf(asdf_container)
                          MAX_STRING_LENGTH, &
                          mysize)
 
+    deallocate(stations_names)
+    deallocate(networks_names)
+    deallocate(component_names)
+
     ! Now gather all the coordiante information for these stations
     do i = 1, mysize
       displs(i) = (i-1) * max_num_stations_gather
@@ -453,9 +457,11 @@ subroutine write_asdf(asdf_container)
   endif
 
   deallocate(data_ids)
+  deallocate(provenance)
   deallocate(station_grps_gather)
   deallocate(station_names_gather)
   deallocate(network_names_gather)
+  deallocate(component_names_gather)
   deallocate(station_lats_gather)
   deallocate(station_longs_gather)
   deallocate(station_elevs_gather)
