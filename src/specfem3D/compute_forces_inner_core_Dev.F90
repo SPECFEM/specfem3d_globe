@@ -663,7 +663,7 @@
 
 #ifdef FORCE_VECTORIZATION
         do ijk = 1,NDIM*NGLLCUBE
-          sum_terms(1,ijk,1,1,ispec) = sum_terms(1,ijk,1,1,ispec) + rho_s_H(ijk,1,1,1)
+          sum_terms(ijk,1,1,1,ispec) = sum_terms(ijk,1,1,1,ispec) + rho_s_H(ijk,1,1,1)
         enddo
 #else
         do k = 1,NGLLZ
