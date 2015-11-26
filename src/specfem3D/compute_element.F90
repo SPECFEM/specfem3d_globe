@@ -100,10 +100,18 @@
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
-  real(kind=CUSTOM_REAL) jacobianl
+#ifdef FORCE_VECTORIZATION
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
+  real(kind=CUSTOM_REAL) duxdyl,duxdzl,duydxl,duydzl,duzdxl,duzdyl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+#else
+  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+#endif
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
@@ -138,6 +146,17 @@
   DO_LOOP_IJK
 
     ! compute the Jacobian
+#ifdef FORCE_VECTORIZATION
+    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
+                                            *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                             -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
+                                             -deriv(2,INDEX_IJK,ispec) &
+                                            *(deriv(4,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                             -deriv(6,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)) &
+                                             +deriv(3,INDEX_IJK,ispec) &
+                                            *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
+                                             -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
+#else
     jacobianl = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
                                  *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
                                   -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
@@ -147,7 +166,19 @@
                                   +deriv(3,INDEX_IJK,ispec) &
                                  *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
                                   -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    duxdxl(INDEX_IJK) = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+                      + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+                      + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdyl            = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+                      + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+                      + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdzl            = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+                      + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+                      + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+#else
     duxdxl = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
            + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
            + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
@@ -157,7 +188,18 @@
     duxdzl = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
            + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
            + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-
+#endif
+#ifdef FORCE_VECTORIZATION
+    duydxl            = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+                      + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+                      + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydyl(INDEX_IJK) = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+                      + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+                      + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydzl            = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+                      + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+                      + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+#else
     duydxl = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
            + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
            + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
@@ -167,7 +209,19 @@
     duydzl = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
            + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
            + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    duzdxl            = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+                      + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+                      + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdyl            = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+                      + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+                      + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdzl(INDEX_IJK) = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+                      + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+                      + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+#else
     duzdxl = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
            + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
            + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
@@ -177,14 +231,28 @@
     duzdzl = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
            + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
            + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+#endif
 
     ! precompute some sums to save CPU time
+#ifdef FORCE_VECTORIZATION
+    duxdxl_plus_duydyl(INDEX_IJK) = duxdxl(INDEX_IJK) + duydyl(INDEX_IJK)
+    duxdxl_plus_duzdzl(INDEX_IJK) = duxdxl(INDEX_IJK) + duzdzl(INDEX_IJK)
+    duydyl_plus_duzdzl(INDEX_IJK) = duydyl(INDEX_IJK) + duzdzl(INDEX_IJK)
+    duxdyl_plus_duydxl(INDEX_IJK) = duxdyl            + duydxl
+    duzdxl_plus_duxdzl(INDEX_IJK) = duzdxl            + duxdzl
+    duzdyl_plus_duydzl(INDEX_IJK) = duzdyl            + duydzl
+#else
     duxdxl_plus_duydyl = duxdxl + duydyl
     duxdxl_plus_duzdzl = duxdxl + duzdzl
     duydyl_plus_duzdzl = duydyl + duzdzl
     duxdyl_plus_duydxl = duxdyl + duydxl
     duzdxl_plus_duxdzl = duzdxl + duxdzl
     duzdyl_plus_duydzl = duzdyl + duydzl
+#endif
+
+#ifdef FORCE_VECTORIZATION
+  ENDDO_LOOP_IJK
+#endif
 
 !ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
 !ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
@@ -193,6 +261,54 @@
 !ZN from the expression in which we use the strain later in the code.
 
     ! compute deviatoric strain
+#ifdef FORCE_VECTORIZATION
+    if (COMPUTE_AND_STORE_STRAIN) then
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+        if (ispec == 1) then
+
+          DO_LOOP_IJK
+
+            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+            epsilon_trace_over_3(INDEX_IJK,1) = templ
+            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+          ENDDO_LOOP_IJK
+
+        else
+
+          DO_LOOP_IJK
+
+            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+          ENDDO_LOOP_IJK
+
+        endif
+      else
+
+          DO_LOOP_IJK
+
+            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+            epsilon_trace_over_3(INDEX_IJK,ispec) = templ
+            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+          ENDDO_LOOP_IJK
+
+      endif
+    endif
+#else
     if (COMPUTE_AND_STORE_STRAIN) then
       templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
       if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
@@ -208,6 +324,11 @@
       epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
       epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
     endif
+#endif
+
+#ifdef FORCE_VECTORIZATION
+  DO_LOOP_IJK
+#endif
 
     !
     ! compute  isotropic  elements
@@ -232,13 +353,25 @@
     lambdal = lambdalplus2mul - 2.0_CUSTOM_REAL*mul
 
     ! compute stress sigma
+#ifdef FORCE_VECTORIZATION
+    sigma_xx = lambdalplus2mul*duxdxl(INDEX_IJK) + lambdal*duydyl_plus_duzdzl(INDEX_IJK)
+    sigma_yy = lambdalplus2mul*duydyl(INDEX_IJK) + lambdal*duxdxl_plus_duzdzl(INDEX_IJK)
+    sigma_zz = lambdalplus2mul*duzdzl(INDEX_IJK) + lambdal*duxdxl_plus_duydyl(INDEX_IJK)
+#else
     sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
     sigma_yy = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
     sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl_plus_duydyl
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    sigma_xy = mul*duxdyl_plus_duydxl(INDEX_IJK)
+    sigma_xz = mul*duzdxl_plus_duxdzl(INDEX_IJK)
+    sigma_yz = mul*duzdyl_plus_duydzl(INDEX_IJK)
+#else
     sigma_xy = mul*duxdyl_plus_duydxl
     sigma_xz = mul*duzdxl_plus_duxdzl
     sigma_yz = mul*duzdyl_plus_duydzl
+#endif
 
     ! subtract memory variables if attenuation
     if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
@@ -366,7 +499,11 @@
       sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
 
       ! precompute vector
+#ifdef FORCE_VECTORIZATION
+      factor = dble(jacobianl(INDEX_IJK)) * wgll_cube(INDEX_IJK)
+#else
       factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
+#endif
       rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
       rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
       rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
@@ -374,6 +511,17 @@
     endif  ! end of section with gravity terms
 
     ! form dot product with test vector, non-symmetric form
+#ifdef FORCE_VECTORIZATION
+    tempx1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
+                                              + sigma_yx*deriv(2,INDEX_IJK,ispec) &
+                                              + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
+                                              + sigma_yy*deriv(2,INDEX_IJK,ispec) &
+                                              + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
+                                              + sigma_yz*deriv(2,INDEX_IJK,ispec) &
+                                              + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
+#else
     tempx1(INDEX_IJK) = jacobianl * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
                                    + sigma_yx*deriv(2,INDEX_IJK,ispec) &
                                    + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
@@ -383,7 +531,19 @@
     tempz1(INDEX_IJK) = jacobianl * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
                                    + sigma_yz*deriv(2,INDEX_IJK,ispec) &
                                    + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    tempx2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
+                                              + sigma_yx*deriv(5,INDEX_IJK,ispec) &
+                                              + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
+                                              + sigma_yy*deriv(5,INDEX_IJK,ispec) &
+                                              + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
+                                              + sigma_yz*deriv(5,INDEX_IJK,ispec) &
+                                              + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
+#else
     tempx2(INDEX_IJK) = jacobianl * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
                                    + sigma_yx*deriv(5,INDEX_IJK,ispec) &
                                    + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
@@ -393,7 +553,19 @@
     tempz2(INDEX_IJK) = jacobianl * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
                                    + sigma_yz*deriv(5,INDEX_IJK,ispec) &
                                    + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    tempx3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
+                                              + sigma_yx*deriv(8,INDEX_IJK,ispec) &
+                                              + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
+                                              + sigma_yy*deriv(8,INDEX_IJK,ispec) &
+                                              + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
+                                              + sigma_yz*deriv(8,INDEX_IJK,ispec) &
+                                              + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
+#else
     tempx3(INDEX_IJK) = jacobianl * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
                                    + sigma_yx*deriv(8,INDEX_IJK,ispec) &
                                    + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
@@ -403,6 +575,7 @@
     tempz3(INDEX_IJK) = jacobianl * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
                                    + sigma_yz*deriv(8,INDEX_IJK,ispec) &
                                    + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
+#endif
 
   ENDDO_LOOP_IJK
 
@@ -496,10 +669,20 @@
 
   real(kind=CUSTOM_REAL) twoetaminone,etaminone,eta_aniso
   real(kind=CUSTOM_REAL) two_eta_aniso,four_eta_aniso,six_eta_aniso
+#ifdef FORCE_VECTORIZATION
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
+  real(kind=CUSTOM_REAL) duxdyl,duxdzl,duydxl,duydzl,duzdxl,duzdyl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl,duydyl,duzdzl
+#else
   real(kind=CUSTOM_REAL) jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
+#endif
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+#ifdef FORCE_VECTORIZATION
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+#else
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+#endif
   real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
   real(kind=CUSTOM_REAL) templ
@@ -534,6 +717,17 @@
   DO_LOOP_IJK
 
     ! compute the Jacobian
+#ifdef FORCE_VECTORIZATION
+    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
+                                            *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                             -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
+                                             -deriv(2,INDEX_IJK,ispec) &
+                                            *(deriv(4,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                             -deriv(6,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)) &
+                                             +deriv(3,INDEX_IJK,ispec) &
+                                            *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
+                                             -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
+#else
     jacobianl = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
                                  *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
                                   -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
@@ -543,7 +737,19 @@
                                   +deriv(3,INDEX_IJK,ispec) &
                                  *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
                                   -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    duxdxl(INDEX_IJK) = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+                      + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+                      + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdyl            = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+                      + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+                      + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdzl            = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+                      + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+                      + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+#else
     duxdxl = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
            + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
            + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
@@ -553,7 +759,19 @@
     duxdzl = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
            + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
            + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    duydxl            = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+                      + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+                      + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydyl(INDEX_IJK) = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+                      + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+                      + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydzl            = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+                      + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+                      + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+#else
     duydxl = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
            + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
            + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
@@ -563,7 +781,19 @@
     duydzl = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
            + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
            + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    duzdxl            = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+                      + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+                      + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdyl            = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+                      + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+                      + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdzl(INDEX_IJK) = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+                      + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+                      + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+#else
     duzdxl = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
            + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
            + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
@@ -573,14 +803,28 @@
     duzdzl = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
            + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
            + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+#endif
 
     ! precompute some sums to save CPU time
+#ifdef FORCE_VECTORIZATION
+    duxdxl_plus_duydyl = duxdxl(INDEX_IJK) + duydyl(INDEX_IJK)
+    duxdxl_plus_duzdzl = duxdxl(INDEX_IJK) + duzdzl(INDEX_IJK)
+    duydyl_plus_duzdzl = duydyl(INDEX_IJK) + duzdzl(INDEX_IJK)
+    duxdyl_plus_duydxl(INDEX_IJK) = duxdyl + duydxl
+    duzdxl_plus_duxdzl(INDEX_IJK) = duzdxl + duxdzl
+    duzdyl_plus_duydzl(INDEX_IJK) = duzdyl + duydzl
+#else
     duxdxl_plus_duydyl = duxdxl + duydyl
     duxdxl_plus_duzdzl = duxdxl + duzdzl
     duydyl_plus_duzdzl = duydyl + duzdzl
     duxdyl_plus_duydxl = duxdyl + duydxl
     duzdxl_plus_duxdzl = duzdxl + duxdzl
     duzdyl_plus_duydzl = duzdyl + duydzl
+#endif
+
+#ifdef FORCE_VECTORIZATION
+  ENDDO_LOOP_IJK
+#endif
 
 !ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
 !ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
@@ -589,6 +833,54 @@
 !ZN from the expression in which we use the strain later in the code.
 
     ! compute deviatoric strain
+#ifdef FORCE_VECTORIZATION
+    if (COMPUTE_AND_STORE_STRAIN) then
+      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
+        if (ispec == 1) then
+
+          DO_LOOP_IJK
+
+            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+            epsilon_trace_over_3(INDEX_IJK,1) = templ
+            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+          ENDDO_LOOP_IJK
+
+        else
+
+          DO_LOOP_IJK
+
+            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+          ENDDO_LOOP_IJK
+
+        endif
+      else
+
+          DO_LOOP_IJK
+
+            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+            epsilon_trace_over_3(INDEX_IJK,ispec) = templ
+            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+          ENDDO_LOOP_IJK
+
+      endif
+    endif
+#else
     if (COMPUTE_AND_STORE_STRAIN) then
       templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
       if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
@@ -604,6 +896,11 @@
       epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
       epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
     endif
+#endif
+
+#ifdef FORCE_VECTORIZATION
+  DO_LOOP_IJK
+#endif
 
     !
     ! compute either isotropic or anisotropic elements
@@ -803,6 +1100,25 @@
           - 0.5_CUSTOM_REAL*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
 
     ! general expression of stress tensor for full Cijkl with 21 coefficients
+#ifdef FORCE_VECTORIZATION
+    sigma_xx = c11*duxdxl(INDEX_IJK) + c16*duxdyl_plus_duydxl(INDEX_IJK) + c12*duydyl(INDEX_IJK) + &
+             c15*duzdxl_plus_duxdzl(INDEX_IJK) + c14*duzdyl_plus_duydzl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
+
+    sigma_yy = c12*duxdxl(INDEX_IJK) + c26*duxdyl_plus_duydxl(INDEX_IJK) + c22*duydyl(INDEX_IJK) + &
+             c25*duzdxl_plus_duxdzl(INDEX_IJK) + c24*duzdyl_plus_duydzl(INDEX_IJK) + c23*duzdzl(INDEX_IJK)
+
+    sigma_zz = c13*duxdxl(INDEX_IJK) + c36*duxdyl_plus_duydxl(INDEX_IJK) + c23*duydyl(INDEX_IJK) + &
+             c35*duzdxl_plus_duxdzl(INDEX_IJK) + c34*duzdyl_plus_duydzl(INDEX_IJK) + c33*duzdzl(INDEX_IJK)
+
+    sigma_xy = c16*duxdxl(INDEX_IJK) + c66*duxdyl_plus_duydxl(INDEX_IJK) + c26*duydyl(INDEX_IJK) + &
+             c56*duzdxl_plus_duxdzl(INDEX_IJK) + c46*duzdyl_plus_duydzl(INDEX_IJK) + c36*duzdzl(INDEX_IJK)
+
+    sigma_xz = c15*duxdxl(INDEX_IJK) + c56*duxdyl_plus_duydxl(INDEX_IJK) + c25*duydyl(INDEX_IJK) + &
+             c55*duzdxl_plus_duxdzl(INDEX_IJK) + c45*duzdyl_plus_duydzl(INDEX_IJK) + c35*duzdzl(INDEX_IJK)
+
+    sigma_yz = c14*duxdxl(INDEX_IJK) + c46*duxdyl_plus_duydxl(INDEX_IJK) + c24*duydyl(INDEX_IJK) + &
+             c45*duzdxl_plus_duxdzl(INDEX_IJK) + c44*duzdyl_plus_duydzl(INDEX_IJK) + c34*duzdzl(INDEX_IJK)
+#else
     sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
              c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
 
@@ -820,6 +1136,7 @@
 
     sigma_yz = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
              c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
+#endif
 
     ! subtract memory variables if attenuation
     if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
@@ -936,7 +1253,11 @@
       sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
 
       ! precompute vector
+#ifdef FORCE_VECTORIZATION
+      factor = dble(jacobianl(INDEX_IJK)) * wgll_cube(INDEX_IJK)
+#else
       factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
+#endif
       rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
       rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
       rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
@@ -944,6 +1265,17 @@
     endif  ! end of section with gravity terms
 
     ! form dot product with test vector, non-symmetric form
+#ifdef FORCE_VECTORIZATION
+    tempx1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
+                                              + sigma_yx*deriv(2,INDEX_IJK,ispec) &
+                                              + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
+                                              + sigma_yy*deriv(2,INDEX_IJK,ispec) &
+                                              + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
+                                              + sigma_yz*deriv(2,INDEX_IJK,ispec) &
+                                              + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
+#else
     tempx1(INDEX_IJK) = jacobianl * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
                                    + sigma_yx*deriv(2,INDEX_IJK,ispec) &
                                    + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
@@ -953,7 +1285,19 @@
     tempz1(INDEX_IJK) = jacobianl * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
                                    + sigma_yz*deriv(2,INDEX_IJK,ispec) &
                                    + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    tempx2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
+                                              + sigma_yx*deriv(5,INDEX_IJK,ispec) &
+                                              + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
+                                              + sigma_yy*deriv(5,INDEX_IJK,ispec) &
+                                              + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
+                                              + sigma_yz*deriv(5,INDEX_IJK,ispec) &
+                                              + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
+#else
     tempx2(INDEX_IJK) = jacobianl * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
                                    + sigma_yx*deriv(5,INDEX_IJK,ispec) &
                                    + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
@@ -963,7 +1307,19 @@
     tempz2(INDEX_IJK) = jacobianl * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
                                    + sigma_yz*deriv(5,INDEX_IJK,ispec) &
                                    + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
+#endif
 
+#ifdef FORCE_VECTORIZATION
+    tempx3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
+                                              + sigma_yx*deriv(8,INDEX_IJK,ispec) &
+                                              + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
+                                              + sigma_yy*deriv(8,INDEX_IJK,ispec) &
+                                              + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
+                                              + sigma_yz*deriv(8,INDEX_IJK,ispec) &
+                                              + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
+#else
     tempx3(INDEX_IJK) = jacobianl * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
                                    + sigma_yx*deriv(8,INDEX_IJK,ispec) &
                                    + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
@@ -973,6 +1329,7 @@
     tempz3(INDEX_IJK) = jacobianl * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
                                    + sigma_yz*deriv(8,INDEX_IJK,ispec) &
                                    + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
+#endif
 
   ENDDO_LOOP_IJK
 
