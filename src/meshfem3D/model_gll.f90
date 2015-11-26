@@ -38,24 +38,12 @@
 ! standard routine to setup model
 
   use constants
-  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
+  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY,model_gll_variables
   use meshfem3D_par, only: ADIOS_FOR_MODELS
 
   implicit none
 
   ! GLL model_variables
-  type model_gll_variables
-    sequence
-    ! tomographic iteration model on GLL points
-    double precision :: scale_velocity,scale_density
-    ! isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
-    ! transverse isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vsv_new,vpv_new, &
-      vsh_new,vph_new,eta_new
-    logical :: MODEL_GLL
-    logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
-  end type model_gll_variables
   type (model_gll_variables) MGLL_V
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
@@ -222,23 +210,11 @@
   subroutine read_gll_model(myrank,MGLL_V,NSPEC)
 
   use constants
-  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY
+  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY,model_gll_variables
 
   implicit none
 
   ! GLL model_variables
-  type model_gll_variables
-    sequence
-    ! tomographic iteration model on GLL points
-    double precision :: scale_velocity,scale_density
-    ! isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
-    ! transverse isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vsv_new,vpv_new, &
-      vsh_new,vph_new,eta_new
-    logical :: MODEL_GLL
-    logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
-  end type model_gll_variables
   type (model_gll_variables) MGLL_V
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
