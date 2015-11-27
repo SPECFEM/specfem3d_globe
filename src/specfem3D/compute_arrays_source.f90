@@ -118,7 +118,7 @@
 
   use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
   use write_seismograms_mod, only: band_instrument_code
-  use specfem_par, only: NUMBER_OF_SIMULTANEOUS_RUNS, mygroup
+  use specfem_par, only: NUMBER_OF_SIMULTANEOUS_RUNS, mygroup, scale_displ_inv
 
   implicit none
 
@@ -145,8 +145,6 @@
   double precision, dimension(NGLLZ) :: zigll
 
   double precision, dimension(NDIM,NDIM) :: nu
-
-  double precision,parameter :: scale_displ_inv = 1.d0/R_EARTH
 
   double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
         hgammar(NGLLZ), hpgammar(NGLLZ)

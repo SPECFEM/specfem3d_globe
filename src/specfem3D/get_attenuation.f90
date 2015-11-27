@@ -31,7 +31,8 @@
                                       scale_factor, tau_s, vnspec)
 
   use constants_solver
-  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH
+  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH, &
+    scale_t_inv
 
   implicit none
 
@@ -52,7 +53,7 @@
   ! local parameters
   integer :: i,j,k,ispec,ier,i_sls
   double precision, dimension(N_SLS) :: tau_e, fc
-  double precision :: omsb, Q_mu, sf, T_c_source, scale_t
+  double precision :: omsb, Q_mu, sf, T_c_source
   character(len=MAX_STRING_LEN) :: prname
 
   ! checks if attenuation is on and anything to do
@@ -80,12 +81,10 @@
     close(IIN)
   endif
 
-  scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
-
-  factor_common(:,:,:,:,:) = factor_common(:,:,:,:,:) / scale_t ! This is really tau_e, not factor_common
-  tau_s(:)                 = tau_s(:) / scale_t
+  factor_common(:,:,:,:,:) = factor_common(:,:,:,:,:) * scale_t_inv ! This is really tau_e, not factor_common
+  tau_s(:)                 = tau_s(:) * scale_t_inv
   T_c_source               = 1000.0d0 / T_c_source
-  T_c_source               = T_c_source / scale_t
+  T_c_source               = T_c_source * scale_t_inv
 
   ! loops over elements
   do ispec = 1, vnspec
@@ -161,6 +160,7 @@
   subroutine get_attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
 
   use constants,only: ZERO,ONE,TWO,PI,GRAV,RHOAV,TWO_PI,N_SLS
+  use specfem_par,only: scale_t
 
   implicit none
 
@@ -171,14 +171,11 @@
   double precision,intent(out) :: scale_factor
 
   ! local parameters
-  double precision :: scale_t
   double precision :: f_c_source, w_c_source, f_0_prem
   double precision :: factor_scale_mu0, factor_scale_mu
   double precision :: a_val, b_val
   double precision :: big_omega
   integer :: i
-
-  scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
 
   !--- compute central angular frequency of source (non dimensionalized)
   f_c_source = ONE / T_c_source

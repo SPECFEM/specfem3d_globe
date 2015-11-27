@@ -129,12 +129,12 @@
   !                  with the intent to dimensionalize kernel values to [ s km^(-3) ]
   !
   ! kernel unit [ s / km^3 ]
-  scale_kl = scale_t/scale_displ * 1.d9
+  scale_kl = scale_t * scale_displ_inv * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
   scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
-  scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
+  scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 
   ! allocates temporary arrays
   if (SAVE_TRANSVERSE_KL_ONLY) then
@@ -557,7 +557,7 @@
   real(kind=CUSTOM_REAL) :: rhol,kappal,rho_kl,alpha_kl
   integer :: ispec,i,j,k
 
-  scale_kl = scale_t / scale_displ * 1.d9
+  scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! outer_core
   do ispec = 1, NSPEC_OUTER_CORE
@@ -621,7 +621,7 @@
   integer :: ispec,i,j,k
 
   ! scaling to units
-  scale_kl = scale_t / scale_displ * 1.d9
+  scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! inner_core
   do ispec = 1, NSPEC_INNER_CORE
@@ -679,7 +679,7 @@
   real(kind=CUSTOM_REAL):: scale_kl
 
   ! kernel unit [ s / km^3 ]
-  scale_kl = scale_t/scale_displ * 1.d9
+  scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! scale the boundary kernels properly: *scale_kl gives s/km^3 and 1.d3 gives
   ! the relative boundary kernels (for every 1 km) in s/km^2
@@ -806,7 +806,7 @@
   real(kind=CUSTOM_REAL) :: scale_kl
 
   ! scaling factors
-  scale_kl = scale_t/scale_displ * 1.d9
+  scale_kl = scale_t * scale_displ_inv * 1.d9
 
   ! scales approximate Hessian
   hess_kl_crust_mantle(:,:,:,:) = 2._CUSTOM_REAL * hess_kl_crust_mantle(:,:,:,:) * scale_kl

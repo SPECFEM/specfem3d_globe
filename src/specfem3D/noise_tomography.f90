@@ -401,7 +401,6 @@
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP) :: noise_src_u
   double precision, dimension(NDIM) :: nu_master       ! component direction chosen at the master receiver
   double precision :: xi_noise, eta_noise, gamma_noise ! master receiver location
-  !double precision,parameter :: scale_displ_inv = 1.d0/R_EARTH ! non-dimensional scaling
   double precision, dimension(NGLLX) :: hxir, hpxir
   double precision, dimension(NGLLY) :: hetar, hpetar
   double precision, dimension(NGLLZ) :: hgammar, hpgammar
@@ -1004,7 +1003,7 @@
   real(kind=CUSTOM_REAL) :: scale_kl
 
   ! scaling factor for kernel units [ s / km^3 ]
-  scale_kl = scale_t/scale_displ * 1.d9
+  scale_kl = scale_t * scale_displ_inv * 1.d9
 
   sigma_kl_crust_mantle(:,:,:,:) = sigma_kl_crust_mantle(:,:,:,:) * scale_kl
 

@@ -789,6 +789,7 @@
 ! outputs norm of displacement: MOVIE_VOLUME_TYPE == 7
 
   use constants_solver
+  use specfem_par, only: scale_displ
 
   implicit none
 
@@ -808,14 +809,10 @@
   integer :: ispec,iglob,i,j,k,ier
   character(len=MAX_STRING_LEN) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
-  real(kind=CUSTOM_REAL) :: scale_displ
 
   logical,parameter :: OUTPUT_CRUST_MANTLE = .true.
   logical,parameter :: OUTPUT_OUTER_CORE = .true.
   logical,parameter :: OUTPUT_INNER_CORE = .true.
-
-  ! dimensionalized scaling
-  scale_displ = R_EARTH
 
   ! outputs norm of displacement
   if (OUTPUT_CRUST_MANTLE) then
@@ -911,6 +908,7 @@
 ! outputs norm of velocity: MOVIE_VOLUME_TYPE == 8
 
   use constants_solver
+  use specfem_par, only: scale_veloc
 
   implicit none
 
@@ -930,15 +928,10 @@
   integer :: ispec,iglob,i,j,k,ier
   character(len=MAX_STRING_LEN) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
-  real(kind=CUSTOM_REAL) :: scale_displ,scale_veloc
 
   logical,parameter :: OUTPUT_CRUST_MANTLE = .true.
   logical,parameter :: OUTPUT_OUTER_CORE = .true.
   logical,parameter :: OUTPUT_INNER_CORE = .true.
-
-  ! dimensionalized scaling
-  scale_displ = R_EARTH
-  scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
 
   ! outputs norm of velocity
   if (OUTPUT_CRUST_MANTLE) then
@@ -1033,6 +1026,7 @@
 ! outputs norm of acceleration: MOVIE_VOLUME_TYPE == 1
 
   use constants_solver
+  use specfem_par, only: scale_t_inv,scale_veloc
 
   implicit none
 
@@ -1052,16 +1046,14 @@
   integer :: ispec,iglob,i,j,k,ier
   character(len=MAX_STRING_LEN) outputname
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: tmp_data
-  real(kind=CUSTOM_REAL) :: scale_displ,scale_veloc,scale_accel
+  real(kind=CUSTOM_REAL) :: scale_accel
 
   logical,parameter :: OUTPUT_CRUST_MANTLE = .true.
   logical,parameter :: OUTPUT_OUTER_CORE = .true.
   logical,parameter :: OUTPUT_INNER_CORE = .true.
 
   ! dimensionalized scaling
-  scale_displ = R_EARTH
-  scale_veloc = scale_displ * sqrt(PI*GRAV*RHOAV)
-  scale_accel = scale_veloc * dsqrt(PI*GRAV*RHOAV)
+  scale_accel = scale_veloc * scale_t_inv
 
   ! outputs norm of acceleration
   if (OUTPUT_CRUST_MANTLE) then

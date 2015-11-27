@@ -292,7 +292,7 @@ module specfem_par
   integer :: it
 
   ! non-dimensionalization
-  double precision :: scale_t,scale_t_inv,scale_displ,scale_veloc
+  double precision :: scale_t,scale_t_inv,scale_displ,scale_displ_inv,scale_veloc
 
   ! time scheme parameters
   real(kind=CUSTOM_REAL) :: deltat,deltatover2,deltatsqover2

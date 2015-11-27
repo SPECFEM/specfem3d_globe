@@ -682,6 +682,7 @@
   scale_t_inv = dsqrt(PI*GRAV*RHOAV)
 
   scale_displ = R_EARTH
+  scale_displ_inv = ONE / scale_displ
 
   scale_veloc = scale_displ * scale_t_inv
 

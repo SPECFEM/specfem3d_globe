@@ -63,12 +63,12 @@
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
 
   ! scaling factors
-  scale_kl = scale_t/scale_displ * 1.d9
+  scale_kl = scale_t * scale_displ_inv * 1.d9
   ! For anisotropic kernels
   ! final unit : [s km^(-3) GPa^(-1)]
   scale_kl_ani = scale_t**3 / (RHOAV*R_EARTH**3) * 1.d18
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
-  scale_kl_rho = scale_t / scale_displ / RHOAV * 1.d9
+  scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 
   ! allocates temporary arrays
   allocate(rho_kl_crust_mantle_reg(npoints_slice), &

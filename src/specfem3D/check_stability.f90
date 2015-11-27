@@ -38,7 +38,7 @@
   use specfem_par,only: &
     GPU_MODE,Mesh_pointer, &
     COMPUTE_AND_STORE_STRAIN, &
-    SIMULATION_TYPE,time_start,DT,t0, &
+    SIMULATION_TYPE,scale_displ,time_start,DT,t0, &
     NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
     myrank,UNDO_ATTENUATION
 
@@ -81,8 +81,6 @@
   integer :: year,mon,day,hr,minutes,timestamp,julian_day_number,day_of_week, &
              timestamp_remote,year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
   integer, external :: idaywk
-
-  double precision,parameter :: scale_displ = R_EARTH
 
   ! compute maximum of norm of displacement in each slice
   if (.not. GPU_MODE) then
@@ -362,7 +360,7 @@
 
   use specfem_par,only: &
     GPU_MODE,Mesh_pointer, &
-    SIMULATION_TYPE,time_start,DT,t0, &
+    SIMULATION_TYPE,scale_displ,time_start,DT,t0, &
     NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
     myrank
 
@@ -383,8 +381,6 @@
 
   integer :: it_run,nstep_run
   logical :: SHOW_SEPARATE_RUN_INFORMATION
-
-  double precision,parameter :: scale_displ = R_EARTH
 
   ! checks if anything to do
   if (SIMULATION_TYPE /= 3 ) return

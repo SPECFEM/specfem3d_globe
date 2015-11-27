@@ -119,7 +119,7 @@
     hxir_store,hpxir_store,hetar_store,hpetar_store,hgammar_store,hpgammar_store, &
     tshift_cmt,hdur_gaussian, &
     DT,t0,deltat,it, &
-    scale_displ, &
+    scale_displ,scale_t, &
     hprime_xx,hprime_yy,hprime_zz, &
     ispec_selected_source,number_receiver_global
 
@@ -153,7 +153,6 @@
   double precision :: eps_trace,dxx,dyy,dxy,dxz,dyz
   double precision :: eps_loc(NDIM,NDIM), eps_loc_new(NDIM,NDIM)
   double precision :: stf
-  double precision :: scale_t
 
   real(kind=CUSTOM_REAL) :: displ_s(NDIM,NGLLX,NGLLY,NGLLZ)
   real(kind=CUSTOM_REAL) :: eps_s(NDIM,NDIM), eps_m_s, &
@@ -287,8 +286,6 @@
 
     moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
     sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_l_s(:) * stf_deltat
-
-    scale_t = ONE/dsqrt(PI*GRAV*RHOAV)
 
     Kp_deltat= -1.0d0/sqrt(PI)/hdur_gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-tshift_cmt(irec))/hdur_gaussian(irec))**2) &
                        * deltat * scale_t
