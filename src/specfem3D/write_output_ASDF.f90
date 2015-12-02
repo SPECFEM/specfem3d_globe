@@ -409,8 +409,8 @@ subroutine write_asdf(asdf_container)
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
            station_grps_gather(j, k))
         stationxml_length = 1420 + len(trim(station_names_gather(j,k))) + len(trim(network_names_gather(j,k)))
-        !call ASDF_define_station_xml_f(station_grps_gather(j,k), stationxml_length, &
-        !                             stationxml_gather(j,k))
+        call ASDF_define_station_xml_f(station_grps_gather(j,k), stationxml_length, &
+                                     stationxml_gather(j,k))
         do  i = 1, 3 ! loop over each component
           ! Generate unique waveform name
           write(waveform_name, '(a)') &
@@ -434,7 +434,7 @@ subroutine write_asdf(asdf_container)
                                station_lats_gather(j,myrank+1), station_longs_gather(j,myrank+1), &
                                station_elevs_gather(j,myrank+1), station_depths_gather(j,myrank+1), &
                                start_time_string, stationxml)
-    !call ASDF_write_station_xml_f(stationxml_gather(j, myrank+1), trim(stationxml)//C_NULL_CHAR, ier)
+    call ASDF_write_station_xml_f(stationxml_gather(j, myrank+1), trim(stationxml)//C_NULL_CHAR, ier)
     do i = 1, 3
       call ASDF_write_partial_waveform_f(data_ids(i, j, myrank+1), &
                                       seismograms(i,j,:), seismo_offset, NTSTEP_BETWEEN_OUTPUT_SEISMOS, ier)
