@@ -180,6 +180,7 @@ subroutine write_asdf(asdf_container)
   character(len=MAX_STATIONXML_LENGTH) :: stationxml
 
   integer :: num_stations !
+  integer :: stationxml_length
   integer :: nsamples  ! constant, as in SPECFEM
   double precision :: sampling_rate
   double precision :: startTime
@@ -217,6 +218,7 @@ subroutine write_asdf(asdf_container)
       station_lats_gather, station_longs_gather, station_elevs_gather, &
       station_depths_gather
   integer, dimension(:,:), allocatable :: station_grps_gather
+  integer, dimension(:,:), allocatable :: stationxml_gather
   integer, dimension(:), allocatable :: displs, rcounts
 
   ! temporary name built from network, station and channel names.
@@ -373,6 +375,7 @@ subroutine write_asdf(asdf_container)
     deallocate(rcounts)
 
     allocate(station_grps_gather(max_num_stations_gather, mysize))
+    allocate(stationxml_gather(max_num_stations_gather, mysize))
 
     allocate(data_ids(3, &
                     max_num_stations_gather, &
@@ -401,22 +404,20 @@ subroutine write_asdf(asdf_container)
 
     do k = 1, mysize ! Need to set up ASDF container on all processers
       do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
-        call station_to_stationxml(station_names_gather(j,k), network_names_gather(j,k), &
-                                   station_lats_gather(j,k), station_longs_gather(j,k), &
-                                   station_elevs_gather(j,k), station_depths_gather(j,k), &
-                                   start_time_string, stationxml)
         call ASDF_create_stations_group_f(waveforms_grp,   &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
-           trim(stationxml)//C_NULL_CHAR,             &
-             station_grps_gather(j, k))
+           station_grps_gather(j, k))
+        stationxml_length = 1420 + len(trim(station_names_gather(j,k))) + len(trim(network_names_gather(j,k)))
+        !call ASDF_define_station_xml_f(station_grps_gather(j,k), stationxml_length, &
+        !                             stationxml_gather(j,k))
         do  i = 1, 3 ! loop over each component
           ! Generate unique waveform name
           write(waveform_name, '(a)') &
             trim(network_names_gather(j,k)) // "." //      &
             trim(station_names_gather(j,k)) // ".S3." //trim(component_names_gather(i+(3*(j-1)),k)) &
               //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
-            ! print *, trim(waveform_name), myrank
+            !print *, trim(waveform_name), myrank
             call ASDF_define_waveform_f(station_grps_gather(j,k), &
               nsamples, start_time, sampling_rate, &
               trim(event_name_SAC) // C_NULL_CHAR, &
@@ -429,6 +430,11 @@ subroutine write_asdf(asdf_container)
   endif ! end (seismo_offset == 0) steps
 
   do j = 1, num_stations
+    call station_to_stationxml(station_names_gather(j,myrank+1), network_names_gather(j,myrank+1), &
+                               station_lats_gather(j,myrank+1), station_longs_gather(j,myrank+1), &
+                               station_elevs_gather(j,myrank+1), station_depths_gather(j,myrank+1), &
+                               start_time_string, stationxml)
+    !call ASDF_write_station_xml_f(stationxml_gather(j, myrank+1), trim(stationxml)//C_NULL_CHAR, ier)
     do i = 1, 3
       call ASDF_write_partial_waveform_f(data_ids(i, j, myrank+1), &
                                       seismograms(i,j,:), seismo_offset, NTSTEP_BETWEEN_OUTPUT_SEISMOS, ier)
@@ -452,13 +458,14 @@ subroutine write_asdf(asdf_container)
     enddo
 
     call ASDF_close_group_f(waveforms_grp, ier)
-    call ASDF_close_file_f(current_asdf_handle, ier)
+    !call ASDF_close_file_f(current_asdf_handle, ier)
     call ASDF_finalize_hdf5_f(ier)
   endif
 
   deallocate(data_ids)
   deallocate(provenance)
   deallocate(station_grps_gather)
+  deallocate(stationxml_gather)
   deallocate(station_names_gather)
   deallocate(network_names_gather)
   deallocate(component_names_gather)
