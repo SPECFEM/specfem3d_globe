@@ -451,6 +451,7 @@ subroutine write_asdf(asdf_container)
     do k = 1, mysize
       do j = 1, num_stations_gather(k)
         call ASDF_close_group_f(station_grps_gather(j, k), ier)
+        call ASDF_close_dataset_f(stationxml_gather(j, k), ier)
         do i = 1, 3
           call ASDF_close_dataset_f(data_ids(i, j, k), ier)
         enddo
@@ -458,7 +459,7 @@ subroutine write_asdf(asdf_container)
     enddo
 
     call ASDF_close_group_f(waveforms_grp, ier)
-    !call ASDF_close_file_f(current_asdf_handle, ier)
+    call ASDF_close_file_f(current_asdf_handle, ier)
     call ASDF_finalize_hdf5_f(ier)
   endif
 
