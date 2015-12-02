@@ -429,6 +429,7 @@ subroutine write_asdf(asdf_container)
   endif ! end (seismo_offset == 0) steps
 
   do j = 1, num_stations
+! write staionxml
     do i = 1, 3
       call ASDF_write_partial_waveform_f(data_ids(i, j, myrank+1), &
                                       seismograms(i,j,:), seismo_offset, NTSTEP_BETWEEN_OUTPUT_SEISMOS, ier)
