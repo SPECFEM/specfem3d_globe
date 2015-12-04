@@ -414,10 +414,10 @@ subroutine write_asdf(asdf_container)
         do  i = 1, 3 ! loop over each component
           ! Generate unique waveform name
           write(waveform_name, '(a)') &
-            trim(network_names_gather(j,k)) // "." //      &
+            trim(network_names_gather(j,k)) // "." // &
             trim(station_names_gather(j,k)) // ".S3." //trim(component_names_gather(i+(3*(j-1)),k)) &
               //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
-            !print *, trim(waveform_name), myrank
+            print *, trim(waveform_name), myrank
             call ASDF_define_waveform_f(station_grps_gather(j,k), &
               nsamples, start_time, sampling_rate, &
               trim(event_name_SAC) // C_NULL_CHAR, &
@@ -427,6 +427,8 @@ subroutine write_asdf(asdf_container)
       enddo
     enddo
   
+  call synchronize_all() 
+print *, "sync done"
   endif ! end (seismo_offset == 0) steps
 
   do j = 1, num_stations
