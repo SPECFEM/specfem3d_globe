@@ -54,9 +54,7 @@
 
   use specfem_par_crustmantle,only: &
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
-    xix => xix_crust_mantle,xiy => xiy_crust_mantle,xiz => xiz_crust_mantle, &
-    etax => etax_crust_mantle,etay => etay_crust_mantle,etaz => etaz_crust_mantle, &
-    gammax => gammax_crust_mantle,gammay => gammay_crust_mantle,gammaz => gammaz_crust_mantle, &
+    deriv => deriv_mapping_crust_mantle, &
     kappavstore => kappavstore_crust_mantle,kappahstore => kappahstore_crust_mantle, &
     muvstore => muvstore_crust_mantle,muhstore => muhstore_crust_mantle, &
     eta_anisostore => eta_anisostore_crust_mantle, &
@@ -162,7 +160,7 @@
   endif
 
 !$OMP PARALLEL DEFAULT(NONE) &
-!$OMP SHARED(xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+!$OMP SHARED(deriv, &
 !$OMP one_minus_sum_beta,epsilon_trace_over_3,c11store,c12store,c13store,c14store,c15store, &
 !$OMP c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
 !$OMP c36store,c44store,c45store,c46store,c55store,c56store,c66store,ispec_is_tiso, &
@@ -231,7 +229,7 @@
        call compute_element_aniso(ispec, &
                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
                                   xstore,ystore,zstore, &
-                                  xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                  deriv, &
                                   wgll_cube, &
                                   c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                                   c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
@@ -249,7 +247,7 @@
           call compute_element_iso(ispec, &
                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
                                    xstore,ystore,zstore, &
-                                   xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                   deriv, &
                                    wgll_cube, &
                                    kappavstore,muvstore, &
                                    ibool, &
@@ -264,7 +262,7 @@
           call compute_element_tiso(ispec, &
                                      minus_gravity_table,density_table,minus_deriv_gravity_table, &
                                      xstore,ystore,zstore, &
-                                     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                     deriv, &
                                      wgll_cube, &
                                      kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                                      ibool, &

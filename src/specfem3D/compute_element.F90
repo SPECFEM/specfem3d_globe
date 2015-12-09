@@ -40,7 +40,7 @@
   subroutine compute_element_iso(ispec, &
                                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
                                  xstore,ystore,zstore, &
-                                 xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                 deriv, &
                                  wgll_cube, &
                                  kappavstore,muvstore, &
                                  ibool, &
@@ -65,8 +65,7 @@
   ! x y and z contain r theta and phi
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
@@ -101,7 +100,7 @@
 
 ! local parameters
   real(kind=CUSTOM_REAL) one_minus_sum_beta_use
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -138,33 +137,46 @@
 
   DO_LOOP_IJK
 
-    ! get derivatives of ux, uy and uz with respect to x, y and z
-    xixl = xix(INDEX_IJK,ispec)
-    xiyl = xiy(INDEX_IJK,ispec)
-    xizl = xiz(INDEX_IJK,ispec)
-    etaxl = etax(INDEX_IJK,ispec)
-    etayl = etay(INDEX_IJK,ispec)
-    etazl = etaz(INDEX_IJK,ispec)
-    gammaxl = gammax(INDEX_IJK,ispec)
-    gammayl = gammay(INDEX_IJK,ispec)
-    gammazl = gammaz(INDEX_IJK,ispec)
-
     ! compute the Jacobian
-    jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                                 - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                                 + xizl*(etaxl*gammayl-etayl*gammaxl))
+    jacobianl = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
+                                 *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                  -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
+                                  -deriv(2,INDEX_IJK,ispec) &
+                                 *(deriv(4,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                  -deriv(6,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)) &
+                                  +deriv(3,INDEX_IJK,ispec) &
+                                 *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
+                                  -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
 
-    duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
-    duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
-    duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
+    duxdxl = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdyl = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdzl = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
 
-    duydxl = xixl*tempy1(INDEX_IJK) + etaxl*tempy2(INDEX_IJK) + gammaxl*tempy3(INDEX_IJK)
-    duydyl = xiyl*tempy1(INDEX_IJK) + etayl*tempy2(INDEX_IJK) + gammayl*tempy3(INDEX_IJK)
-    duydzl = xizl*tempy1(INDEX_IJK) + etazl*tempy2(INDEX_IJK) + gammazl*tempy3(INDEX_IJK)
+    duydxl = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydyl = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydzl = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
 
-    duzdxl = xixl*tempz1(INDEX_IJK) + etaxl*tempz2(INDEX_IJK) + gammaxl*tempz3(INDEX_IJK)
-    duzdyl = xiyl*tempz1(INDEX_IJK) + etayl*tempz2(INDEX_IJK) + gammayl*tempz3(INDEX_IJK)
-    duzdzl = xizl*tempz1(INDEX_IJK) + etazl*tempz2(INDEX_IJK) + gammazl*tempz3(INDEX_IJK)
+    duzdxl = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdyl = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdzl = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
 
     ! precompute some sums to save CPU time
     duxdxl_plus_duydyl = duxdxl + duydyl
@@ -362,17 +374,35 @@
     endif  ! end of section with gravity terms
 
     ! form dot product with test vector, non-symmetric form
-    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl) ! this goes to accel_x
-    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl) ! this goes to accel_y
-    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl) ! this goes to accel_z
+    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
 
-    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl) ! this goes to accel_x
-    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl) ! this goes to accel_y
-    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl) ! this goes to accel_z
+    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
 
-    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl) ! this goes to accel_x
-    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
-    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
+    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
 
   ENDDO_LOOP_IJK
 
@@ -388,7 +418,7 @@
   subroutine compute_element_tiso(ispec, &
                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
                                   xstore,ystore,zstore, &
-                                  xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                  deriv, &
                                   wgll_cube, &
                                   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                                   ibool, &
@@ -415,8 +445,7 @@
   ! x y and z contain r theta and phi
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
@@ -467,7 +496,7 @@
 
   real(kind=CUSTOM_REAL) twoetaminone,etaminone,eta_aniso
   real(kind=CUSTOM_REAL) two_eta_aniso,four_eta_aniso,six_eta_aniso
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -504,33 +533,46 @@
 
   DO_LOOP_IJK
 
-    ! get derivatives of ux, uy and uz with respect to x, y and z
-    xixl = xix(INDEX_IJK,ispec)
-    xiyl = xiy(INDEX_IJK,ispec)
-    xizl = xiz(INDEX_IJK,ispec)
-    etaxl = etax(INDEX_IJK,ispec)
-    etayl = etay(INDEX_IJK,ispec)
-    etazl = etaz(INDEX_IJK,ispec)
-    gammaxl = gammax(INDEX_IJK,ispec)
-    gammayl = gammay(INDEX_IJK,ispec)
-    gammazl = gammaz(INDEX_IJK,ispec)
-
     ! compute the Jacobian
-    jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                  - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                  + xizl*(etaxl*gammayl-etayl*gammaxl))
+    jacobianl = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
+                                 *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                  -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
+                                  -deriv(2,INDEX_IJK,ispec) &
+                                 *(deriv(4,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                  -deriv(6,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)) &
+                                  +deriv(3,INDEX_IJK,ispec) &
+                                 *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
+                                  -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
 
-    duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
-    duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
-    duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
+    duxdxl = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdyl = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdzl = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
 
-    duydxl = xixl*tempy1(INDEX_IJK) + etaxl*tempy2(INDEX_IJK) + gammaxl*tempy3(INDEX_IJK)
-    duydyl = xiyl*tempy1(INDEX_IJK) + etayl*tempy2(INDEX_IJK) + gammayl*tempy3(INDEX_IJK)
-    duydzl = xizl*tempy1(INDEX_IJK) + etazl*tempy2(INDEX_IJK) + gammazl*tempy3(INDEX_IJK)
+    duydxl = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydyl = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydzl = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
 
-    duzdxl = xixl*tempz1(INDEX_IJK) + etaxl*tempz2(INDEX_IJK) + gammaxl*tempz3(INDEX_IJK)
-    duzdyl = xiyl*tempz1(INDEX_IJK) + etayl*tempz2(INDEX_IJK) + gammayl*tempz3(INDEX_IJK)
-    duzdzl = xizl*tempz1(INDEX_IJK) + etazl*tempz2(INDEX_IJK) + gammazl*tempz3(INDEX_IJK)
+    duzdxl = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdyl = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdzl = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
 
     ! precompute some sums to save CPU time
     duxdxl_plus_duydyl = duxdxl + duydyl
@@ -902,17 +944,35 @@
     endif  ! end of section with gravity terms
 
     ! form dot product with test vector, non-symmetric form
-    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl) ! this goes to accel_x
-    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl) ! this goes to accel_y
-    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl) ! this goes to accel_z
+    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
 
-    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl) ! this goes to accel_x
-    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl) ! this goes to accel_y
-    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl) ! this goes to accel_z
+    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
 
-    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl) ! this goes to accel_x
-    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
-    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
+    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
 
   ENDDO_LOOP_IJK
 
@@ -928,7 +988,7 @@
   subroutine compute_element_aniso(ispec, &
                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
                                    xstore,ystore,zstore, &
-                                   xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                   deriv, &
                                    wgll_cube, &
                                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                                    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
@@ -955,8 +1015,7 @@
   ! x y and z contain r theta and phi
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
@@ -997,7 +1056,7 @@
   ! the 21 coefficients for an anisotropic medium in reduced notation
   real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
 
-  real(kind=CUSTOM_REAL) xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl
+  real(kind=CUSTOM_REAL) jacobianl
   real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
   real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
@@ -1032,33 +1091,47 @@
 
   DO_LOOP_IJK
 
-    ! get derivatives of ux, uy and uz with respect to x, y and z
-    xixl = xix(INDEX_IJK,ispec)
-    xiyl = xiy(INDEX_IJK,ispec)
-    xizl = xiz(INDEX_IJK,ispec)
-    etaxl = etax(INDEX_IJK,ispec)
-    etayl = etay(INDEX_IJK,ispec)
-    etazl = etaz(INDEX_IJK,ispec)
-    gammaxl = gammax(INDEX_IJK,ispec)
-    gammayl = gammay(INDEX_IJK,ispec)
-    gammazl = gammaz(INDEX_IJK,ispec)
-
     ! compute the Jacobian
-    jacobianl = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
-                  - xiyl*(etaxl*gammazl-etazl*gammaxl) &
-                  + xizl*(etaxl*gammayl-etayl*gammaxl))
+    jacobianl = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
+                                 *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
+                                  -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
+                                  -deriv(2,INDEX_IJK,ispec) &
+                                 *(deriv(4,INDEX_IJK,ispec) &
+                                  *deriv(9,INDEX_IJK,ispec)-deriv(6,INDEX_IJK,ispec) &
+                                  *deriv(7,INDEX_IJK,ispec)) &
+                                  +deriv(3,INDEX_IJK,ispec) &
+                                 *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
+                                  -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
 
-    duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
-    duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
-    duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
+    duxdxl = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdyl = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
+    duxdzl = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
 
-    duydxl = xixl*tempy1(INDEX_IJK) + etaxl*tempy2(INDEX_IJK) + gammaxl*tempy3(INDEX_IJK)
-    duydyl = xiyl*tempy1(INDEX_IJK) + etayl*tempy2(INDEX_IJK) + gammayl*tempy3(INDEX_IJK)
-    duydzl = xizl*tempy1(INDEX_IJK) + etazl*tempy2(INDEX_IJK) + gammazl*tempy3(INDEX_IJK)
+    duydxl = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydyl = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
+    duydzl = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
 
-    duzdxl = xixl*tempz1(INDEX_IJK) + etaxl*tempz2(INDEX_IJK) + gammaxl*tempz3(INDEX_IJK)
-    duzdyl = xiyl*tempz1(INDEX_IJK) + etayl*tempz2(INDEX_IJK) + gammayl*tempz3(INDEX_IJK)
-    duzdzl = xizl*tempz1(INDEX_IJK) + etazl*tempz2(INDEX_IJK) + gammazl*tempz3(INDEX_IJK)
+    duzdxl = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdyl = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
+    duzdzl = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
+           + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
+           + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
 
     ! precompute some sums to save CPU time
     duxdxl_plus_duydyl = duxdxl + duydyl
@@ -1277,17 +1350,35 @@
     endif  ! end of section with gravity terms
 
     ! form dot product with test vector, non-symmetric form
-    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*xixl + sigma_yx*xiyl + sigma_zx*xizl) ! this goes to accel_x
-    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*xixl + sigma_yy*xiyl + sigma_zy*xizl) ! this goes to accel_y
-    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*xixl + sigma_yz*xiyl + sigma_zz*xizl) ! this goes to accel_z
+    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(2,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
 
-    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*etaxl + sigma_yx*etayl + sigma_zx*etazl) ! this goes to accel_x
-    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*etaxl + sigma_yy*etayl + sigma_zy*etazl) ! this goes to accel_y
-    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*etaxl + sigma_yz*etayl + sigma_zz*etazl) ! this goes to accel_z
+    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(5,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
 
-    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*gammaxl + sigma_yx*gammayl + sigma_zx*gammazl) ! this goes to accel_x
-    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*gammaxl + sigma_yy*gammayl + sigma_zy*gammazl) ! this goes to accel_y
-    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*gammaxl + sigma_yz*gammayl + sigma_zz*gammazl) ! this goes to accel_z
+    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yx*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
+    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yy*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
+    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
+                                   + sigma_yz*deriv(8,INDEX_IJK,ispec) &
+                                   + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
 
   ENDDO_LOOP_IJK
 

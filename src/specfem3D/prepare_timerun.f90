@@ -87,6 +87,9 @@
 
   ! precomputes inverse table of ibool
   call prepare_timerun_ibool_inv_tbl()
+  
+  ! prepare fused array for computational kernel
+  call prepare_fused_array()
 
   ! synchronize all the processes
   call synchronize_all()
@@ -3507,5 +3510,52 @@
 
 
   end subroutine prepare_timerun_ibool_inv_tbl
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_fused_array()
+
+! prepare fused array for computational kernel
+
+  use specfem_par
+  use specfem_par_crustmantle
+  implicit none
+
+  integer :: ispec,ijk
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "preparing fused array"
+    call flush_IMAIN()
+  endif
+
+  !---- fused array of mapping matrix ----------------------
+
+  do ispec=1,NSPEC_CRUST_MANTLE
+    do ijk=1,NGLLX*NGLLY*NGLLZ
+      deriv_mapping_crust_mantle(1,ijk,1,1,ispec) = xix_crust_mantle(ijk,1,1,ispec)
+      deriv_mapping_crust_mantle(2,ijk,1,1,ispec) = xiy_crust_mantle(ijk,1,1,ispec)
+      deriv_mapping_crust_mantle(3,ijk,1,1,ispec) = xiz_crust_mantle(ijk,1,1,ispec)
+      deriv_mapping_crust_mantle(4,ijk,1,1,ispec) = etax_crust_mantle(ijk,1,1,ispec)
+      deriv_mapping_crust_mantle(5,ijk,1,1,ispec) = etay_crust_mantle(ijk,1,1,ispec)
+      deriv_mapping_crust_mantle(6,ijk,1,1,ispec) = etaz_crust_mantle(ijk,1,1,ispec)
+      deriv_mapping_crust_mantle(7,ijk,1,1,ispec) = gammax_crust_mantle(ijk,1,1,ispec)
+      deriv_mapping_crust_mantle(8,ijk,1,1,ispec) = gammay_crust_mantle(ijk,1,1,ispec)
+      deriv_mapping_crust_mantle(9,ijk,1,1,ispec) = gammaz_crust_mantle(ijk,1,1,ispec)
+    enddo
+  enddo
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)"  fused array preparation done"
+    call flush_IMAIN()
+  endif
+
+  ! synchronizes processes
+  call synchronize_all()
+
+  end subroutine prepare_fused_array
 
 

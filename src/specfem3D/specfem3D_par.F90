@@ -344,6 +344,9 @@ module specfem_par_crustmantle
     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
 
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+    deriv_mapping_crust_mantle
+
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
 
