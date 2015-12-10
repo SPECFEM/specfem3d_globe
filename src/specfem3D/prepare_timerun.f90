@@ -87,7 +87,7 @@
 
   ! precomputes inverse table of ibool
   call prepare_timerun_ibool_inv_tbl()
-  
+
   ! prepare fused array for computational kernel
   call prepare_fused_array()
 
