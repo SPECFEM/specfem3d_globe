@@ -17,9 +17,10 @@
  *      Department of Geophysics, Maslak, Istanbul-TURKEY
  *      www.geop.itu.edu.tr/~onur
  *                    tano@itu.edu.tr
+ *      now (in 2015) at onur.tan@mam.gov.tr https://en.wikipedia.org/wiki/T%C3%9CB%C4%B0TAK_Marmara_Research_Center
  *--------------------------------------------------------------------------*/
 
-/*  dc2mt.c  : Calculates  moment tensor elements from strike/dip/rake
+/*  dc2mt.c  : Calculates moment tensor elements from strike/dip/rake
   by Onur TAN
   ITU, Dept. of Geophysics, Istanbul, Turkey, 2Jan2004
                21Apr2004 bug fix for Mxy
