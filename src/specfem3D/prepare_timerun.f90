@@ -3499,8 +3499,8 @@
       write(6,*) "   num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
       write(6,*) "   num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
       write(6,*) "#### num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl  #####"
-      write(6,*) "#### Program sttoped ##########"
-      call flush(6)
+      write(6,*) "#### Program stopped ##########"
+      call flush_IMAIN()
     endif
 
     deallocate( ibool_inv_num )

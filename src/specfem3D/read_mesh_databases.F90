@@ -946,9 +946,6 @@
     else
       call read_mesh_databases_MPI_CM()
     endif
-    !call synchronize_all()
-    !print *, "read_mesh_databases_MPI_CM done"
-    !call flush()
   endif
   call bcast_mesh_databases_MPI_CM()
 
