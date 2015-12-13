@@ -3496,10 +3496,10 @@
     ibool_inv_st(iglob_p+1,iphase) = ip + 1
     num_globs(iphase) = iglob_p
     if( num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl )  then
-      write(6,*) "   num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
-      write(6,*) "   num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
-      write(6,*) "#### num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl  #####"
-      write(6,*) "#### Program stopped ##########"
+      write(IMAIN,*) "   num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
+      write(IMAIN,*) "   num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
+      write(IMAIN,*) "#### num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl  #####"
+      write(IMAIN,*) "#### Program stopped ##########"
       call flush_IMAIN()
     endif
 
