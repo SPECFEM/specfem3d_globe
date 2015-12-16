@@ -188,9 +188,9 @@ subroutine write_asdf(asdf_container)
 
   ! Network names and station names are two different beast, as in SPECFEM
   ! network_names(i) is related to station_names(i)
-  character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: networks_names
-  character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: stations_names
-  character(len=MAX_STRING_LENGTH), dimension(:), allocatable :: component_names
+  character(len=MAX_LENGTH_NETWORK_NAME), dimension(:), allocatable :: networks_names
+  character(len=MAX_LENGTH_STATION_NAME), dimension(:), allocatable :: stations_names
+  character(len=3), dimension(:), allocatable :: component_names
 
   ! data. dimension = nsamples * num_channels_per_station * num_stations
   real, dimension(:, :, :), allocatable :: waveforms
@@ -212,8 +212,12 @@ subroutine write_asdf(asdf_container)
   !    order to define ASDF groups and datasets or write them as attributes.
   integer, dimension(:), allocatable :: num_stations_gather
   integer :: max_num_stations_gather
-  character(len=MAX_STRING_LENGTH), dimension(:,:), allocatable :: &
-      station_names_gather, network_names_gather, component_names_gather
+  character(len=MAX_LENGTH_STATION_NAME), dimension(:,:), allocatable :: &
+      station_names_gather
+  character(len=MAX_LENGTH_NETWORK_NAME), dimension(:,:), allocatable :: &
+      network_names_gather
+  character(len=3), dimension(:,:), allocatable :: &
+      component_names_gather
   real, dimension(:,:), allocatable :: &
       station_lats_gather, station_longs_gather, station_elevs_gather, &
       station_depths_gather
@@ -271,21 +275,13 @@ subroutine write_asdf(asdf_container)
     allocate(waveforms(nsamples, 3, num_stations), &
            stat=ier)
 
-    do i = 1, num_stations
-      write(networks_names(i), '(a)') asdf_container%network_array(i)
-      write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
-    enddo
-
-    do i = 1, num_stations*3
-      write(component_names(i), '(a)') asdf_container%component_array(i)
-    enddo
-
     !--------------------------------------------------------
     ! ASDF variables
     !--------------------------------------------------------
     ! Find how many stations are managed by each allgatheress
     allocate(num_stations_gather(mysize))
     call all_gather_all_i(num_stations, num_stations_gather, mysize)
+
     ! find the largest number of stations per allgatheress
     max_num_stations_gather = maxval(num_stations_gather)
 
@@ -301,40 +297,60 @@ subroutine write_asdf(asdf_container)
     allocate(station_depths_gather(max_num_stations_gather,mysize))
     allocate(component_names_gather(max_num_stations_gather*3, mysize))
 
+    ! This needs to be done because asdf_data is a pointer
+    do i = 1, num_stations
+      write(networks_names(i), '(a)') asdf_container%network_array(i)
+      write(stations_names(i), '(a)') asdf_container%receiver_name_array(i)
+    enddo
+
+    do i = 1, num_stations*3
+      write(component_names(i), '(a)') asdf_container%component_array(i)
+    enddo
+
     ! The number of stations is not constant across processes
     do i = 1, mysize
-      displs(i) = (i-1) * max_num_stations_gather * max_string_length
-      rcounts(i) = num_stations_gather(i) * max_string_length
+      displs(i) = (i-1) * max_num_stations_gather * MAX_LENGTH_STATION_NAME
+      rcounts(i) = num_stations_gather(i) * MAX_LENGTH_STATION_NAME
     enddo
 
     call all_gather_all_ch(stations_names, &
-                         num_stations * MAX_STRING_LENGTH, &
+                         num_stations * MAX_LENGTH_STATION_NAME, &
                          station_names_gather, &
                          rcounts, &
                          displs, &
                          max_num_stations_gather, &
-                         MAX_STRING_LENGTH, &
+                         MAX_LENGTH_STATION_NAME, &
                          mysize)
+
+
+    do i = 1, mysize
+      displs(i) = (i-1) * max_num_stations_gather * MAX_LENGTH_NETWORK_NAME
+      rcounts(i) = num_stations_gather(i) * MAX_LENGTH_NETWORK_NAME
+    enddo
+
     call all_gather_all_ch(networks_names, &
-                         num_stations * MAX_STRING_LENGTH, &
+                         num_stations * MAX_LENGTH_NETWORK_NAME, &
                          network_names_gather, &
                          rcounts, &
                          displs, &
                          max_num_stations_gather, &
-                         MAX_STRING_LENGTH, &
+                         MAX_LENGTH_NETWORK_NAME, &
                          mysize)
+
+    do i = 1, mysize
+      displs(i) = (i-1) * max_num_stations_gather * 3
+      rcounts(i) = num_stations_gather(i) * 3
+    enddo
+
     call all_gather_all_ch(component_names, &
-                         num_stations*3*MAX_STRING_LENGTH, &
+                         num_stations*3*3, &
                          component_names_gather, &
                          rcounts*3, &
                          displs*3, &
                          max_num_stations_gather*3, &
-                         MAX_STRING_LENGTH, &
+                         3, &
                          mysize)
 
-    deallocate(stations_names)
-    deallocate(networks_names)
-    deallocate(component_names)
 
     ! Now gather all the coordiante information for these stations
     do i = 1, mysize
@@ -371,6 +387,9 @@ subroutine write_asdf(asdf_container)
                          max_num_stations_gather, &
                          mysize)
 
+    deallocate(stations_names)
+    deallocate(networks_names)
+    deallocate(component_names)
     deallocate(displs)
     deallocate(rcounts)
 
@@ -398,7 +417,7 @@ subroutine write_asdf(asdf_container)
     call read_file("setup/constants.h", sf_constants, len_constants)
     call read_file("DATA/Par_file", sf_parfile, len_Parfile)
     call ASDF_write_auxiliary_data_f(current_asdf_handle, trim(sf_constants) // C_NULL_CHAR,&
-                                    trim(sf_parfile(1:len_Parfile)) // C_NULL_CHAR, ier)
+                                   trim(sf_parfile(1:len_Parfile)) // C_NULL_CHAR, ier)
 
     call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
 
@@ -417,7 +436,6 @@ subroutine write_asdf(asdf_container)
             trim(network_names_gather(j,k)) // "." // &
             trim(station_names_gather(j,k)) // ".S3." //trim(component_names_gather(i+(3*(j-1)),k)) &
               //"__"//trim(start_time_string(1:19))//"__"//trim(end_time_string(1:19))//"__synthetic"
-            print *, trim(waveform_name), myrank
             call ASDF_define_waveform_f(station_grps_gather(j,k), &
               nsamples, start_time, sampling_rate, &
               trim(event_name_SAC) // C_NULL_CHAR, &
@@ -427,8 +445,6 @@ subroutine write_asdf(asdf_container)
       enddo
     enddo
   
-  call synchronize_all() 
-print *, "sync done"
   endif ! end (seismo_offset == 0) steps
 
   do j = 1, num_stations
