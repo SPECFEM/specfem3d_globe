@@ -138,12 +138,23 @@
             do i = 1, NGLLX
               iglob = ibool_crust_mantle(i,j,k,ispec)
               if (integer_mask_ibool_exact_undo(iglob) /= -1) &
-                buffer_for_disk(integer_mask_ibool_exact_undo(iglob)) = eps_trace_over_3_crust_mantle(i,j,k,ispec)
+                buffer_for_disk(integer_mask_ibool_exact_undo(iglob),it_of_this_exact_subset) = &
+                  eps_trace_over_3_crust_mantle(i,j,k,ispec)
             enddo
           enddo
         enddo
       enddo
-      write(IFILE_FOR_EXACT_UNDOING,rec=it) buffer_for_disk
+      if (it_of_this_exact_subset == it_exact_subset_end) then
+        do it_of_this_exact_subset = 1, it_exact_subset_end
+          write(IFILE_FOR_EXACT_UNDOING,rec=it_exact_subset_offset+it_of_this_exact_subset) &
+            buffer_for_disk(:,it_of_this_exact_subset)
+        enddo
+        it_of_this_exact_subset = 1
+        it_exact_subset_offset = it_exact_subset_offset + it_exact_subset_end
+        it_exact_subset_end = min(NSTEP_FOR_EXACT_UNDOING, it_end - it_exact_subset_offset)
+      else
+        it_of_this_exact_subset = it_of_this_exact_subset + 1
+      endif
     endif
 
     ! kernel simulations (forward and adjoint wavefields)
@@ -185,15 +196,28 @@
       else ! of if (.not. EXACT_UNDOING_TO_DISK)
 
         ! read the forward run from disk for the alpha kernel only
-        ! here we time revert the forward run by reading time step NSTEP - it + 1
-        read(IFILE_FOR_EXACT_UNDOING,rec=NSTEP-it+1) buffer_for_disk
+        it_of_this_exact_subset = it_of_this_exact_subset + 1
+        if (it_of_this_exact_subset > it_exact_subset_end) then
+          it_exact_subset_offset = it_exact_subset_offset + it_exact_subset_end
+          it_exact_subset_end = min(NSTEP_FOR_EXACT_UNDOING, it_end - it_exact_subset_offset)
+          do it_of_this_exact_subset = 1, it_exact_subset_end
+            ! here we time revert the forward run by reading time step NSTEP - it + 1
+            ! but here, it == it_exact_subset_offset + it_of_this_exact_subset
+            read(IFILE_FOR_EXACT_UNDOING,rec=NSTEP-it_exact_subset_offset-it_of_this_exact_subset+1) &
+              buffer_for_disk(:,it_of_this_exact_subset)
+          enddo
+          it_of_this_exact_subset = 1
+        endif
+
         do ispec = 1, NSPEC_CRUST_MANTLE
           do k = 1, NGLLZ
             do j = 1, NGLLY
               do i = 1, NGLLX
                 iglob = ibool_crust_mantle(i,j,k,ispec)
-                if (integer_mask_ibool_exact_undo(iglob) /= -1) &
-                  b_eps_trace_over_3_crust_mantle(i,j,k,ispec) = buffer_for_disk(integer_mask_ibool_exact_undo(iglob))
+                if (integer_mask_ibool_exact_undo(iglob) /= -1) then
+                  b_eps_trace_over_3_crust_mantle(i,j,k,ispec) = &
+                    buffer_for_disk(integer_mask_ibool_exact_undo(iglob),it_of_this_exact_subset)
+                endif
               enddo
             enddo
           enddo
@@ -485,11 +509,11 @@
   enddo
 
   ! allocate the buffer used to dump a single time step
-  allocate(buffer_for_disk(counter))
+  allocate(buffer_for_disk(counter,NSTEP_FOR_EXACT_UNDOING))
 
   ! open the file in which we will dump all the time steps (in a single file)
   write(outputname,"('huge_dumps/proc',i6.6,'_huge_dump_of_all_time_steps.bin')") myrank
-  inquire(iolength=record_length) buffer_for_disk
+  inquire(iolength=record_length) buffer_for_disk(:,1)
   ! we write to or read from the file depending on the simulation type
   if (SIMULATION_TYPE == 1) then
     open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='write', status='unknown', &
@@ -497,6 +521,17 @@
   else if (SIMULATION_TYPE == 3) then
     open(file=outputname, unit=IFILE_FOR_EXACT_UNDOING, action='read', status='old', &
                     form='unformatted', access='direct', recl=record_length)
+  endif
+
+  if (SIMULATION_TYPE == 1) then
+    it_of_this_exact_subset = 1
+    it_exact_subset_offset = it_begin - 1
+    it_exact_subset_end = min(NSTEP_FOR_EXACT_UNDOING, it_end - it_begin + 1)
+  else if (SIMULATION_TYPE == 3) then
+    ! Trigger a read at the start of the loop
+    it_of_this_exact_subset = 0
+    it_exact_subset_offset = it_begin - 1
+    it_exact_subset_end = 0
   endif
 
   end subroutine setup_exact_undoing_to_disk

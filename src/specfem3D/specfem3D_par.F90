@@ -315,7 +315,9 @@ module specfem_par
 
   ! for EXACT_UNDOING_TO_DISK
   integer, dimension(:), allocatable :: integer_mask_ibool_exact_undo
-  real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_for_disk
+  integer :: it_exact_subset
+  integer :: it_of_this_exact_subset, it_exact_subset_offset, it_exact_subset_end
 
 
 end module specfem_par

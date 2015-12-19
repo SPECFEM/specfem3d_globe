@@ -531,6 +531,8 @@
   logical, parameter :: EXACT_UNDOING_TO_DISK = .false.
   ! ID of the huge file in which we dump all the time steps of the simulation
   integer, parameter :: IFILE_FOR_EXACT_UNDOING = 244
+  ! Number of time steps between dumping the forward run
+  integer, parameter :: NSTEP_FOR_EXACT_UNDOING = 500
 
 !------------------------------------------------------
 !----------- do not modify anything below -------------
