@@ -1,18 +1,20 @@
 #!/usr/bin/perl -w
 
-#  This program figures out the global slice number for given simulation parameters
+#  This program figures out the global slice number on a source-receiver
+#  belt for given simulation parameters
 #  uses xglobal_slice_number and xnormal_plane, compile first from global_slice_util/
-# Qinya Liu, May 2007, Caltech
+#  Qinya Liu, Caltech, May 2007
 
 # modify the following line for the correct location of perl libs (utils/lib)
 use FindBin;
-use lib "$FindBin::Bin/../../lib/";
+use lib "$FindBin::Bin/../../lib";
 use CMT_TOOLS;
 
-if (@ARGV != 3) {die("Usage: global_slice_number.pl CMTSOLUTION STATIONS_ADJOINT Par_file\n");}
+if (@ARGV != 3 && @ARGV != 4) {die("Usage: global_slice_number.pl CMTSOLUTION STATIONS_ADJOINT Par_file [lat_belt_width (in degrees)]\n");}
 $cmt = $ARGV[0];
 $sta = $ARGV[1];
 $par_file = $ARGV[2];
+$lat0 = $ARGV[3] || "";
 
 # obtain event location
 ($elat,$elon) = get_cmt_location($cmt);
@@ -39,17 +41,17 @@ if ($nchunk != 6) {
 # minor
 print "compute slices along minor arc ...\n";
 if ($nchunk == 6) {
-  $command = "xglobal_slice_number $elon $elat $slon $slat $nproc 0";
+  $command = "$FindBin::Bin/xglobal_slice_number $elon $elat $slon $slat $nproc 0 $lat0";
 }else {
-  $command = "xglobal_slice_number $elon $elat $slon $slat $nproc 0 $nchunk $xi_width $eta_width $clon $clat $grot";}
+  $command = "$FindBin::Bin/xglobal_slice_number $elon $elat $slon $slat $nproc 0 $nchunk $xi_width $eta_width $clon $clat $grot $lat0";}
 system(" $command > slices_minor ");
 
 # major
 print "compute slices along major arc ...\n";
 if ($nchunk == 6) {
-  $command = "xglobal_slice_number $elon $elat $slon $slat $nproc 1";
+  $command = "$FindBin::Bin/xglobal_slice_number $elon $elat $slon $slat $nproc 1 $lat0";
 }else {
-  $command = "xglobal_slice_number $elon $elat $slon $slat $nproc 1 $nchunk $xi_width $eta_width $clon $clat $grot";}
+  $command = "$FindBin::Bin/xglobal_slice_number $elon $elat $slon $slat $nproc 1 $nchunk $xi_width $eta_width $clon $clat $grot $lat0";}
 system(" $command > slices_major ");
 
 if ($nchunk == 6) {
@@ -73,10 +75,10 @@ if ($nchunk == 6) {
 
 # figure out the normal to the source-receiver plane
 print "calculate normal to source and receiver plane\n";
-$command = "xnormal_plane $elat $elon $slat $slon";
+$command = "$FindBin::Bin/xnormal_plane $elat $elon $slat $slon";
 $result = `$command`;
 print "$result\n";
 
 # clean up temp files
-system(" rm -f slice_ab_old gcarc_station.txt xsection_translate.txt");
+system(" rm -f slice_ab_old garc_station.txt xsection_translate.txt");
 
