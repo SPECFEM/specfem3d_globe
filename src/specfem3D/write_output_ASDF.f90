@@ -453,6 +453,7 @@ subroutine write_asdf(asdf_container)
                                station_elevs_gather(j,myrank+1), station_depths_gather(j,myrank+1), &
                                start_time_string, stationxml)
     call ASDF_write_station_xml_f(stationxml_gather(j, myrank+1), trim(stationxml)//C_NULL_CHAR, ier)
+    ! write staionxml
     do i = 1, 3
       call ASDF_write_partial_waveform_f(data_ids(i, j, myrank+1), &
                                       seismograms(i,j,:), seismo_offset, NTSTEP_BETWEEN_OUTPUT_SEISMOS, ier)
