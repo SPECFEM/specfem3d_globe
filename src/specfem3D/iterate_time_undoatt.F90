@@ -45,7 +45,6 @@
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_ic_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_oc_store_buffer,b_accel_oc_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: b_noise_surface_movie_buffer
-
   double precision :: sizeval
   ! timing
   double precision, external :: wtime

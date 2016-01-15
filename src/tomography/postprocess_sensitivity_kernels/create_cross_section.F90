@@ -1062,7 +1062,7 @@
   call get_geocentric_thetaphi(lat2,lon2,theta2,phi2,ELLIPTICITY)
 
   ! reduce lat/lon to corresponding range
-  call set_thetaphi_range(theta1,phi2,use_positive_lon)
+  call set_thetaphi_range(theta1,phi1,use_positive_lon)
   call set_thetaphi_range(theta2,phi2,use_positive_lon)
 
   ! debug
