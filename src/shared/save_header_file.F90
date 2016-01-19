@@ -446,7 +446,7 @@
     ! regional mesh, variable chunk sizes
     num_elem_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI )
     num_gll_gc = int( 90.d0 / ANGULAR_WIDTH_XI_IN_DEGREES * 4 * NEX_XI *(NGLLX-1) )
-    avg_dist_deg = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) / dble(NGLLX-1)
+    avg_dist_deg = max( ANGULAR_WIDTH_XI_IN_DEGREES/NEX_XI,ANGULAR_WIDTH_ETA_IN_DEGREES/NEX_ETA ) / dble(NGLLX-1)
     avg_dist_km = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM / dble(NGLLX-1)
     avg_element_size = max( ANGULAR_WIDTH_XI_RAD/NEX_XI,ANGULAR_WIDTH_ETA_RAD/NEX_ETA ) * R_EARTH_KM
   else
