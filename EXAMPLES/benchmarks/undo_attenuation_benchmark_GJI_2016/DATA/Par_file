@@ -43,7 +43,7 @@ MODEL                           = 1D_transversely_isotropic_prem
 # parameters describing the Earth model
 OCEANS                          = .true.
 ELLIPTICITY                     = .true.
-TOPOGRAPHY                      = .true.
+TOPOGRAPHY                      = .false.
 GRAVITY                         = .true.
 ROTATION                        = .true.
 ATTENUATION                     = .true.
