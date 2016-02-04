@@ -213,6 +213,9 @@ module specfem_par
   integer :: yr, jda, mo, da, ho, mi
   double precision :: sec
 
+  ! for ASDF QuakeML file
+  real :: ms
+
   ! strain flag
   logical :: COMPUTE_AND_STORE_STRAIN
 
@@ -284,6 +287,12 @@ module specfem_par
   !-----------------------------------------------------------------
   ! adios file handle
   integer(kind=8) :: current_adios_handle
+
+  !-----------------------------------------------------------------
+  ! ASDF
+  !-----------------------------------------------------------------
+  ! asdf file handle
+  integer :: current_asdf_handle
 
   !-----------------------------------------------------------------
   ! time scheme
