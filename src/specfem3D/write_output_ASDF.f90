@@ -444,7 +444,7 @@ subroutine write_asdf(asdf_container)
         enddo
       enddo
     enddo
-  
+
   endif ! end (seismo_offset == 0) steps
 
   do j = 1, num_stations
@@ -658,7 +658,7 @@ end subroutine cmt_to_quakeml
 ! Convert system time into a string
 !! \param time system time
 !! \param time_string a string representation of the input time
-subroutine convert_systime_to_string(time, time_string) 
+subroutine convert_systime_to_string(time, time_string)
 
   double precision, intent(in) :: time
   character(len=*), intent(out) :: time_string

@@ -110,7 +110,7 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
     ! checks if adjoint source exists in ASDF file
     call ASDF_adjoint_source_exists_f(current_asdf_handle, trim(adj_filename) // C_NULL_CHAR, ier)
-   
+
     if (ier /= 0) then
       ! adjoint source not found
       ! stops simulation
