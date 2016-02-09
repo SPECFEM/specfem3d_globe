@@ -742,12 +742,14 @@
   ! computes derivatives
   do irec_local = 1, nrec_local
     ! rotate and scale the location derivatives to correspond to dn,de,dz
-    sloc_der(:,irec_local) = matmul(transpose(nu_source(:,:,irec_local)),sloc_der(:,irec_local)) &
+    sloc_der(:,irec_local) = matmul(nu_source(:,:,irec_local), sloc_der(:,irec_local)) &
                              * scale_displ * scale_t
 
     ! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
-    moment_der(:,:,irec_local) = matmul(matmul(transpose(nu_source(:,:,irec_local)),moment_der(:,:,irec_local)),&
-               nu_source(:,:,irec_local)) * scale_t ** 3 / scale_mass
+    moment_der(:,:,irec_local) = matmul(matmul(nu_source(:,:,irec_local), moment_der(:,:,irec_local)),&
+               transpose(nu_source(:,:,irec_local))) * scale_t ** 3 / scale_mass
+
+    ! *nu_source* is the rotation matrix from ECEF to local N-E-UP as defined in src/specfem3D/locate_sources.f90
 
     ! derivatives for time shift and hduration
     stshift_der(irec_local) = stshift_der(irec_local) * scale_displ**2
