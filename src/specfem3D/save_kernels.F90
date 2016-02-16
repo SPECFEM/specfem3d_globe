@@ -742,14 +742,28 @@
   ! computes derivatives
   do irec_local = 1, nrec_local
     ! rotate and scale the location derivatives to correspond to dn,de,dz
-    sloc_der(:,irec_local) = matmul(nu_source(:,:,irec_local), sloc_der(:,irec_local)) &
+    sloc_der(:,irec_local) = matmul(transpose(nu_source(:,:,irec_local)),sloc_der(:,irec_local)) &
                              * scale_displ * scale_t
 
     ! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
-    moment_der(:,:,irec_local) = matmul(matmul(nu_source(:,:,irec_local), moment_der(:,:,irec_local)),&
-               transpose(nu_source(:,:,irec_local))) * scale_t ** 3 / scale_mass
+    moment_der(:,:,irec_local) = matmul(matmul(transpose(nu_source(:,:,irec_local)),moment_der(:,:,irec_local)),&
+               nu_source(:,:,irec_local)) * scale_t ** 3 / scale_mass
 
     ! *nu_source* is the rotation matrix from ECEF to local N-E-UP as defined in src/specfem3D/locate_sources.f90
+
+! From Qinya Liu, Toronto University, Canada:
+! these derivatives are basically derivatives of the misfit function phi with respect to
+! source parameters, which means, if the nu is the rotation matrix that
+! transforms coordinates from the global system (x,y,z) to the local
+! coordinate system (N,E,V), e.g., the moment tensor is transformed as
+!
+! M_L = \nu * M_g * \nu^T,
+!
+! then the derivative should be transformed as
+!
+! \partial{\phi}{M_L} = \nu^T \partial{\phi}{M_g} \nu
+!
+! which is in the opposite sense from the transformation of M.
 
     ! derivatives for time shift and hduration
     stshift_der(irec_local) = stshift_der(irec_local) * scale_displ**2
