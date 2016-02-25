@@ -22,13 +22,19 @@
 
 /*  dc2mt.c  : Calculates moment tensor elements from strike/dip/rake
   by Onur TAN
-  ITU, Dept. of Geophysics, Istanbul, Turkey, 2Jan2004
-               21Apr2004 bug fix for Mxy
-        [ g++ -o dc2mt dc2mt.c ]
+  ITU, Dept. of Geophysics, Istanbul, Turkey, 02 Jan 2004
+               21 Apr 2004 bug fix for Mxy
 */
 
 // Modified by Dimitri Komatitsch, University of Pau, France, September 2007
-// compile with "  gcc -o dc2mt dc2mt.c -lm " to include the math library
+// compile with "  gcc -o strike_dip_rake_to_CMTSOLUTION strike_dip_rake_to_CMTSOLUTION.c -lm " to include the math library
+
+// Message from Onur TAN to Dimitri Komatitsch, about the reverse conversion program, Feb 2016:
+// I am sorry, I have no reverse conversion program.
+// But I found these web sites for Matlab codes:
+// https://github.com/g2e/seizmo/blob/master/cmt/sdr2mt.m
+// https://github.com/g2e/seizmo/blob/master/cmt/mt2sdr.m
+// Note from Dimitri: I have downloaded them and put them in file seizmo_master_containing_Matlab_codes_for_mt2dc_conversion.zip in this directory.
 
 #include <stdio.h>
 #include <string.h>
