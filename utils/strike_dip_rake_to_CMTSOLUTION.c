@@ -35,6 +35,7 @@
 // https://github.com/g2e/seizmo/blob/master/cmt/sdr2mt.m
 // https://github.com/g2e/seizmo/blob/master/cmt/mt2sdr.m
 // Note from Dimitri: I have downloaded them and put them in file seizmo_master_containing_Matlab_codes_for_mt2dc_conversion.zip in this directory.
+// Note from Elliott Sales de Andrade: ObsPy https://github.com/obspy also provides conversion for moment tensors from/to several different bases and strike/dip/rake.
 
 #include <stdio.h>
 #include <string.h>
