@@ -114,7 +114,7 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, irec, chn
   length_network_name = len_trim(network_name(irec))
   asdf_container%receiver_name_array(irec_local) = station_name(irec)(1:length_station_name)
   asdf_container%network_array(irec_local) = network_name(irec)(1:length_network_name)
-  asdf_container%component_array(i) = chn
+  asdf_container%component_array(i) = chn(1:3)
   asdf_container%receiver_lat(irec_local) = stlat(irec)
   asdf_container%receiver_lo(irec_local) = stlon(irec)
   asdf_container%receiver_el(irec_local) = stele(irec)
@@ -710,8 +710,9 @@ subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_sta
   character(len=*) :: pde_start_time_string
   double precision, intent(inout) :: starttime
   double precision :: trace_length_in_sec
-  integer :: year
+  integer :: year, runtime
   double precision :: pdetime, cmttime, endtime
+  integer,dimension(8) :: values
 
   ! Calculates the start time since the epoch in seconds
   ! Reference:
@@ -734,6 +735,12 @@ subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_sta
   trace_length_in_sec = DT*NSTEP
   endtime = starttime + trace_length_in_sec
   call convert_systime_to_string(endtime, end_time_string)
+ 
+  ! Calculates time in seconds since the epoch
+  call date_and_time(VALUES=values)
+  !time8()
+
+  !write(*,*) fmtdate(values,'The CPU time used by this program is now %c seconds')
 
 end subroutine get_time
 
@@ -769,8 +776,8 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
 
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
                      '<Source>SPECFEM3D_GLOBE</Source>'//&
-                     '<Module>fdsn-stationxml-converter/1.0.0</Module>'//&
-                     '<ModuleURI>http://www.iris.edu/fdsnstationconverter</ModuleURI>'//&
+                     '<Module>SPECFEM3D_GLOBE/asdf-library</Module>'//&
+                     '<ModuleURI>http://seismic-data.org</ModuleURI>'//&
                      '<Created>'//trim(start_time_string)//'</Created>'//&
                      '<Network code="'//trim(network_name(1:len(network_name)))//'"'//&
                      '><Station code="'//trim(station_name(1:len(station_name)))//'">'//&
