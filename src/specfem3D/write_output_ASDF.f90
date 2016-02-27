@@ -427,7 +427,7 @@ subroutine write_asdf(asdf_container)
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
            station_grps_gather(j, k))
-        stationxml_length = 1399 + len(trim(station_names_gather(j,k))) + len(trim(network_names_gather(j,k)))
+        stationxml_length = 1423 + len(trim(station_names_gather(j,k))) + len(trim(network_names_gather(j,k)))
         call ASDF_define_station_xml_f(station_grps_gather(j,k), stationxml_length, &
                                      stationxml_gather(j,k))
         do  i = 1, 3 ! loop over each component
@@ -710,7 +710,7 @@ subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_sta
   character(len=*) :: pde_start_time_string
   double precision, intent(inout) :: starttime
   double precision :: trace_length_in_sec
-  integer :: year, runtime
+  integer :: year
   double precision :: pdetime, cmttime, endtime
   integer,dimension(8) :: values
 
@@ -761,20 +761,25 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
   character(len=*) :: network_name
   character(len=*) :: start_time_string
   character(len=15) :: station_lat, station_lon, station_ele, station_depth
-  integer :: len_station_name, len_network_name
+  integer :: len_station_name, len_network_name, len_station_lat
+  integer :: len_station_lon, len_station_depth, len_station_ele
   real, intent(in) :: latitude, longitude, elevation, burial_depth
 
   ! Convert double precision to character strings for the StationXML string
 
-  write(station_lat, "(g11.4)") latitude
-  write(station_lon, "(g11.4)") longitude
-  write(station_ele, "(g8.1)") elevation
-  write(station_depth, "(g8.1)") burial_depth
+  write(station_lat, "(F11.4)") latitude
+  write(station_lon, "(F11.4)") longitude
+  write(station_ele, "(F8.1)") elevation
+  write(station_depth, "(F8.1)") burial_depth
 
-  print *, trim(station_lat), trim(station_depth), trim(station_ele)
+  ! print *, trim(station_lat), trim(station_lon), trim(station_depth), trim(station_ele)
 
   len_network_name = len(network_name)
   len_station_name = len(station_name)
+  len_station_lat = len(trim(station_lat))
+  len_station_lon = len(trim(station_lon))
+  len_station_depth = len(trim(station_depth))
+  len_station_ele = len(trim(station_ele))
 
   stationxmlstring = '<FDSNStationXML schemaVersion="1.0" xmlns="http://www.fdsn.org/xml/station/1">'//&
                      '<Source>SPECFEM3D_GLOBE</Source>'//&
@@ -783,9 +788,9 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<Created>'//trim(start_time_string)//'</Created>'//&
                      '<Network code="'//trim(network_name(1:len(network_name)))//'"'//&
                      '><Station code="'//trim(station_name(1:len(station_name)))//'">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
                      '<Site>'//&
                      '<Name>N/A</Name>'//&
                      '</Site>'//&
@@ -794,28 +799,28 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '<SelectedNumberChannels>3</SelectedNumberChannels>'//&
                      '<Channel locationCode="S3" code="MXN"'//&
                      ' startDate="'//trim(start_time_string)//'">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
-                     '<Depth>'//trim(station_depth)//'</Depth>'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
+                     '<Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
                      '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
                      '<Channel locationCode="S3" code="MXE"'//&
                      ' startDate="'//trim(start_time_string)//'">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
-                     '<Depth>'//trim(station_depth)//'</Depth>'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
+                     '<Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
                      '<Azimuth>90.0</Azimuth>'//&
                      '<Dip>0.0</Dip>'//&
                      '</Channel>'//&
                      '<Channel locationCode="S3" code="MXZ"'//&
                      ' startDate="'//trim(start_time_string)//'">'//&
-                     '<Latitude unit="DEGREES">'//trim(station_lat)//'</Latitude>'//&
-                     '<Longitude unit="DEGREES">'//trim(station_lon)//'</Longitude>'//&
-                     '<Elevation>'//trim(station_ele)//'</Elevation>'//&
-                     '<Depth>'//trim(station_depth)//'</Depth>'//&
+                     '<Latitude unit="DEGREES">'//trim(station_lat(1:len_station_lat))//'</Latitude>'//&
+                     '<Longitude unit="DEGREES">'//trim(station_lon(1:len_station_lon))//'</Longitude>'//&
+                     '<Elevation>'//trim(station_ele(1:len_station_ele))//'</Elevation>'//&
+                     '<Depth>'//trim(station_depth(1:len_station_depth))//'</Depth>'//&
                      '<Azimuth>0.0</Azimuth>'//&
                      '<Dip>90.0</Dip>'//&
                      '</Channel>'//&
