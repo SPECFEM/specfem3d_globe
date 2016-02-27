@@ -427,7 +427,7 @@ subroutine write_asdf(asdf_container)
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
            station_grps_gather(j, k))
-        stationxml_length = 1371 + len(trim(station_names_gather(j,k))) + len(trim(network_names_gather(j,k)))
+        stationxml_length = 1399 + len(trim(station_names_gather(j,k))) + len(trim(network_names_gather(j,k)))
         call ASDF_define_station_xml_f(station_grps_gather(j,k), stationxml_length, &
                                      stationxml_gather(j,k))
         do  i = 1, 3 ! loop over each component
@@ -766,10 +766,12 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
 
   ! Convert double precision to character strings for the StationXML string
 
-  write(station_lat, "(f5.2)") latitude
-  write(station_lon, "(f5.2)") longitude
-  write(station_ele, "(f5.2)") elevation
-  write(station_depth, "(f5.2)") burial_depth
+  write(station_lat, "(g11.4)") latitude
+  write(station_lon, "(g11.4)") longitude
+  write(station_ele, "(g8.1)") elevation
+  write(station_depth, "(g8.1)") burial_depth
+
+  print *, trim(station_lat), trim(station_depth), trim(station_ele)
 
   len_network_name = len(network_name)
   len_station_name = len(station_name)
