@@ -735,7 +735,7 @@ subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_sta
   trace_length_in_sec = DT*NSTEP
   endtime = starttime + trace_length_in_sec
   call convert_systime_to_string(endtime, end_time_string)
- 
+
   ! Calculates time in seconds since the epoch
   call date_and_time(VALUES=values)
   !time8()
