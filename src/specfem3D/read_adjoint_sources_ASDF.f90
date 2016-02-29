@@ -58,11 +58,11 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
   offset = index_start ! the value to start reading from
   nsamples = index_end - index_start ! this is how many points we want to read in from the adjoint source
 
-  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//&
-        trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
+  !call ASDF_read_partial_waveform_f(current_asdf_handle, "/AuxiliaryData/AdjointSource/"//&
+  !      trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
 
-  !call ASDF_read_full_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//&
-  !        trim(adj_source_name) // C_NULL_CHAR, adj_source, ier)
+  call ASDF_read_full_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//&
+          trim(adj_source_name) // C_NULL_CHAR, adj_source, ier)
 
   if (ier /= 0) then
     print *,'Error reading adjoint source: ',trim(adj_source_name)
@@ -87,6 +87,7 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
   integer :: nadj_sources_found
   integer :: nsamples_infered
   integer :: icomp
+  integer :: adjoint_source_exists
   integer :: ier
 
   ! local parameters
@@ -98,8 +99,8 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
   ! bandwidth code
   call band_instrument_code(DT,bic)
-  comp(1) = bic(1:2)//'N'
-  comp(2) = bic(1:2)//'E'
+  comp(1) = bic(1:2)//'E'
+  comp(2) = bic(1:2)//'N'
   comp(3) = bic(1:2)//'Z'
 
   ! loops over file components E/N/Z
@@ -109,9 +110,9 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
     adj_filename = trim(adj_source_file) // '_'// comp(icomp)
 
     ! checks if adjoint source exists in ASDF file
-    call ASDF_adjoint_source_exists_f(current_asdf_handle, trim(adj_filename) // C_NULL_CHAR, ier)
+    call ASDF_adjoint_source_exists_f(current_asdf_handle, trim(adj_filename) // C_NULL_CHAR, adjoint_source_exists)
 
-    if (ier /= 0) then
+    if (adjoint_source_exists == 0) then
       ! adjoint source not found
       ! stops simulation
       call exit_MPI(myrank,'adjoint source '//trim(adj_filename)//' not found, please check STATIONS_ADJOINT file and ASDF file')
