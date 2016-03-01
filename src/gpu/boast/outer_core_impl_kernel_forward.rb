@@ -318,7 +318,7 @@ elem_per_thread.times { |elem_index|
              print templ[2] === templ[2] + s_dummy_loc[l*ngll2+j*ngllx+i]*sh_hprime_xx[l*ngllx+k]
           }
           get_output.puts "#ifdef #{manually_unrolled_loops}"
-            for_loop.unroll
+            print for_loop.unroll
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
@@ -405,7 +405,7 @@ elem_per_thread.times { |elem_index|
              print templ[2] === templ[2] + s_temp[2][l*ngll2+j*ngllx+i]*sh_hprimewgll_xx[k*ngllx+l]
           }
           get_output.puts "#ifdef #{manually_unrolled_loops}"
-            for_loop.unroll
+            print for_loop.unroll
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"

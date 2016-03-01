@@ -808,7 +808,7 @@ elem_per_thread.times { |elem_index|
             }
           }
           get_output.puts "#ifdef #{manually_unrolled_loops}"
-            for_loop.unroll
+            print for_loop.unroll
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
@@ -1005,7 +1005,7 @@ elem_per_thread.times { |elem_index|
             }
           }
           get_output.puts "#ifdef #{manually_unrolled_loops}"
-            for_loop.unroll
+            print for_loop.unroll
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
