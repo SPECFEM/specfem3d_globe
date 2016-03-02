@@ -208,6 +208,11 @@ endif
 
 asdf_specfem3D_OBJECTS = \
 	$O/write_output_ASDF.solverstatic.o \
+	$O/read_adjoint_sources_ASDF.solverstatic.o \
+	$(EMPTY_MACRO)
+
+asdf_specfem3D_SHARED_OBJECTS = \
+	$O/asdf_manager.shared_asdf.o \
 	$(EMPTY_MACRO)
 
 asdf_specfem3D_STUBS = \
@@ -220,6 +225,7 @@ asdf_specfem3D_SHARED_STUBS = \
 # conditional asdf linking
 ifeq ($(ASDF),yes)
 specfem3D_OBJECTS += $(asdf_specfem3D_OBJECTS)
+specfem3D_SHARED_OBJECTS += $(asdf_specfem3D_SHARED_OBJECTS)
 else
 specfem3D_OBJECTS += $(asdf_specfem3D_STUBS)
 specfem3D_SHARED_OBJECTS += ${asdf_specfem3D_SHARED_STUBS}
@@ -267,7 +273,7 @@ endif
 
 # non-gpu or opencl
 ifeq ($(ASDF),yes)
-SPECFEM_LINK_FLAGS += $(ASDF_LIBS) -lhdf5hl_fortran -lhdf5_hl -lhdf5 -Wl -lstdc++
+SPECFEM_LINK_FLAGS += $(ASDF_LIBS) -lhdf5hl_fortran -lhdf5_hl -lhdf5 -lstdc++
 endif
 
 

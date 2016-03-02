@@ -183,6 +183,9 @@ PRINT_SOURCE_TIME_FUNCTION      = .false.
 #
 #-----------------------------------------------------------
 
+# use ASDF format for reading the adjoint sources
+READ_ADJSRC_ASDF                = .false.
+
 # this parameter must be set to .true. to compute anisotropic kernels
 # in crust and mantle (related to the 21 Cij in geographical coordinates)
 # default is .false. to compute isotropic kernels (related to alpha and beta)

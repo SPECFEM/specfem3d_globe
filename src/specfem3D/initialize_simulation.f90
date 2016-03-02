@@ -266,6 +266,11 @@
     !call write_specfem_header_adios()
   !endif
 
+  if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 &
+       .and. READ_ADJSRC_ASDF) then
+    call asdf_setup(current_asdf_handle)
+  endif
+
   ! synchronizes processes
   call synchronize_all()
 

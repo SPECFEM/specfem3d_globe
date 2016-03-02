@@ -43,9 +43,12 @@ module asdf_data
     !size info
     integer           :: nreceivers
 
-    character(len=20),pointer :: receiver_name_array(:), network_array(:)
-    character(len=20),pointer :: component_array(:)
-    character(len=20),pointer :: receiver_id_array(:)
+    !seismic record info
+    real, pointer             :: receiver_lat(:), receiver_lo(:)
+    real, pointer             :: receiver_el(:), receiver_dpt(:)
+    character(len=32),pointer :: receiver_name_array(:)
+    character(len=8),pointer :: network_array(:)
+    character(len=3),pointer :: component_array(:)
 
     !seismograms
     type (asdf_record), pointer :: records(:)

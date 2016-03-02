@@ -99,7 +99,7 @@ contains
     write_time_begin = wtime()
 
     ! checks if anything to do
-    ! note: ASDF uses adios that defines the MPI communicator group that the solver is
+    ! note: ASDF uses parallel hdf5 that defines the MPI communicator group that the solver is
     !       run with. this means every processor in the group is needed for write_seismograms
     if (nrec_local > 0 .or. ( WRITE_SEISMOGRAMS_BY_MASTER .and. myrank == 0 ) .or. OUTPUT_SEISMOS_ASDF) then
       ! writes out seismogram files

@@ -117,8 +117,9 @@
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
   use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
+  use iso_c_binding, only: C_NULL_CHAR
   use write_seismograms_mod, only: band_instrument_code
-  use specfem_par, only: NUMBER_OF_SIMULTANEOUS_RUNS, mygroup, scale_displ_inv
+  use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
 
   implicit none
 
@@ -129,8 +130,6 @@
 
   double precision xi_receiver, eta_receiver, gamma_receiver
   double precision DT
-
-  character(len=*) adj_source_file
 
   ! Vala added
   integer it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
@@ -151,6 +150,7 @@
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP_BLOCK) :: adj_src
+  real(kind=CUSTOM_REAL), dimension(NSTEP_BLOCK) :: adj_source_asdf
   double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
   integer icomp, itime, ios
@@ -158,6 +158,8 @@
   real(kind=CUSTOM_REAL) :: junk
   character(len=3),dimension(NDIM) :: comp
   character(len=MAX_STRING_LEN) :: filename, path_to_add
+  character(len=*) :: adj_source_file
+  character(len=11) :: adj_source_name
   character(len=2) :: bic
 
   call band_instrument_code(DT,bic)
@@ -189,41 +191,14 @@
   index_end = index_end
 
   adj_src = 0._CUSTOM_REAL
-  do icomp = 1, NDIM
 
-    ! opens adjoint component file
-    filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+  if (READ_ADJSRC_ASDF) then
 
-    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-      filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
-    endif
+    do icomp = 1, NDIM ! 3 components
 
-    open(unit=IIN_ADJ,file=trim(filename),status='old',action='read',iostat=ios)
+      print *, "READING ADJOINT SOURCES USING ASDF"
 
-    ! note: adjoint source files must be available for all three components E/N/Z, even
-    !          if a component is just zeroed out
-    if (ios /= 0) then
-      ! adjoint source file not found
-      ! stops simulation
-      call exit_MPI(myrank,&
-          'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
-    endif
-    !if (ios /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
-
-    ! jumps over unused trace length
-    do itime  = 1,index_start-1
-      read(IIN_ADJ,*,iostat=ios) junk,junk
-      if (ios /= 0) &
-        call exit_MPI(myrank,&
-          'file '//trim(filename)//' has wrong length, please check with your simulation duration')
-    enddo
-
-    ! reads in (sub)trace
-    do itime = index_start,index_end
-
-      ! index will run from 1 to NSTEP_BLOCK
-      index_i = itime - index_start + 1
+      adj_source_name = trim(adj_source_file) // '_' // comp(icomp)
 
       ! would skip read and set source artificially to zero if out of bounds, see comments above
       if (index_start == 0 .and. itime == 0) then
@@ -231,21 +206,72 @@
         cycle
       endif
 
-      ! reads in adjoint source trace
-      !read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,itime-index_start+1)
-      read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,index_i)
+      call read_adjoint_sources_ASDF(adj_source_name, adj_source_asdf, index_start, index_end)
 
-      if (ios /= 0) then
-        print *,'Error reading adjoint source: ',trim(filename)
-        print *,'rank ',myrank,' - time step: ',itime,' index_start: ',index_start,' index_end: ',index_end
-        print *,'  ',trim(filename)//'has wrong length, please check with your simulation duration'
-        call exit_MPI(myrank,'file '//trim(filename)//' has wrong length, please check with your simulation duration')
-      endif
+      adj_src(icomp,:) = adj_source_asdf(1:NSTEP_BLOCK)
+
     enddo
 
-    close(IIN_ADJ)
+  else
 
-  enddo
+    do icomp = 1, NDIM
+
+      ! opens adjoint component file
+      filename = 'SEM/'//trim(adj_source_file) // '.'// comp(icomp) // '.adj'
+
+      if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+        write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+        filename = path_to_add(1:len_trim(path_to_add))//filename(1:len_trim(filename))
+      endif
+
+      open(unit=IIN_ADJ,file=trim(filename),status='old',action='read',iostat=ios)
+
+      ! note: adjoint source files must be available for all three components E/N/Z, even
+      !          if a component is just zeroed out
+      if (ios /= 0) then
+        ! adjoint source file not found
+        ! stops simulation
+        call exit_MPI(myrank,&
+            'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
+      endif
+      !if (ios /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
+
+      ! jumps over unused trace length
+      do itime  = 1,index_start-1
+        read(IIN_ADJ,*,iostat=ios) junk,junk
+        if (ios /= 0) &
+          call exit_MPI(myrank,&
+            'file '//trim(filename)//' has wrong length, please check with your simulation duration')
+      enddo
+
+      ! reads in (sub)trace
+      do itime = index_start,index_end
+
+        ! index will run from 1 to NSTEP_BLOCK
+        index_i = itime - index_start + 1
+
+        ! would skip read and set source artificially to zero if out of bounds, see comments above
+        if (index_start == 0 .and. itime == 0) then
+          adj_src(icomp,1) = 0._CUSTOM_REAL
+          cycle
+        endif
+
+        ! reads in adjoint source trace
+        !read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,itime-index_start+1)
+        read(IIN_ADJ,*,iostat=ios) junk, adj_src(icomp,index_i)
+
+        if (ios /= 0) then
+          print *,'Error reading adjoint source: ',trim(filename)
+          print *,'rank ',myrank,' - time step: ',itime,' index_start: ',index_start,' index_end: ',index_end
+          print *,'  ',trim(filename)//'has wrong length, please check with your simulation duration'
+          call exit_MPI(myrank,'file '//trim(filename)//' has wrong length, please check with your simulation duration')
+        endif
+      enddo
+
+      close(IIN_ADJ)
+
+    enddo
+  endif
 
   ! non-dimensionalize
   adj_src(:,:) = adj_src(:,:) * scale_displ_inv
