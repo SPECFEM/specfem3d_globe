@@ -5,9 +5,10 @@ import os
 
 import numpy as np
 import matplotlib.pyplot as plt
-import scipy.signal
-# ObsPy has a simpler filtering interface
-import obspy.signal
+import obspy
+from obspy.core import Stream, Trace, Stats, UTCDateTime
+assert hasattr(obspy, '__version__') and obspy.__version__[0] >= '1', \
+    'ObsPy is too old to filter correctly. Please install 1.0.0 or newer.'
 
 
 START_50_100 = 3325
@@ -17,45 +18,52 @@ END_100_200 = 3900
 COMPONENT = 'Z'
 
 
+def read_specfem_seismogram(output_files, network, station, band):
+    st = Stream()
+    for component in 'ZNE':
+        channel = '%sX%s' % (band, component)
+        filename = os.path.join(output_files,
+                                '%s.%s.%s.sem.ascii' % (network, station,
+                                                        channel))
+        tmp = np.genfromtxt(filename)
+
+        stats = Stats()
+        stats.network = network
+        stats.station = station
+        stats.channel = channel
+        stats.delta = tmp[1, 0] - tmp[0, 0]
+        stats.npts = tmp.shape[0]
+        stats.starttime = tmp[0, 0]
+
+        tr = Trace(tmp[:, 1], stats)
+        st += tr
+
+    return st
+
+
 def plot_seismo(data, title, markers=(), colours=(), units='m'):
     if not args.plot:
         return
 
-    fig, ax = plt.subplots(3, 1, figsize=(16, 12), sharex=True)
+    fig = data.plot(type='relative', reftime=UTCDateTime(0), handle=True)
 
-    for i, comp in enumerate('ZEN'):
-        ax[i].plot(data[comp][:, 0], data[comp][:, 1])
-        ax[i].set_xlim(data[comp][0, 0], data[comp][-1, 0])
-
+    for ax in fig.get_axes():
         for mark, col in zip(markers, colours):
-            ax[i].axvline(mark, c=col, ls='--')
+            ax.axvline(mark, c=col, ls='--', lw=1)
+        ax.set_ylabel(units)
 
-        ax[i].set_ylabel('%s (%s)' % (comp, units))
-
-    ax[2].set_xlabel('Time (s)')
     fig.suptitle(title)
 
     if output:
         output.savefig(fig)
 
 
-def bandpass(data, low_period, high_period, dt, markers=(), colours=()):
-    filt = {}
-    vel = {}
-
-    for c in 'ZEN':
-        filt[c] = np.empty_like(data[c])
-        filt[c][:, 0] = data[c][:, 0]
-        # NOTE: ObsPy has a bandpass filter, but it is broken in current
-        # releases. It should be fixed in master and the next (0.11.0) release.
-        tmp = obspy.signal.lowpass(data[c][:, 1], 1.0 / low_period,
-                                   df=1.0 / dt, zerophase=True)
-        filt[c][:, 1] = obspy.signal.highpass(tmp, 1.0 / high_period,
-                                              df=1.0 / dt, zerophase=True)
-
-        vel[c] = np.empty_like(detrend[c])
-        vel[c][:, 0] = detrend[c][:, 0]
-        vel[c][:, 1] = np.gradient(filt[c][:, 1])
+def bandpass(data, low_period, high_period, markers=(), colours=()):
+    filt = data.copy().filter('bandpass',
+                              freqmin=1.0 / high_period,
+                              freqmax=1.0 / low_period,
+                              zerophase=True)
+    vel = filt.copy().differentiate()
 
     plot_seismo(filt, 'Filtered %ds - %ds Displacement' % (low_period,
                                                            high_period),
@@ -78,8 +86,8 @@ def create_adjsrc(all_data, t1, t2, component, EPS=1e-17):
     Parameters
     ----------
 
-    all_data : dict
-        A dictionary of each time series indexing by component.
+    all_data : obspy.core.stream.Stream
+        A Stream of each time series.
     t1, t2 : float
         The start and end times for the window.
     component : str
@@ -94,17 +102,15 @@ def create_adjsrc(all_data, t1, t2, component, EPS=1e-17):
         values windowed and normalized within the requested range.
 
     """
-    adj_src = {}
-    for comp in 'ZEN':
-        adj_src[comp] = all_data[comp].copy()
-
-        if component and comp != component:
+    adj_src = all_data.copy()
+    for tr in adj_src:
+        if component and tr.stats.channel[-1] != component:
             # A specific component is chosen and this is not it.
-            adj_src[comp][:, 1] = 0.0
+            tr.data.fill(0)
             continue
 
-        time = all_data[comp][:, 0]
-        data = all_data[comp][:, 1]
+        time = tr.times() + (tr.stats.starttime - UTCDateTime(0))
+        data = tr.data
 
         # Select time range.
         mask = np.where((t1 <= time) & (time <= t2))
@@ -117,16 +123,16 @@ def create_adjsrc(all_data, t1, t2, component, EPS=1e-17):
 
         # Find normalization factor.
         norm = np.sum(tw * data * data)
-        print('component = ', comp, 'norm = ', norm)
+        print('ID =', tr.id, 'norm =', norm)
 
         # Create adjoint source.
         if abs(norm) > EPS:
             adj = - data * tw / norm
         else:
-            print('norm < EPS for component', comp)
-            adj = 0.0
+            print('norm < EPS for component', tr.stats.channel[-1])
+            adj = np.zeros_like(data)
 
-        adj_src[comp][:, 1] = adj
+        tr.data = adj
 
     return adj_src
 
@@ -163,9 +169,12 @@ def generate_adjoint_files(basedir, section, data):
     except OSError:
         pass
 
-    for c in 'ZEN':
-        name = os.path.join(sem_dir, 'SY.STA00.MX%s.adj' % (c, ))
-        np.savetxt(name, data[c])
+    for tr in data:
+        name = os.path.join(sem_dir, '%s.adj' % (tr.id.replace('..', '.'), ))
+        output = np.column_stack((
+            tr.times() + (tr.stats.starttime - UTCDateTime(0)),
+            tr.data))
+        np.savetxt(name, output)
 
 
 # Read any command-line arguments.
@@ -188,25 +197,17 @@ else:
 synthetics_dir = os.path.join(args.synthetics, 'OUTPUT_FILES')
 
 # Load output files.
-files = {}
+st = read_specfem_seismogram(synthetics_dir, 'SY', 'STA00', 'M')
+print('Read in', st)
 
-for c in 'ZEN':
-    name = os.path.join(synthetics_dir, 'SY.STA00.MX%s.sem.ascii' % (c, ))
-    files[c] = np.genfromtxt(name)
-dt = files['Z'][1, 0] - files['Z'][0, 0]
-
-plot_seismo(files, 'Raw Displacement Seismograms',
+plot_seismo(st, 'Raw Displacement Seismograms',
             markers=(START_50_100, END_50_100, START_100_200, END_100_200),
             colours='rrgg')
 
 # Detrend (not much change here).
-detrend = {}
-for c in 'ZEN':
-    detrend[c] = np.empty_like(files[c])
-    detrend[c][:, 0] = files[c][:, 0]
-    detrend[c][:, 1] = scipy.signal.detrend(files[c][:, 1])
+st.detrend('linear')
 
-plot_seismo(detrend, 'Detrended Displacement Seismograms',
+plot_seismo(st, 'Detrended Displacement Seismograms',
             markers=(START_50_100, END_50_100, START_100_200, END_100_200),
             colours='rrgg')
 
@@ -215,12 +216,12 @@ plot_seismo(detrend, 'Detrended Displacement Seismograms',
 #   * Second band from 100s to 200s
 
 # 50s - 100s
-filt_50_100, vel_50_100 = bandpass(detrend, 50, 100, dt,
+filt_50_100, vel_50_100 = bandpass(st, 50, 100,
                                    markers=(START_50_100, END_50_100),
                                    colours='rr')
 
 # 100s - 200s
-filt_100_200, vel_100_200 = bandpass(detrend, 100, 200, dt,
+filt_100_200, vel_100_200 = bandpass(st, 100, 200,
                                      markers=(START_100_200, END_100_200),
                                      colours='gg')
 
