@@ -11,10 +11,10 @@ assert hasattr(obspy, '__version__') and obspy.__version__[0] >= '1', \
     'ObsPy is too old to filter correctly. Please install 1.0.0 or newer.'
 
 
-START_50_100 = 3325
-END_50_100 = 3635
-START_100_200 = 3350
-END_100_200 = 3900
+START_50_100 = 3395
+END_50_100 = 3595
+START_100_200 = 3390
+END_100_200 = 3825
 COMPONENT = 'Z'
 
 
@@ -41,16 +41,20 @@ def read_specfem_seismogram(output_files, network, station, band):
     return st
 
 
-def plot_seismo(data, title, markers=(), colours=(), units='m'):
+def plot_seismo(data, title, markers=(), colours=(), units='m', **kwargs):
     if not args.plot:
         return
 
-    fig = data.plot(type='relative', reftime=UTCDateTime(0), handle=True)
+    if isinstance(units, str):
+        units = [units] * len(data)
 
-    for ax in fig.get_axes():
+    fig = data.plot(type='relative', reftime=UTCDateTime(0), handle=True,
+                    **kwargs)
+
+    for ax, unit in zip(fig.get_axes(), units):
         for mark, col in zip(markers, colours):
             ax.axvline(mark, c=col, ls='--', lw=1)
-        ax.set_ylabel(units)
+        ax.set_ylabel(unit)
 
     fig.suptitle(title)
 
@@ -234,6 +238,31 @@ plot_seismo(cut_50_100, 'Adjoint Source 50s - 100s', units='m/s',
             markers=(START_50_100, END_50_100), colours='rr')
 plot_seismo(cut_100_200, 'Adjoint Source 100s - 200s', units='m/s',
             markers=(START_100_200, END_100_200), colours='gg')
+
+# Plot together
+
+st_50_100 = Stream()
+for this_st, name in zip([st, filt_50_100, vel_50_100],
+                         ['1-raw', '2-filt', '3-vel']):
+    for tr in this_st.select(component=COMPONENT):
+        tr_new = tr.copy()
+        tr_new.stats.location = name
+        st_50_100 += tr_new
+
+st_100_200 = Stream()
+for this_st, name in zip([st, filt_100_200, vel_100_200],
+                         ['1-raw', '2-filt', '3-vel']):
+    for tr in this_st.select(component=COMPONENT):
+        tr_new = tr.copy()
+        tr_new.stats.location = name
+        st_100_200 += tr_new
+
+plot_seismo(st_50_100, 'All Stages 50s - 100s', units=('m', 'm', 'm/s'),
+            markers=(START_50_100, END_50_100), colours='rr',
+            equal_scale=False)
+plot_seismo(st_100_200, 'All Stages 100s - 200s', units=('m', 'm', 'm/s'),
+            markers=(START_100_200, END_100_200), colours='gg',
+            equal_scale=False)
 
 # Write output
 
