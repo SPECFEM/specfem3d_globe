@@ -34,7 +34,7 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
 
   integer :: itime, offset, nsamples
   integer :: index_start, index_end
-  double precision, dimension(*),intent(out) :: adj_source ! NSTEP block size
+  real(kind=CUSTOM_REAL), dimension(*),intent(out) :: adj_source ! NSTEP block size
   double precision, dimension(42300) :: adj_source_test
   character(len=*) :: adj_source_name
   !--- Error variable
