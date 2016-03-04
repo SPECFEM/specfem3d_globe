@@ -45,13 +45,13 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
 
   print *, myrank, " myrank ", trim(adj_source_name)
 
-  !call ASDF_read_partial_waveform_f(current_asdf_handle, "/AuxiliaryData/AdjointSource/"//&
+  !call ASDF_read_partial_waveform_f(current_asdf_handle, "/AuxiliaryData/AdjointSources/"//&
   !      trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source_test(1:999), ier)
 
   print *, current_asdf_handle, " current asdf handle"
   print *, trim(adj_source_name)
   
-  call ASDF_read_full_waveform_f(current_asdf_handle, "/AuxiliaryData/AdjointSource/"//&
+  call ASDF_read_full_waveform_f(current_asdf_handle, "/AuxiliaryData/AdjointSources/"//&
           trim(adj_source_name) // C_NULL_CHAR, adj_source_test, ier)
 
   print *, "myrank ", myrank, trim(adj_source_name), adj_source_test(1:10)
@@ -101,11 +101,10 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
     ! name of adjoint source file for this component
     adj_filename = trim(adj_source_file) // '_'// comp(icomp)
-    print *, trim(adj_filename)
 
     ! checks if adjoint source exists in ASDF file
     call ASDF_adjoint_source_exists_f(current_asdf_handle, trim(adj_filename) // C_NULL_CHAR, adjoint_source_exists)
-    print *, trim(adj_filename), adjoint_source_exists
+    ! print *, trim(adj_filename), adjoint_source_exists
 
     if (adjoint_source_exists == 0) then
         !adjoint source not found
@@ -115,9 +114,9 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
     ! checks length of file
     call ASDF_get_num_elements_from_path_f(current_asdf_handle,&
-       "AuxiliaryData/AdjointSource/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
+       "AuxiliaryData/AdjointSources/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
 
-    print *, trim(adj_filename), nsamples_infered
+    ! print *, trim(adj_filename), nsamples_infered
 
     ! checks length
     if (nsamples_infered /= NSTEP) then
@@ -130,5 +129,5 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
     nadj_sources_found = nadj_sources_found + 1
    
   enddo
-  print *, myrank, "exiting"
+
 end subroutine check_adjoint_sources_ASDF
