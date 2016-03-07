@@ -35,7 +35,6 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
   integer :: itime, offset, nsamples
   integer :: index_start, index_end
   real(kind=CUSTOM_REAL), dimension(*),intent(out) :: adj_source ! NSTEP block size
-  double precision, dimension(42300) :: adj_source_test
   character(len=*) :: adj_source_name
   !--- Error variable
   integer ier
@@ -43,19 +42,20 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
   offset = index_start ! the value to start reading from
   nsamples = index_end - index_start ! this is how many points we want to read in from the adjoint source
 
-  print *, myrank, " myrank ", trim(adj_source_name)
+  !print *, myrank, " myrank ", trim(adj_source_name)
+  !print *, " offset, ", offset
+  !print *, " nsamples ", nsamples
+  !print *, adj_source_name, " reading"
 
-  !call ASDF_read_partial_waveform_f(current_asdf_handle, "/AuxiliaryData/AdjointSources/"//&
-  !      trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source_test(1:999), ier)
+  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSources/"//&
+      trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
 
-  print *, current_asdf_handle, " current asdf handle"
-  print *, trim(adj_source_name)
+  !print *, current_asdf_handle, " current asdf handle"
+  !print *, trim(adj_source_name)
   
-  call ASDF_read_full_waveform_f(current_asdf_handle, "/AuxiliaryData/AdjointSources/"//&
-          trim(adj_source_name) // C_NULL_CHAR, adj_source_test, ier)
-
-  print *, "myrank ", myrank, trim(adj_source_name), adj_source_test(1:10)
-  adj_source(1:nsamples)=adj_source_test(1:nsamples)
+  !call ASDF_read_full_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSources/"//&
+  !        trim(adj_source_name) // C_NULL_CHAR, adj_source, ier)
+  !print *, adj_source(1:10)
 
   if (ier /= 0) then
     print *,'Error reading adjoint source: ',trim(adj_source_name)
@@ -92,8 +92,8 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
   ! bandwidth code
   call band_instrument_code(DT,bic)
-  comp(1) = bic(1:2)//'E'
-  comp(2) = bic(1:2)//'N'
+  comp(1) = bic(1:2)//'N'
+  comp(2) = bic(1:2)//'E'
   comp(3) = bic(1:2)//'Z'
 
   ! loops over file components E/N/Z

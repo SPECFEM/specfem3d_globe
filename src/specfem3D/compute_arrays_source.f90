@@ -163,8 +163,8 @@
   character(len=2) :: bic
 
   call band_instrument_code(DT,bic)
-  comp(1) = bic(1:2)//'E'
-  comp(2) = bic(1:2)//'N'
+  comp(1) = bic(1:2)//'N'
+  comp(2) = bic(1:2)//'E'
   comp(3) = bic(1:2)//'Z'
 
   ! (sub)trace start and end
