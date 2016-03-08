@@ -79,7 +79,7 @@ module BOAST
         print ispec === abs_boundary_ispec[iface]-1
 
         print Case( interface_type,
-        0, lambda {
+        0 => lambda {
           print If(Expression("||", nkmin_xi[INDEX2(2,0,iface)] == 0, njmin[INDEX2(2,0,iface)] == 0) )   { print Return(nil) }
           print i === 0
           print k === igll/ngllx
@@ -88,7 +88,7 @@ module BOAST
           print If(Expression("||", j <    njmin[INDEX2(2,0,iface)]-1, j > ngllx-1) )                    { print Return(nil) } #incoherent with acoustic checks
           print fac1 === wgllwgll[k*ngllx+j] if type == :forward
         },
-        1, lambda {
+        1 => lambda {
           print If(Expression("||", nkmin_xi[INDEX2(2,1,iface)] == 0, njmin[INDEX2(2,1,iface)] == 0) )   { print Return(nil) }
           print i === ngllx-1
           print k === igll/ngllx
@@ -97,7 +97,7 @@ module BOAST
           print If(Expression("||", j <    njmin[INDEX2(2,1,iface)]-1, j > njmax[INDEX2(2,1,iface)]-1) ) { print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+j] if type == :forward
         },
-        2, lambda {
+        2 => lambda {
           print If(Expression("||", nkmin_eta[INDEX2(2,0,iface)] == 0, nimin[INDEX2(2,0,iface)] == 0) )  { print Return(nil) }
           print j === 0
           print k === igll/ngllx
@@ -106,7 +106,7 @@ module BOAST
           print If(Expression("||", i <     nimin[INDEX2(2,0,iface)]-1, i > nimax[INDEX2(2,0,iface)]-1) ){ print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+i] if type == :forward
         },
-        3, lambda {
+        3 => lambda {
           print If(Expression("||", nkmin_eta[INDEX2(2,1,iface)] == 0, nimin[INDEX2(2,1,iface)] == 0) )  { print Return(nil) }
           print j === ngllx-1
           print k === igll/ngllx
