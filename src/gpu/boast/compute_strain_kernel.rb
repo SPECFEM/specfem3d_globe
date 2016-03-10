@@ -80,9 +80,9 @@ module BOAST
                                                       sh_hprime_xx,
                                                       epsdev,eps_trace_over_3.address)
 
-        print If(nspec_strain_only == 1, lambda {
+        print If(nspec_strain_only == 1 => lambda {
           print epsilon_trace_over_3[tx] === eps_trace_over_3
-        }, lambda {
+        }, :else => lambda {
           print epsilon_trace_over_3[ijk_ispec] === eps_trace_over_3
         })
 

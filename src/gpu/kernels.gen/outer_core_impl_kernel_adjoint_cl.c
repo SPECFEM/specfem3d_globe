@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 1.0.4
+//      this file has been generated automatically by BOAST version 1.1.0
 //      by: make boast_kernels
 
 /*
@@ -299,7 +299,7 @@ __kernel void outer_core_impl_kernel_adjoint(const int nb_blocks_to_compute, con
     sin_theta = sincos(theta,  &cos_theta);\n\
     sin_phi = sincos(phi,  &cos_phi);\n\
     int_radius = rint(((radius) * (R_EARTH_KM)) * (10.0f)) - (1);\n\
-    if ( ! GRAVITY) {\n\
+    if ( !(GRAVITY)) {\n\
       grad_x_ln_rho = ((sin_theta) * (cos_phi)) * (d_d_ln_density_dr_table[int_radius]);\n\
       grad_y_ln_rho = ((sin_theta) * (sin_phi)) * (d_d_ln_density_dr_table[int_radius]);\n\
       grad_z_ln_rho = (cos_theta) * (d_d_ln_density_dr_table[int_radius]);\n\

@@ -196,7 +196,7 @@
 
     do icomp = 1, NDIM ! 3 components
 
-      print *, "READING ADJOINT SOURCES USING ASDF"
+      ! print *, "READING ADJOINT SOURCES USING ASDF"
 
       adj_source_name = trim(adj_source_file) // '_' // comp(icomp)
 
@@ -208,7 +208,7 @@
 
       call read_adjoint_sources_ASDF(adj_source_name, adj_source_asdf, index_start, index_end)
 
-      adj_src(icomp,:) = adj_source_asdf(1:NSTEP_BLOCK)
+      adj_src(icomp,:) = real(adj_source_asdf(1:NSTEP_BLOCK))
 
     enddo
 

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 1.0.4
+//      this file has been generated automatically by BOAST version 1.1.0
 //      by: make boast_kernels
 
 /*
@@ -699,13 +699,13 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
     if (ANISOTROPY) {
       compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     } else {
-      if ( ! d_ispec_is_tiso[working_element]) {
+      if ( !(d_ispec_is_tiso[working_element])) {
         compute_element_cm_iso(offset, d_kappavstore, d_muvstore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duydyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, duydyl_plus_duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
       } else {
         compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob_1, d_ystore, d_zstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
       }
     }
-    if (ATTENUATION &&  ! PARTIAL_PHYS_DISPERSION_ONLY) {
+    if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
       compute_element_cm_att_stress(tx, working_element, R_xx, R_yy, R_xy, R_xz, R_yz,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);
     }
     sigma_yx = sigma_xy;
@@ -869,7 +869,7 @@ __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
       atomicAdd(d_accel + (iglob_1) * (3) + 2, sum_terms3);
     }
 #endif
-    if (ATTENUATION &&  ! PARTIAL_PHYS_DISPERSION_ONLY) {
+    if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {
       compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);
     }
     if (COMPUTE_AND_STORE_STRAIN) {

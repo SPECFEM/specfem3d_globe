@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 1.0.4
+//      this file has been generated automatically by BOAST version 1.1.0
 //      by: make boast_kernels
 
 /*
@@ -182,7 +182,7 @@ __kernel void compute_stacey_elastic_kernel(const __global float * veloc, __glob
         }\n\
         fac1 = wgllwgll[(k) * (NGLLX) + i];\n\
         break;\n\
-      }\n\
+    }\n\
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);\n\
     vx = veloc[(iglob) * (3) + 0];\n\
     vy = veloc[(iglob) * (3) + 1];\n\
