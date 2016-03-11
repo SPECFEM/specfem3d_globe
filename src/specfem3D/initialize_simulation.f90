@@ -39,6 +39,7 @@
   integer :: ier
   character(len=MAX_STRING_LEN) :: dummystring
   character(len=MAX_STRING_LEN) :: path_to_add
+  logical :: simul_run_flag
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
@@ -223,6 +224,9 @@
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
     STATIONS_FILE = path_to_add(1:len_trim(path_to_add))//STATIONS_FILE(1:len_trim(STATIONS_FILE))
+    simul_run_flag = .true.
+  else
+    simul_run_flag = .false.
   endif
 
   ! get total number of receivers
@@ -268,7 +272,7 @@
 
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 &
        .and. READ_ADJSRC_ASDF) then
-    call asdf_setup(current_asdf_handle)
+    call asdf_setup(current_asdf_handle, path_to_add, simul_run_flag)
   endif
 
   ! synchronizes processes
