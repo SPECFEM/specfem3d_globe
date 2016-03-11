@@ -120,7 +120,7 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
     ! updates counter for found files
     nadj_sources_found = nadj_sources_found + 1
-   
+
   enddo
 
 end subroutine check_adjoint_sources_ASDF
