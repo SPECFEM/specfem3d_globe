@@ -772,10 +772,20 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   free(cdDevices);
 
   // command kernel queues
+  // clCreateCommandQueue feature in OpenCL 1.2, will be deprecated in OpenCL 2.0
+#ifdef CL_VERSION_2_0
+  // version 2.0
+  mocl.command_queue = clCreateCommandQueueWithProperties(mocl.context, mocl.device, 0, clck_(&errcode));
+  if (GPU_ASYNC_COPY) {
+    mocl.copy_queue = clCreateCommandQueueWithProperties(mocl.context, mocl.device, 0, clck_(&errcode));
+  }
+#else
+  // version 1.2, CL_VERSION_1_2
   mocl.command_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
   if (GPU_ASYNC_COPY) {
     mocl.copy_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
   }
+#endif
 }
 #endif
 
