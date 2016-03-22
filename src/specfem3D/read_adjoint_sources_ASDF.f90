@@ -39,13 +39,15 @@ subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, i
   !--- Error variable
   integer ier
 
-  offset = index_start ! the value to start reading from
-  nsamples = index_end - index_start ! this is how many points we want to read in from the adjoint source
+  ! Fortran/C index convension. Meaning Fortran starts at 1 and C starts at 0 so
+  ! we need to subtract 1 for the C subroutine read_partial_waveform_f
+  offset = index_start - 1 ! the value to start reading from
+  nsamples = index_end - index_start + 1 ! this is how many points we want to read in from the adjoint source
 
-  !print *, myrank, " myrank ", trim(adj_source_name)
-  !print *, " offset, ", offset
-  !print *, " nsamples ", nsamples
-  !print *, adj_source_name, " reading"
+  ! print *, myrank, " myrank ", trim(adj_source_name)
+  ! print *, " offset, ", offset
+  ! print *, " nsamples ", nsamples
+  ! print *, adj_source_name, " reading"
 
   call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSources/"//&
       trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)

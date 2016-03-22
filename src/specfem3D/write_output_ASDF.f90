@@ -394,7 +394,7 @@ subroutine write_asdf(asdf_container)
     call ASDF_write_string_attribute_f(current_asdf_handle, "file_format" // C_NULL_CHAR, &
                                        "ASDF" // C_NULL_CHAR, ier)
     call ASDF_write_string_attribute_f(current_asdf_handle, "file_format_version" // C_NULL_CHAR, &
-                                       "0.0.2" // C_NULL_CHAR, ier)
+                                       "1.0.0" // C_NULL_CHAR, ier)
 
     call ASDF_write_quakeml_f(current_asdf_handle, trim(quakeml) // C_NULL_CHAR, ier)
     call ASDF_write_provenance_data_f(current_asdf_handle, provenance(1:len_prov+1), ier)
