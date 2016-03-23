@@ -84,6 +84,7 @@ specfem3D_OBJECTS += \
 	$O/locate_sources.solverstatic.o \
 	$O/multiply_arrays_source.solverstatic.o \
 	$O/noise_tomography.solverstatic.o \
+	$O/prepare_optimized_arrays.solverstatic.o \
 	$O/prepare_timerun.solverstatic.o \
 	$O/read_adjoint_sources.solverstatic.o \
 	$O/read_arrays_solver.solverstatic.o \
