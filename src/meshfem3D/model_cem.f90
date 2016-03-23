@@ -61,7 +61,11 @@ module cem_par
 
 end module cem_par
 
-subroutine model_cem_broadcast (myrank)
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine model_cem_broadcast (myrank)
 
   use cem_par
   use netcdf
@@ -104,9 +108,13 @@ subroutine model_cem_broadcast (myrank)
 
   endif
 
-end subroutine model_cem_broadcast
+  end subroutine model_cem_broadcast
 
-subroutine request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
 
   use cem_par
   use constants
@@ -152,9 +160,13 @@ subroutine request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
 
   endif
 
-end subroutine request_cem
+  end subroutine request_cem
 
-subroutine return_populated_arrays (structure, param, reg)
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine return_populated_arrays (structure, param, reg)
 
   use cem_par
   use netcdf
@@ -165,7 +177,6 @@ subroutine return_populated_arrays (structure, param, reg)
   integer :: ncid, dimid, nPar
   integer :: status, varid
 
-
   character(3), intent(in) :: param
 
   type (par) :: structure
@@ -173,7 +184,6 @@ subroutine return_populated_arrays (structure, param, reg)
   character (len=MAX_STRING_LEN) :: fileName
   character (len=MAX_STRING_LEN) :: fileNameTrim
   character (len=MAX_STRING_LEN) :: formatString
-
 
   formatString = "(A,A3,A,I0.2,A,I0.6,A)"
   write (fileName,formatString) "./DATA/cemRequest/", param, "_reg", reg, ".proc", rank, ".nc"
@@ -197,10 +207,13 @@ subroutine return_populated_arrays (structure, param, reg)
   if ( param == "vph" ) status = nf90_get_var (ncid, varid, structure%vph)
   if ( param == "vsh" ) status = nf90_get_var (ncid, varid, structure%vsh)
 
+  end subroutine return_populated_arrays
 
-end subroutine return_populated_arrays
+!
+!-------------------------------------------------------------------------------------------
+!
 
-subroutine write_cem_request (iregion_code)
+  subroutine write_cem_request (iregion_code)
 
   use netcdf
   use constants
@@ -212,14 +225,14 @@ subroutine write_cem_request (iregion_code)
   integer, dimension (NDIMS_WRITE) :: start, count, ids
 
   integer :: ncid, paramDimID, procDimID, varidX, varidY, varidZ
-  integer :: varidR, iregion_code, commWorldSize, worldComm, myRank, info
+  integer :: varidR, iregion_code, commWorldSize, Comm, myRank, info
   character (len = MAX_STRING_LEN) :: fileName, fileNameTrim, formatString
 
   ! Get the total number of processors.
-  call world_rank     (myRank)
-  call world_size     (commWorldSize)
-  call world_get_comm (worldComm)
-  call world_get_info_null (info)
+  call world_rank(myRank)
+  call world_size(commWorldSize)
+  call world_duplicate(Comm)
+  call world_get_info_null(info)
 
   ! Define filename.
   formatString = "(A,I0.2,A)"
@@ -227,8 +240,7 @@ subroutine write_cem_request (iregion_code)
   fileNameTrim = trim (fileName)
 
   ! Create parallel NetCDF file.
-  call checkNC (nf90_create (fileNameTrim, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
-    comm = worldComm, info = info))
+  call checkNC (nf90_create (fileNameTrim, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, comm = Comm, info = info))
 
   ! Define the processor array.
   call checkNC (nf90_def_dim (ncid, 'glob', size (xyzOut(:,1)), paramDimID))
@@ -260,9 +272,14 @@ subroutine write_cem_request (iregion_code)
   deallocate(xyzOut)
   deallocate(regCode)
 
-end subroutine write_cem_request
+  end subroutine write_cem_request
 
-subroutine build_global_coordinates (nspec, nglob, iregion_code)
+!
+!-------------------------------------------------------------------------------------------
+!
+
+
+  subroutine build_global_coordinates (nspec, nglob, iregion_code)
 
   use constants
   use cem_par
@@ -376,9 +393,13 @@ subroutine build_global_coordinates (nspec, nglob, iregion_code)
 
   endif
 
-end subroutine build_global_coordinates
+  end subroutine build_global_coordinates
 
-subroutine checkNC (status)
+!
+!-------------------------------------------------------------------------------------------
+!
+
+  subroutine checkNC (status)
 
   ! This little guy just checks for an error from the NetCDF libraries and throws a tantrum if
   ! one's found.
@@ -394,4 +415,4 @@ subroutine checkNC (status)
     stop 'Netcdf error.'
   endif
 
-end subroutine checkNC
+  end subroutine checkNC

@@ -99,6 +99,7 @@ end module my_mpi
 
   ! broadcast parameters read from master to all processes
   my_local_mpi_comm_world = MPI_COMM_WORLD
+
   call bcast_all_singlei(NUMBER_OF_SIMULTANEOUS_RUNS)
   call bcast_all_singlel(BROADCAST_SAME_MESH_AND_MODEL)
 
@@ -1709,6 +1710,27 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
+  subroutine world_rank_comm(rank,comm)
+
+  use my_mpi
+
+  implicit none
+
+  integer,intent(out) :: rank
+  integer,intent(in) :: comm
+
+  ! local parameters
+  integer :: ier
+
+  call MPI_COMM_RANK(comm,rank,ier)
+  if (ier /= 0 ) stop 'Error getting MPI rank'
+
+  end subroutine world_rank_comm
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
   subroutine world_duplicate(comm)
 
   use my_mpi
@@ -1717,6 +1739,16 @@ end module my_mpi
 
   integer,intent(out) :: comm
   integer :: ier
+
+  ! note: see http://www.mpich.org/static/docs/v3.1/www3/MPI_Comm_dup.html
+  ! "..
+  ! This routine is used to create a new communicator that has a new communication context but contains
+  ! the same group of processes as the input communicator. Since all MPI communication is performed within
+  ! a communicator (specifies as the group of processes plus the context), this routine provides an effective way
+  ! to create a private communicator for use by a software module or library.
+  !
+  ! In particular, no library routine should use MPI_COMM_WORLD as the communicator;
+  ! instead, a duplicate of a user-specified communicator should always be used."
 
   call MPI_COMM_DUP(my_local_mpi_comm_world,comm,ier)
   if (ier /= 0 ) stop 'Error duplicating my_local_mpi_comm_world communicator'
@@ -1771,6 +1803,27 @@ end module my_mpi
   info = MPI_INFO_NULL
 
   end subroutine world_get_info_null
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine world_comm_free(comm)
+
+  use my_mpi
+
+  implicit none
+
+  integer,intent(inout) :: comm
+
+  ! local parameters
+  integer :: ier
+
+  call MPI_Comm_free(comm,ier)
+  if (ier /= 0 ) stop 'Error freeing MPI communicator'
+
+  end subroutine world_comm_free
+
 
 !
 !-------------------------------------------------------------------------------------------------
