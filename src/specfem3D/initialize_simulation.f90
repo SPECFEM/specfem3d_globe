@@ -29,6 +29,7 @@
 
   use specfem_par
   use specfem_par_movie
+  use manager_adios
 
   implicit none
 
@@ -260,7 +261,7 @@
   endif
 
   if (ADIOS_ENABLED) then
-    call adios_setup()
+    call initialize_adios()
   endif
   !if (ADIOS_ENABLED) then
     ! TODO use only one ADIOS group to write simulation parameters

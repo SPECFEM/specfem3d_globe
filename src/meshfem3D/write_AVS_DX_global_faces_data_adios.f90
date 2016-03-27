@@ -42,7 +42,7 @@ module AVS_DX_global_faces_mod
     real(kind=4), dimension(:), allocatable :: x_adios, y_adios, z_adios
     integer(kind=4), dimension(:), allocatable :: idoubling, iglob1, iglob2, &
         iglob3, iglob4
-    real, dimension(:), allocatable :: dvp, dvs
+    real(kind=4), dimension(:), allocatable :: dvp, dvs
   endtype
 
 contains
@@ -72,16 +72,16 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
   logical :: iMPIcut_eta(2,nspec)
 
   ! logical mask used to output global points only once
-  integer npointot
-  logical mask_ibool(npointot)
+  integer :: npointot
+  logical :: mask_ibool(npointot)
 
   integer(kind=8), intent(inout) :: group_size_inc
   type(avs_dx_global_faces_t), intent(inout) :: avs_dx_adios
 
   ! local parameters
-  integer ispec
-  integer iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
-  integer npoin,nspecface
+  integer :: ispec
+  integer :: iglob1,iglob2,iglob3,iglob4,iglob5,iglob6,iglob7,iglob8
+  integer :: npoin,nspecface
   integer :: ierr
 
   ! Dummy arrays for type inference inside adios helpers
@@ -679,7 +679,6 @@ subroutine write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
                                    "points_faces/y_value", avs_dx_adios%y_adios)
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
                                    "points_faces/z_value", avs_dx_adios%z_adios)
-
 
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
                                    "elements_faces/idoubling", avs_dx_adios%idoubling)

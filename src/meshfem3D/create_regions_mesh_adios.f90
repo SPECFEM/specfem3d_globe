@@ -29,10 +29,6 @@
   subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
                                        num_ibool_AVS_DX, mask_ibool)
 
-  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
-
-  use adios_helpers_mod
-
   use meshfem3d_par,only: &
     ibool,idoubling, &
     xstore,ystore,zstore, &
@@ -53,6 +49,9 @@
   use AVS_DX_global_chunks_mod
   use AVS_DX_surface_mod
 
+  use adios_helpers_mod
+  use manager_adios
+
   implicit none
 
   ! number of spectral elements in each block
@@ -70,8 +69,8 @@
   type(avs_dx_surface_t) :: avs_dx_surface_vars
 
   character(len=MAX_STRING_LEN) :: reg_name, outputname, group_name
-  integer :: comm, ier
-  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
+  integer :: ier
+  integer(kind=8) :: adios_group, group_size_inc
 
   integer :: sizeprocs
 
@@ -80,22 +79,12 @@
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
   call create_name_database_adios(reg_name,iregion_code,LOCAL_PATH)
+
   write(group_name,"('SPECFEM3D_GLOBE_AVS_DX_reg',i1)") iregion_code
 
-  ! Alias COMM_WORLD to use ADIOS
-  call world_duplicate(comm)
-
+  ! set the adios group size to 0 before incremented by calls to helpers functions.
   group_size_inc = 0
-
-  call adios_declare_group(adios_group, group_name, "", 0, ier)
-  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(myrank,ier)
-
-  ! We set the transport method to 'MPI'. This seems to be the correct choice
-  ! for now. We might want to move this to the constant.h file later on.
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", ier)
-  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(myrank,ier)
+  call init_adios_group(adios_group,group_name)
 
   !--- Define ADIOS variables -----------------------------
   call define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
@@ -115,28 +104,26 @@
 
   call define_AVS_DX_surfaces_data_adios(adios_group, &
                                          myrank,nspec,iboun,ibool, &
-                                         mask_ibool,npointot,&
+                                         mask_ibool,npointot, &
                                          ISOTROPIC_3D_MANTLE, &
                                          group_size_inc, avs_dx_surface_vars)
+
 
   !--- Open an ADIOS handler to the AVS_DX file. ---------
   outputname = trim(reg_name) // "AVS_DX.bp"
   ! user output
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
-  call adios_open (adios_handle, group_name, outputname, "w", comm, ier)
-  call check_adios_err(myrank,ier)
-
-  call adios_group_size (adios_handle, group_size_inc,adios_totalsize, ier)
-  call check_adios_err(myrank,ier)
+  ! opens file for writing
+  call open_file_adios_write(outputname,group_name)
+  call set_adios_group_size(group_size_inc)
 
   !--- Schedule writes for the previously defined ADIOS variables
   call prepare_AVS_DX_global_data_adios(myrank, &
                                         nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
                                         mask_ibool, npointot, avs_dx_global_vars)
 
-  call write_AVS_DX_global_data_adios(adios_handle, myrank, &
-      sizeprocs, avs_dx_global_vars)
+  call write_AVS_DX_global_data_adios(file_handle_adios, myrank,sizeprocs, avs_dx_global_vars)
 
   call prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
                                               iMPIcut_xi,iMPIcut_eta, &
@@ -147,19 +134,19 @@
                                               RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                               avs_dx_global_faces_vars)
 
-  call write_AVS_DX_global_faces_data_adios(adios_handle, myrank, &
-      sizeprocs, avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
+  call write_AVS_DX_global_faces_data_adios(file_handle_adios, myrank, &
+                                            sizeprocs, avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
 
   call prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
-      iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,&
-      npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
-      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
-      RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
-      RMIDDLE_CRUST,ROCEAN,iregion_code, &
-      avs_dx_global_chunks_vars)
+                                               iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,&
+                                               npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
+                                               ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
+                                               RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
+                                               RMIDDLE_CRUST,ROCEAN,iregion_code, &
+                                               avs_dx_global_chunks_vars)
 
-  call write_AVS_DX_global_chunks_data_adios(adios_handle, myrank, &
-      sizeprocs, avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
+  call write_AVS_DX_global_chunks_data_adios(file_handle_adios, myrank, &
+                                             sizeprocs, avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
 
   call prepare_AVS_DX_surfaces_data_adios(myrank,nspec,iboun, &
                                           ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
@@ -169,12 +156,16 @@
                                           RMIDDLE_CRUST,ROCEAN,iregion_code, &
                                           avs_dx_surface_vars)
 
-  call write_AVS_DX_surfaces_data_adios(adios_handle, myrank, &
-      sizeprocs, avs_dx_surface_vars, ISOTROPIC_3D_MANTLE)
+  call write_AVS_DX_surfaces_data_adios(file_handle_adios, myrank, &
+                                        sizeprocs, avs_dx_surface_vars, ISOTROPIC_3D_MANTLE)
+
+
 
   !--- Reset the path to zero and perform the actual write to disk
-  call adios_set_path (adios_handle, "", ier)
-  call adios_close(adios_handle, ier)
+  call adios_set_path (file_handle_adios, "", ier)
+
+  ! closes file
+  call close_file_adios()
 
   !--- Clean up temporary arrays -------------------------
   call free_AVS_DX_global_data_adios(avs_dx_global_vars)

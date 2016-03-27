@@ -30,20 +30,21 @@
   use constants_solver, only: SAVE_BOUNDARY_MESH
 
   use specfem_par, only: NOISE_TOMOGRAPHY,SIMULATION_TYPE,nrec_local, &
-    APPROXIMATE_HESS_KL,SAVE_REGULAR_KL, &
-    current_adios_handle,ADIOS_FOR_KERNELS
+    APPROXIMATE_HESS_KL,SAVE_REGULAR_KL,ADIOS_FOR_KERNELS
 
   use specfem_par_innercore, only: rhostore_inner_core,muvstore_inner_core,kappavstore_inner_core, &
     rho_kl_inner_core,alpha_kl_inner_core,beta_kl_inner_core
 
   use specfem_par_outercore, only: rhostore_outer_core,kappavstore_outer_core,rho_kl_outer_core,alpha_kl_outer_core
 
+  use manager_adios
+
   implicit none
 
   ! Open an handler to the ADIOS file in which kernel variables are written.
   if (ADIOS_FOR_KERNELS) then
     if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      call define_kernel_adios_variables(current_adios_handle)
+      call define_kernel_adios_variables()
   endif
 
   ! dump kernel arrays
@@ -86,7 +87,7 @@
   ! Write ADIOS defined variables to disk.
   if (ADIOS_FOR_KERNELS) then
     if ((SIMULATION_TYPE == 3) .or. (SIMULATION_TYPE == 2 .and. nrec_local > 0)) &
-      call perform_write_adios_kernels(current_adios_handle)
+      call close_file_adios()
   endif
 
   end subroutine save_kernels
@@ -401,8 +402,7 @@
 
   ! writes out kernels to files
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_cm_adios(current_adios_handle, &
-                                mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+    call write_kernels_cm_adios(mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
                                 alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
                                 betav_kl_crust_mantle,betah_kl_crust_mantle, &
                                 eta_kl_crust_mantle, &
@@ -578,7 +578,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_oc_adios(current_adios_handle)
+    call write_kernels_oc_adios()
   else
     call create_name_database(prname,myrank,IREGION_OUTER_CORE,LOCAL_TMP_PATH)
 
@@ -646,7 +646,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_ic_adios(current_adios_handle)
+    call write_kernels_ic_adios()
   else
     call create_name_database(prname,myrank,IREGION_INNER_CORE,LOCAL_TMP_PATH)
 
@@ -691,7 +691,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_boundary_kl_adios(current_adios_handle)
+    call write_kernels_boundary_kl_adios()
   else
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
 
@@ -772,7 +772,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_source_derivatives_adios(current_adios_handle)
+    call write_kernels_source_derivatives_adios()
   else
     ! kernel file output
     do irec_local = 1, nrec_local
@@ -829,7 +829,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_hessian_adios(current_adios_handle)
+    call write_kernels_hessian_adios()
   else
     ! stores into file
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)

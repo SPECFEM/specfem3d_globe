@@ -44,6 +44,7 @@ tomography/postprocess_sensitivity_kernels_TARGETS = \
 ifeq ($(ADIOS),yes)
 tomography/postprocess_sensitivity_kernels_TARGETS += \
 	$E/xconvert_model_file_adios \
+	$E/xinterpolate_model_adios \
 	$(EMPTY_MACRO)
 endif
 
@@ -111,7 +112,7 @@ xconvert_model_file_adios_SHARED_OBJECTS = \
 	$O/adios_helpers_definitions.shared_adios_module.o \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
-	$O/adios_manager.shared_adios.o \
+	$O/adios_manager.shared_adios_module.o \
 	$(EMPTY_MACRO)
 
 ${E}/xconvert_model_file_adios: $(xconvert_model_file_adios_OBJECTS) $(xconvert_model_file_adios_SHARED_OBJECTS)
@@ -228,6 +229,30 @@ $O/interpolate_model.postprocess.o: $O/search_kdtree.shared.o
 ${E}/xinterpolate_model: $(xinterpolate_model_OBJECTS) $(xinterpolate_model_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
+##
+## xinterpolate_model_adios
+##
+xinterpolate_model_adios_OBJECTS = \
+	$O/postprocess_par.postprocess_module.o \
+	$O/interpolate_model.postprocess_adios.o \
+	$(EMPTY_MACRO)
+
+xinterpolate_model_adios_SHARED_OBJECTS = \
+	$(xinterpolate_model_SHARED_OBJECTS)
+
+xinterpolate_model_adios_SHARED_OBJECTS += \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios_module.o \
+	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/interpolate_model.postprocess_adios.o: $O/search_kdtree.shared.o $O/adios_manager.shared_adios_module.o
+
+${E}/xinterpolate_model_adios: $(xinterpolate_model_adios_OBJECTS) $(xinterpolate_model_adios_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
 
 ##
 ## xsmooth_sem
@@ -327,7 +352,7 @@ $O/%.postprocess.o: $S/%.F90 $O/postprocess_par.postprocess_module.o $O/parallel
 
 
 $O/%.postprocess_adios.o: $S/%.F90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)ADIOS_INPUT
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
 
 $O/%.postprocess_adios.o: $S/%.f90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<

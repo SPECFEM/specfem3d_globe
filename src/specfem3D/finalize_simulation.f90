@@ -32,6 +32,9 @@
   use specfem_par_innercore
   use specfem_par_outercore
   use specfem_par_movie
+
+  use manager_adios
+
   implicit none
 
   ! synchronize all processes, waits until all processes have written their seismograms
@@ -117,7 +120,7 @@
 
   ! adios finalizes
   if (ADIOS_ENABLED) then
-    call adios_cleanup()
+    call finalize_adios()
   endif
 
   ! asdf finalizes

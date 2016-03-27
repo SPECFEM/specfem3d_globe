@@ -366,7 +366,6 @@ subroutine write_AVS_DX_global_data_adios(adios_handle, myrank, sizeprocs, avs_d
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, npoin, &
                                    "points/z_value", avs_dx_adios%z_adios)
 
-
   call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, nspec, &
                                    "elements/idoubling", avs_dx_adios%idoubling)
 

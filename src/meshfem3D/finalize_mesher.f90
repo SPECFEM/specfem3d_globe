@@ -30,6 +30,8 @@
   use meshfem3D_par
   use meshfem3D_models_par
 
+  use manager_adios
+
   implicit none
 
   ! local parameters
@@ -400,7 +402,7 @@
   call synchronize_all()
 
   if (ADIOS_ENABLED) then
-    call adios_cleanup()
+    call finalize_adios()
   endif
 
   end subroutine finalize_mesher

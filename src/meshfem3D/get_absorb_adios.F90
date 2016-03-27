@@ -58,11 +58,10 @@ subroutine get_absorb_adios(myrank, iregion, &
 
   use constants
 
-  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
-
-  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array,check_adios_err
-
   use meshfem3D_par, only: LOCAL_PATH
+
+  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array
+  use manager_adios
 
   ! Stacey, define flags for absorbing boundaries
   implicit none
@@ -78,12 +77,10 @@ subroutine get_absorb_adios(myrank, iregion, &
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name
-  integer :: comm, local_dim
+  integer :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
-  integer                 :: adios_err
-  integer(kind=8)         :: adios_group, adios_handle
-  integer(kind=8)         :: adios_totalsize
+  integer(kind=8)         :: adios_group
   character(len=128)      :: region_name
 
   integer, save :: num_regions_written = 0
@@ -105,21 +102,9 @@ subroutine get_absorb_adios(myrank, iregion, &
   ! save these temporary arrays for the solver for Stacey conditions
   write(group_name,"('SPECFEM3D_GLOBE_STACEY_reg',i1)") iregion
 
-  ! Alias COMM_WORLD to use ADIOS
-  call world_duplicate(comm)
-
-  ! set the adios group size to 0 before incremented by calls to
-  ! helpers functions.
+  ! set the adios group size to 0 before incremented by calls to helpers functions.
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, "", 0, adios_err)
-  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(myrank,ier)
-
-  ! We set the transport method to 'MPI'. This seems to be the correct choice
-  ! for now. We might want to move this to the constant.h file later on.
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
-  ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-  !call check_adios_err(myrank,adios_err)
+  call init_adios_group(adios_group,group_name)
 
   !--- Define ADIOS variables -----------------------------
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX
@@ -140,35 +125,34 @@ subroutine get_absorb_adios(myrank, iregion, &
 
   !--- Open an ADIOS handler to the restart file. ---------
   if (num_regions_written == 0) then
-    call adios_open (adios_handle, group_name, outputname, "w", comm, adios_err)
-    call check_adios_err(myrank,adios_err)
+    ! opens file for writing
+    call open_file_adios_write(outputname,group_name)
   else
-    call adios_open (adios_handle, group_name, outputname, "a", comm, adios_err)
-    call check_adios_err(myrank,adios_err)
+    ! opens file for writing in append mode
+    call open_file_adios_write_append(outputname,group_name)
   endif
-
-  call adios_group_size (adios_handle, group_size_inc, &
-                         adios_totalsize, adios_err)
+  call set_adios_group_size(group_size_inc)
 
   !--- Schedule writes for the previously defined ADIOS variables
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX
-  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(njmin))
-  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(njmax))
-  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(nkmin_xi))
 
   local_dim = 2*NSPEC2DMAX_YMIN_YMAX
-  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(nimin))
-  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(nimax))
-  call write_adios_global_1d_array(adios_handle, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(nkmin_eta))
 
   !--- Reset the path to zero and perform the actual write to disk
-  call adios_close(adios_handle, adios_err)
+  ! closes file
+  call close_file_adios()
 
   num_regions_written = num_regions_written + 1
 

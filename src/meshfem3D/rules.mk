@@ -119,6 +119,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/create_regions_mesh_par2.$(FC_MODEXT) \
 	$(FC_MODDIR)/create_mpi_interfaces_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/gapp2_mantle_model_constants.$(FC_MODEXT) \
+	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/meshfem3d_models_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/meshfem3d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/mpi_crust_mantle_par.$(FC_MODEXT) \
@@ -151,6 +152,7 @@ meshfem3D_MODULES = \
 # These files come from the shared directory
 meshfem3D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/adios_manager.shared_adios_module.o \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
@@ -208,10 +210,6 @@ adios_meshfem3D_SHARED_OBJECTS = \
 	$O/adios_helpers_definitions.shared_adios_module.o \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
-	$O/adios_manager.shared_adios.o \
-	$(EMPTY_MACRO)
-
-adios_meshfem3D_STUBS = \
 	$(EMPTY_MACRO)
 
 adios_meshfem3D_SHARED_STUBS = \
@@ -223,7 +221,6 @@ ifeq ($(ADIOS),yes)
 meshfem3D_OBJECTS += $(adios_meshfem3D_OBJECTS)
 meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_OBJECTS)
 else
-meshfem3D_OBJECTS += $(adios_meshfem3D_STUBS)
 meshfem3D_SHARED_OBJECTS += $(adios_meshfem3D_SHARED_STUBS)
 endif
 
@@ -266,6 +263,8 @@ $O/model_attenuation.check.o: \
 	$O/model_ak135.check.o \
 	$O/model_1066a.check.o \
 	$O/model_sea1d.check.o
+
+$O/meshfem3D_par.check_module.o: $O/adios_manager.shared_adios_module.o
 
 # Version file
 $O/initialize_mesher.check.o: ${SETUP}/version.fh

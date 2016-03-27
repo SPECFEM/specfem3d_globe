@@ -32,14 +32,15 @@
 
 program convert_model_file_adios
 
-  use adios_read_mod
-  use adios_write_mod
-  use adios_helpers_mod
+  use constants,only: ADIOS_TRANSPORT_METHOD
 
   use postprocess_par,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     MAX_STRING_LEN,NPROCTOT_VAL,NSPEC_CRUST_MANTLE
 
-  use constants,only: ADIOS_TRANSPORT_METHOD
+  use adios_read_mod
+  use adios_write_mod
+  use adios_helpers_mod
+  use manager_adios
 
   implicit none
 
@@ -88,8 +89,6 @@ program convert_model_file_adios
   integer(kind=8) :: totalsize
   integer(kind=8) :: group_size_inc
   integer :: local_dim
-  integer(kind=8) :: sel
-  integer(kind=8) :: sel_start(1),count_ad(1)
   integer :: comm
   integer :: ier
 
@@ -97,7 +96,6 @@ program convert_model_file_adios
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)
-  call world_get_comm(comm)
 
   ! checks number of processes
   ! note: must run as with same number of process as file was created
@@ -209,7 +207,7 @@ program convert_model_file_adios
     print *, 'initializing ADIOS...'
     print *, ' '
   endif
-  call adios_setup()
+  call initialize_adios()
 
   ! initializes model values
   model(:,:,:,:) = 0.0_CUSTOM_REAL
@@ -220,6 +218,9 @@ program convert_model_file_adios
   model_eta(:,:,:,:) = 0.0_CUSTOM_REAL
   model_rho(:,:,:,:) = 0.0_CUSTOM_REAL
   model_qmu(:,:,:,:) = 0.0_CUSTOM_REAL
+
+  ! gets mpi communicator for adios calls
+  call world_duplicate(comm)
 
 !--------------------------------------------
   if (convert_format == 1) then ! from adios to old binaries
@@ -232,32 +233,14 @@ program convert_model_file_adios
       print *, 'reading in ADIOS model file: ',trim(m_adios_file)
     endif
 
-    call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", ier)
-    if (ier /= 0 ) stop 'Error in adios_read_init_method()'
-
-    call adios_read_open_file (model_handle, trim(m_adios_file), 0, comm, ier)
-    if (ier /= 0) then
-      print *, 'Error opening adios model file: ',trim(m_adios_file)
-      stop 'Error opening adios model file'
-    endif
-
-    local_dim = NGLLX * NGLLY * NGLLZ * NSPEC
+    ! opens adios file
+    call open_file_adios_read(m_adios_file)
 
     do iker = 1,nparams
       model(:,:,:,:) = 0.0_CUSTOM_REAL
 
-      call adios_get_scalar(model_handle, trim(model_name(iker))//"/local_dim",local_dim, ier)
-      if (ier /= 0 ) stop 'Error adios get scalar'
-
-      sel_start(1) = local_dim * myrank
-      count_ad(1) = NGLLX * NGLLY * NGLLZ * NSPEC
-
-      call adios_selection_boundingbox(sel, 1, sel_start, count_ad)
-      call adios_schedule_read(model_handle, sel,trim(model_name(iker))//"/array",0, 1, model, ier)
-      if (ier /= 0 ) stop 'Error adios schedule read'
-
-      call adios_perform_reads(model_handle, ier)
-      if (ier /= 0 ) stop 'Error adios perform read'
+      ! reads in associated model array
+      call read_adios_array_gll(myrank,NSPEC,model,model_name(iker))
 
       if (USE_TRANSVERSE_ISOTROPY) then
         ! TI model
@@ -294,11 +277,9 @@ program convert_model_file_adios
       endif
     enddo
 
-    call adios_read_close(model_handle,ier)
-    if (ier /= 0 ) stop 'Error adios read close'
+    ! closes adios file
+    call close_file_adios_read()
 
-    call adios_read_finalize_method(ADIOS_READ_METHOD_BP, ier)
-    if (ier /= 0 ) stop 'Error adios read finalize'
 
     ! WRITE OUT THE MODEL IN OLD BINARIES
 
@@ -476,6 +457,8 @@ program convert_model_file_adios
     endif
 
     call adios_group_size (model_handle, group_size_inc, totalsize, ier)
+    if (ier /= 0 ) stop 'Error calling adios_group_size() routine failed'
+
     call adios_write(model_handle, "NSPEC", nspec, ier)
 
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC

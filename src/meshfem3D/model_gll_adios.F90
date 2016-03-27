@@ -36,9 +36,12 @@
 subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
 
   use constants
+
+  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY,model_gll_variables
+
   use adios_read_mod
   use adios_helpers_mod
-  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY,model_gll_variables
+  use manager_adios,only: open_file_adios_read,file_handle_adios
 
   implicit none
 
@@ -51,11 +54,9 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
   ! local parameters
   integer :: local_dim
   character(len=MAX_STRING_LEN) :: file_name
-  integer :: comm
 
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_handle ! adios_group
   integer(kind=8), dimension(1) :: start, count
 
   integer(kind=8) :: sel
@@ -71,58 +72,50 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
     call flush_IMAIN()
   endif
 
-  call world_get_comm(comm)
-
   ! Setup the ADIOS library to read the file
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
-  call check_adios_err(myrank,adios_err)
-
-  call adios_read_open_file (adios_handle, trim(file_name), 0, comm, adios_err)
-  if (adios_err /= 0) then
-    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
-    call check_adios_err(myrank,adios_err)
-  endif
+  call open_file_adios_read(file_name)
 
   local_dim = NGLLX * NGLLY * NGLLZ * nspec(IREGION_CRUST_MANTLE)
-  start(1) = local_dim*myrank; count(1) = local_dim
+  start(1) = local_dim*myrank
+  count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
 
   ! reads in model for each partition
   if (.not. TRANSVERSE_ISOTROPY) then
     ! isotropic model
     ! vp mesh
-    call adios_schedule_read(adios_handle, sel, "reg1/vp/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, "reg1/vp/array", 0, 1, &
         MGLL_V%vp_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
-    call adios_schedule_read(adios_handle, sel, "reg1/vs/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, "reg1/vs/array", 0, 1, &
         MGLL_V%vs_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
   else
     ! transverse isotropic model
     ! WARNING previously wronly name 'vps' in the adios files
     ! vp mesh
-    call adios_schedule_read(adios_handle, sel, "reg1/vpv/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, "reg1/vpv/array", 0, 1, &
         MGLL_V%vpv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
-    call adios_schedule_read(adios_handle, sel, "reg1/vph/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, "reg1/vph/array", 0, 1, &
         MGLL_V%vph_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
 
     ! vs mesh
-    call adios_schedule_read(adios_handle, sel, "reg1/vsv/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, "reg1/vsv/array", 0, 1, &
         MGLL_V%vsv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
-    call adios_schedule_read(adios_handle, sel, "reg1/vsh/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, "reg1/vsh/array", 0, 1, &
         MGLL_V%vsh_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
 
     ! eta mesh
-    call adios_schedule_read(adios_handle, sel, "reg1/eta/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, "reg1/eta/array", 0, 1, &
         MGLL_V%eta_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
   endif
 
   ! rho mesh
-  call adios_schedule_read(adios_handle, sel, "reg1/rho/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, "reg1/rho/array", 0, 1, &
       MGLL_V%rho_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_read_close(adios_handle, adios_err)
+  call adios_read_close(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
 end subroutine read_gll_model_adios

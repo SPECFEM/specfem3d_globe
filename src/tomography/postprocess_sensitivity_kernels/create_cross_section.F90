@@ -179,7 +179,7 @@
       print *, "this program must be executed in parallel with NPROCTOT_VAL = ",NPROCTOT_VAL,"processes"
       print *, "Invalid number of processes used: ", sizeprocs, " procs"
       print *
-      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xinterpolate_model .."
+      print *, "Please run: mpirun -np ",NPROCTOT_VAL," ./bin/xcreate_cross_section .."
     endif
     call abort_mpi()
   endif

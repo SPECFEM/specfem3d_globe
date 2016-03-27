@@ -109,6 +109,7 @@ specfem3D_OBJECTS += \
 specfem3D_MODULES = \
 	$(FC_MODDIR)/asdf_data.$(FC_MODEXT) \
 	$(FC_MODDIR)/constants_solver.$(FC_MODEXT) \
+	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_crustmantle.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_innercore.$(FC_MODEXT) \
@@ -121,6 +122,7 @@ specfem3D_MODULES = \
 # These files come from the shared directory
 specfem3D_SHARED_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/adios_manager.shared_adios_module.o \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
@@ -184,10 +186,6 @@ adios_specfem3D_SHARED_OBJECTS = \
 	$O/adios_helpers_definitions.shared_adios_module.o \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
-	$O/adios_manager.shared_adios.o \
-	$(EMPTY_MACRO)
-
-adios_specfem3D_STUBS = \
 	$(EMPTY_MACRO)
 
 adios_specfem3D_SHARED_STUBS = \
@@ -199,7 +197,6 @@ ifeq ($(ADIOS),yes)
 specfem3D_OBJECTS += $(adios_specfem3D_OBJECTS)
 specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_OBJECTS)
 else
-specfem3D_OBJECTS += $(adios_specfem3D_STUBS)
 specfem3D_SHARED_OBJECTS += $(adios_specfem3D_SHARED_STUBS)
 endif
 
@@ -307,6 +304,8 @@ $O/iterate_time.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/iterate_time_undoatt.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/locate_receivers.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/read_adjoint_sources.solverstatic.o: $O/write_seismograms.solverstatic.o
+
+$O/specfem3D_par.solverstatic_module.o: $O/adios_manager.shared_adios_module.o
 
 # Version file
 $O/initialize_simulation.solverstatic.o: ${SETUP}/version.fh

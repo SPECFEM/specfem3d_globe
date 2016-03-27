@@ -53,13 +53,6 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
                                     NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
                                     NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
-
-  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
-
-  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
-    define_adios_global_real_1d_array,define_adios_scalar, &
-    check_adios_err
-
   use constants
 
   use meshfem3D_models_par,only: &
@@ -88,6 +81,12 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
     ispec_is_tiso,tau_s,T_c_source,tau_e_store,Qmu_store, &
     nspec_actually, nspec_ani, nspec_stacey, nglob_xy, nglob_oceans ! prname,
+
+  use adios_write_mod,only: adios_declare_group,adios_select_method
+  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
+    define_adios_global_real_1d_array,define_adios_scalar, &
+    check_adios_err
+  use manager_adios
 
   implicit none
 
@@ -119,12 +118,11 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: reg_name, outputname, group_name
-  integer :: comm, local_dim
+  integer :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, handle
-  integer(kind=8)         :: adios_totalsize
+  integer(kind=8)         :: adios_group
   character(len=128)      :: region_name, region_name_scalar
 
   !--- Save the number of region written. Open the file in "w" mode if 0, else
@@ -147,9 +145,6 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   ! save arrays for the solver to run.
   write(group_name,"('SPECFEM3D_GLOBE_ARRAYS_SOLVER_reg',i1)") iregion_code
-
-  ! Alias COMM_WORLD to use ADIOS
-  call world_duplicate(comm)
 
   ! set the adios group size to 0 before incremented by calls to
   ! helpers functions.
@@ -296,15 +291,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
   if (num_regions_written == 0) then
-    call adios_open (handle, group_name, outputname, "w", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing
+    call open_file_adios_write(outputname,group_name)
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing in append mode
+    call open_file_adios_write_append(outputname,group_name)
   endif
-
-  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
-  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
+  call set_adios_group_size(group_size_inc)
 
   ! mesh topology
 
@@ -360,79 +353,79 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
   !--- Schedule writes for the previously defined ADIOS variables
   ! save nspec and nglob, to be used in combine_paraview_data
-  call adios_write(handle, trim(region_name) // "nspec", nspec, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nspec", nspec, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_write(handle, trim(region_name) // "nglob", nglob, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nglob", nglob, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = nglob
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // "x_global", tmp_array_x)
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // "y_global", tmp_array_y)
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // "z_global", tmp_array_z)
   local_dim = NGLLX * NGLLY * NGLLZ * nspec
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(xstore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(ystore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(zstore))
 
   local_dim = NGLLX * NGLLY * NGLLZ * nspec
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(rhostore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(kappavstore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(ibool))
 
   if (iregion_code /= IREGION_OUTER_CORE) then
     if (.not. (ANISOTROPIC_3D_MANTLE .and. &
                iregion_code == IREGION_CRUST_MANTLE)) then
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(muvstore))
     endif
     if (TRANSVERSE_ISOTROPY) then
       if (iregion_code == IREGION_CRUST_MANTLE .and. &
           .not. ANISOTROPIC_3D_MANTLE) then
-        call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(kappahstore))
-        call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(muhstore))
-        call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+        call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                              trim(region_name) // STRINGIFY_VAR(eta_anisostore))
       endif
     endif
   endif
 
   local_dim = nspec
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                   trim(region_name) // STRINGIFY_VAR(idoubling))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                               trim(region_name) // STRINGIFY_VAR(ispec_is_tiso))
 
   local_dim = NGLLX * NGLLY * NGLLZ * nspec_actually
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(xixstore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(xiystore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(xizstore))
 
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                   trim(region_name) // STRINGIFY_VAR(etaxstore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                   trim(region_name) // STRINGIFY_VAR(etaystore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                   trim(region_name) // STRINGIFY_VAR(etazstore))
 
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(gammaxstore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(gammaystore))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(gammazstore))
 
   local_dim = NGLLX * NGLLY * NGLLZ * nspec_ani
@@ -440,58 +433,58 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
 
     !   save anisotropy in the inner core only
     if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) then
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c11store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c33store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c12store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c13store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c44store))
     endif
 
     if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c11store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c12store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c13store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c14store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c15store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c16store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c22store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c23store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c24store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c25store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c33store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c34store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c35store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c36store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c44store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c45store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c46store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c55store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c56store))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(c66store))
     endif
   endif
@@ -499,13 +492,13 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   local_dim = NGLLX * NGLLY * NGLLZ * nspec_stacey
   if (ABSORBING_CONDITIONS) then
     if (iregion_code == IREGION_CRUST_MANTLE) then
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                      trim(region_name) // STRINGIFY_VAR(rho_vp))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                      trim(region_name) // STRINGIFY_VAR(rho_vs))
 
     else if (iregion_code == IREGION_OUTER_CORE) then
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                      trim(region_name) // STRINGIFY_VAR(rho_vp))
     endif
   endif
@@ -515,23 +508,23 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   if ((NCHUNKS /= 6 .and. ABSORBING_CONDITIONS .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
      (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_CRUST_MANTLE) .or. &
      (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION .and. iregion_code == IREGION_INNER_CORE)) then
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                      trim(region_name) // STRINGIFY_VAR(rmassx))
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                      trim(region_name) // STRINGIFY_VAR(rmassy))
   endif
 
   local_dim = nglob
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                    trim(region_name) // STRINGIFY_VAR(rmassz))
 
   ! mass matrices for backward simulation when ROTATION is .true.
   local_dim = nglob_xy
   if (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION) then
     if (iregion_code == IREGION_CRUST_MANTLE .or. iregion_code == IREGION_INNER_CORE) then
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                        trim(region_name) // STRINGIFY_VAR(b_rmassx))
-      call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                        trim(region_name) // STRINGIFY_VAR(b_rmassy))
     endif
   endif
@@ -539,14 +532,15 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   ! additional ocean load mass matrix if oceans and if we are in the crust
   local_dim = nglob_oceans
   if (OCEANS .and. iregion_code == IREGION_CRUST_MANTLE) then
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                            trim(region_name) // STRINGIFY_VAR(rmass_ocean_load))
     if (minval(rmass_ocean_load) <= 0._CUSTOM_REAL) &
         call exit_MPI(myrank,'negative mass matrix term for the oceans')
   endif
 
   !--- perform the actual write to disk
-  call adios_close(handle, adios_err)
+  ! closes file
+  call close_file_adios()
 
   ! Clean the temporary arrays containing the node information
   deallocate(tmp_array_x)
@@ -658,109 +652,104 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
   if (num_regions_written == 0) then
-    call adios_open (handle, group_name, outputname, "w", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing
+    call open_file_adios_write(outputname,group_name)
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing in append mode
+    call open_file_adios_write_append(outputname,group_name)
   endif
-
-  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
-  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
+  call set_adios_group_size(group_size_inc)
 
   !--- Schedule writes for the previously defined ADIOS variables
-  call adios_write(handle, trim(region_name) // "nspec2D_xmin", nspec2D_xmin, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nspec2D_xmin", nspec2D_xmin, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_write(handle, trim(region_name) // "nspec2D_xmax", nspec2D_xmax, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nspec2D_xmax", nspec2D_xmax, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_write(handle, trim(region_name) // "nspec2D_ymin", nspec2D_ymin, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nspec2D_ymin", nspec2D_ymin, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_write(handle, trim(region_name) // "nspec2D_ymax", nspec2D_ymax, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nspec2D_ymax", nspec2D_ymax, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_write(handle, trim(region_name) // "NSPEC2D_BOTTOM", NSPEC2D_BOTTOM, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "NSPEC2D_BOTTOM", NSPEC2D_BOTTOM, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_write(handle, trim(region_name) // "NSPEC2D_TOP", NSPEC2D_TOP, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "NSPEC2D_TOP", NSPEC2D_TOP, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! boundary elements
   local_dim = NSPEC2DMAX_XMIN_XMAX
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(ibelm_xmin))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(ibelm_xmax))
 
   local_dim = NSPEC2DMAX_YMIN_YMAX
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(ibelm_ymin))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(ibelm_ymax))
 
   local_dim = NSPEC2D_BOTTOM
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                trim(region_name) // STRINGIFY_VAR(ibelm_bottom))
 
   local_dim = NSPEC2D_TOP
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                   trim(region_name) // STRINGIFY_VAR(ibelm_top))
 
   ! normals
   local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(normal_xmin))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(normal_xmax))
 
   local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(normal_ymin))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(normal_ymax))
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                               trim(region_name) // STRINGIFY_VAR(normal_bottom))
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(normal_top))
 
   ! Jacobians
   local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                             trim(region_name) // STRINGIFY_VAR(jacobian2D_xmin))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                             trim(region_name) // STRINGIFY_VAR(jacobian2D_xmax))
 
   local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                             trim(region_name) // STRINGIFY_VAR(jacobian2D_ymin))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                             trim(region_name) // STRINGIFY_VAR(jacobian2D_ymax))
 
   local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                           trim(region_name) // STRINGIFY_VAR(jacobian2D_bottom))
 
   local_dim = NGLLX*NGLLY*NSPEC2D_TOP
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                              trim(region_name) // STRINGIFY_VAR(jacobian2D_top))
 
   !--- Reset the path to zero and perform the actual write to disk
-  call adios_close(handle, adios_err)
+  ! closes file
+  call close_file_adios()
 
   !---------------------------------------------------------
   !--- Attenuation arrays ----------------------------------
   !---------------------------------------------------------
   if (ATTENUATION) then
     write(group_name,"('SPECFEM3D_GLOBE_ATTENUATION_reg',i1)") iregion_code
-    group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, "", 0, adios_err)
-    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-    !call check_adios_err(myrank,adios_err)
 
-    call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
-    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-    !call check_adios_err(myrank,adios_err)
+    ! set the adios group size to 0 before incremented by calls to helpers functions.
+    group_size_inc = 0
+    call init_adios_group(adios_group,group_name)
 
     !--- Define ADIOS variables -----------------------------
     call define_adios_scalar (adios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(t_c_source))
@@ -778,31 +767,30 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
     if (num_regions_written == 0) then
-      call adios_open (handle, group_name, outputname, "w", comm, adios_err)
-      if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+      ! opens file for writing
+      call open_file_adios_write(outputname,group_name)
     else
-      call adios_open (handle, group_name, outputname, "a", comm, adios_err)
-      if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+      ! opens file for writing in append mode
+      call open_file_adios_write_append(outputname,group_name)
     endif
-
-    call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
+    call set_adios_group_size(group_size_inc)
 
     !--- Schedule writes for the previously defined ADIOS variables
-    call adios_write(handle, trim(region_name) // "t_c_source", T_c_source, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "t_c_source", T_c_source, adios_err)
 
     local_dim = size (tau_s)
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                      trim(region_name) // STRINGIFY_VAR(tau_s))
     local_dim = size (tau_e_store)
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(tau_e_store))
     local_dim = size (Qmu_store)
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                   trim(region_name) // STRINGIFY_VAR(Qmu_store))
 
     !--- Reset the path to zero and perform the actual write to disk
-    call adios_close(handle, adios_err)
+    ! closes file
+    call close_file_adios()
 
   endif
 
@@ -811,14 +799,10 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
   !---------------------------------------------------------
   if (HETEROGEN_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
     write(group_name,"('SPECFEM3D_GLOBE_DVP_reg',i1)") iregion_code
-    group_size_inc = 0
-    call adios_declare_group(adios_group, group_name, "", 0, adios_err)
-    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-    !call check_adios_err(myrank,adios_err)
 
-    call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
-    ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
-    !call check_adios_err(myrank,adios_err)
+    ! set the adios group size to 0 before incremented by calls to helpers functions.
+    group_size_inc = 0
+    call init_adios_group(adios_group,group_name)
 
     !--- Define ADIOS variables -----------------------------
     local_dim = size (dvpstore)
@@ -831,20 +815,20 @@ subroutine save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
     if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
     if (num_regions_written == 0) then
-      call adios_open (handle, group_name, outputname, "w", comm, adios_err)
-      if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+      ! opens file for writing
+      call open_file_adios_write(outputname,group_name)
     else
-      call adios_open (handle, group_name, outputname, "a", comm, adios_err)
-      if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+      ! opens file for writing in append mode
+      call open_file_adios_write_append(outputname,group_name)
     endif
+    call set_adios_group_size(group_size_inc)
 
-    call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
-
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "dvp", dvpstore)
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "dvp", dvpstore)
 
     !--- Reset the path to zero and perform the actual write to disk
-    call adios_close(handle, adios_err)
+    ! closes file
+    call close_file_adios()
+
   endif
 
   !---------------------------------------------------------
@@ -874,11 +858,6 @@ end subroutine save_arrays_solver_adios
 !! \param nspec Number of GLL points per spectral elements
 subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
 
-  ! outputs model files in binary format
-  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
-
-  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array,check_adios_err
-
   use constants
 
   use meshfem3D_par, only: &
@@ -892,6 +871,10 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     Qmu_store
 
+  use adios_write_mod,only: adios_declare_group,adios_select_method
+  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array,check_adios_err
+  use manager_adios
+
   implicit none
 
   integer :: myrank, nspec, iregion_code
@@ -904,12 +887,11 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name
-  integer :: comm, local_dim
+  integer :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, handle
-  integer(kind=8)         :: adios_totalsize
+  integer(kind=8)         :: adios_group
   character(len=128)      :: region_name, region_name_scalar
   !--- Save the number of region written. Open the file in "w" mode if 0, else
   !    in "a"  mode
@@ -923,8 +905,6 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
   ! scaling factors to re-dimensionalize units
   scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
   scaleval2 = sngl( RHOAV/1000.0d0 )
-
-  call world_duplicate(comm)
 
   ! isotropic model
   write(region_name,"('reg',i1, '/')") iregion_code
@@ -982,54 +962,52 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
   if (num_regions_written == 0) then
-    call adios_open (handle, group_name, outputname, "w", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing
+    call open_file_adios_write(outputname,group_name)
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing in append mode
+    call open_file_adios_write_append(outputname,group_name)
   endif
-
-  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
-  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
+  call set_adios_group_size(group_size_inc)
 
 
   !--- Schedule writes for the previously defined ADIOS variables
   ! TODO Try the new write helpers routines
   !--- vp arrays -------------------------------------------
   local_dim = size (kappavstore)
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "vp", &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "vp", &
                                    sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1)
 
   !--- vs arrays -------------------------------------------
   local_dim = size (rhostore)
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "vs", &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "vs", &
                                    sqrt( muvstore/rhostore )*scaleval1 )
   !--- rho arrays ------------------------------------------
   local_dim = size (rhostore)
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "rho", &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "rho", &
                                    rhostore *scaleval2)
   ! transverse isotropic model
   if (TRANSVERSE_ISOTROPY) then
     !--- vps arrays ----------------------------------------
     local_dim = size (kappavstore)
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "vpv", &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "vpv", &
                                      sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1)
 
     local_dim = size (kappavstore)
     !--- vph arrays ----------------------------------------
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "vph", &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "vph", &
                                      sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1)
     !--- vsv arrays ----------------------------------------
     local_dim = size (rhostore)
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "vsv", &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "vsv", &
                                      sqrt( muvstore/rhostore )*scaleval1)
     !--- vsh arrays ----------------------------------------
     local_dim = size (rhostore)
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "vsh", &
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "vsh", &
                                      sqrt( muhstore/rhostore )*scaleval1)
     !--- eta arrays ----------------------------------------
     local_dim = size (eta_anisostore)
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "eta", eta_anisostore)
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "eta", eta_anisostore)
   endif ! TRANSVERSE_ISOTROPY
   ! shear attenuation
   if (ATTENUATION) then
@@ -1056,13 +1034,14 @@ subroutine save_arrays_solver_meshfiles_adios(myrank, iregion_code, nspec)
     endif
 
     local_dim = NGLLX * NGLLY * NGLLZ * nspec
-    call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, trim(region_name) // "qmu", temp_store)
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, trim(region_name) // "qmu", temp_store)
 
     ! frees temporary memory
     deallocate(temp_store)
   endif ! ATTENUATION
 
-  call adios_close(handle, adios_err)
+  ! closes file
+  call close_file_adios()
 
   num_regions_written = num_regions_written + 1
 
@@ -1092,12 +1071,12 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
                                  ibool_interfaces, nspec_inner,nspec_outer, num_phase_ispec, &
                                  phase_ispec_inner, num_colors_outer,num_colors_inner, num_elem_colors)
 
-  use adios_write_mod,only: adios_declare_group,adios_select_method,adios_open,adios_group_size
+  use constants
 
+  use adios_write_mod,only: adios_declare_group,adios_select_method
   use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
     define_adios_scalar,check_adios_err
-
-  use constants
+  use manager_adios
 
   implicit none
 
@@ -1120,12 +1099,11 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
 
   ! local parameters
   character(len=MAX_STRING_LEN) :: prname, outputname, group_name
-  integer :: comm, local_dim
+  integer :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, handle
-  integer(kind=8)         :: adios_totalsize
+  integer(kind=8)         :: adios_group
   character(len=128)      :: region_name, region_name_scalar
   !--- Save the number of region written. Open the file in "w" mode if 0, else
   !    in "a"  mode
@@ -1162,8 +1140,6 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
   write(group_name,"('SPECFEM3D_GLOBE_MPI_ARRAYS_reg',i1)") iregion_code
-
-  call world_duplicate(comm)
 
   group_size_inc = 0
   call adios_declare_group(adios_group, group_name, "", 1, adios_err)
@@ -1211,93 +1187,100 @@ subroutine save_mpi_arrays_adios(myrank,iregion_code,LOCAL_PATH, &
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
   if (num_regions_written == 0) then
-    call adios_open (handle, group_name, outputname, "w", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing
+    call open_file_adios_write(outputname,group_name)
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing in append mode
+    call open_file_adios_write_append(outputname,group_name)
   endif
-
-  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
-  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
+  call set_adios_group_size(group_size_inc)
 
   !--- Schedule writes for the previously defined ADIOS variables
   ! MPI interfaces
-  call adios_write(handle, trim(region_name) // "num_interfaces", &
+  call adios_write(file_handle_adios, trim(region_name) // "num_interfaces", &
                    num_interfaces, adios_err)
 
   if (num_interfaces > 0) then
-    call adios_write(handle, trim(region_name) // "max_nibool_interfaces", &
+    call adios_write(file_handle_adios, trim(region_name) // "max_nibool_interfaces", &
         max_nibool_interfaces, adios_err)
     !local_dim = num_interfaces_wmax
-    !call write_adios_global_1d_array(handle, myrank, sizeprocs, &
+    !call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                      !local_dim, trim(region_name) // &
                                      !STRINGIFY_VAR(my_neighbours))
-    !call write_adios_global_1d_array(handle, myrank, sizeprocs, &
+    !call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                      !local_dim,  trim(region_name) // &
                                      !STRINGIFY_VAR(nibool_interfaces))
 
     !local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
-    !call write_adios_global_1d_array(handle, myrank, sizeprocs, &
+    !call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
                                      !local_dim, trim(region_name) // &
                                      !STRINGIFY_VAR(ibool_interfaces))
 
-    call adios_write(handle, trim(region_name) // "my_neighbours/local_dim", num_interfaces, adios_err)
-    call adios_write(handle, trim(region_name) // "my_neighbours/global_dim", num_interfaces_wmax*sizeprocs, adios_err)
-    call adios_write(handle, trim(region_name) // "my_neighbours/offset", num_interfaces_wmax*myrank, adios_err)
-    call adios_write(handle, trim(region_name) // "my_neighbours/array", my_neighbours, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "my_neighbours/local_dim", num_interfaces, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "my_neighbours/global_dim", num_interfaces_wmax*sizeprocs, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "my_neighbours/offset", num_interfaces_wmax*myrank, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "my_neighbours/array", my_neighbours, adios_err)
 
-    call adios_write(handle, trim(region_name) // "nibool_interfaces/local_dim", num_interfaces, adios_err)
-    call adios_write(handle, trim(region_name) // "nibool_interfaces/global_dim", num_interfaces_wmax*sizeprocs, adios_err)
-    call adios_write(handle, trim(region_name) // "nibool_interfaces/offset", num_interfaces_wmax*myrank, adios_err)
-    call adios_write(handle, trim(region_name) // "nibool_interfaces/array", nibool_interfaces, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "nibool_interfaces/local_dim", &
+                     num_interfaces, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "nibool_interfaces/global_dim", &
+                     num_interfaces_wmax*sizeprocs, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "nibool_interfaces/offset", &
+                     num_interfaces_wmax*myrank, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "nibool_interfaces/array", &
+                     nibool_interfaces, adios_err)
 
-    call adios_write(handle, trim(region_name) // "ibool_interfaces/local_dim", &
+    call adios_write(file_handle_adios, trim(region_name) // "ibool_interfaces/local_dim", &
                      max_nibool_interfaces * num_interfaces, adios_err)
-    call adios_write(handle, trim(region_name) // "ibool_interfaces/global_dim", &
+    call adios_write(file_handle_adios, trim(region_name) // "ibool_interfaces/global_dim", &
                      max_nibool_interfaces_wmax * num_interfaces_wmax*sizeprocs, adios_err)
-    call adios_write(handle, trim(region_name) // "ibool_interfaces/offset", &
+    call adios_write(file_handle_adios, trim(region_name) // "ibool_interfaces/offset", &
                      max_nibool_interfaces_wmax * num_interfaces_wmax*myrank, adios_err)
-    call adios_write(handle, trim(region_name) // "ibool_interfaces/array", &
+    call adios_write(file_handle_adios, trim(region_name) // "ibool_interfaces/array", &
                      ibool_interfaces, adios_err)
   endif
 
   ! inner/outer elements
-  call adios_write(handle, trim(region_name) // "nspec_inner", nspec_inner, adios_err)
-  call adios_write(handle, trim(region_name) // "nspec_outer", nspec_outer, adios_err)
-  call adios_write(handle, trim(region_name) // "num_phase_ispec", num_phase_ispec, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nspec_inner", nspec_inner, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "nspec_outer", nspec_outer, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "num_phase_ispec", num_phase_ispec, adios_err)
 
   if (num_phase_ispec > 0) then
     !local_dim = num_phase_ispec_wmax * 2
-    !call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+    !call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                           !trim(region_name) // STRINGIFY_VAR(phase_ispec_inner))
-    call adios_write(handle, trim(region_name) // "phase_ispec_inner/local_dim", 2 * num_phase_ispec, adios_err)
-    call adios_write(handle, trim(region_name) // "phase_ispec_inner/global_dim", 2 * num_phase_ispec_wmax * sizeprocs, adios_err)
-    call adios_write(handle, trim(region_name) // "phase_ispec_inner/offset", 2 * num_phase_ispec_wmax * myrank, adios_err)
-    call adios_write(handle, trim(region_name) // "phase_ispec_inner/array", phase_ispec_inner, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "phase_ispec_inner/local_dim", &
+                     2 * num_phase_ispec, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "phase_ispec_inner/global_dim", &
+                     2 * num_phase_ispec_wmax * sizeprocs, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "phase_ispec_inner/offset", &
+                     2 * num_phase_ispec_wmax * myrank, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "phase_ispec_inner/array", &
+                     phase_ispec_inner, adios_err)
   endif
 
   ! mesh coloring
   if (USE_MESH_COLORING_GPU) then
-    call adios_write(handle, trim(region_name) // "num_colors_outer", nspec_inner, adios_err)
-    call adios_write(handle, trim(region_name) // "num_colors_inner", nspec_inner, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "num_colors_outer", nspec_inner, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "num_colors_inner", nspec_inner, adios_err)
 
     !local_dim = num_colors_outer_wmax + num_colors_inner_wmax
-    !call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+    !call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                             !trim(region_name) // STRINGIFY_VAR(num_elem_colors))
 
-    call adios_write(handle, trim(region_name) // "num_elem_colors/local_dim", &
+    call adios_write(file_handle_adios, trim(region_name) // "num_elem_colors/local_dim", &
                      (num_colors_inner + num_colors_outer), adios_err)
-     call adios_write(handle, trim(region_name) // "num_elem_colors/global_dim", &
+     call adios_write(file_handle_adios, trim(region_name) // "num_elem_colors/global_dim", &
                       (num_colors_inner_wmax + num_colors_outer_wmax)* sizeprocs, adios_err)
-     call adios_write(handle, trim(region_name) // "num_elem_colors/offset", &
+     call adios_write(file_handle_adios, trim(region_name) // "num_elem_colors/offset", &
                       (num_colors_inner_wmax + num_colors_outer_wmax)* myrank, adios_err)
-     call adios_write(handle, trim(region_name) // "num_elem_colors/array", &
+     call adios_write(file_handle_adios, trim(region_name) // "num_elem_colors/array", &
                       num_elem_colors, adios_err)
   endif
 
   !--- Reset the path to zero and perform the actual write to disk
-  call adios_close(handle, adios_err)
+  ! closes file
+  call close_file_adios()
 
   num_regions_written = num_regions_written + 1
 
@@ -1330,17 +1313,18 @@ subroutine save_arrays_boundary_adios()
   use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
     define_adios_scalar,check_adios_err
 
+  use manager_adios
+
   implicit none
 
   ! local parameters
   ! local parameters
   character(len=MAX_STRING_LEN) :: outputname, group_name
-  integer :: comm, local_dim
+  integer :: local_dim
   integer(kind=8) :: group_size_inc
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_group, handle !, varid
-  integer(kind=8)         :: adios_totalsize
+  integer(kind=8)         :: adios_group
   character(len=128)      :: region_name, region_name_scalar
   integer, parameter :: iregion_code = IREGION_CRUST_MANTLE
   !--- Save the number of region written. Open the file in "w" mode if 0, else
@@ -1364,11 +1348,10 @@ subroutine save_arrays_boundary_adios()
 
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
+
   group_name = "SPECFEM3D_GLOBE_BOUNDARY_DISC"
-
-  call world_duplicate(comm)
-
   group_size_inc = 0
+
   call adios_declare_group(adios_group, group_name, "", 1, adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
@@ -1404,53 +1387,52 @@ subroutine save_arrays_boundary_adios()
   if (myrank == 0) write(IMAIN,*) '    saving arrays in ADIOS file: ',trim(outputname)
 
   if (num_regions_written == 0) then
-    call adios_open (handle, group_name, outputname, "w", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing
+    call open_file_adios_write(outputname,group_name)
   else
-    call adios_open (handle, group_name, outputname, "a", comm, adios_err)
-    if (adios_err /= 0 ) stop 'Error calling adios_open() routine failed'
+    ! opens file for writing in append mode
+    call open_file_adios_write_append(outputname,group_name)
   endif
-
-  call adios_group_size (handle, group_size_inc, adios_totalsize, adios_err)
-  if (adios_err /= 0 ) stop 'Error calling adios_group_size() routine failed'
+  call set_adios_group_size(group_size_inc)
 
   !--- Schedule writes for the previously defined ADIOS variables
-  call adios_write(handle, trim(region_name) // "NSPEC2D_MOHO", NSPEC2D_MOHO, adios_err)
-  call adios_write(handle, trim(region_name) // "NSPEC2D_400", NSPEC2D_400, adios_err)
-  call adios_write(handle, trim(region_name) // "NSPEC2D_670", NSPEC2D_670, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "NSPEC2D_MOHO", NSPEC2D_MOHO, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "NSPEC2D_400", NSPEC2D_400, adios_err)
+  call adios_write(file_handle_adios, trim(region_name) // "NSPEC2D_670", NSPEC2D_670, adios_err)
 
   local_dim = NSPEC2D_MOHO
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                              trim(region_name) // STRINGIFY_VAR(ibelm_moho_top))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                              trim(region_name) // STRINGIFY_VAR(ibelm_moho_bot))
 
   local_dim = NSPEC2D_400
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                               trim(region_name) // STRINGIFY_VAR(ibelm_400_top))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                               trim(region_name) // STRINGIFY_VAR(ibelm_400_bot))
 
   local_dim = NSPEC2D_670
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                               trim(region_name) // STRINGIFY_VAR(ibelm_670_top))
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                               trim(region_name) // STRINGIFY_VAR(ibelm_670_bot))
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_MOHO
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                 trim(region_name) // STRINGIFY_VAR(normal_moho))
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_400
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(normal_400))
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_670
-  call write_adios_global_1d_array(handle, myrank, sizeprocs, local_dim, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
                                  trim(region_name) // STRINGIFY_VAR(normal_670))
 
   !--- Reset the path to zero and perform the actual write to disk
-  call adios_close(handle, adios_err)
+  ! closes file
+  call close_file_adios()
 
   num_regions_written = num_regions_written + 1
 

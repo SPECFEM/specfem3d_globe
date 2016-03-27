@@ -34,21 +34,6 @@
 
 typedef float realw;
 
-// placeholders for non-adios compilation
-
-void
-warn_no_adios(void)
-{
-  fprintf(stderr, "Error: ADIOS enabled without ADIOS Support. "
-                  "To enable ADIOS support, reconfigure with --with-adios flag.\n");
-  exit(1);
-}
-
-void FC_FUNC_(adios_setup,ADIOS_SETUP)(void) { warn_no_adios(); }
-
-void FC_FUNC_(adios_cleanup,ADIOS_CLEANUP)(void) {}
-
-
 
 // for xmeshfem3D compilation
 
@@ -101,8 +86,6 @@ void FC_FUNC_(save_forward_arrays_adios,SAVE_FORWARD_ARRAYS_ADIOS)(void) {}
 void FC_FUNC_(save_forward_arrays_undoatt_adios,SAVE_FORWARD_ARRAYS_UNDOATT_ADIOS)(void) {}
 
 void FC_FUNC_(save_intermediate_forward_arrays_adios,SAVE_INTERMEDIATE_FORWARD_ARRAYS_ADIOS)(void) {}
-
-void FC_FUNC_(perform_write_adios_kernels,PERFORM_WRITE_ADIOS_KERNELS)(void) {}
 
 void FC_FUNC_(define_kernel_adios_variables,DEFINE_KERNEL_ADIOS_VARIABLES)(void) {}
 

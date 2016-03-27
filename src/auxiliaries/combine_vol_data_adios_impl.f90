@@ -134,7 +134,7 @@ subroutine init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle
   integer :: ier
   integer :: comm
 
-  call world_get_comm(comm)
+  call world_duplicate(comm)
 
   call adios_read_init_method(ADIOS_READ_METHOD_BP, comm, "verbose=1", ier)
   if (ier /= 0 ) stop 'Error in adios_read_init_method()'
