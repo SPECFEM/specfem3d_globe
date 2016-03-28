@@ -72,7 +72,9 @@
   use kdtree_search, only: kdtree_setup,kdtree_set_verbose,kdtree_delete,kdtree_find_nearest_neighbor, &
     kdtree_num_nodes,kdtree_nodes_location,kdtree_nodes_index
 
+#ifdef ADIOS_INPUT
   use manager_adios
+#endif
 
   implicit none
 
