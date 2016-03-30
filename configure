@@ -692,6 +692,8 @@ COND_ADIOS_FALSE
 COND_ADIOS_TRUE
 COND_VTK_FALSE
 COND_VTK_TRUE
+COND_MIC_FALSE
+COND_MIC_TRUE
 COND_OCL_FALSE
 COND_OCL_TRUE
 COND_CUDA5_FALSE
@@ -758,6 +760,7 @@ enable_debug
 enable_vectorization
 with_cuda
 with_opencl
+with_mic
 enable_vtk
 with_adios
 with_asdf
@@ -1423,6 +1426,7 @@ Optional Packages:
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
   --with-cuda             build cuda GPU enabled version [default=no]
   --with-opencl           build OpenCL GPU enabled version [default=no]
+  --with-mic              build native Xeon PHI enabled version [default=no]
   --with-adios            build ADIOS enabled version [default=no]
   --with-asdf             build ASDF enabled version [default=no]
   --with-cem              build CEM enabled version [default=no]
@@ -2802,6 +2806,27 @@ fi
 else
   COND_OCL_TRUE='#'
   COND_OCL_FALSE=
+fi
+
+
+###
+### MIC (Xeon PHI)
+###
+
+
+# Check whether --with-mic was given.
+if test "${with_mic+set}" = set; then :
+  withval=$with_mic; want_mic="$withval"
+else
+  want_mic=no
+fi
+
+ if test "$want_mic" != no; then
+  COND_MIC_TRUE=
+  COND_MIC_FALSE='#'
+else
+  COND_MIC_TRUE='#'
+  COND_MIC_FALSE=
 fi
 
 
@@ -6730,6 +6755,25 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 fi
 
 ###
+### MIC
+###
+
+if test x"$want_mic" != xno; then :
+
+  $as_echo "## --- ##
+## MIC ##
+## --- ##"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: MIC native compilation is enabled" >&5
+$as_echo "$as_me: MIC native compilation is enabled" >&6;}
+  FLAGS_CHECK=$(echo $FLAGS_CHECK | sed -e 's/\-xHost -fpe0\>//g')
+
+fi
+if test x"$want_vec" == xno && test x"$want_mic" == xyes; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: --enable-vectorization and --with-mic should be both specified for better performance." >&5
+$as_echo "$as_me: --enable-vectorization and --with-mic should be both specified for better performance." >&6;}
+fi
+
+###
 ### FORCE_VECTORIZATION
 ###
 
@@ -6745,6 +6789,7 @@ $as_echo "$as_me: FORCE_VECTORIZATION is enabled" >&6;}
   CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
 
 fi
+
 
 ###
 ### VTK
@@ -7882,6 +7927,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_OCL_TRUE}" && test -z "${COND_OCL_FALSE}"; then
   as_fn_error $? "conditional \"COND_OCL\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_MIC_TRUE}" && test -z "${COND_MIC_FALSE}"; then
+  as_fn_error $? "conditional \"COND_MIC\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_VTK_TRUE}" && test -z "${COND_VTK_FALSE}"; then

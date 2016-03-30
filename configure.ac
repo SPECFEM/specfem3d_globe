@@ -97,6 +97,17 @@ AC_ARG_WITH([opencl],
 AM_CONDITIONAL([COND_OCL], [test "$want_opencl" != no])
 
 ###
+### MIC (Xeon PHI)
+###
+
+AC_ARG_WITH([mic],
+    [AC_HELP_STRING([--with-mic],
+        [build native Xeon PHI enabled version @<:@default=no@:>@])],
+    [want_mic="$withval"],
+    [want_mic=no])
+AM_CONDITIONAL([COND_MIC], [test "$want_mic" != no])
+
+###
 ### VTK
 ###
 
@@ -276,6 +287,19 @@ AS_IF([test x"$want_opencl" != xno], [
 ])
 
 ###
+### MIC
+###
+
+AS_IF([test x"$want_mic" != xno], [
+  AS_BOX([MIC])
+  AC_MSG_NOTICE([MIC native compilation is enabled])
+  FLAGS_CHECK=$(echo $FLAGS_CHECK | sed -e 's/\-xHost -fpe0\>//g')
+])
+if test x"$want_vec" == xno && test x"$want_mic" == xyes; then
+    AC_MSG_NOTICE([--enable-vectorization and --with-mic should be both specified for better performance.])
+fi
+
+###
 ### FORCE_VECTORIZATION
 ###
 
@@ -286,6 +310,7 @@ AS_IF([test x"$want_vec" != xno],[
   FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}FORCE_VECTORIZATION"
   CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
 ])
+
 
 ###
 ### VTK

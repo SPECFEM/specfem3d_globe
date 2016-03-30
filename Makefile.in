@@ -145,6 +145,22 @@ MPI_INCLUDES = @MPI_INCLUDES@
 
 #######################################
 ####
+#### MIC
+#### with configure: ./configure --with-mic
+####
+#######################################
+
+@COND_MIC_TRUE@MIC = yes
+@COND_MIC_FALSE@MIC = no
+
+@COND_MIC_TRUE@MIC_FLAGS = -mmic #-qopt-report2 -qopt-report-phase=vec
+@COND_MIC_FALSE@MIC_FLAGS =
+
+FCFLAGS += $(MIC_FLAGS)
+CPPFLAGS += $(MIC_FLAGS)
+
+#######################################
+####
 #### VTK
 #### with configure: ./configure --enable-vtk ..
 ####
@@ -156,7 +172,6 @@ MPI_INCLUDES = @MPI_INCLUDES@
 CPPFLAGS += @VTK_INCLUDES@
 LDFLAGS += @VTK_LDFLAGS@
 MPILIBS += @VTK_LIBS@
-
 
 #######################################
 ####
@@ -195,7 +210,6 @@ MPILIBS += @ASDF_LIBS@
 #######################################
 @COND_VECTORIZATION_TRUE@FORCE_VECTORIZATION = yes
 @COND_VECTORIZATION_FALSE@FORCE_VECTORIZATION = no
-
 
 #######################################
 ####

@@ -66,11 +66,39 @@ create_header_file_SHARED_OBJECTS = \
 ${OUTPUT}/values_from_mesher.h: $E/xcreate_header_file $B/DATA/Par_file
 	@-rm -f $@
 	@echo ""
+ifeq ($(MIC),yes)
+#
+# note: xcreate_header_file is compiled with -mmic and needs to run on a Intel Phi (MIC)
+#       the following command is specific for a certain environment and might need to be changed...
+#
+# see: https://software.intel.com/en-us/articles/building-a-native-application-for-intel-xeon-phi-coprocessors
+# micnativeloadex .. will fail since micnativeloadex will run the binary in a temporary location /tmp
+# where we miss the path to DATA/Par_file
+#micnativeloadex $E/xcreate_header_file
+#
+# or (using default mpirun with the mic environment specification)
+#mpirun -env LD_LIBRARY_PATH $$MIC_LD_LIBRARY_PATH -host ${HOSTNAME}-mic0 -np 1 $E/xcreate_header_file
+#
+# or (using a special environment function mpirun.mic)
+#mpirun.mic -host $(HOSTNAME)-mic0 -np 1 $E/xcreate_header_file
+#
+	@echo "running xcreate_header_file on MIC..."
+	@echo ""
+	mpirun -env LD_LIBRARY_PATH $$MIC_LD_LIBRARY_PATH -host ${HOSTNAME}-mic0 -np 1 $E/xcreate_header_file
+	@echo ""
+#
+# note: testing sometimes fails although file is created... give it some more time to respond...
+#
+	@echo "testing if file exists: $@"
+	@sleep 1; ls -al ${OUTPUT}/; echo ""
+	@test -f $@ || { echo "File does not exist! Exiting..."; exit 1; }
+else
 	@echo "running xcreate_header_file..."
 	@echo ""
 	$E/xcreate_header_file
 	@echo ""
 	@test -f $@
+endif
 
 #######################################
 
