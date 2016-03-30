@@ -466,35 +466,51 @@
   implicit none
 
   ! local parameters
-  integer :: i
+  integer :: i,ier
   real(kind=CUSTOM_REAL) :: rval,thetaval,phival
 
   ! change x, y, z to r, theta and phi once and for all
-  ! IMPROVE dangerous: old name kept (xstore ystore zstore) for new values
+  !
+  ! note: we merged all 3 components into a single array rstore(:,:).
+  !       this makes it more suitable for performance improvements by compilers (better prefetch, more efficient memory access)
 
   ! convert in the crust and mantle
+  allocate(rstore_crust_mantle(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating rstore for crust/mantle'
+
   do i = 1,NGLOB_CRUST_MANTLE
     call xyz_2_rthetaphi(xstore_crust_mantle(i),ystore_crust_mantle(i),zstore_crust_mantle(i),rval,thetaval,phival)
-    xstore_crust_mantle(i) = rval
-    ystore_crust_mantle(i) = thetaval
-    zstore_crust_mantle(i) = phival
+    rstore_crust_mantle(1,i) = rval
+    rstore_crust_mantle(2,i) = thetaval
+    rstore_crust_mantle(3,i) = phival
   enddo
 
   ! convert in the outer core
+  allocate(rstore_outer_core(NDIM,NGLOB_OUTER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating rstore for outer core'
+
   do i = 1,NGLOB_OUTER_CORE
     call xyz_2_rthetaphi(xstore_outer_core(i),ystore_outer_core(i),zstore_outer_core(i),rval,thetaval,phival)
-    xstore_outer_core(i) = rval
-    ystore_outer_core(i) = thetaval
-    zstore_outer_core(i) = phival
+    rstore_outer_core(1,i) = rval
+    rstore_outer_core(2,i) = thetaval
+    rstore_outer_core(3,i) = phival
   enddo
 
   ! convert in the inner core
+  allocate(rstore_inner_core(NDIM,NGLOB_INNER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating rstore for inner core'
+
   do i = 1,NGLOB_INNER_CORE
     call xyz_2_rthetaphi(xstore_inner_core(i),ystore_inner_core(i),zstore_inner_core(i),rval,thetaval,phival)
-    xstore_inner_core(i) = rval
-    ystore_inner_core(i) = thetaval
-    zstore_inner_core(i) = phival
+    rstore_inner_core(1,i) = rval
+    rstore_inner_core(2,i) = thetaval
+    rstore_inner_core(3,i) = phival
   enddo
+
+  ! old x/y/z array not needed anymore
+  deallocate(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
+  deallocate(xstore_outer_core,ystore_outer_core,zstore_outer_core)
+  deallocate(xstore_inner_core,ystore_inner_core,zstore_inner_core)
 
   end subroutine prepare_timerun_convert_coord
 
@@ -604,7 +620,7 @@
   endif
 
   ! checks
-  ! the following has to be true for the the array dimensions of eps to match with those of xstore etc..
+  ! the following has to be true for the the array dimensions of eps to match with those of rstore etc..
   ! note that epsilondev and eps_trace_over_3 don't have the same dimensions.. could cause trouble
   if (NSPEC_CRUST_MANTLE_STR_OR_ATT /= NSPEC_CRUST_MANTLE) &
     stop 'NSPEC_CRUST_MANTLE_STRAINS_ATT /= NSPEC_CRUST_MANTLE'
@@ -2316,7 +2332,7 @@
                                      rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                      b_rmassx_crust_mantle,b_rmassy_crust_mantle, &
                                      ibool_crust_mantle, &
-                                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                                     rstore_crust_mantle, &
                                      ispec_is_tiso_crust_mantle, &
                                      c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
                                      c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
@@ -2344,7 +2360,7 @@
                                      rmassx_crust_mantle,rmassy_crust_mantle,rmassz_crust_mantle, &
                                      dummy,dummy, &
                                      ibool_crust_mantle, &
-                                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                                     rstore_crust_mantle, &
                                      ispec_is_tiso_crust_mantle, &
                                      c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
                                      c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
@@ -2377,7 +2393,7 @@
                                  rhostore_outer_core,kappavstore_outer_core, &
                                  rmass_outer_core, &
                                  ibool_outer_core, &
-                                 xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                                 rstore_outer_core, &
                                  num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
                                  nspec_outer_outer_core,nspec_inner_outer_core, &
                                  NSPEC2D_TOP(IREGION_OUTER_CORE), &
@@ -2408,7 +2424,7 @@
                                    rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                                    b_rmassx_inner_core,b_rmassy_inner_core, &
                                    ibool_inner_core, &
-                                   xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                                   rstore_inner_core, &
                                    c11store_inner_core,c12store_inner_core,c13store_inner_core, &
                                    c33store_inner_core,c44store_inner_core, &
                                    idoubling_inner_core, &
@@ -2427,7 +2443,7 @@
                                    rmassx_inner_core,rmassy_inner_core,rmassz_inner_core, &
                                    dummy,dummy, &
                                    ibool_inner_core, &
-                                   xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                                   rstore_inner_core, &
                                    c11store_inner_core,c12store_inner_core,c13store_inner_core, &
                                    c33store_inner_core,c44store_inner_core, &
                                    idoubling_inner_core, &
@@ -2660,12 +2676,8 @@
       ! padded c11,..
       memory_size = memory_size + 21.d0 * NGLL3_PADDED * NSPEC_CRUST_MANTLE * dble(CUSTOM_REAL)
     endif
-    ! ystore,zstore
-    memory_size = memory_size + 2.d0 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
-    ! xstore
-    if (GRAVITY_VAL) then
-      memory_size = memory_size + NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
-    endif
+    ! rstore
+    memory_size = memory_size + 3.d0 * NGLOB_CRUST_MANTLE * dble(CUSTOM_REAL)
     ! inner core
     ! padded muv
     memory_size = memory_size + NGLL3_PADDED * NSPEC_INNER_CORE * dble(CUSTOM_REAL)
@@ -2676,7 +2688,7 @@
       ! padded c11,..
       memory_size = memory_size + 5.d0 * NGLL3_PADDED * NSPEC_INNER_CORE * dble(CUSTOM_REAL)
     endif
-    ! xstore,ystore,zstore
+    ! rstore
     if (GRAVITY_VAL) then
       memory_size = memory_size + 3.d0 * NGLOB_INNER_CORE * dble(CUSTOM_REAL)
     endif
@@ -2704,7 +2716,7 @@
     memory_size = memory_size + NGLL3_PADDED * NSPEC_OUTER_CORE * dble(CUSTOM_REAL)
     ! ibool
     memory_size = memory_size + NGLL3 * NSPEC_OUTER_CORE * dble(SIZE_INTEGER)
-    ! d_xstore_outer_core,..
+    ! d_rstore_outer_core,..
     memory_size = memory_size + 3.d0 * NGLOB_OUTER_CORE * dble(CUSTOM_REAL)
     ! d_phase_ispec_inner_outer_core
     memory_size = memory_size + 2.d0 * num_phase_ispec_outer_core * dble(SIZE_INTEGER)
@@ -2858,11 +2870,8 @@
     do iglob = 1,NGLOB_CRUST_MANTLE
       if (vtkmask(iglob) .eqv. .true.) then
         inum = inum + 1
-        ! note: xstore/ystore/zstore have changed coordinates to r/theta/phi,
-        !       converts back to x/y/z
-        call rthetaphi_2_xyz(x,y,z,xstore_crust_mantle(iglob), &
-                             ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
-
+        ! note: rstore has coordinates r/theta/phi, converts back to x/y/z
+        call rthetaphi_2_xyz(x,y,z,rstore_crust_mantle(1,iglob),rstore_crust_mantle(2,iglob),rstore_crust_mantle(3,iglob))
         free_x(inum) = x
         free_y(inum) = y
         free_z(inum) = z
@@ -3103,10 +3112,8 @@
     do iglob = 1,NGLOB_CRUST_MANTLE
       if (vtkmask(iglob) .eqv. .true.) then
         inum = inum + 1
-        ! note: xstore/ystore/zstore have changed coordinates to r/theta/phi,
-        !       converts back to x/y/z
-        call rthetaphi_2_xyz(x,y,z,xstore_crust_mantle(iglob), &
-                             ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
+        ! note: rstore has coordinates r/theta/phi, converts back to x/y/z
+        call rthetaphi_2_xyz(x,y,z,rstore_crust_mantle(1,iglob),rstore_crust_mantle(2,iglob),rstore_crust_mantle(3,iglob))
         vol_x(inum) = x
         vol_y(inum) = y
         vol_z(inum) = z

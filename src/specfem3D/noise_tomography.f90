@@ -28,7 +28,7 @@
 ! subroutines for NOISE TOMOGRAPHY
 
 
-  subroutine noise_distribution_direction(xcoord_in,ycoord_in,zcoord_in, &
+  subroutine noise_distribution_direction(r_in,theta_in,phi_in, &
                                           normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
                                           mask_noise_out)
 
@@ -43,15 +43,15 @@
   implicit none
 
   ! input parameters
-  real(kind=CUSTOM_REAL) :: xcoord_in,ycoord_in,zcoord_in
+  real(kind=CUSTOM_REAL) :: r_in,theta_in,phi_in
   ! output parameters
   real(kind=CUSTOM_REAL) :: normal_x_noise_out,normal_y_noise_out,normal_z_noise_out,mask_noise_out
   ! local parameters
   real(kind=CUSTOM_REAL) :: xcoord,ycoord,zcoord
 
 
-  ! coordinates "x/y/zcoord_in" actually contain r theta phi, therefore convert back to x y z
-  call rthetaphi_2_xyz(xcoord,ycoord,zcoord, xcoord_in,ycoord_in,zcoord_in)
+  ! convert r theta phi back to x y z
+  call rthetaphi_2_xyz(xcoord,ycoord,zcoord,r_in,theta_in,phi_in)
   ! NOTE that all coordinates are non-dimensionalized in GLOBAL package!
   ! USERS are free to choose which set to use,
   ! either "r theta phi" (xcoord_in,ycoord_in,zcoord_in)
@@ -190,6 +190,7 @@
   integer :: ipoin, ispec2D, ispec, i, j, k, iglob, ier
   integer(kind=8) :: filesize
   real(kind=CUSTOM_REAL) :: normal_x_noise_out,normal_y_noise_out,normal_z_noise_out,mask_noise_out
+  real(kind=CUSTOM_REAL) :: r,theta,phi
   character(len=MAX_STRING_LEN) :: filename
 
   ! read master receiver ID -- the ID in DATA/STATIONS
@@ -250,9 +251,13 @@
         ipoin = ipoin + 1
         iglob = ibool_crust_mantle(i,j,k,ispec)
 
+        ! point location
+        r = rstore_crust_mantle(1,iglob)
+        theta = rstore_crust_mantle(2,iglob)
+        phi = rstore_crust_mantle(3,iglob)
+
         ! this subroutine must be modified by USERS
-        call noise_distribution_direction(xstore_crust_mantle(iglob), &
-                                          ystore_crust_mantle(iglob),zstore_crust_mantle(iglob), &
+        call noise_distribution_direction(r,theta,phi, &
                                           normal_x_noise_out,normal_y_noise_out,normal_z_noise_out, &
                                           mask_noise_out)
 
@@ -324,9 +329,9 @@
         ipoin = ipoin + 1
         iglob = ibool_crust_mantle(i,j,k,ispec)
         ! stores position
-        val_x(ipoin) = xstore_crust_mantle(iglob)
-        val_y(ipoin) = ystore_crust_mantle(iglob)
-        val_z(ipoin) = zstore_crust_mantle(iglob)
+        val_x(ipoin) = rstore_crust_mantle(1,iglob) ! r
+        val_y(ipoin) = rstore_crust_mantle(2,iglob) ! theta
+        val_z(ipoin) = rstore_crust_mantle(3,iglob) ! phi
         ! stores mask
         val_ux(ipoin) = mask_noise(ipoin)
         val_uy(ipoin) = mask_noise(ipoin)
@@ -358,9 +363,9 @@
     open(unit=IOUT_NOISE,file=trim(filename),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening output file mask_noise')
 
-    write(IOUT_NOISE) val_x_all
-    write(IOUT_NOISE) val_y_all
-    write(IOUT_NOISE) val_z_all
+    write(IOUT_NOISE) val_x_all ! r
+    write(IOUT_NOISE) val_y_all ! theta
+    write(IOUT_NOISE) val_z_all ! phi
     write(IOUT_NOISE) val_ux_all
     write(IOUT_NOISE) val_uy_all
     write(IOUT_NOISE) val_uz_all

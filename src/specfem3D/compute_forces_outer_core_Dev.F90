@@ -50,7 +50,7 @@
     USE_LDDRK,istage
 
   use specfem_par_outercore,only: &
-    xstore => xstore_outer_core,ystore => ystore_outer_core,zstore => zstore_outer_core, &
+    rstore => rstore_outer_core, &
     xix => xix_outer_core,xiy => xiy_outer_core,xiz => xiz_outer_core, &
     etax => etax_outer_core,etay => etay_outer_core,etaz => etaz_outer_core, &
     gammax => gammax_outer_core,gammay => gammay_outer_core,gammaz => gammaz_outer_core, &
@@ -161,7 +161,7 @@
 
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( &
-!$OMP num_elements, phase_ispec_inner, iphase, ibool, displfluid, xstore, ystore, zstore, &
+!$OMP num_elements, phase_ispec_inner, iphase, ibool, displfluid, rstore, &
 !$OMP d_ln_density_dr_table, hprime_xx, hprime_xxT, xix, xiy, xiz,  etax, etay, etaz, &
 !$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation, &
 !$OMP minus_rho_g_over_kappa_fluid, wgll_cube, MOVIE_VOLUME, hprimewgll_xxT, hprimewgll_xx, &
@@ -197,9 +197,9 @@
       ! pre-computes factors
       ! use mesh coordinates to get theta and phi
       ! x y z contain r theta phi
-      radius = dble(xstore(iglob))
-      theta = dble(ystore(iglob))
-      phi = dble(zstore(iglob))
+      radius = dble(rstore(1,iglob))
+      theta = dble(rstore(2,iglob))
+      phi = dble(rstore(3,iglob))
 
       cos_theta = dcos(theta)
       sin_theta = dsin(theta)
@@ -402,6 +402,17 @@
 
     endif
 
+    ! updates acceleration
+#ifdef FORCE_VECTORIZATION
+    ! update will be done later at the very end..
+#else
+    ! updates for non-vectorization case)
+    DO_LOOP_IJK
+      iglob = ibool(INDEX_IJK,ispec)
+      accelfluid(iglob) = accelfluid(iglob) + sum_terms(INDEX_IJK,ispec)
+    ENDDO_LOOP_IJK
+#endif
+
     ! update rotation term with Euler scheme
     !
     ! note: rotation with euler scheme is not exactly revertible;
@@ -440,18 +451,18 @@
   enddo   ! spectral element loop
 !$OMP enddo
 
-    ! updates acceleration
+#ifdef FORCE_VECTORIZATION
+  ! updates acceleration
 !$OMP DO
-  do iglob_p=1,num_globs(iphase)
+  do iglob_p = 1,num_globs(iphase)
     iglob = phase_iglob(iglob_p,iphase)
-    do ip=ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+    do ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
       ijk_spec = ibool_inv_tbl(ip,iphase)
-
       accelfluid(iglob) = accelfluid(iglob) + sum_terms(ijk_spec,1,1,1)
     enddo
   enddo
 !OMP enddo
-
+#endif
 !$OMP END PARALLEL
 
   contains

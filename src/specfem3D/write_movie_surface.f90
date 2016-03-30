@@ -112,9 +112,9 @@
         ipoin = ipoin + 1
         ! stores values
         iglob = ibool_crust_mantle(i,j,k,ispec)
-        store_val_x(ipoin) = xstore_crust_mantle(iglob) ! <- radius r (normalized)
-        store_val_y(ipoin) = ystore_crust_mantle(iglob) ! <- colatitude theta (in radian)
-        store_val_z(ipoin) = zstore_crust_mantle(iglob) ! <- longitude phi (in radian)
+        store_val_x(ipoin) = rstore_crust_mantle(1,iglob) ! <- radius r (normalized)
+        store_val_y(ipoin) = rstore_crust_mantle(2,iglob) ! <- colatitude theta (in radian)
+        store_val_z(ipoin) = rstore_crust_mantle(3,iglob) ! <- longitude phi (in radian)
       enddo
     enddo
   enddo

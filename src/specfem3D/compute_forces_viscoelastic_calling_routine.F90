@@ -904,6 +904,7 @@
   endif
 
   end subroutine compute_forces_crust_mantle
+
 !
 !-------------------------------------------------------------------------------------------------
 !
@@ -988,7 +989,6 @@
                                          alphaval,betaval,gammaval, &
                                          factor_common,vnspec)
   endif
-
 
   end subroutine compute_forces_inner_core
 

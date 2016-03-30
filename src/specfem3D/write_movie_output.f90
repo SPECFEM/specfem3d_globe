@@ -291,7 +291,7 @@
     NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE
 
   use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
-    ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+    ibool_crust_mantle,rstore_crust_mantle
 
   implicit none
 
@@ -316,7 +316,7 @@
   ! one file per process
   write(filename,'(a,i6.6,a,i6.6)') 'OUTPUT_FILES/snapshot_proc',myrank,'_reg_1_displ_',it
   call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                         xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                         rstore_crust_mantle, &
                          ibool_crust_mantle,displ_crust_mantle,filename)
 
   ! backward/reconstructed field
@@ -327,7 +327,7 @@
 
     write(filename,'(a,i6.6,a,i6.6)') 'OUTPUT_FILES/snapshot_proc',myrank,'_reg_1_b_displ_',it
     call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                           rstore_crust_mantle, &
                            ibool_crust_mantle,b_displ_crust_mantle,filename)
   endif
 

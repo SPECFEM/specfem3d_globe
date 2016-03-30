@@ -39,7 +39,7 @@
 
   subroutine compute_element_iso(ispec, &
                                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                 xstore,ystore,zstore, &
+                                 rstore, &
                                  deriv, &
                                  wgll_cube, &
                                  kappavstore,muvstore, &
@@ -63,7 +63,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
 
   ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: rstore
 
   real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
 
@@ -439,8 +439,8 @@
       ! x y and z contain r theta and phi
       iglob = ibool(INDEX_IJK,ispec)
 
-      dtheta = dble(ystore(iglob))
-      dphi = dble(zstore(iglob))
+      dtheta = dble(rstore(2,iglob))
+      dphi = dble(rstore(3,iglob))
 
       cos_theta = dcos(dtheta)
       sin_theta = dsin(dtheta)
@@ -455,7 +455,7 @@
       ! get g, rho and dg/dr=dg
       ! spherical components of the gravitational acceleration
       ! for efficiency replace with lookup table every 100 m in radial direction
-      radius = dble(xstore(iglob))
+      radius = dble(rstore(1,iglob))
 
       int_radius = nint(10.d0 * radius * R_EARTH_KM )
       minus_g = minus_gravity_table(int_radius)
@@ -590,7 +590,7 @@
 
   subroutine compute_element_tiso(ispec, &
                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                  xstore,ystore,zstore, &
+                                  rstore, &
                                   deriv, &
                                   wgll_cube, &
                                   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -616,7 +616,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
 
   ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: rstore
 
   real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
 
@@ -939,11 +939,11 @@
     eta_aniso = eta_anisostore(INDEX_IJK,ispec)  !!! that is  F / (A - 2 L)
 
     ! use mesh coordinates to get theta and phi
-    ! ystore and zstore contain theta and phi
+    ! rstore contains theta and phi
     iglob = ibool(INDEX_IJK,ispec)
 
-    theta = ystore(iglob)
-    phi = zstore(iglob)
+    theta = rstore(2,iglob)
+    phi = rstore(3,iglob)
 
      ! precompute some products to reduce the CPU time
 
@@ -1194,9 +1194,9 @@
       ! x y and z contain r theta and phi
       iglob = ibool(INDEX_IJK,ispec)
 
-      dtheta = dble(ystore(iglob))
-      dphi = dble(zstore(iglob))
-      radius = dble(xstore(iglob))
+      radius = dble(rstore(1,iglob))
+      dtheta = dble(rstore(2,iglob))
+      dphi = dble(rstore(3,iglob))
 
       cos_theta = dcos(dtheta)
       sin_theta = dsin(dtheta)
@@ -1344,7 +1344,7 @@
 
   subroutine compute_element_aniso(ispec, &
                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                   xstore,ystore,zstore, &
+                                   rstore, &
                                    deriv, &
                                    wgll_cube, &
                                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -1370,7 +1370,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
 
   ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(3,NGLOB_CRUST_MANTLE) :: rstore
 
   real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
 
@@ -1640,9 +1640,9 @@
       ! x y and z contain r theta and phi
       iglob = ibool(INDEX_IJK,ispec)
 
-      dtheta = dble(ystore(iglob))
-      dphi = dble(zstore(iglob))
-      radius = dble(xstore(iglob))
+      radius = dble(rstore(1,iglob))
+      dtheta = dble(rstore(2,iglob))
+      dphi = dble(rstore(3,iglob))
 
       cos_theta = dcos(dtheta)
       sin_theta = dsin(dtheta)

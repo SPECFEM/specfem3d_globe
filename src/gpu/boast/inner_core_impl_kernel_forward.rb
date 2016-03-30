@@ -177,8 +177,7 @@ module BOAST
     v.push duzdyl_plus_duydzl     = Real("duzdyl_plus_duydzl", :dir => :in)
     v.push iglob                  = Int( "iglob",              :dir => :in)
 #    v.push nglob                  = Int( "NGLOB",              :dir => :in)
-    v.push d_ystore               = Real("d_ystore",           :dir => :in,  :dim => [Dim()])
-    v.push d_zstore               = Real("d_zstore",           :dir => :in,  :dim => [Dim()])
+    v.push d_rstore               = Real("d_rstore",           :dir => :in,  :dim => [Dim(3), Dim()])
     v.push sigma_xx               = Real("sigma_xx",           :dir => :out, :dim => [Dim()], :private => true )
     v.push sigma_yy               = Real("sigma_yy",           :dir => :out, :dim => [Dim()], :private => true )
     v.push sigma_zz               = Real("sigma_zz",           :dir => :out, :dim => [Dim()], :private => true )
@@ -228,8 +227,8 @@ module BOAST
 
       print eta_aniso === d_eta_anisostore[offset]
 
-      print theta === d_ystore[iglob]
-      print phi === d_zstore[iglob]
+      print theta === d_rstore[1,iglob]
+      print phi === d_rstore[2,iglob]
 
       if (get_lang == CL) then
         print sintheta     === sincos(theta,     costheta.address)
@@ -499,7 +498,7 @@ module BOAST
       v.push *(d_cstore.flatten.reject { |e| e.nil? })
     end
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :restrict => true, :dim => [Dim()] ), d_ystore = Real("d_ystore",:dir => :in, :restrict => true, :dim => [Dim()] ), d_zstore = Real("d_zstore",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     v.push d_minus_gravity_table   = Real("d_minus_gravity_table",   :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_minus_deriv_gravity_table = Real("d_minus_deriv_gravity_table", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_density_table         = Real("d_density_table",         :dir => :in, :restrict => true, :dim => [Dim()] )
@@ -928,7 +927,7 @@ elem_per_thread.times { |elem_index|
                                                    *(dudl.flatten),
                                                    duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,
                                                    iglob[elem_index], #nglob,
-                                                   d_store[1], d_store[2],
+                                                   d_rstore,
                                                    sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,
                                                    sigma[0][1].address, sigma[0][2].address, sigma[1][2].address )
               })
@@ -952,7 +951,7 @@ elem_per_thread.times { |elem_index|
                                                  + xil[2]*(etal[0]*gammal[1] - etal[1]*gammal[0]))
           print If(gravity) {
             print sub_compute_element_gravity.call(tx, iglob[elem_index],\
-                                   d_store[0], d_store[1], d_store[2],\
+                                   d_rstore,\
                                    d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table,\
                                    wgll_cube, jacobianl,\
                                    s_dummy_loc[0], s_dummy_loc[1], s_dummy_loc[2],\

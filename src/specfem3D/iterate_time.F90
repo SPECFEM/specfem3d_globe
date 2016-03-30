@@ -468,8 +468,8 @@
       do j = 1, NGLLY
         do i = 1, NGLLX
           iglob = ibool_crust_mantle(i,j,k,ispec)
-          ! xstore ystore zstore have previously been converted to r theta phi, thus xstore now stores the radius
-          radius = xstore_crust_mantle(iglob) ! <- radius r (normalized)
+          ! xstore ystore zstore have previously been converted to r theta phi in rstore
+          radius = rstore_crust_mantle(1,iglob) ! <- radius r (normalized)
           ! save that element only if it is in the upper part of the mesh
           if (radius >= R670 / R_EARTH) then
             ! if this point has not yet been found before

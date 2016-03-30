@@ -53,7 +53,7 @@
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_crustmantle,only: &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
+    rstore => rstore_crust_mantle, &
     deriv => deriv_mapping_crust_mantle, &
     kappavstore => kappavstore_crust_mantle,kappahstore => kappahstore_crust_mantle, &
     muvstore => muvstore_crust_mantle,muhstore => muhstore_crust_mantle, &
@@ -164,9 +164,9 @@
 !$OMP one_minus_sum_beta,epsilon_trace_over_3,c11store,c12store,c13store,c14store,c15store, &
 !$OMP c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
 !$OMP c36store,c44store,c45store,c46store,c55store,c56store,c66store,ispec_is_tiso, &
-!$OMP kappavstore,muvstore,kappahstore,muhstore,eta_anisostore,ibool,ystore,zstore, &
+!$OMP kappavstore,muvstore,kappahstore,muhstore,eta_anisostore,ibool, &
 !$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
-!$OMP xstore,minus_gravity_table,minus_deriv_gravity_table,density_table, &
+!$OMP rstore,minus_gravity_table,minus_deriv_gravity_table,density_table, &
 !$OMP displ_crust_mantle,wgll_cube,hprime_xxt,hprime_xx, &
 !$OMP vnspec, &
 !$OMP accel_crust_mantle, &
@@ -228,7 +228,7 @@
        ! anisotropic element
        call compute_element_aniso(ispec, &
                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                  xstore,ystore,zstore, &
+                                  rstore, &
                                   deriv, &
                                   wgll_cube, &
                                   c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -246,7 +246,7 @@
           ! isotropic element
           call compute_element_iso(ispec, &
                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                   xstore,ystore,zstore, &
+                                   rstore, &
                                    deriv, &
                                    wgll_cube, &
                                    kappavstore,muvstore, &
@@ -261,7 +261,7 @@
           ! transverse isotropic element
           call compute_element_tiso(ispec, &
                                      minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                     xstore,ystore,zstore, &
+                                     rstore, &
                                      deriv, &
                                      wgll_cube, &
                                      kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -320,6 +320,19 @@
 
     endif
 
+    ! updates acceleration
+#ifdef FORCE_VECTORIZATION
+    ! update will be done later at the very end..
+#else
+    ! updates for non-vectorization case
+    DO_LOOP_IJK
+      iglob = ibool(INDEX_IJK,ispec)
+      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,INDEX_IJK,ispec)
+      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,INDEX_IJK,ispec)
+      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,INDEX_IJK,ispec)
+    ENDDO_LOOP_IJK
+#endif
+
     ! update memory variables based upon the Runge-Kutta scheme
     ! convention for attenuation
     ! term in xx = 1
@@ -367,6 +380,7 @@
   enddo ! of spectral element loop NSPEC_CRUST_MANTLE
 !$OMP enddo
 
+#ifdef FORCE_VECTORIZATION
   ! updates acceleration
 !$OMP DO
   do iglob_p=1,num_globs(iphase)
@@ -382,7 +396,7 @@
     enddo
   enddo
 !$OMP enddo
-
+#endif
 !$OMP END PARALLEL
 
   contains
@@ -420,6 +434,7 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
+!dir$ ivdep
     do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
@@ -464,6 +479,7 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
+!dir$ ivdep
     do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
@@ -507,10 +523,10 @@
   integer :: i,j,k
 
   ! matrix-matrix multiplication
-  do j = 1,n2
-    do i = 1,n1
-      ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-      do k = 1,n3
+  do k = 1,n3
+    do j = 1,n2
+!dir$ ivdep
+      do i = 1,n1
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
                    + A1(i,3,k) * B(3,j) &

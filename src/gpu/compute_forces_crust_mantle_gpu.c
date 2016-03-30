@@ -266,9 +266,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c56store.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c66store.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_xstore_crust_mantle.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_ystore_crust_mantle.ocl));
-    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_zstore_crust_mantle.ocl));
+    clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_rstore_crust_mantle.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_gravity_table.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_deriv_gravity_table.ocl));
     clCheck (clSetKernelArg (*crust_mantle_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_density_table.ocl));
@@ -361,7 +359,7 @@ void crust_mantle (int nb_blocks_to_compute, Mesh *mp,
                                                                  d_c44store.cuda,d_c45store.cuda,d_c46store.cuda,
                                                                  d_c55store.cuda,d_c56store.cuda,d_c66store.cuda,
                                                                  mp->gravity,
-                                                                 mp->d_xstore_crust_mantle.cuda,mp->d_ystore_crust_mantle.cuda,mp->d_zstore_crust_mantle.cuda,
+                                                                 mp->d_rstore_crust_mantle.cuda,
                                                                  mp->d_minus_gravity_table.cuda,
                                                                  mp->d_minus_deriv_gravity_table.cuda,
                                                                  mp->d_density_table.cuda,

@@ -356,8 +356,10 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
     deriv_mapping_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+
+  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: rstore_crust_mantle
 
   ! arrays for isotropic elements stored only where needed to save space
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
@@ -547,8 +549,10 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
     rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_inner_core,ystore_inner_core,zstore_inner_core
+
+  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: rstore_inner_core
 
   ! arrays for inner-core anisotropy only when needed
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
@@ -659,8 +663,10 @@ module specfem_par_outercore
     etax_outer_core,etay_outer_core,etaz_outer_core, &
     gammax_outer_core,gammay_outer_core,gammaz_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_outer_core,ystore_outer_core,zstore_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: rstore_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: rhostore_outer_core,kappavstore_outer_core
 

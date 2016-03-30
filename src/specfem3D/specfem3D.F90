@@ -456,7 +456,9 @@
   call init_mpi()
 
   ! force Flush-To-Zero if available to avoid very slow Gradual Underflow trapping
+#ifndef __MIC__
   call force_ftz()
+#endif
 
   ! initializes simulation parameters
   call initialize_simulation()

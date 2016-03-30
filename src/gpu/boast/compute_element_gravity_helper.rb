@@ -9,11 +9,11 @@ module BOAST
     end
     ngll3 = Int("NGLL3", :const => n_gll3)
     v = []
-    v.push tx                = Int( "tx",                :dir => :in)
-    v.push iglob             = Int( "iglob",             :dir => :in)
-    #v.push working_element   = Int( "working_element",   :dir => :in)
+    v.push tx                      = Int( "tx",                :dir => :in)
+    v.push iglob                   = Int( "iglob",             :dir => :in)
+    #v.push working_element         = Int( "working_element",   :dir => :in)
     #v.push d_ibool                 = Int("d_ibool",                  :dir => :in, :dim => [Dim()] )
-    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :restrict => true, :dim => [Dim()] ), d_ystore = Real("d_ystore",:dir => :in, :restrict => true, :dim => [Dim()] ), d_zstore = Real("d_zstore",:dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     v.push d_minus_gravity_table   = Real("d_minus_gravity_table",   :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_minus_deriv_gravity_table = Real("d_minus_deriv_gravity_table", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_density_table         = Real("d_density_table",         :dir => :in, :restrict => true, :dim => [Dim()] )
@@ -47,12 +47,14 @@ module BOAST
       decl factor = Real("factor")
       decl int_radius = Int("int_radius")
 
-      print radius === d_xstore[iglob]
+      print radius === d_rstore[0,iglob]
+      print theta === d_rstore[1,iglob]
+      print phi === d_rstore[2,iglob]
+
       print If(radius < ( 100.0 / (r_earth_km*1000.0))) {
         print radius ===  100.0 / (r_earth_km*1000.0)
       }
-      print theta === d_ystore[iglob]
-      print phi === d_zstore[iglob]
+
       if (get_lang == CL) then
         print sin_theta === sincos(theta, cos_theta.address)
         print sin_phi   === sincos(phi,   cos_phi.address)

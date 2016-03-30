@@ -223,6 +223,12 @@
            b_rmassy_crust_mantle(NGLOB_XY_CM),stat=ier)
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in crust_mantle'
 
+  ! x/y/z locations
+  allocate(xstore_crust_mantle(NGLOB_CRUST_MANTLE), &
+           ystore_crust_mantle(NGLOB_CRUST_MANTLE), &
+           zstore_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating x/y/zstore in crust_mantle'
+
   ! reads databases file
   if (I_should_read_the_database) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
@@ -372,10 +378,16 @@
   NGLOB_XY_dummy = 1
 
   allocate(dummy_rmass(NGLOB_XY_dummy), &
-          dummy_ispec_is_tiso(NSPEC_OUTER_CORE), &
-          dummy_idoubling_outer_core(NSPEC_OUTER_CORE), &
-          stat=ier)
+           dummy_ispec_is_tiso(NSPEC_OUTER_CORE), &
+           dummy_idoubling_outer_core(NSPEC_OUTER_CORE), &
+           stat=ier)
   if (ier /= 0) stop 'Error allocating dummy rmass and dummy ispec/idoubling in outer core'
+
+  ! x/y/z locations
+  allocate(xstore_outer_core(NGLOB_OUTER_CORE), &
+           ystore_outer_core(NGLOB_OUTER_CORE), &
+           zstore_outer_core(NGLOB_OUTER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating x/y/zstore in outer core'
 
   ! reads in mesh arrays
   if (I_should_read_the_database) then
@@ -502,6 +514,12 @@
   allocate(b_rmassx_inner_core(NGLOB_XY_IC), &
            b_rmassy_inner_core(NGLOB_XY_IC),stat=ier)
   if (ier /= 0) stop 'Error allocating b_rmassx, b_rmassy in inner_core'
+
+  ! x/y/z locations
+  allocate(xstore_inner_core(NGLOB_INNER_CORE), &
+           ystore_inner_core(NGLOB_INNER_CORE), &
+           zstore_inner_core(NGLOB_INNER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating x/y/zstore in inner core'
 
   ! reads in arrays
   if (I_should_read_the_database) then

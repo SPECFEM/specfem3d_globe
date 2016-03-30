@@ -47,7 +47,7 @@
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_innercore,only: &
-    xstore => xstore_inner_core,ystore => ystore_inner_core,zstore => zstore_inner_core, &
+    rstore => rstore_inner_core, &
     xix => xix_inner_core,xiy => xiy_inner_core,xiz => xiz_inner_core, &
     etax => etax_inner_core,etay => etay_inner_core,etaz => etaz_inner_core, &
     gammax => gammax_inner_core,gammay => gammay_inner_core,gammaz => gammaz_inner_core, &
@@ -358,9 +358,9 @@
               ! use mesh coordinates to get theta and phi
               ! x y and z contain r theta and phi
               iglob = ibool(i,j,k,ispec)
-              radius = dble(xstore(iglob))
-              theta = dble(ystore(iglob))
-              phi = dble(zstore(iglob))
+              radius = dble(rstore(1,iglob))
+              theta = dble(rstore(2,iglob))
+              phi = dble(rstore(3,iglob))
 
               ! make sure radius is never zero even for points at center of cube
               ! because we later divide by radius

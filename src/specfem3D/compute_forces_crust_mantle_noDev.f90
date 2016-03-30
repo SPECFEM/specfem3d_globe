@@ -47,7 +47,7 @@
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_crustmantle,only: &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
+    rstore => rstore_crust_mantle, &
     xix => xix_crust_mantle,xiy => xiy_crust_mantle,xiz => xiz_crust_mantle, &
     etax => etax_crust_mantle,etay => etay_crust_mantle,etaz => etaz_crust_mantle, &
     gammax => gammax_crust_mantle,gammay => gammay_crust_mantle,gammaz => gammaz_crust_mantle, &
@@ -399,11 +399,11 @@
               eta_aniso = eta_anisostore(i,j,k,ispec)  !!! that is  F / (A - 2 L)
 
               ! use mesh coordinates to get theta and phi
-              ! ystore and zstore contain theta and phi
+              ! rstore contains theta and phi
 
               iglob = ibool(i,j,k,ispec)
-              theta = ystore(iglob)
-              phi = zstore(iglob)
+              theta = rstore(2,iglob)
+              phi = rstore(3,iglob)
 
               costheta = cos(theta)
               sintheta = sin(theta)
@@ -609,9 +609,9 @@
             ! x y and z contain r theta and phi
 
             iglob = ibool(i,j,k,ispec)
-            radius = dble(xstore(iglob))
-            theta = ystore(iglob)
-            phi = zstore(iglob)
+            radius = dble(rstore(1,iglob))
+            theta = rstore(2,iglob)
+            phi = rstore(3,iglob)
 
             cos_theta = dcos(dble(theta))
             sin_theta = dsin(dble(theta))

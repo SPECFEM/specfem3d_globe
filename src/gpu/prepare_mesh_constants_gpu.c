@@ -1258,7 +1258,7 @@ void FC_FUNC_ (prepare_crust_mantle_device,
                                              realw *h_rmassx, realw *h_rmassy, realw *h_rmassz,
                                              realw *h_b_rmassx, realw *h_b_rmassy,
                                              int *h_ibool,
-                                             realw *h_xstore, realw *h_ystore, realw *h_zstore,
+                                             realw *h_rstore,
                                              int *h_ispec_is_tiso,
                                              realw *c11store, realw *c12store, realw *c13store,
                                              realw *c14store, realw *c15store, realw *c16store,
@@ -1595,14 +1595,8 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   // mesh locations
   TRACE ("prepare_crust_mantle mesh locations");
 
-  // ystore & zstore needed for tiso elements
-  gpuCreateCopy_todevice_realw (&mp->d_ystore_crust_mantle, h_ystore, size_glob);
-  gpuCreateCopy_todevice_realw (&mp->d_zstore_crust_mantle, h_zstore, size_glob);
-
-  // xstore only needed when gravity is on
-  if (mp->gravity) {
-    gpuCreateCopy_todevice_realw (&mp->d_xstore_crust_mantle, h_xstore, size_glob);
-  }
+  // rstore
+  gpuCreateCopy_todevice_realw (&mp->d_rstore_crust_mantle, h_rstore, NDIM*size_glob);
 
   // inner/outer elements
   mp->num_phase_ispec_crust_mantle = *num_phase_ispec;
@@ -1785,7 +1779,7 @@ void FC_FUNC_ (prepare_outer_core_device,
                                            realw *h_rho, realw *h_kappav,
                                            realw *h_rmass,
                                            int *h_ibool,
-                                           realw *h_xstore, realw *h_ystore, realw *h_zstore,
+                                           realw *h_rstore,
                                            int *num_phase_ispec,
                                            int *phase_ispec_inner,
                                            int *nspec_outer,
@@ -1916,9 +1910,7 @@ void FC_FUNC_ (prepare_outer_core_device,
   // mesh locations
 
   // always needed
-  gpuCreateCopy_todevice_realw (&mp->d_xstore_outer_core, h_xstore, size_glob);
-  gpuCreateCopy_todevice_realw (&mp->d_ystore_outer_core, h_ystore, size_glob);
-  gpuCreateCopy_todevice_realw (&mp->d_zstore_outer_core, h_zstore, size_glob);
+  gpuCreateCopy_todevice_realw (&mp->d_rstore_outer_core, h_rstore, NDIM * size_glob);
 
   // inner/outer elements
 
@@ -2070,7 +2062,7 @@ void FC_FUNC_ (prepare_inner_core_device,
                                            realw *h_rmassx, realw *h_rmassy, realw *h_rmassz,
                                            realw *h_b_rmassx, realw *h_b_rmassy,
                                            int *h_ibool,
-                                           realw *h_xstore, realw *h_ystore, realw *h_zstore,
+                                           realw *h_rstore,
                                            realw *c11store, realw *c12store, realw *c13store,
                                            realw *c33store, realw *c44store,
                                            int *h_idoubling_inner_core,
@@ -2275,9 +2267,7 @@ void FC_FUNC_ (prepare_inner_core_device,
   // only needed when gravity is on
 
   if (mp->gravity) {
-    gpuCreateCopy_todevice_realw (&mp->d_xstore_inner_core, h_xstore, size_glob);
-    gpuCreateCopy_todevice_realw (&mp->d_ystore_inner_core, h_ystore, size_glob);
-    gpuCreateCopy_todevice_realw (&mp->d_zstore_inner_core, h_zstore, size_glob);
+    gpuCreateCopy_todevice_realw (&mp->d_rstore_inner_core, h_rstore, NDIM * size_glob);
   }
 
   // inner/outer elements
@@ -2890,9 +2880,7 @@ void FC_FUNC_ (prepare_cleanup_device,
     gpuFree (&mp->d_rhostore_crust_mantle);
   }
 
-  gpuFree (&mp->d_ystore_crust_mantle);
-  gpuFree (&mp->d_zstore_crust_mantle);
-  if (mp->gravity) gpuFree (&mp->d_xstore_crust_mantle);
+  gpuFree (&mp->d_rstore_crust_mantle);
 
   gpuFree (&mp->d_phase_ispec_inner_crust_mantle);
   gpuFree (&mp->d_ibelm_bottom_crust_mantle);
@@ -2953,9 +2941,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   gpuFree (&mp->d_ibool_outer_core);
 
-  gpuFree (&mp->d_xstore_outer_core);
-  gpuFree (&mp->d_ystore_outer_core);
-  gpuFree (&mp->d_zstore_outer_core);
+  gpuFree (&mp->d_rstore_outer_core);
 
   gpuFree (&mp->d_phase_ispec_inner_outer_core);
 
@@ -3018,9 +3004,7 @@ void FC_FUNC_ (prepare_cleanup_device,
 
   // gravity
   if (mp->gravity) {
-    gpuFree (&mp->d_xstore_inner_core);
-    gpuFree (&mp->d_ystore_inner_core);
-    gpuFree (&mp->d_zstore_inner_core);
+    gpuFree (&mp->d_rstore_inner_core);
   }
 
   gpuFree (&mp->d_phase_ispec_inner_inner_core);

@@ -150,7 +150,7 @@
 
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Starting time iteration loop...'
+    write(IMAIN,*) 'Starting time iteration loop (undoatt)...'
     write(IMAIN,*)
     call flush_IMAIN()
   endif

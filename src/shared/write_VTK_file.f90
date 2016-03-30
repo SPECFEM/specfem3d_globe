@@ -310,7 +310,7 @@
 ! external mesh routine for saving VTK files for custom_real values on global points
 
   subroutine write_VTK_data_cr(idoubling,nspec,nglob, &
-                               xstore_dummy,ystore_dummy,zstore_dummy, &
+                               rstore_dummy, &
                                ibool,glob_data,prname_file)
 
 ! outputs single file for each process
@@ -325,7 +325,7 @@
 
   ! global coordinates
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: rstore_dummy
 
   ! global data values array
   real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: glob_data
@@ -349,9 +349,10 @@
   do i = 1,nglob
 
     !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
-    rval = xstore_dummy(i)
-    thetaval = ystore_dummy(i)
-    phival = zstore_dummy(i)
+    rval = rstore_dummy(1,i)
+    thetaval = rstore_dummy(2,i)
+    phival = rstore_dummy(3,i)
+
     call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
 
     write(IOUT_VTK,'(3e18.6)') xval,yval,zval

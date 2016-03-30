@@ -53,7 +53,7 @@
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_innercore,only: &
-    xstore => xstore_inner_core,ystore => ystore_inner_core,zstore => zstore_inner_core, &
+    rstore => rstore_inner_core, &
     xix => xix_inner_core,xiy => xiy_inner_core,xiz => xiz_inner_core, &
     etax => etax_inner_core,etay => etay_inner_core,etaz => etaz_inner_core, &
     gammax => gammax_inner_core,gammay => gammay_inner_core,gammaz => gammaz_inner_core, &
@@ -176,7 +176,7 @@
 !$OMP PARALLEL DEFAULT( NONE ) &
 !$OMP SHARED( num_elements, phase_ispec_inner, iphase, idoubling, ibool, displ_inner_core, hprime_xx, hprime_xxT, &
 !$OMP xix, xiy, xiz, etax, etay, etaz, gammax, gammay, gammaz, COMPUTE_AND_STORE_STRAIN, c11store,  c12store, c13store, &
-!$OMP c33store, c44store, one_minus_sum_beta, muvstore, kappavstore, R_xx, R_yy, R_xy, R_xz, R_yz, xstore, ystore, zstore, &
+!$OMP c33store, c44store, one_minus_sum_beta, muvstore, kappavstore, R_xx, R_yy, R_xy, R_xz, R_yz, rstore, &
 !$OMP minus_gravity_table, minus_deriv_gravity_table, density_table, wgll_cube, hprimewgll_xxT, hprimewgll_xx, wgllwgll_yz_3D, &
 !$OMP wgllwgll_xz_3D, wgllwgll_xy_3D, accel_inner_core, USE_LDDRK, R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP vnspec, factor_common, deltat, alphaval,betaval,gammaval, epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -476,9 +476,9 @@
           ! use mesh coordinates to get theta and phi
           ! x y and z contain r theta and phi
           iglob = ibool(INDEX_IJK,ispec)
-          radius = dble(xstore(iglob))
-          theta = dble(ystore(iglob))
-          phi = dble(zstore(iglob))
+          radius = dble(rstore(1,iglob))
+          theta = dble(rstore(2,iglob))
+          phi = dble(rstore(3,iglob))
 
           ! make sure radius is never zero even for points at center of cube
           ! because we later divide by radius
@@ -679,6 +679,19 @@
 
       endif
 
+      ! updates acceleration
+      ! sum contributions from each element to the global mesh and add gravity terms
+#ifdef FORCE_VECTORIZATION
+    ! update will be done later at the very end..
+#else
+    ! updates acceleration (for non-vectorization case)
+    DO_LOOP_IJK
+      iglob = ibool(INDEX_IJK,ispec)
+      accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,INDEX_IJK,ispec)
+      accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,INDEX_IJK,ispec)
+      accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,INDEX_IJK,ispec)
+    ENDDO_LOOP_IJK
+#endif
 
       ! use Runge-Kutta scheme to march memory variables in time
       ! convention for attenuation
@@ -728,6 +741,7 @@
   enddo ! of spectral element loop
 !$OMP enddo
 
+#ifdef FORCE_VECTORIZATION
   ! sum contributions from each element to the global mesh and add gravity terms
 !$OMP DO
   do iglob_p=1,num_globs(iphase)
@@ -743,8 +757,7 @@
     enddo
   enddo
 !$OMP enddo
-
-
+#endif
 !$OMP END PARALLEL
 
   contains

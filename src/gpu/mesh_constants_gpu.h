@@ -364,9 +364,7 @@ typedef struct mesh_ {
   gpu_int_mem d_ispec_is_tiso_crust_mantle;
 
   // mesh locations
-  gpu_realw_mem d_xstore_crust_mantle;
-  gpu_realw_mem d_ystore_crust_mantle;
-  gpu_realw_mem d_zstore_crust_mantle;
+  gpu_realw_mem d_rstore_crust_mantle;
 
   // anisotropic 3D mantle
   gpu_realw_mem d_c11store_crust_mantle;
@@ -481,9 +479,7 @@ typedef struct mesh_ {
   gpu_int_mem d_ibool_outer_core;
 
   // mesh locations
-  gpu_realw_mem d_xstore_outer_core;
-  gpu_realw_mem d_ystore_outer_core;
-  gpu_realw_mem d_zstore_outer_core;
+  gpu_realw_mem d_rstore_outer_core;
 
   // wavefields
   // displacement, velocity, acceleration
@@ -558,9 +554,7 @@ typedef struct mesh_ {
   gpu_int_mem d_idoubling_inner_core;
 
   // mesh locations
-  gpu_realw_mem d_xstore_inner_core;
-  gpu_realw_mem d_ystore_inner_core;
-  gpu_realw_mem d_zstore_inner_core;
+  gpu_realw_mem d_rstore_inner_core;
 
   // anisotropic 3D mantle
   gpu_realw_mem d_c11store_inner_core;

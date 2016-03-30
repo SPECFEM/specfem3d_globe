@@ -96,9 +96,7 @@ module BOAST
     v.push wgllwgll_xz             = Real("wgllwgll_xz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgllwgll_yz             = Real("wgllwgll_yz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :restrict => true, :dim => [Dim()] ),
-                       d_ystore    = Real("d_ystore",                :dir => :in, :restrict => true, :dim => [Dim()] ),
-                       d_zstore    = Real("d_zstore",                :dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     v.push d_d_ln_density_dr_table = Real("d_d_ln_density_dr_table", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
@@ -348,9 +346,10 @@ elem_per_thread.times { |elem_index|
             print dpotentialdy_with_rot === dpotentialdl[1]
           })
 
-          print radius === d_store[0][iglob[elem_index]]
-          print theta  === d_store[1][iglob[elem_index]]
-          print phi    === d_store[2][iglob[elem_index]]
+          print radius === d_rstore[0,iglob[elem_index]]
+          print theta  === d_rstore[1,iglob[elem_index]]
+          print phi    === d_rstore[2,iglob[elem_index]]
+
           if (get_lang == CL) then
             print sin_theta === sincos(theta, cos_theta.address)
             print sin_phi   === sincos(phi,   cos_phi.address)

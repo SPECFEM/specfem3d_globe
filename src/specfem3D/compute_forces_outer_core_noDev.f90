@@ -42,7 +42,7 @@
     USE_LDDRK,istage
 
   use specfem_par_outercore,only: &
-    xstore => xstore_outer_core,ystore => ystore_outer_core,zstore => zstore_outer_core, &
+    rstore => rstore_outer_core, &
     xix => xix_outer_core,xiy => xiy_outer_core,xiz => xiz_outer_core, &
     etax => etax_outer_core,etay => etay_outer_core,etaz => etaz_outer_core, &
     gammax => gammax_outer_core,gammay => gammay_outer_core,gammaz => gammaz_outer_core, &
@@ -224,9 +224,9 @@
             ! x y z contain r theta phi
             iglob = ibool(i,j,k,ispec)
 
-            radius = dble(xstore(iglob))
-            theta = dble(ystore(iglob))
-            phi = dble(zstore(iglob))
+            radius = dble(rstore(1,iglob))
+            theta = dble(rstore(2,iglob))
+            phi = dble(rstore(3,iglob))
 
             cos_theta = dcos(theta)
             sin_theta = dsin(theta)
@@ -256,9 +256,9 @@
             ! x y z contain r theta phi
             iglob = ibool(i,j,k,ispec)
 
-            radius = dble(xstore(iglob))
-            theta = dble(ystore(iglob))
-            phi = dble(zstore(iglob))
+            radius = dble(rstore(1,iglob))
+            theta = dble(rstore(2,iglob))
+            phi = dble(rstore(3,iglob))
 
             cos_theta = dcos(theta)
             sin_theta = dsin(theta)

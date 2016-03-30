@@ -63,9 +63,9 @@
   do ispec = 1,NSPEC_CRUST_MANTLE
     !output element if center of element is in the given region
     iglob    = ibool_crust_mantle((NGLLX+1)/2,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
-    rval     = xstore_crust_mantle(iglob)
-    thetaval = ystore_crust_mantle(iglob)
-    phival   = zstore_crust_mantle(iglob)
+    rval     = rstore_crust_mantle(1,iglob)
+    thetaval = rstore_crust_mantle(2,iglob)
+    phival   = rstore_crust_mantle(3,iglob)
 
     ! we already changed xyz back to rthetaphi
     if ((rval < MOVIE_TOP .and. rval > MOVIE_BOTTOM) .and. &
@@ -204,9 +204,9 @@
             ! gets point position
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            rval = xstore_crust_mantle(iglob)
-            thetaval = ystore_crust_mantle(iglob)
-            phival = zstore_crust_mantle(iglob)
+            rval = rstore_crust_mantle(1,iglob)
+            thetaval = rstore_crust_mantle(2,iglob)
+            phival = rstore_crust_mantle(3,iglob)
 
             !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
             call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)

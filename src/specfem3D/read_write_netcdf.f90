@@ -77,9 +77,9 @@
   ! Each processor writes one row.
   start = (/ 1, myRank + 1 /)
   count = (/ NGLOB_CRUST_MANTLE, 1 /)
-  call checkNC (nf90_put_var (ncid, varIdRadius, xstore_crust_mantle, start = start, count = count))
-  call checkNC (nf90_put_var (ncid, varIdTheta,  ystore_crust_mantle, start = start, count = count))
-  call checkNC (nf90_put_var (ncid, varIdPhi,    zstore_crust_mantle, start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varIdRadius, rstore_crust_mantle(1,:), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varIdTheta,  rstore_crust_mantle(2,:), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varIdPhi,    rstore_crust_mantle(3,:), start = start, count = count))
 
   ! Close the netcdf file.
   call checkNC (nf90_close (ncid))

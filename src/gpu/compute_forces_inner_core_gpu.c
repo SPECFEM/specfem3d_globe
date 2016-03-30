@@ -219,9 +219,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c33store.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &d_c44store.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (int), (void *) &mp->gravity));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_xstore_inner_core.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_ystore_inner_core.ocl));
-    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_zstore_inner_core.ocl));
+    clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_rstore_inner_core.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_gravity_table.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_minus_deriv_gravity_table.ocl));
     clCheck (clSetKernelArg (*inner_core_kernel_p, idx++, sizeof (cl_mem), (void *) &mp->d_density_table.ocl));
@@ -300,7 +298,7 @@ void inner_core (int nb_blocks_to_compute, Mesh *mp,
                                                                d_c11store.cuda,d_c12store.cuda,d_c13store.cuda,
                                                                d_c33store.cuda,d_c44store.cuda,
                                                                mp->gravity,
-                                                               mp->d_xstore_inner_core.cuda,mp->d_ystore_inner_core.cuda,mp->d_zstore_inner_core.cuda,
+                                                               mp->d_rstore_inner_core.cuda,
                                                                mp->d_minus_gravity_table.cuda,
                                                                mp->d_minus_deriv_gravity_table.cuda,
                                                                mp->d_density_table.cuda,
