@@ -62,16 +62,20 @@
     c11store => c11store_inner_core,c12store => c12store_inner_core,c13store => c13store_inner_core, &
     c33store => c33store_inner_core,c44store => c44store_inner_core, &
     ibool => ibool_inner_core,idoubling => idoubling_inner_core, &
-    ibool_inv_tbl => ibool_inv_tbl_inner_core, &
-    ibool_inv_st => ibool_inv_st_inner_core, &
-    num_globs => num_globs_inner_core, &
-    phase_iglob => phase_iglob_inner_core, &
     one_minus_sum_beta => one_minus_sum_beta_inner_core, &
     phase_ispec_inner => phase_ispec_inner_inner_core, &
     nspec_outer => nspec_outer_inner_core, &
     nspec_inner => nspec_inner_inner_core
 
   use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+
+#ifdef FORCE_VECTORIZATION
+  use specfem_par_innercore,only: &
+    ibool_inv_tbl => ibool_inv_tbl_inner_core, &
+    ibool_inv_st => ibool_inv_st_inner_core, &
+    num_globs => num_globs_inner_core, &
+    phase_iglob => phase_iglob_inner_core
+#endif
 
   implicit none
 
@@ -152,12 +156,11 @@
 ! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
 ! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
   integer :: ijk
+  integer :: ijk_spec, ip, iglob_p
   real(kind=CUSTOM_REAL) :: R_xx_val,R_yy_val
 #else
   integer :: i,j,k
 #endif
-
-  integer :: ijk_spec, ip, iglob_p
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -180,7 +183,11 @@
 !$OMP minus_gravity_table, minus_deriv_gravity_table, density_table, wgll_cube, hprimewgll_xxT, hprimewgll_xx, wgllwgll_yz_3D, &
 !$OMP wgllwgll_xz_3D, wgllwgll_xy_3D, accel_inner_core, USE_LDDRK, R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP vnspec, factor_common, deltat, alphaval,betaval,gammaval, epsilondev_xx,epsilondev_yy,epsilondev_xy, &
-!$OMP sum_terms, ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, epsilondev_xz,epsilondev_yz, epsilon_trace_over_3 ) &
+!$OMP sum_terms, &
+#ifdef FORCE_VECTORIZATION
+!$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
+#endif
+!$OMP epsilondev_xz,epsilondev_yz, epsilon_trace_over_3 ) &
 !$OMP PRIVATE( ispec_p, ispec, iglob, dummyx_loc, dummyy_loc, dummyz_loc, tempx2, tempy2, tempz2, xixl, xiyl, xizl, &
 !$OMP etaxl, etayl, etazl, gammaxl, gammayl, gammazl, jacobianl, duxdxl, tempx1, tempx3, duxdyl, duxdzl, duydxl, &
 !$OMP tempy1, tempy3, duydyl, duydzl, tempz1, tempz3, duzdxl, duzdyl, duzdzl, duxdxl_plus_duydyl, duxdxl_plus_duzdzl, &
@@ -191,9 +198,11 @@
 !$OMP minus_g_over_radius, minus_dg_plus_g_over_radius, Hxxl, Hyyl, Hzzl, Hxyl, Hxzl, Hyzl, sx_l, sy_l, sz_l, &
 !$OMP factor, rho_s_H, newtempx2, newtempy2, newtempz2, fac1, fac2, fac3, newtempx1, newtempx3 , newtempy1, &
 #ifdef FORCE_VECTORIZATION
+!$OMP ijk, &
+!$OMP ijk_spec, ip, iglob_p, &
 !$OMP R_xx_val, R_yy_val, &
 #endif
-!$OMP ijk_spec, ip, newtempy3, newtempz1, newtempz3)
+!$OMP newtempy3, newtempz1, newtempz3)
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
@@ -744,9 +753,9 @@
 #ifdef FORCE_VECTORIZATION
   ! sum contributions from each element to the global mesh and add gravity terms
 !$OMP DO
-  do iglob_p=1,num_globs(iphase)
+  do iglob_p = 1,num_globs(iphase)
     iglob = phase_iglob(iglob_p,iphase)
-    do ip=ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+    do ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
       ijk_spec = ibool_inv_tbl(ip,iphase)
 
       ! do NOT use array syntax ":" for the three statements below

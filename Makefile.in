@@ -150,6 +150,7 @@ MPI_INCLUDES = @MPI_INCLUDES@
 ####
 #######################################
 
+# native compilation
 @COND_MIC_TRUE@MIC = yes
 @COND_MIC_FALSE@MIC = no
 
@@ -158,6 +159,21 @@ MPI_INCLUDES = @MPI_INCLUDES@
 
 FCFLAGS += $(MIC_FLAGS)
 CPPFLAGS += $(MIC_FLAGS)
+
+#######################################
+####
+#### OpenMP
+#### with configure: ./configure --enable-openmp
+####
+#######################################
+
+@COND_OMP_TRUE@OPENMP = yes
+@COND_OMP_FALSE@OPENMP = no
+
+@COND_OMP_TRUE@OMP_FLAGS = @OMP_FCFLAGS@ $(FC_DEFINE)USE_OPENMP #$(FC_DEFINE)USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+@COND_OMP_FALSE@OMP_FLAGS =
+
+FCFLAGS += $(OMP_FLAGS)
 
 #######################################
 ####

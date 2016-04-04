@@ -176,9 +176,21 @@
     endif
     nullify(b_rmassz_crust_mantle)
   endif
+  deallocate(rstore_crust_mantle)
+
+  ! optimized arrays
+  if (USE_DEVILLE_PRODUCTS_VAL) then
+    deallocate(deriv_mapping_crust_mantle)
+  endif
+  if (use_inversed_arrays) then
+    deallocate(ibool_inv_tbl_crust_mantle,ibool_inv_tbl_inner_core,ibool_inv_tbl_outer_core)
+    deallocate(ibool_inv_st_crust_mantle,ibool_inv_st_inner_core,ibool_inv_st_outer_core)
+    deallocate(phase_iglob_crust_mantle,phase_iglob_inner_core,phase_iglob_outer_core)
+  endif
 
   ! outer core
   if (SIMULATION_TYPE == 3 ) nullify(b_rmass_outer_core)
+  deallocate(rstore_outer_core)
 
   ! inner core
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
@@ -194,6 +206,7 @@
     endif
     nullify(b_rmassz_inner_core)
   endif
+  deallocate(rstore_inner_core)
 
   ! MPI buffers
   deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &

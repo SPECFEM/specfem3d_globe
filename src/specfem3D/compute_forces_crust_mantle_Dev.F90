@@ -66,10 +66,6 @@
     c44store => c44store_crust_mantle,c45store => c45store_crust_mantle,c46store => c46store_crust_mantle, &
     c55store => c55store_crust_mantle,c56store => c56store_crust_mantle,c66store => c66store_crust_mantle, &
     ibool => ibool_crust_mantle, &
-    ibool_inv_tbl => ibool_inv_tbl_crust_mantle, &
-    ibool_inv_st => ibool_inv_st_crust_mantle, &
-    num_globs => num_globs_crust_mantle, &
-    phase_iglob => phase_iglob_crust_mantle, &
     ispec_is_tiso => ispec_is_tiso_crust_mantle, &
     one_minus_sum_beta => one_minus_sum_beta_crust_mantle, &
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
@@ -77,6 +73,15 @@
     nspec_inner => nspec_inner_crust_mantle
 
   use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+
+#ifdef FORCE_VECTORIZATION
+  ! optimized arrays
+  use specfem_par_crustmantle,only: &
+    ibool_inv_tbl => ibool_inv_tbl_crust_mantle, &
+    ibool_inv_st => ibool_inv_st_crust_mantle, &
+    num_globs => num_globs_crust_mantle, &
+    phase_iglob => phase_iglob_crust_mantle
+#endif
 
 !daniel: att - debug
 !  use specfem_par,only: it,NSTEP
@@ -139,12 +144,13 @@
   integer :: iphase
 
 #ifdef FORCE_VECTORIZATION
-  integer :: ijk
+  integer :: ijk_spec,ip,iglob_p,ijk
 #else
   integer :: i,j,k
 #endif
 
-  integer :: ijk_spec,ip,iglob_p
+  integer,parameter :: NGLL2 = NGLLY * NGLLZ
+  integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
@@ -180,10 +186,13 @@
 !$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP sum_terms, &
+#ifdef FORCE_VECTORIZATION
 !$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
+#endif
 !$OMP deltat, COMPUTE_AND_STORE_STRAIN ) &
 !$OMP PRIVATE(ispec,fac1,fac2,fac3,ispec_p, &
 #ifdef FORCE_VECTORIZATION
+!$OMP ijk_spec, ip, iglob_p, &
 !$OMP ijk, &
 #else
 !$OMP i,j,k, &
@@ -191,7 +200,6 @@
 !$OMP tempx1,tempx2,tempx3, &
 !$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
 !$OMP dummyx_loc,dummyy_loc,dummyz_loc,rho_s_H,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-!$OMP ijk_spec, ip, &
 !$OMP iglob,epsilondev_loc)
 
 !$OMP DO SCHEDULE(GUIDED)
@@ -325,12 +333,38 @@
     ! update will be done later at the very end..
 #else
     ! updates for non-vectorization case
+
+! note: Critical OpenMP here might degrade performance,
+!       especially for a larger number of threads (>8).
+!       Using atomic operations can partially help.
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
+! we can force vectorization using a compiler directive here because we know that there is no dependency
+! inside a given spectral element, since all the global points of a local elements are different by definition
+! (only common points between different elements can be the same)
+! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
+!IBM* ASSERT (NODEPS)
+!pgi$ ivdep
+!DIR$ IVDEP
     DO_LOOP_IJK
       iglob = ibool(INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
       accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
       accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
       accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,INDEX_IJK,ispec)
     ENDDO_LOOP_IJK
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP END CRITICAL
+#endif
 #endif
 
     ! update memory variables based upon the Runge-Kutta scheme
@@ -380,12 +414,17 @@
   enddo ! of spectral element loop NSPEC_CRUST_MANTLE
 !$OMP enddo
 
-#ifdef FORCE_VECTORIZATION
   ! updates acceleration
+#ifdef FORCE_VECTORIZATION
+  ! updates for vectorized case
+  ! loops over all global nodes in this phase (inner/outer)
 !$OMP DO
-  do iglob_p=1,num_globs(iphase)
+  do iglob_p = 1,num_globs(iphase)
+    ! global node index
     iglob = phase_iglob(iglob_p,iphase)
-    do ip=ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+    ! loops over valence points
+    do ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+      ! local 1D index from array ibool
       ijk_spec = ibool_inv_tbl(ip,iphase)
 
       ! do NOT use array syntax ":" for the three statements below otherwise most compilers
@@ -397,7 +436,57 @@
   enddo
 !$OMP enddo
 #endif
+
 !$OMP END PARALLEL
+
+
+! kept here for reference: updating for non-vectorized case
+! timing example:
+!         update here will take: 1m 25s
+!         update in ispec-loop : 1m 20s
+! thus a 6% increase...
+!
+! this gets even slower for MIC and a large number of OpenMP threads
+! (for best performance use the vectorized version)
+!
+! ! similar as above but with i/j/k/ispec-indexing
+!  do iglob_p = 1,num_globs(iphase)
+!    ! global node index
+!    iglob = phase_iglob(iglob_p,iphase)
+!    ! loops over valence points
+!    do ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+!      ! local 1D index from array ibool
+!      ijk_spec = ibool_inv_tbl(ip,iphase)
+!
+!      ! uses (i,j,k,ispec) indexing!
+!      !
+!      ! converts to i/j/k/ispec-indexing (starting from 0)
+!      ijk_spec = ijk_spec - 1
+!
+!      ispec = int(ijk_spec / NGLL3)
+!      ijk = ijk_spec - ispec * NGLL3
+!
+!      k = int(ijk / NGLL2)
+!      j = int((ijk - k * NGLL2) / NGLLX)
+!      i = ijk - k * NGLL2 - j * NGLLX
+!
+!      ! converts back to indexing starting from 1
+!      ispec = ispec + 1
+!      i = i + 1
+!      j = j + 1
+!      k = k + 1
+!
+!      ! checks
+!      !if (i < 1 .or. i > NGLLX .or. j < 1 .or. j > NGLLY .or. k < 1 .or. k > NGLLZ .or. ispec < 1 .or. ispec > NSPEC) then
+!      !  print *,'Error i/j/k-index: ',i,j,k,ispec,'from',ijk_spec,ijk
+!      !  stop 'Error invalid i-index'
+!      !endif
+!
+!      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,i,j,k,ispec)
+!      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,i,j,k,ispec)
+!      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,i,j,k,ispec)
+!    enddo
+!  enddo
 
   contains
 

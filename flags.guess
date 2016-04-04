@@ -82,6 +82,7 @@ case $my_FC in
         OPT_FFLAGS="-O3 -Onoaggress -Oipa0 -hfp2 -Ovector3 -Oscalar3 -Ocache2 -Ounroll2 -Ofusion2"
         # -Oaggress -Oipa4 would make it even more aggressive
         DEBUG_FFLAGS="-eC -eD -ec -en -eI -ea -g -G0"
+        OMP_FFLAGS="" # OpenMP is enabled by default for Cray compiler
         ;;
     pgf95|*/pgf95|pgf90|*/pgf90|pgfortran|*/pgfortran)
         #
@@ -90,6 +91,7 @@ case $my_FC in
         DEF_FFLAGS="-Mdclchk -Minform=warn -mcmodel=medium"
         OPT_FFLAGS="-Mnobounds -fast"
         DEBUG_FFLAGS="-Mbounds"
+        OMP_FFLAGS="-mp"
         ;;
     ifort|*/ifort)
         #
@@ -105,6 +107,7 @@ case $my_FC in
         DEF_FFLAGS="-xHost -fpe0 -ftz -assume buffered_io -assume byterecl -align sequence -std03 -diag-disable 6477 -implicitnone -gen-interfaces -warn all" # -mcmodel=medium -shared-intel
         OPT_FFLAGS="-O3 -check nobounds"
         DEBUG_FFLAGS="-check all -debug -g -O0 -fp-stack-check -traceback -ftrapuv"
+        OMP_FFLAGS="-openmp"
         #
         ;;
     gfortran|*/gfortran|f95|*/f95)
@@ -115,14 +118,16 @@ case $my_FC in
         OPT_FFLAGS="-O3"
         DEBUG_FFLAGS="-g -O0 -ggdb -fbacktrace -fbounds-check"
         # useful to track loss of accuracy because of automatic double to single precision conversion:  -Wconversion  (this may generate many warnings...)
+        OMP_FFLAGS="-fopenmp"
         ;;
     g95|*/g95)
         #
-        # g95 (free f95 compiler from http://www.g95.org)
+        # g95 ( free f95 compiler from http://www.g95.org )
         #
         DEF_FFLAGS="-fimplicit-none"
         OPT_FFLAGS="-O"
         DEBUG_FFLAGS="-g -O0 -fbounds-check -ftrace"
+        OMP_FFLAGS="" #OpenMP not supported
         ;;
     f90|*/f90)
         case $host_os in
@@ -135,6 +140,7 @@ case $my_FC in
                         DEF_FFLAGS="-W132 -s -cpu:p7 -v -YDEALLOC=ALL"
                         OPT_FFLAGS="-O3"
                         DEBUG_FFLAGS=""
+                        OMP_FFLAGS=""
                         ;;
                 esac
                 ;;
@@ -145,6 +151,7 @@ case $my_FC in
                 DEF_FFLAGS="-ansi -u -64 -OPT:Olimit=0 -OPT:roundoff=3 -OPT:IEEE_arithmetic=3 -r10000 -mips4"
                 OPT_FFLAGS="-O3"
                 DEBUG_FFLAGS="-check_bounds"
+                OMP_FFLAGS=""
                 ;;
             superux*)
                 ################## NEC SX ##################
@@ -152,6 +159,7 @@ case $my_FC in
                 DEF_FFLAGS="-C hopt -R2 -Wf\" -L nostdout noinclist mrgmsg noeject -msg b -pvctl loopcnt=14000000 expand=10 fullmsg vecthreshold=20 -s\" -pi auto line=100 exp=swap_all,rank"
                 OPT_FFLAGS=""
                 DEBUG_FFLAGS=""
+                OMP_FFLAGS=""
                 ;;
         esac
         ;;
@@ -162,6 +170,7 @@ case $my_FC in
         DEF_FFLAGS="--warn --wo --tpp --f95 --dal"
         OPT_FFLAGS="-O"
         DEBUG_FFLAGS="--chk"
+        OMP_FFLAGS=""
         ;;
     ######## IBM ######
     mpxlf*|*/mpxlf*)
@@ -206,6 +215,7 @@ case $my_FC in
         # On IBM BlueGene at IDRIS (France) use:
         # -qtune=auto -qarch=450d -qsave     instead of -qtune=auto -qarch=auto
         #
+        OMP_FFLAGS="-qsmp=omp"
         ;;
     pathf90|*/pathf90)
         #
@@ -218,6 +228,7 @@ case $my_FC in
         DEF_FFLAGS="-fno-math-errno -ffast-math -msse3 -march=auto -fno-second-underscore -align64"
         OPT_FFLAGS="-O3 -OPT:Ofast -LNO:fusion=2 -LNO:simd=2 -LNO:simd_verbose=ON"
         DEBUG_FFLAGS="-g2"
+        OMP_FFLAGS="-mp"
         ;;
 
 esac
@@ -250,6 +261,9 @@ if test "x$MPIFC" = "x"; then
         MPILIBS="$DEF_MPILIBS"
     fi
 fi
+if test "x$OMP_FCFLAGS" = "x"; then
+    OMP_FCFLAGS="$OMP_FFLAGS"
+fi
 
 echo MPIFC=\"$MPIFC\" | sed 's/\$/\\\$/g'
 echo MPILIBS=\"$MPILIBS\" | sed 's/\$/\\\$/g'
@@ -260,5 +274,6 @@ if [ -n "${DEF_CFLAGS+set}" -a -z "${CFLAGS+set}" ]; then
 # overridden it on the command-line.
 echo CFLAGS=\"$DEF_CFLAGS\" | sed 's/\$/\\\$/g'
 fi
+echo OMP_FCFLAGS=\"$OMP_FCFLAGS\" | sed 's/\$/\\\$/g'
 
 # end of file

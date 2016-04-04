@@ -55,15 +55,19 @@
     etax => etax_outer_core,etay => etay_outer_core,etaz => etaz_outer_core, &
     gammax => gammax_outer_core,gammay => gammay_outer_core,gammaz => gammaz_outer_core, &
     ibool => ibool_outer_core, &
-    ibool_inv_tbl => ibool_inv_tbl_outer_core, &
-    ibool_inv_st => ibool_inv_st_outer_core, &
-    num_globs => num_globs_outer_core, &
-    phase_iglob => phase_iglob_outer_core, &
     phase_ispec_inner => phase_ispec_inner_outer_core, &
     nspec_outer => nspec_outer_outer_core, &
     nspec_inner => nspec_inner_outer_core
 
   use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+
+#ifdef FORCE_VECTORIZATION
+  use specfem_par_outercore,only: &
+    ibool_inv_tbl => ibool_inv_tbl_outer_core, &
+    ibool_inv_st => ibool_inv_st_outer_core, &
+    num_globs => num_globs_outer_core, &
+    phase_iglob => phase_iglob_outer_core
+#endif
 
   implicit none
 
@@ -121,12 +125,11 @@
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
+  integer :: ijk_spec, ip, iglob_p
 #else
   integer :: i,j,k
 #endif
   real(kind=CUSTOM_REAL), dimension(NSTAGE) :: MYALPHA_LDDRK,MYBETA_LDDRK
-
-  integer :: ijk_spec, ip, iglob_p
 
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
@@ -166,7 +169,10 @@
 !$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation, &
 !$OMP minus_rho_g_over_kappa_fluid, wgll_cube, MOVIE_VOLUME, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accelfluid, USE_LDDRK, A_array_rotation_lddrk, &
-!$OMP sum_terms, ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
+!$OMP sum_terms, &
+#ifdef FORCE_VECTORIZATION
+!$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
+#endif
 !$OMP istage, B_array_rotation_lddrk, div_displfluid ) &
 !$OMP PRIVATE( &
 !$OMP ispec_p, ispec, iglob, dummyx_loc, radius, theta, phi, &
@@ -177,7 +183,11 @@
 !$OMP dpotentialdxl, tempx1, tempx3, dpotentialdyl, dpotentialdzl, two_omega_deltat, cos_two_omega_t, &
 !$OMP sin_two_omega_t, source_euler_A, source_euler_B, A_rotation, B_rotation, ux_rotation, uy_rotation, &
 !$OMP dpotentialdx_with_rot, dpotentialdy_with_rot, gxl, gyl, gzl, gravity_term, &
-!$OMP ijk_spec, ip, newtempx1, newtempx3, newtempx2 ) &
+#ifdef FORCE_VECTORIZATION
+!$OMP ijk, &
+!$OMP ijk_spec, ip, iglob_p, &
+#endif
+!$OMP newtempx1, newtempx3, newtempx2 ) &
 !$OMP FIRSTPRIVATE( MYALPHA_LDDRK,MYBETA_LDDRK )
 
 !$OMP DO SCHEDULE(GUIDED)

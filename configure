@@ -635,6 +635,7 @@ MPI_INC
 VTK_LIBS
 VTK_LDFLAGS
 VTK_INCLUDES
+OMP_FCFLAGS
 OCL_LIBS
 OCL_LDFLAGS
 OCL_CFLAGS
@@ -692,6 +693,8 @@ COND_ADIOS_FALSE
 COND_ADIOS_TRUE
 COND_VTK_FALSE
 COND_VTK_TRUE
+COND_OMP_FALSE
+COND_OMP_TRUE
 COND_MIC_FALSE
 COND_MIC_TRUE
 COND_OCL_FALSE
@@ -761,6 +764,7 @@ enable_vectorization
 with_cuda
 with_opencl
 with_mic
+enable_openmp
 enable_vtk
 with_adios
 with_asdf
@@ -794,6 +798,7 @@ OCL_CPU_FLAGS
 OCL_GPU_FLAGS
 OCL_INC
 OCL_LIB
+OMP_FCFLAGS
 MPI_INC
 CXX
 CXXFLAGS
@@ -1419,6 +1424,7 @@ Optional Features:
   --enable-debug          build with debugging options enabled [default=no]
   --enable-vectorization  build FORCE_VECTORIZATION enabled version
                           [default=auto]
+  --enable-openmp         build OpenMP enabled version [default=no]
   --enable-vtk            build VTK enabled version [default=no]
 
 Optional Packages:
@@ -1466,6 +1472,7 @@ Some influential environment variables:
               OpenCL GPU compiler flags
   OCL_INC     Location of OpenCL include files
   OCL_LIB     Location of OpenCL library libOpenCL
+  OMP_FCFLAGS OpenMP Fortran compiler flags
   MPI_INC     Location of MPI include mpi.h, needed by CUDA/VTK (default:
               auto-detect)
   CXX         C++ compiler command
@@ -2828,6 +2835,27 @@ else
   COND_MIC_TRUE='#'
   COND_MIC_FALSE=
 fi
+
+
+###
+### OpenMP
+###
+
+# Check whether --enable-openmp was given.
+if test "${enable_openmp+set}" = set; then :
+  enableval=$enable_openmp; want_omp="$enableval"
+else
+  want_omp=no
+fi
+
+ if test "$want_omp" != no; then
+  COND_OMP_TRUE=
+  COND_OMP_FALSE='#'
+else
+  COND_OMP_TRUE='#'
+  COND_OMP_FALSE=
+fi
+
 
 
 ###
@@ -6763,14 +6791,101 @@ if test x"$want_mic" != xno; then :
   $as_echo "## --- ##
 ## MIC ##
 ## --- ##"
-  { $as_echo "$as_me:${as_lineno-$LINENO}: MIC native compilation is enabled" >&5
-$as_echo "$as_me: MIC native compilation is enabled" >&6;}
+  { $as_echo "$as_me:${as_lineno-$LINENO}: MIC native compilation" >&5
+$as_echo "$as_me: MIC native compilation" >&6;}
   FLAGS_CHECK=$(echo $FLAGS_CHECK | sed -e 's/\-xHost -fpe0\>//g')
 
 fi
 if test x"$want_vec" == xno && test x"$want_mic" == xyes; then
     { $as_echo "$as_me:${as_lineno-$LINENO}: --enable-vectorization and --with-mic should be both specified for better performance." >&5
 $as_echo "$as_me: --enable-vectorization and --with-mic should be both specified for better performance." >&6;}
+fi
+
+###
+### OpenMP
+###
+
+if test x"$want_omp" != xno; then :
+
+  $as_echo "## ------ ##
+## OpenMP ##
+## ------ ##"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: OpenMP compilation is enabled" >&5
+$as_echo "$as_me: OpenMP compilation is enabled" >&6;}
+
+
+
+  # openmp checking
+  { $as_echo "$as_me:${as_lineno-$LINENO}: OpenMP flag $OMP_FCFLAGS" >&5
+$as_echo "$as_me: OpenMP flag $OMP_FCFLAGS" >&6;}
+
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+cit_fc_save_fc=$FC
+cit_fc_save_fcflags=$FCFLAGS
+FC=$FC
+FCFLAGS="$FCFLAGS $OMP_FCFLAGS"
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether OpenMP directives work" >&5
+$as_echo_n "checking whether OpenMP directives work... " >&6; }
+
+#AC_COMPILE_IFELSE(_CIT_FC_TRIVIAL_OPENMP_PROGRAM, [
+#    AC_MSG_RESULT(yes)
+#], [
+#    AC_MSG_RESULT(no)
+#    AC_MSG_FAILURE([cannot compile a trivial OpenMP program using $FC])
+#])
+
+cat > conftest.$ac_ext <<_ACEOF
+
+      program main
+
+       implicit none
+       integer OMP_get_thread_num
+       integer OMP_GET_MAX_THREADS
+       integer NUM_THREADS
+       integer thread_id
+
+       NUM_THREADS = OMP_GET_MAX_THREADS()
+       !$OMP PARALLEL DEFAULT(SHARED) PRIVATE(thread_id)
+       thread_id = OMP_get_thread_num()+1
+       !$OMP END PARALLEL
+
+      end
+
+_ACEOF
+if ac_fn_fc_try_link "$LINENO"; then :
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot link a trivial OpenMP program using $FC with flags: $OMP_FCFLAGS
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+FC=$cit_fc_save_fc
+FCFLAGS=$cit_fc_save_fcflags
+
+
+ac_ext=${ac_fc_srcext-f}
+ac_compile='$FC -c $FCFLAGS $ac_fcflags_srcext conftest.$ac_ext >&5'
+ac_link='$FC -o conftest$ac_exeext $FCFLAGS $LDFLAGS $ac_fcflags_srcext conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_fc_compiler_gnu
+
+
+
 fi
 
 ###
@@ -6789,7 +6904,6 @@ $as_echo "$as_me: FORCE_VECTORIZATION is enabled" >&6;}
   CPPFLAGS="${CPPFLAGS} -DFORCE_VECTORIZATION"
 
 fi
-
 
 ###
 ### VTK
@@ -7726,7 +7840,6 @@ ac_compiler_gnu=$ac_cv_fc_compiler_gnu
 
 fi
 
-
 ###
 ### CEM
 ###
@@ -7931,6 +8044,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_MIC_TRUE}" && test -z "${COND_MIC_FALSE}"; then
   as_fn_error $? "conditional \"COND_MIC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_OMP_TRUE}" && test -z "${COND_OMP_FALSE}"; then
+  as_fn_error $? "conditional \"COND_OMP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_VTK_TRUE}" && test -z "${COND_VTK_FALSE}"; then

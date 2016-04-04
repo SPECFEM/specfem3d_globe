@@ -326,6 +326,8 @@ module specfem_par
   integer, dimension(:), allocatable :: integer_mask_ibool_exact_undo
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: buffer_for_disk
 
+  ! for optimized arrays
+  logical :: use_inversed_arrays
 
 end module specfem_par
 
@@ -343,17 +345,18 @@ module specfem_par_crustmantle
   ! mesh parameters
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
 
-  integer, dimension(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2) :: ibool_inv_tbl_crust_mantle
-  integer, dimension(NGLOB_CRUST_MANTLE+1,2) :: ibool_inv_st_crust_mantle
+  ! optimized arrays
+  integer, dimension(:,:),allocatable :: ibool_inv_tbl_crust_mantle
+  integer, dimension(:,:),allocatable :: ibool_inv_st_crust_mantle
+  integer, dimension(:,:),allocatable :: phase_iglob_crust_mantle
   integer, dimension(2) :: num_globs_crust_mantle
-  integer, dimension(NGLOB_CRUST_MANTLE,2) :: phase_iglob_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: &
     deriv_mapping_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
@@ -534,10 +537,11 @@ module specfem_par_innercore
   ! mesh parameters
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
 
-  integer, dimension(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2) :: ibool_inv_tbl_inner_core
-  integer, dimension(NGLOB_CRUST_MANTLE+1,2) :: ibool_inv_st_inner_core
+  ! optimized arrays
+  integer, dimension(:,:),allocatable :: ibool_inv_tbl_inner_core
+  integer, dimension(:,:),allocatable :: ibool_inv_st_inner_core
+  integer, dimension(:,:),allocatable :: phase_iglob_inner_core
   integer, dimension(2) :: num_globs_inner_core
-  integer, dimension(NGLOB_CRUST_MANTLE,2) :: phase_iglob_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
     xix_inner_core,xiy_inner_core,xiz_inner_core,&
@@ -653,10 +657,11 @@ module specfem_par_outercore
   ! mesh parameters
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
-  integer, dimension(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2) :: ibool_inv_tbl_outer_core
-  integer, dimension(NGLOB_CRUST_MANTLE+1,2) :: ibool_inv_st_outer_core
+  ! optimized arrays
+  integer, dimension(:,:),allocatable :: ibool_inv_tbl_outer_core
+  integer, dimension(:,:),allocatable :: ibool_inv_st_outer_core
+  integer, dimension(:,:),allocatable :: phase_iglob_outer_core
   integer, dimension(2) :: num_globs_outer_core
-  integer, dimension(NGLOB_CRUST_MANTLE,2) :: phase_iglob_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
     xix_outer_core,xiy_outer_core,xiz_outer_core,&

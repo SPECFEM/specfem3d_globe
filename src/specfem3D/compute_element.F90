@@ -189,6 +189,7 @@
            + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
            + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
 #endif
+
 #ifdef FORCE_VECTORIZATION
     duydxl            = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
                       + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
@@ -504,6 +505,7 @@
 #else
       factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
 #endif
+
       rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
       rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
       rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
