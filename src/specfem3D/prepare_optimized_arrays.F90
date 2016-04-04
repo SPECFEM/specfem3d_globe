@@ -246,8 +246,8 @@
       stop 'Error invalid maximum valence value'
     endif
     ! debug
-    !print*,myrank,'maximum shared degrees theoretical = ',num_alloc_ibool_inv_tbl_theor ! regional_Greece_small example: 40
-    !print*,myrank,'maximum shared degrees from array  = ',maxval(ibool_inv_num(:))      ! regional_Greece_small example: 8 and 16
+    !print *,myrank,'maximum shared degrees theoretical = ',num_alloc_ibool_inv_tbl_theor ! regional_Greece_small example: 40
+    !print *,myrank,'maximum shared degrees from array  = ',maxval(ibool_inv_num(:))      ! regional_Greece_small example: 8 and 16
 
     allocate(ibool_inv_tbl_tmp(num_alloc_ibool_inv_tbl,nglob),stat=ier)
     if (ier /= 0) stop 'Error allocating ibool_inv_tbl_tmp array'
