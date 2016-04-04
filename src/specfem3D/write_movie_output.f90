@@ -137,7 +137,8 @@
 
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,eps_trace_over_3_crust_mantle, &
+                    it,NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+                    eps_trace_over_3_crust_mantle, &
                     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                     muvstore_crust_mantle_3dmovie, &
@@ -147,7 +148,8 @@
         ! output the Time Integral of Strain, or \mu*TIS
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,Ieps_trace_over_3_crust_mantle, &
+                    it,NSPEC_CRUST_MANTLE_3DMOVIE, &
+                    Ieps_trace_over_3_crust_mantle, &
                     Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle,Iepsilondev_xy_crust_mantle, &
                     Iepsilondev_xz_crust_mantle,Iepsilondev_yz_crust_mantle, &
                     muvstore_crust_mantle_3dmovie, &
