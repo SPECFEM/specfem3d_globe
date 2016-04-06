@@ -150,7 +150,7 @@ please check if driver and runtime libraries work together\n\n");
   id_device = myrank % nbMatchingDevices;
 #endif
 
-  int myDevice = matchingDevices[id_device];
+  myDevice = matchingDevices[id_device];
 
   free(matchingDevices);
 
