@@ -119,6 +119,7 @@ please check if driver and runtime libraries work together\n\n");
   int nbMatchingDevices = 0;
   struct cudaDeviceProp deviceProp;
   int i;
+  int id_device,myDevice;
 
   for (i = 0; i < device_count; i++) {
     // get device properties
@@ -140,7 +141,16 @@ please check if driver and runtime libraries work together\n\n");
     exit_on_error("Error CUDA found no matching devices (for device filter set in Par_file)\n");
   }
 
-  int myDevice = matchingDevices[myrank % nbMatchingDevices];
+#ifdef GPU_DEVICE_ID
+  // uses fixed device id when compile with e.g.: -DGPU_DEVICE_ID=0
+  id_device = GPU_DEVICE_ID;
+  if (myrank == 0) printf("setting cuda devices with id = %d for all processes by -DGPU_DEVICE_ID\n\n",id_device);
+#else
+  // spreads across all available devices
+  id_device = myrank % nbMatchingDevices;
+#endif
+
+  int myDevice = matchingDevices[id_device];
 
   free(matchingDevices);
 
@@ -768,7 +778,18 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
   clGetContextInfo(mocl.context, CL_CONTEXT_DEVICES, szParmDataBytes, cdDevices, NULL);
 
-  mocl.device = cdDevices[myrank % mocl.nb_devices];
+  // sets device for this process
+  int id_device;
+#ifdef GPU_DEVICE_ID
+  // uses fixed device id when compile with e.g.: -DGPU_DEVICE_ID=0
+  id_device = GPU_DEVICE_ID;
+  if (myrank == 0) printf("setting OpenCL devices with id = %d for all processes by -DGPU_DEVICE_ID\n\n",id_device);
+#else
+  // spreads across all available devices
+  id_device = myrank % mocl.nb_devices;
+#endif
+
+  mocl.device = cdDevices[id_device];
   free(cdDevices);
 
   // command kernel queues
