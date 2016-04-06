@@ -53,7 +53,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: &
         xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ),intent(out) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: eps_trace_over_3_loc
 
   !  local variable
@@ -129,11 +129,11 @@
     ! strains
     templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     eps_trace_over_3_loc(INDEX_IJK) = templ
-    epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
-    epsilondev_loc(INDEX_IJK,2) = duydyl - templ
-    epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-    epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-    epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
+    epsilondev_loc(1,INDEX_IJK) = duxdxl - templ
+    epsilondev_loc(2,INDEX_IJK) = duydyl - templ
+    epsilondev_loc(3,INDEX_IJK) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+    epsilondev_loc(4,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+    epsilondev_loc(5,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
   ENDDO_LOOP_IJK
 
@@ -324,7 +324,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ),intent(out) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: eps_trace_over_3_loc
 
   ! local parameters
@@ -419,11 +419,11 @@
 
         ! compute deviatoric strain
         eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-        epsilondev_loc(i,j,k,1) = duxdxl - eps_trace_over_3_loc(i,j,k)
-        epsilondev_loc(i,j,k,2) = duydyl - eps_trace_over_3_loc(i,j,k)
-        epsilondev_loc(i,j,k,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-        epsilondev_loc(i,j,k,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-        epsilondev_loc(i,j,k,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
+        epsilondev_loc(1,i,j,k) = duxdxl - eps_trace_over_3_loc(i,j,k)
+        epsilondev_loc(2,i,j,k) = duydyl - eps_trace_over_3_loc(i,j,k)
+        epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+        epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+        epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
       enddo ! NGLLX
     enddo ! NGLLY
