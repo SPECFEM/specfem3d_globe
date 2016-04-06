@@ -191,7 +191,7 @@
 
         ENDDO_LOOP_IJK
       enddo
-!$OMP ENDDO
+!$OMP enddo
 
     else
 
@@ -284,7 +284,7 @@
         ENDDO_LOOP_IJK
 
       enddo
-!$OMP ENDDO
+!$OMP enddo
 
     endif ! ANISOTROPIC_KL
 
@@ -539,7 +539,7 @@
       ENDDO_LOOP_IJK
 
     enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
     !deviatoric kernel check
@@ -792,7 +792,7 @@
       ENDDO_LOOP_IJK
 
     enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   else
@@ -918,7 +918,7 @@
       ENDDO_LOOP_IJK
 
     enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   else
