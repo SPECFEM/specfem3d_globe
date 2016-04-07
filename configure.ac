@@ -354,7 +354,7 @@ AS_IF([test x"$want_vtk" != xno], [
 ### MPI
 ###
 
-AS_IF([test x"$want_cuda" != xno -o x"$want_vtk" != xno], [
+AS_IF([test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_vtk" != xno], [
     AS_BOX([MPI])
     # checks MPI include directory
     CIT_MPI_INCDIR([$MPIFC])

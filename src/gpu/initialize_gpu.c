@@ -30,6 +30,10 @@
 #include "mesh_constants_gpu.h"
 #include <string.h>
 
+// debugging
+const int DEBUG_VERBOSE_OUTPUT = 0;
+
+
 // GPU initialization
 
 #ifdef USE_OPENCL
@@ -128,8 +132,10 @@ please check if driver and runtime libraries work together\n\n");
       continue;
     }
     // debug
-    //printf("device match: %d match %d out of %d - filter platform = %s device = %s\n",
-    //        i,nbMatchingDevices,device_count,platform_filter, device_filter);
+    if (DEBUG_VERBOSE_OUTPUT){
+      printf("device match: %d match %d out of %d - filter platform = %s device = %s\n",
+              i,nbMatchingDevices,device_count,platform_filter, device_filter);
+    }
 
     // adds match
     matchingDevices[nbMatchingDevices] = i;
@@ -210,7 +216,7 @@ e.g., on titan enable environment CRAY_CUDA_MPS=1 to use a single GPU with multi
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
   }
   // debugging
-  if (DEBUG) {
+  if (DEBUG_VERBOSE_OUTPUT) {
     do_output_info = 1;
     sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
   }
@@ -361,7 +367,7 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
   }
   // debugging
-  if (DEBUG) {
+  if (DEBUG_VERBOSE_OUTPUT) {
     do_output_info = 1;
     sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
   }
@@ -540,9 +546,6 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   cl_platform_id *platform_ids;
   cl_uint num_platforms;
 
-  // debugging
-  const int VERBOSE_OUTPUT = 0;
-
   // first OpenCL call
   // only gets number of platforms
   clCheck( clGetPlatformIDs(0, NULL, &num_platforms) );
@@ -608,7 +611,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     }
 
     // debug output
-    if (VERBOSE_OUTPUT){
+    if (DEBUG_VERBOSE_OUTPUT){
       if (myrank == 0) {
         printf("\nAvailable platforms are:\n");
         for (i = 0; i < num_platforms; i++) {
@@ -617,6 +620,8 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         printf("\nMatching platforms: %i\n",found);
         printf("\n");
       }
+      // synchronizes
+      synchronize_mpi();
     }
 
     // checks if platform found
@@ -705,7 +710,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     }
 
     // debug output
-    if (VERBOSE_OUTPUT){
+    if (DEBUG_VERBOSE_OUTPUT){
       if (myrank == 0) {
         printf("\nAvailable devices are:\n");
         for (i = 0; i < num_devices; i++) {
@@ -714,12 +719,14 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         printf("\nMatching devices: %i\n",found);
         printf("\n");
       }
+      // synchronizes
+      synchronize_mpi();
     }
 
     if (!found) {
       // user output
       if (myrank == 0) {
-        fprintf(stderr, "\nAvailable devices are:\n");
+        fprintf(stderr, "\nNo matching device found!\n\nAvailable devices are:\n");
         for (i = 0; i < num_devices; i++) {
           if (info_device_all[i]) { fprintf(stderr, "  device %i: name = %s\n",i,info_device_all[i]);}
         }
@@ -777,6 +784,28 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   cdDevices = (cl_device_id *) malloc(szParmDataBytes);
 
   clGetContextInfo(mocl.context, CL_CONTEXT_DEVICES, szParmDataBytes, cdDevices, NULL);
+
+  // debugging
+  if (DEBUG_VERBOSE_OUTPUT) {
+    // synchronizes
+    synchronize_mpi();
+    // outputs info
+    fflush(stdout);
+    printf("\nrank %d - OpenCL devices: number of devices = %d\n",myrank,mocl.nb_devices);
+    for (i = 0; i < mocl.nb_devices; i++) {
+      size_t info_length;
+      char *info;
+      clCheck( clGetDeviceInfo(cdDevices[i], CL_DEVICE_NAME, 0, NULL, &info_length));
+      info = (char *) malloc(info_length * sizeof(char));
+      clCheck( clGetDeviceInfo(cdDevices[i], CL_DEVICE_NAME, info_length, info, NULL));
+      printf("  gpu device id %d: %s\n",i,info);
+      free(info);
+    }
+    printf("\n");
+    fflush(stdout);
+    // synchronizes
+    synchronize_mpi();
+  }
 
   // sets device for this process
   int id_device;

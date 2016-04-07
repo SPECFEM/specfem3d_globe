@@ -29,6 +29,9 @@
 
 #include "mesh_constants_gpu.h"
 
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 
 /* ----------------------------------------------------------------------------------------------- */
 // OpenCL setup for memset function

@@ -226,7 +226,7 @@ typedef float realw;
 // leads up to ~10% performance increase in OpenCL and ~1% in Cuda
 #define MANUALLY_UNROLLED_LOOPS
 
-// compiler specifications
+// CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
 //
 // note: main kernel is Kernel_2_crust_mantle_impl() which is limited by register usage to only 5 active blocks
