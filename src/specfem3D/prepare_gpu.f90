@@ -603,14 +603,15 @@
 
     ! outputs info
     if (total_mb /= 0) then
-       write(IMAIN,*)
-       write(IMAIN,*)"  GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
-       write(IMAIN,*)"             used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
-       write(IMAIN,*)"             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
-       write(IMAIN,*)
+       write(IMAIN,*) ""
+       write(IMAIN,*) "  GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
+       write(IMAIN,*) "             used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
+       write(IMAIN,*) "             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
+       write(IMAIN,*) ""
     else
-       write(IMAIN,*)
-       write(IMAIN,*)"  GPU usage: not available."
+       write(IMAIN,*) ""
+       write(IMAIN,*) "  GPU usage: not available."
+       write(IMAIN,*) ""
     endif
     call flush_IMAIN()
   endif
@@ -840,9 +841,9 @@
 
     ! user output
     if(myrank == 0) then
-      write(IMAIN,*)
-      write(IMAIN,*) '  minimum memory requested     : ',memory_size / 1024. / 1024.,'MB per process'
-      write(IMAIN,*)
+      write(IMAIN,*) ""
+      write(IMAIN,*) "  minimum memory requested     : ",memory_size / 1024. / 1024.,"MB per process"
+      write(IMAIN,*) ""
       call flush_IMAIN()
     endif
 

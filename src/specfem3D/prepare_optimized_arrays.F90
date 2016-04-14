@@ -73,6 +73,7 @@
 
   ! local parameters
   integer :: iphase,ier
+  integer :: num_elements
 
   ! inverse arrays use 1D indexing for better compiler vectorization
   ! only used for Deville routines and FORCE_VECTORIZATION)
@@ -123,53 +124,51 @@
     phase_iglob_outer_core(:,:) = 0
 
     !---- make inv. table ----------------------
-    !---- crust mantle : outer elements (iphase=1)
-    iphase = 1
-    call make_inv_table(iphase,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                        nspec_outer_crust_mantle,phase_ispec_inner_crust_mantle, &
-                        ibool_crust_mantle,phase_iglob_crust_mantle, &
-                        ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
-                        num_globs_crust_mantle)
+    ! loops over phases
+    ! (1 == outer elements / 2 == inner elements)
+    do iphase = 1,2
+      ! crust mantle
+      if (iphase == 1) then
+        ! outer elements (iphase=1)
+        num_elements = nspec_outer_crust_mantle
+      else
+        ! inner elements (iphase=2)
+        num_elements = nspec_inner_crust_mantle
+      endif
+      call make_inv_table(iphase,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                          num_elements,phase_ispec_inner_crust_mantle, &
+                          ibool_crust_mantle,phase_iglob_crust_mantle, &
+                          ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
+                          num_globs_crust_mantle)
 
-    !---- crust mantle : inner elements (iphase=2)
-    iphase = 2
-    call make_inv_table(iphase,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                        nspec_inner_crust_mantle,phase_ispec_inner_crust_mantle, &
-                        ibool_crust_mantle,phase_iglob_crust_mantle, &
-                        ibool_inv_tbl_crust_mantle, ibool_inv_st_crust_mantle, &
-                        num_globs_crust_mantle)
+      ! inner core
+      if (iphase == 1) then
+        ! outer elements (iphase=1)
+        num_elements = nspec_outer_inner_core
+      else
+        ! inner elements (iphase=2)
+        num_elements = nspec_inner_inner_core
+      endif
+      call make_inv_table(iphase,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                          num_elements,phase_ispec_inner_inner_core, &
+                          ibool_inner_core,phase_iglob_inner_core, &
+                          ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
+                          num_globs_inner_core)
 
-    !---- inner core : outer elements (iphase=1)
-    iphase = 1
-    call make_inv_table(iphase,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                        nspec_outer_inner_core,phase_ispec_inner_inner_core, &
-                        ibool_inner_core,phase_iglob_inner_core, &
-                        ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
-                        num_globs_inner_core)
-
-    !---- inner core : inner elements (iphase=2)
-    iphase = 2
-    call make_inv_table(iphase,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                        nspec_inner_inner_core,phase_ispec_inner_inner_core, &
-                        ibool_inner_core,phase_iglob_inner_core, &
-                        ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
-                        num_globs_inner_core)
-
-    !---- outer core : outer elements (iphase=1)
-    iphase = 1
-    call make_inv_table(iphase,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
-                        nspec_outer_outer_core,phase_ispec_inner_outer_core, &
-                        ibool_outer_core,phase_iglob_outer_core, &
-                        ibool_inv_tbl_outer_core, ibool_inv_st_outer_core, &
-                        num_globs_outer_core)
-
-    !---- outer core : inner elements (iphase=2)
-    iphase = 2
-    call make_inv_table(iphase,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
-                        nspec_inner_outer_core,phase_ispec_inner_outer_core, &
-                        ibool_outer_core,phase_iglob_outer_core, &
-                        ibool_inv_tbl_outer_core, ibool_inv_st_outer_core, &
-                        num_globs_outer_core)
+      ! outer core
+      if (iphase == 1) then
+        ! outer elements (iphase=1)
+        num_elements = nspec_outer_outer_core
+      else
+        ! inner elements (iphase=2)
+        num_elements = nspec_inner_outer_core
+      endif
+      call make_inv_table(iphase,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
+                          num_elements,phase_ispec_inner_outer_core, &
+                          ibool_outer_core,phase_iglob_outer_core, &
+                          ibool_inv_tbl_outer_core, ibool_inv_st_outer_core, &
+                          num_globs_outer_core)
+    enddo
 
     ! user output
     if (myrank == 0) then
@@ -217,6 +216,9 @@
 
     ! tolerance number of shared degrees per node
     integer, parameter :: N_TOL = 20
+
+    ! checks if anything to do (e.g., no outer elements for single process simulations)
+    if (phase_nspec == 0) return
 
     ! allocates temporary arrays
     allocate(ibool_inv_num(nglob),stat=ier)
