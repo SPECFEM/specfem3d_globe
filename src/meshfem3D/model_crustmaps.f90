@@ -74,21 +74,21 @@
 
   ! allocates model arrays
   allocate(thickness(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
-          density(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
-          velocp(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
-          velocs(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
-          stat=ier)
+           density(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+           velocp(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+           velocs(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps arrays')
 
   allocate(thicknessnp(NLAYERS_CRUSTMAP), &
-          densitynp(NLAYERS_CRUSTMAP), &
-          velocpnp(NLAYERS_CRUSTMAP), &
-          velocsnp(NLAYERS_CRUSTMAP), &
-          thicknesssp(NLAYERS_CRUSTMAP), &
-          densitysp(NLAYERS_CRUSTMAP), &
-          velocpsp(NLAYERS_CRUSTMAP), &
-          velocssp(NLAYERS_CRUSTMAP), &
-          stat=ier)
+           densitynp(NLAYERS_CRUSTMAP), &
+           velocpnp(NLAYERS_CRUSTMAP), &
+           velocsnp(NLAYERS_CRUSTMAP), &
+           thicknesssp(NLAYERS_CRUSTMAP), &
+           densitysp(NLAYERS_CRUSTMAP), &
+           velocpsp(NLAYERS_CRUSTMAP), &
+           velocssp(NLAYERS_CRUSTMAP), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps np/sp arrays')
 
   ! master reads in crust maps
@@ -201,7 +201,7 @@
   character(len=MAX_STRING_LEN) :: eucrust
   integer :: ier, ila, iln
 
-  write(eucrust,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
+  write(eucrust,'(a,a1,i1,a5)') 'DATA/crustmap/eucrust', var_letter, ind,'.cmap'
 
   open(unit = IIN,file=trim(eucrust),status='old',action='read',iostat=ier)
   if (ier /= 0) then
