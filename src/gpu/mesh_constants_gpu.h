@@ -70,6 +70,7 @@ typedef float realw;
 #define DEBUG 0
 #if DEBUG == 1
 #define TRACE(x) printf ("%s\n", x); fflush(stdout);
+#define TRACE_EXTENDED(x) printf ("%s --- function %s file %s line %d \n",x,__func__,__FILE__,__LINE__); fflush(stdout);
 #else
 #define TRACE(x)
 #endif
@@ -246,7 +247,7 @@ typedef float realw;
 
 /*----------------------------------------------------------------------------------------------- */
 
-// cuda kernel block size for updating displacements/potential (newmark time scheme)
+// kernel block size for updating displacements/potential (Newmark time scheme)
 // current hardware: 128 is slightly faster than 256 (~ 4%)
 #define BLOCKSIZE_KERNEL1 128
 #define BLOCKSIZE_KERNEL3 128
@@ -254,6 +255,46 @@ typedef float realw;
 
 // maximum grid dimension in one direction of GPU
 #define MAXIMUM_GRID_DIM 65535
+
+/*----------------------------------------------------------------------------------------------- */
+
+//MIC (Knights Corner)
+#define MIC_KNIGHTS_CORNER 0
+#if MIC_KNIGHTS_CORNER == 1
+// redefines block sizes
+// local work group size: SIMD size 512-bit/64-byte -> multiple of 16 floats (each 4-byte)
+#undef BLOCKSIZE_KERNEL1
+#undef BLOCKSIZE_KERNEL3
+#undef BLOCKSIZE_TRANSFER
+#define BLOCKSIZE_KERNEL1 64    // for updating displacement (Newmark)
+#define BLOCKSIZE_KERNEL3 64
+#define BLOCKSIZE_TRANSFER 128
+
+// max_compute_unit (number of work-groups should be equal to this for best performance)
+// Knights Corner has 236 threads (1percore), optimal number of work groups is a multiple
+#define MAXIMUM_COMPUTE_UNITS 236
+
+// preferred work group size multiple for kernels (taken from device/kernel info)
+#define PREFERRED_WORK_GROUP_SIZE_MULTIPLE 128
+
+// max_work_group_size
+// device info: CL_DEVICE_MAX_WORK_ITEM_SIZES == 8192
+// kernel info: CL_KERNEL_WORK_GROUP_SIZE == 2048 for crust_mantle kernel
+#undef MAXIMUM_GRID_DIM
+#define MAXIMUM_GRID_DIM 32 * MAXIMUM_COMPUTE_UNITS // 7552 = 32 * 236 = 7552
+#endif // MIC_KNIGHTS_CORNER
+
+/*----------------------------------------------------------------------------------------------- */
+
+// balancing work group x/y-size
+#undef BALANCE_WORK_GROUP
+
+// maximum number of work group units in one dimension
+#define BALANCE_WORK_GROUP_UNITS 7552 // == 32 * 236 for Knights Corner test
+
+#ifdef BALANCE_WORK_GROUP
+#pragma message ("\nCompiling with: BALANCE_WORK_GROUP enabled\n")
+#endif
 
 /*----------------------------------------------------------------------------------------------- */
 
@@ -998,9 +1039,9 @@ void gpuReset ();
 
 void exit_on_gpu_error (const char *kernel_name);
 void exit_on_error (const char *info);
+
 void synchronize_mpi ();
 double get_time_val ();
-void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
 
 // defined in check_fields_gpu.c
 void get_free_memory (double *free_db, double *used_db, double *total_db);
@@ -1056,5 +1097,47 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #define RELEASE_OFFSET(_buffer_, _offset_)      \
   RELEASE_OFFSET_OCL(_buffer_, _offset_);        \
   RELEASE_OFFSET_CUDA(_buffer_, _offset_);
+
+/* ----------------------------------------------------------------------------------------------- */
+// kernel setup function
+/* ----------------------------------------------------------------------------------------------- */
+// moved here into header to inline function calls if possible
+
+static inline void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y) {
+  // Initially sets the blocks_x to be the num_blocks, and adds rows as needed (block size limit of 65535).
+  // If an additional row is added, the row length is cut in
+  // half. If the block count is odd, there will be 1 too many blocks,
+  // which must be managed at runtime with an if statement.
+
+  *num_blocks_x = num_blocks;
+  *num_blocks_y = 1;
+
+  while (*num_blocks_x > MAXIMUM_GRID_DIM) {
+    *num_blocks_x = (int) ceil (*num_blocks_x * 0.5f);
+    *num_blocks_y = *num_blocks_y * 2;
+  }
+
+#if DEBUG == 1
+  printf("work group - total %d has group size x = %d / y = %d\n",
+         num_blocks,*num_blocks_x,*num_blocks_y);
+#endif
+
+  // tries to balance x- and y-group
+#ifdef BALANCE_WORK_GROUP
+  if (*num_blocks_x > BALANCE_WORK_GROUP_UNITS && *num_blocks_y < BALANCE_WORK_GROUP_UNITS){
+    while (*num_blocks_x > BALANCE_WORK_GROUP_UNITS && *num_blocks_y < BALANCE_WORK_GROUP_UNITS) {
+      *num_blocks_x = (int) ceil (*num_blocks_x * 0.5f);
+      *num_blocks_y = *num_blocks_y * 2;
+    }
+  }
+
+#if DEBUG == 1
+  printf("balancing work group with limit size %d - total %d has group size x = %d / y = %d\n",
+         BALANCE_WORK_GROUP_UNITS,num_blocks,*num_blocks_x,*num_blocks_y);
+#endif
+
+#endif
+}
+
 
 #endif   // MESH_CONSTANTS_GPU_H

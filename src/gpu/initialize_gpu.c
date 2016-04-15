@@ -396,11 +396,27 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
       clGetDeviceInfo(mocl.device, CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t), &image2d_max_size[0], NULL);
       clGetDeviceInfo(mocl.device, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), &image2d_max_size[1], NULL);
       fprintf (fp, "  image2d_max_size: %zu x %zu\n", image2d_max_size[0], image2d_max_size[1]);
+      clGetDeviceInfo(mocl.device, CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT, sizeof(units), &units, NULL);
+      fprintf (fp, "  vector_width_int: %u\n", units);
       fprintf(fp,"blocks:\n");
       clGetDeviceInfo(mocl.device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(units), &units, NULL);
       fprintf (fp, "  max_compute_units: %u\n", units);
       clGetDeviceInfo(mocl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(max_work_group_size), &max_work_group_size, NULL);
       fprintf (fp, "  max_work_group_size: %lu\n", max_work_group_size);
+      clGetDeviceInfo(mocl.device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(units), &units, NULL);
+      fprintf (fp, "  max_work_item_dimensions: %u\n", units);
+      if (units > 0) {
+        size_t* item_sizes = (size_t *) malloc (sizeof(size_t) * units);
+        clGetDeviceInfo(mocl.device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * units, item_sizes, NULL);
+        if (units == 1){
+          fprintf (fp, "  max_work_item_sizes: %zu \n", item_sizes[0]);
+        } else if (units == 2){
+          fprintf (fp, "  max_work_item_sizes: %zu %zu\n", item_sizes[0], item_sizes[1]);
+        }else if (units >= 3){
+          fprintf (fp, "  max_work_item_sizes: %zu %zu %zu\n", item_sizes[0], item_sizes[1], item_sizes[2]);
+        }
+        free(item_sizes);
+      }
       fprintf(fp,"features:\n");
       clGetDeviceInfo(mocl.device, CL_DEVICE_VERSION, sizeof(name), name, NULL);
       fprintf (fp, "  device version : %s\n", name);
@@ -418,6 +434,33 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
   // builds OpenCL kernels
   build_kernels();
 
+  // debugging
+  if (DEBUG_VERBOSE_OUTPUT){
+    // Get the maximum work group size for executing each kernel on the device
+    // and preferred size multiple for each kernel CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE
+#undef BOAST_KERNEL
+#define BOAST_KERNEL(__kern_name__)  \
+    if (myrank == 0) { \
+      printf("getting kernel info: "#__kern_name__"\n"); \
+      size_t local,preferred;\
+      mocl_errcode = clGetKernelWorkGroupInfo(mocl.kernels.__kern_name__, mocl.device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL); \
+      if (mocl_errcode != CL_SUCCESS){ \
+        fprintf(stderr,"OpenCL Error: Failed to retrieve kernel work group info: %s\n", clewErrorString(mocl_errcode)); \
+        exit(1); \
+      } \
+      mocl_errcode = clGetKernelWorkGroupInfo(mocl.kernels.__kern_name__, mocl.device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(preferred), &preferred, NULL); \
+      if (mocl_errcode != CL_SUCCESS){ \
+        fprintf(stderr,"OpenCL Error: Failed to retrieve preferred work group size: %s\n", clewErrorString(mocl_errcode)); \
+        exit(1); \
+      } \
+      printf("  "#__kern_name__": kernel has   maximum work group size = %d\n",(int) local); \
+      printf("  "#__kern_name__": kernel has preferred work group size = %d\n",(int) preferred); \
+      printf("\n"); \
+    }
+
+    // gets kernel info for each OpenCL kernel
+    #include "kernel_list.h"
+  }
 }
 
 #define xQUOTE(str) #str
