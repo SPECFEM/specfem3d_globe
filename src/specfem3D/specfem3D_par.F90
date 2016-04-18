@@ -548,6 +548,9 @@ module specfem_par_innercore
     etax_inner_core,etay_inner_core,etaz_inner_core, &
     gammax_inner_core,gammay_inner_core,gammaz_inner_core
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: &
+    deriv_mapping_inner_core
+
   ! material parameters
   ! (note: muvstore also needed for attenuation in case of anisotropic inner core)
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &

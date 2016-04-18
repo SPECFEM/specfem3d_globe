@@ -205,9 +205,8 @@
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
 
-    ispec = phase_ispec_inner(ispec_p,iphase)
-
     ! only compute elements which belong to current phase (inner or outer elements)
+    ispec = phase_ispec_inner(ispec_p,iphase)
 
     DO_LOOP_IJK
 
@@ -233,22 +232,22 @@
     ! compute either isotropic, transverse isotropic or anisotropic elements
     !
     if (ANISOTROPIC_3D_MANTLE_VAL) then
-       ! anisotropic element
-       call compute_element_aniso(ispec, &
-                                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                  rstore, &
-                                  deriv, &
-                                  wgll_cube, &
-                                  c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                                  c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                                  c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                                  ibool, &
-                                  R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                  epsilon_trace_over_3, &
-                                  one_minus_sum_beta,vnspec, &
-                                  tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                  dummyx_loc,dummyy_loc,dummyz_loc, &
-                                  epsilondev_loc,rho_s_H)
+      ! anisotropic element
+      call compute_element_aniso(ispec, &
+                                 minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                 rstore, &
+                                 deriv, &
+                                 wgll_cube, &
+                                 c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                 c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                 c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                 ibool, &
+                                 R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                 epsilon_trace_over_3, &
+                                 one_minus_sum_beta,vnspec, &
+                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+                                 epsilondev_loc,rho_s_H)
     else
        if (.not. ispec_is_tiso(ispec)) then
           ! isotropic element
@@ -295,7 +294,6 @@
     call mxm5_3comp_singleB(tempx3,tempy3,tempz3,m2,hprimewgll_xx,newtempx3,newtempy3,newtempz3,m1)
 
     ! sums contributions
-
     DO_LOOP_IJK
 
       fac1 = wgllwgll_yz_3D(INDEX_IJK)

@@ -351,6 +351,7 @@
 
   use specfem_par
   use specfem_par_crustmantle
+  use specfem_par_innercore
 
   implicit none
 
@@ -365,6 +366,8 @@
 
   ! fused array only needed for compute forces in crust/mantle (Deville routine)
   if (USE_DEVILLE_PRODUCTS_VAL) then
+
+    ! crust/mantle
     ! allocates fused array
     allocate(deriv_mapping_crust_mantle(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_crust_mantle'
@@ -383,6 +386,30 @@
         deriv_mapping_crust_mantle(7,INDEX_IJK,ispec) = gammax_crust_mantle(INDEX_IJK,ispec)
         deriv_mapping_crust_mantle(8,INDEX_IJK,ispec) = gammay_crust_mantle(INDEX_IJK,ispec)
         deriv_mapping_crust_mantle(9,INDEX_IJK,ispec) = gammaz_crust_mantle(INDEX_IJK,ispec)
+
+      ENDDO_LOOP_IJK
+
+    enddo
+
+    ! inner core
+    ! allocates fused array
+    allocate(deriv_mapping_inner_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
+    if (ier /= 0) stop 'Error allocating array deriv_mapping_inner_core'
+
+    !---- fused array of mapping matrix ----------------------
+    do ispec = 1,NSPEC_INNER_CORE
+
+      DO_LOOP_IJK
+
+        deriv_mapping_inner_core(1,INDEX_IJK,ispec) = xix_inner_core(INDEX_IJK,ispec)
+        deriv_mapping_inner_core(2,INDEX_IJK,ispec) = xiy_inner_core(INDEX_IJK,ispec)
+        deriv_mapping_inner_core(3,INDEX_IJK,ispec) = xiz_inner_core(INDEX_IJK,ispec)
+        deriv_mapping_inner_core(4,INDEX_IJK,ispec) = etax_inner_core(INDEX_IJK,ispec)
+        deriv_mapping_inner_core(5,INDEX_IJK,ispec) = etay_inner_core(INDEX_IJK,ispec)
+        deriv_mapping_inner_core(6,INDEX_IJK,ispec) = etaz_inner_core(INDEX_IJK,ispec)
+        deriv_mapping_inner_core(7,INDEX_IJK,ispec) = gammax_inner_core(INDEX_IJK,ispec)
+        deriv_mapping_inner_core(8,INDEX_IJK,ispec) = gammay_inner_core(INDEX_IJK,ispec)
+        deriv_mapping_inner_core(9,INDEX_IJK,ispec) = gammaz_inner_core(INDEX_IJK,ispec)
 
       ENDDO_LOOP_IJK
 

@@ -484,9 +484,7 @@
                                             displ_inner_core,veloc_inner_core,0._CUSTOM_REAL, &
                                             ibool_inner_core, &
                                             hprime_xx,hprime_xxT, &
-                                            xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                            etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                            deriv_mapping_inner_core, &
                                             epsilondev_xx_inner_core, &
                                             epsilondev_yy_inner_core, &
                                             epsilondev_xy_inner_core, &
@@ -500,9 +498,7 @@
                                             displ_crust_mantle,veloc_crust_mantle,0._CUSTOM_REAL, &
                                             ibool_crust_mantle, &
                                             hprime_xx,hprime_xxT, &
-                                            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                            deriv_mapping_crust_mantle, &
                                             epsilondev_xx_crust_mantle, &
                                             epsilondev_yy_crust_mantle, &
                                             epsilondev_xy_crust_mantle, &
@@ -586,9 +582,7 @@
                                             b_displ_inner_core,b_veloc_inner_core,0._CUSTOM_REAL, &
                                             ibool_inner_core, &
                                             hprime_xx,hprime_xxT, &
-                                            xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                            etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                            deriv_mapping_inner_core, &
                                             b_epsilondev_xx_inner_core, &
                                             b_epsilondev_yy_inner_core, &
                                             b_epsilondev_xy_inner_core, &
@@ -603,9 +597,7 @@
                                             b_displ_crust_mantle,b_veloc_crust_mantle,0._CUSTOM_REAL, &
                                             ibool_crust_mantle, &
                                             hprime_xx,hprime_xxT, &
-                                            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                            deriv_mapping_crust_mantle, &
                                             b_epsilondev_xx_crust_mantle, &
                                             b_epsilondev_yy_crust_mantle, &
                                             b_epsilondev_xy_crust_mantle, &

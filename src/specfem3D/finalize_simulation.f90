@@ -181,6 +181,7 @@
   ! optimized arrays
   if (USE_DEVILLE_PRODUCTS_VAL) then
     deallocate(deriv_mapping_crust_mantle)
+    deallocate(deriv_mapping_inner_core)
   endif
   if (use_inversed_arrays) then
     deallocate(ibool_inv_tbl_crust_mantle,ibool_inv_tbl_inner_core,ibool_inv_tbl_outer_core)
