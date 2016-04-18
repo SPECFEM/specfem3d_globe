@@ -1,0 +1,31 @@
+-----------------------------------
+Transversly isotropic input models:
+-----------------------------------
+
+crust:
+3D crustal files are spherical harmonic models up to degree 40 named C*.dat and MOHO.dat
+
+mantle:
+3D mantle files are spherical harmonic models up to degree 20 and parametrized on 21 splines 
+with depths (similar to S20RTS) named M*.dat 
+
+internal topography:
+Mantle topgraphy files are spherical harmonic models up to degree 20 named T410.dat T660.dat and TCMB.dat
+
+-------------------------------------
+
+Provided model files are:
+
+Example files for the crust are:
+- Crust2.0 equivalent named *2.0.ylm, 
+- Crust from Meier et al. (2007) named *mct.ylm
+
+Example files for the mantle are:
+- S20RTS files (see DATA/s20rts)
+
+Examples files for topography are
+- Meier et al. (2009) named 400.ylm and 660.ylm or multiplied by two 400_2.ylm 660_2.ylm
+
+
+(Jeannot Trampert, j.a.trampert@uu.nl, Jan. 7 2016)
+
