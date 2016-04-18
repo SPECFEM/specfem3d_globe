@@ -96,7 +96,8 @@
     write(IMAIN,*) 'internal topography 410/660:'
     if ((.not. SUPPRESS_INTERNAL_TOPOGRAPHY) .and. &
         (THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
-         .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA)) then
+         .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA &
+         .or. THREE_D_MODEL == THREE_D_MODEL_MANTLE_SH)) then
       write(IMAIN,*) '  incorporating element stretching for 3-D internal surfaces'
     else
       write(IMAIN,*) '  no element stretching for 3-D internal surfaces'

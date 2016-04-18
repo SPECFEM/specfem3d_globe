@@ -232,6 +232,7 @@
 
   ! adds topography on 410 km and 650 km discontinuity in model S362ANI
   if (.not. SUPPRESS_INTERNAL_TOPOGRAPHY) then
+    ! s362ani internal topography
     if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .or. THREE_D_MODEL == THREE_D_MODEL_S362WMANI &
       .or. THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM .or. THREE_D_MODEL == THREE_D_MODEL_S29EA) then
       ! stretching between 220 and 770
@@ -244,6 +245,24 @@
           ! stretches anchor points only, interpolates GLL points later on
           call add_topography_410_650(myrank,xelm,yelm,zelm)
         endif
+      endif
+    endif
+
+    ! full_sh model
+    if (THREE_D_MODEL == THREE_D_MODEL_MANTLE_SH) then
+
+      ! 410/650 topography
+      ! stretching between 220 and 770
+      if (idoubling(ispec) == IFLAG_670_220 .or. &
+          idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
+        call add_topography_sh_mantle(myrank,xelm,yelm,zelm)
+      endif
+
+      ! CMB topography
+      ! stretching lower mantle/outer core
+      if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
+          idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
+        call add_topography_sh_cmb(myrank,xelm,yelm,zelm)
       endif
     endif
 

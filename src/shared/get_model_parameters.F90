@@ -270,6 +270,17 @@
     THREE_D_MODEL = THREE_D_MODEL_S40RTS
     TRANSVERSE_ISOTROPY = .true.
 
+  else if(MODEL_ROOT == 'full_sh') then
+    ! uses PREM by default
+    !REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+    !ATTENUATION_3D = .true.
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ONE_CRUST = .true.
+    THREE_D_MODEL = THREE_D_MODEL_MANTLE_SH
+    TRANSVERSE_ISOTROPY = .true.
+
   else if (MODEL_ROOT == 'sea99_jp3d1994') then
     CASE_3D = .true.
     CRUSTAL = .true.
