@@ -394,9 +394,9 @@ module specfem_par_crustmantle
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE),target :: rmassz_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassz_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: rmassx_crust_mantle,rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: rmassx_crust_mantle,rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
@@ -426,11 +426,11 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
     b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),pointer :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer, contiguous :: &
     b_epsilondev_xx_crust_mantle,b_epsilondev_yy_crust_mantle,b_epsilondev_xy_crust_mantle, &
     b_epsilondev_xz_crust_mantle,b_epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),pointer :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer, contiguous :: &
     b_eps_trace_over_3_crust_mantle
 
   ! for crust/oceans coupling
@@ -571,9 +571,9 @@ module specfem_par_innercore
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE), target :: rmassz_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassz_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: rmassx_inner_core,rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassx_inner_core,b_rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassz_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: rmassx_inner_core,rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassx_inner_core,b_rmassy_inner_core
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
@@ -602,11 +602,11 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT) :: &
     b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),pointer :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer, contiguous :: &
     b_epsilondev_xx_inner_core,b_epsilondev_yy_inner_core,b_epsilondev_xy_inner_core, &
     b_epsilondev_xz_inner_core,b_epsilondev_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),pointer :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer, contiguous :: &
     b_eps_trace_over_3_inner_core
 
   ! coupling/boundary surfaces
@@ -680,7 +680,7 @@ module specfem_par_outercore
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE), target :: rmass_outer_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmass_outer_core
 
   ! velocity potential
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &

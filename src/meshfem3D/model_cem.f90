@@ -47,13 +47,13 @@ module cem_par
 
   type par
 
-    double precision, dimension (:), pointer :: vsv, vsh, vpv, vph, rho
-    double precision, dimension (:), pointer :: c11, c12, c13, c14
-    double precision, dimension (:), pointer :: c15, c16, c26, c33
-    double precision, dimension (:), pointer :: c22, c23, c24, c25
-    double precision, dimension (:), pointer :: c34, c35, c36, c44
-    double precision, dimension (:), pointer :: c55, c56, c66, c45
-    double precision, dimension (:), pointer :: c46
+    double precision, dimension (:), allocatable :: vsv, vsh, vpv, vph, rho
+    double precision, dimension (:), allocatable :: c11, c12, c13, c14
+    double precision, dimension (:), allocatable :: c15, c16, c26, c33
+    double precision, dimension (:), allocatable :: c22, c23, c24, c25
+    double precision, dimension (:), allocatable :: c34, c35, c36, c44
+    double precision, dimension (:), allocatable :: c55, c56, c66, c45
+    double precision, dimension (:), allocatable :: c46
 
   end type par
 
@@ -166,7 +166,7 @@ end module cem_par
 !-------------------------------------------------------------------------------------------
 !
 
-  subroutine return_populated_arrays (structure, param, reg)
+  subroutine return_populated_arrays (structure_p, param, reg)
 
   use cem_par
   use netcdf
@@ -179,7 +179,7 @@ end module cem_par
 
   character(3), intent(in) :: param
 
-  type (par) :: structure
+  type (par) :: structure_p
 
   character (len=MAX_STRING_LEN) :: fileName
   character (len=MAX_STRING_LEN) :: fileNameTrim
@@ -193,19 +193,19 @@ end module cem_par
   status = nf90_inq_dimid         (ncid, "param", dimid)
   status = nf90_inquire_dimension (ncid, dimid, len = nPar)
 
-  if ( param == "vsv" ) allocate(structure%vsv(nPar))
-  if ( param == "rho" ) allocate(structure%rho(nPar))
-  if ( param == "vpv" ) allocate(structure%vpv(nPar))
-  if ( param == "vph" ) allocate(structure%vph(nPar))
-  if ( param == "vsh" ) allocate(structure%vsh(nPar))
+  if ( param == "vsv" ) allocate(structure_p%vsv(nPar))
+  if ( param == "rho" ) allocate(structure_p%rho(nPar))
+  if ( param == "vpv" ) allocate(structure_p%vpv(nPar))
+  if ( param == "vph" ) allocate(structure_p%vph(nPar))
+  if ( param == "vsh" ) allocate(structure_p%vsh(nPar))
 
   status = nf90_inq_varid (ncid, "data", varid)
 
-  if ( param == "vsv" ) status = nf90_get_var (ncid, varid, structure%vsv)
-  if ( param == "rho" ) status = nf90_get_var (ncid, varid, structure%rho)
-  if ( param == "vpv" ) status = nf90_get_var (ncid, varid, structure%vpv)
-  if ( param == "vph" ) status = nf90_get_var (ncid, varid, structure%vph)
-  if ( param == "vsh" ) status = nf90_get_var (ncid, varid, structure%vsh)
+  if ( param == "vsv" ) status = nf90_get_var (ncid, varid, structure_p%vsv)
+  if ( param == "rho" ) status = nf90_get_var (ncid, varid, structure_p%rho)
+  if ( param == "vpv" ) status = nf90_get_var (ncid, varid, structure_p%vpv)
+  if ( param == "vph" ) status = nf90_get_var (ncid, varid, structure_p%vph)
+  if ( param == "vsh" ) status = nf90_get_var (ncid, varid, structure_p%vsh)
 
   end subroutine return_populated_arrays
 
