@@ -984,7 +984,7 @@
           if (ANISOTROPIC_INNER_CORE_VAL) then
             scale_factor_minus_one = scale_factor - 1.d0
 
-            mul = muvstore_inner_core(i,j,k,ispec)
+            mul = c44store_inner_core(i,j,k,ispec)
             c11store_inner_core(i,j,k,ispec) = c11store_inner_core(i,j,k,ispec) &
                     + FOUR_THIRDS * scale_factor_minus_one * mul
             c12store_inner_core(i,j,k,ispec) = c12store_inner_core(i,j,k,ispec) &

@@ -535,14 +535,14 @@
           call compute_element_att_memory_ic_lddrk(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                    R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                    ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
-                                                   muvstore, &
+                                                   c44store,muvstore, &
                                                    epsilondev_loc, &
                                                    deltat)
         else
           call compute_element_att_memory_ic(ispec,R_xx,R_yy,R_xy,R_xz,R_yz, &
                                              ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec,factor_common, &
                                              alphaval,betaval,gammaval, &
-                                             muvstore, &
+                                             c44store,muvstore, &
                                              epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                              epsilondev_xz,epsilondev_yz, &
                                              epsilondev_loc)

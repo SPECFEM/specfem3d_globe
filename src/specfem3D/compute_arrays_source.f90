@@ -133,7 +133,9 @@
   double precision,intent(in) :: xi_receiver, eta_receiver, gamma_receiver
   double precision, dimension(NDIM,NDIM),intent(in) :: nu
 
+
   ! output
+  integer,intent(in) :: NTSTEP_BETWEEN_READ_ADJSRC
   real(kind=CUSTOM_REAL),intent(out) :: adj_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
@@ -141,8 +143,10 @@
   double precision, dimension(NGLLY),intent(in) :: yigll
   double precision, dimension(NGLLZ),intent(in) :: zigll
 
-  integer,intent(in) :: NSTEP_BLOCK,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
+  integer,intent(in) :: NSTEP_SUB_ADJ
   integer, dimension(NSTEP_SUB_ADJ,2),intent(in) :: iadjsrc
+
+  integer,intent(in) :: NSTEP_BLOCK
   integer,intent(in) :: it_sub_adj
 
   double precision,intent(in) :: DT

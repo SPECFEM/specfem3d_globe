@@ -1072,7 +1072,7 @@
                                       rstore, &
                                       deriv, &
                                       wgll_cube, &
-                                      c11store,c12store,c13store,c33store,c44store,muvstore, &
+                                      c11store,c12store,c13store,c33store,c44store, &
                                       ibool, &
                                       R_xx,R_yy,R_xy,R_xz,R_yz, &
                                       epsilon_trace_over_3, &
@@ -1121,7 +1121,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO),intent(in) :: &
         c11store,c12store,c13store,c33store,c44store
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: muvstore
+  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: muvstore
 
   ! attenuation
   ! memory variables for attenuation
@@ -1224,16 +1224,21 @@
       else
         minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
       endif
-      mul = muvstore(INDEX_IJK,ispec)
-      !daniel debug
-      ! shear along [100] direction: mul = c44
-      print*,'debug shear: mul = ',mul,' c44 = ',c44
 
-      c11 = c11 + FOUR_THIRDS * minus_sum_beta * mul
-      c12 = c12 - TWO_THIRDS * minus_sum_beta * mul
-      c13 = c13 - TWO_THIRDS * minus_sum_beta * mul
-      c33 = c33 + FOUR_THIRDS * minus_sum_beta * mul
-      c44 = c44 + minus_sum_beta * mul
+      ! note: muvstore has still original values, whereas c11store,.., have been rescaled due to attenuation
+      !
+      ! please check:
+      ! shear along [100] direction: mul = c44
+      ! instead of
+      !mul = muvstore(INDEX_IJK,ispec) * minus_sum_beta
+      ! this would be following the implementation from above for fully anisotropic elements...
+      mul = c44 * minus_sum_beta
+
+      c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
+      c12 = c12 - TWO_THIRDS * mul
+      c13 = c13 - TWO_THIRDS * mul
+      c33 = c33 + FOUR_THIRDS * mul
+      c44 = c44 + mul
     endif
 
     sigma_xx(INDEX_IJK) = c11*duxdxl(INDEX_IJK) + c12*duydyl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
@@ -1294,8 +1299,7 @@
 !
 
 ! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES FORCEINLINE :: compute_element_stress_attenuation_contrib
-
+!DIR$ATTRIBUTES INLINE :: compute_element_stress_attenuation_contrib
   subroutine compute_element_stress_attenuation_contrib(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
                                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
@@ -1398,8 +1402,7 @@
 ! please leave this routine in this file, to help compilers inlining this function...
 
 ! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES FORCEINLINE :: compute_element_precompute_factors
-
+!DIR$ATTRIBUTES INLINE :: compute_element_precompute_factors
   subroutine compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                                 deriv_loc,jacobianl, &
                                                 duxdxl,duydyl,duzdzl, &
@@ -1488,8 +1491,7 @@
 ! please leave this routine in this file, to help compilers inlining this function...
 
 ! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES FORCEINLINE :: compute_element_deviatoric_strain
-
+!DIR$ATTRIBUTES INLINE :: compute_element_deviatoric_strain
   subroutine compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
                                                duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
                                                ispec,NSPEC_STRAIN_ONLY, &
@@ -1583,8 +1585,7 @@
 ! please leave this routine in this file, to help compilers inlining this function...
 
 ! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES FORCEINLINE :: compute_element_dot_product_stress
-
+!DIR$ATTRIBUTES INLINE :: compute_element_dot_product_stress
   subroutine compute_element_dot_product_stress(deriv_loc,jacobianl, &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
@@ -1638,17 +1639,27 @@
     fac = jacobianl(INDEX_IJK)
 
     ! form dot product with test vector, non-symmetric form
-    tempx1(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*xixl + sigma_yx(INDEX_IJK)*xiyl + sigma_zx(INDEX_IJK)*xizl) ! this goes to accel_x
-    tempy1(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*xixl + sigma_yy(INDEX_IJK)*xiyl + sigma_zy(INDEX_IJK)*xizl) ! this goes to accel_y
-    tempz1(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*xixl + sigma_yz(INDEX_IJK)*xiyl + sigma_zz(INDEX_IJK)*xizl) ! this goes to accel_z
 
-    tempx2(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*etaxl + sigma_yx(INDEX_IJK)*etayl + sigma_zx(INDEX_IJK)*etazl) ! this goes to accel_x
-    tempy2(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*etaxl + sigma_yy(INDEX_IJK)*etayl + sigma_zy(INDEX_IJK)*etazl) ! this goes to accel_y
-    tempz2(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*etaxl + sigma_yz(INDEX_IJK)*etayl + sigma_zz(INDEX_IJK)*etazl) ! this goes to accel_z
+    ! this goes to accel_x
+    tempx1(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*xixl + sigma_yx(INDEX_IJK)*xiyl + sigma_zx(INDEX_IJK)*xizl)
+    ! this goes to accel_y
+    tempy1(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*xixl + sigma_yy(INDEX_IJK)*xiyl + sigma_zy(INDEX_IJK)*xizl)
+    ! this goes to accel_z
+    tempz1(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*xixl + sigma_yz(INDEX_IJK)*xiyl + sigma_zz(INDEX_IJK)*xizl)
 
-    tempx3(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*gammaxl + sigma_yx(INDEX_IJK)*gammayl + sigma_zx(INDEX_IJK)*gammazl) ! this goes to accel_x
-    tempy3(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*gammaxl + sigma_yy(INDEX_IJK)*gammayl + sigma_zy(INDEX_IJK)*gammazl) ! this goes to accel_y
-    tempz3(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*gammaxl + sigma_yz(INDEX_IJK)*gammayl + sigma_zz(INDEX_IJK)*gammazl) ! this goes to accel_z
+    ! this goes to accel_x
+    tempx2(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*etaxl + sigma_yx(INDEX_IJK)*etayl + sigma_zx(INDEX_IJK)*etazl)
+    ! this goes to accel_y
+    tempy2(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*etaxl + sigma_yy(INDEX_IJK)*etayl + sigma_zy(INDEX_IJK)*etazl)
+    ! this goes to accel_z
+    tempz2(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*etaxl + sigma_yz(INDEX_IJK)*etayl + sigma_zz(INDEX_IJK)*etazl)
+
+    ! this goes to accel_x
+    tempx3(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*gammaxl + sigma_yx(INDEX_IJK)*gammayl + sigma_zx(INDEX_IJK)*gammazl)
+    ! this goes to accel_y
+    tempy3(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*gammaxl + sigma_yy(INDEX_IJK)*gammayl + sigma_zy(INDEX_IJK)*gammazl)
+    ! this goes to accel_z
+    tempz3(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*gammaxl + sigma_yz(INDEX_IJK)*gammayl + sigma_zz(INDEX_IJK)*gammazl)
 
   ENDDO_LOOP_IJK
 
@@ -1661,8 +1672,7 @@
 ! please leave this routine in this file, to help compilers inlining this function...
 
 ! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES FORCEINLINE :: compute_element_gravity
-
+!DIR$ATTRIBUTES INLINE :: compute_element_gravity
   subroutine compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,jacobianl,wgll_cube, &
                                      minus_gravity_table,minus_deriv_gravity_table,density_table, &
                                      dummyx_loc,dummyy_loc,dummyz_loc, &
@@ -1719,6 +1729,9 @@
   integer :: i,j,k
 #endif
 
+  ! minimum radius in inner core (to avoid zero radius)
+  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_EARTH
+
   ! computes non-symmetric terms for gravity
   DO_LOOP_IJK
 
@@ -1732,7 +1745,7 @@
 
     ! make sure radius is never zero even for points at center of cube
     ! because we later divide by radius
-    if (radius < 100.d0 / R_EARTH) radius = 100.d0 / R_EARTH
+    if (radius < MINIMUM_RADIUS_INNER_CORE) radius = MINIMUM_RADIUS_INNER_CORE
 
     cos_theta = dcos(dtheta)
     sin_theta = dsin(dtheta)
