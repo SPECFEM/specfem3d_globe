@@ -110,9 +110,9 @@
     ! tomographic iteration model on GLL points
     double precision :: scale_velocity,scale_density
     ! isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vs_new,vp_new,rho_new
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vs_new,vp_new,rho_new
     ! transverse isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),pointer :: vsv_new,vpv_new, &
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vsv_new,vpv_new, &
       vsh_new,vph_new,eta_new
     logical :: MODEL_GLL
     logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
