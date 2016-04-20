@@ -59,7 +59,8 @@
     muvstore => muvstore_inner_core, &
     c11store => c11store_inner_core,c12store => c12store_inner_core,c13store => c13store_inner_core, &
     c33store => c33store_inner_core,c44store => c44store_inner_core, &
-    ibool => ibool_inner_core,idoubling => idoubling_inner_core, &
+    ibool => ibool_inner_core, &
+    idoubling => idoubling_inner_core, &
     one_minus_sum_beta => one_minus_sum_beta_inner_core, &
     phase_ispec_inner => phase_ispec_inner_inner_core, &
     nspec_outer => nspec_outer_inner_core, &
@@ -154,33 +155,38 @@
 
 !$OMP PARALLEL DEFAULT( NONE ) &
 !$OMP SHARED( deriv, &
-!$OMP num_elements, phase_ispec_inner, iphase, idoubling, ibool, &
-!$OMP displ_inner_core, accel_inner_core, &
-!$OMP COMPUTE_AND_STORE_STRAIN, &
-!$OMP c11store,  c12store, c13store, c33store, c44store, &
-!$OMP one_minus_sum_beta, muvstore, kappavstore, R_xx, R_yy, R_xy, R_xz, R_yz, rstore, &
-!$OMP minus_gravity_table, minus_deriv_gravity_table, density_table, &
-!$OMP hprime_xx, hprime_xxT, &
-!$OMP wgll_cube, hprimewgll_xxT, hprimewgll_xx, wgllwgll_yz_3D, &
-!$OMP wgllwgll_xz_3D, wgllwgll_xy_3D, &
+!$OMP num_elements,iphase,phase_ispec_inner, &
+!$OMP ibool,idoubling,rstore, &
+!$OMP displ_inner_core,accel_inner_core, &
+!$OMP wgll_cube,hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
+!$OMP wgllwgll_yz_3D,wgllwgll_xz_3D, wgllwgll_xy_3D, &
+!$OMP c11store,c12store,c13store,c33store,c44store, &
+!$OMP muvstore, kappavstore, &
+!$OMP vnspec, &
+!$OMP factor_common,one_minus_sum_beta, &
+!$OMP alphaval,betaval,gammaval, &
+!$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
+!$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3, &
+!$OMP minus_gravity_table,minus_deriv_gravity_table,density_table, &
 !$OMP USE_LDDRK, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
-!$OMP vnspec, factor_common, deltat, alphaval,betaval,gammaval, epsilondev_xx,epsilondev_yy,epsilondev_xy, &
 !$OMP sum_terms, &
 #ifdef FORCE_VECTORIZATION
 !$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
 #endif
-!$OMP epsilondev_xz,epsilondev_yz, epsilon_trace_over_3 ) &
-!$OMP PRIVATE( ispec_p, ispec, iglob, &
+!$OMP deltat,COMPUTE_AND_STORE_STRAIN ) &
+!$OMP PRIVATE( ispec,ispec_p,iglob, &
 #ifdef FORCE_VECTORIZATION
+!$OMP ijk_spec,ip,iglob_p, &
 !$OMP ijk, &
-!$OMP ijk_spec, ip, iglob_p, &
+#else
+!$OMP i,j,k, &
 #endif
-!$OMP fac1, fac2, fac3, &
-!$OMP dummyx_loc, dummyy_loc, dummyz_loc, rho_s_H, &
-!$OMP tempx1, tempx2, tempx3, tempy1, tempy2, tempy3, tempz1, tempz2, tempz3, &
-!$OMP newtempx1, newtempx2, newtempx3, newtempy1, newtempy2, newtempy3, newtempz1, newtempz2, newtempz3, &
-!$OMP epsilondev_loc)
+!$OMP fac1,fac2,fac3, &
+!$OMP tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+!$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
+!$OMP dummyx_loc,dummyy_loc,dummyz_loc, &
+!$OMP rho_s_H,epsilondev_loc)
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
@@ -386,6 +392,7 @@
     iglob = phase_iglob(iglob_p,iphase)
     ! loops over valence points
     do ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+      ! local 1D index from array ibool
       ijk_spec = ibool_inv_tbl(ip,iphase)
 
       ! do NOT use array syntax ":" for the three statements below
@@ -435,6 +442,7 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
+!dir$ ivdep
     do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
@@ -479,6 +487,7 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
+!dir$ ivdep
     do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
@@ -522,10 +531,10 @@
   integer :: i,j,k
 
   ! matrix-matrix multiplication
-  do j = 1,n2
-    do i = 1,n1
-      ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-      do k = 1,n3
+  do k = 1,n3
+    do j = 1,n2
+!dir$ ivdep
+      do i = 1,n1
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
                    + A1(i,3,k) * B(3,j) &
