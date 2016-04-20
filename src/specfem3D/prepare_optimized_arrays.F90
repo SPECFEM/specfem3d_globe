@@ -153,7 +153,7 @@
                           num_elements,phase_ispec_inner_inner_core, &
                           ibool_inner_core,phase_iglob_inner_core, &
                           ibool_inv_tbl_inner_core, ibool_inv_st_inner_core, &
-                          num_globs_inner_core)
+                          num_globs_inner_core,idoubling_inner_core)
 
       ! outer core
       if (iphase == 1) then
@@ -184,7 +184,7 @@
 
     subroutine make_inv_table(iphase,nglob,nspec, &
                               phase_nspec,phase_ispec,ibool,phase_iglob, &
-                              ibool_inv_tbl,ibool_inv_st,num_globs)
+                              ibool_inv_tbl,ibool_inv_st,num_globs,idoubling)
 
     implicit none
 
@@ -201,6 +201,8 @@
     integer, dimension(:,:),intent(inout) :: ibool_inv_st
     integer, dimension(:),intent(inout) :: num_globs
 
+    integer,dimension(:),optional :: idoubling
+
     ! local parameters
     integer, dimension(:),   allocatable :: ibool_inv_num
     integer, dimension(:,:), allocatable :: ibool_inv_tbl_tmp
@@ -213,12 +215,20 @@
 #else
     integer :: i,j,k
 #endif
+    logical :: is_inner_core
 
     ! tolerance number of shared degrees per node
     integer, parameter :: N_TOL = 20
 
     ! checks if anything to do (e.g., no outer elements for single process simulations)
     if (phase_nspec == 0) return
+
+    ! checks if inner core region
+    if (present(idoubling)) then
+      is_inner_core = .true.
+    else
+      is_inner_core = .false.
+    endif
 
     ! allocates temporary arrays
     allocate(ibool_inv_num(nglob),stat=ier)
@@ -228,6 +238,12 @@
     ibool_inv_num(:) = 0
     do ispec_p = 1,phase_nspec
       ispec = phase_ispec(ispec_p,iphase)
+
+      ! exclude fictitious elements in central cube
+      if (is_inner_core) then
+        if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+      endif
+
       DO_LOOP_IJK
         iglob = ibool(INDEX_IJK,ispec)
         ! increases valence counter
@@ -259,6 +275,11 @@
     ibool_inv_num(:) = 0
     do ispec_p = 1,phase_nspec
       ispec = phase_ispec(ispec_p,iphase)
+
+      ! exclude fictitious elements in central cube
+      if (is_inner_core) then
+        if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+      endif
 
       DO_LOOP_IJK
 
