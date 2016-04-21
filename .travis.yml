@@ -1,0 +1,57 @@
+# Travis configuration
+#
+# Note: building Fortran code is not supported (yet): see https://docs.travis-ci.com/user/language-specific/
+#       this is using C as a base and installs gfortran in the test environment
+language: c
+
+sudo: required
+
+os: linux
+compiler: gcc
+
+
+# recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
+#before_install:
+#  - test -n $CC && unset CC
+
+before_install:
+  - sudo apt-get update
+  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
+
+install:
+  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
+
+env:
+  global:
+  - FLAGS_CHECK_COV="-fprofile-arcs -ftest-coverage -O0"
+  - FC=gfortran
+  - MPIFC=mpif90
+  - CC=gcc
+  matrix:
+  - TEST=()
+  - TEST=(--enable-debug)
+  - TEST=(--enable-openmp)
+  - TEST=(--enable-vectorization)
+  - TEST=(--enable-openmp FLAGS_CHECK="${FLAGS_CHECK_COV}")
+
+script:
+  - echo "compiler versions:"
+  - echo ${FC} ${MPIFC} ${CC}
+  - ${FC} --version
+  - ${MPIFC} --version
+  - ${CC} --version
+  - echo "configuration test:"
+  - echo ${FLAGS[@]} 
+  - ./configure FC=${FC} MPIFC=${MPIFC} "${FLAGS[@]}"
+  - make clean && make
+  # test example 
+  #- cd EXAMPLES/regional_Greece_small/
+  #- ./run_this_example.sh
+
+# runs example
+after_success:
+  # code coverage: see example https://github.com/codecov/example-fortran/blob/master/.travis.yml
+  #- bash <(curl -s https://codecov.io/bash)
+  - echo ""
+  - echo "done"
+
