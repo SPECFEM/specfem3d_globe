@@ -27,26 +27,24 @@ env:
   - MPIFC=mpif90
   - CC=gcc
   matrix:
-  - TEST=()
-  - TEST=(--enable-debug)
-  - TEST=(--enable-vectorization)
-  - TEST=(--enable-openmp)
-  - TEST=(--enable-openmp FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0")
+  - TEST="" TESTFLAGS=""
+  - TEST="--enable-debug" TESTFLAGS=""
+  - TEST="--enable-vectorization" TESTFLAGS=""
+  - TEST="--enable-openmp" TESTFLAGS="FLAGS_CHECK=-O3"
+  - TEST="--enable-openmp" TESTFLAGS="FLAGS_CHECK=\"-fprofile-arcs -ftest-coverage -O0\""
 
 script:
-  - echo "compiler versions:"
-  - echo ${FC} ${MPIFC} ${CC}
+  - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
   - ${FC} --version
   - ${MPIFC} --version
   - ${CC} --version
-  - echo "configuration test:"
-  - echo ${TEST[@]}
+  - echo "configuration test:" ${TEST} ${TESTFLAGS}
   # test configuration
-  - ./configure FC=${FC} MPIFC=${MPIFC} "${TEST[@]}"
-  # test compilation
-  - make clean && make
-  # test small example 
+  - ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} ${TESTFLAGS}
+  - make clean
+  # test small example
   - cd EXAMPLES/regional_Greece_small/
+  - sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
   - ./run_this_example.sh
 
 # runs example
@@ -55,4 +53,3 @@ after_success:
   - bash <(curl -s https://codecov.io/bash)
   - echo ""
   - echo "done"
-
