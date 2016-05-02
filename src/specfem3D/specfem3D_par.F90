@@ -313,7 +313,7 @@ module specfem_par
   real(kind=CUSTOM_REAL),dimension(N_SLS) :: tau_sigma_CUSTOM_REAL
 
   ! UNDO_ATTENUATION
-  integer :: NSUBSET_ITERATIONS
+  integer :: NT_DUMP_ATTENUATION,NSUBSET_ITERATIONS
   integer :: iteration_on_subset,it_of_this_subset
   integer :: it_subset_end
 
@@ -328,6 +328,9 @@ module specfem_par
 
   ! for optimized arrays
   logical :: use_inversed_arrays
+
+  ! for saving/reading stacey boundary contributions
+  logical :: SAVE_STACEY
 
 end module specfem_par
 

@@ -32,7 +32,7 @@
   use constants_solver
 
   use specfem_par,only: &
-    ichunk,SIMULATION_TYPE,SAVE_FORWARD,it, &
+    ichunk,SIMULATION_TYPE,SAVE_STACEY,it, &
     wgllwgll_xz,wgllwgll_yz
 
   use specfem_par,only: GPU_MODE,Mesh_pointer
@@ -116,7 +116,7 @@
             accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
             accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-            if (SAVE_FORWARD) then
+            if (SAVE_STACEY) then
               absorb_xmin_crust_mantle(1,j,k,ispec2D) = tx*weight
               absorb_xmin_crust_mantle(2,j,k,ispec2D) = ty*weight
               absorb_xmin_crust_mantle(3,j,k,ispec2D) = tz*weight
@@ -131,7 +131,7 @@
     endif
 
     ! writes absorbing boundary values
-    if (SAVE_FORWARD .and. nspec2D_xmin_crust_mantle > 0) then
+    if (SAVE_STACEY .and. nspec2D_xmin_crust_mantle > 0) then
       call write_abs(0,absorb_xmin_crust_mantle, reclen_xmin_crust_mantle,it)
     endif
 
@@ -175,7 +175,7 @@
             accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
             accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-            if (SAVE_FORWARD) then
+            if (SAVE_STACEY) then
               absorb_xmax_crust_mantle(1,j,k,ispec2D) = tx*weight
               absorb_xmax_crust_mantle(2,j,k,ispec2D) = ty*weight
               absorb_xmax_crust_mantle(3,j,k,ispec2D) = tz*weight
@@ -192,7 +192,7 @@
 
 
     ! writes absorbing boundary values
-    if (SAVE_FORWARD .and. nspec2D_xmax_crust_mantle > 0) then
+    if (SAVE_STACEY .and. nspec2D_xmax_crust_mantle > 0) then
       call write_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,it)
     endif
 
@@ -234,7 +234,7 @@
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-          if (SAVE_FORWARD) then
+          if (SAVE_STACEY) then
             absorb_ymin_crust_mantle(1,i,k,ispec2D) = tx*weight
             absorb_ymin_crust_mantle(2,i,k,ispec2D) = ty*weight
             absorb_ymin_crust_mantle(3,i,k,ispec2D) = tz*weight
@@ -250,7 +250,7 @@
   endif
 
   ! writes absorbing boundary values
-  if (SAVE_FORWARD .and. nspec2D_ymin_crust_mantle > 0) then
+  if (SAVE_STACEY .and. nspec2D_ymin_crust_mantle > 0) then
     call write_abs(2,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle,it)
   endif
 
@@ -290,7 +290,7 @@
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
-          if (SAVE_FORWARD) then
+          if (SAVE_STACEY) then
             absorb_ymax_crust_mantle(1,i,k,ispec2D) = tx*weight
             absorb_ymax_crust_mantle(2,i,k,ispec2D) = ty*weight
             absorb_ymax_crust_mantle(3,i,k,ispec2D) = tz*weight
@@ -306,7 +306,7 @@
   endif
 
   ! writes absorbing boundary values
-  if (SAVE_FORWARD .and. nspec2D_ymax_crust_mantle > 0) then
+  if (SAVE_STACEY .and. nspec2D_ymax_crust_mantle > 0) then
     call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
   endif
 
@@ -544,13 +544,9 @@
   integer :: i,j,k,ispec,iglob,ispec2D
   !integer :: reclen1,reclen2
 
-  ! note: we use C functions for I/O as they still have a better performance than
-  !           Fortran, unformatted file I/O. however, using -assume byterecl together with Fortran functions
-  !           comes very close (only  ~ 4 % slower ).
-  !
-  !           tests with intermediate storage (every 8 step) and/or asynchronous
-  !           file access (by process rank modulo 8) showed that the following,
-  !           simple approach is still fastest. (assuming that files are accessed on a local scratch disk)
+  ! note: we need no file i/o to read in contributions from previous forward run.
+  !       the stacey contribution here is calculated again for the reconstruction of the forward wavefield
+  !       based on the way we run the undo_attenuation time stepping and temporary storage of the forward wavefield to a buffer.
 
   ! checks
   if (SIMULATION_TYPE /= 3) return

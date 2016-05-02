@@ -412,14 +412,19 @@
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
       if (.not. EXACT_UNDOING_TO_DISK) then
-        if (.not. UNDO_ATTENUATION) then
-          if (.not. PARTIAL_PHYS_DISPERSION_ONLY) then
-            call exit_MPI(myrank, &
-                    'ATTENUATION for adjoint runs or SAVE_FORWARD requires UNDO_ATTENUATION or PARTIAL_PHYS_DISPERSION_ONLY')
-          endif
+        if ((.not. UNDO_ATTENUATION) .and. (.not. PARTIAL_PHYS_DISPERSION_ONLY)) then
+          call exit_MPI(myrank, &
+                  'ATTENUATION for adjoint runs or SAVE_FORWARD requires UNDO_ATTENUATION or PARTIAL_PHYS_DISPERSION_ONLY')
         endif
       endif
 
+      ! checks if compiled with right flags
+      ! note:
+      !  - flag UNDO_ATTENUATION only affects the mesher when EXACT_MASS_MATRIX_FOR_ROTATION is used (which we check below).
+      !    In all other cases, it can be turned on/off arbitrarily without the need to recompile
+      !
+      !  - flag PARTIAL_PHYS_DISPERSION_ONLY affects the heavy solver routines and needs to be known at compile time
+      !    to optimize the performance of those routines
       if (PARTIAL_PHYS_DISPERSION_ONLY .NEQV. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
         if (myrank == 0) write(IMAIN,*) 'PARTIAL_PHYS_DISPERSION_ONLY:',PARTIAL_PHYS_DISPERSION_ONLY, &
                                                                        PARTIAL_PHYS_DISPERSION_ONLY_VAL

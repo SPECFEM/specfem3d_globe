@@ -16,7 +16,7 @@ module BOAST
       abs_boundary_jacobian2D       = Real("abs_boundary_jacobian2D",    :dir => :in,   :dim => [ Dim() ])
       wgllwgll                      = Real("wgllwgll",                   :dir => :in,   :dim => [ Dim() ])
       vpstore                       = Real("vpstore",                    :dir => :in,   :dim => [ Dim() ])
-      save_forward                  = Int( "SAVE_FORWARD",               :dir => :in)
+      save_stacey                   = Int( "SAVE_STACEY",                :dir => :in)
       variables = [potential_dot_acoustic, potential_dot_dot_acoustic]
     elsif type == :acoustic_backward then
       function_name = "compute_stacey_acoustic_backward_kernel"
@@ -39,7 +39,7 @@ module BOAST
     ibool                         = Int( "ibool",                      :dir => :in,   :dim => [ Dim() ])
     variables += [ interface_type, num_abs_boundary_faces, abs_boundary_ispec, nkmin_xi, nkmin_eta, njmin, njmax, nimin, nimax ]
     if type == :acoustic_forward then
-      variables += [ abs_boundary_jacobian2D, wgllwgll, ibool, vpstore, save_forward, b_absorb_potential ]
+      variables += [ abs_boundary_jacobian2D, wgllwgll, ibool, vpstore, save_stacey, b_absorb_potential ]
     elsif type == :acoustic_backward then
       variables += [ ibool ]
     end
@@ -119,7 +119,7 @@ module BOAST
           print sn === potential_dot_acoustic[iglob] / vpstore[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)]
           print jacobianw === abs_boundary_jacobian2D[INDEX2(ngll2,igll,iface)]*fac1
           print atomicAdd(potential_dot_dot_acoustic + iglob, -sn*jacobianw)
-          print If(save_forward) {
+          print If(save_stacey) {
             print b_absorb_potential[INDEX2(ngll2,igll,iface)] === sn*jacobianw
           }
         elsif type == :acoustic_backward then

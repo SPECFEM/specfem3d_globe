@@ -310,17 +310,6 @@
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
 
-  ! checks with undo_attenuation
-  if (UNDO_ATTENUATION) then
-    ! note: NSTEP must not be a multiple of NT_DUMP_ATTENUATION, but should be larger
-    ! makes sure buffer size is not too big for total time length
-    if (NSTEP < NT_DUMP_ATTENUATION) then
-      print *,'Error undoing attenuation: time steps ',NSTEP,' smaller than buffer size ',NT_DUMP_ATTENUATION
-      print *,'Please recompile the solver with your updated parameter set in Par_file.'
-      call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
-    endif
-  endif
-
   ! checks length for symmetry in case of noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
     if (mod(NSTEP+1,2) /= 0) then
@@ -340,6 +329,16 @@
   ! otherwise we waste memory
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     if (NTSTEP_BETWEEN_READ_ADJSRC > NSTEP) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
+  endif
+
+  ! buffering with undo_attenuation
+  NT_DUMP_ATTENUATION = NT_DUMP_ATTENUATION_VAL
+  if (UNDO_ATTENUATION) then
+    ! makes sure buffer size is not too big for total time length
+    !
+    ! note: NSTEP must not be a multiple of NT_DUMP_ATTENUATION.
+    !       the value from the header file NT_DUMP_ATTENUATION_VAL gives the optimal (maximum) number of time steps for buffering
+    if (NSTEP < NT_DUMP_ATTENUATION) NT_DUMP_ATTENUATION = NSTEP
   endif
 
   ! debug

@@ -81,6 +81,17 @@
   ! checks
   if (.not. UNDO_ATTENUATION) return
 
+  ! checks with undo_attenuation
+  if (UNDO_ATTENUATION) then
+    ! note: NSTEP must not be a multiple of NT_DUMP_ATTENUATION, but should be equal or larger
+    ! makes sure buffer size is not too big for total time length
+    if (NSTEP < NT_DUMP_ATTENUATION) then
+      print *,'Error undoing attenuation: time steps ',NSTEP,' smaller than buffer size ',NT_DUMP_ATTENUATION
+      print *,'Please recompile the solver with your updated parameter set in Par_file.'
+      call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
+    endif
+  endif
+
   ! number of time subsets for time loop
   NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
 

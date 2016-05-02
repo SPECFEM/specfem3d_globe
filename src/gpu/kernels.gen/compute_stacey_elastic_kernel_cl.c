@@ -95,7 +95,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void compute_stacey_elastic_kernel(const __global float * veloc, __global float * accel, const int interface_type, const int num_abs_boundary_faces, const __global int * abs_boundary_ispec, const __global int * nkmin_xi, const __global int * nkmin_eta, const __global int * njmin, const __global int * njmax, const __global int * nimin, const __global int * nimax, const __global float * abs_boundary_normal, const __global float * abs_boundary_jacobian2D, const __global float * wgllwgll, const __global int * ibool, const __global float * rho_vp, const __global float * rho_vs, const int SAVE_FORWARD, __global float * b_absorb_field){\n\
+__kernel void compute_stacey_elastic_kernel(const __global float * veloc, __global float * accel, const int interface_type, const int num_abs_boundary_faces, const __global int * abs_boundary_ispec, const __global int * nkmin_xi, const __global int * nkmin_eta, const __global int * njmin, const __global int * njmax, const __global int * nimin, const __global int * nimax, const __global float * abs_boundary_normal, const __global float * abs_boundary_jacobian2D, const __global float * wgllwgll, const __global int * ibool, const __global float * rho_vp, const __global float * rho_vs, const int SAVE_STACEY, __global float * b_absorb_field){\n\
   int igll;\n\
   int iface;\n\
   int i;\n\
@@ -200,7 +200,7 @@ __kernel void compute_stacey_elastic_kernel(const __global float * veloc, __glob
     atomicAdd(accel + (iglob) * (3) + 0, ( -(tx)) * (jacobianw));\n\
     atomicAdd(accel + (iglob) * (3) + 1, ( -(ty)) * (jacobianw));\n\
     atomicAdd(accel + (iglob) * (3) + 2, ( -(tz)) * (jacobianw));\n\
-    if (SAVE_FORWARD) {\n\
+    if (SAVE_STACEY) {\n\
       b_absorb_field[INDEX3(NDIM, NGLL2, 0, igll, iface)] = (tx) * (jacobianw);\n\
       b_absorb_field[INDEX3(NDIM, NGLL2, 1, igll, iface)] = (ty) * (jacobianw);\n\
       b_absorb_field[INDEX3(NDIM, NGLL2, 2, igll, iface)] = (tz) * (jacobianw);\n\

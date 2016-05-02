@@ -43,49 +43,40 @@
   ! closes Stacey absorbing boundary snapshots
   if (ABSORBING_CONDITIONS) then
     ! crust mantle
-    if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_xmin_crust_mantle > 0 .and. SAVE_STACEY) then
       call close_file_abs(0)
     endif
 
-    if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_xmax_crust_mantle > 0 .and. SAVE_STACEY) then
       call close_file_abs(1)
     endif
 
-    if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_ymin_crust_mantle > 0 .and. SAVE_STACEY) then
       call close_file_abs(2)
     endif
 
-    if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_ymax_crust_mantle > 0 .and. SAVE_STACEY) then
       call close_file_abs(3)
     endif
 
     ! outer core
-    if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_xmin_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(4)
     endif
 
-    if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_xmax_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(5)
     endif
 
-    if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_ymin_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(6)
     endif
 
-    if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_ymax_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(7)
     endif
 
-    if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_zmin_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(8)
     endif
 

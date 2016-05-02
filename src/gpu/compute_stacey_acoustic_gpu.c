@@ -142,7 +142,7 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_wgllwgll.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_vp_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &mp->save_forward));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &mp->save_stacey));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_potential.ocl));
 
     local_work_size[0] = blocksize;
@@ -180,13 +180,13 @@ void FC_FUNC_ (compute_stacey_acoustic_gpu,
                                                      d_wgllwgll.cuda,
                                                      mp->d_ibool_outer_core.cuda,
                                                      mp->d_vp_outer_core.cuda,
-                                                     mp->save_forward,
+                                                     mp->save_stacey,
                                                      d_b_absorb_potential.cuda);
   }
 #endif
 
   //  adjoint simulations: stores absorbed wavefield part
-  if (mp->save_forward) {
+  if (mp->save_stacey) {
     // explicitly waits until kernel is finished
     gpuSynchronize();
     // copies array to CPU
@@ -427,7 +427,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &d_wgllwgll.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_outer_core.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_vp_outer_core.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &mp->save_forward));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (int), (void *) &mp->save_stacey));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_acoustic_kernel, idx++, sizeof (cl_mem), (void *) NULL));
 
     local_work_size[0] = blocksize;
@@ -459,7 +459,7 @@ void FC_FUNC_ (compute_stacey_acoustic_undoatt_gpu,
                                                                           d_wgllwgll.cuda,
                                                                           mp->d_ibool_outer_core.cuda,
                                                                           mp->d_vp_outer_core.cuda,
-                                                                          mp->save_forward,
+                                                                          mp->save_stacey,
                                                                           NULL);
   }
 #endif

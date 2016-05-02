@@ -135,7 +135,7 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rho_vp_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rho_vs_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &mp->save_forward));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &mp->save_stacey));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &d_b_absorb_field.ocl));
 
     local_work_size[0] = blocksize;
@@ -170,13 +170,13 @@ void FC_FUNC_ (compute_stacey_elastic_gpu,
                                                                          mp->d_ibool_crust_mantle.cuda,
                                                                          mp->d_rho_vp_crust_mantle.cuda,
                                                                          mp->d_rho_vs_crust_mantle.cuda,
-                                                                         mp->save_forward,
+                                                                         mp->save_stacey,
                                                                          d_b_absorb_field.cuda);
   }
 #endif
 
   // adjoint simulations: stores absorbed wavefield part
-  if (mp->save_forward) {
+  if (mp->save_stacey) {
     // explicitly waits until kernel is finished
     gpuSynchronize();
     // copies array to CPU
@@ -413,7 +413,7 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_ibool_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rho_vp_crust_mantle.ocl));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) &mp->d_rho_vs_crust_mantle.ocl));
-    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &mp->save_forward));
+    clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (int), (void *) &mp->save_stacey));
     clCheck (clSetKernelArg (mocl.kernels.compute_stacey_elastic_kernel, idx++, sizeof (cl_mem), (void *) NULL));
 
     local_work_size[0] = blocksize;
@@ -448,7 +448,7 @@ void FC_FUNC_ (compute_stacey_elastic_undoatt_gpu,
                                                                          mp->d_ibool_crust_mantle.cuda,
                                                                          mp->d_rho_vp_crust_mantle.cuda,
                                                                          mp->d_rho_vs_crust_mantle.cuda,
-                                                                         mp->save_forward,
+                                                                         mp->save_stacey,
                                                                          NULL);
   }
 #endif

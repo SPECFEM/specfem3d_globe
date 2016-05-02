@@ -712,6 +712,7 @@ typedef struct mesh_ {
   // simulation flags
   int save_forward;
   int absorbing_conditions;
+  int save_stacey;
 
   int attenuation;
   int undo_attenuation;

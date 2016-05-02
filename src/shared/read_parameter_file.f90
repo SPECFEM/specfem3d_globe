@@ -122,10 +122,6 @@
   call read_value_double_precision(PERCENT_OF_MEM_TO_USE_PER_CORE, 'PERCENT_OF_MEM_TO_USE_PER_CORE', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: PERCENT_OF_MEM_TO_USE_PER_CORE'
 
-  ! sanity check
-  if((PARTIAL_PHYS_DISPERSION_ONLY .or. UNDO_ATTENUATION) .and. .not. ATTENUATION) &
-    stop 'please turn off both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION in the Par_file when ATTENUATION is off'
-
   ! mass matrix corrections
   call read_value_logical(EXACT_MASS_MATRIX_FOR_ROTATION, 'EXACT_MASS_MATRIX_FOR_ROTATION', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: EXACT_MASS_MATRIX_FOR_ROTATION'
@@ -273,6 +269,13 @@
 
   ! ignore EXACT_MASS_MATRIX_FOR_ROTATION if rotation is not included in the simulations
   if (.not. ROTATION) EXACT_MASS_MATRIX_FOR_ROTATION = .false.
+
+  ! re-sets attenuation flags
+  if (.not. ATTENUATION) then
+    ! turns off both PARTIAL_PHYS_DISPERSION_ONLY and UNDO_ATTENUATION when ATTENUATION is off in the Par_file
+    PARTIAL_PHYS_DISPERSION_ONLY = .false.
+    UNDO_ATTENUATION = .false.
+  endif
 
   ! re-sets ADIOS flags
   if (.not. ADIOS_ENABLED) then

@@ -187,7 +187,7 @@
     if (ROTATION_VAL) then
       write(IMAIN,*) 'incorporating rotation'
       if (EXACT_MASS_MATRIX_FOR_ROTATION_VAL ) &
-        write(IMAIN,*) 'using exact mass matrix for rotation'
+        write(IMAIN,*) '  using exact mass matrix for rotation'
     else
       write(IMAIN,*) 'no rotation'
     endif
@@ -196,9 +196,11 @@
     if (ATTENUATION_VAL) then
       write(IMAIN,*) 'incorporating attenuation using ',N_SLS,' standard linear solids'
       if (ATTENUATION_3D_VAL) &
-        write(IMAIN,*) 'using 3D attenuation model'
+        write(IMAIN,*) '  using 3D attenuation model'
       if (PARTIAL_PHYS_DISPERSION_ONLY_VAL ) &
-        write(IMAIN,*) 'mimicking effects on velocity only'
+        write(IMAIN,*) '  mimicking effects on velocity only'
+      if (UNDO_ATTENUATION ) &
+        write(IMAIN,*) '  using undo_attenuation scheme'
     else
       write(IMAIN,*) 'no attenuation'
     endif
@@ -1509,9 +1511,21 @@
   ! create name of database
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_PATH)
 
+  ! sets flag to check if we need to save the stacey contributions to file
+  if (UNDO_ATTENUATION) then
+    ! not needed for undo_attenuation scheme
+    SAVE_STACEY = .false.
+  else
+    ! used for simulation type 1 and 3
+    if (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD)) then
+      SAVE_STACEY = .true.
+    else
+      SAVE_STACEY = .false.
+    endif
+  endif
+
   ! allocates buffers
-  if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_xmin_crust_mantle > 0 .and. SAVE_STACEY) then
     nabs_xmin_cm = nspec2D_xmin_crust_mantle
   else
     nabs_xmin_cm = 1
@@ -1519,8 +1533,7 @@
   allocate(absorb_xmin_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmin_cm),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb xmin')
 
-  if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_xmax_crust_mantle > 0 .and. SAVE_STACEY) then
     nabs_xmax_cm = nspec2D_xmax_crust_mantle
   else
     nabs_xmax_cm = 1
@@ -1528,8 +1541,7 @@
   allocate(absorb_xmax_crust_mantle(NDIM,NGLLY,NGLLZ,nabs_xmax_cm),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb xmax')
 
-  if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_ymin_crust_mantle > 0 .and. SAVE_STACEY) then
     nabs_ymin_cm = nspec2D_ymin_crust_mantle
   else
     nabs_ymin_cm = 1
@@ -1537,8 +1549,7 @@
   allocate(absorb_ymin_crust_mantle(NDIM,NGLLX,NGLLZ,nabs_ymin_cm),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb ymin')
 
-  if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_ymax_crust_mantle > 0 .and. SAVE_STACEY) then
     nabs_ymax_cm = nspec2D_ymax_crust_mantle
   else
     nabs_ymax_cm = 1
@@ -1547,8 +1558,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb ymax')
 
   ! file I/O for re-construction of wavefields
-  if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_xmin_crust_mantle > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_xmin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmin_crust_mantle)
@@ -1565,8 +1575,7 @@
                           filesize)
     endif
   endif
-  if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_xmax_crust_mantle > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_xmax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLY * NGLLZ * nspec2D_xmax_crust_mantle)
@@ -1583,8 +1592,7 @@
                           filesize)
     endif
   endif
-  if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_ymin_crust_mantle > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_ymin_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymin_crust_mantle)
@@ -1602,8 +1610,7 @@
                           filesize)
     endif
   endif
-  if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-    .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_ymax_crust_mantle > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_ymax_crust_mantle = CUSTOM_REAL * (NDIM * NGLLX * NGLLZ * nspec2D_ymax_crust_mantle)
@@ -1628,7 +1635,7 @@
 
   ! allocates buffers
   ! xmin
-  if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_xmin_outer_core > 0 .and. SAVE_STACEY) then
     nabs_xmin_oc = nspec2D_xmin_outer_core
   else
     nabs_xmin_oc = 1
@@ -1637,7 +1644,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb xmin')
 
   ! xmax
-  if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_xmax_outer_core > 0 .and. SAVE_STACEY) then
     nabs_xmax_oc = nspec2D_xmax_outer_core
   else
     nabs_xmax_oc = 1
@@ -1646,7 +1653,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb xmax')
 
   ! ymin
-  if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_ymin_outer_core > 0 .and. SAVE_STACEY) then
     nabs_ymin_oc = nspec2D_ymin_outer_core
   else
     nabs_ymin_oc = 1
@@ -1655,7 +1662,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb ymin')
 
   ! ymax
-  if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_ymax_outer_core > 0 .and. SAVE_STACEY) then
     nabs_ymax_oc = nspec2D_ymax_outer_core
   else
     nabs_ymax_oc = 1
@@ -1664,7 +1671,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating absorb ymax')
 
   ! zmin
-  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_zmin_outer_core > 0 .and. SAVE_STACEY) then
     nabs_zmin_oc = nspec2D_zmin_outer_core
   else
     nabs_zmin_oc = 1
@@ -1674,7 +1681,7 @@
 
   ! file I/O for re-construction of wavefields
   ! xmin
-  if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_xmin_outer_core > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_xmin_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmin_outer_core)
@@ -1692,7 +1699,7 @@
     endif
   endif
   ! xmax
-  if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_xmax_outer_core > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_xmax_outer_core = CUSTOM_REAL * (NGLLY * NGLLZ * nspec2D_xmax_outer_core)
@@ -1710,7 +1717,7 @@
    endif
   endif
   ! ymin
-  if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_ymin_outer_core > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_ymin_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymin_outer_core)
@@ -1728,7 +1735,7 @@
     endif
   endif
   ! ymanx
-  if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_ymax_outer_core > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_ymax_outer_core = CUSTOM_REAL * (NGLLX * NGLLZ * nspec2D_ymax_outer_core)
@@ -1746,7 +1753,7 @@
     endif
   endif
   ! zmin
-  if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+  if (nspec2D_zmin_outer_core > 0 .and. SAVE_STACEY) then
 
     ! size of single record
     reclen_zmin = CUSTOM_REAL * (NGLLX * NGLLY * nspec2D_zmin_outer_core)

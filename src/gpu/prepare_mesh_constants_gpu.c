@@ -266,6 +266,19 @@ void FC_FUNC_ (prepare_constants_device,
   mp->use_mesh_coloring_gpu = *USE_MESH_COLORING_GPU_f;
 #endif
 
+  // sets flag to check if we need to save the stacey contributions to file
+  if (mp->undo_attenuation) {
+    // not needed for undo_attenuation scheme
+    mp->save_stacey = 0;
+  }else{
+    // used for simulation type 1 and 3
+    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      mp->save_stacey = 1;
+    }else{
+      mp->save_stacey = 0;
+    }
+  }
+
   // sources
   mp->nsources_local = *nsources_local;
   if (mp->simulation_type == 1 || mp->simulation_type == 3) {
@@ -819,7 +832,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_xmin_crust_mantle, jacobian2D_xmin_crust_mantle, NGLL2 * mp->nspec2D_xmin_crust_mantle);
 
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_xmin_crust_mantle, NDIM * NGLL2 * mp->nspec2D_xmin_crust_mantle);
     }
   }
@@ -830,7 +843,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     gpuCreateCopy_todevice_realw (&mp->d_normal_xmax_crust_mantle, normal_xmax_crust_mantle, NDIM*NGLL2 * mp->nspec2D_xmax_crust_mantle);
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_xmax_crust_mantle, jacobian2D_xmax_crust_mantle, NGLL2 * mp->nspec2D_xmax_crust_mantle);
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_xmax_crust_mantle, NDIM * NGLL2 * mp->nspec2D_xmax_crust_mantle);
     }
   }
@@ -841,7 +854,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     gpuCreateCopy_todevice_realw (&mp->d_normal_ymin_crust_mantle, normal_ymin_crust_mantle, NDIM*NGLL2 * mp->nspec2D_ymin_crust_mantle);
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymin_crust_mantle, jacobian2D_ymin_crust_mantle, NGLL2 * mp->nspec2D_ymin_crust_mantle);
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_ymin_crust_mantle, NDIM * NGLL2 * mp->nspec2D_ymin_crust_mantle);
     }
   }
@@ -854,7 +867,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymax_crust_mantle, jacobian2D_ymax_crust_mantle, NGLL2 * mp->nspec2D_ymax_crust_mantle);
 
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_ymax_crust_mantle, NDIM * NGLL2 * mp->nspec2D_ymax_crust_mantle);
     }
   }
@@ -883,7 +896,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     gpuCreateCopy_todevice_int (&mp->d_ibelm_xmin_outer_core, ibelm_xmin_outer_core, mp->nspec2D_xmin_outer_core);
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_xmin_outer_core, jacobian2D_xmin_outer_core, NGLL2 * mp->nspec2D_xmin_outer_core);
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_xmin_outer_core, NGLL2 * mp->nspec2D_xmin_outer_core);
     }
   }
@@ -894,7 +907,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_xmax_outer_core, jacobian2D_xmax_outer_core, NGLL2 * mp->nspec2D_xmax_outer_core);
 
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_xmax_outer_core, NGLL2 * mp->nspec2D_xmax_outer_core);
     }
   }
@@ -904,7 +917,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     gpuCreateCopy_todevice_int (&mp->d_ibelm_ymin_outer_core, ibelm_ymin_outer_core, mp->nspec2D_ymin_outer_core);
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymin_outer_core, jacobian2D_ymin_outer_core, NGLL2 * mp->nspec2D_ymin_outer_core);
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_ymin_outer_core, NGLL2 * mp->nspec2D_ymin_outer_core);
     }
   }
@@ -914,7 +927,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     gpuCreateCopy_todevice_int (&mp->d_ibelm_ymax_outer_core, ibelm_ymax_outer_core, mp->nspec2D_ymax_outer_core);
     gpuCreateCopy_todevice_realw (&mp->d_jacobian2D_ymax_outer_core, jacobian2D_ymax_outer_core, NGLL2 * mp->nspec2D_ymax_outer_core);
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_ymax_outer_core, NGLL2 * mp->nspec2D_ymax_outer_core);
     }
   }
@@ -924,7 +937,7 @@ void FC_FUNC_ (prepare_fields_absorb_device,
     // note: ibelm_bottom_outer_core and jacobian2D_bottom_outer_core will be allocated
     //          when preparing the outer core
     // boundary buffer
-    if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+    if (mp->save_stacey) {
       gpuMalloc_realw (&mp->d_absorb_zmin_outer_core, NGLL2 * mp->nspec2D_zmin_outer_core);
     }
   }
@@ -2721,7 +2734,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       gpuFree (&mp->d_ibelm_xmin_crust_mantle);
       gpuFree (&mp->d_normal_xmin_crust_mantle);
       gpuFree (&mp->d_jacobian2D_xmin_crust_mantle);
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_xmin_crust_mantle);
       }
     }
@@ -2729,7 +2742,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       gpuFree (&mp->d_ibelm_xmax_crust_mantle);
       gpuFree (&mp->d_normal_xmax_crust_mantle);
       gpuFree (&mp->d_jacobian2D_xmax_crust_mantle);
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_xmax_crust_mantle);
       }
     }
@@ -2737,7 +2750,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       gpuFree (&mp->d_ibelm_ymin_crust_mantle);
       gpuFree (&mp->d_normal_ymin_crust_mantle);
       gpuFree (&mp->d_jacobian2D_ymin_crust_mantle);
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_ymin_crust_mantle);
       }
     }
@@ -2745,7 +2758,7 @@ void FC_FUNC_ (prepare_cleanup_device,
       gpuFree (&mp->d_ibelm_ymax_crust_mantle);
       gpuFree (&mp->d_normal_ymax_crust_mantle);
       gpuFree (&mp->d_jacobian2D_ymax_crust_mantle);
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_ymax_crust_mantle);
       }
     }
@@ -2759,33 +2772,33 @@ void FC_FUNC_ (prepare_cleanup_device,
     if (mp->nspec2D_xmin_outer_core > 0) {
       gpuFree (&mp->d_ibelm_xmin_outer_core);
       gpuFree (&mp->d_jacobian2D_xmin_outer_core);
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_xmin_outer_core);
       }
     }
     if (mp->nspec2D_xmax_outer_core > 0) {
       gpuFree (&mp->d_ibelm_xmax_outer_core);
       gpuFree (&mp->d_jacobian2D_xmax_outer_core);
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_xmax_outer_core);
       }
     }
     if (mp->nspec2D_ymin_outer_core > 0) {
       gpuFree (&mp->d_ibelm_ymin_outer_core);
       gpuFree (&mp->d_jacobian2D_ymin_outer_core);
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_ymin_outer_core);
       }
     }
     if (mp->nspec2D_ymax_outer_core > 0) {
       gpuFree (&mp->d_ibelm_ymax_outer_core);
       gpuFree (&mp->d_jacobian2D_ymax_outer_core);
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_ymax_outer_core);
       }
     }
     if (mp->nspec2D_zmin_outer_core > 0) {
-      if ((mp->simulation_type == 1 && mp->save_forward) || (mp->simulation_type == 3)) {
+      if (mp->save_stacey) {
         gpuFree (&mp->d_absorb_zmin_outer_core);
       }
     }
