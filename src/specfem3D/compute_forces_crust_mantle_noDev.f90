@@ -29,7 +29,7 @@
                                                deltat, &
                                                displ_crust_mantle, &
                                                accel_crust_mantle, &
-                                               phase_is_inner, &
+                                               iphase, &
                                                R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -99,7 +99,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! local parameters
 
@@ -161,18 +161,17 @@
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
-  integer :: iphase
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
 
 !  computed_elements = 0
-  if (.not. phase_is_inner) then
-    iphase = 1
+  if (iphase == 1) then
+    ! outer elements (halo region)
     num_elements = nspec_outer
   else
-    iphase = 2
+    ! inner elements
     num_elements = nspec_inner
   endif
 

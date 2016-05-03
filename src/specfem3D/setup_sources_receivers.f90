@@ -304,7 +304,10 @@
   !
   ! adds initial t0 time to update number of time steps and reach full record length
   if (abs(t0) > 0.d0) then
-    NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+    ! note: for zero length, only minimal of 5 timesteps for testing is used
+    if (RECORD_LENGTH_IN_MINUTES > TINYVAL) then
+      NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+    endif
   endif
 
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only

@@ -33,7 +33,7 @@
                                               deltat, &
                                               displ_crust_mantle, &
                                               accel_crust_mantle, &
-                                              phase_is_inner, &
+                                              iphase, &
                                               R_xx,R_yy,R_xy,R_xz,R_yz, &
                                               R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                               epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -117,7 +117,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! local parameters
 
@@ -141,7 +141,6 @@
 
   integer :: ispec,iglob
   integer :: num_elements,ispec_p
-  integer :: iphase
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk_spec,ip,iglob_p,ijk
@@ -157,16 +156,16 @@
 ! ****************************************************
 
 !  computed_elements = 0
-  if (.not. phase_is_inner) then
-    iphase = 1
+  if (iphase == 1) then
+    ! outer elements (halo region)
     num_elements = nspec_outer
   else
-    iphase = 2
+    ! inner elements
     num_elements = nspec_inner
   endif
 
 !$OMP PARALLEL DEFAULT(NONE) &
-!$OMP SHARED(deriv, &
+!$OMP SHARED( deriv, &
 !$OMP num_elements,iphase,phase_ispec_inner, &
 !$OMP ibool,ispec_is_tiso,rstore, &
 !$OMP displ_crust_mantle,accel_crust_mantle, &
@@ -316,9 +315,9 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            sum_terms(1,INDEX_IJK,ispec) = sum_terms(1,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,1)
-            sum_terms(2,INDEX_IJK,ispec) = sum_terms(2,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,2)
-            sum_terms(3,INDEX_IJK,ispec) = sum_terms(3,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,3)
+            sum_terms(1,i,j,k,ispec) = sum_terms(1,i,j,k,ispec) + rho_s_H(i,j,k,1)
+            sum_terms(2,i,j,k,ispec) = sum_terms(2,i,j,k,ispec) + rho_s_H(i,j,k,2)
+            sum_terms(3,i,j,k,ispec) = sum_terms(3,i,j,k,ispec) + rho_s_H(i,j,k,3)
           enddo
         enddo
       enddo
@@ -439,6 +438,7 @@
 
 
 ! kept here for reference: updating for non-vectorized case
+!
 ! timing example:
 !         update here will take: 1m 25s
 !         update in ispec-loop : 1m 20s

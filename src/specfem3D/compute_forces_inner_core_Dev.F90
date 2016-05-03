@@ -33,7 +33,7 @@
                                             deltat, &
                                             displ_inner_core, &
                                             accel_inner_core, &
-                                            phase_is_inner, &
+                                            iphase, &
                                             R_xx,R_yy,R_xy,R_xz,R_yz, &
                                             R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                             epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -106,7 +106,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: epsilon_trace_over_3
 
   ! inner/outer element run flag
-  logical :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! local parameters
   ! Deville
@@ -127,7 +127,6 @@
 
   integer :: ispec,iglob
   integer :: num_elements,ispec_p
-  integer :: iphase
 
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
@@ -145,11 +144,11 @@
 
 !  computed_elements = 0
 
-  if (.not. phase_is_inner) then
-    iphase = 1
+  if (iphase == 1) then
+    ! outer elements (halo region)
     num_elements = nspec_outer
   else
-    iphase = 2
+    ! inner elements
     num_elements = nspec_inner
   endif
 

@@ -116,7 +116,12 @@
   !             (see also routine setup_timesteps() in setup_sources_receivers.f90)
   !
   ! initial guess : compute total number of time steps, rounded to next multiple of 100
-  NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
+  if (RECORD_LENGTH_IN_MINUTES < TINYVAL) then
+    ! zero length, uses a minimum of 5 steps for testing
+    NSTEP = 5
+  else
+    NSTEP = 100 * (int(RECORD_LENGTH_IN_MINUTES * 60.d0 / (100.d0*DT)) + 1)
+  endif
 
   ! noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then

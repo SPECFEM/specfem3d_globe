@@ -50,7 +50,6 @@
   ! iphase: iphase = 1 is for computing outer elements in the crust_mantle and inner_core regions,
   !              iphase = 2 is for computing inner elements (former icall parameter)
   integer :: iphase
-  logical :: phase_is_inner
 
   ! ****************************************************
   !   big loop over all spectral elements in the solid
@@ -68,12 +67,7 @@
     !
     ! compute all the outer elements first, then sends out non blocking MPI communication
     ! and continues computing inner elements (overlapping)
-    if (iphase == 1) then
-      phase_is_inner = .false.
-    else
-      phase_is_inner = .true.
-    endif
-
+    !
     ! compute internal forces in the solid regions
     ! note: for anisotropy and gravity, x y and z contain r theta and phi
     if (.not. GPU_MODE) then
@@ -84,7 +78,7 @@
                                        deltat, &
                                        displ_crust_mantle, &
                                        accel_crust_mantle, &
-                                       phase_is_inner, &
+                                       iphase, &
                                        R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle, &
                                        R_xz_crust_mantle,R_yz_crust_mantle, &
                                        R_xx_crust_mantle_lddrk,R_yy_crust_mantle_lddrk,R_xy_crust_mantle_lddrk, &
@@ -101,7 +95,7 @@
                                      deltat, &
                                      displ_inner_core, &
                                      accel_inner_core, &
-                                     phase_is_inner, &
+                                     iphase, &
                                      R_xx_inner_core,R_yy_inner_core,R_xy_inner_core, &
                                      R_xz_inner_core,R_yz_inner_core, &
                                      R_xx_inner_core_lddrk,R_yy_inner_core_lddrk,R_xy_inner_core_lddrk, &
@@ -423,7 +417,6 @@
   ! iphase: iphase = 1 is for computing outer elements in the crust_mantle and inner_core regions,
   !              iphase = 2 is for computing inner elements (former icall parameter)
   integer :: iphase
-  logical :: phase_is_inner
 
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
@@ -478,12 +471,7 @@
     !
     ! compute all the outer elements first, then sends out non blocking MPI communication
     ! and continues computing inner elements (overlapping)
-    if (iphase == 1) then
-      phase_is_inner = .false.
-    else
-      phase_is_inner = .true.
-    endif
-
+    !
     ! compute internal forces in the solid regions
     ! note: for anisotropy and gravity, x y and z contain r theta and phi
     if (.not. GPU_MODE) then
@@ -495,7 +483,7 @@
                                        b_deltat, &
                                        b_displ_crust_mantle, &
                                        b_accel_crust_mantle, &
-                                       phase_is_inner, &
+                                       iphase, &
                                        b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle, &
                                        b_R_xz_crust_mantle,b_R_yz_crust_mantle, &
                                        b_R_xx_crust_mantle_lddrk,b_R_yy_crust_mantle_lddrk,b_R_xy_crust_mantle_lddrk, &
@@ -512,7 +500,7 @@
                                      b_deltat, &
                                      b_displ_inner_core, &
                                      b_accel_inner_core, &
-                                     phase_is_inner, &
+                                     iphase, &
                                      b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core, &
                                      b_R_xz_inner_core,b_R_yz_inner_core, &
                                      b_R_xx_inner_core_lddrk,b_R_yy_inner_core_lddrk,b_R_xy_inner_core_lddrk, &
@@ -826,7 +814,7 @@
                                           deltat, &
                                           displ_crust_mantle, &
                                           accel_crust_mantle, &
-                                          phase_is_inner, &
+                                          iphase, &
                                           R_xx,R_yy,R_xy,R_xz,R_yz, &
                                           R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                           epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -873,7 +861,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville (2002) optimizations
@@ -881,7 +869,7 @@
                                          deltat, &
                                          displ_crust_mantle, &
                                          accel_crust_mantle, &
-                                         phase_is_inner, &
+                                         iphase, &
                                          R_xx,R_yy,R_xy,R_xz,R_yz, &
                                          R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
@@ -894,7 +882,7 @@
                                            deltat, &
                                            displ_crust_mantle, &
                                            accel_crust_mantle, &
-                                           phase_is_inner, &
+                                           iphase, &
                                            R_xx,R_yy,R_xy,R_xz,R_yz, &
                                            R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                            epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
@@ -914,7 +902,7 @@
                                         deltat, &
                                         displ_inner_core, &
                                         accel_inner_core, &
-                                        phase_is_inner, &
+                                        iphase, &
                                         R_xx,R_yy,R_xy,R_xz,R_yz, &
                                         R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                         epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -960,7 +948,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),intent(inout) :: epsilon_trace_over_3
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   if (USE_DEVILLE_PRODUCTS_VAL) then
     ! uses Deville (2002) optimizations
@@ -968,7 +956,7 @@
                                        deltat, &
                                        displ_inner_core, &
                                        accel_inner_core, &
-                                       phase_is_inner, &
+                                       iphase, &
                                        R_xx,R_yy,R_xy,R_xz,R_yz, &
                                        R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
@@ -981,7 +969,7 @@
                                          deltat, &
                                          displ_inner_core, &
                                          accel_inner_core, &
-                                         phase_is_inner, &
+                                         iphase, &
                                          R_xx,R_yy,R_xy,R_xz,R_yz, &
                                          R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &

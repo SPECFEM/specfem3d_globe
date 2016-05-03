@@ -30,7 +30,7 @@
                                              A_array_rotation,B_array_rotation, &
                                              A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                              displfluid,accelfluid, &
-                                             div_displfluid,phase_is_inner)
+                                             div_displfluid,iphase)
 
   use constants_solver
 
@@ -71,7 +71,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),intent(out) :: div_displfluid
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
@@ -96,22 +96,21 @@
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
-  integer :: iphase
 
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. ( .not. phase_is_inner )) then
+  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. (iphase == 1)) then
     div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
 !  computed_elements = 0
-  if (.not. phase_is_inner) then
-    iphase = 1
+  if (iphase == 1) then
+    ! outer elements
     num_elements = nspec_outer
   else
-    iphase = 2
+    ! inner elements
     num_elements = nspec_inner
   endif
 

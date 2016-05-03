@@ -36,7 +36,7 @@
                                            A_array_rotation,B_array_rotation, &
                                            A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                            displfluid,accelfluid, &
-                                           div_displfluid,phase_is_inner)
+                                           div_displfluid,iphase)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -89,7 +89,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),intent(out) :: div_displfluid
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: sum_terms
@@ -121,7 +121,6 @@
     displ_times_grad_x_ln_rho,displ_times_grad_y_ln_rho,displ_times_grad_z_ln_rho
 
   integer :: num_elements,ispec_p
-  integer :: iphase
 
 #ifdef FORCE_VECTORIZATION
   integer :: ijk
@@ -135,16 +134,15 @@
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. (.not. phase_is_inner)) then
+  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. (iphase == 1)) then
     div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
 ! computed_elements = 0
-  if (.not. phase_is_inner) then
-    iphase = 1
+  if (iphase == 1) then
+    ! outer elements
     num_elements = nspec_outer
   else
-    iphase = 2
     num_elements = nspec_inner
   endif
 
