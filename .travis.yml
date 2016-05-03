@@ -9,18 +9,6 @@ sudo: required
 os: linux
 compiler: gcc
 
-
-# recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
-#before_install:
-#  - test -n $CC && unset CC
-
-before_install:
-  - sudo apt-get update
-  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
-
-install:
-  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
-
 env:
   global:
   - FC=gfortran
@@ -33,11 +21,21 @@ env:
   - TEST="--enable-openmp" TESTFLAGS="FLAGS_CHECK=-O3"
   - TEST="--enable-openmp" TESTFLAGS="FLAGS_CHECK=\"-fprofile-arcs -ftest-coverage -O0\""
 
-script:
+# recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
+#before_install:
+#  - test -n $CC && unset CC
+
+before_install:
+  - sudo apt-get update
+
+install:
+  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
   - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
   - ${FC} --version
   - ${MPIFC} --version
   - ${CC} --version
+
+script:
   - echo "configuration test:" ${TEST} ${TESTFLAGS}
   # test configuration
   - ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} ${TESTFLAGS}
@@ -46,10 +44,11 @@ script:
   - cd EXAMPLES/regional_Greece_small/
   - sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
   - ./run_this_example.sh
+  # report example
+  - cat OUTPUT_FILES/output_mesher.txt
+  - cat OUTPUT_FILES/output_solver.txt
 
 # runs example
 after_success:
   # code coverage: see example https://github.com/codecov/example-fortran/blob/master/.travis.yml
-  - bash <(curl -s https://codecov.io/bash)
-  - echo ""
-  - echo "done"
+  - bash <(curl -s https://codecov.io/bash) -s obj/

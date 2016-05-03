@@ -37,6 +37,9 @@ cp $currentdir/DATA/Par_file DATA/Par_file
 make clean
 make all
 
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/
 cp OUTPUT_FILES/values_from_mesher.h $currentdir/OUTPUT_FILES/values_from_mesher.h.compilation
@@ -66,6 +69,8 @@ echo "  running script..."
 echo
 ./run_mesher_solver.bash
 
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo `date`
 
