@@ -14,18 +14,17 @@ env:
   - FC=gfortran
   - MPIFC=mpif90
   - CC=gcc
+  - OMP_NUM_THREADS=2
   matrix:
   - TEST="" TESTFLAGS=""
   - TEST="--enable-debug" TESTFLAGS=""
   - TEST="--enable-vectorization" TESTFLAGS=""
-  - TEST="--enable-openmp" TESTFLAGS="FLAGS_CHECK=-O3"
+  - TEST="--enable-vectorization --enable-openmp" TESTFLAGS=""
   - TEST="--enable-openmp" TESTFLAGS="FLAGS_CHECK=\"-fprofile-arcs -ftest-coverage -O0\""
 
-# recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
-#before_install:
-#  - test -n $CC && unset CC
-
 before_install:
+  # recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
+  #- test -n $CC && unset CC
   - sudo apt-get update
 
 install:
@@ -45,10 +44,10 @@ script:
   - sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
   - ./run_this_example.sh
   # report example
-  - cat OUTPUT_FILES/output_mesher.txt
-  - cat OUTPUT_FILES/output_solver.txt
+  - if [ -f OUTPUT_FILES/output_mesher.txt ]; then cat OUTPUT_FILES/output_mesher.txt; fi
+  - if [ -f OUTPUT_FILES/output_solver.txt ]; then cat OUTPUT_FILES/output_solver.txt; fi
 
 # runs example
 after_success:
   # code coverage: see example https://github.com/codecov/example-fortran/blob/master/.travis.yml
-  - bash <(curl -s https://codecov.io/bash) -s obj/
+  - if [ ! "${TESTFLAGS}" == "" ]; then bash <(curl -s https://codecov.io/bash) -s obj/; fi
