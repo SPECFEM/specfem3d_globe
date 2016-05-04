@@ -18,9 +18,10 @@ env:
   matrix:
   - TEST="" TESTCOV=0
   - TEST="--enable-debug" TESTCOV=0
+  - TEST="--enable-debug --enable-openmp" TESTCOV=0
   - TEST="--enable-vectorization" TESTCOV=0
   - TEST="--enable-vectorization --enable-openmp" TESTCOV=0
-  - TEST="--enable-openmp" TESTFLAGS="FLAGS_CHECK=\"-fprofile-arcs -ftest-coverage -O0\""
+  - TEST="--enable-vectorization --enable-openmp" TESTCOV=1
 
 before_install:
   # recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
@@ -45,7 +46,7 @@ script:
   - make clean
   # test small example
   - cd EXAMPLES/regional_Greece_small/
-  - sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
+  - sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   - ./run_this_example.sh
   # report example
   - if [ -f OUTPUT_FILES/output_mesher.txt ]; then cat OUTPUT_FILES/output_mesher.txt; fi
