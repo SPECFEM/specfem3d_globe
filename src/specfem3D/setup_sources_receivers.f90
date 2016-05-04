@@ -304,8 +304,14 @@
   !
   ! adds initial t0 time to update number of time steps and reach full record length
   if (abs(t0) > 0.d0) then
-    ! note: for zero length, only minimal of 5 timesteps for testing is used
-    if (RECORD_LENGTH_IN_MINUTES > TINYVAL) then
+    ! note: for zero length, nstep has minimal of 5 timesteps for testing
+    !       we won't extend this
+    !
+    ! careful: do not use RECORD_LENGTH_IN_MINUTES here, as it is only read by the master process
+    !          when reading the parameter file, but it is not broadcasted to all other processes
+    !          NSTEP gets broadcasted, so we work with this values
+    if (NSTEP /= 5) then
+      ! extend by bulk of 100 steps to account for half-duration rise time
       NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
     endif
   endif
