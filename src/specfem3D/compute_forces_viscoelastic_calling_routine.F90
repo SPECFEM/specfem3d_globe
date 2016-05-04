@@ -830,6 +830,9 @@
   use constants_solver,only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
     ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,NSPEC_CRUST_MANTLE_STRAIN_ONLY
 
+  ! note: passes sum_terms array as subroutine argument which will help for performance (better than use-statement)
+  use specfem_par_crustmantle,only: sum_terms_crust_mantle
+
   implicit none
 
   integer,intent(in) :: NSPEC,NGLOB,NSPEC_ATT
@@ -875,7 +878,7 @@
                                          epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                          epsilon_trace_over_3, &
                                          alphaval,betaval,gammaval, &
-                                         factor_common,vnspec)
+                                         factor_common,vnspec,sum_terms_crust_mantle)
   else
     ! no Deville optimization
     call compute_forces_crust_mantle_noDev(NSPEC,NGLOB,NSPEC_ATT, &
@@ -917,6 +920,9 @@
 
   use constants_solver,only: CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,USE_DEVILLE_PRODUCTS_VAL, &
     ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,NSPEC_INNER_CORE_STRAIN_ONLY
+
+  ! note: passes sum_terms array as subroutine argument which will help for performance (better than use-statement)
+  use specfem_par_innercore,only: sum_terms_inner_core
 
   implicit none
 
@@ -962,7 +968,7 @@
                                        epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
                                        epsilon_trace_over_3,&
                                        alphaval,betaval,gammaval, &
-                                       factor_common,vnspec)
+                                       factor_common,vnspec,sum_terms_inner_core)
   else
     ! no Deville optimization
     call compute_forces_inner_core_noDev(NSPEC,NGLOB,NSPEC_ATT, &

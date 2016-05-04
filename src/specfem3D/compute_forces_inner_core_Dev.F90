@@ -40,7 +40,7 @@
                                             epsilondev_xz,epsilondev_yz, &
                                             epsilon_trace_over_3, &
                                             alphaval,betaval,gammaval, &
-                                            factor_common,vnspec)
+                                            factor_common,vnspec,sum_terms)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -105,6 +105,9 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY) :: epsilon_trace_over_3
 
+  ! work array with contributions
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC),intent(out) :: sum_terms
+
   ! inner/outer element run flag
   integer,intent(in) :: iphase
 
@@ -117,8 +120,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
     newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3
-
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: sum_terms
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
   real(kind=CUSTOM_REAL) :: fac1,fac2,fac3

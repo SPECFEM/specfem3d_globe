@@ -625,7 +625,7 @@
   character(len=2),intent(out) :: bic
 
   bic = ''
-  
+
   if (1.0d0 <= DT)  bic = 'LX'
   if (0.1d0 < DT .and. DT < 1.0d0) bic = 'MX'
   if (0.0125d0 < DT .and. DT <= 0.1d0) bic = 'BX'

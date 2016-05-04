@@ -362,6 +362,8 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: &
     deriv_mapping_crust_mantle
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: sum_terms_crust_mantle
+
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
 
@@ -554,6 +556,8 @@ module specfem_par_innercore
   real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: &
     deriv_mapping_inner_core
 
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: sum_terms_inner_core
+
   ! material parameters
   ! (note: muvstore also needed for attenuation in case of anisotropic inner core)
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
@@ -673,6 +677,11 @@ module specfem_par_outercore
     xix_outer_core,xiy_outer_core,xiz_outer_core,&
     etax_outer_core,etay_outer_core,etaz_outer_core, &
     gammax_outer_core,gammay_outer_core,gammaz_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: &
+    deriv_mapping_outer_core
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sum_terms_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
     xstore_outer_core,ystore_outer_core,zstore_outer_core

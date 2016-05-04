@@ -89,6 +89,23 @@
     use_inversed_arrays = .false.
   endif
 
+  ! uses local array to store all element contributions
+  if (USE_DEVILLE_PRODUCTS_VAL) then
+    ! note: we use allocate for sum_terms arrays rather than defining within subroutine compute_forces_**_Dev() itself
+    !       as it will crash when using OpenMP and operating systems with small stack sizes
+    !       e.g. see http://stackoverflow.com/questions/22649827/illegal-instruction-error-when-running-openmp-in-gfortran-mac
+    allocate(sum_terms_crust_mantle(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
+             sum_terms_inner_core(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE), &
+             sum_terms_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE), &
+             stat=ier)
+    if (ier /= 0) stop 'Error allocating sum_terms arrays'
+    sum_terms_crust_mantle(:,:,:,:,:) = 0._CUSTOM_REAL
+    sum_terms_inner_core(:,:,:,:,:) = 0._CUSTOM_REAL
+    sum_terms_outer_core(:,:,:,:) = 0._CUSTOM_REAL
+  endif
+
+  ! inverse table
+  ! this helps to speedup the assembly, especially with OpenMP (or on MIC) threading
   if (use_inversed_arrays) then
     ! allocating arrays
     allocate(ibool_inv_tbl_crust_mantle(NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE,2), &
@@ -373,6 +390,7 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
+  use specfem_par_outercore
 
   implicit none
 
@@ -393,7 +411,7 @@
     allocate(deriv_mapping_crust_mantle(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_crust_mantle'
 
-    !---- fused array of mapping matrix ----------------------
+    !---- fused array of mapping matrix
     do ispec = 1,NSPEC_CRUST_MANTLE
 
       DO_LOOP_IJK
@@ -417,7 +435,7 @@
     allocate(deriv_mapping_inner_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE),stat=ier)
     if (ier /= 0) stop 'Error allocating array deriv_mapping_inner_core'
 
-    !---- fused array of mapping matrix ----------------------
+    !---- fused array of mapping matrix
     do ispec = 1,NSPEC_INNER_CORE
 
       DO_LOOP_IJK
@@ -431,6 +449,30 @@
         deriv_mapping_inner_core(7,INDEX_IJK,ispec) = gammax_inner_core(INDEX_IJK,ispec)
         deriv_mapping_inner_core(8,INDEX_IJK,ispec) = gammay_inner_core(INDEX_IJK,ispec)
         deriv_mapping_inner_core(9,INDEX_IJK,ispec) = gammaz_inner_core(INDEX_IJK,ispec)
+
+      ENDDO_LOOP_IJK
+
+    enddo
+
+    ! outer core
+    ! allocates fused array
+    allocate(deriv_mapping_outer_core(9,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE),stat=ier)
+    if (ier /= 0) stop 'Error allocating array deriv_mapping_outer_core'
+
+    !---- fused array of mapping matrix
+    do ispec = 1,NSPEC_OUTER_CORE
+
+      DO_LOOP_IJK
+
+        deriv_mapping_outer_core(1,INDEX_IJK,ispec) = xix_outer_core(INDEX_IJK,ispec)
+        deriv_mapping_outer_core(2,INDEX_IJK,ispec) = xiy_outer_core(INDEX_IJK,ispec)
+        deriv_mapping_outer_core(3,INDEX_IJK,ispec) = xiz_outer_core(INDEX_IJK,ispec)
+        deriv_mapping_outer_core(4,INDEX_IJK,ispec) = etax_outer_core(INDEX_IJK,ispec)
+        deriv_mapping_outer_core(5,INDEX_IJK,ispec) = etay_outer_core(INDEX_IJK,ispec)
+        deriv_mapping_outer_core(6,INDEX_IJK,ispec) = etaz_outer_core(INDEX_IJK,ispec)
+        deriv_mapping_outer_core(7,INDEX_IJK,ispec) = gammax_outer_core(INDEX_IJK,ispec)
+        deriv_mapping_outer_core(8,INDEX_IJK,ispec) = gammay_outer_core(INDEX_IJK,ispec)
+        deriv_mapping_outer_core(9,INDEX_IJK,ispec) = gammaz_outer_core(INDEX_IJK,ispec)
 
       ENDDO_LOOP_IJK
 

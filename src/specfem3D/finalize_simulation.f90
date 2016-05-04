@@ -40,6 +40,13 @@
   ! synchronize all processes, waits until all processes have written their seismograms
   call synchronize_all()
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'finalizing simulation'
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
   ! closes Stacey absorbing boundary snapshots
   if (ABSORBING_CONDITIONS) then
     ! crust mantle
@@ -171,8 +178,8 @@
 
   ! optimized arrays
   if (USE_DEVILLE_PRODUCTS_VAL) then
-    deallocate(deriv_mapping_crust_mantle)
-    deallocate(deriv_mapping_inner_core)
+    deallocate(sum_terms_crust_mantle,sum_terms_inner_core,sum_terms_outer_core)
+    deallocate(deriv_mapping_crust_mantle,deriv_mapping_inner_core,deriv_mapping_outer_core)
   endif
   if (use_inversed_arrays) then
     deallocate(ibool_inv_tbl_crust_mantle,ibool_inv_tbl_inner_core,ibool_inv_tbl_outer_core)

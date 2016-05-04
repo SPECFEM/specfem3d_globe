@@ -36,7 +36,7 @@
                                            A_array_rotation,B_array_rotation, &
                                            A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                            displfluid,accelfluid, &
-                                           div_displfluid,iphase)
+                                           div_displfluid,iphase,sum_terms)
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -51,9 +51,7 @@
 
   use specfem_par_outercore,only: &
     rstore => rstore_outer_core, &
-    xix => xix_outer_core,xiy => xiy_outer_core,xiz => xiz_outer_core, &
-    etax => etax_outer_core,etay => etay_outer_core,etaz => etaz_outer_core, &
-    gammax => gammax_outer_core,gammay => gammay_outer_core,gammaz => gammaz_outer_core, &
+    deriv => deriv_mapping_outer_core, &
     ibool => ibool_outer_core, &
     phase_ispec_inner => phase_ispec_inner_outer_core, &
     nspec_outer => nspec_outer_outer_core, &
@@ -88,12 +86,12 @@
   ! divergence of displacement
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),intent(out) :: div_displfluid
 
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(out) :: sum_terms
+
   ! inner/outer element run flag
   integer,intent(in) :: iphase
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: sum_terms
-
   ! for gravity
   integer :: int_radius
   double precision :: radius,theta,phi,gxl,gyl,gzl
@@ -161,10 +159,10 @@
   endif
 
 !$OMP PARALLEL DEFAULT(NONE) &
-!$OMP SHARED( &
+!$OMP SHARED( deriv, &
 !$OMP num_elements, phase_ispec_inner, iphase, ibool, displfluid, rstore, &
-!$OMP d_ln_density_dr_table, hprime_xx, hprime_xxT, xix, xiy, xiz,  etax, etay, etaz, &
-!$OMP gammax, gammay, gammaz, deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation, &
+!$OMP d_ln_density_dr_table, hprime_xx, hprime_xxT, &
+!$OMP deltat, two_omega_earth, timeval, A_array_rotation, B_array_rotation, &
 !$OMP minus_rho_g_over_kappa_fluid, wgll_cube, MOVIE_VOLUME, hprimewgll_xxT, hprimewgll_xx, &
 !$OMP wgllwgll_yz_3D, wgllwgll_xz_3D, wgllwgll_xy_3D, accelfluid, USE_LDDRK, A_array_rotation_lddrk, &
 !$OMP sum_terms, &
@@ -248,15 +246,15 @@
     DO_LOOP_IJK
 
       ! get derivatives of velocity potential with respect to x, y and z
-      xixl = xix(INDEX_IJK,ispec)
-      xiyl = xiy(INDEX_IJK,ispec)
-      xizl = xiz(INDEX_IJK,ispec)
-      etaxl = etax(INDEX_IJK,ispec)
-      etayl = etay(INDEX_IJK,ispec)
-      etazl = etaz(INDEX_IJK,ispec)
-      gammaxl = gammax(INDEX_IJK,ispec)
-      gammayl = gammay(INDEX_IJK,ispec)
-      gammazl = gammaz(INDEX_IJK,ispec)
+      xixl = deriv(1,INDEX_IJK,ispec)
+      xiyl = deriv(2,INDEX_IJK,ispec)
+      xizl = deriv(3,INDEX_IJK,ispec)
+      etaxl = deriv(4,INDEX_IJK,ispec)
+      etayl = deriv(5,INDEX_IJK,ispec)
+      etazl = deriv(6,INDEX_IJK,ispec)
+      gammaxl = deriv(7,INDEX_IJK,ispec)
+      gammayl = deriv(8,INDEX_IJK,ispec)
+      gammazl = deriv(9,INDEX_IJK,ispec)
 
       ! compute the Jacobian
       jacobianl = 1._CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &

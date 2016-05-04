@@ -202,7 +202,6 @@
 ! array to assemble
   real(kind=CUSTOM_REAL), dimension(nglob) :: array_val
 
-
   real(kind=CUSTOM_REAL), dimension(max_nibool_interfaces,num_interfaces) :: &
        buffer_recv_scalar
 

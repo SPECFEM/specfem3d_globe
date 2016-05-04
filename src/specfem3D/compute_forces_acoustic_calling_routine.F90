@@ -153,12 +153,12 @@
       if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
-                                accel_outer_core, &
-                                buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
-                                my_neighbours_outer_core, &
-                                request_send_scalar_oc,request_recv_scalar_oc)
+                                   accel_outer_core, &
+                                   buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
+                                   num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                   nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                   my_neighbours_outer_core, &
+                                   request_send_scalar_oc,request_recv_scalar_oc)
       else
         ! on GPU
         ! sends accel values to corresponding MPI interface neighbors
@@ -188,7 +188,7 @@
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                    accel_outer_core, &
-                                   buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
+                                   buffer_recv_scalar_outer_core,num_interfaces_outer_core, &
                                    max_nibool_interfaces_oc, &
                                    nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
                                    request_send_scalar_oc,request_recv_scalar_oc)
@@ -510,6 +510,8 @@
 
   use constants_solver,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE,USE_DEVILLE_PRODUCTS_VAL
 
+  use specfem_par_outercore,only: sum_terms_outer_core
+
   implicit none
 
   integer,intent(in) :: NSPEC,NGLOB
@@ -540,7 +542,7 @@
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
-                                       div_displfluid,iphase)
+                                       div_displfluid,iphase,sum_terms_outer_core)
   else
     ! div_displ_outer_core is initialized to zero in the following subroutine.
     call compute_forces_outer_core_noDev(timeval,deltat,two_omega_earth, &
