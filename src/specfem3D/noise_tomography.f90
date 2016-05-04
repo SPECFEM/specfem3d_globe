@@ -1014,7 +1014,7 @@
 
   ! kernel file output
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_strength_noise_adios(current_adios_handle)
+    call write_kernels_strength_noise_adios()
   else
     ! binary file output
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
