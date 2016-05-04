@@ -27,8 +27,9 @@
 
 subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, index_end)
 
-  use iso_c_binding, only: C_NULL_CHAR
   use specfem_par, only: NDIM,CUSTOM_REAL, myrank, current_asdf_handle
+
+  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
@@ -65,9 +66,9 @@ end subroutine read_adjoint_sources_ASDF
 
 subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
-  use iso_c_binding, only: C_NULL_CHAR
   use specfem_par
-  use write_seismograms_mod, only: band_instrument_code
+
+  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 

@@ -35,7 +35,7 @@
   use specfem_par_outercore
   use specfem_par_noise
   use specfem_par_movie
-  use write_seismograms_mod, only: write_seismograms
+
   implicit none
 
   ! local parameters
@@ -257,7 +257,7 @@
         call write_seismograms()
 
         ! outputs movie files
-        call write_movie_output()
+        if (MOVIE_SURFACE .or. MOVIE_VOLUME) call write_movie_output()
 
         ! first step of noise tomography, i.e., save a surface movie at every time step
         ! modified from the subroutine 'write_movie_surface'

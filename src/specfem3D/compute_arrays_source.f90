@@ -117,9 +117,10 @@
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
   use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
-  use iso_c_binding, only: C_NULL_CHAR
-  use write_seismograms_mod, only: band_instrument_code
+
   use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
+
+  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 

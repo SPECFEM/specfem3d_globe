@@ -119,7 +119,6 @@ specfem3D_MODULES = \
 	$(FC_MODDIR)/specfem_par_outercore.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_noise.$(FC_MODEXT) \
 	$(FC_MODDIR)/specfem_par_movie.$(FC_MODEXT) \
-	$(FC_MODDIR)/write_seismograms_mod.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
@@ -300,7 +299,6 @@ $(specfem3D_OBJECTS): S = ${S_TOP}/src/specfem3D
 ### additional dependencies
 ###
 
-$O/write_seismograms.solverstatic.o: $O/asdf_data.solverstatic_module.o
 $O/write_output_ASDF.solverstatic.o: $O/asdf_data.solverstatic_module.o
 $O/compute_arrays_source.solverstatic.o: $O/write_seismograms.solverstatic.o
 $O/iterate_time.solverstatic.o: $O/write_seismograms.solverstatic.o
