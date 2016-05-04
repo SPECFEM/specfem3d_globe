@@ -39,9 +39,9 @@ script:
   - echo "configuration test:" ${TEST} ${TESTFLAGS}
   # test configuration
   - if [ "$TESTCOV" == "1" ]; then
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0"
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0";
     else
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST};
     fi
   - make clean
   # test small example
