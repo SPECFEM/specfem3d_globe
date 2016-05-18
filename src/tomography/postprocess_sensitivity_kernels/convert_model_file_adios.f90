@@ -169,6 +169,7 @@ program convert_model_file_adios
     model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
     fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
   endif
+
   ! adds shear attenuation
   if (USE_ATTENUATION_Q) then
     nparams = nparams + 1

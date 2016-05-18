@@ -142,6 +142,8 @@ please check if driver and runtime libraries work together\n\n");
     nbMatchingDevices++;
   }
 
+  *nb_devices = nbMatchingDevices;
+
   if (nbMatchingDevices == 0) {
     printf("Error: no matching devices for criteria %s/%s\n", platform_filter, device_filter);
     exit_on_error("Error CUDA found no matching devices (for device filter set in Par_file)\n");
