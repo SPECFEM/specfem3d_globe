@@ -241,7 +241,7 @@ program convert_model_file_adios
       model(:,:,:,:) = 0.0_CUSTOM_REAL
 
       ! reads in associated model array
-      call read_adios_array_gll(myrank,NSPEC,model,model_name(iker))
+      call read_adios_array_gll(myrank,NSPEC,model_name(iker),model(:,:,:,:))
 
       if (USE_TRANSVERSE_ISOTROPY) then
         ! TI model

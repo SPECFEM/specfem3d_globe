@@ -40,7 +40,7 @@
 !! \note Everything is define in this single function, even the group size.
 !!       It is the reason why this function require only an handle on an ADIOS
 !!       file as an argument.
-subroutine define_kernel_adios_variables()
+  subroutine define_kernel_adios_variables()
 
   use specfem_par ! Just for dimensions. No need of arrays for now.
   use specfem_par_crustmantle
@@ -181,17 +181,89 @@ subroutine define_kernel_adios_variables()
   call open_file_adios_write(outputname,group_name)
   call set_adios_group_size(group_size_inc)
 
-end subroutine define_kernel_adios_variables
+  end subroutine define_kernel_adios_variables
 
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the crust mantle.
-subroutine write_kernels_cm_adios(mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
-                                  alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-                                  betav_kl_crust_mantle,betah_kl_crust_mantle, &
-                                  eta_kl_crust_mantle, &
-                                  bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-                                  bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+  subroutine write_kernels_cm_ani_adios(alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+                                        betav_kl_crust_mantle,betah_kl_crust_mantle, &
+                                        eta_kl_crust_mantle, &
+                                        bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+                                        bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle)
+
+  use specfem_par
+  use specfem_par_crustmantle
+
+  use adios_helpers_mod
+  use adios_write_mod
+  use manager_adios
+
+  implicit none
+
+  ! Parameters
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+      alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
+      betav_kl_crust_mantle,betah_kl_crust_mantle, &
+      eta_kl_crust_mantle, &
+      bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
+      bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
+
+  ! Variables
+  integer :: local_dim
+
+  ! checks if anything to do
+  if (.not. ANISOTROPIC_KL) return
+
+  local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
+
+  ! For anisotropic kernels
+  ! outputs transverse isotropic kernels only
+  if (SAVE_TRANSVERSE_KL_ONLY) then
+    ! transverse isotropic kernels
+    ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(alphav_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(alphah_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(betav_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(betah_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(eta_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(rho_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(bulk_c_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(bulk_betav_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(bulk_betah_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(alpha_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(beta_kl_crust_mantle))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
+  else
+    ! note: the C_ij and density kernels are not for relative perturbations
+    !       (delta ln( m_i) = delta m_i / m_i),
+    !       but absolute perturbations (delta m_i = m_i - m_0)
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     "rho_kl_crust_mantle", -rho_kl_crust_mantle)
+
+    local_dim = 21 * NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     "cijkl_kl_crust_mantle",-cijkl_kl_crust_mantle)
+  endif
+
+  end subroutine write_kernels_cm_ani_adios
+
+!==============================================================================
+!> Schedule ADIOS writes for kernel variables related to the crust mantle.
+  subroutine write_kernels_cm_iso_adios(mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
+                                        bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle)
 
   use specfem_par
   use specfem_par_crustmantle
@@ -205,92 +277,45 @@ subroutine write_kernels_cm_adios(mu_kl_crust_mantle, kappa_kl_crust_mantle, rho
   ! Parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
       mu_kl_crust_mantle, kappa_kl_crust_mantle, rhonotprime_kl_crust_mantle, &
-      alphav_kl_crust_mantle,alphah_kl_crust_mantle, &
-      betav_kl_crust_mantle,betah_kl_crust_mantle, &
-      eta_kl_crust_mantle, &
-      bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle, &
-      bulk_betav_kl_crust_mantle,bulk_betah_kl_crust_mantle
+      bulk_c_kl_crust_mantle,bulk_beta_kl_crust_mantle
 
   ! Variables
   integer :: local_dim
-  integer :: sizeprocs
 
-  ! number of MPI processes
-  call world_size(sizeprocs)
+  ! checks if anything to do
+  if (ANISOTROPIC_KL) return
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
 
-  ! For anisotropic kernels
-  if (ANISOTROPIC_KL) then
-    ! outputs transverse isotropic kernels only
-    if (SAVE_TRANSVERSE_KL_ONLY) then
-      ! transverse isotropic kernels
-      ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(alphav_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(alphah_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(betav_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(betah_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(eta_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(rho_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(bulk_c_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(bulk_betav_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(bulk_betah_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(alpha_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(beta_kl_crust_mantle))
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
-    else
-      ! note: the C_ij and density kernels are not for relative perturbations
-      !       (delta ln( m_i) = delta m_i / m_i),
-      !       but absolute perturbations (delta m_i = m_i - m_0)
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       "rho_kl_crust_mantle", -rho_kl_crust_mantle)
+  ! isotropic kernels
+  ! primary kernels: (rho,kappa,mu) parameterization
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(rhonotprime_kl_crust_mantle))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(kappa_kl_crust_mantle))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(mu_kl_crust_mantle))
 
-      local_dim = 21 * NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
-      call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                       "cijkl_kl_crust_mantle",-cijkl_kl_crust_mantle)
-    endif
-  else
-    ! primary kernels: (rho,kappa,mu) parameterization
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(rhonotprime_kl_crust_mantle))
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(kappa_kl_crust_mantle))
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(mu_kl_crust_mantle))
+  ! (rho, alpha, beta ) parameterization
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(rho_kl_crust_mantle))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(alpha_kl_crust_mantle))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(beta_kl_crust_mantle))
 
-    ! (rho, alpha, beta ) parameterization
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(rho_kl_crust_mantle))
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(alpha_kl_crust_mantle))
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(beta_kl_crust_mantle))
+  ! (rho, bulk, beta ) parameterization, K_rho same as above
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(bulk_c_kl_crust_mantle))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
 
-    ! (rho, bulk, beta ) parameterization, K_rho same as above
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(bulk_c_kl_crust_mantle))
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, &
-                                     STRINGIFY_VAR(bulk_beta_kl_crust_mantle))
-  endif
-
-end subroutine write_kernels_cm_adios
+  end subroutine write_kernels_cm_iso_adios
 
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the outer core.
-subroutine write_kernels_oc_adios()
+  subroutine write_kernels_oc_adios()
 
   use specfem_par
   use specfem_par_outercore
@@ -303,27 +328,26 @@ subroutine write_kernels_oc_adios()
 
   ! Variables
   integer :: local_dim
-  integer :: sizeprocs
-
-  ! number of MPI processes
-  call world_size(sizeprocs)
 
   local_dim = NSPEC_OUTER_CORE * NGLLX* NGLLY * NGLLZ
 
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(rho_kl_outer_core))
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(alpha_kl_outer_core))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(rho_kl_outer_core))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(alpha_kl_outer_core))
 
   !deviatoric kernel check
   if (deviatoric_outercore) then
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(beta_kl_outer_core))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                     STRINGIFY_VAR(beta_kl_outer_core))
   endif
 
-end subroutine write_kernels_oc_adios
+  end subroutine write_kernels_oc_adios
 
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the inner core.
-subroutine write_kernels_ic_adios()
+  subroutine write_kernels_ic_adios()
 
   use specfem_par
   use specfem_par_innercore
@@ -336,24 +360,22 @@ subroutine write_kernels_ic_adios()
 
   ! Variables
   integer :: local_dim
-  integer :: sizeprocs
-
-  ! number of MPI processes
-  call world_size(sizeprocs)
 
   local_dim = NSPEC_INNER_CORE * NGLLX * NGLLY * NGLLZ
 
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(rho_kl_inner_core))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(rho_kl_inner_core))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(alpha_kl_inner_core))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(beta_kl_inner_core))
 
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(alpha_kl_inner_core))
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(beta_kl_inner_core))
-
-end subroutine write_kernels_ic_adios
+  end subroutine write_kernels_ic_adios
 
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the boundaries.
-subroutine write_kernels_boundary_kl_adios()
+  subroutine write_kernels_boundary_kl_adios()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -367,30 +389,26 @@ subroutine write_kernels_boundary_kl_adios()
 
   ! Variables
   integer :: local_dim
-  integer :: sizeprocs
-
-  ! number of MPI processes
-  call world_size(sizeprocs)
 
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
     local_dim = NSPEC2D_MOHO * NGLLX * NGLLY * NDIM
 
-    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(moho_kl))
+    call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(moho_kl))
   endif
 
   local_dim = NSPEC2D_400 * NGLLX * NGLLY
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(d400_kl))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(d400_kl))
 
   local_dim = NSPEC2D_670 * NGLLX * NGLLY
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(d670_kl))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(d670_kl))
 
   local_dim = NSPEC2D_CMB * NGLLX * NGLLY
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(cmb_kl))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(cmb_kl))
 
   local_dim = NSPEC2D_ICB * NGLLX * NGLLY
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(icb_kl))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(icb_kl))
 
-end subroutine write_kernels_boundary_kl_adios
+  end subroutine write_kernels_boundary_kl_adios
 
 
 !==============================================================================
@@ -401,7 +419,7 @@ end subroutine write_kernels_boundary_kl_adios
 !!       scaled and oriented but are not written in the same order than in the
 !!       non ADIOS version.
 !!       (see save_kernels_source_derivatives in save_kernels.f90)
-subroutine write_kernels_source_derivatives_adios()
+  subroutine write_kernels_source_derivatives_adios()
 
   use specfem_par
 
@@ -420,10 +438,6 @@ subroutine write_kernels_source_derivatives_adios()
   !real(kind=CUSTOM_REAL), dimension(3,3,nrec_local) :: moment_der_tmp
   !real(kind=CUSTOM_REAL), dimension(3,nrec_local) :: sloc_der_tmp
   integer :: local_dim
-  integer :: sizeprocs
-
-  ! number of MPI processes
-  call world_size(sizeprocs)
 
   !moment_der_tmp(:, :, :) = moment_der(:, :, :) * 1e-7
   !moment_der_tmp(1, 3, :) = -2 * moment_der(1, 3, :)
@@ -437,21 +451,21 @@ subroutine write_kernels_source_derivatives_adios()
 
 
   local_dim = 3 * 3 * nrec_local
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(moment_der))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(moment_der))
 
   local_dim = 3 * nrec_local
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(sloc_der))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(sloc_der))
 
   local_dim = nrec_local
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(stshift_der))
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(shdur_der))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(stshift_der))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, STRINGIFY_VAR(shdur_der))
 
-end subroutine write_kernels_source_derivatives_adios
+  end subroutine write_kernels_source_derivatives_adios
 
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the Hessian.
-subroutine write_kernels_hessian_adios()
+  subroutine write_kernels_hessian_adios()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -464,21 +478,18 @@ subroutine write_kernels_hessian_adios()
 
   ! Variables
   integer :: local_dim
-  integer :: sizeprocs
-
-  ! number of MPI processes
-  call world_size(sizeprocs)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
 
   ! stores into file
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(hess_kl_crust_mantle))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(hess_kl_crust_mantle))
 
-end subroutine write_kernels_hessian_adios
+  end subroutine write_kernels_hessian_adios
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the noise strength kernel.
-subroutine write_kernels_strength_noise_adios()
+  subroutine write_kernels_strength_noise_adios()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -492,14 +503,11 @@ subroutine write_kernels_strength_noise_adios()
 
   ! Variables
   integer :: local_dim
-  integer :: sizeprocs
-
-  ! number of MPI processes
-  call world_size(sizeprocs)
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_ADJOINT
 
   ! stores into file
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, local_dim, STRINGIFY_VAR(sigma_kl_crust_mantle))
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
+                                   STRINGIFY_VAR(sigma_kl_crust_mantle))
 
-end subroutine write_kernels_strength_noise_adios
+  end subroutine write_kernels_strength_noise_adios

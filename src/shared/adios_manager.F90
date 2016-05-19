@@ -42,6 +42,8 @@ module manager_adios
   integer :: comm_adios
   integer :: myrank_adios
 
+  integer,public :: sizeprocs_adios
+
   ! initialized flag
   logical :: is_adios_initialized
 
@@ -77,6 +79,9 @@ module manager_adios
   public :: read_adios_array_1d_int
   public :: read_adios_scalar_int
   public :: read_adios_scalar_int_only_rank
+  ! writing
+  public :: write_adios_array_gll
+  public :: write_adios_scalar_int
   ! file opening
   public :: open_file_adios_read
   public :: open_file_adios_read_only_rank
@@ -114,6 +119,7 @@ contains
   is_adios_initialized = .false.
   comm_adios = 0
   myrank_adios = -1
+  file_handle_adios = 0
 
 #ifdef ADIOS_INPUT
 
@@ -123,12 +129,14 @@ contains
   ! gets rank from (duplicate) adios communicator
   call world_rank_comm(myrank_adios,comm_adios)
 
+  ! number of MPI processes
+  call world_size(sizeprocs_adios)
+
   call adios_init_noxml (comm_adios, ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !       e.g., version 1.5.0 returns 1 here
   !print *,'adios init return: ',ier
   !if (ier /= 0 ) stop 'Error setting up ADIOS: calling adios_init_noxml() routine failed'
-
 
   call adios_allocate_buffer(ADIOS_BUFFER_SIZE_IN_MB, ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
@@ -219,6 +227,9 @@ contains
     print *,trim(err_message)
     stop 'Error closing ADIOS file: calling adios_close() routine failed'
   endif
+
+  ! sets explicitly to zero
+  file_handle_adios = 0
 
   ! synchronizes all processes
   call synchronize_all_comm(comm_adios)
@@ -330,6 +341,9 @@ contains
   ! local parameters
   integer :: ier
   integer(kind=8) :: totalsize
+
+  ! checks if file handle valid
+  if (file_handle_adios == 0) stop 'Invalid ADIOS file handle in set_adios_group_size()'
 
   call adios_group_size(file_handle_adios, groupsize, totalsize, ier)
   if (ier /= 0 ) stop 'Error calling adios_group_size() routine failed'
@@ -470,8 +484,7 @@ contains
 
   subroutine open_file_adios_write(filename,group_name)
 
-! useful to read in data from the same number of processors
-! as the data was written from
+! opens adios file for writing
 
   use adios_write_mod,only: adios_open
 
@@ -519,8 +532,7 @@ contains
 
   subroutine open_file_adios_write_append(filename,group_name)
 
-! useful to read in data from the same number of processors
-! as the data was written from
+! open adios file for appending data
 
   use adios_write_mod,only: adios_open
 
@@ -568,14 +580,16 @@ contains
 
   subroutine read_adios_scalar_int(rank,scalar_name,scalar)
 
-  use adios_read_mod
+! reads in a single integer value
+
+  use adios_read_mod,only: adios_schedule_read,adios_perform_reads
 
   implicit none
 
   integer, intent(in) :: rank
 
-  character(len=*),intent(in) :: scalar_name
   integer, intent(out) :: scalar
+  character(len=*),intent(in) :: scalar_name
 
   ! local parameters
   integer :: ier
@@ -610,13 +624,14 @@ contains
 
   subroutine read_adios_scalar_int_only_rank(rank,scalar_name,scalar)
 
-  use adios_read_mod
+  use adios_read_mod,only: adios_get_scalar
 
   implicit none
 
   integer, intent(in) :: rank
-  character(len=*),intent(in) :: scalar_name
+
   integer, intent(out) :: scalar
+  character(len=*),intent(in) :: scalar_name
 
   ! local parameters
   integer :: ier
@@ -671,7 +686,7 @@ contains
 ! file inquiry showing all adios file variables
 
   use adios_read_mod,only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP, &
-    adios_inq_file,adios_inq_varnames,adios_inq_attrnames,adios_errmsg
+    adios_inq_file,adios_inq_varnames,adios_inq_attrnames
 
   implicit none
 
@@ -765,9 +780,9 @@ contains
 ! to clearly separate adios version and non-adios version of same tools
 #ifdef ADIOS_INPUT
 
-  subroutine read_adios_array_gll(rank,nspec,array_gll,array_name)
+  subroutine read_adios_array_gll(rank,nspec,array_name,array_gll)
 
-  use adios_read_mod
+  use adios_read_mod,only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
 
   use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
@@ -775,8 +790,8 @@ contains
 
   integer,intent(in) :: rank
   integer,intent(in) :: nspec
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: array_gll
 
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: array_gll
   character(len=*),intent(in) :: array_name
 
   ! local parameters
@@ -795,9 +810,10 @@ contains
     stop 'Error adios helper read array'
   endif
 
-  ! checks rank
-  !if (myrank_adios /= rank) &
-  !  stop 'Error invalid rank for reading adios GLL array'
+  ! allow any rank to read from another rank-segment
+  !! checks rank
+  !!if (myrank_adios /= rank) &
+  !!  stop 'Error invalid rank for reading adios GLL array'
 
   sel_start(1) = local_dim * rank
   count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
@@ -828,9 +844,9 @@ contains
 ! to clearly separate adios version and non-adios version of same tools
 #ifdef ADIOS_INPUT
 
-  subroutine read_adios_array_gll_int(rank,nspec,array_gll,array_name)
+  subroutine read_adios_array_gll_int(rank,nspec,array_name,array_gll)
 
-  use adios_read_mod
+  use adios_read_mod,only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
 
   use constants,only: NGLLX,NGLLY,NGLLZ
 
@@ -838,8 +854,8 @@ contains
 
   integer,intent(in) :: rank
   integer,intent(in) :: nspec
-  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: array_gll
 
+  integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: array_gll
   character(len=*),intent(in) :: array_name
 
   ! local parameters
@@ -856,9 +872,10 @@ contains
     stop 'Error adios helper read array'
   endif
 
-  ! checks rank
-  !if (myrank_adios /= rank) &
-  !  stop 'Error invalid rank for reading adios GLL array'
+  ! allow any rank to read from another rank-segment
+  !! checks rank
+  !!if (myrank_adios /= rank) &
+  !!  stop 'Error invalid rank for reading adios GLL array'
 
   sel_start(1) = local_dim * rank
   count_ad(1) = NGLLX * NGLLY * NGLLZ * nspec
@@ -889,9 +906,9 @@ contains
 ! to clearly separate adios version and non-adios version of same tools
 #ifdef ADIOS_INPUT
 
-  subroutine read_adios_array_1d(rank,nsize,array_1d,array_name)
+  subroutine read_adios_array_1d(rank,nsize,array_name,array_1d)
 
-  use adios_read_mod
+  use adios_read_mod,only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
 
   use constants,only: CUSTOM_REAL
 
@@ -899,8 +916,8 @@ contains
 
   integer,intent(in) :: rank
   integer,intent(in) :: nsize
-  real(kind=CUSTOM_REAL),dimension(nsize),intent(out) :: array_1d
 
+  real(kind=CUSTOM_REAL),dimension(nsize),intent(out) :: array_1d
   character(len=*),intent(in) :: array_name
 
   ! local parameters
@@ -910,9 +927,10 @@ contains
   integer(kind=8) :: sel_start(1),count_ad(1)
   !integer :: offset
 
-  ! checks rank
-  if (myrank_adios /= rank) &
-    stop 'Error invalid rank for reading adios GLL array'
+  ! allow any rank to read from another rank-segment
+  !! checks rank
+  !!if (myrank_adios /= rank) &
+  !!  stop 'Error invalid rank for reading adios GLL array'
 
   ! initializes
   array_1d(:) = 0
@@ -964,9 +982,9 @@ contains
 ! to clearly separate adios version and non-adios version of same tools
 #ifdef ADIOS_INPUT
 
-  subroutine read_adios_array_1d_int(rank,nsize,array_1d,array_name)
+  subroutine read_adios_array_1d_int(rank,nsize,array_name,array_1d)
 
-  use adios_read_mod
+  use adios_read_mod,only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
 
   use constants,only: NGLLX,NGLLY,NGLLZ
 
@@ -974,8 +992,8 @@ contains
 
   integer,intent(in) :: rank
   integer,intent(in) :: nsize
-  integer,dimension(nsize),intent(out) :: array_1d
 
+  integer,dimension(nsize),intent(out) :: array_1d
   character(len=*),intent(in) :: array_name
 
   ! local parameters
@@ -1015,76 +1033,88 @@ contains
 
 #endif
 
-
-!
 !-------------------------------------------------------------------------------
-!
-
+! ADIOS writing
+!-------------------------------------------------------------------------------
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-!#ifdef ADIOS_INPUT
-!
-!  subroutine write_adios_array_gll(filename,nspec,array_gll,array_name)
-!
-!! useful to write data from the same number of processors
-!
-!  use adios_read_mod,only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP,adios_errmsg
-!
-!  use constants, only: ADIOS_TRANSPORT_METHOD,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,MAX_STRING_LEN
-!
-!  implicit none
-!
-!  character(len=*),intent(in) :: filename
-!  integer,intent(in) :: nspec
-!  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: array_gll
-!
-!  character(len=*),intent(in) :: array_name
-!
-!  ! local parameters
-!  character(len=MAX_STRING_LEN) :: group_name
-!  integer(kind=8) :: group_size_inc
-!  integer(kind=8) :: group, model_handle
-!  integer(kind=8) :: totalsize
-!  integer :: local_dim
-!  integer :: ier
-!
-!  ! check
-!  if (.not. is_adios_initialized) &
-!    stop 'Error intializing for adios read: please initialize adios first using intitialize_adios() routine'
-!
-!  group_size_inc = 0
-!  group_name = "MODELS_GROUP"
-!
-!  call adios_declare_group(group, group_name, "", 1, ier)
-!  call adios_select_method(group, ADIOS_TRANSPORT_METHOD, "", "", ier)
-!  call define_adios_scalar(group, group_size_inc, "", "NSPEC", nspec)
-!
-!  ! Setup ADIOS for the current group
-!  local_dim = NGLLX * NGLLY * NGLLZ * nspec
-!
-!  ! Define ADIOS Variable
-!  call define_adios_global_array1D(group, group_size_inc,local_dim,"",array_name,array_gll)
-!
-!  ! Open an handler to the ADIOS file and setup the group size
-!  call adios_open(model_handle, group_name, trim(filename), "w", comm_adios, ier);
-!  if (ier /= 0) then
-!    print *, 'Error opening adios file: ',trim(filename)
-!    stop 'Error opening adios file'
-!  endif
-!
-!  call adios_group_size (model_handle, group_size_inc, totalsize, ier)
-!  if (ier /= 0 ) stop 'Error calling adios_group_size() routine failed'
-!
-!  call adios_write(model_handle, "NSPEC", nspec, ier)
-!
-!  ! synchronizes all processes
-!  call synchronize_all_comm(comm_adios)
-!
-!  end subroutine write_adios_array_gll
-!
-!#endif
+#ifdef ADIOS_INPUT
 
+  subroutine write_adios_scalar_int(scalar_name,scalar)
+
+! writes a single scalar
+
+  use adios_write_mod,only: adios_write
+
+  implicit none
+
+  integer, intent(in) :: scalar
+  character(len=*),intent(in) :: scalar_name
+
+  ! local parameters
+  integer :: ier
+
+  ! checks if file handle valid
+  if (file_handle_adios == 0) stop 'Invalid ADIOS file handle in write_adios_scalar_int()'
+
+  ! writes scalar (either buffered or directly to disk)
+  call adios_write(file_handle_adios, trim(scalar_name), scalar, ier)
+  if (ier /= 0) then
+    call adios_errmsg(err_message)
+    print *,'Error adios: could not write parameter: ',trim(scalar_name)
+    print *,trim(err_message)
+    stop 'Error adios helper write scalar'
+  endif
+
+  end subroutine write_adios_scalar_int
+
+#endif
+
+!-------------------------------------------------------------------------------
+
+! only available with ADIOS compilation support
+! to clearly separate adios version and non-adios version of same tools
+#ifdef ADIOS_INPUT
+
+  subroutine write_adios_array_gll(rank,nspec,array_name,array_gll)
+
+! writes a gll array
+
+  use adios_helpers_writers_mod,only: write_adios_global_1d_array
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+  implicit none
+
+  integer,intent(in) :: rank
+  integer,intent(in) :: nspec
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: array_gll
+  character(len=*),intent(in) :: array_name
+
+  ! local parameters
+  integer :: ier
+  integer :: local_dim
+
+  ! checks if file handle valid
+  if (file_handle_adios == 0) stop 'Invalid ADIOS file handle in write_adios_array_gll()'
+
+  ! array size
+  local_dim = NGLLX * NGLLY * NGLLZ * nspec
+
+  ! writes array
+  call write_adios_global_1d_array(file_handle_adios,rank,sizeprocs_adios,local_dim,trim(array_name),array_gll)
+  if (ier /= 0) then
+    call adios_errmsg(err_message)
+    print *,'Error adios: could not write array parameter: ',trim(array_name)
+    print *,trim(err_message)
+    stop 'Error adios helper write array'
+  endif
+
+  end subroutine write_adios_array_gll
+
+#endif
 
 end module manager_adios
 

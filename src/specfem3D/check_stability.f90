@@ -360,9 +360,11 @@
 
   use specfem_par,only: &
     GPU_MODE,Mesh_pointer, &
-    SIMULATION_TYPE,scale_displ,time_start,DT,t0, &
+    SIMULATION_TYPE,scale_displ, &
     NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
     myrank
+
+  !use specfem_par,only: time_start,DT,t0
 
   use specfem_par_crustmantle,only: b_displ_crust_mantle
   use specfem_par_innercore,only: b_displ_inner_core
@@ -374,10 +376,10 @@
   ! maximum of the norm of the displacement and of the potential in the fluid
   real(kind=CUSTOM_REAL) b_Usolidnorm,b_Usolidnorm_all,b_Ufluidnorm,b_Ufluidnorm_all
   ! timer MPI
-  double precision :: tCPU
-  double precision, external :: wtime
-  double precision :: timeval
-  integer :: ihours,iminutes,iseconds,int_tCPU
+  !double precision :: tCPU
+  !double precision, external :: wtime
+  !double precision :: timeval
+  !integer :: ihours,iminutes,iseconds,int_tCPU
 
   integer :: it_run,nstep_run
   logical :: SHOW_SEPARATE_RUN_INFORMATION
@@ -419,31 +421,30 @@
     it_run = it - it_begin + 1
     nstep_run = it_end - it_begin + 1
 
-    ! elapsed time since beginning of the simulation
-    tCPU = wtime() - time_start
-
-    int_tCPU = int(tCPU)
-    ihours = int_tCPU / 3600
-    iminutes = (int_tCPU - 3600*ihours) / 60
-    iseconds = int_tCPU - 3600*ihours - 60*iminutes
-
     ! no further time estimation since only partially computed solution yet...
+    ! elapsed time since beginning of the simulation
+    !tCPU = wtime() - time_start
+    !int_tCPU = int(tCPU)
+    !ihours = int_tCPU / 3600
+    !iminutes = (int_tCPU - 3600*ihours) / 60
+    !iseconds = int_tCPU - 3600*ihours - 60*iminutes
 
     ! current time (in seconds)
-    timeval = dble(it-1)*DT - t0
+    !timeval = dble(it-1)*DT - t0
 
     ! user output
     write(IMAIN,*) 'Time step for back propagation # ',it
-    write(IMAIN,*) 'Time: ',sngl((timeval)/60.d0),' minutes'
+    !write(IMAIN,*) 'Time: ',sngl((timeval)/60.d0),' minutes'
 
     ! rescale maximum displacement to correct dimensions
     b_Usolidnorm_all = b_Usolidnorm_all * sngl(scale_displ)
     write(IMAIN,*) 'Max norm displacement vector U in solid in all slices for back prop.(m) = ',b_Usolidnorm_all
     write(IMAIN,*) 'Max non-dimensional potential Ufluid in fluid in all slices for back prop.= ',b_Ufluidnorm_all
 
-    write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
-    write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
-    write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
+    ! no timing info, things get confusing with forward check timing
+    !write(IMAIN,*) 'Elapsed time in seconds = ',tCPU
+    !write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
+    !write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
     if (SHOW_SEPARATE_RUN_INFORMATION) then
       write(IMAIN,*) 'Time steps done for this run = ',it_run,' out of ',nstep_run

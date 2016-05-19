@@ -133,6 +133,11 @@ $(shared_OBJECTS): S = ${S_TOP}/src/shared
 #### rule for each .o file below
 ####
 
+## additional dependencies
+ifeq ($(ADIOS),yes)
+$O/adios_manager.shared_adios_module.o: $O/adios_helpers_writers.shared_adios_module.o
+endif
+
 ##
 ## shared
 ##

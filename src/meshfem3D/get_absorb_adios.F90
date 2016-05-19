@@ -52,9 +52,9 @@
 !!
 !! \note This routine only call adios to write the file to disk, Note that he
 !!       necessary data preparation is done by the get_absorb() routine.
-subroutine get_absorb_adios(myrank, iregion, &
-                            nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
-                            NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
+  subroutine get_absorb_adios(myrank, iregion, &
+                              nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
+                              NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
 
   use constants
 
@@ -84,11 +84,6 @@ subroutine get_absorb_adios(myrank, iregion, &
   character(len=128)      :: region_name
 
   integer, save :: num_regions_written = 0
-
-  integer :: sizeprocs
-
-  ! number of MPI processes
-  call world_size(sizeprocs)
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
   !call create_name_database_adios(reg_name,iregion,LOCAL_PATH)
@@ -135,19 +130,19 @@ subroutine get_absorb_adios(myrank, iregion, &
 
   !--- Schedule writes for the previously defined ADIOS variables
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(njmin))
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(njmax))
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(nkmin_xi))
 
   local_dim = 2*NSPEC2DMAX_YMIN_YMAX
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(nimin))
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(nimax))
-  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs, &
+  call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, &
                                    local_dim, trim(region_name) // STRINGIFY_VAR(nkmin_eta))
 
   !--- Reset the path to zero and perform the actual write to disk
@@ -156,5 +151,5 @@ subroutine get_absorb_adios(myrank, iregion, &
 
   num_regions_written = num_regions_written + 1
 
-end subroutine get_absorb_adios
+  end subroutine get_absorb_adios
 

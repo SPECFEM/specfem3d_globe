@@ -261,6 +261,8 @@ $O/create_regions_mesh_adios.check_adios.o: \
 	$O/write_AVS_DX_global_faces_data_adios.check_adios_module.o \
 	$O/write_AVS_DX_surface_data_adios.check_adios_module.o
 
+$O/get_absorb_adios.check_adios.o: $O/adios_manager.shared_adios_module.o
+
 $O/model_attenuation.check.o: \
 	$O/model_1dref.check.o \
 	$O/model_ak135.check.o \
@@ -268,6 +270,7 @@ $O/model_attenuation.check.o: \
 	$O/model_sea1d.check.o
 
 $O/meshfem3D_par.check_module.o: $O/adios_manager.shared_adios_module.o
+
 
 # Version file
 $O/initialize_mesher.check.o: ${SETUP}/version.fh
