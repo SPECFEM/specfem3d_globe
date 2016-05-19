@@ -208,6 +208,10 @@ puts ""
 puts "-------------------------------"
 puts "building header & make files"
 puts "-------------------------------"
+
+# sorts kernels for file lists
+kernels.sort!
+
 langs.each { |lang|
   puts "  " + lang.to_s
 

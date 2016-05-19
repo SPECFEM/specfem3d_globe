@@ -69,6 +69,7 @@ typedef float realw;
 // debug: outputs traces
 #define DEBUG 0
 #if DEBUG == 1
+#pragma message ("\nCompiling with: DEBUG enabled\n")
 #define TRACE(x) printf ("%s\n", x); fflush(stdout);
 #define TRACE_EXTENDED(x) printf ("%s --- function %s file %s line %d \n",x,__func__,__FILE__,__LINE__); fflush(stdout);
 #else
@@ -81,6 +82,7 @@ typedef float realw;
 // more outputs
 #define MAXDEBUG 0
 #if MAXDEBUG == 1
+#pragma message ("\nCompiling with: MAXDEBUG enabled\n")
 #define LOG(x) printf ("%s\n", x)
 #define PRINT5(var, offset) for (;print_count<5;print_count++) printf ("var (%d)=%2.20f\n", print_count, var[offset+print_count]);
 #define PRINT10(var) if (print_count<10) { printf ("var=%1.20e\n", var); print_count++; }
@@ -93,6 +95,7 @@ typedef float realw;
 // debug: run backward simulations with/without GPU routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
+#pragma message ("\nCompiling with: DEBUG_BACKWARD_SIMULATIONS enabled\n")
 #define DEBUG_BACKWARD_ASSEMBLY_OC()  return;
 #define DEBUG_BACKWARD_ASSEMBLY_IC()  return;
 #define DEBUG_BACKWARD_ASSEMBLY_CM()  return;
@@ -118,6 +121,7 @@ typedef float realw;
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
 #define ENABLE_VERY_SLOW_ERROR_CHECKING 0
 #if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
+#pragma message ("\nCompiling with: ENABLE_VERY_SLOW_ERROR_CHECKING enabled\n")
 #define GPU_ERROR_CHECKING(x) exit_on_gpu_error(x);
 #else
 #define GPU_ERROR_CHECKING(x)
