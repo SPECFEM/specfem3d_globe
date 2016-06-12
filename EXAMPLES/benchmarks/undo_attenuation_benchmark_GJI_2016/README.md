@@ -4,7 +4,8 @@ Undo Attenuation Benchmark
 This benchmark reproduces the results of section 3 of the paper "Anelastic
 sensitivity kernels with parsimonious storage for adjoint tomography and full
 waveform inversion" by D. Komatitsch, Z. Xie, E. Bozdag, E. Sales de Andrade,
-D. B. Peter, Q. Liu and J. Tromp, published in GJI 2016.
+D. B. Peter, Q. Liu and J. Tromp, published in GJI 2016. The exact revision of
+the code used to produce the paper is 74ffd4e330f281d7964855d1845d1b72bf13ab74.
 
 There are three phases to the benchmark:
   * Exact computation of adjoint kernel using a full dump of the attenuated
