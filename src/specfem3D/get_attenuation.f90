@@ -36,19 +36,17 @@
 
   implicit none
 
-  integer :: myrank
-
-  integer :: vnspec
+  integer,intent(in) :: myrank
+  integer,intent(in) :: iregion_code
 
   ! note: factor_common,one_minus_sum_beta and scale_factor are real custom.
   !       this is better, it works fine and these arrays are really huge
   !       in the crust_mantle region, thus let us not double their size
+  integer,intent(in) :: vnspec
   real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(out) :: one_minus_sum_beta, scale_factor
   real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(out) :: factor_common
 
   double precision, dimension(N_SLS),intent(out) :: tau_s
-
-  integer :: iregion_code
 
   ! local parameters
   integer :: i,j,k,ispec,ier,i_sls

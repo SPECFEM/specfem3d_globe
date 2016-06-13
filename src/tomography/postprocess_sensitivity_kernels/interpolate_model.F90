@@ -72,6 +72,11 @@
   use kdtree_search, only: kdtree_setup,kdtree_set_verbose,kdtree_delete,kdtree_find_nearest_neighbor, &
     kdtree_num_nodes,kdtree_nodes_location,kdtree_nodes_index
 
+#ifdef ADIOS_INPUT
+  use manager_adios
+  use adios_helpers_mod,only: define_adios_scalar,define_adios_global_array1D
+#endif
+
   implicit none
 
   !-------------------------------------------------------------------
@@ -167,12 +172,16 @@
 
   ! model
   integer :: nparams
-  character(len=16) :: fname(7)
-#ifdef ADIOS_INPUT
-  character(len=16) :: model_name(7)
-#endif
+  character(len=16),dimension(7) :: fname
   character(len=MAX_STRING_LEN) :: m_file
   character(len=MAX_STRING_LEN) :: solver_file
+
+  ! ADIOS
+#ifdef ADIOS_INPUT
+  integer :: local_dim,global_dim
+  character(len=MAX_STRING_LEN) :: group_name
+  integer(kind=8) :: group,group_size_inc
+#endif
 
   ! mpi parameters
   integer :: sizeprocs,myrank
@@ -207,20 +216,23 @@
       call get_command_argument(i,arg)
       ! usage info
       if (len_trim(arg) == 0) then
-        if (myrank == 0) then
-          print *,' '
-          print *,' Usage: xinterpolate_model old-topo-dir/ old-model-dir/ new-topo-dir/ model-output-dir/ (midpoint-search)'
-          print *,' '
-          print *,' with'
-          print *,'   old-topo-dir/     - old mesh directory with topology files (e.g. proc***_solver_data.bin)'
-          print *,'   old-model-dir/    - directoy which holds old model files (e.g. proc***_vpv.bin)'
-          print *,'   new-topo-dir/     - new mesh directory with topology files (e.g. proc***_solver_data.bin)'
-          print *,'   model-output-dir/ - output directory for interpolated model on new mesh'
-          print *,'   (optional) midpoint-search = 0  - uses every single gll point for search of closest element'
-          print *,'                              = 1  - uses midpoints for search of closest element (default)'
-          print *,' '
-        endif
-        call synchronize_all()
+        print *,' '
+        print *,' Usage: xinterpolate_model old-topo-dir/ old-model-dir/ new-topo-dir/ model-output-dir/ (midpoint-search)'
+        print *,' '
+        print *,' with'
+#ifdef ADIOS_INPUT
+        print *,'   old-topo-dir/     - old mesh directory with topology files (e.g. solver_data.bp)'
+        print *,'   old-model-dir/    - directoy which holds old model files (e.g. model_gll.bp)'
+        print *,'   new-topo-dir/     - new mesh directory with topology files (e.g. solver_data.bp)'
+#else
+        print *,'   old-topo-dir/     - old mesh directory with topology files (e.g. proc***_solver_data.bin)'
+        print *,'   old-model-dir/    - directoy which holds old model files (e.g. proc***_vpv.bin)'
+        print *,'   new-topo-dir/     - new mesh directory with topology files (e.g. proc***_solver_data.bin)'
+#endif
+        print *,'   model-output-dir/ - output directory for interpolated model on new mesh'
+        print *,'   (optional) midpoint-search = 0  - uses every single gll point for search of closest element'
+        print *,'                              = 1  - uses midpoints for search of closest element (default)'
+        print *,' '
         stop ' Reenter command line options'
       endif
     enddo
@@ -273,47 +285,53 @@
   endif
 
 #ifdef ADIOS_INPUT
-  stop 'safety stop: ADIOS support not fully implemented yet...'
-
+  call synchronize_all()
   ! initializes ADIOS
   if (myrank == 0) then
     print *, 'initializing ADIOS...'
     print *, ' '
   endif
-  call adios_setup()
+  call initialize_adios()
 #endif
 
-  ! defines model parameters
-  if (USE_TRANSVERSE_ISOTROPY) then
-    ! transversly isotropic (TI) model
-    nparams = 6
-#ifdef ADIOS_INPUT
-    model_name(1:6) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho"/)
-#endif
-    fname(1:6) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho"/)
-  else
-    ! isotropic model
-    nparams = 3
-    ! note: adds space at endings to equal number of characters
-    !       to avoid compiler error: "Different shape for array assignment.."
-#ifdef ADIOS_INPUT
-    model_name(1:3) = (/character(len=16) :: "reg1/vp ","reg1/vs ","reg1/rho"/)
-#endif
-    fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
-  endif
-  ! adds shear attenuation
-  if (USE_ATTENUATION_Q) then
-    nparams = nparams + 1
-#ifdef ADIOS_INPUT
-    model_name(nparams) = "reg1/qmu"
-#endif
-    fname(nparams) = "qmu"
-  endif
-
-  ! master process gets old, source mesh dimension
+  !  master process gets old, source mesh dimension
   if (myrank == 0) then
+
+#ifdef ADIOS_INPUT
+    ! user output
+    print *, 'reading in ADIOS solver file: ',trim(dir_topo1)//'/solver_data.bp'
+
+    ! opens adios file
+    write(solver_file,'(a,a)') trim(dir_topo1)//'/solver_data.bp'
+    call open_file_adios_read_only_rank(myrank,solver_file)
+
+    ! reads in scalars
+    print *,'rank ',myrank,'reading scalar'
+    call read_adios_scalar_int_only_rank(myrank,"reg1/nspec",nspec_max_old)
+    call read_adios_scalar_int_only_rank(myrank,"reg1/nglob",nglob_max_old)
+
+    ! determines total number of processes
+    rank = 0
+    call read_adios_scalar_int_only_rank(myrank,"reg1/ibool/local_dim",local_dim)
+    call read_adios_scalar_int_only_rank(myrank,"reg1/ibool/global_dim",global_dim)
+    if (mod(global_dim,local_dim) == 0) then
+      ! sizeprocs
+      rank = global_dim/local_dim
+    else
+      print *,'Error invalid local_dim/global_dim ratio in file: ',trim(solver_file)
+      stop 'Error adios array has invalid local_dim/global_dim ratio'
+    endif
+
+    ! closes file
+    call close_file_adios_read()
+
+#else
+    ! user output
+    print *, 'reading in binary solver files: ',trim(dir_topo1)//'/proc***_reg1_solver_data.bin'
+
     ! gets nspec/nglob
-    write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',myrank,'_reg1_'//'solver_data.bin'
+    ! opens file
+    write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'/proc',myrank,'_reg1_'//'solver_data.bin'
     open(IIN,file=trim(solver_file),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(solver_file)
@@ -326,18 +344,28 @@
     ! gets number of processes from old mesh (1 file per process)
     rank = 0
     do while (ier == 0)
-      write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',rank,'_reg1_'//'solver_data.bin'
+      write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'/proc',rank,'_reg1_'//'solver_data.bin'
       open(IIN,file=trim(solver_file),status='old',action='read',form='unformatted',iostat=ier)
       if (ier == 0) then
         rank = rank + 1
         close(IIN)
       endif
     enddo
+#endif
+
+    ! checks
+    if (rank == 0) then
+      print *,'Error invalid number of processes found for old setup'
+      stop 'Error invalid number of processes for old setup'
+    endif
+
     ! assumes same number of chunks and nproc_eta = nproc_xi
     nproc_eta_old = int (sqrt ( dble(rank) / NCHUNKS_VAL ))
     nproc_xi_old = int (sqrt ( dble(rank) / NCHUNKS_VAL ))
-  endif
-  ! broadcasts to all other processes (assumes all slices have equal nspec/nglob values)
+
+  endif ! master
+
+  ! master broadcasts to all other processes (assumes all slices have equal nspec/nglob values)
   call bcast_all_singlei(nspec_max_old)
   call bcast_all_singlei(nglob_max_old)
   call bcast_all_singlei(nproc_eta_old)
@@ -346,6 +374,38 @@
   ! sets old nproc_xi (assumes equal nproc_xi/nproc_eta)
   nproc_xi_old = nproc_eta_old
 
+  ! defines model parameters
+  ! note: the fname setup is done here now to avoid corruption by the above adios routines. the adios calls above
+  !       for some reason corrupt the fname list if this setup is done before...
+  if (USE_TRANSVERSE_ISOTROPY) then
+    ! transversly isotropic (TI) model
+    nparams = 6
+#ifdef ADIOS_INPUT
+    fname(1:6) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho"/)
+#else
+    fname(1:6) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho"/)
+#endif
+
+  else
+    ! isotropic model
+    nparams = 3
+    ! note: adds space at endings to equal number of characters
+    !       to avoid compiler error: "Different shape for array assignment.."
+    fname(1:3) = (/character(len=16) :: "vp ","vs ","rho"/)
+  endif
+
+  ! adds shear attenuation
+  if (USE_ATTENUATION_Q) then
+    nparams = nparams + 1
+    fname(nparams) = "qmu"
+  endif
+
+#ifdef ADIOS_INPUT
+  ! adios only for model_gll.bp implemented which uses vpv,vph,..,rho
+  if (nparams /= 6) &
+    stop 'ADIOS version only works for purely transversely isotropic model file model_gll.bp so far...'
+#endif
+
   ! console output
   if (myrank == 0) then
     print *,'source mesh:  '
@@ -353,14 +413,14 @@
     print *,'  nproc_eta / nproc_xi = ',nproc_eta_old,nproc_xi_old
     print *,'  nspec      = ',nspec_max_old
     print *,'  nglob      = ',nglob_max_old
-    print *
+    print *,''
     print *,'target mesh:  '
     print *,'  processors = ',NPROCTOT_VAL
     print *,'  nproc_eta / nproc_xi = ',NPROC_ETA_VAL,NPROC_XI_VAL
     print *,'  nex        = ',NEX_XI_VAL
     print *,'  nspec      = ',NSPEC_CRUST_MANTLE
     print *,'  nglob      = ',NGLOB_CRUST_MANTLE
-    print *
+    print *,''
     if (USE_TRANSVERSE_ISOTROPY) then
       print *,'model parameters:',nparams,' - transversely isotropic model'
     else
@@ -369,26 +429,26 @@
     if (USE_ATTENUATION_Q) then
       print *,'  includes qmu model parameter'
     endif
-    print *,'  ( ',(trim(fname(i))//" ",i=1,nparams),')'
-    print *
+    print *,'  ( ',(trim(fname(iker))//" ",iker = 1,nparams),')'
+    print *,''
     print *,'input model  directory: ',trim(input_model_dir)
     print *,'output model directory: ',trim(output_model_dir)
-    print *
+    print *,''
     print *,'array size:'
     print *,'  ibool1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nproc_eta_old*nproc_xi_old*dble(SIZE_INTEGER)/1024./1024.,'MB'
     print *,'  x1,y1,z1 = ',nglob_max_old*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *
+    print *,''
     print *,'  model1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nparams*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print *,'  model2   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *
+    print *,''
     print *,'total mpi processes: ',sizeprocs
-    print *
+    print *,''
     if (DO_BRUTE_FORCE_SEARCH) then
       print *,'location search by : brute-force approach'
     else
       print *,'location search by : kd-tree search'
       if (USE_MIDPOINT_SEARCH) then
-        print *,'location search by : uses midpoints of elements only'
+        print *,'  uses midpoints of elements only'
       else
         print *,'  uses internal gll points'
       endif
@@ -402,7 +462,11 @@
         print *,'  uses fall-back to model value of closest point in case of large differences'
       endif
     endif
-    print *
+    print *,''
+#ifdef ADIOS_INPUT
+    print *,'file format: ADIOS files'
+    print *,''
+#endif
   endif
   call synchronize_all()
 
@@ -411,7 +475,7 @@
 
   ! checks temporary file creation, to see if we could write out new model
   if (myrank == 0) then
-    write(m_file,'(a,i6.6,a)') trim(output_model_dir)// '/proc',myrank,'_reg1_'//trim(fname(1))//'.tmp'
+    write(m_file,'(a,i6.6,a)') trim(output_model_dir)// '/tmp_proc',myrank,'.tmp'
     open(IOUT,file=trim(m_file),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(m_file)
@@ -520,6 +584,13 @@
   z1(:,:) = 0.0_CUSTOM_REAL
   ibool1(:,:,:,:,:) = 0
 
+#ifdef ADIOS_INPUT
+  ! single adios file for all old process slices
+  ! opens adios file
+  write(solver_file,'(a,a)') trim(dir_topo1)//'/solver_data.bp'
+  call open_file_adios_read(solver_file)
+#endif
+
   iprocnum = 0
   do iproc_eta = 0, nproc_eta_old - 1
     do iproc_xi = 0, nproc_xi_old - 1
@@ -534,8 +605,30 @@
         print *,'  slice number: ',iprocnum,' out of ',nproc_chunk1
       endif
 
+      ! reads in old arrays
+#ifdef ADIOS_INPUT
+print *,myrank,'adios file rank',rank
+      ! reads in scalars for rank
+      call read_adios_scalar_int(rank,"reg1/nspec",nspec)
+      call read_adios_scalar_int(rank,"reg1/nglob",nglob)
+
+      ! checks dimensions
+      if (nspec /= nspec_max_old .or. nglob /= nglob_max_old) then
+        print *,'Error dimension of old, source mesh: solver_data nspec/nglob = ',nspec,nglob
+        stop 'Error new mesh dimensions'
+      endif
+
+      ! reads in arrays
+      call read_adios_array_1d(rank,nglob,"reg1/x_global",x1(:,iprocnum-1))
+      call read_adios_array_1d(rank,nglob,"reg1/y_global",y1(:,iprocnum-1))
+      call read_adios_array_1d(rank,nglob,"reg1/z_global",z1(:,iprocnum-1))
+
+      call read_adios_array_gll_int(rank,nspec,"reg1/ibool",ibool1(:,:,:,:,iprocnum-1))
+      call read_adios_array_1d_int(rank,nspec,"reg1/idoubling",idoubling1(:,iprocnum-1))
+
+#else
       ! old, source mesh locations
-      write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'proc',rank,'_reg1_'//'solver_data.bin'
+      write(solver_file,'(a,i6.6,a)') trim(dir_topo1)//'/proc',rank,'_reg1_'//'solver_data.bin'
       open(IIN,file=solver_file,status='old',form='unformatted',action='read',iostat=ier)
       if (ier /= 0) then
         print *,'Error opening file: ',trim(solver_file)
@@ -556,8 +649,15 @@
       read(IIN) ibool1(:,:,:,:,iprocnum-1)
       read(IIN) idoubling1(:,iprocnum-1)
       close(IIN)
+#endif
     enddo
   enddo
+
+#ifdef ADIOS_INPUT
+  ! closes file
+  call close_file_adios_read()
+#endif
+
   ! user output
   if (myrank == 0) then
     print *
@@ -577,6 +677,14 @@
 
   ! reads in old model files
   model1(:,:,:,:,:,:) = 0.0_CUSTOM_REAL
+
+#ifdef ADIOS_INPUT
+  ! single adios file for all old model arrays
+  ! opens adios file
+  write(solver_file,'(a,a)') trim(dir_topo1)//'/model_gll.bp'
+  call open_file_adios_read(solver_file)
+#endif
+
   iprocnum = 0
   do iproc_eta = 0, nproc_eta_old - 1
     do iproc_xi = 0, nproc_xi_old - 1
@@ -594,7 +702,12 @@
       ! reads in model slices
       do iker = 1,nparams
         ! debug user output
-        !if (myrank == 0) print *, '  for parameter: ',trim(fname(iker))
+        if (myrank == 0) print *, '  for parameter: ',trim(fname(iker))
+
+#ifdef ADIOS_INPUT
+        ! reads in array
+        call read_adios_array_gll(rank,nspec,fname(iker),model1(:,:,:,:,iker,iprocnum-1))
+#else
         ! opens model file
         write(m_file,'(a,i6.6,a)') trim(input_model_dir)//'proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
         open(IIN,file=trim(m_file),status='old',form='unformatted',action='read',iostat=ier)
@@ -604,9 +717,16 @@
         endif
         read(IIN) model1(:,:,:,:,iker,iprocnum-1)
         close(IIN)
+#endif
       enddo
     enddo
   enddo
+
+#ifdef ADIOS_INPUT
+  ! closes file
+  call close_file_adios_read()
+#endif
+
   ! user output
   if (myrank == 0) then
     print *
@@ -630,6 +750,34 @@
   endif
 
   ! checks new mesh locations
+#ifdef ADIOS_INPUT
+  ! single adios file for all process slices
+  ! opens adios file
+  write(solver_file,'(a,a)') trim(dir_topo2)//'/solver_data.bp'
+  call open_file_adios_read(solver_file)
+  ! reads in scalars for rank
+  call read_adios_scalar_int(rank,"reg1/nspec",nspec)
+  call read_adios_scalar_int(rank,"reg1/nglob",nglob)
+
+  ! checks dimensions
+  if (nspec /= NSPEC_CRUST_MANTLE .or. nglob /= NGLOB_CRUST_MANTLE) then
+    print *,'Error dimension of new mesh: solver_data nspec/nglob = ',nspec,nglob
+    stop 'Error new mesh dimensions'
+  endif
+  call synchronize_all()
+
+  ! reads in arrays
+  call read_adios_array_1d(rank,nglob,"reg1/x_global",x2(:))
+  call read_adios_array_1d(rank,nglob,"reg1/y_global",y2(:))
+  call read_adios_array_1d(rank,nglob,"reg1/z_global",z2(:))
+  call read_adios_array_gll_int(rank,nspec,"reg1/ibool",ibool2(:,:,:,:))
+  call read_adios_array_1d_int(rank,nspec,"reg1/idoubling",idoubling2(:))
+
+  ! closes file
+  call close_file_adios_read()
+
+#else
+  ! opens binary file
   write(solver_file,'(a,i6.6,a)') trim(dir_topo2)//'proc',rank,'_reg1_'//'solver_data.bin'
   open(IIN,file=solver_file,status='old',form='unformatted',action='read',iostat=ier)
   if (ier /= 0) then
@@ -652,6 +800,7 @@
   read(IIN) ibool2(:,:,:,:)
   read(IIN) idoubling2(:)
   close(IIN)
+#endif
 
   ! checks that layers match
   if (minval(idoubling1) /= minval(idoubling2) .or. maxval(idoubling1) /= maxval(idoubling2)) then
@@ -896,6 +1045,28 @@
     print *, 'writing out new model files'
   endif
 
+#ifdef ADIOS_INPUT
+  ! sets up adios group
+  group_name = "MODELS_GROUP"
+  group_size_inc = 0
+  call init_adios_group(group,group_name)
+
+  ! defines group size
+  call define_adios_scalar(group, group_size_inc, "", "NSPEC", nspec)
+  local_dim = size(model2(:,:,:,:,iker))
+  do iker=1,nparams
+    call define_adios_global_array1D(group, group_size_inc,local_dim,"",trim(fname(iker)),model2(:,:,:,:,iker))
+  enddo
+
+  ! opens new adios model file
+  write(solver_file,'(a,a)') trim(output_model_dir) //'/model_gll_interpolated.bp'
+  call open_file_adios_write(solver_file,group_name)
+  call set_adios_group_size(group_size_inc)
+
+  ! writes nspec
+  call write_adios_scalar_int("NSPEC",nspec)
+#endif
+
   ! writes out new model
   do iker = 1,nparams
     ! user output
@@ -903,6 +1074,12 @@
       print *, '  for parameter: ',trim(fname(iker))
     endif
 
+#ifdef ADIOS_INPUT
+!  call finalize_adios()
+!  stop 'safety stop: ADIOS support not fully implemented yet...'
+    ! writes previously defined ADIOS variables
+    call write_adios_array_gll(myrank,nspec,trim(fname(iker)),model2(:,:,:,:,iker))
+#else
     write(m_file,'(a,i6.6,a)') trim(output_model_dir) // '/proc',rank,'_reg1_'//trim(fname(iker))//'.bin'
     open(IOUT,file=trim(m_file),status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0) then
@@ -911,7 +1088,14 @@
     endif
     write(IOUT) model2(:,:,:,:,iker)
     close(IOUT)
+#endif
+
   enddo
+
+#ifdef ADIOS_INPUT
+  ! closing performs actual write
+  call close_file_adios()
+#endif
 
   ! frees memory
   deallocate(model2)
@@ -923,12 +1107,18 @@
   if (myrank == 0) then
     print *
     print *, 'check new model files in directory: ',trim(output_model_dir)
+#ifdef ADIOS_INPUT
+    print *, 'see file: ',trim(solver_file)
+#else
+    print *, 'see files: ',trim(output_model_dir) // '/proc***_reg1_**.bin'
+#endif
     print *, 'done successfully'
     print *
   endif
 
 #ifdef ADIOS_INPUT
-  call adios_finalize (myrank, ier)
+  ! finalizes adios
+  call finalize_adios()
 #endif
 
   ! exiting MPI processes

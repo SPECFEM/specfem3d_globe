@@ -62,9 +62,7 @@ GPU_INT_BUFFER (d_ibool_crust_mantle);
 GPU_INT_BUFFER (d_ispec_is_tiso_crust_mantle);
 
   // mesh locations
-GPU_REALW_BUFFER (d_xstore_crust_mantle);
-GPU_REALW_BUFFER (d_ystore_crust_mantle);
-GPU_REALW_BUFFER (d_zstore_crust_mantle);
+GPU_REALW_BUFFER (d_rstore_crust_mantle);
 
   // anisotropic 3D mantle
 GPU_REALW_BUFFER (d_c11store_crust_mantle);
@@ -158,9 +156,7 @@ GPU_REALW_BUFFER (d_b_rmass_outer_core);
 GPU_INT_BUFFER (d_ibool_outer_core);
 
   // mesh locations
-GPU_REALW_BUFFER (d_xstore_outer_core);
-GPU_REALW_BUFFER (d_ystore_outer_core);
-GPU_REALW_BUFFER (d_zstore_outer_core);
+GPU_REALW_BUFFER (d_rstore_outer_core);
 
   // wavefields
 GPU_REALW_BUFFER (d_displ_outer_core);
@@ -219,9 +215,7 @@ GPU_INT_BUFFER (d_ibool_inner_core);
 GPU_INT_BUFFER (d_idoubling_inner_core);
 
   // mesh locations
-GPU_REALW_BUFFER (d_xstore_inner_core);
-GPU_REALW_BUFFER (d_ystore_inner_core);
-GPU_REALW_BUFFER (d_zstore_inner_core);
+GPU_REALW_BUFFER (d_rstore_inner_core);
 
   // anisotropic 3D mantle
 GPU_REALW_BUFFER (d_c11store_inner_core);

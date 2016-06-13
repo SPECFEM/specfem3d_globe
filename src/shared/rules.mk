@@ -33,6 +33,7 @@ shared_TARGETS = \
 
 shared_OBJECTS = \
 	$O/shared_par.shared_module.o \
+	$O/adios_manager.shared_adios_module.o \
 	$O/auto_ner.shared.o \
 	$O/binary_c_io.cc.o \
 	$O/broadcast_computed_parameters.shared.o \
@@ -77,6 +78,7 @@ shared_OBJECTS = \
 
 shared_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
+	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_compute_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
@@ -87,7 +89,6 @@ adios_shared_OBJECTS = \
 	$O/adios_helpers_definitions.shared_adios_module.o \
 	$O/adios_helpers_writers.shared_adios_module.o \
 	$O/adios_helpers.shared_adios.o \
-	$O/adios_manager.shared_adios.o \
 	$(EMPTY_MACRO)
 
 adios_shared_MODULES = \
@@ -132,6 +133,11 @@ $(shared_OBJECTS): S = ${S_TOP}/src/shared
 #### rule for each .o file below
 ####
 
+## additional dependencies
+ifeq ($(ADIOS),yes)
+$O/adios_manager.shared_adios_module.o: $O/adios_helpers_writers.shared_adios_module.o
+endif
+
 ##
 ## shared
 ##
@@ -150,14 +156,17 @@ $O/%.sharedmpi.o: $S/%.f90 $O/shared_par.shared_module.o $O/read_parameter_file.
 
 ## adios
 
-$O/%.shared_adios_module.o: $S/%.f90
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+$O/%.shared_adios_module.o: $S/%.f90 $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
 
-$O/%.shared_adios.o: $S/%.f90 $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+$O/%.shared_adios_module.o: $S/%.F90 $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
 
-$O/%.shared_adios.o: $S/%.F90 $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+$O/%.shared_adios.o: $S/%.f90 $O/adios_manager.shared_adios_module.o $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
+
+$O/%.shared_adios.o: $S/%.F90 $O/adios_manager.shared_adios_module.o $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o $O/shared_par.shared_module.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
 
 ## asdf
 

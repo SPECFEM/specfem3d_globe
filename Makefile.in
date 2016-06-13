@@ -118,7 +118,7 @@ GENCODE_35 = -gencode=arch=compute_35,code=\"sm_35,compute_35\"
 @COND_OCL_TRUE@OCL = yes
 @COND_OCL_FALSE@OCL = no
 
-OCL_CPU_FLAGS = @OCL_CPU_FLAGS@
+OCL_CPU_FLAGS = @OCL_CPU_FLAGS@ $(MPI_INCLUDES)
 OCL_GPU_FLAGS = @OCL_GPU_FLAGS@
 
 OCL_INC = @OCL_CFLAGS@
@@ -145,6 +145,38 @@ MPI_INCLUDES = @MPI_INCLUDES@
 
 #######################################
 ####
+#### MIC
+#### with configure: ./configure --with-mic
+####
+#######################################
+
+# native compilation
+@COND_MIC_TRUE@MIC = yes
+@COND_MIC_FALSE@MIC = no
+
+@COND_MIC_TRUE@MIC_FLAGS = -mmic #-qopt-report2 -qopt-report-phase=vec
+@COND_MIC_FALSE@MIC_FLAGS =
+
+FCFLAGS += $(MIC_FLAGS)
+CPPFLAGS += $(MIC_FLAGS)
+
+#######################################
+####
+#### OpenMP
+#### with configure: ./configure --enable-openmp
+####
+#######################################
+
+@COND_OMP_TRUE@OPENMP = yes
+@COND_OMP_FALSE@OPENMP = no
+
+@COND_OMP_TRUE@OMP_FLAGS = @OMP_FCFLAGS@ $(FC_DEFINE)USE_OPENMP #$(FC_DEFINE)USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+@COND_OMP_FALSE@OMP_FLAGS =
+
+FCFLAGS += $(OMP_FLAGS)
+
+#######################################
+####
 #### VTK
 #### with configure: ./configure --enable-vtk ..
 ####
@@ -157,7 +189,6 @@ CPPFLAGS += @VTK_INCLUDES@
 LDFLAGS += @VTK_LDFLAGS@
 MPILIBS += @VTK_LIBS@
 
-
 #######################################
 ####
 #### ADIOS
@@ -167,6 +198,9 @@ MPILIBS += @VTK_LIBS@
 
 @COND_ADIOS_TRUE@ADIOS = yes
 @COND_ADIOS_FALSE@ADIOS = no
+
+@COND_ADIOS_TRUE@ADIOS_DEF = $(FC_DEFINE)ADIOS_INPUT
+@COND_ADIOS_FALSE@ADIOS_DEF =
 
 FCFLAGS += @ADIOS_FCFLAGS@
 MPILIBS += @ADIOS_LIBS@
@@ -192,7 +226,6 @@ MPILIBS += @ASDF_LIBS@
 #######################################
 @COND_VECTORIZATION_TRUE@FORCE_VECTORIZATION = yes
 @COND_VECTORIZATION_FALSE@FORCE_VECTORIZATION = no
-
 
 #######################################
 ####

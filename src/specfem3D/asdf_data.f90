@@ -32,27 +32,36 @@
 
 module asdf_data
 
+  implicit none
+
+  private
+
   type asdf_record
     real, pointer :: record(:)
   end type asdf_record
 
   type asdf_event
     !scalars
-    character(len=13)     :: event
+    character(len=13) :: event
 
     !size info
-    integer           :: nreceivers
+    integer :: nreceivers
+    integer :: nrec_local
 
     !seismic record info
-    real, pointer             :: receiver_lat(:), receiver_lo(:)
-    real, pointer             :: receiver_el(:), receiver_dpt(:)
+    real, pointer :: receiver_lat(:), receiver_lo(:)
+    real, pointer :: receiver_el(:), receiver_dpt(:)
     character(len=32),pointer :: receiver_name_array(:)
     character(len=8),pointer :: network_array(:)
     character(len=3),pointer :: component_array(:)
 
     !seismograms
     type (asdf_record), pointer :: records(:)
-
   end type asdf_event
+
+  ! ASDF
+  type(asdf_event) :: asdf_container
+
+  public :: asdf_container
 
 end module asdf_data

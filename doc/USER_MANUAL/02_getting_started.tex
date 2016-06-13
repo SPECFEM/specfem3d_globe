@@ -1,6 +1,13 @@
+%-----------------------------------------------------------------------------------------------------------------------------------%
+
 \chapter{Getting Started}\label{cha:Getting-Started}
 
+%-----------------------------------------------------------------------------------------------------------------------------------%
+
+
+%-----------------------------------------------------------------------------------------------------------------------------------%
 \section{Configuring and compiling the source code}
+%-----------------------------------------------------------------------------------------------------------------------------------%
 
 To get the SPECFEM3D\_GLOBE software package, type this:
 \begin{verbatim}
@@ -147,7 +154,9 @@ when undoing attenuation using the UNDO\_ATTENUATION option in DATA/Par\_file.
 To do so, ask your system administrator for the option to add to your batch submission script; it is for instance
 \texttt{\#BSUB -x} with SLURM and \texttt{\#\$ -l exclusive=TRUE} with Sun Grid Engine (SGE).
 
+%-----------------------------------------------------------------------------------------------------------------------------------%
 \section{Using the GPU version of the code}
+%-----------------------------------------------------------------------------------------------------------------------------------%
 
 SPECFEM3D\_GLOBE now supports OpenCL and NVIDIA CUDA GPU acceleration.
 OpenCL can be enabled with the \texttt{--with-opencl} flag, and the
@@ -211,7 +220,9 @@ their software package called BOAST \citep{Videau2013}.
 
 
 
+%-----------------------------------------------------------------------------------------------------------------------------------%
 \section{Compiling on an IBM BlueGene}
+%-----------------------------------------------------------------------------------------------------------------------------------%
 
 \underline{More recent installation instruction for IBM BlueGene, from October 2012:}\\
 
@@ -274,7 +285,9 @@ On BlueGene, one also needs to run the \texttt{xcreate\_header\_file} binary fil
 bgrun -np 1 -mode VN -exe ./bin/xcreate_header_file
 \end{verbatim}
 
+%-----------------------------------------------------------------------------------------------------------------------------------%
 \section{Using a cross compiler}
+%-----------------------------------------------------------------------------------------------------------------------------------%
 
 The \texttt{``configure''} script assumes that you will compile the code on the same kind of hardware
 as the machine on which you will run it. On some systems (for instance IBM BlueGene, see also the previous section) this might not be the case
@@ -336,15 +349,20 @@ Then:
 \noindent
 should work.
 
+%-----------------------------------------------------------------------------------------------------------------------------------%
 \section{Adding OpenMP support in addition to MPI}
+%-----------------------------------------------------------------------------------------------------------------------------------%
 
 OpenMP support can be enabled in addition to MPI. However, in many cases performance will not improve
 because our pure MPI implementation is already heavily optimized and thus the resulting code will in fact
-be slightly slower. A possible exception could be IBM BlueGene-type architectures.
+be slightly slower. A possible exception could be IBM BlueGene-type architectures.\\
 
-To enable OpenMP, uncomment the OpenMP compiler option in two lines in file \texttt{src/specfem3D/Makefile.in}
-(before running \texttt{configure}) and also uncomment the \texttt{\#define USE\_OPENMP} statement in file\\
-\texttt{src/specfem3D/specfem3D.F90}.
+\noindent
+To enable OpenMP,  add the flag {\texttt --enable-openmp} to the configuration:
+\begin{verbatim}
+./configure --enable-openmp ..
+\end{verbatim}
+This will add the corresponding OpenMP flag for the chosen Fortran compiler.
 
 The DO-loop using OpenMP threads has a SCHEDULE property. The OMP\_SCHEDULE
 environment variable can set the scheduling policy of that DO-loop.
@@ -355,12 +373,17 @@ OpenMP threads (thus chunk size = 8 for 4 OpenMP threads etc).
 If OMP\_SCHEDULE is not set or is empty, the DO-loop will assume generic
 scheduling policy, which will slow down the job quite a bit.
 
+%-----------------------------------------------------------------------------------------------------------------------------------%
 \section{Visualizing the subroutine calling tree of the source code}
+%-----------------------------------------------------------------------------------------------------------------------------------%
 
 Packages such as \texttt{doxywizard} can be used to visualize the subroutine calling tree of the source code.
 \texttt{Doxywizard} is a GUI front-end for configuring and running \texttt{doxygen}.
 
+
+%-----------------------------------------------------------------------------------------------------------------------------------%
 \section{Becoming a developer of the code, or making small modifications in the source code}
+%-----------------------------------------------------------------------------------------------------------------------------------%
 
 If you want to develop new features in the code, and/or if you want to make small changes, improvements, or bug fixes, you are very welcome to contribute. To do so, i.e. to access the development branch of the source code with read/write access (in a safe way, no need to worry too much about breaking the package, there is a robot called BuildBot that is in charge of checking and validating all new contributions and changes), please visit this Web page: \url{https://github.com/geodynamics/specfem3d/wiki}.
 

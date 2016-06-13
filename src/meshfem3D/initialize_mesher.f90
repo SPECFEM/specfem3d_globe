@@ -30,6 +30,8 @@
   use meshfem3D_par
   use meshfem3D_models_par
 
+  use manager_adios
+
   implicit none
 
   include 'version.fh'
@@ -97,7 +99,7 @@
   if (NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
   if (ADIOS_ENABLED) then
-    call adios_setup()
+    call initialize_adios()
   endif
 
   end subroutine initialize_mesher

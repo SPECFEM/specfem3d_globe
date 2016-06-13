@@ -13,7 +13,7 @@ in the
 
 - PDF manual located in directory: [doc/USER_MANUAL](doc/USER_MANUAL).
 
-- HTML manual (latest version): [specfem3d-globe.readthedocs.org](http://specfem3d-globe.readthedocs.org/)
+- HTML manual (latest version): [specfem3d-globe.readthedocs.io](http://specfem3d-globe.readthedocs.io/)
 
 
 ## Development

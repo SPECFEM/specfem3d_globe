@@ -39,7 +39,7 @@
 
   subroutine compute_element_iso(ispec, &
                                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                 xstore,ystore,zstore, &
+                                 rstore, &
                                  deriv, &
                                  wgll_cube, &
                                  kappavstore,muvstore, &
@@ -51,288 +51,119 @@
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
                                  epsilondev_loc,rho_s_H)
 
-  use constants_solver
+! isotropic element in crust/mantle region
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS
+
+  use constants_solver,only: &
+    NSPEC => NSPEC_CRUST_MANTLE, &
+    NGLOB => NGLOB_CRUST_MANTLE, &
+    NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
+    NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
+    NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
+    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
+
   use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
 
   implicit none
 
   ! element id
-  integer :: ispec
+  integer,intent(in) :: ispec
 
   ! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 
   ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: rstore
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  double precision, dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
 
   ! store anisotropic properties only where needed to save memory
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        kappavstore,muvstore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO),intent(in) :: kappavstore,muvstore
 
   ! variable sized array variables
-  integer :: vnspec
+  integer,intent(in) :: vnspec
 
   ! attenuation
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
 
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(in) :: one_minus_sum_beta
 
   ! gravity
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
+  double precision, dimension(NRAD_GRAVITY),intent(in) :: minus_gravity_table,density_table,minus_deriv_gravity_table
 
   ! element info
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM),intent(out) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
 
 ! local parameters
-  real(kind=CUSTOM_REAL) one_minus_sum_beta_use
-#ifdef FORCE_VECTORIZATION
+  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use
+
+  ! local element arrays
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-  real(kind=CUSTOM_REAL) duxdyl,duxdzl,duydxl,duydzl,duzdxl,duzdyl
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
-#else
-  real(kind=CUSTOM_REAL) jacobianl
-  real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
-  real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
-  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
-#endif
-  real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
-  real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
 
-  real(kind=CUSTOM_REAL) templ
-  real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
-  real(kind=CUSTOM_REAL) kappal
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xx,sigma_yy,sigma_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
 
-  ! for gravity
-  double precision dphi,dtheta
-  double precision radius,rho,minus_g,minus_dg
-  double precision minus_g_over_radius,minus_dg_plus_g_over_radius
-  double precision cos_theta,sin_theta,cos_phi,sin_phi
-  double precision cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
-  double precision factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
-  double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
-
-  integer :: int_radius
-  integer :: iglob
+  real(kind=CUSTOM_REAL) :: lambdal,mul,lambdalplus2mul
+  real(kind=CUSTOM_REAL) :: kappal
 
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
 ! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
 ! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
   integer :: ijk
-  real(kind=CUSTOM_REAL) :: R_xx_val,R_yy_val
 #else
   integer :: i,j,k
 #endif
+! note: profiling shows that this routine takes about 60% of the total time, another 30% is spend in the tiso routine below..
+
 
   ! isotropic element
 
+  ! precomputes factors
+  call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          duxdxl,duydyl,duzdzl, &
+                                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
+                                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
+
+  ! compute deviatoric strain
+  if (COMPUTE_AND_STORE_STRAIN) then
+    call compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
+                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
+                                           ispec,NSPEC_STRAIN_ONLY, &
+                                           epsilon_trace_over_3,epsilondev_loc)
+  endif
+
+  !
+  ! compute  isotropic  elements
+  !
   DO_LOOP_IJK
-
-    ! compute the Jacobian
-#ifdef FORCE_VECTORIZATION
-    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
-                                            *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                             -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
-                                             -deriv(2,INDEX_IJK,ispec) &
-                                            *(deriv(4,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                             -deriv(6,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)) &
-                                             +deriv(3,INDEX_IJK,ispec) &
-                                            *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
-                                             -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
-#else
-    jacobianl = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
-                                 *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                  -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
-                                  -deriv(2,INDEX_IJK,ispec) &
-                                 *(deriv(4,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                  -deriv(6,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)) &
-                                  +deriv(3,INDEX_IJK,ispec) &
-                                 *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
-                                  -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    duxdxl(INDEX_IJK) = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-                      + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-                      + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdyl            = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-                      + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-                      + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdzl            = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-                      + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-                      + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-#else
-    duxdxl = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdyl = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdzl = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-#endif
-#ifdef FORCE_VECTORIZATION
-    duydxl            = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-                      + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-                      + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydyl(INDEX_IJK) = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-                      + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-                      + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydzl            = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-                      + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-                      + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-#else
-    duydxl = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydyl = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydzl = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    duzdxl            = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-                      + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-                      + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdyl            = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-                      + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-                      + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdzl(INDEX_IJK) = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-                      + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-                      + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-#else
-    duzdxl = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdyl = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdzl = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-#endif
-
-    ! precompute some sums to save CPU time
-#ifdef FORCE_VECTORIZATION
-    duxdxl_plus_duydyl(INDEX_IJK) = duxdxl(INDEX_IJK) + duydyl(INDEX_IJK)
-    duxdxl_plus_duzdzl(INDEX_IJK) = duxdxl(INDEX_IJK) + duzdzl(INDEX_IJK)
-    duydyl_plus_duzdzl(INDEX_IJK) = duydyl(INDEX_IJK) + duzdzl(INDEX_IJK)
-    duxdyl_plus_duydxl(INDEX_IJK) = duxdyl            + duydxl
-    duzdxl_plus_duxdzl(INDEX_IJK) = duzdxl            + duxdzl
-    duzdyl_plus_duydzl(INDEX_IJK) = duzdyl            + duydzl
-#else
-    duxdxl_plus_duydyl = duxdxl + duydyl
-    duxdxl_plus_duzdzl = duxdxl + duzdzl
-    duydyl_plus_duzdzl = duydyl + duzdzl
-    duxdyl_plus_duydxl = duxdyl + duydxl
-    duzdxl_plus_duxdzl = duzdxl + duxdzl
-    duzdyl_plus_duydzl = duzdyl + duydzl
-#endif
-
-#ifdef FORCE_VECTORIZATION
-  ENDDO_LOOP_IJK
-#endif
-
-!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
-!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
-!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
-!ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
-!ZN from the expression in which we use the strain later in the code.
-
-    ! compute deviatoric strain
-#ifdef FORCE_VECTORIZATION
-    if (COMPUTE_AND_STORE_STRAIN) then
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-        if (ispec == 1) then
-
-          DO_LOOP_IJK
-
-            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-            epsilon_trace_over_3(INDEX_IJK,1) = templ
-            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-
-          ENDDO_LOOP_IJK
-
-        else
-
-          DO_LOOP_IJK
-
-            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-
-          ENDDO_LOOP_IJK
-
-        endif
-      else
-
-          DO_LOOP_IJK
-
-            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-            epsilon_trace_over_3(INDEX_IJK,ispec) = templ
-            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-
-          ENDDO_LOOP_IJK
-
-      endif
-    endif
-#else
-    if (COMPUTE_AND_STORE_STRAIN) then
-      templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-        if (ispec == 1) then
-          epsilon_trace_over_3(INDEX_IJK,1) = templ
-        endif
-      else
-        epsilon_trace_over_3(INDEX_IJK,ispec) = templ
-      endif
-      epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
-      epsilondev_loc(INDEX_IJK,2) = duydyl - templ
-      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-    endif
-#endif
-
-#ifdef FORCE_VECTORIZATION
-  DO_LOOP_IJK
-#endif
-
-    !
-    ! compute  isotropic  elements
-    !
 
     ! layer with no transverse isotropy, use kappav and muv
     kappal = kappavstore(INDEX_IJK,ispec)
@@ -353,233 +184,245 @@
     lambdal = lambdalplus2mul - 2.0_CUSTOM_REAL*mul
 
     ! compute stress sigma
-#ifdef FORCE_VECTORIZATION
-    sigma_xx = lambdalplus2mul*duxdxl(INDEX_IJK) + lambdal*duydyl_plus_duzdzl(INDEX_IJK)
-    sigma_yy = lambdalplus2mul*duydyl(INDEX_IJK) + lambdal*duxdxl_plus_duzdzl(INDEX_IJK)
-    sigma_zz = lambdalplus2mul*duzdzl(INDEX_IJK) + lambdal*duxdxl_plus_duydyl(INDEX_IJK)
-#else
-    sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
-    sigma_yy = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
-    sigma_zz = lambdalplus2mul*duzdzl + lambdal*duxdxl_plus_duydyl
-#endif
+    sigma_xx(INDEX_IJK) = lambdalplus2mul*duxdxl(INDEX_IJK) + lambdal*duydyl_plus_duzdzl(INDEX_IJK)
+    sigma_yy(INDEX_IJK) = lambdalplus2mul*duydyl(INDEX_IJK) + lambdal*duxdxl_plus_duzdzl(INDEX_IJK)
+    sigma_zz(INDEX_IJK) = lambdalplus2mul*duzdzl(INDEX_IJK) + lambdal*duxdxl_plus_duydyl(INDEX_IJK)
 
-#ifdef FORCE_VECTORIZATION
-    sigma_xy = mul*duxdyl_plus_duydxl(INDEX_IJK)
-    sigma_xz = mul*duzdxl_plus_duxdzl(INDEX_IJK)
-    sigma_yz = mul*duzdyl_plus_duydzl(INDEX_IJK)
-#else
-    sigma_xy = mul*duxdyl_plus_duydxl
-    sigma_xz = mul*duzdxl_plus_duxdzl
-    sigma_yz = mul*duzdyl_plus_duydzl
-#endif
-
-    ! subtract memory variables if attenuation
-    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
-
-#ifdef FORCE_VECTORIZATION
-      ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers
-      !from vectorizing the outer loop
-
-      ! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop
-      ! in order to vectorize the outer loop
-      R_xx_val = R_xx(INDEX_IJK,1,ispec)
-      R_yy_val = R_yy(INDEX_IJK,1,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,1,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,1,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,1,ispec)
-
-      R_xx_val = R_xx(INDEX_IJK,2,ispec)
-      R_yy_val = R_yy(INDEX_IJK,2,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,2,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,2,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,2,ispec)
-
-      R_xx_val = R_xx(INDEX_IJK,3,ispec)
-      R_yy_val = R_yy(INDEX_IJK,3,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,3,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,3,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,3,ispec)
-#else
-!daniel debug: att - debug update
-!          call compute_element_att_mem_up_cm(ispec,INDEX_IJK, &
-!                                          R_xx(INDEX_IJK,1,ispec), &
-!                                          R_yy(INDEX_IJK,1,ispec), &
-!                                          R_xy(INDEX_IJK,1,ispec), &
-!                                          R_xz(INDEX_IJK,1,ispec), &
-!                                          R_yz(INDEX_IJK,1,ispec), &
-!                                          epsilondev_loc(INDEX_IJK,:),muvstore(INDEX_IJK,ispec),is_backward_field)
-
-      ! note: function inlining is generally done by fortran compilers;
-      !       compilers decide based on performance heuristics
-      ! note: fortran passes pointers to array location, thus R_memory(1,1,...) should be fine
-      call compute_element_att_stress(i,j,k,R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
-                                      R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
-                                      sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
-#endif
-
-    endif ! ATTENUATION_VAL
-
-    ! define symmetric components of sigma for gravity
-    sigma_yx = sigma_xy
-    sigma_zx = sigma_xz
-    sigma_zy = sigma_yz
-
-    ! compute non-symmetric terms for gravity
-    if (GRAVITY_VAL) then
-      ! use mesh coordinates to get theta and phi
-      ! x y and z contain r theta and phi
-      iglob = ibool(INDEX_IJK,ispec)
-
-      dtheta = dble(ystore(iglob))
-      dphi = dble(zstore(iglob))
-
-      cos_theta = dcos(dtheta)
-      sin_theta = dsin(dtheta)
-      cos_phi = dcos(dphi)
-      sin_phi = dsin(dphi)
-
-      cos_theta_sq = cos_theta*cos_theta
-      sin_theta_sq = sin_theta*sin_theta
-      cos_phi_sq = cos_phi*cos_phi
-      sin_phi_sq = sin_phi*sin_phi
-
-      ! get g, rho and dg/dr=dg
-      ! spherical components of the gravitational acceleration
-      ! for efficiency replace with lookup table every 100 m in radial direction
-      radius = dble(xstore(iglob))
-
-      int_radius = nint(10.d0 * radius * R_EARTH_KM )
-      minus_g = minus_gravity_table(int_radius)
-      minus_dg = minus_deriv_gravity_table(int_radius)
-      rho = density_table(int_radius)
-
-      ! Cartesian components of the gravitational acceleration
-      gxl = minus_g*sin_theta*cos_phi
-      gyl = minus_g*sin_theta*sin_phi
-      gzl = minus_g*cos_theta
-
-      ! Cartesian components of gradient of gravitational acceleration
-      ! obtained from spherical components
-      minus_g_over_radius = minus_g / radius
-      minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
-
-      Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-      Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-      Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-      Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-      Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-      Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
-
-      ! get displacement and multiply by density to compute G tensor
-      sx_l = rho * dble(dummyx_loc(INDEX_IJK)) ! dble(displ_crust_mantle(1,iglob))
-      sy_l = rho * dble(dummyy_loc(INDEX_IJK)) ! dble(displ_crust_mantle(2,iglob))
-      sz_l = rho * dble(dummyz_loc(INDEX_IJK)) ! dble(displ_crust_mantle(3,iglob))
-
-      ! compute G tensor from s . g and add to sigma (not symmetric)
-      sigma_xx = sigma_xx + real(sy_l*gyl + sz_l*gzl, kind=CUSTOM_REAL)
-      sigma_yy = sigma_yy + real(sx_l*gxl + sz_l*gzl, kind=CUSTOM_REAL)
-      sigma_zz = sigma_zz + real(sx_l*gxl + sy_l*gyl, kind=CUSTOM_REAL)
-
-      sigma_xy = sigma_xy - real(sx_l * gyl, kind=CUSTOM_REAL)
-      sigma_yx = sigma_yx - real(sy_l * gxl, kind=CUSTOM_REAL)
-
-      sigma_xz = sigma_xz - real(sx_l * gzl, kind=CUSTOM_REAL)
-      sigma_zx = sigma_zx - real(sz_l * gxl, kind=CUSTOM_REAL)
-
-      sigma_yz = sigma_yz - real(sy_l * gzl, kind=CUSTOM_REAL)
-      sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
-
-      ! precompute vector
-#ifdef FORCE_VECTORIZATION
-      factor = dble(jacobianl(INDEX_IJK)) * wgll_cube(INDEX_IJK)
-#else
-      factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-#endif
-      rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
-      rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
-      rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
-
-    endif  ! end of section with gravity terms
-
-    ! form dot product with test vector, non-symmetric form
-#ifdef FORCE_VECTORIZATION
-    tempx1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
-                                              + sigma_yx*deriv(2,INDEX_IJK,ispec) &
-                                              + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
-                                              + sigma_yy*deriv(2,INDEX_IJK,ispec) &
-                                              + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
-                                              + sigma_yz*deriv(2,INDEX_IJK,ispec) &
-                                              + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
-#else
-    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    tempx2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
-                                              + sigma_yx*deriv(5,INDEX_IJK,ispec) &
-                                              + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
-                                              + sigma_yy*deriv(5,INDEX_IJK,ispec) &
-                                              + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
-                                              + sigma_yz*deriv(5,INDEX_IJK,ispec) &
-                                              + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
-#else
-    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    tempx3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
-                                              + sigma_yx*deriv(8,INDEX_IJK,ispec) &
-                                              + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
-                                              + sigma_yy*deriv(8,INDEX_IJK,ispec) &
-                                              + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
-                                              + sigma_yz*deriv(8,INDEX_IJK,ispec) &
-                                              + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
-#else
-    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
-#endif
+    sigma_xy(INDEX_IJK) = mul*duxdyl_plus_duydxl(INDEX_IJK)
+    sigma_xz(INDEX_IJK) = mul*duzdxl_plus_duxdzl(INDEX_IJK)
+    sigma_yz(INDEX_IJK) = mul*duzdyl_plus_duydzl(INDEX_IJK)
 
   ENDDO_LOOP_IJK
 
+  ! attenuation contribution to stress
+  ! subtract memory variables if attenuation
+  if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+    call compute_element_stress_attenuation_contrib(R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
+                                                    R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
+                                                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+  endif
+
+  ! define symmetric components of sigma (to be general in case of gravity)
+  DO_LOOP_IJK
+
+    sigma_yx(INDEX_IJK) = sigma_xy(INDEX_IJK)
+    sigma_zx(INDEX_IJK) = sigma_xz(INDEX_IJK)
+    sigma_zy(INDEX_IJK) = sigma_yz(INDEX_IJK)
+
+  ENDDO_LOOP_IJK
+
+  ! compute non-symmetric terms for gravity
+  if (GRAVITY_VAL) then
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,jacobianl,wgll_cube, &
+                                 minus_gravity_table,minus_deriv_gravity_table,density_table, &
+                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+                                 sigma_xx,sigma_yy,sigma_zz, &
+                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                 rho_s_H)
+  endif
+
+  ! dot product of stress tensor with test vector, non-symmetric form
+  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+                                                sigma_xx,sigma_yy,sigma_zz, &
+                                                sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+
   end subroutine compute_element_iso
+
+
+!--------------------------------------------------------------------------------------------
+
+  subroutine compute_element_iso_ic(ispec, &
+                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                    rstore, &
+                                    deriv, &
+                                    wgll_cube, &
+                                    kappavstore,muvstore, &
+                                    ibool, &
+                                    R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                    epsilon_trace_over_3, &
+                                    one_minus_sum_beta,vnspec, &
+                                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                    dummyx_loc,dummyy_loc,dummyz_loc, &
+                                    epsilondev_loc,rho_s_H)
+
+! isotropic element in inner core
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS
+
+  use constants_solver,only: &
+    NSPEC => NSPEC_INNER_CORE, &
+    NGLOB => NGLOB_INNER_CORE, &
+    NSPEC_ATTENUATION => NSPEC_INNER_CORE_ATTENUATION, &
+    NSPEC_STRAIN_ONLY => NSPEC_INNER_CORE_STRAIN_ONLY, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
+    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
+
+  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
+
+  implicit none
+
+  ! element id
+  integer,intent(in) :: ispec
+
+  ! arrays with mesh parameters per slice
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
+
+  ! x y and z contain r theta and phi
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: rstore
+
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
+
+  ! array with derivatives of Lagrange polynomials and precalculated products
+  double precision, dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
+
+  ! store anisotropic properties only where needed to save memory
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: kappavstore,muvstore
+
+  ! variable sized array variables
+  integer,intent(in) :: vnspec
+
+  ! attenuation
+  ! memory variables for attenuation
+  ! memory variables R_ij are stored at the local rather than global level
+  ! to allow for optimization of cache access by compiler
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(in) :: one_minus_sum_beta
+
+  ! gravity
+  double precision, dimension(NRAD_GRAVITY),intent(in) :: minus_gravity_table,density_table,minus_deriv_gravity_table
+
+  ! element info
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
+    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM),intent(out) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+
+! local parameters
+  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use
+
+  ! local element arrays
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xx,sigma_yy,sigma_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
+
+  real(kind=CUSTOM_REAL) :: lambdal,mul,lambdalplus2mul
+  real(kind=CUSTOM_REAL) :: kappal
+
+#ifdef FORCE_VECTORIZATION
+! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
+! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
+! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+! note: profiling shows that this routine takes about 60% of the total time, another 30% is spend in the tiso routine below..
+
+
+  ! isotropic element
+
+  ! precomputes factors
+  call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          duxdxl,duydyl,duzdzl, &
+                                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
+                                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
+
+  ! compute deviatoric strain
+  if (COMPUTE_AND_STORE_STRAIN) then
+    call compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
+                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
+                                           ispec,NSPEC_STRAIN_ONLY, &
+                                           epsilon_trace_over_3,epsilondev_loc)
+  endif
+
+  !
+  ! compute  isotropic  elements
+  !
+  DO_LOOP_IJK
+
+    ! inner core with no anisotropy, use kappav and muv for instance
+    ! layer with no anisotropy, use kappav and muv for instance
+    kappal = kappavstore(INDEX_IJK,ispec)
+    mul = muvstore(INDEX_IJK,ispec)
+
+    ! use unrelaxed parameters if attenuation
+    if (ATTENUATION_VAL) then
+      ! precompute terms for attenuation if needed
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+        one_minus_sum_beta_use = one_minus_sum_beta(INDEX_IJK,ispec)
+      else
+        one_minus_sum_beta_use = one_minus_sum_beta(1,1,1,ispec)
+      endif
+      mul = mul * one_minus_sum_beta_use
+    endif
+
+    lambdalplus2mul = kappal + FOUR_THIRDS * mul
+    lambdal = lambdalplus2mul - 2.0_CUSTOM_REAL*mul
+
+    ! compute stress sigma
+    sigma_xx(INDEX_IJK) = lambdalplus2mul*duxdxl(INDEX_IJK) + lambdal*duydyl_plus_duzdzl(INDEX_IJK)
+    sigma_yy(INDEX_IJK) = lambdalplus2mul*duydyl(INDEX_IJK) + lambdal*duxdxl_plus_duzdzl(INDEX_IJK)
+    sigma_zz(INDEX_IJK) = lambdalplus2mul*duzdzl(INDEX_IJK) + lambdal*duxdxl_plus_duydyl(INDEX_IJK)
+
+    sigma_xy(INDEX_IJK) = mul*duxdyl_plus_duydxl(INDEX_IJK)
+    sigma_xz(INDEX_IJK) = mul*duzdxl_plus_duxdzl(INDEX_IJK)
+    sigma_yz(INDEX_IJK) = mul*duzdyl_plus_duydzl(INDEX_IJK)
+
+  ENDDO_LOOP_IJK
+
+  ! attenuation contribution to stress
+  ! subtract memory variables if attenuation
+  if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+    call compute_element_stress_attenuation_contrib(R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
+                                                    R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
+                                                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+  endif
+
+  ! define symmetric components of sigma (to be general in case of gravity)
+  DO_LOOP_IJK
+
+    sigma_yx(INDEX_IJK) = sigma_xy(INDEX_IJK)
+    sigma_zx(INDEX_IJK) = sigma_xz(INDEX_IJK)
+    sigma_zy(INDEX_IJK) = sigma_yz(INDEX_IJK)
+
+  ENDDO_LOOP_IJK
+
+  ! compute non-symmetric terms for gravity
+  if (GRAVITY_VAL) then
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,jacobianl,wgll_cube, &
+                                 minus_gravity_table,minus_deriv_gravity_table,density_table, &
+                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+                                 sigma_xx,sigma_yy,sigma_zz, &
+                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                 rho_s_H)
+  endif
+
+  ! dot product of stress tensor with test vector, non-symmetric form
+  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+                                                sigma_xx,sigma_yy,sigma_zz, &
+                                                sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+
+  end subroutine compute_element_iso_ic
 
 
 !--------------------------------------------------------------------------------------------
@@ -590,7 +433,7 @@
 
   subroutine compute_element_tiso(ispec, &
                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                  xstore,ystore,zstore, &
+                                  rstore, &
                                   deriv, &
                                   wgll_cube, &
                                   kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -602,104 +445,105 @@
                                   dummyx_loc,dummyy_loc,dummyz_loc, &
                                   epsilondev_loc,rho_s_H)
 
-! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
+! tiso element in crust/mantle
 
-  use constants_solver
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+
+  use constants_solver,only: &
+    NSPEC => NSPEC_CRUST_MANTLE, &
+    NGLOB => NGLOB_CRUST_MANTLE, &
+    NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
+    NSPECMAX_TISO => NSPECMAX_TISO_MANTLE, &
+    NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
+    NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
+    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
+
   use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
 
   implicit none
 
   ! element id
-  integer :: ispec
+  integer,intent(in) :: ispec
 
   ! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 
   ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB),intent(in) :: rstore
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  double precision, dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
 
   ! store anisotropic properties only where needed to save memory
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO),intent(in) :: &
         kappahstore,muhstore,eta_anisostore
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
-        kappavstore,muvstore
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO),intent(in) :: kappavstore,muvstore
 
   ! attenuation
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
 
   ! variable sized array variables
-  integer :: vnspec
+  integer,intent(in) :: vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(in) :: one_minus_sum_beta
 
   ! gravity
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
+  double precision, dimension(NRAD_GRAVITY),intent(in) :: minus_gravity_table,density_table,minus_deriv_gravity_table
 
   ! element info
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM),intent(out) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
 
 ! local parameters
-  real(kind=CUSTOM_REAL) one_minus_sum_beta_use
+  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
+  real(kind=CUSTOM_REAL) :: c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
 
-  real(kind=CUSTOM_REAL) rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
+  real(kind=CUSTOM_REAL) :: rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
         cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
         costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
         sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta
 
-  real(kind=CUSTOM_REAL) two_rhovsvsq,two_rhovshsq ! two_rhovpvsq,two_rhovphsq
-  real(kind=CUSTOM_REAL) four_rhovsvsq,four_rhovshsq ! four_rhovpvsq,four_rhovphsq
+  real(kind=CUSTOM_REAL) :: two_rhovsvsq,two_rhovshsq ! two_rhovpvsq,two_rhovphsq
+  real(kind=CUSTOM_REAL) :: four_rhovsvsq,four_rhovshsq ! four_rhovpvsq,four_rhovphsq
 
-  real(kind=CUSTOM_REAL) twoetaminone,etaminone,eta_aniso
-  real(kind=CUSTOM_REAL) two_eta_aniso,four_eta_aniso,six_eta_aniso
-#ifdef FORCE_VECTORIZATION
+  real(kind=CUSTOM_REAL) :: twoetaminone,etaminone,eta_aniso
+  real(kind=CUSTOM_REAL) :: two_eta_aniso,four_eta_aniso,six_eta_aniso
+
+  ! local element arrays
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
-  real(kind=CUSTOM_REAL) duxdyl,duxdzl,duydxl,duydzl,duzdxl,duzdyl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl,duydyl,duzdzl
-#else
-  real(kind=CUSTOM_REAL) jacobianl
-  real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
-#endif
-  real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
-#ifdef FORCE_VECTORIZATION
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
-#else
-  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
-#endif
-  real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
 
-  real(kind=CUSTOM_REAL) templ
-  real(kind=CUSTOM_REAL) templ1,templ1_cos,templ2,templ2_cos,templ3,templ3_two,templ3_cos
-  real(kind=CUSTOM_REAL) kappavl,kappahl,muvl,muhl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xx,sigma_yy,sigma_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
 
-  ! for gravity
-  double precision dphi,dtheta
-  double precision radius,rho,minus_g,minus_dg
-  double precision minus_g_over_radius,minus_dg_plus_g_over_radius
-  double precision cos_theta,sin_theta,cos_phi,sin_phi
-  double precision cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
-  double precision factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
-  double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
-  real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
+  real(kind=CUSTOM_REAL) :: templ1,templ1_cos,templ2,templ2_cos,templ3,templ3_two,templ3_cos
+  real(kind=CUSTOM_REAL) :: kappavl,kappahl,muvl,muhl
 
-  integer :: int_radius
   integer :: iglob
 
 #ifdef FORCE_VECTORIZATION
@@ -707,204 +551,33 @@
 ! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
 ! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
   integer :: ijk
-  real(kind=CUSTOM_REAL) :: R_xx_val,R_yy_val
 #else
   integer :: i,j,k
 #endif
+! note: profiling shows that this routine takes about 30% of the total time, another 60% is spend in the iso routine above..
 
   ! transverse isotropic element
 
+  ! precomputes factors
+  call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          duxdxl,duydyl,duzdzl, &
+                                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
+                                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
+
+  ! compute deviatoric strain
+  if (COMPUTE_AND_STORE_STRAIN) then
+    call compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
+                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
+                                           ispec,NSPEC_STRAIN_ONLY, &
+                                           epsilon_trace_over_3,epsilondev_loc)
+  endif
+
+
+  !
+  ! compute either transversely isotropic elements
+  !
   DO_LOOP_IJK
-
-    ! compute the Jacobian
-#ifdef FORCE_VECTORIZATION
-    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
-                                            *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                             -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
-                                             -deriv(2,INDEX_IJK,ispec) &
-                                            *(deriv(4,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                             -deriv(6,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)) &
-                                             +deriv(3,INDEX_IJK,ispec) &
-                                            *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
-                                             -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
-#else
-    jacobianl = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
-                                 *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                  -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
-                                  -deriv(2,INDEX_IJK,ispec) &
-                                 *(deriv(4,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                  -deriv(6,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)) &
-                                  +deriv(3,INDEX_IJK,ispec) &
-                                 *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
-                                  -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    duxdxl(INDEX_IJK) = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-                      + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-                      + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdyl            = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-                      + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-                      + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdzl            = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-                      + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-                      + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-#else
-    duxdxl = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdyl = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdzl = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    duydxl            = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-                      + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-                      + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydyl(INDEX_IJK) = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-                      + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-                      + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydzl            = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-                      + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-                      + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-#else
-    duydxl = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydyl = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydzl = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    duzdxl            = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-                      + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-                      + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdyl            = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-                      + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-                      + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdzl(INDEX_IJK) = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-                      + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-                      + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-#else
-    duzdxl = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdyl = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdzl = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-#endif
-
-    ! precompute some sums to save CPU time
-#ifdef FORCE_VECTORIZATION
-    duxdxl_plus_duydyl = duxdxl(INDEX_IJK) + duydyl(INDEX_IJK)
-    duxdxl_plus_duzdzl = duxdxl(INDEX_IJK) + duzdzl(INDEX_IJK)
-    duydyl_plus_duzdzl = duydyl(INDEX_IJK) + duzdzl(INDEX_IJK)
-    duxdyl_plus_duydxl(INDEX_IJK) = duxdyl + duydxl
-    duzdxl_plus_duxdzl(INDEX_IJK) = duzdxl + duxdzl
-    duzdyl_plus_duydzl(INDEX_IJK) = duzdyl + duydzl
-#else
-    duxdxl_plus_duydyl = duxdxl + duydyl
-    duxdxl_plus_duzdzl = duxdxl + duzdzl
-    duydyl_plus_duzdzl = duydyl + duzdzl
-    duxdyl_plus_duydxl = duxdyl + duydxl
-    duzdxl_plus_duxdzl = duzdxl + duxdzl
-    duzdyl_plus_duydzl = duzdyl + duydzl
-#endif
-
-#ifdef FORCE_VECTORIZATION
-  ENDDO_LOOP_IJK
-#endif
-
-!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
-!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
-!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
-!ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
-!ZN from the expression in which we use the strain later in the code.
-
-    ! compute deviatoric strain
-#ifdef FORCE_VECTORIZATION
-    if (COMPUTE_AND_STORE_STRAIN) then
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-        if (ispec == 1) then
-
-          DO_LOOP_IJK
-
-            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-            epsilon_trace_over_3(INDEX_IJK,1) = templ
-            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-
-          ENDDO_LOOP_IJK
-
-        else
-
-          DO_LOOP_IJK
-
-            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-
-          ENDDO_LOOP_IJK
-
-        endif
-      else
-
-          DO_LOOP_IJK
-
-            templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
-            epsilon_trace_over_3(INDEX_IJK,ispec) = templ
-            epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
-            epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
-            epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
-
-          ENDDO_LOOP_IJK
-
-      endif
-    endif
-#else
-    if (COMPUTE_AND_STORE_STRAIN) then
-      templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-        if (ispec == 1) then
-          epsilon_trace_over_3(INDEX_IJK,1) = templ
-        endif
-      else
-        epsilon_trace_over_3(INDEX_IJK,ispec) = templ
-      endif
-      epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
-      epsilondev_loc(INDEX_IJK,2) = duydyl - templ
-      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-    endif
-#endif
-
-#ifdef FORCE_VECTORIZATION
-  DO_LOOP_IJK
-#endif
-
-    !
-    ! compute either isotropic or anisotropic elements
-    !
 
 ! note: the mesh is built such that anisotropic elements are created first in anisotropic layers,
 !           thus they are listed first ( see in create_regions_mesh.f90: perm_layer() ordering )
@@ -939,11 +612,11 @@
     eta_aniso = eta_anisostore(INDEX_IJK,ispec)  !!! that is  F / (A - 2 L)
 
     ! use mesh coordinates to get theta and phi
-    ! ystore and zstore contain theta and phi
+    ! rstore contains theta and phi
     iglob = ibool(INDEX_IJK,ispec)
 
-    theta = ystore(iglob)
-    phi = zstore(iglob)
+    theta = rstore(2,iglob)
+    phi = rstore(3,iglob)
 
      ! precompute some products to reduce the CPU time
 
@@ -1100,238 +773,58 @@
           - 0.5_CUSTOM_REAL*eta_aniso*sintwophisq*sinthetafour*(rhovphsq - two_rhovsvsq)
 
     ! general expression of stress tensor for full Cijkl with 21 coefficients
-#ifdef FORCE_VECTORIZATION
-    sigma_xx = c11*duxdxl(INDEX_IJK) + c16*duxdyl_plus_duydxl(INDEX_IJK) + c12*duydyl(INDEX_IJK) + &
+    sigma_xx(INDEX_IJK) = c11*duxdxl(INDEX_IJK) + c16*duxdyl_plus_duydxl(INDEX_IJK) + c12*duydyl(INDEX_IJK) + &
              c15*duzdxl_plus_duxdzl(INDEX_IJK) + c14*duzdyl_plus_duydzl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
 
-    sigma_yy = c12*duxdxl(INDEX_IJK) + c26*duxdyl_plus_duydxl(INDEX_IJK) + c22*duydyl(INDEX_IJK) + &
+    sigma_yy(INDEX_IJK) = c12*duxdxl(INDEX_IJK) + c26*duxdyl_plus_duydxl(INDEX_IJK) + c22*duydyl(INDEX_IJK) + &
              c25*duzdxl_plus_duxdzl(INDEX_IJK) + c24*duzdyl_plus_duydzl(INDEX_IJK) + c23*duzdzl(INDEX_IJK)
 
-    sigma_zz = c13*duxdxl(INDEX_IJK) + c36*duxdyl_plus_duydxl(INDEX_IJK) + c23*duydyl(INDEX_IJK) + &
+    sigma_zz(INDEX_IJK) = c13*duxdxl(INDEX_IJK) + c36*duxdyl_plus_duydxl(INDEX_IJK) + c23*duydyl(INDEX_IJK) + &
              c35*duzdxl_plus_duxdzl(INDEX_IJK) + c34*duzdyl_plus_duydzl(INDEX_IJK) + c33*duzdzl(INDEX_IJK)
 
-    sigma_xy = c16*duxdxl(INDEX_IJK) + c66*duxdyl_plus_duydxl(INDEX_IJK) + c26*duydyl(INDEX_IJK) + &
+    sigma_xy(INDEX_IJK) = c16*duxdxl(INDEX_IJK) + c66*duxdyl_plus_duydxl(INDEX_IJK) + c26*duydyl(INDEX_IJK) + &
              c56*duzdxl_plus_duxdzl(INDEX_IJK) + c46*duzdyl_plus_duydzl(INDEX_IJK) + c36*duzdzl(INDEX_IJK)
 
-    sigma_xz = c15*duxdxl(INDEX_IJK) + c56*duxdyl_plus_duydxl(INDEX_IJK) + c25*duydyl(INDEX_IJK) + &
+    sigma_xz(INDEX_IJK) = c15*duxdxl(INDEX_IJK) + c56*duxdyl_plus_duydxl(INDEX_IJK) + c25*duydyl(INDEX_IJK) + &
              c55*duzdxl_plus_duxdzl(INDEX_IJK) + c45*duzdyl_plus_duydzl(INDEX_IJK) + c35*duzdzl(INDEX_IJK)
 
-    sigma_yz = c14*duxdxl(INDEX_IJK) + c46*duxdyl_plus_duydxl(INDEX_IJK) + c24*duydyl(INDEX_IJK) + &
+    sigma_yz(INDEX_IJK) = c14*duxdxl(INDEX_IJK) + c46*duxdyl_plus_duydxl(INDEX_IJK) + c24*duydyl(INDEX_IJK) + &
              c45*duzdxl_plus_duxdzl(INDEX_IJK) + c44*duzdyl_plus_duydzl(INDEX_IJK) + c34*duzdzl(INDEX_IJK)
-#else
-    sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
-             c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
-
-    sigma_yy = c12*duxdxl + c26*duxdyl_plus_duydxl + c22*duydyl + &
-             c25*duzdxl_plus_duxdzl + c24*duzdyl_plus_duydzl + c23*duzdzl
-
-    sigma_zz = c13*duxdxl + c36*duxdyl_plus_duydxl + c23*duydyl + &
-             c35*duzdxl_plus_duxdzl + c34*duzdyl_plus_duydzl + c33*duzdzl
-
-    sigma_xy = c16*duxdxl + c66*duxdyl_plus_duydxl + c26*duydyl + &
-             c56*duzdxl_plus_duxdzl + c46*duzdyl_plus_duydzl + c36*duzdzl
-
-    sigma_xz = c15*duxdxl + c56*duxdyl_plus_duydxl + c25*duydyl + &
-             c55*duzdxl_plus_duxdzl + c45*duzdyl_plus_duydzl + c35*duzdzl
-
-    sigma_yz = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
-             c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
-#endif
-
-    ! subtract memory variables if attenuation
-    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
-#ifdef FORCE_VECTORIZATION
-      ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers
-      ! from vectorizing the outer loop
-
-      ! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop
-      ! in order to vectorize the outer loop
-      R_xx_val = R_xx(INDEX_IJK,1,ispec)
-      R_yy_val = R_yy(INDEX_IJK,1,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,1,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,1,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,1,ispec)
-
-      R_xx_val = R_xx(INDEX_IJK,2,ispec)
-      R_yy_val = R_yy(INDEX_IJK,2,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,2,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,2,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,2,ispec)
-
-      R_xx_val = R_xx(INDEX_IJK,3,ispec)
-      R_yy_val = R_yy(INDEX_IJK,3,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,3,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,3,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,3,ispec)
-#else
-      ! note: function inlining is generally done by fortran compilers;
-      !       compilers decide based on performance heuristics
-      ! note: fortran passes pointers to array location, thus R_memory(1,1,...) is fine
-      call compute_element_att_stress(i,j,k,R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
-                                      R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
-                                      sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
-#endif
-
-    endif ! ATTENUATION_VAL
-
-    ! define symmetric components of sigma for gravity
-    sigma_yx = sigma_xy
-    sigma_zx = sigma_xz
-    sigma_zy = sigma_yz
-
-    ! compute non-symmetric terms for gravity
-    if (GRAVITY_VAL) then
-      ! use mesh coordinates to get theta and phi
-      ! x y and z contain r theta and phi
-      iglob = ibool(INDEX_IJK,ispec)
-
-      dtheta = dble(ystore(iglob))
-      dphi = dble(zstore(iglob))
-      radius = dble(xstore(iglob))
-
-      cos_theta = dcos(dtheta)
-      sin_theta = dsin(dtheta)
-      cos_phi = dcos(dphi)
-      sin_phi = dsin(dphi)
-
-      cos_theta_sq = cos_theta*cos_theta
-      sin_theta_sq = sin_theta*sin_theta
-      cos_phi_sq = cos_phi*cos_phi
-      sin_phi_sq = sin_phi*sin_phi
-
-      ! get g, rho and dg/dr=dg
-      ! spherical components of the gravitational acceleration
-      ! for efficiency replace with lookup table every 100 m in radial direction
-      int_radius = nint(10.d0 * radius * R_EARTH_KM )
-      minus_g = minus_gravity_table(int_radius)
-      minus_dg = minus_deriv_gravity_table(int_radius)
-      rho = density_table(int_radius)
-
-      ! Cartesian components of the gravitational acceleration
-      gxl = minus_g*sin_theta*cos_phi
-      gyl = minus_g*sin_theta*sin_phi
-      gzl = minus_g*cos_theta
-
-      ! Cartesian components of gradient of gravitational acceleration
-      ! obtained from spherical components
-      minus_g_over_radius = minus_g / radius
-      minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
-
-      Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-      Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-      Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-      Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-      Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-      Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
-
-      ! get displacement and multiply by density to compute G tensor
-      sx_l = rho * dble(dummyx_loc(INDEX_IJK))
-      sy_l = rho * dble(dummyy_loc(INDEX_IJK))
-      sz_l = rho * dble(dummyz_loc(INDEX_IJK))
-
-      ! compute G tensor from s . g and add to sigma (not symmetric)
-      sigma_xx = sigma_xx + real(sy_l*gyl + sz_l*gzl, kind=CUSTOM_REAL)
-      sigma_yy = sigma_yy + real(sx_l*gxl + sz_l*gzl, kind=CUSTOM_REAL)
-      sigma_zz = sigma_zz + real(sx_l*gxl + sy_l*gyl, kind=CUSTOM_REAL)
-
-      sigma_xy = sigma_xy - real(sx_l * gyl, kind=CUSTOM_REAL)
-      sigma_yx = sigma_yx - real(sy_l * gxl, kind=CUSTOM_REAL)
-
-      sigma_xz = sigma_xz - real(sx_l * gzl, kind=CUSTOM_REAL)
-      sigma_zx = sigma_zx - real(sz_l * gxl, kind=CUSTOM_REAL)
-
-      sigma_yz = sigma_yz - real(sy_l * gzl, kind=CUSTOM_REAL)
-      sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
-
-      ! precompute vector
-#ifdef FORCE_VECTORIZATION
-      factor = dble(jacobianl(INDEX_IJK)) * wgll_cube(INDEX_IJK)
-#else
-      factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-#endif
-      rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
-      rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
-      rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
-
-    endif  ! end of section with gravity terms
-
-    ! form dot product with test vector, non-symmetric form
-#ifdef FORCE_VECTORIZATION
-    tempx1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
-                                              + sigma_yx*deriv(2,INDEX_IJK,ispec) &
-                                              + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
-                                              + sigma_yy*deriv(2,INDEX_IJK,ispec) &
-                                              + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz1(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
-                                              + sigma_yz*deriv(2,INDEX_IJK,ispec) &
-                                              + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
-#else
-    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    tempx2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
-                                              + sigma_yx*deriv(5,INDEX_IJK,ispec) &
-                                              + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
-                                              + sigma_yy*deriv(5,INDEX_IJK,ispec) &
-                                              + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz2(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
-                                              + sigma_yz*deriv(5,INDEX_IJK,ispec) &
-                                              + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
-#else
-    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
-#endif
-
-#ifdef FORCE_VECTORIZATION
-    tempx3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
-                                              + sigma_yx*deriv(8,INDEX_IJK,ispec) &
-                                              + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
-                                              + sigma_yy*deriv(8,INDEX_IJK,ispec) &
-                                              + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz3(INDEX_IJK) = jacobianl(INDEX_IJK) * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
-                                              + sigma_yz*deriv(8,INDEX_IJK,ispec) &
-                                              + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
-#else
-    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
-#endif
 
   ENDDO_LOOP_IJK
+
+  ! attenuation contribution to stress
+  ! subtract memory variables if attenuation
+  if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+    call compute_element_stress_attenuation_contrib(R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
+                                                    R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
+                                                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+  endif
+
+  ! define symmetric components of sigma (to be general in case of gravity)
+  DO_LOOP_IJK
+
+    sigma_yx(INDEX_IJK) = sigma_xy(INDEX_IJK)
+    sigma_zx(INDEX_IJK) = sigma_xz(INDEX_IJK)
+    sigma_zy(INDEX_IJK) = sigma_yz(INDEX_IJK)
+
+  ENDDO_LOOP_IJK
+
+  ! compute non-symmetric terms for gravity
+  if (GRAVITY_VAL) then
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,jacobianl,wgll_cube, &
+                                 minus_gravity_table,minus_deriv_gravity_table,density_table, &
+                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+                                 sigma_xx,sigma_yy,sigma_zz, &
+                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                 rho_s_H)
+  endif
+
+  ! dot product of stress tensor with test vector, non-symmetric form
+  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+                                                sigma_xx,sigma_yy,sigma_zz, &
+                                                sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
 
   end subroutine compute_element_tiso
 
@@ -1344,7 +837,7 @@
 
   subroutine compute_element_aniso(ispec, &
                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                   xstore,ystore,zstore, &
+                                   rstore, &
                                    deriv, &
                                    wgll_cube, &
                                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -1358,27 +851,44 @@
                                    dummyx_loc,dummyy_loc,dummyz_loc, &
                                    epsilondev_loc,rho_s_H)
 
-  use constants_solver
+! fully anisotropic element in crust/mantle region
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+
+  use constants_solver,only: &
+    NSPEC => NSPEC_CRUST_MANTLE, &
+    NGLOB => NGLOB_CRUST_MANTLE, &
+    NSPECMAX_ANISO => NSPECMAX_ANISO_MANTLE, &
+    NSPEC_ATTENUATION => NSPEC_CRUST_MANTLE_ATTENUATION, &
+    NSPEC_STRAIN_ONLY => NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
+    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
+
   use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
 
   implicit none
 
   ! element id
-  integer :: ispec
+  integer,intent(in) :: ispec
 
   ! arrays with mesh parameters per slice
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
 
   ! x y and z contain r theta and phi
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE) :: xstore,ystore,zstore
+  real(kind=CUSTOM_REAL), dimension(3,NGLOB),intent(in) :: rstore
 
-  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: deriv
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
 
   ! array with derivatives of Lagrange polynomials and precalculated products
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  double precision, dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
 
   ! arrays for full anisotropy only when needed
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO),intent(in) :: &
         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
         c36store,c44store,c45store,c46store,c55store,c56store,c66store
@@ -1387,143 +897,74 @@
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: R_xx,R_yy,R_xy,R_xz,R_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
 
-  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
 
   ! variable sized array variables
-  integer :: vnspec
+  integer,intent(in) :: vnspec
 
   ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: one_minus_sum_beta
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(in) :: one_minus_sum_beta
 
   ! gravity
-  double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table,density_table,minus_deriv_gravity_table
+  double precision, dimension(NRAD_GRAVITY),intent(in) :: minus_gravity_table,density_table,minus_deriv_gravity_table
 
   ! element info
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM),intent(out) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
 
   ! local parameters
-  real(kind=CUSTOM_REAL) minus_sum_beta,mul
+  real(kind=CUSTOM_REAL) :: minus_sum_beta,mul
   ! the 21 coefficients for an anisotropic medium in reduced notation
-  real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
+  real(kind=CUSTOM_REAL) :: c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
 
-  real(kind=CUSTOM_REAL) jacobianl
-  real(kind=CUSTOM_REAL) duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl
-  real(kind=CUSTOM_REAL) duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
-  real(kind=CUSTOM_REAL) duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
-  real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
+  ! local element arrays
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
 
-  real(kind=CUSTOM_REAL) templ
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
 
-  ! for gravity
-  double precision dphi,dtheta
-  double precision radius,rho,minus_g,minus_dg
-  double precision minus_g_over_radius,minus_dg_plus_g_over_radius
-  double precision cos_theta,sin_theta,cos_phi,sin_phi
-  double precision cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
-  double precision factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
-  double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
-  real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
-
-  integer :: int_radius
-  integer :: iglob
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xx,sigma_yy,sigma_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
 
 #ifdef FORCE_VECTORIZATION
 ! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
 ! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
 ! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
   integer :: ijk
-  real(kind=CUSTOM_REAL) :: R_xx_val,R_yy_val
 #else
   integer :: i,j,k
 #endif
 
   !  anisotropic elements
 
+  ! precomputes factors
+  call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          duxdxl,duydyl,duzdzl, &
+                                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
+                                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
+
+  ! compute deviatoric strain
+  if (COMPUTE_AND_STORE_STRAIN) then
+    call compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
+                                           duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
+                                           ispec,NSPEC_STRAIN_ONLY, &
+                                           epsilon_trace_over_3,epsilondev_loc)
+  endif
+
+  !
+  ! compute anisotropic elements
+  !
   DO_LOOP_IJK
-
-    ! compute the Jacobian
-    jacobianl = 1.0_CUSTOM_REAL / (deriv(1,INDEX_IJK,ispec) &
-                                 *(deriv(5,INDEX_IJK,ispec)*deriv(9,INDEX_IJK,ispec) &
-                                  -deriv(6,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec)) &
-                                  -deriv(2,INDEX_IJK,ispec) &
-                                 *(deriv(4,INDEX_IJK,ispec) &
-                                  *deriv(9,INDEX_IJK,ispec)-deriv(6,INDEX_IJK,ispec) &
-                                  *deriv(7,INDEX_IJK,ispec)) &
-                                  +deriv(3,INDEX_IJK,ispec) &
-                                 *(deriv(4,INDEX_IJK,ispec)*deriv(8,INDEX_IJK,ispec) &
-                                  -deriv(5,INDEX_IJK,ispec)*deriv(7,INDEX_IJK,ispec)))
-
-    duxdxl = deriv(1,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdyl = deriv(2,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-    duxdzl = deriv(3,INDEX_IJK,ispec)*tempx1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempx2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempx3(INDEX_IJK)
-
-    duydxl = deriv(1,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydyl = deriv(2,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-    duydzl = deriv(3,INDEX_IJK,ispec)*tempy1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempy2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempy3(INDEX_IJK)
-
-    duzdxl = deriv(1,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(4,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(7,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdyl = deriv(2,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(5,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(8,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-    duzdzl = deriv(3,INDEX_IJK,ispec)*tempz1(INDEX_IJK) &
-           + deriv(6,INDEX_IJK,ispec)*tempz2(INDEX_IJK) &
-           + deriv(9,INDEX_IJK,ispec)*tempz3(INDEX_IJK)
-
-    ! precompute some sums to save CPU time
-    duxdxl_plus_duydyl = duxdxl + duydyl
-    duxdxl_plus_duzdzl = duxdxl + duzdzl
-    duydyl_plus_duzdzl = duydyl + duzdzl
-    duxdyl_plus_duydxl = duxdyl + duydxl
-    duzdxl_plus_duxdzl = duzdxl + duxdzl
-    duzdyl_plus_duydzl = duzdyl + duydzl
-
-!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
-!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
-!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
-!ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
-!ZN from the expression in which we use the strain later in the code.
-
-    ! compute deviatoric strain
-    if (COMPUTE_AND_STORE_STRAIN) then
-      templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-      if (NSPEC_CRUST_MANTLE_STRAIN_ONLY == 1) then
-        if (ispec == 1) then
-          epsilon_trace_over_3(INDEX_IJK,1) = templ
-        endif
-      else
-        epsilon_trace_over_3(INDEX_IJK,ispec) = templ
-      endif
-      epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
-      epsilondev_loc(INDEX_IJK,2) = duydyl - templ
-      epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-      epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-      epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
-    endif
-
-    !
-    ! compute anisotropic elements
-    !
 
     c11 = c11store(INDEX_IJK,ispec)
     c12 = c12store(INDEX_IJK,ispec)
@@ -1566,180 +1007,284 @@
       c66 = c66 + mul
     endif
 
-    sigma_xx = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
-             c15*duzdxl_plus_duxdzl + c14*duzdyl_plus_duydzl + c13*duzdzl
+    sigma_xx(INDEX_IJK) = c11*duxdxl(INDEX_IJK) + c16*duxdyl_plus_duydxl(INDEX_IJK) + c12*duydyl(INDEX_IJK) + &
+             c15*duzdxl_plus_duxdzl(INDEX_IJK) + c14*duzdyl_plus_duydzl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
 
-    sigma_yy = c12*duxdxl + c26*duxdyl_plus_duydxl + c22*duydyl + &
-             c25*duzdxl_plus_duxdzl + c24*duzdyl_plus_duydzl + c23*duzdzl
+    sigma_yy(INDEX_IJK) = c12*duxdxl(INDEX_IJK) + c26*duxdyl_plus_duydxl(INDEX_IJK) + c22*duydyl(INDEX_IJK) + &
+             c25*duzdxl_plus_duxdzl(INDEX_IJK) + c24*duzdyl_plus_duydzl(INDEX_IJK) + c23*duzdzl(INDEX_IJK)
 
-    sigma_zz = c13*duxdxl + c36*duxdyl_plus_duydxl + c23*duydyl + &
-             c35*duzdxl_plus_duxdzl + c34*duzdyl_plus_duydzl + c33*duzdzl
+    sigma_zz(INDEX_IJK) = c13*duxdxl(INDEX_IJK) + c36*duxdyl_plus_duydxl(INDEX_IJK) + c23*duydyl(INDEX_IJK) + &
+             c35*duzdxl_plus_duxdzl(INDEX_IJK) + c34*duzdyl_plus_duydzl(INDEX_IJK) + c33*duzdzl(INDEX_IJK)
 
-    sigma_xy = c16*duxdxl + c66*duxdyl_plus_duydxl + c26*duydyl + &
-             c56*duzdxl_plus_duxdzl + c46*duzdyl_plus_duydzl + c36*duzdzl
+    sigma_xy(INDEX_IJK) = c16*duxdxl(INDEX_IJK) + c66*duxdyl_plus_duydxl(INDEX_IJK) + c26*duydyl(INDEX_IJK) + &
+             c56*duzdxl_plus_duxdzl(INDEX_IJK) + c46*duzdyl_plus_duydzl(INDEX_IJK) + c36*duzdzl(INDEX_IJK)
 
-    sigma_xz = c15*duxdxl + c56*duxdyl_plus_duydxl + c25*duydyl + &
-             c55*duzdxl_plus_duxdzl + c45*duzdyl_plus_duydzl + c35*duzdzl
+    sigma_xz(INDEX_IJK) = c15*duxdxl(INDEX_IJK) + c56*duxdyl_plus_duydxl(INDEX_IJK) + c25*duydyl(INDEX_IJK) + &
+             c55*duzdxl_plus_duxdzl(INDEX_IJK) + c45*duzdyl_plus_duydzl(INDEX_IJK) + c35*duzdzl(INDEX_IJK)
 
-    sigma_yz = c14*duxdxl + c46*duxdyl_plus_duydxl + c24*duydyl + &
-             c45*duzdxl_plus_duxdzl + c44*duzdyl_plus_duydzl + c34*duzdzl
-
-    ! subtract memory variables if attenuation
-    if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
-#ifdef FORCE_VECTORIZATION
-      ! do NOT put this is a subroutine, otherwise the call to the subroutine prevents compilers
-      ! from vectorizing the outer loop
-
-      ! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop
-      ! in order to vectorize the outer loop
-      R_xx_val = R_xx(INDEX_IJK,1,ispec)
-      R_yy_val = R_yy(INDEX_IJK,1,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,1,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,1,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,1,ispec)
-
-      R_xx_val = R_xx(INDEX_IJK,2,ispec)
-      R_yy_val = R_yy(INDEX_IJK,2,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,2,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,2,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,2,ispec)
-
-      R_xx_val = R_xx(INDEX_IJK,3,ispec)
-      R_yy_val = R_yy(INDEX_IJK,3,ispec)
-      sigma_xx = sigma_xx - R_xx_val
-      sigma_yy = sigma_yy - R_yy_val
-      sigma_zz = sigma_zz + R_xx_val + R_yy_val
-      sigma_xy = sigma_xy - R_xy(INDEX_IJK,3,ispec)
-      sigma_xz = sigma_xz - R_xz(INDEX_IJK,3,ispec)
-      sigma_yz = sigma_yz - R_yz(INDEX_IJK,3,ispec)
-#else
-      ! note: function inlining is generally done by fortran compilers;
-      !       compilers decide based on performance heuristics
-
-      ! note: Fortran passes pointers to array location, thus R_memory(1,1,...) is fine
-      call compute_element_att_stress(i,j,k,R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
-                                      R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
-                                      sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
-#endif
-    endif ! ATTENUATION_VAL
-
-    ! define symmetric components of sigma for gravity
-    sigma_yx = sigma_xy
-    sigma_zx = sigma_xz
-    sigma_zy = sigma_yz
-
-    ! compute non-symmetric terms for gravity
-    if (GRAVITY_VAL) then
-      ! use mesh coordinates to get theta and phi
-      ! x y and z contain r theta and phi
-      iglob = ibool(INDEX_IJK,ispec)
-
-      dtheta = dble(ystore(iglob))
-      dphi = dble(zstore(iglob))
-      radius = dble(xstore(iglob))
-
-      cos_theta = dcos(dtheta)
-      sin_theta = dsin(dtheta)
-      cos_phi = dcos(dphi)
-      sin_phi = dsin(dphi)
-
-      cos_theta_sq = cos_theta*cos_theta
-      sin_theta_sq = sin_theta*sin_theta
-      cos_phi_sq = cos_phi*cos_phi
-      sin_phi_sq = sin_phi*sin_phi
-
-      ! get g, rho and dg/dr=dg
-      ! spherical components of the gravitational acceleration
-      ! for efficiency replace with lookup table every 100 m in radial direction
-      int_radius = nint(10.d0 * radius * R_EARTH_KM )
-      minus_g = minus_gravity_table(int_radius)
-      minus_dg = minus_deriv_gravity_table(int_radius)
-      rho = density_table(int_radius)
-
-      ! Cartesian components of the gravitational acceleration
-      gxl = minus_g*sin_theta*cos_phi
-      gyl = minus_g*sin_theta*sin_phi
-      gzl = minus_g*cos_theta
-
-      ! Cartesian components of gradient of gravitational acceleration
-      ! obtained from spherical components
-      minus_g_over_radius = minus_g / radius
-      minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
-
-      Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-      Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-      Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-      Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-      Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-      Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
-
-      ! get displacement and multiply by density to compute G tensor
-      sx_l = rho * dble(dummyx_loc(INDEX_IJK)) ! dble(displ_crust_mantle(1,iglob))
-      sy_l = rho * dble(dummyy_loc(INDEX_IJK)) ! dble(displ_crust_mantle(2,iglob))
-      sz_l = rho * dble(dummyz_loc(INDEX_IJK)) !  dble(displ_crust_mantle(3,iglob))
-
-      ! compute G tensor from s . g and add to sigma (not symmetric)
-      sigma_xx = sigma_xx + real(sy_l*gyl + sz_l*gzl, kind=CUSTOM_REAL)
-      sigma_yy = sigma_yy + real(sx_l*gxl + sz_l*gzl, kind=CUSTOM_REAL)
-      sigma_zz = sigma_zz + real(sx_l*gxl + sy_l*gyl, kind=CUSTOM_REAL)
-
-      sigma_xy = sigma_xy - real(sx_l * gyl, kind=CUSTOM_REAL)
-      sigma_yx = sigma_yx - real(sy_l * gxl, kind=CUSTOM_REAL)
-
-      sigma_xz = sigma_xz - real(sx_l * gzl, kind=CUSTOM_REAL)
-      sigma_zx = sigma_zx - real(sz_l * gxl, kind=CUSTOM_REAL)
-
-      sigma_yz = sigma_yz - real(sy_l * gzl, kind=CUSTOM_REAL)
-      sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
-
-      ! precompute vector
-      factor = dble(jacobianl) * wgll_cube(INDEX_IJK)
-      rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
-      rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
-      rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
-
-    endif  ! end of section with gravity terms
-
-    ! form dot product with test vector, non-symmetric form
-    tempx1(INDEX_IJK) = jacobianl * (sigma_xx*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy1(INDEX_IJK) = jacobianl * (sigma_xy*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz1(INDEX_IJK) = jacobianl * (sigma_xz*deriv(1,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(2,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(3,INDEX_IJK,ispec)) ! this goes to accel_z
-
-    tempx2(INDEX_IJK) = jacobianl * (sigma_xx*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy2(INDEX_IJK) = jacobianl * (sigma_xy*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz2(INDEX_IJK) = jacobianl * (sigma_xz*deriv(4,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(5,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(6,INDEX_IJK,ispec)) ! this goes to accel_z
-
-    tempx3(INDEX_IJK) = jacobianl * (sigma_xx*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yx*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zx*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_x
-    tempy3(INDEX_IJK) = jacobianl * (sigma_xy*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yy*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zy*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_y
-    tempz3(INDEX_IJK) = jacobianl * (sigma_xz*deriv(7,INDEX_IJK,ispec) &
-                                   + sigma_yz*deriv(8,INDEX_IJK,ispec) &
-                                   + sigma_zz*deriv(9,INDEX_IJK,ispec)) ! this goes to accel_z
+    sigma_yz(INDEX_IJK) = c14*duxdxl(INDEX_IJK) + c46*duxdyl_plus_duydxl(INDEX_IJK) + c24*duydyl(INDEX_IJK) + &
+             c45*duzdxl_plus_duxdzl(INDEX_IJK) + c44*duzdyl_plus_duydzl(INDEX_IJK) + c34*duzdzl(INDEX_IJK)
 
   ENDDO_LOOP_IJK
 
+  ! attenuation contribution to stress
+  ! subtract memory variables if attenuation
+  if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+    call compute_element_stress_attenuation_contrib(R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
+                                                    R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
+                                                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+  endif
+
+  ! define symmetric components of sigma (to be general in case of gravity)
+  DO_LOOP_IJK
+
+    sigma_yx(INDEX_IJK) = sigma_xy(INDEX_IJK)
+    sigma_zx(INDEX_IJK) = sigma_xz(INDEX_IJK)
+    sigma_zy(INDEX_IJK) = sigma_yz(INDEX_IJK)
+
+  ENDDO_LOOP_IJK
+
+  ! compute non-symmetric terms for gravity
+  if (GRAVITY_VAL) then
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,jacobianl,wgll_cube, &
+                                 minus_gravity_table,minus_deriv_gravity_table,density_table, &
+                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+                                 sigma_xx,sigma_yy,sigma_zz, &
+                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                 rho_s_H)
+  endif
+
+  ! dot product of stress tensor with test vector, non-symmetric form
+  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+                                                sigma_xx,sigma_yy,sigma_zz, &
+                                                sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+
   end subroutine compute_element_aniso
+
+
+
+!
+!--------------------------------------------------------------------------------------------
+
+  subroutine compute_element_aniso_ic(ispec, &
+                                      minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                      rstore, &
+                                      deriv, &
+                                      wgll_cube, &
+                                      c11store,c12store,c13store,c33store,c44store, &
+                                      ibool, &
+                                      R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                      epsilon_trace_over_3, &
+                                      one_minus_sum_beta,vnspec, &
+                                      tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                      dummyx_loc,dummyy_loc,dummyz_loc, &
+                                      epsilondev_loc,rho_s_H)
+
+! anisotropic element in inner core with hexagonal symmetry (and vertical symmetry axis)
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+
+  use constants_solver,only:  &
+    NSPEC => NSPEC_INNER_CORE, &
+    NGLOB => NGLOB_INNER_CORE, &
+    NSPECMAX_ANISO => NSPECMAX_ANISO_IC, &
+    NSPEC_ATTENUATION => NSPEC_INNER_CORE_ATTENUATION, &
+    NSPEC_STRAIN_ONLY => NSPEC_INNER_CORE_STRAIN_ONLY, &
+    ATT1_VAL,ATT2_VAL,ATT3_VAL, &
+    ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
+    PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
+
+  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
+
+  implicit none
+
+  ! element id
+  integer,intent(in) :: ispec
+
+  ! arrays with mesh parameters per slice
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
+
+  ! x y and z contain r theta and phi
+  real(kind=CUSTOM_REAL), dimension(3,NGLOB),intent(in) :: rstore
+
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: deriv
+
+  ! array with derivatives of Lagrange polynomials and precalculated products
+  double precision, dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
+
+  ! arrays for full anisotropy only when needed
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO),intent(in) :: &
+        c11store,c12store,c13store,c33store,c44store
+
+  !real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: muvstore
+
+  ! attenuation
+  ! memory variables for attenuation
+  ! memory variables R_ij are stored at the local rather than global level
+  ! to allow for optimization of cache access by compiler
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_ATTENUATION),intent(in) :: &
+    R_xx,R_yy,R_xy,R_xz,R_yz
+
+  real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+
+  ! variable sized array variables
+  integer,intent(in) :: vnspec
+
+  ! [alpha,beta,gamma]val reduced to N_SLS  to N_SLS*NUM_NODES
+  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec),intent(in) :: one_minus_sum_beta
+
+  ! gravity
+  double precision, dimension(NRAD_GRAVITY),intent(in) :: minus_gravity_table,density_table,minus_deriv_gravity_table
+
+  ! element info
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: &
+    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM),intent(out) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: minus_sum_beta,mul
+  real(kind=CUSTOM_REAL) :: c11,c33,c44,c12,c13
+
+  ! local element arrays
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: jacobianl
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl, duydyl, duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xx,sigma_yy,sigma_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
+
+#ifdef FORCE_VECTORIZATION
+! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
+! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
+! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+  !  anisotropic elements
+
+  ! precomputes factors
+  call compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                          deriv(:,:,:,:,ispec),jacobianl, &
+                                          duxdxl,duydyl,duzdzl, &
+                                          duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
+                                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
+
+  ! compute deviatoric strain
+  if (COMPUTE_AND_STORE_STRAIN) then
+    call compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
+                                          duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
+                                          ispec,NSPEC_STRAIN_ONLY, &
+                                          epsilon_trace_over_3,epsilondev_loc)
+  endif
+
+  !
+  ! compute anisotropic elements
+  !
+  DO_LOOP_IJK
+
+    ! elastic tensor for hexagonal symmetry in reduced notation:
+    !
+    !      c11 c12 c13  0   0        0
+    !      c12 c11 c13  0   0        0
+    !      c13 c13 c33  0   0        0
+    !       0   0   0  c44  0        0
+    !       0   0   0   0  c44       0
+    !       0   0   0   0   0  (c11-c12)/2
+    !
+    !       in terms of the A, C, L, N and F of Love (1927):
+    !
+    !       c11 = A
+    !       c12 = A-2N
+    !       c13 = F
+    !       c33 = C
+    !       c44 = L
+    c11 = c11store(INDEX_IJK,ispec)
+    c12 = c12store(INDEX_IJK,ispec)
+    c13 = c13store(INDEX_IJK,ispec)
+    c33 = c33store(INDEX_IJK,ispec)
+    c44 = c44store(INDEX_IJK,ispec)
+
+    if (ATTENUATION_VAL) then
+      ! precompute terms for attenuation if needed
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+        minus_sum_beta =  one_minus_sum_beta(INDEX_IJK,ispec) - 1.0_CUSTOM_REAL
+      else
+        minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
+      endif
+
+      ! note: muvstore has still original values, whereas c11store,.., have been rescaled due to attenuation
+      !
+      ! please check:
+      ! shear along [100] direction: mul = c44
+      ! instead of
+      !mul = muvstore(INDEX_IJK,ispec) * minus_sum_beta
+      ! this would be following the implementation from above for fully anisotropic elements...
+      mul = c44 * minus_sum_beta
+
+      c11 = c11 + FOUR_THIRDS * mul ! * minus_sum_beta * mul
+      c12 = c12 - TWO_THIRDS * mul
+      c13 = c13 - TWO_THIRDS * mul
+      c33 = c33 + FOUR_THIRDS * mul
+      c44 = c44 + mul
+    endif
+
+    sigma_xx(INDEX_IJK) = c11*duxdxl(INDEX_IJK) + c12*duydyl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
+    sigma_yy(INDEX_IJK) = c12*duxdxl(INDEX_IJK) + c11*duydyl(INDEX_IJK) + c13*duzdzl(INDEX_IJK)
+    sigma_zz(INDEX_IJK) = c13*duxdxl(INDEX_IJK) + c13*duydyl(INDEX_IJK) + c33*duzdzl(INDEX_IJK)
+
+    sigma_xy(INDEX_IJK) = 0.5_CUSTOM_REAL*(c11-c12)*duxdyl_plus_duydxl(INDEX_IJK)
+    sigma_xz(INDEX_IJK) = c44*duzdxl_plus_duxdzl(INDEX_IJK)
+    sigma_yz(INDEX_IJK) = c44*duzdyl_plus_duydzl(INDEX_IJK)
+
+  ENDDO_LOOP_IJK
+
+  ! attenuation contribution to stress
+  ! subtract memory variables if attenuation
+  if (ATTENUATION_VAL .and. .not. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
+    call compute_element_stress_attenuation_contrib(R_xx(1,1,1,1,ispec),R_yy(1,1,1,1,ispec),R_xy(1,1,1,1,ispec), &
+                                                    R_xz(1,1,1,1,ispec),R_yz(1,1,1,1,ispec), &
+                                                    sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+  endif
+
+  ! define symmetric components of sigma (to be general in case of gravity)
+  DO_LOOP_IJK
+
+    sigma_yx(INDEX_IJK) = sigma_xy(INDEX_IJK)
+    sigma_zx(INDEX_IJK) = sigma_xz(INDEX_IJK)
+    sigma_zy(INDEX_IJK) = sigma_yz(INDEX_IJK)
+
+  ENDDO_LOOP_IJK
+
+  ! compute non-symmetric terms for gravity
+  if (GRAVITY_VAL) then
+    call compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,jacobianl,wgll_cube, &
+                                 minus_gravity_table,minus_deriv_gravity_table,density_table, &
+                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+                                 sigma_xx,sigma_yy,sigma_zz, &
+                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                 rho_s_H)
+  endif
+
+  ! dot product of stress tensor with test vector, non-symmetric form
+  call compute_element_dot_product_stress(deriv(:,:,:,:,ispec),jacobianl, &
+                                                sigma_xx,sigma_yy,sigma_zz, &
+                                                sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+
+  end subroutine compute_element_aniso_ic
 
 
 
@@ -1748,582 +1293,527 @@
 ! helper functions
 !
 !--------------------------------------------------------------------------------------------
+
 !
 ! please leave this routine in this file, to help compilers inlining this function...
 !
 
+! we can force inlining (Intel compiler)
+!DIR$ATTRIBUTES INLINE :: compute_element_stress_attenuation_contrib
+  subroutine compute_element_stress_attenuation_contrib(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
+                                                        sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
 
-  subroutine compute_element_att_stress(i,j,k,R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
-                                       sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+! updates stress with attenuation coontribution
 
-! updates stress with attenuation correction
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,N_SLS
 
-
-  use constants_solver,only: CUSTOM_REAL,N_SLS,NGLLX,NGLLY,NGLLZ
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
 
   implicit none
 
-  integer, intent(in) :: i,j,k
   ! attenuation
   ! memory variables for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_xx_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_yy_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_xy_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_xz_loc
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS) :: R_yz_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS),intent(in) :: R_xx_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS),intent(in) :: R_yy_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS),intent(in) :: R_xy_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS),intent(in) :: R_xz_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS),intent(in) :: R_yz_loc
 
-  real(kind=CUSTOM_REAL) sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: sigma_xx,sigma_yy,sigma_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: sigma_xy,sigma_xz,sigma_yz
 
-! local parameters
-  real(kind=CUSTOM_REAL) R_xx_val,R_yy_val
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: R_xx_val,R_yy_val
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
   integer :: i_SLS
+#endif
 
+#ifdef FORCE_VECTORIZATION
+
+  ! here we assume that N_SLS == 3 in order to be able to unroll and suppress the loop
+  ! in order to vectorize the outer loop
+  DO_LOOP_IJK
+
+    R_xx_val = R_xx_loc(INDEX_IJK,1)
+    R_yy_val = R_yy_loc(INDEX_IJK,1)
+    sigma_xx(INDEX_IJK) = sigma_xx(INDEX_IJK) - R_xx_val
+    sigma_yy(INDEX_IJK) = sigma_yy(INDEX_IJK) - R_yy_val
+    sigma_zz(INDEX_IJK) = sigma_zz(INDEX_IJK) + R_xx_val + R_yy_val
+    sigma_xy(INDEX_IJK) = sigma_xy(INDEX_IJK) - R_xy_loc(INDEX_IJK,1)
+    sigma_xz(INDEX_IJK) = sigma_xz(INDEX_IJK) - R_xz_loc(INDEX_IJK,1)
+    sigma_yz(INDEX_IJK) = sigma_yz(INDEX_IJK) - R_yz_loc(INDEX_IJK,1)
+
+    R_xx_val = R_xx_loc(INDEX_IJK,2)
+    R_yy_val = R_yy_loc(INDEX_IJK,2)
+    sigma_xx(INDEX_IJK) = sigma_xx(INDEX_IJK) - R_xx_val
+    sigma_yy(INDEX_IJK) = sigma_yy(INDEX_IJK) - R_yy_val
+    sigma_zz(INDEX_IJK) = sigma_zz(INDEX_IJK) + R_xx_val + R_yy_val
+    sigma_xy(INDEX_IJK) = sigma_xy(INDEX_IJK) - R_xy_loc(INDEX_IJK,2)
+    sigma_xz(INDEX_IJK) = sigma_xz(INDEX_IJK) - R_xz_loc(INDEX_IJK,2)
+    sigma_yz(INDEX_IJK) = sigma_yz(INDEX_IJK) - R_yz_loc(INDEX_IJK,2)
+
+    R_xx_val = R_xx_loc(INDEX_IJK,3)
+    R_yy_val = R_yy_loc(INDEX_IJK,3)
+    sigma_xx(INDEX_IJK) = sigma_xx(INDEX_IJK) - R_xx_val
+    sigma_yy(INDEX_IJK) = sigma_yy(INDEX_IJK) - R_yy_val
+    sigma_zz(INDEX_IJK) = sigma_zz(INDEX_IJK) + R_xx_val + R_yy_val
+    sigma_xy(INDEX_IJK) = sigma_xy(INDEX_IJK) - R_xy_loc(INDEX_IJK,3)
+    sigma_xz(INDEX_IJK) = sigma_xz(INDEX_IJK) - R_xz_loc(INDEX_IJK,3)
+    sigma_yz(INDEX_IJK) = sigma_yz(INDEX_IJK) - R_yz_loc(INDEX_IJK,3)
+
+  ENDDO_LOOP_IJK
+
+#else
+
+  ! loops over standard linear solids
   do i_SLS = 1,N_SLS
-    R_xx_val = R_xx_loc(i,j,k,i_SLS)
-    R_yy_val = R_yy_loc(i,j,k,i_SLS)
-    sigma_xx = sigma_xx - R_xx_val
-    sigma_yy = sigma_yy - R_yy_val
-    sigma_zz = sigma_zz + R_xx_val + R_yy_val
-    sigma_xy = sigma_xy - R_xy_loc(i,j,k,i_SLS)
-    sigma_xz = sigma_xz - R_xz_loc(i,j,k,i_SLS)
-    sigma_yz = sigma_yz - R_yz_loc(i,j,k,i_SLS)
+
+    DO_LOOP_IJK
+
+      R_xx_val = R_xx_loc(INDEX_IJK,i_SLS)
+      R_yy_val = R_yy_loc(INDEX_IJK,i_SLS)
+      sigma_xx(INDEX_IJK) = sigma_xx(INDEX_IJK) - R_xx_val
+      sigma_yy(INDEX_IJK) = sigma_yy(INDEX_IJK) - R_yy_val
+      sigma_zz(INDEX_IJK) = sigma_zz(INDEX_IJK) + R_xx_val + R_yy_val
+      sigma_xy(INDEX_IJK) = sigma_xy(INDEX_IJK) - R_xy_loc(INDEX_IJK,i_SLS)
+      sigma_xz(INDEX_IJK) = sigma_xz(INDEX_IJK) - R_xz_loc(INDEX_IJK,i_SLS)
+      sigma_yz(INDEX_IJK) = sigma_yz(INDEX_IJK) - R_yz_loc(INDEX_IJK,i_SLS)
+
+    ENDDO_LOOP_IJK
+
   enddo
 
-  end subroutine compute_element_att_stress
+#endif
 
-! for reference...
-!!--------------------------------------------------------------------------------------------
-!!
-!! Deville et al. 2002
-!! Higher-Order Methods for Incompressible Fluid Flow
-!!
-!! subroutines adapted from Deville, Fischer and Mund, High-order methods
-!! for incompressible fluid flow, Cambridge University Press (2002),
-!! pages 386 and 389 and Figure 8.3.1
-!!
-!!--------------------------------------------------------------------------------------------
-!
-!! matrix - matrix multiplications
-!
-!! single component routines
-!
-!  subroutine mxm(A,n1,B,n2,C,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n2,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
-!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-!
-!  ! chooses optimized version
-!  select case (n2)
-!
-!  case (4)
-!    call mxm4(A,n1,B,C,n3)
-!
-!  case (5)
-!    call mxm5(A,n1,B,C,n3)
-!
-!  case (6)
-!    call mxm6(A,n1,B,C,n3)
-!
-!  case (7)
-!    call mxm7(A,n1,B,C,n3)
-!
-!  case (8)
-!    call mxm8(A,n1,B,C,n3)
-!
-!  case default
-!    call mxmN(A,n1,B,n2,C,n3)
-!
-!  end select
-!
-!  end subroutine mxm
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm4(A,n1,B,C,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,4) :: A
-!  real(kind=CUSTOM_REAL),dimension(4,n3) :: B
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C(i,j) =  A(i,1) * B(1,j) &
-!              + A(i,2) * B(2,j) &
-!              + A(i,3) * B(3,j) &
-!              + A(i,4) * B(4,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm4
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm5(A,n1,B,C,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
-!  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C(i,j) =  A(i,1) * B(1,j) &
-!              + A(i,2) * B(2,j) &
-!              + A(i,3) * B(3,j) &
-!              + A(i,4) * B(4,j) &
-!              + A(i,5) * B(5,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm5
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm6(A,n1,B,C,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,6) :: A
-!  real(kind=CUSTOM_REAL),dimension(6,n3) :: B
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C(i,j) =  A(i,1) * B(1,j) &
-!              + A(i,2) * B(2,j) &
-!              + A(i,3) * B(3,j) &
-!              + A(i,4) * B(4,j) &
-!              + A(i,5) * B(5,j) &
-!              + A(i,6) * B(6,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm6
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm7(A,n1,B,C,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,7) :: A
-!  real(kind=CUSTOM_REAL),dimension(7,n3) :: B
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C(i,j) =  A(i,1) * B(1,j) &
-!              + A(i,2) * B(2,j) &
-!              + A(i,3) * B(3,j) &
-!              + A(i,4) * B(4,j) &
-!              + A(i,5) * B(5,j) &
-!              + A(i,6) * B(6,j) &
-!              + A(i,7) * B(7,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm7
-!
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm8(A,n1,B,C,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,8) :: A
-!  real(kind=CUSTOM_REAL),dimension(8,n3) :: B
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C(i,j) =  A(i,1) * B(1,j) &
-!              + A(i,2) * B(2,j) &
-!              + A(i,3) * B(3,j) &
-!              + A(i,4) * B(4,j) &
-!              + A(i,5) * B(5,j) &
-!              + A(i,6) * B(6,j) &
-!              + A(i,7) * B(7,j) &
-!              + A(i,8) * B(8,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm8
-!
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxmN(A,n1,B,n2,C,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n2,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
-!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
-!
-!  ! local parameters
-!  integer :: i,j,k
-!  real(kind=CUSTOM_REAL) :: tmp
-!
-!  ! general matrix-matrix multiplication
-!  do j = 1,n3
-!    do k = 1,n2
-!      tmp = B(k,j)
-!      do i = 1,n1
-!        C(i,j) = C(i,j) + A(i,k) * tmp
-!      enddo
-!    enddo
-!  enddo
-!
-!  end subroutine mxmN
-!
-!
-!!----------------------------------------------------------------------------------------------
-!
-!
-!
-!! 3-component routines: combines arrays A1,A2,A3 which correspond to 3 different components x/y/z
-!
-!  subroutine mxm_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n2,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
-!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-!
-!  ! chooses optimized version
-!  select case (n2)
-!
-!  case (4)
-!    call mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  case (5)
-!    call mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  case (6)
-!    call mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  case (7)
-!    call mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  case (8)
-!    call mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  case default
-!    call mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
-!
-!  end select
-!
-!  end subroutine mxm_3comp
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,4) :: A1,A2,A3
-!  real(kind=CUSTOM_REAL),dimension(4,n3) :: B1,B2,B3
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C1(i,j) =  A1(i,1) * B1(1,j) &
-!               + A1(i,2) * B1(2,j) &
-!               + A1(i,3) * B1(3,j) &
-!               + A1(i,4) * B1(4,j)
-!
-!      C2(i,j) =  A2(i,1) * B2(1,j) &
-!               + A2(i,2) * B2(2,j) &
-!               + A2(i,3) * B2(3,j) &
-!               + A2(i,4) * B2(4,j)
-!
-!      C3(i,j) =  A3(i,1) * B3(1,j) &
-!               + A3(i,2) * B3(2,j) &
-!               + A3(i,3) * B3(3,j) &
-!               + A3(i,4) * B3(4,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm4_3comp
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
-!  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C1(i,j) =  A1(i,1) * B1(1,j) &
-!               + A1(i,2) * B1(2,j) &
-!               + A1(i,3) * B1(3,j) &
-!               + A1(i,4) * B1(4,j) &
-!               + A1(i,5) * B1(5,j)
-!
-!      C2(i,j) =  A2(i,1) * B2(1,j) &
-!               + A2(i,2) * B2(2,j) &
-!               + A2(i,3) * B2(3,j) &
-!               + A2(i,4) * B2(4,j) &
-!               + A2(i,5) * B2(5,j)
-!
-!      C3(i,j) =  A3(i,1) * B3(1,j) &
-!               + A3(i,2) * B3(2,j) &
-!               + A3(i,3) * B3(3,j) &
-!               + A3(i,4) * B3(4,j) &
-!               + A3(i,5) * B3(5,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm5_3comp
-!
-!
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,6) :: A1,A2,A3
-!  real(kind=CUSTOM_REAL),dimension(6,n3) :: B1,B2,B3
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C1(i,j) =  A1(i,1) * B1(1,j) &
-!               + A1(i,2) * B1(2,j) &
-!               + A1(i,3) * B1(3,j) &
-!               + A1(i,4) * B1(4,j) &
-!               + A1(i,5) * B1(5,j) &
-!               + A1(i,6) * B1(6,j)
-!
-!      C2(i,j) =  A2(i,1) * B2(1,j) &
-!               + A2(i,2) * B2(2,j) &
-!               + A2(i,3) * B2(3,j) &
-!               + A2(i,4) * B2(4,j) &
-!               + A2(i,5) * B2(5,j) &
-!               + A2(i,6) * B2(6,j)
-!
-!      C3(i,j) =  A3(i,1) * B3(1,j) &
-!               + A3(i,2) * B3(2,j) &
-!               + A3(i,3) * B3(3,j) &
-!               + A3(i,4) * B3(4,j) &
-!               + A3(i,5) * B3(5,j) &
-!               + A3(i,6) * B3(6,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm6_3comp
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,7) :: A1,A2,A3
-!  real(kind=CUSTOM_REAL),dimension(7,n3) :: B1,B2,B3
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C1(i,j) =  A1(i,1) * B1(1,j) &
-!               + A1(i,2) * B1(2,j) &
-!               + A1(i,3) * B1(3,j) &
-!               + A1(i,4) * B1(4,j) &
-!               + A1(i,5) * B1(5,j) &
-!               + A1(i,6) * B1(6,j) &
-!               + A1(i,7) * B1(7,j)
-!
-!      C2(i,j) =  A2(i,1) * B2(1,j) &
-!               + A2(i,2) * B2(2,j) &
-!               + A2(i,3) * B2(3,j) &
-!               + A2(i,4) * B2(4,j) &
-!               + A2(i,5) * B2(5,j) &
-!               + A2(i,6) * B2(6,j) &
-!               + A2(i,7) * B2(7,j)
-!
-!      C3(i,j) =  A3(i,1) * B3(1,j) &
-!               + A3(i,2) * B3(2,j) &
-!               + A3(i,3) * B3(3,j) &
-!               + A3(i,4) * B3(4,j) &
-!               + A3(i,5) * B3(5,j) &
-!               + A3(i,6) * B3(6,j) &
-!               + A3(i,7) * B3(7,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm7_3comp
-!
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,8) :: A1,A2,A3
-!  real(kind=CUSTOM_REAL),dimension(8,n3) :: B1,B2,B3
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-!
-!  ! local parameters
-!  integer :: i,j
-!
-!  ! matrix-matrix multiplication
-!  do j = 1,n3
-!    do i = 1,n1
-!      C1(i,j) =  A1(i,1) * B1(1,j) &
-!               + A1(i,2) * B1(2,j) &
-!               + A1(i,3) * B1(3,j) &
-!               + A1(i,4) * B1(4,j) &
-!               + A1(i,5) * B1(5,j) &
-!               + A1(i,6) * B1(6,j) &
-!               + A1(i,7) * B1(7,j) &
-!               + A1(i,8) * B1(8,j)
-!
-!      C2(i,j) =  A2(i,1) * B2(1,j) &
-!               + A2(i,2) * B2(2,j) &
-!               + A2(i,3) * B2(3,j) &
-!               + A2(i,4) * B2(4,j) &
-!               + A2(i,5) * B2(5,j) &
-!               + A2(i,6) * B2(6,j) &
-!               + A2(i,7) * B2(7,j) &
-!               + A2(i,8) * B2(8,j)
-!
-!      C3(i,j) =  A3(i,1) * B3(1,j) &
-!               + A3(i,2) * B3(2,j) &
-!               + A3(i,3) * B3(3,j) &
-!               + A3(i,4) * B3(4,j) &
-!               + A3(i,5) * B3(5,j) &
-!               + A3(i,6) * B3(6,j) &
-!               + A3(i,7) * B3(7,j) &
-!               + A3(i,8) * B3(8,j)
-!    enddo
-!  enddo
-!
-!  end subroutine mxm8_3comp
-!
-!
-!!--------------------------------------------------------------------------------------------
-!
-!  subroutine mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
-!
-!  use constants_solver,only: CUSTOM_REAL
-!
-!  implicit none
-!
-!  integer,intent(in) :: n1,n2,n3
-!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
-!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
-!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
-!
-!  ! local parameters
-!  integer :: i,j,k
-!  real(kind=CUSTOM_REAL) :: tmp1,tmp2,tmp3
-!
-!  ! general matrix-matrix multiplication
-!  do j = 1,n3
-!    do k = 1,n2
-!      tmp1 = B1(k,j)
-!      tmp2 = B2(k,j)
-!      tmp3 = B3(k,j)
-!      do i = 1,n1
-!        C1(i,j) = C1(i,j) + A1(i,k) * tmp1
-!        C2(i,j) = C2(i,j) + A2(i,k) * tmp2
-!        C3(i,j) = C3(i,j) + A3(i,k) * tmp3
-!      enddo
-!    enddo
-!  enddo
-!
-!  end subroutine mxmN_3comp
+  end subroutine compute_element_stress_attenuation_contrib
 
+!
+!--------------------------------------------------------------------------------------------
+!
+
+! please leave this routine in this file, to help compilers inlining this function...
+
+! we can force inlining (Intel compiler)
+!DIR$ATTRIBUTES INLINE :: compute_element_precompute_factors
+  subroutine compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                                deriv_loc,jacobianl, &
+                                                duxdxl,duydyl,duzdzl, &
+                                                duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
+                                                duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
+
+! precomputes factors
+
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: tempx1,tempx2,tempx3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: tempy1,tempy2,tempy3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: tempz1,tempz2,tempz3
+
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: jacobianl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: duxdxl,duydyl,duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
+    duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL) :: duxdyl,duxdzl,duydxl,duydzl,duzdxl,duzdyl
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+  ! precomputes factors
+  DO_LOOP_IJK
+
+    ! get derivatives of ux, uy and uz with respect to x, y and z
+    xixl = deriv_loc(1,INDEX_IJK)
+    xiyl = deriv_loc(2,INDEX_IJK)
+    xizl = deriv_loc(3,INDEX_IJK)
+    etaxl = deriv_loc(4,INDEX_IJK)
+    etayl = deriv_loc(5,INDEX_IJK)
+    etazl = deriv_loc(6,INDEX_IJK)
+    gammaxl = deriv_loc(7,INDEX_IJK)
+    gammayl = deriv_loc(8,INDEX_IJK)
+    gammazl = deriv_loc(9,INDEX_IJK)
+
+    ! compute the Jacobian
+    jacobianl(INDEX_IJK) = 1.0_CUSTOM_REAL / (xixl*(etayl*gammazl-etazl*gammayl) &
+                                 - xiyl*(etaxl*gammazl-etazl*gammaxl) &
+                                 + xizl*(etaxl*gammayl-etayl*gammaxl))
+
+    duxdxl(INDEX_IJK) = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
+    duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
+    duxdzl = xizl*tempx1(INDEX_IJK) + etazl*tempx2(INDEX_IJK) + gammazl*tempx3(INDEX_IJK)
+
+    duydxl = xixl*tempy1(INDEX_IJK) + etaxl*tempy2(INDEX_IJK) + gammaxl*tempy3(INDEX_IJK)
+    duydyl(INDEX_IJK) = xiyl*tempy1(INDEX_IJK) + etayl*tempy2(INDEX_IJK) + gammayl*tempy3(INDEX_IJK)
+    duydzl = xizl*tempy1(INDEX_IJK) + etazl*tempy2(INDEX_IJK) + gammazl*tempy3(INDEX_IJK)
+
+    duzdxl = xixl*tempz1(INDEX_IJK) + etaxl*tempz2(INDEX_IJK) + gammaxl*tempz3(INDEX_IJK)
+    duzdyl = xiyl*tempz1(INDEX_IJK) + etayl*tempz2(INDEX_IJK) + gammayl*tempz3(INDEX_IJK)
+    duzdzl(INDEX_IJK) = xizl*tempz1(INDEX_IJK) + etazl*tempz2(INDEX_IJK) + gammazl*tempz3(INDEX_IJK)
+
+    ! precompute some sums to save CPU time
+    duxdxl_plus_duydyl(INDEX_IJK) = duxdxl(INDEX_IJK) + duydyl(INDEX_IJK)
+    duxdxl_plus_duzdzl(INDEX_IJK) = duxdxl(INDEX_IJK) + duzdzl(INDEX_IJK)
+    duydyl_plus_duzdzl(INDEX_IJK) = duydyl(INDEX_IJK) + duzdzl(INDEX_IJK)
+    duxdyl_plus_duydxl(INDEX_IJK) = duxdyl            + duydxl
+    duzdxl_plus_duxdzl(INDEX_IJK) = duzdxl            + duxdzl
+    duzdyl_plus_duydzl(INDEX_IJK) = duzdyl            + duydzl
+
+  ENDDO_LOOP_IJK
+
+  end subroutine compute_element_precompute_factors
+
+!
+!--------------------------------------------------------------------------------------------
+!
+
+! please leave this routine in this file, to help compilers inlining this function...
+
+! we can force inlining (Intel compiler)
+!DIR$ATTRIBUTES INLINE :: compute_element_deviatoric_strain
+  subroutine compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
+                                               duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
+                                               ispec,NSPEC_STRAIN_ONLY, &
+                                               epsilon_trace_over_3,epsilondev_loc)
+
+! computes deviatoric strain
+
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,ONE_THIRD
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: duxdxl,duydyl,duzdzl
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
+
+  integer, intent(in) :: ispec,NSPEC_STRAIN_ONLY
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_STRAIN_ONLY),intent(out) :: epsilon_trace_over_3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: templ
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+!ZN beware, here the expression differs from the strain used in memory variable equation (6) in D. Komatitsch and J. Tromp 1999,
+!ZN here Brian Savage uses the engineering strain which are epsilon = 1/2*(grad U + (grad U)^T),
+!ZN where U is the displacement vector and grad the gradient operator, i.e. there is a 1/2 factor difference between the two.
+!ZN Both expressions are fine, but we need to keep in mind that if we put the 1/2 factor here there we need to remove it
+!ZN from the expression in which we use the strain later in the code.
+
+  ! compute deviatoric strain
+  if (NSPEC_STRAIN_ONLY == 1) then
+    if (ispec == 1) then
+
+      DO_LOOP_IJK
+
+        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+        epsilon_trace_over_3(INDEX_IJK,1) = templ
+        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+      ENDDO_LOOP_IJK
+
+    else
+
+      DO_LOOP_IJK
+
+        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+      ENDDO_LOOP_IJK
+
+    endif
+  else
+
+      DO_LOOP_IJK
+
+        templ = ONE_THIRD * (duxdxl(INDEX_IJK) + duydyl(INDEX_IJK) + duzdzl(INDEX_IJK))
+        epsilon_trace_over_3(INDEX_IJK,ispec) = templ
+        epsilondev_loc(INDEX_IJK,1) = duxdxl(INDEX_IJK) - templ
+        epsilondev_loc(INDEX_IJK,2) = duydyl(INDEX_IJK) - templ
+        epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl(INDEX_IJK)
+        epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl(INDEX_IJK)
+        epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl(INDEX_IJK)
+
+      ENDDO_LOOP_IJK
+
+  endif
+
+  end subroutine compute_element_deviatoric_strain
+
+!
+!--------------------------------------------------------------------------------------------
+!
+
+! please leave this routine in this file, to help compilers inlining this function...
+
+! we can force inlining (Intel compiler)
+!DIR$ATTRIBUTES INLINE :: compute_element_dot_product_stress
+  subroutine compute_element_dot_product_stress(deriv_loc,jacobianl, &
+                                                sigma_xx,sigma_yy,sigma_zz, &
+                                                sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                                tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+
+! computes dot product of stress tensor with test vector, non-symmetric form
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
+
+  implicit none
+
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ),intent(in) :: deriv_loc
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: jacobianl
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: sigma_xx,sigma_yy,sigma_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: tempx1,tempx2,tempx3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: tempy1,tempy2,tempy3
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: tempz1,tempz2,tempz3
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl
+  real(kind=CUSTOM_REAL) :: fac
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+  ! dot product of stress tensor with test vector, non-symmetric form
+  DO_LOOP_IJK
+
+    ! reloads derivatives of ux, uy and uz with respect to x, y and z
+    xixl = deriv_loc(1,INDEX_IJK)
+    xiyl = deriv_loc(2,INDEX_IJK)
+    xizl = deriv_loc(3,INDEX_IJK)
+    etaxl = deriv_loc(4,INDEX_IJK)
+    etayl = deriv_loc(5,INDEX_IJK)
+    etazl = deriv_loc(6,INDEX_IJK)
+    gammaxl = deriv_loc(7,INDEX_IJK)
+    gammayl = deriv_loc(8,INDEX_IJK)
+    gammazl = deriv_loc(9,INDEX_IJK)
+
+    ! common factor
+    fac = jacobianl(INDEX_IJK)
+
+    ! form dot product with test vector, non-symmetric form
+
+    ! this goes to accel_x
+    tempx1(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*xixl + sigma_yx(INDEX_IJK)*xiyl + sigma_zx(INDEX_IJK)*xizl)
+    ! this goes to accel_y
+    tempy1(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*xixl + sigma_yy(INDEX_IJK)*xiyl + sigma_zy(INDEX_IJK)*xizl)
+    ! this goes to accel_z
+    tempz1(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*xixl + sigma_yz(INDEX_IJK)*xiyl + sigma_zz(INDEX_IJK)*xizl)
+
+    ! this goes to accel_x
+    tempx2(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*etaxl + sigma_yx(INDEX_IJK)*etayl + sigma_zx(INDEX_IJK)*etazl)
+    ! this goes to accel_y
+    tempy2(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*etaxl + sigma_yy(INDEX_IJK)*etayl + sigma_zy(INDEX_IJK)*etazl)
+    ! this goes to accel_z
+    tempz2(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*etaxl + sigma_yz(INDEX_IJK)*etayl + sigma_zz(INDEX_IJK)*etazl)
+
+    ! this goes to accel_x
+    tempx3(INDEX_IJK) = fac * (sigma_xx(INDEX_IJK)*gammaxl + sigma_yx(INDEX_IJK)*gammayl + sigma_zx(INDEX_IJK)*gammazl)
+    ! this goes to accel_y
+    tempy3(INDEX_IJK) = fac * (sigma_xy(INDEX_IJK)*gammaxl + sigma_yy(INDEX_IJK)*gammayl + sigma_zy(INDEX_IJK)*gammazl)
+    ! this goes to accel_z
+    tempz3(INDEX_IJK) = fac * (sigma_xz(INDEX_IJK)*gammaxl + sigma_yz(INDEX_IJK)*gammayl + sigma_zz(INDEX_IJK)*gammazl)
+
+  ENDDO_LOOP_IJK
+
+  end subroutine compute_element_dot_product_stress
+
+!
+!--------------------------------------------------------------------------------------------
+!
+
+! please leave this routine in this file, to help compilers inlining this function...
+
+! we can force inlining (Intel compiler)
+!DIR$ATTRIBUTES INLINE :: compute_element_gravity
+  subroutine compute_element_gravity(ispec,NSPEC,NGLOB,ibool,rstore,jacobianl,wgll_cube, &
+                                     minus_gravity_table,minus_deriv_gravity_table,density_table, &
+                                     dummyx_loc,dummyy_loc,dummyz_loc, &
+                                     sigma_xx,sigma_yy,sigma_zz, &
+                                     sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
+                                     rho_s_H)
+
+! computes non-symmetric stress terms for gravity
+
+  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NRAD_GRAVITY,R_EARTH,R_EARTH_KM
+
+#ifdef FORCE_VECTORIZATION
+  use constants,only: NGLLCUBE
+#endif
+
+  implicit none
+
+  integer,intent(in) :: ispec
+  integer,intent(in) :: NSPEC,NGLOB
+
+  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(3,NGLOB),intent(in) :: rstore
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: jacobianl
+
+  double precision, dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: wgll_cube
+
+  ! gravity
+  double precision, dimension(NRAD_GRAVITY),intent(in) :: minus_gravity_table,density_table,minus_deriv_gravity_table
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(in) :: dummyx_loc,dummyy_loc,dummyz_loc
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: sigma_xx,sigma_yy,sigma_zz
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(inout) :: sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy
+
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM),intent(out) :: rho_s_H
+
+  ! local parameters
+  ! for gravity
+  double precision :: dphi,dtheta
+  double precision :: radius,rho,minus_g,minus_dg
+  double precision :: minus_g_over_radius,minus_dg_plus_g_over_radius
+  double precision :: cos_theta,sin_theta,cos_phi,sin_phi
+  double precision :: cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
+  double precision :: factor,sx_l,sy_l,sz_l,gxl,gyl,gzl
+  double precision :: Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
+
+  integer :: int_radius
+  integer :: iglob
+
+#ifdef FORCE_VECTORIZATION
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+  ! minimum radius in inner core (to avoid zero radius)
+  double precision, parameter :: MINIMUM_RADIUS_INNER_CORE = 100.d0 / R_EARTH
+
+  ! computes non-symmetric terms for gravity
+  DO_LOOP_IJK
+
+    ! use mesh coordinates to get theta and phi
+    ! x y and z contain r theta and phi
+    iglob = ibool(INDEX_IJK,ispec)
+
+    radius = dble(rstore(1,iglob))
+    dtheta = dble(rstore(2,iglob))
+    dphi = dble(rstore(3,iglob))
+
+    ! make sure radius is never zero even for points at center of cube
+    ! because we later divide by radius
+    if (radius < MINIMUM_RADIUS_INNER_CORE) radius = MINIMUM_RADIUS_INNER_CORE
+
+    cos_theta = dcos(dtheta)
+    sin_theta = dsin(dtheta)
+    cos_phi = dcos(dphi)
+    sin_phi = dsin(dphi)
+
+    cos_theta_sq = cos_theta*cos_theta
+    sin_theta_sq = sin_theta*sin_theta
+    cos_phi_sq = cos_phi*cos_phi
+    sin_phi_sq = sin_phi*sin_phi
+
+    ! get g, rho and dg/dr=dg
+    ! spherical components of the gravitational acceleration
+
+    ! for efficiency replace with lookup table every 100 m in radial direction
+    !int_radius = nint(10.d0 * radius * R_EARTH_KM )
+
+    ! make sure we never use zero for point exactly at the center of the Earth
+    int_radius = max(1,nint(10.d0 * radius * R_EARTH_KM))
+
+    minus_g = minus_gravity_table(int_radius)
+    minus_dg = minus_deriv_gravity_table(int_radius)
+    rho = density_table(int_radius)
+
+    ! Cartesian components of the gravitational acceleration
+    gxl = minus_g*sin_theta*cos_phi
+    gyl = minus_g*sin_theta*sin_phi
+    gzl = minus_g*cos_theta
+
+    ! Cartesian components of gradient of gravitational acceleration
+    ! obtained from spherical components
+    minus_g_over_radius = minus_g / radius
+    minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
+
+    Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
+    Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
+    Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
+    Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
+    Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
+    Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
+
+    ! get displacement and multiply by density to compute G tensor
+    sx_l = rho * dble(dummyx_loc(INDEX_IJK)) ! dble(displ_crust_mantle(1,iglob))
+    sy_l = rho * dble(dummyy_loc(INDEX_IJK)) ! dble(displ_crust_mantle(2,iglob))
+    sz_l = rho * dble(dummyz_loc(INDEX_IJK)) ! dble(displ_crust_mantle(3,iglob))
+
+    ! compute G tensor from s . g and add to sigma (not symmetric)
+    sigma_xx(INDEX_IJK) = sigma_xx(INDEX_IJK) + real(sy_l*gyl + sz_l*gzl, kind=CUSTOM_REAL)
+    sigma_yy(INDEX_IJK) = sigma_yy(INDEX_IJK) + real(sx_l*gxl + sz_l*gzl, kind=CUSTOM_REAL)
+    sigma_zz(INDEX_IJK) = sigma_zz(INDEX_IJK) + real(sx_l*gxl + sy_l*gyl, kind=CUSTOM_REAL)
+
+    sigma_xy(INDEX_IJK) = sigma_xy(INDEX_IJK) - real(sx_l * gyl, kind=CUSTOM_REAL)
+    sigma_yx(INDEX_IJK) = sigma_yx(INDEX_IJK) - real(sy_l * gxl, kind=CUSTOM_REAL)
+
+    sigma_xz(INDEX_IJK) = sigma_xz(INDEX_IJK) - real(sx_l * gzl, kind=CUSTOM_REAL)
+    sigma_zx(INDEX_IJK) = sigma_zx(INDEX_IJK) - real(sz_l * gxl, kind=CUSTOM_REAL)
+
+    sigma_yz(INDEX_IJK) = sigma_yz(INDEX_IJK) - real(sy_l * gzl, kind=CUSTOM_REAL)
+    sigma_zy(INDEX_IJK) = sigma_zy(INDEX_IJK) - real(sz_l * gyl, kind=CUSTOM_REAL)
+
+    ! precompute vector
+    factor = dble(jacobianl(INDEX_IJK)) * wgll_cube(INDEX_IJK)
+
+    rho_s_H(INDEX_IJK,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
+    rho_s_H(INDEX_IJK,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
+    rho_s_H(INDEX_IJK,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
+
+  ENDDO_LOOP_IJK
+
+  end subroutine compute_element_gravity
 

@@ -25,44 +25,33 @@
 !
 !=====================================================================
 
-!==============================================================================
-! Copyright 2015 ASDF developers
-!
-! Licensed under the Apache License, Version 2.0 (the "License");
-! you may not use this file except in compliance with the License.
-! You may obtain a copy of the License at
-!
-!    http://www.apache.org/licenses/LICENSE-2.0
-!
-! Unless required by applicable law or agreed to in writing, software
-! distributed under the License is distributed on an "AS IS" BASIS,
-! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-! See the License for the specific language governing permissions and
-! limitations under the License.
-!==============================================================================
-
 subroutine read_adjoint_sources_ASDF(adj_source_name, adj_source, index_start, index_end)
 
-  use iso_c_binding, only: C_NULL_CHAR
   use specfem_par, only: NDIM,CUSTOM_REAL, myrank, current_asdf_handle
+
+  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
   integer :: itime, offset, nsamples
   integer :: index_start, index_end
-  real(kind=CUSTOM_REAL),dimension(*),intent(out) :: adj_source
+  real(kind=CUSTOM_REAL), dimension(*),intent(out) :: adj_source ! NSTEP block size
   character(len=*) :: adj_source_name
   !--- Error variable
   integer ier
 
-  offset = index_start ! the value to start reading from
-  nsamples = index_end - index_start ! this is how many points we want to read in from the adjoint source
+  ! Fortran/C index convension. Meaning Fortran starts at 1 and C starts at 0 so
+  ! we need to subtract 1 for the C subroutine read_partial_waveform_f
+  offset = index_start - 1 ! the value to start reading from
+  nsamples = index_end - index_start + 1 ! this is how many points we want to read in from the adjoint source
 
-  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//&
-        trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
+  ! print *, myrank, " myrank ", trim(adj_source_name)
+  ! print *, " offset, ", offset
+  ! print *, " nsamples ", nsamples
+  ! print *, adj_source_name, " reading"
 
-  !call ASDF_read_full_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSource/"//&
-  !        trim(adj_source_name) // C_NULL_CHAR, adj_source, ier)
+  call ASDF_read_partial_waveform_f(current_asdf_handle, "AuxiliaryData/AdjointSources/"//&
+      trim(adj_source_name) // C_NULL_CHAR, offset, nsamples, adj_source, ier)
 
   if (ier /= 0) then
     print *,'Error reading adjoint source: ',trim(adj_source_name)
@@ -77,9 +66,9 @@ end subroutine read_adjoint_sources_ASDF
 
 subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
 
-  use iso_c_binding, only: C_NULL_CHAR
   use specfem_par
-  use write_seismograms_mod, only: band_instrument_code
+
+  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
@@ -87,6 +76,7 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
   integer :: nadj_sources_found
   integer :: nsamples_infered
   integer :: icomp
+  integer :: adjoint_source_exists
   integer :: ier
 
   ! local parameters
@@ -109,17 +99,20 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
     adj_filename = trim(adj_source_file) // '_'// comp(icomp)
 
     ! checks if adjoint source exists in ASDF file
-    call ASDF_adjoint_source_exists_f(current_asdf_handle, trim(adj_filename) // C_NULL_CHAR, ier)
+    call ASDF_adjoint_source_exists_f(current_asdf_handle, trim(adj_filename) // C_NULL_CHAR, adjoint_source_exists)
+    ! print *, trim(adj_filename), adjoint_source_exists
 
-    if (ier /= 0) then
-      ! adjoint source not found
-      ! stops simulation
+    if (adjoint_source_exists == 0) then
+        !adjoint source not found
+        !stops simulation
       call exit_MPI(myrank,'adjoint source '//trim(adj_filename)//' not found, please check STATIONS_ADJOINT file and ASDF file')
     endif
 
     ! checks length of file
     call ASDF_get_num_elements_from_path_f(current_asdf_handle,&
-       "AuxiliaryData/AdjointSource/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
+       "AuxiliaryData/AdjointSources/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
+
+    ! print *, trim(adj_filename), nsamples_infered
 
     ! checks length
     if (nsamples_infered /= NSTEP) then

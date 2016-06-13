@@ -137,7 +137,8 @@
 
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,eps_trace_over_3_crust_mantle, &
+                    it,NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+                    eps_trace_over_3_crust_mantle, &
                     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                     muvstore_crust_mantle_3dmovie, &
@@ -147,7 +148,8 @@
         ! output the Time Integral of Strain, or \mu*TIS
         call  write_movie_volume_strains(myrank,npoints_3dmovie, &
                     LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                    it,Ieps_trace_over_3_crust_mantle, &
+                    it,NSPEC_CRUST_MANTLE_3DMOVIE, &
+                    Ieps_trace_over_3_crust_mantle, &
                     Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle,Iepsilondev_xy_crust_mantle, &
                     Iepsilondev_xz_crust_mantle,Iepsilondev_yz_crust_mantle, &
                     muvstore_crust_mantle_3dmovie, &
@@ -291,7 +293,7 @@
     NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE
 
   use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
-    ibool_crust_mantle,xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+    ibool_crust_mantle,rstore_crust_mantle
 
   implicit none
 
@@ -316,7 +318,7 @@
   ! one file per process
   write(filename,'(a,i6.6,a,i6.6)') 'OUTPUT_FILES/snapshot_proc',myrank,'_reg_1_displ_',it
   call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                         xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                         rstore_crust_mantle, &
                          ibool_crust_mantle,displ_crust_mantle,filename)
 
   ! backward/reconstructed field
@@ -327,7 +329,7 @@
 
     write(filename,'(a,i6.6,a,i6.6)') 'OUTPUT_FILES/snapshot_proc',myrank,'_reg_1_b_displ_',it
     call write_VTK_data_cr(dummy_i,NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                           xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                           rstore_crust_mantle, &
                            ibool_crust_mantle,b_displ_crust_mantle,filename)
   endif
 

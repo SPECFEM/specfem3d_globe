@@ -117,49 +117,56 @@
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
   use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
-  use iso_c_binding, only: C_NULL_CHAR
-  use write_seismograms_mod, only: band_instrument_code
+
   use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
+
+  use iso_c_binding, only: C_NULL_CHAR
 
   implicit none
 
 ! input -- notice here NSTEP_BLOCK is different from the NSTEP in the main program
 ! instead NSTEP_BLOCK = iadjsrc_len(it_sub_adj), the length of this specific block
 
-  integer myrank, NSTEP_BLOCK
+  integer,intent(in) :: myrank
 
-  double precision xi_receiver, eta_receiver, gamma_receiver
-  double precision DT
+  character(len=*),intent(in) :: adj_source_file
 
-  ! Vala added
-  integer it_sub_adj,NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC
-  integer, dimension(NSTEP_SUB_ADJ,2) :: iadjsrc
+  double precision,intent(in) :: xi_receiver, eta_receiver, gamma_receiver
+  double precision, dimension(NDIM,NDIM),intent(in) :: nu
+
 
   ! output
-  real(kind=CUSTOM_REAL) :: adj_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC)
+  integer,intent(in) :: NTSTEP_BETWEEN_READ_ADJSRC
+  real(kind=CUSTOM_REAL),intent(out) :: adj_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX) :: xigll
-  double precision, dimension(NGLLY) :: yigll
-  double precision, dimension(NGLLZ) :: zigll
+  double precision, dimension(NGLLX),intent(in) :: xigll
+  double precision, dimension(NGLLY),intent(in) :: yigll
+  double precision, dimension(NGLLZ),intent(in) :: zigll
 
-  double precision, dimension(NDIM,NDIM) :: nu
+  integer,intent(in) :: NSTEP_SUB_ADJ
+  integer, dimension(NSTEP_SUB_ADJ,2),intent(in) :: iadjsrc
 
-  double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), &
-        hgammar(NGLLZ), hpgammar(NGLLZ)
+  integer,intent(in) :: NSTEP_BLOCK
+  integer,intent(in) :: it_sub_adj
+
+  double precision,intent(in) :: DT
+
+  ! local parameters
+  double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), hgammar(NGLLZ), hpgammar(NGLLZ)
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
+
+  double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP_BLOCK) :: adj_src
   real(kind=CUSTOM_REAL), dimension(NSTEP_BLOCK) :: adj_source_asdf
-  double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
-
-  integer icomp, itime, ios
-  integer index_start,index_end,index_i
   real(kind=CUSTOM_REAL) :: junk
+
+  integer :: icomp, itime, ios
+  integer :: index_start,index_end,index_i
   character(len=3),dimension(NDIM) :: comp
   character(len=MAX_STRING_LEN) :: filename, path_to_add
-  character(len=*) :: adj_source_file
-  character(len=11) :: adj_source_name
+  character(len=80) :: adj_source_name
   character(len=2) :: bic
 
   call band_instrument_code(DT,bic)
@@ -190,13 +197,14 @@
   index_start = index_start
   index_end = index_end
 
-  adj_src = 0._CUSTOM_REAL
+  itime = 0
+  adj_src(:,:) = 0._CUSTOM_REAL
 
   if (READ_ADJSRC_ASDF) then
 
     do icomp = 1, NDIM ! 3 components
 
-      print *, "READING ADJOINT SOURCES USING ASDF"
+      ! print *, "READING ADJOINT SOURCES USING ASDF"
 
       adj_source_name = trim(adj_source_file) // '_' // comp(icomp)
 
@@ -208,7 +216,7 @@
 
       call read_adjoint_sources_ASDF(adj_source_name, adj_source_asdf, index_start, index_end)
 
-      adj_src(icomp,:) = adj_source_asdf(1:NSTEP_BLOCK)
+      adj_src(icomp,:) = real(adj_source_asdf(1:NSTEP_BLOCK))
 
     enddo
 

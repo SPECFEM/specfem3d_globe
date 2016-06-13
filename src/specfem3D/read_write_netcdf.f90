@@ -26,7 +26,11 @@
 !=====================================================================
 
 
-subroutine write_coordinates_netcdf(fName)
+! note: only called for Comprehensive Earth Model (CEM) routines
+!       check with: #ifdef CEM
+
+
+  subroutine write_coordinates_netcdf(fName)
 
   ! This writes the corresponding kernel coordinates.
 
@@ -43,18 +47,17 @@ subroutine write_coordinates_netcdf(fName)
   integer :: ncid
   integer :: sizeprocs
   integer :: procDimId, kernDimId, varIdRadius, varIdTheta, varIdPhi
-  integer :: mpicomm,mpiinfo_null
+  integer :: comm,info_null
 
   integer, dimension(NDIMS) :: start, count, ids
 
   ! Get the total number of processors.
   call world_size(sizeprocs)
-  call world_get_comm(mpicomm)
-  call world_get_info_null(mpiinfo_null)
+  call world_duplicate(comm)
+  call world_get_info_null(info_null)
 
   ! Create parallel NetCDF file.
-  call checkNC (nf90_create (fName, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
-                             comm = mpicomm, info = mpiinfo_null))
+  call checkNC (nf90_create (fName, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, comm = comm, info = info_null))
 
   ! Define the processor array.
   call checkNC (nf90_def_dim (ncid, 'glob', NGLOB_CRUST_MANTLE, kernDimId))
@@ -74,20 +77,20 @@ subroutine write_coordinates_netcdf(fName)
   ! Each processor writes one row.
   start = (/ 1, myRank + 1 /)
   count = (/ NGLOB_CRUST_MANTLE, 1 /)
-  call checkNC (nf90_put_var (ncid, varIdRadius, xstore_crust_mantle, start = start, count = count))
-  call checkNC (nf90_put_var (ncid, varIdTheta,  ystore_crust_mantle, start = start, count = count))
-  call checkNC (nf90_put_var (ncid, varIdPhi,    zstore_crust_mantle, start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varIdRadius, rstore_crust_mantle(1,:), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varIdTheta,  rstore_crust_mantle(2,:), start = start, count = count))
+  call checkNC (nf90_put_var (ncid, varIdPhi,    rstore_crust_mantle(3,:), start = start, count = count))
 
   ! Close the netcdf file.
   call checkNC (nf90_close (ncid))
 
-end subroutine write_coordinates_netcdf
+  end subroutine write_coordinates_netcdf
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-subroutine write_kernel_netcdf(fName, param)
+  subroutine write_kernel_netcdf(fName, param)
 
   ! This guy converts the kernels to global numbering, and writes to a NetCDF file in parallel.
 
@@ -110,14 +113,14 @@ subroutine write_kernel_netcdf(fName, param)
   integer :: i, j, k, ispec, iglob
   integer :: sizeprocs
   integer :: procDimId, kernDimId, varId
-  integer :: mpicomm,mpiinfo_null
+  integer :: comm,info_null
 
   integer, dimension (NDIMS) :: start, count, ids
 
   ! Get the total number of processors.
   call world_size(sizeprocs)
-  call world_get_comm(mpicomm)
-  call world_get_info_null(mpiinfo_null)
+  call world_duplicate(comm)
+  call world_get_info_null(info_null)
 
   ! Allocate the kernel dump array.
   allocate (paramUnpacked (NGLOB_CRUST_MANTLE))
@@ -137,8 +140,7 @@ subroutine write_kernel_netcdf(fName, param)
   enddo
 
   ! Create the parallel NetCDF file.
-  call checkNC (nf90_create (fName, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, &
-    comm = mpicomm, info = mpiinfo_null))
+  call checkNC (nf90_create (fName, IOR(NF90_NETCDF4, NF90_MPIIO), ncid, comm = comm, info = info_null))
 
   ! Define the processor array.
   call checkNC (nf90_def_dim (ncid, 'glob', NGLOB_CRUST_MANTLE, kernDimId))
@@ -167,13 +169,13 @@ subroutine write_kernel_netcdf(fName, param)
   ! Deallocate the kernel dump array.
   deallocate (paramUnpacked)
 
-end subroutine write_kernel_netcdf
+  end subroutine write_kernel_netcdf
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-subroutine checkNC (status)
+  subroutine checkNC (status)
 
   ! This little guy just checks for an error from the NetCDF libraries and throws a tantrum if
   ! one's found.
@@ -189,4 +191,4 @@ subroutine checkNC (status)
     stop 'Error Netcdf command failed'
   endif
 
-end subroutine checkNC
+  end subroutine checkNC

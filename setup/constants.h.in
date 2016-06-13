@@ -193,6 +193,7 @@
   integer, parameter :: ICRUST_CRUST2 = 2
   integer, parameter :: ICRUST_CRUSTMAPS = 3
   integer, parameter :: ICRUST_EPCRUST = 4
+  integer, parameter :: ICRUST_CRUST_SH = 5
 
 !-------------------------------
 ! crustal model cap smoothing - extension range in degree
@@ -220,6 +221,8 @@
 ! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
 !-- uncomment for using EPcrust instead (European regional model)
 ! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
+!-- uncomment for using SHcrust
+! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST_SH
 
 
 !!-----------------------------------------------------------
@@ -364,8 +367,7 @@
 
   integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
-
-  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "POSIX"
+  character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX"
   character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ""
 
 !!-----------------------------------------------------------
@@ -688,6 +690,7 @@
   integer, parameter :: THREE_D_MODEL_GLL  = 10    ! format for iterations with GLL mesh
   integer, parameter :: THREE_D_MODEL_S40RTS = 11
   integer, parameter :: THREE_D_MODEL_GAPP2  = 12
+  integer, parameter :: THREE_D_MODEL_MANTLE_SH  = 13
 
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3

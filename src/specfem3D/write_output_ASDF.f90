@@ -25,38 +25,24 @@
 !
 !=====================================================================
 
-!==============================================================================
-! Copyright 2015 ASDF developers
-!
-! Licensed under the Apache License, Version 2.0 (the "License");
-! you may not use this file except in compliance with the License.
-! You may obtain a copy of the License at
-!
-!    http://www.apache.org/licenses/LICENSE-2.0
-!
-! Unless required by applicable law or agreed to in writing, software
-! distributed under the License is distributed on an "AS IS" BASIS,
-! WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-! See the License for the specific language governing permissions and
-! limitations under the License.
-!==============================================================================
-
 !> Initializes the data structure for ASDF
-!! \param asdf_container The ASDF data structure
 !! \param nrec_local The number of receivers on the local processor
-subroutine init_asdf_data(asdf_container, nrec_local)
+  subroutine init_asdf_data(nrec_local)
 
-  use asdf_data
   use specfem_par, only : myrank
 
+  use asdf_data,only: asdf_container
+
+  implicit none
   ! Parameters
-  type(asdf_event),intent(inout) :: asdf_container
   integer,intent(in) :: nrec_local
 
   ! Variables
   integer :: total_seismos_local, ier
 
   total_seismos_local = nrec_local*3 ! 3 components
+
+  asdf_container%nrec_local = nrec_local
 
   allocate (asdf_container%receiver_name_array(nrec_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
@@ -75,43 +61,46 @@ subroutine init_asdf_data(asdf_container, nrec_local)
   allocate (asdf_container%records(total_seismos_local), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocate failed.')
 
-end subroutine init_asdf_data
+  end subroutine init_asdf_data
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
 !> Stores the records into the ASDF structure
-!! \param asdf_container The ASDF data container
 !! \param seismogram_tmp The current seismogram to store
 !! \param irec_local The local index of the receiver
 !! \param irec The global index of the receiver
 !! \param chn The broadband channel simulated
 !! \param iorientation The recorded seismogram's orientation direction
-subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, irec, chn, iorientation)
+  subroutine store_asdf_data(seismogram_tmp, irec_local, irec, chn, iorientation)
 
-  use asdf_data
+  use constants,only: CUSTOM_REAL
+
   use specfem_par,only: &
     station_name,network_name, &
     seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS, myrank, &
     stlat, stlon, stele, stbur
-  use constants
+
+  use asdf_data,only: asdf_container
 
   implicit none
 
   ! Parameters
-  type(asdf_event),intent(inout) :: asdf_container
   character(len=4),intent(in) :: chn
   integer,intent(in) :: irec_local, irec, iorientation
   real(kind=CUSTOM_REAL),dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS),intent(in) :: seismogram_tmp
+
   ! local Variables
   integer :: length_station_name, length_network_name
   integer :: ier, i
+
   ! trace index
   i = (irec_local-1)*(3) + (iorientation)
 
   length_station_name = len_trim(station_name(irec))
   length_network_name = len_trim(network_name(irec))
+
   asdf_container%receiver_name_array(irec_local) = station_name(irec)(1:length_station_name)
   asdf_container%network_array(irec_local) = network_name(irec)(1:length_network_name)
   asdf_container%component_array(i) = chn(1:3)
@@ -122,50 +111,49 @@ subroutine store_asdf_data(asdf_container, seismogram_tmp, irec_local, irec, chn
 
   allocate (asdf_container%records(i)%record(seismo_current), STAT=ier)
   if (ier /= 0) call exit_MPI (myrank, 'Allocating ASDF container failed.')
+
   asdf_container%records(i)%record(1:seismo_current) = seismogram_tmp(iorientation, 1:seismo_current)
 
-end subroutine store_asdf_data
+  end subroutine store_asdf_data
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
 !> Closes the ASDF data structure by deallocating all arrays
-!! \param asdf_container The ASDF data structure
-!! \param nrec_local The number of receivers on the local processor
-subroutine close_asdf_data(asdf_container, nrec_local)
+  subroutine close_asdf_data()
 
-  use asdf_data
-  ! Parameters
-  type(asdf_event),intent(inout) :: asdf_container
-  integer,intent(in) :: nrec_local
+  use asdf_data,only: asdf_container
+
+  implicit none
+
   !Variables
   integer :: i
 
-  do i = 1, nrec_local*3 ! 3 components
+  do i = 1, asdf_container%nrec_local*3 ! 3 components
     deallocate(asdf_container%records(i)%record)
   enddo
   deallocate (asdf_container%receiver_name_array)
   deallocate (asdf_container%network_array)
   deallocate (asdf_container%component_array)
 
-end subroutine close_asdf_data
+  end subroutine close_asdf_data
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
 !> Writes the ASDF data structure to the file
-!! \param asdf_container The ASDF data container for the waveforms
-subroutine write_asdf(asdf_container)
+  subroutine write_asdf()
 
-  use asdf_data
+  use asdf_data,only: asdf_container
+
   use iso_c_binding
   use iso_fortran_env
+
   use specfem_par
 
   implicit none
-  type(asdf_event),intent(inout) :: asdf_container
 
   ! Parameters
   integer, parameter :: MAX_STRING_LENGTH = 1024
@@ -405,12 +393,12 @@ subroutine write_asdf(asdf_container)
     !--------------------------------------------------------
 
     call ASDF_initialize_hdf5_f(ier);
-    call ASDF_create_new_file_f(OUTPUT_FILES_BASE // "synthetic.h5" // C_NULL_CHAR, comm, current_asdf_handle)
+    call ASDF_create_new_file_f(trim(OUTPUT_FILES) // "synthetic.h5" // C_NULL_CHAR, comm, current_asdf_handle)
 
     call ASDF_write_string_attribute_f(current_asdf_handle, "file_format" // C_NULL_CHAR, &
                                        "ASDF" // C_NULL_CHAR, ier)
     call ASDF_write_string_attribute_f(current_asdf_handle, "file_format_version" // C_NULL_CHAR, &
-                                       "0.0.2" // C_NULL_CHAR, ier)
+                                       "1.0.0" // C_NULL_CHAR, ier)
 
     call ASDF_write_quakeml_f(current_asdf_handle, trim(quakeml) // C_NULL_CHAR, ier)
     call ASDF_write_provenance_data_f(current_asdf_handle, provenance(1:len_prov+1), ier)
@@ -496,7 +484,7 @@ subroutine write_asdf(asdf_container)
 
   deallocate(waveforms)
 
-end subroutine write_asdf
+  end subroutine write_asdf
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -505,7 +493,7 @@ end subroutine write_asdf
 !> Converts the CMT source file read by SPECFEM to a QuakeML file for the ASDF container
 !! \param quakemlstring The QuakeML string to store in the ASDF file
 !! \start_time_string The start date stored as a character string
-subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_string)
+  subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_string)
 
   use specfem_par,only:&
     cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
@@ -649,7 +637,7 @@ subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_s
                   '</eventParameters>'//&
                   '</q:quakeml>'
 
-end subroutine cmt_to_quakeml
+  end subroutine cmt_to_quakeml
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -658,8 +646,9 @@ end subroutine cmt_to_quakeml
 ! Convert system time into a string
 !! \param time system time
 !! \param time_string a string representation of the input time
-subroutine convert_systime_to_string(time, time_string)
+  subroutine convert_systime_to_string(time, time_string)
 
+  implicit none
   double precision, intent(in) :: time
   character(len=*), intent(out) :: time_string
   real :: fraction_sec
@@ -685,7 +674,7 @@ subroutine convert_systime_to_string(time, time_string)
   time_string = trim(yr)//"-"//trim(mo)//"-"//trim(da)//"T"//&
                   trim(hr)//':'//trim(minute)//':'//trim(second)
 
-end subroutine convert_systime_to_string
+  end subroutine convert_systime_to_string
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -697,7 +686,7 @@ end subroutine convert_systime_to_string
 !! \param pde_start_time_string A string for defining the waveform name start time using PDE
 !! \param cmt_start_time_string A string for defining the waveform name start time using CMT
 !! \param end_time_string A string for defining the waveform name end time
-subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
+  subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
 
   use specfem_par,only:&
     NSTEP,DT,t_shift_SAC,hdur,&
@@ -742,7 +731,7 @@ subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_sta
 
   !write(*,*) fmtdate(values,'The CPU time used by this program is now %c seconds')
 
-end subroutine get_time
+  end subroutine get_time
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -752,8 +741,8 @@ end subroutine get_time
 !! \param station_name The name of the station based on SEED
 !! \param network_name The name of the network based on SEED
 !! \param stationxmlstring The StationXML string that will be written to the ASDF file
-subroutine station_to_stationxml(station_name, network_name, latitude, longitude, elevation, &
-                                 burial_depth, start_time_string, stationxmlstring)
+  subroutine station_to_stationxml(station_name, network_name, latitude, longitude, elevation, &
+                                   burial_depth, start_time_string, stationxmlstring)
 
   implicit none
   character(len=*) :: stationxmlstring
@@ -828,7 +817,7 @@ subroutine station_to_stationxml(station_name, network_name, latitude, longitude
                      '</Network>'//&
                      '</FDSNStationXML>'
 
-end subroutine station_to_stationxml
+  end subroutine station_to_stationxml
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -837,7 +826,7 @@ end subroutine station_to_stationxml
 !> Reads an external file and stores it in filestring
 !! \param filename The name of the file to read
 !! \param filestring The string that the file is stored
-subroutine read_file(filename, filestring, filesize)
+  subroutine read_file(filename, filestring, filesize)
 
   implicit none
   character(len=*) :: filestring
@@ -855,4 +844,4 @@ subroutine read_file(filename, filestring, filesize)
   read (10, rec=1) filestring(1:filesize)
   close(10)
 
-end subroutine read_file
+  end subroutine read_file

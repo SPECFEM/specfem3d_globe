@@ -35,7 +35,8 @@
   use constants,only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
-    SUPPRESS_MOHO_STRETCHING
+    SUPPRESS_MOHO_STRETCHING, &
+    ITYPE_CRUSTAL_MODEL,ICRUST_CRUST_SH
 
   use meshfem3D_par,only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
@@ -51,15 +52,26 @@
 
   ! local parameters
   double precision :: r,theta,phi,lat,lon
-  double precision :: vpc,vsc,rhoc,moho,elevation,gamma
+  double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
+  double precision :: moho,elevation,gamma
   double precision :: x,y,z
   double precision :: R_moho,R_middlecrust
   integer :: ia,count_crust,count_mantle
   logical :: found_crust
 
   ! minimum/maximum allowed moho depths (5km/90km non-dimensionalized)
-  double precision,parameter :: MOHO_MINIMUM = 5.0 / R_EARTH_KM
-  double precision,parameter :: MOHO_MAXIMUM = 90.0 / R_EARTH_KM
+  double precision,parameter :: MOHO_MINIMUM_DEFAULT = 5.0 / R_EARTH_KM
+  double precision,parameter :: MOHO_MAXIMUM_DEFAULT = 90.0 / R_EARTH_KM
+
+  double precision :: MOHO_MINIMUM,MOHO_MAXIMUM
+
+  ! sets min/max allowed moho depth
+  MOHO_MINIMUM = MOHO_MINIMUM_DEFAULT
+  MOHO_MAXIMUM = MOHO_MAXIMUM_DEFAULT
+  if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUST_SH) then
+    ! minimum moho < 3.9km
+    MOHO_MINIMUM = 3.5d0 / R_EARTH_KM
+  endif
 
   ! radii for stretching criteria
   R_moho = RMOHO_FICTITIOUS_IN_MESHER/R_EARTH
@@ -98,7 +110,7 @@
     moho = 0.d0
 
     ! gets smoothed moho depth
-    call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
 
     ! checks non-dimensionalized moho depth
     !
@@ -251,10 +263,11 @@
   logical :: elem_in_crust,elem_in_mantle
 
   ! local parameters
-  integer:: ia,count_crust,count_mantle
-  double precision:: r,theta,phi,lat,lon
-  double precision:: vpc,vsc,rhoc,moho
-  logical:: found_crust
+  integer :: ia,count_crust,count_mantle
+  double precision :: r,theta,phi,lat,lon
+  double precision :: vpvc,vphc,vsvc,vshc,etac,rhoc
+  double precision :: moho
+  logical :: found_crust
   double precision :: x,y,z
 
   ! loops over element's anchor points
@@ -291,10 +304,10 @@
     moho = 0.d0
 
     ! gets smoothed moho depth
-    call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+    call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
 
     ! checks moho depth
-    if (abs(moho) < TINYVAL ) call exit_mpi(myrank,'Error moho depth to honor')
+    if (abs(moho) < TINYVAL ) call exit_mpi(myrank,'Error moho depth in crust_reg to honor')
 
     moho = ONE - moho
 

@@ -37,7 +37,7 @@ module AVS_DX_surface_mod
     real(kind=4), dimension(:), allocatable :: x_adios, y_adios, z_adios
     integer(kind=4), dimension(:), allocatable :: idoubling, iglob1, iglob2, &
         iglob3, iglob4
-    real, dimension(:), allocatable :: dvp, dvs
+    real(kind=4), dimension(:), allocatable :: dvp, dvs
   endtype
 
 contains

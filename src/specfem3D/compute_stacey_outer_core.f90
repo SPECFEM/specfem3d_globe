@@ -30,7 +30,7 @@
   use constants_solver
 
   use specfem_par,only: &
-    ichunk,SIMULATION_TYPE,SAVE_FORWARD,it, &
+    ichunk,SIMULATION_TYPE,SAVE_STACEY,it, &
     wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
 
   use specfem_par,only: GPU_MODE,Mesh_pointer
@@ -99,7 +99,7 @@
 
               accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-              if (SAVE_FORWARD) then
+              if (SAVE_STACEY) then
                 absorb_xmin_outer_core(j,k,ispec2D) = weight*sn
               endif
             enddo
@@ -112,7 +112,7 @@
       endif
 
       ! writes absorbing boundary values to file
-      if (SAVE_FORWARD) then
+      if (SAVE_STACEY) then
         call write_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,it)
       endif
     endif
@@ -143,7 +143,7 @@
 
               accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-              if (SAVE_FORWARD) then
+              if (SAVE_STACEY) then
                 absorb_xmax_outer_core(j,k,ispec2D) = weight*sn
               endif
 
@@ -156,7 +156,7 @@
         call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_xmax_outer_core,5) ! <= xmax
       endif
 
-      if (SAVE_FORWARD) then
+      if (SAVE_STACEY) then
         call write_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,it)
       endif
     endif
@@ -186,7 +186,7 @@
 
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-            if (SAVE_FORWARD) then
+            if (SAVE_STACEY) then
               absorb_ymin_outer_core(i,k,ispec2D) = weight*sn
             endif
 
@@ -198,7 +198,7 @@
       call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymin_outer_core,6) ! <= ymin
     endif
 
-    if (SAVE_FORWARD) then
+    if (SAVE_STACEY) then
       call write_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,it)
     endif
   endif
@@ -226,7 +226,7 @@
 
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-            if (SAVE_FORWARD) then
+            if (SAVE_STACEY) then
               absorb_ymax_outer_core(i,k,ispec2D) = weight*sn
             endif
 
@@ -238,7 +238,7 @@
       call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymax_outer_core,7) ! <= ymax
     endif
 
-    if (SAVE_FORWARD) then
+    if (SAVE_STACEY) then
       call write_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,it)
     endif
   endif
@@ -265,7 +265,7 @@
 
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
-            if (SAVE_FORWARD) then
+            if (SAVE_STACEY) then
               absorb_zmin_outer_core(i,j,ispec2D) = weight*sn
             endif
 
@@ -277,7 +277,7 @@
       call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_zmin_outer_core,8) ! <= zmin
     endif
 
-    if (SAVE_FORWARD) then
+    if (SAVE_STACEY) then
       call write_abs(8,absorb_zmin_outer_core,reclen_zmin,it)
     endif
   endif

@@ -63,9 +63,9 @@
   do ispec = 1,NSPEC_CRUST_MANTLE
     !output element if center of element is in the given region
     iglob    = ibool_crust_mantle((NGLLX+1)/2,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
-    rval     = xstore_crust_mantle(iglob)
-    thetaval = ystore_crust_mantle(iglob)
-    phival   = zstore_crust_mantle(iglob)
+    rval     = rstore_crust_mantle(1,iglob)
+    thetaval = rstore_crust_mantle(2,iglob)
+    phival   = rstore_crust_mantle(3,iglob)
 
     ! we already changed xyz back to rthetaphi
     if ((rval < MOVIE_TOP .and. rval > MOVIE_BOTTOM) .and. &
@@ -119,18 +119,18 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL) :: deltat
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
 
-  integer :: vnspec
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec) :: &
+  integer,intent(in) :: vnspec
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec),intent(in) :: &
     eps_trace_over_3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec),intent(in) :: &
     epsilondev_xx,epsilondev_yy,epsilondev_xy, &
     epsilondev_xz,epsilondev_yz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec),intent(inout) :: &
     Ieps_trace_over_3
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec),intent(inout) :: &
     Iepsilondev_xx,Iepsilondev_yy,Iepsilondev_xy, &
     Iepsilondev_xz,Iepsilondev_yz
 
@@ -204,9 +204,9 @@
             ! gets point position
             iglob = ibool_crust_mantle(i,j,k,ispec)
 
-            rval = xstore_crust_mantle(iglob)
-            thetaval = ystore_crust_mantle(iglob)
-            phival = zstore_crust_mantle(iglob)
+            rval = rstore_crust_mantle(1,iglob)
+            thetaval = rstore_crust_mantle(2,iglob)
+            phival = rstore_crust_mantle(3,iglob)
 
             !x,y,z store have been converted to r theta phi already, need to revert back for xyz output
             call rthetaphi_2_xyz(xval,yval,zval,rval,thetaval,phival)
@@ -320,7 +320,8 @@
 
   subroutine write_movie_volume_strains(myrank,npoints_3dmovie, &
                                         LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
-                                        it,eps_trace_over_3_crust_mantle, &
+                                        it,vnspec, &
+                                        eps_trace_over_3_crust_mantle, &
                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
                                         muvstore_crust_mantle_3dmovie, &
@@ -333,20 +334,21 @@
   implicit none
 
   ! input
-  integer :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
+  integer,intent(in) :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
+  integer,intent(in) :: vnspec
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec),intent(in) :: eps_trace_over_3_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),intent(in) :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: muvstore_crust_mantle_3dmovie
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),intent(in) :: muvstore_crust_mantle_3dmovie
 
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
+  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),intent(in) :: mask_3dmovie
 
-  logical :: MOVIE_COARSE
-  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie) :: nu_3dmovie
+  logical,intent(in) :: MOVIE_COARSE
+  real(kind=CUSTOM_REAL), dimension(3,3,npoints_3dmovie),intent(in) :: nu_3dmovie
   character(len=MAX_STRING_LEN) LOCAL_TMP_PATH,outputname
 
   ! variables
@@ -364,12 +366,12 @@
 
   ! allocates arrays
   allocate(store_val3d_NN(npoints_3dmovie), &
-          store_val3d_EE(npoints_3dmovie), &
-          store_val3d_ZZ(npoints_3dmovie), &
-          store_val3d_NE(npoints_3dmovie), &
-          store_val3d_NZ(npoints_3dmovie), &
-          store_val3d_EZ(npoints_3dmovie), &
-          stat=ier)
+           store_val3d_EE(npoints_3dmovie), &
+           store_val3d_ZZ(npoints_3dmovie), &
+           store_val3d_NE(npoints_3dmovie), &
+           store_val3d_NZ(npoints_3dmovie), &
+           store_val3d_EZ(npoints_3dmovie), &
+           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating store_val3d_ .. arrays')
 
   if (MOVIE_VOLUME_TYPE == 1) then
@@ -394,36 +396,36 @@
     do j = 1,NGLLY,iNIT
      do i = 1,NGLLX,iNIT
       if (mask_3dmovie(i,j,k,ispec)) then
-       ipoints_3dmovie=ipoints_3dmovie+1
-       muv_3dmovie=muvstore_crust_mantle_3dmovie(i,j,k,ispec)
+       ipoints_3dmovie = ipoints_3dmovie + 1
+       muv_3dmovie = muvstore_crust_mantle_3dmovie(i,j,k,ispec)
 
-       eps_loc(1,1)=eps_trace_over_3_crust_mantle(i,j,k,ispec) + &
+       eps_loc(1,1) = eps_trace_over_3_crust_mantle(i,j,k,ispec) + &
                       epsilondev_xx_crust_mantle(i,j,k,ispec)
-       eps_loc(2,2)=eps_trace_over_3_crust_mantle(i,j,k,ispec) + &
+       eps_loc(2,2) = eps_trace_over_3_crust_mantle(i,j,k,ispec) + &
                       epsilondev_yy_crust_mantle(i,j,k,ispec)
-       eps_loc(3,3)=eps_trace_over_3_crust_mantle(i,j,k,ispec) - &
+       eps_loc(3,3) = eps_trace_over_3_crust_mantle(i,j,k,ispec) - &
                       epsilondev_xx_crust_mantle(i,j,k,ispec) - &
                       epsilondev_yy_crust_mantle(i,j,k,ispec)
 
-       eps_loc(1,2)=epsilondev_xy_crust_mantle(i,j,k,ispec)
-       eps_loc(1,3)=epsilondev_xz_crust_mantle(i,j,k,ispec)
-       eps_loc(2,3)=epsilondev_yz_crust_mantle(i,j,k,ispec)
+       eps_loc(1,2) = epsilondev_xy_crust_mantle(i,j,k,ispec)
+       eps_loc(1,3) = epsilondev_xz_crust_mantle(i,j,k,ispec)
+       eps_loc(2,3) = epsilondev_yz_crust_mantle(i,j,k,ispec)
 
-       eps_loc(2,1)=eps_loc(1,2)
-       eps_loc(3,1)=eps_loc(1,3)
-       eps_loc(3,2)=eps_loc(2,3)
+       eps_loc(2,1) = eps_loc(1,2)
+       eps_loc(3,1) = eps_loc(1,3)
+       eps_loc(3,2) = eps_loc(2,3)
 
        ! rotate eps_loc to spherical coordinates
        eps_loc_new(:,:) = matmul(matmul(nu_3dmovie(:,:,ipoints_3dmovie),eps_loc(:,:)), &
                                   transpose(nu_3dmovie(:,:,ipoints_3dmovie)))
        if (MOVIE_VOLUME_TYPE == 3) eps_loc_new(:,:) = eps_loc(:,:)*muv_3dmovie
 
-       store_val3d_NN(ipoints_3dmovie)=eps_loc_new(1,1)
-       store_val3d_EE(ipoints_3dmovie)=eps_loc_new(2,2)
-       store_val3d_ZZ(ipoints_3dmovie)=eps_loc_new(3,3)
-       store_val3d_NE(ipoints_3dmovie)=eps_loc_new(1,2)
-       store_val3d_NZ(ipoints_3dmovie)=eps_loc_new(1,3)
-       store_val3d_EZ(ipoints_3dmovie)=eps_loc_new(2,3)
+       store_val3d_NN(ipoints_3dmovie) = eps_loc_new(1,1)
+       store_val3d_EE(ipoints_3dmovie) = eps_loc_new(2,2)
+       store_val3d_ZZ(ipoints_3dmovie) = eps_loc_new(3,3)
+       store_val3d_NE(ipoints_3dmovie) = eps_loc_new(1,2)
+       store_val3d_NZ(ipoints_3dmovie) = eps_loc_new(1,3)
+       store_val3d_EZ(ipoints_3dmovie) = eps_loc_new(2,3)
       endif
      enddo
     enddo
@@ -468,7 +470,7 @@
   close(IOUT)
 
   deallocate(store_val3d_NN,store_val3d_EE,store_val3d_ZZ, &
-            store_val3d_NE,store_val3d_NZ,store_val3d_EZ)
+             store_val3d_NE,store_val3d_NZ,store_val3d_EZ)
 
   end subroutine write_movie_volume_strains
 

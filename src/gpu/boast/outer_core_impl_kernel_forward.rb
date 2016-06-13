@@ -96,9 +96,7 @@ module BOAST
     v.push wgllwgll_xz             = Real("wgllwgll_xz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgllwgll_yz             = Real("wgllwgll_yz",             :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push gravity                 = Int( "GRAVITY",                 :dir => :in)
-    v.push *d_store = [d_xstore    = Real("d_xstore",                :dir => :in, :restrict => true, :dim => [Dim()] ),
-                       d_ystore    = Real("d_ystore",                :dir => :in, :restrict => true, :dim => [Dim()] ),
-                       d_zstore    = Real("d_zstore",                :dir => :in, :restrict => true, :dim => [Dim()] ) ]
+    v.push d_rstore                = Real("d_rstore",                :dir => :in, :restrict => true, :dim => [Dim(3), Dim()] )
     v.push d_d_ln_density_dr_table = Real("d_d_ln_density_dr_table", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push d_minus_rho_g_over_kappa_fluid = Real("d_minus_rho_g_over_kappa_fluid", :dir => :in, :restrict => true, :dim => [Dim()] )
     v.push wgll_cube               = Real("wgll_cube",               :dir => :in, :restrict => true, :dim => [Dim()] )
@@ -273,9 +271,9 @@ module BOAST
           get_output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
           get_output.puts "#else"
-            print If(use_mesh_coloring_gpu, lambda {
+            print If(use_mesh_coloring_gpu => lambda {
               print working_element === bx
-            }, lambda {
+            }, :else => lambda {
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
             })
           get_output.puts "#endif"
@@ -318,7 +316,7 @@ elem_per_thread.times { |elem_index|
              print templ[2] === templ[2] + s_dummy_loc[l*ngll2+j*ngllx+i]*sh_hprime_xx[l*ngllx+k]
           }
           get_output.puts "#ifdef #{manually_unrolled_loops}"
-            for_loop.unroll
+            print for_loop.unroll
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
@@ -334,7 +332,7 @@ elem_per_thread.times { |elem_index|
             print dpotentialdl[indx] === xil[indx]*templ[0] + etal[indx]*templ[1] + gammal[indx]*templ[2]
           }
 
-          print If(rotation , lambda {
+          print If(rotation => lambda {
             print sub_kernel.call(tx,working_element,\
                                   time,two_omega_earth,deltat,\
                                   d_A_array_rotation,\
@@ -343,14 +341,15 @@ elem_per_thread.times { |elem_index|
                                   dpotentialdl[1],\
                                   dpotentialdx_with_rot.address,\
                                   dpotentialdy_with_rot.address)
-          }, lambda {
+          }, :else => lambda {
             print dpotentialdx_with_rot === dpotentialdl[0]
             print dpotentialdy_with_rot === dpotentialdl[1]
           })
 
-          print radius === d_store[0][iglob[elem_index]]
-          print theta  === d_store[1][iglob[elem_index]]
-          print phi    === d_store[2][iglob[elem_index]]
+          print radius === d_rstore[0,iglob[elem_index]]
+          print theta  === d_rstore[1,iglob[elem_index]]
+          print phi    === d_rstore[2,iglob[elem_index]]
+
           if (get_lang == CL) then
             print sin_theta === sincos(theta, cos_theta.address)
             print sin_phi   === sincos(phi,   cos_phi.address)
@@ -366,7 +365,7 @@ elem_per_thread.times { |elem_index|
             end
           end
           print int_radius === rint(radius * rearth_km * 10.0) - 1
-          print If(!gravity , lambda {
+          print If(!gravity => lambda {
             print grad_ln_rho[0] === sin_theta * cos_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[1] === sin_theta * sin_phi * d_d_ln_density_dr_table[int_radius]
             print grad_ln_rho[2] ===           cos_theta * d_d_ln_density_dr_table[int_radius]
@@ -374,7 +373,7 @@ elem_per_thread.times { |elem_index|
             print dpotentialdx_with_rot === dpotentialdx_with_rot + s_dummy_loc[tx] * grad_ln_rho[0]
             print dpotentialdy_with_rot === dpotentialdy_with_rot + s_dummy_loc[tx] * grad_ln_rho[1]
             print dpotentialdl[2]       === dpotentialdl[2] +       s_dummy_loc[tx] * grad_ln_rho[2]
-          }, lambda {
+          }, :else => lambda {
             print gl[0] === sin_theta*cos_phi
             print gl[1] === sin_theta*sin_phi
             print gl[2] === cos_theta
@@ -405,7 +404,7 @@ elem_per_thread.times { |elem_index|
              print templ[2] === templ[2] + s_temp[2][l*ngll2+j*ngllx+i]*sh_hprimewgll_xx[k*ngllx+l]
           }
           get_output.puts "#ifdef #{manually_unrolled_loops}"
-            for_loop.unroll
+            print for_loop.unroll
           get_output.puts "#else"
             print for_loop
           get_output.puts "#endif"
@@ -421,17 +420,17 @@ elem_per_thread.times { |elem_index|
               print d_potential_dot_dot[iglob[elem_index]] === d_potential_dot_dot[iglob[elem_index]] + sum_terms
             get_output.puts "#endif"
           get_output.puts "#else"
-            print If(use_mesh_coloring_gpu, lambda {
-              print If(nspec_outer_core > coloring_min_nspec_outer_core, lambda {
+            print If(use_mesh_coloring_gpu => lambda {
+              print If(nspec_outer_core > coloring_min_nspec_outer_core => lambda {
                 get_output.puts "#ifdef #{use_textures_fields}"
                   print d_potential_dot_dot[iglob[elem_index]] === d_accel_oc_tex[iglob[elem_index]] + sum_terms
                 get_output.puts "#else"
                   print d_potential_dot_dot[iglob[elem_index]] === d_potential_dot_dot[iglob[elem_index]] + sum_terms
                 get_output.puts "#endif"
-              }, lambda{
+              }, :else => lambda{
                 print atomicAdd(d_potential_dot_dot+iglob[elem_index],sum_terms)
               })
-            }, lambda {
+            }, :else => lambda {
               print atomicAdd(d_potential_dot_dot+iglob[elem_index],sum_terms)
             })
           get_output.puts "#endif"

@@ -44,7 +44,6 @@
   ! iphase: iphase = 1 is for computing outer elements in the outer_core,
   !              iphase = 2 is for computing inner elements in the outer core (former icall parameter)
   integer :: iphase
-  logical :: phase_is_inner
 
   ! compute internal forces in the fluid region
 
@@ -60,18 +59,13 @@
   ! ****************************************************
 
   ! distinguishes two runs: for elements on MPI interfaces, and elements within the partitions
-  do iphase=1,2
+  do iphase = 1,2
 
     ! first, iphase == 1 for points on MPI interfaces (thus outer elements)
     ! second, iphase == 2 for points purely inside partition (thus inner elements)
     !
     ! compute all the outer elements first, then sends out non blocking MPI communication
     ! and continues computing inner elements (overlapping)
-    if (iphase == 1) then
-      phase_is_inner = .false.
-    else
-      phase_is_inner = .true.
-    endif
 
     if (.not. GPU_MODE) then
       ! on CPU
@@ -80,7 +74,7 @@
                                          A_array_rotation,B_array_rotation, &
                                          A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                          displ_outer_core,accel_outer_core, &
-                                         div_displ_outer_core,phase_is_inner)
+                                         div_displ_outer_core,iphase)
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 1
@@ -159,12 +153,12 @@
       if (.not. GPU_MODE) then
         ! on CPU
         call assemble_MPI_scalar_s(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
-                                accel_outer_core, &
-                                buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
-                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
-                                my_neighbours_outer_core, &
-                                request_send_scalar_oc,request_recv_scalar_oc)
+                                   accel_outer_core, &
+                                   buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
+                                   num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                                   nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
+                                   my_neighbours_outer_core, &
+                                   request_send_scalar_oc,request_recv_scalar_oc)
       else
         ! on GPU
         ! sends accel values to corresponding MPI interface neighbors
@@ -194,7 +188,7 @@
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                    accel_outer_core, &
-                                   buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
+                                   buffer_recv_scalar_outer_core,num_interfaces_outer_core, &
                                    max_nibool_interfaces_oc, &
                                    nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
                                    request_send_scalar_oc,request_recv_scalar_oc)
@@ -270,7 +264,6 @@
   !              iphase = 2 is for computing inner elements in the outer core (former icall parameter)
   integer :: iphase
   integer :: it_tmp
-  logical :: phase_is_inner
 
   ! checks
   if (SIMULATION_TYPE /= 3 ) return
@@ -320,11 +313,6 @@
     !
     ! compute all the outer elements first, then sends out non blocking MPI communication
     ! and continues computing inner elements (overlapping)
-    if (iphase == 1) then
-      phase_is_inner = .false.
-    else
-      phase_is_inner = .true.
-    endif
 
     if (.not. GPU_MODE) then
       ! on CPU
@@ -334,7 +322,7 @@
                                      b_A_array_rotation,b_B_array_rotation, &
                                      b_A_array_rotation_lddrk,b_B_array_rotation_lddrk, &
                                      b_displ_outer_core,b_accel_outer_core, &
-                                     div_displ_outer_core,phase_is_inner)
+                                     div_displ_outer_core,iphase)
     else
       ! on GPU
       ! includes FORWARD_OR_ADJOINT == 3
@@ -514,13 +502,15 @@
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
-                                       div_displfluid,phase_is_inner)
+                                       div_displfluid,iphase)
 
 ! wrapper function, decides about Deville optimization
 !
 ! (left in this file to let compiler decide about inlining)
 
   use constants_solver,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE,USE_DEVILLE_PRODUCTS_VAL
+
+  use specfem_par_outercore,only: sum_terms_outer_core
 
   implicit none
 
@@ -542,7 +532,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),intent(out) :: div_displfluid
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
 
   if (USE_DEVILLE_PRODUCTS_VAL) then
@@ -552,7 +542,7 @@
                                        A_array_rotation,B_array_rotation, &
                                        A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                        displfluid,accelfluid, &
-                                       div_displfluid,phase_is_inner)
+                                       div_displfluid,iphase,sum_terms_outer_core)
   else
     ! div_displ_outer_core is initialized to zero in the following subroutine.
     call compute_forces_outer_core_noDev(timeval,deltat,two_omega_earth, &
@@ -560,7 +550,7 @@
                                          A_array_rotation,B_array_rotation, &
                                          A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                          displfluid,accelfluid, &
-                                         div_displfluid,phase_is_inner)
+                                         div_displfluid,iphase)
   endif
 
   end subroutine compute_forces_outer_core

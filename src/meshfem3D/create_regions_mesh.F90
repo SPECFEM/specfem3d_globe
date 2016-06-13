@@ -1334,12 +1334,6 @@ subroutine crm_save_mesh_files(nspec,npointot,iregion_code)
   logical, dimension(:), allocatable :: mask_ibool
   integer :: ier
 
-  ! structures used for ADIOS AVS/DX files
-!  type(avs_dx_global_t) :: avs_dx_global_vars
-!  character(len=MAX_STRING_LEN) :: reg_name, outputname, group_name
-!  integer :: comm, sizeprocs
-!  integer(kind=8) :: adios_group, group_size_inc, adios_totalsize, adios_handle
-
   ! arrays num_ibool_AVS_DX and mask_ibool used to save memory
   ! allocate memory for arrays
   allocate(num_ibool_AVS_DX(npointot), &

@@ -41,25 +41,27 @@ module kdtree_search
   type :: kdtree_node
     ! id (used for debugging tree)
     !integer :: id
+    ! index of associated data point
+    integer :: ipoint
+    ! index of lower and upper bounds of point range
+    integer :: ibound_lower,ibound_upper
+
     ! cut dimension index ( 1/2/3 for 3D point set )
     integer :: idim
     ! cut value
     double precision :: cut_value
     ! bounds value on cut dimension
     !double precision :: cut_min,cut_max
-    ! index of associated data point
-    integer :: ipoint
-    ! index of lower and upper bounds of point range
-    integer :: ibound_lower,ibound_upper
+
     ! child nodes in sub level
-    type (kdtree_node),pointer :: left, right
+    type (kdtree_node), pointer :: left, right
   end type kdtree_node
 
   ! data associated kd-tree structure (root node)
   ! note: in general, a save attribute should be added to this root pointer
   !       to have the tree variable stored globally
   !       however, putting it here into the module declaration will have the same effect
-  type (kdtree_node),pointer :: kdtree
+  type (kdtree_node), pointer :: kdtree
 
   ! kdtree arrays
   ! total number of tree nodes
@@ -134,8 +136,8 @@ contains
 
   ! local parameters
   integer :: npoints
-  integer, dimension(:),allocatable :: points_index
-  double precision,dimension(:,:),pointer :: points_data
+  integer, dimension(:), allocatable :: points_index
+  double precision,dimension(:,:), pointer, contiguous :: points_data
 
   ! tree statistics
   integer :: depth
@@ -628,11 +630,11 @@ contains
 
   implicit none
 
-  integer,intent(in) :: npoints
-  double precision,dimension(3,npoints),intent(in) :: points_data
-  integer,dimension(npoints),intent(inout) :: points_index
+  integer, intent(in) :: npoints
+  double precision, dimension(3,npoints), intent(in) :: points_data
+  integer,dimension(npoints), intent(inout) :: points_index
 
-  type (kdtree_node), pointer,intent(inout) :: node
+  type (kdtree_node), pointer, intent(inout) :: node
 
   integer,intent(in) :: depth
   integer,intent(in) :: ibound_lower,ibound_upper
@@ -791,16 +793,16 @@ contains
 
   implicit none
 
-  integer,intent(in) :: npoints
-  double precision,dimension(3,npoints),intent(in) :: points_data
-  integer,dimension(npoints),intent(in) :: points_index
+  integer, intent(in) :: npoints
+  double precision, dimension(3,npoints),intent(in) :: points_data
+  integer,dimension(npoints), intent(in) :: points_index
 
   type (kdtree_node), pointer,intent(inout) :: node
 
-  integer,intent(inout) :: numnodes
+  integer, intent(inout) :: numnodes
 
   ! local parameters
-  integer,parameter :: OUTPUT_LENGTH = 50
+  integer, parameter :: OUTPUT_LENGTH = 50
 
   ! checks if valid pointer (must have been nullified initially to be able to check with associated())
   if (.not. associated(node) ) return
@@ -891,15 +893,15 @@ contains
 
   ! searches for node point closest to given location
   implicit none
-  integer,intent(in) :: npoints
-  double precision,dimension(3,npoints),intent(in) :: points_data
+  integer, intent(in) :: npoints
+  double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer,intent(inout) :: node
+  type (kdtree_node), pointer, intent(inout) :: node
 
-  double precision,dimension(3),intent(in) :: xyz_target
+  double precision, dimension(3), intent(in) :: xyz_target
 
-  integer,intent(inout) :: ipoint_min
-  double precision,intent(inout) :: dist_min
+  integer, intent(inout) :: ipoint_min
+  double precision, intent(inout) :: dist_min
 
   ! local parameters
   double precision :: dist
@@ -1008,17 +1010,17 @@ contains
   ! searches for all node points within a given radius to given location
 
   implicit none
-  integer,intent(in) :: npoints
-  double precision,dimension(3,npoints),intent(in) :: points_data
+  integer, intent(in) :: npoints
+  double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer,intent(inout) :: node
+  type (kdtree_node), pointer, intent(inout) :: node
 
-  double precision,dimension(3),intent(in) :: xyz_target
+  double precision,dimension(3), intent(in) :: xyz_target
 
-  double precision,intent(in) :: r_squared
-  integer,intent(inout) :: num_nodes
+  double precision, intent(in) :: r_squared
+  integer, intent(inout) :: num_nodes
 
-  logical,intent(in) :: fill_index
+  logical, intent(in) :: fill_index
 
   ! local parameters
   double precision :: dist
@@ -1138,17 +1140,17 @@ contains
   ! searches for all node points within a given search ellipsoid to given location
 
   implicit none
-  integer,intent(in) :: npoints
-  double precision,dimension(3,npoints),intent(in) :: points_data
+  integer, intent(in) :: npoints
+  double precision, dimension(3,npoints), intent(in) :: points_data
 
-  type (kdtree_node), pointer,intent(inout) :: node
+  type (kdtree_node), pointer, intent(inout) :: node
 
-  double precision,dimension(3),intent(in) :: xyz_target
+  double precision, dimension(3), intent(in) :: xyz_target
 
-  double precision,intent(in) :: r_squared_v,r_squared_h
-  integer,intent(inout) :: num_nodes
+  double precision, intent(in) :: r_squared_v,r_squared_h
+  integer, intent(inout) :: num_nodes
 
-  logical,intent(in) :: fill_index
+  logical, intent(in) :: fill_index
 
   ! local parameters
   double precision :: dist,dist_v,dist_h

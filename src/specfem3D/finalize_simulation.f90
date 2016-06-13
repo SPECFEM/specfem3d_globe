@@ -32,57 +32,58 @@
   use specfem_par_innercore
   use specfem_par_outercore
   use specfem_par_movie
+
+  use manager_adios
+
   implicit none
 
   ! synchronize all processes, waits until all processes have written their seismograms
   call synchronize_all()
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'finalizing simulation'
+    call flush_IMAIN()
+  endif
+  call synchronize_all()
+
   ! closes Stacey absorbing boundary snapshots
   if (ABSORBING_CONDITIONS) then
     ! crust mantle
-    if (nspec2D_xmin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_xmin_crust_mantle > 0 .and. SAVE_STACEY) then
       call close_file_abs(0)
     endif
 
-    if (nspec2D_xmax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_xmax_crust_mantle > 0 .and. SAVE_STACEY) then
       call close_file_abs(1)
     endif
 
-    if (nspec2D_ymin_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_ymin_crust_mantle > 0 .and. SAVE_STACEY) then
       call close_file_abs(2)
     endif
 
-    if (nspec2D_ymax_crust_mantle > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_ymax_crust_mantle > 0 .and. SAVE_STACEY) then
       call close_file_abs(3)
     endif
 
     ! outer core
-    if (nspec2D_xmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_xmin_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(4)
     endif
 
-    if (nspec2D_xmax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_xmax_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(5)
     endif
 
-    if (nspec2D_ymin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_ymin_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(6)
     endif
 
-    if (nspec2D_ymax_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_ymax_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(7)
     endif
 
-    if (nspec2D_zmin_outer_core > 0 .and. (SIMULATION_TYPE == 3 &
-      .or. (SIMULATION_TYPE == 1 .and. SAVE_FORWARD))) then
+    if (nspec2D_zmin_outer_core > 0 .and. SAVE_STACEY) then
       call close_file_abs(8)
     endif
 
@@ -117,7 +118,7 @@
 
   ! adios finalizes
   if (ADIOS_ENABLED) then
-    call adios_cleanup()
+    call finalize_adios()
   endif
 
   ! asdf finalizes
@@ -173,9 +174,22 @@
     endif
     nullify(b_rmassz_crust_mantle)
   endif
+  deallocate(rstore_crust_mantle)
+
+  ! optimized arrays
+  if (USE_DEVILLE_PRODUCTS_VAL) then
+    deallocate(sum_terms_crust_mantle,sum_terms_inner_core,sum_terms_outer_core)
+    deallocate(deriv_mapping_crust_mantle,deriv_mapping_inner_core,deriv_mapping_outer_core)
+  endif
+  if (use_inversed_arrays) then
+    deallocate(ibool_inv_tbl_crust_mantle,ibool_inv_tbl_inner_core,ibool_inv_tbl_outer_core)
+    deallocate(ibool_inv_st_crust_mantle,ibool_inv_st_inner_core,ibool_inv_st_outer_core)
+    deallocate(phase_iglob_crust_mantle,phase_iglob_inner_core,phase_iglob_outer_core)
+  endif
 
   ! outer core
   if (SIMULATION_TYPE == 3 ) nullify(b_rmass_outer_core)
+  deallocate(rstore_outer_core)
 
   ! inner core
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
@@ -191,6 +205,7 @@
     endif
     nullify(b_rmassz_inner_core)
   endif
+  deallocate(rstore_inner_core)
 
   ! MPI buffers
   deallocate(buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &

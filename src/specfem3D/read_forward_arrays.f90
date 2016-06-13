@@ -141,10 +141,10 @@
 
   ! local parameters
   integer :: ier
-  character(len=MAX_STRING_LEN) outputname
+  character(len=MAX_STRING_LEN) :: outputname
 
   ! checks if anything to do
-  if (UNDO_ATTENUATION ) return
+  if (UNDO_ATTENUATION) return
 
   ! reads in file data
   if (ADIOS_FOR_FORWARD_ARRAYS) then

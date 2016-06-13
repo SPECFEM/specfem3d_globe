@@ -46,6 +46,9 @@ echo
 
 mpirun -np $numnodes $PWD/bin/xmeshfem3D
 
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
+
 echo "  mesher done: `date`"
 echo
 
@@ -69,6 +72,9 @@ echo starting run in current directory $PWD
 echo
 
 mpirun -np $numnodes $PWD/bin/xspecfem3D
+
+# checks exit code
+if [[ $? -ne 0 ]]; then exit 1; fi
 
 echo "finished successfully"
 echo `date`

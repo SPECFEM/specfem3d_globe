@@ -93,14 +93,6 @@ langs = $options[:langs]
 
 BOAST::set_default_real_size(4)
 BOAST::set_replace_constants(false)
-class Float
-  alias_method :old_to_s, :to_s
-  def to_s
-    s = ""+old_to_s
-    s += "f" if BOAST::get_default_real_size == 4
-    return s
-  end
-end
 
 kerns = kernels
 kerns = kerns.select { |k,v| k.to_s.match($options[:kernel]) } if $options[:kernel]
@@ -216,6 +208,10 @@ puts ""
 puts "-------------------------------"
 puts "building header & make files"
 puts "-------------------------------"
+
+# sorts kernels for file lists
+kernels.sort!
+
 langs.each { |lang|
   puts "  " + lang.to_s
 

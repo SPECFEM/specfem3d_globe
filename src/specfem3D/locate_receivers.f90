@@ -54,7 +54,6 @@
     rspl,espl,espl2,nspl,ibathy_topo, &
     TOPOGRAPHY,RECEIVERS_CAN_BE_BURIED
 
-  use write_seismograms_mod, only: band_instrument_code
   implicit none
 
   integer,intent(in) :: nspec,nglob

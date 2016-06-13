@@ -25,11 +25,12 @@
 !
 !=====================================================================
 
-module write_seismograms_mod
-
-contains
 
   subroutine write_seismograms()
+
+  use constants,only: IMAIN
+
+  use constants_solver,only: NGLOB_CRUST_MANTLE,NGLOB_CRUST_MANTLE_ADJOINT
 
   use specfem_par,only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
     nrec_local,number_receiver_global,ispec_selected_rec,ispec_selected_source, &
@@ -37,10 +38,13 @@ contains
     WRITE_SEISMOGRAMS_BY_MASTER,OUTPUT_SEISMOS_ASDF, &
     it_adj_written,moment_der,sloc_der,shdur_der,stshift_der
 
-
-  use specfem_par_crustmantle
+  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
+    eps_trace_over_3_crust_mantle,epsilondev_xx_crust_mantle,epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
+    epsilondev_yy_crust_mantle,epsilondev_yz_crust_mantle, &
+    ibool_crust_mantle
 
   implicit none
+
   ! local parameters
   ! timing
   double precision, external :: wtime
@@ -113,6 +117,7 @@ contains
         it_adj_written = it
       end select
     endif
+
     ! synchronizes processes (waits for all processes to finish writing)
     call synchronize_all()
 
@@ -161,8 +166,6 @@ contains
           OUTPUT_FILES, &
           WRITE_SEISMOGRAMS_BY_MASTER
 
-  use asdf_data,only: asdf_event
-
   implicit none
 
   ! local parameters
@@ -173,8 +176,6 @@ contains
   integer :: total_seismos
   integer,dimension(:),allocatable:: islice_num_rec_local
   character(len=MAX_STRING_LEN) :: sisname
-  ! ASDF
-  type(asdf_event) :: asdf_container
 
   ! allocates single station seismogram
   allocate(one_seismogram(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
@@ -205,7 +206,7 @@ contains
     endif
 
     ! initializes the ASDF data structure by allocating arrays
-    if (OUTPUT_SEISMOS_ASDF) call init_asdf_data(asdf_container, nrec_local)
+    if (OUTPUT_SEISMOS_ASDF) call init_asdf_data(nrec_local)
 
     ! loop on all the local receivers
     do irec_local = 1,nrec_local
@@ -216,26 +217,23 @@ contains
       one_seismogram(:,:) = seismograms(:,irec_local,:)
 
       ! write this seismogram
-      if (OUTPUT_SEISMOS_ASDF) then
-        ! note: ASDF data structure is passed as an argument
-        ! stores all traces into ASDF container
-        call write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
-      else
-        call write_one_seismogram(one_seismogram,irec,irec_local)
-      endif
+      ! note: ASDF data structure is given in module
+      !       stores all traces into ASDF container in case
+      call write_one_seismogram(one_seismogram,irec,irec_local)
     enddo
 
     ! writes out ASDF container to the file
     if (OUTPUT_SEISMOS_ASDF) then
-      call write_asdf(asdf_container)
+      call write_asdf()
       ! deallocate the container
-      call close_asdf_data(asdf_container, nrec_local)
+      call close_asdf_data()
     endif
 
     ! create one large file instead of one small file per station to avoid file system overload
     if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
-  else ! WRITE_SEISMOGRAMS_BY_MASTER
+  else
+    ! WRITE_SEISMOGRAMS_BY_MASTER
 
     ! only the master process does the writing of seismograms and
     ! collects the data from all other processes
@@ -356,7 +354,7 @@ contains
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_one_seismogram(one_seismogram,irec,irec_local,asdf_container)
+  subroutine write_one_seismogram(one_seismogram,irec,irec_local)
 
   use constants_solver,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,DEGREES_TO_RADIANS, &
     MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME
@@ -372,14 +370,10 @@ contains
   use specfem_par,only: &
           cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC
 
-  use asdf_data,only: asdf_event
-
   implicit none
 
   integer :: irec,irec_local
   real(kind=CUSTOM_REAL), dimension(NDIM,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: one_seismogram
-
-  type(asdf_event), optional :: asdf_container
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(5,NTSTEP_BETWEEN_OUTPUT_SEISMOS) :: seismogram_tmp
@@ -501,16 +495,19 @@ contains
                    station_name(irec)(1:length_station_name),chn
 
     ! SAC output format
-    if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) &
+    if (OUTPUT_SEISMOS_SAC_ALPHANUM .or. OUTPUT_SEISMOS_SAC_BINARY ) then
       call write_output_SAC(seismogram_tmp,irec,iorientation,sisname,chn,phi)
+    endif
 
     ! ASCII output format
-    if (OUTPUT_SEISMOS_ASCII_TEXT) &
+    if (OUTPUT_SEISMOS_ASCII_TEXT) then
       call write_output_ASCII(seismogram_tmp,iorientation,sisname,sisname_big_file)
+    endif
 
     ! ASDF output format
-    if (OUTPUT_SEISMOS_ASDF) &
-      call store_asdf_data(asdf_container,seismogram_tmp,irec_local,irec,chn,iorientation)
+    if (OUTPUT_SEISMOS_ASDF) then
+      call store_asdf_data(seismogram_tmp,irec_local,irec,chn,iorientation)
+    endif
 
   enddo ! do iorientation
 
@@ -612,7 +609,7 @@ contains
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine band_instrument_code(DT,bic)
+  subroutine band_instrument_code(DT,bic)
 
 ! This subroutine is to choose the appropriate band and instrument codes for channel names of seismograms
 ! based on the IRIS convention (first two letters of channel codes which were LH(Z/E/N) previously).
@@ -623,8 +620,11 @@ contains
 ! Ebru, November 2010
 
   implicit none
-  double precision :: DT
-  character(len=2) :: bic
+
+  double precision,intent(in) :: DT
+  character(len=2),intent(out) :: bic
+
+  bic = ''
 
   if (1.0d0 <= DT)  bic = 'LX'
   if (0.1d0 < DT .and. DT < 1.0d0) bic = 'MX'
@@ -633,6 +633,5 @@ contains
   if (0.001d0 < DT .and. DT <= 0.004d0) bic = 'CX'
   if (DT <= 0.001d0) bic = 'FX'
 
- end subroutine band_instrument_code
+  end subroutine band_instrument_code
 
-end module write_seismograms_mod

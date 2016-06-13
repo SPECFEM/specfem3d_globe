@@ -34,7 +34,7 @@
   subroutine compute_element_strain_undoatt_Dev(ispec,nglob,nspec, &
                                                 displ,ibool, &
                                                 hprime_xx,hprime_xxT,&
-                                                xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                                deriv, &
                                                 epsilondev_loc,eps_trace_over_3_loc)
 
 ! computes strain for single element based on Deville routine setup (NGLLX == NGLLY == NGLLZ == 5)
@@ -50,10 +50,9 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx,hprime_xxT
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: &
-        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ),intent(out) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: eps_trace_over_3_loc
 
   !  local variable
@@ -96,15 +95,15 @@
   DO_LOOP_IJK
 
     ! get derivatives of ux, uy and uz with respect to x, y and z
-    xixl = xix(INDEX_IJK,ispec)
-    xiyl = xiy(INDEX_IJK,ispec)
-    xizl = xiz(INDEX_IJK,ispec)
-    etaxl = etax(INDEX_IJK,ispec)
-    etayl = etay(INDEX_IJK,ispec)
-    etazl = etaz(INDEX_IJK,ispec)
-    gammaxl = gammax(INDEX_IJK,ispec)
-    gammayl = gammay(INDEX_IJK,ispec)
-    gammazl = gammaz(INDEX_IJK,ispec)
+    xixl = deriv(1,INDEX_IJK,ispec)
+    xiyl = deriv(2,INDEX_IJK,ispec)
+    xizl = deriv(3,INDEX_IJK,ispec)
+    etaxl = deriv(4,INDEX_IJK,ispec)
+    etayl = deriv(5,INDEX_IJK,ispec)
+    etazl = deriv(6,INDEX_IJK,ispec)
+    gammaxl = deriv(7,INDEX_IJK,ispec)
+    gammayl = deriv(8,INDEX_IJK,ispec)
+    gammazl = deriv(9,INDEX_IJK,ispec)
 
     duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
     duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)
@@ -129,11 +128,11 @@
     ! strains
     templ = ONE_THIRD * (duxdxl + duydyl + duzdzl)
     eps_trace_over_3_loc(INDEX_IJK) = templ
-    epsilondev_loc(INDEX_IJK,1) = duxdxl - templ
-    epsilondev_loc(INDEX_IJK,2) = duydyl - templ
-    epsilondev_loc(INDEX_IJK,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-    epsilondev_loc(INDEX_IJK,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-    epsilondev_loc(INDEX_IJK,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
+    epsilondev_loc(1,INDEX_IJK) = duxdxl - templ
+    epsilondev_loc(2,INDEX_IJK) = duydyl - templ
+    epsilondev_loc(3,INDEX_IJK) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+    epsilondev_loc(4,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+    epsilondev_loc(5,INDEX_IJK) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
   ENDDO_LOOP_IJK
 
@@ -324,7 +323,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC),intent(in) :: &
     xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5),intent(out) :: epsilondev_loc
+  real(kind=CUSTOM_REAL), dimension(5,NGLLX,NGLLY,NGLLZ),intent(out) :: epsilondev_loc
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ),intent(out) :: eps_trace_over_3_loc
 
   ! local parameters
@@ -419,11 +418,11 @@
 
         ! compute deviatoric strain
         eps_trace_over_3_loc(i,j,k) = ONE_THIRD * (duxdxl + duydyl + duzdzl)
-        epsilondev_loc(i,j,k,1) = duxdxl - eps_trace_over_3_loc(i,j,k)
-        epsilondev_loc(i,j,k,2) = duydyl - eps_trace_over_3_loc(i,j,k)
-        epsilondev_loc(i,j,k,3) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
-        epsilondev_loc(i,j,k,4) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
-        epsilondev_loc(i,j,k,5) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
+        epsilondev_loc(1,i,j,k) = duxdxl - eps_trace_over_3_loc(i,j,k)
+        epsilondev_loc(2,i,j,k) = duydyl - eps_trace_over_3_loc(i,j,k)
+        epsilondev_loc(3,i,j,k) = 0.5_CUSTOM_REAL * duxdyl_plus_duydxl
+        epsilondev_loc(4,i,j,k) = 0.5_CUSTOM_REAL * duzdxl_plus_duxdzl
+        epsilondev_loc(5,i,j,k) = 0.5_CUSTOM_REAL * duzdyl_plus_duydzl
 
       enddo ! NGLLX
     enddo ! NGLLY
@@ -443,7 +442,7 @@
                                            displ,veloc,deltat, &
                                            ibool, &
                                            hprime_xx,hprime_xxT,&
-                                           xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
+                                           deriv, &
                                            epsilondev_xx_loc_nplus1, &
                                            epsilondev_yy_loc_nplus1, &
                                            epsilondev_xy_loc_nplus1, &
@@ -455,24 +454,23 @@
 
   implicit none
 
-  integer :: ispec,nglob,nspec
-  real(kind=CUSTOM_REAL) :: deltat
+  integer,intent(in) :: ispec,nglob,nspec
+  real(kind=CUSTOM_REAL),intent(in) :: deltat
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,nglob) :: displ,veloc
+  real(kind=CUSTOM_REAL), dimension(NDIM,nglob),intent(in) :: displ,veloc
 
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprime_xxT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
-        xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX),intent(in) :: hprime_xx,hprime_xxT
+  real(kind=CUSTOM_REAL), dimension(9,NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: deriv
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_xx_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_yy_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_xy_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_xz_loc_nplus1
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: epsilondev_yz_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_xx_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_yy_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_xy_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_xz_loc_nplus1
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: epsilondev_yz_loc_nplus1
 
-  integer :: nspec_strain_only
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_strain_only) :: eps_trace_over_3_loc_nplus1
+  integer,intent(in) :: nspec_strain_only
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_strain_only),intent(out) :: eps_trace_over_3_loc_nplus1
 
   ! local variable
   integer :: iglob
@@ -514,15 +512,15 @@
   DO_LOOP_IJK
 
     ! get derivatives of ux, uy and uz with respect to x, y and z
-    xixl = xix(INDEX_IJK,ispec)
-    xiyl = xiy(INDEX_IJK,ispec)
-    xizl = xiz(INDEX_IJK,ispec)
-    etaxl = etax(INDEX_IJK,ispec)
-    etayl = etay(INDEX_IJK,ispec)
-    etazl = etaz(INDEX_IJK,ispec)
-    gammaxl = gammax(INDEX_IJK,ispec)
-    gammayl = gammay(INDEX_IJK,ispec)
-    gammazl = gammaz(INDEX_IJK,ispec)
+    xixl = deriv(1,INDEX_IJK,ispec)
+    xiyl = deriv(2,INDEX_IJK,ispec)
+    xizl = deriv(3,INDEX_IJK,ispec)
+    etaxl = deriv(4,INDEX_IJK,ispec)
+    etayl = deriv(5,INDEX_IJK,ispec)
+    etazl = deriv(6,INDEX_IJK,ispec)
+    gammaxl = deriv(7,INDEX_IJK,ispec)
+    gammayl = deriv(8,INDEX_IJK,ispec)
+    gammazl = deriv(9,INDEX_IJK,ispec)
 
     duxdxl = xixl*tempx1(INDEX_IJK) + etaxl*tempx2(INDEX_IJK) + gammaxl*tempx3(INDEX_IJK)
     duxdyl = xiyl*tempx1(INDEX_IJK) + etayl*tempx2(INDEX_IJK) + gammayl*tempx3(INDEX_IJK)

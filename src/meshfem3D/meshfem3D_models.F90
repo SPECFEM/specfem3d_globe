@@ -97,6 +97,9 @@
       case (THREE_D_MODEL_S40RTS)
         call model_s40rts_broadcast(myrank)
 
+      case(THREE_D_MODEL_MANTLE_SH)
+        call model_mantle_sh_broadcast(myrank)
+
       case (THREE_D_MODEL_SEA99_JP3D)
         ! the variables read are declared and stored in structure model_sea99_s_par and model_jp3d_par
         call model_sea99_s_broadcast(myrank)
@@ -216,6 +219,10 @@
     case (ICRUST_EPCRUST)
       ! EPcrust
       call model_epcrust_broadcast(myrank)
+
+    case (ICRUST_CRUST_SH)
+      ! SH crustmaps
+      call model_crust_sh_broadcast(myrank)
 
     case default
       stop 'crustal model type not defined'
@@ -357,39 +364,52 @@
 
   use meshfem3D_models_par
 
-
   implicit none
 
-#ifdef CEM
-  ! CEM needs these to determine iglob
-  integer, intent (in) :: ispec, i, j, k
-#endif
-  integer iregion_code
-  double precision r_prem
-  double precision rho,dvp
-  double precision vpv,vph,vsv,vsh,eta_aniso
+  integer, intent (in) :: iregion_code
+  double precision :: r_prem
+  double precision :: rho,dvp
+  double precision :: vpv,vph,vsv,vsh,eta_aniso
 
-  double precision RCMB,R670,RMOHO
-  double precision xmesh,ymesh,zmesh,r
+  double precision :: RCMB,R670,RMOHO
+  double precision :: xmesh,ymesh,zmesh,r
 
   ! the 21 coefficients for an anisotropic medium in reduced notation
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
 
+#ifdef CEM
+  ! CEM needs these to determine iglob
+  integer, intent (in) :: ispec, i, j, k
+#endif
+
   ! local parameters
   double precision :: r_used,r_dummy,theta,phi
   double precision :: dvs,drho,vp,vs
-  real(kind=4) :: xcolat,xlon,xrad,dvpv,dvph,dvsv,dvsh
+  double precision :: dvpv,dvph,dvsv,dvsh,deta
+  double precision :: lat,lon
+
+  real(kind=4) :: xcolat,xlon,xrad
+  real(kind=4) :: xdvpv,xdvph,xdvsv,xdvsh
+
   logical :: found_crust,suppress_mantle_extension
 
   ! initializes perturbation values
   dvs = ZERO
   dvp = ZERO
   drho = ZERO
-  dvpv = 0.
-  dvph = 0.
-  dvsv = 0.
-  dvsh = 0.
+
+  dvpv = ZERO
+  dvph = ZERO
+  dvsv = ZERO
+  dvsh = ZERO
+  deta = ZERO
+
+  xdvpv = 0.
+  xdvph = 0.
+  xdvsv = 0.
+  xdvsh = 0.
+
   r_used = ZERO
   suppress_mantle_extension = .false.
 
@@ -436,44 +456,58 @@
       case (THREE_D_MODEL_S20RTS)
         ! s20rts
         call mantle_s20rts(r_used,theta,phi,dvs,dvp,drho)
-        vpv=vpv*(1.0d0+dvp)
-        vph=vph*(1.0d0+dvp)
-        vsv=vsv*(1.0d0+dvs)
-        vsh=vsh*(1.0d0+dvs)
-        rho=rho*(1.0d0+drho)
+        vpv = vpv*(1.0d0+dvp)
+        vph = vph*(1.0d0+dvp)
+        vsv = vsv*(1.0d0+dvs)
+        vsh = vsh*(1.0d0+dvs)
+        rho = rho*(1.0d0+drho)
 
       case (THREE_D_MODEL_S40RTS)
         ! s40rts
         call mantle_s40rts(r_used,theta,phi,dvs,dvp,drho)
-        vpv=vpv*(1.0d0+dvp)
-        vph=vph*(1.0d0+dvp)
-        vsv=vsv*(1.0d0+dvs)
-        vsh=vsh*(1.0d0+dvs)
-        rho=rho*(1.0d0+drho)
+        vpv = vpv*(1.0d0+dvp)
+        vph = vph*(1.0d0+dvp)
+        vsv = vsv*(1.0d0+dvs)
+        vsh = vsh*(1.0d0+dvs)
+        rho = rho*(1.0d0+drho)
+
+      case(THREE_D_MODEL_MANTLE_SH)
+        ! full_sh model
+        lat = (PI/2.0d0-theta)*180.0d0/PI
+        lon = phi*180.0d0/PI
+        if(lon > 180.0d0) lon = lon - 360.0d0
+
+        call mantle_sh(lat,lon,r_used,dvpv,dvph,dvsv,dvsh,deta,drho)
+        vpv = vpv*(1.0d0+dvpv)
+        vph = vph*(1.0d0+dvph)
+        vsv = vsv*(1.0d0+dvsv)
+        vsh = vsh*(1.0d0+dvsh)
+        eta_aniso = eta_aniso*(1.0d0+deta)
+        rho = rho*(1.0d0+drho)
 
       case (THREE_D_MODEL_SEA99_JP3D)
         ! sea99 + jp3d1994
         call model_sea99_s(r_used,theta,phi,dvs)
-        vsv=vsv*(1.0d0+dvs)
-        vsh=vsh*(1.0d0+dvs)
+        vsv = vsv*(1.0d0+dvs)
+        vsh = vsh*(1.0d0+dvs)
         ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
         if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
           .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
         ! makes sure radius is fine
         if (r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
             call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
-            vpv=vpv*(1.0d0+dvp)
-            vph=vph*(1.0d0+dvp)
-            vsv=vsv*(1.0d0+dvs)
-            vsh=vsh*(1.0d0+dvs)
+            vpv = vpv*(1.0d0+dvp)
+            vph = vph*(1.0d0+dvp)
+            vsv = vsv*(1.0d0+dvs)
+            vsh = vsh*(1.0d0+dvs)
           endif
         endif
 
       case (THREE_D_MODEL_SEA99)
         ! sea99 Vs-only
         call model_sea99_s(r_used,theta,phi,dvs)
-        vsv=vsv*(1.0d0+dvs)
-        vsh=vsh*(1.0d0+dvs)
+        vsv = vsv*(1.0d0+dvs)
+        vsh = vsh*(1.0d0+dvs)
 
       case (THREE_D_MODEL_JP3D)
         ! jp3d1994
@@ -481,10 +515,10 @@
             .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
           if (r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
             call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
-            vpv=vpv*(1.0d0+dvp)
-            vph=vph*(1.0d0+dvp)
-            vsv=vsv*(1.0d0+dvs)
-            vsh=vsh*(1.0d0+dvs)
+            vpv = vpv*(1.0d0+dvp)
+            vph = vph*(1.0d0+dvp)
+            vsv = vsv*(1.0d0+dvs)
+            vsh = vsh*(1.0d0+dvs)
           endif
         endif
 
@@ -494,55 +528,55 @@
         xcolat = sngl(theta*180.0d0/PI)
         xlon = sngl(phi*180.0d0/PI)
         xrad = sngl(r_used*R_EARTH_KM)
-        call model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
+        call model_s362ani_subshsv(xcolat,xlon,xrad,xdvsh,xdvsv,xdvph,xdvpv)
 
         ! to use speed values from the 1D reference model but with 3D mesh variations
         if (USE_1D_REFERENCE) then
           ! sets all 3D variations in the mantle to zero
-          dvpv = 0.d0
-          dvph = 0.d0
-          dvsv = 0.d0
-          dvsh = 0.d0
+          xdvpv = 0.d0
+          xdvph = 0.d0
+          xdvsv = 0.d0
+          xdvsh = 0.d0
         endif
 
         if (TRANSVERSE_ISOTROPY) then
-          vpv=vpv*(1.0d0+dble(dvpv))
-          vph=vph*(1.0d0+dble(dvph))
-          vsv=vsv*(1.0d0+dble(dvsv))
-          vsh=vsh*(1.0d0+dble(dvsh))
+          vpv = vpv*(1.0d0+dble(xdvpv))
+          vph = vph*(1.0d0+dble(xdvph))
+          vsv = vsv*(1.0d0+dble(xdvsv))
+          vsh = vsh*(1.0d0+dble(xdvsh))
         else
-          vpv=vpv+dvpv
-          vph=vph+dvph
-          vsv=vsv+dvsv
-          vsh=vsh+dvsh
+          vpv = vpv+xdvpv
+          vph = vph+xdvph
+          vsv = vsv+xdvsv
+          vsh = vsh+xdvsh
           vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                     + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
           vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                     + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
-          vpv=vp
-          vph=vp
-          vsv=vs
-          vsh=vs
+          vpv = vp
+          vph = vp
+          vsv = vs
+          vsh = vs
           eta_aniso=1.0d0
         endif
 
       case (THREE_D_MODEL_PPM )
         ! point profile model
         call model_PPM(r_used,theta,phi,dvs,dvp,drho)
-        vpv=vpv*(1.0d0+dvp)
-        vph=vph*(1.0d0+dvp)
-        vsv=vsv*(1.0d0+dvs)
-        vsh=vsh*(1.0d0+dvs)
-        rho=rho*(1.0d0+drho)
+        vpv = vpv*(1.0d0+dvp)
+        vph = vph*(1.0d0+dvp)
+        vsv = vsv*(1.0d0+dvs)
+        vsh = vsh*(1.0d0+dvs)
+        rho = rho*(1.0d0+drho)
 
       case (THREE_D_MODEL_GAPP2 )
         ! 3D GAP model (Obayashi)
         call mantle_gapmodel(r_used,theta,phi,dvs,dvp,drho)
-        vpv=vpv*(1.0d0+dvp)
-        vph=vph*(1.0d0+dvp)
-        vsv=vsv*(1.0d0+dvs)
-        vsh=vsh*(1.0d0+dvs)
-        rho=rho*(1.0d0+drho)
+        vpv = vpv*(1.0d0+dvp)
+        vph = vph*(1.0d0+dvp)
+        vsv = vsv*(1.0d0+dvs)
+        vsh = vsh*(1.0d0+dvs)
+        rho = rho*(1.0d0+drho)
 
       case default
         stop 'unknown 3D Earth model in meshfem3D_models_get3Dmntl_val() '
@@ -556,11 +590,11 @@
     call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_used,theta,phi)
     call reduce(theta,phi)
     call model_heterogen_mantle(r_used,theta,phi,dvs,dvp,drho)
-    vpv=vpv*(1.0d0+dvp)
-    vph=vpv*(1.0d0+dvp)
-    vsv=vsv*(1.0d0+dvs)
-    vsh=vsh*(1.0d0+dvs)
-    rho=rho*(1.0d0+drho)
+    vpv = vpv*(1.0d0+dvp)
+    vph = vpv*(1.0d0+dvp)
+    vsv = vsv*(1.0d0+dvs)
+    vsh = vsh*(1.0d0+dvs)
+    rho = rho*(1.0d0+drho)
   endif ! HETEROGEN_3D_MANTLE
 
   if (ANISOTROPIC_INNER_CORE .and. iregion_code == IREGION_INNER_CORE) &
@@ -666,7 +700,9 @@
   ! local parameters
   double precision :: r_dummy,theta,phi
   double precision :: lat,lon
-  double precision :: vpc,vsc,rhoc !,vpc_eu
+  double precision :: vpvc,vphc,vsvc,vshc,etac
+  double precision :: vpc,vsc,rhoc !vpc_eu
+
   double precision :: dvs
   logical :: found_crust !,found_eucrust
 
@@ -678,6 +714,7 @@
   call xyz_2_rthetaphi_dble(xmesh,ymesh,zmesh,r_dummy,theta,phi)
   call reduce(theta,phi)
 
+  ! lat/lon in degrees (range lat/lon = [-90,90] / [-180,180]
   lat = (PI_OVER_TWO - theta) * RADIANS_TO_DEGREES
   lon = phi * RADIANS_TO_DEGREES
   if (lon > 180.0d0 ) lon = lon - 360.0d0
@@ -702,33 +739,33 @@
         endif
       else
         ! default crust
-        call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+        call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
       endif
 
     case (THREE_D_MODEL_PPM)
       ! takes vs,rho from default crust
-      call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
 
       ! takes vp from eucrust07
       !call model_eucrust(lat,lon,r,vpc_eu,found_eucrust)
       !if (found_eucrust) then
-      !  vpc=vpc_eu
+      !  vpvc=vpc_eu; vphc=vpc_eu
       !endif
 
     case default
       ! default crust
-      call meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      call meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
 
   end select
 
   ! sets crustal values
   if (found_crust) then
-    vpv=vpc
-    vph=vpc
-    vsv=vsc
-    vsh=vsc
-    rho=rhoc
-    eta_aniso=1.0d0
+    vpv = vpvc
+    vph = vphc
+    vsv = vsvc
+    vsh = vshc
+    rho = rhoc
+    eta_aniso = etac
 
     ! sets anisotropy in crustal region as well
     if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -763,7 +800,7 @@
 !
 
 
-  subroutine meshfem3D_model_crust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+  subroutine meshfem3D_model_crust(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
 
 ! returns velocity/density for default crust
 
@@ -772,16 +809,32 @@
   implicit none
 
   double precision,intent(in) :: lat,lon,r
-  double precision,intent(out) :: vpc,vsc,rhoc
+  double precision,intent(out) :: vpvc,vphc,vsvc,vshc,etac,rhoc
   double precision,intent(out) :: moho
   logical,intent(out) :: found_crust
   logical,intent(in) :: elem_in_crust
 
+  ! local parameters
+  ! for isotropic crust
+  double precision :: vpc,vsc
+
   ! initializes
+  vpvc = 0.d0
+  vphc = 0.d0
+  vsvc = 0.d0
+  vshc = 0.d0
+
   vpc = 0.d0
   vsc = 0.d0
   rhoc = 0.d0
+
+  ! isotropic by default
+  etac = 1.d0
+
+  ! moho depth
   moho = 0.d0
+
+  ! flag to indicate if position inside crust
   found_crust = .false.
 
 !---
@@ -795,18 +848,38 @@
     case (ICRUST_CRUST1)
       ! crust 1.0
       call model_crust_1_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      vpvc = vpc
+      vphc = vpc
+      vsvc = vsc
+      vshc = vsc
 
     case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
       call model_crust_2_0(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      vpvc = vpc
+      vphc = vpc
+      vsvc = vsc
+      vshc = vsc
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
       call model_crustmaps(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      vpvc = vpc
+      vphc = vpc
+      vsvc = vsc
+      vshc = vsc
 
     case (ICRUST_EPCRUST)
       call model_epcrust(lat,lon,r,vpc,vsc,rhoc,moho,found_crust,elem_in_crust)
+      vpvc = vpc
+      vphc = vpc
+      vsvc = vsc
+      vshc = vsc
+
+    case (ICRUST_CRUST_SH)
+      ! SH crust: provides TI crust
+      call crust_sh(lat,lon,r,vpvc,vphc,vsvc,vshc,etac,rhoc,moho,found_crust,elem_in_crust)
 
     case default
       stop 'crustal model type not defined'

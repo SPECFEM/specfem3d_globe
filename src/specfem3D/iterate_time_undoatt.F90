@@ -35,7 +35,7 @@
   use specfem_par_outercore
   use specfem_par_noise
   use specfem_par_movie
-  use write_seismograms_mod, only: write_seismograms
+
   implicit none
 
   ! local parameters
@@ -80,6 +80,17 @@
 
   ! checks
   if (.not. UNDO_ATTENUATION) return
+
+  ! checks with undo_attenuation
+  if (UNDO_ATTENUATION) then
+    ! note: NSTEP must not be a multiple of NT_DUMP_ATTENUATION, but should be equal or larger
+    ! makes sure buffer size is not too big for total time length
+    if (NSTEP < NT_DUMP_ATTENUATION) then
+      print *,'Error undoing attenuation: time steps ',NSTEP,' smaller than buffer size ',NT_DUMP_ATTENUATION
+      print *,'Please recompile the solver with your updated parameter set in Par_file.'
+      call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
+    endif
+  endif
 
   ! number of time subsets for time loop
   NSUBSET_ITERATIONS = ceiling( dble(NSTEP)/dble(NT_DUMP_ATTENUATION) )
@@ -150,7 +161,7 @@
 
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'Starting time iteration loop...'
+    write(IMAIN,*) 'Starting time iteration loop (undoatt)...'
     write(IMAIN,*)
     call flush_IMAIN()
   endif
@@ -246,7 +257,7 @@
         call write_seismograms()
 
         ! outputs movie files
-        call write_movie_output()
+        if (MOVIE_SURFACE .or. MOVIE_VOLUME) call write_movie_output()
 
         ! first step of noise tomography, i.e., save a surface movie at every time step
         ! modified from the subroutine 'write_movie_surface'
@@ -484,9 +495,7 @@
                                             displ_inner_core,veloc_inner_core,0._CUSTOM_REAL, &
                                             ibool_inner_core, &
                                             hprime_xx,hprime_xxT, &
-                                            xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                            etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                            deriv_mapping_inner_core, &
                                             epsilondev_xx_inner_core, &
                                             epsilondev_yy_inner_core, &
                                             epsilondev_xy_inner_core, &
@@ -500,9 +509,7 @@
                                             displ_crust_mantle,veloc_crust_mantle,0._CUSTOM_REAL, &
                                             ibool_crust_mantle, &
                                             hprime_xx,hprime_xxT, &
-                                            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                            deriv_mapping_crust_mantle, &
                                             epsilondev_xx_crust_mantle, &
                                             epsilondev_yy_crust_mantle, &
                                             epsilondev_xy_crust_mantle, &
@@ -586,9 +593,7 @@
                                             b_displ_inner_core,b_veloc_inner_core,0._CUSTOM_REAL, &
                                             ibool_inner_core, &
                                             hprime_xx,hprime_xxT, &
-                                            xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                            etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                            gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                            deriv_mapping_inner_core, &
                                             b_epsilondev_xx_inner_core, &
                                             b_epsilondev_yy_inner_core, &
                                             b_epsilondev_xy_inner_core, &
@@ -603,9 +608,7 @@
                                             b_displ_crust_mantle,b_veloc_crust_mantle,0._CUSTOM_REAL, &
                                             ibool_crust_mantle, &
                                             hprime_xx,hprime_xxT, &
-                                            xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                            etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
-                                            gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
+                                            deriv_mapping_crust_mantle, &
                                             b_epsilondev_xx_crust_mantle, &
                                             b_epsilondev_yy_crust_mantle, &
                                             b_epsilondev_xy_crust_mantle, &

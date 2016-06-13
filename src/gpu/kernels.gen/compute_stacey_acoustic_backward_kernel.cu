@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 1.0.4
+//      this file has been generated automatically by BOAST version 1.2.2
 //      by: make boast_kernels
 
 /*
@@ -164,7 +164,7 @@ __global__ void compute_stacey_acoustic_backward_kernel(float * b_potential_dot_
            return ;
         }
         break;
-      }
+    }
     iglob = ibool[INDEX4(NGLLX, NGLLX, NGLLX, i, j, k, ispec)] - (1);
     atomicAdd(b_potential_dot_dot_acoustic + iglob,  -(b_absorb_potential[INDEX2(NGLL2, igll, iface)]));
   }

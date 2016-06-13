@@ -30,6 +30,10 @@
 #include "mesh_constants_gpu.h"
 #include <string.h>
 
+// debugging
+const int DEBUG_VERBOSE_OUTPUT = 0;
+
+
 // GPU initialization
 
 #ifdef USE_OPENCL
@@ -119,6 +123,7 @@ please check if driver and runtime libraries work together\n\n");
   int nbMatchingDevices = 0;
   struct cudaDeviceProp deviceProp;
   int i;
+  int id_device,myDevice;
 
   for (i = 0; i < device_count; i++) {
     // get device properties
@@ -127,20 +132,33 @@ please check if driver and runtime libraries work together\n\n");
       continue;
     }
     // debug
-    //printf("device match: %d match %d out of %d - filter platform = %s device = %s\n",
-    //        i,nbMatchingDevices,device_count,platform_filter, device_filter);
+    if (DEBUG_VERBOSE_OUTPUT){
+      printf("device match: %d match %d out of %d - filter platform = %s device = %s\n",
+              i,nbMatchingDevices,device_count,platform_filter, device_filter);
+    }
 
     // adds match
     matchingDevices[nbMatchingDevices] = i;
     nbMatchingDevices++;
   }
 
+  *nb_devices = nbMatchingDevices;
+
   if (nbMatchingDevices == 0) {
     printf("Error: no matching devices for criteria %s/%s\n", platform_filter, device_filter);
     exit_on_error("Error CUDA found no matching devices (for device filter set in Par_file)\n");
   }
 
-  int myDevice = matchingDevices[myrank % nbMatchingDevices];
+#ifdef GPU_DEVICE_ID
+  // uses fixed device id when compile with e.g.: -DGPU_DEVICE_ID=0
+  id_device = GPU_DEVICE_ID;
+  if (myrank == 0) printf("setting cuda devices with id = %d for all processes by -DGPU_DEVICE_ID\n\n",id_device);
+#else
+  // spreads across all available devices
+  id_device = myrank % nbMatchingDevices;
+#endif
+
+  myDevice = matchingDevices[id_device];
 
   free(matchingDevices);
 
@@ -200,7 +218,7 @@ e.g., on titan enable environment CRAY_CUDA_MPS=1 to use a single GPU with multi
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
   }
   // debugging
-  if (DEBUG) {
+  if (DEBUG_VERBOSE_OUTPUT) {
     do_output_info = 1;
     sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
   }
@@ -351,7 +369,7 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
     sprintf(filename, "OUTPUT_FILES/gpu_device_info.txt");
   }
   // debugging
-  if (DEBUG) {
+  if (DEBUG_VERBOSE_OUTPUT) {
     do_output_info = 1;
     sprintf(filename,"OUTPUT_FILES/gpu_device_info_proc_%06d.txt",myrank);
   }
@@ -380,11 +398,27 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
       clGetDeviceInfo(mocl.device, CL_DEVICE_IMAGE2D_MAX_WIDTH, sizeof(size_t), &image2d_max_size[0], NULL);
       clGetDeviceInfo(mocl.device, CL_DEVICE_IMAGE2D_MAX_HEIGHT, sizeof(size_t), &image2d_max_size[1], NULL);
       fprintf (fp, "  image2d_max_size: %zu x %zu\n", image2d_max_size[0], image2d_max_size[1]);
+      clGetDeviceInfo(mocl.device, CL_DEVICE_PREFERRED_VECTOR_WIDTH_INT, sizeof(units), &units, NULL);
+      fprintf (fp, "  vector_width_int: %u\n", units);
       fprintf(fp,"blocks:\n");
       clGetDeviceInfo(mocl.device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(units), &units, NULL);
       fprintf (fp, "  max_compute_units: %u\n", units);
       clGetDeviceInfo(mocl.device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(max_work_group_size), &max_work_group_size, NULL);
       fprintf (fp, "  max_work_group_size: %lu\n", max_work_group_size);
+      clGetDeviceInfo(mocl.device, CL_DEVICE_MAX_WORK_ITEM_DIMENSIONS, sizeof(units), &units, NULL);
+      fprintf (fp, "  max_work_item_dimensions: %u\n", units);
+      if (units > 0) {
+        size_t* item_sizes = (size_t *) malloc (sizeof(size_t) * units);
+        clGetDeviceInfo(mocl.device, CL_DEVICE_MAX_WORK_ITEM_SIZES, sizeof(size_t) * units, item_sizes, NULL);
+        if (units == 1){
+          fprintf (fp, "  max_work_item_sizes: %zu \n", item_sizes[0]);
+        } else if (units == 2){
+          fprintf (fp, "  max_work_item_sizes: %zu %zu\n", item_sizes[0], item_sizes[1]);
+        }else if (units >= 3){
+          fprintf (fp, "  max_work_item_sizes: %zu %zu %zu\n", item_sizes[0], item_sizes[1], item_sizes[2]);
+        }
+        free(item_sizes);
+      }
       fprintf(fp,"features:\n");
       clGetDeviceInfo(mocl.device, CL_DEVICE_VERSION, sizeof(name), name, NULL);
       fprintf (fp, "  device version : %s\n", name);
@@ -402,6 +436,33 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
   // builds OpenCL kernels
   build_kernels();
 
+  // debugging
+  if (DEBUG_VERBOSE_OUTPUT){
+    // Get the maximum work group size for executing each kernel on the device
+    // and preferred size multiple for each kernel CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE
+#undef BOAST_KERNEL
+#define BOAST_KERNEL(__kern_name__)  \
+    if (myrank == 0) { \
+      printf("getting kernel info: "#__kern_name__"\n"); \
+      size_t local,preferred;\
+      mocl_errcode = clGetKernelWorkGroupInfo(mocl.kernels.__kern_name__, mocl.device, CL_KERNEL_WORK_GROUP_SIZE, sizeof(local), &local, NULL); \
+      if (mocl_errcode != CL_SUCCESS){ \
+        fprintf(stderr,"OpenCL Error: Failed to retrieve kernel work group info: %s\n", clewErrorString(mocl_errcode)); \
+        exit(1); \
+      } \
+      mocl_errcode = clGetKernelWorkGroupInfo(mocl.kernels.__kern_name__, mocl.device, CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE, sizeof(preferred), &preferred, NULL); \
+      if (mocl_errcode != CL_SUCCESS){ \
+        fprintf(stderr,"OpenCL Error: Failed to retrieve preferred work group size: %s\n", clewErrorString(mocl_errcode)); \
+        exit(1); \
+      } \
+      printf("  "#__kern_name__": kernel has   maximum work group size = %d\n",(int) local); \
+      printf("  "#__kern_name__": kernel has preferred work group size = %d\n",(int) preferred); \
+      printf("\n"); \
+    }
+
+    // gets kernel info for each OpenCL kernel
+    #include "kernel_list.h"
+  }
 }
 
 #define xQUOTE(str) #str
@@ -530,9 +591,6 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
   cl_platform_id *platform_ids;
   cl_uint num_platforms;
 
-  // debugging
-  const int VERBOSE_OUTPUT = 0;
-
   // first OpenCL call
   // only gets number of platforms
   clCheck( clGetPlatformIDs(0, NULL, &num_platforms) );
@@ -598,7 +656,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     }
 
     // debug output
-    if (VERBOSE_OUTPUT){
+    if (DEBUG_VERBOSE_OUTPUT){
       if (myrank == 0) {
         printf("\nAvailable platforms are:\n");
         for (i = 0; i < num_platforms; i++) {
@@ -607,6 +665,8 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         printf("\nMatching platforms: %i\n",found);
         printf("\n");
       }
+      // synchronizes
+      synchronize_mpi();
     }
 
     // checks if platform found
@@ -695,7 +755,7 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
     }
 
     // debug output
-    if (VERBOSE_OUTPUT){
+    if (DEBUG_VERBOSE_OUTPUT){
       if (myrank == 0) {
         printf("\nAvailable devices are:\n");
         for (i = 0; i < num_devices; i++) {
@@ -704,12 +764,14 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
         printf("\nMatching devices: %i\n",found);
         printf("\n");
       }
+      // synchronizes
+      synchronize_mpi();
     }
 
     if (!found) {
       // user output
       if (myrank == 0) {
-        fprintf(stderr, "\nAvailable devices are:\n");
+        fprintf(stderr, "\nNo matching device found!\n\nAvailable devices are:\n");
         for (i = 0; i < num_devices; i++) {
           if (info_device_all[i]) { fprintf(stderr, "  device %i: name = %s\n",i,info_device_all[i]);}
         }
@@ -768,14 +830,57 @@ void ocl_select_device(const char *platform_filter, const char *device_filter, i
 
   clGetContextInfo(mocl.context, CL_CONTEXT_DEVICES, szParmDataBytes, cdDevices, NULL);
 
-  mocl.device = cdDevices[myrank % mocl.nb_devices];
+  // debugging
+  if (DEBUG_VERBOSE_OUTPUT) {
+    // synchronizes
+    synchronize_mpi();
+    // outputs info
+    fflush(stdout);
+    printf("\nrank %d - OpenCL devices: number of devices = %d\n",myrank,mocl.nb_devices);
+    for (i = 0; i < mocl.nb_devices; i++) {
+      size_t info_length;
+      char *info;
+      clCheck( clGetDeviceInfo(cdDevices[i], CL_DEVICE_NAME, 0, NULL, &info_length));
+      info = (char *) malloc(info_length * sizeof(char));
+      clCheck( clGetDeviceInfo(cdDevices[i], CL_DEVICE_NAME, info_length, info, NULL));
+      printf("  gpu device id %d: %s\n",i,info);
+      free(info);
+    }
+    printf("\n");
+    fflush(stdout);
+    // synchronizes
+    synchronize_mpi();
+  }
+
+  // sets device for this process
+  int id_device;
+#ifdef GPU_DEVICE_ID
+  // uses fixed device id when compile with e.g.: -DGPU_DEVICE_ID=0
+  id_device = GPU_DEVICE_ID;
+  if (myrank == 0) printf("setting OpenCL devices with id = %d for all processes by -DGPU_DEVICE_ID\n\n",id_device);
+#else
+  // spreads across all available devices
+  id_device = myrank % mocl.nb_devices;
+#endif
+
+  mocl.device = cdDevices[id_device];
   free(cdDevices);
 
   // command kernel queues
+  // clCreateCommandQueue feature in OpenCL 1.2, will be deprecated in OpenCL 2.0
+#ifdef CL_VERSION_2_0
+  // version 2.0
+  mocl.command_queue = clCreateCommandQueueWithProperties(mocl.context, mocl.device, 0, clck_(&errcode));
+  if (GPU_ASYNC_COPY) {
+    mocl.copy_queue = clCreateCommandQueueWithProperties(mocl.context, mocl.device, 0, clck_(&errcode));
+  }
+#else
+  // version 1.2, CL_VERSION_1_2
   mocl.command_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
   if (GPU_ASYNC_COPY) {
     mocl.copy_queue = clCreateCommandQueue(mocl.context, mocl.device, 0, clck_(&errcode));
   }
+#endif
 }
 #endif
 

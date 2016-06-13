@@ -31,63 +31,53 @@
 !!        (file: regX_boundary.bp)
 subroutine read_mesh_databases_coupling_adios()
 
-  use adios_read_mod
-
 ! to couple mantle with outer core
+
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
 
+  use adios_read_mod
   use adios_helpers_mod, only: check_adios_err
+  use manager_adios
 
   implicit none
 
   ! local parameters
   integer :: njunk1,njunk2,njunk3
-  integer :: comm
   character(len=MAX_STRING_LEN) :: file_name
   integer :: local_dim
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_handle, sel
+  integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
   character(len=128)      :: region_name
 
-  call world_duplicate(comm)
-
   file_name = trim(LOCAL_PATH) // "/boundary.bp"
 
   ! opens adios file
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
-  call check_adios_err(myrank,adios_err)
-
-  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
-  if (adios_err /= 0) then
-    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
-    call check_adios_err(myrank,adios_err)
-  endif
+  call open_file_adios_read(file_name)
 
   ! crust and mantle
-
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_xmin", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_xmin", 0, 1, &
      nspec2D_xmin_crust_mantle, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_xmax", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_xmax", 0, 1, &
      nspec2D_xmax_crust_mantle, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_ymin", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_ymin", 0, 1, &
      nspec2D_ymin_crust_mantle, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_ymax", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_ymax", 0, 1, &
      nspec2D_ymax_crust_mantle, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "NSPEC2D_BOTTOM", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "NSPEC2D_BOTTOM", 0, 1, &
      njunk1, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "NSPEC2D_TOP", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "NSPEC2D_TOP", 0, 1, &
      njunk2, adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! boundary elements
@@ -96,150 +86,150 @@ subroutine read_mesh_databases_coupling_adios()
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_xmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_xmin/array", 0, 1, &
     ibelm_xmin_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_xmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_xmax/array", 0, 1, &
     ibelm_xmax_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2DMAX_YMIN_YMAX_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_ymin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_ymin/array", 0, 1, &
     ibelm_ymin_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_ymax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_ymax/array", 0, 1, &
     ibelm_ymax_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2D_BOTTOM_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_bottom/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_bottom/array", 0, 1, &
     ibelm_bottom_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2D_TOP_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_top/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_top/array", 0, 1, &
     ibelm_top_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NDIM*NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_xmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_xmin/array", 0, 1, &
     normal_xmin_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_xmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_xmax/array", 0, 1, &
     normal_xmax_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_ymin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_ymin/array", 0, 1, &
     normal_ymin_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_ymax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_ymax/array", 0, 1, &
     normal_ymax_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_bottom/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_bottom/array", 0, 1, &
     normal_bottom_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_top/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_top/array", 0, 1, &
     normal_top_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLY*NGLLZ*NSPEC2DMAX_XMIN_XMAX_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_xmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_xmin/array", 0, 1, &
     jacobian2D_xmin_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_xmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_xmax/array", 0, 1, &
     jacobian2D_xmax_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_ymin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_ymin/array", 0, 1, &
     jacobian2D_ymin_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_ymax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_ymax/array", 0, 1, &
     jacobian2D_ymax_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_bottom/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_bottom/array", 0, 1, &
     jacobian2D_bottom_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX*NGLLY*NSPEC2D_TOP_CM
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_top/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_top/array", 0, 1, &
     jacobian2D_top_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
 
@@ -250,16 +240,16 @@ subroutine read_mesh_databases_coupling_adios()
   write(region_name,"('reg',i1, '/')") IREGION_OUTER_CORE
 
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_xmin", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_xmin", 0, 1, &
      nspec2D_xmin_outer_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_xmax", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_xmax", 0, 1, &
      nspec2D_xmax_outer_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_ymin", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_ymin", 0, 1, &
      nspec2D_ymin_outer_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_ymax", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_ymax", 0, 1, &
      nspec2D_ymax_outer_core, adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! boundary elements
@@ -268,50 +258,50 @@ subroutine read_mesh_databases_coupling_adios()
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_xmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_xmin/array", 0, 1, &
     ibelm_xmin_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_xmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_xmax/array", 0, 1, &
     ibelm_xmax_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2DMAX_YMIN_YMAX_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_ymin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_ymin/array", 0, 1, &
     ibelm_ymin_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_ymax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_ymax/array", 0, 1, &
     ibelm_ymax_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2D_BOTTOM_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_bottom/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_bottom/array", 0, 1, &
     ibelm_bottom_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2D_TOP_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_top/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_top/array", 0, 1, &
     ibelm_top_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! normals
@@ -320,50 +310,50 @@ subroutine read_mesh_databases_coupling_adios()
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_xmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_xmin/array", 0, 1, &
     normal_xmin_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_xmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_xmax/array", 0, 1, &
     normal_xmax_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NDIM*NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_ymin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_ymin/array", 0, 1, &
     normal_ymin_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_ymax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_ymax/array", 0, 1, &
     normal_ymax_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_BOTTOM_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_bottom/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_bottom/array", 0, 1, &
     normal_bottom_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_TOP_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_top/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_top/array", 0, 1, &
     normal_top_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! Jacobians
@@ -372,50 +362,50 @@ subroutine read_mesh_databases_coupling_adios()
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_xmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_xmin/array", 0, 1, &
     jacobian2D_xmin_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_xmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_xmax/array", 0, 1, &
     jacobian2D_xmax_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX*NGLLZ*NSPEC2DMAX_YMIN_YMAX_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_ymin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_ymin/array", 0, 1, &
     jacobian2D_ymin_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_ymax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_ymax/array", 0, 1, &
     jacobian2D_ymax_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX*NGLLY*NSPEC2D_BOTTOM_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_bottom/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_bottom/array", 0, 1, &
     jacobian2D_bottom_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NGLLX*NGLLY*NSPEC2D_TOP_OC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "jacobian2D_top/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "jacobian2D_top/array", 0, 1, &
     jacobian2D_top_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
 
@@ -425,16 +415,16 @@ subroutine read_mesh_databases_coupling_adios()
 
   ! number of elements
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_xmin", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_xmin", 0, 1, &
      nspec2D_xmin_inner_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_xmax", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_xmax", 0, 1, &
      nspec2D_xmax_inner_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_ymin", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_ymin", 0, 1, &
      nspec2D_ymin_inner_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec2D_ymax", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec2D_ymax", 0, 1, &
      nspec2D_ymax_inner_core, adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! boundary elements
@@ -443,59 +433,57 @@ subroutine read_mesh_databases_coupling_adios()
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_xmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_xmin/array", 0, 1, &
     ibelm_xmin_inner_core, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_xmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_xmax/array", 0, 1, &
     ibelm_xmax_inner_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2DMAX_YMIN_YMAX_IC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_ymin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_ymin/array", 0, 1, &
     ibelm_ymin_inner_core, adios_err)
   call check_adios_err(myrank,adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_ymax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_ymax/array", 0, 1, &
     ibelm_ymax_inner_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2D_BOTTOM_IC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_bottom/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_bottom/array", 0, 1, &
     ibelm_bottom_inner_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = NSPEC2D_TOP_IC
   start(1) = local_dim * myrank; count(1) = local_dim
 
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_top/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_top/array", 0, 1, &
     ibelm_top_inner_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! Close ADIOS handler to the restart file.
   call adios_selection_delete(sel)
-  call adios_read_close(adios_handle, adios_err)
-  call check_adios_err(myrank,adios_err)
-  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
-  call check_adios_err(myrank,adios_err)
 
+  ! closes adios file
+  call close_file_adios_read()
 
   ! -- Boundary Mesh for crust and mantle ---
   if (SAVE_BOUNDARY_MESH .and. SIMULATION_TYPE == 3) then
@@ -503,25 +491,18 @@ subroutine read_mesh_databases_coupling_adios()
     file_name = trim(LOCAL_PATH) // "boundary_disc.bp"
 
     ! opens adios file
-    call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
-    call check_adios_err(myrank,adios_err)
-
-    call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
-    if (adios_err /= 0) then
-      print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
-      call check_adios_err(myrank,adios_err)
-    endif
+    call open_file_adios_read(file_name)
 
     ! number of elements
     call adios_selection_writeblock(sel, myrank)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "NSPEC2D_MOHO", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "NSPEC2D_MOHO", 0, 1, &
        njunk1, adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "NSPEC2D_400", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "NSPEC2D_400", 0, 1, &
        njunk2, adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "NSPEC2D_670", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "NSPEC2D_670", 0, 1, &
        njunk3, adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! checks dimensions
@@ -535,42 +516,42 @@ subroutine read_mesh_databases_coupling_adios()
     local_dim = NSPEC2D_MOHO
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_moho_top/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_moho_top/array", 0, 1, &
       ibelm_moho_bot, adios_err)
     call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_moho_bot/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_moho_bot/array", 0, 1, &
       ibelm_moho_top, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! 400
     local_dim = NSPEC2D_400
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_400_top/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_400_top/array", 0, 1, &
       ibelm_400_bot, adios_err)
     call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_400_bot/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_400_bot/array", 0, 1, &
       ibelm_400_top, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! 670
     local_dim = NSPEC2D_670
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_670_top/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_670_top/array", 0, 1, &
       ibelm_670_bot, adios_err)
     call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "ibelm_670_bot/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "ibelm_670_bot/array", 0, 1, &
       ibelm_670_top, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! normals
@@ -579,41 +560,40 @@ subroutine read_mesh_databases_coupling_adios()
     local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_MOHO
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_moho/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_moho/array", 0, 1, &
       normal_moho, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! 400
     local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_400
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_400/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_400/array", 0, 1, &
       normal_400, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! 670
     local_dim = NDIM*NGLLX*NGLLY*NSPEC2D_670
     start(1) = local_dim*myrank; count(1) = local_dim
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "normal_670/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "normal_670/array", 0, 1, &
       normal_670, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! Close ADIOS handler to the restart file.
     call adios_selection_delete(sel)
-    call adios_read_close(adios_handle, adios_err)
-    call check_adios_err(myrank,adios_err)
-    call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
-    call check_adios_err(myrank,adios_err)
+
+    ! closes adios file
+    call close_file_adios_read()
 
   endif
 
@@ -725,21 +705,21 @@ end subroutine read_mesh_databases_addressing_adios
 !> \brief Read crust mantle MPI arrays from an ADIOS file.
 subroutine read_mesh_databases_MPI_CM_adios()
 
-  ! External imports
-  use adios_read_mod
-  ! Internal imports
   use specfem_par
   use specfem_par_crustmantle
+
+  use adios_read_mod
   use adios_helpers_mod, only: check_adios_err
+  use manager_adios
 
   implicit none
 
   ! local parameters
-  integer :: comm, ierr
+  integer :: ierr
   character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_handle, sel
+  integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
   integer :: offset_my_neighbours, offset_nibool_interfaces, &
@@ -752,33 +732,25 @@ subroutine read_mesh_databases_MPI_CM_adios()
 
   file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
 
-  call world_duplicate(comm)
-
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
-  call check_adios_err(myrank,adios_err)
-
-  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
-  if (adios_err /= 0) then
-    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
-    call check_adios_err(myrank,adios_err)
-  endif
+  ! opens adios file
+  call open_file_adios_read(file_name)
 
   ! MPI interfaces
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_interfaces", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_interfaces", 0, 1, &
      num_interfaces_crust_mantle, adios_err)
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec_inner", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec_inner", &
     0, 1, nspec_inner_crust_mantle, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec_outer", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec_outer", &
     0, 1, nspec_outer_crust_mantle, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_phase_ispec", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_phase_ispec", &
     0, 1, num_phase_ispec_crust_mantle, adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   !--------------------------------------.
@@ -786,27 +758,27 @@ subroutine read_mesh_databases_MPI_CM_adios()
   !--------------------------------------'
   call adios_selection_writeblock(sel, myrank)
   if (num_interfaces_crust_mantle > 0) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "my_neighbours/offset", &
                              0, 1,  offset_my_neighbours, adios_err)
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "nibool_interfaces/offset", &
                              0, 1, offset_nibool_interfaces, adios_err)
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "ibool_interfaces/offset", &
                              0, 1, offset_ibool_interfaces, adios_err)
   endif
   if (num_phase_ispec_crust_mantle > 0) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                               trim(region_name) // "phase_ispec_inner/offset", &
                               0, 1, offset_phase_ispec_inner, adios_err)
   endif
   if (USE_MESH_COLORING_GPU) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                               trim(region_name) // "num_elem_colors/offset", &
                               0, 1,  offset_num_elem_colors, adios_err)
   endif
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
@@ -817,9 +789,9 @@ subroutine read_mesh_databases_MPI_CM_adios()
 
   if (num_interfaces_crust_mantle > 0) then
     call adios_selection_writeblock(sel, myrank)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "max_nibool_interfaces", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "max_nibool_interfaces", 0, 1, &
        max_nibool_interfaces_cm, adios_err)
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     allocate(ibool_interfaces_crust_mantle(max_nibool_interfaces_cm, &
@@ -830,25 +802,25 @@ subroutine read_mesh_databases_MPI_CM_adios()
     start(1) = offset_my_neighbours
     count(1) = num_interfaces_crust_mantle
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
       my_neighbours_crust_mantle, adios_err)
     call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "nibool_interfaces/array", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nibool_interfaces/array", &
       0, 1, nibool_interfaces_crust_mantle, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     start(1) = offset_ibool_interfaces
     count(1) = max_nibool_interfaces_cm * num_interfaces_crust_mantle
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // &
       "ibool_interfaces/array", 0, 1, &
       ibool_interfaces_crust_mantle, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   else
     ! dummy array
@@ -872,24 +844,24 @@ subroutine read_mesh_databases_MPI_CM_adios()
     start(1) = offset_phase_ispec_inner
     count(1) = num_phase_ispec_crust_mantle * 2
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // &
       "phase_ispec_inner/array", 0, 1, &
       phase_ispec_inner_crust_mantle, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   endif
 
   ! mesh coloring for GPUs
   if (USE_MESH_COLORING_GPU) then
     call adios_selection_writeblock(sel, myrank)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_colors_outer", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_colors_outer", &
       0, 1, num_colors_outer_crust_mantle, adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_colors_inner", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_colors_inner", &
       0, 1, num_colors_inner_crust_mantle, adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! colors
@@ -902,12 +874,12 @@ subroutine read_mesh_databases_MPI_CM_adios()
     start(1) = offset_num_elem_colors
     count(1)= num_colors_outer_crust_mantle + num_colors_inner_crust_mantle
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // &
       "num_elem_colors/array", 0, 1, &
       num_elem_colors_crust_mantle, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   else
     ! allocates dummy arrays
@@ -921,12 +893,9 @@ subroutine read_mesh_databases_MPI_CM_adios()
   endif
   ! Close ADIOS handler to the restart file.
   call adios_selection_delete(sel)
-  call adios_read_close(adios_handle, adios_err)
-  call check_adios_err(myrank,adios_err)
-  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
-  call check_adios_err(myrank,adios_err)
 
-  call synchronize_all_comm(comm)
+  ! closes adios file
+  call close_file_adios_read()
 
 end subroutine read_mesh_databases_MPI_CM_adios
 
@@ -934,20 +903,21 @@ end subroutine read_mesh_databases_MPI_CM_adios
 !> \brief Read outer core MPI arrays from an ADIOS file.
 subroutine read_mesh_databases_MPI_OC_adios()
 
-  use adios_read_mod
   use specfem_par
   use specfem_par_outercore
 
+  use adios_read_mod
   use adios_helpers_mod, only: check_adios_err
+  use manager_adios
 
   implicit none
 
   ! local parameters
-  integer :: comm, ierr
+  integer :: ierr
   character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_handle, sel
+  integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
   integer :: offset_my_neighbours, offset_nibool_interfaces, &
@@ -960,33 +930,25 @@ subroutine read_mesh_databases_MPI_OC_adios()
 
   file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
 
-  call world_duplicate(comm)
-
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
-  call check_adios_err(myrank,adios_err)
-
-  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
-  if (adios_err /= 0) then
-    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
-    call check_adios_err(myrank,adios_err)
-  endif
+  ! opens adios file
+  call open_file_adios_read(file_name)
 
   ! MPI interfaces
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_interfaces", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_interfaces", &
     0, 1, num_interfaces_outer_core, adios_err)
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! inner / outer elements
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec_inner", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec_inner", &
   0, 1, nspec_inner_outer_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec_outer", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec_outer", &
     0, 1, nspec_outer_outer_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_phase_ispec", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_phase_ispec", &
     0, 1, num_phase_ispec_outer_core, adios_err)
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
@@ -1000,34 +962,34 @@ subroutine read_mesh_databases_MPI_OC_adios()
   !--------------------------------------'
   call adios_selection_writeblock(sel, myrank)
   if (num_interfaces_outer_core > 0) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "my_neighbours/offset", &
                              0, 1,  offset_my_neighbours, adios_err)
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "nibool_interfaces/offset", &
                              0, 1, offset_nibool_interfaces, adios_err)
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "ibool_interfaces/offset", &
                              0, 1, offset_ibool_interfaces, adios_err)
   endif
   if (num_phase_ispec_outer_core > 0) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                               trim(region_name) // "phase_ispec_inner/offset", &
                               0, 1, offset_phase_ispec_inner, adios_err)
   endif
   if (USE_MESH_COLORING_GPU) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                               trim(region_name) // "num_elem_colors/offset", &
                               0, 1,  offset_num_elem_colors, adios_err)
   endif
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   if (num_interfaces_outer_core> 0) then
     call adios_selection_writeblock(sel, myrank)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "max_nibool_interfaces", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "max_nibool_interfaces", &
       0, 1, max_nibool_interfaces_oc, adios_err)
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc, &
@@ -1038,25 +1000,25 @@ subroutine read_mesh_databases_MPI_OC_adios()
     start(1) = offset_my_neighbours
     count(1) = num_interfaces_outer_core
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
       my_neighbours_outer_core, adios_err)
     call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "nibool_interfaces/array", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nibool_interfaces/array", &
       0, 1, nibool_interfaces_outer_core, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     start(1) = offset_ibool_interfaces
     count(1) = max_nibool_interfaces_oc * num_interfaces_outer_core
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // &
       "ibool_interfaces/array", 0, 1, &
       ibool_interfaces_outer_core, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   else
     ! dummy array
@@ -1078,23 +1040,23 @@ subroutine read_mesh_databases_MPI_OC_adios()
     start(1) = offset_phase_ispec_inner
     count(1) = num_phase_ispec_outer_core * 2
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // &
       "phase_ispec_inner/array", 0, 1, &
       phase_ispec_inner_outer_core, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   endif
 
   ! mesh coloring for GPUs
   if (USE_MESH_COLORING_GPU) then
     call adios_selection_writeblock(sel, myrank)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_colors_outer", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_colors_outer", &
       0, 1, num_colors_outer_outer_core, adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_colors_inner", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_colors_inner", &
       0, 1, num_colors_inner_outer_core, adios_err)
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     ! colors
@@ -1107,12 +1069,12 @@ subroutine read_mesh_databases_MPI_OC_adios()
     start(1) = offset_num_elem_colors
     count(1)= num_colors_outer_outer_core + num_colors_inner_outer_core
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // &
       "num_elem_colors/array", 0, 1, &
       num_elem_colors_outer_core, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   else
     ! allocates dummy arrays
@@ -1126,12 +1088,9 @@ subroutine read_mesh_databases_MPI_OC_adios()
   endif
   ! Close ADIOS handler to the restart file.
   call adios_selection_delete(sel)
-  call adios_read_close(adios_handle, adios_err)
-  call check_adios_err(myrank,adios_err)
-  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
-  call check_adios_err(myrank,adios_err)
 
-  call synchronize_all_comm(comm)
+  ! closes adios file
+  call close_file_adios_read()
 
 end subroutine read_mesh_databases_MPI_OC_adios
 
@@ -1140,19 +1099,21 @@ end subroutine read_mesh_databases_MPI_OC_adios
 !> \brief Read outer core MPI arrays from an ADIOS file.
 subroutine read_mesh_databases_MPI_IC_adios()
 
-  use adios_read_mod
   use specfem_par
   use specfem_par_innercore
+
+  use adios_read_mod
   use adios_helpers_mod, only: check_adios_err
+  use manager_adios
 
   implicit none
 
   ! local parameters
-  integer :: comm, ierr
+  integer :: ierr
   character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_handle, sel
+  integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
   integer :: offset_my_neighbours, offset_nibool_interfaces, &
@@ -1165,34 +1126,26 @@ subroutine read_mesh_databases_MPI_IC_adios()
 
   file_name = trim(LOCAL_PATH) // "/solver_data_mpi.bp"
 
-  call world_duplicate(comm)
-
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
-  call check_adios_err(myrank,adios_err)
-
-  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
-  if (adios_err /= 0) then
-    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
-    call check_adios_err(myrank,adios_err)
-  endif
+  ! opens adios file
+  call open_file_adios_read(file_name)
 
   ! MPI interfaces
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_interfaces", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_interfaces", &
     0, 1, num_interfaces_inner_core, adios_err)
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   ! inner / outer elements
   call adios_selection_writeblock(sel, myrank)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec_inner", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec_inner", &
     0, 1, nspec_inner_inner_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nspec_outer", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nspec_outer", &
     0, 1, nspec_outer_inner_core, adios_err)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_phase_ispec", &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_phase_ispec", &
     0, 1, num_phase_ispec_inner_core, adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   !--------------------------------------.
@@ -1200,27 +1153,27 @@ subroutine read_mesh_databases_MPI_IC_adios()
   !--------------------------------------'
   call adios_selection_writeblock(sel, myrank)
   if (num_interfaces_inner_core > 0) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "my_neighbours/offset", &
                              0, 1,  offset_my_neighbours, adios_err)
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "nibool_interfaces/offset", &
                              0, 1, offset_nibool_interfaces, adios_err)
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "ibool_interfaces/offset", &
                              0, 1, offset_ibool_interfaces, adios_err)
   endif
   if (num_phase_ispec_inner_core > 0) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                               trim(region_name) // "phase_ispec_inner/offset", &
                               0, 1, offset_phase_ispec_inner, adios_err)
   endif
   if (USE_MESH_COLORING_GPU) then
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
                               trim(region_name) // "num_elem_colors/offset", &
                               0, 1,  offset_num_elem_colors, adios_err)
   endif
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
@@ -1231,10 +1184,10 @@ subroutine read_mesh_databases_MPI_IC_adios()
 
   if (num_interfaces_inner_core > 0) then
     call adios_selection_writeblock(sel, myrank)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "max_nibool_interfaces", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "max_nibool_interfaces", &
       0, 1, max_nibool_interfaces_ic, adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic, &
@@ -1245,25 +1198,25 @@ subroutine read_mesh_databases_MPI_IC_adios()
     start(1) = offset_my_neighbours
     count(1) = num_interfaces_inner_core
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
       my_neighbours_inner_core, adios_err)
     call check_adios_err(myrank,adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "nibool_interfaces/array", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nibool_interfaces/array", &
       0, 1, nibool_interfaces_inner_core, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
 
     start(1) = offset_ibool_interfaces
     count(1) = max_nibool_interfaces_ic * num_interfaces_inner_core
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // &
       "ibool_interfaces/array", 0, 1, &
       ibool_interfaces_inner_core, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   else
     ! dummy array
@@ -1285,24 +1238,24 @@ subroutine read_mesh_databases_MPI_IC_adios()
     start(1) = offset_phase_ispec_inner
     count(1) = num_phase_ispec_inner_core * 2
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // &
       "phase_ispec_inner/array", 0, 1, &
       phase_ispec_inner_inner_core, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   endif
 
   ! mesh coloring for GPUs
   if (USE_MESH_COLORING_GPU) then
     call adios_selection_writeblock(sel, myrank)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_colors_outer", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_colors_outer", &
       0, 1, num_colors_outer_inner_core, adios_err)
-    call adios_schedule_read(adios_handle, sel, trim(region_name) // "num_colors_inner", &
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "num_colors_inner", &
       0, 1, num_colors_inner_inner_core, adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
     ! colors
 
@@ -1314,12 +1267,12 @@ subroutine read_mesh_databases_MPI_IC_adios()
     start(1) = offset_num_elem_colors
     count(1)= num_colors_outer_inner_core + num_colors_inner_inner_core
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(adios_handle, sel, &
+    call adios_schedule_read(file_handle_adios, sel, &
       "num_elem_colors/array", 0, 1, &
       num_elem_colors_inner_core, adios_err)
     call check_adios_err(myrank,adios_err)
 
-    call adios_perform_reads(adios_handle, adios_err)
+    call adios_perform_reads(file_handle_adios, adios_err)
     call check_adios_err(myrank,adios_err)
   else
     ! allocates dummy arrays
@@ -1333,12 +1286,9 @@ subroutine read_mesh_databases_MPI_IC_adios()
   endif
   ! Close ADIOS handler to the restart file.
   call adios_selection_delete(sel)
-  call adios_read_close(adios_handle, adios_err)
-  call check_adios_err(myrank,adios_err)
-  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
-  call check_adios_err(myrank,adios_err)
 
-  call synchronize_all_comm(comm)
+  ! closes adios file
+  call close_file_adios_read()
 
 end subroutine read_mesh_databases_MPI_IC_adios
 
@@ -1347,78 +1297,71 @@ end subroutine read_mesh_databases_MPI_IC_adios
 !> \brief Read Stacey BC arrays from an ADIOS file.
 subroutine read_mesh_databases_stacey_adios()
 
-  use adios_read_mod
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
   use specfem_par_outercore
+
+  use adios_read_mod
   use adios_helpers_mod, only: check_adios_err
+  use manager_adios
 
   implicit none
 
   ! local parameters
-  integer :: comm, local_dim
+  integer :: local_dim
   ! processor identification
   character(len=MAX_STRING_LEN) :: file_name
   ! ADIOS variables
   integer                 :: adios_err
-  integer(kind=8)         :: adios_handle, sel
+  integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
   character(len=128)      :: region_name
-
-  call world_duplicate(comm)
 
   file_name = trim(LOCAL_PATH) // "/stacey.bp"
 
   ! crust and mantle
   write(region_name,"('reg',i1, '/')") IREGION_CRUST_MANTLE
 
-  call adios_read_init_method (ADIOS_READ_METHOD_BP, comm, "verbose=1", adios_err)
-  call check_adios_err(myrank,adios_err)
-
-  call adios_read_open_file (adios_handle, file_name, 0, comm, adios_err)
-  if (adios_err /= 0) then
-    print *,'Error rank ',myrank,' opening adios file: ',trim(file_name)
-    call check_adios_err(myrank,adios_err)
-  endif
+  ! opens adios file
+  call open_file_adios_read(file_name)
 
   ! read arrays for Stacey conditions
-
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX_CM
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "njmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "njmin/array", 0, 1, &
       njmin_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "njmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "njmax/array", 0, 1, &
       njmax_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nkmin_xi/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nkmin_xi/array", 0, 1, &
       nkmin_xi_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = 2*NSPEC2DMAX_YMIN_YMAX_CM
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nimin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nimin/array", 0, 1, &
       nimin_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nimax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nimax/array", 0, 1, &
       nimax_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nkmin_eta/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nkmin_eta/array", 0, 1, &
       nkmin_eta_crust_mantle, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   call adios_selection_delete(sel)
@@ -1433,44 +1376,43 @@ subroutine read_mesh_databases_stacey_adios()
   local_dim = 2*NSPEC2DMAX_XMIN_XMAX_OC
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "njmin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "njmin/array", 0, 1, &
       njmin_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "njmax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "njmax/array", 0, 1, &
       njmax_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nkmin_xi/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nkmin_xi/array", 0, 1, &
       nkmin_xi_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   local_dim = 2*NSPEC2DMAX_YMIN_YMAX_OC
   start(1) = local_dim*myrank; count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nimin/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nimin/array", 0, 1, &
       nimin_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nimax/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nimax/array", 0, 1, &
       nimax_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
   call adios_selection_boundingbox (sel , 1, start, count)
-  call adios_schedule_read(adios_handle, sel, trim(region_name) // "nkmin_eta/array", 0, 1, &
+  call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nkmin_eta/array", 0, 1, &
       nkmin_eta_outer_core, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  call adios_perform_reads(adios_handle, adios_err)
+  call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
   call adios_selection_delete(sel)
-  call adios_read_close(adios_handle, adios_err)
-  call check_adios_err(myrank,adios_err)
-  call adios_read_finalize_method(ADIOS_READ_METHOD_BP, adios_err)
-  call check_adios_err(myrank,adios_err)
+
+  ! closes adios file
+  call close_file_adios_read()
 
 end subroutine read_mesh_databases_stacey_adios
 

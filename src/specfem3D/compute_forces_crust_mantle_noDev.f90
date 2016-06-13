@@ -29,7 +29,7 @@
                                                deltat, &
                                                displ_crust_mantle, &
                                                accel_crust_mantle, &
-                                               phase_is_inner, &
+                                               iphase, &
                                                R_xx,R_yy,R_xy,R_xz,R_yz, &
                                                R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                                epsilondev_xx,epsilondev_yy,epsilondev_xy, &
@@ -47,7 +47,7 @@
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_crustmantle,only: &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
+    rstore => rstore_crust_mantle, &
     xix => xix_crust_mantle,xiy => xiy_crust_mantle,xiz => xiz_crust_mantle, &
     etax => etax_crust_mantle,etay => etay_crust_mantle,etaz => etaz_crust_mantle, &
     gammax => gammax_crust_mantle,gammay => gammay_crust_mantle,gammaz => gammaz_crust_mantle, &
@@ -99,7 +99,7 @@
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! local parameters
 
@@ -141,7 +141,7 @@
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
   real(kind=CUSTOM_REAL) lambdal,mul,lambdalplus2mul
   real(kind=CUSTOM_REAL) kappal,kappavl,kappahl,muvl,muhl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: sum_terms
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sum_terms
 
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
   real(kind=CUSTOM_REAL) tempy1l,tempy2l,tempy3l
@@ -161,18 +161,17 @@
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
-  integer :: iphase
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
 
 !  computed_elements = 0
-  if (.not. phase_is_inner) then
-    iphase = 1
+  if (iphase == 1) then
+    ! outer elements (halo region)
     num_elements = nspec_outer
   else
-    iphase = 2
+    ! inner elements
     num_elements = nspec_inner
   endif
 
@@ -399,11 +398,11 @@
               eta_aniso = eta_anisostore(i,j,k,ispec)  !!! that is  F / (A - 2 L)
 
               ! use mesh coordinates to get theta and phi
-              ! ystore and zstore contain theta and phi
+              ! rstore contains theta and phi
 
               iglob = ibool(i,j,k,ispec)
-              theta = ystore(iglob)
-              phi = zstore(iglob)
+              theta = rstore(2,iglob)
+              phi = rstore(3,iglob)
 
               costheta = cos(theta)
               sintheta = sin(theta)
@@ -609,9 +608,9 @@
             ! x y and z contain r theta and phi
 
             iglob = ibool(i,j,k,ispec)
-            radius = dble(xstore(iglob))
-            theta = ystore(iglob)
-            phi = zstore(iglob)
+            radius = dble(rstore(1,iglob))
+            theta = rstore(2,iglob)
+            phi = rstore(3,iglob)
 
             cos_theta = dcos(dble(theta))
             sin_theta = dsin(dble(theta))
@@ -736,14 +735,14 @@
           fac2 = wgllwgll_xz(i,k)
           fac3 = wgllwgll_xy(i,j)
 
-          sum_terms(i,j,k,1) = - (fac1*tempx1l + fac2*tempx2l + fac3*tempx3l)
-          sum_terms(i,j,k,2) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
-          sum_terms(i,j,k,3) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
+          sum_terms(1,i,j,k) = - (fac1*tempx1l + fac2*tempx2l + fac3*tempx3l)
+          sum_terms(2,i,j,k) = - (fac1*tempy1l + fac2*tempy2l + fac3*tempy3l)
+          sum_terms(3,i,j,k) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
 
           if (GRAVITY_VAL) then
-            sum_terms(i,j,k,1) = sum_terms(i,j,k,1) + rho_s_H(i,j,k,1)
-            sum_terms(i,j,k,2) = sum_terms(i,j,k,2) + rho_s_H(i,j,k,2)
-            sum_terms(i,j,k,3) = sum_terms(i,j,k,3) + rho_s_H(i,j,k,3)
+            sum_terms(1,i,j,k) = sum_terms(1,i,j,k) + rho_s_H(i,j,k,1)
+            sum_terms(2,i,j,k) = sum_terms(2,i,j,k) + rho_s_H(i,j,k,2)
+            sum_terms(3,i,j,k) = sum_terms(3,i,j,k) + rho_s_H(i,j,k,3)
           endif
 
         enddo ! NGLLX
@@ -755,9 +754,9 @@
       do j = 1,NGLLY
         do i = 1,NGLLX
           iglob = ibool(i,j,k,ispec)
-          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(i,j,k,1)
-          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(i,j,k,2)
-          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(i,j,k,3)
+          accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,i,j,k)
+          accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,i,j,k)
+          accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,i,j,k)
         enddo
       enddo
     enddo

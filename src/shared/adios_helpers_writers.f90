@@ -618,8 +618,7 @@ subroutine write_adios_global_1d_integer_4d(adios_handle, myrank, sizeprocs, loc
   ! Variables
   integer :: adios_err
 
-  call write_1D_global_array_adios_dims(adios_handle, myrank, &
-      local_dim, sizeprocs, array_name)
+  call write_1D_global_array_adios_dims(adios_handle, myrank, local_dim, sizeprocs, array_name)
 
   call adios_write(adios_handle, array_name // "/array", array, adios_err)
   call check_adios_err(myrank,adios_err)

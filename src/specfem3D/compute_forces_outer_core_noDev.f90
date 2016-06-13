@@ -30,7 +30,7 @@
                                              A_array_rotation,B_array_rotation, &
                                              A_array_rotation_lddrk,B_array_rotation_lddrk, &
                                              displfluid,accelfluid, &
-                                             div_displfluid,phase_is_inner)
+                                             div_displfluid,iphase)
 
   use constants_solver
 
@@ -42,7 +42,7 @@
     USE_LDDRK,istage
 
   use specfem_par_outercore,only: &
-    xstore => xstore_outer_core,ystore => ystore_outer_core,zstore => zstore_outer_core, &
+    rstore => rstore_outer_core, &
     xix => xix_outer_core,xiy => xiy_outer_core,xiz => xiz_outer_core, &
     etax => etax_outer_core,etay => etay_outer_core,etaz => etaz_outer_core, &
     gammax => gammax_outer_core,gammay => gammay_outer_core,gammaz => gammaz_outer_core, &
@@ -71,7 +71,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),intent(out) :: div_displfluid
 
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! local parameters
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: tempx1,tempx2,tempx3
@@ -96,22 +96,21 @@
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
-  integer :: iphase
 
 ! ****************************************************
 !   big loop over all spectral elements in the fluid
 ! ****************************************************
 
-  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. ( .not. phase_is_inner )) then
+  if (MOVIE_VOLUME .and. NSPEC_OUTER_CORE_3DMOVIE /= 1 .and. (iphase == 1)) then
     div_displfluid(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
 !  computed_elements = 0
-  if (.not. phase_is_inner) then
-    iphase = 1
+  if (iphase == 1) then
+    ! outer elements
     num_elements = nspec_outer
   else
-    iphase = 2
+    ! inner elements
     num_elements = nspec_inner
   endif
 
@@ -224,9 +223,9 @@
             ! x y z contain r theta phi
             iglob = ibool(i,j,k,ispec)
 
-            radius = dble(xstore(iglob))
-            theta = dble(ystore(iglob))
-            phi = dble(zstore(iglob))
+            radius = dble(rstore(1,iglob))
+            theta = dble(rstore(2,iglob))
+            phi = dble(rstore(3,iglob))
 
             cos_theta = dcos(theta)
             sin_theta = dsin(theta)
@@ -256,9 +255,9 @@
             ! x y z contain r theta phi
             iglob = ibool(i,j,k,ispec)
 
-            radius = dble(xstore(iglob))
-            theta = dble(ystore(iglob))
-            phi = dble(zstore(iglob))
+            radius = dble(rstore(1,iglob))
+            theta = dble(rstore(2,iglob))
+            phi = dble(rstore(3,iglob))
 
             cos_theta = dcos(theta)
             sin_theta = dsin(theta)

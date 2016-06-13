@@ -69,7 +69,9 @@ typedef float realw;
 // debug: outputs traces
 #define DEBUG 0
 #if DEBUG == 1
+#pragma message ("\nCompiling with: DEBUG enabled\n")
 #define TRACE(x) printf ("%s\n", x); fflush(stdout);
+#define TRACE_EXTENDED(x) printf ("%s --- function %s file %s line %d \n",x,__func__,__FILE__,__LINE__); fflush(stdout);
 #else
 #define TRACE(x)
 #endif
@@ -80,6 +82,7 @@ typedef float realw;
 // more outputs
 #define MAXDEBUG 0
 #if MAXDEBUG == 1
+#pragma message ("\nCompiling with: MAXDEBUG enabled\n")
 #define LOG(x) printf ("%s\n", x)
 #define PRINT5(var, offset) for (;print_count<5;print_count++) printf ("var (%d)=%2.20f\n", print_count, var[offset+print_count]);
 #define PRINT10(var) if (print_count<10) { printf ("var=%1.20e\n", var); print_count++; }
@@ -92,6 +95,7 @@ typedef float realw;
 // debug: run backward simulations with/without GPU routines and empty arrays for debugging
 #define DEBUG_BACKWARD_SIMULATIONS 0
 #if DEBUG_BACKWARD_SIMULATIONS == 1
+#pragma message ("\nCompiling with: DEBUG_BACKWARD_SIMULATIONS enabled\n")
 #define DEBUG_BACKWARD_ASSEMBLY_OC()  return;
 #define DEBUG_BACKWARD_ASSEMBLY_IC()  return;
 #define DEBUG_BACKWARD_ASSEMBLY_CM()  return;
@@ -117,6 +121,7 @@ typedef float realw;
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
 #define ENABLE_VERY_SLOW_ERROR_CHECKING 0
 #if ENABLE_VERY_SLOW_ERROR_CHECKING == 1
+#pragma message ("\nCompiling with: ENABLE_VERY_SLOW_ERROR_CHECKING enabled\n")
 #define GPU_ERROR_CHECKING(x) exit_on_gpu_error(x);
 #else
 #define GPU_ERROR_CHECKING(x)
@@ -226,7 +231,7 @@ typedef float realw;
 // leads up to ~10% performance increase in OpenCL and ~1% in Cuda
 #define MANUALLY_UNROLLED_LOOPS
 
-// compiler specifications
+// CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
 //
 // note: main kernel is Kernel_2_crust_mantle_impl() which is limited by register usage to only 5 active blocks
@@ -246,7 +251,7 @@ typedef float realw;
 
 /*----------------------------------------------------------------------------------------------- */
 
-// cuda kernel block size for updating displacements/potential (newmark time scheme)
+// kernel block size for updating displacements/potential (Newmark time scheme)
 // current hardware: 128 is slightly faster than 256 (~ 4%)
 #define BLOCKSIZE_KERNEL1 128
 #define BLOCKSIZE_KERNEL3 128
@@ -254,6 +259,46 @@ typedef float realw;
 
 // maximum grid dimension in one direction of GPU
 #define MAXIMUM_GRID_DIM 65535
+
+/*----------------------------------------------------------------------------------------------- */
+
+//MIC (Knights Corner)
+#define MIC_KNIGHTS_CORNER 0
+#if MIC_KNIGHTS_CORNER == 1
+// redefines block sizes
+// local work group size: SIMD size 512-bit/64-byte -> multiple of 16 floats (each 4-byte)
+#undef BLOCKSIZE_KERNEL1
+#undef BLOCKSIZE_KERNEL3
+#undef BLOCKSIZE_TRANSFER
+#define BLOCKSIZE_KERNEL1 64    // for updating displacement (Newmark)
+#define BLOCKSIZE_KERNEL3 64
+#define BLOCKSIZE_TRANSFER 128
+
+// max_compute_unit (number of work-groups should be equal to this for best performance)
+// Knights Corner has 236 threads (1percore), optimal number of work groups is a multiple
+#define MAXIMUM_COMPUTE_UNITS 236
+
+// preferred work group size multiple for kernels (taken from device/kernel info)
+#define PREFERRED_WORK_GROUP_SIZE_MULTIPLE 128
+
+// max_work_group_size
+// device info: CL_DEVICE_MAX_WORK_ITEM_SIZES == 8192
+// kernel info: CL_KERNEL_WORK_GROUP_SIZE == 2048 for crust_mantle kernel
+#undef MAXIMUM_GRID_DIM
+#define MAXIMUM_GRID_DIM 32 * MAXIMUM_COMPUTE_UNITS // 7552 = 32 * 236 = 7552
+#endif // MIC_KNIGHTS_CORNER
+
+/*----------------------------------------------------------------------------------------------- */
+
+// balancing work group x/y-size
+#undef BALANCE_WORK_GROUP
+
+// maximum number of work group units in one dimension
+#define BALANCE_WORK_GROUP_UNITS 7552 // == 32 * 236 for Knights Corner test
+
+#ifdef BALANCE_WORK_GROUP
+#pragma message ("\nCompiling with: BALANCE_WORK_GROUP enabled\n")
+#endif
 
 /*----------------------------------------------------------------------------------------------- */
 
@@ -364,9 +409,7 @@ typedef struct mesh_ {
   gpu_int_mem d_ispec_is_tiso_crust_mantle;
 
   // mesh locations
-  gpu_realw_mem d_xstore_crust_mantle;
-  gpu_realw_mem d_ystore_crust_mantle;
-  gpu_realw_mem d_zstore_crust_mantle;
+  gpu_realw_mem d_rstore_crust_mantle;
 
   // anisotropic 3D mantle
   gpu_realw_mem d_c11store_crust_mantle;
@@ -481,9 +524,7 @@ typedef struct mesh_ {
   gpu_int_mem d_ibool_outer_core;
 
   // mesh locations
-  gpu_realw_mem d_xstore_outer_core;
-  gpu_realw_mem d_ystore_outer_core;
-  gpu_realw_mem d_zstore_outer_core;
+  gpu_realw_mem d_rstore_outer_core;
 
   // wavefields
   // displacement, velocity, acceleration
@@ -558,9 +599,7 @@ typedef struct mesh_ {
   gpu_int_mem d_idoubling_inner_core;
 
   // mesh locations
-  gpu_realw_mem d_xstore_inner_core;
-  gpu_realw_mem d_ystore_inner_core;
-  gpu_realw_mem d_zstore_inner_core;
+  gpu_realw_mem d_rstore_inner_core;
 
   // anisotropic 3D mantle
   gpu_realw_mem d_c11store_inner_core;
@@ -677,6 +716,7 @@ typedef struct mesh_ {
   // simulation flags
   int save_forward;
   int absorbing_conditions;
+  int save_stacey;
 
   int attenuation;
   int undo_attenuation;
@@ -1004,9 +1044,9 @@ void gpuReset ();
 
 void exit_on_gpu_error (const char *kernel_name);
 void exit_on_error (const char *info);
+
 void synchronize_mpi ();
 double get_time_val ();
-void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y);
 
 // defined in check_fields_gpu.c
 void get_free_memory (double *free_db, double *used_db, double *total_db);
@@ -1062,5 +1102,47 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
 #define RELEASE_OFFSET(_buffer_, _offset_)      \
   RELEASE_OFFSET_OCL(_buffer_, _offset_);        \
   RELEASE_OFFSET_CUDA(_buffer_, _offset_);
+
+/* ----------------------------------------------------------------------------------------------- */
+// kernel setup function
+/* ----------------------------------------------------------------------------------------------- */
+// moved here into header to inline function calls if possible
+
+static inline void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y) {
+  // Initially sets the blocks_x to be the num_blocks, and adds rows as needed (block size limit of 65535).
+  // If an additional row is added, the row length is cut in
+  // half. If the block count is odd, there will be 1 too many blocks,
+  // which must be managed at runtime with an if statement.
+
+  *num_blocks_x = num_blocks;
+  *num_blocks_y = 1;
+
+  while (*num_blocks_x > MAXIMUM_GRID_DIM) {
+    *num_blocks_x = (int) ceil (*num_blocks_x * 0.5f);
+    *num_blocks_y = *num_blocks_y * 2;
+  }
+
+#if DEBUG == 1
+  printf("work group - total %d has group size x = %d / y = %d\n",
+         num_blocks,*num_blocks_x,*num_blocks_y);
+#endif
+
+  // tries to balance x- and y-group
+#ifdef BALANCE_WORK_GROUP
+  if (*num_blocks_x > BALANCE_WORK_GROUP_UNITS && *num_blocks_y < BALANCE_WORK_GROUP_UNITS){
+    while (*num_blocks_x > BALANCE_WORK_GROUP_UNITS && *num_blocks_y < BALANCE_WORK_GROUP_UNITS) {
+      *num_blocks_x = (int) ceil (*num_blocks_x * 0.5f);
+      *num_blocks_y = *num_blocks_y * 2;
+    }
+  }
+
+#if DEBUG == 1
+  printf("balancing work group with limit size %d - total %d has group size x = %d / y = %d\n",
+         BALANCE_WORK_GROUP_UNITS,num_blocks,*num_blocks_x,*num_blocks_y);
+#endif
+
+#endif
+}
+
 
 #endif   // MESH_CONSTANTS_GPU_H

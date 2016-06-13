@@ -33,14 +33,14 @@
                                               deltat, &
                                               displ_crust_mantle, &
                                               accel_crust_mantle, &
-                                              phase_is_inner, &
+                                              iphase, &
                                               R_xx,R_yy,R_xy,R_xz,R_yz, &
                                               R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                               epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                               epsilondev_xz,epsilondev_yz, &
                                               epsilon_trace_over_3, &
                                               alphaval,betaval,gammaval, &
-                                              factor_common,vnspec )
+                                              factor_common,vnspec,sum_terms )
 
 ! this routine is optimized for NGLLX = NGLLY = NGLLZ = 5 using the Deville et al. (2002) inlined matrix-matrix products
 
@@ -53,7 +53,7 @@
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_crustmantle,only: &
-    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle, &
+    rstore => rstore_crust_mantle, &
     deriv => deriv_mapping_crust_mantle, &
     kappavstore => kappavstore_crust_mantle,kappahstore => kappahstore_crust_mantle, &
     muvstore => muvstore_crust_mantle,muhstore => muhstore_crust_mantle, &
@@ -66,10 +66,6 @@
     c44store => c44store_crust_mantle,c45store => c45store_crust_mantle,c46store => c46store_crust_mantle, &
     c55store => c55store_crust_mantle,c56store => c56store_crust_mantle,c66store => c66store_crust_mantle, &
     ibool => ibool_crust_mantle, &
-    ibool_inv_tbl => ibool_inv_tbl_crust_mantle, &
-    ibool_inv_st => ibool_inv_st_crust_mantle, &
-    num_globs => num_globs_crust_mantle, &
-    phase_iglob => phase_iglob_crust_mantle, &
     ispec_is_tiso => ispec_is_tiso_crust_mantle, &
     one_minus_sum_beta => one_minus_sum_beta_crust_mantle, &
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
@@ -77,6 +73,15 @@
     nspec_inner => nspec_inner_crust_mantle
 
   use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+
+#ifdef FORCE_VECTORIZATION
+  ! optimized arrays
+  use specfem_par_crustmantle,only: &
+    ibool_inv_tbl => ibool_inv_tbl_crust_mantle, &
+    ibool_inv_st => ibool_inv_st_crust_mantle, &
+    num_globs => num_globs_crust_mantle, &
+    phase_iglob => phase_iglob_crust_mantle
+#endif
 
 !daniel: att - debug
 !  use specfem_par,only: it,NSTEP
@@ -111,8 +116,11 @@
   real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec),intent(in) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS),intent(in) :: alphaval,betaval,gammaval
 
+  ! work array with contributions
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC),intent(out) :: sum_terms
+
   ! inner/outer element run flag
-  logical,intent(in) :: phase_is_inner
+  integer,intent(in) :: iphase
 
   ! local parameters
 
@@ -126,8 +134,6 @@
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: dummyx_loc,dummyy_loc,dummyz_loc
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: sum_terms
-
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
 
@@ -136,70 +142,71 @@
 
   integer :: ispec,iglob
   integer :: num_elements,ispec_p
-  integer :: iphase
 
 #ifdef FORCE_VECTORIZATION
-  integer :: ijk
+  integer :: ijk_spec,ip,iglob_p,ijk
 #else
   integer :: i,j,k
 #endif
 
-  integer :: ijk_spec,ip,iglob_p
+  integer,parameter :: NGLL2 = NGLLY * NGLLZ
+  integer,parameter :: NGLL3 = NGLLX * NGLLY * NGLLZ
 
 ! ****************************************************
 !   big loop over all spectral elements in the solid
 ! ****************************************************
 
 !  computed_elements = 0
-  if (.not. phase_is_inner) then
-    iphase = 1
+  if (iphase == 1) then
+    ! outer elements (halo region)
     num_elements = nspec_outer
   else
-    iphase = 2
+    ! inner elements
     num_elements = nspec_inner
   endif
 
 !$OMP PARALLEL DEFAULT(NONE) &
-!$OMP SHARED(deriv, &
-!$OMP one_minus_sum_beta,epsilon_trace_over_3,c11store,c12store,c13store,c14store,c15store, &
-!$OMP c16store,c22store,c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-!$OMP c36store,c44store,c45store,c46store,c55store,c56store,c66store,ispec_is_tiso, &
-!$OMP kappavstore,muvstore,kappahstore,muhstore,eta_anisostore,ibool,ystore,zstore, &
-!$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
-!$OMP xstore,minus_gravity_table,minus_deriv_gravity_table,density_table, &
-!$OMP displ_crust_mantle,wgll_cube,hprime_xxt,hprime_xx, &
-!$OMP vnspec, &
-!$OMP accel_crust_mantle, &
-!$OMP hprimewgll_xx,hprimewgll_xxt, &
-!$OMP alphaval,betaval, &
-!$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz, &
-!$OMP gammaval,factor_common, &
-!$OMP iphase, &
-!$OMP phase_ispec_inner, &
-!$OMP num_elements, USE_LDDRK, &
+!$OMP SHARED( deriv, &
+!$OMP num_elements,iphase,phase_ispec_inner, &
+!$OMP ibool,ispec_is_tiso,rstore, &
+!$OMP displ_crust_mantle,accel_crust_mantle, &
+!$OMP wgll_cube,hprime_xxt,hprime_xx,hprimewgll_xx,hprimewgll_xxT, &
 !$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
+!$OMP c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+!$OMP c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+!$OMP c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+!$OMP kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
+!$OMP vnspec, &
+!$OMP factor_common,one_minus_sum_beta, &
+!$OMP alphaval,betaval,gammaval, &
+!$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
+!$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3, &
+!$OMP minus_gravity_table,minus_deriv_gravity_table,density_table, &
+!$OMP USE_LDDRK, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP sum_terms, &
-!$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
-!$OMP deltat, COMPUTE_AND_STORE_STRAIN ) &
-!$OMP PRIVATE(ispec,fac1,fac2,fac3,ispec_p, &
 #ifdef FORCE_VECTORIZATION
+!$OMP ibool_inv_tbl, ibool_inv_st, num_globs, phase_iglob, &
+#endif
+!$OMP deltat,COMPUTE_AND_STORE_STRAIN ) &
+!$OMP PRIVATE( ispec,ispec_p,iglob, &
+#ifdef FORCE_VECTORIZATION
+!$OMP ijk_spec,ip,iglob_p, &
 !$OMP ijk, &
 #else
 !$OMP i,j,k, &
 #endif
-!$OMP tempx1,tempx2,tempx3, &
+!$OMP fac1,fac2,fac3, &
+!$OMP tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
 !$OMP newtempx1,newtempx2,newtempx3,newtempy1,newtempy2,newtempy3,newtempz1,newtempz2,newtempz3, &
-!$OMP dummyx_loc,dummyy_loc,dummyz_loc,rho_s_H,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-!$OMP ijk_spec, ip, &
-!$OMP iglob,epsilondev_loc)
+!$OMP dummyx_loc,dummyy_loc,dummyz_loc, &
+!$OMP rho_s_H,epsilondev_loc )
 
 !$OMP DO SCHEDULE(GUIDED)
   do ispec_p = 1,num_elements
 
+    ! only compute elements which belong to current phase (inner or outer elements)
     ispec = phase_ispec_inner(ispec_p,iphase)
-
-    ! only compute element which belong to current phase (inner or outer elements)
 
     DO_LOOP_IJK
 
@@ -225,28 +232,28 @@
     ! compute either isotropic, transverse isotropic or anisotropic elements
     !
     if (ANISOTROPIC_3D_MANTLE_VAL) then
-       ! anisotropic element
-       call compute_element_aniso(ispec, &
-                                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                  xstore,ystore,zstore, &
-                                  deriv, &
-                                  wgll_cube, &
-                                  c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                                  c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                                  c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                                  ibool, &
-                                  R_xx,R_yy,R_xy,R_xz,R_yz, &
-                                  epsilon_trace_over_3, &
-                                  one_minus_sum_beta,vnspec, &
-                                  tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
-                                  dummyx_loc,dummyy_loc,dummyz_loc, &
-                                  epsilondev_loc,rho_s_H)
+      ! anisotropic element
+      call compute_element_aniso(ispec, &
+                                 minus_gravity_table,density_table,minus_deriv_gravity_table, &
+                                 rstore, &
+                                 deriv, &
+                                 wgll_cube, &
+                                 c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                 c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                 c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                 ibool, &
+                                 R_xx,R_yy,R_xy,R_xz,R_yz, &
+                                 epsilon_trace_over_3, &
+                                 one_minus_sum_beta,vnspec, &
+                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
+                                 dummyx_loc,dummyy_loc,dummyz_loc, &
+                                 epsilondev_loc,rho_s_H)
     else
        if (.not. ispec_is_tiso(ispec)) then
           ! isotropic element
           call compute_element_iso(ispec, &
                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                   xstore,ystore,zstore, &
+                                   rstore, &
                                    deriv, &
                                    wgll_cube, &
                                    kappavstore,muvstore, &
@@ -261,7 +268,7 @@
           ! transverse isotropic element
           call compute_element_tiso(ispec, &
                                      minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                     xstore,ystore,zstore, &
+                                     rstore, &
                                      deriv, &
                                      wgll_cube, &
                                      kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -287,7 +294,6 @@
     call mxm5_3comp_singleB(tempx3,tempy3,tempz3,m2,hprimewgll_xx,newtempx3,newtempy3,newtempz3,m1)
 
     ! sums contributions
-
     DO_LOOP_IJK
 
       fac1 = wgllwgll_yz_3D(INDEX_IJK)
@@ -310,15 +316,54 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            sum_terms(1,INDEX_IJK,ispec) = sum_terms(1,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,1)
-            sum_terms(2,INDEX_IJK,ispec) = sum_terms(2,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,2)
-            sum_terms(3,INDEX_IJK,ispec) = sum_terms(3,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,3)
+            sum_terms(1,i,j,k,ispec) = sum_terms(1,i,j,k,ispec) + rho_s_H(i,j,k,1)
+            sum_terms(2,i,j,k,ispec) = sum_terms(2,i,j,k,ispec) + rho_s_H(i,j,k,2)
+            sum_terms(3,i,j,k,ispec) = sum_terms(3,i,j,k,ispec) + rho_s_H(i,j,k,3)
           enddo
         enddo
       enddo
 #endif
 
     endif
+
+    ! updates acceleration
+#ifdef FORCE_VECTORIZATION
+    ! update will be done later at the very end..
+#else
+    ! updates for non-vectorization case
+
+! note: Critical OpenMP here might degrade performance,
+!       especially for a larger number of threads (>8).
+!       Using atomic operations can partially help.
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
+! we can force vectorization using a compiler directive here because we know that there is no dependency
+! inside a given spectral element, since all the global points of a local elements are different by definition
+! (only common points between different elements can be the same)
+! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
+!IBM* ASSERT (NODEPS)
+!pgi$ ivdep
+!DIR$ IVDEP
+    DO_LOOP_IJK
+      iglob = ibool(INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,INDEX_IJK,ispec)
+    ENDDO_LOOP_IJK
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP END CRITICAL
+#endif
+#endif
 
     ! update memory variables based upon the Runge-Kutta scheme
     ! convention for attenuation
@@ -368,10 +413,16 @@
 !$OMP enddo
 
   ! updates acceleration
+#ifdef FORCE_VECTORIZATION
+  ! updates for vectorized case
+  ! loops over all global nodes in this phase (inner/outer)
 !$OMP DO
-  do iglob_p=1,num_globs(iphase)
+  do iglob_p = 1,num_globs(iphase)
+    ! global node index
     iglob = phase_iglob(iglob_p,iphase)
-    do ip=ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+    ! loops over valence points
+    do ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+      ! local 1D index from array ibool
       ijk_spec = ibool_inv_tbl(ip,iphase)
 
       ! do NOT use array syntax ":" for the three statements below otherwise most compilers
@@ -382,8 +433,59 @@
     enddo
   enddo
 !$OMP enddo
+#endif
 
 !$OMP END PARALLEL
+
+
+! kept here for reference: updating for non-vectorized case
+!
+! timing example:
+!         update here will take: 1m 25s
+!         update in ispec-loop : 1m 20s
+! thus a 6% increase...
+!
+! this gets even slower for MIC and a large number of OpenMP threads
+! (for best performance use the vectorized version)
+!
+! ! similar as above but with i/j/k/ispec-indexing
+!  do iglob_p = 1,num_globs(iphase)
+!    ! global node index
+!    iglob = phase_iglob(iglob_p,iphase)
+!    ! loops over valence points
+!    do ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
+!      ! local 1D index from array ibool
+!      ijk_spec = ibool_inv_tbl(ip,iphase)
+!
+!      ! uses (i,j,k,ispec) indexing!
+!      !
+!      ! converts to i/j/k/ispec-indexing (starting from 0)
+!      ijk_spec = ijk_spec - 1
+!
+!      ispec = int(ijk_spec / NGLL3)
+!      ijk = ijk_spec - ispec * NGLL3
+!
+!      k = int(ijk / NGLL2)
+!      j = int((ijk - k * NGLL2) / NGLLX)
+!      i = ijk - k * NGLL2 - j * NGLLX
+!
+!      ! converts back to indexing starting from 1
+!      ispec = ispec + 1
+!      i = i + 1
+!      j = j + 1
+!      k = k + 1
+!
+!      ! checks
+!      !if (i < 1 .or. i > NGLLX .or. j < 1 .or. j > NGLLY .or. k < 1 .or. k > NGLLZ .or. ispec < 1 .or. ispec > NSPEC) then
+!      !  print *,'Error i/j/k-index: ',i,j,k,ispec,'from',ijk_spec,ijk
+!      !  stop 'Error invalid i-index'
+!      !endif
+!
+!      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,i,j,k,ispec)
+!      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,i,j,k,ispec)
+!      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,i,j,k,ispec)
+!    enddo
+!  enddo
 
   contains
 
@@ -420,6 +522,7 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
+!dir$ ivdep
     do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
@@ -464,6 +567,7 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
+!dir$ ivdep
     do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
@@ -507,10 +611,10 @@
   integer :: i,j,k
 
   ! matrix-matrix multiplication
-  do j = 1,n2
-    do i = 1,n1
-      ! for efficiency it is better to leave this loop on k inside, it leads to slightly faster code
-      do k = 1,n3
+  do k = 1,n3
+    do j = 1,n2
+!dir$ ivdep
+      do i = 1,n1
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
                    + A1(i,3,k) * B(3,j) &
@@ -537,4 +641,536 @@
   end subroutine compute_forces_crust_mantle_Dev
 
 
+! please leave for reference...
+!!--------------------------------------------------------------------------------------------
+!!
+!! Deville et al. 2002
+!! Higher-Order Methods for Incompressible Fluid Flow
+!!
+!! subroutines adapted from Deville, Fischer and Mund, High-order methods
+!! for incompressible fluid flow, Cambridge University Press (2002),
+!! pages 386 and 389 and Figure 8.3.1
+!!
+!!--------------------------------------------------------------------------------------------
+!
+!! matrix - matrix multiplications
+!
+!! single component routines
+!
+!  subroutine mxm(A,n1,B,n2,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
+!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! chooses optimized version
+!  select case (n2)
+!
+!  case (4)
+!    call mxm4(A,n1,B,C,n3)
+!
+!  case (5)
+!    call mxm5(A,n1,B,C,n3)
+!
+!  case (6)
+!    call mxm6(A,n1,B,C,n3)
+!
+!  case (7)
+!    call mxm7(A,n1,B,C,n3)
+!
+!  case (8)
+!    call mxm8(A,n1,B,C,n3)
+!
+!  case default
+!    call mxmN(A,n1,B,n2,C,n3)
+!
+!  end select
+!
+!  end subroutine mxm
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm4(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,4) :: A
+!  real(kind=CUSTOM_REAL),dimension(4,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm4
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm5(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
+!  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm5
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm6(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,6) :: A
+!  real(kind=CUSTOM_REAL),dimension(6,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm6
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm7(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,7) :: A
+!  real(kind=CUSTOM_REAL),dimension(7,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j) &
+!              + A(i,7) * B(7,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm7
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm8(A,n1,B,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,8) :: A
+!  real(kind=CUSTOM_REAL),dimension(8,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C(i,j) =  A(i,1) * B(1,j) &
+!              + A(i,2) * B(2,j) &
+!              + A(i,3) * B(3,j) &
+!              + A(i,4) * B(4,j) &
+!              + A(i,5) * B(5,j) &
+!              + A(i,6) * B(6,j) &
+!              + A(i,7) * B(7,j) &
+!              + A(i,8) * B(8,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm8
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxmN(A,n1,B,n2,C,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A
+!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+!
+!  ! local parameters
+!  integer :: i,j,k
+!  real(kind=CUSTOM_REAL) :: tmp
+!
+!  ! general matrix-matrix multiplication
+!  do j = 1,n3
+!    do k = 1,n2
+!      tmp = B(k,j)
+!      do i = 1,n1
+!        C(i,j) = C(i,j) + A(i,k) * tmp
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine mxmN
+!
+!
+!!----------------------------------------------------------------------------------------------
+!
+!
+!
+!! 3-component routines: combines arrays A1,A2,A3 which correspond to 3 different components x/y/z
+!
+!  subroutine mxm_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! chooses optimized version
+!  select case (n2)
+!
+!  case (4)
+!    call mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case (5)
+!    call mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case (6)
+!    call mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case (7)
+!    call mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case (8)
+!    call mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  case default
+!    call mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+!
+!  end select
+!
+!  end subroutine mxm_3comp
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,4) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(4,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm4_3comp
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j) &
+!               + A1(i,5) * B1(5,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j) &
+!               + A2(i,5) * B2(5,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j) &
+!               + A3(i,5) * B3(5,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm5_3comp
+!
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,6) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(6,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j) &
+!               + A1(i,5) * B1(5,j) &
+!               + A1(i,6) * B1(6,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j) &
+!               + A2(i,5) * B2(5,j) &
+!               + A2(i,6) * B2(6,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j) &
+!               + A3(i,5) * B3(5,j) &
+!               + A3(i,6) * B3(6,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm6_3comp
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,7) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(7,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j) &
+!               + A1(i,5) * B1(5,j) &
+!               + A1(i,6) * B1(6,j) &
+!               + A1(i,7) * B1(7,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j) &
+!               + A2(i,5) * B2(5,j) &
+!               + A2(i,6) * B2(6,j) &
+!               + A2(i,7) * B2(7,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j) &
+!               + A3(i,5) * B3(5,j) &
+!               + A3(i,6) * B3(6,j) &
+!               + A3(i,7) * B3(7,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm7_3comp
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,8) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(8,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j
+!
+!  ! matrix-matrix multiplication
+!  do j = 1,n3
+!    do i = 1,n1
+!      C1(i,j) =  A1(i,1) * B1(1,j) &
+!               + A1(i,2) * B1(2,j) &
+!               + A1(i,3) * B1(3,j) &
+!               + A1(i,4) * B1(4,j) &
+!               + A1(i,5) * B1(5,j) &
+!               + A1(i,6) * B1(6,j) &
+!               + A1(i,7) * B1(7,j) &
+!               + A1(i,8) * B1(8,j)
+!
+!      C2(i,j) =  A2(i,1) * B2(1,j) &
+!               + A2(i,2) * B2(2,j) &
+!               + A2(i,3) * B2(3,j) &
+!               + A2(i,4) * B2(4,j) &
+!               + A2(i,5) * B2(5,j) &
+!               + A2(i,6) * B2(6,j) &
+!               + A2(i,7) * B2(7,j) &
+!               + A2(i,8) * B2(8,j)
+!
+!      C3(i,j) =  A3(i,1) * B3(1,j) &
+!               + A3(i,2) * B3(2,j) &
+!               + A3(i,3) * B3(3,j) &
+!               + A3(i,4) * B3(4,j) &
+!               + A3(i,5) * B3(5,j) &
+!               + A3(i,6) * B3(6,j) &
+!               + A3(i,7) * B3(7,j) &
+!               + A3(i,8) * B3(8,j)
+!    enddo
+!  enddo
+!
+!  end subroutine mxm8_3comp
+!
+!
+!!--------------------------------------------------------------------------------------------
+!
+!  subroutine mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
+!
+!  use constants_solver,only: CUSTOM_REAL
+!
+!  implicit none
+!
+!  integer,intent(in) :: n1,n2,n3
+!  real(kind=CUSTOM_REAL),dimension(n1,n2) :: A1,A2,A3
+!  real(kind=CUSTOM_REAL),dimension(n2,n3) :: B1,B2,B3
+!  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+!
+!  ! local parameters
+!  integer :: i,j,k
+!  real(kind=CUSTOM_REAL) :: tmp1,tmp2,tmp3
+!
+!  ! general matrix-matrix multiplication
+!  do j = 1,n3
+!    do k = 1,n2
+!      tmp1 = B1(k,j)
+!      tmp2 = B2(k,j)
+!      tmp3 = B3(k,j)
+!      do i = 1,n1
+!        C1(i,j) = C1(i,j) + A1(i,k) * tmp1
+!        C2(i,j) = C2(i,j) + A2(i,k) * tmp2
+!        C3(i,j) = C3(i,j) + A3(i,k) * tmp3
+!      enddo
+!    enddo
+!  enddo
+!
+!  end subroutine mxmN_3comp
 

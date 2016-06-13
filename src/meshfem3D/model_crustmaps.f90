@@ -74,21 +74,21 @@
 
   ! allocates model arrays
   allocate(thickness(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
-          density(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
-          velocp(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
-          velocs(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
-          stat=ier)
+           density(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+           velocp(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+           velocs(180*CRUSTMAP_RESOLUTION,360*CRUSTMAP_RESOLUTION,NLAYERS_CRUSTMAP), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps arrays')
 
   allocate(thicknessnp(NLAYERS_CRUSTMAP), &
-          densitynp(NLAYERS_CRUSTMAP), &
-          velocpnp(NLAYERS_CRUSTMAP), &
-          velocsnp(NLAYERS_CRUSTMAP), &
-          thicknesssp(NLAYERS_CRUSTMAP), &
-          densitysp(NLAYERS_CRUSTMAP), &
-          velocpsp(NLAYERS_CRUSTMAP), &
-          velocssp(NLAYERS_CRUSTMAP), &
-          stat=ier)
+           densitynp(NLAYERS_CRUSTMAP), &
+           velocpnp(NLAYERS_CRUSTMAP), &
+           velocsnp(NLAYERS_CRUSTMAP), &
+           thicknesssp(NLAYERS_CRUSTMAP), &
+           densitysp(NLAYERS_CRUSTMAP), &
+           velocpsp(NLAYERS_CRUSTMAP), &
+           velocssp(NLAYERS_CRUSTMAP), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating crustmaps np/sp arrays')
 
   ! master reads in crust maps
@@ -129,12 +129,15 @@
 
   implicit none
 
-  integer :: i,l
+  ! local parameters
+  integer :: i,k,l
+  double precision :: moho,moho_min,moho_max
 
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'incorporating crustal model: crustMap'
   write(IMAIN,*)
+  call flush_IMAIN()
 
   do l = 1,NLAYERS_CRUSTMAP
     ! file index: from 3 to 7
@@ -180,6 +183,23 @@
 !   print *,'thicknessnp(',l,')',thicknessnp(l)
   enddo
 
+  ! moho thickness = sediment (index 1+2) + upper crust (index 3) + middle crust (index 4) + lower crust (index 5)
+  moho_min = HUGEVAL
+  moho_max = -HUGEVAL
+  do k = 1,180*CRUSTMAP_RESOLUTION
+    do i = 1,360*CRUSTMAP_RESOLUTION
+      moho = sum(thickness(k,i,:)) !thickness(:,:,1) + thickness(:,:,2)+ thickness(:,:,3) + thickness(:,:,4) + thickness(:,:,5)
+      ! limit moho thickness
+      if (moho > moho_max) moho_max = moho
+      if (moho < moho_min) moho_min = moho
+    enddo
+  enddo
+
+  ! user output
+  write(IMAIN,*) '  Moho crustal thickness (without ice) min/max = ',sngl(moho_min),sngl(moho_max),' km'
+  write(IMAIN,*)
+  call flush_IMAIN()
+
   end subroutine read_general_crustmap
 
 !
@@ -201,7 +221,7 @@
   character(len=MAX_STRING_LEN) :: eucrust
   integer :: ier, ila, iln
 
-  write(eucrust,'(a,a1,i1)') 'DATA/crustmap/eucrust', var_letter, ind
+  write(eucrust,'(a,a1,i1,a5)') 'DATA/crustmap/eucrust', var_letter, ind,'.cmap'
 
   open(unit = IIN,file=trim(eucrust),status='old',action='read',iostat=ier)
   if (ier /= 0) then
@@ -280,15 +300,15 @@
    found_crust = .false.
   endif
 
-  if (found_crust) then
   !   non-dimensionalize
-    scaleval = dsqrt(PI*GRAV*RHOAV)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+
+  if (found_crust) then
     vp = vp*1000.0d0/(R_EARTH*scaleval)
     vs = vs*1000.0d0/(R_EARTH*scaleval)
     rho = rho*1000.0d0/RHOAV
-   ! moho = (h_uc+thicks(4)+thicks(5))*1000.0d0/R_EARTH
   else
-    scaleval = dsqrt(PI*GRAV*RHOAV)
+    ! takes ficticious values
     vp = 20.0*1000.0d0/(R_EARTH*scaleval)
     vs = 20.0*1000.0d0/(R_EARTH*scaleval)
     rho = 20.0*1000.0d0/RHOAV
@@ -312,8 +332,8 @@
   implicit none
 
   ! argument variables
-  double precision lat,lon
-  double precision rhos(5),thicks(5),velp(5),vels(5)
+  double precision,intent(in) :: lat,lon
+  double precision,intent(out) :: rhos(5),thicks(5),velp(5),vels(5)
 
   !-------------------------------
   ! work-around to avoid Jacobian problems when stretching mesh elements;
@@ -336,24 +356,29 @@
   integer, parameter :: NPHI = 20
   !-------------------------------
 
-! local variables
-  double precision weightup,weightleft,weightul,weightur,weightll,weightlr
-  double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
-  double precision rhol(NLAYERS_CRUSTMAP),thickl(NLAYERS_CRUSTMAP), &
-    velpl(NLAYERS_CRUSTMAP),velsl(NLAYERS_CRUSTMAP)
-  double precision weightl,cap_degree,dist
-  double precision h_sed
-  integer num_points
-  integer i,ipoin,iupcolat,ileftlng,irightlng
+  ! local variables
+  double precision,dimension(NTHETA*NPHI) :: xlon,xlat,weight
+  double precision,dimension(NLAYERS_CRUSTMAP) :: rhol,thickl,velpl,velsl
+
+  double precision :: lat_used,lon_used
+  double precision :: weightup,weightleft,weightul,weightur,weightll,weightlr
+  double precision :: weightl,cap_degree,dist
+  double precision :: h_sed
+  integer :: num_points
+  integer :: i,ipoin,iupcolat,ileftlng,irightlng
 
 ! get integer colatitude and longitude of crustal cap
 ! -90<lat<90 -180<lon<180
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
     write(*,*) lat,' ',lon, ' error in latitude/longitude range in crust'
-  if (lat==90.0d0) lat=89.9999d0
-  if (lat==-90.0d0) lat=-89.9999d0
-  if (lon==180.0d0) lon=179.9999d0
-  if (lon==-180.0d0) lon=-179.9999d0
+
+  ! avoid rounding at poles
+  lat_used = lat
+  lon_used = lon
+  if (lat == 90.0d0) lat_used = 89.9999d0
+  if (lat == -90.0d0) lat_used = -89.9999d0
+  if (lon == 180.0d0) lon_used = 179.9999d0
+  if (lon == -180.0d0) lon_used = -179.9999d0
 
   ! by defaults uses only 1 point location
   num_points = 1
@@ -366,7 +391,7 @@
   ! checks if inside/outside of critical region for mesh stretching
   if (SMOOTH_CRUST_EVEN_MORE) then
 
-    dist = dsqrt( (lon-LON_CRITICAL_EUROPE)**2 + (lat-LAT_CRITICAL_EUROPE )**2 )
+    dist = dsqrt( (lon_used - LON_CRITICAL_EUROPE)**2 + (lat_used - LAT_CRITICAL_EUROPE )**2 )
     if (dist < CRITICAL_RANGE_EUROPE) then
       ! sets up smoothing points
       ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
@@ -381,11 +406,11 @@
       cap_degree = cap_degree + dist
 
       ! gets smoothing points and weights
-      call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+      call smooth_weights_CAP_vardegree(lon_used,lat_used,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
     endif
 
-    dist = dsqrt( (lon-LON_CRITICAL_ANDES)**2 + (lat-LAT_CRITICAL_ANDES )**2 )
+    dist = dsqrt( (lon_used - LON_CRITICAL_ANDES)**2 + (lat_used - LAT_CRITICAL_ANDES )**2 )
     if (dist < CRITICAL_RANGE_ANDES) then
       ! sets up smoothing points
       ! by default uses CAP smoothing with crustmap resolution, e.g. 1/4 degree
@@ -400,7 +425,7 @@
       cap_degree = cap_degree + dist
 
       ! gets smoothing points and weights
-      call smooth_weights_CAP_vardegree(lon,lat,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
+      call smooth_weights_CAP_vardegree(lon_used,lat_used,xlon,xlat,weight,cap_degree,NTHETA,NPHI)
       num_points = NTHETA*NPHI
     endif
 
@@ -416,8 +441,8 @@
   do ipoin = 1,num_points
     ! checks if more than one weighting points are taken
     if (num_points > 1) then
-      lat = xlat(ipoin)
-      lon = xlon(ipoin)
+      lat_used = xlat(ipoin)
+      lon_used = xlon(ipoin)
       ! weighting value
       weightl = weight(ipoin)
     else
@@ -425,7 +450,7 @@
     endif
 
     ! gets crust value indices
-    call ibilinearmap(lat,lon,iupcolat,ileftlng,weightup,weightleft)
+    call ibilinearmap(lat_used,lon_used,iupcolat,ileftlng,weightup,weightleft)
 
     ! interpolates location and crust values
     if (iupcolat == 0) then

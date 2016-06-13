@@ -304,22 +304,20 @@
   !
   ! adds initial t0 time to update number of time steps and reach full record length
   if (abs(t0) > 0.d0) then
-    NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+    ! note: for zero length, nstep has minimal of 5 timesteps for testing
+    !       we won't extend this
+    !
+    ! careful: do not use RECORD_LENGTH_IN_MINUTES here, as it is only read by the master process
+    !          when reading the parameter file, but it is not broadcasted to all other processes
+    !          NSTEP gets broadcasted, so we work with this values
+    if (NSTEP /= 5) then
+      ! extend by bulk of 100 steps to account for half-duration rise time
+      NSTEP = NSTEP + 100 * (int( abs(t0) / (100.d0*DT)) + 1)
+    endif
   endif
 
   ! if doing benchmark runs to measure scaling of the code for a limited number of time steps only
   if (DO_BENCHMARK_RUN_ONLY) NSTEP = NSTEP_FOR_BENCHMARK
-
-  ! checks with undo_attenuation
-  if (UNDO_ATTENUATION) then
-    ! note: NSTEP must not be a multiple of NT_DUMP_ATTENUATION, but should be larger
-    ! makes sure buffer size is not too big for total time length
-    if (NSTEP < NT_DUMP_ATTENUATION) then
-      print *,'Error undoing attenuation: time steps ',NSTEP,' smaller than buffer size ',NT_DUMP_ATTENUATION
-      print *,'Please recompile the solver with your updated parameter set in Par_file.'
-      call exit_MPI(myrank,'Error undoing attenuation: number of time steps are too small, please increase record length!')
-    endif
-  endif
 
   ! checks length for symmetry in case of noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
@@ -340,6 +338,16 @@
   ! otherwise we waste memory
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     if (NTSTEP_BETWEEN_READ_ADJSRC > NSTEP) NTSTEP_BETWEEN_READ_ADJSRC = NSTEP
+  endif
+
+  ! buffering with undo_attenuation
+  NT_DUMP_ATTENUATION = NT_DUMP_ATTENUATION_VAL
+  if (UNDO_ATTENUATION) then
+    ! makes sure buffer size is not too big for total time length
+    !
+    ! note: NSTEP must not be a multiple of NT_DUMP_ATTENUATION.
+    !       the value from the header file NT_DUMP_ATTENUATION_VAL gives the optimal (maximum) number of time steps for buffering
+    if (NSTEP < NT_DUMP_ATTENUATION) NT_DUMP_ATTENUATION = NSTEP
   endif
 
   ! debug

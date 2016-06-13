@@ -43,6 +43,7 @@
   real(kind=CUSTOM_REAL) :: scale_kl,scale_kl_ani,scale_kl_rho
   real(kind=CUSTOM_REAL) :: rhol,mul,kappal,rho_kl,alpha_kl,beta_kl
   real(kind=CUSTOM_REAL) :: alphah_kl,alphav_kl,betah_kl,betav_kl,rhonotprime_kl
+  real(kind=CUSTOM_REAL) :: theta,phi
   integer :: ispec,i,j,k,iglob
   double precision :: hlagrange
   integer :: ipoint
@@ -141,8 +142,9 @@
 
             ! The Cartesian global cijkl_kl are rotated into the spherical local cijkl_kl
             ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
-            call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local, &
-                                     ystore_crust_mantle(iglob),zstore_crust_mantle(iglob))
+            theta = rstore_crust_mantle(2,iglob)
+            phi = rstore_crust_mantle(3,iglob)
+            call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local(:),theta,phi)
 
             cijkl_kl_crust_mantle_reg(:,ipoint) = cijkl_kl_crust_mantle_reg(:,ipoint) &
                                                 + cijkl_kl_local * scale_kl_ani * hlagrange

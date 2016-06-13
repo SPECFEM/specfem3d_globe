@@ -29,6 +29,9 @@
 
 #include "mesh_constants_gpu.h"
 
+#ifdef WITH_MPI
+#include <mpi.h>
+#endif
 
 /* ----------------------------------------------------------------------------------------------- */
 // OpenCL setup for memset function
@@ -756,11 +759,9 @@ void exit_on_error (const char *info) {
 /*----------------------------------------------------------------------------------------------- */
 // additional helper functions
 /*----------------------------------------------------------------------------------------------- */
-
 double get_time_val () {
   struct timeval t;
-  struct timezone tzp;
-  gettimeofday (&t, &tzp);
+  gettimeofday (&t, NULL);
   return t.tv_sec + t.tv_usec*1e-6;
 }
 
@@ -812,21 +813,4 @@ void synchronize_mpi () {
 #endif
 }
 
-/* ----------------------------------------------------------------------------------------------- */
-// kernel setup functions
-/* ----------------------------------------------------------------------------------------------- */
 
-void get_blocks_xy (int num_blocks, int *num_blocks_x, int *num_blocks_y) {
-  // Initially sets the blocks_x to be the num_blocks, and adds rows as needed (block size limit of 65535).
-  // If an additional row is added, the row length is cut in
-  // half. If the block count is odd, there will be 1 too many blocks,
-  // which must be managed at runtime with an if statement.
-
-  *num_blocks_x = num_blocks;
-  *num_blocks_y = 1;
-
-  while (*num_blocks_x > MAXIMUM_GRID_DIM) {
-    *num_blocks_x = (int) ceil (*num_blocks_x * 0.5f);
-    *num_blocks_y = *num_blocks_y * 2;
-  }
-}

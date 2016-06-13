@@ -17,7 +17,7 @@ module BOAST
       wgllwgll                 = Real("wgllwgll",                :dir => :in,   :dim => [ Dim() ])
       rho_vp                   = Real("rho_vp",                  :dir => :in,   :dim => [ Dim() ])
       rho_vs                   = Real("rho_vs",                  :dir => :in,   :dim => [ Dim() ])
-      save_forward             = Int( "SAVE_FORWARD",            :dir => :in)
+      save_stacey              = Int( "SAVE_STACEY",             :dir => :in)
       b_absorb_field           = Real("b_absorb_field",          :dir => :out,  :dim => [ Dim() ])
       variables = [veloc, accel]
     elsif type == :backward then
@@ -41,7 +41,7 @@ module BOAST
     ibool                  = Int( "ibool",                  :dir => :in,   :dim => [ Dim() ])
     variables += [ interface_type, num_abs_boundary_faces, abs_boundary_ispec, nkmin_xi, nkmin_eta, njmin, njmax, nimin, nimax ]
     if type == :forward then
-      variables += [ abs_boundary_normal, abs_boundary_jacobian2D, wgllwgll, ibool, rho_vp, rho_vs, save_forward, b_absorb_field ]
+      variables += [ abs_boundary_normal, abs_boundary_jacobian2D, wgllwgll, ibool, rho_vp, rho_vs, save_stacey, b_absorb_field ]
     elsif type == :backward then
       variables += [ ibool ]
      end
@@ -79,7 +79,7 @@ module BOAST
         print ispec === abs_boundary_ispec[iface]-1
 
         print Case( interface_type,
-        0, lambda {
+        0 => lambda {
           print If(Expression("||", nkmin_xi[INDEX2(2,0,iface)] == 0, njmin[INDEX2(2,0,iface)] == 0) )   { print Return(nil) }
           print i === 0
           print k === igll/ngllx
@@ -88,7 +88,7 @@ module BOAST
           print If(Expression("||", j <    njmin[INDEX2(2,0,iface)]-1, j > ngllx-1) )                    { print Return(nil) } #incoherent with acoustic checks
           print fac1 === wgllwgll[k*ngllx+j] if type == :forward
         },
-        1, lambda {
+        1 => lambda {
           print If(Expression("||", nkmin_xi[INDEX2(2,1,iface)] == 0, njmin[INDEX2(2,1,iface)] == 0) )   { print Return(nil) }
           print i === ngllx-1
           print k === igll/ngllx
@@ -97,7 +97,7 @@ module BOAST
           print If(Expression("||", j <    njmin[INDEX2(2,1,iface)]-1, j > njmax[INDEX2(2,1,iface)]-1) ) { print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+j] if type == :forward
         },
-        2, lambda {
+        2 => lambda {
           print If(Expression("||", nkmin_eta[INDEX2(2,0,iface)] == 0, nimin[INDEX2(2,0,iface)] == 0) )  { print Return(nil) }
           print j === 0
           print k === igll/ngllx
@@ -106,7 +106,7 @@ module BOAST
           print If(Expression("||", i <     nimin[INDEX2(2,0,iface)]-1, i > nimax[INDEX2(2,0,iface)]-1) ){ print Return(nil) }
           print fac1 === wgllwgll[k*ngllx+i] if type == :forward
         },
-        3, lambda {
+        3 => lambda {
           print If(Expression("||", nkmin_eta[INDEX2(2,1,iface)] == 0, nimin[INDEX2(2,1,iface)] == 0) )  { print Return(nil) }
           print j === ngllx-1
           print k === igll/ngllx
@@ -134,7 +134,7 @@ module BOAST
           (0..2).each { |indx|
             print atomicAdd(accel + iglob*3 + indx, -t[indx]*jacobianw)
           }
-          print If(save_forward) {
+          print If(save_stacey) {
             (0..2).each { |indx|
               print b_absorb_field[INDEX3(ndim,ngll2,indx,igll,iface)] === t[indx]*jacobianw
             }

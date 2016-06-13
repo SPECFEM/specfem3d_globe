@@ -29,6 +29,7 @@
 
   use specfem_par
   use specfem_par_movie
+  use manager_adios
 
   implicit none
 
@@ -39,6 +40,7 @@
   integer :: ier
   character(len=MAX_STRING_LEN) :: dummystring
   character(len=MAX_STRING_LEN) :: path_to_add
+  logical :: simul_run_flag
 
   ! sizeprocs returns number of processes started (should be equal to NPROCTOT).
   ! myrank is the rank of each process, between 0 and sizeprocs-1.
@@ -223,6 +225,9 @@
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
     write(path_to_add,"('run',i4.4,'/')") mygroup + 1
     STATIONS_FILE = path_to_add(1:len_trim(path_to_add))//STATIONS_FILE(1:len_trim(STATIONS_FILE))
+    simul_run_flag = .true.
+  else
+    simul_run_flag = .false.
   endif
 
   ! get total number of receivers
@@ -256,7 +261,7 @@
   endif
 
   if (ADIOS_ENABLED) then
-    call adios_setup()
+    call initialize_adios()
   endif
   !if (ADIOS_ENABLED) then
     ! TODO use only one ADIOS group to write simulation parameters
@@ -268,7 +273,7 @@
 
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3 &
        .and. READ_ADJSRC_ASDF) then
-    call asdf_setup(current_asdf_handle)
+    call asdf_setup(current_asdf_handle, path_to_add, simul_run_flag)
   endif
 
   ! synchronizes processes
@@ -407,14 +412,19 @@
       ! checks mimic flag:
       ! attenuation for adjoint simulations must have PARTIAL_PHYS_DISPERSION_ONLY set by xcreate_header_file
       if (.not. EXACT_UNDOING_TO_DISK) then
-        if (.not. UNDO_ATTENUATION) then
-          if (.not. PARTIAL_PHYS_DISPERSION_ONLY) then
-            call exit_MPI(myrank, &
-                    'ATTENUATION for adjoint runs or SAVE_FORWARD requires UNDO_ATTENUATION or PARTIAL_PHYS_DISPERSION_ONLY')
-          endif
+        if ((.not. UNDO_ATTENUATION) .and. (.not. PARTIAL_PHYS_DISPERSION_ONLY)) then
+          call exit_MPI(myrank, &
+                  'ATTENUATION for adjoint runs or SAVE_FORWARD requires UNDO_ATTENUATION or PARTIAL_PHYS_DISPERSION_ONLY')
         endif
       endif
 
+      ! checks if compiled with right flags
+      ! note:
+      !  - flag UNDO_ATTENUATION only affects the mesher when EXACT_MASS_MATRIX_FOR_ROTATION is used (which we check below).
+      !    In all other cases, it can be turned on/off arbitrarily without the need to recompile
+      !
+      !  - flag PARTIAL_PHYS_DISPERSION_ONLY affects the heavy solver routines and needs to be known at compile time
+      !    to optimize the performance of those routines
       if (PARTIAL_PHYS_DISPERSION_ONLY .NEQV. PARTIAL_PHYS_DISPERSION_ONLY_VAL) then
         if (myrank == 0) write(IMAIN,*) 'PARTIAL_PHYS_DISPERSION_ONLY:',PARTIAL_PHYS_DISPERSION_ONLY, &
                                                                        PARTIAL_PHYS_DISPERSION_ONLY_VAL

@@ -97,6 +97,29 @@ AC_ARG_WITH([opencl],
 AM_CONDITIONAL([COND_OCL], [test "$want_opencl" != no])
 
 ###
+### MIC (Xeon PHI)
+###
+
+AC_ARG_WITH([mic],
+    [AC_HELP_STRING([--with-mic],
+        [build native Xeon PHI enabled version @<:@default=no@:>@])],
+    [want_mic="$withval"],
+    [want_mic=no])
+AM_CONDITIONAL([COND_MIC], [test "$want_mic" != no])
+
+###
+### OpenMP
+###
+
+AC_ARG_ENABLE([openmp],
+    [AC_HELP_STRING([--enable-openmp],
+        [build OpenMP enabled version @<:@default=no@:>@])],
+    [want_omp="$enableval"],
+    [want_omp=no])
+AM_CONDITIONAL([COND_OMP], [test "$want_omp" != no])
+
+
+###
 ### VTK
 ###
 
@@ -276,6 +299,34 @@ AS_IF([test x"$want_opencl" != xno], [
 ])
 
 ###
+### MIC
+###
+
+AS_IF([test x"$want_mic" != xno], [
+  AS_BOX([MIC])
+  AC_MSG_NOTICE([MIC native compilation])
+  FLAGS_CHECK=$(echo $FLAGS_CHECK | sed -e 's/\-xHost -fpe0\>//g')
+])
+if test x"$want_vec" == xno && test x"$want_mic" == xyes; then
+    AC_MSG_NOTICE([--enable-vectorization and --with-mic should be both specified for better performance.])
+fi
+
+###
+### OpenMP
+###
+
+AS_IF([test x"$want_omp" != xno], [
+  AS_BOX([OpenMP])
+  AC_MSG_NOTICE([OpenMP compilation is enabled])
+
+  AC_ARG_VAR(OMP_FCFLAGS, [OpenMP Fortran compiler flags])
+
+  # openmp checking
+  AC_MSG_NOTICE([OpenMP flag $OMP_FCFLAGS])
+  CIT_FC_OPENMP_MODULE([$FC], [$OMP_FCFLAGS])
+])
+
+###
 ### FORCE_VECTORIZATION
 ###
 
@@ -303,12 +354,11 @@ AS_IF([test x"$want_vtk" != xno], [
 ### MPI
 ###
 
-AS_IF([test x"$want_cuda" != xno -o x"$want_vtk" != xno], [
+AS_IF([test x"$want_cuda" != xno -o x"$want_opencl" != xno -o x"$want_vtk" != xno], [
     AS_BOX([MPI])
     # checks MPI include directory
     CIT_MPI_INCDIR([$MPIFC])
 ])
-
 
 ###
 ### CEM
