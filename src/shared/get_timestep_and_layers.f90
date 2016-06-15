@@ -38,6 +38,7 @@
   ! local variables
   integer :: multiplication_factor
   double precision :: min_chunk_width_in_degrees
+  double precision :: dt_auto
 
   !----
   !----  case prem_onecrust by default
@@ -51,6 +52,7 @@
     multiplication_factor = 1
   endif
 
+  ! sets empirical values for time step size, attenuation range (for 3 SLS) and number of element layers
   if (NEX_MAX*multiplication_factor <= 80) then
     ! time step
     DT                       = 0.252d0
@@ -360,10 +362,13 @@
                                    MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
   endif
 
-  ! adapts number of layer elements and time step size
-  if (ANGULAR_WIDTH_XI_IN_DEGREES  < 90.0d0 .or. &
-      ANGULAR_WIDTH_ETA_IN_DEGREES < 90.0d0 .or. &
-      NEX_MAX > 1248) then
+  ! regional simulations
+  if (NCHUNKS /= 6 .or. NEX_MAX > 1248) then
+    ! adapts number of layer elements and time step size
+
+    ! note: for global simulations, we set
+    !         ANGULAR_WIDTH_XI_IN_DEGREES = 90.0d0 and
+    !         ANGULAR_WIDTH_ETA_IN_DEGREES = 90.0d0 in read_parameter_file.f90
 
     ! gets number of element-layers
     call auto_ner(min_chunk_width_in_degrees, NEX_MAX, &
@@ -378,7 +383,18 @@
                                   MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
     ! gets time step size
-    call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, DT)
+    call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, dt_auto)
+
+    ! checks if underestimating for large chunks
+    if (min_chunk_width_in_degrees > 90.d0) then
+      ! above global estimate for DT is empirical for chunk sizes of 90 degrees
+      ! if regional chunk size is larger, than dt_auto could be even bigger
+      ! this makes sure, it is certainly not smaller in such cases
+      if (dt_auto < DT) dt_auto = DT
+    endif
+
+    ! sets new time step size
+    DT = dt_auto
 
     !! DK DK suppressed because this routine should not write anything to the screen
     !    write(*,*)'##############################################################'
@@ -512,6 +528,5 @@
 ! Since the code computes the time step using the Newmark scheme, for LDDRK we simply
 ! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
   if (USE_LDDRK .and. INCREASE_CFL_FOR_LDDRK) DT = DT * RATIO_BY_WHICH_TO_INCREASE_IT
-
 
   end subroutine get_timestep_and_layers
