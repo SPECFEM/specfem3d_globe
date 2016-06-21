@@ -4,7 +4,7 @@ Undo Attenuation Benchmark
 This benchmark reproduces the results of section 3 of the paper "Anelastic
 sensitivity kernels with parsimonious storage for adjoint tomography and full
 waveform inversion" by D. Komatitsch, Z. Xie, E. Bozdag, E. Sales de Andrade,
-D. B. Peter, Q. Liu and J. Tromp, published in Geophys. J. Int. 2016,
+D. B. Peter, Q. Liu, and J. Tromp, published in Geophys. J. Int. 2016,
 doi: 10.1093/gji/ggw224. The exact revision of the code used to produce the
 figure in the paper is 74ffd4e330f281d7964855d1845d1b72bf13ab74.
 
@@ -78,8 +78,10 @@ simulations should proceed the same as the forward simulation (e.g., using
 whatever cluster you have available.)
 
 The resulting kernel files will be in
-`<phase>/step2-adjoint/<band>/DATABASES_MPI/proc**_alpha_kernel.bin`
+`<phase>/step2-adjoint/<band>/DATABASES_MPI/proc??????_alpha_kernel.bin`
 where `<phase>` is `exact`, `ppd`, or `undo`; `<band>` is `50-100s` or
 `100-200s`. You can visualize these files in whatever manner you wish, such as
 the scripts in the `utils/Visualization/VTK_ParaView/` directory of this
-repository.
+repository. The figures created for the paper can be reproduced using the code
+in the [undo attenuation benchmark
+repository](https://gitlab.com/QuLogic/undo_attenuation_benchmark).
