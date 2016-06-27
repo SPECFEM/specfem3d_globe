@@ -832,7 +832,7 @@ program smooth_sem_globe
         if (ispec == tmp_ispec_dbg) then
           ! outputs gaussian weighting function
           write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_gaussian_proc',iproc
-          call write_VTK_data_elem_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
+          call write_VTK_data_gll_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
           print *,'file written: ',trim(filename)//'.vtk'
         endif
       endif

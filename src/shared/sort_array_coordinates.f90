@@ -40,6 +40,7 @@
   integer, intent(in) :: npointot
   double precision, dimension(npointot), intent(inout) :: x, y, z
   integer, dimension(npointot), intent(inout) :: ibool
+
   integer, dimension(npointot), intent(out) :: iglob, locval, ninseg
   logical, dimension(npointot), intent(out) :: ifseg
   integer, intent(out) :: nglob

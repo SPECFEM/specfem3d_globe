@@ -73,7 +73,7 @@
   integer :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
 
   ! local parameters
-  integer :: nglob
+  integer :: nglob_buffer
   integer :: NGLOB1D_RADIAL
   character(len=MAX_STRING_LEN) :: ERR_MSG
 
@@ -519,10 +519,10 @@
               iproc_eta /= 0 .and. iproc_eta /= NPROC_ETA-1) &
               call exit_MPI(myrank,'slice not on any edge')
 
-            nglob=nglob_ori
+            nglob_buffer = nglob_ori
 
-            ! check that iboolmax=nglob
-            if (minval(ibool(:,:,:,1:nspec)) /= 1 .or. maxval(ibool(:,:,:,1:nspec)) /= nglob) &
+            ! check that iboolmax == nglob_buffer
+            if (minval(ibool(:,:,:,1:nspec)) /= 1 .or. maxval(ibool(:,:,:,1:nspec)) /= nglob_buffer) &
               call exit_MPI(myrank,ERR_MSG)
 
             ! erase logical mask
@@ -717,10 +717,10 @@
             ! sort on x, y and z, the other arrays will be swapped as well
 
             call sort_array_coordinates(npoin2D,xstore_selected,ystore_selected,zstore_selected, &
-                                        ibool_selected,iglob,locval,ifseg,nglob,ninseg)
+                                        ibool_selected,iglob,locval,ifseg,nglob_buffer,ninseg)
 
             ! check that no duplicate has been detected
-            if (nglob /= npoin2D) call exit_MPI(myrank,'duplicates detected in buffer')
+            if (nglob_buffer /= npoin2D) call exit_MPI(myrank,'duplicates detected in buffer')
 
             ! write list of selected points to output buffer
 
@@ -1016,11 +1016,11 @@
         ! sort array read based upon the coordinates of the points
         ! to ensure conforming matching with other buffers from neighbors
         call sort_array_coordinates(NGLOB1D_RADIAL,xread1D,yread1D,zread1D, &
-                                    ibool1D,iglob,locval,ifseg,nglob,ninseg)
+                                    ibool1D,iglob,locval,ifseg,nglob_buffer,ninseg)
 
         ! check that no duplicates have been found
-        if (nglob /= NGLOB1D_RADIAL) then
-          print *,'Error ',myrank,' npoin1D_corner: ',nglob,'NGLOB1D_RADIAL:',NGLOB1D_RADIAL
+        if (nglob_buffer /= NGLOB1D_RADIAL) then
+          print *,'Error ',myrank,' npoin1D_corner: ',nglob_buffer,'NGLOB1D_RADIAL:',NGLOB1D_RADIAL
           print *,'iregion_code:',iregion_code
           call exit_MPI(myrank,'duplicates found for corners')
         endif

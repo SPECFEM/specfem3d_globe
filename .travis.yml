@@ -11,48 +11,134 @@ compiler: gcc
 
 env:
   global:
-  - FC=gfortran
-  - MPIFC=mpif90
-  - CC=gcc
-  - OMP_NUM_THREADS=2
+    - FC=gfortran
+    - MPIFC=mpif90
+    - CC=gcc
+    - OMP_NUM_THREADS=2
+    - WORKDIR=`pwd`
+
   matrix:
-  - TEST="" TESTCOV=0
-  - TEST="--enable-debug" TESTCOV=0
-  - TEST="--enable-debug --enable-openmp" TESTCOV=0
-  - TEST="--enable-vectorization" TESTCOV=0
-  - TEST="--enable-vectorization --enable-openmp" TESTCOV=0
-  - TEST="--enable-vectorization --enable-openmp" TESTCOV=1
+    # for test cases, we use
+    #   TEST    - flags used for configuration
+    #   TESTCOV - determines whether or not (0/1) code coverage flags are used
+
+    # run default
+    - TEST="" TESTCOV=0
+
+    # run debug
+    - TEST="--enable-debug" TESTCOV=0
+
+    # run debug & openmp
+    - TEST="--enable-debug --enable-openmp" TESTCOV=0
+
+    # run vectorization
+    - TEST="--enable-vectorization" TESTCOV=0
+
+    # run vectorization & openmp
+    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0
+
+    # run vectorization & openmp, using coverage flags
+    - TEST="--enable-vectorization --enable-openmp" TESTCOV=1
 
 before_install:
+  # informations on git
+  - |
+    git --version
+    git rev-parse --verify HEAD
+    git branch -a
+
+  # infos on commits
+  - |
+    echo "request: Branch($TRAVIS_BRANCH) Pull Request($TRAVIS_PULL_REQUEST) Tag($TRAVIS_TAG)"
+    echo "commit : Commit($TRAVIS_COMMIT) Range($TRAVIS_COMMIT_RANGE)"
+
   # recommended for MPI projects to unset CC: see https://docs.travis-ci.com/user/languages/c
   #- test -n $CC && unset CC
+
+  # updates repository
   - sudo apt-get update
 
 install:
+  # fortran/openMPI compiler
   - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
+
+  # version infos
   - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
   - ${FC} --version
   - ${MPIFC} --version
   - ${CC} --version
 
 script:
-  - echo "configuration test:" ${TEST} ${TESTFLAGS}
-  # test configuration
-  - if [ "$TESTCOV" == "1" ]; then
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0";
+  ###########################################################
+  # setup
+  ###########################################################
+  # info
+  - |
+    echo $TRAVIS_BUILD_DIR
+    echo $WORKDIR
+    echo "configuration test:" ${TEST} ${TESTFLAGS}
+
+  # bash function for checking seismogram output with reference solutions
+  - |
+    my_report(){
+      # report example
+      if [ -f OUTPUT_FILES/output_mesher.txt ]; then cat OUTPUT_FILES/output_mesher.txt; fi
+      if [ -f OUTPUT_FILES/output_solver.txt ]; then cat OUTPUT_FILES/output_solver.txt; fi
+    }
+
+  ###########################################################
+  # configuration & compilation
+  ###########################################################
+  # configuration
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0"
     else
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST};
+      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
     fi
-  - make clean
-  # test small example
-  - cd EXAMPLES/regional_Greece_small/
-  - sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-  - ./run_this_example.sh
-  # report example
-  - if [ -f OUTPUT_FILES/output_mesher.txt ]; then cat OUTPUT_FILES/output_mesher.txt; fi
-  - if [ -f OUTPUT_FILES/output_solver.txt ]; then cat OUTPUT_FILES/output_solver.txt; fi
+
+  # compilation
+  - make clean; make -j4 all
+
+  ###########################################################
+  # test examples
+  ###########################################################
+  # testing small example (short & quick for all configuration)
+  - |
+    # default
+    dir=EXAMPLES/regional_Greece_small/
+    echo "##########################################################"
+    echo "test directory: $dir"
+    echo "##########################################################"
+    cd $dir
+    # limit number of time steps to a minimum (5 by default)
+    sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+    ./run_this_example.sh
+    my_report
+    cd ../../
+
+  # done
+  - echo `pwd`
 
 # runs example
 after_success:
+  ###########################################################
+  # code coverage
+  ###########################################################
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      gcov --version
+      echo `pwd`
+      ls -al obj/
+    fi
+
+  # produces coverage reports (done manually because of different naming for source & object files)
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      find obj/ -iname '*.o' | sort | awk '{print "gcov -o obj/ "$1;}'
+      # executes gcov-commands
+      find obj/ -iname '*.o' | sort | awk '{print "gcov -o obj/ "$1;}' | sh
+    fi
+
   # code coverage: see example https://github.com/codecov/example-fortran/blob/master/.travis.yml
-  - if [ "$TESTCOV" == "1" ]; then bash <(curl -s https://codecov.io/bash) -s obj/; fi
+  - if [ "$TESTCOV" == "1" ]; then bash <(curl -s https://codecov.io/bash) -X gcov; fi

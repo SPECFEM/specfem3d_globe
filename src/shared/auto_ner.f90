@@ -74,6 +74,8 @@
 
   ! initializes defaults
   RADIAL_LEN_RATIO_CENTRAL_CUBE   =     0.40d0
+
+  ! conservative stability limit
   MAXIMUM_STABILITY_CONDITION     =     0.40d0
 
   DOUBLING_INNER_CORE             =      8.0d0
@@ -130,6 +132,9 @@
   ! see: http://keisan.casio.com/exec/system/1280801905
 
   select case (NGLLX)
+  case (2)
+    MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 1.0 ) ! 1.0
+
   case (3)
     MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.0 ) ! 0.5
 
@@ -154,10 +159,13 @@
   case (10)
     MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.9195339081664588138289 ) ! 0.040233
 
+  case default
+    stop 'auto_time_stepping: NGLLX value not supported yet! please consider adding it...'
+
   end select
 
-
   ! element at inner core
+  ! size in horizontal direction
   elem_size = RADIAL_LEN_RATIO_CENTRAL_CUBE * ((WIDTH * DEGREES_TO_RADIANS) * RADIUS_INNER_CORE) / &
                 ( dble(NEX_MAX) / DOUBLING_INNER_CORE )
 
@@ -165,7 +173,7 @@
   min_grid_dx = elem_size * MIN_GLL_POINT_SPACING
 
   ! estimated time step
-  DT = min_grid_dx / P_VELOCITY_MAX * MAXIMUM_STABILITY_CONDITION
+  DT = MAXIMUM_STABILITY_CONDITION * min_grid_dx / P_VELOCITY_MAX
 
   end subroutine auto_time_stepping
 
@@ -174,20 +182,50 @@
 !
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-  use constants,only: N_SLS
+  use constants,only: N_SLS,NGLLX
 
   implicit none
 
-  integer NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
-  double precision WIDTH, TMP
-  double precision GLL_SPACING, PTS_PER_WAVELENGTH
-  double precision S_VELOCITY_MIN, DEG2KM
-  double precision THETA(5)
+  double precision,intent(in) :: WIDTH
 
-  GLL_SPACING        =   4.00d0
-  PTS_PER_WAVELENGTH =   4.00d0
-  S_VELOCITY_MIN     =   2.25d0
-  DEG2KM             = 111.00d0
+  integer, intent(in) :: NEX_MAX
+  integer, intent(out) :: MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
+
+  ! local parameters
+  double precision :: TMP
+  double precision :: GLL_SPACING
+  double precision :: S_VELOCITY_MIN
+  double precision :: THETA(5)
+
+  ! factor degree to km
+  double precision,parameter :: DEG2KM = 111.d0
+
+  ! required points per wavelength
+  double precision,parameter :: PTS_PER_WAVELENGTH = 4.d0
+
+  ! average spacing between GLL points
+  GLL_SPACING = dble(NGLLX - 1)
+
+  ! minimum velocity (Vs)
+  S_VELOCITY_MIN = 2.25d0
+
+  ! width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
+  TMP = WIDTH / dble(NEX_MAX) * DEG2KM
+
+  ! average grid node spacing in km = Width of an element in km / spacing for GLL point
+  TMP = TMP / GLL_SPACING
+
+  ! minimum resolved wavelength (for fixed number of points per wavelength)
+  TMP = TMP * PTS_PER_WAVELENGTH
+
+  ! Compute Min Attenuation Period
+  !
+  ! The Minimum attenuation period = (minimum wavelength) / V_min
+  MIN_ATTENUATION_PERIOD = int(TMP/S_VELOCITY_MIN)
+
+  if (N_SLS < 2 .or. N_SLS > 5) then
+     stop 'N_SLS must be greater than 1 or less than 6'
+  endif
 
   ! THETA defines the width of the Attenuation Range in Decades
   !   The number defined here were determined by minimizing
@@ -200,25 +238,12 @@
   THETA(4)           =   2.25d0
   THETA(5)           =   2.85d0
 
-  ! Compute Min Attenuation Period
-  !
-  ! The Minimum attenuation period = (Grid Spacing in km) / V_min
-  !  Grid spacing in km     = Width of an element in km * spacing for GLL point * points per wavelength
-  !  Width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
-
-  TMP = (WIDTH / ( GLL_SPACING * dble(NEX_MAX)) * DEG2KM * PTS_PER_WAVELENGTH ) / &
-       S_VELOCITY_MIN
-  MIN_ATTENUATION_PERIOD = int(TMP)
-
-  if (N_SLS < 2 .or. N_SLS > 5) then
-     stop 'N_SLS must be greater than 1 or less than 6'
-  endif
-
   ! Compute Max Attenuation Period
   !
   ! The max attenuation period for 3 SLS is optimally
   !   1.75 decades from the min attenuation period, see THETA above
   TMP = TMP * 10.0d0**THETA(N_SLS)
+
   MAX_ATTENUATION_PERIOD = int(TMP)
 
   end subroutine auto_attenuation_periods
@@ -294,8 +319,8 @@
   radius(7)  = R670   !     670
   radius(8)  = R771   !     771
   radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
-  radius(10) = RTOPDDOUBLEPRIME   !     D''
-  radius(11) = RCMB   !     CMB
+  radius(10) = RTOPDDOUBLEPRIME   !     D'' ~ 3630
+  radius(11) = RCMB   !     CMB ~ 3480
   radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
   radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
   radius(14) =  982000.0d0 ! Top Central Cube
@@ -312,16 +337,40 @@
   scaling(12)    = 8  ! MIC     TO MIC-II
   scaling(13:14) = 16 ! MIC-II  TO Central Cube -> Center of the Earth
 
-  ! Minimum Number of Elements a Region must have
+  ! initializes minimum Number of Elements a Region must have
   NER(:)    = 1
   NER(3:5)  = 2
   if (CASE_3D) then
      NER(1) = 2
   endif
 
+  ! starts from input arguments of a 90-degree chunk
+  ! (where NER values are set empirically for a good mesh design)
+  NER(1) = NER_CRUST
+  NER(2) = NER_80_MOHO
+  NER(3) = NER_220_80
+  NER(4) = NER_400_220
+  NER(5) = NER_600_400
+  NER(6) = NER_670_600
+  NER(7) = NER_771_670
+  ! distributes NER_TOPDDOUBLEPRIME_771 onto two element layer regions depending on vertical sizes of layers
+  NER(8) = NER_TOPDDOUBLEPRIME_771 * (radius(8) - radius(9)) / (radius(8) - radius(10))
+  NER(9) = NER_TOPDDOUBLEPRIME_771 - NER(8)
+  NER(10) = NER_CMB_TOPDDOUBLEPRIME
+  ! distributes NER_OUTER_CORE onto two element layer regions depending on vertical sizes of layers
+  NER(11) = NER_OUTER_CORE * (radius(11) - radius(12)) / (radius(11) - radius(13))
+  NER(12) = NER_OUTER_CORE - NER(11)
+  NER(13) = NER_TOP_CENTRAL_CUBE_ICB
+
+  ! debug
+  !print *,'input NER:',NER(:)
+
   ! Find the Number of Radial Elements in a region based upon
   ! the aspect ratio of the elements
   call auto_optimal_ner(NUM_REGIONS, WIDTH, NEX_MAX, radius, scaling, NER, ratio_top, ratio_bottom)
+
+  ! debug
+  !print *,'output NER:',NER(:)
 
   ! Set Output arguments
   NER_CRUST                = NER(1)
@@ -349,18 +398,20 @@
 
   implicit none
 
-  integer NUM_REGIONS
-  integer NEX
-  double precision  width                                ! Width of the Chunk in Degrees
-  integer,          dimension(NUM_REGIONS-1) :: NER      ! Elements per Region    - IN-N-OUT - Yummy !
-  integer,          dimension(NUM_REGIONS)   :: scaling  ! Element Doubling       - INPUT
-  double precision, dimension(NUM_REGIONS)   :: r        ! Radius                 - INPUT
-  double precision, dimension(NUM_REGIONS-1) :: rt       ! Ratio at Top           - OUTPUT
-  double precision, dimension(NUM_REGIONS-1) :: rb       ! Ratio at Bottom        - OUTPUT
+  integer,intent(in) :: NUM_REGIONS
+  integer,intent(in) :: NEX
+  double precision,intent(in) ::  width   ! Width of the Chunk in Degrees
 
-  double precision dr, w, ratio, xi, ximin, wt, wb
-  integer ner_test
-  integer i
+  integer,          dimension(NUM_REGIONS-1),intent(inout) :: NER      ! Elements per Region    - IN-N-OUT - Yummy !
+  integer,          dimension(NUM_REGIONS)  ,intent(in)    :: scaling  ! Element Doubling       - INPUT
+  double precision, dimension(NUM_REGIONS)  ,intent(in)    :: r        ! Radius                 - INPUT
+  double precision, dimension(NUM_REGIONS-1),intent(out)   :: rt       ! Ratio at Top           - OUTPUT
+  double precision, dimension(NUM_REGIONS-1),intent(out)   :: rb       ! Ratio at Bottom        - OUTPUT
+
+  ! local parameters
+  double precision :: dr, w, ratio, xi, ximin, wt, wb
+  integer :: ner_test
+  integer :: i
 
   ! Find optimal elements per region
   do i = 1,NUM_REGIONS-1
@@ -371,8 +422,12 @@
      ner_test = NER(i)               ! Initial solution
      ratio = (dr / ner_test) / w     ! Aspect Ratio of Element
      xi = dabs(ratio - 1.0d0)        ! Aspect Ratio should be near 1.0
-     ximin = 1e7                     ! Initial Minimum
+     ximin = 1.e7                    ! Initial Minimum
 
+     !debug
+     !print *,'region ',i,'element ratio: ',ratio,'xi = ',xi,'width = ',w
+
+     ! increases NER to reach vertical/horizontal element ratio of about 1
      do while(xi <= ximin)
         NER(i) = ner_test            ! Found a better solution
         ximin = xi                   !
@@ -382,6 +437,9 @@
      enddo
      rt(i) = dr / NER(i) / wt        ! Find the Ratio of Top
      rb(i) = dr / NER(i) / wb        ! and Bottom for completeness
+
+     !debug
+     !print *,'region ',i,'element ratio: top = ',rt(i),'bottom = ',rb(i)
   enddo
 
   end subroutine auto_optimal_ner
@@ -394,23 +452,27 @@
 
   implicit none
 
+  integer,intent(in) :: nex_xi_in
+  double precision,intent(out) :: rcube
+  integer,intent(out) :: nex_eta_in
+
+  ! local parameters
   integer, parameter :: NBNODE = 8
   double precision, parameter :: alpha = 0.41d0
 
-  integer npts
-  integer nex_xi, nex_eta_in, nex_xi_in
-  integer nex_eta
-  double precision rcube, rcubestep, rcube_test, rcubemax
-  double precision xi, ximin
-  double precision , allocatable, dimension(:,:) :: points
-  double precision elem(NBNODE+1, 2)
-  integer nspec_cube, nspec_chunks, ispec, nspec
-  double precision edgemax, edgemin
-  double precision max_edgemax, min_edgemin
-  double precision aspect_ratio, max_aspect_ratio
+  integer :: npts
+  integer :: nex_xi
+  integer :: nex_eta
+  double precision :: rcubestep, rcube_test, rcubemax
+  double precision :: xi, ximin
+  double precision, allocatable, dimension(:,:) :: points
+  double precision :: elem(NBNODE+1, 2)
+  integer :: nspec_cube, nspec_chunks, ispec, nspec
+  double precision :: edgemax, edgemin
+  double precision :: max_edgemax, min_edgemin
+  double precision :: aspect_ratio, max_aspect_ratio
 
   nex_xi = nex_xi_in / 16
-
 
   rcubestep    = 1.0d0
   rcube_test   =  930.0d0
@@ -423,10 +485,13 @@
      max_edgemax = -1e7
      min_edgemin = 1e7
      max_aspect_ratio = 0.0d0
+
      call compute_nex(nex_xi, rcube_test, alpha, nex_eta)
+
      npts = (4 * nex_xi * nex_eta * NBNODE) + (nex_xi * nex_xi * NBNODE)
 
      allocate(points(npts, 2))
+
      call compute_IC_mesh(rcube_test, points, npts, nspec_cube, nspec_chunks, nex_xi, nex_eta)
 
      nspec = nspec_cube + nspec_chunks

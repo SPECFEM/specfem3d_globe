@@ -312,6 +312,13 @@
 !!
 !!-----------------------------------------------------------
 
+! Courant number for time step suggestion
+! (empirical choice for distorted elements to estimate time step)
+  double precision,parameter :: COURANT_SUGGESTED = 0.55d0
+
+! number of points per minimum wavelength for minimum period estimate
+  integer,parameter :: NPTS_PER_WAVELENGTH = 5
+
 ! the first doubling is implemented right below the Moho
 ! it seems optimal to implement the three other doublings at these depths
 ! in the mantle

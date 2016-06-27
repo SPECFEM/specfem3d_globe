@@ -819,12 +819,26 @@ end module my_mpi
 
   end subroutine min_all_cr
 
+
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-!  subroutine min_all_all_cr(sendbuf, recvbuf)
-!  end subroutine min_all_all_cr
+  subroutine min_all_all_cr(sendbuf, recvbuf)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL):: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MIN,my_local_mpi_comm_world,ier)
+
+  end subroutine min_all_all_cr
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -870,8 +884,21 @@ end module my_mpi
 !-------------------------------------------------------------------------------------------------
 !
 
-!  subroutine max_all_all_cr(sendbuf, recvbuf)
-!  end subroutine max_all_all_cr
+  subroutine max_all_all_cr(sendbuf, recvbuf)
+
+  use my_mpi
+  use constants,only: CUSTOM_REAL
+
+  implicit none
+
+  include "precision.h"
+
+  real(kind=CUSTOM_REAL):: sendbuf, recvbuf
+  integer :: ier
+
+  call MPI_ALLREDUCE(sendbuf,recvbuf,1,CUSTOM_MPI_TYPE,MPI_MAX,my_local_mpi_comm_world,ier)
+
+  end subroutine max_all_all_cr
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -109,12 +109,12 @@
     ! perform two passes in this part to be able to save memory
     do ipass = 1,2
       call create_regions_mesh(iregion_code, &
-                          NSPEC(iregion_code),NGLOB(iregion_code),npointot, &
-                          NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-                          NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
-                          NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-                          mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
-                          ipass)
+                               NSPEC(iregion_code),NGLOB(iregion_code),npointot, &
+                               NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                               NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
+                               NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
+                               mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
+                               ipass)
 
       ! If we're in the request stage of CEM, exit.
       if (CEM_REQUEST) exit
