@@ -710,7 +710,7 @@
 ! modified to fortran from: https://en.wikipedia.org/wiki/Eigenvalue_algorithm#3.C3.973_matrices
 !
 ! Smith, Oliver K. (April 1961),
-! "Eigenvalues of a symmetric 3 × 3 matrix.",
+! Eigenvalues of a symmetric 3 x 3 matrix,
 ! Communications of the ACM 4 (4): 168, doi:10.1145/355578.366316
 !
 ! Given a real symmetric 3x3 matrix A, compute the eigenvalues
