@@ -32,7 +32,7 @@
     myrank,OUTPUT_FILES,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN
 
-  use meshfem3D_par,only: ibool,is_on_a_slice_edge
+  use meshfem3D_par,only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -95,9 +95,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_crust_mantle_proc',myrank
       call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                                xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                                ibool, &
-                                is_on_a_slice_edge,filename)
+                                xstore_glob,ystore_glob,zstore_glob, &
+                                ibool,is_on_a_slice_edge,filename)
     endif
 
   case (IREGION_OUTER_CORE)
@@ -137,9 +136,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_outer_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-                                xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-                                ibool, &
-                                is_on_a_slice_edge,filename)
+                                xstore_glob,ystore_glob,zstore_glob, &
+                                ibool,is_on_a_slice_edge,filename)
     endif
 
   case (IREGION_INNER_CORE)
@@ -180,9 +178,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_innerouter_inner_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                                xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                                ibool, &
-                                is_on_a_slice_edge,filename)
+                                xstore_glob,ystore_glob,zstore_glob, &
+                                ibool,is_on_a_slice_edge,filename)
     endif
 
   end select

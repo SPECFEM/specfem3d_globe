@@ -641,7 +641,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_VTK_data_elem_cr(nspec,nglob, &
+  subroutine write_VTK_data_gll_cr(nspec,nglob, &
                                     xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
                                     gll_data,prname_file)
 
@@ -816,6 +816,74 @@
   endif
   write(IOUT_VTK,*)
 
+  close(IOUT_VTK)
+
+  end subroutine write_VTK_data_gll_cr
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_VTK_data_elem_cr(nspec,nglob, &
+                                    xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
+                                    elem_data,prname_file)
+
+! saves vtk files for custom_real values on all spectral elements
+
+  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+
+  implicit none
+
+  integer,intent(in) :: nspec,nglob
+
+  ! global coordinates
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
+  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
+
+  ! element data values array
+  real(kind=CUSTOM_REAL), dimension(nspec),intent(in) :: elem_data
+
+  ! file name
+  character(len=MAX_STRING_LEN),intent(in) :: prname_file
+
+  ! local parameters
+  integer :: ispec,i,ier
+
+  open(IOUT_VTK,file=prname_file(1:len_trim(prname_file))//'.vtk',status='unknown',action='write',iostat=ier)
+  if (ier /= 0) stop 'Error opening VTK file'
+
+  write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
+  write(IOUT_VTK,'(a)') 'material model VTK file'
+  write(IOUT_VTK,'(a)') 'ASCII'
+  write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
+  write(IOUT_VTK, '(a,i12,a)') 'POINTS ', nglob, ' float'
+  do i=1,nglob
+    write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
+  enddo
+  write(IOUT_VTK,*) ""
+
+  ! note: indices for vtk start at 0
+  write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
+  do ispec = 1,nspec
+    write(IOUT_VTK,'(9i12)') 8, &
+          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+          ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
+  enddo
+  write(IOUT_VTK,*) ""
+
+  ! type: hexahedrons
+  write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
+  write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec)
+  write(IOUT_VTK,*) ""
+
+  write(IOUT_VTK,'(a,i12)') "CELL_DATA ",nspec
+  write(IOUT_VTK,'(a)') "SCALARS elem_val float"
+  write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
+  do ispec = 1,nspec
+    write(IOUT_VTK,*) elem_data(ispec)
+  enddo
+  write(IOUT_VTK,*) ""
   close(IOUT_VTK)
 
   end subroutine write_VTK_data_elem_cr

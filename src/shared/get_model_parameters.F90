@@ -473,6 +473,9 @@
   if (HONOR_1D_SPHERICAL_MOHO .and. CRUSTAL ) &
     stop 'honor 1D spherical moho excludes having 3D crustal structure'
 
+  if (HONOR_1D_SPHERICAL_MOHO .and. CASE_3D ) &
+    stop 'honor 1D spherical moho excludes having 3D crustal mesh stretching'
+
   ! checks that IASP91, AK135, 1066A, JP1D or SEA1D is isotropic
   if ((REFERENCE_1D_MODEL == REFERENCE_MODEL_IASP91 .or. &
        REFERENCE_1D_MODEL == REFERENCE_MODEL_AK135F_NO_MUD .or. &
@@ -538,8 +541,8 @@
 
   ! default: PREM
   ROCEAN = 6368000.d0
-  RMIDDLE_CRUST = 6356000.d0
-  RMOHO = 6346600.d0
+  RMIDDLE_CRUST = 6356000.d0 ! at 15km depth
+  RMOHO = 6346600.d0  ! at 24.4km depth
   R80  = 6291000.d0
   R120 = -1.d0   ! by default there is no d120 discontinuity, except in IASP91, therefore set to fictitious value
   R220 = 6151000.d0
@@ -562,7 +565,7 @@
     ! IASP91
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6351000.d0
-    RMOHO = 6336000.d0
+    RMOHO = 6336000.d0 ! ! at 35km depth
     R80  = 6291000.d0
     R120 = 6251000.d0
     R220 = 6161000.d0
@@ -585,7 +588,7 @@
 
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6351000.d0
-    RMOHO  = 6336000.d0
+    RMOHO  = 6336000.d0 ! at 35km depth
     R80    = 6293500.d0
     R220   = 6161000.d0
     R400   = 5961000.d0
@@ -604,7 +607,7 @@
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
     ! values below corrected by Ying Zhou <yingz@gps.caltech.edu>
     ! 1066A
-    RMOHO = 6360000.d0
+    RMOHO = 6360000.d0 ! at 11km depth
     R400 = 5950000.d0
     R600 = 5781000.d0
     R670 = 5700000.d0
@@ -630,7 +633,7 @@
     ! REF
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6356000.d0
-    RMOHO = 6346600.d0
+    RMOHO = 6346600.d0 ! at 24.4km depth
     R80  = 6291000.d0
     R220 = 6151000.d0
     R400 = 5961000.d0 ! 410km discontinuity
@@ -649,7 +652,7 @@
     ! jp1d
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6359000.d0
-    RMOHO = 6345000.d0
+    RMOHO = 6345000.d0 ! at 26km depth
     R80 = 6291000.d0
     R220 = 6161000.d0
     R400 = 5949000.d0
@@ -666,7 +669,7 @@
     ! SEA1D without the 2 km of mud layer or the 3km water layer
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6361000.d0
-    RMOHO  = 6346000.d0
+    RMOHO  = 6346000.d0 ! at 25km depth
     R80    = 6291000.d0
     R220   = 6161000.d0
     R400   = 5961000.d0

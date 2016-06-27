@@ -132,7 +132,7 @@
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES,MAX_STRING_LEN
 
-  use meshfem3D_par,only: ibool,is_on_a_slice_edge
+  use meshfem3D_par,only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
@@ -194,7 +194,7 @@
                             max_nibool,MAX_NEIGHBOURS, &
                             ibool,is_on_a_slice_edge, &
                             IREGION_CRUST_MANTLE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                            xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,NPROCTOT)
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
   deallocate(test_flag)
   deallocate(dummy_i)
@@ -233,7 +233,7 @@
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_crust_mantle_proc',myrank, &
                       '_',my_neighbours_crust_mantle(i)
       call write_VTK_data_points(NGLOB_crust_mantle, &
-                        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                        xstore_glob,ystore_glob,zstore_glob, &
                         ibool_interfaces_crust_mantle(1:nibool_interfaces_crust_mantle(i),i), &
                         nibool_interfaces_crust_mantle(i),filename)
     enddo
@@ -264,7 +264,7 @@
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES,MAX_STRING_LEN
 
-  use meshfem3D_par,only: ibool,is_on_a_slice_edge
+  use meshfem3D_par,only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use create_MPI_interfaces_par
   use MPI_outer_core_par
@@ -329,7 +329,7 @@
                           max_nibool,MAX_NEIGHBOURS, &
                           ibool,is_on_a_slice_edge, &
                           IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                          xstore_outer_core,ystore_outer_core,zstore_outer_core,NPROCTOT)
+                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
   deallocate(test_flag)
   deallocate(dummy_i)
@@ -367,7 +367,7 @@
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_outer_core_proc',myrank, &
                       '_',my_neighbours_outer_core(i)
       call write_VTK_data_points(NGLOB_OUTER_CORE, &
-                        xstore_outer_core,ystore_outer_core,zstore_outer_core, &
+                        xstore_glob,ystore_glob,zstore_glob, &
                         ibool_interfaces_outer_core(1:nibool_interfaces_outer_core(i),i), &
                         nibool_interfaces_outer_core(i),filename)
     enddo
@@ -398,7 +398,7 @@
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES,IFLAG_IN_FICTITIOUS_CUBE,NGLLX,NGLLY,NGLLZ,NSPEC2D_BOTTOM,MAX_STRING_LEN
 
-  use meshfem3D_par,only: ibool,idoubling,is_on_a_slice_edge
+  use meshfem3D_par,only: ibool,idoubling,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use create_MPI_interfaces_par
   use MPI_inner_core_par
@@ -466,7 +466,7 @@
   if (DEBUG) then
     write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
     call write_VTK_data_elem_i(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                               xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                               xstore_glob,ystore_glob,zstore_glob, &
                                ibool,idoubling,filename)
     call synchronize_all()
   endif
@@ -510,7 +510,7 @@
   !                          max_nibool,MAX_NEIGHBOURS, &
   !                          ibool,is_on_a_slice_edge, &
   !                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
-  !                          xstore_inner_core,ystore_inner_core,zstore_inner_core,NPROCTOT)
+  !                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
   !  endif
   !  call synchronize_all()
   !enddo
@@ -523,7 +523,7 @@
                         max_nibool,MAX_NEIGHBOURS, &
                         ibool,is_on_a_slice_edge, &
                         IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
-                        xstore_inner_core,ystore_inner_core,zstore_inner_core,NPROCTOT)
+                        xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
   deallocate(test_flag)
 
@@ -560,7 +560,7 @@
       write(filename,'(a,i6.6,a,i2.2)') trim(OUTPUT_FILES)//'/MPI_points_inner_core_proc',myrank, &
                       '_',my_neighbours_inner_core(i)
       call write_VTK_data_points(NGLOB_INNER_CORE, &
-                        xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                        xstore_glob,ystore_glob,zstore_glob, &
                         ibool_interfaces_inner_core(1:nibool_interfaces_inner_core(i),i), &
                         nibool_interfaces_inner_core(i),filename)
     enddo

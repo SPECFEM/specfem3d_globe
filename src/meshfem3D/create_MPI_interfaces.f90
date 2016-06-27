@@ -34,9 +34,6 @@
   ! sets up arrays
   call cmi_allocate_addressing(iregion_code)
 
-  ! gets in arrays
-  call cmi_get_addressing(iregion_code)
-
   ! reads "iboolleft_..txt", "iboolright_..txt" (and "list_messages_..txt", "buffer_...txt") files and sets up MPI buffers
   call cmi_get_buffers(iregion_code)
 
@@ -48,11 +45,11 @@
 
   subroutine cmi_allocate_addressing(iregion_code)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par,only: myrank,ibool, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
     NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC,NGLOB, &
-    myrank,NGLOB1D_RADIAL,NUMCORNERS_SHARED,NGLLX,NGLLY,NGLLZ
+    NGLOB1D_RADIAL,NUMCORNERS_SHARED,NGLLX,NGLLY,NGLLZ
 
   use create_MPI_interfaces_par
 
@@ -124,61 +121,61 @@
     stop 'Error iregion_code value not recognized'
   end select
 
+  ! checks ibool for mesh
+  select case (iregion_code)
+  case (IREGION_CRUST_MANTLE)
+    ! check that the number of points in this slice is correct
+    if (minval(ibool(:,:,:,:)) /= 1 .or. maxval(ibool(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
+        call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
+
+  case (IREGION_OUTER_CORE)
+    ! check that the number of points in this slice is correct
+    if (minval(ibool(:,:,:,:)) /= 1 .or. maxval(ibool(:,:,:,:)) /= NGLOB_OUTER_CORE) &
+      call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
+
+  case (IREGION_INNER_CORE)
+    ! check that the number of points in this slice is correct
+    if (minval(ibool(:,:,:,:)) /= 1 .or. maxval(ibool(:,:,:,:)) /= NGLOB_INNER_CORE) &
+      call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
+
+  end select
+
   ! allocates arrays
   allocate(buffer_send_chunkcorn_scalar(NGLOB1D_RADIAL_CM), &
-          buffer_recv_chunkcorn_scalar(NGLOB1D_RADIAL_CM))
+           buffer_recv_chunkcorn_scalar(NGLOB1D_RADIAL_CM),stat=ier)
+  if (ier /= 0) stop 'Error allocating buffer buffer_send_chunkcorn_scalar,.. arrays'
 
   allocate(buffer_send_chunkcorn_vector(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC), &
-          buffer_recv_chunkcorn_vector(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC))
+           buffer_recv_chunkcorn_vector(NDIM,NGLOB1D_RADIAL_CM + NGLOB1D_RADIAL_IC),stat=ier)
+  if (ier /= 0) stop 'Error allocating buffer buffer_send_chunkcorn_vector,.. arrays'
 
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
     ! crust mantle
     allocate(iboolcorner_crust_mantle(NGLOB1D_RADIAL_CM,NUMCORNERS_SHARED))
     allocate(iboolleft_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM), &
-            iboolright_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM))
+             iboolright_xi_crust_mantle(NGLOB2DMAX_XMIN_XMAX_CM))
     allocate(iboolleft_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX_CM), &
-            iboolright_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX_CM))
+             iboolright_eta_crust_mantle(NGLOB2DMAX_YMIN_YMAX_CM))
     allocate(iboolfaces_crust_mantle(NGLOB2DMAX_XY,NUMFACES_SHARED))
-
-    ! crust mantle mesh
-    allocate(xstore_crust_mantle(NGLOB_CRUST_MANTLE), &
-            ystore_crust_mantle(NGLOB_CRUST_MANTLE), &
-            zstore_crust_mantle(NGLOB_CRUST_MANTLE), &
-            stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary crust mantle arrays')
 
   case (IREGION_OUTER_CORE)
     ! outer core
     allocate(iboolcorner_outer_core(NGLOB1D_RADIAL_OC,NUMCORNERS_SHARED))
     allocate(iboolleft_xi_outer_core(NGLOB2DMAX_XMIN_XMAX_OC), &
-            iboolright_xi_outer_core(NGLOB2DMAX_XMIN_XMAX_OC))
+             iboolright_xi_outer_core(NGLOB2DMAX_XMIN_XMAX_OC))
     allocate(iboolleft_eta_outer_core(NGLOB2DMAX_YMIN_YMAX_OC), &
-            iboolright_eta_outer_core(NGLOB2DMAX_YMIN_YMAX_OC))
+             iboolright_eta_outer_core(NGLOB2DMAX_YMIN_YMAX_OC))
     allocate(iboolfaces_outer_core(NGLOB2DMAX_XY,NUMFACES_SHARED))
-
-    ! outer core mesh
-    allocate(xstore_outer_core(NGLOB_OUTER_CORE), &
-            ystore_outer_core(NGLOB_OUTER_CORE), &
-            zstore_outer_core(NGLOB_OUTER_CORE), &
-            stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary outer core arrays')
 
   case (IREGION_INNER_CORE)
     ! inner core
     allocate(iboolcorner_inner_core(NGLOB1D_RADIAL_IC,NUMCORNERS_SHARED))
     allocate(iboolleft_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC), &
-            iboolright_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC))
+             iboolright_xi_inner_core(NGLOB2DMAX_XMIN_XMAX_IC))
     allocate(iboolleft_eta_inner_core(NGLOB2DMAX_YMIN_YMAX_IC), &
-            iboolright_eta_inner_core(NGLOB2DMAX_YMIN_YMAX_IC))
+             iboolright_eta_inner_core(NGLOB2DMAX_YMIN_YMAX_IC))
     allocate(iboolfaces_inner_core(NGLOB2DMAX_XY,NUMFACES_SHARED))
-
-    ! inner core mesh
-    allocate(xstore_inner_core(NGLOB_INNER_CORE), &
-            ystore_inner_core(NGLOB_INNER_CORE), &
-            zstore_inner_core(NGLOB_INNER_CORE), &
-            stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary inner core arrays')
 
   end select
 
@@ -191,68 +188,6 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine cmi_get_addressing(iregion_code)
-
-  use meshfem3D_par,only: &
-    myrank
-
-  use meshfem3D_par,only: &
-    ibool
-
-  use create_MPI_interfaces_par
-  use MPI_crust_mantle_par
-  use MPI_outer_core_par
-  use MPI_inner_core_par
-  implicit none
-
-  integer,intent(in):: iregion_code
-
-  ! read coordinates of the mesh
-  select case (iregion_code)
-  case (IREGION_CRUST_MANTLE)
-    ! crust mantle
-!    ibool_crust_mantle(:,:,:,:) = -1
-    call cmi_read_solver_data(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                             xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle)
-
-    ! check that the number of points in this slice is correct
-    if (minval(ibool(:,:,:,:)) /= 1 .or. &
-      maxval(ibool(:,:,:,:)) /= NGLOB_CRUST_MANTLE) &
-        call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in crust and mantle')
-
-  case (IREGION_OUTER_CORE)
-    ! outer core
-!    ibool_outer_core(:,:,:,:) = -1
-    call cmi_read_solver_data(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-                             xstore_outer_core,ystore_outer_core,zstore_outer_core)
-
-    ! check that the number of points in this slice is correct
-    if (minval(ibool(:,:,:,:)) /= 1 .or. &
-       maxval(ibool(:,:,:,:)) /= NGLOB_OUTER_CORE) &
-      call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in outer core')
-
-  case (IREGION_INNER_CORE)
-    ! inner core
-!    ibool_inner_core(:,:,:,:) = -1
-    call cmi_read_solver_data(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                             xstore_inner_core,ystore_inner_core,zstore_inner_core)
-
-    ! check that the number of points in this slice is correct
-    if (minval(ibool(:,:,:,:)) /= 1 .or. &
-      maxval(ibool(:,:,:,:)) /= NGLOB_INNER_CORE) &
-      call exit_MPI(myrank,'incorrect global numbering: iboolmax does not equal nglob in inner core')
-
-  end select
-
-  ! synchronize processes
-  call synchronize_all()
-
-  end subroutine cmi_get_addressing
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
   subroutine cmi_get_buffers(iregion_code)
 
   use meshfem3D_par,only: myrank,MAX_STRING_LEN,&
@@ -260,7 +195,8 @@
     NGLOB1D_RADIAL,NSPEC2D_BOTTOM, &
     NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
     NPROC_XI,NPROC_ETA,NCHUNKS,OUTPUT_FILES,IIN,INCLUDE_CENTRAL_CUBE, &
-    iproc_xi,iproc_eta,ichunk,addressing
+    iproc_xi,iproc_eta,ichunk,addressing, &
+    xstore_glob,ystore_glob,zstore_glob
 
   use meshfem3D_par,only: &
     ibool,idoubling,is_on_a_slice_edge
@@ -330,8 +266,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_crust_mantle_proc',myrank
       call write_VTK_data_elem_l(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
-                                xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                                ibool,is_on_a_slice_edge,filename)
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,is_on_a_slice_edge,filename)
     endif
 
     ! added this to reduce the size of the buffers
@@ -376,8 +312,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_outer_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
-                                xstore_outer_core,ystore_outer_core,zstore_outer_core, &
-                                ibool,is_on_a_slice_edge,filename)
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,is_on_a_slice_edge,filename)
     endif
 
     ! added this to reduce the size of the buffers
@@ -463,7 +399,7 @@
                  NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
                  NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
                  addressing,ibool,idoubling, &
-                 xstore_inner_core,ystore_inner_core,zstore_inner_core, &
+                 xstore_glob,ystore_glob,zstore_glob, &
                  nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
                  nspec2D_ymin_inner_core,nspec2D_ymax_inner_core, &
                  ibelm_xmin_inner_core,ibelm_xmax_inner_core, &
@@ -519,8 +455,8 @@
     if (DEBUG) then
       write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_is_on_a_slice_edge_inner_core_proc',myrank
       call write_VTK_data_elem_l(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                                xstore_inner_core,ystore_inner_core,zstore_inner_core, &
-                                ibool,is_on_a_slice_edge,filename)
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,is_on_a_slice_edge,filename)
     endif
 
     ! added this to reduce the size of the buffers
@@ -532,46 +468,6 @@
 
 
   end subroutine cmi_get_buffers
-
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine cmi_read_solver_data(nspec,nglob,xstore_s,ystore_s,zstore_s)
-
-
-  use meshfem3D_par,only: &
-    xstore,ystore,zstore,ibool
-
-  use constants
-
-  implicit none
-
-  integer :: nspec,nglob
-
-  ! global mesh points
-  real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_s,ystore_s,zstore_s
-
-  ! local parameters
-  integer :: i,j,k,ispec,iglob
-
-  ! fill custom_real arrays
-  do ispec = 1,nspec
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          ! distinguish between single and double precision for reals
-          xstore_s(iglob) = real(xstore(i,j,k,ispec), kind=CUSTOM_REAL)
-          ystore_s(iglob) = real(ystore(i,j,k,ispec), kind=CUSTOM_REAL)
-          zstore_s(iglob) = real(zstore(i,j,k,ispec), kind=CUSTOM_REAL)
-        enddo
-      enddo
-    enddo
-  enddo
-
-  end subroutine cmi_read_solver_data
 
 
 !

@@ -37,7 +37,7 @@ typedef float realw;
 
 // for xmeshfem3D compilation
 
-void FC_FUNC_(crm_save_mesh_files_adios,CRM_SAVE_MESH_FILES_ADIOS)(int* nspec, int* npointot, int* iregion_code,
+void FC_FUNC_(write_AVS_DX_output_adios,WRITE_AVS_DX_OUTPUT_ADIOS)(int* nspec, int* npointot, int* iregion_code,
                                                                    int* num_ibool_AVS_DX, int* mask_ibool) {}
 
 void FC_FUNC_(get_absorb_adios,GET_ABSORB_ADIOS)(int* myrank, int* iregion,

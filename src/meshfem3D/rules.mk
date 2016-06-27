@@ -44,6 +44,7 @@ meshfem3D_OBJECTS = \
 	$O/assemble_MPI_scalar_mesh.check.o \
 	$O/assemble_MPI_vector_mesh.check.o \
 	$O/calc_jacobian.check.o \
+	$O/check_mesh_resolution.check.o \
 	$O/compute_coordinates_grid.check.o \
 	$O/compute_element_properties.check.o \
 	$O/compute_volumes_and_areas.check.o \
@@ -56,6 +57,7 @@ meshfem3D_OBJECTS = \
 	$O/create_meshes.check.o \
 	$O/create_MPI_interfaces.check.o \
 	$O/create_regions_mesh.check.o \
+	$O/create_regions_elements.check.o \
 	$O/create_regular_elements.check.o \
 	$O/define_superbrick.check.o \
 	$O/finalize_mesher.check.o \
@@ -112,6 +114,7 @@ meshfem3D_OBJECTS = \
 	$O/write_AVS_DX_global_chunks_data.check.o \
 	$O/write_AVS_DX_global_data.check.o \
 	$O/write_AVS_DX_global_faces_data.check.o \
+	$O/write_AVS_DX_output.check.o \
 	$O/write_AVS_DX_surface_data.check.o \
 	$(EMPTY_MACRO)
 
@@ -202,8 +205,8 @@ adios_meshfem3D_OBJECTS = \
 	$O/write_AVS_DX_global_chunks_data_adios.check_adios_module.o \
 	$O/write_AVS_DX_global_data_adios.check_adios_module.o \
 	$O/write_AVS_DX_global_faces_data_adios.check_adios_module.o \
+	$O/write_AVS_DX_output_adios.check_adios.o \
 	$O/write_AVS_DX_surface_data_adios.check_adios_module.o \
-	$O/create_regions_mesh_adios.check_adios.o \
 	$O/get_absorb_adios.check_adios.o \
 	$O/model_gll_adios.check_adios.o \
 	$O/save_arrays_solver_adios.check_adios.o \
@@ -255,7 +258,7 @@ $(meshfem3D_OBJECTS): S = ${S_TOP}/src/meshfem3D
 
 ## additional module dependencies
 
-$O/create_regions_mesh_adios.check_adios.o: \
+$O/write_AVS_DX_output_adios.check_adios.o: \
 	$O/write_AVS_DX_global_data_adios.check_adios_module.o \
 	$O/write_AVS_DX_global_chunks_data_adios.check_adios_module.o \
 	$O/write_AVS_DX_global_faces_data_adios.check_adios_module.o \

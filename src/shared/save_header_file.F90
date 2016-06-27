@@ -165,7 +165,9 @@
     print *,'total elements per slice = ',sum(NSPEC)
     print *,'total points per slice = ',sum(nglob)
     print *
-    print *,'the time step of the solver will be DT = ',sngl(DT)
+    print *,'the time step of the solver will be DT = ',sngl(DT),' (s)'
+    print *,'the (approximate) minimum period resolved will be = ', &
+            sngl(max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0),' (s)'
     print *
     print *,'current record length is = ',sngl(RECORD_LENGTH_IN_MINUTES),'min'
     print *,'current minimum number of time steps will be = ',NSTEP
@@ -336,7 +338,9 @@
   write(IOUT,*) '! total elements per slice = ',sum(NSPEC)
   write(IOUT,*) '! total points per slice = ',sum(NGLOB)
   write(IOUT,*) '!'
-  write(IOUT,*) '! the time step of the solver will be DT = ',sngl(DT)
+  write(IOUT,*) '! the time step of the solver will be DT = ',sngl(DT),' (s)'
+  write(IOUT,*) '! the (approximate) minimum period resolved will be = ', &
+            sngl(max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0),' (s)'
   write(IOUT,*) '!'
 
   write(IOUT,'(1x,a,i1,a)') '! total for full ',NCHUNKS,'-chunk mesh:'

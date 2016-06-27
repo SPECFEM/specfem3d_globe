@@ -229,6 +229,10 @@
 
   ! arrays with the mesh in double precision
   double precision, dimension(:,:,:,:), allocatable :: xstore,ystore,zstore
+
+  ! temporary arrays with mesh only on global points
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: xstore_glob,ystore_glob,zstore_glob
+
   ! parameters needed to store the radii of the grid points
   ! in the spherically symmetric Earth
   integer, dimension(:), allocatable :: idoubling
@@ -236,6 +240,11 @@
 
   ! this for non blocking MPI
   logical, dimension(:), allocatable :: is_on_a_slice_edge
+
+  ! mesh global time step
+  real(kind=CUSTOM_REAL) :: dt_max_glob
+  ! mesh minimum period resolved
+  real(kind=CUSTOM_REAL) :: pmax_glob
 
   end module meshfem3D_par
 
@@ -478,9 +487,6 @@
   integer :: NSPEC2D_BOTTOM_CM
   integer :: NSPEC2D_TOP_CM
 
-  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
-    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-
   ! assembly
   integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_crust_mantle
   integer, dimension(NB_SQUARE_EDGES_ONEDIR) :: npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle
@@ -536,9 +542,6 @@
   integer :: NSPEC2DMAX_YMIN_YMAX_IC
   integer :: NSPEC2D_BOTTOM_IC
   integer :: NSPEC2D_TOP_IC
-
-  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
-    xstore_inner_core,ystore_inner_core,zstore_inner_core
 
   ! for matching with central cube in inner core
   integer, dimension(:), allocatable :: sender_from_slices_to_cube
@@ -605,9 +608,6 @@
   integer :: NSPEC2DMAX_YMIN_YMAX_OC
   integer :: NSPEC2D_BOTTOM_OC
   integer :: NSPEC2D_TOP_OC
-
-  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
-    xstore_outer_core,ystore_outer_core,zstore_outer_core
 
   ! assembly
   integer, dimension(NUMFACES_SHARED) :: npoin2D_faces_outer_core

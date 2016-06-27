@@ -330,7 +330,24 @@
     ! 1D models honor 1D spherical moho
     if (.not. ONE_CRUST) then
       ! case 1D + two crustal layers
+      !
+      ! note: we use here 2 element layers for the crust to honor also the middle crust
+      !       for example, PREM distinguishes different constant velocities for upper crust (vp=5.8km/s, depth down to 15km)
+      !       and lower crust (vp=6.8km/s, depth down to 24.4km)
+      !
+      !       be aware that using 2 element layers in the crust will lead to very thin elements for the lower crust
+      !       which decreases significantly the time step size for stability
       if (NER_CRUST < 2 ) NER_CRUST = 2
+    endif
+  else
+    ! 3D models: must have two element layers for crust
+    if (NER_CRUST < 2 ) NER_CRUST = 2
+  endif
+
+  ! time step
+  if (HONOR_1D_SPHERICAL_MOHO) then
+    ! 1D models honor 1D spherical moho
+    if (.not. ONE_CRUST) then
       ! makes time step smaller
       if (NEX_MAX*multiplication_factor <= 160) then
         DT = 0.20d0
@@ -339,8 +356,6 @@
       endif
     endif
   else
-    ! 3D models: must have two element layers for crust
-    if (NER_CRUST < 2 ) NER_CRUST = 2
     ! makes time step smaller
     if (NEX_MAX*multiplication_factor <= 80) then
         DT = 0.125d0
@@ -362,8 +377,15 @@
                                    MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
   endif
 
-  ! regional simulations
-  if (NCHUNKS /= 6 .or. NEX_MAX > 1248) then
+  ! note: global estimate above for DT is empirical for chunk sizes of 90 degrees.
+  ! if regional chunk size is larger, the time step is still limited by the vertical size of elements,
+  ! which depends only on the number of vertical element layers.
+  ! this however gets estimated above for 90 degrees already, so time stepping remains unchanged.
+
+  ! adapts number of layer elements and time step size
+  ! (for regional simulations with chunk sizes < 90 degrees)
+  ! (or very, very large meshes)
+  if (min_chunk_width_in_degrees < 90.0d0 .or. NEX_MAX > 1248) then
     ! adapts number of layer elements and time step size
 
     ! note: for global simulations, we set
@@ -385,16 +407,11 @@
     ! gets time step size
     call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, dt_auto)
 
-    ! checks if underestimating for large chunks
-    if (min_chunk_width_in_degrees > 90.d0) then
-      ! above global estimate for DT is empirical for chunk sizes of 90 degrees
-      ! if regional chunk size is larger, than dt_auto could be even bigger
-      ! this makes sure, it is certainly not smaller in such cases
-      if (dt_auto < DT) dt_auto = DT
-    endif
+    ! note: automatic time step might overestimate the time step size for chunk sizes larger ~ 40 degrees
+    !       thus we only replace the empirical time step size if the estimate gets smaller
 
     ! sets new time step size
-    DT = dt_auto
+    if (dt_auto < DT) DT = dt_auto
 
     !! DK DK suppressed because this routine should not write anything to the screen
     !    write(*,*)'##############################################################'
@@ -529,4 +546,55 @@
 ! multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
   if (USE_LDDRK .and. INCREASE_CFL_FOR_LDDRK) DT = DT * RATIO_BY_WHICH_TO_INCREASE_IT
 
+
+  ! for future usage:
+  ! cut at a significant number of digits (2 digits)
+  ! in steps of 1/2 digits
+  ! example: 0.0734815 -> 0.0730
+  !          0.07371   -> 0.0735
+  !call get_timestep_limit_significant_digit(DT)
+
   end subroutine get_timestep_and_layers
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine get_timestep_limit_significant_digit(time_step)
+
+  ! cut at a significant number of digits (2 digits) using 1/2 rounding
+  ! example: 0.0734815 -> 0.0730
+  !      and 0.0737777 -> 0.0735
+
+  implicit none
+
+  double precision,intent(inout) :: time_step
+
+  ! rounding
+  integer :: lpow,ival
+  double precision :: fac_pow,dt_cut
+
+  ! initializes
+  dt_cut = time_step
+
+  ! cut at a significant number of digits (2 digits)
+  ! example: 0.0734815 -> lpow = (2 - (-1) = 3
+  lpow = int(2.d0 - log10(dt_cut))
+
+  ! example: -> factor 10**3
+  fac_pow = 10.d0**(lpow)
+
+  ! example: -> 73
+  ival = int(fac_pow * dt_cut)
+
+  ! adds .5-digit (in case): 73.0 -> 0.073
+  if ( (fac_pow * dt_cut - ival) >= 0.5 ) then
+    dt_cut = (dble(ival) + 0.5d0) / fac_pow
+  else
+    dt_cut = dble(ival) / fac_pow
+  endif
+
+  time_step = dt_cut
+
+  end subroutine get_timestep_limit_significant_digit

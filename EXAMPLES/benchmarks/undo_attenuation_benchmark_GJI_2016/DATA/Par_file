@@ -1,3 +1,8 @@
+#-----------------------------------------------------------
+#
+# Simulation input parameters
+#
+#-----------------------------------------------------------
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
@@ -10,8 +15,8 @@ NCHUNKS                         = 6
 # angular width of the first chunk (not used if full sphere with six chunks)
 ANGULAR_WIDTH_XI_IN_DEGREES     = 90.d0   # angular size of a chunk
 ANGULAR_WIDTH_ETA_IN_DEGREES    = 90.d0
-CENTER_LATITUDE_IN_DEGREES      =  0.d0
-CENTER_LONGITUDE_IN_DEGREES     =  0.d0
+CENTER_LATITUDE_IN_DEGREES      = 0.d0
+CENTER_LONGITUDE_IN_DEGREES     = 0.d0
 GAMMA_ROTATION_AZIMUTH          = 0.d0
 
 # number of elements at the surface along the two sides of the first chunk
@@ -23,6 +28,12 @@ NEX_ETA                         = 256
 NPROC_XI                        = 8
 NPROC_ETA                       = 8
 
+#-----------------------------------------------------------
+#
+# Model
+#
+#-----------------------------------------------------------
+
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135f_no_mud, 1D_ref, 1D_ref_iso, 1D_jp3d,1D_sea99
 #
@@ -32,7 +43,7 @@ NPROC_ETA                       = 8
 # fully 3D models:
 # transversely_isotropic_prem_plus_3D_crust_2.0, 3D_anisotropic, 3D_attenuation,
 # s20rts, s40rts, s362ani, s362iso, s362wmani, s362ani_prem, s362ani_3DQ, s362iso_3DQ,
-# s29ea, s29ea,sea99_jp3d1994,sea99,jp3d1994,heterogen
+# s29ea, s29ea,sea99_jp3d1994,sea99,jp3d1994,heterogen,full_sh
 #
 # 3D models with 1D crust: append "_1Dcrust" the the 3D model name
 #                          to take the 1D crustal model from the
@@ -97,6 +108,8 @@ PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 # this flag is of course unused if ROTATION above is set to .false.
 EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
 
+#-----------------------------------------------------------
+
 # this for LDDRK high-order time scheme instead of Newmark
 USE_LDDRK                       = .false.
 
@@ -109,6 +122,12 @@ USE_LDDRK                       = .false.
 # multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
 INCREASE_CFL_FOR_LDDRK          = .true.
 RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
+
+#-----------------------------------------------------------
+#
+# Visualization
+#
+#-----------------------------------------------------------
 
 # save AVS or OpenDX movies
 #MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
@@ -150,6 +169,12 @@ LOCAL_TMP_PATH                  = ./DATABASES_MPI
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 
+#-----------------------------------------------------------
+#
+# Sources & seismograms
+#
+#-----------------------------------------------------------
+
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 1000
 NTSTEP_BETWEEN_READ_ADJSRC      = 1000
@@ -179,7 +204,7 @@ PRINT_SOURCE_TIME_FUNCTION      = .false.
 
 #-----------------------------------------------------------
 #
-#  adjoint kernel outputs
+#  Adjoint kernel outputs
 #
 #-----------------------------------------------------------
 

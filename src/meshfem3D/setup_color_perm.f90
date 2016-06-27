@@ -235,11 +235,10 @@
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN,IOUT
 
   use meshfem3D_par,only: &
-    idoubling
+    idoubling,xstore_glob,ystore_glob,zstore_glob
 
   use MPI_crust_mantle_par,only: &
-    num_colors_outer_crust_mantle,num_colors_inner_crust_mantle,num_elem_colors_crust_mantle, &
-    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
+    num_colors_outer_crust_mantle,num_colors_inner_crust_mantle,num_elem_colors_crust_mantle
 
   use MPI_outer_core_par,only: &
     num_colors_outer_outer_core,num_colors_inner_outer_core,num_elem_colors_outer_core
@@ -341,7 +340,7 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'color_'//str_domain(idomain)
     call write_VTK_data_elem_i(nspec,nglob, &
-                               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                               xstore_glob,ystore_glob,zstore_glob, &
                                ibool,color,filename)
   endif
   deallocate(color)
@@ -576,7 +575,7 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'perm_'//str_domain(idomain)
     call write_VTK_data_elem_i(nspec,nglob, &
-                               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                               xstore_glob,ystore_glob,zstore_glob, &
                                ibool,perm,filename)
   endif
 
@@ -607,7 +606,7 @@
     ABSORBING_CONDITIONS, &
     LOCAL_PATH, &
     NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
-    xstore,ystore,zstore,idoubling
+    xstore,ystore,zstore,idoubling,xstore_glob,ystore_glob,zstore_glob
 
   use create_regions_mesh_par2,only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -624,9 +623,7 @@
     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
     ibelm_670_top,ibelm_670_bot
 
-  use MPI_crust_mantle_par,only: NSPEC_CRUST_MANTLE, &
-    xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
-
+  use MPI_crust_mantle_par,only: NSPEC_CRUST_MANTLE
   use MPI_outer_core_par,only: NSPEC_OUTER_CORE
   use MPI_inner_core_par,only: NSPEC_INNER_CORE
 
@@ -765,7 +762,7 @@
     call create_name_database(prname,myrank,idomain,LOCAL_PATH)
     filename = prname(1:len_trim(prname))//'perm_global'
     call write_VTK_data_elem_i(nspec,nglob, &
-                               xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
+                               xstore_glob,ystore_glob,zstore_glob, &
                                ibool,temp_perm_global,filename)
   endif
 

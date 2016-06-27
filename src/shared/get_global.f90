@@ -90,8 +90,8 @@
 
   ! copies original array
   allocate(copy_ibool_ori(NGLLX,NGLLY,NGLLZ,nspec), &
-          mask_ibool(nglob), &
-          stat=ier)
+           mask_ibool(nglob), &
+           stat=ier)
   if (ier /= 0) stop 'Error allocating local arrays in get_global_indirect_addressing'
 
   ! initializes arrays

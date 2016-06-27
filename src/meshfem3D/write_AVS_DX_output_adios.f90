@@ -26,7 +26,7 @@
 !=====================================================================
 
 
-  subroutine crm_save_mesh_files_adios(nspec,npointot,iregion_code, &
+  subroutine write_AVS_DX_output_adios(nspec,npointot,iregion_code, &
                                        num_ibool_AVS_DX, mask_ibool)
 
   use meshfem3d_par,only: &
@@ -173,4 +173,4 @@
   call free_AVS_DX_global_chunks_data_adios(avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
   call free_AVS_DX_surfaces_data_adios(avs_dx_surface_vars, ISOTROPIC_3D_MANTLE)
 
-  end subroutine crm_save_mesh_files_adios
+  end subroutine write_AVS_DX_output_adios
