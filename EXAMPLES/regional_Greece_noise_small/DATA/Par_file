@@ -1,3 +1,8 @@
+#-----------------------------------------------------------
+#
+# Simulation input parameters
+#
+#-----------------------------------------------------------
 
 # forward or adjoint simulation
 SIMULATION_TYPE                 = 1   # set to 1 for forward simulations, 2 for adjoint simulations for sources, and 3 for kernel simulations
@@ -22,6 +27,12 @@ NEX_ETA                         = 48
 # number of MPI processors along the two sides of the first chunk
 NPROC_XI                        = 2
 NPROC_ETA                       = 2
+
+#-----------------------------------------------------------
+#
+# Model
+#
+#-----------------------------------------------------------
 
 # 1D models with real structure:
 # 1D_isotropic_prem, 1D_transversely_isotropic_prem, 1D_iasp91, 1D_1066a, 1D_ak135f_no_mud, 1D_ref, 1D_ref_iso, 1D_jp3d,1D_sea99
@@ -97,6 +108,8 @@ PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 # this flag is of course unused if ROTATION above is set to .false.
 EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
 
+#-----------------------------------------------------------
+
 # this for LDDRK high-order time scheme instead of Newmark
 USE_LDDRK                       = .false.
 
@@ -109,6 +122,12 @@ USE_LDDRK                       = .false.
 # multiply that time step by this ratio when LDDRK is on and when flag INCREASE_CFL_FOR_LDDRK is true.
 INCREASE_CFL_FOR_LDDRK          = .true.
 RATIO_BY_WHICH_TO_INCREASE_IT   = 1.5d0
+
+#-----------------------------------------------------------
+#
+# Visualization
+#
+#-----------------------------------------------------------
 
 # save AVS or OpenDX movies
 #MOVIE_COARSE saves movie only at corners of elements (SURFACE OR VOLUME)
@@ -150,6 +169,12 @@ LOCAL_TMP_PATH                  = ./DATABASES_MPI
 # interval at which we output time step info and max of norm of displacement
 NTSTEP_BETWEEN_OUTPUT_INFO      = 500
 
+#-----------------------------------------------------------
+#
+# Sources & seismograms
+#
+#-----------------------------------------------------------
+
 # interval in time steps for temporary writing of seismograms
 NTSTEP_BETWEEN_OUTPUT_SEISMOS   = 5000000
 NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
@@ -179,7 +204,7 @@ PRINT_SOURCE_TIME_FUNCTION      = .false.
 
 #-----------------------------------------------------------
 #
-#  adjoint kernel outputs
+#  Adjoint kernel outputs
 #
 #-----------------------------------------------------------
 
