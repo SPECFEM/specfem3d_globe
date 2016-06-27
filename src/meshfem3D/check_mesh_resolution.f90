@@ -100,6 +100,7 @@
 
   pmax_reg = - HUGEVAL
   dt_max_reg = HUGEVAL
+  cmax_reg = - HUGEVAL
 
   do ispec = 1,nspec
 
