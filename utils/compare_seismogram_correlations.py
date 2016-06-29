@@ -36,7 +36,7 @@ def get_cross_correlation_timeshift(x,y,dt):
 
     # cross-correlation length
     signal_length = len(x)
-    length = 2 * signal_length
+    length = 2 * signal_length - 1
 
     # cross-correlation array
     crosscorrelation = np.correlate(x, y, mode='full')
@@ -50,6 +50,10 @@ def get_cross_correlation_timeshift(x,y,dt):
     
     # subsample precision
     maxval = crosscorrelation[indexmax]
+
+    #debug
+    #print "xcorr: ",indexmax,maxval,len(crosscorrelation),length
+
     # gets values left/right from maximum value
     if indexmax >= 1 and indexmax < length-1:
         val_left = crosscorrelation[indexmax-1]
@@ -90,8 +94,16 @@ def plot_correlations(out_dir,ref_dir):
     print('  reference directory: %s' % ref_dir)
     print('  output directory   : %s\n' % out_dir)
 
+    # seismogram file ending
+    ending = '.sem*' # .semd, .semv, .sema, .semp, ..
+
     # gets seismograms
-    files = glob.glob(out_dir + '/*.sem.ascii')
+    files = glob.glob(out_dir + '/*' + ending)
+    if len(files) == 0:
+        print "no seismogram files with ending ",ending," found"
+        print "Please check directory: ",out_dir
+        sys.exit(1)
+
     files.sort()
 
     corr_min = 1.0
@@ -168,10 +180,26 @@ def plot_correlations(out_dir,ref_dir):
 
         #debug
         #print "  seismogram: ", fname, "vs", fname_old,"  lengths: ",len(ref0),len(syn0)
-        
+
         # cuts common length
         length = min(len(ref0),len(syn0))
         if length <= 1: continue
+
+        # length warning
+        if len(ref0) != len(syn0):
+          print("** warning: mismatch of file length in both files syn/ref = %d / %d" %(len(syn0),len(ref0)))
+          #print("** warning: using smaller length %d" % length)
+
+        # time step size in reference file
+        ref_time = np.loadtxt(ref_file)[:, 0]
+        dt_ref = ref_time[1] - ref_time[0]
+        # mismatch warning
+        if abs(dt - dt_ref)/dt > 1.e-5:
+          print("** warning: mismatch of time step size in both files syn/ref = %e / %e" %(dt,dt_ref))
+          #print("** warning: using time step size %e from file %s" %(dt,syn_file))
+
+        #debug
+        #print "common length: ",length
 
         ref = ref0[0:length]
         syn = syn0[0:length]
@@ -179,17 +207,41 @@ def plot_correlations(out_dir,ref_dir):
         # least square test
         norm = np.linalg.norm
         sqrt = np.sqrt
-        err = norm(ref-syn)/sqrt(norm(ref)*norm(syn))
+
+        # normalized by power in reference solution
+        fac_norm = norm(ref)
+        # or normalized by power in (ref*syn)
+        #fac_norm = sqrt(norm(ref)*norm(syn))
+
+        if fac_norm > 0.0:
+            err = norm(ref-syn)/fac_norm
+        else:
+            err = norm(ref-syn)
+
+        #debug
+        #print('norm syn = %e norm ref = %e' % (norm(syn),fac_norm))
 
         # correlation test
         # total length
-        corr_mat = np.corrcoef(ref, syn)
+        if fac_norm > 0.0:
+            corr_mat = np.corrcoef(ref, syn)
+        else:
+            if norm(ref-syn) > 0.0:
+                corr_mat = np.cov(ref-syn)
+            else:
+                # both zero traces
+                print("** warning: comparing zero traces")
+                corr_mat = 1.0
         corr = np.min(corr_mat)
         
         # time shift
-        # total length
-        shift = get_cross_correlation_timeshift(ref,syn,dt)
-        
+        if fac_norm > 0.0:
+          # shift (in s) by cross correlation
+          shift = get_cross_correlation_timeshift(ref,syn,dt)
+        else:
+          # no correlation with zero trace
+          shift = 0.0
+
         # correlation in moving window
         if USE_SUB_WINDOW_CORR:
             # moves window through seismogram
@@ -224,13 +276,24 @@ def plot_correlations(out_dir,ref_dir):
         # counter
         n += 1
 
+
+    # check if any comparison done
+    if n == 0:
+        # values indicating failure
+        corr_min = 0.0
+        err_max = 1.e9
+        shift_max = 1.e9
+
     # print min(coor) max(err)
     print("|---------------------------------------------------------------------------|")
     print("|%30s| %13.5f| %13.5le| %13.5le|" % ('min/max', corr_min, err_max, shift_max))
 
     # output summary
     print("\nsummary:")
-    print("%d seismograms compared" % n)
+    print("%d seismograms compared\n" % n)
+    if n == 0:
+        print("\nno seismograms found for comparison!\n\n")
+
     print("correlations: values 1.0 perfect, < %.1f poor correlation" % TOL_CORR)
     if corr_min < TOL_CORR:
         print("              poor correlation seismograms found")
