@@ -321,6 +321,20 @@ endif
 realclean: clean
 mrproper: clean
 
+# unit testing
+# If the first argument is "test"...
+ifeq (test,$(findstring test,firstword $(MAKECMDGOALS)))
+  # use the rest as arguments for "run"
+  TEST_ARGS := $(wordlist 2,$(words $(MAKECMDGOALS)),$(MAKECMDGOALS))
+  # turn them into do-nothing targets
+  $(eval $(TEST_ARGS):;@:)
+endif
+
+tests:
+	@echo "testing in directory: ${S_TOP}/tests/"
+	cd ${S_TOP}/tests; ./run_all_tests.sh $(TEST_ARGS)
+	@echo ""
+
 help:
 	@echo "usage: make [executable]"
 	@echo ""
@@ -377,8 +391,11 @@ endif
 	@echo "    xsum_kernels"
 	@echo "    xsum_preconditioned_kernels"
 	@echo ""
+	@echo "for unit testing:"
+	@echo "    tests"
+	@echo ""
 
-.PHONY: all default clean help
+.PHONY: all default clean realclean help tests
 
 #######################################
 
@@ -416,6 +433,9 @@ $$(foreach target, $$(filter $E/%,$$($(1)_TARGETS)), $$(eval $$(call target_shor
 endef
 
 $(foreach dir, $(SUBDIRS), $(eval $(call shortcut,$(dir))))
+
+# shortcut testing
+test : tests
 
 # Other old shortcuts
 mesh: $E/xmeshfem3D
