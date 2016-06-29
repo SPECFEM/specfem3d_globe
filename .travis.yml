@@ -26,9 +26,6 @@ env:
     # run default
     - TEST="" TESTCOV=0 TESTMAKE=0
 
-    # run debug
-    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=0
-
     # run vectorization
     - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=0
 
@@ -38,8 +35,14 @@ env:
     # run vectorization & openmp, using coverage flags
     - TEST="--enable-vectorization" TESTCOV=1 TESTMAKE=0
 
-    # run default test with make tests
+    # run default test (with > make tests)
     - TEST="" TESTCOV=0 TESTMAKE=1
+
+    # run example 2 (global)
+    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=2
+
+    # run regional example with debug bounds checking
+    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=3
 
 before_install:
   # informations on git
@@ -118,7 +121,7 @@ script:
   ###########################################################
   # test examples
   ###########################################################
-  # testing small example (short & quick for all configuration)
+  # testing small example (short & quick for all configurations)
   - |
     if [ "$TESTMAKE" == "1" ]; then
       # runs default tests
@@ -126,14 +129,39 @@ script:
     else
       # default
       dir=EXAMPLES/regional_Greece_small/
+      if [ "$TESTMAKE" == "2" ]; then
+        dir=EXAMPLES/global_small/
+      fi
       echo "##########################################################"
       echo "test directory: $dir"
       echo "##########################################################"
       # we need to output to console output, otherwise tests will fail by timeout
       sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
+      # changes to example directory
       cd $dir
       # limit number of time steps
-      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.75:" DATA/Par_file
+      if [ "$TESTMAKE" == "0" ]; then
+        sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.75:" DATA/Par_file
+      fi
+      if [ "$TESTMAKE" == "3" ] || [ "$TESTCOV" == "1" ]; then
+        sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+      fi
+      ./run_this_example.sh
+      # compares seismograms
+      if [ ! "$TESTMAKE" == "3" ] && [ ! "$TESTCOV" == "1" ]; then
+        my_test
+      fi
+      cd ../../
+    fi
+
+  # additional code coverage testing
+  - |
+    if [ "$TESTCOV" == "1" ]; then
+      # we need to output to console output, otherwise tests will fail by timeout
+      sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
+      # changes to example directory
+      cd EXAMPLES/global_small/
+      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
       ./run_this_example.sh
       my_test
       cd ../../
