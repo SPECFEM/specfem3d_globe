@@ -95,7 +95,7 @@ def plot_correlations(out_dir,ref_dir):
     print('  output directory   : %s\n' % out_dir)
 
     # seismogram file ending
-    ending = '.sem*' # .semd, .semv, .sema, .semp, ..
+    ending = '.sem.ascii' # MX*.sem.ascii, ..
 
     # gets seismograms
     files = glob.glob(out_dir + '/*' + ending)
