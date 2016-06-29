@@ -155,7 +155,7 @@
   double precision, allocatable, dimension(:,:) :: xyz_midpoints
 
   ! search range
-  double precision :: lat,lon
+  double precision :: lat,lon,r
   double precision :: lat_min,lat_max,lon_min,lon_max
   ! search margin in degrees
   double precision,parameter :: LAT_LON_MARGIN = 2.d0
@@ -200,9 +200,6 @@
            z_found(nrec), &
            final_distance(nrec),stat=ier)
   if (ier /= 0) call exit_MPI(myrank,'Error allocating temporary receiver arrays')
-
-  ! initializes search distances
-  final_distance(:) = HUGEVAL
 
   ! read that STATIONS file on the master
   if (myrank == 0) then
@@ -586,6 +583,9 @@
 ! find the best (xi,eta) for each receiver
 ! ****************************************
 
+  ! initializes search distances
+  final_distance(:) = HUGEVAL
+
   ! loop on all the receivers
   ! gather source information in subsets to reduce memory requirements
   islice_selected_rec(:) = -1
@@ -764,11 +764,12 @@
       z_found_subset(irec_in_this_subset) = z_found(irec)
 
       ! compute final distance between asked and found (converted to km)
-      final_distance(irec) = dsqrt((x_target_rec-x)**2 + &
-                                   (y_target_rec-y)**2 + &
-                                   (z_target_rec-z)**2)*R_EARTH_KM
+      distmin_not_squared = dsqrt((x_target_rec-x)**2 + &
+                                  (y_target_rec-y)**2 + &
+                                  (z_target_rec-z)**2)*R_EARTH_KM
 
-      final_distance_subset(irec_in_this_subset) = final_distance(irec)
+      final_distance(irec) = distmin_not_squared
+      final_distance_subset(irec_in_this_subset) = distmin_not_squared
 
     enddo ! end of loop on all stations within current subset
 
@@ -862,6 +863,9 @@
         write(IMAIN,*) 'closest estimate found: ',sngl(final_distance(irec)),' km away'
         write(IMAIN,*) ' in slice ',islice_selected_rec(irec),' in element ',ispec_selected_rec(irec)
         write(IMAIN,*) ' at xi,eta,gamma coordinates = ',xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec)
+        ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
+        call xyz_2_rlatlon_dble(x_found(irec),y_found(irec),z_found(irec),r,lat,lon)
+        write(IMAIN,*) ' at lat/lon = ',sngl(lat),sngl(lon)
       endif
 
       ! add warning if estimate is poor

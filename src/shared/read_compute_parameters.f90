@@ -39,7 +39,6 @@
   implicit none
 
   ! local parameters
-  integer :: NEX_MAX
   integer :: nblocks_xi,nblocks_eta
   ! doubling layers
   integer :: ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,elem_doubling_bottom_outer_core
@@ -107,8 +106,7 @@
 
   ! sets time step size and number of layers
   ! right distribution is determined based upon maximum value of NEX
-  NEX_MAX = max(NEX_XI,NEX_ETA)
-  call get_timestep_and_layers(NEX_MAX)
+  call get_timestep_and_layers()
 
   ! time steps: this is an initial estimate based on the record length.
   !             we will need to add additional time steps for reaching the start time at -t0,

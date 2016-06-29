@@ -34,6 +34,38 @@
   integer :: ipass
   integer :: ier
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) 'Radial Meshing parameters:'
+    write(IMAIN,*) '  CHUNK WIDTH XI/ETA =', ANGULAR_WIDTH_XI_IN_DEGREES,'/',ANGULAR_WIDTH_ETA_IN_DEGREES
+    write(IMAIN,*) '  NEX XI/ETA =', NEX_XI,'/',NEX_ETA
+    write(IMAIN,*)
+    write(IMAIN,*) '  NER_CRUST:               ', NER_CRUST
+    write(IMAIN,*) '  NER_80_MOHO:             ', NER_80_MOHO
+    write(IMAIN,*) '  NER_220_80:              ', NER_220_80
+    write(IMAIN,*) '  NER_400_220:             ', NER_400_220
+    write(IMAIN,*) '  NER_600_400:             ', NER_600_400
+    write(IMAIN,*) '  NER_670_600:             ', NER_670_600
+    write(IMAIN,*) '  NER_771_670:             ', NER_771_670
+    write(IMAIN,*) '  NER_TOPDDOUBLEPRIME_771: ', NER_TOPDDOUBLEPRIME_771
+    write(IMAIN,*) '  NER_CMB_TOPDDOUBLEPRIME: ', NER_CMB_TOPDDOUBLEPRIME
+    write(IMAIN,*) '  NER_OUTER_CORE:          ', NER_OUTER_CORE
+    write(IMAIN,*) '  NER_TOP_CENTRAL_CUBE_ICB:', NER_TOP_CENTRAL_CUBE_ICB
+    write(IMAIN,*) '  SUPPRESS_CRUSTAL_MESH:   ', SUPPRESS_CRUSTAL_MESH
+    write(IMAIN,*)
+    write(IMAIN,*) '  R_CENTRAL_CUBE = ', sngl(R_CENTRAL_CUBE/1000.d0),' km'
+    write(IMAIN,*)
+    write(IMAIN,*) 'Mesh resolution:'
+    write(IMAIN,*) '  DT = ',DT
+    write(IMAIN,*) '  Minimum period = ', &
+                   max(ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES)/90.0 * 256.0/min(NEX_ETA,NEX_XI) * 17.0,' (s)'
+    write(IMAIN,*)
+    write(IMAIN,*) '  MIN_ATTENUATION_PERIOD = ',MIN_ATTENUATION_PERIOD
+    write(IMAIN,*) '  MAX_ATTENUATION_PERIOD = ',MAX_ATTENUATION_PERIOD
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! get addressing for this process
   ichunk = ichunk_slice(myrank)
   iproc_xi = iproc_xi_slice(myrank)

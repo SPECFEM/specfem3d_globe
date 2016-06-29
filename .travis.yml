@@ -2,6 +2,7 @@
 #
 # Note: building Fortran code is not supported (yet): see https://docs.travis-ci.com/user/language-specific/
 #       this is using C as a base and installs gfortran in the test environment
+
 language: c
 
 sudo: required
@@ -23,22 +24,22 @@ env:
     #   TESTCOV - determines whether or not (0/1) code coverage flags are used
 
     # run default
-    - TEST="" TESTCOV=0
+    - TEST="" TESTCOV=0 TESTMAKE=0
 
     # run debug
-    - TEST="--enable-debug" TESTCOV=0
-
-    # run debug & openmp
-    - TEST="--enable-debug --enable-openmp" TESTCOV=0
+    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=0
 
     # run vectorization
-    - TEST="--enable-vectorization" TESTCOV=0
+    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=0
 
     # run vectorization & openmp
-    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0
+    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=0
 
     # run vectorization & openmp, using coverage flags
-    - TEST="--enable-vectorization --enable-openmp" TESTCOV=1
+    - TEST="--enable-vectorization" TESTCOV=1 TESTMAKE=0
+
+    # run default test with make tests
+    - TEST="" TESTCOV=0 TESTMAKE=1
 
 before_install:
   # informations on git
@@ -62,6 +63,9 @@ install:
   # fortran/openMPI compiler
   - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
 
+  # python script needs numpy
+  - sudo apt-get install -qq python-numpy #python-scipy
+
   # version infos
   - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
   - ${FC} --version
@@ -82,9 +86,20 @@ script:
   - |
     my_report(){
       # report example
-      if [ -f OUTPUT_FILES/output_mesher.txt ]; then cat OUTPUT_FILES/output_mesher.txt; fi
-      if [ -f OUTPUT_FILES/output_solver.txt ]; then cat OUTPUT_FILES/output_solver.txt; fi
+      if [ -f OUTPUT_FILES/output_mesher.txt ]; then cat OUTPUT_FILES/output_mesher.txt; else exit 1; fi
+      if [ -f OUTPUT_FILES/output_solver.txt ]; then cat OUTPUT_FILES/output_solver.txt; else exit 1; fi
     }
+
+  - |
+    my_test(){
+      echo "testing seismograms:"
+      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
+      if [[ $? -ne 0 ]]; then exit 1; fi
+      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+      if [[ $? -ne 0 ]]; then exit 1; fi
+      rm -rf OUTPUT_FILES/
+    }
+
 
   ###########################################################
   # configuration & compilation
@@ -97,30 +112,35 @@ script:
       ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
     fi
 
-  # compilation
-  - make clean; make -j4 all
+  # compilation (only cleaning)
+  - make clean
 
   ###########################################################
   # test examples
   ###########################################################
   # testing small example (short & quick for all configuration)
   - |
-    # default
-    dir=EXAMPLES/regional_Greece_small/
-    echo "##########################################################"
-    echo "test directory: $dir"
-    echo "##########################################################"
-    cd $dir
-    # limit number of time steps to a minimum (5 by default)
-    sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-    ./run_this_example.sh
-    my_report
-    cd ../../
+    if [ "$TESTMAKE" == "1" ]; then
+      # runs default tests
+      make tests
+    else
+      # default
+      dir=EXAMPLES/regional_Greece_small/
+      echo "##########################################################"
+      echo "test directory: $dir"
+      echo "##########################################################"
+      cd $dir
+      # limit number of time steps
+      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
+      ./run_this_example.sh
+      my_report
+      my_test
+      cd ../../
+    fi
 
   # done
   - echo `pwd`
 
-# runs example
 after_success:
   ###########################################################
   # code coverage
