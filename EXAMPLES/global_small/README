@@ -1,0 +1,29 @@
+------------------------------------
+README
+------------------------------------
+
+Example of a global simulation 
+(using the smallest possible global mesh, i.e. a spherical mesh with NEX=32, for testing)
+
+This example creates a global mesh, using a 3D shear-wave speed model S362ANI (Kustowski et al. [2006], 
+and runs a spectral-element simulation. The simulation is setup to use 6 CPU cores (MPI processes).
+The runtime is about 5 min.
+
+
+1. forward simulation:
+----------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+The simulation is accurate down to a shortest period of ~ 136 s.
+(minimum period resolved ~ (256/NEX_XI) * 17)
+ 
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+
+
+Please modify the setup and scripts according to your specifics.
+
