@@ -1031,7 +1031,9 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) "  attenuation period range min/max = ",MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
+    write(IMAIN,*) "  attenuation period range min/max: ",MIN_ATTENUATION_PERIOD,'/',MAX_ATTENUATION_PERIOD,' (s)'
+    write(IMAIN,*) "  ATTENUATION_1D_WITH_3D_STORAGE  : ",ATTENUATION_1D_WITH_3D_STORAGE_VAL
+    write(IMAIN,*) "  ATTENUATION_3D                  : ",ATTENUATION_3D_VAL
     call flush_IMAIN()
   endif
 

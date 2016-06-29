@@ -203,12 +203,19 @@
   ! required points per wavelength
   double precision,parameter :: PTS_PER_WAVELENGTH = 4.d0
 
+  ! safety check
+  if (N_SLS < 2 .or. N_SLS > 5) then
+     stop 'N_SLS must be greater than 1 or less than 6'
+  endif
+
   ! average spacing between GLL points
   GLL_SPACING = dble(NGLLX - 1)
 
   ! minimum velocity (Vs)
   S_VELOCITY_MIN = 2.25d0
 
+  ! Compute Min Attenuation Period
+  !
   ! width of element in km = (Angular width in degrees / NEX_MAX) * degrees to km
   TMP = WIDTH / dble(NEX_MAX) * DEG2KM
 
@@ -218,14 +225,11 @@
   ! minimum resolved wavelength (for fixed number of points per wavelength)
   TMP = TMP * PTS_PER_WAVELENGTH
 
-  ! Compute Min Attenuation Period
-  !
   ! The Minimum attenuation period = (minimum wavelength) / V_min
-  MIN_ATTENUATION_PERIOD = int(TMP/S_VELOCITY_MIN)
+  TMP = TMP/S_VELOCITY_MIN
 
-  if (N_SLS < 2 .or. N_SLS > 5) then
-     stop 'N_SLS must be greater than 1 or less than 6'
-  endif
+  ! The Minimum attenuation period (integer)
+  MIN_ATTENUATION_PERIOD = int(TMP)
 
   ! THETA defines the width of the Attenuation Range in Decades
   !   The number defined here were determined by minimizing
@@ -245,6 +249,9 @@
   TMP = TMP * 10.0d0**THETA(N_SLS)
 
   MAX_ATTENUATION_PERIOD = int(TMP)
+
+  ! debug
+  !print *,'attenuation range min/max: ',MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
 
   end subroutine auto_attenuation_periods
 
