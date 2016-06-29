@@ -30,7 +30,7 @@ if [ ! -e $EXAMPLES/$NAME/run_this_example.sh ]; then
 fi
 
 #cleanup output
-rm -rf ./OUTPUT_FILES ./DATA ./run_this_example.sh ./run_mesher_solver.bash ./REF_SEIS
+rm -rf ./DATABASES_MPI ./OUTPUT_FILES ./DATA ./run_this_example.sh ./run_mesher_solver.bash ./REF_SEIS
 mkdir -p OUTPUT_FILES
 
 # setup
@@ -43,7 +43,7 @@ ln -s $EXAMPLES/$NAME/REF_SEIS
 #sed -i "s:^NPROC_XI .*:NPROC_XI      = 2:" DATA/Par_file
 #sed -i "s:^NPROC_ETA .*:NPROC_ETA    = 2:" DATA/Par_file
 # limits length
-sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES    = 0.3:" DATA/Par_file
+sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES    = 0.0:" DATA/Par_file
 
 # checks exit code
 if [[ $? -ne 0 ]]; then
@@ -72,7 +72,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 # cleanup
-rm -rf ./OUTPUT_FILES ./DATA ./run_this_example.sh ./REF_SEIS
+rm -rf ./DATABASES_MPI ./OUTPUT_FILES ./DATA ./run_this_example.sh ./run_mesher_solver.bash ./REF_SEIS
 
 echo "successful compilation" >> $testdir/results.log
 

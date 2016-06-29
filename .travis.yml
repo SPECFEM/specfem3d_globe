@@ -129,11 +129,12 @@ script:
       echo "##########################################################"
       echo "test directory: $dir"
       echo "##########################################################"
+      # we need to output to console output, otherwise tests will fail by timeout
+      sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
       cd $dir
       # limit number of time steps
-      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
+      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.75:" DATA/Par_file
       ./run_this_example.sh
-      my_report
       my_test
       cd ../../
     fi

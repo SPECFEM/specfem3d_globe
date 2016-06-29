@@ -39,6 +39,9 @@ if [[ $? -ne 0 ]]; then
   exit 1
 fi
 
+# we need to output to console output, otherwise tests will fail by timeout in travis
+sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h >> $testdir/results.log
+
 echo "" >> $testdir/results.log
 echo "successful configuration" >> $testdir/results.log
 
