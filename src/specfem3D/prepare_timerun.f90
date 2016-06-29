@@ -1029,6 +1029,12 @@
    b_gammaval = gammaval
   endif
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) "  attenuation period range min/max = ",MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
+    call flush_IMAIN()
+  endif
+
   ! synchronizes processes
   call synchronize_all()
 

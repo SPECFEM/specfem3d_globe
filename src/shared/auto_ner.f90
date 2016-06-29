@@ -160,7 +160,7 @@
     MIN_GLL_POINT_SPACING = 0.5d0 * ( 1.d0 - 0.9195339081664588138289 ) ! 0.040233
 
   case default
-    stop 'auto_time_stepping: NGLLX value not supported yet! please consider adding it...'
+    stop 'auto_time_stepping: NGLLX > 10 value not supported yet! please consider adding it...'
 
   end select
 
