@@ -142,6 +142,8 @@ script:
       # limit number of time steps
       if [ "$TESTMAKE" == "0" ]; then
         sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.75:" DATA/Par_file
+      elif [ "$TESTMAKE" == "2" ]; then
+        sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
       fi
       if [ "$TESTMAKE" == "3" ] || [ "$TESTCOV" == "1" ]; then
         sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
@@ -161,9 +163,8 @@ script:
       sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
       # changes to example directory
       cd EXAMPLES/global_small/
-      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
+      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
       ./run_this_example.sh
-      my_test
       cd ../../
     fi
 
