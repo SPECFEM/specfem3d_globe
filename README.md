@@ -18,6 +18,8 @@ in the
 
 ## Development
 
+[![Build Status](https://travis-ci.org/geodynamics/specfem3d_globe.svg?branch=devel)](https://travis-ci.org/geodynamics/specfem3d_globe) [![codecov](https://codecov.io/gh/geodynamics/specfem3d_globe/branch/devel/graph/badge.svg)](https://codecov.io/gh/geodynamics/specfem3d_globe)
+
 Development is hosted on GitHub in the
 [geodynamics/specfem3d_globe repository](https://github.com/geodynamics/specfem3d_globe).
 
