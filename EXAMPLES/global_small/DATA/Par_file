@@ -21,11 +21,11 @@ GAMMA_ROTATION_AZIMUTH          = 20.d0
 
 # number of elements at the surface along the two sides of the first chunk
 # (must be multiple of 16 and 8 * multiple of NPROC below)
-NEX_XI                          = 32 
+NEX_XI                          = 32
 NEX_ETA                         = 32
 
 # number of MPI processors along the two sides of the first chunk
-NPROC_XI                        = 1 
+NPROC_XI                        = 1
 NPROC_ETA                       = 1
 
 #-----------------------------------------------------------
