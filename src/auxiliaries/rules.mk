@@ -45,6 +45,10 @@ auxiliaries_TARGETS += \
 	$E/xcombine_vol_data_adios \
 	$E/xcombine_vol_data_vtk_adios \
 	$(EMPTY_MACRO)
+
+auxiliaries_MODULES = \
+	$(FC_MODDIR)/combine_vol_data_adios_mod.$(FC_MODEXT) \
+	$(EMPTY_MACRO)
 endif
 
 auxiliaries_OBJECTS = \
@@ -59,6 +63,7 @@ auxiliaries_OBJECTS = \
 	$(xcombine_vol_data_vtk_adios_OBJECTS) \
 	$(xcreate_movie_AVS_DX_OBJECTS) \
 	$(xcreate_movie_GMT_global_OBJECTS) \
+	$(xextract_database_OBJECTS) \
 	$(EMPTY_MACRO)
 
 # These files come from the shared directory
@@ -74,7 +79,6 @@ auxiliaries_SHARED_OBJECTS = \
 	$(xcombine_vol_data_vtk_adios_SHARED_OBJECTS) \
 	$(xcreate_movie_AVS_DX_SHARED_OBJECTS) \
 	$(xcreate_movie_GMT_global_SHARED_OBJECTS) \
-	$(xextract_database_SHARED_OBJECTS) \
 	$(EMPTY_MACRO)
 
 ####
@@ -353,10 +357,7 @@ xextract_database_OBJECTS = \
 	$O/extract_database.aux.o \
 	$(EMPTY_MACRO)
 
-xextract_database_SHARED_OBJECTS = \
-	$(EMPTY_MACRO)
-
-${E}/xextract_database: $(xextract_database_OBJECTS) $(xextract_database_SHARED_OBJECTS)
+${E}/xextract_database: $(xextract_database_OBJECTS)
 	${FCCOMPILE_CHECK} -o $@ $+
 
 #######################################

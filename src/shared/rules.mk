@@ -54,6 +54,7 @@ shared_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
+	$O/interpolate.shared.o \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
@@ -78,7 +79,9 @@ shared_OBJECTS = \
 
 shared_MODULES = \
 	$(FC_MODDIR)/constants.$(FC_MODEXT) \
+	$(FC_MODDIR)/manager_adios.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/my_mpi.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_input_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_compute_parameters.$(FC_MODEXT) \
 	$(FC_MODDIR)/shared_parameters.$(FC_MODEXT) \
@@ -106,7 +109,7 @@ asdf_shared_OBJECTS = \
 	$(EMPTY_MACRO)
 
 asdf_shared_STUBS = \
-	$O/asdf_shared_stubs.cc.o \
+	$O/asdf_method_stubs.cc.o \
 	$(EMPTY_MACRO)
 
 ifeq ($(ADIOS),yes)

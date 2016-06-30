@@ -59,6 +59,12 @@ tomography/postprocess_sensitivity_kernels_OBJECTS = \
 	$(xconvert_model_file_adios_OBJECTS) \
 	$(EMPTY_MACRO)
 
+ifeq ($(ADIOS),yes)
+tomography/postprocess_sensitivity_kernels_OBJECTS += \
+	$(xinterpolate_model_adios_OBJECTS) \
+	$(EMPTY_MACRO)
+endif
+
 # These files come from the shared directory
 tomography/postprocess_sensitivity_kernels_SHARED_OBJECTS = \
 	$(xaddition_sem_SHARED_OBJECTS) \
