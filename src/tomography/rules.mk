@@ -36,6 +36,7 @@ tomography_TARGETS = \
 	$E/xsum_preconditioned_kernels \
 	$(EMPTY_MACRO)
 
+
 tomography_OBJECTS = \
 	$(xadd_model_iso_OBJECTS) \
 	$(xadd_model_tiso_OBJECTS) \
@@ -44,6 +45,7 @@ tomography_OBJECTS = \
 	$(xsum_kernels_OBJECTS) \
 	$(xsum_preconditioned_kernels_OBJECTS) \
 	$(EMPTY_MACRO)
+
 
 # These files come from the shared directory
 tomography_SHARED_OBJECTS = \
@@ -61,6 +63,24 @@ tomography_MODULES = \
 	$(FC_MODDIR)/tomography_model_tiso.$(FC_MODEXT) \
 	$(FC_MODDIR)/tomography_model_iso.$(FC_MODEXT) \
 	$(EMPTY_MACRO)
+
+
+####
+#### ADIOS versions
+####
+ifeq ($(ADIOS),yes)
+
+tomography_TARGETS += \
+	$E/xsum_kernels_adios \
+	$(EMPTY_MACRO)
+
+tomography_OBJECTS += \
+	$(xsum_kernels_adios_OBJECTS) \
+	$(EMPTY_MACRO)
+
+endif
+
+
 
 ####
 #### rules for executables
@@ -172,6 +192,28 @@ xsum_kernels_SHARED_OBJECTS = \
 ${E}/xsum_kernels: $(xsum_kernels_OBJECTS) $(xsum_kernels_SHARED_OBJECTS)
 	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
 
+##
+## xsum_kernels_adios
+##
+xsum_kernels_adios_OBJECTS = \
+	$O/tomography_par.tomo_module.o \
+	$O/sum_kernels.tomo_adios.o \
+	$(EMPTY_MACRO)
+
+xsum_kernels_adios_SHARED_OBJECTS = \
+	$(xsum_kernels_SHARED_OBJECTS) \
+	$O/adios_helpers_definitions.shared_adios_module.o \
+	$O/adios_helpers_writers.shared_adios_module.o \
+	$O/adios_helpers.shared_adios.o \
+	$O/adios_manager.shared_adios_module.o \
+	$(EMPTY_MACRO)
+
+# extra dependencies
+$O/sum_kernels.tomo_adios.o: $O/adios_manager.shared_adios_module.o
+
+${E}/xsum_kernels_adios: $(xsum_kernels_adios_OBJECTS) $(xsum_kernels_adios_SHARED_OBJECTS)
+	${MPIFCCOMPILE_CHECK} -o $@ $+ $(MPILIBS)
+
 
 ##
 ## xsum_preconditioned_kernels
@@ -221,4 +263,12 @@ $O/%.tomo.o: $S/%.f90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o
 
 $O/%.tomo.o: $S/%.F90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+### ADIOS
+$O/%.tomo_adios.o: $S/%.f90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
+
+$O/%.tomo_adios.o: $S/%.F90 $O/tomography_par.tomo_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
+
 

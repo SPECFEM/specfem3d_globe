@@ -49,6 +49,10 @@ program sum_kernels_globe
 
   use tomography_par
 
+#ifdef ADIOS_INPUT
+  use manager_adios
+#endif
+
   implicit none
 
   character(len=MAX_STRING_LEN) :: kernel_list(MAX_KERNEL_PATHS), sline, kernel_name
@@ -61,14 +65,18 @@ program sum_kernels_globe
   call world_size(sizeprocs)
   call world_rank(myrank)
 
-  if(myrank==0) then
+  if (myrank == 0) then
+#ifdef ADIOS_INPUT
+    write(*,*) 'sum_kernels_globe (ADIOS version):'
+#else
     write(*,*) 'sum_kernels_globe:'
+#endif
     write(*,*)
     write(*,*) 'reading kernel list: '
   endif
 
   ! reads in event list
-  nker=0
+  nker = 0
   open(unit=IIN,file=trim(kernel_file_list),status='old',action='read',iostat=ier)
   if (ier /= 0) then
      print *,'Error opening ',trim(kernel_file_list),myrank
@@ -102,8 +110,18 @@ program sum_kernels_globe
   endif
   call synchronize_all()
 
+#ifdef ADIOS_INPUT
+  call synchronize_all()
+  ! initializes ADIOS
+  if (myrank == 0) then
+    print *, 'initializing ADIOS...'
+    print *, ' '
+  endif
+  call initialize_adios()
+#endif
+
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
     print *,'summing kernels in INPUT_KERNELS/ directories:'
     print *,kernel_list(1:nker)
     print *
@@ -144,7 +162,7 @@ program sum_kernels_globe
   else
 
     ! transverse isotropic kernels
-    if (myrank == 0) write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah,eta'
+    if (myrank == 0) write(*,*) 'transverse isotropic kernels: bulk_c, bulk_betav, bulk_betah, eta'
 
     kernel_name = 'bulk_c_kernel'
     call sum_kernel(kernel_name,kernel_list,nker)
@@ -162,6 +180,11 @@ program sum_kernels_globe
 
   if(myrank==0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
 
+#ifdef ADIOS_INPUT
+  ! finalizes adios
+  call finalize_adios()
+#endif
+
   ! stop all the processes, and exit
   call finalize_mpi()
 
@@ -171,9 +194,14 @@ end program sum_kernels_globe
 !-------------------------------------------------------------------------------------------------
 !
 
-subroutine sum_kernel(kernel_name,kernel_list,nker)
+  subroutine sum_kernel(kernel_name,kernel_list,nker)
 
   use tomography_par
+
+#ifdef ADIOS_INPUT
+  use manager_adios
+  use adios_helpers_mod,only: define_adios_scalar,define_adios_global_array1D
+#endif
 
   implicit none
 
@@ -187,36 +215,140 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
   integer :: iker,ier
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
 
+  ! ADIOS
+#ifdef ADIOS_INPUT
+  integer :: is,ie
+  integer :: local_dim
+  integer(kind=8) :: group
+  integer(kind=8),save :: group_size_inc
+  character(len=MAX_STRING_LEN) :: kernel_name_adios
+  logical,save :: is_first_call = .true.
+
+  character(len=MAX_STRING_LEN),parameter :: group_name = "KERNELS_GROUP"
+  character(len=MAX_STRING_LEN),dimension(10),parameter :: kl_name = &
+      (/character(len=MAX_STRING_LEN) :: &
+       "bulk_c_kl_crust_mantle", &
+       "bulk_beta_kl_crust_mantle", &
+       "rho_kl_crust_mantle", &
+       "alpha_kl_crust_mantle", &
+       "beta_kl_crust_mantle", &
+       "rho_kl_crust_mantle", &
+       "bulk_c_kl_crust_mantle", &
+       "bulk_betav_kl_crust_mantle", &
+       "bulk_betah_kl_crust_mantle", &
+       "eta_kl_crust_mantle" &
+       /) ! "rho_kl_crust_mantle","hess_kl_crust_mantle"
+#endif
+
   ! initializes arrays
   allocate(kernel(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
            total_kernel(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating kernel arrays'
+  total_kernel(:,:,:,:) = 0._CUSTOM_REAL
 
   if (USE_SOURCE_MASK) then
     allocate( mask_source(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) )
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
 
+  ! ADIOS setup group size
+#ifdef ADIOS_INPUT
+  ! start setting up full file group size when first kernel is called
+  if (is_first_call) then
+    ! reset flag
+    is_first_call = .false.
+
+    ! sets up adios group
+    group_size_inc = 0
+    call init_adios_group(group,group_name)
+
+    ! defines group size
+    call define_adios_scalar(group, group_size_inc, "", "NSPEC", NSPEC_CRUST_MANTLE)
+
+    ! defines all arrays
+    if (USE_ISO_KERNELS) then
+      ! for 3 parameters: (bulk_c, bulk_beta, rho)
+      is = 1; ie = 3
+    else if (USE_ALPHA_BETA_RHO) then
+      ! for 3 parameters: (alpha, beta, rho)
+      is = 4; ie = 6
+    else
+      ! for 4 parameters: (bulk_c, bulk_betav, bulk_betah, eta)
+      is = 7; ie = 10
+    endif
+    do iker = is,ie
+      local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
+      call define_adios_global_array1D(group, group_size_inc, local_dim, "", trim(kl_name(iker)), total_kernel(:,:,:,:))
+    enddo
+
+    ! opens new adios model file
+    write(k_file,'(a)') 'OUTPUT_SUM/' // 'kernels_sum.bp'
+    call open_file_adios_write(k_file,group_name)
+    call set_adios_group_size(group_size_inc)
+
+    ! writes nspec
+    call write_adios_scalar_int("NSPEC",NSPEC_CRUST_MANTLE)
+
+    ! closes file
+    call close_file_adios()
+  endif
+
+  ! choose corresponding ADIOS kernel name
+  select case (trim(kernel_name))
+  case ('bulk_c_kernel')
+    kernel_name_adios = kl_name(1)
+  case ('bulk_beta_kernel')
+    kernel_name_adios = kl_name(2)
+  case ('rho_kernel')
+    kernel_name_adios = kl_name(3)
+  case ('alpha_kernel')
+    kernel_name_adios = kl_name(4)
+  case ('beta_kernel')
+    kernel_name_adios = kl_name(5)
+  !case ('rho_kernel')
+  !  kernel_name_adios = kl_name(6)
+  !case ('bulk_c_kernel')
+  !  kernel_name_adios = kl_name(7)
+  case ('bulk_betav_kernel')
+    kernel_name_adios = kl_name(8)
+  case ('bulk_betah_kernel')
+    kernel_name_adios = kl_name(9)
+  case ('eta_kernel')
+    kernel_name_adios = kl_name(10)
+  case default
+    print *,'Error kernel name not recognized for ADIOS: ',trim(kernel_name)
+    stop 'Kernel name not recognized for ADIOS'
+  end select
+#endif
+
   ! loops over all event kernels
-  total_kernel = 0._CUSTOM_REAL
   do iker = 1, nker
     ! user output
-    if(myrank==0) then
+    if (myrank == 0) then
+#ifdef ADIOS_INPUT
+    write(*,*) 'reading in event kernel for: ',trim(kernel_name_adios)
+#else
     write(*,*) 'reading in event kernel for: ',trim(kernel_name)
+#endif
     write(*,*) '    ',iker, ' out of ', nker
     endif
 
     ! sensitivity kernel / frechet derivative
-    kernel = 0._CUSTOM_REAL
+#ifdef ADIOS_INPUT
+    write(k_file,'(a,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)),'/kernels.bp'
+    ! debug
+    !write(*,*) 'adios kernel name: ',trim(kernel_name_adios)
+    !write(*,*) 'adios file: ',trim(k_file)
+    ! reads adios file
+    call open_file_adios_read(k_file)
+    call read_adios_array_gll(myrank,NSPEC_CRUST_MANTLE,trim(kernel_name_adios),kernel(:,:,:,:))
+    call close_file_adios_read()
+#else
     write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
                                //'/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
-    open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
-    if (ier /= 0) then
-     write(*,*) '  kernel not found: ',trim(k_file)
-     stop 'Error kernel file not found'
-    endif
-    read(IIN) kernel
-    close(IIN)
+    ! reads binary file
+    call read_kernel_binary(k_file,NSPEC_CRUST_MANTLE,kernel)
+#endif
 
     ! outputs norm of kernel
     norm = sum( kernel * kernel )
@@ -231,13 +363,7 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
       ! reads in mask
       write(k_file,'(a,i6.6,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)) &
                                  //'/proc',myrank,trim(REG)//'mask_source.bin'
-      open(IIN,file=trim(k_file),status='old',form='unformatted',action='read',iostat=ier)
-      if (ier /= 0) then
-        write(*,*) '  file not found: ',trim(k_file)
-        stop 'Error source mask file not found'
-      endif
-      read(IIN) mask_source
-      close(IIN)
+      call read_kernel_binary(k_file,NSPEC_CRUST_MANTLE,mask_source)
 
       ! masks source elements
       kernel = kernel * mask_source
@@ -247,25 +373,98 @@ subroutine sum_kernel(kernel_name,kernel_list,nker)
     total_kernel = total_kernel + kernel
   enddo
 
+  ! user output
+#ifdef ADIOS_INPUT
+  if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name_adios),' into file kernels_sum.bp'
+#else
+  if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
+#endif
+
   ! stores summed kernels
-  if(myrank==0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
-
+#ifdef ADIOS_INPUT
+  ! appends to adios file
+  write(k_file,'(a)') 'OUTPUT_SUM/' // 'kernels_sum.bp'
+  call open_file_adios_write_append(k_file,group_name)
+  call set_adios_group_size(group_size_inc)
+  ! writes previously defined ADIOS variables
+  call write_adios_array_gll(myrank,NSPEC_CRUST_MANTLE,trim(kernel_name_adios),total_kernel(:,:,:,:))
+  ! closing performs actual write
+  call close_file_adios()
+#else
   write(k_file,'(a,i6.6,a)') 'OUTPUT_SUM/proc',myrank,trim(REG)//trim(kernel_name)//'.bin'
+  call write_kernel_binary(k_file,NSPEC_CRUST_MANTLE,total_kernel)
+#endif
 
-  open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ier)
-  if (ier /= 0) then
-    write(*,*) 'Error kernel not written: ',trim(k_file)
-    stop 'Error kernel write'
-  endif
-  write(IOUT) total_kernel
-  close(IOUT)
-
-  if(myrank==0) write(*,*)
+  if (myrank == 0) write(*,*)
 
   ! frees memory
   deallocate(kernel,total_kernel)
   if (USE_SOURCE_MASK) deallocate(mask_source)
 
-end subroutine sum_kernel
+  end subroutine sum_kernel
 
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine read_kernel_binary(filename,nspec,kernel)
+
+  use tomography_par,only: NGLLX,NGLLY,NGLLZ,IIN,CUSTOM_REAL,MAX_STRING_LEN
+
+  implicit none
+
+  character(len=MAX_STRING_LEN),intent(in) :: filename
+
+  integer,intent(in) :: nspec
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: kernel
+
+  ! local parameters
+  integer :: ier
+
+  ! initializes
+  kernel(:,:,:,:) = 0._CUSTOM_REAL
+
+  ! reads in binary file
+  open(IIN,file=trim(filename),status='old',form='unformatted',action='read',iostat=ier)
+  if (ier /= 0) then
+   write(*,*) '  file not found: ',trim(filename)
+   stop 'Error file not found'
+  endif
+
+  read(IIN) kernel(:,:,:,:)
+
+  close(IIN)
+
+  end subroutine read_kernel_binary
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine write_kernel_binary(filename,nspec,kernel)
+
+  use tomography_par,only: NGLLX,NGLLY,NGLLZ,IOUT,CUSTOM_REAL,MAX_STRING_LEN
+
+  implicit none
+
+  character(len=MAX_STRING_LEN),intent(in) :: filename
+
+  integer,intent(in) :: nspec
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: kernel
+
+  ! local parameters
+  integer :: ier
+
+  ! writes out in binary format
+  open(IOUT,file=trim(filename),form='unformatted',status='unknown',action='write',iostat=ier)
+  if (ier /= 0) then
+    write(*,*) 'Error file not written: ',trim(filename)
+    stop 'Error file write'
+  endif
+
+  write(IOUT) kernel
+
+  close(IOUT)
+
+  end subroutine write_kernel_binary

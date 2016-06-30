@@ -1054,7 +1054,7 @@ print *,myrank,'adios file rank',rank
   ! defines group size
   call define_adios_scalar(group, group_size_inc, "", "NSPEC", nspec)
   local_dim = size(model2(:,:,:,:,iker))
-  do iker=1,nparams
+  do iker = 1,nparams
     call define_adios_global_array1D(group, group_size_inc,local_dim,"",trim(fname(iker)),model2(:,:,:,:,iker))
   enddo
 
