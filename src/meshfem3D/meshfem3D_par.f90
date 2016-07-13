@@ -157,7 +157,7 @@
   double precision :: Earth_mass_total
   double precision :: Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
   double precision :: distance_to_center_in_km
-  
+
   ! arrays containing the positions of the observation points in non-dimensionalized value for gravity integrals
   double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: x_observation,y_observation,z_observation
 
