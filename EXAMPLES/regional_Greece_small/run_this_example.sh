@@ -35,7 +35,7 @@ cd ../../
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
 make clean
-make all
+make -j4 all
 
 # checks exit code
 if [[ $? -ne 0 ]]; then exit 1; fi

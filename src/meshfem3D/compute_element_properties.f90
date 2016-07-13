@@ -27,19 +27,19 @@
 
 ! compute several rheological and geometrical properties for a given spectral element
   subroutine compute_element_properties(ispec,iregion_code,idoubling,ipass, &
-                         xstore,ystore,zstore,nspec,myrank, &
-                         xelm,yelm,zelm,shape3D, &
-                         rmin,rmax, &
-                         rhostore,dvpstore, &
-                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                         xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
-                         gammaxstore,gammaystore,gammazstore,nspec_actually, &
-                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
-                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
-                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                         nspec_ani,nspec_stacey, &
-                         rho_vp,rho_vs,&
-                         xigll,yigll,zigll,ispec_is_tiso)
+                                        xstore,ystore,zstore,nspec,myrank, &
+                                        xelm,yelm,zelm,shape3D, &
+                                        rmin,rmax, &
+                                        rhostore,dvpstore, &
+                                        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
+                                        gammaxstore,gammaystore,gammazstore,nspec_actually, &
+                                        c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                        c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                        c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+                                        nspec_ani,nspec_stacey, &
+                                        rho_vp,rho_vs,&
+                                        xigll,yigll,zigll,ispec_is_tiso)
 
   use meshfem3D_models_par
 
@@ -272,14 +272,14 @@
     ! CMB topography
     !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
     !     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
-    !           call add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
+    !           call add_topography_cmb(myrank,xelm,yelm,zelm)
 
     ! ICB topography
     !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
     !     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
     !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
     !     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
-    !           call add_topography_icb(myrank,xelm,yelm,zelm,RICB,RCMB)
+    !           call add_topography_icb(myrank,xelm,yelm,zelm)
   endif
 
 

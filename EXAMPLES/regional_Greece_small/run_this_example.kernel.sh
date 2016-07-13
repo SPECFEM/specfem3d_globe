@@ -40,7 +40,7 @@ cd ../../
 cp $currentdir/DATA/Par_file DATA/Par_file
 sed -i "s:SAVE_FORWARD.*:SAVE_FORWARD                    = .true.:g"  DATA/Par_file
 make clean
-make all
+make -j4 all
 
 # backup of constants setup
 cp setup/* $currentdir/OUTPUT_FILES/

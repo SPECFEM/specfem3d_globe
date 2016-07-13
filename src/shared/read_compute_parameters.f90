@@ -269,7 +269,7 @@
 
   use constants,only: &
     CUSTOM_REAL,SIZE_REAL,SIZE_DOUBLE,NUMFACES_SHARED,NUMCORNERS_SHARED, &
-    N_SLS,NGNOD,NGNOD2D,NGLLX,NGLLY
+    N_SLS,NGNOD,NGNOD2D,NGLLX,NGLLY,GRAVITY_INTEGRALS
 
   use shared_parameters
 
@@ -408,6 +408,11 @@
     if (SAVE_ALL_SEISMOS_IN_ONE_FILE .or. USE_BINARY_FOR_LARGE_FILE) &
       stop 'Please set SAVE_ALL_SEISMOS_IN_ONE_FILE and USE_BINARY_FOR_LARGE_FILE to be .false. for noise simulation'
   endif
+
+!! DK DK for gravity integrals
+  ! in the case of GRAVITY_INTEGRALS we should always use double precision
+  if (GRAVITY_INTEGRALS .and. CUSTOM_REAL /= SIZE_DOUBLE) &
+    stop 'for GRAVITY_INTEGRALS use double precision i.e. configure the code with --enable-double-precision'
 
   end subroutine rcp_check_parameters
 

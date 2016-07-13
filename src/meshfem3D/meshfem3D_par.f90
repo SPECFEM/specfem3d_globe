@@ -156,31 +156,27 @@
   ! check Earth mass and Earth center of mass computed in the final mesh
   double precision :: Earth_mass_total
   double precision :: Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
-
+  double precision :: distance_to_center_in_km
+  
   ! arrays containing the positions of the observation points in non-dimensionalized value for gravity integrals
-  ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops
   double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: x_observation,y_observation,z_observation
-  double precision, dimension(NTOTAL_OBSERVATION) :: x_observation1D,y_observation1D,z_observation1D
-  equivalence(x_observation,x_observation1D)
-  equivalence(y_observation,y_observation1D)
-  equivalence(z_observation,z_observation1D)
+
+  ! daniel: compilers don't won't like equivalence statements, as they hinder internal optimizations
+  !         let's go without it and do the 1D-loops with FORCE_VECTORIZATION when no bounds-checking is done,
+  !         i.e., when compiled with run flags (already done in other code parts)
+  !
+  ! left here for referencing original way:
+  ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops
+  !double precision, dimension(NTOTAL_OBSERVATION) :: x_observation1D,y_observation1D,z_observation1D
+  !equivalence(x_observation,x_observation1D)
+  !equivalence(y_observation,y_observation1D)
+  !equivalence(z_observation,z_observation1D)
 
   double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: lon_observation,lat_observation
 
   ! arrays containing the computed fields for gravity integrals at the observation points
-  ! the 1D equivalenced versions are for the FORCE_VECTORIZATION version of the loops
   double precision, dimension(NX_OBSERVATION,NY_OBSERVATION,NCHUNKS_MAX) :: g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz, &
                                                                             temporary_array_for_sum
-  double precision, dimension(NTOTAL_OBSERVATION) :: g_x1D,g_y1D,g_z1D,G_xx1D,G_yy1D,G_zz1D,G_xy1D,G_xz1D,G_yz1D
-  equivalence(g_x,g_x1D)
-  equivalence(g_y,g_y1D)
-  equivalence(g_z,g_z1D)
-  equivalence(G_xx,G_xx1D)
-  equivalence(G_yy,G_yy1D)
-  equivalence(G_zz,G_zz1D)
-  equivalence(G_xy,G_xy1D)
-  equivalence(G_xz,G_xz1D)
-  equivalence(G_yz,G_yz1D)
 
   ! for loop on all the slices
   integer :: iregion_code

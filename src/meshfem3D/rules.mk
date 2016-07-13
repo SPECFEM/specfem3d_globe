@@ -74,6 +74,7 @@ meshfem3D_OBJECTS = \
 	$O/get_perm_color.check.o \
 	$O/get_shape2D.check.o \
 	$O/get_shape3D.check.o \
+	$O/gravity_integrals.check.o \
 	$O/initialize_layers.check.o \
 	$O/initialize_mesher.check.o \
 	$O/lgndr.check.o \

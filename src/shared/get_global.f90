@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_global(npointot,xp,yp,zp,iglob,locval,ifseg,nglob)
+  subroutine get_global(npointot,xp,yp,zp,iglob,locval,ifseg,nglob_new)
 
 ! this routine MUST be in double precision to avoid sensitivity
 ! to roundoff errors in the coordinates of the points
@@ -43,7 +43,7 @@
 
   integer, dimension(npointot), intent(out) :: iglob,locval
   logical, dimension(npointot), intent(out) :: ifseg
-  integer, intent(out) :: nglob
+  integer, intent(out) :: nglob_new
 
   ! local variables
   integer, dimension(:), allocatable :: ninseg,idummy
@@ -56,8 +56,7 @@
   allocate(idummy(npointot),stat=ier)
   if (ier /= 0) stop 'Error while allocating idummy'
 
-  call sort_array_coordinates(npointot,xp,yp,zp,idummy,iglob,locval,ifseg, &
-                              nglob,ninseg)
+  call sort_array_coordinates(npointot,xp,yp,zp,idummy,iglob,locval,ifseg,nglob_new,ninseg)
 
   ! deallocate arrays
   deallocate(ninseg,idummy)
@@ -79,7 +78,7 @@
   implicit none
 
   integer,intent(in) :: nspec,nglob
-  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
+  integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: ibool
 
   ! local parameters
   ! mask to sort ibool

@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine create_regions_mesh(iregion_code, &
-                                 nspec,nglob_theor,npointot, &
+                                 nspec,nglob,npointot, &
                                  NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                                  NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                                  NSPEC2D_BOTTOM,NSPEC2D_TOP, &
@@ -80,11 +80,11 @@
   implicit none
 
   ! code for the four regions of the mesh
-  integer :: iregion_code
+  integer,intent(in) :: iregion_code
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer :: nspec
-  integer :: nglob_theor,npointot
+  integer,intent(in) :: nspec
+  integer,intent(in) :: nglob,npointot
 
   integer :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
   integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
@@ -97,7 +97,6 @@
 
   ! local parameters
   integer :: ier
-  integer :: nglob
 
   ! user output
   if (myrank == 0) then
@@ -163,10 +162,7 @@
       write(IMAIN,*) '  ...creating global addressing'
       call flush_IMAIN()
     endif
-    call crm_setup_indexing(nspec,nglob_theor,npointot)
-
-    ! copy the theoretical number of points for the second pass
-    nglob = nglob_theor
+    call crm_setup_indexing(nspec,nglob,npointot)
 
     ! create MPI buffers
     call synchronize_all()
@@ -242,8 +238,10 @@
                                  xigll,yigll,zigll)
 
 !! DK DK for gravity integrals
-! creation of the top observation surface if region is the crust_mantle
-    if (GRAVITY_INTEGRALS .and. iregion_code == IREGION_CRUST_MANTLE) call compute_observation_surface()
+    ! creation of the top observation surface if region is the crust_mantle
+    if (GRAVITY_INTEGRALS) then
+      if (iregion_code == IREGION_CRUST_MANTLE) call gravity_observation_surface()
+    endif
 
     ! create chunk buffers if more than one chunk
     call synchronize_all()
@@ -383,7 +381,9 @@
 
     ! save the binary files
     call synchronize_all()
+
 !! DK DK for gravity integrals
+    ! gravity integrals computation won't need mesh nor solver runs
     if (.not. GRAVITY_INTEGRALS) then
       if (myrank == 0) then
         write(IMAIN,*)
@@ -402,51 +402,60 @@
                                 iregion_code,xstore,ystore,zstore, &
                                 NSPEC2D_TOP,NSPEC2D_BOTTOM)
       endif
-    endif
+
+      ! saves MPI interface info
+      call save_arrays_solver_MPI(iregion_code)
+
+      ! boundary mesh for MOHO, 400 and 670 discontinuities
+      if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
+        ! user output
+        call synchronize_all()
+        if (myrank == 0) then
+          write(IMAIN,*)
+          write(IMAIN,*) '  ...saving boundary mesh files'
+          call flush_IMAIN()
+        endif
+        ! saves boundary file
+        if (ADIOS_FOR_ARRAYS_SOLVER) then
+          if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
+          call save_arrays_boundary_adios()
+        else
+          call save_arrays_boundary()
+        endif
+      endif
+
+      ! create AVS or DX mesh data for the slices
+      if (SAVE_MESH_FILES) then
+        ! user output
+        call synchronize_all()
+        if (myrank == 0) then
+          write(IMAIN,*)
+          write(IMAIN,*) '  ...saving AVS or DX mesh files'
+          call flush_IMAIN()
+        endif
+        call write_AVS_DX_output(nspec,npointot,iregion_code)
+      endif
+
+    endif ! .not. GRAVITY_INTEGRALS
 
     ! frees memory
     deallocate(rmassx,rmassy,rmassz)
     deallocate(b_rmassx,b_rmassy)
     deallocate(rmass_ocean_load)
-
-    ! saves MPI interface info
-!! DK DK for gravity integrals
-    if (.not. GRAVITY_INTEGRALS) call save_arrays_solver_MPI(iregion_code)
-
     ! frees MPI arrays memory
     call crm_free_MPI_arrays(iregion_code)
 
-    ! boundary mesh for MOHO, 400 and 670 discontinuities
-!! DK DK for gravity integrals
-    if (SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE .and. .not. GRAVITY_INTEGRALS) then
-      ! user output
-      call synchronize_all()
-      if (myrank == 0) then
-        write(IMAIN,*)
-        write(IMAIN,*) '  ...saving boundary mesh files'
-        call flush_IMAIN()
-      endif
-      ! saves boundary file
-      if (ADIOS_FOR_ARRAYS_SOLVER) then
-        if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
-        call save_arrays_boundary_adios()
-      else
-        call save_arrays_boundary()
-      endif
-
-    endif
-
     ! compute volume, bottom and top area of that part of the slice, and then the total
     call compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
-                            xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
-                            NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
-                            volume_total,RCMB,RICB,R_CENTRAL_CUBE)
+                                   xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+                                   NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
+                                   volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
     ! compute Earth mass of that part of the slice, and then total Earth mass
     call compute_Earth_mass(myrank,Earth_mass_total, &
-        Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
-        nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
-        etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
+                            Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
+                            nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
+                            etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
 
 !! DK DK for gravity integrals
     if (GRAVITY_INTEGRALS) then
@@ -454,26 +463,14 @@
       if (myrank == 0) then
         write(IMAIN,*)
         write(IMAIN,*) '  ...computing gravity integrals'
-        call flush_IMAIN()
-      endif
-
-      ! compute gravity integrals of that part of the slice, and then total integrals for the whole Earth
-      call compute_gravity_integrals(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
-          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
-
-    endif
-
-    ! create AVS or DX mesh data for the slices
-!! DK DK for gravity integrals
-    if (SAVE_MESH_FILES .and. .not. GRAVITY_INTEGRALS) then
-      ! user output
-      call synchronize_all()
-      if (myrank == 0) then
         write(IMAIN,*)
-        write(IMAIN,*) '  ...saving AVS or DX mesh files'
         call flush_IMAIN()
       endif
-      call write_AVS_DX_output(nspec,npointot,iregion_code)
+      ! compute gravity integrals of that part of the slice, and then total integrals for the whole Earth
+      call gravity_compute_integrals(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
+                                     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
+                                     rhostore,idoubling)
+
     endif
 
   case default
@@ -909,7 +906,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine crm_setup_indexing(nspec,nglob_theor,npointot)
+  subroutine crm_setup_indexing(nspec,nglob,npointot)
 
 ! creates global indexing array ibool
 
@@ -924,7 +921,7 @@
   implicit none
 
   ! number of spectral elements in each block
-  integer,intent(in) :: nspec,npointot,nglob_theor
+  integer,intent(in) :: nspec,npointot,nglob
 
   ! local parameters
   ! variables for creating array ibool
@@ -974,20 +971,20 @@
   deallocate(locval,ifseg)
 
   ! check that number of points found equals theoretical value
-  if (nglob_new /= nglob_theor) then
-    write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob_theor = ',&
-                    myrank,nglob_new,nglob_theor
+  if (nglob_new /= nglob) then
+    write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob = ',&
+                    myrank,nglob_new,nglob
     call exit_MPI(myrank,errmsg)
   endif
-  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) &
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
     call exit_MPI(myrank,'incorrect global numbering')
 
   ! creates a new indirect addressing to reduce cache misses in memory access in the solver
   ! this is *critical* to improve performance in the solver
-  call get_global_indirect_addressing(nspec,nglob_theor,ibool)
+  call get_global_indirect_addressing(nspec,nglob,ibool)
 
   ! checks again
-  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob_theor) &
+  if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
     call exit_MPI(myrank,'incorrect global numbering after sorting')
 
   end subroutine crm_setup_indexing
@@ -1130,7 +1127,7 @@
   ! allocates temporary global mesh
   allocate(xstore_glob(nglob),ystore_glob(nglob),zstore_glob(nglob), &
            stat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating temporary global mesh arrays')
+  if (ier /= 0) call exit_mpi(myrank,'Error allocating temporary global mesh arrays')
 
   ! fill custom_real arrays
   do ispec = 1,nspec

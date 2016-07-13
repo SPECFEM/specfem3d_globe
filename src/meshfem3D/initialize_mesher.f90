@@ -84,11 +84,6 @@
     call exit_MPI(myrank,'wrong number of MPI processes')
   endif
 
-!! DK DK for gravity integrals
-  ! in the case of GRAVITY_INTEGRALS we should always use double precision
-  if (GRAVITY_INTEGRALS .and. CUSTOM_REAL /= SIZE_DOUBLE) &
-    call exit_MPI(myrank,'for GRAVITY_INTEGRALS use double precision i.e. configure the code with --enable-double-precision')
-
   ! synchronizes processes
   call synchronize_all()
 
@@ -98,8 +93,14 @@
 
   if (NCHUNKS /= 6) call euler_angles(rotation_matrix,CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH)
 
+  ! ADIOS
   if (ADIOS_ENABLED) then
     call initialize_adios()
+  endif
+
+  ! gravity integrals
+  if (GRAVITY_INTEGRALS) then
+    call gravity_initialize_integrals()
   endif
 
   end subroutine initialize_mesher

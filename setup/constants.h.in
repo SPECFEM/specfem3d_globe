@@ -449,6 +449,7 @@
 !! for gravity integrals
 !!
 !!-----------------------------------------------------------
+! (for using gravity integral computations, please make sure you compile with double-precision --enable-double-precision)
 
   logical, parameter :: GRAVITY_INTEGRALS = .false.
 
@@ -497,9 +498,6 @@
 
 ! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
   integer, parameter :: NSPEC_DISPLAY_INTERVAL = 100
-
-! for the FORCE_VECTORIZATION 1D version of some loops
-  integer, parameter :: NTOTAL_OBSERVATION = NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX
 
 
 !!-----------------------------------------------------------
