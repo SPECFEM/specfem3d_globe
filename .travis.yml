@@ -23,25 +23,25 @@ env:
     #   TEST    - flags used for configuration
     #   TESTCOV - determines whether or not (0/1) code coverage flags are used
 
-    # run default
+    # run default test (with > make tests)
     - TEST="" TESTCOV=0 TESTMAKE=0
 
-    # run vectorization
-    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=0
-
-    # run vectorization & openmp
-    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=0
-
-    # run vectorization & openmp, using coverage flags
-    - TEST="--enable-vectorization" TESTCOV=1 TESTMAKE=0
-
-    # run default test (with > make tests)
+    # run default (regional)
     - TEST="" TESTCOV=0 TESTMAKE=1
+
+    # run vectorization (regional)
+    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=1
+
+    # run vectorization & openmp (regional)
+    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=1
+
+    # run vectorization & openmp, using coverage flags (regional)
+    - TEST="--enable-vectorization" TESTCOV=1 TESTMAKE=1
 
     # run example 2 (global)
     - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=2
 
-    # run regional example with debug bounds checking
+    # run example with debug bounds checking (regional)
     - TEST="--enable-debug" TESTCOV=0 TESTMAKE=3
 
 before_install:
@@ -96,9 +96,10 @@ script:
   - |
     my_test(){
       echo "testing seismograms:"
-      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
+      ln -s $WORKDIR/utils/compare_seismogram_correlations.py
+      ./compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
       if [[ $? -ne 0 ]]; then exit 1; fi
-      ../../utils/compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
+      ./compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
       if [[ $? -ne 0 ]]; then exit 1; fi
       rm -rf OUTPUT_FILES/
     }
@@ -115,6 +116,9 @@ script:
       ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
     fi
 
+  # we need to output to console output, otherwise tests will fail by timeout
+  - sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
+
   # compilation (only cleaning)
   - make clean
 
@@ -123,37 +127,39 @@ script:
   ###########################################################
   # testing small example (short & quick for all configurations)
   - |
-    if [ "$TESTMAKE" == "1" ]; then
+    # chooses example directory
+    case "$TESTMAKE" in
+    0) dir=./ ;;
+    1) dir=EXAMPLES/regional_Greece_small/ ;;
+    2) dir=EXAMPLES/global_small/ ;;
+    3) dir=EXAMPLES/regional_Greece_small/ ;;
+    *) dir=EXAMPLES/regional_Greece_small/ ;;
+    esac
+    # runs test
+    echo "##########################################################"
+    echo "test directory: $dir"
+    echo "##########################################################"
+    # changes to example directory
+    cd $dir
+    if [ "$TESTMAKE" == "0" ]; then
       # runs default tests
       make tests
     else
-      # default
-      dir=EXAMPLES/regional_Greece_small/
-      if [ "$TESTMAKE" == "2" ]; then
-        dir=EXAMPLES/global_small/
-      fi
-      echo "##########################################################"
-      echo "test directory: $dir"
-      echo "##########################################################"
-      # we need to output to console output, otherwise tests will fail by timeout
-      sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
-      # changes to example directory
-      cd $dir
       # limit number of time steps
-      if [ "$TESTMAKE" == "0" ]; then
-        sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.75:" DATA/Par_file
-      elif [ "$TESTMAKE" == "2" ]; then
+      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
+      if [ "$TESTMAKE" == "2" ]; then
         sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
       fi
       if [ "$TESTMAKE" == "3" ] || [ "$TESTCOV" == "1" ]; then
         sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
       fi
+      # default script
       ./run_this_example.sh
       # compares seismograms
       if [ ! "$TESTMAKE" == "3" ] && [ ! "$TESTCOV" == "1" ]; then
         my_test
       fi
-      cd ../../
+      cd $WORKDIR
     fi
 
   # additional code coverage testing
@@ -165,7 +171,7 @@ script:
       cd EXAMPLES/global_small/
       sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
       ./run_this_example.sh
-      cd ../../
+      cd $WORKDIR
     fi
 
   # done

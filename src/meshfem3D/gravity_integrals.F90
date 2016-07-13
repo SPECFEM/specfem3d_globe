@@ -58,8 +58,10 @@
       write(IMAIN,*) 'only computing center of mass'
     if (COMPUTE_CRUST_CONTRIB_ONLY) &
       write(IMAIN,*) 'only computing crust contribution'
-    if (SHIFT_TO_THIS_CENTER_OF_MASS) &
-      write(IMAIN,*) 'shifting to center of mass x/y/z =  ',sngl(x_shift),'/',sngl(y_shift),'/',sngl(z_shift)
+    if (SHIFT_TO_THIS_CENTER_OF_MASS) then
+      write(IMAIN,*) 'shifting to center of mass:'
+      write(IMAIN,*) '  new center position x/y/z =  ',sngl(x_shift),'/',sngl(y_shift),'/',sngl(z_shift)
+    endif
     write(IMAIN,*) ''
     write(IMAIN,*) 'array size for number of observation nx/ny = ',NX_OBSERVATION,NY_OBSERVATION
     write(IMAIN,*) '***'
