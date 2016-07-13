@@ -1249,11 +1249,11 @@
 
   implicit none
 
-  integer :: myrank
+  integer,intent(in) :: myrank
 
-  double precision :: xelm(NGNOD)
-  double precision :: yelm(NGNOD)
-  double precision :: zelm(NGNOD)
+  double precision,intent(inout) :: xelm(NGNOD)
+  double precision,intent(inout) :: yelm(NGNOD)
+  double precision,intent(inout) :: zelm(NGNOD)
 
   ! PREM reference values
   double precision :: RTOPDDOUBLEPRIME_ = 3630000.d0
@@ -1276,8 +1276,8 @@
   do ia = 1,NGNOD
 
     x = xelm(ia)
-    y = xelm(ia)
-    z = xelm(ia)
+    y = yelm(ia)
+    z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
     call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
@@ -1329,8 +1329,8 @@
 
   implicit none
 
-  double precision :: lat,lon
-  double precision :: topocmb
+  double precision,intent(in) :: lat,lon
+  double precision,intent(out) :: topocmb
 
   ! local parameters
   integer :: l

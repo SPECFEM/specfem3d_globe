@@ -25,21 +25,20 @@
 !
 !=====================================================================
 
-  subroutine add_topography_cmb(myrank,xelm,yelm,zelm,RTOPDDOUBLEPRIME,RCMB)
+  subroutine add_topography_cmb(myrank,xelm,yelm,zelm)
 
 ! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
 
   use constants
+  use meshfem3D_par,only: RTOPDDOUBLEPRIME,RCMB
 
   implicit none
 
-  integer :: myrank
+  integer,intent(in) :: myrank
 
-  double precision :: xelm(NGNOD)
-  double precision :: yelm(NGNOD)
-  double precision :: zelm(NGNOD)
-
-  double precision :: RTOPDDOUBLEPRIME,RCMB
+  double precision,intent(inout) :: xelm(NGNOD)
+  double precision,intent(inout) :: yelm(NGNOD)
+  double precision,intent(inout) :: zelm(NGNOD)
 
   ! local parameters
   integer :: ia
@@ -54,14 +53,16 @@
   do ia = 1,NGNOD
 
     x = xelm(ia)
-    y = xelm(ia)
-    z = xelm(ia)
+    y = yelm(ia)
+    z = zelm(ia)
 
     ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
     call xyz_2_rlatlon_dble(x,y,z,r,lat,lon)
 
     ! compute topography on CMB; routine subtopo_cmb needs to be supplied by the user
+    ! (see for example routine subtopo_sh_cmb() in model_full_sh.f90)
     !   call subtopo_cmb(lat,lon,topocmb)
+    ! until then, no topography pertubations...
     topocmb = 0.0d0
 
     ! non-dimensionalize the topography, which is in km
