@@ -402,10 +402,17 @@
 
     call ASDF_write_quakeml_f(current_asdf_handle, trim(quakeml) // C_NULL_CHAR, ier)
     call ASDF_write_provenance_data_f(current_asdf_handle, provenance(1:len_prov+1), ier)
-    call read_file("setup/constants.h", sf_constants, len_constants)
-    call read_file("DATA/Par_file", sf_parfile, len_Parfile)
-    call ASDF_write_auxiliary_data_f(current_asdf_handle, trim(sf_constants) // C_NULL_CHAR,&
-                                   trim(sf_parfile(1:len_Parfile)) // C_NULL_CHAR, ier)
+
+    if (myrank == 0) then
+      call read_file("setup/constants.h", sf_constants, len_constants)
+      call read_file("DATA/Par_file", sf_parfile, len_Parfile)
+    endif
+
+    ! broadcast the files read and their lengths read on the master to all slaves 
+    call bcast_all_singlei(len_constants)
+    call bcast_all_singlei(len_Parfile)
+    call bcast_all_ch_array(sf_constants, 1, len_constants)
+    call bcast_all_ch_array(sf_parfile, 1, len_Parfile)
 
     call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
 
