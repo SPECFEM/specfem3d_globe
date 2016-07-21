@@ -9,7 +9,7 @@ module BOAST
     b_eps_trace_over_3 = Real("b_eps_trace_over_3",:dir => :in)
     b_epsdev           = Real("b_epsdev",          :dir => :in, :dim => [Dim(5)], :register => true )
 
-    sub = Procedure(function_name, [prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev], [], :local => true) {
+    sub = Procedure(function_name, [prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev], :local => true) {
       decl eps   = Real("eps", :dim => [Dim(6)], :allocate => true )
       decl b_eps = Real("b_eps", :dim => [Dim(6)], :allocate => true )
       decl p = Int("p")

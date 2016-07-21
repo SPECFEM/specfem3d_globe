@@ -23,7 +23,7 @@ module BOAST
     v.push epsilon_trace_over_3  = Real("epsilon_trace_over_3",          :dir => :out, :dim => [Dim(1)], :register => true )
 
 
-    sub = Procedure(function_name, v, [], :local => true) {
+    sub = Procedure(function_name, v, :local => true) {
       decl tx = Int("tx")
       decl k = Int("K")
       decl j = Int("J")

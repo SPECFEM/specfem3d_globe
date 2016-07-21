@@ -16,7 +16,7 @@ module BOAST
 
     ngll3 = Int("NGLL3", :const => n_gll3)
 
-    p = Procedure(function_name, v, [], :local => true) {
+    p = Procedure(function_name, v, :local => true) {
       decl two_omega_deltat = Real("two_omega_deltat")
       decl cos_two_omega_t  = Real("cos_two_omega_t")
       decl sin_two_omega_t  = Real("sin_two_omega_t")
@@ -173,21 +173,21 @@ module BOAST
       if get_lang == CL then
         get_output.puts "#ifdef #{use_textures_fields}"
           get_output.puts "#ifdef #{use_textures_constants}"
-            p = Procedure(function_name, v+textures_fields+textures_constants, constants)
+            p = Procedure(function_name, v+textures_fields+textures_constants, :constants => constants)
             open p
             set_indent_level(0)
           get_output.puts "#else"
-            p = Procedure(function_name, v+textures_fields, constants)
+            p = Procedure(function_name, v+textures_fields, :constants => constants)
             open p
             set_indent_level(0)
           get_output.puts "#endif"
         get_output.puts "#else"
           get_output.puts "#ifdef #{use_textures_constants}"
-            p = Procedure(function_name, v+textures_constants, constants)
+            p = Procedure(function_name, v+textures_constants, :constants => constants)
             open p
             set_indent_level(0)
           get_output.puts "#else"
-            p = Procedure(function_name, v, constants)
+            p = Procedure(function_name, v, :constants => constants)
             open p
           get_output.puts "#endif"
         get_output.puts "#endif"
@@ -201,7 +201,7 @@ module BOAST
           decl d_hprimewgll_xx_oc_tex.sampler
         get_output.puts "#endif"
       else
-        p = Procedure(function_name, v, constants)
+        p = Procedure(function_name, v, :constants => constants)
         open p
       end
       decl bx = Int("bx")
