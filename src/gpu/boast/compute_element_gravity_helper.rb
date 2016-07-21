@@ -34,7 +34,7 @@ module BOAST
                                      Real("rho_s_H#{n}", :dir => :inout, :dim => [Dim()], :private => true )
     }
 
-    p = Procedure(function_name, v, [], :local => true) {
+    p = Procedure(function_name, v, :local => true) {
       decl radius = Real("radius"), theta = Real("theta"), phi = Real("phi")
       decl cos_theta = Real("cos_theta"), sin_theta = Real("sin_theta"), cos_phi = Real("cos_phi"), sin_phi = Real("sin_phi")
       decl cos_theta_sq = Real("cos_theta_sq"), sin_theta_sq = Real("sin_theta_sq"), cos_phi_sq = Real("cos_phi_sq"), sin_phi_sq = Real("sin_phi_sq")

@@ -16,7 +16,7 @@ module BOAST
     ngll3        = Int("NGLL3",        :const => n_gll3)
     ngll3_padded = Int("NGLL3_PADDED", :const => n_gll3_padded)
 
-    p = Procedure(function_name, v, [],:local => true) {
+    p = Procedure(function_name, v, :local => true) {
       decl *templ    = [Real("temp1l"),    Real("temp2l"),    Real("temp3l")]
       decl *hp       = [Real("hp1"),       Real("hp2"),       Real("hp3")]
       decl *xil      = [Real("xixl"),      Real("xiyl"),      Real("xizl")]
