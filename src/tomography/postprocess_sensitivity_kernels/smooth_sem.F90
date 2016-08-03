@@ -633,7 +633,7 @@ program smooth_sem_globe
 
       ! fills kd-tree arrays
       do ispec = 1,NSPEC_AB
-        ! adds node index ( index points to same ispec for all internal gll points)
+        ! adds node index ( index points to same ispec for all internal GLL points)
         kdtree_nodes_index(ispec) = ispec
 
         ! adds node location

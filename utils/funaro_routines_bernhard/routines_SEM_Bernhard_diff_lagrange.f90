@@ -13,11 +13,11 @@ integer N,i,j,k
 
 
 !Calculate the Gauss-Lobatto-Legendre Quadrature points and the values of the
-!Legendre polynomials VN at the gll nodes
+!Legendre polynomials VN at the GLL nodes
 
 call main_pol(xi,N,VN)
 
-!calculate the weights rho(i) at every gll node for the gll integration rule
+!calculate the weights rho(i) at every GLL node for the GLL integration rule
 
 rho = 2 / ( float((N+1)*N) * VN**2)
 

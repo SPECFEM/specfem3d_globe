@@ -251,7 +251,7 @@
             xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
             gll_data,prname_file)
 
-! external mesh routine for saving vtk files for custom_real values on all gll points
+! external mesh routine for saving vtk files for custom_real values on all GLL points
 
   implicit none
 
@@ -263,7 +263,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
 
-! gll data values array
+! GLL data values array
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: gll_data
 
 ! file name

@@ -1079,7 +1079,7 @@ contains
 
   subroutine write_adios_array_gll(rank,nspec,array_name,array_gll)
 
-! writes a gll array
+! writes a GLL array
 
   use adios_helpers_writers_mod,only: write_adios_global_1d_array
 

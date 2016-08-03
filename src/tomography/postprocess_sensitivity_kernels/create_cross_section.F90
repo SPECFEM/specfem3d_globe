@@ -311,7 +311,7 @@
   enddo
 
   ! kdtree search:
-  ! searches closest element using internal gll points
+  ! searches closest element using internal GLL points
 
   ! console output
   if (myrank == 0) then
@@ -346,7 +346,7 @@
     print *,'total mpi processes: ',sizeprocs
     print *,''
     print *,'location search by : kd-tree search'
-    print *,'  uses internal gll points'
+    print *,'  uses internal GLL points'
     print *,''
     if (TOPOGRAPHY) then
       print *,'uses topography'
@@ -589,7 +589,7 @@
 
   ! builds search tree
   ! counts total number of points in this slice
-  ! takes all internal gll points ( 2 to NGLLX-1 ) to build kd-tree points
+  ! takes all internal GLL points ( 2 to NGLLX-1 ) to build kd-tree points
   kdtree_num_nodes = NSPEC_CRUST_MANTLE * (NGLLX-2) * (NGLLY-2) * (NGLLZ-2)
 
   ! debug
@@ -612,7 +612,7 @@
   inodes = 0
   do ispec = 1,NSPEC_CRUST_MANTLE
     ! sets up tree nodes
-    ! all internal gll points
+    ! all internal GLL points
     do k = 2,NGLLZ-1
       do j = 2,NGLLY-1
         do i = 2,NGLLX-1
@@ -622,7 +622,7 @@
           inodes = inodes + 1
           if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
 
-          ! adds node index ( index points to same ispec for all internal gll points)
+          ! adds node index ( index points to same ispec for all internal GLL points)
           kdtree_nodes_index(inodes) = ispec
 
           ! adds node location
@@ -694,7 +694,7 @@
     print *,'  min/max values = ',min_val,max_val
     print *,''
     print *,'  maximum distance to target point = ',maxval(model_distance2(:)) * R_EARTH_KM,'(km)'
-    print *,'  maximum model value difference between closest gll point = ',val
+    print *,'  maximum model value difference between closest GLL point = ',val
     print *,''
   endif
   call synchronize_all()
@@ -1604,7 +1604,7 @@
 
     implicit none
 
-    ! checks closest gll point
+    ! checks closest GLL point
     iglob_min = ibool(i_selected,j_selected,k_selected,ispec_selected)
     x_found = xstore(iglob_min)
     y_found = ystore(iglob_min)
@@ -1612,10 +1612,10 @@
 
     ! checks distance
     if (DO_WARNING) then
-      ! distance to closest gll (still normalized)
+      ! distance to closest GLL (still normalized)
       dist = sqrt((x_found-x_target)**2 + (y_found-y_target)**2 + (z_found-z_target)**2)
       if (dist > 2 * typical_size) then
-        print *,'Warning: rank ',myrank,' - large gll distance: ',dist * R_EARTH_KM,'(km)', &
+        print *,'Warning: rank ',myrank,' - large GLL distance: ',dist * R_EARTH_KM,'(km)', &
                'element size:',element_size*R_EARTH_KM,'typical size:',typical_size * R_EARTH_KM
         print *,'target location:',xyz_target(:)
         print *,'target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
@@ -1623,11 +1623,11 @@
         print *,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
         print *,'minimum distance gll:',dist_min,'(km)'
         ! debug
-        !stop 'Error gll model value invalid'
+        !stop 'Error GLL model value invalid'
       endif
       ! debug
       !if (myrank == 0 .and. iglob_min < 100) &
-      !  print *,'dist_min gll point: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+      !  print *,'dist_min GLL point: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
     endif
 
     end subroutine check_location
@@ -1652,7 +1652,7 @@
       ! sets new model value
       model2(iglob) = val
 
-      ! checks difference of interpolated value with model value of closest gll point
+      ! checks difference of interpolated value with model value of closest GLL point
       val_initial = model(i_selected,j_selected,k_selected,ispec_selected)
       if (abs(val - val_initial ) > abs(model_maxdiff)) model_maxdiff = val - val_initial
 
@@ -1668,8 +1668,8 @@
           print *,'  interpolation       :',xi,eta,gamma
           print *,'  target location:',xyz_target(:)
           print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
-          print *,'  gll location   :',x_found,y_found,z_found
-          print *,'  gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
+          print *,'  GLL location   :',x_found,y_found,z_found
+          print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
           print *,'  distance gll:',dist_min * R_EARTH_KM,'(km)'
           !stop 'Error model value invalid'
         endif
@@ -1774,7 +1774,7 @@
   iy_initial_guess = 0
   iz_initial_guess = 0
 
-  ! finds closest interior gll point
+  ! finds closest interior GLL point
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -1857,7 +1857,7 @@
   deta = 0.d0
   dgamma = 0.d0
 
-  ! loop leads to invalid jacobian... probably some gll points are too far outside of the selected element
+  ! loop leads to invalid jacobian... probably some GLL points are too far outside of the selected element
   do iter_loop = 1,2*NUM_ITER
 
     ! recompute jacobian for the new point
