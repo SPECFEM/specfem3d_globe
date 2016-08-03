@@ -414,6 +414,10 @@
     call bcast_all_ch_array(sf_constants, 1, len_constants)
     call bcast_all_ch_array(sf_parfile, 1, len_Parfile)
 
+    call ASDF_write_auxiliary_data_f(current_asdf_handle, trim(sf_constants) //
+                                     C_NULL_CHAR, trim(sf_parfile(1:len_Parfile)) //
+                                     C_NULL_CHAR, ier)
+
     call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
 
     do k = 1, mysize ! Need to set up ASDF container on all processers
