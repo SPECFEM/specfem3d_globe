@@ -342,7 +342,7 @@
   double precision z
   integer n
 
-  double precision P1,P2,P1D,P2D,P3D,FK,P3
+  double precision P1,P2,P1D,P2D,P3D,DBLE_K,P3
   integer k
 
   P1   = 1.d0
@@ -352,9 +352,9 @@
   P3D  = 1.d0
 
   do K = 1, N-1
-    FK  = dble(K)
-    P3  = ((2.d0*FK+1.d0)*Z*P2 - FK*P1)/(FK+1.d0)
-    P3D = ((2.d0*FK+1.d0)*P2 + (2.d0*FK+1.d0)*Z*P2D - FK*P1D) / (FK+1.d0)
+    DBLE_K  = dble(K)
+    P3  = ((2.d0*DBLE_K+1.d0)*Z*P2 - DBLE_K*P1)/(DBLE_K+1.d0)
+    P3D = ((2.d0*DBLE_K+1.d0)*P2 + (2.d0*DBLE_K+1.d0)*Z*P2D - DBLE_K*P1D) / (DBLE_K+1.d0)
     P1  = P2
     P2  = P3
     P1D = P2D
@@ -382,7 +382,7 @@
   double precision z
   integer n
 
-  double precision P1,P2,P3,FK
+  double precision P1,P2,P3,DBLE_K
   integer k
 
   P1   = 1.d0
@@ -390,8 +390,8 @@
   P3   = P2
 
   do K = 1, N-1
-    FK  = dble(K)
-    P3  = ((2.d0*FK+1.d0)*Z*P2 - FK*P1)/(FK+1.d0)
+    DBLE_K  = dble(K)
+    P3  = ((2.d0*DBLE_K+1.d0)*Z*P2 - DBLE_K*P1)/(DBLE_K+1.d0)
     P1  = P2
     P2  = P3
   enddo
