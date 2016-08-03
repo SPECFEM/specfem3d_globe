@@ -25,7 +25,7 @@ module BOAST
     ngll3 = Int("NGLL3", :const => n_gll3)
     nsls  = Int("N_SLS", :const => n_sls)
 
-    p = Procedure(function_name, v, [], :local => true) {
+    p = Procedure(function_name, v, :local => true) {
       decl offset = Int("offset")
       decl i_sls  = Int("i_sls")
       decl r_xx_val = Real("R_xx_val")

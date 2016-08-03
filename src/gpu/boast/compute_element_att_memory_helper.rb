@@ -41,7 +41,7 @@ module BOAST
     ngll3_padded = Int("NGLL3_PADDED", :const => n_gll3_padded)
     nsls  = Int("N_SLS", :const => n_sls)
 
-    p = Procedure(function_name, v, [], :local => true) {
+    p = Procedure(function_name, v, :local => true) {
       decl offset = Int("offset")
       decl i_sls  = Int("i_sls")
       decl mul = Real("mul")

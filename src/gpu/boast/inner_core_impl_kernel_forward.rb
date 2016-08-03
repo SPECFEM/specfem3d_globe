@@ -59,7 +59,7 @@ module BOAST
     v.push sigma_xz = Real("sigma_xz", :dir => :out, :dim => [Dim()], :private => true )
     v.push sigma_yz = Real("sigma_yz", :dir => :out, :dim => [Dim()], :private => true )
 
-    p = Procedure( function_name, v, [], :local => true ) {
+    p = Procedure( function_name, v, :local => true ) {
       c = (0..5).collect { |indx1|
             (0..5).collect { |indx2|
               if (indx2 < indx1) then
@@ -132,7 +132,7 @@ module BOAST
     v.push sigma_xz               = Real("sigma_xz",           :dir => :out, :dim => [Dim()], :private => true )
     v.push sigma_yz               = Real("sigma_yz",           :dir => :out, :dim => [Dim()], :private => true )
 
-    p = Procedure( function_name, v, [], :local => true ) {
+    p = Procedure( function_name, v, :local => true ) {
       decl lambdal = Real("lambdal"), mul = Real("mul"), lambdalplus2mul = Real("lambdalplus2mul"), kappal = Real("kappal")
 
       print kappal === d_kappavstore[offset]
@@ -185,7 +185,7 @@ module BOAST
     v.push sigma_xz               = Real("sigma_xz",           :dir => :out, :dim => [Dim()], :private => true )
     v.push sigma_yz               = Real("sigma_yz",           :dir => :out, :dim => [Dim()], :private => true )
 
-    p = Procedure( function_name, v, [], :local => true ) {
+    p = Procedure( function_name, v, :local => true ) {
       decl kappavl = Real("kappavl"), muvl = Real("muvl"), kappahl = Real("kappahl"), muhl = Real("muhl")
       decl rhovpvsq = Real("rhovpvsq"), rhovphsq = Real("rhovphsq"), rhovsvsq = Real("rhovsvsq"), rhovshsq = Real("rhovshsq"), eta_aniso = Real("eta_aniso")
       decl costheta = Real("costheta"), sintheta = Real("sintheta"), cosphi = Real("cosphi"), sinphi = Real("sinphi")
@@ -601,21 +601,21 @@ module BOAST
       if get_lang == CL then
         get_output.puts "#ifdef #{use_textures_fields}"
           get_output.puts "#ifdef #{use_textures_constants}"
-            p = Procedure(function_name, v+textures_fields+textures_constants, constants, :qualifiers => qualifiers)
+            p = Procedure(function_name, v+textures_fields+textures_constants, :constants => constants, :qualifiers => qualifiers)
             open p
             set_indent_level(0)
           get_output.puts "#else"
-            p = Procedure(function_name, v+textures_fields, constants, :qualifiers => qualifiers)
+            p = Procedure(function_name, v+textures_fields, :constants => constants, :qualifiers => qualifiers)
             open p
             set_indent_level(0)
           get_output.puts "#endif"
         get_output.puts "#else"
           get_output.puts "#ifdef #{use_textures_constants}"
-            p = Procedure(function_name, v+textures_constants, constants, :qualifiers => qualifiers)
+            p = Procedure(function_name, v+textures_constants, :constants => constants, :qualifiers => qualifiers)
             open p
             set_indent_level(0)
           get_output.puts "#else"
-            p = Procedure(function_name, v, constants, :qualifiers => qualifiers)
+            p = Procedure(function_name, v, :constants => constants, :qualifiers => qualifiers)
             open p
           get_output.puts "#endif"
         get_output.puts "#endif"
@@ -629,7 +629,7 @@ module BOAST
           decl d_hprimewgll_xx_tex.sampler
         get_output.puts "#endif"
       else
-        p = Procedure(function_name, v, constants, :qualifiers => qualifiers)
+        p = Procedure(function_name, v, :constants => constants, :qualifiers => qualifiers)
         open p
       end
 

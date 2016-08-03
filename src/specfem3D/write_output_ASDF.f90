@@ -408,7 +408,7 @@
       call read_file("DATA/Par_file", sf_parfile, len_Parfile)
     endif
 
-    ! broadcast the files read and their lengths read on the master to all slaves 
+    ! broadcast the files read and their lengths read on the master to all slaves
     call bcast_all_singlei(len_constants)
     call bcast_all_singlei(len_Parfile)
     call bcast_all_ch_array(sf_constants, 1, len_constants)
