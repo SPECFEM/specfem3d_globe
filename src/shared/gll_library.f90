@@ -16,14 +16,16 @@
 !
 ! This program is distributed in the hope that it will be useful,
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
-! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
 ! GNU General Public License for more details.
 !
 ! You should have received a copy of the GNU General Public License along
 ! with this program; if not, write to the Free Software Foundation, Inc.,
 ! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
 !
-!=====================================================================
+! The full text of the license is available in file "LICENSE".
+!
+!========================================================================
 
 !=======================================================================
 !
@@ -32,6 +34,8 @@
 !  Department of Mechanical Engineering
 !
 !=======================================================================
+
+! note: this version uses zwgljd() with double precision arguments
 
   double precision function endw1(n,alpha,beta)
 
@@ -530,7 +534,7 @@
 
   implicit none
 
-  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0
+  double precision, parameter :: zero=0.d0,one=1.d0,two=2.d0,tol_zero=1.d-30
 
   integer np
   double precision alpha,beta
@@ -569,8 +573,11 @@
   z(1)  = - one
   z(np) =  one
 
-! if number of points is odd, the middle abscissa is exactly zero
-  if (mod(np,2) /= 0) z((np-1)/2+1) = zero
+! note: Jacobi polynomials with (alpha,beta) equal to zero become Legendre polynomials.
+!       for Legendre polynomials, if number of points is odd, the middle abscissa is exactly zero
+  if (abs(alpha) < tol_zero .and. abs(beta) < tol_zero) then
+    if (mod(np,2) /= 0) z((np-1)/2+1) = zero
+  endif
 
 ! weights
   do i=2,np-1
@@ -584,4 +591,62 @@
   w(np) = endw2(n,alpha,beta)/(two*pd)
 
   end subroutine zwgljd
+
+
+!
+!------------------------------------------------------------------------
+!
+
+  double precision function pnglj(z,n)
+
+!------------------------------------------------------------------------
+!
+!     Compute the value of the Nth order polynomial of the
+!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.
+!
+!------------------------------------------------------------------------
+
+  implicit none
+  include "constants.h"
+
+  double precision z
+  integer n
+  double precision, external :: pnleg
+
+  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)
+    pnglj = (pnleg(z,n)+pnleg(z,n+1))/(ONE+z)
+  else
+    pnglj = (dble(n)+ONE)*(-1)**n
+  endif
+
+  end function pnglj
+
+!
+!------------------------------------------------------------------------
+!
+
+  double precision function pndglj(z,n)
+
+!------------------------------------------------------------------------
+!
+!     Compute the value of the derivative of Nth order polynomial of the
+!     Gauss-Lobatto-Jacobi (0,1) at Z. from Legendre polynomials.
+!
+!------------------------------------------------------------------------
+
+  implicit none
+  include "constants.h"
+
+  double precision z
+  integer n
+  double precision, external :: pnleg, pndleg
+
+  if (abs(z+1.d0) > TINYVAL) then  ! if (z /= -1.d0)
+    pndglj = (pndleg(z,n)+pndleg(z,n+1))/(ONE+z) - (pnleg(z,n)+pnleg(z,n+1))/((ONE+z)**2)
+  else
+    pndglj = pnleg(-1.d0,n)+pnleg(-1.d0,n+1)
+  endif
+
+  end function pndglj
+
 
