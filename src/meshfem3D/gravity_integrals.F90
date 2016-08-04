@@ -47,11 +47,11 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     write(IMAIN,*) '***'
     write(IMAIN,*) 'gravity integrals computation'
     write(IMAIN,*) '***'
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     if (REUSE_EXISTING_OBSERVATION_SURF) &
       write(IMAIN,*) 'reusing existing observation surface'
     if (ONLY_COMPUTE_CENTER_OF_MASS) &
@@ -62,10 +62,10 @@
       write(IMAIN,*) 'shifting to center of mass:'
       write(IMAIN,*) '  new center position x/y/z =  ',sngl(x_shift),'/',sngl(y_shift),'/',sngl(z_shift)
     endif
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     write(IMAIN,*) 'array size for number of observation nx/ny = ',NX_OBSERVATION,NY_OBSERVATION
     write(IMAIN,*) '***'
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

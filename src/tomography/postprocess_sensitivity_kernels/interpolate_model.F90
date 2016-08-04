@@ -413,14 +413,14 @@
     print *,'  nproc_eta / nproc_xi = ',nproc_eta_old,nproc_xi_old
     print *,'  nspec      = ',nspec_max_old
     print *,'  nglob      = ',nglob_max_old
-    print *,''
+    print *
     print *,'target mesh:  '
     print *,'  processors = ',NPROCTOT_VAL
     print *,'  nproc_eta / nproc_xi = ',NPROC_ETA_VAL,NPROC_XI_VAL
     print *,'  nex        = ',NEX_XI_VAL
     print *,'  nspec      = ',NSPEC_CRUST_MANTLE
     print *,'  nglob      = ',NGLOB_CRUST_MANTLE
-    print *,''
+    print *
     if (USE_TRANSVERSE_ISOTROPY) then
       print *,'model parameters:',nparams,' - transversely isotropic model'
     else
@@ -430,19 +430,19 @@
       print *,'  includes qmu model parameter'
     endif
     print *,'  ( ',(trim(fname(iker))//" ",iker = 1,nparams),')'
-    print *,''
+    print *
     print *,'input model  directory: ',trim(input_model_dir)
     print *,'output model directory: ',trim(output_model_dir)
-    print *,''
+    print *
     print *,'array size:'
     print *,'  ibool1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nproc_eta_old*nproc_xi_old*dble(SIZE_INTEGER)/1024./1024.,'MB'
     print *,'  x1,y1,z1 = ',nglob_max_old*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *,''
+    print *
     print *,'  model1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nparams*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print *,'  model2   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *,''
+    print *
     print *,'total mpi processes: ',sizeprocs
-    print *,''
+    print *
     if (DO_BRUTE_FORCE_SEARCH) then
       print *,'location search by : brute-force approach'
     else
@@ -462,10 +462,10 @@
         print *,'  uses fall-back to model value of closest point in case of large differences'
       endif
     endif
-    print *,''
+    print *
 #ifdef ADIOS_INPUT
     print *,'file format: ADIOS files'
-    print *,''
+    print *
 #endif
   endif
   call synchronize_all()

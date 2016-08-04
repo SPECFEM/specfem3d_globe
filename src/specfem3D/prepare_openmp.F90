@@ -68,15 +68,15 @@
 
       ! user output
       if (myrank == 0) then
-        write(IMAIN,*) ''
+        write(IMAIN,*)
         write(IMAIN,*) 'OpenMP information:'
         write(IMAIN,*) '  number of threads (per MPI process) = ', num_threads
-        write(IMAIN,*) ''
+        write(IMAIN,*)
         write(IMAIN,*) '  number of processors available      = ', num_procs
         write(IMAIN,*) '  maximum number of threads available = ', num_procs
         write(IMAIN,*) '  dynamic thread adjustement          = ', is_dynamic
         write(IMAIN,*) '  nested parallelism                  = ', is_nested
-        write(IMAIN,*) ''
+        write(IMAIN,*)
         call flush_IMAIN()
       endif
     endif

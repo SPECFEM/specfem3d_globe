@@ -191,34 +191,34 @@
       ! usage info
       if (len_trim(arg) == 0) then
         if (myrank == 0) then
-          print *,''
+          print *
           print *,' Usage: xcreate_cross_section param section-param mesh-dir/ model-dir/ output-dir/ ' // &
                   'topoography-flag ellipticity-flag'
-          print *,''
+          print *
           print *,' with'
           print *,'   param         - model parameter name (e.g. vpv)'
-          print *,''
+          print *
           print *,'   section-param - cross-section parameters, use format:'
           print *,'        -H depth,delta-incr'
           print *,'        for horizontal cross-section at depth (in km) '
           print *,'        with increment delta-incr for regular latitude/longitudes (in degrees)'
-          print *,''
+          print *
           print *,'        -V lat1,lon1,lat2,lon2,delta-incr,depth-incr,(depth_min),(depth_max)'
           print *,'        for vertical cross-section along great-circle path '
           print *,'        at points (lat1,lon2) and (lat2,lon2) '
           print *,'        with increment delta-incr for regular great-circle section'
           print *,'        and depth-incr for depth increments (in km)'
           print *,'        optionally, depth_min and depth_max can be set for minimum/maximum depths (given in km)'
-          print *,''
+          print *
           print *,'   mesh-dir/     - mesh directory with topology files (e.g. proc***_solver_data.bin)'
           print *,'   model-dir/    - directoy which holds model files (e.g. proc***_vpv.bin)'
           print *,'   output-dir/   - output directory with topology files (e.g. proc***_solver_data.bin)'
-          print *,''
+          print *
           print *,'   topoography-flag - depth will be taken with respect to surface topography (0 == off / 1 == on);'
           print *,'                      if no topography is used, then depth is with respect to sea-level (at radius R_EARTH_KM)'
           print *,'   ellipticity-flag - depth will consider Earth ellipticity (0 == off / 1 == on);'
           print *,'                      if no ellipticity is used, Earth shape is assumed to be perfectly spherical'
-          print *,''
+          print *
         endif
         stop ' Reenter command line options'
       endif
@@ -315,7 +315,7 @@
 
   ! console output
   if (myrank == 0) then
-    print *,''
+    print *
     if (section_type == 0) then
       print *,'horizontal cross-section:'
     else if (section_type == 1) then
@@ -323,31 +323,31 @@
     else
       stop 'Error cross-section type invalid'
     endif
-    print *,''
+    print *
     print *,'mesh:  '
     print *,'  processors = ',NPROCTOT_VAL
     print *,'  nproc_eta / nproc_xi = ',NPROC_ETA_VAL,NPROC_XI_VAL
     print *,'  nex        = ',NEX_XI_VAL
     print *,'  nspec      = ',NSPEC_CRUST_MANTLE
     print *,'  nglob      = ',NGLOB_CRUST_MANTLE
-    print *,''
+    print *
     print *,'model parameter: ',trim(fname)
-    print *,''
+    print *
     print *,'  mesh directory: ',trim(dir_topo)
     print *,' model directory: ',trim(input_model_dir)
     print *,'output directory: ',trim(output_dir)
-    print *,''
+    print *
     print *,'array size:'
     print *,'  ibool   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(SIZE_INTEGER)/1024./1024.,'MB'
     print *,'  x,y,z   = ',NGLOB_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *,''
+    print *
     print *,'  model   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *,''
+    print *
     print *,'total mpi processes: ',sizeprocs
-    print *,''
+    print *
     print *,'location search by : kd-tree search'
     print *,'  uses internal GLL points'
-    print *,''
+    print *
     if (TOPOGRAPHY) then
       print *,'uses topography'
       print *,'  depth will be determined from (mesh) elevation'
@@ -355,7 +355,7 @@
       print *,'no topography'
       print *,'  depth given with respect to sea-level'
     endif
-    print *,''
+    print *
     if (ELLIPTICITY) then
       print *,'uses ellipticity'
       print *,'  radius and latitude of points will be determined for elliptical Earth'
@@ -363,7 +363,7 @@
       print *,'no ellipticity'
       print *,'  radius and latitude of points with respect to a spherical Earth'
     endif
-    print *,''
+    print *
   endif
   call synchronize_all()
 
@@ -398,9 +398,9 @@
 
   ! user output
   if (myrank == 0) then
-    print *,''
+    print *
     print *,'creating target cross-section points... '
-    print *,''
+    print *
   endif
 
   ! cross-section points
@@ -497,7 +497,7 @@
 
   ! user output
   if (myrank == 0) then
-    print *,''
+    print *
     print *, 'loading source mesh ... '
   endif
 
@@ -541,18 +541,18 @@
 
   ! user output
   if (myrank == 0) then
-    print *,''
+    print *
     print *,'  source mesh chunk read successfully'
-    print *,''
+    print *
   endif
   call synchronize_all()
 
   ! user output
   if (myrank == 0) then
     print *,'loading source model ... '
-    print *,''
+    print *
     print *,'  parameter: ',trim(fname)
-    print *,''
+    print *
   endif
 
   ! model files
@@ -578,9 +578,9 @@
 
   ! user output
   if (myrank == 0) then
-    print *,''
+    print *
     print *,'  source model slice read successfully'
-    print *,''
+    print *
   endif
   call synchronize_all()
 
@@ -677,7 +677,7 @@
     ! elapsed time since beginning of the simulation
     tCPU = wtime() - time_start
     print *,'elapsed time in seconds = ',tCPU
-    print *,''
+    print *
   endif
 
   ! collects best points on master
@@ -692,10 +692,10 @@
     ! user output
     print *,'search statistics:','  parameter ',trim(fname)
     print *,'  min/max values = ',min_val,max_val
-    print *,''
+    print *
     print *,'  maximum distance to target point = ',maxval(model_distance2(:)) * R_EARTH_KM,'(km)'
     print *,'  maximum model value difference between closest GLL point = ',val
-    print *,''
+    print *
   endif
   call synchronize_all()
 
@@ -739,9 +739,9 @@
     ! elapsed time since beginning of the simulation
     tCPU = wtime() - time_start
     print *,'elapsed time in seconds = ',tCPU
-    print *,''
+    print *
     print *, 'done successfully'
-    print *,''
+    print *
   endif
 
   ! exiting MPI processes
@@ -804,16 +804,16 @@
   ! user output
   if (myrank == 0) then
     print *,'  horizontal cross-section'
-    print *,''
+    print *
     print *,'  depth: ',depth0,'km'
     print *,'  lat/lon increments: ',sngl(dlat),'/',sngl(dlon),'degrees'
-    print *,''
+    print *
     print *,'  total number of points = ',nglob_target
     print *,'  total size for point arrays = ',5 * dble(nglob_target) * dble(CUSTOM_REAL) / 1024. / 1024.,'MB'
-    print *,''
+    print *
     if (TOPOGRAPHY) print *,'  considering topography'
     if (ELLIPTICITY) print *,'  considering ellipticity'
-    print *,''
+    print *
   endif
 
   ! make ellipticity
@@ -996,26 +996,26 @@
   ! user output
   if (myrank == 0) then
     print *,'  vertical cross-section'
-    print *,''
+    print *
     print *,'  starting depth         : ',sngl(depth0),'km'
     print *,'  reaching maximum depth : ',sngl(depth0 + (ndepth-1) * ddepth),'km'
     print *,'  depth increment        : ',ddepth,'km'
-    print *,''
+    print *
     print *,'  start location lat/lon = ',sngl(lat1),sngl(lon1)
     print *,'    end location lat/lon = ',sngl(lat2),sngl(lon2)
-    print *,''
+    print *
     print *,'  epicentral distance    : ',sngl(epidist),'degrees'
-    print *,''
+    print *
     print *,'  great-circle increments: ',sngl(dincr),'degrees'
     print *,'  total number of great-circle increments = ',nsec
     print *,'  total path length of great-circle = ',sngl((nsec-1)*dincr),'degrees'
-    print *,''
+    print *
     print *,'  total number of points = ',nglob_target
     print *,'  total size for point arrays = ',5 * dble(nglob_target) * dble(CUSTOM_REAL) / 1024. / 1024.,'MB'
-    print *,''
+    print *
     if (TOPOGRAPHY) print *,'  considering topography'
     if (ELLIPTICITY) print *,'  considering ellipticity'
-    print *,''
+    print *
   endif
 
   ! make ellipticity
@@ -1374,9 +1374,9 @@
   ! user output
   if (myrank == 0) then
     print *,'  using search radius: ',sngl(r_search * R_EARTH_KM),'(km)'
-    print *,''
+    print *
     print *,'  points contained in master slice: ',nslice_points,' out of ',nglob_target
-    print *,''
+    print *
   endif
 
   ! loops over all cross-section points in this slice
@@ -2090,9 +2090,9 @@
   close(IOUT)
 
   ! user output
-  print *,''
+  print *
   print *, '  written cross-section file: ',trim(filename)
-  print *,''
+  print *
 
   end subroutine write_cross_section
 
@@ -2222,13 +2222,13 @@
 
   ! checks if some points got counted
   if (ipoints_integral == 0) then
-    print *,''
+    print *
     print *,'  Warning: no cross-section points within mesh volume'
   endif
   if (total_spherical_area <= 0.d0) then
-    print *,''
+    print *
     print *,'  Warning: integrated surface area is invalid'
-    print *,''
+    print *
   endif
 
   ! mean or average value over cross-section surface
@@ -2284,16 +2284,16 @@
   ! user output
   print *,'  distance limit of close points       = ',sngl(distance_limit * R_EARTH_KM),'(km)'
   print *,'  number of close cross-section points = ',ipoints_integral
-  print *,''
+  print *
   print *,'  full Earth surface area    = ',sngl(4.0 * PI * R_EARTH_KM**2),'(km^2)'
   print *,'  cross-section surface area = ',sngl(total_spherical_area * R_EARTH_KM**2),'(km^2)'
   print *,'                             = ',sngl(total_spherical_area / (4.0 * PI) * 100.d0) ,'%'
-  print *,''
+  print *
   print *,'  cross-section average value = ',sngl(m_avg_total)
   print *,'          point average value = ',sngl(point_avg_total)
-  print *,''
+  print *
   print *,'  perturbation value min/max = ',sngl(pert_min),sngl(pert_max)
-  print *,''
+  print *
 
   end subroutine get_cross_section_avg
 

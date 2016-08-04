@@ -408,7 +408,7 @@
                  receiver_cube_from_slices,sender_from_slices_to_cube,ibool_central_cube, &
                  buffer_slices,buffer_slices2,buffer_all_cube_from_slices)
 
-      if (myrank == 0) write(IMAIN,*) ''
+      if (myrank == 0) write(IMAIN,*)
 
       ! frees memory
       deallocate(ibelm_xmin_inner_core,ibelm_xmax_inner_core)

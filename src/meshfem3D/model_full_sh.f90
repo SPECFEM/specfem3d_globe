@@ -97,7 +97,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  done full_sh crust'
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -441,7 +441,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  done full_sh mantle'
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

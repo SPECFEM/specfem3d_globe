@@ -209,10 +209,10 @@ program smooth_sem_globe
   ! check number of MPI processes
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'Expected number of MPI processes: ', NPROCTOT_VAL
       print *,'Actual number of MPI processes: ', sizeprocs
-      print *,''
+      print *
     endif
     call synchronize_all()
     stop 'Error wrong number of MPI processes'
@@ -280,7 +280,7 @@ program smooth_sem_globe
     print *,"  element size on surface (km): ",element_size
     print *
     print *,"  smoothing sigma_h , sigma_v (km)                : ",sigma_h,sigma_v
-    ! scalelength: approximately S ~ sigma * sqrt(8.0) for a gaussian smoothing
+    ! scalelength: approximately S ~ sigma * sqrt(8.0) for a Gaussian smoothing
     print *,"  smoothing scalelengths horizontal, vertical (km): ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
     print *
     print *,"  data name      : ",trim(kernel_name)
@@ -299,7 +299,7 @@ program smooth_sem_globe
   sigma_h = sigma_h / R_EARTH_KM ! scale
   sigma_v = sigma_v / R_EARTH_KM ! scale
 
-  sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for gaussian distribution with standard variance sigma
+  sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for Gaussian distribution with standard variance sigma
   sigma_v2 = 2.0 * sigma_v ** 2
 
   ! checks
@@ -324,7 +324,7 @@ program smooth_sem_globe
   ! theoretic normal value
   ! (see integral over -inf to +inf of exp[- x*x/(2*sigma) ] = sigma * sqrt(2*pi) )
 
-! note: smoothing is using a gaussian (ellipsoid for sigma_h /= sigma_v),
+! note: smoothing is using a Gaussian (ellipsoid for sigma_h /= sigma_v),
 !          but in spherical coordinates, we use horizontal distance as epicentral distance
 !          and vertical distance as radial distance?
 
@@ -774,7 +774,7 @@ program smooth_sem_globe
           y0 = yy0(INDEX_IJK,ispec)
           z0 = zz0(INDEX_IJK,ispec)
 
-          ! calculate weights based on gaussian smoothing
+          ! calculate weights based on Gaussian smoothing
           call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
                                      xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
@@ -800,7 +800,7 @@ program smooth_sem_globe
           ! adds contribution of element ispec2 to smoothed kernel values
           tk(INDEX_IJK,ispec) = tk(INDEX_IJK,ispec) + sum(exp_val(:,:,:) * kernel(:,:,:,ispec2))
 
-          ! normalization, integrated values of gaussian smoothing function
+          ! normalization, integrated values of Gaussian smoothing function
           bk(INDEX_IJK,ispec) = bk(INDEX_IJK,ispec) + sum(exp_val(:,:,:))
 
           ! checks number
@@ -830,8 +830,8 @@ program smooth_sem_globe
       if (DEBUG .and. myrank == 0) then
         ! debug element (tmp_ispec_dbg)
         if (ispec == tmp_ispec_dbg) then
-          ! outputs gaussian weighting function
-          write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_gaussian_proc',iproc
+          ! outputs Gaussian weighting function
+          write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_Gaussian_proc',iproc
           call write_VTK_data_gll_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
           print *,'file written: ',trim(filename)//'.vtk'
         endif
@@ -896,7 +896,7 @@ program smooth_sem_globe
       ! avoids division by zero
       if (bk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL) bk(INDEX_IJK,ispec) = 1.0_CUSTOM_REAL
 
-      ! normalizes smoothed kernel values by integral value of gaussian weighting
+      ! normalizes smoothed kernel values by integral value of Gaussian weighting
       kernel_smooth(INDEX_IJK,ispec) = tk(INDEX_IJK,ispec) / bk(INDEX_IJK,ispec)
 
       ! checks number (isNaN check)

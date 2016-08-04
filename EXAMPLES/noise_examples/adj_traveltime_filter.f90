@@ -70,13 +70,13 @@ program adj_traveltime
 
   ! user output
   print *,'noise adjoint source'
-  print *,''
+  print *
   print *,'station: ',trim(network)//'.'//trim(station)
   print *,'  using filter flag : ',filter_flag,'(0 = no filter / 1 = bandpass)'
   print *,'  using taper type  : ',taper_type ,'(0 = boxcar / 1 = cosine)'
   print *,'  using measurement window length: ',sngl(length_time_window),'s'
   print *,'  using cross-correlation branch : ',branch_type,'(0 = negative / 1 = positive branch)'
-  print *,''
+  print *
 
   ! reads in number of steps (based on first trace)
   ! trace
@@ -108,7 +108,7 @@ program adj_traveltime
   print *,'  number of time steps = ',nstep
   print *,'  time step size       = ',sngl(dt),'s'
   print *,'  trace length         = ',sngl(nstep * dt),'s'
-  print *,''
+  print *
 
   ! checks
   if (dt <= 0.d0) stop 'Error time step is zero, please check station trace'
@@ -158,7 +158,7 @@ program adj_traveltime
   ! maximum value
   trace_data_max = maxval(abs(data_trace(:)))
   print *,'  vertical component: maximum value = ',sngl(trace_data_max)
-  print *,''
+  print *
 
   ! shifts time line (to start at zero)
   do itime = 1,nstep
@@ -341,9 +341,9 @@ program adj_traveltime
   write(1001,*) misfit_traveltime, traveltime_delay
   close(1001)
 
-  print *,''
+  print *
   print *,'done, see adjoint traces in directory: SEM/'
-  print *,''
+  print *
 
 end program adj_traveltime
 

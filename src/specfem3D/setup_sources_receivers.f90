@@ -110,7 +110,7 @@
 
   allocate(tshift_cmt(NSOURCES), &
            hdur(NSOURCES), &
-           hdur_gaussian(NSOURCES),stat=ier)
+           hdur_Gaussian(NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
   allocate(theta_source(NSOURCES), &
@@ -173,7 +173,7 @@
   endif
 
   ! convert the half duration for triangle STF to the one for Gaussian STF
-  hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
+  hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! define t0 as the earliest start time
   t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )

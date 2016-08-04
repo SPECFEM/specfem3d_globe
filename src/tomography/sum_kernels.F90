@@ -98,12 +98,12 @@ program sum_kernels_globe
   ! checks if number of MPI process as specified
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'Error: run xsum_kernels with the same number of MPI processes '
       print *,'       as specified when slices were created'
-      print *,''
+      print *
       print *,'for example: mpirun -np ',NPROCTOT_VAL,' ./xsum_kernels ...'
-      print *,''
+      print *
     endif
     call synchronize_all()
     stop 'Error total number of slices'

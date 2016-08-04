@@ -87,7 +87,7 @@
 
         else
           ! source time function value
-          stf = comp_source_time_function(timeval,hdur_gaussian(isource))
+          stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
 
           !     distinguish between single and double precision for reals
           stf_used = real(stf, kind=CUSTOM_REAL)
@@ -129,7 +129,7 @@
         timeval = time_t - tshift_cmt(isource)
 
         ! source time function value
-        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_gaussian(isource))
+        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=1 and NOISE_TOM = 0
@@ -413,7 +413,7 @@
         else
 
           ! see note above: time step corresponds now to NSTEP-it
-          stf = comp_source_time_function(timeval,hdur_gaussian(isource))
+          stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
 
           !     distinguish between single and double precision for reals
           stf_used = real(stf, kind=CUSTOM_REAL)
@@ -453,7 +453,7 @@
         ! sets current time for this source
         timeval = time_t - tshift_cmt(isource)
         ! source time function contribution
-        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_gaussian(isource))
+        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM = 0)

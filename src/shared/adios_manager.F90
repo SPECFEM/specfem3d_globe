@@ -725,7 +725,7 @@ contains
   else
     print *,'  no variables'
   endif
-  print *,''
+  print *
 
   ! attributes
   if (attribute_count > 0) then
@@ -744,7 +744,7 @@ contains
   else
     print *,'  no attributes'
   endif
-  print *,''
+  print *
 
   ! groups
   call adios_inq_ngroups(file_handle_adios, group_count, ier)
@@ -765,7 +765,7 @@ contains
   else
     print *,'  no groups'
   endif
-  print *,''
+  print *
 
   end subroutine show_adios_file_variables
 

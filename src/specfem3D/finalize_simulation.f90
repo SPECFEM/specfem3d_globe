@@ -246,7 +246,7 @@
              ispec_selected_source, &
              Mxx,Myy,Mzz,Mxy,Mxz,Myz)
   deallocate(xi_source,eta_source,gamma_source)
-  deallocate(tshift_cmt,hdur,hdur_gaussian)
+  deallocate(tshift_cmt,hdur,hdur_Gaussian)
   deallocate(nu_source)
 
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)

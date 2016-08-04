@@ -64,7 +64,7 @@
   !          +(zz(:,:,:,ispec2)-z0)**2 )/(2*sigma2) )*factor(:,:,:)
 
   ! from basin code smoothing:
-  ! gaussian function
+  ! Gaussian function
   !exp_val(:,:,:) = exp( -(xx(:,:,:,ispec2)-x0)**2/(sigma_h2) &
   !                      -(yy(:,:,:,ispec2)-y0)**2/(sigma_h2) &
   !                      -(zz(:,:,:,ispec2)-z0)**2/(sigma_v2) ) * factor(:,:,:)

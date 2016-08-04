@@ -105,10 +105,10 @@ program clip_sem_globe
   ! check number of MPI processes
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'Expected number of MPI processes: ', NPROCTOT_VAL
       print *,'Actual number of MPI processes: ', sizeprocs
-      print *,''
+      print *
     endif
     call synchronize_all()
     stop 'Error wrong number of MPI processes'
@@ -117,7 +117,7 @@ program clip_sem_globe
 
   if (myrank == 0) then
     print *,'Running XCLIP_SEM'
-    print *,''
+    print *
   endif
   call synchronize_all()
 
@@ -140,12 +140,12 @@ program clip_sem_globe
     print *,'input directory     : ',trim(input_dir)
     print *,'output directory    : ',trim(output_dir)
     print *,'clip values min/max : ',min_val,max_val
-    print *,''
+    print *
     print *,'SEM array size = ',NGLLX,'x',NGLLY,'x',NGLLZ,'x',NSPEC_CRUST_MANTLE
     print *,'total number of points in SEM array = ',NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
-    print *,''
+    print *
     print *,'region code uses format: ','proc'//'***'//reg//'*'//'.bin'
-    print *,''
+    print *
   endif
 
   ! initialize array
@@ -216,7 +216,7 @@ program clip_sem_globe
     call max_all_cr(data_max,data_max_all)
     if (myrank == 0) then
         print *,'  after  min/max value = ',data_min_all,data_max_all
-        print *,''
+        print *
     endif
 
   enddo
@@ -226,7 +226,7 @@ program clip_sem_globe
 
   ! user output
   if (myrank == 0) then
-    print *,''
+    print *
     print *,'done writing all kernels, see directory: ',trim(output_dir)
   endif
 

@@ -913,7 +913,7 @@
   ! local parameters
   integer :: it,iom,ier
   double precision :: scalar_moment
-  double precision :: t0, hdur_gaussian(NSOURCES)
+  double precision :: t0, hdur_Gaussian(NSOURCES)
   double precision :: t_cmt_used(NSOURCES)
   double precision time_source,om
   double precision :: f0
@@ -969,7 +969,7 @@
   ! convert the half duration for triangle STF to the one for Gaussian STF
   ! note: this calculation here is only used for outputting the plot_source_time_function file
   !          (see setup_sources_receivers.f90)
-  hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
+  hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! writes out source time function to file
   do it = 1,NSTEP
@@ -982,7 +982,7 @@
     else
       ! Gaussian source time function
       write(IOUT,*) sngl(dble(it-1)*DT-t0), &
-        sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
+        sngl(scalar_moment*comp_source_time_function(time_source,hdur_Gaussian(isource)))
     endif
   enddo
   close(IOUT)

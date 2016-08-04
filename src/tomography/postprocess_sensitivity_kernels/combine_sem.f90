@@ -87,10 +87,10 @@ program combine_sem_globe
   ! check number of MPI processes
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'Expected number of MPI processes: ', NPROCTOT_VAL
       print *,'Actual number of MPI processes: ', sizeprocs
-      print *,''
+      print *
     endif
     call synchronize_all()
     stop 'Error wrong number of MPI processes'
@@ -118,7 +118,7 @@ program combine_sem_globe
     print *,'kernel names     : ',(trim(kernel_names(i))//' ',i=1,nker)
     print *,'input file       : ',trim(input_file)
     print *,'output directory : ',trim(output_dir)
-    print *,''
+    print *
   endif
 
   ! parse paths from INPUT_FILE
@@ -139,10 +139,10 @@ program combine_sem_globe
   ! user output
   if (myrank == 0) then
     print *,'number of events: ',npath
-    print *,''
+    print *
     print *,'summing kernels in:'
     print *,(trim(kernel_paths(i))//' ',i=1,npath)
-    print *,''
+    print *
   endif
 
   call synchronize_all()
