@@ -152,9 +152,9 @@
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(icb_kl))
     endif
 
-    ! approximate hessian
+    ! approximate Hessian
     if (APPROXIMATE_HESS_KL) then
-      !call save_kernels_hessian()
+      !call save_kernels_Hessian()
       local_dim = NSPEC_CRUST_MANTLE_ADJOINT* NGLLX * NGLLY * NGLLZ
       call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(hess_kl_crust_mantle))
     endif
@@ -465,7 +465,7 @@
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the Hessian.
-  subroutine write_kernels_hessian_adios()
+  subroutine write_kernels_Hessian_adios()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -485,7 +485,7 @@
   call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, local_dim, &
                                    STRINGIFY_VAR(hess_kl_crust_mantle))
 
-  end subroutine write_kernels_hessian_adios
+  end subroutine write_kernels_Hessian_adios
 
 !==============================================================================
 !> Schedule ADIOS writes for kernel variables related to the noise strength kernel.

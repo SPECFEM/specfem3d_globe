@@ -82,17 +82,17 @@
 !----
 
 ! smooth topography/bathymetry model
-  if(SMOOTH_THE_MODEL) then
+  if (SMOOTH_THE_MODEL) then
 
   print *
   print *,'smoothing topo file'
-  if(SIZE_FILTER_ONE_SIDE < 1) stop 'SIZE_FILTER_ONE_SIDE must be greater than 1 for filter'
+  if (SIZE_FILTER_ONE_SIDE < 1) stop 'SIZE_FILTER_ONE_SIDE must be greater than 1 for filter'
   print *,'size of window filter is ',2*SIZE_FILTER_ONE_SIDE+1,' x ',2*SIZE_FILTER_ONE_SIDE+1
   area_window = dble((2*SIZE_FILTER_ONE_SIDE+1)**2)
 
   do iy_current = 1,NY_BATHY
 
-   if(mod(iy_current,10) == 0) print *,'smoothing line ',iy_current,' out of ',NY_BATHY
+   if (mod(iy_current,10) == 0) print *,'smoothing line ',iy_current,' out of ',NY_BATHY
 
     do ix_current = 1,NX_BATHY
 
@@ -114,13 +114,13 @@
         iy_value = iy
 
 ! avoid edge effects, use periodic boundary in Xmin and Xmax
-      if(ix_value < 1) ix_value = ix_value + NX_BATHY
-      if(ix_value > NX_BATHY) ix_value = ix_value - NX_BATHY
+      if (ix_value < 1) ix_value = ix_value + NX_BATHY
+      if (ix_value > NX_BATHY) ix_value = ix_value - NX_BATHY
 
 ! avoid edge effects, use rigid boundary in Ymin and Ymax
 ! *not* periodic, because South and North poles must not be merged
-      if(iy_value < 1) iy_value = 1
-      if(iy_value > NY_BATHY) iy_value = NY_BATHY
+      if (iy_value < 1) iy_value = 1
+      if (iy_value > NY_BATHY) iy_value = NY_BATHY
 
 ! compute sum
       value_sum = value_sum + dble(ibathy_topo_ori(ix_value,iy_value))
@@ -156,7 +156,7 @@
 
   print *,'subsampling OpenDX file by a factor of NSUBSAMPLING to reduce its number of elements'
   print *,'NSUBSAMPLING = ',NSUBSAMPLING
-  if(mod(NX_BATHY,NSUBSAMPLING) /= 0 .or. mod(NY_BATHY,NSUBSAMPLING) /= 0) &
+  if (mod(NX_BATHY,NSUBSAMPLING) /= 0 .or. mod(NY_BATHY,NSUBSAMPLING) /= 0) &
     stop 'need NX_BATHY and NX_BATHY to be multiples of NSUBSAMPLING to be able to subsample'
 
 ! creating the header

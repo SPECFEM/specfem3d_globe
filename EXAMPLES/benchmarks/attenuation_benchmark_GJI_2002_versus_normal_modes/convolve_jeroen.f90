@@ -55,9 +55,9 @@
       tau_j=dble(j)*dt
 
 ! convolve with a triangle
-    if(triangle) then
+    if (triangle) then
        height = 1. / hdur
-       if(abs(tau_j) > hdur) then
+       if (abs(tau_j) > hdur) then
          source = 0.
        else if (tau_j < 0) then
          t1 = - N_j * dt
@@ -82,7 +82,7 @@
 
       endif
 
-      if(i > j.and.i-j <= nlines) &
+      if (i > j.and.i-j <= nlines) &
               sem_fil(i)=sem_fil(i)+dble(sem(i-j))*source*dt
     enddo
   enddo

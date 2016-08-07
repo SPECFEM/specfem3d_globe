@@ -475,7 +475,7 @@
         ! full_sh model
         lat = (PI/2.0d0-theta)*180.0d0/PI
         lon = phi*180.0d0/PI
-        if(lon > 180.0d0) lon = lon - 360.0d0
+        if (lon > 180.0d0) lon = lon - 360.0d0
 
         call mantle_sh(lat,lon,r_used,dvpv,dvph,dvsv,dvsh,deta,drho)
         vpv = vpv*(1.0d0+dvpv)

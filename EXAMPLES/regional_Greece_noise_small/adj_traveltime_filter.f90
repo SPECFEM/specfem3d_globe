@@ -192,7 +192,7 @@ program adj_traveltime
   if (ier /= 0) stop 'Error opening misfit output file in SEM/'
 
   ! number of filter frequencies
-  if (filter_flag == 0)   then
+  if (filter_flag == 0) then
     nfreq = 1
   else
     nfreq = size(freq_low)
@@ -353,7 +353,7 @@ end program adj_traveltime
 !
 
 
-SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)
+subroutine BNDPAS(F1,F2,DELT,D,G,N)
 ! RECURSIVE BUTTERWORTH BAND PASS FILTER (KANASEWICH, TIME SERIES
 ! ANALYSIS IN GEOPHYSICS, UNIVERSITY OF ALBERTA PRESS, 1975; SHANKS,
 ! JOHN L, RECURSION FILTERS FOR DIGITAL PROCESSING, GEOPHYSICS, V32,
@@ -408,7 +408,7 @@ SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)
    29 D(I+1)=(A-2.0*B)/A
       G=G*G
     5 FORMAT ('-FILTER GAIN IS ', 9E12.6)
-      RETURN
+      return
 
       ENTRY FILTER(X,N,D,G,IG)
 
@@ -418,7 +418,7 @@ SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)
 !     IG = 1  one pass
 !     ig = 2  two passes
 
-      IF (ISW==1) GO TO 31
+      if (ISW==1) goto 31
       WRITE (6,6)
     6 FORMAT ('1BNDPAS MUST BE CALLED BEFORE FILTER')
       return
@@ -445,15 +445,15 @@ SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)
       XM1=XM
       XM=X(I)
       K=I-((I-1)/3)*3
-      GO TO (34,35,36),K
+      goto (34,35,36),K
    34 M=1
       M1=3
       M2=2
-      GO TO 37
+      goto 37
    35 M=2
       M1=1
       M2=3
-      GO TO 37
+      goto 37
    36 M=3
       M1=2
       M2=1
@@ -463,7 +463,7 @@ SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)
    39 X(I)=XE(M)-XE(M2)-D(7)*X(I-1)-D(8)*X(I-2)
 !
 !
-      if(ig==1) goto 3333
+      if (ig==1) goto 3333
       XM2=X(N)
       XM1=X(N-1)
       XM=X(N-2)
@@ -485,15 +485,15 @@ SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)
       J=N-I+1
       XM=X(J)
       K=I-((I-1)/3)*3
-      GO TO (44,45,46),K
+      goto (44,45,46),K
    44 M=1
       M1=3
       M2=2
-      GO TO 47
+      goto 47
    45 M=2
       M1=1
       M2=3
-      GO TO 47
+      goto 47
    46 M=3
       M1=2
       M2=1
@@ -509,6 +509,6 @@ SUBROUTINE BNDPAS(F1,F2,DELT,D,G,N)
       endif
       DO 59 I=1,N
    59 X(I)=X(I)/gg
-      RETURN
+      return
 END
 

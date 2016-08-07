@@ -141,7 +141,7 @@
 
 !!! -- this part is from create_regions_mesh
 
-  if(ONE_CRUST) then
+  if (ONE_CRUST) then
      NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS-1
   else
      NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS
@@ -172,7 +172,7 @@
     iline = 0
 
 ! read crustal models and topo models as they are needed to modify the depths of the discontinuities
-    if(CRUSTAL) then
+    if (CRUSTAL) then
        call reduce(theta,phi)
        ! convert from rthetaphi to xyz, with r=-7km
        r = (1.0d0 - 7.0d0/R_EARTH_KM)
@@ -186,10 +186,10 @@
             elem_in_crust,moho)
        print *, 'moho depth [km]:',moho*R_EARTH_KM, (1.0d0-moho)*R_EARTH_KM,  vpv,vph,vsv,vsh,rho,eta_aniso,dvp !, 'moho radius:',1.0d0 - moho, 'in km: ',(1.0d0-moho)*R_EARTH_KM
     endif
-    if(TOPOGRAPHY .or. OCEANS) then
+    if (TOPOGRAPHY .or. OCEANS) then
        lat=(PI/2.0d0-theta)*180.0d0/PI
        lon=phi*180.0d0/PI
-       if(lon>180.0d0) lon=lon-360.0d0
+       if (lon>180.0d0) lon=lon-360.0d0
        print *,'get_topo_bathy(lat,lon,elevation,ibathy_topo',lat,lon,elevation
        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
        print *,'get_topo_bathy(lat,lon,elevation,ibathy_topo',lat,lon,elevation
@@ -198,7 +198,7 @@
 
     do ilayer = 1,NUMBER_OF_MESH_LAYERS  ! loop over all layers
 
-       if(ilayer == 1) then
+       if (ilayer == 1) then
          rmin = 0.0d0
          rmax = rmins(NUMBER_OF_MESH_LAYERS-1)
          idoubling = IFLAG_INNER_CORE_NORMAL
@@ -209,40 +209,40 @@
        endif
 
 !  make sure that the Moho discontinuity is at the real moho
-      if(CRUSTAL) then
-        if(rmin == RMOHO_FICTITIOUS_IN_MESHER/R_EARTH) then
+      if (CRUSTAL) then
+        if (rmin == RMOHO_FICTITIOUS_IN_MESHER/R_EARTH) then
           rmin = 1.0d0 - moho
 !          write(*,*) 'rmin == RMOHO',iline
         endif
-        if(rmax == RMOHO_FICTITIOUS_IN_MESHER/R_EARTH) rmax = 1.0d0 - moho
+        if (rmax == RMOHO_FICTITIOUS_IN_MESHER/R_EARTH) rmax = 1.0d0 - moho
       endif
 
 
-      if(rmin == rmax_last) then  !!!! this means that we have just jumped between layers
+      if (rmin == rmax_last) then  !!!! this means that we have just jumped between layers
 
        ! write values every 10 km in the deep earth and every 1 km in the shallow earth
-       if(rmin>(R_EARTH_KM-100.0d0)/R_EARTH_KM) then
+       if (rmin>(R_EARTH_KM-100.0d0)/R_EARTH_KM) then
          delta = 1.0d0/R_EARTH_KM
        else
          delta = 10.0d0/R_EARTH_KM
        endif
 
-       if((TOPOGRAPHY .or. OCEANS) .or. ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH))) then
-        if(rmax == 1.0d0) rmax = ROCEAN /R_EARTH
+       if ((TOPOGRAPHY .or. OCEANS) .or. ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH))) then
+        if (rmax == 1.0d0) rmax = ROCEAN /R_EARTH
        endif
 
        rmax_last = rmax
        nit = floor((rmax - rmin)/delta) + 1
        do islice = 1,nit+1
          r = rmin + (islice-1)*delta
-         if(rmin == RICB/R_EARTH .and. islice == 1) iline_icb = iline
-         if(rmin == RCMB/R_EARTH .and. islice == 1) iline_cmb = iline
-         if(CRUSTAL) then
-           if(rmin == (1.0d0 - moho) .and. islice == 1) then
+         if (rmin == RICB/R_EARTH .and. islice == 1) iline_icb = iline
+         if (rmin == RCMB/R_EARTH .and. islice == 1) iline_cmb = iline
+         if (CRUSTAL) then
+           if (rmin == (1.0d0 - moho) .and. islice == 1) then
               iline_moho = iline
            endif
          else
-           if(rmin == RMOHO/R_EARTH .and. islice == 1) iline_moho = iline
+           if (rmin == RMOHO/R_EARTH .and. islice == 1) iline_moho = iline
          endif
 
         ! initializes values
@@ -281,8 +281,8 @@
         ! make sure we are within the right shell in PREM to honor discontinuities
         ! use small geometrical tolerance
         r_prem = r
-        if(r <= rmin*1.000001d0) r_prem = rmin*1.000001d0
-        if(r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
+        if (r <= rmin*1.000001d0) r_prem = rmin*1.000001d0
+        if (r >= rmax*0.999999d0) r_prem = rmax*0.999999d0
 
         ! convert from rthetaphi to xyz to use in function calls.
 
@@ -348,24 +348,24 @@
 !END GET_MODEL
 !!!!--------------------------
 !   make sure that the first point of the profile is at zero and the last is at the surface
-      if(islice == 1) then
+      if (islice == 1) then
          r_prem = rmin
-      else if(islice == nit+1) then
+      else if (islice == nit+1) then
          r_prem = rmax
       endif
 
 !---
 ! add_topography
-if((THREE_D_MODEL/=0 .or. TOPOGRAPHY ) .and. &
+if ((THREE_D_MODEL/=0 .or. TOPOGRAPHY ) .and. &
    (idoubling == IFLAG_CRUST .or. idoubling == IFLAG_80_MOHO .or. idoubling == IFLAG_220_80)) then
 
    !print *, 'adding topography.  elevation: ',elevation
    gamma = (r_prem - R220/R_EARTH) / (R_UNIT_SPHERE - R220/R_EARTH)
-   if(gamma < -0.02 .or. gamma > 1.02) print *, 'incorrect value of gamma for topograpy'
+   if (gamma < -0.02 .or. gamma > 1.02) print *, 'incorrect value of gamma for topograpy'
 !   print *,'rprem before: ',r_prem*R_EARTH
    r_prem = r_prem*(ONE + gamma * (elevation/R_EARTH) /r_prem)
 !   print *,'r_prem after: ',r_prem*R_EARTH
-else if((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
+else if ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
    r_prem = ROCEAN/R_EARTH
 endif
 ! end add_topography
@@ -395,12 +395,12 @@ endif
 !--------
 !!  This part adds the ocean to profile where needed
 
-  if((OCEANS .and. elevation < -500.0) .or. ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH))) then
+  if ((OCEANS .and. elevation < -500.0) .or. ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH))) then
      iline_ocean = iline
-     if(OCEANS .and. elevation < -500.0) then
+     if (OCEANS .and. elevation < -500.0) then
 !        iline_ocean = iline
         nlayers_ocean = floor(-elevation/500.0d0)
-     else if((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
+     else if ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) then
         nlayers_ocean = floor((R_EARTH - ROCEAN)/500.0d0)
      endif
 

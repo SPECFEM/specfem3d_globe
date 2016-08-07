@@ -270,13 +270,13 @@
 !   when LAY = 2, the focus is in the lower crust;
 !   when LAY = 3, the focus is in the mantle wedge;
 !   when LAY = 4, the focus is beneath the plate boundary.
-  if (HE<=H1) THEN
+  if (HE<=H1) then
      LAY = 1
      found_crust = .true.
-  ELSE if (HE>H1.and.HE<=H2) THEN
+  else if (HE>H1.and.HE<=H2) then
      LAY = 2
      found_crust = .true.
-  ELSE if (HE>H2.and.HE<=H3) THEN
+  else if (HE>H2.and.HE<=H3) then
      LAY = 3
   ELSE
      LAY = 4
@@ -308,13 +308,13 @@
   vp=vp*1000.0d0/(R_EARTH*scaleval)
   vs=vs*1000.0d0/(R_EARTH*scaleval)
 
-  END subroutine model_jp3d_iso_zhao
+  end subroutine model_jp3d_iso_zhao
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE INPUT1()
+  subroutine INPUT1()
 
   use constants
   use model_jp3d_par
@@ -332,13 +332,12 @@
   CALL PUT1(JP3DM_NPB,JP3DM_NRB,JP3DM_NHB,JP3DM_PNB,JP3DM_RNB,JP3DM_HNB,JP3DM_VELBP)
   CALL BLDMAP()
 
-  RETURN
-  END SUBROUTINE INPUT1
+  end subroutine INPUT1
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-  SUBROUTINE PUT1(NPX,NRX,NHX,PNX,RNX,HNX,VELXP)
+  subroutine PUT1(NPX,NRX,NHX,PNX,RNX,HNX,VELXP)
 
   implicit none
 
@@ -357,12 +356,13 @@
 140         FORMAT(4(14F5.2/))
          enddo
       enddo
-  END SUBROUTINE PUT1
+
+  end subroutine PUT1
 
 !
 !---------------------------------------------------------------------------------------------
 !
-  SUBROUTINE INPUT2()
+  subroutine INPUT2()
 
   use constants
   use model_jp3d_par
@@ -374,29 +374,31 @@
   READ(3,100)  NP,NNR
   READ(3,110) (JP3DM_PN(I),I = 1,NP)
   READ(3,120) (JP3DM_RRN(I),I = 1,NNR)
-  DO 1  I = NP,1,-1
+
+  DO I = NP,1,-1
       READ(3,130) (JP3DM_DEPA(I,J),J = 1,NNR)
-1     CONTINUE
-  DO 2  I = NP,1,-1
+  enddo
+
+  DO I = NP,1,-1
       READ(3,130) (JP3DM_DEPB(I,J),J = 1,NNR)
-2     CONTINUE
-  DO 3  I = NP,1,-1
+  enddo
+
+  DO I = NP,1,-1
       READ(3,130) (JP3DM_DEPC(I,J),J = 1,NNR)
-3     CONTINUE
+  enddo
 
 100   FORMAT(2I6)
 110   FORMAT(5(10F7.2/),F7.2)
 120   FORMAT(6(10F7.2/),3F7.2)
 130   FORMAT(6(10F7.1/),3F7.1)
 
-  RETURN
   END
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE BLDMAP()
+  subroutine BLDMAP()
 
   use constants
   use model_jp3d_par
@@ -408,13 +410,12 @@
   CALL LOCX(JP3DM_PNB,JP3DM_RNB,JP3DM_HNB,JP3DM_NPB,JP3DM_NRB,JP3DM_NHB,MKB, &
            JP3DM_PLB,JP3DM_RLB,JP3DM_HLB,JP3DM_IPLOCB,JP3DM_IRLOCB,JP3DM_IHLOCB)
 
-  RETURN
   END
 
 !
 !-------------------------------------------------------------------------------------------------
 !
-      SUBROUTINE LOCX(PNX,RNX,HNX,NPX,NRX,NHX,MKX, &
+      subroutine LOCX(PNX,RNX,HNX,NPX,NRX,NHX,MKX, &
                  PLX,RLX,HLX,IPLOCX,IRLOCX,IHLOCX)
      integer ::  NPX,NRX,NHX,MKX,IPLOCX(MKX),IRLOCX(MKX),IHLOCX(MKX)
      integer ::  IPMAX,IP,IP1,IRMAX,IR,IR1,IH1,IH,IHMAX,I
@@ -428,7 +429,7 @@
       PNOW     = (FLOAT(I)-PLX)/100.0
       if (PNOW>=PNX(IP1))   IP = IP1
       IPLOCX(I)= IP
-10    CONTINUE
+10    continue
       RLX      = 1.0-RNX(1)*100.0
       IRMAX    = IDNINT(RNX(NRX)*100.0+RLX)
       IR       = 1
@@ -437,7 +438,7 @@
       RNOW     = (FLOAT(I)-RLX)/100.0
       if (RNOW>=RNX(IR1))   IR = IR1
       IRLOCX(I)= IR
-20    CONTINUE
+20    continue
       HLX      = 1.0-HNX(1)
       IHMAX    = IDNINT(HNX(NHX)+HLX)
       IH       = 1
@@ -446,15 +447,15 @@
       HNOW     = FLOAT(I)-HLX
       if (HNOW>=HNX(IH1))   IH = IH1
       IHLOCX(I)= IH
-30    CONTINUE
-      RETURN
+30    continue
+
       END
 
 !
 !-------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE VEL3(PE,RE,HE,V,LAY)
+  subroutine VEL3(PE,RE,HE,V,LAY)
 
   use constants
   use model_jp3d_par
@@ -468,10 +469,10 @@
   JP3DM_P     = 90.0-PE/DEGREES_TO_RADIANS
   JP3DM_R     = RE/DEGREES_TO_RADIANS
   JP3DM_H     = HE
-  if (LAY<=3) THEN
+  if (LAY<=3) then
      CALL PRHF(JP3DM_IPLOCA,JP3DM_IRLOCA,JP3DM_IHLOCA,JP3DM_PLA,JP3DM_RLA,JP3DM_HLA, &
           JP3DM_PNA,JP3DM_RNA,JP3DM_HNA,MPA,MRA,MHA,MKA)
-  ELSE if (LAY==4) THEN
+  else if (LAY==4) then
      CALL PRHF(JP3DM_IPLOCB,JP3DM_IRLOCB,JP3DM_IHLOCB,JP3DM_PLB,JP3DM_RLB,JP3DM_HLB, &
           JP3DM_PNB,JP3DM_RNB,JP3DM_HNB,MPB,MRB,MHB,MKB)
   ELSE
@@ -487,21 +488,19 @@
   JP3DM_WV(8) = JP3DM_PF*JP3DM_RF*JP3DM_HF
 
   !   calculate velocity
-  if (LAY<=3) THEN
+  if (LAY<=3) then
      CALL VABPS(MPA,MRA,MHA,JP3DM_VELAP,V)
-  ELSE if (LAY==4) THEN
+  else if (LAY==4) then
      CALL VABPS(MPB,MRB,MHB,JP3DM_VELBP,V)
-  ELSE
   endif
 
-  RETURN
-  END SUBROUTINE VEL3
+  end subroutine VEL3
 
 !
 !---------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE VABPS(MP,MR,MH,V,VEL)
+  subroutine VABPS(MP,MR,MH,V,VEL)
 
   use constants
   use model_jp3d_par
@@ -517,14 +516,13 @@
       + JP3DM_WV(5)*V(JP3DM_IP,JP3DM_JP,JP3DM_KP1) + JP3DM_WV(6)*V(JP3DM_IP1,JP3DM_JP,JP3DM_KP1) &
       + JP3DM_WV(7)*V(JP3DM_IP,JP3DM_JP1,JP3DM_KP1)+ JP3DM_WV(8)*V(JP3DM_IP1,JP3DM_JP1,JP3DM_KP1)
 
-  RETURN
   END
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE INTMAP(R,IRLOC,NNR,RL,IR)
+  subroutine INTMAP(R,IRLOC,NNR,RL,IR)
 
   implicit none
   integer :: NNR,IRLOC(NNR),IS,IR
@@ -533,14 +531,13 @@
   IS      = IDNINT(R+RL)
   IR      = IRLOC(IS)
 
-  RETURN
   END
 
 !
 !------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE PRHF(IPLOCX,IRLOCX,IHLOCX,PLX,RLX,HLX, &
+  subroutine PRHF(IPLOCX,IRLOCX,IHLOCX,PLX,RLX,HLX, &
                       PNX,RNX,HNX,MPX,MRX,MHX,MKX)
 
   use constants
@@ -571,14 +568,14 @@
   JP3DM_PF1   = 1.0-JP3DM_PF
   JP3DM_RF1   = 1.0-JP3DM_RF
   JP3DM_HF1   = 1.0-JP3DM_HF
-  RETURN
+
   END
 
 !
 !----------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE HLAY(PE,RE,HE,IJK)
+  subroutine HLAY(PE,RE,HE,IJK)
 
   use constants
   use model_jp3d_par
@@ -596,14 +593,14 @@
 
         DO 1 I = 1,50
            I1     = I+1
-           if (P>=JP3DM_PN(I).and.P<JP3DM_PN(I1)) GO TO 11
-1          CONTINUE
-11         CONTINUE
+           if (P>=JP3DM_PN(I).and.P<JP3DM_PN(I1)) goto 11
+1          continue
+11         continue
            DO 2 J = 1,62
               J1     = J+1
-              if (R>=JP3DM_RRN(J).and.R<JP3DM_RRN(J1)) GO TO 22
-2             CONTINUE
-22            CONTINUE
+              if (R>=JP3DM_RRN(J).and.R<JP3DM_RRN(J1)) goto 22
+2             continue
+22            continue
               PF    = (P-JP3DM_PN(I))/(JP3DM_PN(I1)-JP3DM_PN(I))
               RF    = (R-JP3DM_RRN(J))/(JP3DM_RRN(J1)-JP3DM_RRN(J))
               PF1   = 1.0-PF
@@ -612,25 +609,25 @@
               WV2   = PF*RF1
               WV3   = PF1*RF
               WV4   = PF*RF
-              if (IJK == 1) THEN
+              if (IJK == 1) then
                  HE  = WV1*JP3DM_DEPA(I,J)  + WV2*JP3DM_DEPA(I1,J) &
                       + WV3*JP3DM_DEPA(I,J1) + WV4*JP3DM_DEPA(I1,J1)
-              ELSE if (IJK == 2) THEN
+              else if (IJK == 2) then
                  HE  = WV1*JP3DM_DEPB(I,J)  + WV2*JP3DM_DEPB(I1,J) &
                       + WV3*JP3DM_DEPB(I,J1) + WV4*JP3DM_DEPB(I1,J1)
-              ELSE if (IJK == 3) THEN
+              else if (IJK == 3) then
                  HE  = WV1*JP3DM_DEPC(I,J)  + WV2*JP3DM_DEPC(I1,J) &
                       + WV3*JP3DM_DEPC(I,J1) + WV4*JP3DM_DEPC(I1,J1)
               ELSE
               endif
-  RETURN
-  END SUBROUTINE HLAY
+
+  end subroutine HLAY
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE LIMIT(C1,C2,C)
+  subroutine LIMIT(C1,C2,C)
 
   implicit none
   double precision :: A1,A2,C1,C2,C
@@ -640,13 +637,13 @@
   if (C<A1)   C = A1
   if (C>A2)   C = A2
 
-  END SUBROUTINE LIMIT
+  end subroutine LIMIT
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE VEL1D(HE,V,LAY,IPS)
+  subroutine VEL1D(HE,V,LAY,IPS)
 
   use constants
   use model_jp3d_par
@@ -656,15 +653,15 @@
   integer :: IPS,LAY
   double precision :: HE,V,VM,HM
 
-  if (LAY == 1) THEN
+  if (LAY == 1) then
     V    = 6.0
     if (IPS == 2)    V = 3.5
-  ELSE if (LAY == 2) THEN
+  else if (LAY == 2) then
     V    = 6.7
     if (IPS == 2)    V = 3.8
-  ELSE if (LAY>=3) THEN
+  else if (LAY>=3) then
     HM   = 40.0
-    if (HE<HM) THEN
+    if (HE<HM) then
       CALL JPMODEL(IPS,HM,VM)
       V  = VM-(HM-HE)*0.003
     ELSE
@@ -673,14 +670,13 @@
   ELSE
   endif
 
-  RETURN
   END
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE INPUTJP()
+  subroutine INPUTJP()
 
   use constants
   use model_jp3d_par
@@ -703,21 +699,20 @@
            0.78,0.76,0.74,0.72,0.70,0.68,0.66,0.64, &
            0.62,0.60,0.58,0.56,0.55/
 
-  DO 1 L  = 1,29
+  DO L  = 1,29
     JP3DM_VP(L)   = VP1(L)
     JP3DM_VS(L)   = VS1(L)
     JP3DM_RA(L)   = RA1(L)
     JP3DM_DEPJ(L) = 40.0+6325.59*(1.0-RA1(L))
-1     CONTINUE
+  enddo
 
-  RETURN
   END
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  SUBROUTINE JPMODEL(IPS,H,V)
+  subroutine JPMODEL(IPS,H,V)
 
   use constants
   use model_jp3d_par
@@ -731,17 +726,16 @@
       K1     = K+1
       H1     = JP3DM_DEPJ(K)
       H2     = JP3DM_DEPJ(K1)
-      if (H>=H1.and.H<H2) GO TO 3
-2     CONTINUE
-3     CONTINUE
+      if (H>=H1.and.H<H2) goto 3
+2     continue
+3     continue
 
   H12    = (H-H1)/(H2-H1)
-  if (IPS == 1) THEN
+  if (IPS == 1) then
      V   = (JP3DM_VP(K1)-JP3DM_VP(K))*H12+JP3DM_VP(K)
   ELSE
      V   = (JP3DM_VS(K1)-JP3DM_VS(K))*H12+JP3DM_VS(K)
   endif
 
-  RETURN
   END
 

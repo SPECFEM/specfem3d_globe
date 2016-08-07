@@ -84,17 +84,17 @@
 !----
 
 ! smooth topography/bathymetry model
-  if(SMOOTH_THE_MODEL) then
+  if (SMOOTH_THE_MODEL) then
 
   print *
   print *,'smoothing topo file'
-  if(SIZE_FILTER_ONE_SIDE < 1) stop 'SIZE_FILTER_ONE_SIDE must be greater than 1 for filter'
+  if (SIZE_FILTER_ONE_SIDE < 1) stop 'SIZE_FILTER_ONE_SIDE must be greater than 1 for filter'
   print *,'size of window filter is ',2*SIZE_FILTER_ONE_SIDE+1,' x ',2*SIZE_FILTER_ONE_SIDE+1
   area_window = dble((2*SIZE_FILTER_ONE_SIDE+1)**2)
 
   do iy_current = 1,NY_BATHY
 
-   if(mod(iy_current,10) == 0) print *,'smoothing line ',iy_current,' out of ',NY_BATHY
+   if (mod(iy_current,10) == 0) print *,'smoothing line ',iy_current,' out of ',NY_BATHY
 
     do ix_current = 1,NX_BATHY
 
@@ -116,13 +116,13 @@
         iy_value = iy
 
 ! avoid edge effects, use periodic boundary in Xmin and Xmax
-      if(ix_value < 1) ix_value = ix_value + NX_BATHY
-      if(ix_value > NX_BATHY) ix_value = ix_value - NX_BATHY
+      if (ix_value < 1) ix_value = ix_value + NX_BATHY
+      if (ix_value > NX_BATHY) ix_value = ix_value - NX_BATHY
 
 ! avoid edge effects, use rigid boundary in Ymin and Ymax
 ! *not* periodic, because South and North poles must not be merged
-      if(iy_value < 1) iy_value = 1
-      if(iy_value > NY_BATHY) iy_value = NY_BATHY
+      if (iy_value < 1) iy_value = 1
+      if (iy_value > NY_BATHY) iy_value = NY_BATHY
 
 ! compute sum
       value_sum = value_sum + dble(ibathy_topo_ori(ix_value,iy_value))
@@ -221,18 +221,18 @@
   double precision xlo
 
   xlo = xlon
-  if(xlon < 0.d0) xlo = xlo + 360.d0
+  if (xlon < 0.d0) xlo = xlo + 360.d0
 
 ! compute number of samples per degree
   samples_per_degree_topo = dble(RESOLUTION_TOPO_FILE) / 60.d0
 
 ! compute offset in data file and avoid edge effects
   iadd1 = 1 + int((90.d0-xlat)/samples_per_degree_topo)
-  if(iadd1 < 1) iadd1 = 1
-  if(iadd1 > NY_BATHY) iadd1 = NY_BATHY
+  if (iadd1 < 1) iadd1 = 1
+  if (iadd1 > NY_BATHY) iadd1 = NY_BATHY
 
   iel1 = int(xlo/samples_per_degree_topo)
-  if(iel1 <= 0 .or. iel1 > NX_BATHY) iel1 = NX_BATHY
+  if (iel1 <= 0 .or. iel1 > NX_BATHY) iel1 = NX_BATHY
 
 ! convert integer value to double precision
   value = dble(ibathy_topo(iel1,iadd1))

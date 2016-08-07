@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine prepare_GPU()
 
 ! initializes and copies arrays onto GPU device
@@ -840,7 +839,7 @@
     if (SIMULATION_TYPE == 3) memory_size = 2.d0 * memory_size
 
     ! user output
-    if(myrank == 0) then
+    if (myrank == 0) then
       write(IMAIN,*) ""
       write(IMAIN,*) "  minimum memory requested     : ",memory_size / 1024. / 1024.,"MB per process"
       write(IMAIN,*) ""

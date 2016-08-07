@@ -69,9 +69,9 @@
       call save_kernels_boundary_kl()
     endif
 
-    ! approximate hessian
+    ! approximate Hessian
     if (APPROXIMATE_HESS_KL) then
-      call save_kernels_hessian()
+      call save_kernels_Hessian()
     endif
   endif
 
@@ -941,7 +941,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_hessian()
+  subroutine save_kernels_Hessian()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -959,7 +959,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_hessian_adios()
+    call write_kernels_Hessian_adios()
   else
     ! stores into file
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -969,7 +969,7 @@
     close(IOUT)
   endif
 
-  end subroutine save_kernels_hessian
+  end subroutine save_kernels_Hessian
 
 !
 !-------------------------------------------------------------------------------------------------

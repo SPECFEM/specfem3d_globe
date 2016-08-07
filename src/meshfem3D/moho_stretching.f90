@@ -170,7 +170,7 @@
 
           call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
-        else  if (moho > R_middlecrust) then
+        else if (moho > R_middlecrust) then
           ! moho above middle crust
           ! elements in first layer will squeeze into crust above moho
 

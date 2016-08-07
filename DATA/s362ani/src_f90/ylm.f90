@@ -36,7 +36,7 @@
     TEMP=FAC*CMPLX(WK1(IM),0.)
     IND=IND+1
     Y(IND)=REAL(TEMP)
-    IF(IM == 1) GOTO 20
+    if (IM == 1) goto 20
     IND=IND+1
     Y(IND)=AIMAG(TEMP)
  20 FAC=FAC*DFAC
@@ -82,16 +82,16 @@
     XP(I)=0.
   enddo
 
-  IF(L > 1.and.ABS(THETA) > 1.E-5) GO TO 3
+  if (L > 1.and.ABS(THETA) > 1.E-5) goto 3
   X(1)=FCT
-  IF(L == 0) RETURN
+  if (L == 0) return
   X(1)=CT*FCT
   X(2)=-ST*FCT/DSFL3
   XP(1)=-ST*FCT
   XP(2)=-.5D0*CT*FCT*DSFL3
-  IF(ABS(THETA) < 1.E-5) XCOSEC(2)=XP(2)
-  IF(ABS(THETA) >= 1.E-5) XCOSEC(2)=X(2)/ST
-  RETURN
+  if (ABS(THETA) < 1.E-5) XCOSEC(2)=XP(2)
+  if (ABS(THETA) >= 1.E-5) XCOSEC(2)=X(2)/ST
+  return
 
  3 X1=1.D0
   X2=CT
@@ -115,7 +115,7 @@
   XCOSEC(2)=X(2)*COSEC
   XP(2)=-XP(2)/SFL3
   SUM=SUM+2.D0*X(2)*X(2)
-  IF(SUM-COMPAR > SMALL) RETURN
+  if (SUM-COMPAR > SMALL) return
   X1=X3
   X2=-X2/DSQRT(dble(L*(L+1)))
 
@@ -126,7 +126,7 @@
     XM=K
     X3=-(2.D0*COT*(XM-1.D0)*X2+F2*X1)/F1
     SUM=SUM+2.D0*X3*X3
-    IF(SUM-COMPAR > SMALL.and.I /= LP1) RETURN
+    if (SUM-COMPAR > SMALL.and.I /= LP1) return
     X(I)=X3
     XCOSEC(I)=X(I)*COSEC
     X1=X2

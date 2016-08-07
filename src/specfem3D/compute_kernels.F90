@@ -64,8 +64,8 @@
   ! boundary kernels
   if (SAVE_BOUNDARY_MESH) call compute_boundary_kernels()
 
-  ! approximate hessian
-  if (APPROXIMATE_HESS_KL) call compute_kernels_hessian()
+  ! approximate Hessian
+  if (APPROXIMATE_HESS_KL) call compute_kernels_Hessian()
 
   end subroutine compute_kernels
 
@@ -804,7 +804,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! Subroutines to compute the kernels for the 21 elastic coefficients
+! subroutines to compute the kernels for the 21 elastic coefficients
 
   subroutine compute_strain_product(prod,eps_trace_over_3,epsdev,&
                                     b_eps_trace_over_3,b_epsdev)
@@ -865,7 +865,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_kernels_hessian()
+  subroutine compute_kernels_Hessian()
 
   use constants_solver
   use specfem_par,only: deltat
@@ -902,7 +902,7 @@
 
         iglob = ibool_crust_mantle(INDEX_IJK,ispec)
 
-        ! approximates hessian
+        ! approximates Hessian
         ! term with adjoint acceleration and backward/reconstructed acceleration
         hess_kl_crust_mantle(INDEX_IJK,ispec) =  hess_kl_crust_mantle(INDEX_IJK,ispec) &
            + deltat * (accel_crust_mantle(1,iglob) * b_accel_crust_mantle(1,iglob) &
@@ -923,4 +923,4 @@
 
   endif
 
-  end subroutine compute_kernels_hessian
+  end subroutine compute_kernels_Hessian

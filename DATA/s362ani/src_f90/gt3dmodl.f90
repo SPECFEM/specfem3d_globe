@@ -39,13 +39,13 @@
   ierror=0
   call rd3dmodl(lu,targetfile,ierror)
 
-  if(nhorpar <= maxhpa) then
+  if (nhorpar <= maxhpa) then
   numhpa=nhorpar
   else
   ierror=ierror+1
   endif
 
-  if(nmodkern <= maxker) then
+  if (nmodkern <= maxker) then
   numker=nmodkern
   else
   ierror=ierror+1
@@ -56,7 +56,7 @@
   dskker(i)=desckern(i)
   do j=1,ncoefhor(ihpakern(i))
     coe(j,i)=coef(j,i)
-!          if(j==1) then
+!          if (j==1) then
 !            write(6,"(e12.4)") coe(j,i)
 !          endif
   enddo
@@ -66,7 +66,7 @@
   numcoe(i)=ncoefhor(i)
   lmxhpa(i)=lmaxhor(i)
   itypehpa(i)=ityphpar(i)
-  if(itypehpa(i) == 2) then
+  if (itypehpa(i) == 2) then
     do j=1,ncoefhor(i)
       itpspl(j,i)=ixlspl(j,i)
       xlatspl(j,i)=xlaspl(j,i)
@@ -87,11 +87,11 @@
   enddo
   ivarkern(i)=0
   do k=1,numvar
-    if(string(1:j) == varstr(k)(1:j)) then
+    if (string(1:j) == varstr(k)(1:j)) then
       ivarkern(i)=k
     endif
   enddo
-  if(ivarkern(i) == 0) then
+  if (ivarkern(i) == 0) then
     numvar=numvar+1
     varstr(numvar)=string(1:j)
     ivarkern(i)=numvar

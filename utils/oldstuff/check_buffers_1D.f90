@@ -88,7 +88,7 @@
   open(unit=34,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
   do iproc = 0,NPROCTOT-1
       read(34,*) iproc_read,ichunk,iproc_xi,iproc_eta
-      if(iproc_read /= iproc) stop 'incorrect slice number read'
+      if (iproc_read /= iproc) stop 'incorrect slice number read'
       addressing(ichunk,iproc_xi,iproc_eta) = iproc
   enddo
   close(34)
@@ -222,11 +222,11 @@
 
 ! read 1D addressing buffers for copy between slices along xi with MPI
 
-  if(icorners == 1) then
+  if (icorners == 1) then
 ! read ibool1D_rightxi_lefteta of this slice
   write(*,*) 'reading MPI 1D buffer ibool1D_rightxi_lefteta slice ',ithisproc
   open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
-  else if(icorners == 2) then
+  else if (icorners == 2) then
 ! read ibool1D_rightxi_righteta of this slice
   write(*,*) 'reading MPI 1D buffer ibool1D_rightxi_righteta slice ',ithisproc
   open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
@@ -237,25 +237,25 @@
   npoin1D = 1
  360  continue
   read(34,*) iboolright(npoin1D),xright(npoin1D),yright(npoin1D),zright(npoin1D)
-  if(iboolright(npoin1D) > 0) then
+  if (iboolright(npoin1D) > 0) then
       npoin1D = npoin1D + 1
       goto 360
   endif
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolright slice ',ithisproc
   read(34,*) npoin1D_mesher
-  if(icorners == 1) then
-    if(npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(2)) stop 'incorrect iboolright read'
+  if (icorners == 1) then
+    if (npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(2)) stop 'incorrect iboolright read'
   else
-    if(npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(3)) stop 'incorrect iboolright read'
+    if (npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(3)) stop 'incorrect iboolright read'
   endif
   close(34)
 
-  if(icorners == 1) then
+  if (icorners == 1) then
 ! read ibool1D_leftxi_lefteta of other slice
   write(*,*) 'reading MPI 1D buffer ibool1D_leftxi_lefteta slice ',iotherproc
   open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
-  else if(icorners == 2) then
+  else if (icorners == 2) then
 ! read ibool1D_leftxi_righteta of other slice
   write(*,*) 'reading MPI 1D buffer ibool1D_leftxi_righteta slice ',iotherproc
   open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
@@ -266,17 +266,17 @@
   npoin1D = 1
  350  continue
   read(34,*) iboolleft(npoin1D),xleft(npoin1D),yleft(npoin1D),zleft(npoin1D)
-  if(iboolleft(npoin1D) > 0) then
+  if (iboolleft(npoin1D) > 0) then
       npoin1D = npoin1D + 1
       goto 350
   endif
   npoin1D = npoin1D - 1
   write(*,*) 'found ',npoin1D,' points in iboolleft slice ',iotherproc
   read(34,*) npoin1D_mesher
-  if(icorners == 1) then
-    if(npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(1)) stop 'incorrect iboolleft read'
+  if (icorners == 1) then
+    if (npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(1)) stop 'incorrect iboolleft read'
   else
-    if(npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(4)) stop 'incorrect iboolleft read'
+    if (npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(4)) stop 'incorrect iboolleft read'
   endif
   close(34)
 
@@ -285,7 +285,7 @@
   do ipoin = 1,npoin1D
       diff = dmax1(dabs(xleft(ipoin)-xright(ipoin)), &
        dabs(yleft(ipoin)-yright(ipoin)),dabs(zleft(ipoin)-zright(ipoin)))
-      if(diff > 0.0000001d0) then
+      if (diff > 0.0000001d0) then
             print *,'different: ',ipoin,iboolleft(ipoin),iboolright(ipoin),diff
             stop 'error: different'
       endif
@@ -404,11 +404,11 @@
 
 ! read 1D addressing buffers for copy between slices along xi with MPI
 
-  if(icorners == 1) then
+  if (icorners == 1) then
 ! read ibool1D_leftxi_righteta of this slice
   write(*,*) 'reading MPI 1D buffer ibool1D_leftxi_righteta slice ',ithisproc
   open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_leftxi_righteta.txt',status='old',action='read')
-  else if(icorners == 2) then
+  else if (icorners == 2) then
 ! read ibool1D_rightxi_righteta of this slice
   write(*,*) 'reading MPI 1D buffer ibool1D_rightxi_righteta slice ',ithisproc
   open(unit=34,file=prname(1:len_trim(prname))//'ibool1D_rightxi_righteta.txt',status='old',action='read')
@@ -419,7 +419,7 @@
   npoin1D = 1
  460  continue
   read(34,*) iboolright(npoin1D),xright(npoin1D),yright(npoin1D),zright(npoin1D)
-  if(iboolright(npoin1D) > 0) then
+  if (iboolright(npoin1D) > 0) then
       npoin1D = npoin1D + 1
       goto 460
   endif
@@ -427,18 +427,18 @@
   write(*,*) 'found ',npoin1D,' points in iboolright slice ',ithisproc
   read(34,*) npoin1D_mesher
 
-  if(icorners == 1) then
-    if(npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(4)) stop 'incorrect iboolright read'
+  if (icorners == 1) then
+    if (npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(4)) stop 'incorrect iboolright read'
   else
-    if(npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(3)) stop 'incorrect iboolright read'
+    if (npoin1D /= NGLOB1D_RADIAL_SPEC_THIS(3)) stop 'incorrect iboolright read'
   endif
   close(34)
 
-  if(icorners == 1) then
+  if (icorners == 1) then
 ! read ibool1D_leftxi_lefteta of other slice
   write(*,*) 'reading MPI 1D buffer ibool1D_leftxi_lefteta slice ',iotherproc
   open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_leftxi_lefteta.txt',status='old',action='read')
-  else if(icorners == 2) then
+  else if (icorners == 2) then
 ! read ibool1D_rightxi_lefteta of other slice
   write(*,*) 'reading MPI 1D buffer ibool1D_rightxi_lefteta slice ',iotherproc
   open(unit=34,file=prname_other(1:len_trim(prname_other))//'ibool1D_rightxi_lefteta.txt',status='old',action='read')
@@ -449,7 +449,7 @@
   npoin1D = 1
  450  continue
   read(34,*) iboolleft(npoin1D),xleft(npoin1D),yleft(npoin1D),zleft(npoin1D)
-  if(iboolleft(npoin1D) > 0) then
+  if (iboolleft(npoin1D) > 0) then
       npoin1D = npoin1D + 1
       goto 450
   endif
@@ -457,10 +457,10 @@
   write(*,*) 'found ',npoin1D,' points in iboolleft slice ',iotherproc
   read(34,*) npoin1D_mesher
 
-  if(icorners == 1) then
-    if(npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(1)) stop 'incorrect iboolleft read'
+  if (icorners == 1) then
+    if (npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(1)) stop 'incorrect iboolleft read'
   else
-    if(npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(2)) stop 'incorrect iboolleft read'
+    if (npoin1D /= NGLOB1D_RADIAL_SPEC_OTHER(2)) stop 'incorrect iboolleft read'
   endif
   close(34)
 
@@ -469,7 +469,7 @@
   do ipoin = 1,npoin1D
       diff = dmax1(dabs(xleft(ipoin)-xright(ipoin)), &
        dabs(yleft(ipoin)-yright(ipoin)),dabs(zleft(ipoin)-zright(ipoin)))
-      if(diff > 0.0000001d0) then
+      if (diff > 0.0000001d0) then
             print *,'different: ',ipoin,iboolleft(ipoin),iboolright(ipoin),diff
             stop 'error: different'
       endif

@@ -27,7 +27,7 @@
 
 !-------------------------------------------------------------------------------
 !> \file get_absorb_adios.f90
-!! \brief Function to write Stacey boundary condition to disk with ADIOS.
+!! \brief function to write Stacey boundary condition to disk with ADIOS.
 !! \author MPBL
 !-------------------------------------------------------------------------------
 

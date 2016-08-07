@@ -354,7 +354,7 @@
       if (I-I1 >  0) goto 8
 
  7    I=II
-      GOTO 6
+      goto 6
  11   I=I1
 
 !   CALCULATE RSPLE USING SPLINE COEFFICIENTS IN Y AND Q.
@@ -369,7 +369,7 @@
 
   implicit none
 
-! Subroutine rspln computes cubic spline interpolation coefficients
+! The subroutine rspln computes cubic spline interpolation coefficients
 ! for y(x) between grid points i1 and i2 saving them in q.The
 ! interpolation is continuous with continuous first and second
 ! derivatives. It agrees exactly with y at grid points and with the
@@ -402,11 +402,11 @@
       DO 3 I=J1,I2
       B0=A0
       A0=X(I)
-      if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) GOTO 4
- 3    CONTINUE
+      if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) goto 4
+ 3    continue
  17   J1=J1-1
       J2=I2-2
-      GOTO 5
+      goto 5
  4    J1=J1-1
       J2=I-3
 !   SEE IF THERE ARE ENOUGH POINTS TO INTERPOLATE (AT LEAST THREE).
@@ -421,7 +421,7 @@
         Q(J,J1)=YY(J)
         Q(J,J2)=YY(J)
       enddo
-      GOTO 12
+      goto 12
 
 !   MORE THAN TWO POINTS.  DO SPLINE INTERPOLATION.
  11   A0 = 0.

@@ -1117,10 +1117,10 @@
       sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
-    ! approximate hessian
+    ! approximate Hessian
     if (APPROXIMATE_HESS_KL) then
       allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating hessian')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Hessian')
       hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
@@ -1907,7 +1907,7 @@
   call read_parameters_noise()
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
     ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
     write(IMAIN,*) "  ignoring CMT sources"
     select case (NOISE_TOMOGRAPHY)

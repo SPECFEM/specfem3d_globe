@@ -582,7 +582,7 @@
   ! mass matrix corrections
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
     ! uses corrected mass matrices in case Newmark time scheme is used
-    if (USE_LDDRK)  then
+    if (USE_LDDRK) then
       ! uses single mass matrix without correction in case LDDRK time scheme is used
       ! frees pointer memory
       deallocate(rmassx_inner_core,rmassy_inner_core)

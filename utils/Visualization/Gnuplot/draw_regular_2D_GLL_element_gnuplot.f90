@@ -57,7 +57,7 @@
   write(20,*) sngl(coord(1,ix+1,iy)),sngl(coord(2,ix+1,iy))
   write(20,"('')")
 
-  if(iy == 1 .or. iy == NGLLY) then
+  if (iy == 1 .or. iy == NGLLY) then
     write(21,*) sngl(coord(1,ix,iy)),sngl(coord(2,ix,iy))
     write(21,*) sngl(coord(1,ix+1,iy)),sngl(coord(2,ix+1,iy))
     write(21,"('')")
@@ -76,7 +76,7 @@
   write(20,*) sngl(coord(1,ix,iy+1)),sngl(coord(2,ix,iy+1))
   write(20,"('')")
 
-  if(ix == 1 .or. ix == NGLLX) then
+  if (ix == 1 .or. ix == NGLLX) then
     write(21,*) sngl(coord(1,ix,iy)),sngl(coord(2,ix,iy))
     write(21,*) sngl(coord(1,ix,iy+1)),sngl(coord(2,ix,iy+1))
     write(21,"('')")
@@ -299,7 +299,7 @@
   pd = 0.d0
   jmin = 0
   do j=1,np
-   if(j == 1) then
+   if (j == 1) then
       x = dcos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
    else
       x1 = dcos((2.d0*(dble(j)-1.d0)+1.d0)*dth)
@@ -315,7 +315,7 @@
       enddo
       delx = -p/(pd-recsum*p)
       x    = x+delx
-      if(abs(delx) < eps) goto 31
+      if (abs(delx) < eps) goto 31
    enddo
  31      continue
    xjac(np-j+1) = x
@@ -324,12 +324,12 @@
   do i=1,np
    xmin = 2.d0
    do j=i,np
-      if(xjac(j) < xmin) then
+      if (xjac(j) < xmin) then
          xmin = xjac(j)
          jmin = j
       endif
    enddo
-   if(jmin /= i) then
+   if (jmin /= i) then
       swap = xjac(i)
       xjac(i) = xjac(jmin)
       xjac(jmin) = swap
@@ -400,7 +400,7 @@
 !------------------------------------------------------------------------
 !
 
-  double precision FUNCTION PNDLEG (Z,N)
+  double precision function PNDLEG (Z,N)
 
 !------------------------------------------------------------------------
 !
@@ -440,7 +440,7 @@
 !------------------------------------------------------------------------
 !
 
-  double precision FUNCTION PNLEG (Z,N)
+  double precision function PNLEG (Z,N)
 
 !------------------------------------------------------------------------
 !
@@ -639,7 +639,7 @@
   z(np) =  one
 
 ! if number of points is odd, the middle abscissa is exactly zero
-  if(mod(np,2) /= 0) z((np-1)/2+1) = zero
+  if (mod(np,2) /= 0) z((np-1)/2+1) = zero
 
 ! weights
   do i=2,np-1

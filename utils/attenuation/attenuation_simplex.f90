@@ -54,7 +54,7 @@ subroutine attenuation_simplex(t1, t2, n, Q_real, omega_not, tau_s, tau_e)
   exp1 = log10(f1);
   exp2 = log10(f2);
 
-  if(f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
+  if (f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
      write(*,*)'bad parameters'
      call exit(-1)
   endif
@@ -87,7 +87,7 @@ subroutine attenuation_simplex(t1, t2, n, Q_real, omega_not, tau_s, tau_e)
 
   ! Run a simplex search to determine the optimum values of tau_e
   call fminsearch(attenuation_eval, tau_e, n, iterations, min_value, prnt, err)
-  if(err > 0) then
+  if (err > 0) then
      write(*,*)'Search did not converge for an attenuation of ', Q_real
      write(*,*)'    Iterations: ', iterations
      write(*,*)'    Min Value:  ', min_value
@@ -270,7 +270,7 @@ end function attenuation_eval
 !                 4 => report every iteration, total simplex
 !     err       = Output
 !                 0 => Normal exeecution, converged within desired range
-!                 1 => Function Evaluation exceeded limit
+!                 1 => function Evaluation exceeded limit
 !                 2 => Iterations exceeded limit
 !
 !     See Matlab fminsearch
@@ -316,7 +316,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
   sigma = 0.5d0
 
 
-  if(itercount > 0) then
+  if (itercount > 0) then
      maxiter = itercount
   else
      maxiter = 200 * n
@@ -324,7 +324,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
   itercount = 0
   maxfun  = 200 * n
 
-  if(tolf > 0.0d0) then
+  if (tolf > 0.0d0) then
      tolx = 1.0e-4
   else
      tolx = 1.0e-4
@@ -347,7 +347,7 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
 
   do j = 1,n
      y = xin
-     if(y(j) /= 0.0d0) then
+     if (y(j) /= 0.0d0) then
         y(j) = (1.0d0 + usual_delta) * y(j)
      else
         y(j) = zero_term_delta
@@ -367,11 +367,11 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
   how = initial
   itercount = 1
   func_evals = n+1
-  if(prnt == 3) then
+  if (prnt == 3) then
      write(*,*)'Iterations   Funk Evals   Value How'
      write(*,*)itercount, func_evals, fv(1), how
   endif
-  if(prnt == 4) then
+  if (prnt == 4) then
      write(*,*)'How: ',how
      write(*,*)'V: ', v
      write(*,*)'fv: ',fv
@@ -380,10 +380,10 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
 
   do while (func_evals < maxfun .and. itercount < maxiter)
 
-!     if(max(max(abs(v(:,2:n+1) - v(:,1)))) <= tolx .and. &
+!     if (max(max(abs(v(:,2:n+1) - v(:,1)))) <= tolx .and. &
 !          max(abs(fv(1) - fv(2:n+1))) <= tolf) then
 
-     if(max_size_simplex(v,n) <= tolx .and. &
+     if (max_size_simplex(v,n) <= tolx .and. &
           max_value(fv,n+1) <= tolf) then
         goto 666
      endif
@@ -484,11 +484,11 @@ subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err)
      endif
   enddo
 
-  if(func_evals > maxfun) then
+  if (func_evals > maxfun) then
      write(*,*)'function evaluations exceeded prescribed limit', maxfun
      err = 1
   endif
-  if(itercount > maxiter) then
+  if (itercount > maxiter) then
      write(*,*)'iterations exceeded prescribed limit', maxiter
      err = 2
   endif
@@ -511,7 +511,7 @@ end subroutine fminsearch
 !      n  = Input
 !             Length of fv
 !
-!      Returns:
+!      returns:
 !         Xi = max( || fv(1)- fv(i) || ); i=2:n
 !
 real(8) function max_value(fv,n)
@@ -525,7 +525,7 @@ real(8) function max_value(fv,n)
   m = 0.0d0
   do i = 2,n
      z = abs(fv(1) - fv(i))
-     if(z > m) then
+     if (z > m) then
         m = z
      endif
   enddo
@@ -543,7 +543,7 @@ end function max_value
 !            dimension(n, n+1)
 !     n  = Pseudo Length of n
 !
-!     Returns:
+!     returns:
 !       Xi = max( max( || v(:,1) - v(:,i) || ) ) ; i=2:n+1
 !
 real(8) function max_size_simplex(v,n)
@@ -558,7 +558,7 @@ real(8) function max_size_simplex(v,n)
   do i = 1,n
      do j = 2,n+1
         z = abs(v(i,j) - v(i,1))
-        if(z > m) then
+        if (z > m) then
            m = z
         endif
      enddo
@@ -603,7 +603,7 @@ subroutine bubble_sort(X,n,I)
 
   do j = 1,n
      do k = 1,n-j
-        if(X(k+1) < X(k)) then
+        if (X(k+1) < X(k)) then
            rtmp   = X(k)
            X(k)   = X(k+1)
            X(k+1) = rtmp

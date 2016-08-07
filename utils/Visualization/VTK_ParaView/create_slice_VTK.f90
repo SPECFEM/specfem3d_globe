@@ -83,7 +83,7 @@
       print *, '   - filename:    looks for filename.bin must be array of (NGLLX,NGLLY,NGLLZ,nspec) '
       print *, '   - input_topo_dir:    includes "proc***_array_dims.txt '
       print *,  '   - input_file_dir:    includes "proc****filename.bin '
-      print *, '   - output_dir:    output mesh files go to here '
+      print *, '   - output_dir:    output mesh files goto here '
       print *, '   if region is not specified, all 3 regions will be collected, otherwise, only collect regions specified'
       print *, ' '
       stop ' Reenter command line options'

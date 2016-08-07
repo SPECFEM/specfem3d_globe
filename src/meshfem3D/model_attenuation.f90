@@ -117,7 +117,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! This Subroutine is Hackish.  It could probably all be moved to an input attenuation file.
+! This subroutine is hackish.  It could probably all be moved to an input attenuation file.
 ! Actually all the velocities, densities and attenuations could be moved to separate input
 ! files rather than be defined within the CODE
 !
@@ -693,7 +693,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !                 4 => report every iteration, total simplex
 !     err       = Output
 !                 0 => Normal execution, converged within desired range
-!                 1 => Function Evaluation exceeded limit
+!                 1 => function evaluation exceeded limit
 !                 2 => Iterations exceeded limit
 !
 !     See Matlab fminsearch
@@ -936,7 +936,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !      n  = Input
 !             Length of fv
 !
-!      Returns:
+!      returns:
 !         Xi = max( || fv(1)- fv(i) || ) for i=2:n
 !
   double precision function max_value(fv,n)
@@ -970,7 +970,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !            dimension(n, n+1)
 !     n  = Pseudo Length of n
 !
-!     Returns:
+!     returns:
 !       Xi = max( max( || v(:,1) - v(:,i) || ) ) for i=2:n+1
 !
   double precision function max_size_simplex(v,n)

@@ -358,8 +358,8 @@
         ival = 255 * (ibathy_topo(ix,iy) - minvalue) / (maxvalue - minvalue)
       endif
 
-      if(ival < 1) ival = 1
-      if(ival > 255) ival = 255
+      if (ival < 1) ival = 1
+      if (ival > 255) ival = 255
 
       ! write data value (red = green = blue to produce grey levels)
       write(IOUT,'(i3)') ival

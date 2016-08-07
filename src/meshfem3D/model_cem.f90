@@ -128,7 +128,7 @@ end module cem_par
   integer, intent (in) :: iregion_code, ispec, i, j, k
   integer              :: iglob
 
-  if      (iregion_code == IREGION_CRUST_MANTLE) then
+  if (iregion_code == IREGION_CRUST_MANTLE) then
 
     iglob = ibool(i,j,k,ispec)
 
@@ -367,7 +367,7 @@ end module cem_par
 
             rad = dsqrt ( x * x + y * y + z * z )
 
-            if      (rad < R_670_KM .and. rad >= R_CMB_KM) then
+            if (rad < R_670_KM .and. rad >= R_CMB_KM) then
               region = 3
             else if (rad < R_400_KM .and. rad >= R_670_KM) then
               region = 2

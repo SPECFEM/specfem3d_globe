@@ -12,11 +12,11 @@
   do i=1,6
     do j=i,6
       print *,'prod(',p,')=eps',i,'*b_eps',j
-      if(j>i) then
+      if (j>i) then
         print *,'prod(',p,')=prod(',p,')+eps',j,'*b_eps',i
-        if(j>3 .and. i<4) print *,'prod(',p,') = prod(',p,') * 2._CUSTOM_REAL'
+        if (j>3 .and. i<4) print *,'prod(',p,') = prod(',p,') * 2._CUSTOM_REAL'
       endif
-      if(i>3) print *,'prod(',p,') = prod(',p,') * 4._CUSTOM_REAL'
+      if (i>3) print *,'prod(',p,') = prod(',p,') * 4._CUSTOM_REAL'
       p=p+1
     enddo
   enddo

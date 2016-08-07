@@ -16,7 +16,7 @@
 
   double precision, dimension(NR_REF) :: radius_ref,density_ref,vpv_ref,vph_ref,vsv_ref,vsh_ref,eta_ref,Qkappa_ref,Qmu_ref
 
-  if(NR_REF /= 750) stop 'NR_REF should be equal to 750 in the Harvard model'
+  if (NR_REF /= 750) stop 'NR_REF should be equal to 750 in the Harvard model'
 
   open(unit=10,file='./REF',status='old',action='read')
 
@@ -39,23 +39,23 @@
 
   do i1 = 1,25
 
-    if(iarray == 1) then
+    if (iarray == 1) then
       print *,'Mref_V%radius_ref(',i+1,':',i+30,') = (/ &'
-    else if(iarray == 2) then
+    else if (iarray == 2) then
       print *,'Mref_V%density_ref(',i+1,':',i+30,') = (/ &'
-    else if(iarray == 3) then
+    else if (iarray == 3) then
       print *,'Mref_V%vpv_ref(',i+1,':',i+30,') = (/ &'
-    else if(iarray == 4) then
+    else if (iarray == 4) then
       print *,'Mref_V%vsv_ref(',i+1,':',i+30,') = (/ &'
-    else if(iarray == 5) then
+    else if (iarray == 5) then
       print *,'Mref_V%Qkappa_ref(',i+1,':',i+30,') = (/ &'
-    else if(iarray == 6) then
+    else if (iarray == 6) then
       print *,'Mref_V%Qmu_ref(',i+1,':',i+30,') = (/ &'
-    else if(iarray == 7) then
+    else if (iarray == 7) then
       print *,'Mref_V%vph_ref(',i+1,':',i+30,') = (/ &'
-    else if(iarray == 8) then
+    else if (iarray == 8) then
       print *,'Mref_V%vsh_ref(',i+1,':',i+30,') = (/ &'
-    else if(iarray == 9) then
+    else if (iarray == 9) then
       print *,'Mref_V%eta_ref(',i+1,':',i+30,') = (/ &'
     else
       stop 'incorrect array number'
@@ -67,25 +67,25 @@
     i = i + 1
 
 ! continue to next line or close constructor if this is the last line
-    if(i2 /= 30) then
+    if (i2 /= 30) then
 
-    if(iarray == 1) then
+    if (iarray == 1) then
       print *,radius_ref(i),', &'
-    else if(iarray == 2) then
+    else if (iarray == 2) then
       print *,density_ref(i),', &'
-    else if(iarray == 3) then
+    else if (iarray == 3) then
       print *,vpv_ref(i),', &'
-    else if(iarray == 4) then
+    else if (iarray == 4) then
       print *,vsv_ref(i),', &'
-    else if(iarray == 5) then
+    else if (iarray == 5) then
       print *,Qkappa_ref(i),', &'
-    else if(iarray == 6) then
+    else if (iarray == 6) then
       print *,Qmu_ref(i),', &'
-    else if(iarray == 7) then
+    else if (iarray == 7) then
       print *,vph_ref(i),', &'
-    else if(iarray == 8) then
+    else if (iarray == 8) then
       print *,vsh_ref(i),', &'
-    else if(iarray == 9) then
+    else if (iarray == 9) then
       print *,eta_ref(i),', &'
     else
       stop 'incorrect array number'
@@ -93,23 +93,23 @@
 
     else
 
-    if(iarray == 1) then
+    if (iarray == 1) then
       print *,radius_ref(i),' /)'
-    else if(iarray == 2) then
+    else if (iarray == 2) then
       print *,density_ref(i),' /)'
-    else if(iarray == 3) then
+    else if (iarray == 3) then
       print *,vpv_ref(i),' /)'
-    else if(iarray == 4) then
+    else if (iarray == 4) then
       print *,vsv_ref(i),' /)'
-    else if(iarray == 5) then
+    else if (iarray == 5) then
       print *,Qkappa_ref(i),' /)'
-    else if(iarray == 6) then
+    else if (iarray == 6) then
       print *,Qmu_ref(i),' /)'
-    else if(iarray == 7) then
+    else if (iarray == 7) then
       print *,vph_ref(i),' /)'
-    else if(iarray == 8) then
+    else if (iarray == 8) then
       print *,vsh_ref(i),' /)'
-    else if(iarray == 9) then
+    else if (iarray == 9) then
       print *,eta_ref(i),' /)'
     else
       stop 'incorrect array number'

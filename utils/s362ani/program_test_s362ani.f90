@@ -116,7 +116,7 @@
 !            sngl(vsv*(R_EARTH*scaleval)),sngl(vsh*(R_EARTH*scaleval)),sngl(eta),sngl(Qmu)
 !
 ! find and check discontinuities
-!    if(Mref_V%radius_ref(i) == Mref_V%radius_ref(i+1)) then
+!    if (Mref_V%radius_ref(i) == Mref_V%radius_ref(i+1)) then
 !      print *,i,Mref_V%radius_ref(i)
 !    endif
 !
@@ -196,7 +196,7 @@
 
 ! smoothed version of topographic variations
      elevation = 0.5d0*EMAX
-     if(topomoho < EMAX) elevation = 0.5d0 * topomoho
+     if (topomoho < EMAX) elevation = 0.5d0 * topomoho
 
 !      print *,sngl(lat),sngl(lon),sngl(moho*R_EARTH_KM),sngl(r_moho*R_EARTH_KM-RMOHO/1000.0d0),sngl(elevation*R_EARTH_KM)
     enddo

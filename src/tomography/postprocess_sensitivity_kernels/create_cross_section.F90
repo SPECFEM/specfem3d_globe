@@ -1455,7 +1455,7 @@
       ! debug
       !if (myrank == 0) print *,'search first guess = ',dist_min*R_EARTH_KM,'point',ipoin
 
-      ! no more searching needed, go to next point
+      ! no more searching needed, switch to next point
       cycle
     endif
 

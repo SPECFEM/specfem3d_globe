@@ -57,7 +57,7 @@
   read(*,*) LONGITUDE_MAX
   print *
 
-  if(LONGITUDE_MIN >= LONGITUDE_MAX) stop 'incorrect longitude range given'
+  if (LONGITUDE_MIN >= LONGITUDE_MAX) stop 'incorrect longitude range given'
 
   print *,'enter LATITUDE_MIN:'
   read(*,*) LATITUDE_MIN
@@ -67,7 +67,7 @@
   read(*,*) LATITUDE_MAX
   print *
 
-  if(LATITUDE_MIN >= LATITUDE_MAX) stop 'incorrect latitude range given'
+  if (LATITUDE_MIN >= LATITUDE_MAX) stop 'incorrect latitude range given'
 
   nrec_filtered = 0
 
@@ -76,7 +76,7 @@
   read(IIN, *) nrec
   do irec = 1, nrec
     read(IIN, *) station_name, network_name, stlat, stlon, stele, stbur
-    if(stlat >= LATITUDE_MIN .and. stlat <= LATITUDE_MAX .and. stlon >= LONGITUDE_MIN .and. stlon <= LONGITUDE_MAX) &
+    if (stlat >= LATITUDE_MIN .and. stlat <= LATITUDE_MAX .and. stlon >= LONGITUDE_MIN .and. stlon <= LONGITUDE_MAX) &
           nrec_filtered = nrec_filtered + 1
   enddo
   close(IIN)
@@ -87,7 +87,7 @@
     write(IOUT,*) nrec_filtered
     do irec = 1,nrec
       read(IIN,*) station_name,network_name,stlat,stlon,stele,stbur
-      if(stlat >= LATITUDE_MIN .and. stlat <= LATITUDE_MAX .and. stlon >= LONGITUDE_MIN .and. stlon <= LONGITUDE_MAX) &
+      if (stlat >= LATITUDE_MIN .and. stlat <= LATITUDE_MAX .and. stlon >= LONGITUDE_MIN .and. stlon <= LONGITUDE_MAX) &
             write(IOUT,*) trim(station_name),' ',trim(network_name),' ',sngl(stlat),' ',sngl(stlon), ' ',sngl(stele), ' ',sngl(stbur)
     enddo
     close(IIN)

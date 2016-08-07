@@ -298,7 +298,7 @@ contains
     ces = cos(eo-so)
     ses = sin(eo-so)
 
-    if  (sa==ea) then
+    if (sa==ea) then
       if (sto==epo) then
         dk =0.00
         dd =0.00

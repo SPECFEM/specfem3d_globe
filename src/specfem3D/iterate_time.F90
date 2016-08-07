@@ -348,7 +348,7 @@
       call transfer_kernels_noise_to_host(Mesh_pointer,sigma_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
 
-    ! approximative hessian for preconditioning kernels
+    ! approximative Hessian for preconditioning kernels
     if (APPROXIMATE_HESS_KL) then
       call transfer_kernels_hess_cm_tohost(Mesh_pointer,hess_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif

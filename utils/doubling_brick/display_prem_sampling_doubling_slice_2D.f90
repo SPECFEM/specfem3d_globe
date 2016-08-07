@@ -150,8 +150,8 @@
   NEX_PER_PROC_XI = NEX_XI / NPROC_XI
 
 ! check that mesh can be coarsened in depth four times (block size must be a multiple of 16)
-  if(mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
-  if(mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
+  if (mod(NEX_XI,16) /= 0) stop 'NEX_XI must be a multiple of 16'
+  if (mod(NEX_XI/16,NPROC_XI) /= 0) stop 'NEX_XI must be a multiple of 16*NPROC_XI'
 
   print *,'-----------------------------------------'
   print *
@@ -162,7 +162,7 @@
 
 ! period min for    4.000000 points per lambda S min in horizontal direction =    17.11689
 ! element width =   0.3515625      degrees =    39.09196      km
-  if(NEX == 128) then
+  if (NEX == 128) then
     DT                       = 0.20d0 * 0.30d0 / 0.2565
 ! stability max = approximately 0.2565
     NER_220_CRUST            = 4
@@ -177,7 +177,7 @@
 
 ! period min for 4.000000 points per lambda S min in horizontal direction =    13.69351
 ! element width =   0.2812500      degrees =    31.27357      km
-  else if(NEX == 320) then
+  else if (NEX == 320) then
     DT                       = 0.125d0 * 0.30d0 / 0.2429
 ! stability max = approximately 0.2429
     NER_220_CRUST            = 2
@@ -192,7 +192,7 @@
 
 ! period min for 4.000000 points per lambda S min in horizontal direction =    9.129005
 ! element width =   0.1875000      degrees =    20.84905      km
-  else if(NEX == 480) then
+  else if (NEX == 480) then
     DT                       = 0.125d0 * 0.30d0 / 0.3235
 ! stability max = approximately 0.3235
     NER_220_CRUST            = 3
@@ -207,7 +207,7 @@
 
 ! period min for 4.000000 points per lambda S min in horizontal direction =    8.558443
 ! element width =   0.1757812      degrees =    19.54598      km
-  else if(NEX == 512) then
+  else if (NEX == 512) then
     DT                       = 0.125d0 * 0.30d0 / 0.3235
 ! stability max = approximately 0.3235
     NER_220_CRUST            = 4
@@ -222,7 +222,7 @@
 
 ! period min for 4.000000 points per lambda S min in horizontal direction =    6.846754
 ! element width =   0.1406250      degrees =    15.63679      km
-  else if(NEX == 640) then
+  else if (NEX == 640) then
     DT                       = 0.125d0 * 0.30d0 / 0.4067
 ! stability max = approximately 0.4067
     NER_220_CRUST            = 4
@@ -237,7 +237,7 @@
 
 ! period min for 4.000000 points per lambda S min in horizontal direction =    5.071670
 ! element width =   0.1041667      degrees =    11.58280      km
-  else if(NEX == 864) then
+  else if (NEX == 864) then
     DT                       = 0.0555555555d0 * 0.30d0 / 0.2565
 ! stability max = approximately 0.2565
     NER_220_CRUST            = 6
@@ -252,7 +252,7 @@
 
 ! period min for 4.000000 points per lambda S min in horizontal direction =    3.803752
 ! element width =   7.8125000E-02  degrees =    8.687103      km
-  else if(NEX == 1152) then
+  else if (NEX == 1152) then
     DT                       = 0.0555555555d0 * 0.30d0 / 0.3504
 ! stability max = approximately 0.3504
     NER_220_CRUST            = 8
@@ -267,7 +267,7 @@
 
 ! period min for 4.000000 points per lambda S min in horizontal direction =    3.511156
 ! element width =   7.2115384E-02  degrees =    8.018865      km
-  else if(NEX == 1248) then
+  else if (NEX == 1248) then
     DT                       = 0.05d0 * 0.30d0 / 0.3318
 ! stability max = approximately 0.3318
     NER_220_CRUST            = 8
@@ -334,7 +334,7 @@
 ! convert to real percentage
   percent_GLL(:) = percent_GLL(:) / 100.d0
 
-  if(NGLLX > NGLLX_MAX_STABILITY) stop 'cannot estimate the stability condition for that degree'
+  if (NGLLX > NGLLX_MAX_STABILITY) stop 'cannot estimate the stability condition for that degree'
 
 ! list of corners defining the edges
 ! the edge number is sorted according to the numbering convention defined in file hex_nodes.f90
@@ -361,7 +361,7 @@
 
   call prem_iso(r,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
-  if(vs < 0.001d0) vs = vp / MARGIN_SAFE
+  if (vs < 0.001d0) vs = vp / MARGIN_SAFE
 
 ! compute mesh size in the horizontal direction at that depth
   spectral_element_size = (2.d0 * PI * r) / (4 * NEX / ratio_sampling)
@@ -453,7 +453,7 @@
 
   call prem_iso(r,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
-  if(vs < 0.001d0) vs = vp / MARGIN_SAFE
+  if (vs < 0.001d0) vs = vp / MARGIN_SAFE
 
 ! compute number of elements per wavelength at that depth
   num_points_per_lambda_S = period_min * vs / average_mesh_point_size
@@ -463,17 +463,17 @@
 
 !!!!!! DK DK quick hack to detect doublings and show problems with small doubling brick
   call prem_iso(r_next,rho,vp_new,vs_new,ratio_sampling_new)
-  if(ratio_sampling_new < ratio_sampling) stability = stability * 3.d0 / 2.d0
+  if (ratio_sampling_new < ratio_sampling) stability = stability * 3.d0 / 2.d0
 !!!!!! DK DK quick hack to detect doublings and show problems with small doubling brick
 
   r_gnuplot = (R_EARTH-r)/1000.d0
   write(27,*) sngl(r_gnuplot),sngl(num_points_per_lambda_S * vp/vs),sngl(num_points_per_lambda_S),sngl(stability)
 
 ! add one more point at the top of the last layer
-  if(ielem == ner(ilayer)) then
+  if (ielem == ner(ilayer)) then
     call prem_iso(r_next,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
-    if(vs < 0.001d0) vs = vp / MARGIN_SAFE
+    if (vs < 0.001d0) vs = vp / MARGIN_SAFE
 
 ! compute number of elements per wavelength at that depth
     num_points_per_lambda_S = period_min * vs / average_mesh_point_size
@@ -500,7 +500,7 @@
   do ielem = 1,NER_TOPDDOUBLEPRIME_771
     zval = RTOPDDOUBLEPRIME + ielem * (R771 - RTOPDDOUBLEPRIME) / dble(NER_TOPDDOUBLEPRIME_771)
     distance = abs(zval - (R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL))
-    if(distance < distance_min) then
+    if (distance < distance_min) then
       elem_doubling_mantle = ielem
       distance_min = distance
       DEPTH_SECOND_DOUBLING_REAL = R_EARTH - zval
@@ -518,7 +518,7 @@
   do ielem = 2,NER_OUTER_CORE
     zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
     distance = abs(zval - (R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL))
-    if(distance < distance_min) then
+    if (distance < distance_min) then
       elem_doubling_middle_outer_core = ielem
       distance_min = distance
       DEPTH_THIRD_DOUBLING_REAL = R_EARTH - zval
@@ -536,7 +536,7 @@
   do ielem = 1,NER_OUTER_CORE-1
     zval = RICB + ielem * (RCMB - RICB) / dble(NER_OUTER_CORE)
     distance = abs(zval - (R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL))
-    if(distance < distance_min) then
+    if (distance < distance_min) then
       elem_doubling_bottom_outer_core = ielem
       distance_min = distance
       DEPTH_FOURTH_DOUBLING_REAL = R_EARTH - zval
@@ -547,7 +547,7 @@
   print *
 
 ! make sure that the two doublings in the outer core are found in the right order
-  if(elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
+  if (elem_doubling_bottom_outer_core >= elem_doubling_middle_outer_core) &
                   stop 'error in location of the two doublings in the outer core'
 
 ! define all the layers for the mesh
@@ -627,7 +627,7 @@
 
 ! if there is a doubling at the top of this region, we implement it in the last layer of elements
 ! and therefore we suppress one layer of regular elements here
-    if(this_region_has_a_doubling(ilayer)) ner_without_doubling = ner_without_doubling - 1
+    if (this_region_has_a_doubling(ilayer)) ner_without_doubling = ner_without_doubling - 1
 
     number_basic_elems_horizontal = (NEX_PER_PROC_XI/ratio_sampling_array(ilayer))
 
@@ -638,7 +638,7 @@
 ! a basic regular block of 2 elements.
 ! We have imposed that NEX be a multiple of 16 therefore we know that we can always create
 ! these 2 blocks because NEX_PER_PROC_XI / ratio_sampling_array(ilayer) is always divisible by 2.
-    if(this_region_has_a_doubling(ilayer)) nspec = nspec + NSPEC_DOUBLING_SUPERBRICK * number_basic_elems_horizontal / 2
+    if (this_region_has_a_doubling(ilayer)) nspec = nspec + NSPEC_DOUBLING_SUPERBRICK * number_basic_elems_horizontal / 2
 
   enddo
 
@@ -696,7 +696,7 @@
 
 ! if there is a doubling at the top of this region, we implement it in the last layer of elements
 ! and therefore we suppress one layer of regular elements here
-    if(this_region_has_a_doubling(ilayer)) ner_without_doubling = ner_without_doubling - 1
+    if (this_region_has_a_doubling(ilayer)) ner_without_doubling = ner_without_doubling - 1
 
    do ir_elem = 1,ner_without_doubling
 
@@ -743,10 +743,10 @@
    r = sqrt(xval**2 + zval**2)
    call prem_iso(r,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
-  if(vs < 0.001d0) vs = vp / MARGIN_SAFE
+  if (vs < 0.001d0) vs = vp / MARGIN_SAFE
 ! if we are in the last region (the inner core), ignore S-wave velocity because we purposely
 ! make sampling bad there since Poisson's ratio is too high
-  if(ilayer == NUMBER_OF_MESH_LAYERS) vs = HUGEVAL
+  if (ilayer == NUMBER_OF_MESH_LAYERS) vs = HUGEVAL
 
 ! store stability condition (Courant number) and number of points per S wavelength for that element
    courant_stability_number(ispec_final) = vp * DT / (distance_min * percent_GLL(NGLLX))
@@ -755,11 +755,11 @@
 ! store region number to color that element
 
 ! we are in the crust or mantle
-   if(ilayer <= 8) then
+   if (ilayer <= 8) then
      color(ispec_final) = 1
 
 ! we are in the inner core
-   else if(ilayer == NUMBER_OF_MESH_LAYERS) then
+   else if (ilayer == NUMBER_OF_MESH_LAYERS) then
      color(ispec_final) = 3
 
 ! we are in the outer core
@@ -776,7 +776,7 @@
 ! a basic regular block of 2 elements.
 ! We have imposed that NEX be a multiple of 16 therefore we know that we can always create
 ! these 2 blocks because NEX_PER_PROC_XI / ratio_sampling_array(ilayer) is always divisible by 2.
-    if(this_region_has_a_doubling(ilayer)) then
+    if (this_region_has_a_doubling(ilayer)) then
 
 ! the doubling is implemented in the last radial element
       ir_elem = ner(ilayer)
@@ -830,10 +830,10 @@
    r = sqrt(xval**2 + zval**2)
    call prem_iso(r,rho,vp,vs,ratio_sampling)
 ! for outer core, in which there is no S wave velocity, use P velocity potential with a margin to be safe
-  if(vs < 0.001d0) vs = vp / MARGIN_SAFE
+  if (vs < 0.001d0) vs = vp / MARGIN_SAFE
 ! if we are in the last region (the inner core), ignore S-wave velocity because we purposely
 ! make sampling bad there since Poisson's ratio is too high, therefore compute for Vp instead
-  if(ilayer == NUMBER_OF_MESH_LAYERS) vs = HUGEVAL
+  if (ilayer == NUMBER_OF_MESH_LAYERS) vs = HUGEVAL
 
 ! store stability condition (Courant number) for that element
    courant_stability_number(ispec_final) = vp * DT / (distance_min * percent_GLL(NGLLX))
@@ -842,11 +842,11 @@
 ! store region number to color that element
 
 ! we are in the crust or mantle
-   if(ilayer <= 8) then
+   if (ilayer <= 8) then
      color(ispec_final) = 1
 
 ! we are in the inner core
-   else if(ilayer == NUMBER_OF_MESH_LAYERS) then
+   else if (ilayer == NUMBER_OF_MESH_LAYERS) then
      color(ispec_final) = 3
 
 ! we are in the outer core
@@ -1111,7 +1111,7 @@
 ! this mesh works because even if ellipticity and/or topography are turned on
 ! at this stage the reference Earth is still purely spherical
 ! therefore it will always perfectly match the sphere defined above
-  if(ilayer == NUMBER_OF_MESH_LAYERS) then ! if we are in the last region (the inner core)
+  if (ilayer == NUMBER_OF_MESH_LAYERS) then ! if we are in the last region (the inner core)
 
     x_bot = -x
     z_bot = ONE
@@ -1146,11 +1146,11 @@
 !
 !--- inner core
 !
-  if(r <= RICB) then
+  if (r <= RICB) then
     rho=13.0885d0-8.8381d0*x*x
     vp=11.2622d0-6.3640d0*x*x
     vs=3.6678d0-4.4475d0*x*x
-    if(IMPLEMENT_FOURTH_DOUBLING) then
+    if (IMPLEMENT_FOURTH_DOUBLING) then
       ratio_sampling = 8.d0
     else
       ratio_sampling = 4.d0
@@ -1158,23 +1158,23 @@
 !
 !--- outer core
 !
-  else if(r > RICB .and. r <= RCMB) then
+  else if (r > RICB .and. r <= RCMB) then
     rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
     vp=11.0487d0-4.0362d0*x+4.8023d0*x*x-13.5732d0*x*x*x
     vs=0.0d0
 
-    if(IMPLEMENT_FOURTH_DOUBLING) then
+    if (IMPLEMENT_FOURTH_DOUBLING) then
 ! third and fourth doublings
-      if(r > R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL) then
+      if (r > R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL) then
         ratio_sampling = 2.d0
-      else if(r > R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL) then
+      else if (r > R_EARTH - DEPTH_FOURTH_DOUBLING_OPTIMAL) then
         ratio_sampling = 4.d0
       else
         ratio_sampling = 8.d0
       endif
     else
 ! third doubling
-      if(r > R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL) then
+      if (r > R_EARTH - DEPTH_THIRD_DOUBLING_OPTIMAL) then
         ratio_sampling = 2.d0
       else
         ratio_sampling = 4.d0
@@ -1184,7 +1184,7 @@
 !
 !--- D" at the base of the mantle
 !
-  else if(r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
+  else if (r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
     vp=15.3891d0-5.3181d0*x+5.5242d0*x*x-2.5514d0*x*x*x
     vs=6.9254d0+1.4672d0*x-2.0834d0*x*x+0.9783d0*x*x*x
@@ -1192,19 +1192,19 @@
 !
 !--- mantle: from top of D" to d670
 !
-  else if(r > RTOPDDOUBLEPRIME .and. r <= R771) then
+  else if (r > RTOPDDOUBLEPRIME .and. r <= R771) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
     vp=24.9520d0-40.4673d0*x+51.4832d0*x*x-26.6419d0*x*x*x
     vs=11.1671d0-13.7818d0*x+17.4575d0*x*x-9.2777d0*x*x*x
 
 ! second doubling
-    if(r > R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL) then
+    if (r > R_EARTH - DEPTH_SECOND_DOUBLING_OPTIMAL) then
       ratio_sampling = 1.d0
     else
       ratio_sampling = 2.d0
     endif
 
-  else if(r > R771 .and. r <= R670) then
+  else if (r > R771 .and. r <= R670) then
     rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
     vp=29.2766d0-23.6027d0*x+5.5242d0*x*x-2.5514d0*x*x*x
     vs=22.3459d0-17.2473d0*x-2.0834d0*x*x+0.9783d0*x*x*x
@@ -1212,22 +1212,22 @@
 !
 !--- mantle: above d670
 !
-  else if(r > R670 .and. r <= R600) then
+  else if (r > R670 .and. r <= R600) then
     rho=5.3197d0-1.4836d0*x
     vp=19.0957d0-9.8672d0*x
     vs=9.9839d0-4.9324d0*x
     ratio_sampling = 1.d0
-  else if(r > R600 .and. r <= R400) then
+  else if (r > R600 .and. r <= R400) then
     rho=11.2494d0-8.0298d0*x
     vp=39.7027d0-32.6166d0*x
     vs=22.3512d0-18.5856d0*x
     ratio_sampling = 1.d0
-  else if(r > R400 .and. r <= R220) then
+  else if (r > R400 .and. r <= R220) then
     rho=7.1089d0-3.8045d0*x
     vp=20.3926d0-12.2569d0*x
     vs=8.9496d0-4.4597d0*x
     ratio_sampling = 1.d0
-  else if(r > R220) then
+  else if (r > R220) then
 !! DK DK completely suppressed the crust for PKP study
     rho=2.6910d0+0.6924d0*x
     vp=4.1875d0+3.9382d0*x

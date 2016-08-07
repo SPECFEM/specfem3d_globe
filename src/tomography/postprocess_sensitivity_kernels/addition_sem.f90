@@ -181,7 +181,7 @@ program addition_sem
     write(file2name,'(a,i6.6,a)') trim(input2dir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'.bin'
 
     ! reads in file from first directory
-    if(myrank==0) write(*,*) '  data_1: ',trim(file1name)
+    if (myrank==0) write(*,*) '  data_1: ',trim(file1name)
     open(IIN,file=trim(file1name),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)

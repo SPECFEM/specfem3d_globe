@@ -267,4 +267,4 @@
   call bcast_all_cr_for_database(factor_common(1,1,1,1,1), size(factor_common))
   call bcast_all_dp_for_database(tau_s(1), size(tau_s))
 
-  endsubroutine bcast_attenuation_model_3D
+  end subroutine bcast_attenuation_model_3D

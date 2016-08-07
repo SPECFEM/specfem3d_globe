@@ -286,7 +286,7 @@
 !!errors occur (the error handling is only at its embryonal phase). Therefore the functions calling must be done in the following
 !!way:
 !!
-!!\begin{boxred}{Functions Calling}
+!!\begin{boxred}{functions Calling}
 !!\begin{verbatim}
 !!...
 !!integer(4):: E_IO
@@ -338,7 +338,7 @@ module LIB_VTK_IO
 !!
 !!The functions actually present are:
 !!
-!!\begin{boxred}{Functions for Legacy VTK file format}
+!!\begin{boxred}{functions for Legacy VTK file format}
 !!\begin{enumerate1Red}
 !! \item \MaiuscolettoS{VTK\_INI}
 !! \item \MaiuscolettoS{VTK\_GEO}
@@ -349,7 +349,7 @@ module LIB_VTK_IO
 !!\end{enumerate1Red}
 !!\end{boxred}
 !!
-!!\begin{boxred}{Functions for XML VTK file format}
+!!\begin{boxred}{functions for XML VTK file format}
 !!\begin{enumerate1Red}
 !! \item \MaiuscolettoS{VTK\_INI\_XML}
 !! \item \MaiuscolettoS{VTK\_GEO\_XML}
@@ -545,7 +545,7 @@ contains
   !(doc/)codesnippet
   !!GetUnit function is private and cannot be called outside \LIBVTKIO. If you are interested to use it change its scope to public.
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction GetUnit
+  end function GetUnit
 
   function Upper_Case(string)
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -580,7 +580,7 @@ contains
   !!Upper\_Case function is private and cannot be called outside \LIBVTKIO. If you are interested to use it change its scope
   !!to public.
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction Upper_Case
+  end function Upper_Case
 
   !!\chapter{VTK LEGACY functions}
   !!\minitoc
@@ -668,7 +668,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_INI
+  end function VTK_INI
 
   !!\section{VTK\_GEO}
   !!
@@ -897,7 +897,7 @@ contains
   !(\doc)skippedblock
   function VTK_GEO_STRP_R8(Nx,Ny,Nz,X0,Y0,Z0,Dx,Dy,Dz) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = STRUCTURED\_POINTS (R8P).
+  !! function for saving mesh; topology = STRUCTURED\_POINTS (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -932,11 +932,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_STRP_R8
+  end function VTK_GEO_STRP_R8
 
   function VTK_GEO_STRP_R4(Nx,Ny,Nz,X0,Y0,Z0,Dx,Dy,Dz) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = STRUCTURED\_POINTS (R4P).
+  !! function for saving mesh; topology = STRUCTURED\_POINTS (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -971,11 +971,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_STRP_R4
+  end function VTK_GEO_STRP_R4
 
   function VTK_GEO_STRG_R8(Nx,Ny,Nz,NN,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = STRUCTURED\_GRID (R8P).
+  !! function for saving mesh; topology = STRUCTURED\_GRID (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1009,11 +1009,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_STRG_R8
+  end function VTK_GEO_STRG_R8
 
   function VTK_GEO_STRG_R4(Nx,Ny,Nz,NN,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = STRUCTURED\_GRID (R4P).
+  !! function for saving mesh; topology = STRUCTURED\_GRID (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1047,11 +1047,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_STRG_R4
+  end function VTK_GEO_STRG_R4
 
   function VTK_GEO_RECT_R8(Nx,Ny,Nz,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = RECTILINEAR\_GRID (R8P).
+  !! function for saving mesh; topology = RECTILINEAR\_GRID (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1096,11 +1096,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_RECT_R8
+  end function VTK_GEO_RECT_R8
 
   function VTK_GEO_RECT_R4(Nx,Ny,Nz,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = RECTILINEAR\_GRID (R4P).
+  !! function for saving mesh; topology = RECTILINEAR\_GRID (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1145,11 +1145,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_RECT_R4
+  end function VTK_GEO_RECT_R4
 
   function VTK_GEO_UNST_R8(NN,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = UNSTRUCTURED\_GRID (R8P).
+  !! function for saving mesh; topology = UNSTRUCTURED\_GRID (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1177,11 +1177,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_UNST_R8
+  end function VTK_GEO_UNST_R8
 
   function VTK_GEO_UNST_R4(NN,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = UNSTRUCTURED\_GRID (R4P).
+  !! function for saving mesh; topology = UNSTRUCTURED\_GRID (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1209,7 +1209,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_UNST_R4
+  end function VTK_GEO_UNST_R4
   !(doc/)skippedblock
 
   function VTK_CON(NC,connect,cell_type) result(E_IO)
@@ -1327,7 +1327,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_CON
+  end function VTK_CON
 
   function VTK_DAT(NC_NN,var_location) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1388,7 +1388,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_DAT
+  end function VTK_DAT
 
   !!\section{VTK\_VAR}
   !!
@@ -1606,7 +1606,7 @@ contains
   !(\doc)skippedblock
   function VTK_VAR_SCAL_R8(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving field of scalar variable (R8P).
+  !! function for saving field of scalar variable (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1632,11 +1632,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_SCAL_R8
+  end function VTK_VAR_SCAL_R8
 
   function VTK_VAR_SCAL_R4(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving field of scalar variable (R4P).
+  !! function for saving field of scalar variable (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1662,11 +1662,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_SCAL_R4
+  end function VTK_VAR_SCAL_R4
 
   function VTK_VAR_SCAL_I4(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving field of scalar variable (I4P).
+  !! function for saving field of scalar variable (I4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1692,11 +1692,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_SCAL_I4
+  end function VTK_VAR_SCAL_I4
 
   function VTK_VAR_VECT_R8(vec_type,NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving field of vectorial variable (R8P).
+  !! function for saving field of vectorial variable (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1734,11 +1734,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_VECT_R8
+  end function VTK_VAR_VECT_R8
 
   function VTK_VAR_VECT_R4(vec_type,NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving field of vectorial variable (R4P).
+  !! function for saving field of vectorial variable (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1776,11 +1776,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_VECT_R4
+  end function VTK_VAR_VECT_R4
 
   function VTK_VAR_VECT_I4(NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving field of vectorial variable (I4P).
+  !! function for saving field of vectorial variable (I4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1807,11 +1807,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_VECT_I4
+  end function VTK_VAR_VECT_I4
 
   function VTK_VAR_TEXT_R8(NC_NN,dimm,varname,textCoo) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving texture variable (R8P).
+  !! function for saving texture variable (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1841,11 +1841,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_TEXT_R8
+  end function VTK_VAR_TEXT_R8
 
   function VTK_VAR_TEXT_R4(NC_NN,dimm,varname,textCoo) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving texture variable (R4P).
+  !! function for saving texture variable (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -1875,7 +1875,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_TEXT_R4
+  end function VTK_VAR_TEXT_R4
   !(doc/)skippedblock
 
   function VTK_END() result(E_IO)
@@ -1909,7 +1909,7 @@ contains
   close(unit=Unit_VTK,iostat=E_IO)
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_END
+  end function VTK_END
 
   !!\chapter{VTK XML functions}
   !!\minitoc
@@ -1924,7 +1924,7 @@ contains
   !!\MaiuscolettoBS{4-byte integer function}: the output of these functions is an integer that is $0$ if the function calling
   !!has been done right while it is $> 0$  if some errors occur. The functions calling is the same as legacy functions:
   !!
-  !!\begin{boxred}{Functions Calling}
+  !!\begin{boxred}{functions Calling}
   !!\begin{verbatim}
   !!...
   !!integer(4):: E_IO
@@ -2057,7 +2057,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_INI_XML
+  end function VTK_INI_XML
 
   !!\section{VTK\_GEO\_XML}
   !!
@@ -2273,7 +2273,7 @@ contains
   !(\doc)skippedblock
   function VTK_GEO_XML_STRG_R8(nx1,nx2,ny1,ny2,nz1,nz2,NN,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = StructuredGrid (R8P).
+  !! function for saving mesh; topology = StructuredGrid (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -2321,11 +2321,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_XML_STRG_R8
+  end function VTK_GEO_XML_STRG_R8
 
   function VTK_GEO_XML_STRG_R4(nx1,nx2,ny1,ny2,nz1,nz2,NN,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = StructuredGrid (R4P).
+  !! function for saving mesh; topology = StructuredGrid (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -2373,11 +2373,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_XML_STRG_R4
+  end function VTK_GEO_XML_STRG_R4
 
   function VTK_GEO_XML_RECT_R8(nx1,nx2,ny1,ny2,nz1,nz2,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = RectilinearGrid (R8P).
+  !! function for saving mesh; topology = RectilinearGrid (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -2444,11 +2444,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_XML_RECT_R8
+  end function VTK_GEO_XML_RECT_R8
 
   function VTK_GEO_XML_RECT_R4(nx1,nx2,ny1,ny2,nz1,nz2,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = RectilinearGrid (R4P).
+  !! function for saving mesh; topology = RectilinearGrid (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -2515,11 +2515,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_XML_RECT_R4
+  end function VTK_GEO_XML_RECT_R4
 
   function VTK_GEO_XML_UNST_R8(NN,NC,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = UnstructuredGrid (R8P).
+  !! function for saving mesh; topology = UnstructuredGrid (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -2565,11 +2565,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_XML_UNST_R8
+  end function VTK_GEO_XML_UNST_R8
 
   function VTK_GEO_XML_UNST_R4(NN,NC,X,Y,Z) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving mesh; topology = UnstructuredGrid (R4P).
+  !! function for saving mesh; topology = UnstructuredGrid (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -2615,11 +2615,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_XML_UNST_R4
+  end function VTK_GEO_XML_UNST_R4
 
   function VTK_GEO_XML_CLOSEP() result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for closing mesh block data.
+  !! function for closing mesh block data.
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -2638,7 +2638,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_GEO_XML_CLOSEP
+  end function VTK_GEO_XML_CLOSEP
   !(doc/)skippedblock
 
   function VTK_CON_XML(NC,connect,offset,cell_type) result(E_IO)
@@ -2804,7 +2804,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_CON_XML
+  end function VTK_CON_XML
 
   function VTK_DAT_XML(var_location,var_block_action) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2902,7 +2902,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_DAT_XML
+  end function VTK_DAT_XML
 
   !!\section{VTK\_VAR\_XML}
   !!
@@ -3021,7 +3021,7 @@ contains
   !(\doc)skippedblock
   function VTK_VAR_XML_SCAL_R8(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving scalar variable (R8P).
+  !! function for saving scalar variable (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3052,11 +3052,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_SCAL_R8
+  end function VTK_VAR_XML_SCAL_R8
 
   function VTK_VAR_XML_SCAL_R4(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving scalar variable (R4P).
+  !! function for saving scalar variable (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3087,11 +3087,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_SCAL_R4
+  end function VTK_VAR_XML_SCAL_R4
 
   function VTK_VAR_XML_SCAL_I8(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving scalar variable (I8P).
+  !! function for saving scalar variable (I8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3122,11 +3122,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_SCAL_I8
+  end function VTK_VAR_XML_SCAL_I8
 
   function VTK_VAR_XML_SCAL_I4(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving scalar variable (I4P).
+  !! function for saving scalar variable (I4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3157,11 +3157,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_SCAL_I4
+  end function VTK_VAR_XML_SCAL_I4
 
   function VTK_VAR_XML_SCAL_I2(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving scalar variable (I2P).
+  !! function for saving scalar variable (I2P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3192,11 +3192,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_SCAL_I2
+  end function VTK_VAR_XML_SCAL_I2
 
   function VTK_VAR_XML_SCAL_I1(NC_NN,varname,var) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving scalar variable (I1P).
+  !! function for saving scalar variable (I1P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3227,11 +3227,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_SCAL_I1
+  end function VTK_VAR_XML_SCAL_I1
 
   function VTK_VAR_XML_VECT_R8(NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving vectorial variable (R8P).
+  !! function for saving vectorial variable (R8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3264,11 +3264,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_VECT_R8
+  end function VTK_VAR_XML_VECT_R8
 
   function VTK_VAR_XML_VECT_R4(NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving vectorial variable (R4P).
+  !! function for saving vectorial variable (R4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3301,11 +3301,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_VECT_R4
+  end function VTK_VAR_XML_VECT_R4
 
   function VTK_VAR_XML_VECT_I8(NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving vectorial variable (I8P).
+  !! function for saving vectorial variable (I8P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3338,11 +3338,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_VECT_I8
+  end function VTK_VAR_XML_VECT_I8
 
   function VTK_VAR_XML_VECT_I4(NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving vectorial variable (I4P).
+  !! function for saving vectorial variable (I4P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3375,11 +3375,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_VECT_I4
+  end function VTK_VAR_XML_VECT_I4
 
   function VTK_VAR_XML_VECT_I2(NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving vectorial variable (I2P).
+  !! function for saving vectorial variable (I2P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3412,11 +3412,11 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_VECT_I2
+  end function VTK_VAR_XML_VECT_I2
 
   function VTK_VAR_XML_VECT_I1(NC_NN,varname,varX,varY,varZ) result(E_IO)
   !--------------------------------------------------------------------------------------------------------------------------------
-  !! Function for saving vectorial variable (I1P).
+  !! function for saving vectorial variable (I1P).
   !--------------------------------------------------------------------------------------------------------------------------------
 
   implicit none
@@ -3449,7 +3449,7 @@ contains
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_VAR_XML_VECT_I1
+  end function VTK_VAR_XML_VECT_I1
   !(doc/)skippedblock
 
   function VTK_END_XML() result(E_IO)
@@ -3539,7 +3539,7 @@ contains
   close(unit=Unit_VTK,iostat=E_IO)
   return
   !--------------------------------------------------------------------------------------------------------------------------------
-  endfunction VTK_END_XML
+  end function VTK_END_XML
 endmodule LIB_VTK_IO
 !!
 !!\appendix

@@ -92,7 +92,7 @@
   print *
 
 ! make sure we do not start below the lower limit
-  if(6 * int(sqrt(MIN_NUMBER_OF_PROCS / 6.d0))**2 == MIN_NUMBER_OF_PROCS) then
+  if (6 * int(sqrt(MIN_NUMBER_OF_PROCS / 6.d0))**2 == MIN_NUMBER_OF_PROCS) then
     offset = 0
   else
     offset = 1
@@ -115,10 +115,10 @@
 ! impose an upper limit on current "reasonably large" values to avoid an infinite loop
 ! these values should be okay for the next few years (i.e., on machines around 1 petaflops)
 ! (this written in August 2008)
-      if(c > 15 .or. NEX_XI > 6000) exit
+      if (c > 15 .or. NEX_XI > 6000) exit
 
 ! also exclude very coarse meshes below NEX_XI = 64
-      if(NEX_XI >= 64 .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
+      if (NEX_XI >= 64 .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
 
         counter = counter + 1
 
@@ -126,9 +126,9 @@
         EMULATE_ONLY = .true.
         call read_compute_parameters()
 
-        if(first_time) then
+        if (first_time) then
           first_time = .false.
-          if(ATTENUATION) then
+          if (ATTENUATION) then
             print *,'ATTENUATION = .true.'
           else
             print *,'ATTENUATION = .false.'
@@ -160,10 +160,10 @@
 
           percent = 100.d0 * mem_per_core / MAX_MEMORY_PER_CORE
 
-          if(percent > 100.d0) goto 777
+          if (percent > 100.d0) goto 777
 
-  if(percent < 0.d0) then
-    if(.not. already_printed) then
+  if (percent < 0.d0) then
+    if (.not. already_printed) then
       print *
       print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem used/core:'
     endif
@@ -172,8 +172,8 @@
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
-  else if(percent >= 93.d0) then
-    if(.not. already_printed) then
+  else if (percent >= 93.d0) then
+    if (.not. already_printed) then
       print *
       print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem used/core:'
     endif
@@ -182,8 +182,8 @@
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
-  else if(percent >= 85.d0) then
-    if(.not. already_printed) then
+  else if (percent >= 85.d0) then
+    if (.not. already_printed) then
       print *
       print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem used/core:'
     endif
@@ -192,8 +192,8 @@
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
-  else if(percent >= 80.d0) then
-    if(.not. already_printed) then
+  else if (percent >= 80.d0) then
+    if (.not. already_printed) then
       print *
       print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem used/core:'
     endif
@@ -202,8 +202,8 @@
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
-  else if(percent >= 70.d0) then
-    if(.not. already_printed) then
+  else if (percent >= 70.d0) then
+    if (.not. already_printed) then
       print *
       print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem used/core:'
     endif
@@ -212,8 +212,8 @@
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
     goto 777
 
-  else if(percent >= 60.d0) then
-    if(.not. already_printed) then
+  else if (percent >= 60.d0) then
+    if (.not. already_printed) then
       print *
       print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem used/core:'
     endif
@@ -222,8 +222,8 @@
       6*NPROC_XI**2,100.d0*6*NPROC_XI**2/dble(MAX_NUMBER_OF_PROCS),NPROC_XI,NEX_XI,mem_per_core,percent
 
 ! uncomment line below to completely suppress cases that give an occupancy below 50%
-  else ! if(percent >= 50.d0) then
-    if(.not. already_printed) then
+  else ! if (percent >= 50.d0) then
+    if (.not. already_printed) then
       print *
       print *,'NPROC, % of the machine, NPROC_XI, NEX_XI, GB used/core, % mem used/core:'
     endif

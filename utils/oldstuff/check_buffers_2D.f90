@@ -89,7 +89,7 @@
   open(unit=34,file=trim(OUTPUT_FILES)//'/addressing.txt',status='old',action='read')
   do iproc = 0,NPROCTOT-1
       read(34,*) iproc_read,ichunk,iproc_xi,iproc_eta
-      if(iproc_read /= iproc) stop 'incorrect slice number read'
+      if (iproc_read /= iproc) stop 'incorrect slice number read'
       addressing(ichunk,iproc_xi,iproc_eta) = iproc
   enddo
   close(34)
@@ -153,14 +153,14 @@
  360  continue
   read(34,*) iboolright_xi(npoin2D_xi), &
               xright_xi(npoin2D_xi),yright_xi(npoin2D_xi),zright_xi(npoin2D_xi)
-  if(iboolright_xi(npoin2D_xi) > 0) then
+  if (iboolright_xi(npoin2D_xi) > 0) then
       npoin2D_xi = npoin2D_xi + 1
       goto 360
   endif
   npoin2D_xi = npoin2D_xi - 1
   write(*,*) 'found ',npoin2D_xi,' points in iboolright_xi slice ',ithisproc
   read(34,*) npoin2D_xi_mesher
-  if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX(iregion_code) .or. npoin2D_xi /= npoin2D_xi_mesher) then
+  if (npoin2D_xi > NGLOB2DMAX_XMIN_XMAX(iregion_code) .or. npoin2D_xi /= npoin2D_xi_mesher) then
       stop 'incorrect iboolright_xi read'
   endif
   close(34)
@@ -175,19 +175,19 @@
  350  continue
   read(34,*) iboolleft_xi(npoin2D_xi), &
               xleft_xi(npoin2D_xi),yleft_xi(npoin2D_xi),zleft_xi(npoin2D_xi)
-  if(iboolleft_xi(npoin2D_xi) > 0) then
+  if (iboolleft_xi(npoin2D_xi) > 0) then
       npoin2D_xi = npoin2D_xi + 1
       goto 350
   endif
   npoin2D_xi = npoin2D_xi - 1
   write(*,*) 'found ',npoin2D_xi,' points in iboolleft_xi slice ',iotherproc
   read(34,*) npoin2D_xi_mesher
-  if(npoin2D_xi > NGLOB2DMAX_XMIN_XMAX(iregion_code) .or. npoin2D_xi /= npoin2D_xi_mesher) then
+  if (npoin2D_xi > NGLOB2DMAX_XMIN_XMAX(iregion_code) .or. npoin2D_xi /= npoin2D_xi_mesher) then
       stop 'incorrect iboolleft_xi read'
   endif
   close(34)
 
-  if(npoin2D_xi_save == npoin2D_xi) then
+  if (npoin2D_xi_save == npoin2D_xi) then
       print *,'okay, same size for both buffers'
   else
       stop 'wrong buffer size'
@@ -198,7 +198,7 @@
   do ipoin = 1,npoin2D_xi
       diff = dmax1(dabs(xleft_xi(ipoin)-xright_xi(ipoin)), &
        dabs(yleft_xi(ipoin)-yright_xi(ipoin)),dabs(zleft_xi(ipoin)-zright_xi(ipoin)))
-      if(diff > 0.0000001d0) print *,'different: ',ipoin,iboolleft_xi(ipoin),iboolright_xi(ipoin),diff
+      if (diff > 0.0000001d0) print *,'different: ',ipoin,iboolleft_xi(ipoin),iboolright_xi(ipoin),diff
   enddo
 
   enddo
@@ -240,14 +240,14 @@
  460  continue
   read(34,*) iboolright_eta(npoin2D_eta), &
               xright_eta(npoin2D_eta),yright_eta(npoin2D_eta),zright_eta(npoin2D_eta)
-  if(iboolright_eta(npoin2D_eta) > 0) then
+  if (iboolright_eta(npoin2D_eta) > 0) then
       npoin2D_eta = npoin2D_eta + 1
       goto 460
   endif
   npoin2D_eta = npoin2D_eta - 1
   write(*,*) 'found ',npoin2D_eta,' points in iboolright_eta slice ',ithisproc
   read(34,*) npoin2D_eta_mesher
-  if(npoin2D_eta > NGLOB2DMAX_YMIN_YMAX(iregion_code) .or. npoin2D_eta /= npoin2D_eta_mesher) then
+  if (npoin2D_eta > NGLOB2DMAX_YMIN_YMAX(iregion_code) .or. npoin2D_eta /= npoin2D_eta_mesher) then
       stop 'incorrect iboolright_eta read'
   endif
   close(34)
@@ -262,19 +262,19 @@
  450  continue
   read(34,*) iboolleft_eta(npoin2D_eta), &
               xleft_eta(npoin2D_eta),yleft_eta(npoin2D_eta),zleft_eta(npoin2D_eta)
-  if(iboolleft_eta(npoin2D_eta) > 0) then
+  if (iboolleft_eta(npoin2D_eta) > 0) then
       npoin2D_eta = npoin2D_eta + 1
       goto 450
   endif
   npoin2D_eta = npoin2D_eta - 1
   write(*,*) 'found ',npoin2D_eta,' points in iboolleft_eta slice ',iotherproc
   read(34,*) npoin2D_eta_mesher
-  if(npoin2D_eta > NGLOB2DMAX_YMIN_YMAX(iregion_code) .or. npoin2D_eta /= npoin2D_eta_mesher) then
+  if (npoin2D_eta > NGLOB2DMAX_YMIN_YMAX(iregion_code) .or. npoin2D_eta /= npoin2D_eta_mesher) then
       stop 'incorrect iboolleft_eta read'
   endif
   close(34)
 
-  if(npoin2D_eta_save == npoin2D_eta) then
+  if (npoin2D_eta_save == npoin2D_eta) then
       print *,'okay, same size for both buffers'
   else
       stop 'wrong buffer size'
@@ -285,7 +285,7 @@
   do ipoin = 1,npoin2D_eta
       diff = dmax1(dabs(xleft_eta(ipoin)-xright_eta(ipoin)), &
        dabs(yleft_eta(ipoin)-yright_eta(ipoin)),dabs(zleft_eta(ipoin)-zright_eta(ipoin)))
-      if(diff > 0.0000001d0) print *,'different: ',ipoin,iboolleft_eta(ipoin),iboolright_eta(ipoin),diff
+      if (diff > 0.0000001d0) print *,'different: ',ipoin,iboolleft_eta(ipoin),iboolright_eta(ipoin),diff
   enddo
 
   enddo

@@ -270,7 +270,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S40RTS
     TRANSVERSE_ISOTROPY = .true.
 
-  else if(MODEL_ROOT == 'full_sh') then
+  else if (MODEL_ROOT == 'full_sh') then
     ! uses PREM by default
     !REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     !ATTENUATION_3D = .true.

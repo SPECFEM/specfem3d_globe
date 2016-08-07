@@ -114,7 +114,7 @@
     read(IIN, '(A)', iostat = ier) line
 
     if (ier /= 0) then
-      print *, "ERROR IN SOURCE TIME FUNCTION."
+      print *, "Error in external source time function."
       stop 'Error reading external stf file'
     endif
 

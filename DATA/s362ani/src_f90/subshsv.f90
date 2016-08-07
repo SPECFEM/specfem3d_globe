@@ -33,7 +33,7 @@
 
   depth=6371.0-xrad
   call evradker (depth,kerstr,numker,vercof,vercofd,ierror)
-  if(ierror /= 0) stop 'ierror evradker'
+  if (ierror /= 0) stop 'ierror evradker'
 
 ! --- loop over sv and sh (sv=0,sh=1)
 
@@ -44,10 +44,10 @@
   y=90.0-xcolat
   x=xlon
   do ihpa=1,numhpa
-      if(itypehpa(ihpa) == 1) then
+      if (itypehpa(ihpa) == 1) then
         lmax=lmxhpa(ihpa)
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
-      else if(itypehpa(ihpa) == 2) then
+      else if (itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
         call splcon(y,x,numcof,xlaspl(1,ihpa), &
               xlospl(1,ihpa),radspl(1,ihpa), &
@@ -68,30 +68,30 @@
       isel=0
       lstr=len_trim(varstr(ivarkern(iker)))
       vstr=(varstr(ivarkern(iker)))
-      if(ieval == 1) then
-        if(vstr(1:lstr) == 'UM (SH+SV)*0.5,'.or. &
+      if (ieval == 1) then
+        if (vstr(1:lstr) == 'UM (SH+SV)*0.5,'.or. &
                  vstr(1:lstr) == 'LM (SH+SV)*0.5,'.or. &
                  vstr(1:lstr) == 'EA (SH+SV)*0.5,') then
           isel=1
       endif
-      else if(ieval == 2) then
-        if(vstr(1:lstr) == 'UM SH-SV,'.or. &
+      else if (ieval == 2) then
+        if (vstr(1:lstr) == 'UM SH-SV,'.or. &
                        vstr(1:lstr) == 'LM SH-SV,'.or. &
                        vstr(1:lstr) == 'EA SH-SV,') then
           isel=1
         endif
       endif
 
-      if(isel == 1) then
-        if(vercof(iker) /= 0.) then
-            if(itypehpa(ihpakern(iker)) == 1) then
+      if (isel == 1) then
+        if (vercof(iker) /= 0.) then
+            if (itypehpa(ihpakern(iker)) == 1) then
           ihpa=ihpakern(iker)
               nylm=(lmxhpa(ihpakern(iker))+1)**2
               do i=1,nylm
                 value=value+vercof(iker)*ylmcof(i,ihpa) &
                           *coe(i,iker)
               enddo
-            else if(itypehpa(ihpakern(iker)) == 2) then
+            else if (itypehpa(ihpakern(iker)) == 2) then
           ihpa=ihpakern(iker)
               do i=1,nconpt(ihpa)
                 iver=iconpt(i,ihpa)
@@ -111,9 +111,9 @@
 
 !       --- evaluate perturbations in vsh and vsv
 
-  if(ish == 1) then
+  if (ish == 1) then
     vsh3drel=valu(1)+0.5*valu(2)
-  else if(ish == 0) then
+  else if (ish == 0) then
     vsv3drel=valu(1)-0.5*valu(2)
   else
     stop 'something wrong'

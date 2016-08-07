@@ -128,9 +128,9 @@ USE LIB_VTK_IO
    integer :: ix_subsamp,iy_subsamp,iz_subsamp
 !!!!!!---- DK DK for ParaView / VTK output
 
-  if(mod(NX,subsampling_of_VTK_display) /= 0) stop 'error: NX must be a multiple of subsampling_of_VTK_display'
-  if(mod(NY,subsampling_of_VTK_display) /= 0) stop 'error: NY must be a multiple of subsampling_of_VTK_display'
-  if(mod(NZ,subsampling_of_VTK_display) /= 0) stop 'error: NZ must be a multiple of subsampling_of_VTK_display'
+  if (mod(NX,subsampling_of_VTK_display) /= 0) stop 'error: NX must be a multiple of subsampling_of_VTK_display'
+  if (mod(NY,subsampling_of_VTK_display) /= 0) stop 'error: NY must be a multiple of subsampling_of_VTK_display'
+  if (mod(NZ,subsampling_of_VTK_display) /= 0) stop 'error: NZ must be a multiple of subsampling_of_VTK_display'
 
   print *
   print *,'processing chunk ',ichunk

@@ -155,7 +155,7 @@ program combine_vol_data
       print *, ' ***** Notice: now allow different input dir for topo and kernel files ******** '
       print *, '   expect to have the topology and filename.bin(NGLLX,NGLLY,NGLLZ,nspec) '
       print *, '   already collected to input_topo_dir and input_file_dir'
-      print *, '   output mesh files (filename_points.mesh, filename_elements.mesh) go to output_dir '
+      print *, '   output mesh files (filename_points.mesh, filename_elements.mesh) are saved to output_dir '
       print *, '   give 0 for low resolution and 1 for high resolution'
       print *, '   if region is not specified, all 3 regions will be collected, otherwise, only collect regions specified'
       stop ' Reenter command line options'

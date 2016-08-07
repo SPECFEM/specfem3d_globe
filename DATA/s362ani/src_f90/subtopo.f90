@@ -30,10 +30,10 @@
   y=90.0-xcolat
   x=xlon
   do ihpa=1,numhpa
-      if(itypehpa(ihpa) == 1) then
+      if (itypehpa(ihpa) == 1) then
         lmax=lmxhpa(ihpa)
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
-      else if(itypehpa(ihpa) == 2) then
+      else if (itypehpa(ihpa) == 2) then
         numcof=numcoe(ihpa)
         call splcon(y,x,numcof,xlaspl(1,ihpa), &
               xlospl(1,ihpa),radspl(1,ihpa), &
@@ -54,24 +54,24 @@
       isel=0
       lstr=len_trim(varstr(ivarkern(iker)))
       vstr=(varstr(ivarkern(iker)))
-      if(ieval == 1) then
-        if(vstr(1:lstr) == 'Topo 400,') then
+      if (ieval == 1) then
+        if (vstr(1:lstr) == 'Topo 400,') then
           isel=1
       endif
-      else if(ieval == 2) then
-        if(vstr(1:lstr) == 'Topo 670,') then
+      else if (ieval == 2) then
+        if (vstr(1:lstr) == 'Topo 670,') then
           isel=1
         endif
       endif
 
-      if(isel == 1) then
-            if(itypehpa(ihpakern(iker)) == 1) then
+      if (isel == 1) then
+            if (itypehpa(ihpakern(iker)) == 1) then
           ihpa=ihpakern(iker)
               nylm=(lmxhpa(ihpakern(iker))+1)**2
               do i=1,nylm
                 value=value+ylmcof(i,ihpa)*coe(i,iker)
               enddo
-            else if(itypehpa(ihpakern(iker)) == 2) then
+            else if (itypehpa(ihpakern(iker)) == 2) then
           ihpa=ihpakern(iker)
               do i=1,nconpt(ihpa)
                 iver=iconpt(i,ihpa)
