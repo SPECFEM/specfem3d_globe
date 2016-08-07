@@ -179,7 +179,7 @@
   t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
 
   ! uses an external file for source time function, which starts at time 0.0
-  if (EXTERNAL_SOURCE_TIME_function) then
+  if (EXTERNAL_SOURCE_TIME_FUNCTION) then
     hdur(:) = 0.d0
     t0      = 0.d0
   endif

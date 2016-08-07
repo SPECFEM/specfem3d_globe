@@ -27,7 +27,7 @@
 
   double precision function comp_source_time_function(t,hdur)
 
-  use constants,only: EXTERNAL_SOURCE_TIME_function
+  use constants,only: EXTERNAL_SOURCE_TIME_FUNCTION
 
   implicit none
 
@@ -37,7 +37,7 @@
   double precision, external :: netlib_specfun_erf
   double precision, external :: comp_source_time_function_ext
 
-  if (EXTERNAL_SOURCE_TIME_function) then
+  if (EXTERNAL_SOURCE_TIME_FUNCTION) then
     comp_source_time_function = comp_source_time_function_ext()
   else
     ! quasi Heaviside
