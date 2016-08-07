@@ -28,7 +28,7 @@
   subroutine get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                      DT,NSOURCES,min_tshift_cmt_original)
 
-  use constants,only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
+  use constants,only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_function, &
     RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
 
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
@@ -326,7 +326,7 @@
   if (NOISE_TOMOGRAPHY /= 0) hdur(:) = 0.d0
 
   ! If we're using external stf, don't worry about hdur.
-  if (EXTERNAL_SOURCE_TIME_FUNCTION) then
+  if (EXTERNAL_SOURCE_TIME_function) then
     hdur(:) = 0.d0
   endif
 

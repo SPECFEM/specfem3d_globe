@@ -620,10 +620,10 @@
                   '<uncertainty>0</uncertainty>'//&
                   '</Mtp>'//&
                   '</tensor>'//&
-                  '<sourceTimeFunction>'//&
+                  '<sourceTimefunction>'//&
                   '<type>triangle</type>'//&
                   '<duration>'//trim(hdur_str)//'</duration>'//&
-                  '</sourceTimeFunction>'//&
+                  '</sourceTimefunction>'//&
                   '</momentTensor>'//&
                   '</focalMechanism>'//&
                   '<magnitude publicID="smi:local/'//trim(event_name_SAC)//'/magnitude#moment_mag">'//&
