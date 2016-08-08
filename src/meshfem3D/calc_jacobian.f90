@@ -171,16 +171,16 @@
             .or. abs(zmesh - zstore(i,j,k,ispec)) > TINYVAL) then
             call exit_MPI(myrank,'Error new mesh is wrong in recalc_jacobian_gll3D.f90')
           endif
-          if (abs(sumshape-one) >  TINYVAL) then
+          if (abs(sumshape-one) > TINYVAL) then
             call exit_MPI(myrank,'Error shape functions in recalc_jacobian_gll3D.f90')
           endif
-          if (abs(sumdershapexi) >  TINYVAL) then
+          if (abs(sumdershapexi) > TINYVAL) then
             call exit_MPI(myrank,'Error derivative xi in recalc_jacobian_gll3D.f90')
           endif
-          if (abs(sumdershapeeta) >  TINYVAL) then
+          if (abs(sumdershapeeta) > TINYVAL) then
             call exit_MPI(myrank,'Error derivative eta in recalc_jacobian_gll3D.f90')
           endif
-          if (abs(sumdershapegamma) >  TINYVAL) then
+          if (abs(sumdershapegamma) > TINYVAL) then
             call exit_MPI(myrank,'Error derivative gamma in recalc_jacobian_gll3D.f90')
           endif
         endif
@@ -332,13 +332,13 @@
            call exit_MPI(myrank,'new boundary mesh is wrong in recalc_jacobian_gll2D')
         endif
 
-        if (abs(sumshape-one) >  TINYVAL) then
+        if (abs(sumshape-one) > TINYVAL) then
            call exit_MPI(myrank,'Error shape functions in recalc_jacobian_gll2D')
         endif
-        if (abs(sumdershapexi) >  TINYVAL) then
+        if (abs(sumdershapexi) > TINYVAL) then
            call exit_MPI(myrank,'Error derivative xi in recalc_jacobian_gll2D')
         endif
-        if (abs(sumdershapeeta) >  TINYVAL) then
+        if (abs(sumdershapeeta) > TINYVAL) then
            call exit_MPI(myrank,'Error derivative eta in recalc_jacobian_gll2D')
         endif
 

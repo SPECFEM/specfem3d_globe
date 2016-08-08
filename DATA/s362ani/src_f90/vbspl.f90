@@ -20,8 +20,8 @@
   integer :: iflag,interval,ik,ib
 
 !
-!---- iflag=1 ==>> second derivative is 0 at end points
-!---- iflag=0 ==>> first derivative is 0 at end points
+!---- iflag=1 = => > second derivative is 0 at end points
+!---- iflag=0 = => > first derivative is 0 at end points
 !
   iflag=1
 !
@@ -29,9 +29,9 @@
 !
   interval=0
   ik=1
-  do while(interval == 0.and.ik < np)
+  do while(interval == 0 .and. ik < np)
   ik=ik+1
-  if (x >= xarr(ik-1).and.x <= xarr(ik)) interval=ik-1
+  if (x >= xarr(ik-1) .and. x <= xarr(ik)) interval=ik-1
   enddo
   if (x > xarr(np)) then
   interval=np
@@ -39,7 +39,7 @@
 
   if (interval == 0) then
 !        write(6,"('low value:',2f10.3)") x,xarr(1)
-  else if (interval > 0.and.interval < np) then
+  else if (interval > 0 .and. interval < np) then
 !        write(6,"('bracket:',i5,3f10.3)") interval,xarr(interval),x,xarr(interval+1)
   else
 !        write(6,"('high value:',2f10.3)") xarr(np),x
@@ -70,7 +70,7 @@
    r12d=-1./(xarr(3)-xarr(2))
    r13d=-1./(xarr(2)-xarr(1))
 
-    if (interval == ib.or.interval == 0) then
+    if (interval == ib .or. interval == 0) then
          if (iflag == 0) then
            val=r1*r4*r10 + r2*r5*r10 + r2*r6*r11 +r13**3
            vald=r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
@@ -142,7 +142,7 @@
    r11d=1./(xarr(ib+1)-xarr(ib))
    r12d=-1./(xarr(ib+2)-xarr(ib+1))
 
-    if (interval == ib-1.or.interval == 0) then
+    if (interval == ib-1 .or. interval == 0) then
          val=r1*r3*r8 + r1*r4*r9 + r2*r5*r9
          vald=r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
          vald=vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
@@ -230,7 +230,7 @@
            vald=vald+0.3333*(rr1d*rr3*rr7+rr1*rr3d*rr7+ &
                     rr1*rr3*rr7d)
          endif
-    else if (interval == ib.or.interval == np) then
+    else if (interval == ib .or. interval == np) then
          val=r1*r4*r10 + r2*r5*r10 + r2*r6*r11
          vald=r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
          vald=vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
@@ -278,7 +278,7 @@
            val=0.6667*r1*r3*r7
            vald=0.6667*(r1d*r3*r7+r1*r3d*r7+r1*r3*r7d)
          endif
-    else if (interval == np-1.or.interval == np) then
+    else if (interval == np-1 .or. interval == np) then
          if (iflag == 0) then
            val=r1*r3*r8 + r1*r4*r9 + r2*r5*r9 + r13**3
            vald=r1d*r3*r8+r1*r3d*r8+r1*r3*r8d

@@ -211,7 +211,7 @@
   endif
 
   ! latitude
-  if (theta>=PI) then
+  if (theta >= PI) then
      ia = na
   else
      ia = int(theta / dtheta) + 1
@@ -219,7 +219,7 @@
   ! longitude
   if (phi < 0.0d0) phi = phi + 2.*PI
   io=int(phi / dphi) + 1
-  if (io>no) io=io-no
+  if (io > no) io=io-no
 
   ! velocity and density perturbations
   dvp = vp3(ia,io,id)/100.d0
@@ -250,15 +250,15 @@
     icon = 0
     dmax=di(mr)
     dmin=di(0)
-    if (d>dmax) then
+    if (d > dmax) then
        icon=99
-    else if (d<dmin) then
+    else if (d < dmin) then
        icon=-99
-    else if (d==dmax) then
+    else if (d == dmax) then
        id=mr+1
     else
        do i = 0, mr
-          if (d<di(i)) then
+          if (d < di(i)) then
              id=i
              goto 900
           endif

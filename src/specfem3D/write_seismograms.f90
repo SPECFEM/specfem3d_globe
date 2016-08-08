@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine write_seismograms()
 
   use constants,only: IMAIN
@@ -368,7 +367,7 @@
           OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
   use specfem_par,only: &
-          cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC
+          cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC
 
   implicit none
 
@@ -441,11 +440,11 @@
       ! (north corresponds to zero degrees)
 
       ! rotation angle phi takes opposite direction; to have radial direction pointing in outgoing direction
-      if (phi>180.d0) then
+      if (phi > 180.d0) then
          phi = phi-180.d0
-      else if (phi<180.d0) then
+      else if (phi < 180.d0) then
          phi = phi+180.d0
-      else if (phi==180.d0) then
+      else if (phi == 180.d0) then
          phi = 0.d0
       endif
 

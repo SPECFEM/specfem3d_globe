@@ -178,7 +178,7 @@ program sum_kernels_globe
 
   endif
 
-  if (myrank==0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
+  if (myrank == 0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
 
 #ifdef ADIOS_INPUT
   ! finalizes adios

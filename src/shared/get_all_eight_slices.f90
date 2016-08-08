@@ -83,7 +83,7 @@
     endif
   endif
 
-  if (ixi==nproc_xi-1) then
+  if (ixi == nproc_xi-1) then
     call get_lrbt_slices(ichunk_right,islice_xi_right,islice_eta_right, &
                ileft0, ichunk_left0, islice_xi_left0, islice_eta_left0, &
                iright0, ichunk_right0, islice_xi_right0, islice_eta_right0, &
@@ -124,7 +124,7 @@
     endif
   endif
 
-  if (ieta==nproc_eta-1) then
+  if (ieta == nproc_eta-1) then
     call get_lrbt_slices(ichunk_top,islice_xi_top,islice_eta_top, &
                ileft0, ichunk_left0, islice_xi_left0, islice_eta_left0, &
                iright0, ichunk_right0, islice_xi_right0, islice_eta_right0, &

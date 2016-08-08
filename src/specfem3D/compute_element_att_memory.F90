@@ -586,7 +586,7 @@
 !!daniel: att - debug update
 !  use specfem_par,only: tau_sigma_dble,deltat,b_deltat
 !
-!  use specfem_par_crustmantle,only: factor_common=>factor_common_crust_mantle
+!  use specfem_par_crustmantle,only: factor_common => factor_common_crust_mantle
 !
 !  use constants_solver
 !

@@ -160,21 +160,21 @@
         ! which show significant transverse isotropy also below 220km depth
         if (USE_OLD_VERSION_5_1_5_FORMAT) then
           ! assigns TI only to elements below (2-layer) fictitious moho down to 670
-          if (idoubling(ispec)==IFLAG_220_80 &
-            .or. idoubling(ispec)==IFLAG_80_MOHO &
-            .or. idoubling(ispec)==IFLAG_670_220) then
+          if (idoubling(ispec) == IFLAG_220_80 &
+            .or. idoubling(ispec) == IFLAG_80_MOHO &
+            .or. idoubling(ispec) == IFLAG_670_220) then
             elem_is_tiso = .true.
           endif
         else
           ! assigns TI to elements in mantle elements just below actual moho down to 670
-          if (idoubling(ispec)==IFLAG_220_80 &
-            .or. idoubling(ispec)==IFLAG_80_MOHO &
-            .or. idoubling(ispec)==IFLAG_670_220 &
-            .or. (idoubling(ispec)==IFLAG_CRUST .and. elem_in_mantle )) then
+          if (idoubling(ispec) == IFLAG_220_80 &
+            .or. idoubling(ispec) == IFLAG_80_MOHO &
+            .or. idoubling(ispec) == IFLAG_670_220 &
+            .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle )) then
             elem_is_tiso = .true.
           endif
         endif
-      else if (idoubling(ispec)==IFLAG_220_80 .or. idoubling(ispec)==IFLAG_80_MOHO) then
+      else if (idoubling(ispec) == IFLAG_220_80 .or. idoubling(ispec) == IFLAG_80_MOHO) then
         ! default case for PREM reference models:
         ! models use only transverse isotropy between moho and 220 km depth
         elem_is_tiso = .true.
@@ -271,14 +271,14 @@
     ! must be done/supplied by the user; uncomment in case
     ! CMB topography
     !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
-    !     .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
+    ! .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
     !           call add_topography_cmb(myrank,xelm,yelm,zelm)
 
     ! ICB topography
     !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
-    !     .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
-    !     .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
-    !     .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
+    ! .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
+    ! .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
+    ! .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
     !           call add_topography_icb(myrank,xelm,yelm,zelm)
   endif
 

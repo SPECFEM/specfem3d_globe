@@ -166,7 +166,7 @@
   double precision:: cut, min_sed
 
   !if (lat < EPCRUST_LAT_MIN .or. lat > EPCRUST_LAT_MAX &
-  !        .or. lon < EPCRUST_LON_MIN .or. lon > EPCRUST_LON_MAX) then
+  ! .or. lon < EPCRUST_LON_MIN .or. lon > EPCRUST_LON_MAX) then
   !        stop 'incorrect enter EPCRUST model, check lat and lon'
   !endif
 

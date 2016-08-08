@@ -357,7 +357,7 @@
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_MANTLE_NORMAL
-      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for top D" -> d670 point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for top D" to d670 point')
     endif
 
   !
@@ -368,7 +368,7 @@
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_670_220
-      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d670 -> d220 point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d670 to d220 point')
     endif
 
   !
@@ -379,7 +379,7 @@
       call xyz_2_rthetaphi_dble(x,y,z,r,theta,phi)
       print *,'Error point r/lat/lon:',r_m,90.0 - theta/DEGREES_TO_RADIANS,phi/DEGREES_TO_RADIANS
       print *,'  idoubling/IFLAG: ',idoubling,IFLAG_220_80,IFLAG_80_MOHO,IFLAG_CRUST
-      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d220 -> Moho -> surface point')
+      call exit_MPI(myrank,'Error  in get_model_check_idoubling() wrong doubling flag for d220 to Moho to surface point')
     endif
 
   endif

@@ -408,7 +408,7 @@
 
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
-      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
+      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
         ner( 1) = ceiling (NER_CRUST / 2.d0)
         ner( 2) = floor (NER_CRUST / 2.d0)
       else
@@ -818,7 +818,7 @@
 
       NUMBER_OF_MESH_LAYERS = 15
       layer_offset = 1
-      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
+      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
         ner( 1) = ceiling (NER_CRUST / 2.d0)
         ner( 2) = floor (NER_CRUST / 2.d0)
       else

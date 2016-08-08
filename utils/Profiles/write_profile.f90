@@ -189,7 +189,7 @@
     if (TOPOGRAPHY .or. OCEANS) then
        lat=(PI/2.0d0-theta)*180.0d0/PI
        lon=phi*180.0d0/PI
-       if (lon>180.0d0) lon=lon-360.0d0
+       if (lon > 180.0d0) lon=lon-360.0d0
        print *,'get_topo_bathy(lat,lon,elevation,ibathy_topo',lat,lon,elevation
        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
        print *,'get_topo_bathy(lat,lon,elevation,ibathy_topo',lat,lon,elevation
@@ -221,7 +221,7 @@
       if (rmin == rmax_last) then  !!!! this means that we have just jumped between layers
 
        ! write values every 10 km in the deep earth and every 1 km in the shallow earth
-       if (rmin>(R_EARTH_KM-100.0d0)/R_EARTH_KM) then
+       if (rmin > (R_EARTH_KM-100.0d0)/R_EARTH_KM) then
          delta = 1.0d0/R_EARTH_KM
        else
          delta = 10.0d0/R_EARTH_KM
@@ -356,7 +356,7 @@
 
 !---
 ! add_topography
-if ((THREE_D_MODEL/=0 .or. TOPOGRAPHY ) .and. &
+if ((THREE_D_MODEL /= 0 .or. TOPOGRAPHY ) .and. &
    (idoubling == IFLAG_CRUST .or. idoubling == IFLAG_80_MOHO .or. idoubling == IFLAG_220_80)) then
 
    !print *, 'adding topography.  elevation: ',elevation

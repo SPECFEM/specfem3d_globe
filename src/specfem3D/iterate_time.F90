@@ -476,7 +476,7 @@
 
   if (ANISOTROPIC_KL) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires ANISOTROPIC_KL to be turned off')
 
-  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /=3) &
+  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) &
     call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK can only be used with SIMULATION_TYPE == 1 or SIMULATION_TYPE == 3')
 
 
@@ -493,7 +493,7 @@
         do i = 1, NGLLX
           iglob = ibool_crust_mantle(i,j,k,ispec)
           ! xstore ystore zstore have previously been converted to r theta phi in rstore
-          radius = rstore_crust_mantle(1,iglob) ! <- radius r (normalized)
+          radius = rstore_crust_mantle(1,iglob) ! radius r (normalized)
           ! save that element only if it is in the upper part of the mesh
           if (radius >= R670 / R_EARTH) then
             ! if this point has not yet been found before

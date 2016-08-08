@@ -162,13 +162,13 @@
   integer :: numvar,ihpa
 
   ! sets model file name
-  if (THREE_D_MODEL  ==  THREE_D_MODEL_S362ANI) then
+  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI) then
     modeldef='DATA/s362ani/S362ANI'
-  else if (THREE_D_MODEL  ==  THREE_D_MODEL_S362WMANI) then
+  else if (THREE_D_MODEL == THREE_D_MODEL_S362WMANI) then
     modeldef='DATA/s362ani/S362WMANI'
-  else if (THREE_D_MODEL  ==  THREE_D_MODEL_S362ANI_PREM) then
+  else if (THREE_D_MODEL == THREE_D_MODEL_S362ANI_PREM) then
     modeldef='DATA/s362ani/S362ANI_PREM'
-  else if (THREE_D_MODEL  ==  THREE_D_MODEL_S29EA) then
+  else if (THREE_D_MODEL == THREE_D_MODEL_S29EA) then
     modeldef='DATA/s362ani/S2.9EA'
   else
     stop 'Error: unknown 3D model in read_model_s362ani() routine'
@@ -243,16 +243,16 @@
   radius2=r0-depth+ddep
   upper=.false.
   lower=.false.
-  if (radius > rcmb.and.radius < r670) then
+  if (radius > rcmb .and. radius < r670) then
     lower=.true.
-  else if (radius >= r670.and.radius < rmoho) then
+  else if (radius >= r670 .and. radius < rmoho) then
     upper=.true.
   endif
   upper_650=.false.
   lower_650=.false.
-  if (radius > rcmb.and.radius < r650) then
+  if (radius > rcmb .and. radius < r650) then
     lower_650=.true.
-  else if (radius >= r650.and.radius < rmoho) then
+  else if (radius >= r650 .and. radius < rmoho) then
     upper_650=.true.
   endif
   do iker = 1,nker
@@ -373,7 +373,7 @@
 !        vercof(23)=1.
 !        vercof(24)=1.
 !        vercof(25)=1.
-  else if ((string(1:lstr) == 'WDC+ANI_362_U6L8'.and.lstr == 16) &
+  else if ((string(1:lstr) == 'WDC+ANI_362_U6L8' .and. lstr == 16) &
       .or. (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO'.and.lstr == 21)) then
     if (upper) then
       nspl=6
@@ -403,7 +403,7 @@
     vercof(1)=1.0
     vercof(22)=1.0
     vercof(23)=1.0
-  else if (string(1:lstr) == 'WDC+WM_362_U6L8'.and.lstr == 15) then
+  else if (string(1:lstr) == 'WDC+WM_362_U6L8' .and. lstr == 15) then
     if (upper) then
       nspl=6
       splpts(1)=24.4
@@ -437,7 +437,7 @@
     vercof(30)=1.0
     vercof(31)=1.0
     vercof(32)=1.0
-  else if ((string(1:lstr) == 'WDC+ANI_362_U6L8_650'.and.lstr == 20) &
+  else if ((string(1:lstr) == 'WDC+ANI_362_U6L8_650' .and. lstr == 20) &
       .or. (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO_650'.and.lstr == 25)) then
     if (upper_650) then
       nspl=6
@@ -467,7 +467,7 @@
     vercof(1)=1.0
     vercof(22)=1.0
     vercof(23)=1.0
-  else if (string(1:lstr) == 'WDC+WM_362_U6L8_650' .and.lstr == 19) then
+  else if (string(1:lstr) == 'WDC+WM_362_U6L8_650' .and. lstr == 19) then
     if (upper_650) then
       nspl=6
       splpts(1)=24.4
@@ -501,7 +501,7 @@
     vercof(30)=1.0
     vercof(31)=1.0
     vercof(32)=1.0
-  else if (string(1:lstr) == 'WDC+U8L8_650'.and.lstr == 12) then
+  else if (string(1:lstr) == 'WDC+U8L8_650' .and. lstr == 12) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -537,7 +537,7 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if (string(1:lstr) == 'WDC+U8L8_670'.and.lstr == 12) then
+  else if (string(1:lstr) == 'WDC+U8L8_670' .and. lstr == 12) then
     if (upper) then
       nspl=8
       splpts(1)=24.4
@@ -573,7 +573,7 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if ((string(1:lstr) == 'WDC+U8L8_I1D_650'.and.lstr == 16) &
+  else if ((string(1:lstr) == 'WDC+U8L8_I1D_650' .and. lstr == 16) &
       .or. (string(1:lstr) == 'WDC+U8L8_I3D_650'.and.lstr == 16)) then
     if (upper_650) then
       nspl=8
@@ -626,8 +626,8 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if ((string(1:lstr) == 'WDC+I1D_650'.and.lstr == 11).or. &
-          (string(1:lstr) == 'WDC+I3D_650'.and.lstr == 11)) then
+  else if ((string(1:lstr) == 'WDC+I1D_650' .and. lstr == 11) .or. &
+          (string(1:lstr) == 'WDC+I3D_650' .and. lstr == 11)) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -695,7 +695,7 @@
     vercof(34)=1.0
     vercof(35)=1.0
     vercof(36)=1.0
-  else if (string(1:lstr) == 'V16A4_V7A4'.and.lstr == 10) then
+  else if (string(1:lstr) == 'V16A4_V7A4' .and. lstr == 10) then
     if (upper_650) then
       nspl=8
       splpts(1)=24.4
@@ -891,7 +891,7 @@
     string=dskker(i)
     lstr=len_trim(string)
     j = 1
-    do while(string(j:j) /= ','.and.j < lstr)
+    do while(string(j:j) /= ',' .and. j < lstr)
       j = j+1
     enddo
     ivarkern(i) = 0
@@ -1005,12 +1005,12 @@
       if (ierror /= 0) then
         stop 'Error reading model 3'
       endif
-    else if (string(1:4) == 'DESC'.and.string(9:9) == ':') then
+    else if (string(1:4) == 'DESC' .and. string(9:9) == ':') then
       read(string(5:8),"(i4)") idummy
       substr=string(10:len_trim(string))
       ifst = 1
       ilst = len_trim(substr)
-      do while (substr(ifst:ifst) == ' '.and.ifst < ilst)
+      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
         ifst = ifst+1
       enddo
       if (ilst-ifst <= 0) then
@@ -1024,11 +1024,11 @@
       if (ierror /= 0) then
         stop 'Error reading model 5'
       endif
-    else if (string(1:4) == 'HPAR'.and.string(9:9) == ':') then
+    else if (string(1:4) == 'HPAR' .and. string(9:9) == ':') then
       read(string(5:8),"(i4)") idummy
       ifst = 10
       ilst = len_trim(string)
-      do while (string(ifst:ifst) == ' '.and.ifst < ilst)
+      do while (string(ifst:ifst) == ' ' .and. ifst < ilst)
         ifst = ifst+1
       enddo
       if (ilst-ifst <= 0) then
@@ -1048,7 +1048,7 @@
         enddo
         read(string(ifst+1:ilst),*) ncoef
         substr=string(ifst1:ifst-1)
-        do while (string(ifst1:ifst1) == ' '.and.ifst1 < ifst)
+        do while (string(ifst1:ifst1) == ' ' .and. ifst1 < ifst)
           ifst1=ifst1+1
         enddo
         hsplfile(idummy)=string(ifst1:ifst-1)
@@ -1059,7 +1059,7 @@
           read(IIN,*) ixlspl(i,idummy),xlaspl(i,idummy),xlospl(i,idummy),xraspl(i,idummy)
         enddo
       endif
-    else if (string(1:4) == 'STRU'.and.string(9:9) == ':') then
+    else if (string(1:4) == 'STRU' .and. string(9:9) == ':') then
       read(string(5:8),"(i4)") idummy
       substr=string(10:len_trim(string))
       read(substr,*) ihor
@@ -1225,12 +1225,12 @@
         lstr=len_trim(varstr(ivarkern(iker)))
         vstr=(varstr(ivarkern(iker)))
         if (ieval == 1) then
-          if (vstr(1:lstr) == 'UM (SH+SV)*0.5,'.or. vstr(1:lstr) == 'LM (SH+SV)*0.5,'.or. &
+          if (vstr(1:lstr) == 'UM (SH+SV)*0.5,' .or. vstr(1:lstr) == 'LM (SH+SV)*0.5,' .or. &
              vstr(1:lstr) == 'EA (SH+SV)*0.5,') then
             isel = 1
           endif
         else if (ieval == 2) then
-          if (vstr(1:lstr) == 'UM SH-SV,'.or. vstr(1:lstr) == 'LM SH-SV,'.or. &
+          if (vstr(1:lstr) == 'UM SH-SV,' .or. vstr(1:lstr) == 'LM SH-SV,' .or. &
              vstr(1:lstr) == 'EA SH-SV,') then
             isel = 1
           endif
@@ -1400,8 +1400,8 @@
   integer :: iflag,interval,ik,ib
 
 !
-!---- iflag=1 ==>> second derivative is 0 at end points
-!---- iflag = 0 ==>> first derivative is 0 at end points
+!---- iflag = 1, second derivative is 0 at end points
+!---- iflag = 0, first derivative is 0 at end points
 !
   iflag = 1
 !
@@ -1411,7 +1411,7 @@
   ik = 1
   do while(interval == 0 .and. ik < np)
     ik=ik+1
-    if (x >= xarr(ik-1).and.x <= xarr(ik)) interval=ik-1
+    if (x >= xarr(ik-1) .and. x <= xarr(ik)) interval=ik-1
   enddo
   if (x > xarr(np)) then
     interval=np
@@ -1444,7 +1444,7 @@
    r12d=-1.0/(xarr(3)-xarr(2))
    r13d=-1.0/(xarr(2)-xarr(1))
 
-    if (interval == ib.or.interval == 0) then
+    if (interval == ib .or. interval == 0) then
 
          if (iflag == 0) then
            val=r1*r4*r10 + r2*r5*r10 + r2*r6*r11 +r13**3
@@ -1599,7 +1599,7 @@
            val=val+0.3333*rr1*rr3*rr7
            vald=vald+0.3333*(rr1d*rr3*rr7+rr1*rr3d*rr7+ rr1*rr3*rr7d)
          endif
-    else if (interval == ib.or.interval == np) then
+    else if (interval == ib .or. interval == np) then
          val=r1*r4*r10 + r2*r5*r10 + r2*r6*r11
          vald=r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
          vald=vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
@@ -1857,7 +1857,7 @@
     XM=K
     X3=-(2.D0*COT*(XM-1.D0)*X2+F2*X1)/F1
     sumval=sumval+2.D0*X3*X3
-    if (sumval-COMPAR > SMALL.and.I /= LP1) return
+    if (sumval-COMPAR > SMALL .and. I /= LP1) return
     X(I)=X3
     XCOSEC(I)=X(I)*COSEC
     X1=X2

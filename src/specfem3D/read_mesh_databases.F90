@@ -104,7 +104,7 @@
   endif
   allocate(addressing(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1))
   call read_mesh_databases_addressing()
-  if (.not.SAVE_REGULAR_KL) then
+  if (.not. SAVE_REGULAR_KL) then
     deallocate(addressing)
   endif
 

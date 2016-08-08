@@ -98,7 +98,7 @@
 
   megaflops = dble(NELEM_ARRAY) * dble(NLOOP) / (time_end - time_start) / 1.d3
 
-  print *,NELEM_ARRAY,' elements -> megaflops = ',megaflops
+  print *,NELEM_ARRAY,' elements - > megaflops = ',megaflops
 
   enddo
 

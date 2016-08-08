@@ -264,8 +264,8 @@
     station_duplet(:) = 0
     do irec = 1,nrec
       do i = 1,irec-1
-        if ((station_name(irec)==station_name(i)) .and. &
-            (network_name(irec)==network_name(i))) then
+        if ((station_name(irec) == station_name(i)) .and. &
+            (network_name(irec) == network_name(i))) then
 
             station_duplet(i)=station_duplet(i)+1
             if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then

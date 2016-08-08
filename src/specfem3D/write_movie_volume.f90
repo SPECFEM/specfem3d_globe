@@ -71,7 +71,7 @@
     if ((rval < MOVIE_TOP .and. rval > MOVIE_BOTTOM) .and. &
        (thetaval > MOVIE_NORTH .and. thetaval < MOVIE_SOUTH) .and. &
        ( (phival < MOVIE_EAST .and. phival > MOVIE_WEST) .or. &
-       ( (MOVIE_EAST < MOVIE_WEST) .and. (phival >MOVIE_EAST .or. phival < MOVIE_WEST) ) )) then
+       ( (MOVIE_EAST < MOVIE_WEST) .and. (phival > MOVIE_EAST .or. phival < MOVIE_WEST) ) )) then
       ispecel_3dmovie=ispecel_3dmovie+1
 
       do k = 1,NGLLZ,iNIT

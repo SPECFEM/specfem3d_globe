@@ -33,8 +33,6 @@
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
 !     University of Rhode Island
 !
-!  <savage@uri.edu>.
-!
 !   It is based upon formulation in the following references:
 !
 !   Dahlen and Tromp, 1998

@@ -82,7 +82,7 @@
 
       endif
 
-      if (i > j.and.i-j <= nlines) &
+      if (i > j .and. i-j <= nlines) &
               sem_fil(i)=sem_fil(i)+dble(sem(i-j))*source*dt
     enddo
   enddo

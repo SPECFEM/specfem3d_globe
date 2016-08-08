@@ -1884,7 +1884,7 @@
   noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
 
   ! file i/o buffer
-  ! checks integer size limit: size of buffer must fit onto an 4-byte integer (<2 GB)
+  ! checks integer size limit: size of buffer must fit onto an 4-byte integer ( < 2 GB)
   if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM * NT_DUMP_NOISE_BUFFER)) then
     print *,'buffer of noise surface_movie needed exceeds integer 4-byte limit: ',dble(reclen_noise) * dble(NT_DUMP_NOISE_BUFFER)
     print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP,NT_DUMP_NOISE_BUFFER

@@ -408,11 +408,11 @@
 
     ! stretches mesh at r35 to moho depth
     elevation = moho - R35
-    if (r >=R35.and.r<R15) then
+    if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
     else if (r < R35 .and. r > R60) then
       gamma = (( r - R60)/( R35 - R60)) ! keeps r60 fixed
-      if (abs(gamma)<SMALLVAL) then
+      if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
     else
@@ -428,11 +428,11 @@
 
     ! moves mesh at r35 down to r45
     elevation = R45 - R35
-    if (r>= R35.and.r<R15) then
+    if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35)) ! moves r35 down to r45
-    else if (r<R35 .and. r>R60) then
+    else if (r < R35 .and. r > R60) then
       gamma=((r-R60)/(R35-R60)) ! keeps r60 fixed
-      if (abs(gamma)<SMALLVAL) then
+      if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
     else
@@ -449,11 +449,11 @@
 
       ! stretches mesh at r60 to moho
       elevation = moho - R60
-      if (r <R45.and. r >= R60) then
+      if (r < R45 .and. r >= R60) then
         gamma=(R45-r)/(R45-R60)
-      else if (r<R60) then
+      else if (r < R60) then
         gamma=(r-R220/R_EARTH)/(R60-R220/R_EARTH)
-        if (abs(gamma)<SMALLVAL) then
+        if (abs(gamma) < SMALLVAL) then
           gamma=0.0d0
         endif
       else
@@ -468,11 +468,11 @@
 
     ! moves mesh at r35 up to r25
     elevation = R25-R35
-    if (r>=R35.and.r<R15) then
+    if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35)) ! stretches r35 up to r25
-    else if (r<R35 .and. r>R60) then
+    else if (r < R35 .and. r > R60) then
       gamma=(r-R60)/(R35-R60) ! keeps r60 fixed
-      if (abs(gamma)<SMALLVAL) then
+      if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
     else
@@ -489,11 +489,11 @@
 
       ! stretches mesh at r15 to moho depth
       elevation = moho-R15
-      if (r>=R15) then
+      if (r >= R15) then
         gamma=(R_UNIT_SPHERE-r)/(R_UNIT_SPHERE-R15)
-      else if (r<R15.and.R>R25) then
+      else if (r < R15 .and. R > R25) then
         gamma=(r-R25)/(R15-R25) ! keeps mesh at r25 fixed
-        if (abs(gamma)<SMALLVAL) then
+        if (abs(gamma) < SMALLVAL) then
           gamma=0.0d0
         endif
       else
@@ -555,11 +555,11 @@
   if (moho < R25 .and. moho > R45) then
 
     elevation = moho - R35
-    if (r >=R35.and.r<R15) then
+    if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r<R35.and.r>R220/R_EARTH) then
+    else if (r < R35 .and. r > R220/R_EARTH) then
       gamma = ((r-R220/R_EARTH)/(R35-R220/R_EARTH))
-      if (abs(gamma)<SMALLVAL) then
+      if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
     else
@@ -575,11 +575,11 @@
 
     ! moves mesh at r35 down to r45
     elevation = R45 - R35
-    if (r>= R35.and.r<R15) then
+    if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r<R35.and.r>R220/R_EARTH) then
+    else if (r < R35 .and. r > R220/R_EARTH) then
       gamma=((r-R220/R_EARTH)/(R35-R220/R_EARTH))
-      if (abs(gamma)<SMALLVAL) then
+      if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
     else
@@ -595,11 +595,11 @@
 
     ! moves mesh at r35 up to r25
     elevation = R25-R35
-    if (r>=R35.and.r<R15) then
+    if (r >= R35 .and. r < R15) then
       gamma=((R15-r)/(R15-R35))
-    else if (r<R35.and.r>R220/R_EARTH) then
+    else if (r < R35 .and. r > R220/R_EARTH) then
       gamma=(r-R220/R_EARTH)/(R35-R220/R_EARTH)
-      if (abs(gamma)<SMALLVAL) then
+      if (abs(gamma) < SMALLVAL) then
         gamma=0.0d0
       endif
     else
@@ -611,13 +611,13 @@
     call move_point(ia,xelm,yelm,zelm,x,y,z,gamma,elevation,r)
 
     ! add shallow moho here
-    if (moho >R15) then
+    if (moho > R15) then
       elevation = moho-R15
-      if (r>=R15) then
+      if (r >= R15) then
         gamma=(R_UNIT_SPHERE-r)/(R_UNIT_SPHERE-R15)
-      else if (r<R15.and.R>R25) then
+      else if (r < R15 .and. R > R25) then
         gamma=(r-R25)/(R15-R25)
-        if (abs(gamma)<SMALLVAL) then
+        if (abs(gamma) < SMALLVAL) then
           gamma=0.0d0
         endif
       else

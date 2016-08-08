@@ -270,13 +270,13 @@
 !   when LAY = 2, the focus is in the lower crust;
 !   when LAY = 3, the focus is in the mantle wedge;
 !   when LAY = 4, the focus is beneath the plate boundary.
-  if (HE<=H1) then
+  if (HE <= H1) then
      LAY = 1
      found_crust = .true.
-  else if (HE>H1.and.HE<=H2) then
+  else if (HE > H1 .and. HE <= H2) then
      LAY = 2
      found_crust = .true.
-  else if (HE>H2.and.HE<=H3) then
+  else if (HE > H2 .and. HE <= H3) then
      LAY = 3
   ELSE
      LAY = 4
@@ -427,7 +427,7 @@
       DO 10 I  = 1,IPMAX
       IP1      = IP+1
       PNOW     = (FLOAT(I)-PLX)/100.0
-      if (PNOW>=PNX(IP1))   IP = IP1
+      if (PNOW >= PNX(IP1))   IP = IP1
       IPLOCX(I)= IP
 10    continue
       RLX      = 1.0-RNX(1)*100.0
@@ -436,7 +436,7 @@
       DO 20 I  = 1,IRMAX
       IR1      = IR+1
       RNOW     = (FLOAT(I)-RLX)/100.0
-      if (RNOW>=RNX(IR1))   IR = IR1
+      if (RNOW >= RNX(IR1))   IR = IR1
       IRLOCX(I)= IR
 20    continue
       HLX      = 1.0-HNX(1)
@@ -445,7 +445,7 @@
       DO 30 I  = 1,IHMAX
       IH1      = IH+1
       HNOW     = FLOAT(I)-HLX
-      if (HNOW>=HNX(IH1))   IH = IH1
+      if (HNOW >= HNX(IH1))   IH = IH1
       IHLOCX(I)= IH
 30    continue
 
@@ -469,10 +469,10 @@
   JP3DM_P     = 90.0-PE/DEGREES_TO_RADIANS
   JP3DM_R     = RE/DEGREES_TO_RADIANS
   JP3DM_H     = HE
-  if (LAY<=3) then
+  if (LAY <= 3) then
      CALL PRHF(JP3DM_IPLOCA,JP3DM_IRLOCA,JP3DM_IHLOCA,JP3DM_PLA,JP3DM_RLA,JP3DM_HLA, &
           JP3DM_PNA,JP3DM_RNA,JP3DM_HNA,MPA,MRA,MHA,MKA)
-  else if (LAY==4) then
+  else if (LAY == 4) then
      CALL PRHF(JP3DM_IPLOCB,JP3DM_IRLOCB,JP3DM_IHLOCB,JP3DM_PLB,JP3DM_RLB,JP3DM_HLB, &
           JP3DM_PNB,JP3DM_RNB,JP3DM_HNB,MPB,MRB,MHB,MKB)
   ELSE
@@ -488,9 +488,9 @@
   JP3DM_WV(8) = JP3DM_PF*JP3DM_RF*JP3DM_HF
 
   !   calculate velocity
-  if (LAY<=3) then
+  if (LAY <= 3) then
      CALL VABPS(MPA,MRA,MHA,JP3DM_VELAP,V)
-  else if (LAY==4) then
+  else if (LAY == 4) then
      CALL VABPS(MPB,MRB,MHB,JP3DM_VELBP,V)
   endif
 
@@ -593,12 +593,12 @@
 
         DO 1 I = 1,50
            I1     = I+1
-           if (P>=JP3DM_PN(I).and.P<JP3DM_PN(I1)) goto 11
+           if (P >= JP3DM_PN(I) .and. P < JP3DM_PN(I1)) goto 11
 1          continue
 11         continue
            DO 2 J = 1,62
               J1     = J+1
-              if (R>=JP3DM_RRN(J).and.R<JP3DM_RRN(J1)) goto 22
+              if (R >= JP3DM_RRN(J) .and. R < JP3DM_RRN(J1)) goto 22
 2             continue
 22            continue
               PF    = (P-JP3DM_PN(I))/(JP3DM_PN(I1)-JP3DM_PN(I))
@@ -634,8 +634,8 @@
 
   A1    = dmin1(C1,C2)
   A2    = dmax1(C1,C2)
-  if (C<A1)   C = A1
-  if (C>A2)   C = A2
+  if (C < A1)   C = A1
+  if (C > A2)   C = A2
 
   end subroutine LIMIT
 
@@ -659,9 +659,9 @@
   else if (LAY == 2) then
     V    = 6.7
     if (IPS == 2)    V = 3.8
-  else if (LAY>=3) then
+  else if (LAY >= 3) then
     HM   = 40.0
-    if (HE<HM) then
+    if (HE < HM) then
       CALL JPMODEL(IPS,HM,VM)
       V  = VM-(HM-HE)*0.003
     ELSE
@@ -726,7 +726,7 @@
       K1     = K+1
       H1     = JP3DM_DEPJ(K)
       H2     = JP3DM_DEPJ(K1)
-      if (H>=H1.and.H<H2) goto 3
+      if (H >= H1 .and. H < H2) goto 3
 2     continue
 3     continue
 

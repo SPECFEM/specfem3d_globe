@@ -331,7 +331,7 @@ program combine_surf_data
 
   enddo  ! all slices for points
 
-  if (np /=  npoint_total) stop 'Error: Number of total points not consistent'
+  if (np /= npoint_total) stop 'Error: Number of total points not consistent'
   if (ne /= nelement_total) stop 'Error: Number of total elements not consistent'
 
   call close_file_fd(pfd)

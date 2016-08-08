@@ -605,7 +605,7 @@
     RHO_BOTTOM_OC = 12139.1000 / RHOAV
 
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1066A) then
-    ! values below corrected by Ying Zhou <yingz@gps.caltech.edu>
+    ! values below corrected by Ying Zhou
     ! 1066A
     RMOHO = 6360000.d0 ! at 11km depth
     R400 = 5950000.d0
@@ -648,7 +648,7 @@
     RHO_BOTTOM_OC = 12166.35 / RHOAV
 
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_JP1D) then
-    ! values below corrected by Min Chen <mchen@gps.caltech.edu>
+    ! values below corrected by Min Chen
     ! jp1d
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6359000.d0

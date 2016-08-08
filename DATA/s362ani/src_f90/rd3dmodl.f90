@@ -26,7 +26,7 @@
       substr=string(17:lstr)
       ifst=1
       ilst=len_trim(substr)
-      do while (substr(ifst:ifst) == ' '.and.ifst < ilst)
+      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
         ifst=ifst+1
       enddo
       if (ilst-ifst <= 0) then
@@ -38,7 +38,7 @@
       substr=string(12:len_trim(string))
       ifst=1
       ilst=len_trim(substr)
-      do while (substr(ifst:ifst) == ' '.and.ifst < ilst)
+      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
         ifst=ifst+1
       enddo
       if (ilst-ifst <= 0) then
@@ -52,12 +52,12 @@
       if (ierror /= 0) then
         stop 'error reading model 3'
       endif
-    else if (string(1:4) == 'DESC'.and.string(9:9) == ':') then
+    else if (string(1:4) == 'DESC' .and. string(9:9) == ':') then
       read(string(5:8),"(i4)") idummy
       substr=string(10:len_trim(string))
       ifst=1
       ilst=len_trim(substr)
-      do while (substr(ifst:ifst) == ' '.and.ifst < ilst)
+      do while (substr(ifst:ifst) == ' ' .and. ifst < ilst)
         ifst=ifst+1
       enddo
       if (ilst-ifst <= 0) then
@@ -71,11 +71,11 @@
       if (ierror /= 0) then
         stop 'error reading model 5'
       endif
-    else if (string(1:4) == 'HPAR'.and.string(9:9) == ':') then
+    else if (string(1:4) == 'HPAR' .and. string(9:9) == ':') then
       read(string(5:8),"(i4)") idummy
       ifst=10
       ilst=len_trim(string)
-      do while (string(ifst:ifst) == ' '.and.ifst < ilst)
+      do while (string(ifst:ifst) == ' ' .and. ifst < ilst)
         ifst=ifst+1
       enddo
       if (ilst-ifst <= 0) then
@@ -95,7 +95,7 @@
         enddo
         read(string(ifst+1:ilst),*) ncoef
         substr=string(ifst1:ifst-1)
-        do while (string(ifst1:ifst1) == ' '.and.ifst1 < ifst)
+        do while (string(ifst1:ifst1) == ' ' .and. ifst1 < ifst)
           ifst1=ifst1+1
         enddo
         hsplfile(idummy)=string(ifst1:ifst-1)
@@ -107,7 +107,7 @@
              xlospl(i,idummy),xraspl(i,idummy)
         enddo
       endif
-    else if (string(1:4) == 'STRU'.and.string(9:9) == ':') then
+    else if (string(1:4) == 'STRU' .and. string(9:9) == ':') then
       read(string(5:8),"(i4)") idummy
       substr=string(10:len_trim(string))
       read(substr,*) ihor

@@ -916,7 +916,7 @@ contains
   !  print *,'node distance',node%id,ipoint_min,dist_min
 
   ! in case this is a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
+  if (.not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
@@ -1027,7 +1027,7 @@ contains
   double precision,dimension(3) :: xyz
 
   ! checks a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
+  if (.not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
@@ -1157,7 +1157,7 @@ contains
   double precision,dimension(3) :: xyz
 
   ! checks a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
+  if (.not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'

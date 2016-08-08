@@ -210,7 +210,7 @@
                                             buffer_recv_scalar_outer_core, &
                                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                             request_send_scalar_oc,request_recv_scalar_oc, &
-                                            1) ! <-- 1 == fwd accel
+                                            1) ! -- 1 == fwd accel
       endif
     endif ! iphase == 1
 
@@ -272,7 +272,7 @@
 
   ! note on backward/reconstructed wavefields:
   !       b_timeval for b_displ( it=1 ) corresponds to (NSTEP - 1)*DT - t0  (after Newmark scheme...)
-  !       as we start with saved wavefields b_displ( 1 ) <-> displ( NSTEP ) which correspond
+  !       as we start with saved wavefields b_displ( 1 ), displ( NSTEP ) which correspond
   !       to a time (NSTEP - (it-1) - 1)*DT - t0
   !       for reconstructing the rotational contributions
   if (UNDO_ATTENUATION) then
@@ -466,7 +466,7 @@
                                             b_buffer_recv_scalar_outer_core, &
                                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                             b_request_send_scalar_oc,b_request_recv_scalar_oc, &
-                                            3) ! <-- 3 == adjoint b_accel
+                                            3) ! -- 3 == adjoint b_accel
       endif
     endif ! iphase == 1
 

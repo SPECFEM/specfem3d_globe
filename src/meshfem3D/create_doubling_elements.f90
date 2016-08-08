@@ -170,7 +170,7 @@
     iz_elem = ner(ilayer)
     step_mult = 2
   else
-    if (iregion_code==IREGION_OUTER_CORE .and. ilayer==ilast_region &
+    if (iregion_code == IREGION_OUTER_CORE .and. ilayer == ilast_region &
       .and. (CUT_SUPERBRICK_XI .or. CUT_SUPERBRICK_ETA)) then
       nspec_sb = NSPEC_DOUBLING_BASICBRICK
       step_mult = 1
@@ -297,10 +297,10 @@
             if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= iboun_sb(ispec_superbrick,4)
         endif
         ! zmax only
-        if (ilayer==ifirst_region) then
+        if (ilayer == ifirst_region) then
           iboun(6,ispec)= iboun_sb(ispec_superbrick,6)
         endif
-        if (ilayer==ilast_region .and. iz_elem == 1) then
+        if (ilayer == ilast_region .and. iz_elem == 1) then
           iboun(5,ispec)= iboun_sb(ispec_superbrick,5)
         endif
 

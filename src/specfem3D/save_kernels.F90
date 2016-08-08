@@ -978,7 +978,7 @@
   subroutine rotate_kernels_dble(cij_kl,cij_kll,theta_in,phi_in)
 
 ! Purpose : compute the kernels in r,theta,phi (cij_kll)
-! from the kernels in x,y,z (cij_kl) (x,y,z <-> r,theta,phi)
+! from the kernels in x,y,z (cij_kl) (x,y,z to r,theta,phi)
 ! At r,theta,phi fixed
 ! theta and phi are in radians
 

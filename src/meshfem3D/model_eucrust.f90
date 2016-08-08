@@ -217,7 +217,7 @@
   do i = 1,ilons-1
     if (lon >= eucrust_lon(i) .and. lon < eucrust_lon(i+1)) then
           do j = 0,ilats-1
-            if (lat>=eucrust_lat(i+j*ilons) .and. lat<eucrust_lat(i+(j+1)*ilons)) then
+            if (lat >= eucrust_lat(i+j*ilons) .and. lat < eucrust_lat(i+(j+1)*ilons)) then
 
               h_basement = eucrust_basement(i+j*ilons)
               h_uc = eucrust_ucdepth(i+j*ilons)
@@ -291,13 +291,13 @@
   double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
 
   ! get integer colatitude and longitude of crustal cap
-  ! -90<lat<90 -180<lon<180
+  ! -90 < lat < 90 -180 < lon < 180
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
     stop 'Error in latitude/longitude range in crust'
-  if (lat==90.0d0) lat=89.9999d0
-  if (lat==-90.0d0) lat=-89.9999d0
-  if (lon==180.0d0) lon=179.9999d0
-  if (lon==-180.0d0) lon=-179.9999d0
+  if (lat == 90.0d0) lat=89.9999d0
+  if (lat == -90.0d0) lat=-89.9999d0
+  if (lon == 180.0d0) lon=179.9999d0
+  if (lon == -180.0d0) lon=-179.9999d0
 
   !call icolat_ilon(lat,lon,icolat,ilon)
   !crustaltype=abbreviation(icolat,ilon)

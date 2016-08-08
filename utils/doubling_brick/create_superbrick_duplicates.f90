@@ -285,7 +285,7 @@
   L=n/2+1
   ir=n
   100 continue
-   if (l>1) then
+   if (l > 1) then
       l=l-1
       indx=ind(l)
       q=a(indx)
@@ -303,10 +303,10 @@
    j=l+l
   200    continue
    if (J <= IR) then
-      if (J<IR) then
-         if ( A(IND(j))<A(IND(j+1)) ) j=j+1
+      if (J < IR) then
+         if ( A(IND(j)) < A(IND(j+1)) ) j=j+1
       endif
-      if (q<A(IND(j))) then
+      if (q < A(IND(j))) then
          IND(I)=IND(J)
          I=J
          J=J+J

@@ -322,7 +322,7 @@
   ! checks length for symmetry in case of noise simulations
   if (NOISE_TOMOGRAPHY /= 0) then
     if (mod(NSTEP+1,2) /= 0) then
-      print *,'Error noise simulation: invalid time steps = ',NSTEP,' -> NSTEP + 1 must be a multiple of 2 due to branch symmetry'
+      print *,'Error noise simulation: invalid time steps = ',NSTEP,', NSTEP + 1 must be a multiple of 2 due to branch symmetry'
       call exit_MPI(myrank,'Error noise simulation: number of timesteps must be symmetric, due to +/- branches')
     endif
   endif
@@ -633,7 +633,8 @@
     ! only extract receiver locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/receiver.vtk'
     write(command, &
-  "('awk ',a1,'{if (NR<5) print $0;if (NR==6)print ',a1,'POINTS',i6,' float',a1,';if (NR>5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
+  "('awk ',a1,'{if (NR < 5) print $0;if (NR == 6)&
+   &print ',a1,'POINTS',i6,' float',a1,';if (NR > 5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
 
     ! note: this system() routine is non-standard fortran
@@ -642,7 +643,7 @@
     ! only extract source locations and remove temporary file
     filename_new = trim(OUTPUT_FILES)//'/source.vtk'
     write(command, &
-  "('awk ',a1,'{if (NR< 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
+  "('awk ',a1,'{if (NR < 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
 
     ! note: this system() routine is non-standard fortran
@@ -667,7 +668,7 @@
   integer(kind=8) :: arraysize
 
   ! allocates source arrays
-  if (SIMULATION_TYPE == 1  .or. SIMULATION_TYPE == 3) then
+  if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
     ! source interpolated on all GLL points in source element
     allocate(sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,NSOURCES),stat=ier)
     if (ier /= 0 ) then

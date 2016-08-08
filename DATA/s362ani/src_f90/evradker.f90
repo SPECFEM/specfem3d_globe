@@ -34,16 +34,16 @@
   radius2=r0-depth+ddep
   upper=.false.
   lower=.false.
-  if (radius > rcmb.and.radius < r670) then
+  if (radius > rcmb .and. radius < r670) then
   lower=.true.
-  else if (radius >= r670.and.radius < rmoho) then
+  else if (radius >= r670 .and. radius < rmoho) then
   upper=.true.
   endif
   upper_650=.false.
   lower_650=.false.
-  if (radius > rcmb.and.radius < r650) then
+  if (radius > rcmb .and. radius < r650) then
   lower_650=.true.
-  else if (radius >= r650.and.radius < rmoho) then
+  else if (radius >= r650 .and. radius < rmoho) then
   upper_650=.true.
   endif
   do iker=1,nker
@@ -166,9 +166,9 @@
 !        vercof(24)=1.
 !        vercof(25)=1.
   else if ( &
-       (string(1:lstr) == 'WDC+ANI_362_U6L8'.and.lstr == 16) &
+       (string(1:lstr) == 'WDC+ANI_362_U6L8' .and. lstr == 16) &
        .or. &
-           (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO'.and.lstr == 21) &
+           (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO' .and. lstr == 21) &
        ) then
   if (upper) then
    nspl=6
@@ -198,7 +198,7 @@
   vercof(1)=1.
   vercof(22)=1.
   vercof(23)=1.
-  else if (string(1:lstr) == 'WDC+WM_362_U6L8'.and.lstr == 15) then
+  else if (string(1:lstr) == 'WDC+WM_362_U6L8' .and. lstr == 15) then
   if (upper) then
    nspl=6
    splpts(1)=24.4
@@ -233,9 +233,9 @@
   vercof(31)=1.
   vercof(32)=1.
   else if ( &
-     (string(1:lstr) == 'WDC+ANI_362_U6L8_650'.and.lstr == 20) &
+     (string(1:lstr) == 'WDC+ANI_362_U6L8_650' .and. lstr == 20) &
      .or. &
-         (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO_650'.and.lstr == 25) &
+         (string(1:lstr) == 'WDC+ANI_362_U6L8_TOPO_650' .and. lstr == 25) &
      ) then
   if (upper_650) then
    nspl=6
@@ -300,7 +300,7 @@
   vercof(30)=1.
   vercof(31)=1.
   vercof(32)=1.
-  else if (string(1:lstr) == 'WDC+U8L8_650'.and.lstr == 12) then
+  else if (string(1:lstr) == 'WDC+U8L8_650' .and. lstr == 12) then
   if (upper_650) then
    nspl=8
    splpts(1)=24.4
@@ -336,7 +336,7 @@
   vercof(34)=1.
   vercof(35)=1.
   vercof(36)=1.
-  else if (string(1:lstr) == 'WDC+U8L8_670'.and.lstr == 12) then
+  else if (string(1:lstr) == 'WDC+U8L8_670' .and. lstr == 12) then
   if (upper) then
    nspl=8
    splpts(1)=24.4
@@ -373,9 +373,9 @@
   vercof(35)=1.
   vercof(36)=1.
   else if ( &
-      (string(1:lstr) == 'WDC+U8L8_I1D_650'.and.lstr == 16) &
+      (string(1:lstr) == 'WDC+U8L8_I1D_650' .and. lstr == 16) &
       .or. &
-      (string(1:lstr) == 'WDC+U8L8_I3D_650'.and.lstr == 16) &
+      (string(1:lstr) == 'WDC+U8L8_I3D_650' .and. lstr == 16) &
       ) then
   if (upper_650) then
    nspl=8
@@ -428,8 +428,8 @@
   vercof(34)=1.
   vercof(35)=1.
   vercof(36)=1.
-  else if ((string(1:lstr) == 'WDC+I1D_650'.and.lstr == 11).or. &
-          (string(1:lstr) == 'WDC+I3D_650'.and.lstr == 11)) then
+  else if ((string(1:lstr) == 'WDC+I1D_650' .and. lstr == 11) .or. &
+          (string(1:lstr) == 'WDC+I3D_650' .and. lstr == 11)) then
   if (upper_650) then
    nspl=8
    splpts(1)=24.4
@@ -497,7 +497,7 @@
   vercof(34)=1.
   vercof(35)=1.
   vercof(36)=1.
-  else if (string(1:lstr) == 'V16A4_V7A4'.and.lstr == 10) then
+  else if (string(1:lstr) == 'V16A4_V7A4' .and. lstr == 10) then
   if (upper_650) then
    nspl=8
    splpts(1)=24.4

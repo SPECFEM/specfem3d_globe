@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-! Ebru & Daniel
+! Ebru Bozdag and Daniel Peter,
 ! Nice & Zurich, September 2014
 !
 ! converts between adios and binary format for a model file 'model_gll.bp'
@@ -352,7 +352,7 @@ program convert_model_file_adios
       close(IOUT)
     enddo
 
-    if (myrank==0) print *, 'done writing the model in binary format'
+    if (myrank == 0) print *, 'done writing the model in binary format'
 
 !--------------------------------------------
   else if (convert_format == 2) then ! from binaries to adios
@@ -507,10 +507,10 @@ program convert_model_file_adios
     call adios_set_path(model_handle, "", ier)
     call adios_close(model_handle, ier)
 
-    if (myrank==0) print *, 'done writing the model in adios format'
+    if (myrank == 0) print *, 'done writing the model in adios format'
   endif
   ! user output
-  if (myrank==0) then
+  if (myrank == 0) then
     print *, ' '
     print *, 'see output file(s) in directory: ',trim(output_model_dir)
     print *, ' '

@@ -854,45 +854,45 @@
   I = MIN0(I,II)
 
   !   SEE IF X IS INCREASING OR DECREASING.
-  if (X(I2)-X(I1) <  0) goto 1
+  if (X(I2)-X(I1) < 0) goto 1
   if (X(I2)-X(I1) >= 0) goto 2
 
   !   X IS DECREASING.  CHANGE I AS NECESSARY.
 1  if (S-X(I) <= 0) goto 3
-  if (S-X(I) >  0) goto 4
+  if (S-X(I) > 0) goto 4
 
 4  I = I-1
 
-  if (I-I1 <  0) goto 11
+  if (I-I1 < 0) goto 11
   if (I-I1 == 0) goto 6
-  if (I-I1 >  0) goto 1
+  if (I-I1 > 0) goto 1
 
-3  if (S-X(I+1) <  0) goto 5
+3  if (S-X(I+1) < 0) goto 5
   if (S-X(I+1) >= 0) goto 6
 
 5  I = I+1
 
-  if (I-II <  0) goto 3
+  if (I-II < 0) goto 3
   if (I-II == 0) goto 6
-  if (I-II >  0) goto 7
+  if (I-II > 0) goto 7
 
   !   X IS INCREASING.  CHANGE I AS NECESSARY.
 2  if (S-X(I+1) <= 0) goto 8
-  if (S-X(I+1) >  0) goto 9
+  if (S-X(I+1) > 0) goto 9
 
 9  I = I+1
 
-  if (I-II <  0) goto 2
+  if (I-II < 0) goto 2
   if (I-II == 0) goto 6
-  if (I-II >  0) goto 7
+  if (I-II > 0) goto 7
 
-8  if (S-X(I) <  0) goto 10
+8  if (S-X(I) < 0) goto 10
   if (S-X(I) >= 0) goto 6
 
 10 I = I-1
-  if (I-I1 <  0) goto 11
+  if (I-I1 < 0) goto 11
   if (I-I1 == 0) goto 6
-  if (I-I1 >  0) goto 8
+  if (I-I1 > 0) goto 8
 
 7  I = II
   goto 6
@@ -940,9 +940,9 @@
   Y0 = 0.0d0
 
   !   BAIL OUT IF THERE ARE LESS THAN TWO POINTS TOTAL
-  if (I2-I1  < 0) return
+  if (I2-I1 < 0) return
   if (I2-I1 == 0) goto 17
-  if (I2-I1  > 0) goto 8
+  if (I2-I1 > 0) goto 8
 
 8  A0 = X(J1-1)
 
@@ -962,9 +962,9 @@
   J2 = I-3
 
   !   SEE IF THERE ARE ENOUGH POINTS TO INTERPOLATE (AT LEAST THREE).
-5  if (J2+1-J1 <  0) goto 9
+5  if (J2+1-J1 < 0) goto 9
   if (J2+1-J1 == 0) goto 10
-  if (J2+1-J1 >  0) goto 11
+  if (J2+1-J1 > 0) goto 11
 
   !   ONLY TWO POINTS.  USE LINEAR INTERPOLATION.
 10  J2 = J2+2
@@ -1051,7 +1051,7 @@
   !   NO.  GO BACK FOR MORE.
 6  J1 = J2+2
   if (J1-I2 <= 0) goto 8
-  if (J1-I2 >  0) goto 7
+  if (J1-I2 > 0) goto 7
 
   !   THERE IS ONLY ONE POINT LEFT AFTER THE LATEST DISCONTINUITY.
 7 do J = 1,3
@@ -1164,7 +1164,7 @@
       xelm(ia) = x*(ONE + gamma * topo410 / r)
       yelm(ia) = y*(ONE + gamma * topo410 / r)
       zelm(ia) = z*(ONE + gamma * topo410 / r)
-    else if (r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+    else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
       ! stretching between R771 and R670
       gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
       xelm(ia) = x*(ONE + gamma * topo650 / r)
@@ -1299,7 +1299,7 @@
     if (r >= RCMB/R_EARTH .and. r <= RTOPDDOUBLEPRIME/R_EARTH) then
       ! stretching between RCMB and RTOPDDOUBLEPRIME
       gamma = (RTOPDDOUBLEPRIME/R_EARTH - r) / (RTOPDDOUBLEPRIME/R_EARTH - RCMB/R_EARTH)
-    else if (r>= r_start .and. r <= RCMB/R_EARTH) then
+    else if (r >= r_start .and. r <= RCMB/R_EARTH) then
       ! stretching between r_start and RCMB
       gamma = (r - r_start) / (RCMB/R_EARTH - r_start)
     endif

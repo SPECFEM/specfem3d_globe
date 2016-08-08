@@ -82,7 +82,7 @@
   string=dskker(i)
   lstr=len_trim(string)
   j=1
-  do while(string(j:j) /= ','.and.j < lstr)
+  do while(string(j:j) /= ',' .and. j < lstr)
     j=j+1
   enddo
   ivarkern(i)=0

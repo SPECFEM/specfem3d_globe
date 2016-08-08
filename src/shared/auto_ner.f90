@@ -31,10 +31,6 @@
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
 !     University of Rhode Island
 !
-!  <savage@uri.edu>.
-!  <savage13@gps.caltech.edu>
-!  <savage13@dtm.ciw.edu>
-!
 !  It is based partially upon formulation in:
 !
 ! @ARTICLE{KoTr02a,
@@ -342,7 +338,7 @@
   scaling(2:8)   = 2  ! MOHO    TO G'' (Geochemical Mantle 1650)
   scaling(9:11)  = 4  ! G''     TO MIC (Middle Inner Core)
   scaling(12)    = 8  ! MIC     TO MIC-II
-  scaling(13:14) = 16 ! MIC-II  TO Central Cube -> Center of the Earth
+  scaling(13:14) = 16 ! MIC-II  TO Central Cube TO Center of the Earth
 
   ! initializes minimum Number of Elements a Region must have
   NER(:)    = 1

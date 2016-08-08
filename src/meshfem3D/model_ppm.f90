@@ -341,13 +341,13 @@
 
   ! depth of given radius (in km)
   r_depth = R_EARTH_KM*(1.0 - radius)  ! radius is normalized between [0,1]
-  if (r_depth>PPM_maxdepth .or. r_depth < PPM_mindepth) return
+  if (r_depth > PPM_maxdepth .or. r_depth < PPM_mindepth) return
 
   lat=(PI_OVER_TWO-theta)*RADIANS_TO_DEGREES
   if (lat < PPM_minlat .or. lat > PPM_maxlat ) return
 
   lon=phi*RADIANS_TO_DEGREES
-  if (lon>180.0d0) lon=lon-360.0d0
+  if (lon > 180.0d0) lon=lon-360.0d0
   if (lon < PPM_minlon .or. lon > PPM_maxlon ) return
 
   ! search location value
@@ -970,13 +970,13 @@
     ! depth of given radius (in km)
     call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
     r_depth = R_EARTH_KM - radius*R_EARTH_KM  ! radius is normalized between [0,1]
-    if (r_depth>=maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
+    if (r_depth >= maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
     lat=(PI/2.0d0-theta)*180.0d0/PI
     if (lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
 
     lon=phi*180.0d0/PI
-    if (lon>180.0d0) lon=lon-360.0d0
+    if (lon > 180.0d0) lon=lon-360.0d0
     if (lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
 
     do k = 1, NGLLZ
@@ -1015,13 +1015,13 @@
         ! depth of given radius (in km)
         call xyz_2_rthetaphi(cx0(ispec),cy0(ispec),cz0(ispec),radius,theta,phi)
         r_depth = R_EARTH_KM - radius*R_EARTH_KM  ! radius is normalized between [0,1]
-        if (r_depth>=maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
+        if (r_depth >= maxdepth+margin_v .or. r_depth+margin_v < mindepth) cycle
 
         lat=(PI/2.0d0-theta)*180.0d0/PI
         if (lat < minlat-margin_h .or. lat > maxlat+margin_h ) cycle
 
         lon=phi*180.0d0/PI
-        if (lon>180.0d0) lon=lon-360.0d0
+        if (lon > 180.0d0) lon=lon-360.0d0
         if (lon < minlon-margin_h .or. lon > maxlon+margin_h ) cycle
 
         do k = 1, NGLLZ

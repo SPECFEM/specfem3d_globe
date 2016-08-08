@@ -507,10 +507,10 @@
   subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_string)
 
   use specfem_par,only:&
-    cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,cmt_depth=>cmt_depth_SAC,&
-    hdur=>cmt_hdur_SAC,M0,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC,&
-    pde_lat=>elat_SAC,pde_lon=>elon_SAC,pde_depth=>depth_SAC,&
-    mb=>mb_SAC,ms,Mw
+    cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC,cmt_depth => cmt_depth_SAC,&
+    hdur => cmt_hdur_SAC,M0,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC,&
+    pde_lat => elat_SAC,pde_lon => elon_SAC,pde_depth => depth_SAC,&
+    mb => mb_SAC,ms,Mw
 
   implicit none
   character(len=*) :: quakemlstring

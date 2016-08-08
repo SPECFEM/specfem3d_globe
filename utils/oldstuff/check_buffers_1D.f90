@@ -147,7 +147,7 @@
   iotherproc = addressing(ichunk,iproc_xi+1,iproc_eta)
 
   NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_CORNER(iregion_code,:)
-  if (iregion_code==IREGION_OUTER_CORE) then
+  if (iregion_code == IREGION_OUTER_CORE) then
     if (CUT_SUPERBRICK_XI) then
       if (CUT_SUPERBRICK_ETA) then
         if (mod(iproc_xi,2) == 0) then
@@ -181,7 +181,7 @@
     endif
   endif
   NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_CORNER(iregion_code,:)
-  if (iregion_code==IREGION_OUTER_CORE) then
+  if (iregion_code == IREGION_OUTER_CORE) then
     if (CUT_SUPERBRICK_XI) then
       if (CUT_SUPERBRICK_ETA) then
         if (mod(iproc_xi+1,2) == 0) then
@@ -329,7 +329,7 @@
   iotherproc = addressing(ichunk,iproc_xi,iproc_eta+1)
 
   NGLOB1D_RADIAL_SPEC_THIS(:) = NGLOB1D_RADIAL_CORNER(iregion_code,:)
-  if (iregion_code==IREGION_OUTER_CORE) then
+  if (iregion_code == IREGION_OUTER_CORE) then
     if (CUT_SUPERBRICK_XI) then
       if (CUT_SUPERBRICK_ETA) then
         if (mod(iproc_xi,2) == 0) then
@@ -363,7 +363,7 @@
     endif
   endif
   NGLOB1D_RADIAL_SPEC_OTHER(:) = NGLOB1D_RADIAL_CORNER(iregion_code,:)
-  if (iregion_code==IREGION_OUTER_CORE) then
+  if (iregion_code == IREGION_OUTER_CORE) then
     if (CUT_SUPERBRICK_XI) then
       if (CUT_SUPERBRICK_ETA) then
         if (mod(iproc_xi,2) == 0) then

@@ -69,25 +69,25 @@ program attenuation
      write(*,*)
   endif
   if (Q == 312.0d0) then
-     write(*,*)'!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.'
+     write(*,*)'!--- CMB - > d670 (no attenuation in fluid outer core), target Q_mu = 312.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_CMB_670)'
      write(*,*)
   endif
   if (Q == 143.0d0) then
-     write(*,*)'!--- d670 -> d220, target Q_mu: 143.'
+     write(*,*)'!--- d670 - > d220, target Q_mu: 143.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_670_220)'
      write(*,*)
   endif
   if (Q == 80.0d0) then
-     write(*,*)'!--- d220 -> depth of 80 km, target Q_mu:  80.'
+     write(*,*)'!--- d220 - > depth of 80 km, target Q_mu:  80.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_220_80)'
      write(*,*)
   endif
   if (Q == 600.0d0) then
-     write(*,*)'!--- depth of 80 km -> surface, target Q_mu: 600.'
+     write(*,*)'!--- depth of 80 km - > surface, target Q_mu: 600.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_80_SURFACE)'
      write(*,*)

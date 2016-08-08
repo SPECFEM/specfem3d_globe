@@ -390,7 +390,7 @@
   endif
 
   ! check simulation parameters
-  if (SIMULATION_TYPE /= 1 .and.  SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
+  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 2 .and. SIMULATION_TYPE /= 3) &
     call exit_MPI(myrank, 'SIMULATION_TYPE can only be 1, 2, or 3')
 
   ! checks number of sources for adjoint simulations

@@ -850,11 +850,11 @@
   do i = 1,6
     do j = i,6
       prod(p) = eps(i)*b_eps(j)
-      if (j>i) then
+      if (j > i) then
         prod(p) = prod(p)+eps(j)*b_eps(i)
-        if (j>3 .and. i<4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
+        if (j > 3 .and. i < 4) prod(p) = prod(p) * 2.0_CUSTOM_REAL
       endif
-      if (i>3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
+      if (i > 3) prod(p) = prod(p) * 4.0_CUSTOM_REAL
       p = p+1
     enddo
   enddo

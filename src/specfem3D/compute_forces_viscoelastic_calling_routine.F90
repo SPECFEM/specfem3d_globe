@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine compute_forces_viscoelastic()
 
 ! elastic domains for forward or adjoint simulations (SIMULATION_TYPE == 1 or 2 )
@@ -336,7 +335,7 @@
                             buffer_recv_vector_crust_mantle, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                             request_send_vector_cm,request_recv_vector_cm, &
-                            IREGION_CRUST_MANTLE,1) ! <-- 1 == fwd accel
+                            IREGION_CRUST_MANTLE,1) ! -- 1 == fwd accel
         ! inner core
         call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL, &
                             buffer_recv_vector_inner_core, &
@@ -378,7 +377,7 @@
                                   NSPEC2D_TOP(IREGION_CRUST_MANTLE) )
     else
       ! on GPU
-      call compute_coupling_ocean_gpu(Mesh_pointer,1) ! <- 1 == forward arrays
+      call compute_coupling_ocean_gpu(Mesh_pointer,1) ! -- 1 == forward arrays
     endif
   endif
 
@@ -732,7 +731,7 @@
                           b_buffer_recv_vector_cm, &
                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                           b_request_send_vector_cm,b_request_recv_vector_cm, &
-                          IREGION_CRUST_MANTLE,3) ! <-- 3 == adjoint b_accel
+                          IREGION_CRUST_MANTLE,3) ! -- 3 == adjoint b_accel
         ! inner core
         call assemble_MPI_vector_write_gpu(Mesh_pointer,NPROCTOT_VAL,&
                           b_buffer_recv_vector_inner_core, &
@@ -775,7 +774,7 @@
                                   NSPEC2D_TOP(IREGION_CRUST_MANTLE) )
     else
       ! on GPU
-      call compute_coupling_ocean_gpu(Mesh_pointer,3) ! <- 3 == backward/reconstructed arrays
+      call compute_coupling_ocean_gpu(Mesh_pointer,3) ! -- 3 == backward/reconstructed arrays
     endif
   endif
 

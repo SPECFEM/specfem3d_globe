@@ -530,10 +530,10 @@ contains
   Free_Unit = -1_I4P                                      ! initializing free logic unit
   n1=1_I4P                                                ! initializing counter
   do
-    if ((n1/=5_I4P).and.(n1/=6_I4P).and.(n1/=9_I4P)) then
+    if ((n1 /= 5_I4P) .and. (n1 /= 6_I4P) .and. (n1 /= 9_I4P)) then
       inquire (unit=n1,opened=lopen,iostat=ios)           ! verify logic units
-      if (ios==0_I4P) then
-        if (.not.lopen) then
+      if (ios == 0_I4P) then
+        if (.not. lopen) then
           Free_Unit = n1                                  ! assignment of free logic
           return
         endif
@@ -598,7 +598,7 @@ contains
   character(*), intent(IN):: filename      ! name of file
   character(*), intent(IN):: title         ! title
   character(*), intent(IN):: mesh_topology ! mesh topology
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   !!The VTK\_INI variables have the following meaning:
   !!
   !!\begin{description}
@@ -912,7 +912,7 @@ contains
   real(R8P),    intent(IN):: Dx        ! space step in x direction
   real(R8P),    intent(IN):: Dy        ! space step in y direction
   real(R8P),    intent(IN):: Dz        ! space step in z direction
-  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer  ! buffer string
   !--------------------------------------------------------------------------------------------------------------------------------
 
@@ -951,7 +951,7 @@ contains
   real(R4P),    intent(IN):: Dx        ! space step in x direction
   real(R4P),    intent(IN):: Dy        ! space step in y direction
   real(R4P),    intent(IN):: Dz        ! space step in z direction
-  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer  ! buffer string
   !--------------------------------------------------------------------------------------------------------------------------------
 
@@ -988,7 +988,7 @@ contains
   real(R8P),    intent(IN):: X(1:NN)  ! x coordinates
   real(R8P),    intent(IN):: Y(1:NN)  ! y coordinates
   real(R8P),    intent(IN):: Z(1:NN)  ! z coordinates
-  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer ! buffer string
   integer(I4P)::             n1       ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1026,7 +1026,7 @@ contains
   real(R4P),    intent(IN):: X(1:NN)  ! x coordinates
   real(R4P),    intent(IN):: Y(1:NN)  ! y coordinates
   real(R4P),    intent(IN):: Z(1:NN)  ! z coordinates
-  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer ! buffer string
   integer(I4P)::             n1       ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1063,7 +1063,7 @@ contains
   real(R8P),    intent(IN):: X(1:Nx)   ! x coordinates
   real(R8P),    intent(IN):: Y(1:Ny)   ! y coordinates
   real(R8P),    intent(IN):: Z(1:Nz)   ! z coordinates
-  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer  ! buffer string
   integer(I4P)::             n1        ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1112,7 +1112,7 @@ contains
   real(R4P),    intent(IN):: X(1:Nx)   ! x coordinates
   real(R4P),    intent(IN):: Y(1:Ny)   ! y coordinates
   real(R4P),    intent(IN):: Z(1:Nz)   ! z coordinates
-  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer  ! buffer string
   integer(I4P)::             n1        ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1159,7 +1159,7 @@ contains
   real(R8P),    intent(IN):: X(1:NN)   ! x coordinates of all nodes
   real(R8P),    intent(IN):: Y(1:NN)   ! y coordinates of all nodes
   real(R8P),    intent(IN):: Z(1:NN)   ! z coordinates of all nodes
-  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer  ! buffer string
   integer(I4P)::             n1        ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1191,7 +1191,7 @@ contains
   real(R4P),    intent(IN):: X(1:NN)   ! x coordinates of all nodes
   real(R4P),    intent(IN):: Y(1:NN)   ! y coordinates of all nodes
   real(R4P),    intent(IN):: Z(1:NN)   ! z coordinates of all nodes
-  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer  ! buffer string
   integer(I4P)::             n1        ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1224,7 +1224,7 @@ contains
   integer(I4P), intent(IN):: NC              ! number of cells
   integer(I4P), intent(IN):: connect(:)      ! mesh connectivity
   integer(I4P), intent(IN):: cell_type(1:NC) ! VTK cell type
-  integer(I4P)::             E_IO            ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO            ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer        ! buffer string
   integer(I4P)::             ncon            ! dimension of connectivity vector
   !!The VTK\_CON variables have the following meaning:
@@ -1254,22 +1254,22 @@ contains
   !!\begin{boxred}{Connectivity vector example for VTK legacy standard}
   !!\begin{verbatim}
   !!! first cell
-  !!connect(1)  = 8  => number of vertices of 1? cell
-  !!connect(2)  = 0  => identification flag of 1? vertex of 1? cell
-  !!connect(3)  = 1  => identification flag of 2? vertex of 1? cell
-  !!connect(4)  = 2  => identification flag of 3? vertex of 1? cell
-  !!connect(5)  = 3  => identification flag of 4? vertex of 1? cell
-  !!connect(6)  = 4  => identification flag of 5? vertex of 1? cell
-  !!connect(7)  = 5  => identification flag of 6? vertex of 1? cell
-  !!connect(8)  = 6  => identification flag of 7? vertex of 1? cell
-  !!connect(9)  = 7  => identification flag of 8? vertex of 1? cell
+  !!connect(1)  = 8 => number of vertices of 1? cell
+  !!connect(2)  = 0 => identification flag of 1? vertex of 1? cell
+  !!connect(3)  = 1 => identification flag of 2? vertex of 1? cell
+  !!connect(4)  = 2 => identification flag of 3? vertex of 1? cell
+  !!connect(5)  = 3 => identification flag of 4? vertex of 1? cell
+  !!connect(6)  = 4 => identification flag of 5? vertex of 1? cell
+  !!connect(7)  = 5 => identification flag of 6? vertex of 1? cell
+  !!connect(8)  = 6 => identification flag of 7? vertex of 1? cell
+  !!connect(9)  = 7 => identification flag of 8? vertex of 1? cell
   !!! second cell
-  !!connect(10) = 5  => number of vertices of 2? cell
-  !!connect(11) = 0  => identification flag of 1? vertex of 2? cell
-  !!connect(12) = 1  => identification flag of 2? vertex of 2? cell
-  !!connect(13) = 2  => identification flag of 3? vertex of 2? cell
-  !!connect(14) = 3  => identification flag of 4? vertex of 2? cell
-  !!connect(15) = 8  => identification flag of 5? vertex of 2? cell
+  !!connect(10) = 5 => number of vertices of 2? cell
+  !!connect(11) = 0 => identification flag of 1? vertex of 2? cell
+  !!connect(12) = 1 => identification flag of 2? vertex of 2? cell
+  !!connect(13) = 2 => identification flag of 3? vertex of 2? cell
+  !!connect(14) = 3 => identification flag of 4? vertex of 2? cell
+  !!connect(15) = 8 => identification flag of 5? vertex of 2? cell
   !!\end{verbatim}
   !!\end{boxred}
   !!
@@ -1284,8 +1284,8 @@ contains
   !!
   !!\begin{boxred}{Cell-Type vector example for VTK legacy standard}
   !!\begin{verbatim}
-  !!tipo(1) = 12  => VTK hexahedron type of 1? cell
-  !!tipo(2) = 14  => VTK pyramid type of 2? cell
+  !!tipo(1) = 12 => VTK hexahedron type of 1? cell
+  !!tipo(2) = 14 => VTK pyramid type of 2? cell
   !!\end{verbatim}
   !!\end{boxred}
   !!
@@ -1340,7 +1340,7 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   integer(I4P), intent(IN):: NC_NN        ! number of cells or nodes of field
   character(*), intent(IN):: var_location ! location of saving variables: cell for cell-centered, node for node-centered
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer     ! buffer string
   !!The VTK\_DAT variables have the following meaning:
   !!
@@ -1615,7 +1615,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of nodes or cells
   character(*), intent(IN):: varname      ! variable name
   real(R8P),    intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   !--------------------------------------------------------------------------------------------------------------------------------
 
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1645,7 +1645,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of nodes or cells
   character(*), intent(IN):: varname      ! variable name
   real(R4P),    intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   !--------------------------------------------------------------------------------------------------------------------------------
 
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1675,7 +1675,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of nodes or cells
   character(*), intent(IN):: varname      ! variable name
   integer(I4P), intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   !--------------------------------------------------------------------------------------------------------------------------------
 
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1708,7 +1708,7 @@ contains
   real(R8P),    intent(IN):: varX(1:NC_NN) ! x component of vector
   real(R8P),    intent(IN):: varY(1:NC_NN) ! y component of vector
   real(R8P),    intent(IN):: varZ(1:NC_NN) ! z component of vector
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   integer(I8P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
 
@@ -1750,7 +1750,7 @@ contains
   real(R4P),    intent(IN):: varX(1:NC_NN) ! x component of vector
   real(R4P),    intent(IN):: varY(1:NC_NN) ! y component of vector
   real(R4P),    intent(IN):: varZ(1:NC_NN) ! z component of vector
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   integer(I8P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
 
@@ -1791,7 +1791,7 @@ contains
   integer(I4P), intent(IN):: varX(1:NC_NN) ! x component of vector
   integer(I4P), intent(IN):: varY(1:NC_NN) ! y component of vector
   integer(I4P), intent(IN):: varZ(1:NC_NN) ! z component of vector
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   integer(I8P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
 
@@ -1821,7 +1821,7 @@ contains
   integer(I4P), intent(IN):: dimm                    ! texture dimensions
   character(*), intent(IN):: varname                 ! variable name
   real(R8P),    intent(IN):: textCoo(1:NC_NN,1:dimm) ! texture
-  integer(I4P)::             E_IO                    ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO                    ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer                ! buffer string
   integer(I8P)::             n1,n2                   ! counters
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1855,7 +1855,7 @@ contains
   integer(I4P), intent(IN):: dimm                    ! texture dimensions
   character(*), intent(IN):: varname                 ! variable name
   real(R4P),    intent(IN):: textCoo(1:NC_NN,1:dimm) ! texture
-  integer(I4P)::             E_IO                    ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO                    ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer                ! buffer string
   integer(I8P)::             n1,n2                   ! counters
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -1887,7 +1887,7 @@ contains
   implicit none
 
   !--------------------------------------------------------------------------------------------------------------------------------
-  integer(I4P):: E_IO ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P):: E_IO ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   !!The VTK\_END variables have the following meaning:
   !!
   !!\begin{description}
@@ -1950,7 +1950,7 @@ contains
   integer(I4P), intent(IN), optional:: nx1,nx2       ! initial and final nodes of x axis
   integer(I4P), intent(IN), optional:: ny1,ny2       ! initial and final nodes of y axis
   integer(I4P), intent(IN), optional:: nz1,nz2       ! initial and final nodes of z axis
-  integer(I4P)::                       E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::                       E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::              s_buffer      ! buffer string
   !!The VTK\_INI\_XML variables have the following meaning:
   !!
@@ -2009,14 +2009,14 @@ contains
          buffered   = 'YES',      &
          iostat = E_IO)
     ! writing header of file
-    write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)'<?xml version="1.0"?>'
-    write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)'<VTKFile type="'//trim(topology)//'" version="0.1" byte_order="BigEndian">'
+    write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)' < ?xml version="1.0"? > '
+    write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)' < VTKFile type="'//trim(topology)//'" version="0.1" byte_order="BigEndian" > '
     indent = 2
     select case(trim(topology))
     case('RectilinearGrid','StructuredGrid')
-      write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<'//trim(topology)//' WholeExtent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+      write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < '//trim(topology)//' WholeExtent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     case('UnstructuredGrid')
-      write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<'//trim(topology)//'>'
+      write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < '//trim(topology)//' > '
     endselect
     indent = indent + 2
   case('BINARY')
@@ -2031,14 +2031,14 @@ contains
          buffered   = 'YES',          &
          iostat     = E_IO)
     ! writing header of file
-    write(unit=Unit_VTK,                     iostat=E_IO)'<?xml version="1.0"?>'//end_rec
-    write(unit=Unit_VTK,                     iostat=E_IO)'<VTKFile type="'//trim(topology)//'" version="0.1" byte_order="BigEndian">'//end_rec
+    write(unit=Unit_VTK,                     iostat=E_IO)' < ?xml version="1.0"? > '//end_rec
+    write(unit=Unit_VTK,                     iostat=E_IO)' < VTKFile type="'//trim(topology)//'" version="0.1" byte_order="BigEndian" > '//end_rec
     indent = 2
     select case(trim(topology))
     case('RectilinearGrid','StructuredGrid')
-      write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<'//trim(topology)//' WholeExtent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+      write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < '//trim(topology)//' WholeExtent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     case('UnstructuredGrid')
-      write(s_buffer,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<'//trim(topology)//'>'
+      write(s_buffer,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < '//trim(topology)//' > '
     endselect
     write(unit=Unit_VTK,                     iostat=E_IO)trim(s_buffer)//end_rec
     indent = indent + 2
@@ -2286,7 +2286,7 @@ contains
   real(R8P),    intent(IN):: X(1:NN)  ! x coordinates
   real(R8P),    intent(IN):: Y(1:NN)  ! y coordinates
   real(R8P),    intent(IN):: Z(1:NN)  ! z coordinates
-  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer ! buffer string
   integer(I4P)::             n1       ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2294,30 +2294,30 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<Points>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < Points > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" NumberOfComponents="3" Name="Point" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" NumberOfComponents="3" Name="Point" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FR8P//')',    iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</Points>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /Points > '
   case(f_out_binary)
-    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     indent = indent + 2
     write(unit=Unit_VTK,                   iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<Points>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < Points > '//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NN*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R8',3*NN
     write(unit=Unit_VTK_Append,            iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</Points>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /Points > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2338,7 +2338,7 @@ contains
   real(R4P),    intent(IN):: X(1:NN)  ! x coordinates
   real(R4P),    intent(IN):: Y(1:NN)  ! y coordinates
   real(R4P),    intent(IN):: Z(1:NN)  ! z coordinates
-  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer ! buffer string
   integer(I4P)::             n1       ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2346,30 +2346,30 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<Points>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < Points > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" NumberOfComponents="3" Name="Point" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" NumberOfComponents="3" Name="Point" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FR4P//')',    iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</Points>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /Points > '
   case(f_out_binary)
-    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     indent = indent + 2
     write(unit=Unit_VTK,                   iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<Points>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < Points > '//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NN*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R4',3*NN
     write(unit=Unit_VTK_Append,            iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</Points>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /Points > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2389,7 +2389,7 @@ contains
   real(R8P),    intent(IN):: X(nx1:nx2) ! x coordinates
   real(R8P),    intent(IN):: Y(ny1:ny2) ! y coordinates
   real(R8P),    intent(IN):: Z(nz1:nz2) ! z coordinates
-  integer(I4P)::             E_IO       ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO       ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer   ! buffer string
   integer(I4P)::             n1         ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2397,50 +2397,50 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<Coordinates>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < Coordinates > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="X" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="X" format="ascii" > '
     write(unit=Unit_VTK,fmt=FR8P,               iostat=E_IO)(X(n1),n1=nx1,nx2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="Y" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="Y" format="ascii" > '
     write(unit=Unit_VTK,fmt=FR8P,               iostat=E_IO)(Y(n1),n1=ny1,ny2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="Z" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="Z" format="ascii" > '
     write(unit=Unit_VTK,fmt=FR8P,               iostat=E_IO)(Z(n1),n1=nz1,nz2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</Coordinates>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /Coordinates > '
   case(f_out_binary)
-    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     indent = indent + 2
     write(unit=Unit_VTK,                   iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<Coordinates>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < Coordinates > '//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="X" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="X" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = (nx2-nx1+1)*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R8',nx2-nx1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(X(n1),n1=nx1,nx2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="Y" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="Y" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = (ny2-ny1+1)*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R8',ny2-ny1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(Y(n1),n1=ny1,ny2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="Z" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="Z" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = (nz2-nz1+1)*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R8',nz2-nz1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(Z(n1),n1=nz1,nz2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</Coordinates>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /Coordinates > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2460,7 +2460,7 @@ contains
   real(R4P),    intent(IN):: X(nx1:nx2) ! x coordinates
   real(R4P),    intent(IN):: Y(ny1:ny2) ! y coordinates
   real(R4P),    intent(IN):: Z(nz1:nz2) ! z coordinates
-  integer(I4P)::             E_IO       ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO       ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer   ! buffer string
   integer(I4P)::             n1         ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2468,50 +2468,50 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<Coordinates>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < Coordinates > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="X" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="X" format="ascii" > '
     write(unit=Unit_VTK,fmt=FR4P,               iostat=E_IO)(X(n1),n1=nx1,nx2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="Y" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="Y" format="ascii" > '
     write(unit=Unit_VTK,fmt=FR4P,               iostat=E_IO)(Y(n1),n1=ny1,ny2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="Z" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="Z" format="ascii" > '
     write(unit=Unit_VTK,fmt=FR4P,               iostat=E_IO)(Z(n1),n1=nz1,nz2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</Coordinates>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /Coordinates > '
   case(f_out_binary)
-    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
+    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
     indent = indent + 2
     write(unit=Unit_VTK,                   iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<Coordinates>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < Coordinates > '//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="X" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="X" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = (nx2-nx1+1)*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R4',nx2-nx1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(X(n1),n1=nx1,nx2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="Y" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="Y" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = (ny2-ny1+1)*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R4',ny2-ny1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(Y(n1),n1=ny1,ny2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="Z" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="Z" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = (nz2-nz1+1)*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R4',nz2-nz1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(Z(n1),n1=nz1,nz2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</Coordinates>'//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /Coordinates > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2530,7 +2530,7 @@ contains
   real(R8P),    intent(IN):: X(1:NN)  ! x coordinates
   real(R8P),    intent(IN):: Y(1:NN)  ! y coordinates
   real(R8P),    intent(IN):: Z(1:NN)  ! z coordinates
-  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer ! buffer string
   integer(I4P)::             n1       ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2538,30 +2538,30 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'">'
+    write(unit=Unit_VTK,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'" > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'<Points>'
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < Points > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" NumberOfComponents="3" Name="Point" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" NumberOfComponents="3" Name="Point" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FR8P//')',                iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'</Points>'
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < /Points > '
   case(f_out_binary)
-    write(s_buffer,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'">'
+    write(s_buffer,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'" > '
     indent = indent + 2
     write(unit=Unit_VTK,                               iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'<Points>'//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < Points > '//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',                         iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NN*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,                        iostat=E_IO)N_Byte,'R8',3*NN
     write(unit=Unit_VTK_Append,                        iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'</Points>'//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < /Points > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2580,7 +2580,7 @@ contains
   real(R4P),    intent(IN):: X(1:NN)  ! x coordinates
   real(R4P),    intent(IN):: Y(1:NN)  ! y coordinates
   real(R4P),    intent(IN):: Z(1:NN)  ! z coordinates
-  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO     ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer ! buffer string
   integer(I4P)::             n1       ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2588,30 +2588,30 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'">'
+    write(unit=Unit_VTK,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'" > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'<Points>'
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < Points > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" NumberOfComponents="3" Name="Point" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" NumberOfComponents="3" Name="Point" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FR4P//')',                iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'</Points>'
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < /Points > '
   case(f_out_binary)
-    write(s_buffer,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'">'
+    write(s_buffer,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'" > '
     indent = indent + 2
     write(unit=Unit_VTK,                               iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'<Points>'//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < Points > '//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',                         iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NN*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,                        iostat=E_IO)N_Byte,'R4',3*NN
     write(unit=Unit_VTK_Append,                        iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'</Points>'//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < /Points > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2625,16 +2625,16 @@ contains
   implicit none
 
   !--------------------------------------------------------------------------------------------------------------------------------
-  integer(I4P):: E_IO ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P):: E_IO ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   !--------------------------------------------------------------------------------------------------------------------------------
 
   !--------------------------------------------------------------------------------------------------------------------------------
   indent = indent - 2
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</Piece>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /Piece > '
   case(f_out_binary)
-    write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'</Piece>'//end_rec
+    write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < /Piece > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2653,7 +2653,7 @@ contains
   integer(I4P), intent(IN):: connect(:)      ! mesh connectivity
   integer(I4P), intent(IN):: offset(1:NC)    ! cell offset
   integer(I1P), intent(IN):: cell_type(1:NC) ! VTK cell type
-  integer(I4P)::             E_IO            ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO            ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer        ! buffer string
   integer(I4P)::             n1              ! counter
   !!The VTK\_CON\_XML variables have the following meaning:
@@ -2686,20 +2686,20 @@ contains
   !!\begin{boxred}{Connectivity vector example for VTK XML standard}
   !!\begin{verbatim}
   !!! first cell
-  !!connect(1)  = 0  => identification flag of 1? vertex of 1? cell
-  !!connect(2)  = 1  => identification flag of 2? vertex of 1? cell
-  !!connect(3)  = 2  => identification flag of 3? vertex of 1? cell
-  !!connect(4)  = 3  => identification flag of 4? vertex of 1? cell
-  !!connect(5)  = 4  => identification flag of 5? vertex of 1? cell
-  !!connect(6)  = 5  => identification flag of 6? vertex of 1? cell
-  !!connect(7)  = 6  => identification flag of 7? vertex of 1? cell
-  !!connect(8)  = 7  => identification flag of 8? vertex of 1? cell
+  !!connect(1)  = 0 => identification flag of 1? vertex of 1? cell
+  !!connect(2)  = 1 => identification flag of 2? vertex of 1? cell
+  !!connect(3)  = 2 => identification flag of 3? vertex of 1? cell
+  !!connect(4)  = 3 => identification flag of 4? vertex of 1? cell
+  !!connect(5)  = 4 => identification flag of 5? vertex of 1? cell
+  !!connect(6)  = 5 => identification flag of 6? vertex of 1? cell
+  !!connect(7)  = 6 => identification flag of 7? vertex of 1? cell
+  !!connect(8)  = 7 => identification flag of 8? vertex of 1? cell
   !!! second cell
-  !!connect(9)  = 0  => identification flag of 1? vertex of 2? cell
-  !!connect(10) = 1  => identification flag of 2? vertex of 2? cell
-  !!connect(11) = 2  => identification flag of 3? vertex of 2? cell
-  !!connect(12) = 3  => identification flag of 4? vertex of 2? cell
-  !!connect(13) = 8  => identification flag of 5? vertex of 2? cell
+  !!connect(9)  = 0 => identification flag of 1? vertex of 2? cell
+  !!connect(10) = 1 => identification flag of 2? vertex of 2? cell
+  !!connect(11) = 2 => identification flag of 3? vertex of 2? cell
+  !!connect(12) = 3 => identification flag of 4? vertex of 2? cell
+  !!connect(13) = 8 => identification flag of 5? vertex of 2? cell
   !!\end{verbatim}
   !!\end{boxred}
   !!
@@ -2710,7 +2710,7 @@ contains
   !!\begin{boxred}{Offset vector example for VTK XML standard}
   !!\begin{verbatim}
   !!! first cell
-  !!offset(1) = 8  => summ of nodes of 1? cell
+  !!offset(1) = 8 => summ of nodes of 1? cell
   !!! second cell
   !!offset(2) = 13 => summ of nodes of 1? and 2? cells
   !!\end{verbatim}
@@ -2735,8 +2735,8 @@ contains
   !!
   !!\begin{boxred}{Cell-Type vector example for VTK legacy standard}
   !!\begin{verbatim}
-  !!tipo(1) = 12  => VTK hexahedron type of 1? cell
-  !!tipo(2) = 14  => VTK pyramid type of 2? cell
+  !!tipo(1) = 12 => VTK hexahedron type of 1? cell
+  !!tipo(2) = 14 => VTK pyramid type of 2? cell
   !!\end{verbatim}
   !!\end{boxred}
   !!
@@ -2762,45 +2762,45 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<Cells>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < Cells > '
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="connectivity" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="connectivity" format="ascii" > '
     write(unit=Unit_VTK,fmt=FI4P, iostat=E_IO)(connect(n1),n1=1,size(connect))
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="offsets" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="offsets" format="ascii" > '
     write(unit=Unit_VTK,fmt=FI4P, iostat=E_IO)(offset(n1),n1=1,NC)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="types" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="types" format="ascii" > '
     write(unit=Unit_VTK,fmt=FI1P, iostat=E_IO)(cell_type(n1),n1=1,NC)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)', iostat=E_IO)repeat(' ',indent)//'</Cells>'
+    write(unit=Unit_VTK,fmt='(A)', iostat=E_IO)repeat(' ',indent)//' < /Cells > '
   case(f_out_binary)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<Cells>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < Cells > '//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="connectivity" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="connectivity" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = size(connect)*sizeof(Tipo_I4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I4',size(connect)
     write(unit=Unit_VTK_Append,iostat=E_IO)(connect(n1),n1=1,size(connect))
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="offsets" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="offsets" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = NC*sizeof(Tipo_I4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I4',NC
     write(unit=Unit_VTK_Append,iostat=E_IO)(offset(n1),n1=1,NC)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="types" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="types" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = NC*sizeof(Tipo_I1)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I1',NC
     write(unit=Unit_VTK_Append,iostat=E_IO)(cell_type(n1),n1=1,NC)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</Cells>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /Cells > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2817,7 +2817,7 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   character(*), intent(IN):: var_location     ! location of saving variables: CELL for cell-centered, NODE for node-centered
   character(*), intent(IN):: var_block_action ! variables block action: OPEN or CLOSE block
-  integer(I4P)::             E_IO             ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO             ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   !!The VTK\_DAT\_XML variables have the following meaning:
   !!
   !!\begin{description}
@@ -2862,20 +2862,20 @@ contains
     case('CELL')
       select case(trim(Upper_Case(var_block_action)))
       case('OPEN')
-        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<CellData>'
+        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < CellData > '
         indent = indent + 2
       case('CLOSE')
         indent = indent - 2
-        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</CellData>'
+        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /CellData > '
       endselect
     case('NODE')
       select case(trim(Upper_Case(var_block_action)))
       case('OPEN')
-        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<PointData>'
+        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < PointData > '
         indent = indent + 2
       case('CLOSE')
         indent = indent - 2
-        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</PointData>'
+        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /PointData > '
       endselect
     endselect
   case(f_out_binary)
@@ -2883,20 +2883,20 @@ contains
     case('CELL')
       select case(trim(Upper_Case(var_block_action)))
       case('OPEN')
-        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'<CellData>'//end_rec
+        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < CellData > '//end_rec
         indent = indent + 2
       case('CLOSE')
         indent = indent - 2
-        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'</CellData>'//end_rec
+        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < /CellData > '//end_rec
       endselect
     case('NODE')
       select case(trim(Upper_Case(var_block_action)))
       case('OPEN')
-        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'<PointData>'//end_rec
+        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < PointData > '//end_rec
         indent = indent + 2
       case('CLOSE')
         indent = indent - 2
-        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'</PointData>'//end_rec
+        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < /PointData > '//end_rec
       endselect
     endselect
   endselect
@@ -3030,7 +3030,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of cells or nodes
   character(*), intent(IN):: varname      ! variable name
   real(R8P),    intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer     ! buffer string
   integer(I4P)::             n1           ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3038,17 +3038,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
     write(unit=Unit_VTK,fmt=FR8P, iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'R8',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3065,7 +3065,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of cells or nodes
   character(*), intent(IN):: varname      ! variable name
   real(R4P),    intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer     ! buffer string
   integer(I4P)::             n1           ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3073,17 +3073,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
     write(unit=Unit_VTK,fmt=FR4P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'R4',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3100,7 +3100,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of cells or nodes
   character(*), intent(IN):: varname      ! variable name
   integer(I8P), intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer     ! buffer string
   integer(I4P)::             n1           ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3108,17 +3108,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
     write(unit=Unit_VTK,fmt=FI8P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_I8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I8',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3135,7 +3135,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of cells or nodes
   character(*), intent(IN):: varname      ! variable name
   integer(I4P), intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer     ! buffer string
   integer(I4P)::             n1           ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3143,17 +3143,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
     write(unit=Unit_VTK,fmt=FI4P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_I4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I4',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3170,7 +3170,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of cells or nodes
   character(*), intent(IN):: varname      ! variable name
   integer(I2P), intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer     ! buffer string
   integer(I4P)::             n1           ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3178,17 +3178,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
     write(unit=Unit_VTK,fmt=FI2P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_I2)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I2',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3205,7 +3205,7 @@ contains
   integer(I4P), intent(IN):: NC_NN        ! number of cells or nodes
   character(*), intent(IN):: varname      ! variable name
   integer(I1P), intent(IN):: var(1:NC_NN) ! variable to be saved
-  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO         ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer     ! buffer string
   integer(I4P)::             n1           ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3213,17 +3213,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
     write(unit=Unit_VTK,fmt=FI1P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_I1)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I1',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3242,7 +3242,7 @@ contains
   real(R8P),    intent(IN):: varX(1:NC_NN) ! x component
   real(R8P),    intent(IN):: varY(1:NC_NN) ! y component
   real(R8P),    intent(IN):: varZ(1:NC_NN) ! z component
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer      ! buffer string
   integer(I4P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3250,17 +3250,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FR8P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'R8',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3279,7 +3279,7 @@ contains
   real(R4P),    intent(IN):: varX(1:NC_NN) ! x component
   real(R4P),    intent(IN):: varY(1:NC_NN) ! y component
   real(R4P),    intent(IN):: varZ(1:NC_NN) ! z component
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer      ! buffer string
   integer(I4P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3287,17 +3287,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FR4P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'R4',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3316,7 +3316,7 @@ contains
   integer(I8P), intent(IN):: varX(1:NC_NN) ! x component
   integer(I8P), intent(IN):: varY(1:NC_NN) ! y component
   integer(I8P), intent(IN):: varZ(1:NC_NN) ! z component
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer      ! buffer string
   integer(I4P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3324,17 +3324,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FI8P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_I8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I8',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3353,7 +3353,7 @@ contains
   integer(I4P), intent(IN):: varX(1:NC_NN) ! x component
   integer(I4P), intent(IN):: varY(1:NC_NN) ! y component
   integer(I4P), intent(IN):: varZ(1:NC_NN) ! z component
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer      ! buffer string
   integer(I4P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3361,17 +3361,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FI4P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_I4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I4',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3390,7 +3390,7 @@ contains
   integer(I2P), intent(IN):: varX(1:NC_NN) ! x component
   integer(I2P), intent(IN):: varY(1:NC_NN) ! y component
   integer(I2P), intent(IN):: varZ(1:NC_NN) ! z component
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer      ! buffer string
   integer(I4P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3398,17 +3398,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FI2P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_I2)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I2',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3427,7 +3427,7 @@ contains
   integer(I1P), intent(IN):: varX(1:NC_NN) ! x component
   integer(I1P), intent(IN):: varY(1:NC_NN) ! y component
   integer(I1P), intent(IN):: varZ(1:NC_NN) ! z component
-  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::             E_IO          ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(len=maxlen)::    s_buffer      ! buffer string
   integer(I4P)::             n1            ! counter
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3435,17 +3435,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
     write(unit=Unit_VTK,fmt='(3'//FI1P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_I1)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I1',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3460,7 +3460,7 @@ contains
   implicit none
 
   !--------------------------------------------------------------------------------------------------------------------------------
-  integer(I4P)::              E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $> 0$ if IO is not done
+  integer(I4P)::              E_IO      ! Input/Output inquiring flag: $0$ if IO is done, $ > 0$ if IO is not done
   character(2)::              var_type  ! var\_type = R8,R4,I8,I4,I2,I1
   real(R8P),    allocatable:: v_R8(:)   ! R8 vector for IO in AppendData
   real(R4P),    allocatable:: v_R4(:)   ! R4 vector for IO in AppendData
@@ -3485,12 +3485,12 @@ contains
   select case(f_out)
   case(f_out_ascii)
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</'//trim(topology)//'>'
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)'</VTKFile>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /'//trim(topology)//' > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)' < /VTKFile > '
   case(f_out_binary)
     indent = indent - 2
-    write(unit  =Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</'//trim(topology)//'>'//end_rec
-    write(unit  =Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<AppendedData encoding="raw">'//end_rec
+    write(unit  =Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /'//trim(topology)//' > '//end_rec
+    write(unit  =Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < AppendedData encoding="raw" > '//end_rec
     write(unit  =Unit_VTK,       iostat=E_IO)'_'
     endfile(unit=Unit_VTK_Append,iostat=E_IO)
     rewind(unit =Unit_VTK_Append,iostat=E_IO)
@@ -3531,8 +3531,8 @@ contains
     enddo
     100 continue
     write(unit=Unit_VTK,iostat=E_IO)end_rec
-    write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'</AppendedData>'//end_rec
-    write(unit=Unit_VTK,iostat=E_IO)'</VTKFile>'//end_rec
+    write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < /AppendedData > '//end_rec
+    write(unit=Unit_VTK,iostat=E_IO)' < /VTKFile > '//end_rec
     ! closing AppendData file
     close(unit=Unit_VTK_Append,iostat=E_IO)
   endselect
@@ -4696,9 +4696,9 @@ endmodule LIB_VTK_IO
 !!
 !!{\footnotesize
 !!\begin{verbatim}
-!!<one line to give the program's name and a brief idea of what it does.>
+!! < one line to give the program's name and a brief idea of what it does.>
 !!
-!!Copyright (C) <textyear>  <name of author>
+!!Copyright (C) < textyear> < name of author>
 !!
 !!This program is free software: you can redistribute it and/or modify
 !!it under the terms of the GNU General Public License as published by
@@ -4711,7 +4711,7 @@ endmodule LIB_VTK_IO
 !!GNU General Public License for more details.
 !!
 !!You should have received a copy of the GNU General Public License
-!!along with this program.  If not, see <http://www.gnu.org/licenses/>.
+!!along with this program.  If not, see < http://www.gnu.org/licenses/>.
 !!\end{verbatim}
 !!}
 !!
@@ -4722,7 +4722,7 @@ endmodule LIB_VTK_IO
 !!
 !!{\footnotesize
 !!\begin{verbatim}
-!!<program>  Copyright (C) <year>  <name of author>
+!! < program>  Copyright (C) < year> < name of author>
 !!
 !!This program comes with ABSOLUTELY NO WARRANTY; for details type `show w'.
 !!This is free software, and you are welcome to redistribute it

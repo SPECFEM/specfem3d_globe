@@ -116,7 +116,7 @@
       xelm(ia) = x*(ONE + gamma * topo410 / r)
       yelm(ia) = y*(ONE + gamma * topo410 / r)
       zelm(ia) = z*(ONE + gamma * topo410 / r)
-    else if (r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+    else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
       ! stretching between R771 and R670
       gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
       xelm(ia) = x*(ONE + gamma * topo650 / r)
@@ -227,7 +227,7 @@
                 xstore(i,j,k,ispec) = x*(ONE + gamma * topo410 / r)
                 ystore(i,j,k,ispec) = y*(ONE + gamma * topo410 / r)
                 zstore(i,j,k,ispec) = z*(ONE + gamma * topo410 / r)
-        else if (r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+        else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
         ! stretching between R771 and R670
                 gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
                 xstore(i,j,k,ispec) = x*(ONE + gamma * topo650 / r)

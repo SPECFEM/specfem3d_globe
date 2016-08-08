@@ -36,7 +36,7 @@
   data mon /0,31,59,90,120,151,181,212,243,273,304,334/
 
   julian_day = da + mon(mo)
-  if (mo>2) julian_day = julian_day + lpyr(yr)
+  if (mo > 2) julian_day = julian_day + lpyr(yr)
 
   end function julian_day
 
@@ -117,7 +117,7 @@
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ! If you find any errors, please notify:
-! Jon Ahlquist <ahlquist@met.fsu.edu>
+! Jon Ahlquist
 ! Dept of Meteorology
 ! Florida State University
 ! Tallahassee, FL 32306-4520
@@ -439,7 +439,7 @@
 ! but WITHOUT ANY WARRANTY; without even the implied warranty of
 ! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 ! If you find any errors, please notify:
-! Jon Ahlquist <ahlquist@met.fsu.edu>
+! Jon Ahlquist
 ! Dept of Meteorology
 ! Florida State University
 ! Tallahassee, FL 32306-4520
@@ -731,7 +731,7 @@
 !        Now find the day number "iday".
 !        ndays is the number of days since the most recent 1 March,
 !        so ndays = 0 on 1 March.
-   if (ndays <=305) then
+   if (ndays <= 305) then
       iday  = ndays + 60 + leap
    else
       iday  = ndays - 305

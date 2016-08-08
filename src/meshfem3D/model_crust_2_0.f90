@@ -374,10 +374,10 @@
   endif
 
   ! makes sure lat/lon are within crust2.0 range
-  if (lat==90.0d0) lat=89.9999d0
-  if (lat==-90.0d0) lat=-89.9999d0
-  if (lon==180.0d0) lon=179.9999d0
-  if (lon==-180.0d0) lon=-179.9999d0
+  if (lat == 90.0d0) lat=89.9999d0
+  if (lat == -90.0d0) lat=-89.9999d0
+  if (lon == 180.0d0) lon=179.9999d0
+  if (lon == -180.0d0) lon=-179.9999d0
 
   ! sets up smoothing points based on cap smoothing
   cap_degree = CAP_SMOOTHING_DEGREE_DEFAULT
@@ -520,7 +520,7 @@
   ilon = int(1+( (180.d0+xlon)*0.5d0 ))
   if (ilon == 181) ilon = 1
 
-  if (icolat>90 .or. icolat<1) stop 'Error in routine icolat_ilon'
-  if (ilon<1 .or. ilon>180) stop 'Error in routine icolat_ilon'
+  if (icolat > 90 .or. icolat < 1) stop 'Error in routine icolat_ilon'
+  if (ilon < 1 .or. ilon > 180) stop 'Error in routine icolat_ilon'
 
   end subroutine icolat_ilon

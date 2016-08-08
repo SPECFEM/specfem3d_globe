@@ -661,7 +661,7 @@
           write(IMAIN,*) '  lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
           write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_cmt = ',tshift_cmt(isource)
           write(IMAIN,*)
-          write(IMAIN,*) '  half duration -> frequency: ',hdur(isource),' seconds**(-1)'
+          write(IMAIN,*) '  half duration in frequency: ',hdur(isource),' seconds**(-1)'
         else
           write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
           write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
@@ -701,7 +701,7 @@
         call geocentric_2_geographic_dble(theta_source(isource),colat_source)
 
         ! brings longitude between -PI and PI
-        if (phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
+        if (phi_source(isource) > PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
         write(IMAIN,*)
         write(IMAIN,*) 'original (requested) position of the source:'

@@ -69,14 +69,14 @@
       lstr=len_trim(varstr(ivarkern(iker)))
       vstr=(varstr(ivarkern(iker)))
       if (ieval == 1) then
-        if (vstr(1:lstr) == 'UM (SH+SV)*0.5,'.or. &
-                 vstr(1:lstr) == 'LM (SH+SV)*0.5,'.or. &
+        if (vstr(1:lstr) == 'UM (SH+SV)*0.5,' .or. &
+                 vstr(1:lstr) == 'LM (SH+SV)*0.5,' .or. &
                  vstr(1:lstr) == 'EA (SH+SV)*0.5,') then
           isel=1
       endif
       else if (ieval == 2) then
-        if (vstr(1:lstr) == 'UM SH-SV,'.or. &
-                       vstr(1:lstr) == 'LM SH-SV,'.or. &
+        if (vstr(1:lstr) == 'UM SH-SV,' .or. &
+                       vstr(1:lstr) == 'LM SH-SV,' .or. &
                        vstr(1:lstr) == 'EA SH-SV,') then
           isel=1
         endif
