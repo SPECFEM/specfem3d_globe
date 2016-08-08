@@ -1972,13 +1972,6 @@ print *,myrank,'adios file rank',rank
       ! we can go slightly outside the [1,1] segment since with finite elements
       ! the polynomial solution is defined everywhere
       ! can be useful for convergence of iterative scheme with distorted elements
-      !if (xi > 1.10d0) xi = 1.10d0
-      !if (xi < -1.10d0) xi = -1.10d0
-      !if (eta > 1.10d0) eta = 1.10d0
-      !if (eta < -1.10d0) eta = -1.10d0
-      !if (gamma > 1.10d0) gamma = 1.10d0
-      !if (gamma < -1.10d0) gamma = -1.10d0
-
       ! point leaves element, stay to closest guess
       if (xi > 1.10d0 .or. xi < -1.10d0 .or. eta > 1.10d0 .or. eta < -1.10d0 .or. gamma > 1.10d0 .or. gamma < -1.10d0) then
         ! uses previous guess

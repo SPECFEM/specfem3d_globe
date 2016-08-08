@@ -307,7 +307,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! external mesh routine for saving VTK files for custom_real values on global points
+! external mesh routine for saving VTK files for CUSTOM_REAL values on global points
 
   subroutine write_VTK_data_cr(idoubling,nspec,nglob, &
                                rstore_dummy, &
@@ -437,7 +437,7 @@
 !
 ! unused routine, may be used for debugging...
 !
-!! external mesh routine for saving VTK files for custom_real values on global points
+!! external mesh routine for saving VTK files for CUSTOM_REAL values on global points
 !
 !  subroutine write_VTK_data_cr_all(myrank,NPROCTOT,idoubling, &
 !                              nspec,nglob, &
@@ -645,7 +645,7 @@
                                     xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
                                     gll_data,prname_file)
 
-! external mesh routine for saving vtk files for custom_real values on all GLL points
+! external mesh routine for saving vtk files for CUSTOM_REAL values on all GLL points
 
   use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
@@ -829,7 +829,7 @@
                                     xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
                                     elem_data,prname_file)
 
-! saves vtk files for custom_real values on all spectral elements
+! saves vtk files for CUSTOM_REAL values on all spectral elements
 
   use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 

@@ -1129,7 +1129,7 @@
            stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error allocating temporary global mesh arrays')
 
-  ! fill custom_real arrays
+  ! fill CUSTOM_REAL arrays
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY

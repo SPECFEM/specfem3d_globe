@@ -37,7 +37,7 @@
 
   ! local parameters
   integer :: ipoints_3dmovie,ispecel_3dmovie,ispec,iglob,i,j,k,iNIT
-  real(kind=custom_real) :: rval,thetaval,phival
+  real(kind=CUSTOM_REAL) :: rval,thetaval,phival
   integer :: ier
 
   if (MOVIE_COARSE) then

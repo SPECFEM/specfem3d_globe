@@ -419,7 +419,7 @@
 
   ! shear attenuation
   if (ATTENUATION) then
-    ! saves Qmu_store to full custom_real array
+    ! saves Qmu_store to full CUSTOM_REAL array
     ! uses temporary array
     allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
