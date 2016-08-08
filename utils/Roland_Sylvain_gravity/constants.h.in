@@ -343,7 +343,7 @@
 !! new version compatibility
 !!
 !!-----------------------------------------------------------
-! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), custom_real for attenuation arrays (Qmu_store, tau_e_store)
+! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), CUSTOM_REAL for attenuation arrays (Qmu_store, tau_e_store)
 ! new version uses optional full 3d attenuation
   logical, parameter :: USE_OLD_VERSION_5_1_5_FORMAT = .false.
 

@@ -53,7 +53,7 @@ program difference_sem
 
   real(kind=CUSTOM_REAL) :: min_val,max_val
   real(kind=CUSTOM_REAL) :: min_val_all,max_val_all
-  real(kind=CUSTOm_REAL) :: min_rel,max_rel
+  real(kind=CUSTOM_REAL) :: min_rel,max_rel
   real(kind=CUSTOM_REAL) :: min_rel_all,max_rel_all
 
   integer :: i,iproc,ier

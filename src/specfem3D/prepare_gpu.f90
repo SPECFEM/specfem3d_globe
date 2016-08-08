@@ -42,7 +42,7 @@
   integer :: ier
   integer :: i,j,k,ispec,ispec2D,ipoin,iglob
   real :: free_mb,used_mb,total_mb
-  ! dummy custom_real variables to convert from double precision
+  ! dummy CUSTOM_REAL variables to convert from double precision
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable:: cr_wgll_cube
   real(kind=CUSTOM_REAL),dimension(:),allocatable:: &
     cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
