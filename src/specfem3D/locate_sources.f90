@@ -37,7 +37,7 @@
 
   use shared_input_parameters, only: OUTPUT_FILES
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     NSOURCES,myrank, &
     tshift_cmt,theta_source,phi_source, &
     DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
@@ -48,7 +48,7 @@
     islice_selected_source,ispec_selected_source, &
     SAVE_SOURCE_MASK
 
-  use specfem_par_movie,only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
+  use specfem_par_movie, only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
   implicit none
 
@@ -650,7 +650,7 @@
           write(IMAIN,*) '  nu2 = ',nu_source(2,:,isource)
           write(IMAIN,*) '  nu3 = ',nu_source(3,:,isource)
           write(IMAIN,*)
-          write(IMAIN,*) '  at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset),&
+          write(IMAIN,*) '  at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset), &
             y_found_source(isource_in_this_subset),z_found_source(isource_in_this_subset)
 
           ! prints frequency content for point forces

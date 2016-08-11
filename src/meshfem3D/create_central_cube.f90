@@ -30,9 +30,9 @@
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        shape3D,rmin,rmax,rhostore,dvpstore,&
+                        shape3D,rmin,rmax,rhostore,dvpstore, &
                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
+                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
                         gammaxstore,gammaystore,gammazstore,nspec_actually, &
                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
@@ -151,7 +151,7 @@
           ! flat cubed sphere with correct mapping
           call compute_coord_central_cube(ix+iaddx(ia),iy+iaddy(ia),iz+iaddz(ia), &
                         xgrid_central_cube,ygrid_central_cube,zgrid_central_cube, &
-                        iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube,&
+                        iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,nx_central_cube, &
                         ny_central_cube,nz_central_cube,radius_cube)
 
           if (ichunk == CHUNK_AB) then

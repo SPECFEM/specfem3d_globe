@@ -332,7 +332,7 @@
                                      beta_kl_inner_core,NSPEC_INNER_CORE)
     ! outer core
     call transfer_kernels_oc_to_host(Mesh_pointer, &
-                                     rho_kl_outer_core,&
+                                     rho_kl_outer_core, &
                                      alpha_kl_outer_core,NSPEC_OUTER_CORE)
     ! crust/mantle
     call transfer_kernels_cm_to_host(Mesh_pointer, &
@@ -411,14 +411,14 @@
       data_size = size(vtkdata)
       if (myrank == 0) then
         ! gather data
-        call gatherv_all_r(vtkdata,data_size,&
+        call gatherv_all_r(vtkdata,data_size, &
                             vtkdata_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROCTOT_VAL)
         ! updates VTK window
         call visualize_vtkdata(it,currenttime,vtkdata_all)
       else
         ! all other process just send data
-        call gatherv_all_r(vtkdata,data_size,&
+        call gatherv_all_r(vtkdata,data_size, &
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROCTOT_VAL)
       endif

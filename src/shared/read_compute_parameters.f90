@@ -27,7 +27,7 @@
 
   subroutine read_compute_parameters()
 
-  use constants,only: &
+  use constants, only: &
     TINYVAL,R_EARTH_KM,DEGREES_TO_RADIANS, &
     SUPPRESS_CRUSTAL_MESH,ADD_4TH_DOUBLING, &
     DO_BENCHMARK_RUN_ONLY,NSTEP_FOR_BENCHMARK, &
@@ -49,7 +49,7 @@
   integer ::  NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
               nb_lay_sb, nspec_sb, nglob_vol, nglob_surf, nglob_edge
   ! for the cut doublingbrick improvement
-  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
+  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
 
@@ -189,52 +189,52 @@
   NPROCTOT = NCHUNKS * NPROC
 
   !  definition of general mesh parameters
-  call define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80,&
+  call define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80, &
                         NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
                         NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                        NER_TOP_CENTRAL_CUBE_ICB,&
+                        NER_TOP_CENTRAL_CUBE_ICB, &
                         RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                        R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER,&
-                        ONE_CRUST,ner,ratio_sampling_array,&
+                        R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
+                        ONE_CRUST,ner,ratio_sampling_array, &
                         NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
-                        r_bottom,r_top,this_region_has_a_doubling,&
-                        ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,&
-                        elem_doubling_bottom_outer_core,&
+                        r_bottom,r_top,this_region_has_a_doubling, &
+                        ielem,elem_doubling_mantle,elem_doubling_middle_outer_core, &
+                        elem_doubling_bottom_outer_core, &
                         DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
-                        DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval,&
+                        DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
                         doubling_index,rmins,rmaxs)
 
   ! calculates number of elements (NSPEC)
-  call count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC,&
-                        NEX_PER_PROC_ETA,ratio_divide_central_cube,&
+  call count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC, &
+                        NEX_PER_PROC_ETA,ratio_divide_central_cube, &
                         NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                         NSPEC1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
                         ner,ratio_sampling_array,this_region_has_a_doubling, &
-                        ifirst_region,ilast_region,iter_region,iter_layer,&
+                        ifirst_region,ilast_region,iter_region,iter_layer, &
                         doubling,tmp_sum,tmp_sum_xi,tmp_sum_eta, &
                         NUMBER_OF_MESH_LAYERS,layer_offset,nspec2D_xi_sb,nspec2D_eta_sb, &
                         nb_lay_sb, nspec_sb, nglob_surf, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, INCLUDE_CENTRAL_CUBE, &
                         last_doubling_layer, &
-                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-                        tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,&
+                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
+                        tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h, &
                         nglob_edge_v,to_remove)
 
   ! calculates number of points (NGLOB)
-  call count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
+  call count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube, &
                         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB,&
-                        nblocks_xi,nblocks_eta,ner,ratio_sampling_array,&
-                        this_region_has_a_doubling,&
+                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
+                        nblocks_xi,nblocks_eta,ner,ratio_sampling_array, &
+                        this_region_has_a_doubling, &
                         ifirst_region, ilast_region, iter_region, iter_layer, &
                         doubling, padding, tmp_sum, &
                         INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
                         NUMBER_OF_MESH_LAYERS,layer_offset, &
                         nb_lay_sb, nglob_vol, nglob_surf, nglob_edge, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-                        last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
+                        last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
                         normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
 
   if (ATTENUATION) then
@@ -267,7 +267,7 @@
 
   subroutine rcp_check_parameters()
 
-  use constants,only: &
+  use constants, only: &
     CUSTOM_REAL,SIZE_REAL,SIZE_DOUBLE,NUMFACES_SHARED,NUMCORNERS_SHARED, &
     N_SLS,NGNOD,NGNOD2D,NGLLX,NGLLY,GRAVITY_INTEGRALS
 

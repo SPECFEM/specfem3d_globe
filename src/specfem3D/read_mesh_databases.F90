@@ -1113,7 +1113,7 @@
   if (num_phase_ispec_crust_mantle < 0 ) &
     call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
 
-  allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),&
+  allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2), &
           stat=ier)
   if (ier /= 0 ) &
     call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
@@ -1198,7 +1198,7 @@
   if (num_phase_ispec_outer_core < 0 ) &
     call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
 
-  allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),&
+  allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2), &
           stat=ier)
   if (ier /= 0 ) &
     call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
@@ -1282,7 +1282,7 @@
   if (num_phase_ispec_inner_core < 0 ) &
     call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
 
-  allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),&
+  allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2), &
           stat=ier)
   if (ier /= 0 ) &
     call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')
@@ -1758,7 +1758,7 @@
     call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
 
   if (.not. I_should_read_the_database) then
-    allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),&
+    allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2), &
             stat=ier)
     if (ier /= 0 ) &
       call exit_mpi(myrank,'Error allocating array phase_ispec_inner_crust_mantle')
@@ -1849,7 +1849,7 @@
     call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
 
   if (.not. I_should_read_the_database) then
-    allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),&
+    allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2), &
             stat=ier)
     if (ier /= 0 ) &
       call exit_mpi(myrank,'Error allocating array phase_ispec_inner_outer_core')
@@ -1938,7 +1938,7 @@
     call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
 
   if (.not. I_should_read_the_database) then
-    allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),&
+    allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2), &
             stat=ier)
     if (ier /= 0 ) &
       call exit_mpi(myrank,'Error allocating array phase_ispec_inner_inner_core')

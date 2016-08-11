@@ -63,7 +63,7 @@
 ! standard routine to setup model
 
   use constants
-  use meshfem3D_models_par,only: model_attenuation_variables
+  use meshfem3D_models_par, only: model_attenuation_variables
 
   implicit none
 
@@ -94,7 +94,7 @@
   subroutine read_attenuation_model(min_att_period, max_att_period, AM_V)
 
   use constants
-  use meshfem3D_models_par,only: model_attenuation_variables
+  use meshfem3D_models_par, only: model_attenuation_variables
 
   implicit none
 
@@ -125,8 +125,8 @@
                                     R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
 
   use constants
-  use meshfem3D_models_par,only: model_attenuation_variables,model_attenuation_storage_var
-  use meshfem3D_models_par,only: attenuation_simplex_variables
+  use meshfem3D_models_par, only: model_attenuation_variables,model_attenuation_storage_var
+  use meshfem3D_models_par, only: attenuation_simplex_variables
 
   use model_1dref_par, only: &
     NR_REF,Mref_V_radius_ref,Mref_V_Qmu_ref
@@ -249,8 +249,8 @@
 ! includes min_period, max_period, and N_SLS
 
   use constants
-  use meshfem3D_models_par,only: model_attenuation_variables,model_attenuation_storage_var
-  use meshfem3D_models_par,only: attenuation_simplex_variables
+  use meshfem3D_models_par, only: model_attenuation_variables,model_attenuation_storage_var
+  use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none
 
@@ -284,7 +284,7 @@
   subroutine model_attenuation_storage(Qmu, tau_e, rw, AM_S)
 
   use constants
-  use meshfem3D_models_par,only: model_attenuation_storage_var
+  use meshfem3D_models_par, only: model_attenuation_storage_var
 
   implicit none
 
@@ -418,7 +418,7 @@
   subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e, AS_V)
 
   use constants
-  use meshfem3D_models_par,only: attenuation_simplex_variables
+  use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none
 
@@ -507,7 +507,7 @@
 
   subroutine attenuation_simplex_finish(AS_V)
 
-  use meshfem3D_models_par,only: attenuation_simplex_variables
+  use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none
 
@@ -522,7 +522,7 @@ end subroutine attenuation_simplex_finish
 !   - See module for explanation
 subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
-  use meshfem3D_models_par,only: attenuation_simplex_variables
+  use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none
 
@@ -632,7 +632,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !
   double precision function attenuation_eval(Xin,AS_V)
 
-  use meshfem3D_models_par,only: attenuation_simplex_variables
+  use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none
 
@@ -697,7 +697,7 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 !     See Matlab fminsearch
   subroutine fminsearch(funk, x, n, itercount, tolf, prnt, err, AS_V)
 
-  use meshfem3D_models_par,only: attenuation_simplex_variables
+  use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none
 

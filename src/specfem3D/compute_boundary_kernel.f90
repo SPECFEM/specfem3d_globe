@@ -180,7 +180,7 @@
                                        nspec_crust_mantle,iregion_code, &
                                        ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                        hprime_xx,hprime_yy,hprime_zz, &
                                        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
@@ -197,7 +197,7 @@
                                        nspec_crust_mantle,iregion_code, &
                                        ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                       etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                        hprime_xx,hprime_yy,hprime_zz, &
                                        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
@@ -218,7 +218,7 @@
                                      nspec_crust_mantle,iregion_code, &
                                      ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
@@ -235,7 +235,7 @@
                                      nspec_crust_mantle,iregion_code, &
                                      ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
@@ -255,7 +255,7 @@
                                      nspec_crust_mantle,iregion_code, &
                                      ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
@@ -272,7 +272,7 @@
                                      nspec_crust_mantle,iregion_code, &
                                      ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
@@ -295,7 +295,7 @@
                                      nspec_crust_mantle,iregion_code, &
                                      ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
-                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle,&
+                                     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle, muvstore_crust_mantle, &
@@ -319,7 +319,7 @@
                                      nspec_outer_core, &
                                      iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
                                      xix_outer_core,xiy_outer_core,xiz_outer_core, &
-                                     etax_outer_core,etay_outer_core,etaz_outer_core,&
+                                     etax_outer_core,etay_outer_core,etaz_outer_core, &
                                      gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_outer_core,kappavstore_outer_core,dummy_array, &
                                      dummy_array,dummy_array,dummy_array, &
@@ -340,7 +340,7 @@
                                      nspec_outer_core, &
                                      iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
                                      xix_outer_core,xiy_outer_core,xiz_outer_core, &
-                                     etax_outer_core,etay_outer_core,etaz_outer_core,&
+                                     etax_outer_core,etay_outer_core,etaz_outer_core, &
                                      gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_outer_core,kappavstore_outer_core,dummy_array, &
                                      dummy_array,dummy_array,dummy_array, &
@@ -366,7 +366,7 @@
                                      nspec_inner_core,iregion_code, &
                                      ystore_inner_core,zstore_inner_core,ibool_inner_core,dummy_ispec_is_tiso, &
                                      xix_inner_core,xiy_inner_core,xiz_inner_core, &
-                                     etax_inner_core,etay_inner_core,etaz_inner_core,&
+                                     etax_inner_core,etay_inner_core,etaz_inner_core, &
                                      gammax_inner_core,gammay_inner_core,gammaz_inner_core,hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
                                      dummy_array,dummy_array,dummy_array, &
@@ -623,7 +623,7 @@
   real(kind=CUSTOM_REAL) :: duxdxl,duydyl,duzdzl,duxdxl_plus_duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
   real(kind=CUSTOM_REAL) kappal,mul,kappavl,kappahl,muvl,muhl,lambdal,lambdalplus2mul
-  real(kind=CUSTOM_REAL) rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq,&
+  real(kind=CUSTOM_REAL) rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
              cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
              costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
              sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta

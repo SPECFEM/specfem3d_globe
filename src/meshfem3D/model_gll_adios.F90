@@ -37,11 +37,11 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
 
   use constants
 
-  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY,model_gll_variables
+  use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY,model_gll_variables
 
   use adios_read_mod
   use adios_helpers_mod
-  use manager_adios,only: open_file_adios_read,file_handle_adios
+  use manager_adios, only: open_file_adios_read,file_handle_adios
 
   implicit none
 

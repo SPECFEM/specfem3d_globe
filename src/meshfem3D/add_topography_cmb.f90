@@ -30,7 +30,7 @@
 ! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
 
   use constants
-  use meshfem3D_par,only: RTOPDDOUBLEPRIME,RCMB
+  use meshfem3D_par, only: RTOPDDOUBLEPRIME,RCMB
 
   implicit none
 

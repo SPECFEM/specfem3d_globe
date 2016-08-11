@@ -64,10 +64,10 @@
 
 program smooth_sem_globe
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER,NGLLCUBE
 
-  use postprocess_par,only: &
+  use postprocess_par, only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
     ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
     NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES,LOCAL_PATH
@@ -353,8 +353,8 @@ program smooth_sem_globe
   ixi = myrank - ichunk * NPROC_XI * NPROC_ETA - ieta * NPROC_XI
 
   ! get the neighboring slices:
-  call get_all_eight_slices(ichunk,ixi,ieta,&
-                            islice0(1),islice0(2),islice0(3),islice0(4),islice0(5),islice0(6),islice0(7),islice0(8),&
+  call get_all_eight_slices(ichunk,ixi,ieta, &
+                            islice0(1),islice0(2),islice0(3),islice0(4),islice0(5),islice0(6),islice0(7),islice0(8), &
                             NPROC_XI,NPROC_ETA)
 
   ! remove the repeated slices (only 8 for corner slices in global case)
@@ -775,7 +775,7 @@ program smooth_sem_globe
           z0 = zz0(INDEX_IJK,ispec)
 
           ! calculate weights based on Gaussian smoothing
-          call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
+          call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
                                      xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
           ! debug

@@ -28,7 +28,7 @@
   subroutine add_topography_410_650(myrank,xelm,yelm,zelm)
 
   use constants
-  use meshfem3D_par,only: R220,R400,R670,R771
+  use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
 
@@ -163,7 +163,7 @@
   subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
 
   use constants
-  use meshfem3D_par,only: R220,R400,R670,R771
+  use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
 

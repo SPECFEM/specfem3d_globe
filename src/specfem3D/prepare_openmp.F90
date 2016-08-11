@@ -31,7 +31,7 @@
 ! outputs OpenMP support info
 
 #ifdef USE_OPENMP
-  use specfem_par,only: myrank,IMAIN,USE_DEVILLE_PRODUCTS_VAL
+  use specfem_par, only: myrank,IMAIN,USE_DEVILLE_PRODUCTS_VAL
 #endif
 
   implicit none

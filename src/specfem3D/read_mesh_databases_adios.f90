@@ -834,7 +834,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
   if (num_phase_ispec_crust_mantle < 0 ) &
       call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
 
-  allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),&
+  allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
       'Error allocating array phase_ispec_inner_crust_mantle')
@@ -1030,7 +1030,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
   if (num_phase_ispec_outer_core < 0 ) &
       call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
 
-  allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),&
+  allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
       'Error allocating array phase_ispec_inner_outer_core')
@@ -1228,7 +1228,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
   if (num_phase_ispec_inner_core < 0 ) &
       call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
 
-  allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),&
+  allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
       'Error allocating array phase_ispec_inner_inner_core')

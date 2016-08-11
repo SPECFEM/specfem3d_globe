@@ -60,7 +60,7 @@
 
 ! standard routine to setup model
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 
   use model_full_sh_crust_par
 
@@ -109,7 +109,7 @@
 
   subroutine read_crust_sh_model()
 
-  use constants,only: ZERO,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL
+  use constants, only: ZERO,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL
 
   use model_full_sh_crust_par
 
@@ -267,7 +267,7 @@
 
 ! gets crustal value for location lat/lon/r
 
-  use constants,only: ZERO,PI,GRAV,RHOAV,R_EARTH,R_EARTH_KM
+  use constants, only: ZERO,PI,GRAV,RHOAV,R_EARTH,R_EARTH_KM
 
   use model_full_sh_crust_par
 
@@ -394,7 +394,7 @@
 
 ! standard routine to setup model
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 
   use model_full_sh_mantle_par
 
@@ -454,7 +454,7 @@
 
   subroutine read_model_mantle_sh()
 
-  use constants,only: ZERO,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL
+  use constants, only: ZERO,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL
 
   use model_full_sh_mantle_par
 
@@ -692,7 +692,7 @@
 
   subroutine mantle_sh(lat,lon,radius,dvpv,dvph,dvsv,dvsh,deta,drho)
 
-  use constants,only: ZERO
+  use constants, only: ZERO
 
   use model_full_sh_mantle_par
 
@@ -1070,7 +1070,7 @@
 
   use constants
 
-  use meshfem3D_par,only: R220,R400,R670,R771
+  use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
 
@@ -1245,7 +1245,7 @@
 
   use constants
 
-  use shared_parameters,only: RCMB,RTOPDDOUBLEPRIME
+  use shared_parameters, only: RCMB,RTOPDDOUBLEPRIME
 
   implicit none
 

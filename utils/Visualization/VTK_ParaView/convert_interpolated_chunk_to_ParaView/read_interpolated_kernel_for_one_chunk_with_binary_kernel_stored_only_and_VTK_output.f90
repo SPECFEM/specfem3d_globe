@@ -275,8 +275,8 @@ USE LIB_VTK_IO
 ! DK DK the VTK/ParaView legacy structured grid format is used
 
 ! create and open the VTK file in STRUCTURED_GRID (BINARY) format
- E_IO = VTK_INI(output_format = 'BINARY',                     &
-                filename      = 'reg_1_alpha_kernel.vtk',      &
+ E_IO = VTK_INI(output_format = 'BINARY', &
+                filename      = 'reg_1_alpha_kernel.vtk', &
                 title         = 'Structured Grid Alpha Kernel', &
                 mesh_topology = 'STRUCTURED_GRID')
 

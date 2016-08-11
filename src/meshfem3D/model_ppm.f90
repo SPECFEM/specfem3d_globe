@@ -498,20 +498,20 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine smooth_model(myrank, nproc_xi,nproc_eta,&
+  subroutine smooth_model(myrank, nproc_xi,nproc_eta, &
                           rho_vp,rho_vs,nspec_stacey, &
                           iregion_code,xixstore,xiystore,xizstore, &
                           etaxstore,etaystore,etazstore, &
                           gammaxstore,gammaystore,gammazstore, &
                           xstore,ystore,zstore,rhostore,dvpstore, &
-                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
+                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                           nspec,HETEROGEN_3D_MANTLE, &
                           NEX_XI,NCHUNKS,ABSORBING_CONDITIONS)
 
 ! smooth model parameters
 
   use constants
-  use model_ppm_par,only: &
+  use model_ppm_par, only: &
     PPM_maxlat,PPM_maxlon,PPM_minlat,PPM_minlon,PPM_maxdepth,PPM_mindepth
 
   implicit none
@@ -535,7 +535,7 @@
   double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! for anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,dvpstore,kappavstore,kappahstore,&
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,dvpstore,kappavstore,kappahstore, &
         muvstore,muhstore,eta_anisostore
 
 ! Stacey
@@ -671,8 +671,8 @@
   ixi = myrank - mychunk * nproc_xi * nproc_eta - ieta * nproc_xi
 
   ! get the neighboring slices:
-  call get_all_eight_slices(mychunk,ixi,ieta,&
-        islice0(1),islice0(2),islice0(3),islice0(4),islice0(5),islice0(6),islice0(7),islice0(8),&
+  call get_all_eight_slices(mychunk,ixi,ieta, &
+        islice0(1),islice0(2),islice0(3),islice0(4),islice0(5),islice0(6),islice0(7),islice0(8), &
         nproc_xi,nproc_eta)
 
   ! remove the repeated slices (only 8 for corner slices in global case)
@@ -900,7 +900,7 @@
         ! calculates horizontal and vertical distance between two element centers
 
         ! vector approximation
-        call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec),&
+        call get_distance_vec(dist_h,dist_v,cx0(ispec),cy0(ispec),cz0(ispec), &
                               cx(ispec2),cy(ispec2),cz(ispec2))
 
         ! note: distances and sigmah, sigmav are normalized by R_EARTH
@@ -922,7 +922,7 @@
               z0 = zl(i,j,k,ispec)
 
               ! calculate weights based on Gaussian smoothing
-              call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
+              call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
                                          xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
               ! adds GLL integration weights

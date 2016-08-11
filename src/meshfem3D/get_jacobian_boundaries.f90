@@ -154,7 +154,7 @@
           enddo
           ! recalculate Jacobian according to 2D GLL points
           call recalc_jacobian_gll2D(myrank,ispecb1,xelm2D,yelm2D,zelm2D, &
-                          yigll,zigll,jacobian2D_xmin,normal_xmin,&
+                          yigll,zigll,jacobian2D_xmin,normal_xmin, &
                           NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
      endif
     endif
@@ -209,8 +209,8 @@
              enddo
           enddo
           ! recalculate Jacobian according to 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb2,xelm2D,yelm2D,zelm2D,&
-                          yigll,zigll,jacobian2D_xmax,normal_xmax,&
+          call recalc_jacobian_gll2D(myrank,ispecb2,xelm2D,yelm2D,zelm2D, &
+                          yigll,zigll,jacobian2D_xmax,normal_xmax, &
                           NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
        endif
     endif
@@ -265,8 +265,8 @@
              enddo
           enddo
           ! recalculate 2D Jacobian according to GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb3,xelm2D,yelm2D,zelm2D,&
-                          xigll,zigll,jacobian2D_ymin,normal_ymin,&
+          call recalc_jacobian_gll2D(myrank,ispecb3,xelm2D,yelm2D,zelm2D, &
+                          xigll,zigll,jacobian2D_ymin,normal_ymin, &
                           NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
      endif
     endif
@@ -321,8 +321,8 @@
              enddo
           enddo
           ! recalculate Jacobian for 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb4,xelm2D,yelm2D,zelm2D,&
-                          xigll,zigll,jacobian2D_ymax,normal_ymax,&
+          call recalc_jacobian_gll2D(myrank,ispecb4,xelm2D,yelm2D,zelm2D, &
+                          xigll,zigll,jacobian2D_ymax,normal_ymax, &
                           NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
       endif
     endif
@@ -376,8 +376,8 @@
              enddo
           enddo
           ! recalculate 2D Jacobian according to GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb5,xelm2D,yelm2D,zelm2D,&
-                          xigll,yigll,jacobian2D_bottom,normal_bottom,&
+          call recalc_jacobian_gll2D(myrank,ispecb5,xelm2D,yelm2D,zelm2D, &
+                          xigll,yigll,jacobian2D_bottom,normal_bottom, &
                           NGLLX,NGLLY,NSPEC2D_BOTTOM)
      endif
 
@@ -431,8 +431,8 @@
              enddo
           enddo
           ! recalculate Jacobian according to 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb6,xelm2D,yelm2D,zelm2D,&
-                                  xigll,yigll,jacobian2D_top,normal_top,&
+          call recalc_jacobian_gll2D(myrank,ispecb6,xelm2D,yelm2D,zelm2D, &
+                                  xigll,yigll,jacobian2D_top,normal_top, &
                                   NGLLX,NGLLY,NSPEC2D_TOP)
 
       endif

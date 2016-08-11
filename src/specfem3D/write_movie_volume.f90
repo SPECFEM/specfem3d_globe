@@ -355,7 +355,7 @@
   ! character(len=MAX_STRING_LEN) prname
   real(kind=CUSTOM_REAL) :: muv_3dmovie
   real(kind=CUSTOM_REAL),dimension(3,3) :: eps_loc,eps_loc_new
-  real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ,&
+  real(kind=CUSTOM_REAL),dimension(:),allocatable :: store_val3d_NN,store_val3d_EE,store_val3d_ZZ, &
                                                      store_val3d_NE,store_val3d_NZ,store_val3d_EZ
   integer :: ipoints_3dmovie,i,j,k,ispec,iNIT,ier
 
@@ -594,7 +594,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
+ subroutine write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle, &
                                        div_displ_outer_core, &
                                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
                                        eps_trace_over_3_inner_core, &

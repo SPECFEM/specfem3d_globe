@@ -822,7 +822,7 @@ contains
 
   ! check that number of global points output is okay
   if (numpoin /= npoin) &
-    call exit_MPI(myrank,&
+    call exit_MPI(myrank, &
         'incorrect number of global points in AVS or DX file creation')
 
   ! output global AVS or DX elements

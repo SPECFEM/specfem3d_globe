@@ -33,12 +33,12 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
     nrec_local,nu,ispec_selected_rec,number_receiver_global, &
     scale_displ,hlagrange_store
 
-  use specfem_par_crustmantle,only: ibool_crust_mantle
+  use specfem_par_crustmantle, only: ibool_crust_mantle
 
   implicit none
 
@@ -106,12 +106,12 @@
                                          moment_der,sloc_der,stshift_der,shdur_der, &
                                          seismograms)
 
-  use constants_solver,only: &
+  use constants_solver, only: &
     CUSTOM_REAL,SIZE_REAL,ZERO,ONE,PI,GRAV,RHOAV,NGLLX,NGLLY,NGLLZ, NGLLCUBE, &
     NDIM,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
     NSPEC_CRUST_MANTLE_STRAIN_ONLY,NSPEC_CRUST_MANTLE_STR_OR_ATT
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS,UNDO_ATTENUATION, &
     nrec_local, &
     nu_source,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
@@ -123,7 +123,7 @@
     hprime_xx,hprime_yy,hprime_zz, &
     ispec_selected_source,number_receiver_global
 
-  use specfem_par_crustmantle,only: ibool_crust_mantle, &
+  use specfem_par_crustmantle, only: ibool_crust_mantle, &
     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
@@ -310,7 +310,7 @@
 !
 !! re-orders seismogram entries
 !
-!  use specfem_par,only: CUSTOM_REAL,NDIM, &
+!  use specfem_par, only: CUSTOM_REAL,NDIM, &
 !    NT_DUMP_ATTENUATION,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
 !    nrec_local,myrank, &
 !    seismo_current,seismograms

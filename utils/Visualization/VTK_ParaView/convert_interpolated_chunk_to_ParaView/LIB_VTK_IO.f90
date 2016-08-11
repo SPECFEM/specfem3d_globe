@@ -147,14 +147,14 @@
 !!
 !!\begin{boxred}{Fortran 2003 instructions}
 !!\begin{verbatim}
-!!open(unit       = ...,           &
-!!     file       = ...,           &
-!!     form       = ...,           &
-!!     access     = ...,           &
-!!     action     = ...,           &
-!!     convert    = 'BIG_ENDIAN',  &
-!!     recordtype = 'STREAM',      &
-!!     buffered   = 'YES',         &
+!!open(unit       = ..., &
+!!     file       = ..., &
+!!     form       = ..., &
+!!     access     = ..., &
+!!     action     = ..., &
+!!     convert    = 'BIG_ENDIAN', &
+!!     recordtype = 'STREAM', &
+!!     buffered   = 'YES', &
 !!     iostat     = ...)
 !!\end{verbatim}
 !!\end{boxred}
@@ -637,12 +637,12 @@ contains
   select case(trim(Upper_Case(output_format)))
   case('ASCII')
     f_out = f_out_ascii
-    open(unit     = Unit_VTK,       &
+    open(unit     = Unit_VTK, &
          file     = trim(filename), &
-         form     = 'FORMATTED',    &
-         access   = 'SEQUENTIAL',   &
-         action   = 'WRITE',        &
-         buffered = 'YES',          &
+         form     = 'FORMATTED', &
+         access   = 'SEQUENTIAL', &
+         action   = 'WRITE', &
+         buffered = 'YES', &
          iostat   = E_IO)
     ! writing header of file
     write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)'# vtk DataFile Version 3.0'
@@ -651,14 +651,14 @@ contains
     write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)'DATASET '//trim(topology)
   case('BINARY')
     f_out = f_out_binary
-    open(unit       = Unit_VTK,       &
+    open(unit       = Unit_VTK, &
          file       = trim(filename), &
-         form       = 'UNFORMATTED',  &
-         access     = 'SEQUENTIAL',   &
-         action     = 'WRITE',        &
-         convert    = 'BIG_ENDIAN',   &
-         recordtype = 'STREAM',       &
-         buffered   = 'YES',          &
+         form       = 'UNFORMATTED', &
+         access     = 'SEQUENTIAL', &
+         action     = 'WRITE', &
+         convert    = 'BIG_ENDIAN', &
+         recordtype = 'STREAM', &
+         buffered   = 'YES', &
          iostat     = E_IO)
     ! writing header of file
     write(unit=Unit_VTK,iostat=E_IO)'# vtk DataFile Version 3.0'//end_rec
@@ -1983,9 +1983,9 @@ contains
   !!...
   !!...
   !!E_IO = VTK_INI_XML('BINARY','XML_RECT_BINARY.vtr', &
-  !!                   'RectilinearGrid',              &
-  !!                   nx1=nx1,nx2=nx2,                &
-  !!                   ny1=ny1,ny2=ny2,                &
+  !!                   'RectilinearGrid', &
+  !!                   nx1=nx1,nx2=nx2, &
+  !!                   ny1=ny1,ny2=ny2, &
   !!                   nz1=nz1,nz2=nz2)
   !!...
   !!\end{verbatim}
@@ -2001,12 +2001,12 @@ contains
   select case(trim(Upper_Case(output_format)))
   case('ASCII')
     f_out = f_out_ascii
-    open(unit   = Unit_VTK,       &
+    open(unit   = Unit_VTK, &
          file   = trim(filename), &
-         form   = 'FORMATTED',    &
-         access = 'SEQUENTIAL',   &
-         action = 'WRITE',        &
-         buffered   = 'YES',      &
+         form   = 'FORMATTED', &
+         access = 'SEQUENTIAL', &
+         action = 'WRITE', &
+         buffered   = 'YES', &
          iostat = E_IO)
     ! writing header of file
     write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)' < ?xml version="1.0"? > '
@@ -2021,14 +2021,14 @@ contains
     indent = indent + 2
   case('BINARY')
     f_out = f_out_binary
-    open(unit       = Unit_VTK,       &
+    open(unit       = Unit_VTK, &
          file       = trim(filename), &
-         form       = 'UNFORMATTED',  &
-         access     = 'SEQUENTIAL',   &
-         action     = 'WRITE',        &
-         convert    = 'BIG_ENDIAN',   &
-         recordtype = 'STREAM',       &
-         buffered   = 'YES',          &
+         form       = 'UNFORMATTED', &
+         access     = 'SEQUENTIAL', &
+         action     = 'WRITE', &
+         convert    = 'BIG_ENDIAN', &
+         recordtype = 'STREAM', &
+         buffered   = 'YES', &
          iostat     = E_IO)
     ! writing header of file
     write(unit=Unit_VTK,                     iostat=E_IO)' < ?xml version="1.0"? > '//end_rec
@@ -2045,13 +2045,13 @@ contains
     Unit_VTK_Append=GetUnit()
     ! opening the SCRATCH file used for appending raw binary data
     open(unit       = Unit_VTK_Append, &
-         form       = 'UNFORMATTED',   &
-         access     = 'SEQUENTIAL',    &
-         action     = 'WRITE',         &
-         convert    = 'BIG_ENDIAN',    &
-         recordtype = 'STREAM',        &
-         buffered   = 'YES',           &
-         status     = 'SCRATCH',       &
+         form       = 'UNFORMATTED', &
+         access     = 'SEQUENTIAL', &
+         action     = 'WRITE', &
+         convert    = 'BIG_ENDIAN', &
+         recordtype = 'STREAM', &
+         buffered   = 'YES', &
+         status     = 'SCRATCH', &
          iostat     = E_IO)
     ioffset = 0 ! initializing offset puntator
   endselect
@@ -2119,7 +2119,7 @@ contains
   !!real(4):: X(1:NN),Y(1:NN),Z(1:NN)
   !!...
   !!E_IO = VTK_GEO_XML(nx1,nx2,ny1,ny2,nz1,nz2, &
-  !!                   NN,                      &
+  !!                   NN, &
   !!                   X,Y,Z)
   !!...
   !!\end{verbatim}
@@ -3570,32 +3570,32 @@ endmodule LIB_VTK_IO
 !!integer(4)::               i
 !!...
 !!x=(/(i, i=1, Nx, 1)/)
-!!E_IO = VTK_INI(output_format = 'ascii',                &
+!!E_IO = VTK_INI(output_format = 'ascii', &
 !!               filene        = trim(filename)//'.vtk', &
-!!               title         = 'Field',                &
+!!               title         = 'Field', &
 !!               mesh_topology = 'RECTILINEAR_GRID')
-!!E_IO = VTK_GEO(Nx        = Nx,        &
-!!               Ny        = 1,         &
-!!               Nz        = 1,         &
-!!               X         = x,         &
+!!E_IO = VTK_GEO(Nx        = Nx, &
+!!               Ny        = 1, &
+!!               Nz        = 1, &
+!!               X         = x, &
 !!               Y         = (/0.0_8/), &
 !!               Z         = (/0.0_8/))
-!!E_IO = VTK_DAT(NC_NN   = Nx,      &
+!!E_IO = VTK_DAT(NC_NN   = Nx, &
 !!               tipo    = 'node')
-!!E_IO = VTK_VAR(NC_NN   = Nx,      &
-!!               varname = 'p',     &
+!!E_IO = VTK_VAR(NC_NN   = Nx, &
+!!               varname = 'p', &
 !!               var     = p)
-!!E_IO = VTK_VAR(NC_NN   = Nx,      &
-!!               varname = 'rho',   &
+!!E_IO = VTK_VAR(NC_NN   = Nx, &
+!!               varname = 'rho', &
 !!               var     = rho)
-!!E_IO = VTK_VAR(NC_NN   = Nx,      &
-!!               varname = 'u',     &
+!!E_IO = VTK_VAR(NC_NN   = Nx, &
+!!               varname = 'u', &
 !!               var     = u)
-!!E_IO = VTK_VAR(NC_NN   = Nx,      &
+!!E_IO = VTK_VAR(NC_NN   = Nx, &
 !!               varname = 'gamma', &
 !!               var     = gamma)
-!!E_IO = VTK_VAR(NC_NN   = Nx,      &
-!!               varname = 'a',     &
+!!E_IO = VTK_VAR(NC_NN   = Nx, &
+!!               varname = 'a', &
 !!               var     = sqrt(gamma*p/rho))
 !!E_IO = VTK_END()
 !!...
@@ -3619,30 +3619,30 @@ endmodule LIB_VTK_IO
 !!integer(4)::               i
 !!...
 !!x=(/(i, i=1, Nx, 1)/)
-!!E_IO = VTK_INI_XML(output_format = 'ascii',                &
+!!E_IO = VTK_INI_XML(output_format = 'ascii', &
 !!                   filename      = trim(filename)//'.vtr', &
-!!                   mesh_topology = 'RectilinearGrid',      &
+!!                   mesh_topology = 'RectilinearGrid', &
 !!                   nx1=1,nx2=Nx,ny1=1,ny2=1,nz1=1,nz2=1)
 !!E_IO = VTK_GEO_XML(nx1=1,nx2=Nx,ny1=1,ny2=1,nz1=1,nz2=1, &
 !!                   X=x,Y=(/0.0_8/),Z=(/0.0_8/))
-!!E_IO = VTK_DAT_XML(tipo    = 'node',   &
+!!E_IO = VTK_DAT_XML(tipo    = 'node', &
 !!                   azione  = 'OPEN')
-!!E_IO = VTK_VAR_XML(NC_NN   = Nx,      &
-!!                   varname = 'p',     &
+!!E_IO = VTK_VAR_XML(NC_NN   = Nx, &
+!!                   varname = 'p', &
 !!                   var     = p)
-!!E_IO = VTK_VAR_XML(NC_NN   = Nx,      &
-!!                   varname = 'rho',   &
+!!E_IO = VTK_VAR_XML(NC_NN   = Nx, &
+!!                   varname = 'rho', &
 !!                   var     = rho)
-!!E_IO = VTK_VAR_XML(NC_NN   = Nx,      &
-!!                   varname = 'u',     &
+!!E_IO = VTK_VAR_XML(NC_NN   = Nx, &
+!!                   varname = 'u', &
 !!                   var     = u)
-!!E_IO = VTK_VAR_XML(NC_NN   = Nx,      &
+!!E_IO = VTK_VAR_XML(NC_NN   = Nx, &
 !!                   varname = 'gamma', &
 !!                   var     = gamma)
-!!E_IO = VTK_VAR_XML(NC_NN   = Nx,      &
-!!                   varname = 'a',     &
+!!E_IO = VTK_VAR_XML(NC_NN   = Nx, &
+!!                   varname = 'a', &
 !!                   var     = sqrt(gamma*p/rho))
-!!E_IO = VTK_DAT_XML(tipo    = 'node',  &
+!!E_IO = VTK_DAT_XML(tipo    = 'node', &
 !!                   azione  = 'CLOSE')
 !!E_IO = VTK_GEO_XML()
 !!E_IO = VTK_END_XML()
@@ -3668,8 +3668,8 @@ endmodule LIB_VTK_IO
 !!integer(4), dimension(1:Nn):: var_uns_grid_Y
 !!integer(4), dimension(1:Nn):: var_uns_grid_Z
 !!...
-!!E_IO = VTK_INI(output_format  = 'BINARY',                   &
-!!               filename       = 'UNST_GRID_BIN.vtk',        &
+!!E_IO = VTK_INI(output_format  = 'BINARY', &
+!!               filename       = 'UNST_GRID_BIN.vtk', &
 !!               title          = 'Unstructured Grid Example' &
 !!               mesh_topology  = 'UNSTRUCTURED_GRID')
 !!
@@ -3694,14 +3694,14 @@ endmodule LIB_VTK_IO
 !!
 !!connect = (/ 8, 0, 1, 4, 3, 6, 7,10, 9, &
 !!             8, 1, 2, 5, 4, 7, 8,11,10, &
-!!             4, 6,10, 9,12,             &
-!!             4, 5,11,10,14,             &
-!!             6,15,16,17,14,13,12,       &
-!!             6,18,15,19,16,20,17,       &
-!!             4,22,23,20,19,             &
-!!             3,21,22,18,                &
-!!             3,22,19,18,                &
-!!             2,26,25,                   &
+!!             4, 6,10, 9,12, &
+!!             4, 5,11,10,14, &
+!!             6,15,16,17,14,13,12, &
+!!             6,18,15,19,16,20,17, &
+!!             4,22,23,20,19, &
+!!             3,21,22,18, &
+!!             3,22,19,18, &
+!!             2,26,25, &
 !!             1,24/)
 !!tipo = (/12, &
 !!         12, &
@@ -3714,10 +3714,10 @@ endmodule LIB_VTK_IO
 !!          5, &
 !!          3, &
 !!          1/)
-!!E_IO = VTK_CON(NCelle  = Ne,       &
-!!               connect = connect,  &
+!!E_IO = VTK_CON(NCelle  = Ne, &
+!!               connect = connect, &
 !!               tipo    = tipo)
-!!E_IO = VTK_DAT(NC_NN   = Nn,       &
+!!E_IO = VTK_DAT(NC_NN   = Nn, &
 !!               tipo    = 'node')
 !!
 !!var_uns_grid =(/ 0.0, 1.0, 2.0, 3.0, 4.0, 5.0, &
@@ -3726,7 +3726,7 @@ endmodule LIB_VTK_IO
 !!                18.0,19.0,20.0,21.0,22.0,23.0, &
 !!                24.0,25.0,26.0/)
 !!
-!!E_IO = VTK_VAR(NC_NN   = Nn,        &
+!!E_IO = VTK_VAR(NC_NN   = Nn, &
 !!               varname = 'scalars', &
 !!               var     = var_uns_grid)
 !!
@@ -3745,8 +3745,8 @@ endmodule LIB_VTK_IO
 !!                 1,1,1,1,1,1, &
 !!                 1,1,1,1,1,1, &
 !!                 1,1,1/)
-!!E_IO = VTK_VAR(NC_NN   = Nn,             &
-!!               varname = 'vectors',      &
+!!E_IO = VTK_VAR(NC_NN   = Nn, &
+!!               varname = 'vectors', &
 !!               varX    = var_uns_grid_X, &
 !!               varY    = var_uns_grid_Y, &
 !!               varZ    = var_uns_grid_Z)
@@ -3774,7 +3774,7 @@ endmodule LIB_VTK_IO
 !!integer(4), dimension(1:Nn):: var_uns_grid_Y
 !!integer(4), dimension(1:Nn):: var_uns_grid_Z
 !!...
-!!E_IO = VTK_INI_XML(output_format = 'BINARY',              &
+!!E_IO = VTK_INI_XML(output_format = 'BINARY', &
 !!                   filename      = 'XML_UNST_BINARY.vtu', &
 !!                   mesh_topology = 'UnstructuredGrid')
 !!
@@ -3800,14 +3800,14 @@ endmodule LIB_VTK_IO
 !!
 !!connect_xml = (/ 0, 1, 4, 3, 6, 7,10, 9, &
 !!                 1, 2, 5, 4, 7, 8,11,10, &
-!!                 6,10, 9,12,             &
-!!                 5,11,10,14,             &
-!!                15,16,17,14,13,12,       &
-!!                18,15,19,16,20,17,       &
-!!                22,23,20,19,             &
-!!                21,22,18,                &
-!!                22,19,18,                &
-!!                26,25,                   &
+!!                 6,10, 9,12, &
+!!                 5,11,10,14, &
+!!                15,16,17,14,13,12, &
+!!                18,15,19,16,20,17, &
+!!                22,23,20,19, &
+!!                21,22,18, &
+!!                22,19,18, &
+!!                26,25, &
 !!                24/)
 !!offset_xml = (/ 8, &
 !!               16, &
@@ -3821,9 +3821,9 @@ endmodule LIB_VTK_IO
 !!               48, &
 !!               49/)
 !!
-!!E_IO = VTK_CON_XML(NCelle  = Ne,          &
+!!E_IO = VTK_CON_XML(NCelle  = Ne, &
 !!                   connect = connect_xml, &
-!!                   offset  = offset_xml,  &
+!!                   offset  = offset_xml, &
 !!                   tipo    = (/12_1, &
 !!                               12_1, &
 !!                               10_1, &
@@ -3845,7 +3845,7 @@ endmodule LIB_VTK_IO
 !!                18.0,19.0,20.0,21.0,22.0,23.0, &
 !!                24.0,25.0,26.0/)
 !!
-!!E_IO = VTK_VAR_XML(NC_NN   = Nn,        &
+!!E_IO = VTK_VAR_XML(NC_NN   = Nn, &
 !!                   varname = 'scalars', &
 !!                   var     = var_uns_grid)
 !!
@@ -3865,12 +3865,12 @@ endmodule LIB_VTK_IO
 !!                 1,1,1,1,1,1, &
 !!                 1,1,1/)
 !!
-!!E_IO = VTK_VAR_XML(NC_NN   = Nn,             &
-!!                   varname = 'vector',       &
+!!E_IO = VTK_VAR_XML(NC_NN   = Nn, &
+!!                   varname = 'vector', &
 !!                   varX    = var_uns_grid_X, &
 !!                   varY    = var_uns_grid_Y, &
 !!                   varZ    = var_uns_grid_Z)
-!!E_IO = VTK_DAT_XML(tipo    = 'node',   &
+!!E_IO = VTK_DAT_XML(tipo    = 'node', &
 !!                   azione  = 'CLOSE')
 !!E_IO = VTK_GEO_XML()
 !!E_IO = VTK_END_XML()

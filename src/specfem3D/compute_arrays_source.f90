@@ -116,7 +116,7 @@
                                            xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
-  use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
 
   use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
 
@@ -239,7 +239,7 @@
       if (ios /= 0) then
         ! adjoint source file not found
         ! stops simulation
-        call exit_MPI(myrank,&
+        call exit_MPI(myrank, &
             'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
       endif
       !if (ios /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
@@ -248,7 +248,7 @@
       do itime  = 1,index_start-1
         read(IIN_ADJ,*,iostat=ios) junk,junk
         if (ios /= 0) &
-          call exit_MPI(myrank,&
+          call exit_MPI(myrank, &
             'file '//trim(filename)//' has wrong length, please check with your simulation duration')
       enddo
 

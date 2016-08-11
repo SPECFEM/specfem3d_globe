@@ -29,7 +29,7 @@
 
 ! bring theta between 0 and PI, and phi between 0 and 2*PI
 
-  use constants,only: ZERO,PI,TWO_PI,TINYVAL
+  use constants, only: ZERO,PI,TWO_PI,TINYVAL
 
   implicit none
 

@@ -28,7 +28,7 @@
   subroutine get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                      DT,NSOURCES,min_tshift_cmt_original)
 
-  use constants,only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
+  use constants, only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
     RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
 
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
@@ -398,7 +398,7 @@
 
   ! calculates scalar moment (M0)
 
-  use constants,only: RHOAV,R_EARTH,PI,GRAV
+  use constants, only: RHOAV,R_EARTH,PI,GRAV
 
   implicit none
 

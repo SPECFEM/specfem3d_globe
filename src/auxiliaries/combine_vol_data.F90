@@ -118,7 +118,7 @@ program combine_vol_data
   ! starts here---------------------------------------------------------------
   ier = 0 ! avoids compiler warning in case of ADIOS and VTK output
 
-  ! ADIOS mpi initialization
+  ! ADIOS MPI initialization
 #ifdef ADIOS_INPUT
   ! starts mpi
   call init_mpi()

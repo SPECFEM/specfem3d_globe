@@ -648,7 +648,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
 
   ! check that number of surface elements output is okay
   if (ispecface /= nspecface) &
-    call exit_MPI(myrank,&
+    call exit_MPI(myrank, &
         'incorrect number of surface elements in AVS or DX file creation')
 
 end subroutine prepare_AVS_DX_global_faces_data_adios

@@ -77,7 +77,7 @@
 
   use constants_solver
 
-  use specfem_par,only: deltat,GPU_MODE,Mesh_pointer,ANISOTROPIC_KL,UNDO_ATTENUATION, &
+  use specfem_par, only: deltat,GPU_MODE,Mesh_pointer,ANISOTROPIC_KL,UNDO_ATTENUATION, &
     hprime_xx,hprime_xxT,hprime_yy,hprime_zz
 
   use specfem_par_crustmantle
@@ -125,10 +125,10 @@
         ! backward/reconstructed wavefield strain will be re-computed locally here
         if (UNDO_ATTENUATION) then
           if (USE_DEVILLE_PRODUCTS_VAL) then
-            call compute_element_strain_undoatt_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
+            call compute_element_strain_undoatt_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
                                                     b_displ_crust_mantle,ibool_crust_mantle, &
-                                                    hprime_xx,hprime_xxT,&
-                                                    deriv_mapping_crust_mantle,&
+                                                    hprime_xx,hprime_xxT, &
+                                                    deriv_mapping_crust_mantle, &
                                                     b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
 
           else
@@ -202,10 +202,10 @@
         ! backward/reconstructed wavefield strain will be re-computed locally here
         if (UNDO_ATTENUATION) then
           if (USE_DEVILLE_PRODUCTS_VAL) then
-            call compute_element_strain_undoatt_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE,&
+            call compute_element_strain_undoatt_Dev(ispec,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
                                                     b_displ_crust_mantle,ibool_crust_mantle, &
-                                                    hprime_xx,hprime_xxT,&
-                                                    deriv_mapping_crust_mantle,&
+                                                    hprime_xx,hprime_xxT, &
+                                                    deriv_mapping_crust_mantle, &
                                                     b_epsilondev_loc_matrix,b_eps_trace_over_3_loc_matrix)
 
           else
@@ -311,8 +311,8 @@
               nspec_beta_kl_outer_core,deviatoric_outercore)
 
   use constants_solver
-  use specfem_par,only: deltat,hprime_xx,hprime_yy,hprime_zz,myrank
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: deltat,hprime_xx,hprime_yy,hprime_zz,myrank
+  use specfem_par, only: GPU_MODE,Mesh_pointer
 
   implicit none
 
@@ -332,7 +332,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
-    xix_outer_core,xiy_outer_core,xiz_outer_core,&
+    xix_outer_core,xiy_outer_core,xiz_outer_core, &
     etax_outer_core,etay_outer_core,etaz_outer_core, &
     gammax_outer_core,gammay_outer_core,gammaz_outer_core
 
@@ -689,7 +689,7 @@
 
   use constants_solver
 
-  use specfem_par,only: deltat,GPU_MODE,Mesh_pointer,UNDO_ATTENUATION, &
+  use specfem_par, only: deltat,GPU_MODE,Mesh_pointer,UNDO_ATTENUATION, &
     hprime_xx,hprime_xxT,hprime_yy,hprime_zz
 
   use specfem_par_innercore
@@ -806,7 +806,7 @@
 
 ! subroutines to compute the kernels for the 21 elastic coefficients
 
-  subroutine compute_strain_product(prod,eps_trace_over_3,epsdev,&
+  subroutine compute_strain_product(prod,eps_trace_over_3,epsdev, &
                                     b_eps_trace_over_3,b_epsdev)
 
   ! Purpose: compute the 21 strain products at a grid point
@@ -868,8 +868,8 @@
   subroutine compute_kernels_Hessian()
 
   use constants_solver
-  use specfem_par,only: deltat
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: deltat
+  use specfem_par, only: GPU_MODE,Mesh_pointer
   use specfem_par_crustmantle
 
   implicit none

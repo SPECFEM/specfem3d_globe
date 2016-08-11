@@ -30,12 +30,12 @@
 ! acoustic domains for forward or adjoint simulations (SIMULATION_TYPE == 1 or 2 )
 
   use specfem_par
-  use specfem_par_crustmantle,only: displ_crust_mantle, &
+  use specfem_par_crustmantle, only: displ_crust_mantle, &
                                     ibool_crust_mantle,ibelm_bottom_crust_mantle
-  use specfem_par_innercore,only: displ_inner_core, &
+  use specfem_par_innercore, only: displ_inner_core, &
                                   ibool_inner_core,ibelm_top_inner_core
   use specfem_par_outercore
-  use specfem_par_movie,only: div_displ_outer_core
+  use specfem_par_movie, only: div_displ_outer_core
   implicit none
 
   ! local parameters
@@ -89,7 +89,7 @@
         call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
                                            buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                           nibool_interfaces_outer_core,&
+                                           nibool_interfaces_outer_core, &
                                            my_neighbours_outer_core, &
                                            request_send_scalar_oc,request_recv_scalar_oc)
       endif
@@ -176,7 +176,7 @@
           call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
                                              buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                              num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                             nibool_interfaces_outer_core,&
+                                             nibool_interfaces_outer_core, &
                                              my_neighbours_outer_core, &
                                              request_send_scalar_oc,request_recv_scalar_oc)
         endif
@@ -249,12 +249,12 @@
 ! backward/reconstructed wavefields only
 
   use specfem_par
-  use specfem_par_crustmantle,only: b_displ_crust_mantle, &
+  use specfem_par_crustmantle, only: b_displ_crust_mantle, &
                                     ibool_crust_mantle,ibelm_bottom_crust_mantle
-  use specfem_par_innercore,only: b_displ_inner_core, &
+  use specfem_par_innercore, only: b_displ_inner_core, &
                                   ibool_inner_core,ibelm_top_inner_core
   use specfem_par_outercore
-  use specfem_par_movie,only: div_displ_outer_core
+  use specfem_par_movie, only: div_displ_outer_core
   implicit none
 
   ! local parameters
@@ -337,7 +337,7 @@
         call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
                               b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                              nibool_interfaces_outer_core,&
+                              nibool_interfaces_outer_core, &
                               my_neighbours_outer_core, &
                               b_request_send_scalar_oc,b_request_recv_scalar_oc)
       endif
@@ -411,7 +411,7 @@
                               b_accel_outer_core, &
                               b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                              nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
+                              nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
                               my_neighbours_outer_core, &
                               b_request_send_scalar_oc,b_request_recv_scalar_oc)
       else
@@ -431,7 +431,7 @@
           call assemble_MPI_scalar_send_gpu(NPROCTOT_VAL, &
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                nibool_interfaces_outer_core,&
+                                nibool_interfaces_outer_core, &
                                 my_neighbours_outer_core, &
                                 b_request_send_scalar_oc,b_request_recv_scalar_oc)
         endif
@@ -444,7 +444,7 @@
         ! on CPU
         call assemble_MPI_scalar_w(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                                    b_accel_outer_core, &
-                                   b_buffer_recv_scalar_outer_core,num_interfaces_outer_core,&
+                                   b_buffer_recv_scalar_outer_core,num_interfaces_outer_core, &
                                    max_nibool_interfaces_oc, &
                                    nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
                                    b_request_send_scalar_oc,b_request_recv_scalar_oc)
@@ -508,9 +508,9 @@
 !
 ! (left in this file to let compiler decide about inlining)
 
-  use constants_solver,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE,USE_DEVILLE_PRODUCTS_VAL
+  use constants_solver, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE,USE_DEVILLE_PRODUCTS_VAL
 
-  use specfem_par_outercore,only: sum_terms_outer_core
+  use specfem_par_outercore, only: sum_terms_outer_core
 
   implicit none
 

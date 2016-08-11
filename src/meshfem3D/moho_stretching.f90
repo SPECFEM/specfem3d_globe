@@ -32,16 +32,16 @@
 ! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
 
-  use constants,only: &
+  use constants, only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,USE_OLD_VERSION_5_1_5_FORMAT, &
     SUPPRESS_MOHO_STRETCHING, &
     ITYPE_CRUSTAL_MODEL,ICRUST_CRUST_SH
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     TOPOGRAPHY
 
   implicit none
@@ -246,12 +246,12 @@
 ! input:  myrank, xelm, yelm, zelm
 ! Dec, 30, 2009
 
-  use constants,only: &
+  use constants, only: &
     NGNOD,R_EARTH_KM,R_EARTH,R_UNIT_SPHERE, &
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,SMALLVAL,ONE,HONOR_DEEP_MOHO,USE_OLD_VERSION_5_1_5_FORMAT, &
     SUPPRESS_MOHO_STRETCHING
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     R220
 
   implicit none
@@ -366,7 +366,7 @@
 ! honors deep moho (below 60 km), otherwise keeps the mesh boundary at r60 fixed
 
   use constants
-  use meshfem3D_par,only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
+  use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
 
@@ -516,7 +516,7 @@
 ! mesh will get stretched down to r220
 
   use constants
-  use meshfem3D_par,only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
+  use meshfem3D_par, only: RMOHO_FICTITIOUS_IN_MESHER,R220,RMIDDLE_CRUST
 
   implicit none
 
@@ -638,7 +638,7 @@
 
 ! moves a point to a new location defined by gamma,elevation and r
 
-  use constants,only: NGNOD,ONE
+  use constants, only: NGNOD,ONE
 
   implicit none
 

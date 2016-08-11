@@ -65,7 +65,7 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
                            var_name, value_file_name, mesh_file_name, &
                            outdir, ires, irs, ire)
 
-  use constants,only: IIN
+  use constants, only: IIN
 
   implicit none
   ! Arguments
@@ -205,7 +205,7 @@ end subroutine read_scalars_adios_mesh
 subroutine read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob, nspec, &
                                        xstore, ystore, zstore, ibool)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
   ! Parameters
@@ -265,7 +265,7 @@ end subroutine read_coordinates_adios_mesh
 
 subroutine read_values_adios(value_handle, var_name, iproc, ir, nspec, data)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
 
   implicit none
   ! Parameters

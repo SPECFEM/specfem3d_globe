@@ -200,7 +200,7 @@ end program sum_kernels_globe
 
 #ifdef ADIOS_INPUT
   use manager_adios
-  use adios_helpers_mod,only: define_adios_scalar,define_adios_global_array1D
+  use adios_helpers_mod, only: define_adios_scalar,define_adios_global_array1D
 #endif
 
   implicit none
@@ -410,7 +410,7 @@ end program sum_kernels_globe
 
   subroutine read_kernel_binary(filename,nspec,kernel)
 
-  use tomography_par,only: NGLLX,NGLLY,NGLLZ,IIN,CUSTOM_REAL,MAX_STRING_LEN
+  use tomography_par, only: NGLLX,NGLLY,NGLLZ,IIN,CUSTOM_REAL,MAX_STRING_LEN
 
   implicit none
 
@@ -444,7 +444,7 @@ end program sum_kernels_globe
 
   subroutine write_kernel_binary(filename,nspec,kernel)
 
-  use tomography_par,only: NGLLX,NGLLY,NGLLZ,IOUT,CUSTOM_REAL,MAX_STRING_LEN
+  use tomography_par, only: NGLLX,NGLLY,NGLLZ,IOUT,CUSTOM_REAL,MAX_STRING_LEN
 
   implicit none
 

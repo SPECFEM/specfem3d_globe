@@ -194,7 +194,7 @@
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
   use constants_solver
-  use specfem_par,only: tau_sigma_CUSTOM_REAL,istage
+  use specfem_par, only: tau_sigma_CUSTOM_REAL,istage
 
   implicit none
 
@@ -458,7 +458,7 @@
 ! we get Q_\alpha = (9 / 4) * Q_\mu = 2.25 * Q_\mu
 
   use constants_solver
-  use specfem_par,only: tau_sigma_CUSTOM_REAL,istage
+  use specfem_par, only: tau_sigma_CUSTOM_REAL,istage
 
   implicit none
 
@@ -584,9 +584,9 @@
 !
 !
 !!daniel: att - debug update
-!  use specfem_par,only: tau_sigma_dble,deltat,b_deltat
+!  use specfem_par, only: tau_sigma_dble,deltat,b_deltat
 !
-!  use specfem_par_crustmantle,only: factor_common => factor_common_crust_mantle
+!  use specfem_par_crustmantle, only: factor_common => factor_common_crust_mantle
 !
 !  use constants_solver
 !

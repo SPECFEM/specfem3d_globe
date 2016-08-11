@@ -36,8 +36,8 @@
   module model_eucrust_par
 
   ! EUcrust
-  double precision, dimension(:),allocatable :: eucrust_lat,eucrust_lon,&
-      eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth,&
+  double precision, dimension(:),allocatable :: eucrust_lat,eucrust_lon, &
+      eucrust_vp_uppercrust,eucrust_vp_lowercrust,eucrust_mohodepth, &
       eucrust_basement,eucrust_ucdepth
 
   ! original file size entries
@@ -70,11 +70,11 @@
 
   ! allocates eucrust arrays
   allocate(eucrust_vp_uppercrust(num_eucrust), &
-           eucrust_vp_lowercrust(num_eucrust),&
+           eucrust_vp_lowercrust(num_eucrust), &
            eucrust_mohodepth(num_eucrust), &
-           eucrust_basement(num_eucrust),&
+           eucrust_basement(num_eucrust), &
            eucrust_ucdepth(num_eucrust), &
-           eucrust_lon(num_eucrust),&
+           eucrust_lon(num_eucrust), &
            eucrust_lat(num_eucrust), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating EUcrust arrays')

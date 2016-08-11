@@ -57,12 +57,12 @@
 
   program interpolate_model
 
-  use constants,only: SIZE_INTEGER, &
+  use constants, only: SIZE_INTEGER, &
     TWO_PI,R_UNIT_SPHERE, &
     NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM, &
     IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL
 
-  use postprocess_par,only: &
+  use postprocess_par, only: &
     CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
     GAUSSALPHA,GAUSSBETA,R_EARTH_KM, &
     IIN,IOUT,MAX_STRING_LEN, &
@@ -74,7 +74,7 @@
 
 #ifdef ADIOS_INPUT
   use manager_adios
-  use adios_helpers_mod,only: define_adios_scalar,define_adios_global_array1D
+  use adios_helpers_mod, only: define_adios_scalar,define_adios_global_array1D
 #endif
 
   implicit none
@@ -183,7 +183,7 @@
   integer(kind=8) :: group,group_size_inc
 #endif
 
-  ! mpi parameters
+  ! MPI parameters
   integer :: sizeprocs,myrank
 
   ! nodes search
@@ -441,7 +441,7 @@
     print *,'  model1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nparams*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print *,'  model2   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print *
-    print *,'total mpi processes: ',sizeprocs
+    print *,'total MPI processes: ',sizeprocs
     print *
     if (DO_BRUTE_FORCE_SEARCH) then
       print *,'location search by : brute-force approach'
@@ -471,7 +471,7 @@
   call synchronize_all()
 
   ! checks
-  if (sizeprocs /= NPROCTOT_VAL) stop 'Error target mesh processors not equal to current total mpi processes'
+  if (sizeprocs /= NPROCTOT_VAL) stop 'Error target mesh processors not equal to current total MPI processes'
 
   ! checks temporary file creation, to see if we could write out new model
   if (myrank == 0) then
@@ -557,7 +557,7 @@
         ! gets slice number
         rank = addressing2(ichunk,iproc_xi,iproc_eta)
 
-        ! only associated mpi process continues
+        ! only associated MPI process continues
         if (myrank == rank) then
           ichunk_selected = ichunk
           iproc_eta_selected = iproc_eta
@@ -739,7 +739,7 @@ print *,myrank,'adios file rank',rank
   ! gets slice number
   rank = addressing2(ichunk_selected,iproc_xi_selected,iproc_eta_selected)
 
-  ! only associated mpi process continues
+  ! only associated MPI process continues
   if (myrank /= rank) stop 'Error selected addressing rank'
 
   ! user output
@@ -1197,7 +1197,7 @@ print *,myrank,'adios file rank',rank
 
         ! gets interpolated position
         call locate(x_target,y_target,z_target, &
-                    xi,eta,gamma,&
+                    xi,eta,gamma, &
                     ispec_selected,rank_selected, &
                     nspec_max_old,nglob_max_old,nproc_chunk1, &
                     ibool1,x1,y1,z1, &
@@ -1505,7 +1505,7 @@ print *,myrank,'adios file rank',rank
 
         ! gets interpolated position within selected element
         call locate_single(x_target,y_target,z_target, &
-                           xi,eta,gamma,&
+                           xi,eta,gamma, &
                            ispec_selected,rank_selected, &
                            nspec_max_old,nglob_max_old,nproc_chunk1, &
                            ibool1,x1,y1,z1, &
@@ -1760,7 +1760,7 @@ print *,myrank,'adios file rank',rank
                            xigll,yigll,zigll,typical_size, &
                            i_selected,j_selected,k_selected)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
 
   implicit none
 

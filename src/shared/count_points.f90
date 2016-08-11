@@ -26,18 +26,18 @@
 !=====================================================================
 
 
-  subroutine count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube,&
+  subroutine count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube, &
                         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB,&
-                        nblocks_xi,nblocks_eta,ner,ratio_sampling_array,&
-                        this_region_has_a_doubling,&
+                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
+                        nblocks_xi,nblocks_eta,ner,ratio_sampling_array, &
+                        this_region_has_a_doubling, &
                         ifirst_region, ilast_region, iter_region, iter_layer, &
                         doubling, padding, tmp_sum, &
                         INCLUDE_CENTRAL_CUBE,NER_TOP_CENTRAL_CUBE_ICB,NEX_XI, &
                         NUMBER_OF_MESH_LAYERS,layer_offset, &
                         nb_lay_sb, nglob_vol, nglob_surf, nglob_edge, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
-                        last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
+                        last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
                         normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -72,7 +72,7 @@
 
 ! for the cut doublingbrick improvement
   logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,INCLUDE_CENTRAL_CUBE
-  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf,&
+  integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
 
 

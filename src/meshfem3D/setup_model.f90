@@ -55,7 +55,7 @@
 
   ! distributes 3D models
   call meshfem3D_models_broadcast(myrank,NSPEC, &
-                                  MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
+                                  MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
                                   R80,R220,R670,RCMB,RICB, &
                                   LOCAL_PATH)
 
@@ -121,7 +121,7 @@
   subroutine sm_output_info()
 
   use meshfem3D_models_par
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     MODEL,NEX_XI,NEX_ETA, &
     NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
     R_CENTRAL_CUBE

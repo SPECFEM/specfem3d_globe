@@ -129,12 +129,12 @@
   ! distributes 3D models
   print *,'Reading 3D models'
   call meshfem3D_models_broadcast(myrank,NSPEC, &
-       MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
+       MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
        R80,R220,R670,RCMB,RICB)
   print *,'Done reading 3D models'
 
 !!    call meshfem3D_output_info(myrank,sizeprocs,NEX_XI,NEX_ETA, &
- !                               NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT,&
+ !                               NPROC_XI,NPROC_ETA,NPROC,NCHUNKS,NPROCTOT, &
  !                               R_CENTRAL_CUBE)
 
 !!! -- end part from meshfem3D
@@ -304,11 +304,11 @@
                               RMOHO,RMIDDLE_CRUST,ROCEAN)
 
         ! gets the 3-D model parameters for the mantle
-        call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp,&
+        call meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp, &
                               vpv,vph,vsv,vsh,eta_aniso, &
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
-                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
+                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
         ! gets the 3-D crustal model
@@ -323,7 +323,7 @@
 
 !!! VH  commented out following two lines from get_model
 !        ! overwrites with tomographic model values (from iteration step) here, given at all GLL points
-!        call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,&
+!        call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso, &
 !                                        myrank,iregion_code,ispec,i,j,k)
 
         ! checks vpv: if close to zero then there is probably an error

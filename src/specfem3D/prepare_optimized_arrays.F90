@@ -34,8 +34,8 @@
 
 ! optimizes array memory layout to increase computational efficiency
 
-  use constants,only: IMAIN
-  use specfem_par,only: myrank
+  use constants, only: IMAIN
+  use specfem_par, only: myrank
 
   implicit none
 

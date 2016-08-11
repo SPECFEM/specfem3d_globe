@@ -64,7 +64,7 @@
 
   use constants
 
-  use shared_parameters,only: TOPOGRAPHY, &
+  use shared_parameters, only: TOPOGRAPHY, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
     ELLIPTICITY,GRAVITY,ROTATION, &
     OCEANS,ATTENUATION,ATTENUATION_3D, &
@@ -817,12 +817,12 @@
   subroutine compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
                                        static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
 
-  use shared_parameters,only: NGLOB,NSPEC,NSTEP, &
+  use shared_parameters, only: NGLOB,NSPEC,NSTEP, &
     ROTATION,ATTENUATION,GPU_MODE, &
     MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE,NOISE_TOMOGRAPHY, &
     NSPEC2D_TOP
 
-  use constants,only: NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,CUSTOM_REAL, &
+  use constants, only: NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,CUSTOM_REAL, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
 
   implicit none

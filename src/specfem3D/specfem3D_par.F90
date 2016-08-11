@@ -357,7 +357,7 @@ module specfem_par_crustmantle
   integer, dimension(2) :: num_globs_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
-    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle,&
+    xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
 
@@ -551,7 +551,7 @@ module specfem_par_innercore
   integer, dimension(2) :: num_globs_inner_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
-    xix_inner_core,xiy_inner_core,xiz_inner_core,&
+    xix_inner_core,xiy_inner_core,xiz_inner_core, &
     etax_inner_core,etay_inner_core,etaz_inner_core, &
     gammax_inner_core,gammay_inner_core,gammaz_inner_core
 
@@ -676,7 +676,7 @@ module specfem_par_outercore
   integer, dimension(2) :: num_globs_outer_core
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
-    xix_outer_core,xiy_outer_core,xiz_outer_core,&
+    xix_outer_core,xiy_outer_core,xiz_outer_core, &
     etax_outer_core,etay_outer_core,etaz_outer_core, &
     gammax_outer_core,gammay_outer_core,gammaz_outer_core
 

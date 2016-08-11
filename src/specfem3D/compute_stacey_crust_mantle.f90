@@ -31,11 +31,11 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     ichunk,SIMULATION_TYPE,SAVE_STACEY,it, &
     wgllwgll_xz,wgllwgll_yz
 
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: GPU_MODE,Mesh_pointer
 
   use specfem_par_crustmantle, only: &
     veloc_crust_mantle,accel_crust_mantle, &
@@ -322,10 +322,10 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     ichunk,SIMULATION_TYPE,NSTEP,it
 
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: GPU_MODE,Mesh_pointer
 
   use specfem_par_crustmantle, only: &
     b_accel_crust_mantle, &
@@ -514,11 +514,11 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     ichunk,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION, &
     wgllwgll_xz,wgllwgll_yz
 
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: GPU_MODE,Mesh_pointer
 
   use specfem_par_crustmantle, only: &
     b_veloc_crust_mantle,b_accel_crust_mantle, &

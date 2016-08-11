@@ -38,7 +38,7 @@
                                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                                         c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                                         nspec_ani,nspec_stacey, &
-                                        rho_vp,rho_vs,&
+                                        rho_vp,rho_vs, &
                                         xigll,yigll,zigll,ispec_is_tiso)
 
   use meshfem3D_models_par
@@ -308,10 +308,10 @@
   ! updates Jacobian
   ! (only needed for second meshing phase)
   if (ipass == 2) then
-    call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
-                                ispec,nspec,&
-                                xixstore,xiystore,xizstore,&
-                                etaxstore,etaystore,etazstore,&
+    call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll, &
+                                ispec,nspec, &
+                                xixstore,xiystore,xizstore, &
+                                etaxstore,etaystore,etazstore, &
                                 gammaxstore,gammaystore,gammazstore)
   endif
 

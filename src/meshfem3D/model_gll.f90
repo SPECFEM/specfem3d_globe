@@ -38,7 +38,7 @@
 ! standard routine to setup model
 
   use constants
-  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY,model_gll_variables
+  use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY,model_gll_variables
   use meshfem3D_par, only: ADIOS_FOR_MODELS
 
   implicit none
@@ -210,7 +210,7 @@
   subroutine read_gll_model(myrank,MGLL_V,NSPEC)
 
   use constants
-  use meshfem3D_models_par,only: TRANSVERSE_ISOTROPY,model_gll_variables
+  use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY,model_gll_variables
 
   implicit none
 
@@ -237,7 +237,7 @@
   if (.not. TRANSVERSE_ISOTROPY) then
     ! isotropic model
     ! vp mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vp.bin',&
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vp.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vp.bin'
@@ -260,7 +260,7 @@
 
     ! transverse isotropic model
     ! vp mesh
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vpv.bin',&
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vpv.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv.bin'
@@ -269,7 +269,7 @@
     read(IIN) MGLL_V%vpv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
     close(IIN)
 
-    open(unit=IIN,file=prname(1:len_trim(prname))//'vph.bin',&
+    open(unit=IIN,file=prname(1:len_trim(prname))//'vph.bin', &
           status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph.bin'

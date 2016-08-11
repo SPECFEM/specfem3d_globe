@@ -55,7 +55,7 @@
 
   program cross_section
 
-  use constants,only: SIZE_INTEGER, &
+  use constants, only: SIZE_INTEGER, &
     TWO_PI,R_UNIT_SPHERE, &
     NGNOD,CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
     GAUSSALPHA,GAUSSBETA, &
@@ -63,7 +63,7 @@
     NX_BATHY,NY_BATHY,NR,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH,R_EARTH_KM, &
     HUGEVAL,TINYVAL,SMALLVAL,PI,PI_OVER_TWO
 
-  use postprocess_par,only: MAX_KERNEL_NAMES, &
+  use postprocess_par, only: MAX_KERNEL_NAMES, &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL, &
     NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE
 
@@ -122,7 +122,7 @@
   character(len=MAX_STRING_LEN) :: m_file,filename
   character(len=MAX_STRING_LEN) :: solver_file
 
-  ! mpi parameters
+  ! MPI parameters
   integer :: sizeprocs,myrank
 
   ! nodes search
@@ -343,7 +343,7 @@
     print *
     print *,'  model   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*NPROC_ETA_VAL*NPROC_XI_VAL*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print *
-    print *,'total mpi processes: ',sizeprocs
+    print *,'total MPI processes: ',sizeprocs
     print *
     print *,'location search by : kd-tree search'
     print *,'  uses internal GLL points'
@@ -760,12 +760,12 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants,only: R_UNIT_SPHERE,R_EARTH_KM,CUSTOM_REAL, &
+  use constants, only: R_UNIT_SPHERE,R_EARTH_KM,CUSTOM_REAL, &
     NX_BATHY,NY_BATHY,NR, &
     DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH, &
     PI_OVER_TWO
 
-  use shared_parameters,only: ONE_CRUST
+  use shared_parameters, only: ONE_CRUST
 
   implicit none
 
@@ -945,12 +945,12 @@
 
 ! creates point locations of horizontal cross-section points
 
-  use constants,only: R_UNIT_SPHERE,R_EARTH_KM,CUSTOM_REAL, &
+  use constants, only: R_UNIT_SPHERE,R_EARTH_KM,CUSTOM_REAL, &
     NX_BATHY,NY_BATHY,NR, &
     DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,R_EARTH, &
     PI_OVER_TWO,TWO_PI,SMALLVAL
 
-  use shared_parameters,only: ONE_CRUST
+  use shared_parameters, only: ONE_CRUST
 
   implicit none
 
@@ -1197,7 +1197,7 @@
 
   subroutine collect_closest_point_values(myrank,nproc,nglob_target,model2,model_distance2)
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -1434,7 +1434,7 @@
 
     ! gets interpolated position within selected element
     call locate_single_point(x_target,y_target,z_target, &
-                             xi,eta,gamma,&
+                             xi,eta,gamma, &
                              ispec_selected,nspec,nglob, &
                              ibool,xstore,ystore,zstore, &
                              iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
@@ -1517,7 +1517,7 @@
 
       ! gets interpolated position within selected element
       call locate_single_point(x_target,y_target,z_target, &
-                               xi,eta,gamma,&
+                               xi,eta,gamma, &
                                ispec_selected,nspec,nglob, &
                                ibool,xstore,ystore,zstore, &
                                iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
@@ -1699,7 +1699,7 @@
                                  i_selected,j_selected,k_selected,dist_min, &
                                  is_inside_element,element_size)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
 
   implicit none
 
@@ -1996,7 +1996,7 @@
                                  model_diff,model_pert,m_avg_total,point_avg_total, &
                                  typical_size,depth0,section_type,filename)
 
-  use constants,only: CUSTOM_REAL,IOUT,MAX_STRING_LEN,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,IOUT,MAX_STRING_LEN,R_EARTH_KM
 
   implicit none
 
@@ -2098,7 +2098,7 @@
                                    typical_size,dlat,dlon,nlat,lat0,dincr,ddepth,section_type,ELLIPTICITY, &
                                    model_diff,model_pert,m_avg_total,point_avg_total)
 
-  use constants,only: CUSTOM_REAL,RADIANS_TO_DEGREES,R_EARTH_KM, &
+  use constants, only: CUSTOM_REAL,RADIANS_TO_DEGREES,R_EARTH_KM, &
     TINYVAL,HUGEVAL,PI,PI_OVER_TWO,ONE_MINUS_F_SQUARED
 
   implicit none
@@ -2301,7 +2301,7 @@
 !
 ! grid will have a single point at north/south pole
 
-  use constants,only: PI, DEGREES_TO_RADIANS
+  use constants, only: PI, DEGREES_TO_RADIANS
 
   implicit none
 
@@ -2432,7 +2432,7 @@
 !
 ! see: http://mathforum.org/library/drmath/view/63767.html
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -2465,7 +2465,7 @@
 
 ! returns latitude/longitude in radians for geocentric location
 
-  use constants,only: DEGREES_TO_RADIANS,PI,TWO_PI,PI_OVER_TWO,ONE_MINUS_F_SQUARED
+  use constants, only: DEGREES_TO_RADIANS,PI,TWO_PI,PI_OVER_TWO,ONE_MINUS_F_SQUARED
 
   implicit none
 
@@ -2497,7 +2497,7 @@
 ! determines area around lat/lon location for a regular, vertical latitude-longitude grid
 ! with dincr/ddepth increments
 
-  use constants,only: R_EARTH_KM,R_UNIT_SPHERE,PI,DEGREES_TO_RADIANS,SMALLVAL
+  use constants, only: R_EARTH_KM,R_UNIT_SPHERE,PI,DEGREES_TO_RADIANS,SMALLVAL
 
   implicit none
 
@@ -2565,7 +2565,7 @@
 ! returns co-latitude and longitude in range [0,PI]
 ! and [0,2PI] (use_positive_lon == true) / [-PI,PI] (use_positive_lon == false)
 
-  use constants,only: PI,TWO_PI
+  use constants, only: PI,TWO_PI
 
   implicit none
 

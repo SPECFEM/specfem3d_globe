@@ -60,7 +60,7 @@
 
   use meshfem3D_par, only: LOCAL_PATH
 
-  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array
+  use adios_helpers_mod, only: define_adios_global_array1D,write_adios_global_1d_array
   use manager_adios
 
   ! Stacey, define flags for absorbing boundaries

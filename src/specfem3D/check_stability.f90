@@ -31,25 +31,25 @@
 ! in all the slices using an MPI reduction
 ! and output timestamp file to check that simulation is running fine
 
-  use constants,only: CUSTOM_REAL,IMAIN,R_EARTH, &
+  use constants, only: CUSTOM_REAL,IMAIN,R_EARTH, &
     ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE, &
     STABILITY_THRESHOLD
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     GPU_MODE,Mesh_pointer, &
     COMPUTE_AND_STORE_STRAIN, &
     SIMULATION_TYPE,scale_displ,time_start,DT,t0, &
     NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
     myrank,UNDO_ATTENUATION
 
-  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
+  use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
     eps_trace_over_3_crust_mantle, &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  use specfem_par_innercore,only: displ_inner_core,b_displ_inner_core
+  use specfem_par_innercore, only: displ_inner_core,b_displ_inner_core
 
-  use specfem_par_outercore,only: displ_outer_core,b_displ_outer_core
+  use specfem_par_outercore, only: displ_outer_core,b_displ_outer_core
 
   implicit none
 
@@ -354,21 +354,21 @@
 
 ! only for backward/reconstructed wavefield
 
-  use constants,only: CUSTOM_REAL,IMAIN,R_EARTH, &
+  use constants, only: CUSTOM_REAL,IMAIN,R_EARTH, &
     ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE, &
     STABILITY_THRESHOLD
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     GPU_MODE,Mesh_pointer, &
     SIMULATION_TYPE,scale_displ, &
     NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN, &
     myrank
 
-  !use specfem_par,only: time_start,DT,t0
+  !use specfem_par, only: time_start,DT,t0
 
-  use specfem_par_crustmantle,only: b_displ_crust_mantle
-  use specfem_par_innercore,only: b_displ_inner_core
-  use specfem_par_outercore,only: b_displ_outer_core
+  use specfem_par_crustmantle, only: b_displ_crust_mantle
+  use specfem_par_innercore, only: b_displ_inner_core
+  use specfem_par_outercore, only: b_displ_outer_core
 
   implicit none
 
@@ -483,10 +483,10 @@
                                   day_of_week,mon,day,year,hr,minutes, &
                                   day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote)
 
-  use constants,only: CUSTOM_REAL,IOUT, &
+  use constants, only: CUSTOM_REAL,IOUT, &
     ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE,MAX_STRING_LEN
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     SIMULATION_TYPE,OUTPUT_FILES,DT,t0, &
     NSTEP,it,it_begin,it_end,NUMBER_OF_RUNS,NUMBER_OF_THIS_RUN
 
@@ -619,7 +619,7 @@
 
 ! outputs runtime at the completion of time loop
 
-  use specfem_par,only: time_start,IMAIN,myrank
+  use specfem_par, only: time_start,IMAIN,myrank
   implicit none
 
   ! local parameters

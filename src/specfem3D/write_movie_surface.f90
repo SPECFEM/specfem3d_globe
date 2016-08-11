@@ -29,8 +29,8 @@
   subroutine movie_surface_count_points()
 
   use specfem_par
-  use specfem_par_crustmantle,only: NSPEC_TOP
-  use specfem_par_movie,only: NIT,nmovie_points
+  use specfem_par_crustmantle, only: NSPEC_TOP
+  use specfem_par_movie, only: NIT,nmovie_points
 
   implicit none
 

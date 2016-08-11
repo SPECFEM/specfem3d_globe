@@ -40,13 +40,13 @@
 !         gammaxstore,gammaystore,gammazstore ------ parameters used to calculate Jacobian
 
 
-  subroutine recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll,&
-                                   ispec,nspec,&
+  subroutine recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll, &
+                                   ispec,nspec, &
                                    xixstore,xiystore,xizstore, &
                                    etaxstore,etaystore,etazstore, &
                                    gammaxstore,gammaystore,gammazstore)
 
-  use constants,only: NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,SIZE_REAL, &
+  use constants, only: NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,SIZE_REAL, &
     ZERO,ONE,TINYVAL,VERYSMALLVAL,R_EARTH_KM,RADIANS_TO_DEGREES
 
   implicit none
@@ -251,7 +251,7 @@
 
   ! output results:     jacobian2D,normal
   subroutine recalc_jacobian_gll2D(myrank,ispecb, &
-                                xelm2D,yelm2D,zelm2D,xigll,yigll,&
+                                xelm2D,yelm2D,zelm2D,xigll,yigll, &
                                 jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
   use constants
@@ -272,8 +272,8 @@
 
   ! local parameters in this subroutine
   integer::i,j,i1,j1
-  double precision::xxi,xeta,yxi,yeta,zxi,zeta,&
-    xi,eta,xmesh,ymesh,zmesh,hlagrange,hlagrange_xi,hlagrange_eta,&
+  double precision::xxi,xeta,yxi,yeta,zxi,zeta, &
+    xi,eta,xmesh,ymesh,zmesh,hlagrange,hlagrange_xi,hlagrange_eta, &
     sumshape,sumdershapexi,sumdershapeeta,unx,uny,unz,jacobian,jacobian_inv
   double precision,dimension(NGLLA)::hxir,hpxir
   double precision,dimension(NGLLB)::hetar,hpetar

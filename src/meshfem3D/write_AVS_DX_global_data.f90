@@ -200,7 +200,7 @@
 !> Hejun
 ! write material information for GLL points
   subroutine write_AVS_DX_global_data_gll(prname,nspec, &
-                 xstore,ystore,zstore,rhostore,kappavstore,muvstore,Qmustore,&
+                 xstore,ystore,zstore,rhostore,kappavstore,muvstore,Qmustore, &
                  ATTENUATION)
 
   use constants
@@ -246,7 +246,7 @@
         do j = 1,NGLLY
         do i = 1,NGLLX
                 numpoin = numpoin + 1
-                write(IOUT,*) numpoin,sngl(xstore(i,j,k,ispec)),&
+                write(IOUT,*) numpoin,sngl(xstore(i,j,k,ispec)), &
                               sngl(ystore(i,j,k,ispec)),sngl(zstore(i,j,k,ispec))
                 flag(i,j,k,ispec) = numpoin
         enddo
@@ -280,7 +280,7 @@
           iglob8=flag(i,j+1,k+1,ispec)
 
           write(IOUT,*) nelem,iglob1, &
-                        iglob2,iglob3,iglob4,&
+                        iglob2,iglob3,iglob4, &
                         iglob5,iglob6,iglob7,iglob8
         enddo
       enddo

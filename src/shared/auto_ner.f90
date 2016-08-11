@@ -48,7 +48,7 @@
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
 
-  use constants,only: DEGREES_TO_RADIANS, NGLLX, &
+  use constants, only: DEGREES_TO_RADIANS, NGLLX, &
     REFERENCE_MODEL_PREM,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
     REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D
   use shared_compute_parameters, only: REFERENCE_1D_MODEL
@@ -178,7 +178,7 @@
 !
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-  use constants,only: N_SLS,NGLLX
+  use constants, only: N_SLS,NGLLX
 
   implicit none
 
@@ -262,7 +262,7 @@
                       R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
                       HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
-  use constants,only: R_EARTH
+  use constants, only: R_EARTH
 
   implicit none
 
@@ -397,7 +397,7 @@
 
   subroutine auto_optimal_ner(NUM_REGIONS, width, NEX, r, scaling, NER, rt, rb)
 
-  use constants,only: DEGREES_TO_RADIANS
+  use constants, only: DEGREES_TO_RADIANS
 
   implicit none
 
@@ -527,7 +527,7 @@
 
   subroutine compute_nex(nex_xi, rcube, alpha, ner)
 
-  use constants,only: PI,PI_OVER_TWO,PI_OVER_FOUR
+  use constants, only: PI,PI_OVER_TWO,PI_OVER_FOUR
 
   implicit none
 
@@ -674,7 +674,7 @@
 
   subroutine compute_coordinate_central_cube(ix,iy,nbx,nby,radius, alpha, x, y)
 
-  use constants,only: PI_OVER_TWO
+  use constants, only: PI_OVER_TWO
 
   implicit none
 
@@ -706,7 +706,7 @@
 
   subroutine compute_coordinate(ix,iy,nbx, nby, rcube, ic, alpha, x, y)
 
-  use constants,only: PI_OVER_TWO,PI_OVER_FOUR
+  use constants, only: PI_OVER_TWO,PI_OVER_FOUR
 
   implicit none
 

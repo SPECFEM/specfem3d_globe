@@ -109,7 +109,7 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
     endif
 
     ! checks length of file
-    call ASDF_get_num_elements_from_path_f(current_asdf_handle,&
+    call ASDF_get_num_elements_from_path_f(current_asdf_handle, &
        "AuxiliaryData/AdjointSources/" // trim(adj_filename) // C_NULL_CHAR, nsamples_infered, ier)
 
     ! print *, trim(adj_filename), nsamples_infered
@@ -117,7 +117,7 @@ subroutine check_adjoint_sources_ASDF(irec, nadj_sources_found)
     ! checks length
     if (nsamples_infered /= NSTEP) then
       print *,'adjoint source error: ',trim(adj_filename),' has length',nsamples_infered,' but should be',NSTEP
-      call exit_MPI(myrank,&
+      call exit_MPI(myrank, &
         'file '//trim(adj_filename)//' length is wrong, please check your adjoint sources and your simulation duration')
     endif
 

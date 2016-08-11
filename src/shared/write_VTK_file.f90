@@ -40,7 +40,7 @@
 
 ! external mesh routine for saving VTK files for points locations
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 
   implicit none
 
@@ -101,7 +101,7 @@
 !
 !! external mesh routine for saving VTK files for points locations
 !
-!  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
+!  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 !
 !  implicit none
 !
@@ -162,7 +162,7 @@
 
 ! routine for saving VTK file holding logical flag on each spectral element
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
@@ -203,7 +203,7 @@
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec = 1,nspec
     write(IOUT_VTK,'(9i12)') 8, &
-          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1, &
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
   write(IOUT_VTK,*)
@@ -241,7 +241,7 @@
 
 ! routine for saving VTK file holding integer value on each spectral element
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
@@ -282,7 +282,7 @@
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec = 1,nspec
     write(IOUT_VTK,'(9i12)') 8, &
-          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1, &
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
   write(IOUT_VTK,*)
@@ -315,7 +315,7 @@
 
 ! outputs single file for each process
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
 
   implicit none
 
@@ -446,7 +446,7 @@
 !
 !! outputs single file for all processes
 !
-!  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
+!  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
 !
 !  implicit none
 !
@@ -647,7 +647,7 @@
 
 ! external mesh routine for saving vtk files for CUSTOM_REAL values on all GLL points
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
@@ -734,7 +734,7 @@
     write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
     do ispec=1,nspec
       write(IOUT_VTK,'(9i12)') 8, &
-            (ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3,&
+            (ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3, &
             (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
     enddo
   else
@@ -831,7 +831,7 @@
 
 ! saves vtk files for CUSTOM_REAL values on all spectral elements
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
@@ -867,7 +867,7 @@
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec = 1,nspec
     write(IOUT_VTK,'(9i12)') 8, &
-          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1, &
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
   write(IOUT_VTK,*) ""

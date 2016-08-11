@@ -294,7 +294,7 @@
 
   subroutine transfer_boundary_to_device(Mesh_pointer, NPROC, &
                                             buffer_recv_vector, &
-                                            num_interfaces,max_nibool_interfaces,&
+                                            num_interfaces,max_nibool_interfaces, &
                                             request_recv_vector, &
                                             IREGION,FORWARD_OR_ADJOINT)
 

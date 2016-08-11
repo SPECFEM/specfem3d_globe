@@ -256,7 +256,7 @@
   subroutine epcrust_smooth_base(x,y,x1,y1,weight)
 
   use constants
-  use model_epcrust_par,only: NTHETA_EP,NPHI_EP,cap_degree_EP
+  use model_epcrust_par, only: NTHETA_EP,NPHI_EP,cap_degree_EP
 
   implicit none
 
@@ -355,7 +355,7 @@
   subroutine ilon_jlat(lon,lat,ilon,jlat)
 
   use constants
-  use model_epcrust_par,only: &
+  use model_epcrust_par, only: &
     EPCRUST_LON_MIN,EPCRUST_LAT_MAX,EPCRUST_SAMPLE, &
     EPCRUST_NLON,EPCRUST_NLAT
 

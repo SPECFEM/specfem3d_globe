@@ -27,11 +27,11 @@
 
   subroutine setup_color_perm(iregion_code)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,IMAIN,USE_MESH_COLORING_GPU,SAVE_MESH_FILES, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE
 
-  use meshfem3D_par,only: ibool,is_on_a_slice_edge
+  use meshfem3D_par, only: ibool,is_on_a_slice_edge
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -228,20 +228,20 @@
 
 ! sets up mesh coloring
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     LOCAL_PATH,MAX_NUMBER_OF_COLORS,IMAIN,NGLLX,NGLLY,NGLLZ,IFLAG_IN_FICTITIOUS_CUBE, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,MAX_STRING_LEN,IOUT
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     idoubling,xstore_glob,ystore_glob,zstore_glob
 
-  use MPI_crust_mantle_par,only: &
+  use MPI_crust_mantle_par, only: &
     num_colors_outer_crust_mantle,num_colors_inner_crust_mantle,num_elem_colors_crust_mantle
 
-  use MPI_outer_core_par,only: &
+  use MPI_outer_core_par, only: &
     num_colors_outer_outer_core,num_colors_inner_outer_core,num_elem_colors_outer_core
 
-  use MPI_inner_core_par,only: &
+  use MPI_inner_core_par, only: &
     num_colors_outer_inner_core,num_colors_inner_inner_core,num_elem_colors_inner_core
 
   implicit none
@@ -595,18 +595,18 @@
 
   use constants
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,ATTENUATION,SAVE_BOUNDARY_MESH, &
     ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     ABSORBING_CONDITIONS, &
     LOCAL_PATH, &
     NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
     xstore,ystore,zstore,idoubling,xstore_glob,ystore_glob,zstore_glob
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -621,9 +621,9 @@
     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
     ibelm_670_top,ibelm_670_bot
 
-  use MPI_crust_mantle_par,only: NSPEC_CRUST_MANTLE
-  use MPI_outer_core_par,only: NSPEC_OUTER_CORE
-  use MPI_inner_core_par,only: NSPEC_INNER_CORE
+  use MPI_crust_mantle_par, only: NSPEC_CRUST_MANTLE
+  use MPI_outer_core_par, only: NSPEC_OUTER_CORE
+  use MPI_inner_core_par, only: NSPEC_INNER_CORE
 
   implicit none
 
@@ -1006,7 +1006,7 @@
 !                              npoin2D_xi,npoin2D_eta)
 !
 !  use constants
-!  use meshfem3D_par,only: NSTEP,DT,NPROC_XI,NPROC_ETA
+!  use meshfem3D_par, only: NSTEP,DT,NPROC_XI,NPROC_ETA
 !  implicit none
 !
 !  integer :: myrank

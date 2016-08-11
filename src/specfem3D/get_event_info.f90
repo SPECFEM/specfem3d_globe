@@ -33,7 +33,7 @@
 ! Also, t_shift is added as a new parameter to be written on sac headers!
 ! by Ebru Bozdag
 
-  subroutine get_event_info_parallel(myrank,yr,jda,mo,da,ho,mi,sec,&
+  subroutine get_event_info_parallel(myrank,yr,jda,mo,da,ho,mi,sec, &
                                     event_name,tshift_cmt,t_shift, &
                                     elat,elon,depth,mb,ms,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
@@ -128,9 +128,9 @@
 ! Time-shifts of all sources can be read and the minimum t_shift is taken to be written in sac headers!
 ! by Ebru
 
-  subroutine get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift,&
-                            elat_pde,elon_pde,depth_pde,mb,ms,&
-                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES,&
+  subroutine get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift, &
+                            elat_pde,elon_pde,depth_pde,mb,ms, &
+                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
                             Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
 
   use constants

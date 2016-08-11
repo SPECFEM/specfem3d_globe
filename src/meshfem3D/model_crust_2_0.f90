@@ -318,7 +318,7 @@
 ! The cap is first rotated to the North Pole for easier implementation.
 
   use constants
-  use model_crust_2_0_par,only: CRUST_NP,CRUST_NLO,CRUST_NLA
+  use model_crust_2_0_par, only: CRUST_NP,CRUST_NLO,CRUST_NLA
 
   implicit none
 
@@ -471,7 +471,7 @@
 
   subroutine get_crust_2_0_structure(ikey,vptyp,vstyp,rhtyp,thtp,crust_thickness,crust_vp,crust_vs,crust_rho)
 
-  use model_crust_2_0_par,only: CRUST_NP,CRUST_NLO
+  use model_crust_2_0_par, only: CRUST_NP,CRUST_NLO
 
   implicit none
 

@@ -354,7 +354,7 @@
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                         rmass_ocean_load, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                         my_neighbours_crust_mantle)
   endif
 
@@ -362,7 +362,7 @@
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassz_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
 
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
@@ -370,13 +370,13 @@
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
 
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassy_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
   endif
 
@@ -385,13 +385,13 @@
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
 
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassy_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
     endif
   endif
@@ -402,40 +402,40 @@
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                            rmass_outer_core, &
                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                           nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
+                           nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
                            my_neighbours_outer_core)
 
   ! inner core
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
                            rmassz_inner_core, &
                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                           nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                           nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                            my_neighbours_inner_core)
 
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                              rmassx_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                             nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                              my_neighbours_inner_core)
 
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                              rmassy_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                             nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                              my_neighbours_inner_core)
 
     if (SIMULATION_TYPE == 3) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                                b_rmassx_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                               nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                               nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                my_neighbours_inner_core)
 
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                                b_rmassy_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                               nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                               nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                my_neighbours_inner_core)
     endif
   endif
@@ -858,7 +858,7 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
-  use specfem_par_movie,only: muvstore_crust_mantle_3dmovie
+  use specfem_par_movie, only: muvstore_crust_mantle_3dmovie
 
   implicit none
 
@@ -1791,7 +1791,7 @@
   subroutine prepare_timerun_noise()
 
   use specfem_par
-  use specfem_par_crustmantle,only: NSPEC_TOP
+  use specfem_par_crustmantle, only: NSPEC_TOP
   use specfem_par_noise
 
   implicit none

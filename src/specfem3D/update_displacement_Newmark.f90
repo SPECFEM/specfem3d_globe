@@ -147,7 +147,7 @@
   subroutine update_displ_elastic(NGLOB,displ,veloc,accel, &
                                   deltat,deltatover2,deltatsqover2)
 
-  use constants_solver,only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
+  use constants_solver, only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
 
   implicit none
 
@@ -195,7 +195,7 @@
   subroutine update_displ_acoustic(NGLOB,displ,veloc,accel, &
                                    deltat,deltatover2,deltatsqover2)
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -287,7 +287,7 @@
 
 ! updates acceleration and velocity in outer core
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -380,7 +380,7 @@
 
 ! updates velocity in crust/mantle region, and acceleration and velocity in inner core
 
-  use constants_solver,only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
+  use constants_solver, only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
 
   implicit none
 

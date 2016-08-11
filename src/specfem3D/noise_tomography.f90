@@ -81,7 +81,7 @@
 ! checks for consistency of the parameters
 
   use specfem_par
-  use specfem_par_crustmantle,only: NSPEC_TOP
+  use specfem_par_crustmantle, only: NSPEC_TOP
   use specfem_par_noise
 
   implicit none
@@ -387,7 +387,7 @@
 ! for "ensemble forward source"
 
   use constants_solver
-  use shared_parameters,only:OUTPUT_FILES,DT
+  use shared_parameters, only: OUTPUT_FILES,DT
 
   implicit none
 
@@ -440,7 +440,7 @@
     read(IIN_NOISE,*,iostat=ier) nu_master(itime)
     if (ier /= 0) then
       print *,'Error noise nu_master file length: number of required components is 3'
-      call exit_MPI(myrank,&
+      call exit_MPI(myrank, &
                     'file '//trim(filename)//' has wrong length, the vector should have three components (NEZ)')
     endif
   enddo
@@ -485,7 +485,7 @@
 
 ! lists distances to master stations
 
-  use specfem_par,only: nrec,stlat,stlon,station_name,network_name, &
+  use specfem_par, only: nrec,stlat,stlon,station_name,network_name, &
     HUGEVAL,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,myrank,IMAIN,NOISE_TOMOGRAPHY
   use specfem_par_noise
 
@@ -740,11 +740,11 @@
 !
 ! called for NOISE_TOMOGRAPHY == 2 and 3
 
-  use specfem_par,only: CUSTOM_REAL,NDIM,NOISE_TOMOGRAPHY,GPU_MODE,UNDO_ATTENUATION, &
+  use specfem_par, only: CUSTOM_REAL,NDIM,NOISE_TOMOGRAPHY,GPU_MODE,UNDO_ATTENUATION, &
     myrank,Mesh_pointer,wgllwgll_xy,it,it_end, &
     NSTEP,NSUBSET_ITERATIONS,NT_DUMP_ATTENUATION,iteration_on_subset,it_subset_end,it_of_this_subset
 
-  use specfem_par_crustmantle,only: NSPEC_TOP,ibelm_top_crust_mantle,ibool_crust_mantle,jacobian2D_top_crust_mantle
+  use specfem_par_crustmantle, only: NSPEC_TOP,ibelm_top_crust_mantle,ibool_crust_mantle,jacobian2D_top_crust_mantle
   use specfem_par_noise
 
   implicit none

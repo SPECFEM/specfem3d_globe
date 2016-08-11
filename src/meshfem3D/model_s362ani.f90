@@ -208,7 +208,7 @@
 
   subroutine evradker(depth,string,nker,vercof,dvercof,ierror)
 
-  use constants,only: R_EARTH_KM
+  use constants, only: R_EARTH_KM
 
   implicit none
 
@@ -790,7 +790,7 @@
                       numvar,ivarkern,varstr, &
                       refmdl,kerstr,hsplfl,dskker)
 
-  use model_s362ani_par,only: maxcoe,maxhpa,maxker
+  use model_s362ani_par, only: maxcoe,maxhpa,maxker
 
   implicit none
 
@@ -928,9 +928,9 @@
                       xlaspl,xlospl,xraspl,ixlspl,coef, &
                       hsplfile,refmodel,kernstri,desckern)
 
-  use constants,only: IMAIN,IIN
+  use constants, only: IMAIN,IIN
 
-  use model_s362ani_par,only: maxcoe,maxhpa,maxker
+  use model_s362ani_par, only: maxcoe,maxhpa,maxker
 
   implicit none
 
@@ -1079,9 +1079,9 @@
 
   subroutine splcon(xlat,xlon,numcoe,verlat,verlon,verrad,ncon,icon,con,dd)
 
-  use constants,only: DEGREES_TO_RADIANS,RADIANS_TO_DEGREES
+  use constants, only: DEGREES_TO_RADIANS,RADIANS_TO_DEGREES
 
-  use model_s362ani_par,only: maxver,maxcoe
+  use model_s362ani_par, only: maxver,maxcoe
 
   implicit none
 
@@ -1154,7 +1154,7 @@
   subroutine model_s362ani_subshsv(xcolat,xlon,xrad,dvsh,dvsv,dvph,dvpv)
 
   use model_s362ani_par
-  use constants,only: R_EARTH_KM
+  use constants, only: R_EARTH_KM
 
   implicit none
 

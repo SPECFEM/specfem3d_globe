@@ -28,7 +28,7 @@
 
   subroutine write_AVS_DX_output(nspec,npointot,iregion_code)
 
-  use meshfem3d_par,only: &
+  use meshfem3d_par, only: &
     ibool,idoubling, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
@@ -37,7 +37,7 @@
     ADIOS_FOR_AVS_DX
 
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
     nspl,rspl,espl,espl2
 
@@ -95,7 +95,7 @@
 
   ! Output material information for all GLL points
   ! Can be use to check the mesh
-  !    call write_AVS_DX_global_data_gll(prname,nspec,xstore,ystore,zstore,&
+  !    call write_AVS_DX_global_data_gll(prname,nspec,xstore,ystore,zstore, &
   !                rhostore,kappavstore,muvstore,Qmu_store,ATTENUATION)
   deallocate(num_ibool_AVS_DX,mask_ibool)
 

@@ -28,9 +28,9 @@
 
 module postprocess_par
 
-  use shared_input_parameters,only: LOCAL_PATH
+  use shared_input_parameters, only: LOCAL_PATH
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN, &
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN, &
     NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     FOUR_THIRDS,R_EARTH_KM,GAUSSALPHA,GAUSSBETA
 
@@ -53,7 +53,7 @@ module postprocess_par
   integer, dimension(:,:,:,:),allocatable :: ibool
   logical, dimension(:),allocatable :: ispec_is_tiso
 
-  ! mpi process
+  ! MPI process
   integer :: myrank,sizeprocs
 
 end module postprocess_par

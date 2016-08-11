@@ -40,13 +40,13 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
     wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
-  use specfem_par_crustmantle,only: &
+  use specfem_par_crustmantle, only: &
     rstore => rstore_crust_mantle, &
     xix => xix_crust_mantle,xiy => xiy_crust_mantle,xiz => xiz_crust_mantle, &
     etax => etax_crust_mantle,etay => etay_crust_mantle,etaz => etaz_crust_mantle, &

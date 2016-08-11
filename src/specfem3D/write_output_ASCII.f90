@@ -33,9 +33,9 @@
 ! here would result in a loss of accuracy when one later convolves
 ! the results with the source time function
 
-  use constants,only: CUSTOM_REAL,SIZE_REAL,IOUT,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,SIZE_REAL,IOUT,MAX_STRING_LEN
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     DT,t0,NSTEP, &
     seismo_offset,seismo_current, &
     NTSTEP_BETWEEN_OUTPUT_SEISMOS,OUTPUT_FILES,SIMULATION_TYPE, &

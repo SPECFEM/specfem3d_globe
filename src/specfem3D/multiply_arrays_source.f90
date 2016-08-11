@@ -46,7 +46,7 @@
 
 ! multiplies acceleration with inverse of mass matrices in crust/mantle,solid inner core region
 
-  use constants_solver,only: CUSTOM_REAL,NDIM,ROTATION_VAL
+  use constants_solver, only: CUSTOM_REAL,NDIM,ROTATION_VAL
 
   implicit none
 
@@ -120,7 +120,7 @@
 
 ! multiplies acceleration with inverse of mass matrix in outer core region
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 

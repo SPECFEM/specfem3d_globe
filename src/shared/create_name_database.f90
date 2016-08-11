@@ -29,7 +29,7 @@
 
 ! create the name of the database for the mesher and the solver
 
-  use constants,only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
 
   implicit none
 
@@ -50,7 +50,7 @@ subroutine create_name_database_adios(prname,iregion_code,LOCAL_PATH)
 
   ! create the name of the database for the mesher and the solver
 
-  use constants,only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
 
   implicit none
 

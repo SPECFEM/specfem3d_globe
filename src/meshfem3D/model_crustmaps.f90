@@ -209,7 +209,7 @@
   subroutine read_general_crustmap_layer(var,var_letter,ind)
 
   use constants
-  use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
+  use model_crustmaps_par, only: CRUSTMAP_RESOLUTION
 
   implicit none
 
@@ -539,7 +539,7 @@
   subroutine ibilinearmap(lat,lng,iupcolat,ileftlng,weightup,weightleft)
 
   use constants
-  use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
+  use model_crustmaps_par, only: CRUSTMAP_RESOLUTION
 
   implicit none
 

@@ -88,7 +88,7 @@ program clip_sem_globe
   real(kind=CUSTOM_REAL) :: data_min,data_max
   real(kind=CUSTOM_REAL) :: data_min_all,data_max_all
 
-  ! mpi initialization
+  ! MPI initialization
   call init_mpi()
   call world_size(sizeprocs)
   call world_rank(myrank)

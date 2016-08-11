@@ -34,19 +34,19 @@
                                               R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
                                               epsilondev_xx,epsilondev_yy,epsilondev_xy, &
                                               epsilondev_xz,epsilondev_yz, &
-                                              epsilon_trace_over_3,&
+                                              epsilon_trace_over_3, &
                                               alphaval,betaval,gammaval, &
                                               factor_common,vnspec)
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
     wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
-  use specfem_par_innercore,only: &
+  use specfem_par_innercore, only: &
     rstore => rstore_inner_core, &
     xix => xix_inner_core,xiy => xiy_inner_core,xiz => xiz_inner_core, &
     etax => etax_inner_core,etay => etay_inner_core,etaz => etaz_inner_core, &

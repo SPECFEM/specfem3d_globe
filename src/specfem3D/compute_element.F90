@@ -53,9 +53,9 @@
 
 ! isotropic element in crust/mantle region
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS
 
-  use constants_solver,only: &
+  use constants_solver, only: &
     NSPEC => NSPEC_CRUST_MANTLE, &
     NGLOB => NGLOB_CRUST_MANTLE, &
     NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
@@ -65,10 +65,10 @@
     ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
-  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+  use specfem_par, only: COMPUTE_AND_STORE_STRAIN
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -248,9 +248,9 @@
 
 ! isotropic element in inner core
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS
 
-  use constants_solver,only: &
+  use constants_solver, only: &
     NSPEC => NSPEC_INNER_CORE, &
     NGLOB => NGLOB_INNER_CORE, &
     NSPEC_ATTENUATION => NSPEC_INNER_CORE_ATTENUATION, &
@@ -259,10 +259,10 @@
     ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
-  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+  use specfem_par, only: COMPUTE_AND_STORE_STRAIN
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -447,9 +447,9 @@
 
 ! tiso element in crust/mantle
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
 
-  use constants_solver,only: &
+  use constants_solver, only: &
     NSPEC => NSPEC_CRUST_MANTLE, &
     NGLOB => NGLOB_CRUST_MANTLE, &
     NSPECMAX_ISO => NSPECMAX_ISO_MANTLE, &
@@ -460,10 +460,10 @@
     ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
-  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+  use specfem_par, only: COMPUTE_AND_STORE_STRAIN
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -853,9 +853,9 @@
 
 ! fully anisotropic element in crust/mantle region
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
 
-  use constants_solver,only: &
+  use constants_solver, only: &
     NSPEC => NSPEC_CRUST_MANTLE, &
     NGLOB => NGLOB_CRUST_MANTLE, &
     NSPECMAX_ANISO => NSPECMAX_ANISO_MANTLE, &
@@ -865,10 +865,10 @@
     ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
-  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+  use specfem_par, only: COMPUTE_AND_STORE_STRAIN
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -1083,9 +1083,9 @@
 
 ! anisotropic element in inner core with hexagonal symmetry (and vertical symmetry axis)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,NRAD_GRAVITY,FOUR_THIRDS,TWO_THIRDS
 
-  use constants_solver,only:  &
+  use constants_solver, only: &
     NSPEC => NSPEC_INNER_CORE, &
     NGLOB => NGLOB_INNER_CORE, &
     NSPECMAX_ANISO => NSPECMAX_ANISO_IC, &
@@ -1095,10 +1095,10 @@
     ATTENUATION_VAL,ATTENUATION_3D_VAL,ATTENUATION_1D_WITH_3D_STORAGE_VAL, &
     PARTIAL_PHYS_DISPERSION_ONLY_VAL,GRAVITY_VAL
 
-  use specfem_par,only: COMPUTE_AND_STORE_STRAIN
+  use specfem_par, only: COMPUTE_AND_STORE_STRAIN
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -1305,10 +1305,10 @@
 
 ! updates stress with attenuation coontribution
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,N_SLS
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,N_SLS
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -1412,10 +1412,10 @@
 ! precomputes factors
 
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -1500,10 +1500,10 @@
 ! computes deviatoric strain
 
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,ONE_THIRD
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,ONE_THIRD
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -1593,10 +1593,10 @@
 
 ! computes dot product of stress tensor with test vector, non-symmetric form
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none
@@ -1682,10 +1682,10 @@
 
 ! computes non-symmetric stress terms for gravity
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NRAD_GRAVITY,R_EARTH,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,NRAD_GRAVITY,R_EARTH,R_EARTH_KM
 
 #ifdef FORCE_VECTORIZATION
-  use constants,only: NGLLCUBE
+  use constants, only: NGLLCUBE
 #endif
 
   implicit none

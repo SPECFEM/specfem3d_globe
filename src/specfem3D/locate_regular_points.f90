@@ -27,7 +27,7 @@
 
   subroutine read_kl_regular_grid(GRID)
 
-  use constants,only: IIN,NM_KL_REG_LAYER,PATHNAME_KL_REG, &
+  use constants, only: IIN,NM_KL_REG_LAYER,PATHNAME_KL_REG, &
     KL_REG_MIN_LAT,KL_REG_MAX_LAT,KL_REG_MIN_LON,KL_REG_MAX_LON
 
   use specfem_par, only: myrank
@@ -96,7 +96,7 @@
 
   subroutine find_regular_grid_slice_number(slice_number, GRID)
 
-  use constants,only: CUSTOM_REAL,PI,DEGREES_TO_RADIANS, &
+  use constants, only: CUSTOM_REAL,PI,DEGREES_TO_RADIANS, &
     NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
 
   use specfem_par, only: myrank, addressing, &
@@ -169,7 +169,7 @@
                                    xigll,yigll,zigll,ispec_reg, &
                                    hxir_reg,hetar_reg,hgammar_reg)
 
-  use constants_solver,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NUM_ITER, &
+  use constants_solver, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NUM_ITER, &
     DEGREES_TO_RADIANS,HUGEVAL,TWO_PI,R_UNIT_SPHERE,R_EARTH, &
     NM_KL_REG_PTS_VAL,NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
 

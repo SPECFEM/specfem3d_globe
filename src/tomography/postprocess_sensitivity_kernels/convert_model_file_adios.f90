@@ -32,9 +32,9 @@
 
 program convert_model_file_adios
 
-  use constants,only: ADIOS_TRANSPORT_METHOD
+  use constants, only: ADIOS_TRANSPORT_METHOD
 
-  use postprocess_par,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
+  use postprocess_par, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     MAX_STRING_LEN,NPROCTOT_VAL,NSPEC_CRUST_MANTLE
 
   use adios_read_mod
@@ -220,7 +220,7 @@ program convert_model_file_adios
   model_rho(:,:,:,:) = 0.0_CUSTOM_REAL
   model_qmu(:,:,:,:) = 0.0_CUSTOM_REAL
 
-  ! gets mpi communicator for adios calls
+  ! gets MPI communicator for adios calls
   call world_duplicate(comm)
 
 !--------------------------------------------

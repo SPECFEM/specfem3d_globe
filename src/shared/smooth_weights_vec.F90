@@ -30,10 +30,10 @@
 #include "config.fh"
 
 
-  subroutine smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
+  subroutine smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
                                    xx_elem,yy_elem,zz_elem)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE
 
   implicit none
 
@@ -144,7 +144,7 @@
 
 ! returns vector lengths as distances in radial and horizontal direction
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -215,7 +215,7 @@
 !
 ! returns: xlon,xlat,weight
 
-  use constants,only: ZERO,ONE,TINYVAL,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,PI,TWO_PI,PI_OVER_TWO
+  use constants, only: ZERO,ONE,TINYVAL,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,PI,TWO_PI,PI_OVER_TWO
 
   implicit none
 

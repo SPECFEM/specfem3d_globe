@@ -46,13 +46,13 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
     wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
-  use specfem_par_innercore,only: &
+  use specfem_par_innercore, only: &
     rstore => rstore_inner_core, &
     deriv => deriv_mapping_inner_core, &
     kappavstore => kappavstore_inner_core, &
@@ -66,10 +66,10 @@
     nspec_outer => nspec_outer_inner_core, &
     nspec_inner => nspec_inner_inner_core
 
-  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+  use specfem_par, only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
 #ifdef FORCE_VECTORIZATION
-  use specfem_par_innercore,only: &
+  use specfem_par_innercore, only: &
     ibool_inv_tbl => ibool_inv_tbl_inner_core, &
     ibool_inv_st => ibool_inv_st_inner_core, &
     num_globs => num_globs_inner_core, &
@@ -428,7 +428,7 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -473,7 +473,7 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -518,7 +518,7 @@
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 

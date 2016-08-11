@@ -30,7 +30,7 @@
 ! this is only a placeholder routine, which is not used yet... user must supply the sutopo_icb() routine
 
   use constants
-  use meshfem3D_par,only: RICB,RCMB
+  use meshfem3D_par, only: RICB,RCMB
 
   implicit none
 

@@ -37,7 +37,7 @@
 
   use constants
 
-  use meshfem3D_par,only: myrank, &
+  use meshfem3D_par, only: myrank, &
     g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz
 
   implicit none
@@ -309,7 +309,7 @@
 
   use constants
 
-  use meshfem3D_par,only: OUTPUT_FILES,NCHUNKS, &
+  use meshfem3D_par, only: OUTPUT_FILES,NCHUNKS, &
     x_observation,y_observation,z_observation,g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz
 
   implicit none

@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine meshfem3D_models_broadcast(myrank,NSPEC, &
-                                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
+                                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
                                         R80,R220,R670,RCMB,RICB, &
                                         LOCAL_PATH)
 
@@ -351,11 +351,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp,&
+  subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp, &
                               vpv,vph,vsv,vsh,eta_aniso, &
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
-                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
+                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
 #ifdef CEM
                               ,ispec,i,j,k &
@@ -1010,7 +1010,7 @@
 !
 
 
-  subroutine meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,&
+  subroutine meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso, &
                                          myrank,iregion_code,ispec,i,j,k)
 
 ! overwrites values with updated model values (from iteration step) here, given at all GLL points

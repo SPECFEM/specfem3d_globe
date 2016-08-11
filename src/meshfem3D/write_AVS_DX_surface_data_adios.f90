@@ -44,7 +44,7 @@ contains
 
 subroutine define_AVS_DX_surfaces_data_adios(adios_group, &
                                              myrank,nspec,iboun, &
-                                             ibool,mask_ibool,npointot,&
+                                             ibool,mask_ibool,npointot, &
                                              ISOTROPIC_3D_MANTLE, &
                                              group_size_inc, avs_dx_adios)
 
@@ -167,7 +167,7 @@ end subroutine define_AVS_DX_surfaces_data_adios
 !===============================================================================
 
   subroutine prepare_AVS_DX_surfaces_data_adios(myrank,nspec,iboun, &
-                                                ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
+                                                ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
                                                 rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
                                                 ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
                                                 RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &

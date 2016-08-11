@@ -29,9 +29,9 @@
 !! \param nrec_local The number of receivers on the local processor
   subroutine init_asdf_data(nrec_local)
 
-  use specfem_par, only : myrank
+  use specfem_par, only: myrank
 
-  use asdf_data,only: asdf_container
+  use asdf_data, only: asdf_container
 
   implicit none
   ! Parameters
@@ -75,14 +75,14 @@
 !! \param iorientation The recorded seismogram's orientation direction
   subroutine store_asdf_data(seismogram_tmp, irec_local, irec, chn, iorientation)
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     station_name,network_name, &
     seismo_current, NTSTEP_BETWEEN_OUTPUT_SEISMOS, myrank, &
     stlat, stlon, stele, stbur
 
-  use asdf_data,only: asdf_container
+  use asdf_data, only: asdf_container
 
   implicit none
 
@@ -123,7 +123,7 @@
 !> Closes the ASDF data structure by deallocating all arrays
   subroutine close_asdf_data()
 
-  use asdf_data,only: asdf_container
+  use asdf_data, only: asdf_container
 
   implicit none
 
@@ -146,7 +146,7 @@
 !> Writes the ASDF data structure to the file
   subroutine write_asdf()
 
-  use asdf_data,only: asdf_container
+  use asdf_data, only: asdf_container
 
   use iso_c_binding
   use iso_fortran_env
@@ -228,7 +228,7 @@
   character(len=MAX_TIME_STRING_LENGTH) :: start_time_string, end_time_string, &
                        cmt_start_time_string, pde_start_time_string
 
-  ! alias mpi communicator
+  ! alias MPI communicator
   call world_duplicate(comm)
   call world_size(mysize)
 
@@ -250,7 +250,7 @@
     call cmt_to_quakeml(quakeml, pde_start_time_string, cmt_start_time_string)
 
     ! Generate specfem provenance string
-    call ASDF_generate_sf_provenance_f(trim(start_time_string)//C_NULL_CHAR,&
+    call ASDF_generate_sf_provenance_f(trim(start_time_string)//C_NULL_CHAR, &
                                      trim(end_time_string)//C_NULL_CHAR, cptr, len_prov)
     call c_f_pointer(cptr, fptr, [len_prov])
     allocate(provenance(len_prov+1))
@@ -422,7 +422,7 @@
 
     do k = 1, mysize ! Need to set up ASDF container on all processers
       do j = 1, num_stations_gather(k) ! loop over number of stations on that processer
-        call ASDF_create_stations_group_f(waveforms_grp,   &
+        call ASDF_create_stations_group_f(waveforms_grp, &
            trim(network_names_gather(j, k)) // "." //      &
            trim(station_names_gather(j, k)) // C_NULL_CHAR, &
            station_grps_gather(j, k))
@@ -506,10 +506,10 @@
 !! \start_time_string The start date stored as a character string
   subroutine cmt_to_quakeml(quakemlstring, pde_start_time_string, cmt_start_time_string)
 
-  use specfem_par,only:&
-    cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC,cmt_depth => cmt_depth_SAC,&
-    hdur => cmt_hdur_SAC,M0,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC,&
-    pde_lat => elat_SAC,pde_lon => elon_SAC,pde_depth => depth_SAC,&
+  use specfem_par, only: &
+    cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC,cmt_depth => cmt_depth_SAC, &
+    hdur => cmt_hdur_SAC,M0,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC, &
+    pde_lat => elat_SAC,pde_lon => elon_SAC,pde_depth => depth_SAC, &
     mb => mb_SAC,ms,Mw
 
   implicit none
@@ -699,8 +699,8 @@
 !! \param end_time_string A string for defining the waveform name end time
   subroutine get_time(starttime, start_time_string, pde_start_time_string, cmt_start_time_string, end_time_string)
 
-  use specfem_par,only:&
-    NSTEP,DT,t_shift_SAC,hdur,&
+  use specfem_par, only: &
+    NSTEP,DT,t_shift_SAC,hdur, &
     yr_SAC,ho_SAC,mi_SAC,sec_SAC,jda_SAC
 
   implicit none

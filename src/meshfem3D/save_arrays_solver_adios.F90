@@ -55,19 +55,19 @@
 
   use constants
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     OCEANS,TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,ATTENUATION
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, LOCAL_PATH, &
     ADIOS_FOR_SOLVER_MESHFILES, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
-    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
+    rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -82,8 +82,8 @@
     ispec_is_tiso,tau_s,T_c_source,tau_e_store,Qmu_store, &
     nspec_actually, nspec_ani, nspec_stacey, nglob_xy, nglob_oceans ! prname,
 
-  use adios_write_mod,only: adios_declare_group,adios_select_method
-  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
+  use adios_write_mod, only: adios_declare_group,adios_select_method
+  use adios_helpers_mod, only: define_adios_global_array1D,write_adios_global_1d_array, &
     define_adios_global_real_1d_array,define_adios_scalar, &
     check_adios_err
   use manager_adios
@@ -858,16 +858,16 @@
   use meshfem3D_par, only: &
     LOCAL_PATH
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,ATTENUATION, &
     ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     Qmu_store
 
-  use adios_write_mod,only: adios_declare_group,adios_select_method
-  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array,check_adios_err
+  use adios_write_mod, only: adios_declare_group,adios_select_method
+  use adios_helpers_mod, only: define_adios_global_array1D,write_adios_global_1d_array,check_adios_err
   use manager_adios
 
   implicit none
@@ -1065,8 +1065,8 @@
 
   use constants
 
-  use adios_write_mod,only: adios_declare_group,adios_select_method
-  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
+  use adios_write_mod, only: adios_declare_group,adios_select_method
+  use adios_helpers_mod, only: define_adios_global_array1D,write_adios_global_1d_array, &
     define_adios_scalar,check_adios_err
   use manager_adios
 
@@ -1287,10 +1287,10 @@
 
   use constants
 
-  use meshfem3d_par,only: &
+  use meshfem3d_par, only: &
     myrank, LOCAL_PATH
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     HONOR_1D_SPHERICAL_MOHO
     !SAVE_BOUNDARY_MESH,HONOR_1D_SPHERICAL_MOHO,SUPPRESS_CRUSTAL_MESH
 
@@ -1301,7 +1301,7 @@
     ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot, &
     ispec2D_670_top,ispec2D_670_bot ! prname
 
-  use adios_helpers_mod,only: define_adios_global_array1D,write_adios_global_1d_array, &
+  use adios_helpers_mod, only: define_adios_global_array1D,write_adios_global_1d_array, &
     define_adios_scalar,check_adios_err
 
   use manager_adios

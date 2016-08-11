@@ -392,8 +392,8 @@ function pythag_dp(a,b)
 end function pythag_dp
 
 subroutine svdcmp_dp(a,w,v,p)
-!  USE nrtype; USE nrutil, ONLY : assert_eq,nrerror,outerprod
-!  USE nr, ONLY : pythag
+!  USE nrtype; USE nrutil, only: assert_eq,nrerror,outerprod
+!  USE nr, only: pythag
   implicit none
   integer p
   INTEGER, PARAMETER :: DP = KIND(1.0D0)

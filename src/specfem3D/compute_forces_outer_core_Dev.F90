@@ -42,14 +42,14 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
     wgll_cube, &
     minus_rho_g_over_kappa_fluid,d_ln_density_dr_table, &
     MOVIE_VOLUME, &
     USE_LDDRK,istage
 
-  use specfem_par_outercore,only: &
+  use specfem_par_outercore, only: &
     rstore => rstore_outer_core, &
     deriv => deriv_mapping_outer_core, &
     ibool => ibool_outer_core, &
@@ -57,10 +57,10 @@
     nspec_outer => nspec_outer_outer_core, &
     nspec_inner => nspec_inner_outer_core
 
-  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+  use specfem_par, only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
 #ifdef FORCE_VECTORIZATION
-  use specfem_par_outercore,only: &
+  use specfem_par_outercore, only: &
     ibool_inv_tbl => ibool_inv_tbl_outer_core, &
     ibool_inv_st => ibool_inv_st_outer_core, &
     num_globs => num_globs_outer_core, &
@@ -493,7 +493,7 @@
 
 ! 2-dimensional arrays (25,5)/(5,25)
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -525,7 +525,7 @@
 
 ! 3-dimensional arrays (5,5,5) for A and C
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 

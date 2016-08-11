@@ -31,12 +31,12 @@
 
   use constants
 
-  use meshfem3D_par,only: DT,myrank,ibool, &
+  use meshfem3D_par, only: DT,myrank,ibool, &
     xstore_glob,ystore_glob,zstore_glob,SAVE_MESH_FILES, &
     ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,NEX_ETA, &
     dt_max_glob,pmax_glob
 
-  use create_regions_mesh_par2,only: prname
+  use create_regions_mesh_par2, only: prname
 
   implicit none
 
@@ -291,9 +291,9 @@
 !---------------------
   subroutine get_vpvs_minmax(vpmax,vsmin)
 
-  use meshfem3D_models_par,only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
+  use meshfem3D_models_par, only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
@@ -620,7 +620,7 @@
 
   subroutine get_eigenvalues_min_ratio(eig_ratio_min,eig_ratio_max)
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     xixstore,xiystore,xizstore, &
     etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore

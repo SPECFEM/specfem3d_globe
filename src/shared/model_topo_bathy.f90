@@ -317,7 +317,7 @@
 
 ! stores topo_bathy image in PNM format with grey levels
 
-  use constants,only: NX_BATHY,NY_BATHY,IOUT,IMAIN,PLOT_PNM_IMAGE_TOPO_BATHY
+  use constants, only: NX_BATHY,NY_BATHY,IOUT,IMAIN,PLOT_PNM_IMAGE_TOPO_BATHY
   use shared_input_parameters, only: OUTPUT_FILES
 
   implicit none

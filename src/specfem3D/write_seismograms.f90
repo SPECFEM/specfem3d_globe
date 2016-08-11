@@ -27,17 +27,17 @@
 
   subroutine write_seismograms()
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 
-  use constants_solver,only: NGLOB_CRUST_MANTLE,NGLOB_CRUST_MANTLE_ADJOINT
+  use constants_solver, only: NGLOB_CRUST_MANTLE,NGLOB_CRUST_MANTLE_ADJOINT
 
-  use specfem_par,only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
+  use specfem_par, only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
     nrec_local,number_receiver_global,ispec_selected_rec,ispec_selected_source, &
     it,it_begin,it_end,seismo_current,seismo_offset, seismograms,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
     WRITE_SEISMOGRAMS_BY_MASTER,OUTPUT_SEISMOS_ASDF, &
     it_adj_written,moment_der,sloc_der,shdur_der,stshift_der
 
-  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
+  use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
     eps_trace_over_3_crust_mantle,epsilondev_xx_crust_mantle,epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
     epsilondev_yy_crust_mantle,epsilondev_yz_crust_mantle, &
     ibool_crust_mantle
@@ -151,9 +151,9 @@
 ! write seismograms to files
   subroutine write_seismograms_to_file()
 
-  use constants_solver,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,IMAIN,IOUT,itag
+  use constants_solver, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,IMAIN,IOUT,itag
 
-  use specfem_par,only: &
+  use specfem_par, only: &
           NPROCTOT_VAL,myrank,nrec,nrec_local, &
           number_receiver_global,seismograms, &
           islice_selected_rec, &
@@ -191,14 +191,14 @@
         if (seismo_offset == 0) then
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
         else
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
                form='unformatted',position='append',action='write')
         endif
       else
         if (seismo_offset == 0) then
           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
         else
-          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
+          open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old', &
                form='formatted',position='append',action='write')
         endif
       endif
@@ -247,14 +247,14 @@
          if (seismo_offset == 0) then
            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='unknown',form='unformatted',action='write')
          else
-           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old',&
+           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.bin',status='old', &
                 form='unformatted',position='append',action='write')
          endif
        else
          if (seismo_offset == 0) then
            open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='unknown',form='formatted',action='write')
          else
-           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old',&
+           open(unit=IOUT,file=trim(OUTPUT_FILES)//trim(sisname)//'.ascii',status='old', &
                 form='formatted',position='append',action='write')
          endif
        endif
@@ -355,18 +355,18 @@
 
   subroutine write_one_seismogram(one_seismogram,irec,irec_local)
 
-  use constants_solver,only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,DEGREES_TO_RADIANS, &
+  use constants_solver, only: MAX_STRING_LEN,CUSTOM_REAL,NDIM,DEGREES_TO_RADIANS, &
     MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME
 
-  use specfem_par,only: &
+  use specfem_par, only: &
           myrank, &
           station_name,network_name,stlat,stlon, &
           DT, &
           seismo_current, &
-          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_ASDF,&
+          OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_ASDF, &
           OUTPUT_SEISMOS_SAC_BINARY,ROTATE_SEISMOGRAMS_RT,NTSTEP_BETWEEN_OUTPUT_SEISMOS
 
-  use specfem_par,only: &
+  use specfem_par, only: &
           cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC
 
   implicit none
@@ -520,9 +520,9 @@
 
   subroutine write_adj_seismograms(it_adj_written)
 
-  use constants,only: MAX_STRING_LEN,CUSTOM_REAL,IOUT
+  use constants, only: MAX_STRING_LEN,CUSTOM_REAL,IOUT
 
-  use specfem_par,only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
+  use specfem_par, only: NSTEP,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
     DT,t0,LOCAL_TMP_PATH, &
     seismograms,number_receiver_global,nrec_local, &
     it
@@ -583,11 +583,11 @@
       ! the results with the source time function
       if (it <= NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
         !open new file
-        open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)),&
+        open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)), &
               status='unknown',action='write')
       else if (it > NTSTEP_BETWEEN_OUTPUT_SEISMOS) then
         !append to existing file
-        open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)),&
+        open(unit=IOUT,file=LOCAL_TMP_PATH(1:len_trim(LOCAL_TMP_PATH))//sisname(1:len_trim(sisname)), &
               status='old',position='append',action='write')
       endif
       ! make sure we never write more than the maximum number of time steps

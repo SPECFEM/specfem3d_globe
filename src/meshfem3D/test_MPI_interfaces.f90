@@ -32,10 +32,10 @@
                                  ibool_interfaces)
 
   use constants
-  use meshfem3D_par,only: NPROCTOT,myrank
-  use MPI_crust_mantle_par,only: NGLOB_CRUST_MANTLE
-  use MPI_outer_core_par,only: NGLOB_OUTER_CORE
-  use MPI_inner_core_par,only: NGLOB_INNER_CORE
+  use meshfem3D_par, only: NPROCTOT,myrank
+  use MPI_crust_mantle_par, only: NGLOB_CRUST_MANTLE
+  use MPI_outer_core_par, only: NGLOB_OUTER_CORE
+  use MPI_inner_core_par, only: NGLOB_INNER_CORE
 
   implicit none
 
@@ -74,13 +74,13 @@
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
     allocate(mask(NGLOB_CRUST_MANTLE),stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing MPI neighbors')
   case (IREGION_OUTER_CORE)
     allocate(mask(NGLOB_OUTER_CORE),stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing MPI neighbors')
   case (IREGION_INNER_CORE)
     allocate(mask(NGLOB_INNER_CORE),stat=ier)
-    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing mpi neighbors')
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask for testing MPI neighbors')
   case default
     call exit_mpi(myrank,'Error test MPI: iregion_code not recognized')
   end select
@@ -241,7 +241,7 @@
 
   subroutine test_MPI_cm()
 
-  use meshfem3D_par,only: NPROCTOT,myrank
+  use meshfem3D_par, only: NPROCTOT,myrank
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
 
@@ -300,7 +300,7 @@
   call assemble_MPI_vector(NPROCTOT,NGLOB_CRUST_MANTLE, &
                       test_flag_vector, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                      nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                      nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                       my_neighbours_crust_mantle)
 
   ! removes initial flag
@@ -357,7 +357,7 @@
 
   subroutine test_MPI_oc()
 
-  use meshfem3D_par,only: NPROCTOT,myrank
+  use meshfem3D_par, only: NPROCTOT,myrank
   use create_MPI_interfaces_par
   use MPI_outer_core_par
 
@@ -411,7 +411,7 @@
   call assemble_MPI_scalar(NPROCTOT,NGLOB_OUTER_CORE, &
                                 test_flag, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
+                                nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
                                 my_neighbours_outer_core)
 
 
@@ -466,7 +466,7 @@
 
   subroutine test_MPI_ic()
 
-  use meshfem3D_par,only: NPROCTOT,myrank
+  use meshfem3D_par, only: NPROCTOT,myrank
   use create_MPI_interfaces_par
   use MPI_inner_core_par
 
@@ -521,7 +521,7 @@
   call assemble_MPI_vector(NPROCTOT,NGLOB_INNER_CORE, &
                       test_flag_vector, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                      nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                      nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                       my_neighbours_inner_core)
 
   ! removes initial flag

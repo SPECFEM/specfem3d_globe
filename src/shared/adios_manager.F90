@@ -38,7 +38,7 @@ module manager_adios
 
   private
 
-  ! mpi copies of communicator and rank
+  ! MPI copies of communicator and rank
   integer :: comm_adios
   integer :: myrank_adios
 
@@ -102,7 +102,7 @@ contains
 
 !> Initialize ADIOS and setup the xml output file
 
-  use constants,only : ADIOS_BUFFER_SIZE_IN_MB
+  use constants, only: ADIOS_BUFFER_SIZE_IN_MB
 
 #ifdef ADIOS_INPUT
   use adios_write_mod, only: adios_init_noxml,adios_allocate_buffer
@@ -123,7 +123,7 @@ contains
 
 #ifdef ADIOS_INPUT
 
-  ! gets mpi communicator for adios calls
+  ! gets MPI communicator for adios calls
   call world_duplicate(comm_adios)
 
   ! gets rank from (duplicate) adios communicator
@@ -191,7 +191,7 @@ contains
   call adios_finalize(myrank_adios, ier)
   if (ier /= 0 ) stop 'Error cleaning up ADIOS: calling adios_finalize() routine failed'
 
-  ! frees (duplicate) mpi communicator
+  ! frees (duplicate) MPI communicator
   call world_comm_free(comm_adios)
 
 #else
@@ -209,8 +209,8 @@ contains
   subroutine close_file_adios()
 
 #ifdef ADIOS_INPUT
-  use adios_write_mod,only: adios_close
-  use adios_read_mod,only: adios_errmsg
+  use adios_write_mod, only: adios_close
+  use adios_read_mod, only: adios_errmsg
 #endif
 
   implicit none
@@ -257,7 +257,7 @@ contains
 
   subroutine close_file_adios_read()
 
-  use adios_read_mod,only: adios_read_close,adios_read_finalize_method,ADIOS_READ_METHOD_BP
+  use adios_read_mod, only: adios_read_close,adios_read_finalize_method,ADIOS_READ_METHOD_BP
 
   implicit none
 
@@ -288,9 +288,9 @@ contains
 ! useful to read in data from the same number of processors
 ! as the data was written from
 
-  use constants,only: ADIOS_TRANSPORT_METHOD
+  use constants, only: ADIOS_TRANSPORT_METHOD
 
-  use adios_write_mod,only: adios_declare_group,adios_select_method
+  use adios_write_mod, only: adios_declare_group,adios_select_method
 
   implicit none
 
@@ -332,7 +332,7 @@ contains
 
   subroutine set_adios_group_size(groupsize)
 
-  use adios_write_mod,only: adios_group_size
+  use adios_write_mod, only: adios_group_size
 
   implicit none
 
@@ -367,7 +367,7 @@ contains
 ! useful to read in data from the same number of processors
 ! as the data was written from
 
-  use adios_read_mod,only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP,adios_errmsg
+  use adios_read_mod, only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP,adios_errmsg
 
   implicit none
 
@@ -420,7 +420,7 @@ contains
 
 ! only single process is reading, useful for file inquiry
 
-  use adios_read_mod,only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP, &
+  use adios_read_mod, only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP, &
     adios_inq_file,adios_inq_varnames,adios_inq_attrnames
 
   implicit none
@@ -486,7 +486,7 @@ contains
 
 ! opens adios file for writing
 
-  use adios_write_mod,only: adios_open
+  use adios_write_mod, only: adios_open
 
   implicit none
 
@@ -534,7 +534,7 @@ contains
 
 ! open adios file for appending data
 
-  use adios_write_mod,only: adios_open
+  use adios_write_mod, only: adios_open
 
   implicit none
 
@@ -582,7 +582,7 @@ contains
 
 ! reads in a single integer value
 
-  use adios_read_mod,only: adios_schedule_read,adios_perform_reads
+  use adios_read_mod, only: adios_schedule_read,adios_perform_reads
 
   implicit none
 
@@ -624,7 +624,7 @@ contains
 
   subroutine read_adios_scalar_int_only_rank(rank,scalar_name,scalar)
 
-  use adios_read_mod,only: adios_get_scalar
+  use adios_read_mod, only: adios_get_scalar
 
   implicit none
 
@@ -685,7 +685,7 @@ contains
 
 ! file inquiry showing all adios file variables
 
-  use adios_read_mod,only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP, &
+  use adios_read_mod, only: adios_read_open_file,adios_read_init_method,ADIOS_READ_METHOD_BP, &
     adios_inq_file,adios_inq_varnames,adios_inq_attrnames
 
   implicit none
@@ -782,9 +782,9 @@ contains
 
   subroutine read_adios_array_gll(rank,nspec,array_name,array_gll)
 
-  use adios_read_mod,only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
+  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -846,9 +846,9 @@ contains
 
   subroutine read_adios_array_gll_int(rank,nspec,array_name,array_gll)
 
-  use adios_read_mod,only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
+  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
 
-  use constants,only: NGLLX,NGLLY,NGLLZ
+  use constants, only: NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -908,9 +908,9 @@ contains
 
   subroutine read_adios_array_1d(rank,nsize,array_name,array_1d)
 
-  use adios_read_mod,only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
+  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -984,9 +984,9 @@ contains
 
   subroutine read_adios_array_1d_int(rank,nsize,array_name,array_1d)
 
-  use adios_read_mod,only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
+  use adios_read_mod, only: adios_get_scalar,adios_selection_boundingbox,adios_schedule_read,adios_perform_reads
 
-  use constants,only: NGLLX,NGLLY,NGLLZ
+  use constants, only: NGLLX,NGLLY,NGLLZ
 
   implicit none
 
@@ -1045,7 +1045,7 @@ contains
 
 ! writes a single scalar
 
-  use adios_write_mod,only: adios_write
+  use adios_write_mod, only: adios_write
 
   implicit none
 
@@ -1081,9 +1081,9 @@ contains
 
 ! writes a GLL array
 
-  use adios_helpers_writers_mod,only: write_adios_global_1d_array
+  use adios_helpers_writers_mod, only: write_adios_global_1d_array
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
   implicit none
 

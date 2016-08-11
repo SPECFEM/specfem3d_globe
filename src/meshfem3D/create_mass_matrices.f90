@@ -43,17 +43,17 @@
 
   use constants
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     OCEANS
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,NCHUNKS,ABSORBING_CONDITIONS, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,INCLUDE_CENTRAL_CUBE
 
-  use create_regions_mesh_par,only: &
+  use create_regions_mesh_par, only: &
     wxgll,wygll,wzgll
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore,rhostore,kappavstore, &
     rmassx,rmassy,rmassz,b_rmassx,b_rmassy, &
@@ -219,18 +219,18 @@
 ! only called in case of (ROTATION .and. EXACT_MASS_MATRIX_FOR_ROTATION)
   use constants
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,DT
 
-  use create_regions_mesh_par,only: &
+  use create_regions_mesh_par, only: &
     wxgll,wygll,wzgll
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
     rmassx,rmassy,b_rmassx,b_rmassy
 
-  use shared_parameters,only: UNDO_ATTENUATION
+  use shared_parameters, only: UNDO_ATTENUATION
 
   implicit none
 
@@ -338,14 +338,14 @@
 
   use constants
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,DT,NCHUNKS,ichunk, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
-  use create_regions_mesh_par,only: &
+  use create_regions_mesh_par, only: &
     wxgll,wygll,wzgll
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     rmassx,rmassy,rmassz,b_rmassx,b_rmassy, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom, &
     normal_xmin,normal_xmax,normal_ymin,normal_ymax, &
@@ -710,16 +710,16 @@
 
   use constants
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     TOPOGRAPHY,ibathy_topo,CASE_3D
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,RHO_OCEANS
 
-  use create_regions_mesh_par,only: &
+  use create_regions_mesh_par, only: &
     wxgll,wygll
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     rmassz,rmass_ocean_load, &
     ibelm_top,jacobian2D_top
 

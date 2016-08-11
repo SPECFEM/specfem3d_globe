@@ -28,7 +28,7 @@
   subroutine compute_add_sources()
 
   use specfem_par
-  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
+  use specfem_par_crustmantle, only: accel_crust_mantle,ibool_crust_mantle
 
   implicit none
 
@@ -146,7 +146,7 @@
   subroutine compute_add_sources_adjoint()
 
   use specfem_par
-  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
+  use specfem_par_crustmantle, only: accel_crust_mantle,ibool_crust_mantle
 
   implicit none
 
@@ -311,7 +311,7 @@
   subroutine compute_add_sources_backward()
 
   use specfem_par
-  use specfem_par_crustmantle,only: b_accel_crust_mantle,ibool_crust_mantle
+  use specfem_par_crustmantle, only: b_accel_crust_mantle,ibool_crust_mantle
   implicit none
 
   ! local parameters

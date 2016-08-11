@@ -46,13 +46,13 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
     wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
-  use specfem_par_crustmantle,only: &
+  use specfem_par_crustmantle, only: &
     rstore => rstore_crust_mantle, &
     deriv => deriv_mapping_crust_mantle, &
     kappavstore => kappavstore_crust_mantle,kappahstore => kappahstore_crust_mantle, &
@@ -72,11 +72,11 @@
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
 
-  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+  use specfem_par, only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
 #ifdef FORCE_VECTORIZATION
   ! optimized arrays
-  use specfem_par_crustmantle,only: &
+  use specfem_par_crustmantle, only: &
     ibool_inv_tbl => ibool_inv_tbl_crust_mantle, &
     ibool_inv_st => ibool_inv_st_crust_mantle, &
     num_globs => num_globs_crust_mantle, &
@@ -84,7 +84,7 @@
 #endif
 
 !daniel: att - debug
-!  use specfem_par,only: it,NSTEP
+!  use specfem_par, only: it,NSTEP
 
   implicit none
 
@@ -508,7 +508,7 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -553,7 +553,7 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -598,7 +598,7 @@
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -659,7 +659,7 @@
 !
 !  subroutine mxm(A,n1,B,n2,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -697,7 +697,7 @@
 !
 !  subroutine mxm4(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -725,7 +725,7 @@
 !
 !  subroutine mxm5(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -754,7 +754,7 @@
 !
 !  subroutine mxm6(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -784,7 +784,7 @@
 !
 !  subroutine mxm7(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -816,7 +816,7 @@
 !
 !  subroutine mxm8(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -849,7 +849,7 @@
 !
 !  subroutine mxmN(A,n1,B,n2,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -883,7 +883,7 @@
 !
 !  subroutine mxm_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -921,7 +921,7 @@
 !
 !  subroutine mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -959,7 +959,7 @@
 !
 !  subroutine mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -1002,7 +1002,7 @@
 !
 !  subroutine mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -1046,7 +1046,7 @@
 !
 !  subroutine mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -1094,7 +1094,7 @@
 !
 !  subroutine mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -1145,7 +1145,7 @@
 !
 !  subroutine mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !

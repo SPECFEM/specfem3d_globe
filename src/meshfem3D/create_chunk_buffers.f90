@@ -32,12 +32,12 @@
                                   NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
                                   NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,LOCAL_PATH,NCHUNKS,addressing, &
     ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
     NPROC_XI,NPROC_ETA,NPROC,NPROCTOT
 
-  use create_MPI_interfaces_par,only: &
+  use create_MPI_interfaces_par, only: &
     ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
     ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
     xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
@@ -47,7 +47,7 @@
     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
     npoin2D_faces,iboolfaces,iboolcorner
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax
 

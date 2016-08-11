@@ -172,7 +172,7 @@ contains
 !!       x being the variable name inside the code.
 subroutine define_adios_double_scalar (adios_group, group_size_inc, path, name, var)
 
-  use adios_write_mod,only: adios_define_var
+  use adios_write_mod, only: adios_define_var
 
   implicit none
   ! Arguments
@@ -210,7 +210,7 @@ end subroutine define_adios_double_scalar
 !! \note See define_adios_double_scalar()
 subroutine define_adios_float_scalar(adios_group, group_size_inc, path, name, var)
 
-  use adios_write_mod,only: adios_define_var
+  use adios_write_mod, only: adios_define_var
 
   implicit none
   ! Arguments
@@ -248,7 +248,7 @@ end subroutine define_adios_float_scalar
 !! \note See define_adios_double_scalar()
 subroutine define_adios_integer_scalar(adios_group, group_size_inc, path, name, var)
 
-  use adios_write_mod,only: adios_define_var,adios_integer
+  use adios_write_mod, only: adios_define_var,adios_integer
 
   implicit none
   ! Arguments
@@ -291,7 +291,7 @@ end subroutine define_adios_integer_scalar
 !! \note See define_adios_double_scalar()
 subroutine define_adios_long_scalar(adios_group, group_size_inc, path, name, var)
 
-  use adios_write_mod,only: adios_define_var, adios_long
+  use adios_write_mod, only: adios_define_var, adios_long
 
   implicit none
   ! Arguments
@@ -333,7 +333,7 @@ end subroutine define_adios_long_scalar
 !! \note See define_adios_double_scalar()
 subroutine define_adios_byte_scalar (adios_group, group_size_inc, name, path, var)
 
-  use adios_write_mod,only: adios_define_var
+  use adios_write_mod, only: adios_define_var
 
   implicit none
   ! Arguments
@@ -392,7 +392,7 @@ end subroutine define_adios_global_dims_1d
 !! \param local_dim The local dimension of the array.
 subroutine define_adios_global_1d_real_generic(adios_group, group_size_inc, array_name, local_dim)
 
-  use adios_write_mod,only: adios_define_var
+  use adios_write_mod, only: adios_define_var
 
   implicit none
   ! Parameters
@@ -606,7 +606,7 @@ end subroutine define_adios_global_1d_real_5d
 !! \param local_dim The local dimension of the array.
 subroutine define_adios_global_1d_double_generic(adios_group, group_size_inc, array_name, local_dim)
 
-  use adios_write_mod,only: adios_define_var
+  use adios_write_mod, only: adios_define_var
 
   implicit none
   ! Parameters
@@ -820,7 +820,7 @@ end subroutine define_adios_global_1d_double_5d
 !! \param local_dim The local dimension of the array.
 subroutine define_adios_global_1d_int_generic(adios_group, group_size_inc, array_name, local_dim)
 
-  use adios_write_mod,only: adios_define_var
+  use adios_write_mod, only: adios_define_var
 
   implicit none
   ! Parameters
@@ -1034,7 +1034,7 @@ end subroutine define_adios_global_1d_int_5d
 !! \param local_dim The local dimension of the array.
 subroutine define_adios_global_1d_long_generic(adios_group, group_size_inc, array_name, local_dim)
 
-  use adios_write_mod,only: adios_define_var,adios_long
+  use adios_write_mod, only: adios_define_var,adios_long
 
   implicit none
   ! Parameters
@@ -1247,7 +1247,7 @@ end subroutine define_adios_global_1d_long_5d
 !! \param local_dim The local dimension of the array.
 subroutine define_adios_global_1d_logical_generic(adios_group, group_size_inc, array_name, local_dim)
 
-  use adios_write_mod,only: adios_define_var
+  use adios_write_mod, only: adios_define_var
 
   implicit none
   ! Parameters
@@ -1459,7 +1459,7 @@ end subroutine define_adios_global_1d_logical_5d
 !string added
 subroutine define_adios_global_1d_string_generic(adios_group, group_size_inc, array_name, local_dim)
 
-  use adios_write_mod,only: adios_define_var
+  use adios_write_mod, only: adios_define_var
 
   implicit none
   ! Parameters

@@ -737,7 +737,7 @@
       memory_size = memory_size + 6.d0 * NSPEC_2 * dble(SIZE_INTEGER)
     endif
 
-    ! mpi buffers
+    ! MPI buffers
     ! d_ibool_interfaces_crust_mantle
     memory_size = memory_size + num_interfaces_crust_mantle * max_nibool_interfaces_cm * dble(SIZE_INTEGER)
     ! d_send_accel_buffer_crust_mantle
