@@ -535,7 +535,7 @@ program smooth_sem_globe
 
       ! read in the topology, kernel files, calculate center of elements
       ! point locations
-      ! given in cartesian coordinates
+      ! given in Cartesian coordinates
       open(IIN,file=trim(prname_lp),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0) then
         print *,'Error could not open database file: ',trim(prname_lp)
@@ -769,7 +769,7 @@ program smooth_sem_globe
         DO_LOOP_IJK
 
           ! reference location
-          ! current point (i,j,k,ispec) location, cartesian coordinates
+          ! current point (i,j,k,ispec) location, Cartesian coordinates
           x0 = xx0(INDEX_IJK,ispec)
           y0 = yy0(INDEX_IJK,ispec)
           z0 = zz0(INDEX_IJK,ispec)
