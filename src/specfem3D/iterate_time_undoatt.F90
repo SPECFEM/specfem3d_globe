@@ -232,6 +232,7 @@
         ! simulation status output and stability check
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability()
+          if (I_am_running_on_a_slow_node) goto 100
         endif
 
         do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
@@ -395,6 +396,7 @@
         ! simulation status output and stability check
         if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
           call check_stability()
+          if (I_am_running_on_a_slow_node) goto 100
         endif
 
         ! computes adjoint wavefield
@@ -432,6 +434,8 @@
   !---- end of time iteration loop
   !
   enddo   ! end of main time loop
+
+ 100 continue
 
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then

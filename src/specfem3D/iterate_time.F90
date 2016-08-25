@@ -109,6 +109,7 @@
     ! simulation status output and stability check
     if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
       call check_stability()
+      if (I_am_running_on_a_slow_node) goto 100
     endif
 
     do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
@@ -256,6 +257,8 @@
   !---- end of time iteration loop
   !
   enddo   ! end of main time loop
+
+ 100 continue
 
   ! close the huge file that contains a dump of all the time steps to disk
   if (EXACT_UNDOING_TO_DISK) call finish_exact_undoing_to_disk()

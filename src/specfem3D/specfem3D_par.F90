@@ -317,6 +317,10 @@ module specfem_par
   integer :: iteration_on_subset,it_of_this_subset
   integer :: it_subset_end
 
+! if one wants to detect slow nodes compared to a reference time on normal nodes on a given cluster
+! and exclude them from the runs in order not to slow down all the others when NUMBER_OF_SIMULTANEOUS_RUNS > 1.
+  logical :: I_am_running_on_a_slow_node
+
   ! serial i/o mesh reading
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
   logical :: you_can_start_doing_IOs
