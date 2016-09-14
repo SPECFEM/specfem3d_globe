@@ -236,7 +236,8 @@
     write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
-    if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. &
+! do not check before 200 time steps because the time step estimate (which is an average) may then be unreliable
+    if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= 200 .and. &
           tCPU/dble(it) > TOLERANCE_FACTOR_FOR_SLOW_NODES * REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES) &
         I_am_running_on_a_slow_node = .true.
 
@@ -631,8 +632,9 @@
 
   close(IOUT)
 
-  ! if the run is slow and gives up, create a disk file to indicate it, so that users or batch scripts can know it
-  if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. &
+! if the run is slow and gives up, create a disk file to indicate it, so that users or batch scripts can know it.
+! do not check before 200 time steps because the time step estimate (which is an average) may then be unreliable
+  if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= 200 .and. &
         tCPU/dble(it) > TOLERANCE_FACTOR_FOR_SLOW_NODES * REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES) then
     I_am_running_on_a_slow_node = .true.
 ! rank is between 0 and the max rank - 1, for the earthquake here we start at 1, i.e. we use mygroup + 1 rather than mygroup
