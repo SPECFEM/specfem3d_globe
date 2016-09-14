@@ -62,6 +62,9 @@
 ! this is the reference time per time step expected for a normal run for the same mesh and same problem on the same machine,
 ! please adjust it carefully for your own problem (cut and paste it from the output of a run that went well for the same problem)
   double precision, parameter :: REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES = 2.67d-3
+! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
+! because the time step estimate (which is an average) may then be unreliable
+  integer, parameter :: MIN_TIME_STEPS_FOR_SLOW_NODES = 200
 
   ! local parameters
   ! maximum of the norm of the displacement and of the potential in the fluid
@@ -236,8 +239,9 @@
     write(IMAIN,"(' Elapsed time in hh:mm:ss = ',i6,' h ',i2.2,' m ',i2.2,' s')") ihours,iminutes,iseconds
     write(IMAIN,*) 'Mean elapsed time per time step in seconds = ',tCPU/dble(it)
 
-! do not check before 200 time steps because the time step estimate (which is an average) may then be unreliable
-    if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= 200 .and. &
+! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
+! because the time step estimate (which is an average) may then be unreliable
+    if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= MIN_TIME_STEPS_FOR_SLOW_NODES .and. &
           tCPU/dble(it) > TOLERANCE_FACTOR_FOR_SLOW_NODES * REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES) &
         I_am_running_on_a_slow_node = .true.
 
@@ -344,7 +348,8 @@
                               day_of_week,mon,day,year,hr,minutes, &
                               day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote, &
                               CHECK_FOR_SLOW_NODES,NUMBER_OF_SIMULTANEOUS_RUNS,TOLERANCE_FACTOR_FOR_SLOW_NODES, &
-                              REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES,I_am_running_on_a_slow_node,myrank,mygroup)
+                              REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES,I_am_running_on_a_slow_node,myrank,mygroup, &
+                              MIN_TIME_STEPS_FOR_SLOW_NODES)
 
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
@@ -502,7 +507,8 @@
                                   day_of_week,mon,day,year,hr,minutes, &
                                   day_of_week_remote,mon_remote,day_remote,year_remote,hr_remote,minutes_remote, &
                                   CHECK_FOR_SLOW_NODES,NUMBER_OF_SIMULTANEOUS_RUNS,TOLERANCE_FACTOR_FOR_SLOW_NODES, &
-                                  REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES,I_am_running_on_a_slow_node,myrank,mygroup)
+                                  REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES,I_am_running_on_a_slow_node,myrank,mygroup, &
+                                  MIN_TIME_STEPS_FOR_SLOW_NODES)
 
   use constants, only: CUSTOM_REAL,IOUT, &
     ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE,MAX_STRING_LEN
@@ -527,7 +533,7 @@
              year_remote,mon_remote,day_remote,hr_remote,minutes_remote,day_of_week_remote
 
   logical :: CHECK_FOR_SLOW_NODES,I_am_running_on_a_slow_node
-  integer :: NUMBER_OF_SIMULTANEOUS_RUNS,myrank,mygroup
+  integer :: NUMBER_OF_SIMULTANEOUS_RUNS,myrank,mygroup,MIN_TIME_STEPS_FOR_SLOW_NODES
   double precision :: TOLERANCE_FACTOR_FOR_SLOW_NODES,REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES
 
   ! local parameters
@@ -633,8 +639,9 @@
   close(IOUT)
 
 ! if the run is slow and gives up, create a disk file to indicate it, so that users or batch scripts can know it.
-! do not check before 200 time steps because the time step estimate (which is an average) may then be unreliable
-  if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= 200 .and. &
+! do not check before MIN_TIME_STEPS_FOR_SLOW_NODES time steps
+! because the time step estimate (which is an average) may then be unreliable
+  if (CHECK_FOR_SLOW_NODES .and. NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. it >= MIN_TIME_STEPS_FOR_SLOW_NODES .and. &
         tCPU/dble(it) > TOLERANCE_FACTOR_FOR_SLOW_NODES * REFERENCE_TIME_PER_TIME_STEP_ON_NORMAL_NODES) then
     I_am_running_on_a_slow_node = .true.
 ! rank is between 0 and the max rank - 1, for the earthquake here we start at 1, i.e. we use mygroup + 1 rather than mygroup
