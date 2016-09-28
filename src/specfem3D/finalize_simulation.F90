@@ -35,6 +35,10 @@
 
   use manager_adios
 
+#ifdef XSMM
+  use my_libxsmm
+#endif
+
   implicit none
 
   ! synchronize all processes, waits until all processes have written their seismograms
@@ -126,6 +130,11 @@
        .and. READ_ADJSRC_ASDF) then
     call asdf_cleanup()
   endif
+
+#ifdef XSMM
+  ! finalizes LIBXSMM
+  call libxsmm_finalize()
+#endif
 
   ! frees dynamically allocated memory
   call finalize_simulation_cleanup()

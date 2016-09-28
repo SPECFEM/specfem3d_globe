@@ -866,3 +866,28 @@ module specfem_par_movie
   real :: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
 end module specfem_par_movie
+
+!=====================================================================
+
+#ifdef XSMM
+
+module my_libxsmm
+
+  ! for C_LOC(A)
+  ! note: using C_LOC(A) however needs array A to be defined with "..,target :: A" attribute to become an interoperable pointer.
+  !       we haven't had issues yet though with array pointers when passing to C-functions, thus we omit it for now.
+  !use,intrinsic :: ISO_C_BINDING
+
+  !use libxsmm,only: C_LOC,LIBXSMM_SMMFUNCTION,libxsmm_dispatch,libxsmm_call,libxsmm_init,libxsmm_finalize
+
+  ! function calls
+  use libxsmm,only: libxsmm_init,libxsmm_finalize, &
+                    libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
+
+  implicit none
+
+end module my_libxsmm
+
+#endif
+
+

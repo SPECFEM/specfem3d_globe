@@ -256,6 +256,13 @@ else
 specfem3D_OBJECTS += $(vtk_specfem3D_STUBS)
 endif
 
+###
+### LIBXSMM
+###
+# conditional module
+ifeq ($(XSMM),yes)
+specfem3D_MODULES += $(FC_MODDIR)/my_libxsmm.$(FC_MODEXT)
+endif
 
 #######################################
 

@@ -162,6 +162,21 @@ CPPFLAGS += $(MIC_FLAGS)
 
 #######################################
 ####
+#### LIBXSMM
+#### with configure: ./configure --with-xsmm LIBXSMM_INC=/opt/libxsmm/include \
+####                                         LIBXSMM_LIBS=/opt/libxsmm/lib \
+####                                         BLAS_LIBS=/opt/local/lib/lapack
+####
+#######################################
+
+@COND_XSMM_TRUE@XSMM = yes
+@COND_XSMM_FALSE@XSMM = no
+
+@COND_XSMM_TRUE@FCFLAGS += $(FC_DEFINE)XSMM -I@LIBXSMM_INC@
+@COND_XSMM_TRUE@MPILIBS += -L@LIBXSMM_LIBS@ -lxsmmf -lxsmm -L@BLAS_LIBS@ -lblas
+
+#######################################
+####
 #### OpenMP
 #### with configure: ./configure --enable-openmp
 ####

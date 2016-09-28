@@ -495,15 +495,35 @@
 
   use constants_solver, only: CUSTOM_REAL
 
+#ifdef XSMM
+  use my_libxsmm,only: libxsmm_smm_5_25_5,libxsmm_smm_25_5_5
+#endif
+
   implicit none
 
   integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
 
   ! local parameters
   integer :: i,j
+
+! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
+!       however, on Intel Phi (KNC) it is still helpful
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  if (n1 == 5) then
+    ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
+    call libxsmm_smm_5_25_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+  else if (n1 == 25) then
+    ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
+    call libxsmm_smm_25_5_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+  else
+    stop 'Invalid n1 value for LibXSMM in mxm5_single routine'
+  endif
+  return
+#endif
 
   ! matrix-matrix multiplication
   do j = 1,n3
@@ -527,15 +547,38 @@
 
   use constants_solver, only: CUSTOM_REAL
 
+! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
+!       however, on Intel Phi (KNC) it is still helpful (speedup +3%)
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  use my_libxsmm,only: libxsmm_smm_5_5_5
+#endif
+
   implicit none
 
   integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5,n3) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n2) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3) :: C
+  real(kind=CUSTOM_REAL),dimension(n1,5,n3),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
 
   ! local parameters
   integer :: i,j,k
+
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  ! with A(n1,n2,n4) 5x5x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3,n4) 5x5x5-matrix
+  ! static version
+  !do k = 1,5
+  !  call libxsmm_call(xmm3, A(:,:,k), B, C(:,:,k))
+  !enddo
+
+  ! unrolled
+  call libxsmm_smm_5_5_5(a=A(1,1,1), b=B, c=C(1,1,1),pa=A(1,1,1+1), pb=B, pc=C(1,1,1+1))
+  call libxsmm_smm_5_5_5(a=A(1,1,2), b=B, c=C(1,1,2),pa=A(1,1,2+1), pb=B, pc=C(1,1,2+1))
+  call libxsmm_smm_5_5_5(a=A(1,1,3), b=B, c=C(1,1,3),pa=A(1,1,3+1), pb=B, pc=C(1,1,3+1))
+  call libxsmm_smm_5_5_5(a=A(1,1,4), b=B, c=C(1,1,4),pa=A(1,1,4+1), pb=B, pc=C(1,1,4+1))
+  call libxsmm_smm_5_5_5(a=A(1,1,5), b=B, c=C(1,1,5),pa=A(1,1,1), pb=B, pc=C(1,1,1))
+  return
+#endif
 
   ! matrix-matrix multiplication
   do j = 1,n2

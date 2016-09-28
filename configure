@@ -636,6 +636,9 @@ VTK_LIBS
 VTK_LDFLAGS
 VTK_INCLUDES
 OMP_FCFLAGS
+BLAS_LIBS
+LIBXSMM_LIBS
+LIBXSMM_INC
 OCL_LIBS
 OCL_LDFLAGS
 OCL_CFLAGS
@@ -695,6 +698,8 @@ COND_VTK_FALSE
 COND_VTK_TRUE
 COND_OMP_FALSE
 COND_OMP_TRUE
+COND_XSMM_FALSE
+COND_XSMM_TRUE
 COND_MIC_FALSE
 COND_MIC_TRUE
 COND_OCL_FALSE
@@ -764,6 +769,7 @@ enable_vectorization
 with_cuda
 with_opencl
 with_mic
+with_xsmm
 enable_openmp
 enable_vtk
 with_adios
@@ -798,6 +804,9 @@ OCL_CPU_FLAGS
 OCL_GPU_FLAGS
 OCL_INC
 OCL_LIB
+LIBXSMM_INC
+LIBXSMM_LIBS
+BLAS_LIBS
 OMP_FCFLAGS
 MPI_INC
 CXX
@@ -1433,6 +1442,8 @@ Optional Packages:
   --with-cuda             build cuda GPU enabled version [default=no]
   --with-opencl           build OpenCL GPU enabled version [default=no]
   --with-mic              build native Xeon PHI enabled version [default=no]
+  --with-xsmm             build LIBXSMM (see:https://github.com/hfp/libxsmm)
+                          enabled version [default=no]
   --with-adios            build ADIOS enabled version [default=no]
   --with-asdf             build ASDF enabled version [default=no]
   --with-cem              build CEM enabled version [default=no]
@@ -1472,6 +1483,10 @@ Some influential environment variables:
               OpenCL GPU compiler flags
   OCL_INC     Location of OpenCL include files
   OCL_LIB     Location of OpenCL library libOpenCL
+  LIBXSMM_INC LIBXSMM include directory
+  LIBXSMM_LIBS
+              LIBXSMM library directory
+  BLAS_LIBS   LAPACK/BLAS library directory
   OMP_FCFLAGS OpenMP Fortran compiler flags
   MPI_INC     Location of MPI include mpi.h, needed by CUDA/VTK (default:
               auto-detect)
@@ -2834,6 +2849,27 @@ fi
 else
   COND_MIC_TRUE='#'
   COND_MIC_FALSE=
+fi
+
+
+###
+### LIBXSMM (Library for small matrix-matrix multiplications targeting Intel Architecture (x86)
+###          see:https://github.com/hfp/libxsmm )
+###
+
+# Check whether --with-xsmm was given.
+if test "${with_xsmm+set}" = set; then :
+  withval=$with_xsmm; want_xsmm="$withval"
+else
+  want_xsmm=no
+fi
+
+ if test "$want_xsmm" != no; then
+  COND_XSMM_TRUE=
+  COND_XSMM_FALSE='#'
+else
+  COND_XSMM_TRUE='#'
+  COND_XSMM_FALSE=
 fi
 
 
@@ -6802,6 +6838,25 @@ $as_echo "$as_me: --enable-vectorization and --with-mic should be both specified
 fi
 
 ###
+### LIBXSMM
+###
+
+if test x"$want_xsmm" != xno; then :
+
+  $as_echo "## ------- ##
+## LIBXSMM ##
+## ------- ##"
+  { $as_echo "$as_me:${as_lineno-$LINENO}: LIBXSMM compilation is enabled" >&5
+$as_echo "$as_me: LIBXSMM compilation is enabled" >&6;}
+
+
+
+
+
+fi
+
+
+###
 ### OpenMP
 ###
 
@@ -8044,6 +8099,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_MIC_TRUE}" && test -z "${COND_MIC_FALSE}"; then
   as_fn_error $? "conditional \"COND_MIC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_XSMM_TRUE}" && test -z "${COND_XSMM_FALSE}"; then
+  as_fn_error $? "conditional \"COND_XSMM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_OMP_TRUE}" && test -z "${COND_OMP_FALSE}"; then
