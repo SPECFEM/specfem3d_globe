@@ -511,7 +511,7 @@
   use constants_solver, only: CUSTOM_REAL
 
 #ifdef XSMM
-  use my_libxsmm,only: libxsmm_smm_5_25_5
+  use my_libxsmm, only: libxsmm_smm_5_25_5
 #endif
 
   implicit none
@@ -570,7 +570,7 @@
   use constants_solver, only: CUSTOM_REAL
 
 #ifdef XSMM
-  use my_libxsmm,only: libxsmm_smm_25_5_5
+  use my_libxsmm, only: libxsmm_smm_25_5_5
 #endif
 
   implicit none
@@ -631,7 +631,7 @@
 ! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
 !       however, on Intel Phi (KNC) it is still helpful (speedup +3%)
 #if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
-  use my_libxsmm,only: libxsmm_smm_5_5_5
+  use my_libxsmm, only: libxsmm_smm_5_5_5
 #endif
 
   implicit none

@@ -502,11 +502,11 @@
 #ifdef XSMM
   subroutine prepare_xsmm()
 
-  use constants,only: CUSTOM_REAL,SIZE_DOUBLE,m1,m2,IMAIN
+  use constants, only: CUSTOM_REAL,SIZE_DOUBLE,m1,m2,IMAIN
 
-  use specfem_par,only: myrank
+  use specfem_par, only: myrank
 
-  use my_libxsmm,only: libxsmm_init,libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
+  use my_libxsmm, only: libxsmm_init,libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
 
   implicit none
 
