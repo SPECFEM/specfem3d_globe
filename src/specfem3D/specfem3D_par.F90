@@ -96,10 +96,10 @@ module specfem_par
   integer, dimension(:,:),allocatable :: ibathy_topo
 
   ! additional mass matrix for ocean load
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE_OCEANS) :: rmass_ocean_load
+  real(kind=CUSTOM_REAL), dimension(:),allocatable :: rmass_ocean_load
 
   ! flag to mask ocean-bottom degrees of freedom for ocean load
-  logical, dimension(NGLOB_CRUST_MANTLE_OCEANS) :: updated_dof_ocean_load
+  logical, dimension(:), allocatable :: updated_dof_ocean_load
 
   integer :: npoin_oceans
   integer, dimension(:),allocatable :: ibool_ocean_load
@@ -352,39 +352,39 @@ module specfem_par_crustmantle
 
   ! ----------------- crust, mantle and oceans ---------------------
   ! mesh parameters
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool_crust_mantle
+  integer, dimension(:,:,:,:), allocatable :: ibool_crust_mantle
 
   ! optimized arrays
-  integer, dimension(:,:),allocatable :: ibool_inv_tbl_crust_mantle
-  integer, dimension(:,:),allocatable :: ibool_inv_st_crust_mantle
-  integer, dimension(:,:),allocatable :: phase_iglob_crust_mantle
+  integer, dimension(:,:), allocatable :: ibool_inv_tbl_crust_mantle
+  integer, dimension(:,:), allocatable :: ibool_inv_st_crust_mantle
+  integer, dimension(:,:), allocatable :: phase_iglob_crust_mantle
   integer, dimension(2) :: num_globs_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
     etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
     gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     deriv_mapping_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: sum_terms_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sum_terms_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: rstore_crust_mantle
 
   ! arrays for isotropic elements stored only where needed to save space
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ISO_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle
 
   ! arrays for anisotropic elements stored only where needed to save space
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle
 
   ! arrays for full anisotropy only when needed
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle, &
     c14store_crust_mantle,c15store_crust_mantle,c16store_crust_mantle, &
     c22store_crust_mantle,c23store_crust_mantle,c24store_crust_mantle, &
@@ -394,7 +394,7 @@ module specfem_par_crustmantle
     c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle
 
   ! flag for transversely isotropic elements
-  logical, dimension(NSPEC_CRUST_MANTLE) :: ispec_is_tiso_crust_mantle
+  logical, dimension(:),allocatable :: ispec_is_tiso_crust_mantle
 
   ! mass matrices
   !
@@ -404,37 +404,37 @@ module specfem_par_crustmantle
   !
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
-  real(kind=CUSTOM_REAL), dimension(NGLOB_CRUST_MANTLE),target :: rmassz_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassz_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: rmassx_crust_mantle,rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), allocatable, target :: rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: rmassx_crust_mantle,rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
 
   ! displacement, velocity, acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
      displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle
 
   ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle
 
   ! memory variables and standard linear solids for attenuation
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     one_minus_sum_beta_crust_mantle, factor_scale_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT4_VAL) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     factor_common_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     R_xx_crust_mantle,R_yy_crust_mantle,R_xy_crust_mantle,R_xz_crust_mantle,R_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT),target :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
     epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),target :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     eps_trace_over_3_crust_mantle
 
   ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     b_R_xx_crust_mantle,b_R_yy_crust_mantle,b_R_xy_crust_mantle,b_R_xz_crust_mantle,b_R_yz_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer :: &
@@ -445,35 +445,36 @@ module specfem_par_crustmantle
     b_eps_trace_over_3_crust_mantle
 
   ! for crust/oceans coupling
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_CM) :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_CM) :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
-  integer, dimension(NSPEC2D_BOTTOM_CM) :: ibelm_bottom_crust_mantle
-  integer, dimension(NSPEC2D_TOP_CM) :: ibelm_top_crust_mantle
+  integer, dimension(:), allocatable :: ibelm_xmin_crust_mantle,ibelm_xmax_crust_mantle
+  integer, dimension(:), allocatable :: ibelm_ymin_crust_mantle,ibelm_ymax_crust_mantle
+  integer, dimension(:), allocatable :: ibelm_bottom_crust_mantle
+  integer, dimension(:), allocatable :: ibelm_top_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     jacobian2D_bottom_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_CM) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     jacobian2D_top_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     jacobian2D_xmin_crust_mantle,jacobian2D_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_CM) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: &
     jacobian2D_ymin_crust_mantle,jacobian2D_ymax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_CM) :: &
+
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     normal_xmin_crust_mantle,normal_xmax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2DMAX_YMIN_YMAX_CM) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     normal_ymin_crust_mantle,normal_ymax_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_CM) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     normal_bottom_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_CM) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     normal_top_crust_mantle
 
   ! Stacey
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STACEY) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     rho_vp_crust_mantle,rho_vs_crust_mantle
   integer :: nspec2D_xmin_crust_mantle,nspec2D_xmax_crust_mantle, &
              nspec2D_ymin_crust_mantle,nspec2D_ymax_crust_mantle
-  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_CM) :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
-  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_CM) :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
+  integer, dimension(:,:), allocatable :: nimin_crust_mantle,nimax_crust_mantle,nkmin_eta_crust_mantle
+  integer, dimension(:,:), allocatable :: njmin_crust_mantle,njmax_crust_mantle,nkmin_xi_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: absorb_xmin_crust_mantle, &
     absorb_xmax_crust_mantle, absorb_ymin_crust_mantle, absorb_ymax_crust_mantle
@@ -482,33 +483,33 @@ module specfem_par_crustmantle
             reclen_ymin_crust_mantle,reclen_ymax_crust_mantle
 
   ! kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     rho_kl_crust_mantle,beta_kl_crust_mantle,alpha_kl_crust_mantle
   ! For anisotropic kernels (see compute_kernels.f90 for a definition of the array)
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: cijkl_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: cijkl_kl_crust_mantle
   ! approximate Hessian
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: hess_kl_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: hess_kl_crust_mantle
 
   ! Boundary Mesh and Kernels
   integer :: k_top,k_bot,iregion_code
-  integer, dimension(NSPEC2D_MOHO) :: ibelm_moho_top,ibelm_moho_bot
-  integer, dimension(NSPEC2D_400) :: ibelm_400_top,ibelm_400_bot
-  integer, dimension(NSPEC2D_670) :: ibelm_670_top,ibelm_670_bot
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO) :: normal_moho
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_400) :: normal_400
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_670) :: normal_670
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_MOHO) :: moho_kl, moho_kl_top, moho_kl_bot
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_400) :: d400_kl, d400_kl_top, d400_kl_bot
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_670) ::  d670_kl, d670_kl_top, d670_kl_bot
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_CMB) :: cmb_kl, cmb_kl_top, cmb_kl_bot
+  integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot
+  integer, dimension(:), allocatable :: ibelm_400_top,ibelm_400_bot
+  integer, dimension(:), allocatable :: ibelm_670_top,ibelm_670_bot
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_moho
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_400
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_670
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: moho_kl, moho_kl_top, moho_kl_bot
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: d400_kl, d400_kl_top, d400_kl_bot
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: d670_kl, d670_kl_top, d670_kl_bot
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: cmb_kl, cmb_kl_top, cmb_kl_bot
 
   ! For saving kernels on a regular grid
   integer :: npoints_slice
-  integer, dimension(NM_KL_REG_PTS_VAL) :: points_slice
-  integer, dimension(NM_KL_REG_PTS_VAL) :: ispec_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLX, NM_KL_REG_PTS_VAL) :: hxir_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLY, NM_KL_REG_PTS_VAL) :: hetar_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLZ, NM_KL_REG_PTS_VAL) :: hgammar_reg
+  integer, dimension(:), allocatable :: points_slice
+  integer, dimension(:), allocatable :: ispec_reg
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: hxir_reg
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: hetar_reg
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: hgammar_reg
 
   ! inner / outer elements crust/mantle region
   integer :: num_phase_ispec_crust_mantle
@@ -546,73 +547,73 @@ module specfem_par_innercore
 
   ! ----------------- inner core ---------------------
   ! mesh parameters
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: ibool_inner_core
+  integer, dimension(:,:,:,:), allocatable :: ibool_inner_core
 
   ! optimized arrays
-  integer, dimension(:,:),allocatable :: ibool_inv_tbl_inner_core
-  integer, dimension(:,:),allocatable :: ibool_inv_st_inner_core
-  integer, dimension(:,:),allocatable :: phase_iglob_inner_core
+  integer, dimension(:,:), allocatable :: ibool_inv_tbl_inner_core
+  integer, dimension(:,:), allocatable :: ibool_inv_st_inner_core
+  integer, dimension(:,:), allocatable :: phase_iglob_inner_core
   integer, dimension(2) :: num_globs_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     xix_inner_core,xiy_inner_core,xiz_inner_core, &
     etax_inner_core,etay_inner_core,etaz_inner_core, &
     gammax_inner_core,gammay_inner_core,gammaz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     deriv_mapping_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: sum_terms_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: sum_terms_inner_core
 
   ! material parameters
   ! (note: muvstore also needed for attenuation in case of anisotropic inner core)
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     xstore_inner_core,ystore_inner_core,zstore_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: rstore_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rstore_inner_core
 
   ! arrays for inner-core anisotropy only when needed
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_IC) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     c11store_inner_core,c33store_inner_core,c12store_inner_core, &
     c13store_inner_core,c44store_inner_core
 
   ! local to global mapping
-  integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core
+  integer, dimension(:), allocatable :: idoubling_inner_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_INNER_CORE), target :: rmassz_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassz_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: rmassx_inner_core,rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassx_inner_core,b_rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable, target :: rmassz_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassz_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: rmassx_inner_core,rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassx_inner_core,b_rmassy_inner_core
 
   ! displacement, velocity, acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     displ_inner_core,veloc_inner_core,accel_inner_core
   ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core
 
   ! memory variables and standard linear solids for attenuation
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     one_minus_sum_beta_inner_core, factor_scale_inner_core
-  real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT5_VAL) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     factor_common_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     R_xx_inner_core,R_yy_inner_core,R_xy_inner_core,R_xz_inner_core,R_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT),target :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     epsilondev_xx_inner_core,epsilondev_yy_inner_core,epsilondev_xy_inner_core, &
     epsilondev_xz_inner_core,epsilondev_yz_inner_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),target :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable, target :: &
     eps_trace_over_3_inner_core
 
   ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     b_R_xx_inner_core,b_R_yy_inner_core,b_R_xy_inner_core,b_R_xz_inner_core,b_R_yz_inner_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:,:), pointer :: &
@@ -625,17 +626,17 @@ module specfem_par_innercore
   ! coupling/boundary surfaces
   integer :: nspec2D_xmin_inner_core,nspec2D_xmax_inner_core, &
             nspec2D_ymin_inner_core,nspec2D_ymax_inner_core
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_IC) :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_IC) :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
-  integer, dimension(NSPEC2D_BOTTOM_IC) :: ibelm_bottom_inner_core
-  integer, dimension(NSPEC2D_TOP_IC) :: ibelm_top_inner_core
+  integer, dimension(:), allocatable :: ibelm_xmin_inner_core,ibelm_xmax_inner_core
+  integer, dimension(:), allocatable :: ibelm_ymin_inner_core,ibelm_ymax_inner_core
+  integer, dimension(:), allocatable :: ibelm_bottom_inner_core
+  integer, dimension(:), allocatable :: ibelm_top_inner_core
 
   ! adjoint kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     rho_kl_inner_core,beta_kl_inner_core, alpha_kl_inner_core
 
   ! Boundary Mesh and Kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_ICB) :: icb_kl, icb_kl_top, icb_kl_bot
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: icb_kl, icb_kl_top, icb_kl_bot
   logical :: fluid_solid_boundary
 
   ! inner / outer elements inner core region
@@ -671,58 +672,57 @@ module specfem_par_outercore
 
   ! ----------------- outer core ---------------------
   ! mesh parameters
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: ibool_outer_core
+  integer, dimension(:,:,:,:), allocatable :: ibool_outer_core
 
   ! optimized arrays
-  integer, dimension(:,:),allocatable :: ibool_inv_tbl_outer_core
-  integer, dimension(:,:),allocatable :: ibool_inv_st_outer_core
-  integer, dimension(:,:),allocatable :: phase_iglob_outer_core
+  integer, dimension(:,:), allocatable :: ibool_inv_tbl_outer_core
+  integer, dimension(:,:), allocatable :: ibool_inv_st_outer_core
+  integer, dimension(:,:), allocatable :: phase_iglob_outer_core
   integer, dimension(2) :: num_globs_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     xix_outer_core,xiy_outer_core,xiz_outer_core, &
     etax_outer_core,etay_outer_core,etaz_outer_core, &
     gammax_outer_core,gammay_outer_core,gammaz_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: &
     deriv_mapping_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: sum_terms_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: sum_terms_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:),allocatable :: &
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     xstore_outer_core,ystore_outer_core,zstore_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: rstore_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: rstore_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE) :: rhostore_outer_core,kappavstore_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rhostore_outer_core,kappavstore_outer_core
 
   ! mass matrix
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE), target :: rmass_outer_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), allocatable, target :: rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmass_outer_core
 
   ! velocity potential
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: &
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     displ_outer_core,veloc_outer_core,accel_outer_core
 
   ! ADJOINT
-  real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
     b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core
 
   ! for the Euler scheme for rotation
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     A_array_rotation,B_array_rotation
   !ADJOINT
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     b_A_array_rotation,b_B_array_rotation
 
-
   ! Stacey
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_STACEY) :: vp_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: vp_outer_core
   integer :: nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
              nspec2D_ymin_outer_core,nspec2D_ymax_outer_core, &
              nspec2D_zmin_outer_core
-  integer, dimension(2,NSPEC2DMAX_YMIN_YMAX_OC) :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
-  integer, dimension(2,NSPEC2DMAX_XMIN_XMAX_OC) :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
+  integer, dimension(:,:), allocatable :: nimin_outer_core,nimax_outer_core,nkmin_eta_outer_core
+  integer, dimension(:,:), allocatable :: njmin_outer_core,njmax_outer_core,nkmin_xi_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: absorb_xmin_outer_core, &
      absorb_xmax_outer_core, absorb_ymin_outer_core, absorb_ymax_outer_core, &
@@ -732,30 +732,30 @@ module specfem_par_outercore
              reclen_ymin_outer_core, reclen_ymax_outer_core
   integer :: reclen_zmin
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_OUTER_CORE_ADJOINT) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
     vector_accel_outer_core,vector_displ_outer_core,b_vector_displ_outer_core
 
   ! arrays to couple with the fluid regions by pointwise matching
-  integer, dimension(NSPEC2DMAX_XMIN_XMAX_OC) :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
-  integer, dimension(NSPEC2DMAX_YMIN_YMAX_OC) :: ibelm_ymin_outer_core,ibelm_ymax_outer_core
-  integer, dimension(NSPEC2D_BOTTOM_OC) :: ibelm_bottom_outer_core
-  integer, dimension(NSPEC2D_TOP_OC) :: ibelm_top_outer_core
+  integer, dimension(:), allocatable :: ibelm_xmin_outer_core,ibelm_xmax_outer_core
+  integer, dimension(:), allocatable :: ibelm_ymin_outer_core,ibelm_ymax_outer_core
+  integer, dimension(:), allocatable :: ibelm_bottom_outer_core
+  integer, dimension(:), allocatable :: ibelm_top_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: normal_xmin_outer_core,normal_xmax_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: normal_ymin_outer_core,normal_ymax_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: normal_bottom_outer_core
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NSPEC2D_TOP_OC) :: normal_top_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_xmin_outer_core,normal_xmax_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_ymin_outer_core,normal_ymax_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: normal_top_outer_core
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_BOTTOM_OC) :: jacobian2D_bottom_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NSPEC2D_TOP_OC) :: jacobian2D_top_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX_OC) :: jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX_OC) :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_bottom_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_top_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: jacobian2D_ymin_outer_core,jacobian2D_ymax_outer_core
 
   ! adjoint kernels
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT) :: rho_kl_outer_core,alpha_kl_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: rho_kl_outer_core,alpha_kl_outer_core
 
   ! check for deviatoric kernel for outer core region
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: beta_kl_outer_core
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: beta_kl_outer_core
   integer :: nspec_beta_kl_outer_core
   logical, parameter :: deviatoric_outercore = .false.
 
@@ -827,26 +827,26 @@ module specfem_par_movie
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: store_val_ux_all,store_val_uy_all,store_val_uz_all
 
   ! to save movie volume
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     muvstore_crust_mantle_3dmovie
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     Iepsilondev_xx_crust_mantle,Iepsilondev_yy_crust_mantle,Iepsilondev_xy_crust_mantle, &
     Iepsilondev_xz_crust_mantle,Iepsilondev_yz_crust_mantle
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     Ieps_trace_over_3_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: nu_3dmovie
 
   integer :: npoints_3dmovie,nspecel_3dmovie
-  integer, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: num_ibool_3dmovie
+  integer, dimension(:), allocatable :: num_ibool_3dmovie
 
-  logical, dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE) :: mask_3dmovie
-  logical, dimension(NGLOB_CRUST_MANTLE_3DMOVIE) :: mask_ibool
+  logical, dimension(:,:,:,:), allocatable :: mask_3dmovie
+  logical, dimension(:), allocatable :: mask_ibool
 
   ! outer core
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: &
+  real(kind=CUSTOM_REAL), dimension(:,:,:,:), allocatable :: &
     div_displ_outer_core
 
   ! VTK run-time visualization
@@ -878,11 +878,11 @@ module my_libxsmm
   !       we haven't had issues yet though with array pointers when passing to C-functions, thus we omit it for now.
   !use,intrinsic :: ISO_C_BINDING
 
-  !use libxsmm, only: C_LOC,LIBXSMM_SMMfunction,libxsmm_dispatch,libxsmm_call,libxsmm_init,libxsmm_finalize
+  !use libxsmm, only: C_LOC,LIBXSMM_SMMfunction,libxsmm_dispatch,libxsmm_call
 
   ! function calls
   use libxsmm, only: libxsmm_init,libxsmm_finalize, &
-                    libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
+                     libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
 
   implicit none
 

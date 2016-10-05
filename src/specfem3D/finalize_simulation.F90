@@ -185,6 +185,8 @@
   endif
   deallocate(rstore_crust_mantle)
 
+  deallocate(rmass_ocean_load)
+
   ! optimized arrays
   if (USE_DEVILLE_PRODUCTS_VAL) then
     deallocate(sum_terms_crust_mantle,sum_terms_inner_core,sum_terms_outer_core)
