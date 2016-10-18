@@ -129,15 +129,13 @@ contains
   ! returns:
   !   creates internal tree representation
   !
-  !
-  ! example tree creation timing = 0.008 s (for data points = 38704 -> tree nodes = 77407 )
 
   implicit none
 
   ! local parameters
   integer :: npoints
   integer, dimension(:), allocatable :: points_index
-  double precision,dimension(:,:), pointer, contiguous :: points_data
+  double precision,dimension(:,:), pointer :: points_data
 
   ! tree statistics
   integer :: depth
