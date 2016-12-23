@@ -65,6 +65,7 @@
   integer :: k,l,m
 
 ! compute Lagrange polynomials at the source location
+! the source does not necessarily correspond to a Gauss-Lobatto point
   call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)
   call lagrange_any(eta_source,NGLLY,yigll,hetas,hpetas)
   call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
@@ -209,7 +210,6 @@
   !                                second time, it will be index_start=1001 to index_end=2000 and so on...
   index_start = iadjsrc(it_sub_adj,1)
   index_end = iadjsrc(it_sub_adj,1)+NSTEP_BLOCK-1
-
 
   ! unfortunately, things become more tricky because of the Newmark time scheme at
   ! the very beginning of the time loop. however, when we read in the backward/reconstructed
