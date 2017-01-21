@@ -1293,7 +1293,7 @@
     topocmb = -topocmb / R_EARTH_KM
 
     ! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB
-    ! and finish at RTOPDDOUBLEPRIME (D'')
+    ! and finish at RTOPDDOUBLEPRIME of D_double_prime
     r_start = (RCMB - (RTOPDDOUBLEPRIME - RCMB))/R_EARTH
     gamma = 0.0d0
     if (r >= RCMB/R_EARTH .and. r <= RTOPDDOUBLEPRIME/R_EARTH) then

@@ -298,7 +298,7 @@
   !radius(7)  = 5701.00d0 !     670
   !radius(8)  = 5600.00d0 !     771
   !radius(9)  = 4712.00d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
-  !radius(10) = 3630.00d0 !     D''
+  !radius(10) = 3630.00d0 !     D_double_prime
   !radius(11) = 3480.00d0 !     CMB
   !radius(12) = 2511.00d0 !    3860 - 3rd Mesh Doubling Interface
   !radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
@@ -322,7 +322,7 @@
   radius(7)  = R670   !     670
   radius(8)  = R771   !     771
   radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
-  radius(10) = RTOPDDOUBLEPRIME   !     D'' ~ 3630
+  radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
   radius(11) = RCMB   !     CMB ~ 3480
   radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
   radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
@@ -335,8 +335,8 @@
 
   ! Mesh Doubling
   scaling(1)     = 1  ! SURFACE TO MOHO
-  scaling(2:8)   = 2  ! MOHO    TO G'' (Geochemical Mantle 1650)
-  scaling(9:11)  = 4  ! G''     TO MIC (Middle Inner Core)
+  scaling(2:8)   = 2  ! MOHO    TO G_double_prime (Geochemical Mantle 1650)
+  scaling(9:11)  = 4  ! G_double_prime    TO MIC (Middle Inner Core)
   scaling(12)    = 8  ! MIC     TO MIC-II
   scaling(13:14) = 16 ! MIC-II  TO Central Cube TO Center of the Earth
 

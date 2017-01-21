@@ -308,13 +308,13 @@ contains
   if (DEBUG) print *,'***debug ADIOS: rank ',myrank_adios,' init group ',trim(group_name),'****'
 
   ! initializes adios group
-  call adios_declare_group(adios_group, group_name, "", 0, ier)
+  call adios_declare_group(adios_group, group_name, '\0', 0, ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,ier)
 
   ! We set the transport method to 'MPI'. This seems to be the correct choice
   ! for now. We might want to move this to the constant.h file later on.
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", ier)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '\0', '\0', ier)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,ier)
 

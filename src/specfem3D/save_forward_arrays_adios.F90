@@ -65,11 +65,11 @@
   group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS"
   group_size_inc = 0
 
-  call adios_declare_group(adios_group, group_name, "", 1, adios_err)
+  call adios_declare_group(adios_group, group_name, '\0', 1, adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '\0', '\0', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
@@ -89,7 +89,7 @@
   call write_rotation_forward_arrays_adios(file_handle_adios,sizeprocs_adios)
   call write_attenuation_forward_arrays_adios(file_handle_adios,sizeprocs_adios)
   ! Reset the path to its original value to avoid bugs.
-  call adios_set_path (file_handle_adios, "", adios_err)
+  call adios_set_path (file_handle_adios, '\0', adios_err)
 
   ! Close ADIOS handler to the restart file.
   call close_file_adios()
@@ -129,11 +129,11 @@
   group_name = "SPECFEM3D_GLOBE_FORWARD_ARRAYS"
   group_size_inc = 0
 
-  call adios_declare_group(adios_group, group_name, "", 1, adios_err)
+  call adios_declare_group(adios_group, group_name, '\0', 1, adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, "", "", adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '\0', '\0', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
@@ -168,7 +168,7 @@
   endif
 
   ! Reset the path to its original value to avoid bugs.
-  call adios_set_path (file_handle_adios, "", adios_err)
+  call adios_set_path (file_handle_adios, '\0', adios_err)
 
   ! Close ADIOS handler to the restart file.
   call close_file_adios()
@@ -225,7 +225,7 @@
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD_UNDO_ATT, ADIOS_METHOD_PARAMS_UNDO_ATT, "", adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD_UNDO_ATT, ADIOS_METHOD_PARAMS_UNDO_ATT, '\0', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
@@ -257,7 +257,7 @@
   endif
 
   ! Reset the path to its original value to avoid bugs.
-  call adios_set_path (file_handle_adios, "", adios_err)
+  call adios_set_path (file_handle_adios, '\0', adios_err)
 
   ! Close ADIOS handler to the restart file.
   call close_file_adios()
@@ -290,42 +290,42 @@
 
   ! crust/mantle
   local_dim = NDIM * NGLOB_CRUST_MANTLE
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(displ_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(veloc_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(accel_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(displ_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(veloc_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(accel_crust_mantle))
 
   ! inner core
   local_dim = NDIM * NGLOB_INNER_CORE
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(displ_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(veloc_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(accel_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(displ_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(veloc_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(accel_inner_core))
 
   ! outer core
   local_dim = NGLOB_OUTER_CORE
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(displ_outer_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(veloc_outer_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(accel_outer_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(displ_outer_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(veloc_outer_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(accel_outer_core))
 
   ! strains
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_xx_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_yy_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_xy_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_xz_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_yz_crust_mantle))
 
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_xx_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_yy_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_xy_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_xz_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_yz_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_xx_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_yy_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_xy_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_xz_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_yz_inner_core))
 
   end subroutine define_common_forward_arrays_adios
 
@@ -356,24 +356,24 @@
 
   ! strains
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE_STR_OR_ATT
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_xx_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_yy_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_xy_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_xz_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", &
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', &
                                    STRINGIFY_VAR(epsilondev_yz_crust_mantle))
 
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_INNER_CORE_STR_OR_ATT
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_xx_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_yy_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_xy_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_xz_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(epsilondev_yz_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_xx_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_yy_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_xy_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_xz_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(epsilondev_yz_inner_core))
 
   end subroutine define_epsilon_forward_arrays_adios
 
@@ -402,8 +402,8 @@
   integer :: local_dim
 
   local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_OUTER_CORE_ROTATION
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(A_array_rotation))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(B_array_rotation))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(A_array_rotation))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(B_array_rotation))
 
   end subroutine define_rotation_forward_arrays_adios
 
@@ -433,19 +433,19 @@
   ! attenuation memory variables
   ! crust/mantle
   local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE_ATTENUATION
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_xx_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_yy_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_xy_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_xz_crust_mantle))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_yz_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_xx_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_yy_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_xy_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_xz_crust_mantle))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_yz_crust_mantle))
 
   ! inner core
   local_dim = N_SLS*NGLLX*NGLLY*NGLLZ*NSPEC_INNER_CORE_ATTENUATION
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_xx_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_yy_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_xy_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_xz_inner_core))
-  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, "", STRINGIFY_VAR(R_yz_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_xx_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_yy_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_xy_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_xz_inner_core))
+  call define_adios_global_array1D(adios_group, group_size_inc, local_dim, '\0', STRINGIFY_VAR(R_yz_inner_core))
 
   end subroutine define_attenuation_forward_arrays_adios
 

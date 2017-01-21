@@ -1052,10 +1052,10 @@ print *,myrank,'adios file rank',rank
   call init_adios_group(group,group_name)
 
   ! defines group size
-  call define_adios_scalar(group, group_size_inc, "", "NSPEC", nspec)
+  call define_adios_scalar(group, group_size_inc, '\0', "NSPEC", nspec)
   local_dim = size(model2(:,:,:,:,iker))
   do iker = 1,nparams
-    call define_adios_global_array1D(group, group_size_inc,local_dim,"",trim(fname(iker)),model2(:,:,:,:,iker))
+    call define_adios_global_array1D(group, group_size_inc,local_dim,'\0',trim(fname(iker)),model2(:,:,:,:,iker))
   enddo
 
   ! opens new adios model file

@@ -438,16 +438,16 @@ program convert_model_file_adios
     group_size_inc = 0
     group_name = "MODELS_GROUP"
 
-    call adios_declare_group(group, group_name, "", 1, ier)
-    call adios_select_method(group, ADIOS_TRANSPORT_METHOD, "", "", ier)
-    call define_adios_scalar(group, group_size_inc, "", "NSPEC", nspec)
+    call adios_declare_group(group, group_name, '\0', 1, ier)
+    call adios_select_method(group, ADIOS_TRANSPORT_METHOD, '\0', '\0', ier)
+    call define_adios_scalar(group, group_size_inc, '\0', "NSPEC", nspec)
 
     ! Setup ADIOS for the current group
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC
 
     ! Define ADIOS Variables
     do iker=1,nparams
-      call define_adios_global_array1D(group, group_size_inc,local_dim,"",trim(model_name(iker)),model)
+      call define_adios_global_array1D(group, group_size_inc,local_dim,'\0',trim(model_name(iker)),model)
     enddo
 
     ! Open an handler to the ADIOS file and setup the group size
@@ -504,7 +504,7 @@ program convert_model_file_adios
                                        trim(model_name(iker)),model(:,:,:,:))
     enddo
     ! Perform the actual write to disk
-    call adios_set_path(model_handle, "", ier)
+    call adios_set_path(model_handle, '\0', ier)
     call adios_close(model_handle, ier)
 
     if (myrank == 0) print *, 'done writing the model in adios format'

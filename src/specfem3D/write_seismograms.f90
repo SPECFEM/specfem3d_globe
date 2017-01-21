@@ -623,7 +623,7 @@
   double precision,intent(in) :: DT
   character(len=2),intent(out) :: bic
 
-  bic = ''
+  bic = '\0'
 
   if (1.0d0 <= DT)  bic = 'LX'
   if (0.1d0 < DT .and. DT < 1.0d0) bic = 'MX'

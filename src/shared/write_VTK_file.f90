@@ -27,7 +27,7 @@
 
 ! note: this might be a possible bug in gfortran with -mcmodel=medium on cray,
 !       but the write statement
-!         write(IOUT_VTK,*) ""
+!         write(IOUT_VTK,*) '\0'
 !       produces errors, relocation truncated to fit: R_X86_64_32 against `.lrodata'
 !       this can be fixed by using
 !         write(IOUT_VTK,*)
@@ -861,7 +861,7 @@
   do i=1,nglob
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) '\0'
 
   ! note: indices for vtk start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
@@ -870,12 +870,12 @@
           ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1, &
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) '\0'
 
   ! type: hexahedrons
   write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec)
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) '\0'
 
   write(IOUT_VTK,'(a,i12)') "CELL_DATA ",nspec
   write(IOUT_VTK,'(a)') "SCALARS elem_val float"
@@ -883,7 +883,7 @@
   do ispec = 1,nspec
     write(IOUT_VTK,*) elem_data(ispec)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) '\0'
   close(IOUT_VTK)
 
   end subroutine write_VTK_data_elem_cr
