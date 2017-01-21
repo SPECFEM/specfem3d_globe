@@ -1001,7 +1001,7 @@
   write(27,*)
 
 ! display the PREM model alone
-  write(27,"(a140)") 'plot "prem_model.dat" us 1:2 t ''Vp PREM'' w l 1, "prem_model.dat" us 1:3 t ''Vs PREM'' w l 3'
+  write(27,"(a140)") 'plot "prem_model.dat" us 1:2 t "Vp PREM" w l 1, "prem_model.dat" us 1:3 t "Vs PREM" w l 3'
   write(27,*) '########pause -1 "hit key"'
   write(27,*)
 
@@ -1040,16 +1040,16 @@
   enddo
 
 ! formats for output
- 100 format('plot "prem_radial_sampling_',i4.4,'.dat" us 1:3 t ''Vs sampling radial'' w linesp 1, &
-    & "prem_horizontal_sampling_',i4.4,'.dat" us 1:3 t ''Vs sampling horizontal'' w l 3, &
+ 100 format('plot "prem_radial_sampling_',i4.4,'.dat" us 1:3 t "Vs sampling radial" w linesp 1, &
+    & "prem_horizontal_sampling_',i4.4,'.dat" us 1:3 t "Vs sampling horizontal" w l 3, &
     & "cmb.dat" t '''' w l 6, "icb.dat" t '''' w l 6')
 
- 200 format('plot "prem_radial_sampling_',i4.4,'.dat" us 1:2 t ''Vp sampling radial'' w linesp 1, &
-    & "prem_horizontal_sampling_',i4.4,'.dat" us 1:2 t ''Vp sampling horizontal'' w l 3, &
+ 200 format('plot "prem_radial_sampling_',i4.4,'.dat" us 1:2 t "Vp sampling radial" w linesp 1, &
+    & "prem_horizontal_sampling_',i4.4,'.dat" us 1:2 t "Vp sampling horizontal" w l 3, &
     & "cmb.dat" t '''' w l 6, "icb.dat" t '''' w l 6')
 
- 300 format('plot "prem_radial_sampling_',i4.4,'.dat" us 1:4 t ''Stability radial'' w linesp 1, &
-    & "prem_horizontal_sampling_',i4.4,'.dat" us 1:4 t ''Stability horizontal'' w l 3, &
+ 300 format('plot "prem_radial_sampling_',i4.4,'.dat" us 1:4 t "Stability radial" w linesp 1, &
+    & "prem_horizontal_sampling_',i4.4,'.dat" us 1:4 t "Stability horizontal" w l 3, &
     & "cmb.dat" t '''' w l 6, "icb.dat" t '''' w l 6')
 
   close(27)

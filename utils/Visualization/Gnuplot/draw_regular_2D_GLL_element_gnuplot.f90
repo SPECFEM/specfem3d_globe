@@ -55,12 +55,12 @@
 
   write(20,*) sngl(coord(1,ix,iy)),sngl(coord(2,ix,iy))
   write(20,*) sngl(coord(1,ix+1,iy)),sngl(coord(2,ix+1,iy))
-  write(20,"('')")
+  write(20,"('\0')")
 
   if (iy == 1 .or. iy == NGLLY) then
     write(21,*) sngl(coord(1,ix,iy)),sngl(coord(2,ix,iy))
     write(21,*) sngl(coord(1,ix+1,iy)),sngl(coord(2,ix+1,iy))
-    write(21,"('')")
+    write(21,"('\0')")
   endif
 
   enddo
@@ -74,12 +74,12 @@
 
   write(20,*) sngl(coord(1,ix,iy)),sngl(coord(2,ix,iy))
   write(20,*) sngl(coord(1,ix,iy+1)),sngl(coord(2,ix,iy+1))
-  write(20,"('')")
+  write(20,"('\0')")
 
   if (ix == 1 .or. ix == NGLLX) then
     write(21,*) sngl(coord(1,ix,iy)),sngl(coord(2,ix,iy))
     write(21,*) sngl(coord(1,ix,iy+1)),sngl(coord(2,ix,iy+1))
-    write(21,"('')")
+    write(21,"('\0')")
   endif
 
   enddo

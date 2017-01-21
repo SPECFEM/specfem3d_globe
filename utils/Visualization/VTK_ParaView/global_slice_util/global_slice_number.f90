@@ -32,8 +32,8 @@ program global_slice_number
 
   ch_usage = 'Usage: global_slice_number elon elat slon slat nproc narc [nchunks xi_width eta_width clon clat grot] [lat0]'
 
-  if (trim(ch_elon) == '' .or. trim(ch_elat) == '' .or. trim(ch_slon) == '' .or. &
-             trim(ch_slat) == '' .or. trim(ch_nproc) == '' .or. trim(ch_narc) == '') then
+  if (trim(ch_elon) == '\0' .or. trim(ch_elat) == '\0' .or. trim(ch_slon) == '\0' .or. &
+             trim(ch_slat) == '\0' .or. trim(ch_nproc) == '\0' .or. trim(ch_narc) == '\0') then
     print *, trim(ch_usage)
     stop
   endif
@@ -46,14 +46,14 @@ program global_slice_number
   read(ch_narc,*) narc
 
   call getarg(7,ch_arg7)
-  if (trim(ch_arg7) == '') then
+  if (trim(ch_arg7) == '\0') then
     belt_region = .false.
     nchunks = 6
     xi_width = 90.
     eta_width = 90.
   else
     call getarg(8,ch_arg8)
-    if (trim(ch_arg8) == '') then
+    if (trim(ch_arg8) == '\0') then
       belt_region = .true.
       nchunks = 6
       xi_width = 90.
@@ -66,7 +66,7 @@ program global_slice_number
       call getarg(10,ch_clon)
       call getarg(11,ch_clat)
       call getarg(12,ch_grot)
-      if (trim(ch_eta_width) == '' .or. trim(ch_clon) == '' .or. trim(ch_clat) == '' .or. trim(ch_grot) == '') then
+      if (trim(ch_eta_width) == '\0' .or. trim(ch_clon) == '\0' .or. trim(ch_clat) == '\0' .or. trim(ch_grot) == '\0') then
         print *, trim(ch_usage)
         stop
       else
@@ -76,7 +76,7 @@ program global_slice_number
         read(ch_grot,*) grot
 
         call getarg(13,ch_arg13)
-        if (trim(ch_arg13) == '') then
+        if (trim(ch_arg13) == '\0') then
           belt_region = .false.
         else
           belt_region = .true.

@@ -23,15 +23,15 @@ implicit none
 
   call getarg(1,old_machine_file)
   call getarg(2,junk)
-  if (trim(old_machine_file) == '' .or. trim(junk) == '') call exit_mpi(myrank,'Usage: remap old-mach num-slice [old-jobid new-jobid]')
+  if (trim(old_machine_file) == '\0' .or. trim(junk) == '\0') call exit_mpi(myrank,'Usage: remap old-mach num-slice [old-jobid new-jobid]')
   read(junk,*) num_slices
 
   call getarg(3,junk2)
-  if (trim(junk2) == '') then
+  if (trim(junk2) == '\0') then
      use_jobid=.false.
   else
      call getarg(4,junk3)
-     if (trim(junk3) == '') call exit_mpi(myrank,'Usage: remap old-mach num-slice [old-jobid new-jobid]')
+     if (trim(junk3) == '\0') call exit_mpi(myrank,'Usage: remap old-mach num-slice [old-jobid new-jobid]')
      read(junk2,*) old_jobid
      read(junk3,*) new_jobid
      use_jobid=.true.
