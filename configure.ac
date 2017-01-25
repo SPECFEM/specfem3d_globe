@@ -79,16 +79,19 @@ fi
 AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 
 ###
-### GPU
+### CUDA
 ###
 
 AC_ARG_WITH([cuda],
     [AC_HELP_STRING([--with-cuda],
-        [build cuda GPU enabled version @<:@default=no@:>@])],
+        [build CUDA GPU enabled version @<:@default=no@:>@])],
     [want_cuda="$withval"],
     [want_cuda=no])
 AM_CONDITIONAL([COND_CUDA], [test x"$want_cuda" != xno])
 AM_CONDITIONAL([COND_CUDA5], [test x"$want_cuda" = xcuda5])
+AM_CONDITIONAL([COND_CUDA6], [test x"$want_cuda" = xcuda6])
+AM_CONDITIONAL([COND_CUDA7], [test x"$want_cuda" = xcuda7])
+AM_CONDITIONAL([COND_CUDA8], [test x"$want_cuda" = xcuda8])
 
 AC_ARG_WITH([opencl],
  [AC_HELP_STRING([--with-opencl], [build OpenCL GPU enabled version @<:@default=no@:>@])],
