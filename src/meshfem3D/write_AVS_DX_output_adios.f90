@@ -162,7 +162,7 @@
 
 
   !--- Reset the path to zero and perform the actual write to disk
-  call adios_set_path (file_handle_adios, '\0', ier)
+  call adios_set_path (file_handle_adios, '', ier)
 
   ! closes file
   call close_file_adios()

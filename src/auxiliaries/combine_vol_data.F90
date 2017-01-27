@@ -647,7 +647,7 @@ program combine_vol_data
     do i = 1,np
       write(IOUT_VTK,'(3e18.6)') total_dat_xyz(1,i),total_dat_xyz(2,i),total_dat_xyz(3,i)
     enddo
-    write(IOUT_VTK,*) '\0'
+    write(IOUT_VTK,*) ''
 
     ! cells
     ! note: indices for VTK start at 0
@@ -656,12 +656,12 @@ program combine_vol_data
       write(IOUT_VTK,'(9i12)') 8,total_dat_con(1,i),total_dat_con(2,i),total_dat_con(3,i),total_dat_con(4,i), &
                             total_dat_con(5,i),total_dat_con(6,i),total_dat_con(7,i),total_dat_con(8,i)
     enddo
-    write(IOUT_VTK,*) '\0'
+    write(IOUT_VTK,*) ''
     ! VTK
     ! type: hexahedrons
     write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",ne
     write(IOUT_VTK,'(6i12)') (12,it = 1,ne)
-    write(IOUT_VTK,*) '\0'
+    write(IOUT_VTK,*) ''
 
     write(IOUT_VTK,'(a,i12)') "POINT_DATA ",np
     write(IOUT_VTK,'(a)') "SCALARS "//trim(filename)//" float"
@@ -669,7 +669,7 @@ program combine_vol_data
     do i = 1,np
         write(IOUT_VTK,*) total_dat(i)
     enddo
-    write(IOUT_VTK,*) '\0'
+    write(IOUT_VTK,*) ''
     close(IOUT_VTK)
 
     ! free arrays for this region

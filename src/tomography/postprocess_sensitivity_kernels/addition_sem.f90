@@ -84,7 +84,7 @@ program addition_sem
     call get_command_argument(i,arg(i))
 
     ! usage info
-    if (i <= 4 .and. trim(arg(i)) == '\0') then
+    if (i <= 4 .and. trim(arg(i)) == '') then
       if (myrank == 0) then
         print *, ' '
         print *, ' Usage: addition_sem kernel_name input1_dir/ input2_dir/ output_dir/ [region]'

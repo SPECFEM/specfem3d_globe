@@ -131,24 +131,24 @@ subroutine define_AVS_DX_surfaces_data_adios(adios_group, &
 
   !--- Variables for '...AVS_DXpointschunk.txt'
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   '\0', "points_surfaces/x_value", dummy_real1d)
+                                   '', "points_surfaces/x_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   '\0', "points_surfaces/y_value", dummy_real1d)
+                                   '', "points_surfaces/y_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   '\0', "points_surfaces/z_value", dummy_real1d)
+                                   '', "points_surfaces/z_value", dummy_real1d)
 
   !--- Variables for '...AVS_DXpointschunk.txt'
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_surfaces/idoubling", dummy_int1d)
+                                   '', "elements_surfaces/idoubling", dummy_int1d)
 
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_surfaces/num_ibool_AVS_DX_iglob1", dummy_int1d)
+                                   '', "elements_surfaces/num_ibool_AVS_DX_iglob1", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_surfaces/num_ibool_AVS_DX_iglob2", dummy_int1d)
+                                   '', "elements_surfaces/num_ibool_AVS_DX_iglob2", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_surfaces/num_ibool_AVS_DX_iglob3", dummy_int1d)
+                                   '', "elements_surfaces/num_ibool_AVS_DX_iglob3", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_surfaces/num_ibool_AVS_DX_iglob4", dummy_int1d)
+                                   '', "elements_surfaces/num_ibool_AVS_DX_iglob4", dummy_int1d)
 
   !--- Variables for AVS_DXelementschunks_dvp_dvs.txt
   if (ISOTROPIC_3D_MANTLE) then
@@ -157,9 +157,9 @@ subroutine define_AVS_DX_surfaces_data_adios(adios_group, &
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
     call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                     '\0', "elements_surfaces/dvp", dummy_real1d)
+                                     '', "elements_surfaces/dvp", dummy_real1d)
     call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                     '\0', "elements_surfaces/dvs", dummy_real1d)
+                                     '', "elements_surfaces/dvs", dummy_real1d)
   endif
 
 end subroutine define_AVS_DX_surfaces_data_adios

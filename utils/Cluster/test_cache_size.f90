@@ -52,9 +52,9 @@
 !***********************************************************************
 
 ! count elapsed wall-clock time
-  datein = '\0'
-  timein = '\0'
-  zone = '\0'
+  datein = ''
+  timein = ''
+  zone = ''
 
   NELEM_ARRAY = 1000
 

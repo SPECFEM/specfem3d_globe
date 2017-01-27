@@ -15,7 +15,7 @@ program normal_plane
   call getarg(3,ch_latr)
   call getarg(4,ch_lonr)
 
-  if (trim(ch_lats) == '\0' .or. trim(ch_lons) == '\0' .or. trim(ch_latr) == '\0' .or. trim(ch_lonr) == '\0') &
+  if (trim(ch_lats) == '' .or. trim(ch_lons) == '' .or. trim(ch_latr) == '' .or. trim(ch_lonr) == '') &
              stop 'Usage: normal_plane lats lons latr lonr'
 
   read(ch_lats,*) lats

@@ -185,7 +185,7 @@ subroutine define_adios_double_scalar (adios_group, group_size_inc, path, name, 
   real(kind=8) :: idummy
 
   ! adios: 6 == real(kind=8)
-  call adios_define_var (adios_group, trim(name), trim(path), 6,  '\0', '\0', '\0', varid)
+  call adios_define_var (adios_group, trim(name), trim(path), 6,  '', '', '', varid)
 
   group_size_inc = group_size_inc + 8
 
@@ -223,7 +223,7 @@ subroutine define_adios_float_scalar(adios_group, group_size_inc, path, name, va
   real(kind=4) :: idummy
 
   ! adios: 6 == real(kind=8)
-  call adios_define_var (adios_group, trim(name), trim(path), 5,  '\0', '\0', '\0', varid)
+  call adios_define_var (adios_group, trim(name), trim(path), 5,  '', '', '', varid)
 
   group_size_inc = group_size_inc + 4
 
@@ -266,7 +266,7 @@ subroutine define_adios_integer_scalar(adios_group, group_size_inc, path, name, 
 
   ! adios: 2 ~ integer(kind=4)
   call adios_define_var (adios_group, trim(name), trim(path), adios_integer, &
-                         '\0', '\0', '\0', varid)
+                         '', '', '', varid)
 
   group_size_inc = group_size_inc + 4
 
@@ -309,7 +309,7 @@ subroutine define_adios_long_scalar(adios_group, group_size_inc, path, name, var
 
   ! adios: 2 ~ integer(kind=4)
   call adios_define_var (adios_group, trim(name), trim(path), adios_long, &
-                         '\0', '\0', '\0', varid)
+                         '', '', '', varid)
 
   group_size_inc = group_size_inc + 8
 
@@ -348,7 +348,7 @@ subroutine define_adios_byte_scalar (adios_group, group_size_inc, name, path, va
   integer(kind=1) :: idummy
 
   ! adios: 0 == byte == any_data_type(kind=1)
-  call adios_define_var (adios_group, trim(name), trim(path), 0,  '\0', '\0', '\0', varid)
+  call adios_define_var (adios_group, trim(name), trim(path), 0,  '', '', '', varid)
 
   group_size_inc = group_size_inc + 1
 
@@ -1531,7 +1531,7 @@ subroutine  define_adios_local_1d_string_1d(adios_group, group_size_inc, local_d
   !print *,"in define local:"
   !print *,"full_name:", trim(full_name)
 
-  call adios_define_var(adios_group, array_name, path, 9, '\0', '\0', '\0', var_id )
+  call adios_define_var(adios_group, array_name, path, 9, '', '', '', var_id )
 
   group_size_inc = group_size_inc + 1*local_dim
 

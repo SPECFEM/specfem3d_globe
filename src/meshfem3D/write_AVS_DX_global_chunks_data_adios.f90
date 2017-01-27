@@ -175,30 +175,30 @@ contains
 
   !--- Variables for '...AVS_DXpointschunks.txt'
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   '\0', "points_chunks/x_value", dummy_real1d)
+                                   '', "points_chunks/x_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   '\0', "points_chunks/y_value", dummy_real1d)
+                                   '', "points_chunks/y_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   '\0', "points_chunks/z_value", dummy_real1d)
+                                   '', "points_chunks/z_value", dummy_real1d)
 
   !--- Variables for '...AVS_DXpointschunk_stability.txt'
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   '\0', "points_chunks/vmin", dummy_real1d)
+                                   '', "points_chunks/vmin", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   '\0', "points_chunks/vmax", dummy_real1d)
+                                   '', "points_chunks/vmax", dummy_real1d)
 
 !  !--- Variables for AVS_DXelementschunks.txt
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_chunks/idoubling", dummy_int1d)
+                                   '', "elements_chunks/idoubling", dummy_int1d)
 
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_chunks/num_ibool_AVS_DX_iglob1", dummy_int1d)
+                                   '', "elements_chunks/num_ibool_AVS_DX_iglob1", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_chunks/num_ibool_AVS_DX_iglob2", dummy_int1d)
+                                   '', "elements_chunks/num_ibool_AVS_DX_iglob2", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_chunks/num_ibool_AVS_DX_iglob3", dummy_int1d)
+                                   '', "elements_chunks/num_ibool_AVS_DX_iglob3", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   '\0', "elements_chunks/num_ibool_AVS_DX_iglob4", dummy_int1d)
+                                   '', "elements_chunks/num_ibool_AVS_DX_iglob4", dummy_int1d)
 
   if (ISOTROPIC_3D_MANTLE) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
@@ -207,9 +207,9 @@ contains
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
 
     call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                     '\0', "elements_faces/dvp", dummy_real1d)
+                                     '', "elements_faces/dvp", dummy_real1d)
     call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                     '\0', "elements_faces/dvs", dummy_real1d)
+                                     '', "elements_faces/dvs", dummy_real1d)
   endif
 
   end subroutine define_AVS_DX_global_chunks_data

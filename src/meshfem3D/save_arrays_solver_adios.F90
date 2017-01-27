@@ -145,13 +145,13 @@
   ! helpers functions.
   group_size_inc = 0
 
-  call adios_declare_group(adios_group, group_name, '\0', 1, adios_err)
+  call adios_declare_group(adios_group, group_name, '', 1, adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
   ! We set the transport method to 'MPI'. This seems to be the correct choice
   ! for now. We might want to move this to the constant.h file later on.
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '\0', '\0', adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
@@ -580,11 +580,11 @@
   ! set the adios group size to 0 before incremented by calls to
   ! helpers functions.
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, '\0', 1, adios_err)
+  call adios_declare_group(adios_group, group_name, '', 1, adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '\0', '\0', adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
@@ -903,11 +903,11 @@
 
   group_size_inc = 0
 
-  call adios_declare_group(adios_group, group_name, '\0', 1, adios_err)
+  call adios_declare_group(adios_group, group_name, '', 1, adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '\0', '\0', adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
@@ -1129,11 +1129,11 @@
   write(group_name,"('SPECFEM3D_GLOBE_MPI_ARRAYS_reg',i1)") iregion_code
 
   group_size_inc = 0
-  call adios_declare_group(adios_group, group_name, '\0', 1, adios_err)
+  call adios_declare_group(adios_group, group_name, '', 1, adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '\0', '\0', adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
@@ -1338,11 +1338,11 @@
   group_name = "SPECFEM3D_GLOBE_BOUNDARY_DISC"
   group_size_inc = 0
 
-  call adios_declare_group(adios_group, group_name, '\0', 1, adios_err)
+  call adios_declare_group(adios_group, group_name, '', 1, adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 
-  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '\0', '\0', adios_err)
+  call adios_select_method(adios_group, ADIOS_TRANSPORT_METHOD, '', '', adios_err)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !call check_adios_err(myrank,adios_err)
 

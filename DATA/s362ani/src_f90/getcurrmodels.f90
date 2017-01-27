@@ -10,7 +10,7 @@
   integer :: ios,i
 
   inquire(file='current_3d_model',exist=exists)
-  model='\0'
+  model=''
   if (exists) then
   open(13,file='current_3d_model')
   ios=0
@@ -22,10 +22,10 @@
   inquire(file=model,exist=exists)
   if (exists) then
   else
-    model='\0'
+    model=''
     endif
   else
-  model='\0'
+  model=''
   endif
   endif
 

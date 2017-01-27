@@ -21,7 +21,7 @@ program make_az_stations
   call getarg(2,ch_elat)
   call getarg(3,ch_az)
 
-  if (trim(ch_elon) == '\0' .or. trim(ch_elat) == '\0' .or. trim(ch_az) == '\0') then
+  if (trim(ch_elon) == '' .or. trim(ch_elat) == '' .or. trim(ch_az) == '') then
     print *, 'Usage: xmake_az_stations elon elat az [dist(degrees)]'
     stop
   endif
@@ -52,7 +52,7 @@ program make_az_stations
 
   ! read in extra distance argument
   call getarg(4,ch_dist)
-  if (trim(ch_dist) /= '\0') then
+  if (trim(ch_dist) /= '') then
     read(ch_dist,*) dist
     np = 1
     thr_array(1) = dist / 180. * pi
@@ -62,7 +62,7 @@ program make_az_stations
   endif
 
   do i = 1, np
-    if (trim(ch_dist) == '\0') thr_array(i) = (i*1.) / np * pi
+    if (trim(ch_dist) == '') thr_array(i) = (i*1.) / np * pi
     call norm_rot_back(ths,phs,thr_array(i),phr,thr_new(i),phr_new(i))
     latr_new(i) = (pi/2 - thr_new(i)) * 180/pi
     lonr_new(i) = phr_new(i)  * 180/pi

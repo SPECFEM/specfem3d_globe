@@ -13,7 +13,7 @@
   open(13,file='current_3d_model')
   ios=0
   do i=1,10
-  string(i)='\0'
+  string(i)=''
   if (ios == 0) read(13,"(a)",iostat=ios) string(i)
   enddo
   string(imod)=model

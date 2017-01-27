@@ -375,7 +375,7 @@
   integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX"
-  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  '\0'
+  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ''
 
 !!-----------------------------------------------------------
 !!

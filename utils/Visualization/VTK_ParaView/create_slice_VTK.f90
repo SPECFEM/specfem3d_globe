@@ -75,7 +75,7 @@
   ! starts here--------------------------------------------------------------------------------------------------
   do i = 1, 6
     call getarg(i,arg(i))
-    if (i < 6 .and. trim(arg(i)) == '\0') then
+    if (i < 6 .and. trim(arg(i)) == '') then
       print *, ' '
       print *, ' Usage: xcreate_slice_VTK slice_list filename input_topo_dir input_file_dir output_dir [region]'
       print *, ' '
@@ -94,7 +94,7 @@
              stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! get region id
-  if (trim(arg(6)) == '\0') then
+  if (trim(arg(6)) == '') then
     iregion  = 0
   else
     read(arg(6),*) iregion
@@ -308,7 +308,7 @@
     i = ibool(1,NGLLY,NGLLZ,ispec)
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
-  write(IOUT_VTK,*) '\0'
+  write(IOUT_VTK,*) ''
 
   ! note: indices for vtk start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
@@ -316,12 +316,12 @@
     write(IOUT_VTK,'(9i12)') 8,(ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3, &
           (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
   enddo
-  write(IOUT_VTK,*) '\0'
+  write(IOUT_VTK,*) ''
 
   ! type: hexahedrons
   write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec)
-  write(IOUT_VTK,*) '\0'
+  write(IOUT_VTK,*) ''
 
   ! writes out gll-data (velocity) for each element point
   write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nspec*8
@@ -352,7 +352,7 @@
     i = ibool(1,NGLLY,NGLLZ,ispec)-1
     write(IOUT_VTK,'(3e18.6)') gll_data(1,NGLLY,NGLLZ,ispec)
   enddo
-  write(IOUT_VTK,*) '\0'
+  write(IOUT_VTK,*) ''
 
   close(IOUT_VTK)
 

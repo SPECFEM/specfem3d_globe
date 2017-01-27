@@ -228,7 +228,7 @@ program smooth_sem_globe
   ! parse command line arguments
   do i = 1, NARGS
     call get_command_argument(i,arg(i))
-    if (i <= 5 .and. trim(arg(i)) == '\0') then
+    if (i <= 5 .and. trim(arg(i)) == '') then
       stop ' Please check command line arguments'
     endif
   enddo

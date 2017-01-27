@@ -263,7 +263,7 @@ end program sum_kernels_globe
     call init_adios_group(group,group_name)
 
     ! defines group size
-    call define_adios_scalar(group, group_size_inc, '\0', "NSPEC", NSPEC_CRUST_MANTLE)
+    call define_adios_scalar(group, group_size_inc, '', "NSPEC", NSPEC_CRUST_MANTLE)
 
     ! defines all arrays
     if (USE_ISO_KERNELS) then
@@ -278,7 +278,7 @@ end program sum_kernels_globe
     endif
     do iker = is,ie
       local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
-      call define_adios_global_array1D(group, group_size_inc, local_dim, '\0', trim(kl_name(iker)), total_kernel(:,:,:,:))
+      call define_adios_global_array1D(group, group_size_inc, local_dim, '', trim(kl_name(iker)), total_kernel(:,:,:,:))
     enddo
 
     ! opens new adios model file
