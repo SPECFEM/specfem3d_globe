@@ -704,6 +704,12 @@ COND_MIC_FALSE
 COND_MIC_TRUE
 COND_OCL_FALSE
 COND_OCL_TRUE
+COND_CUDA8_FALSE
+COND_CUDA8_TRUE
+COND_CUDA7_FALSE
+COND_CUDA7_TRUE
+COND_CUDA6_FALSE
+COND_CUDA6_TRUE
 COND_CUDA5_FALSE
 COND_CUDA5_TRUE
 COND_CUDA_FALSE
@@ -2813,7 +2819,29 @@ else
   COND_CUDA5_FALSE=
 fi
 
+ if test x"$want_cuda" = xcuda6; then
+  COND_CUDA6_TRUE=
+  COND_CUDA6_FALSE='#'
+else
+  COND_CUDA6_TRUE='#'
+  COND_CUDA6_FALSE=
+fi
 
+ if test x"$want_cuda" = xcuda7; then
+  COND_CUDA7_TRUE=
+  COND_CUDA7_FALSE='#'
+else
+  COND_CUDA7_TRUE='#'
+  COND_CUDA7_FALSE=
+fi
+
+ if test x"$want_cuda" = xcuda8; then
+  COND_CUDA8_TRUE=
+  COND_CUDA8_FALSE='#'
+else
+  COND_CUDA8_TRUE='#'
+  COND_CUDA8_FALSE=
+fi
 
 # Check whether --with-opencl was given.
 if test "${with_opencl+set}" = set; then :
@@ -8091,6 +8119,18 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA5_TRUE}" && test -z "${COND_CUDA5_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA5\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA6_TRUE}" && test -z "${COND_CUDA6_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA6\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA7_TRUE}" && test -z "${COND_CUDA7_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA7\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA8_TRUE}" && test -z "${COND_CUDA8_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA8\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_OCL_TRUE}" && test -z "${COND_OCL_FALSE}"; then
