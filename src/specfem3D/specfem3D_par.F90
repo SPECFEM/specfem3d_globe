@@ -33,9 +33,140 @@ module constants_solver
 
   implicit none
 
+! daniel debug: todo
+#ifndef DANIEL_DEBUG
+
   ! include values created by the mesher
   ! done for performance only using static allocation to allow for loop unrolling
   include "OUTPUT_FILES/values_from_mesher.h"
+
+#else
+  ! for future compilation
+  ! no static compilation, will use dynamic arrays
+
+  ! mesh
+  integer :: NEX_XI_VAL
+  integer :: NEX_ETA_VAL
+
+  integer :: NSPEC_CRUST_MANTLE
+  integer :: NSPEC_OUTER_CORE
+  integer :: NSPEC_INNER_CORE
+
+  integer :: NGLOB_CRUST_MANTLE
+  integer :: NGLOB_OUTER_CORE
+  integer :: NGLOB_INNER_CORE
+
+  ! element types
+  integer :: NSPECMAX_ANISO_IC
+  integer :: NSPECMAX_ISO_MANTLE
+  integer :: NSPECMAX_TISO_MANTLE
+  integer :: NSPECMAX_ANISO_MANTLE
+
+  ! attenuation & strain
+  integer :: NSPEC_CRUST_MANTLE_ATTENUATION
+  integer :: NSPEC_INNER_CORE_ATTENUATION
+
+  integer :: NSPEC_CRUST_MANTLE_STR_OR_ATT
+  integer :: NSPEC_INNER_CORE_STR_OR_ATT
+
+  integer :: NSPEC_CRUST_MANTLE_STR_AND_ATT
+  integer :: NSPEC_INNER_CORE_STR_AND_ATT
+
+  integer :: NSPEC_CRUST_MANTLE_STRAIN_ONLY
+  integer :: NSPEC_INNER_CORE_STRAIN_ONLY
+
+  ! adjoint
+  integer :: NSPEC_CRUST_MANTLE_ADJOINT
+  integer :: NSPEC_OUTER_CORE_ADJOINT
+  integer :: NSPEC_INNER_CORE_ADJOINT
+  integer :: NGLOB_CRUST_MANTLE_ADJOINT
+  integer :: NGLOB_OUTER_CORE_ADJOINT
+  integer :: NGLOB_INNER_CORE_ADJOINT
+  integer :: NSPEC_OUTER_CORE_ROT_ADJOINT
+
+  ! absorbing boundary
+  integer :: NSPEC_CRUST_MANTLE_STACEY
+  integer :: NSPEC_OUTER_CORE_STACEY
+
+  ! ocean/bathymetry
+  integer :: NGLOB_CRUST_MANTLE_OCEANS
+
+  integer :: NX_BATHY_VAL
+  integer :: NY_BATHY_VAL
+
+  ! rotation
+  integer :: NSPEC_OUTER_CORE_ROTATION
+
+  ! MPI partitions
+  integer :: NPROC_XI_VAL
+  integer :: NPROC_ETA_VAL
+  integer :: NCHUNKS_VAL
+  integer :: NPROCTOT_VAL
+
+  ! attenuation
+  integer :: ATT1_VAL
+  integer :: ATT2_VAL
+  integer :: ATT3_VAL
+  integer :: ATT4_VAL
+  integer :: ATT5_VAL
+
+  ! boundaries
+  integer :: NSPEC2DMAX_XMIN_XMAX_CM
+  integer :: NSPEC2DMAX_YMIN_YMAX_CM
+  integer :: NSPEC2D_BOTTOM_CM
+  integer :: NSPEC2D_TOP_CM
+  integer :: NSPEC2DMAX_XMIN_XMAX_IC
+  integer :: NSPEC2DMAX_YMIN_YMAX_IC
+  integer :: NSPEC2D_BOTTOM_IC
+  integer :: NSPEC2D_TOP_IC
+  integer :: NSPEC2DMAX_XMIN_XMAX_OC
+  integer :: NSPEC2DMAX_YMIN_YMAX_OC
+  integer :: NSPEC2D_BOTTOM_OC
+  integer :: NSPEC2D_TOP_OC
+  integer :: NSPEC2D_MOHO
+  integer :: NSPEC2D_400
+  integer :: NSPEC2D_670
+  integer :: NSPEC2D_CMB
+  integer :: NSPEC2D_ICB
+
+  ! movies
+  integer :: NSPEC_CRUST_MANTLE_3DMOVIE
+  integer :: NGLOB_CRUST_MANTLE_3DMOVIE
+  integer :: NSPEC_OUTER_CORE_3DMOVIE
+
+  ! regular kernels
+  integer :: NM_KL_REG_PTS_VAL
+
+  integer :: NGLOB_XY_CM
+  integer :: NGLOB_XY_IC
+  integer :: NT_DUMP_ATTENUATION_VAL
+
+  ! model
+  logical :: TRANSVERSE_ISOTROPY_VAL
+  logical :: ANISOTROPIC_3D_MANTLE_VAL
+  logical :: ANISOTROPIC_INNER_CORE_VAL
+  logical :: ATTENUATION_VAL
+  logical :: ATTENUATION_3D_VAL
+  logical :: ELLIPTICITY_VAL
+  logical :: GRAVITY_VAL
+  logical :: OCEANS_VAL
+
+  logical :: ROTATION_VAL
+  logical :: EXACT_MASS_MATRIX_FOR_ROTATION_VAL
+  logical :: PARTIAL_PHYS_DISPERSION_ONLY_VAL
+
+  logical :: USE_DEVILLE_PRODUCTS_VAL
+  logical :: ATTENUATION_1D_WITH_3D_STORAGE_VAL
+  logical :: FORCE_VECTORIZATION_VAL
+  logical :: UNDO_ATTENUATION_VAL
+
+  ! 1-chunk
+  double precision :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL
+  double precision :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL
+  double precision :: CENTER_LATITUDE_IN_DEGREES_VAL
+  double precision :: CENTER_LONGITUDE_IN_DEGREES_VAL
+  double precision :: GAMMA_ROTATION_AZIMUTH_VAL
+#endif
 
 end module constants_solver
 
@@ -405,9 +536,9 @@ module specfem_par_crustmantle
   ! if absorbing_conditions are not set or if NCHUNKS=6, only one mass matrix is needed
   ! for the sake of performance, only "rmassz" array will be filled and "rmassx" & "rmassy" will be obsolete
   real(kind=CUSTOM_REAL), dimension(:), allocatable, target :: rmassz_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassz_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: rmassx_crust_mantle,rmassy_crust_mantle
-  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassz_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: rmassx_crust_mantle,rmassy_crust_mantle
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassx_crust_mantle,b_rmassy_crust_mantle
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
@@ -585,9 +716,9 @@ module specfem_par_innercore
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(:), allocatable, target :: rmassz_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassz_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: rmassx_inner_core,rmassy_inner_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmassx_inner_core,b_rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassz_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: rmassx_inner_core,rmassy_inner_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmassx_inner_core,b_rmassy_inner_core
 
   ! displacement, velocity, acceleration
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: &
@@ -699,7 +830,7 @@ module specfem_par_outercore
 
   ! mass matrix
   real(kind=CUSTOM_REAL), dimension(:), allocatable, target :: rmass_outer_core
-  real(kind=CUSTOM_REAL), dimension(:), pointer, contiguous :: b_rmass_outer_core
+  real(kind=CUSTOM_REAL), dimension(:), pointer :: b_rmass_outer_core
 
   ! velocity potential
   real(kind=CUSTOM_REAL), dimension(:), allocatable :: &
