@@ -97,6 +97,16 @@ ifeq ($(CUDA),yes)
   ifeq ($(CUDA5),yes)
     BUILD_VERSION_TXT += (v5)
   endif
+  ifeq ($(CUDA6),yes)
+    BUILD_VERSION_TXT += (v6)
+  endif
+  ifeq ($(CUDA7),yes)
+    BUILD_VERSION_TXT += (v7)
+  endif
+  ifeq ($(CUDA8),yes)
+    BUILD_VERSION_TXT += (v8)
+  endif
+
 endif
 
 ifeq ($(GPU_CUDA_AND_OCL),yes)

@@ -704,6 +704,8 @@ COND_MIC_FALSE
 COND_MIC_TRUE
 COND_OCL_FALSE
 COND_OCL_TRUE
+COND_CUDA_PLUS_FALSE
+COND_CUDA_PLUS_TRUE
 COND_CUDA8_FALSE
 COND_CUDA8_TRUE
 COND_CUDA7_FALSE
@@ -1445,7 +1447,7 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-cuda             build cuda GPU enabled version [default=no]
+  --with-cuda             build CUDA GPU enabled version [default=no]
   --with-opencl           build OpenCL GPU enabled version [default=no]
   --with-mic              build native Xeon PHI enabled version [default=no]
   --with-xsmm             build LIBXSMM (see:https://github.com/hfp/libxsmm)
@@ -2792,7 +2794,7 @@ fi
 
 
 ###
-### GPU
+### CUDA
 ###
 
 
@@ -2842,6 +2844,17 @@ else
   COND_CUDA8_TRUE='#'
   COND_CUDA8_FALSE=
 fi
+
+# cuda linking for cuda 5x and 6x
+ if test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6 -o "$want_cuda" = cuda7 -o "$want_cuda" = cuda8; then
+  COND_CUDA_PLUS_TRUE=
+  COND_CUDA_PLUS_FALSE='#'
+else
+  COND_CUDA_PLUS_TRUE='#'
+  COND_CUDA_PLUS_FALSE=
+fi
+
+
 
 # Check whether --with-opencl was given.
 if test "${with_opencl+set}" = set; then :
@@ -8131,6 +8144,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA8_TRUE}" && test -z "${COND_CUDA8_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA8\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA_PLUS_TRUE}" && test -z "${COND_CUDA_PLUS_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA_PLUS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_OCL_TRUE}" && test -z "${COND_OCL_FALSE}"; then

@@ -92,6 +92,8 @@ AM_CONDITIONAL([COND_CUDA5], [test x"$want_cuda" = xcuda5])
 AM_CONDITIONAL([COND_CUDA6], [test x"$want_cuda" = xcuda6])
 AM_CONDITIONAL([COND_CUDA7], [test x"$want_cuda" = xcuda7])
 AM_CONDITIONAL([COND_CUDA8], [test x"$want_cuda" = xcuda8])
+# cuda linking for cuda 5x and 6x
+AM_CONDITIONAL([COND_CUDA_PLUS], [test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6 -o "$want_cuda" = cuda7 -o "$want_cuda" = cuda8])
 
 AC_ARG_WITH([opencl],
  [AC_HELP_STRING([--with-opencl], [build OpenCL GPU enabled version @<:@default=no@:>@])],
