@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 1.2.2
+//      this file has been generated automatically by BOAST version 2.0.1
 //      by: make boast_kernels
 
 /*
@@ -95,6 +95,7 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
+\n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
@@ -115,6 +116,7 @@ void compute_element_cm_att_stress(const int tx, const int working_element, cons
     sigma_yz[0] = sigma_yz[0] - (R_yz[offset]);\n\
   }\n\
 }\n\
+\n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
@@ -160,6 +162,7 @@ void compute_element_cm_att_memory(const int tx, const int working_element, cons
     R_yz[offset] = (alphaval_loc) * (R_yz[offset]) + (betaval_loc) * (sn) + (gammaval_loc) * (snp1);\n\
   }\n\
 }\n\
+\n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
@@ -241,6 +244,7 @@ void compute_element_cm_gravity(const int tx, const int iglob, const __global fl
   rho_s_H2[0] = (factor) * ((sx_l) * (Hxyl) + (sy_l) * (Hyyl) + (sz_l) * (Hyzl));\n\
   rho_s_H3[0] = (factor) * ((sx_l) * (Hxzl) + (sy_l) * (Hyzl) + (sz_l) * (Hzzl));\n\
 }\n\
+\n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
@@ -309,6 +313,7 @@ void compute_element_cm_aniso(const int offset, const __global float * d_c11stor
   *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);\n\
   *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);\n\
 }\n\
+\n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
@@ -331,6 +336,7 @@ void compute_element_cm_iso(const int offset, const __global float * d_kappavsto
   *(sigma_xz) = (mul) * (duzdxl_plus_duxdzl);\n\
   *(sigma_yz) = (mul) * (duzdyl_plus_duydzl);\n\
 }\n\
+\n\
 #if __OPENCL_C_VERSION__ && __OPENCL_C_VERSION__ >= 120\n\
 static\n\
 #endif\n\
@@ -466,6 +472,11 @@ void compute_element_cm_tiso(const int offset, const __global float * d_kappavst
   *(sigma_xz) = (c15) * (duxdxl) + (c56) * (duxdyl_plus_duydxl) + (c25) * (duydyl) + (c55) * (duzdxl_plus_duxdzl) + (c45) * (duzdyl_plus_duydzl) + (c35) * (duzdzl);\n\
   *(sigma_yz) = (c14) * (duxdxl) + (c46) * (duxdyl_plus_duydxl) + (c24) * (duydyl) + (c45) * (duzdxl_plus_duxdzl) + (c44) * (duzdyl_plus_duydzl) + (c34) * (duzdzl);\n\
 }\n\
+\n\
+/*----------------------------------------------*/\n\
+// main function\n\
+/*----------------------------------------------*/\n\
+\n\
 #ifdef USE_TEXTURES_FIELDS\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
 __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, const __global int * d_ibool, const __global int * d_ispec_is_tiso, const __global int * d_phase_ispec_inner, const int num_phase_ispec, const int d_iphase, const float deltat, const int use_mesh_coloring_gpu, const __global float * restrict d_displ, __global float * d_accel, const __global float * restrict d_xix, const __global float * restrict d_xiy, const __global float * restrict d_xiz, const __global float * restrict d_etax, const __global float * restrict d_etay, const __global float * restrict d_etaz, const __global float * restrict d_gammax, const __global float * restrict d_gammay, const __global float * restrict d_gammaz, const __global float * restrict d_hprime_xx, const __global float * restrict d_hprimewgll_xx, const __global float * restrict d_wgllwgll_xy, const __global float * restrict d_wgllwgll_xz, const __global float * restrict d_wgllwgll_yz, const __global float * restrict d_kappavstore, const __global float * restrict d_muvstore, const __global float * restrict d_kappahstore, const __global float * restrict d_muhstore, const __global float * restrict d_eta_anisostore, const int COMPUTE_AND_STORE_STRAIN, __global float * epsilondev_xx, __global float * epsilondev_yy, __global float * epsilondev_xy, __global float * epsilondev_xz, __global float * epsilondev_yz, __global float * epsilon_trace_over_3, const int ATTENUATION, const int PARTIAL_PHYS_DISPERSION_ONLY, const int USE_3D_ATTENUATION_ARRAYS, const __global float * restrict one_minus_sum_beta, const __global float * restrict factor_common, __global float * R_xx, __global float * R_yy, __global float * R_xy, __global float * R_xz, __global float * R_yz, const __global float * restrict alphaval, const __global float * restrict betaval, const __global float * restrict gammaval, const int ANISOTROPY, const __global float * restrict d_c11store, const __global float * restrict d_c12store, const __global float * restrict d_c13store, const __global float * restrict d_c14store, const __global float * restrict d_c15store, const __global float * restrict d_c16store, const __global float * restrict d_c22store, const __global float * restrict d_c23store, const __global float * restrict d_c24store, const __global float * restrict d_c25store, const __global float * restrict d_c26store, const __global float * restrict d_c33store, const __global float * restrict d_c34store, const __global float * restrict d_c35store, const __global float * restrict d_c36store, const __global float * restrict d_c44store, const __global float * restrict d_c45store, const __global float * restrict d_c46store, const __global float * restrict d_c55store, const __global float * restrict d_c56store, const __global float * restrict d_c66store, const int GRAVITY, const __global float * restrict d_rstore, const __global float * restrict d_minus_gravity_table, const __global float * restrict d_minus_deriv_gravity_table, const __global float * restrict d_density_table, const __global float * restrict wgll_cube, const int NSPEC_CRUST_MANTLE_STRAIN_ONLY, __read_only image2d_t d_displ_cm_tex, __read_only image2d_t d_accel_cm_tex, __read_only image2d_t d_hprime_xx_tex, __read_only image2d_t d_hprimewgll_xx_tex){\n\
@@ -572,9 +583,15 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
   __local float s_tempz3[(NGLL3)];\n\
   __local float sh_hprime_xx[(NGLL2)];\n\
   __local float sh_hprimewgll_xx[(NGLL2)];\n\
+\n\
   bx = (get_group_id(1)) * (get_num_groups(0)) + get_group_id(0);\n\
+  if (bx >= nb_blocks_to_compute) {\n\
+     return ;\n\
+  }\n\
+\n\
   tx = get_local_id(0) + ((NGLL3_PADDED) * (0)) / (1);\n\
-  active_1 = (tx < NGLL3 && bx < nb_blocks_to_compute ? 1 : 0);\n\
+  active_1 = (tx < NGLL3 ? 1 : 0);\n\
+\n\
   if (active_1) {\n\
 #ifdef USE_MESH_COLORING_GPU\n\
     working_element = bx;\n\
@@ -596,6 +613,7 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     s_dummyz_loc[tx] = d_displ[2 + (3) * (iglob_1)];\n\
 #endif\n\
   }\n\
+\n\
   if (tx < NGLL2) {\n\
 #ifdef USE_TEXTURES_CONSTANTS\n\
     sh_hprime_xx[tx] = as_float(read_imageui(d_hprime_xx_tex, sampler_d_hprime_xx_tex, int2(tx,0)).x);\n\
@@ -606,9 +624,11 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
 #endif\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
   K = (tx) / (NGLL2);\n\
   J = (tx - ((K) * (NGLL2))) / (NGLLX);\n\
   I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));\n\
+\n\
   if (active_1) {\n\
     tempx1l = 0.0f;\n\
     tempx2l = 0.0f;\n\
@@ -721,6 +741,7 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     duxdyl_plus_duydxl = duxdyl + duydxl;\n\
     duzdxl_plus_duxdzl = duzdxl + duxdzl;\n\
     duzdyl_plus_duydzl = duzdyl + duydzl;\n\
+\n\
     if (COMPUTE_AND_STORE_STRAIN) {\n\
       templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);\n\
       epsilondev_xx_loc_1 = duxdxl - (templ);\n\
@@ -734,6 +755,7 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
         epsilon_trace_over_3[tx + (working_element) * (NGLL3)] = templ;\n\
       }\n\
     }\n\
+\n\
     if (ATTENUATION) {\n\
       if (USE_3D_ATTENUATION_ARRAYS) {\n\
         one_minus_sum_beta_use = one_minus_sum_beta[tx + (working_element) * (NGLL3)];\n\
@@ -741,6 +763,7 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
         one_minus_sum_beta_use = one_minus_sum_beta[working_element];\n\
       }\n\
     }\n\
+\n\
     if (ANISOTROPY) {\n\
       compute_element_cm_aniso(offset, d_c11store, d_c12store, d_c13store, d_c14store, d_c15store, d_c16store, d_c22store, d_c23store, d_c24store, d_c25store, d_c26store, d_c33store, d_c34store, d_c35store, d_c36store, d_c44store, d_c45store, d_c46store, d_c55store, d_c56store, d_c66store, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
     } else {\n\
@@ -750,16 +773,20 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
         compute_element_cm_tiso(offset, d_kappavstore, d_muvstore, d_kappahstore, d_muhstore, d_eta_anisostore, ATTENUATION, one_minus_sum_beta_use, duxdxl, duxdyl, duxdzl, duydxl, duydyl, duydzl, duzdxl, duzdyl, duzdzl, duxdyl_plus_duydxl, duzdxl_plus_duxdzl, duzdyl_plus_duydzl, iglob_1, d_rstore,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
       }\n\
     }\n\
+\n\
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {\n\
       compute_element_cm_att_stress(tx, working_element, R_xx, R_yy, R_xy, R_xz, R_yz,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_xz,  &sigma_yz);\n\
     }\n\
+\n\
     sigma_yx = sigma_xy;\n\
     sigma_zx = sigma_xz;\n\
     sigma_zy = sigma_yz;\n\
     jacobianl = (1.0f) / ((xixl) * ((etayl) * (gammazl) - ((etazl) * (gammayl))) - ((xiyl) * ((etaxl) * (gammazl) - ((etazl) * (gammaxl)))) + (xizl) * ((etaxl) * (gammayl) - ((etayl) * (gammaxl))));\n\
+\n\
     if (GRAVITY) {\n\
       compute_element_cm_gravity(tx, iglob_1, d_rstore, d_minus_gravity_table, d_minus_deriv_gravity_table, d_density_table, wgll_cube, jacobianl, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc,  &sigma_xx,  &sigma_yy,  &sigma_zz,  &sigma_xy,  &sigma_yx,  &sigma_xz,  &sigma_zx,  &sigma_yz,  &sigma_zy,  &rho_s_H_1_1,  &rho_s_H_1_2,  &rho_s_H_1_3);\n\
     }\n\
+\n\
     s_tempx1[tx] = (jacobianl) * ((sigma_xx) * (xixl) + (sigma_yx) * (xiyl) + (sigma_zx) * (xizl));\n\
     s_tempy1[tx] = (jacobianl) * ((sigma_xy) * (xixl) + (sigma_yy) * (xiyl) + (sigma_zy) * (xizl));\n\
     s_tempz1[tx] = (jacobianl) * ((sigma_xz) * (xixl) + (sigma_yz) * (xiyl) + (sigma_zz) * (xizl));\n\
@@ -771,6 +798,7 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     s_tempz3[tx] = (jacobianl) * ((sigma_xz) * (gammaxl) + (sigma_yz) * (gammayl) + (sigma_zz) * (gammazl));\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
+\n\
   if (active_1) {\n\
     tempx1l = 0.0f;\n\
     tempx2l = 0.0f;\n\
@@ -882,11 +910,13 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
     sum_terms1 =  -((fac1) * (tempx1l) + (fac2) * (tempx2l) + (fac3) * (tempx3l));\n\
     sum_terms2 =  -((fac1) * (tempy1l) + (fac2) * (tempy2l) + (fac3) * (tempy3l));\n\
     sum_terms3 =  -((fac1) * (tempz1l) + (fac2) * (tempz2l) + (fac3) * (tempz3l));\n\
+\n\
     if (GRAVITY) {\n\
       sum_terms1 = sum_terms1 + rho_s_H_1_1;\n\
       sum_terms2 = sum_terms2 + rho_s_H_1_2;\n\
       sum_terms3 = sum_terms3 + rho_s_H_1_3;\n\
     }\n\
+\n\
 #ifdef USE_MESH_COLORING_GPU\n\
 #ifdef USE_TEXTURES_FIELDS\n\
     d_accel[0 + (3) * (iglob_1)] = as_float(read_imageui(d_accel_cm_tex, sampler_d_accel_cm_tex, int2((iglob_1) * (3) + 0,0)).x) + sum_terms1;\n\
@@ -914,9 +944,11 @@ __kernel  void crust_mantle_impl_kernel_forward(const int nb_blocks_to_compute, 
       atomicAdd(d_accel + (iglob_1) * (3) + 2, sum_terms3);\n\
     }\n\
 #endif\n\
+\n\
     if (ATTENUATION &&  !(PARTIAL_PHYS_DISPERSION_ONLY)) {\n\
       compute_element_cm_att_memory(tx, working_element, d_muvstore, factor_common, alphaval, betaval, gammaval, R_xx, R_yy, R_xy, R_xz, R_yz, epsilondev_xx, epsilondev_yy, epsilondev_xy, epsilondev_xz, epsilondev_yz, epsilondev_xx_loc_1, epsilondev_yy_loc_1, epsilondev_xy_loc_1, epsilondev_xz_loc_1, epsilondev_yz_loc_1, d_c44store, ANISOTROPY, USE_3D_ATTENUATION_ARRAYS);\n\
     }\n\
+\n\
     if (COMPUTE_AND_STORE_STRAIN) {\n\
       epsilondev_xx[tx + (working_element) * (NGLL3)] = epsilondev_xx_loc_1;\n\
       epsilondev_yy[tx + (working_element) * (NGLL3)] = epsilondev_yy_loc_1;\n\

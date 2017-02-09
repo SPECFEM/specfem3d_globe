@@ -8,6 +8,7 @@ def rndup( val, div)
   return (val%div) == 0 ? val : val + div - (val%div)
 end
 
+# default options
 $options = {:output_dir => "./output", :elem_per_thread => 1, :langs => [:CUDA, :CL] }
 
 $parser = OptionParser::new do |opts|
@@ -108,6 +109,8 @@ puts "BOAST version #{v}"
 puts "-------------------------------"
 puts "building kernel files:"
 puts "-------------------------------"
+puts "option: element per thread = #{$options[:elem_per_thread]}"
+puts ""
 
 # checks output directory
 if File.exists? "#{$options[:output_dir]}/" then

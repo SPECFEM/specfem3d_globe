@@ -586,18 +586,32 @@ module BOAST
         sub_compute_element_att_memory =  compute_element_cm_att_memory(n_gll3, n_gll3_padded, n_sls)
         sub_compute_element_gravity =  compute_element_cm_gravity(n_gll3, r_earth_km)
       end
+      # function definitions
+      comment()
       print sub_compute_element_att_stress
+      comment()
       print sub_compute_element_att_memory
+      comment()
       print sub_compute_element_gravity
+      comment()
       if type == :crust_mantle then
         sub_compute_element_cm_aniso = compute_element_cm_aniso
         print sub_compute_element_cm_aniso
+        comment()
         sub_compute_element_cm_iso = compute_element_cm_iso
         print sub_compute_element_cm_iso
+        comment()
         sub_compute_element_cm_tiso = compute_element_cm_tiso
         print sub_compute_element_cm_tiso
       end
 
+      comment()
+      comment("/*----------------------------------------------*/")
+      comment("// main function")
+      comment("/*----------------------------------------------*/")
+      comment()
+
+      # function name
       if get_lang == CL then
         get_output.puts "#ifdef #{use_textures_fields}"
           get_output.puts "#ifdef #{use_textures_constants}"
@@ -633,104 +647,111 @@ module BOAST
         open p
       end
 
-        decl bx = Int("bx")
-        decl tx = Int("tx")
-        decl k  = Int("K"), j = Int("J"), i = Int("I")
-        get_output.puts "#ifndef #{manually_unrolled_loops}"
-          decl l = Int("l")
-        get_output.puts "#endif"
-        active = (1..elem_per_thread).collect { |e_i| Int("active_#{e_i}", :size => 2, :signed => false) }
-        decl *active
-        decl offset = Int("offset")
-        iglob = (1..elem_per_thread).collect { |e_i| Int("iglob_#{e_i}") }
-        decl *iglob
-        decl working_element = Int("working_element")
-        tempanl = ["x", "y", "z"].collect { |a|
-          [ 1, 2, 3 ].collect { |n|
-            Real("temp#{a}#{n}l")
-          }
+      # declarations
+      decl bx = Int("bx")
+      decl tx = Int("tx")
+      decl k  = Int("K"), j = Int("J"), i = Int("I")
+      get_output.puts "#ifndef #{manually_unrolled_loops}"
+        decl l = Int("l")
+      get_output.puts "#endif"
+      active = (1..elem_per_thread).collect { |e_i| Int("active_#{e_i}", :size => 2, :signed => false) }
+      decl *active
+      decl offset = Int("offset")
+      iglob = (1..elem_per_thread).collect { |e_i| Int("iglob_#{e_i}") }
+      decl *iglob
+      decl working_element = Int("working_element")
+      tempanl = ["x", "y", "z"].collect { |a|
+        [ 1, 2, 3 ].collect { |n|
+          Real("temp#{a}#{n}l")
         }
-        decl *(tempanl.flatten)
-        decl *xil   = [ Real("xixl"),   Real("xiyl"),   Real("xizl")   ]
-        decl *etal  = [ Real("etaxl"),  Real("etayl"),  Real("etazl")  ]
-        decl *gammal= [ Real("gammaxl"),Real("gammayl"),Real("gammazl")]
-        decl jacobianl= Real("jacobianl")
-        dudl = ["x", "y", "z"].collect { |a1|
-          ["x", "y", "z"].collect { |a2|
-            Real("du#{a1}d#{a2}l")
-          }
+      }
+      decl *(tempanl.flatten)
+      decl *xil   = [ Real("xixl"),   Real("xiyl"),   Real("xizl")   ]
+      decl *etal  = [ Real("etaxl"),  Real("etayl"),  Real("etazl")  ]
+      decl *gammal= [ Real("gammaxl"),Real("gammayl"),Real("gammazl")]
+      decl jacobianl= Real("jacobianl")
+      dudl = ["x", "y", "z"].collect { |a1|
+        ["x", "y", "z"].collect { |a2|
+          Real("du#{a1}d#{a2}l")
         }
-        decl *(dudl.flatten)
-        decl duxdxl_plus_duydyl = Real("duxdxl_plus_duydyl")
-        decl duxdxl_plus_duzdzl = Real("duxdxl_plus_duzdzl")
-        decl duydyl_plus_duzdzl = Real("duydyl_plus_duzdzl")
-        decl duxdyl_plus_duydxl = Real("duxdyl_plus_duydxl")
-        decl duzdxl_plus_duxdzl = Real("duzdxl_plus_duxdzl")
-        decl duzdyl_plus_duydzl = Real("duzdyl_plus_duydzl")
-        decl templ = Real("templ")
-        decl *fac = [1,2,3].collect {|n|
-          Real("fac#{n}")
-        }
-        if type == :inner_core then
-          decl lambdal = Real("lambdal")
-          decl mul = Real("mul")
-          decl lambdalplus2mul = Real("lambdalplus2mul")
-          decl kappal = Real("kappal")
-          decl mul_iso = Real("mul_iso")
-          decl mul_aniso = Real("mul_aniso")
-        elsif type == :crust_mantle then
-          decl one_minus_sum_beta_use = Real("one_minus_sum_beta_use")
-        end
+      }
+      decl *(dudl.flatten)
+      decl duxdxl_plus_duydyl = Real("duxdxl_plus_duydyl")
+      decl duxdxl_plus_duzdzl = Real("duxdxl_plus_duzdzl")
+      decl duydyl_plus_duzdzl = Real("duydyl_plus_duzdzl")
+      decl duxdyl_plus_duydxl = Real("duxdyl_plus_duydxl")
+      decl duzdxl_plus_duxdzl = Real("duzdxl_plus_duxdzl")
+      decl duzdyl_plus_duydzl = Real("duzdyl_plus_duydzl")
+      decl templ = Real("templ")
+      decl *fac = [1,2,3].collect {|n|
+        Real("fac#{n}")
+      }
+      if type == :inner_core then
+        decl lambdal = Real("lambdal")
+        decl mul = Real("mul")
+        decl lambdalplus2mul = Real("lambdalplus2mul")
+        decl kappal = Real("kappal")
+        decl mul_iso = Real("mul_iso")
+        decl mul_aniso = Real("mul_aniso")
+      elsif type == :crust_mantle then
+        decl one_minus_sum_beta_use = Real("one_minus_sum_beta_use")
+      end
 
-        sigma = ["x", "y", "z"].collect { |a1|
-          ["x", "y", "z"].collect { |a2|
-            Real("sigma_#{a1}#{a2}")
-          }
+      sigma = ["x", "y", "z"].collect { |a1|
+        ["x", "y", "z"].collect { |a2|
+          Real("sigma_#{a1}#{a2}")
         }
-        decl *(sigma.flatten)
-        decl *epsilondev_xx_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xx_loc_#{e_i}") }
-        decl *epsilondev_yy_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_yy_loc_#{e_i}") }
-        decl *epsilondev_xy_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xy_loc_#{e_i}") }
-        decl *epsilondev_xz_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xz_loc_#{e_i}") }
-        decl *epsilondev_yz_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_yz_loc_#{e_i}") }
-        if type == :inner_core then
-          decl c11 = Real("c11")
-          decl c12 = Real("c12")
-          decl c13 = Real("c13")
-          decl c33 = Real("c33")
-          decl c44 = Real("c44")
-        end
-        decl *sum_terms = [1,2,3].collect {|n|
-          Real("sum_terms#{n}")
+      }
+      decl *(sigma.flatten)
+      decl *epsilondev_xx_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xx_loc_#{e_i}") }
+      decl *epsilondev_yy_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_yy_loc_#{e_i}") }
+      decl *epsilondev_xy_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xy_loc_#{e_i}") }
+      decl *epsilondev_xz_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_xz_loc_#{e_i}") }
+      decl *epsilondev_yz_loc = (1..elem_per_thread).collect{ |e_i| Real("epsilondev_yz_loc_#{e_i}") }
+      if type == :inner_core then
+        decl c11 = Real("c11")
+        decl c12 = Real("c12")
+        decl c13 = Real("c13")
+        decl c33 = Real("c33")
+        decl c44 = Real("c44")
+      end
+      decl *sum_terms = [1,2,3].collect {|n|
+        Real("sum_terms#{n}")
+      }
+      rho_s_H = (1..elem_per_thread).collect{ |e_i|
+        [1,2,3].collect {|n|
+          Real("rho_s_H_#{e_i}_#{n}")
         }
-        rho_s_H = (1..elem_per_thread).collect{ |e_i|
-          [1,2,3].collect {|n|
-            Real("rho_s_H_#{e_i}_#{n}")
-          }
-        }
-        decl *(rho_s_H.flatten)
+      }
+      decl *(rho_s_H.flatten)
 
-        decl *s_dummy_loc = ["x", "y", "z"].collect { |a|
-          Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
+      # shared arrays
+      decl *s_dummy_loc = ["x", "y", "z"].collect { |a|
+        Real("s_dummy#{a}_loc", :local => true, :dim => [Dim(ngll3)] )
+      }
+
+      s_temp = ["x", "y", "z"].collect { |a|
+        [ 1, 2, 3 ].collect { |n|
+          Real("s_temp#{a}#{n}", :local => true, :dim => [Dim(ngll3)] )
         }
+      }
+      decl *(s_temp.flatten)
 
-        s_temp = ["x", "y", "z"].collect { |a|
-          [ 1, 2, 3 ].collect { |n|
-            Real("s_temp#{a}#{n}", :local => true, :dim => [Dim(ngll3)] )
-          }
-        }
-        decl *(s_temp.flatten)
+      decl sh_hprime_xx     = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
+      decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
+      comment()
 
-        decl sh_hprime_xx     = Real("sh_hprime_xx",     :local => true, :dim => [Dim(ngll2)] )
-        decl sh_hprimewgll_xx = Real("sh_hprimewgll_xx", :local => true, :dim => [Dim(ngll2)] )
+      print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
+      print If(bx >= nb_blocks_to_compute) { print Return(nil) }
+      comment()
 
-        print bx === get_group_id(1)*get_num_groups(0)+get_group_id(0)
-elem_per_thread.times { |elem_index|
+      elem_per_thread.times { |elem_index|
         print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
-        print active[elem_index] === Ternary( Expression("&&", tx < ngll3, bx < nb_blocks_to_compute), 1, 0)
+        print active[elem_index] === Ternary( tx < ngll3, 1, 0)
+        comment()
 
         print If(active[elem_index]) {
-  if elem_index == 0 then
+        if elem_index == 0 then
           get_output.puts "#ifdef #{use_mesh_coloring}"
             print working_element === bx
           get_output.puts "#else"
@@ -740,7 +761,7 @@ elem_per_thread.times { |elem_index|
               print working_element === d_phase_ispec_inner[bx + num_phase_ispec*(d_iphase-1)]-1
             })
           get_output.puts "#endif"
-  end
+        end
           __texture_fetch = lambda {
             print iglob[elem_index] === d_ibool[working_element*ngll3 + tx]-1
 
@@ -762,7 +783,9 @@ elem_per_thread.times { |elem_index|
             __texture_fetch.call
           end
         }
-        #inner core and crust mantle differ here, but crust mantle implementation though more reccent seems odd...
+        comment()
+
+        #inner core and crust mantle differ here, but crust mantle implementation though more recent seems odd...
         print If(tx < ngll2) {
           get_output.puts "#ifdef #{use_textures_constants}"
             print sh_hprime_xx[tx] === d_hprime_xx_tex[tx]
@@ -772,16 +795,18 @@ elem_per_thread.times { |elem_index|
             print sh_hprimewgll_xx[tx] === d_hprimewgll_xx[tx]
           get_output.puts "#endif"
         }
-}
-        print barrier(:local)
+      }
+      print barrier(:local)
+      comment()
 
-elem_per_thread.times { |elem_index|
-  if elem_per_thread > 1 then
-        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
-  end
+      elem_per_thread.times { |elem_index|
+        if elem_per_thread > 1 then
+          print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+        end
         print k === tx/ngll2
         print j === (tx-k*ngll2)/ngllx
         print i === tx - k*ngll2 - j*ngllx
+        comment()
 
         print If(active[elem_index]) {
           (0..2).each { |indx1|
@@ -830,6 +855,7 @@ elem_per_thread.times { |elem_index|
           print duxdyl_plus_duydxl === dudl[0][1] + dudl[1][0]
           print duzdxl_plus_duxdzl === dudl[2][0] + dudl[0][2]
           print duzdyl_plus_duydzl === dudl[2][1] + dudl[1][2]
+          comment()
 
           print If(compute_and_store_strain) {
             print templ === (dudl[0][0] + dudl[1][1] + dudl[2][2])*0.33333333333333333333333333
@@ -844,10 +870,13 @@ elem_per_thread.times { |elem_index|
               print epsilon_trace_over_3[tx + working_element*ngll3] === templ
             })
           }
+          comment()
 
           if type == :inner_core then
             print kappal === d_kappavstore[offset]
             print mul === d_muvstore[offset]
+            comment()
+
             print If(attenuation => lambda {
               print If(use_3d_attenuation_arrays => lambda {
                 print mul_iso  === mul * one_minus_sum_beta[tx+working_element*ngll3]
@@ -859,6 +888,8 @@ elem_per_thread.times { |elem_index|
             }, :else => lambda {
               print mul_iso === mul
             })
+            comment()
+
             print If(anisotropy => lambda {
               print c11 === d_c11store[offset]
               print c12 === d_c12store[offset]
@@ -898,6 +929,8 @@ elem_per_thread.times { |elem_index|
                 print one_minus_sum_beta_use === one_minus_sum_beta[working_element]
               })
             }
+            comment()
+
             print If(anisotropy => lambda {
               print sub_compute_element_cm_aniso.call( offset,
                                                       *(d_cstore.flatten.reject { |e| e.nil?}),
@@ -933,8 +966,7 @@ elem_per_thread.times { |elem_index|
               })
             })
           end
-
-
+          comment()
 
           print If(Expression("&&", attenuation, !partial_phys_dispersion_only)) {
             print sub_compute_element_att_stress.call(tx, working_element,\
@@ -942,6 +974,8 @@ elem_per_thread.times { |elem_index|
                                    sigma[0][0].address, sigma[1][1].address, sigma[2][2].address,\
                                    sigma[0][1].address, sigma[0][2].address, sigma[1][2].address)
           }
+          comment()
+
           print sigma[1][0] === sigma[0][1]
           print sigma[2][0] === sigma[0][2]
           print sigma[2][1] === sigma[1][2]
@@ -949,6 +983,8 @@ elem_per_thread.times { |elem_index|
           print jacobianl === Expression("/", 1.0, xil[0]*(etal[1]*gammal[2] - etal[2]*gammal[1])\
                                                  - xil[1]*(etal[0]*gammal[2] - etal[2]*gammal[0])\
                                                  + xil[2]*(etal[0]*gammal[1] - etal[1]*gammal[0]))
+          comment()
+
           print If(gravity) {
             print sub_compute_element_gravity.call(tx, iglob[elem_index],\
                                    d_rstore,\
@@ -960,6 +996,8 @@ elem_per_thread.times { |elem_index|
                                    sigma[2][0].address, sigma[1][2].address, sigma[2][1].address,\
                                    rho_s_H[elem_index][0].address, rho_s_H[elem_index][1].address, rho_s_H[elem_index][2].address)
           }
+          comment()
+
           (0..2).each { |indx|
             print s_temp[indx][0][tx] === jacobianl * (sigma[0][indx]*xil[0] + sigma[1][indx]*xil[1] + sigma[2][indx]*xil[2])
           }
@@ -970,15 +1008,18 @@ elem_per_thread.times { |elem_index|
             print s_temp[indx][2][tx] === jacobianl * (sigma[0][indx]*gammal[0] + sigma[1][indx]*gammal[1] + sigma[2][indx]*gammal[2])
           }
         }
-}
-        print barrier(:local)
-elem_per_thread.times { |elem_index|
-  if elem_per_thread > 1 then
-        print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
-        print k === tx/ngll2
-        print j === (tx-k*ngll2)/ngllx
-        print i === tx - k*ngll2 - j*ngllx
-  end
+      }
+      print barrier(:local)
+      comment()
+
+      elem_per_thread.times { |elem_index|
+        if elem_per_thread > 1 then
+          print tx === get_local_id(0) + ngll3_padded * elem_index / elem_per_thread
+          print k === tx/ngll2
+          print j === (tx-k*ngll2)/ngllx
+          print i === tx - k*ngll2 - j*ngllx
+          comment()
+        end
 
         print If(active[elem_index]) {
           (0..2).each { |indx1|
@@ -1014,12 +1055,15 @@ elem_per_thread.times { |elem_index|
           (0..2).each { |indx|
             print sum_terms[indx] === -(fac[0]*tempanl[indx][0] + fac[1]*tempanl[indx][1] + fac[2]*tempanl[indx][2])
           }
+          comment()
 
           print If(gravity) {
             (0..2).each { |indx|
               print sum_terms[indx] === sum_terms[indx] + rho_s_H[elem_index][indx]
             }
           }
+          comment()
+
           get_output.puts "#ifdef #{use_mesh_coloring}"
             get_output.puts "#ifdef #{use_textures_fields}"
               (0..2).each { |indx|
@@ -1068,6 +1112,8 @@ elem_per_thread.times { |elem_index|
               }
             })
           get_output.puts "#endif"
+          comment()
+
           print If(Expression("&&", attenuation, !partial_phys_dispersion_only ) ) {
             __params = [tx, working_element,\
                         d_muvstore, factor_common,\
@@ -1085,6 +1131,8 @@ elem_per_thread.times { |elem_index|
             __params.push use_3d_attenuation_arrays
             print sub_compute_element_att_memory.call( *__params )
           }
+          comment()
+
           print If(compute_and_store_strain ) {
             print epsilondev_xx[tx + working_element*ngll3] === epsilondev_xx_loc[elem_index]
             print epsilondev_yy[tx + working_element*ngll3] === epsilondev_yy_loc[elem_index]
@@ -1093,7 +1141,7 @@ elem_per_thread.times { |elem_index|
             print epsilondev_yz[tx + working_element*ngll3] === epsilondev_yz_loc[elem_index]
           }
         }
-}
+      }
       close p
     else
       raise "Unsupported language!"
