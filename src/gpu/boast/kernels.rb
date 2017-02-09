@@ -139,7 +139,12 @@ kerns.each { |kern|
     end
     # generates kernels
     if lang == :CUDA then
-      k = BOAST::method(kern).call(false)
+      if big_kernels.include?(kern) then
+        k = BOAST::method(kern).call(false, $options[:elem_per_thread])
+      else
+        k = BOAST::method(kern).call(false)
+      end
+      #k = BOAST::method(kern).call(false)
       puts "  Generated"
       k.print if $options[:display]
       filename = "#{kern}.cu"
