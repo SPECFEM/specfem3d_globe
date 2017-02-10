@@ -387,7 +387,7 @@ module BOAST
       print c[5][5] === rhovshsq*costwophisq*costhetasq -
                     (rhovphsq - two_rhovshsq)*cosphisq*costhetasq*sinphisq*2.0 +
                     (rhovphsq*(costwotheta*4.0 + cosfourtheta + 11.0)*sintwophisq)*0.03125 -
-                    (rhovsvsq*(cosfourphi*-2.0 + cos(phi*4.0 - theta*2.0) - costwotheta*2.0 +
+                    (rhovsvsq*(cosfourphi*(-2.0) + cos(phi*4.0 - theta*2.0) - costwotheta*2.0 +
                     cos((phi*2.0 + theta)*2.0) - 6.0)*sinthetasq)*0.125 +
                     rhovpvsq*cosphisq*sinphisq*sinthetafour -
                     (eta_aniso*(rhovphsq - two_rhovsvsq)*sintwophisq*sinthetafour)*0.5
