@@ -62,7 +62,7 @@
   do ilatitude = -90,+89
 
     stlat = ilatitude
-    if(ilatitude < 0) then
+    if (ilatitude < 0) then
       write(station_name,"('FRONT_MINUS_',i2.2,'_00')") int(abs(stlat))
     else
       write(station_name,"('FRONT_PLUS_',i2.2,'_00')") int(abs(stlat))
@@ -70,7 +70,7 @@
     write(IOUT,*) trim(station_name),' ',trim(network_name),' ',sngl(stlat),' 0 0 0'
 
     stlat = ilatitude + 0.5d0
-    if(stlat < 0) then
+    if (stlat < 0) then
       write(station_name,"('FRONT_MINUS_',i2.2,'_50')") int(abs(stlat))
     else
       write(station_name,"('FRONT_PLUS_',i2.2,'_50')") int(abs(stlat))
@@ -84,7 +84,7 @@
   do ilatitude = -90,+89
 
     stlat = ilatitude
-    if(ilatitude < 0) then
+    if (ilatitude < 0) then
       write(station_name,"('BACK_MINUS_',i2.2,'_00')") int(abs(stlat))
     else
       write(station_name,"('BACK_PLUS_',i2.2,'_00')") int(abs(stlat))
@@ -92,7 +92,7 @@
     write(IOUT,*) trim(station_name),' ',trim(network_name),' ',sngl(stlat),' 180 0 0'
 
     stlat = ilatitude + 0.5d0
-    if(stlat < 0) then
+    if (stlat < 0) then
       write(station_name,"('BACK_MINUS_',i2.2,'_50')") int(abs(stlat))
     else
       write(station_name,"('BACK_PLUS_',i2.2,'_50')") int(abs(stlat))

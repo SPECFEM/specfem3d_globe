@@ -27,22 +27,22 @@
 
   subroutine write_movie_output()
 
-  use specfem_par,only: deltat,it,myrank,Mesh_pointer, &
+  use specfem_par, only: deltat,it,myrank,Mesh_pointer, &
     GPU_MODE,NTSTEP_BETWEEN_FRAMES,LOCAL_TMP_PATH, &
     MOVIE_COARSE,MOVIE_START,MOVIE_STOP,MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_VOLUME_TYPE, &
     scale_displ,scale_veloc
 
-  use specfem_par_crustmantle,only: displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+  use specfem_par_crustmantle, only: displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
     eps_trace_over_3_crust_mantle,epsilondev_xx_crust_mantle,epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
     epsilondev_yy_crust_mantle,epsilondev_yz_crust_mantle, &
     ibool_crust_mantle
 
-  use specfem_par_innercore,only: displ_inner_core,veloc_inner_core,accel_inner_core, &
+  use specfem_par_innercore, only: displ_inner_core,veloc_inner_core,accel_inner_core, &
     eps_trace_over_3_inner_core,epsilondev_xx_inner_core,epsilondev_xy_inner_core,epsilondev_xz_inner_core, &
     epsilondev_yy_inner_core,epsilondev_yz_inner_core, &
     ibool_inner_core
 
-  use specfem_par_outercore,only: displ_outer_core,veloc_outer_core,accel_outer_core, &
+  use specfem_par_outercore, only: displ_outer_core,veloc_outer_core,accel_outer_core, &
     ibool_outer_core,kappavstore_outer_core,rhostore_outer_core
 
   use specfem_par_movie
@@ -176,7 +176,7 @@
                                 displ_outer_core,veloc_outer_core,accel_outer_core,Mesh_pointer)
         endif
 
-        call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle,&
+        call write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle, &
                         div_displ_outer_core, &
                         accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
                         eps_trace_over_3_inner_core, &
@@ -286,13 +286,13 @@
 
   subroutine write_movie_VTK_snapshot()
 
-  use specfem_par,only: it,myrank,Mesh_pointer, &
+  use specfem_par, only: it,myrank,Mesh_pointer, &
     GPU_MODE,SIMULATION_TYPE, &
     NTSTEP_BETWEEN_FRAMES,MOVIE_START,MOVIE_STOP, &
     MAX_STRING_LEN,IFLAG_CRUST,NDIM, &
     NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE
 
-  use specfem_par_crustmantle,only: displ_crust_mantle,b_displ_crust_mantle, &
+  use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
     ibool_crust_mantle,rstore_crust_mantle
 
   implicit none

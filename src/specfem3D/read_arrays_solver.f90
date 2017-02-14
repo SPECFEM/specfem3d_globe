@@ -43,7 +43,7 @@
                                 b_rmassx,b_rmassy)
 
   use constants_solver
-  use specfem_par,only: &
+  use specfem_par, only: &
     ABSORBING_CONDITIONS, &
     LOCAL_PATH,ABSORBING_CONDITIONS
 

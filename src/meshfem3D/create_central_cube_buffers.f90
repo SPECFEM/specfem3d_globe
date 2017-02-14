@@ -574,7 +574,7 @@
       nb_msgs_theor_in_cube = 5
     else
       ! case of a corner
-      if ((iproc_xi == 0 .or. iproc_xi == NPROC_XI-1).and. &
+      if ((iproc_xi == 0 .or. iproc_xi == NPROC_XI-1) .and. &
          (iproc_eta == 0 .or. iproc_eta == NPROC_ETA-1)) then
         ! slices on both "vertical" faces plus one slice at the bottom
         nb_msgs_theor_in_cube = 2*(nproc_xi_half_ceil) + 1
@@ -594,7 +594,7 @@
       nb_msgs_theor_in_cube = 5
     else
       ! case of a corner
-      if ((iproc_xi == 0 .or. iproc_xi == NPROC_XI-1).and. &
+      if ((iproc_xi == 0 .or. iproc_xi == NPROC_XI-1) .and. &
          (iproc_eta == 0 .or. iproc_eta == NPROC_ETA-1)) then
         ! slices on both "vertical" faces plus one slice at the bottom
         nb_msgs_theor_in_cube = 2*(nproc_xi_half_floor) + 1

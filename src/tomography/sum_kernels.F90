@@ -98,12 +98,12 @@ program sum_kernels_globe
   ! checks if number of MPI process as specified
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'Error: run xsum_kernels with the same number of MPI processes '
       print *,'       as specified when slices were created'
-      print *,''
+      print *
       print *,'for example: mpirun -np ',NPROCTOT_VAL,' ./xsum_kernels ...'
-      print *,''
+      print *
     endif
     call synchronize_all()
     stop 'Error total number of slices'
@@ -178,7 +178,7 @@ program sum_kernels_globe
 
   endif
 
-  if(myrank==0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
+  if (myrank == 0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
 
 #ifdef ADIOS_INPUT
   ! finalizes adios
@@ -200,7 +200,7 @@ end program sum_kernels_globe
 
 #ifdef ADIOS_INPUT
   use manager_adios
-  use adios_helpers_mod,only: define_adios_scalar,define_adios_global_array1D
+  use adios_helpers_mod, only: define_adios_scalar,define_adios_global_array1D
 #endif
 
   implicit none
@@ -263,7 +263,7 @@ end program sum_kernels_globe
     call init_adios_group(group,group_name)
 
     ! defines group size
-    call define_adios_scalar(group, group_size_inc, "", "NSPEC", NSPEC_CRUST_MANTLE)
+    call define_adios_scalar(group, group_size_inc, '', "NSPEC", NSPEC_CRUST_MANTLE)
 
     ! defines all arrays
     if (USE_ISO_KERNELS) then
@@ -278,7 +278,7 @@ end program sum_kernels_globe
     endif
     do iker = is,ie
       local_dim = NGLLX * NGLLY * NGLLZ * NSPEC_CRUST_MANTLE
-      call define_adios_global_array1D(group, group_size_inc, local_dim, "", trim(kl_name(iker)), total_kernel(:,:,:,:))
+      call define_adios_global_array1D(group, group_size_inc, local_dim, '', trim(kl_name(iker)), total_kernel(:,:,:,:))
     enddo
 
     ! opens new adios model file
@@ -410,7 +410,7 @@ end program sum_kernels_globe
 
   subroutine read_kernel_binary(filename,nspec,kernel)
 
-  use tomography_par,only: NGLLX,NGLLY,NGLLZ,IIN,CUSTOM_REAL,MAX_STRING_LEN
+  use tomography_par, only: NGLLX,NGLLY,NGLLZ,IIN,CUSTOM_REAL,MAX_STRING_LEN
 
   implicit none
 
@@ -444,7 +444,7 @@ end program sum_kernels_globe
 
   subroutine write_kernel_binary(filename,nspec,kernel)
 
-  use tomography_par,only: NGLLX,NGLLY,NGLLZ,IOUT,CUSTOM_REAL,MAX_STRING_LEN
+  use tomography_par, only: NGLLX,NGLLY,NGLLZ,IOUT,CUSTOM_REAL,MAX_STRING_LEN
 
   implicit none
 

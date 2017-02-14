@@ -39,8 +39,8 @@
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
-                    gammaxstore,gammaystore,gammazstore,&
+                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
+                    gammaxstore,gammaystore,gammazstore, &
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
@@ -181,7 +181,7 @@
           call compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
              ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
              NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-             stretch_tab(1,ner_without_doubling-iz_elem+1),&
+             stretch_tab(1,ner_without_doubling-iz_elem+1), &
              stretch_tab(2,ner_without_doubling-iz_elem+1),1,ilayer,ichunk,rotation_matrix, &
              NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
         else
@@ -260,7 +260,7 @@
                    xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
                    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                    normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                   ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
+                   ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                    NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
                    is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)

@@ -21,7 +21,7 @@ program make_az_stations
   call getarg(2,ch_elat)
   call getarg(3,ch_az)
 
-  if (trim(ch_elon) == '' .or. trim(ch_elat) == '' .or. trim(ch_az) == '')  then
+  if (trim(ch_elon) == '' .or. trim(ch_elat) == '' .or. trim(ch_az) == '') then
     print *, 'Usage: xmake_az_stations elon elat az [dist(degrees)]'
     stop
   endif

@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
   subroutine prepare_GPU()
 
 ! initializes and copies arrays onto GPU device
@@ -43,7 +42,7 @@
   integer :: ier
   integer :: i,j,k,ispec,ispec2D,ipoin,iglob
   real :: free_mb,used_mb,total_mb
-  ! dummy custom_real variables to convert from double precision
+  ! dummy CUSTOM_REAL variables to convert from double precision
   real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable:: cr_wgll_cube
   real(kind=CUSTOM_REAL),dimension(:),allocatable:: &
     cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
@@ -603,15 +602,15 @@
 
     ! outputs info
     if (total_mb /= 0) then
-       write(IMAIN,*) ""
+       write(IMAIN,*)
        write(IMAIN,*) "  GPU usage: free  =",free_mb," MB",nint(free_mb/total_mb*100.0),"%"
        write(IMAIN,*) "             used  =",used_mb," MB",nint(used_mb/total_mb*100.0),"%"
        write(IMAIN,*) "             total =",total_mb," MB",nint(total_mb/total_mb*100.0),"%"
-       write(IMAIN,*) ""
+       write(IMAIN,*)
     else
-       write(IMAIN,*) ""
+       write(IMAIN,*)
        write(IMAIN,*) "  GPU usage: not available."
-       write(IMAIN,*) ""
+       write(IMAIN,*)
     endif
     call flush_IMAIN()
   endif
@@ -738,7 +737,7 @@
       memory_size = memory_size + 6.d0 * NSPEC_2 * dble(SIZE_INTEGER)
     endif
 
-    ! mpi buffers
+    ! MPI buffers
     ! d_ibool_interfaces_crust_mantle
     memory_size = memory_size + num_interfaces_crust_mantle * max_nibool_interfaces_cm * dble(SIZE_INTEGER)
     ! d_send_accel_buffer_crust_mantle
@@ -840,10 +839,10 @@
     if (SIMULATION_TYPE == 3) memory_size = 2.d0 * memory_size
 
     ! user output
-    if(myrank == 0) then
-      write(IMAIN,*) ""
+    if (myrank == 0) then
+      write(IMAIN,*)
       write(IMAIN,*) "  minimum memory requested     : ",memory_size / 1024. / 1024.,"MB per process"
-      write(IMAIN,*) ""
+      write(IMAIN,*)
       call flush_IMAIN()
     endif
 

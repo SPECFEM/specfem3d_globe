@@ -29,12 +29,12 @@
                                     test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
                                     num_interfaces,max_nibool_interfaces, &
                                     max_nibool,MAX_NEIGHBOURS, &
-                                    ibool,&
+                                    ibool, &
                                     is_on_a_slice_edge, &
                                     IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
                                     xstore,ystore,zstore,NPROCTOT)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE
   implicit none
 
   integer,intent(in) :: myrank,NGLOB,NSPEC
@@ -580,7 +580,7 @@
   subroutine sort_MPI_interface(myrank,npoin,ibool_n, &
                                     NGLOB,xstore,ystore,zstore)
 
-  use constants,only: CUSTOM_REAL,SIZE_REAL
+  use constants, only: CUSTOM_REAL,SIZE_REAL
 
   implicit none
 

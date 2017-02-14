@@ -27,7 +27,7 @@
 
   double precision function comp_source_time_function(t,hdur)
 
-  use constants,only: EXTERNAL_SOURCE_TIME_FUNCTION
+  use constants, only: EXTERNAL_SOURCE_TIME_FUNCTION
 
   implicit none
 
@@ -52,7 +52,7 @@
 
   double precision function comp_source_time_function_rickr(t,f0)
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -114,7 +114,7 @@
     read(IIN, '(A)', iostat = ier) line
 
     if (ier /= 0) then
-      print *, "ERROR IN SOURCE TIME FUNCTION."
+      print *, "Error in external source time function."
       stop 'Error reading external stf file'
     endif
 

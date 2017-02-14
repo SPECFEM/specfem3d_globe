@@ -25,20 +25,20 @@
 !
 !=====================================================================
 
-  subroutine define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80,&
+  subroutine define_all_layers(NER_CRUST,NER_80_MOHO,NER_220_80, &
                         NER_400_220,NER_600_400,NER_670_600,NER_771_670, &
                         NER_TOPDDOUBLEPRIME_771,NER_CMB_TOPDDOUBLEPRIME,NER_OUTER_CORE, &
-                        NER_TOP_CENTRAL_CUBE_ICB,&
+                        NER_TOP_CENTRAL_CUBE_ICB, &
                         RMIDDLE_CRUST,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                        R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER,&
+                        R_CENTRAL_CUBE,RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
                         ONE_CRUST, &
-                        ner,ratio_sampling_array,&
+                        ner,ratio_sampling_array, &
                         NUMBER_OF_MESH_LAYERS,layer_offset,last_doubling_layer, &
-                        r_bottom,r_top,this_region_has_a_doubling,&
-                        ielem,elem_doubling_mantle,elem_doubling_middle_outer_core,&
-                        elem_doubling_bottom_outer_core,&
+                        r_bottom,r_top,this_region_has_a_doubling, &
+                        ielem,elem_doubling_mantle,elem_doubling_middle_outer_core, &
+                        elem_doubling_bottom_outer_core, &
                         DEPTH_SECOND_DOUBLING_REAL,DEPTH_THIRD_DOUBLING_REAL, &
-                        DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval,&
+                        DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
                         doubling_index,rmins,rmaxs)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -408,7 +408,7 @@
 
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
-      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
+      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
         ner( 1) = ceiling (NER_CRUST / 2.d0)
         ner( 2) = floor (NER_CRUST / 2.d0)
       else
@@ -818,7 +818,7 @@
 
       NUMBER_OF_MESH_LAYERS = 15
       layer_offset = 1
-      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER)<(R_EARTH-RMIDDLE_CRUST)) then
+      if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
         ner( 1) = ceiling (NER_CRUST / 2.d0)
         ner( 2) = floor (NER_CRUST / 2.d0)
       else

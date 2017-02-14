@@ -52,14 +52,14 @@
     write(IOUT_ENERGY,*) 'set logscale y'
     write(IOUT_ENERGY,*) 'set xlabel "Time step number"'
     write(IOUT_ENERGY,*) 'set ylabel "Energy (J)"'
-    write(IOUT_ENERGY,'(a152)') '#plot "energy.dat" us 1:2 t ''Kinetic Energy'' w l lc 1, "energy.dat" us 1:3 &
-                         &t ''Potential Energy'' w l lc 2, "energy.dat" us 1:4 t ''Total Energy'' w l lc 4'
+    write(IOUT_ENERGY,'(a152)') '#plot "energy.dat" us 1:2 t "Kinetic Energy" w l lc 1, "energy.dat" us 1:3 &
+                         &t "Potential Energy" w l lc 2, "energy.dat" us 1:4 t "Total Energy" w l lc 4'
     write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
-    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:2 t ''Kinetic Energy'' w l lc 1'
+    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:2 t "Kinetic Energy" w l lc 1'
     write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
-    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:3 t ''Potential Energy'' w l lc 2'
+    write(IOUT_ENERGY,*) '#plot "energy.dat" us 1:3 t "Potential Energy" w l lc 2'
     write(IOUT_ENERGY,*) '#pause -1 "Hit any key..."'
-    write(IOUT_ENERGY,*) 'plot "energy.dat" us 1:4 t ''Total Energy'' w l lc 4'
+    write(IOUT_ENERGY,*) 'plot "energy.dat" us 1:4 t "Total Energy" w l lc 4'
     write(IOUT_ENERGY,*) 'pause -1 "Hit any key..."'
     close(IOUT_ENERGY)
   endif
@@ -109,6 +109,7 @@
     ! simulation status output and stability check
     if (mod(it,NTSTEP_BETWEEN_OUTPUT_INFO) == 0 .or. it == it_begin + 4 .or. it == it_end) then
       call check_stability()
+      if (I_am_running_on_a_slow_node) goto 100
     endif
 
     do istage = 1, NSTAGE_TIME_SCHEME ! is equal to 1 if Newmark because only one stage then
@@ -257,6 +258,8 @@
   !
   enddo   ! end of main time loop
 
+ 100 continue
+
   ! close the huge file that contains a dump of all the time steps to disk
   if (EXACT_UNDOING_TO_DISK) call finish_exact_undoing_to_disk()
 
@@ -332,7 +335,7 @@
                                      beta_kl_inner_core,NSPEC_INNER_CORE)
     ! outer core
     call transfer_kernels_oc_to_host(Mesh_pointer, &
-                                     rho_kl_outer_core,&
+                                     rho_kl_outer_core, &
                                      alpha_kl_outer_core,NSPEC_OUTER_CORE)
     ! crust/mantle
     call transfer_kernels_cm_to_host(Mesh_pointer, &
@@ -348,7 +351,7 @@
       call transfer_kernels_noise_to_host(Mesh_pointer,sigma_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
 
-    ! approximative hessian for preconditioning kernels
+    ! approximative Hessian for preconditioning kernels
     if (APPROXIMATE_HESS_KL) then
       call transfer_kernels_hess_cm_tohost(Mesh_pointer,hess_kl_crust_mantle,NSPEC_CRUST_MANTLE)
     endif
@@ -411,14 +414,14 @@
       data_size = size(vtkdata)
       if (myrank == 0) then
         ! gather data
-        call gatherv_all_r(vtkdata,data_size,&
+        call gatherv_all_r(vtkdata,data_size, &
                             vtkdata_all,vtkdata_points_all,vtkdata_offset_all, &
                             vtkdata_numpoints_all,NPROCTOT_VAL)
         ! updates VTK window
         call visualize_vtkdata(it,currenttime,vtkdata_all)
       else
         ! all other process just send data
-        call gatherv_all_r(vtkdata,data_size,&
+        call gatherv_all_r(vtkdata,data_size, &
                             dummy,vtkdata_points_all,vtkdata_offset_all, &
                             1,NPROCTOT_VAL)
       endif
@@ -476,7 +479,7 @@
 
   if (ANISOTROPIC_KL) call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK requires ANISOTROPIC_KL to be turned off')
 
-  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /=3) &
+  if (SIMULATION_TYPE /= 1 .and. SIMULATION_TYPE /= 3) &
     call exit_MPI(myrank,'EXACT_UNDOING_TO_DISK can only be used with SIMULATION_TYPE == 1 or SIMULATION_TYPE == 3')
 
 
@@ -493,7 +496,7 @@
         do i = 1, NGLLX
           iglob = ibool_crust_mantle(i,j,k,ispec)
           ! xstore ystore zstore have previously been converted to r theta phi in rstore
-          radius = rstore_crust_mantle(1,iglob) ! <- radius r (normalized)
+          radius = rstore_crust_mantle(1,iglob) ! radius r (normalized)
           ! save that element only if it is in the upper part of the mesh
           if (radius >= R670 / R_EARTH) then
             ! if this point has not yet been found before

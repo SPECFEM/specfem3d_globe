@@ -1314,9 +1314,9 @@ void FC_FUNC_ (prepare_crust_mantle_device,
   gpuMalloc_realw (&mp->d_gammaz_crust_mantle, size_padded);
 
   // transfer constant element data with padding
+#ifdef USE_OPENCL
   int i;
   for (i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
-#ifdef USE_OPENCL
     if (run_opencl) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
       clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_crust_mantle.ocl, CL_FALSE, offset,
@@ -1346,30 +1346,32 @@ void FC_FUNC_ (prepare_crust_mantle_device,
       clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_gammaz_crust_mantle.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw),&h_gammaz[i*NGLL3], 0, NULL, NULL));
     }
+  }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_crust_mantle.cuda+i*NGLL3_PADDED, &h_xix[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1501);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_crust_mantle.cuda+i*NGLL3_PADDED, &h_xiy[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1502);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_crust_mantle.cuda+i*NGLL3_PADDED, &h_xiz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1503);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_crust_mantle.cuda+i*NGLL3_PADDED, &h_etax[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1504);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_crust_mantle.cuda+i*NGLL3_PADDED, &h_etay[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1505);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_crust_mantle.cuda+i*NGLL3_PADDED, &h_etaz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1506);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_crust_mantle.cuda+i*NGLL3_PADDED, &h_gammax[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1507);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_crust_mantle.cuda+i*NGLL3_PADDED, &h_gammay[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1508);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_crust_mantle.cuda+i*NGLL3_PADDED, &h_gammaz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1509);
-    }
+  // faster (small memcpy have low bandwidth...)
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xix_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_xix,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1501);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiy_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_xiy,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1501);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiz_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_xiz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1501);
+
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etax_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_etax,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1502);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etay_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_etay,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1502);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etaz_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_etaz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1502);
+
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammax_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_gammax,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1503);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammay_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_gammay,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1503);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammaz_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_gammaz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1503);
 #endif
-  }
+
 
   // global indexing
   TRACE ("prepare_crust_mantle global indexing");
@@ -1398,9 +1400,9 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     gpuMalloc_realw (&mp->d_eta_anisostore_crust_mantle, size_padded);
 
     // transfer with padding
+#ifdef USE_OPENCL
     int i;
     for (i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
-#ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_crust_mantle.ocl, CL_FALSE, offset,
@@ -1418,25 +1420,23 @@ void FC_FUNC_ (prepare_crust_mantle_device,
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_eta_anisostore_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_eta_aniso[i*NGLL3], 0, NULL, NULL));
       }
+    }
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) {
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_kappavstore_crust_mantle.cuda+i*NGLL3_PADDED,&h_kappav[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1510);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_kappahstore_crust_mantle.cuda+i*NGLL3_PADDED,&h_kappah[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1511);
+  // faster (small memcpy above have low bandwidth...)
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_kappavstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_kappav,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1510);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_kappahstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_kappah,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1510);
 
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_muvstore_crust_mantle.cuda+i*NGLL3_PADDED,  &h_muv[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1512);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_muhstore_crust_mantle.cuda+i*NGLL3_PADDED,&h_muh[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1513);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muvstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_muv,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1511);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muhstore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_muh,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1511);
 
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_eta_anisostore_crust_mantle.cuda+i*NGLL3_PADDED,&h_eta_aniso[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1514);
-
-      }
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_eta_anisostore_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), h_eta_aniso,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),1511);
 #endif
-    }
   } else {
     // anisotropic 3D mantle
 
@@ -1464,9 +1464,9 @@ void FC_FUNC_ (prepare_crust_mantle_device,
     gpuMalloc_realw (&mp->d_c66store_crust_mantle, size_padded);
 
     // transfer constant element data with padding
+#ifdef USE_OPENCL
     int i;
     for (i = 0; i < mp->NSPEC_CRUST_MANTLE; i++) {
-#ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
 
@@ -1533,54 +1533,53 @@ void FC_FUNC_ (prepare_crust_mantle_device,
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c66store_crust_mantle.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c66store[i*NGLL3], 0, NULL, NULL));
       }
+    }
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) {
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c11store_crust_mantle.cuda + i*NGLL3_PADDED, &c11store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4800);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c12store_crust_mantle.cuda + i*NGLL3_PADDED, &c12store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4801);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c13store_crust_mantle.cuda + i*NGLL3_PADDED, &c13store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4802);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c14store_crust_mantle.cuda + i*NGLL3_PADDED, &c14store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4803);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c15store_crust_mantle.cuda + i*NGLL3_PADDED, &c15store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4804);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c16store_crust_mantle.cuda + i*NGLL3_PADDED, &c16store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4805);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c22store_crust_mantle.cuda + i*NGLL3_PADDED, &c22store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4806);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c23store_crust_mantle.cuda + i*NGLL3_PADDED, &c23store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4807);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c24store_crust_mantle.cuda + i*NGLL3_PADDED, &c24store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4808);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c25store_crust_mantle.cuda + i*NGLL3_PADDED, &c25store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4809);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c26store_crust_mantle.cuda + i*NGLL3_PADDED, &c26store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4810);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c33store_crust_mantle.cuda + i*NGLL3_PADDED, &c33store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4811);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c34store_crust_mantle.cuda + i*NGLL3_PADDED, &c34store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4812);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c35store_crust_mantle.cuda + i*NGLL3_PADDED, &c35store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4813);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c36store_crust_mantle.cuda + i*NGLL3_PADDED, &c36store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4814);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c44store_crust_mantle.cuda + i*NGLL3_PADDED, &c44store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4815);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c45store_crust_mantle.cuda + i*NGLL3_PADDED, &c45store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4816);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c46store_crust_mantle.cuda + i*NGLL3_PADDED, &c46store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4817);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c55store_crust_mantle.cuda + i*NGLL3_PADDED, &c55store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4818);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c56store_crust_mantle.cuda + i*NGLL3_PADDED, &c56store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4819);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c66store_crust_mantle.cuda + i*NGLL3_PADDED, &c66store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4820);
-      }
+    // faster (small memcpy have low bandwidth...)
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c11store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c11store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c12store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c12store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c13store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c13store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c14store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c14store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c15store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c15store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c16store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c16store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c22store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c22store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c23store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c23store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c24store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c24store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c25store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c25store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c26store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c26store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c33store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c33store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c34store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c34store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c35store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c35store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c36store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c36store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c44store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c44store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c45store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c45store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c46store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c46store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c55store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c55store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c56store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c56store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c66store_crust_mantle.cuda, NGLL3_PADDED*sizeof(realw), c66store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_CRUST_MANTLE,cudaMemcpyHostToDevice),4800);
 #endif
-    }
   }
 
   // needed for boundary kernel calculations
@@ -1832,9 +1831,9 @@ void FC_FUNC_ (prepare_outer_core_device,
   gpuMalloc_realw (&mp->d_kappavstore_outer_core, size_padded);
 
   // transfer constant element data with padding
+#ifdef USE_OPENCL
   int i;
   for (i = 0; i < mp->NSPEC_OUTER_CORE; i++) {
-#ifdef USE_OPENCL
     if (run_opencl) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
       clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_xix_outer_core.ocl, CL_FALSE, offset,
@@ -1867,54 +1866,54 @@ void FC_FUNC_ (prepare_outer_core_device,
       clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_outer_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
     }
+  }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_outer_core.cuda+i*NGLL3_PADDED, &h_xix[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1501);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_outer_core.cuda+i*NGLL3_PADDED, &h_xiy[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1502);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_outer_core.cuda+i*NGLL3_PADDED, &h_xiz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1503);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_outer_core.cuda+i*NGLL3_PADDED, &h_etax[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1504);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_outer_core.cuda+i*NGLL3_PADDED, &h_etay[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1505);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_outer_core.cuda+i*NGLL3_PADDED, &h_etaz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1506);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_outer_core.cuda+i*NGLL3_PADDED, &h_gammax[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1507);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_outer_core.cuda+i*NGLL3_PADDED, &h_gammay[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1508);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_outer_core.cuda+i*NGLL3_PADDED, &h_gammaz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1509);
+  // faster (small memcpy have low bandwidth...)
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xix_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_xix,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1501);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiy_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_xiy,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1501);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiz_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_xiz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1501);
 
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_kappavstore_outer_core.cuda+i*NGLL3_PADDED,&h_kappav[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1510);
-    }
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etax_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_etax,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1502);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etay_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_etay,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1502);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etaz_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_etaz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1502);
+
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammax_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammax,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1503);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammay_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammay,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1503);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammaz_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammaz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1503);
+
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_kappavstore_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_kappav,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),1504);
 #endif
-  }
 
   // needed for kernel calculations
   if (mp->simulation_type == 3) {
     gpuMalloc_realw (&mp->d_rhostore_outer_core, size_padded);
 
+#ifdef USE_OPENCL
     int i;
     for (i = 0; i < mp->NSPEC_OUTER_CORE; i++) {
-#ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_outer_core.ocl, CL_FALSE, offset,
                                        NGLL3 * sizeof (realw), &h_rho[i*NGLL3], 0, NULL, NULL));
       }
+    }
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) {
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_rhostore_outer_core.cuda+i*NGLL3_PADDED, &h_rho[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),2106);
-      }
+    // faster (small memcpy have low bandwidth...)
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_rhostore_outer_core.cuda, NGLL3_PADDED*sizeof(realw), h_rho,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_OUTER_CORE,cudaMemcpyHostToDevice),2106);
 #endif
-    }
   }
 
   // global indexing
@@ -2112,9 +2111,9 @@ void FC_FUNC_ (prepare_inner_core_device,
   gpuMalloc_realw (&mp->d_muvstore_inner_core, size_padded);
 
   // transfer constant element data with padding
+#ifdef USE_OPENCL
   int i;
   for (i = 0;i < mp->NSPEC_INNER_CORE;i++) {
-#ifdef USE_OPENCL
     if (run_opencl) {
       int offset = i * NGLL3_PADDED * sizeof (realw);
 
@@ -2148,33 +2147,34 @@ void FC_FUNC_ (prepare_inner_core_device,
       clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_muvstore_inner_core.ocl, CL_FALSE, offset,
                                      NGLL3*sizeof (realw), &h_muv[i*NGLL3], 0, NULL, NULL));
     }
+  }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda) {
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xix_inner_core.cuda+i*NGLL3_PADDED, &h_xix[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1501);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiy_inner_core.cuda+i*NGLL3_PADDED, &h_xiy[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1502);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_xiz_inner_core.cuda+i*NGLL3_PADDED, &h_xiz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1503);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etax_inner_core.cuda+i*NGLL3_PADDED, &h_etax[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1504);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etay_inner_core.cuda+i*NGLL3_PADDED, &h_etay[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1505);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_etaz_inner_core.cuda+i*NGLL3_PADDED, &h_etaz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1506);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammax_inner_core.cuda+i*NGLL3_PADDED, &h_gammax[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1507);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammay_inner_core.cuda+i*NGLL3_PADDED, &h_gammay[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1508);
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_gammaz_inner_core.cuda+i*NGLL3_PADDED, &h_gammaz[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1509);
+  // faster (small memcpy have low bandwidth...)
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xix_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_xix,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1501);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiy_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_xiy,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1501);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_xiz_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_xiz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1501);
 
-      print_CUDA_error_if_any(cudaMemcpy(mp->d_muvstore_inner_core.cuda+i*NGLL3_PADDED, &h_muv[i*NGLL3],
-                                         NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1511);
-    }
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etax_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_etax,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1502);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etay_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_etay,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1502);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_etaz_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_etaz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1502);
+
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammax_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammax,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1503);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammay_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammay,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1503);
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_gammaz_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_gammaz,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1503);
+
+  print_CUDA_error_if_any(cudaMemcpy2D(mp->d_muvstore_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_muv,
+                                       NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1504);
 #endif
-  }
 
   // anisotropy
   if (! mp->anisotropic_inner_core) {
@@ -2183,22 +2183,21 @@ void FC_FUNC_ (prepare_inner_core_device,
     // kappavstore needed
     gpuMalloc_realw (&mp->d_kappavstore_inner_core, size_padded);
 
+#ifdef USE_OPENCL
     int i;
     for (i = 0;i < mp->NSPEC_INNER_CORE;i++) {
-#ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_kappavstore_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_kappav[i*NGLL3], 0, NULL, NULL));
       }
+    }
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) {
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_kappavstore_inner_core.cuda+i*NGLL3_PADDED,&h_kappav[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),1510);
-      }
+    // faster (small memcpy above have low bandwidth...)
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_kappavstore_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_kappav,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),1510);
 #endif
-    }
   } else {
     // anisotropic inner core
     gpuMalloc_realw (&mp->d_c11store_inner_core, size_padded);
@@ -2208,9 +2207,9 @@ void FC_FUNC_ (prepare_inner_core_device,
     gpuMalloc_realw (&mp->d_c44store_inner_core, size_padded);
 
     // transfer constant element data with padding
+#ifdef USE_OPENCL
     int i;
     for (i = 0;i < mp->NSPEC_INNER_CORE; i++) {
-#ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c11store_inner_core.ocl, CL_FALSE, offset,
@@ -2228,44 +2227,44 @@ void FC_FUNC_ (prepare_inner_core_device,
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_c44store_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &c44store[i*NGLL3], 0, NULL, NULL));
       }
+    }
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) {
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c11store_inner_core.cuda + i*NGLL3_PADDED, &c11store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4800);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c12store_inner_core.cuda + i*NGLL3_PADDED, &c12store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4801);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c13store_inner_core.cuda + i*NGLL3_PADDED, &c13store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4802);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c33store_inner_core.cuda + i*NGLL3_PADDED, &c33store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4803);
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_c44store_inner_core.cuda + i*NGLL3_PADDED, &c44store[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),4804);
-      }
+    // faster (small memcpy have low bandwidth...)
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c11store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c11store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c12store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c12store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c13store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c13store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c33store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c33store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_c44store_inner_core.cuda, NGLL3_PADDED*sizeof(realw), c44store,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),4800);
 #endif
-    }
+
   }
 
   // needed for boundary kernel calculations
   if (mp->simulation_type == 3 && mp->save_boundary_mesh) {
     gpuMalloc_realw (&mp->d_rhostore_inner_core, size_padded);
 
+#ifdef USE_OPENCL
     int i;
     for (i = 0; i < mp->NSPEC_INNER_CORE; i++) {
-#ifdef USE_OPENCL
       if (run_opencl) {
         int offset = i * NGLL3_PADDED * sizeof (realw);
         clCheck (clEnqueueWriteBuffer (mocl.command_queue, mp->d_rhostore_inner_core.ocl, CL_FALSE, offset,
                                        NGLL3*sizeof (realw), &h_rho[i*NGLL3], 0, NULL, NULL));
       }
+    }
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) {
-        print_CUDA_error_if_any(cudaMemcpy(mp->d_rhostore_inner_core.cuda+i*NGLL3_PADDED, &h_rho[i*NGLL3],
-                                           NGLL3*sizeof(realw),cudaMemcpyHostToDevice),2106);
-      }
+    // faster (small memcpy have low bandwidth...)
+    print_CUDA_error_if_any(cudaMemcpy2D(mp->d_rhostore_inner_core.cuda, NGLL3_PADDED*sizeof(realw), h_rho,
+                                         NGLL3*sizeof(realw), NGLL3*sizeof(realw),mp->NSPEC_INNER_CORE,cudaMemcpyHostToDevice),2106);
 #endif
-    }
+
   }
 
   // global indexing

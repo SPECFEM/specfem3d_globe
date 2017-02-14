@@ -27,11 +27,11 @@
 
   subroutine add_topography(myrank,xelm,yelm,zelm,ibathy_topo)
 
-  use constants,only: &
+  use constants, only: &
     NGNOD,NX_BATHY,NY_BATHY,R_EARTH,R_UNIT_SPHERE, &
     PI_OVER_TWO,RADIANS_TO_DEGREES,TINYVAL,ONE
 
-  use meshfem3D_par,only: R220
+  use meshfem3D_par, only: R220
 
   implicit none
 
@@ -93,7 +93,7 @@
                                 ibathy_topo)
 
   use constants
-  use meshfem3D_par,only: R220
+  use meshfem3D_par, only: R220
 
   implicit none
 

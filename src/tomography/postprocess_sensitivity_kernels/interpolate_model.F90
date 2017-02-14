@@ -49,7 +49,7 @@
 !  - mid-point-search == 1: looking for mid-points only is a good approach when changing number of processes (NPROC) only,
 !                           while keeping the mesh resolution (NEX) the same
 !                           (by default set to .true.)
-!  - mid-point-search == 0: searching for each single gll point is a good approach when changing resolution (NEX) of meshes;
+!  - mid-point-search == 0: searching for each single GLL point is a good approach when changing resolution (NEX) of meshes;
 !                           in general, interpolation suffers and might lead to differences at internal interfaces (e.g. 410)
 !
 !------------------------------------------------------------------------------
@@ -57,12 +57,12 @@
 
   program interpolate_model
 
-  use constants,only: SIZE_INTEGER, &
+  use constants, only: SIZE_INTEGER, &
     TWO_PI,R_UNIT_SPHERE, &
     NGNOD,MIDX,MIDY,MIDZ,R_EARTH_KM, &
     IFLAG_CRUST,IFLAG_80_MOHO,IFLAG_220_80,IFLAG_670_220,IFLAG_MANTLE_NORMAL
 
-  use postprocess_par,only: &
+  use postprocess_par, only: &
     CUSTOM_REAL,NGLLX,NGLLY,NGLLZ, &
     GAUSSALPHA,GAUSSBETA,R_EARTH_KM, &
     IIN,IOUT,MAX_STRING_LEN, &
@@ -74,7 +74,7 @@
 
 #ifdef ADIOS_INPUT
   use manager_adios
-  use adios_helpers_mod,only: define_adios_scalar,define_adios_global_array1D
+  use adios_helpers_mod, only: define_adios_scalar,define_adios_global_array1D
 #endif
 
   implicit none
@@ -96,7 +96,7 @@
   logical,parameter :: DO_BRUTE_FORCE_SEARCH = .false.
 
   ! kd-tree setup
-  ! uses all internal gll points for search tree
+  ! uses all internal GLL points for search tree
   ! or only element mid-points (only one option must be true)
   logical,parameter :: TREE_INTERNAL_GLL_POINTS = .true.
   logical,parameter :: TREE_MID_POINTS = .false.
@@ -183,7 +183,7 @@
   integer(kind=8) :: group,group_size_inc
 #endif
 
-  ! mpi parameters
+  ! MPI parameters
   integer :: sizeprocs,myrank
 
   ! nodes search
@@ -230,7 +230,7 @@
         print *,'   new-topo-dir/     - new mesh directory with topology files (e.g. proc***_solver_data.bin)'
 #endif
         print *,'   model-output-dir/ - output directory for interpolated model on new mesh'
-        print *,'   (optional) midpoint-search = 0  - uses every single gll point for search of closest element'
+        print *,'   (optional) midpoint-search = 0  - uses every single GLL point for search of closest element'
         print *,'                              = 1  - uses midpoints for search of closest element (default)'
         print *,' '
         stop ' Reenter command line options'
@@ -266,10 +266,10 @@
   enddo
 
   ! kdtree search:
-  ! searches closest element using mid-points only, rather than for every single gll point
+  ! searches closest element using mid-points only, rather than for every single GLL point
   ! note: looking for mid-points only is a good approach when changing number of processes (NPROC)
   !       while keeping the mesh resolution (NEX) the same;
-  !       searching for each single gll point is a good approach when changing resolution (NEX) of meshes;
+  !       searching for each single GLL point is a good approach when changing resolution (NEX) of meshes;
   !       in general, interpolation suffers and might lead to differences at internal interfaces (e.g. 410);
   if (want_midpoint == 1) then
     USE_MIDPOINT_SEARCH = .true.
@@ -413,14 +413,14 @@
     print *,'  nproc_eta / nproc_xi = ',nproc_eta_old,nproc_xi_old
     print *,'  nspec      = ',nspec_max_old
     print *,'  nglob      = ',nglob_max_old
-    print *,''
+    print *
     print *,'target mesh:  '
     print *,'  processors = ',NPROCTOT_VAL
     print *,'  nproc_eta / nproc_xi = ',NPROC_ETA_VAL,NPROC_XI_VAL
     print *,'  nex        = ',NEX_XI_VAL
     print *,'  nspec      = ',NSPEC_CRUST_MANTLE
     print *,'  nglob      = ',NGLOB_CRUST_MANTLE
-    print *,''
+    print *
     if (USE_TRANSVERSE_ISOTROPY) then
       print *,'model parameters:',nparams,' - transversely isotropic model'
     else
@@ -430,19 +430,19 @@
       print *,'  includes qmu model parameter'
     endif
     print *,'  ( ',(trim(fname(iker))//" ",iker = 1,nparams),')'
-    print *,''
+    print *
     print *,'input model  directory: ',trim(input_model_dir)
     print *,'output model directory: ',trim(output_model_dir)
-    print *,''
+    print *
     print *,'array size:'
     print *,'  ibool1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nproc_eta_old*nproc_xi_old*dble(SIZE_INTEGER)/1024./1024.,'MB'
     print *,'  x1,y1,z1 = ',nglob_max_old*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *,''
+    print *
     print *,'  model1   = ',NGLLX*NGLLY*NGLLZ*nspec_max_old*nparams*nproc_eta_old*nproc_xi_old*dble(CUSTOM_REAL)/1024./1024.,'MB'
     print *,'  model2   = ',NGLLX*NGLLY*NGLLZ*NSPEC_CRUST_MANTLE*nparams*dble(CUSTOM_REAL)/1024./1024.,'MB'
-    print *,''
-    print *,'total mpi processes: ',sizeprocs
-    print *,''
+    print *
+    print *,'total MPI processes: ',sizeprocs
+    print *
     if (DO_BRUTE_FORCE_SEARCH) then
       print *,'location search by : brute-force approach'
     else
@@ -450,7 +450,7 @@
       if (USE_MIDPOINT_SEARCH) then
         print *,'  uses midpoints of elements only'
       else
-        print *,'  uses internal gll points'
+        print *,'  uses internal GLL points'
       endif
       if (DO_SEPARATION_410_650) then
         print *,'  uses element separation for 410-km/650-km discontinuity'
@@ -462,16 +462,16 @@
         print *,'  uses fall-back to model value of closest point in case of large differences'
       endif
     endif
-    print *,''
+    print *
 #ifdef ADIOS_INPUT
     print *,'file format: ADIOS files'
-    print *,''
+    print *
 #endif
   endif
   call synchronize_all()
 
   ! checks
-  if (sizeprocs /= NPROCTOT_VAL) stop 'Error target mesh processors not equal to current total mpi processes'
+  if (sizeprocs /= NPROCTOT_VAL) stop 'Error target mesh processors not equal to current total MPI processes'
 
   ! checks temporary file creation, to see if we could write out new model
   if (myrank == 0) then
@@ -557,7 +557,7 @@
         ! gets slice number
         rank = addressing2(ichunk,iproc_xi,iproc_eta)
 
-        ! only associated mpi process continues
+        ! only associated MPI process continues
         if (myrank == rank) then
           ichunk_selected = ichunk
           iproc_eta_selected = iproc_eta
@@ -739,7 +739,7 @@ print *,myrank,'adios file rank',rank
   ! gets slice number
   rank = addressing2(ichunk_selected,iproc_xi_selected,iproc_eta_selected)
 
-  ! only associated mpi process continues
+  ! only associated MPI process continues
   if (myrank /= rank) stop 'Error selected addressing rank'
 
   ! user output
@@ -857,7 +857,7 @@ print *,myrank,'adios file rank',rank
           do ispec = 1, nspec_max_old
             if (idoubling1(ispec,iprocnum-1) == ilayer) then
               if (TREE_INTERNAL_GLL_POINTS) then
-                ! all internal gll points ( 2 to NGLLX-1 )
+                ! all internal GLL points ( 2 to NGLLX-1 )
                 inodes = inodes + (NGLLX-2)*(NGLLY-2)*(NGLLZ-2)
               endif
               if (TREE_MID_POINTS) then
@@ -911,7 +911,7 @@ print *,myrank,'adios file rank',rank
             if (idoubling1(ispec,iprocnum-1) /= ilayer ) cycle
 
             ! sets up tree nodes
-            ! all internal gll points
+            ! all internal GLL points
             if (TREE_INTERNAL_GLL_POINTS) then
               do k = 2,NGLLZ-1
                 do j = 2,NGLLY-1
@@ -922,7 +922,7 @@ print *,myrank,'adios file rank',rank
                     inodes = inodes + 1
                     if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
 
-                    ! adds node index ( index points to same ispec for all internal gll points)
+                    ! adds node index ( index points to same ispec for all internal GLL points)
                     kdtree_nodes_index(inodes) = ispec + (iprocnum - 1) * nspec_max_old
 
                     ! adds node location
@@ -942,7 +942,7 @@ print *,myrank,'adios file rank',rank
               inodes = inodes + 1
               if (inodes > kdtree_num_nodes ) stop 'Error index inodes bigger than kdtree_num_nodes'
 
-              ! adds node index ( index points to same ispec for all internal gll points)
+              ! adds node index ( index points to same ispec for all internal GLL points)
               kdtree_nodes_index(inodes) = ispec + (iprocnum - 1) * nspec_max_old
 
               ! adds node location
@@ -993,7 +993,7 @@ print *,myrank,'adios file rank',rank
 
       ! gets model values
       if (DO_BRUTE_FORCE_SEARCH) then
-        ! brute-force search over all gll points
+        ! brute-force search over all GLL points
         call get_model_values_bruteforce(ispec,nspec,nglob,ibool2,x2,y2,z2,nparams,model2, &
                                          nspec_max_old,nglob_max_old,nproc_chunk1,ibool1,x1,y1,z1,model1, &
                                          iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff)
@@ -1052,10 +1052,10 @@ print *,myrank,'adios file rank',rank
   call init_adios_group(group,group_name)
 
   ! defines group size
-  call define_adios_scalar(group, group_size_inc, "", "NSPEC", nspec)
+  call define_adios_scalar(group, group_size_inc, '', "NSPEC", nspec)
   local_dim = size(model2(:,:,:,:,iker))
   do iker = 1,nparams
-    call define_adios_global_array1D(group, group_size_inc,local_dim,"",trim(fname(iker)),model2(:,:,:,:,iker))
+    call define_adios_global_array1D(group, group_size_inc,local_dim,'',trim(fname(iker)),model2(:,:,:,:,iker))
   enddo
 
   ! opens new adios model file
@@ -1185,7 +1185,7 @@ print *,myrank,'adios file rank',rank
   endif
 
   ! brute-force search over all points
-  ! loops over all gll points
+  ! loops over all GLL points
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
@@ -1197,7 +1197,7 @@ print *,myrank,'adios file rank',rank
 
         ! gets interpolated position
         call locate(x_target,y_target,z_target, &
-                    xi,eta,gamma,&
+                    xi,eta,gamma, &
                     ispec_selected,rank_selected, &
                     nspec_max_old,nglob_max_old,nproc_chunk1, &
                     ibool1,x1,y1,z1, &
@@ -1404,7 +1404,7 @@ print *,myrank,'adios file rank',rank
 
   endif
 
-  ! loops over all element gll points
+  ! loops over all element GLL points
   do k = 1, NGLLZ
     do j = 1, NGLLY
       do i = 1, NGLLX
@@ -1423,10 +1423,10 @@ print *,myrank,'adios file rank',rank
           ! avoids getting values from "wrong" side on 410-km discontinuity,etc.
           if (DO_SEPARATION_410_650) then
             if (is_critical) then
-              ! gll point radius
+              ! GLL point radius
               r = sqrt(x_target*x_target + y_target*y_target + z_target*z_target)
 
-              ! takes corresponding internal gll point for element search
+              ! takes corresponding internal GLL point for element search
               ! 410-km discontinuity
               if (r >= (R410 - R410_MARGIN)/R_EARTH .and. r <= (R410 + R410_MARGIN)/R_EARTH) search_internal = .true.
               ! 650-km discontinuity
@@ -1436,10 +1436,10 @@ print *,myrank,'adios file rank',rank
 
           if (DO_SEPARATION_TOPO) then
             if (is_critical) then
-              ! gll point radius
+              ! GLL point radius
               r = sqrt(x_target*x_target + y_target*y_target + z_target*z_target)
 
-              ! takes corresponding internal gll point for element search
+              ! takes corresponding internal GLL point for element search
               ! surface elements
               if (r >= (RTOP - RTOP_MARGIN)/R_EARTH) search_internal = .true.
             endif
@@ -1505,14 +1505,14 @@ print *,myrank,'adios file rank',rank
 
         ! gets interpolated position within selected element
         call locate_single(x_target,y_target,z_target, &
-                           xi,eta,gamma,&
+                           xi,eta,gamma, &
                            ispec_selected,rank_selected, &
                            nspec_max_old,nglob_max_old,nproc_chunk1, &
                            ibool1,x1,y1,z1, &
                            iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
                            i_selected,j_selected,k_selected)
 
-        ! checks closest gll point
+        ! checks closest GLL point
         iglob = ibool1(i_selected,j_selected,k_selected,ispec_selected,rank_selected)
         x_found = x1(iglob,rank_selected)
         y_found = y1(iglob,rank_selected)
@@ -1529,11 +1529,11 @@ print *,myrank,'adios file rank',rank
           print *,'gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
           print *,'distance gll:',dist_min * R_EARTH_KM,'(km)'
           ! debug
-          !stop 'Error gll model value invalid'
+          !stop 'Error GLL model value invalid'
         endif
         ! debug
         !if (myrank == 0 .and. iglob < 100) &
-        !  print *,'dist_min gll point: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
+        !  print *,'dist_min GLL point: ',dist_min * R_EARTH_KM,'(km)',typical_size * R_EARTH_KM
 
         ! interpolate model values
         do iker = 1,nparams
@@ -1572,8 +1572,8 @@ print *,myrank,'adios file rank',rank
               print *,'  interpolation       :',xi,eta,gamma
               print *,'  target location:',xyz_target(:)
               print *,'  target radius  :',sqrt(xyz_target(1)**2 + xyz_target(2)**2 + xyz_target(3)**2) * R_EARTH_KM,'(km)'
-              print *,'  gll location   :',x_found,y_found,z_found
-              print *,'  gll radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
+              print *,'  GLL location   :',x_found,y_found,z_found
+              print *,'  GLL radius     :',sqrt(x_found**2 + y_found**2 + z_found**2) * R_EARTH_KM,'(km)'
               print *,'  distance gll:',dist_min * R_EARTH_KM,'(km)'
               !stop 'Error model value invalid'
             endif
@@ -1760,7 +1760,7 @@ print *,myrank,'adios file rank',rank
                            xigll,yigll,zigll,typical_size, &
                            i_selected,j_selected,k_selected)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,HUGEVAL,NUM_ITER,R_EARTH_KM
 
   implicit none
 
@@ -1831,7 +1831,7 @@ print *,myrank,'adios file rank',rank
   iy_initial_guess = 0
   iz_initial_guess = 0
 
-  ! finds closest interior gll point
+  ! finds closest interior GLL point
   do k=1,NGLLZ
     do j=1,NGLLY
       do i=1,NGLLX
@@ -1912,7 +1912,7 @@ print *,myrank,'adios file rank',rank
     deta = 0.d0
     dgamma = 0.d0
 
-    ! loop leads to invalid jacobian... probably some gll points are too far outside of the selected element
+    ! loop leads to invalid jacobian... probably some GLL points are too far outside of the selected element
     do iter_loop = 1,2*NUM_ITER
 
       ! recompute jacobian for the new point
@@ -1972,13 +1972,6 @@ print *,myrank,'adios file rank',rank
       ! we can go slightly outside the [1,1] segment since with finite elements
       ! the polynomial solution is defined everywhere
       ! can be useful for convergence of iterative scheme with distorted elements
-      !if (xi > 1.10d0) xi = 1.10d0
-      !if (xi < -1.10d0) xi = -1.10d0
-      !if (eta > 1.10d0) eta = 1.10d0
-      !if (eta < -1.10d0) eta = -1.10d0
-      !if (gamma > 1.10d0) gamma = 1.10d0
-      !if (gamma < -1.10d0) gamma = -1.10d0
-
       ! point leaves element, stay to closest guess
       if (xi > 1.10d0 .or. xi < -1.10d0 .or. eta > 1.10d0 .or. eta < -1.10d0 .or. gamma > 1.10d0 .or. gamma < -1.10d0) then
         ! uses previous guess

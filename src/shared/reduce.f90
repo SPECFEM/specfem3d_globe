@@ -29,7 +29,7 @@
 
 ! bring theta between 0 and PI, and phi between 0 and 2*PI
 
-  use constants,only: ZERO,PI,TWO_PI,TINYVAL
+  use constants, only: ZERO,PI,TWO_PI,TINYVAL
 
   implicit none
 
@@ -49,7 +49,7 @@
   ph = phi
 
   ! brings longitude between 0 and 2*PI
-  if (ph<ZERO .or. ph>TWO_PI) then
+  if (ph < ZERO .or. ph > TWO_PI) then
     i = abs(int(ph/TWO_PI))
     if (ph < ZERO) then
       ph = ph+(i+1)*TWO_PI
@@ -62,11 +62,11 @@
   ! brings colatitude between 0 and PI
   if (th < ZERO .or. th > PI) then
     i=int(th/PI)
-    if (th>ZERO) then
+    if (th > ZERO) then
       if (mod(i,2) /= 0) then
         th=(i+1)*PI-th
         ! switches hemisphere
-        if (ph<PI) then
+        if (ph < PI) then
           ph=ph+PI
         else
           ph=ph-PI
@@ -78,7 +78,7 @@
       if (mod(i,2) == 0) then
         th=-th+i*PI
         ! switches hemisphere
-        if (ph<PI) then
+        if (ph < PI) then
           ph=ph+PI
         else
           ph=ph-PI
@@ -92,8 +92,8 @@
   endif
 
   ! checks ranges
-  if (theta<ZERO .or. theta>PI) stop 'theta out of range in reduce'
-  if (phi<ZERO .or. phi>TWO_PI) stop 'phi out of range in reduce'
+  if (theta < ZERO .or. theta > PI) stop 'theta out of range in reduce'
+  if (phi < ZERO .or. phi > TWO_PI) stop 'phi out of range in reduce'
 
   end subroutine reduce
 

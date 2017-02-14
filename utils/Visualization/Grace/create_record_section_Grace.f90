@@ -51,7 +51,7 @@
 
   print *,'processing file ',irec,' out of ',NSTATIONS
 
-  if(epi >= epi_start .and. epi <= epi_end) then
+  if (epi >= epi_start .and. epi <= epi_end) then
 
     max_amp = -100000.
 
@@ -60,7 +60,7 @@
     do it = 1,NSTEP
       read(10,*) time_sem(it),sem(it)
 ! compute maximum of all the traces
-      if(time_sem(it)/60.0 >= t_start .and. time_sem(it)/60.0 <= t_end .and. abs(sem(it)) > max_amp) max_amp = abs(sem(it))
+      if (time_sem(it)/60.0 >= t_start .and. time_sem(it)/60.0 <= t_end .and. abs(sem(it)) > max_amp) max_amp = abs(sem(it))
     enddo
     close(10)
 
@@ -70,7 +70,7 @@
 ! open the record section file
     open(unit=10,file=station(1:len_trim(station))//'.'//component(1:3)//'.sem.recordsection',status='unknown')
     do it = 1,NSTEP
-      if(time_sem(it)/60.0 >= t_start .and. time_sem(it)/60.0 <= t_end) write(10,*) time_sem(it)/60.0,epi+sem(it)*scale
+      if (time_sem(it)/60.0 >= t_start .and. time_sem(it)/60.0 <= t_end) write(10,*) time_sem(it)/60.0,epi+sem(it)*scale
     enddo
     close(10)
 

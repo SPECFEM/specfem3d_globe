@@ -72,9 +72,9 @@ program extract_databases
   else
     print *,"  extracting for: ","unknown store"
   endif
-  print *,""
+  print *
   print *,"  output to file: ",trim(outfile)
-  print *,""
+  print *
 
   ! opens solver_data file
   open(11,file=trim(infile),status='old',form='unformatted',iostat=ier)
@@ -112,7 +112,7 @@ program extract_databases
   print *,"solver data:"
   print *,"  number of spectral elements = ",nspec
   print *,"  number of global points = ",nglob
-  print *,""
+  print *
 
   ! xstore,ystore,zstore
   read(11) junk1(1:nglob)
@@ -140,7 +140,7 @@ program extract_databases
 
   ! reads desired data array, e.g. rhostore,..
   read(11) junk(:,:,:,1:nspec)
-  print *,""
+  print *
   print *,"  desired data = ",junk(:,1,1,1),".."
 
   ! closes file
@@ -153,9 +153,9 @@ program extract_databases
   close(12)
 
   ! user output
-  print *,""
+  print *
   print *,"done extracting, see file: ",trim(outfile)
-  print *,""
+  print *
 
 end program extract_databases
 

@@ -30,10 +30,10 @@
 #include "config.fh"
 
 
-  subroutine smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
+  subroutine smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
                                    xx_elem,yy_elem,zz_elem)
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGLLCUBE
 
   implicit none
 
@@ -64,7 +64,7 @@
   !          +(zz(:,:,:,ispec2)-z0)**2 )/(2*sigma2) )*factor(:,:,:)
 
   ! from basin code smoothing:
-  ! gaussian function
+  ! Gaussian function
   !exp_val(:,:,:) = exp( -(xx(:,:,:,ispec2)-x0)**2/(sigma_h2) &
   !                      -(yy(:,:,:,ispec2)-y0)**2/(sigma_h2) &
   !                      -(zz(:,:,:,ispec2)-z0)**2/(sigma_v2) ) * factor(:,:,:)
@@ -144,7 +144,7 @@
 
 ! returns vector lengths as distances in radial and horizontal direction
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -215,7 +215,7 @@
 !
 ! returns: xlon,xlat,weight
 
-  use constants,only: ZERO,ONE,TINYVAL,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,PI,TWO_PI,PI_OVER_TWO
+  use constants, only: ZERO,ONE,TINYVAL,DEGREES_TO_RADIANS,RADIANS_TO_DEGREES,PI,TWO_PI,PI_OVER_TWO
 
   implicit none
 

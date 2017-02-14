@@ -25,7 +25,6 @@
 !
 !=====================================================================
 
-
 !===============================================================================
 !> \brief Read adios boundary arrays created by the mesher
 !!        (file: regX_boundary.bp)
@@ -835,7 +834,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
   if (num_phase_ispec_crust_mantle < 0 ) &
       call exit_mpi(myrank,'Error num_phase_ispec_crust_mantle is < zero')
 
-  allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2),&
+  allocate(phase_ispec_inner_crust_mantle(num_phase_ispec_crust_mantle,2), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
       'Error allocating array phase_ispec_inner_crust_mantle')
@@ -985,7 +984,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
   call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  if (num_interfaces_outer_core> 0) then
+  if (num_interfaces_outer_core > 0) then
     call adios_selection_writeblock(sel, myrank)
     call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "max_nibool_interfaces", &
       0, 1, max_nibool_interfaces_oc, adios_err)
@@ -1028,15 +1027,15 @@ subroutine read_mesh_databases_MPI_OC_adios()
         'Error allocating array dummy ibool_interfaces_outer_core')
   endif
 
-  if (num_phase_ispec_outer_core< 0 ) &
+  if (num_phase_ispec_outer_core < 0 ) &
       call exit_mpi(myrank,'Error num_phase_ispec_outer_core is < zero')
 
-  allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2),&
+  allocate(phase_ispec_inner_outer_core(num_phase_ispec_outer_core,2), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
       'Error allocating array phase_ispec_inner_outer_core')
 
-  if (num_phase_ispec_outer_core> 0) then
+  if (num_phase_ispec_outer_core > 0) then
     start(1) = offset_phase_ispec_inner
     count(1) = num_phase_ispec_outer_core * 2
     call adios_selection_boundingbox (sel , 1, start, count)
@@ -1229,7 +1228,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
   if (num_phase_ispec_inner_core < 0 ) &
       call exit_mpi(myrank,'Error num_phase_ispec_inner_core is < zero')
 
-  allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2),&
+  allocate(phase_ispec_inner_inner_core(num_phase_ispec_inner_core,2), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
       'Error allocating array phase_ispec_inner_inner_core')

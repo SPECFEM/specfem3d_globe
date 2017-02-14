@@ -33,7 +33,7 @@
 
   subroutine compute_element_strain_undoatt_Dev(ispec,nglob,nspec, &
                                                 displ,ibool, &
-                                                hprime_xx,hprime_xxT,&
+                                                hprime_xx,hprime_xxT, &
                                                 deriv, &
                                                 epsilondev_loc,eps_trace_over_3_loc)
 
@@ -157,7 +157,7 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -201,7 +201,7 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -245,7 +245,7 @@
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -296,7 +296,7 @@
   subroutine compute_element_strain_undoatt_noDev(ispec,nglob,nspec, &
                                                   displ, &
                                                   hprime_xx,hprime_yy,hprime_zz, &
-                                                  ibool,&
+                                                  ibool, &
                                                   xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
                                                   epsilondev_loc,eps_trace_over_3_loc)
 
@@ -441,7 +441,7 @@
   subroutine compute_element_strain_att_Dev(ispec,nglob,nspec, &
                                            displ,veloc,deltat, &
                                            ibool, &
-                                           hprime_xx,hprime_xxT,&
+                                           hprime_xx,hprime_xxT, &
                                            deriv, &
                                            epsilondev_xx_loc_nplus1, &
                                            epsilondev_yy_loc_nplus1, &
@@ -579,7 +579,7 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -623,7 +623,7 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -667,7 +667,7 @@
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 

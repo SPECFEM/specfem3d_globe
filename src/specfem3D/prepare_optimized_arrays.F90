@@ -34,8 +34,8 @@
 
 ! optimizes array memory layout to increase computational efficiency
 
-  use constants,only: IMAIN
-  use specfem_par,only: myrank
+  use constants, only: IMAIN
+  use specfem_par, only: myrank
 
   implicit none
 
@@ -53,6 +53,11 @@
 
   ! check OpenMP support
   call prepare_openmp()
+
+#ifdef XSMM
+  ! prepares LIBXSMM small matrix multiplication functions
+  call prepare_xsmm()
+#endif
 
   end subroutine prepare_optimized_arrays
 
@@ -333,7 +338,7 @@
         ibool_inv_st(iglob_p,iphase) = ip + 1
 
         ! sets maximum of used valence
-        if( ibool_inv_num(iglob) > num_used_ibool_inv_tbl ) num_used_ibool_inv_tbl = ibool_inv_num(iglob)
+        if ( ibool_inv_num(iglob) > num_used_ibool_inv_tbl ) num_used_ibool_inv_tbl = ibool_inv_num(iglob)
 
         ! loops over valence
         do inum = 1, ibool_inv_num(iglob)
@@ -351,7 +356,7 @@
     num_globs(iphase) = iglob_p
 
     ! checks
-    if( num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl )  then
+    if ( num_used_ibool_inv_tbl > num_alloc_ibool_inv_tbl ) then
       print *,"Error invalid inverse table setting:"
       print *,"  num_alloc_ibool_inv_tbl = ",num_alloc_ibool_inv_tbl
       print *,"  num_used_ibool_inv_tbl  = ",num_used_ibool_inv_tbl
@@ -490,3 +495,67 @@
 
   end subroutine prepare_fused_array
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+#ifdef XSMM
+  subroutine prepare_xsmm()
+
+  use constants, only: CUSTOM_REAL,SIZE_DOUBLE,m1,m2,IMAIN
+
+  use specfem_par, only: myrank
+
+  use my_libxsmm, only: libxsmm_init,libxsmm_smm_25_5_5,libxsmm_smm_5_25_5,libxsmm_smm_5_5_5
+
+  implicit none
+
+  ! temporary arrays
+  real(kind=CUSTOM_REAL),dimension(5,5) :: A1
+  real(kind=CUSTOM_REAL),dimension(5,25) :: B1
+  real(kind=CUSTOM_REAL),dimension(5,25) :: C1
+
+  real(kind=CUSTOM_REAL),dimension(25,5) :: A2
+  real(kind=CUSTOM_REAL),dimension(5,5) :: B2
+  real(kind=CUSTOM_REAL),dimension(25,5) :: C2
+
+  real(kind=CUSTOM_REAL),dimension(5,5,5) :: A3
+  real(kind=CUSTOM_REAL),dimension(5,5) :: B3
+  real(kind=CUSTOM_REAL),dimension(5,5,5) :: C3
+
+  ! quick check
+  if (m1 /= 5) stop 'LibXSMM with invalid m1 constant (must have m1 == 5)'
+  if (m2 /= 5*5) stop 'LibXSMM with invalid m2 constant (must have m2 == 5*5)'
+  if (CUSTOM_REAL == SIZE_DOUBLE) stop 'LibXSMM optimization only for single precision functions'
+
+  ! initializes LIBXSMM
+  call libxsmm_init()
+
+  ! LIBXSMM static functions
+  ! use version compilation with: MNK="5 25, 5" ALPHA=1 BETA=0
+
+  ! dummy static calls to check if they work...
+  ! (see in compute_forces_**Dev.F90 routines for actual function call)
+
+  ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
+  call libxsmm_smm_5_25_5(a=A1, b=B1, c=C1, pa=A1, pb=B1, pc=C1)
+
+  ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
+  call libxsmm_smm_25_5_5(a=A2, b=B2, c=C2, pa=A2, pb=B2, pc=C2)
+
+  ! with A(n1,n2,n4) 5x5x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3,n4) 5x5x5-matrix
+  call libxsmm_smm_5_5_5(a=A3(1,1,1), b=B3, c=C3(1,1,1),pa=A3(1,1,1), pb=B3, pc=C3(1,1,1))
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) "  LIBXSMM functions ready for small matrix-matrix multiplications"
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! synchronizes processes
+  call synchronize_all()
+
+  end subroutine prepare_xsmm
+#endif

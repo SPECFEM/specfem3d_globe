@@ -14,7 +14,7 @@
   ios=0
   do i=1,10
   string(i)=''
-  if(ios == 0) read(13,"(a)",iostat=ios) string(i)
+  if (ios == 0) read(13,"(a)",iostat=ios) string(i)
   enddo
   string(imod)=model
   rewind(13)

@@ -38,12 +38,12 @@
    xnew = (x(i)-minix)/(maxix-minix)
    ynew = (y(i)-miniy)/(maxiy-miniy)
    znew = (z(i)-miniz)/(maxiz-miniz)
-   if(xnew < 0.001d0) xnew = 0.3333333333333d0
-   if(ynew < 0.001d0) ynew = 0.3333333333333d0
+   if (xnew < 0.001d0) xnew = 0.3333333333333d0
+   if (ynew < 0.001d0) ynew = 0.3333333333333d0
 
 ! change Z from (O, 0.50, 0.75, 1) to (0, 0.33, 0.66, 1) to have more even elements
-   if(abs(znew - 0.50d0) < 0.001d0) znew = 1.d0 / 3.d0
-   if(abs(znew - 0.75d0) < 0.001d0) znew = 2.d0 / 3.d0
+   if (abs(znew - 0.50d0) < 0.001d0) znew = 1.d0 / 3.d0
+   if (abs(znew - 0.75d0) < 0.001d0) znew = 2.d0 / 3.d0
 
    x(i) = xnew
    y(i) = ynew

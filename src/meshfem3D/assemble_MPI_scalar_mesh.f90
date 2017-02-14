@@ -254,9 +254,9 @@
 
     icount_faces = 0
     do imsg = 1,NUMMSGS_FACES
-      if (myrank==iprocfrom_faces(imsg) .or. &
-           myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-      if (myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+      if (myrank == iprocfrom_faces(imsg) .or. &
+           myrank == iprocto_faces(imsg)) icount_faces = icount_faces + 1
+      if (myrank == iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
         sender = iprocfrom_faces(imsg)
         npoin2D_chunks = npoin2D_faces(icount_faces)
         call recv_cr(buffer_received_faces_scalar,npoin2D_chunks,sender,itag)
@@ -272,9 +272,9 @@
     !---- a given slice can belong to at most two faces
     icount_faces = 0
     do imsg = 1,NUMMSGS_FACES
-      if (myrank==iprocfrom_faces(imsg) .or. &
-           myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-      if (myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+      if (myrank == iprocfrom_faces(imsg) .or. &
+           myrank == iprocto_faces(imsg)) icount_faces = icount_faces + 1
+      if (myrank == iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
         receiver = iprocto_faces(imsg)
         npoin2D_chunks = npoin2D_faces(icount_faces)
         do ipoin2D = 1,npoin2D_chunks
@@ -293,9 +293,9 @@
 
     icount_faces = 0
     do imsg = 1,NUMMSGS_FACES
-      if (myrank==iprocfrom_faces(imsg) .or. &
-           myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-      if (myrank==iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+      if (myrank == iprocfrom_faces(imsg) .or. &
+           myrank == iprocto_faces(imsg)) icount_faces = icount_faces + 1
+      if (myrank == iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
         sender = iprocto_faces(imsg)
         npoin2D_chunks = npoin2D_faces(icount_faces)
         call recv_cr(buffer_received_faces_scalar,npoin2D_chunks,sender,itag)
@@ -310,9 +310,9 @@
     !---- a given slice can belong to at most two faces
     icount_faces = 0
     do imsg = 1,NUMMSGS_FACES
-      if (myrank==iprocfrom_faces(imsg) .or. &
-           myrank==iprocto_faces(imsg)) icount_faces = icount_faces + 1
-      if (myrank==iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
+      if (myrank == iprocfrom_faces(imsg) .or. &
+           myrank == iprocto_faces(imsg)) icount_faces = icount_faces + 1
+      if (myrank == iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) then
         receiver = iprocfrom_faces(imsg)
         npoin2D_chunks = npoin2D_faces(icount_faces)
         do ipoin2D = 1,npoin2D_chunks
@@ -344,7 +344,7 @@
        (NCHUNKS /= 2 .and. myrank == iproc_worker2_corners(imsg))) icount_corners = icount_corners + 1
 
     !---- receive messages from the two workers on the master
-    if (myrank==iproc_master_corners(imsg)) then
+    if (myrank == iproc_master_corners(imsg)) then
 
       ! receive from worker #1 and add to local array
       sender = iproc_worker1_corners(imsg)
@@ -369,8 +369,8 @@
     endif
 
     !---- send messages from the two workers to the master
-    if (myrank==iproc_worker1_corners(imsg) .or. &
-                (NCHUNKS /= 2 .and. myrank==iproc_worker2_corners(imsg))) then
+    if (myrank == iproc_worker1_corners(imsg) .or. &
+                (NCHUNKS /= 2 .and. myrank == iproc_worker2_corners(imsg))) then
 
       receiver = iproc_master_corners(imsg)
       do ipoin1D = 1,NGLOB1D_RADIAL
@@ -385,8 +385,8 @@
     ! *********************************************************************
 
     !---- receive messages from the master on the two workers
-    if (myrank==iproc_worker1_corners(imsg) .or. &
-                (NCHUNKS /= 2 .and. myrank==iproc_worker2_corners(imsg))) then
+    if (myrank == iproc_worker1_corners(imsg) .or. &
+                (NCHUNKS /= 2 .and. myrank == iproc_worker2_corners(imsg))) then
 
       ! receive from master and copy to local array
       sender = iproc_master_corners(imsg)
@@ -399,7 +399,7 @@
     endif
 
     !---- send messages from the master to the two workers
-    if (myrank==iproc_master_corners(imsg)) then
+    if (myrank == iproc_master_corners(imsg)) then
 
       do ipoin1D = 1,NGLOB1D_RADIAL
         buffer_send_chunkcorn_scalar(ipoin1D) = array_val(iboolcorner(ipoin1D,icount_corners))

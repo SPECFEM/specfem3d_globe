@@ -60,7 +60,7 @@
 
 ! standard routine to setup model
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 
   use model_full_sh_crust_par
 
@@ -97,7 +97,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  done full_sh crust'
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -109,7 +109,7 @@
 
   subroutine read_crust_sh_model()
 
-  use constants,only: ZERO,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL
+  use constants, only: ZERO,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL
 
   use model_full_sh_crust_par
 
@@ -190,7 +190,7 @@
     read(IIN,*) lmax
 
     ! check maximum degree
-    if(lmax > NS_40) then
+    if (lmax > NS_40) then
       print *,'Error full_sh model file: lmax too big ',lmax,' for file ',trim(rootdir)//trim(modelname)
       call exit_MPI(0,'lmax too big in full_sh model file')
     endif
@@ -267,7 +267,7 @@
 
 ! gets crustal value for location lat/lon/r
 
-  use constants,only: ZERO,PI,GRAV,RHOAV,R_EARTH,R_EARTH_KM
+  use constants, only: ZERO,PI,GRAV,RHOAV,R_EARTH,R_EARTH_KM
 
   use model_full_sh_crust_par
 
@@ -394,7 +394,7 @@
 
 ! standard routine to setup model
 
-  use constants,only: IMAIN
+  use constants, only: IMAIN
 
   use model_full_sh_mantle_par
 
@@ -441,7 +441,7 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) '  done full_sh mantle'
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 
@@ -454,7 +454,7 @@
 
   subroutine read_model_mantle_sh()
 
-  use constants,only: ZERO,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL
+  use constants, only: ZERO,IIN,IMAIN,MAX_STRING_LEN,HUGEVAL
 
   use model_full_sh_mantle_par
 
@@ -692,7 +692,7 @@
 
   subroutine mantle_sh(lat,lon,radius,dvpv,dvph,dvsv,dvsh,deta,drho)
 
-  use constants,only: ZERO
+  use constants, only: ZERO
 
   use model_full_sh_mantle_par
 
@@ -854,48 +854,48 @@
   I = MIN0(I,II)
 
   !   SEE IF X IS INCREASING OR DECREASING.
-  IF (X(I2)-X(I1) <  0) goto 1
-  IF (X(I2)-X(I1) >= 0) goto 2
+  if (X(I2)-X(I1) < 0) goto 1
+  if (X(I2)-X(I1) >= 0) goto 2
 
   !   X IS DECREASING.  CHANGE I AS NECESSARY.
-1  IF (S-X(I) <= 0) goto 3
-  IF (S-X(I) >  0) goto 4
+1  if (S-X(I) <= 0) goto 3
+  if (S-X(I) > 0) goto 4
 
 4  I = I-1
 
-  IF (I-I1 <  0) goto 11
-  IF (I-I1 == 0) goto 6
-  IF (I-I1 >  0) goto 1
+  if (I-I1 < 0) goto 11
+  if (I-I1 == 0) goto 6
+  if (I-I1 > 0) goto 1
 
-3  IF (S-X(I+1) <  0) goto 5
-  IF (S-X(I+1) >= 0) goto 6
+3  if (S-X(I+1) < 0) goto 5
+  if (S-X(I+1) >= 0) goto 6
 
 5  I = I+1
 
-  IF (I-II <  0) goto 3
-  IF (I-II == 0) goto 6
-  IF (I-II >  0) goto 7
+  if (I-II < 0) goto 3
+  if (I-II == 0) goto 6
+  if (I-II > 0) goto 7
 
   !   X IS INCREASING.  CHANGE I AS NECESSARY.
-2  IF (S-X(I+1) <= 0) goto 8
-  IF (S-X(I+1) >  0) goto 9
+2  if (S-X(I+1) <= 0) goto 8
+  if (S-X(I+1) > 0) goto 9
 
 9  I = I+1
 
-  IF (I-II <  0) goto 2
-  IF (I-II == 0) goto 6
-  IF (I-II >  0) goto 7
+  if (I-II < 0) goto 2
+  if (I-II == 0) goto 6
+  if (I-II > 0) goto 7
 
-8  IF (S-X(I) <  0) goto 10
-  IF (S-X(I) >= 0) goto 6
+8  if (S-X(I) < 0) goto 10
+  if (S-X(I) >= 0) goto 6
 
 10 I = I-1
-  IF (I-I1 <  0) goto 11
-  IF (I-I1 == 0) goto 6
-  IF (I-I1 >  0) goto 8
+  if (I-I1 < 0) goto 11
+  if (I-I1 == 0) goto 6
+  if (I-I1 > 0) goto 8
 
 7  I = II
-  GOTO 6
+  goto 6
 
 11 I = I1
 
@@ -914,7 +914,7 @@
 
   implicit none
 
-! Subroutine rspln computes cubic spline interpolation coefficients
+! The subroutine rspln computes cubic spline interpolation coefficients
 ! for y(x) between grid points i1 and i2 saving them in q.The
 ! interpolation is continuous with continuous first and second
 ! derivatives. It agrees exactly with y at grid points and with the
@@ -940,9 +940,9 @@
   Y0 = 0.0d0
 
   !   BAIL OUT IF THERE ARE LESS THAN TWO POINTS TOTAL
-  IF(I2-I1  < 0) return
-  IF(I2-I1 == 0) goto 17
-  IF(I2-I1  > 0) goto 8
+  if (I2-I1 < 0) return
+  if (I2-I1 == 0) goto 17
+  if (I2-I1 > 0) goto 8
 
 8  A0 = X(J1-1)
 
@@ -950,21 +950,21 @@
   do 3 I = J1,I2
     B0 = A0
     A0 = X(I)
-    if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) GOTO 4
+    if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) goto 4
 
-3   CONTINUE
+3   continue
 
 17 J1 = J1-1
   J2 = I2-2
-  GOTO 5
+  goto 5
 
 4  J1 = J1-1
   J2 = I-3
 
   !   SEE IF THERE ARE ENOUGH POINTS TO INTERPOLATE (AT LEAST THREE).
-5  IF (J2+1-J1 <  0) goto 9
-  IF (J2+1-J1 == 0) goto 10
-  IF (J2+1-J1 >  0) goto 11
+5  if (J2+1-J1 < 0) goto 9
+  if (J2+1-J1 == 0) goto 10
+  if (J2+1-J1 > 0) goto 11
 
   !   ONLY TWO POINTS.  USE LINEAR INTERPOLATION.
 10  J2 = J2+2
@@ -973,7 +973,7 @@
     Q(J,J1) = YY(J)
     Q(J,J2) = YY(J)
   enddo
-  GOTO 12
+  goto 12
 
     !   MORE THAN TWO POINTS.  DO SPLINE INTERPOLATION.
 11  A0 = 0.
@@ -1042,7 +1042,7 @@
   enddo
 
   !   SEE IF THIS DISCONTINUITY IS THE LAST.
-12 IF (J2-I2 < 0) then
+12 if (J2-I2 < 0) then
     goto 6
   else
     return
@@ -1050,8 +1050,8 @@
 
   !   NO.  GO BACK FOR MORE.
 6  J1 = J2+2
-  IF(J1-I2 <= 0) goto 8
-  IF(J1-I2 >  0) goto 7
+  if (J1-I2 <= 0) goto 8
+  if (J1-I2 > 0) goto 7
 
   !   THERE IS ONLY ONE POINT LEFT AFTER THE LATEST DISCONTINUITY.
 7 do J = 1,3
@@ -1070,7 +1070,7 @@
 
   use constants
 
-  use meshfem3D_par,only: R220,R400,R670,R771
+  use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
 
@@ -1138,7 +1138,7 @@
     ! debug
     !write(*,*) 'ola',lat,lon,topo410,topo650
 
-    if(topo410 == 0.d0 .and. topo650 == 0.d0) return
+    if (topo410 == 0.d0 .and. topo650 == 0.d0) return
 
     ! min/max statistics
     topo410out = sngl(topo410)
@@ -1164,7 +1164,7 @@
       xelm(ia) = x*(ONE + gamma * topo410 / r)
       yelm(ia) = y*(ONE + gamma * topo410 / r)
       zelm(ia) = z*(ONE + gamma * topo410 / r)
-    else if (r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+    else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
       ! stretching between R771 and R670
       gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
       xelm(ia) = x*(ONE + gamma * topo650 / r)
@@ -1245,7 +1245,7 @@
 
   use constants
 
-  use shared_parameters,only: RCMB,RTOPDDOUBLEPRIME
+  use shared_parameters, only: RCMB,RTOPDDOUBLEPRIME
 
   implicit none
 
@@ -1293,13 +1293,13 @@
     topocmb = -topocmb / R_EARTH_KM
 
     ! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB
-    ! and finish at RTOPDDOUBLEPRIME (D'')
+    ! and finish at RTOPDDOUBLEPRIME of D_double_prime
     r_start = (RCMB - (RTOPDDOUBLEPRIME - RCMB))/R_EARTH
     gamma = 0.0d0
     if (r >= RCMB/R_EARTH .and. r <= RTOPDDOUBLEPRIME/R_EARTH) then
       ! stretching between RCMB and RTOPDDOUBLEPRIME
       gamma = (RTOPDDOUBLEPRIME/R_EARTH - r) / (RTOPDDOUBLEPRIME/R_EARTH - RCMB/R_EARTH)
-    else if (r>= r_start .and. r <= RCMB/R_EARTH) then
+    else if (r >= r_start .and. r <= RCMB/R_EARTH) then
       ! stretching between r_start and RCMB
       gamma = (r - r_start) / (RCMB/R_EARTH - r_start)
     endif

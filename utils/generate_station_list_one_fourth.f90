@@ -61,7 +61,7 @@
 
 ! add 1/10th of a degree to generate stations every 0.1 degree between -90 and -50
 ! otherwise only every degree
-    if(ilatitude < -50) then
+    if (ilatitude < -50) then
       upper_bound = 9
     else
       upper_bound = 0

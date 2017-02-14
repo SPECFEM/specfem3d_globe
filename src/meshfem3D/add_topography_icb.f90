@@ -30,7 +30,7 @@
 ! this is only a placeholder routine, which is not used yet... user must supply the sutopo_icb() routine
 
   use constants
-  use meshfem3D_par,only: RICB,RCMB
+  use meshfem3D_par, only: RICB,RCMB
 
   implicit none
 
@@ -73,7 +73,7 @@
     if (r > 0.0d0 .and. r <= RICB/R_EARTH) then
       ! stretching between center and RICB
       gamma = r/(RICB/R_EARTH)
-    else if (r>= RICB/R_EARTH .and. r <= RCMB/R_EARTH) then
+    else if (r >= RICB/R_EARTH .and. r <= RCMB/R_EARTH) then
       ! stretching between RICB and RCMB
       gamma = (r - RCMB/R_EARTH) / (RICB/R_EARTH - RCMB/R_EARTH)
     endif

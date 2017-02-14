@@ -118,7 +118,7 @@ program combine_vol_data
   ! starts here---------------------------------------------------------------
   ier = 0 ! avoids compiler warning in case of ADIOS and VTK output
 
-  ! ADIOS mpi initialization
+  ! ADIOS MPI initialization
 #ifdef ADIOS_INPUT
   ! starts mpi
   call init_mpi()
@@ -155,7 +155,7 @@ program combine_vol_data
       print *, ' ***** Notice: now allow different input dir for topo and kernel files ******** '
       print *, '   expect to have the topology and filename.bin(NGLLX,NGLLY,NGLLZ,nspec) '
       print *, '   already collected to input_topo_dir and input_file_dir'
-      print *, '   output mesh files (filename_points.mesh, filename_elements.mesh) go to output_dir '
+      print *, '   output mesh files (filename_points.mesh, filename_elements.mesh) are saved to output_dir '
       print *, '   give 0 for low resolution and 1 for high resolution'
       print *, '   if region is not specified, all 3 regions will be collected, otherwise, only collect regions specified'
       stop ' Reenter command line options'
@@ -647,7 +647,7 @@ program combine_vol_data
     do i = 1,np
       write(IOUT_VTK,'(3e18.6)') total_dat_xyz(1,i),total_dat_xyz(2,i),total_dat_xyz(3,i)
     enddo
-    write(IOUT_VTK,*) ""
+    write(IOUT_VTK,*) ''
 
     ! cells
     ! note: indices for VTK start at 0
@@ -656,12 +656,12 @@ program combine_vol_data
       write(IOUT_VTK,'(9i12)') 8,total_dat_con(1,i),total_dat_con(2,i),total_dat_con(3,i),total_dat_con(4,i), &
                             total_dat_con(5,i),total_dat_con(6,i),total_dat_con(7,i),total_dat_con(8,i)
     enddo
-    write(IOUT_VTK,*) ""
+    write(IOUT_VTK,*) ''
     ! VTK
     ! type: hexahedrons
     write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",ne
     write(IOUT_VTK,'(6i12)') (12,it = 1,ne)
-    write(IOUT_VTK,*) ""
+    write(IOUT_VTK,*) ''
 
     write(IOUT_VTK,'(a,i12)') "POINT_DATA ",np
     write(IOUT_VTK,'(a)') "SCALARS "//trim(filename)//" float"
@@ -669,7 +669,7 @@ program combine_vol_data
     do i = 1,np
         write(IOUT_VTK,*) total_dat(i)
     enddo
-    write(IOUT_VTK,*) ""
+    write(IOUT_VTK,*) ''
     close(IOUT_VTK)
 
     ! free arrays for this region

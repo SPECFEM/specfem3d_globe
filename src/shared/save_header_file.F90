@@ -64,7 +64,7 @@
 
   use constants
 
-  use shared_parameters,only: TOPOGRAPHY, &
+  use shared_parameters, only: TOPOGRAPHY, &
     TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
     ELLIPTICITY,GRAVITY,ROTATION, &
     OCEANS,ATTENUATION,ATTENUATION_3D, &
@@ -420,7 +420,7 @@
       ! convert geocentric to geographic colatitude
       call geocentric_2_geographic_dble(theta_corner,colat_corner)
 
-      if (phi_corner>PI) phi_corner=phi_corner-TWO_PI
+      if (phi_corner > PI) phi_corner=phi_corner-TWO_PI
 
       ! compute real position of the source
       lat = (PI_OVER_TWO-colat_corner)*RADIANS_TO_DEGREES
@@ -817,12 +817,12 @@
   subroutine compute_optimized_dumping(static_memory_size,NT_DUMP_ATTENUATION_optimal,number_of_dumpings_to_do, &
                                        static_memory_size_GB,size_to_store_at_each_time_step,disk_size_of_each_dumping)
 
-  use shared_parameters,only: NGLOB,NSPEC,NSTEP, &
+  use shared_parameters, only: NGLOB,NSPEC,NSTEP, &
     ROTATION,ATTENUATION,GPU_MODE, &
     MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE,NOISE_TOMOGRAPHY, &
     NSPEC2D_TOP
 
-  use constants,only: NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,CUSTOM_REAL, &
+  use constants, only: NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,CUSTOM_REAL, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
 
   implicit none
@@ -843,7 +843,7 @@
        stop 'less than 50% for PERCENT_OF_MEM_TO_USE_PER_CORE does not seem realistic; exiting...'
   if (PERCENT_OF_MEM_TO_USE_PER_CORE > 100.d0) &
        stop 'more than 100% for PERCENT_OF_MEM_TO_USE_PER_CORE makes no sense; exiting...'
-!! DK DK will need to remove the ".and. .not. GPU_MODE" test here
+!! DK DK will need to remove the .and. .not. GPU_MODE test here
 !! DK DK if the undo_attenuation buffers are stored on the GPU instead of on the host
   if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
        stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'

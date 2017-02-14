@@ -29,8 +29,8 @@
   subroutine movie_surface_count_points()
 
   use specfem_par
-  use specfem_par_crustmantle,only: NSPEC_TOP
-  use specfem_par_movie,only: NIT,nmovie_points
+  use specfem_par_crustmantle, only: NSPEC_TOP
+  use specfem_par_movie, only: NIT,nmovie_points
 
   implicit none
 
@@ -112,9 +112,9 @@
         ipoin = ipoin + 1
         ! stores values
         iglob = ibool_crust_mantle(i,j,k,ispec)
-        store_val_x(ipoin) = rstore_crust_mantle(1,iglob) ! <- radius r (normalized)
-        store_val_y(ipoin) = rstore_crust_mantle(2,iglob) ! <- colatitude theta (in radian)
-        store_val_z(ipoin) = rstore_crust_mantle(3,iglob) ! <- longitude phi (in radian)
+        store_val_x(ipoin) = rstore_crust_mantle(1,iglob) ! radius r (normalized)
+        store_val_y(ipoin) = rstore_crust_mantle(2,iglob) ! colatitude theta (in radian)
+        store_val_z(ipoin) = rstore_crust_mantle(3,iglob) ! longitude phi (in radian)
       enddo
     enddo
   enddo

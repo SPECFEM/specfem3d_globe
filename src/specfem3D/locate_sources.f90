@@ -37,7 +37,7 @@
 
   use shared_input_parameters, only: OUTPUT_FILES
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     NSOURCES,myrank, &
     tshift_cmt,theta_source,phi_source, &
     DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
@@ -48,7 +48,7 @@
     islice_selected_source,ispec_selected_source, &
     SAVE_SOURCE_MASK
 
-  use specfem_par_movie,only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
+  use specfem_par_movie, only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
   implicit none
 
@@ -650,7 +650,7 @@
           write(IMAIN,*) '  nu2 = ',nu_source(2,:,isource)
           write(IMAIN,*) '  nu3 = ',nu_source(3,:,isource)
           write(IMAIN,*)
-          write(IMAIN,*) '  at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset),&
+          write(IMAIN,*) '  at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset), &
             y_found_source(isource_in_this_subset),z_found_source(isource_in_this_subset)
 
           ! prints frequency content for point forces
@@ -661,7 +661,7 @@
           write(IMAIN,*) '  lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
           write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_cmt = ',tshift_cmt(isource)
           write(IMAIN,*)
-          write(IMAIN,*) '  half duration -> frequency: ',hdur(isource),' seconds**(-1)'
+          write(IMAIN,*) '  half duration in frequency: ',hdur(isource),' seconds**(-1)'
         else
           write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
           write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
@@ -701,7 +701,7 @@
         call geocentric_2_geographic_dble(theta_source(isource),colat_source)
 
         ! brings longitude between -PI and PI
-        if (phi_source(isource)>PI) phi_source(isource)=phi_source(isource)-TWO_PI
+        if (phi_source(isource) > PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
         write(IMAIN,*)
         write(IMAIN,*) 'original (requested) position of the source:'
@@ -913,7 +913,7 @@
   ! local parameters
   integer :: it,iom,ier
   double precision :: scalar_moment
-  double precision :: t0, hdur_gaussian(NSOURCES)
+  double precision :: t0, hdur_Gaussian(NSOURCES)
   double precision :: t_cmt_used(NSOURCES)
   double precision time_source,om
   double precision :: f0
@@ -969,7 +969,7 @@
   ! convert the half duration for triangle STF to the one for Gaussian STF
   ! note: this calculation here is only used for outputting the plot_source_time_function file
   !          (see setup_sources_receivers.f90)
-  hdur_gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
+  hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! writes out source time function to file
   do it = 1,NSTEP
@@ -982,7 +982,7 @@
     else
       ! Gaussian source time function
       write(IOUT,*) sngl(dble(it-1)*DT-t0), &
-        sngl(scalar_moment*comp_source_time_function(time_source,hdur_gaussian(isource)))
+        sngl(scalar_moment*comp_source_time_function(time_source,hdur_Gaussian(isource)))
     endif
   enddo
   close(IOUT)

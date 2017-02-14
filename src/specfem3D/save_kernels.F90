@@ -69,9 +69,9 @@
       call save_kernels_boundary_kl()
     endif
 
-    ! approximate hessian
+    ! approximate Hessian
     if (APPROXIMATE_HESS_KL) then
-      call save_kernels_hessian()
+      call save_kernels_Hessian()
     endif
   endif
 
@@ -94,7 +94,7 @@
 
   subroutine save_kernels_crust_mantle()
 
-  use specfem_par,only: SAVE_REGULAR_KL,ANISOTROPIC_KL
+  use specfem_par, only: SAVE_REGULAR_KL,ANISOTROPIC_KL
 
   implicit none
 
@@ -876,7 +876,7 @@
                              * scale_displ * scale_t
 
     ! rotate scale the moment derivatives to correspond to M[n,e,z][n,e,z]
-    moment_der(:,:,irec_local) = matmul(matmul(transpose(nu_source(:,:,irec_local)),moment_der(:,:,irec_local)),&
+    moment_der(:,:,irec_local) = matmul(matmul(transpose(nu_source(:,:,irec_local)),moment_der(:,:,irec_local)), &
                nu_source(:,:,irec_local)) * scale_t ** 3 / scale_mass
 
     ! *nu_source* is the rotation matrix from ECEF to local N-E-UP as defined in src/specfem3D/locate_sources.f90
@@ -941,7 +941,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_kernels_hessian()
+  subroutine save_kernels_Hessian()
 
   use specfem_par
   use specfem_par_crustmantle
@@ -959,7 +959,7 @@
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
-    call write_kernels_hessian_adios()
+    call write_kernels_Hessian_adios()
   else
     ! stores into file
     call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
@@ -969,7 +969,7 @@
     close(IOUT)
   endif
 
-  end subroutine save_kernels_hessian
+  end subroutine save_kernels_Hessian
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -978,7 +978,7 @@
   subroutine rotate_kernels_dble(cij_kl,cij_kll,theta_in,phi_in)
 
 ! Purpose : compute the kernels in r,theta,phi (cij_kll)
-! from the kernels in x,y,z (cij_kl) (x,y,z <-> r,theta,phi)
+! from the kernels in x,y,z (cij_kl) (x,y,z to r,theta,phi)
 ! At r,theta,phi fixed
 ! theta and phi are in radians
 

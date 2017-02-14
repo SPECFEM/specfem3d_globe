@@ -129,15 +129,13 @@ contains
   ! returns:
   !   creates internal tree representation
   !
-  !
-  ! example tree creation timing = 0.008 s (for data points = 38704 -> tree nodes = 77407 )
 
   implicit none
 
   ! local parameters
   integer :: npoints
   integer, dimension(:), allocatable :: points_index
-  double precision,dimension(:,:), pointer, contiguous :: points_data
+  double precision,dimension(:,:), pointer :: points_data
 
   ! tree statistics
   integer :: depth
@@ -916,7 +914,7 @@ contains
   !  print *,'node distance',node%id,ipoint_min,dist_min
 
   ! in case this is a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
+  if (.not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
@@ -1027,7 +1025,7 @@ contains
   double precision,dimension(3) :: xyz
 
   ! checks a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
+  if (.not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'
@@ -1157,7 +1155,7 @@ contains
   double precision,dimension(3) :: xyz
 
   ! checks a final node
-  if ( .not. associated(node%left) .and. .not. associated(node%right)) then
+  if (.not. associated(node%left) .and. .not. associated(node%right)) then
     ! checks node
     if (node%idim /= 0 ) stop 'Error searched node is not final node'
     if (node%ipoint < 1 ) stop 'Error searched node has wrong point index'

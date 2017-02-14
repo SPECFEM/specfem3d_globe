@@ -28,7 +28,7 @@
   subroutine add_topography_410_650(myrank,xelm,yelm,zelm)
 
   use constants
-  use meshfem3D_par,only: R220,R400,R670,R771
+  use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
 
@@ -116,7 +116,7 @@
       xelm(ia) = x*(ONE + gamma * topo410 / r)
       yelm(ia) = y*(ONE + gamma * topo410 / r)
       zelm(ia) = z*(ONE + gamma * topo410 / r)
-    else if (r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+    else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
       ! stretching between R771 and R670
       gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
       xelm(ia) = x*(ONE + gamma * topo650 / r)
@@ -163,7 +163,7 @@
   subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
 
   use constants
-  use meshfem3D_par,only: R220,R400,R670,R771
+  use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
 
@@ -227,7 +227,7 @@
                 xstore(i,j,k,ispec) = x*(ONE + gamma * topo410 / r)
                 ystore(i,j,k,ispec) = y*(ONE + gamma * topo410 / r)
                 zstore(i,j,k,ispec) = z*(ONE + gamma * topo410 / r)
-        else if (r>= R771/R_EARTH .and. r <= R670/R_EARTH) then
+        else if (r >= R771/R_EARTH .and. r <= R670/R_EARTH) then
         ! stretching between R771 and R670
                 gamma = (r - R771/R_EARTH) / (R670/R_EARTH - R771/R_EARTH)
                 xstore(i,j,k,ispec) = x*(ONE + gamma * topo650 / r)

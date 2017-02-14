@@ -25,8 +25,8 @@
 !
 !=====================================================================
 
-  subroutine count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC,&
-                        NEX_PER_PROC_ETA,ratio_divide_central_cube,&
+  subroutine count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC, &
+                        NEX_PER_PROC_ETA,ratio_divide_central_cube, &
                         NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                         NSPEC1D_RADIAL, &
@@ -38,8 +38,8 @@
                         nb_lay_sb, nspec_sb, nglob_surf, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, INCLUDE_CENTRAL_CUBE, &
                         last_doubling_layer, &
-                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA,&
-                        tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,&
+                        DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
+                        tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h, &
                         nglob_edge_v,to_remove)
 
   use constants

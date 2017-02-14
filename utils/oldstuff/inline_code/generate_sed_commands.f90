@@ -18,11 +18,11 @@
     write(*,141) i,i
   enddo
 
-  130  format('sed -e ''1,$s/aa/',i1.1,'/g'' < inline_scalar_first > file_scalar_first_',i1.1)
-  131  format('sed -e ''1,$s/aa/',i1.1,'/g'' < inline_scalar_second > file_scalar_second_',i1.1)
+  130  format('sed -e "1,$s/aa/',i1.1,'/g" < inline_scalar_first > file_scalar_first_',i1.1)
+  131  format('sed -e "1,$s/aa/',i1.1,'/g" < inline_scalar_second > file_scalar_second_',i1.1)
 
-  140  format('sed -e ''1,$s/aa/',i1.1,'/g'' < inline_vector_first > file_vector_first_',i1.1)
-  141  format('sed -e ''1,$s/aa/',i1.1,'/g'' < inline_vector_second > file_vector_second_',i1.1)
+  140  format('sed -e "1,$s/aa/',i1.1,'/g" < inline_vector_first > file_vector_first_',i1.1)
+  141  format('sed -e "1,$s/aa/',i1.1,'/g" < inline_vector_second > file_vector_second_',i1.1)
 
   end program generate_sed
 

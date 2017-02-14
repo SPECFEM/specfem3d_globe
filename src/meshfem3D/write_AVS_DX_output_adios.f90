@@ -29,7 +29,7 @@
   subroutine write_AVS_DX_output_adios(nspec,npointot,iregion_code, &
                                        num_ibool_AVS_DX, mask_ibool)
 
-  use meshfem3d_par,only: &
+  use meshfem3d_par, only: &
     ibool,idoubling, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
@@ -37,7 +37,7 @@
     RMIDDLE_CRUST,ROCEAN, &
     LOCAL_PATH,IMAIN,ADIOS_TRANSPORT_METHOD
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
     nspl,rspl,espl,espl2
 
@@ -138,7 +138,7 @@
                                             sizeprocs, avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
 
   call prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
-                                               iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,&
+                                               iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                                npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
                                                ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
                                                RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
@@ -149,7 +149,7 @@
                                              sizeprocs, avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
 
   call prepare_AVS_DX_surfaces_data_adios(myrank,nspec,iboun, &
-                                          ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot,&
+                                          ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
                                           rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
                                           ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
                                           RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
@@ -162,7 +162,7 @@
 
 
   !--- Reset the path to zero and perform the actual write to disk
-  call adios_set_path (file_handle_adios, "", ier)
+  call adios_set_path (file_handle_adios, '', ier)
 
   ! closes file
   call close_file_adios()

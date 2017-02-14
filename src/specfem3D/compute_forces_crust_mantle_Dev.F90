@@ -46,13 +46,13 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
     wgll_cube, &
     minus_gravity_table,density_table,minus_deriv_gravity_table, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
-  use specfem_par_crustmantle,only: &
+  use specfem_par_crustmantle, only: &
     rstore => rstore_crust_mantle, &
     deriv => deriv_mapping_crust_mantle, &
     kappavstore => kappavstore_crust_mantle,kappahstore => kappahstore_crust_mantle, &
@@ -72,11 +72,11 @@
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
 
-  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+  use specfem_par, only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
 #ifdef FORCE_VECTORIZATION
   ! optimized arrays
-  use specfem_par_crustmantle,only: &
+  use specfem_par_crustmantle, only: &
     ibool_inv_tbl => ibool_inv_tbl_crust_mantle, &
     ibool_inv_st => ibool_inv_st_crust_mantle, &
     num_globs => num_globs_crust_mantle, &
@@ -84,7 +84,7 @@
 #endif
 
 !daniel: att - debug
-!  use specfem_par,only: it,NSTEP
+!  use specfem_par, only: it,NSTEP
 
   implicit none
 
@@ -225,7 +225,7 @@
     call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
     call mxm5_3comp_3dmat_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m1,hprime_xxT,m1,tempx2,tempy2,tempz2,NGLLX)
-    ! computes 3. matrix multiplication for tempx1,..
+    ! computes 3. matrix multiplication for tempx3,..
     call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
 
     !
@@ -508,17 +508,31 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
+
+#ifdef XSMM
+  use my_libxsmm, only: libxsmm_smm_5_25_5
+#endif
 
   implicit none
 
   integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B1,B2,B3
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B1,B2,B3
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j
+
+#ifdef XSMM
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
+  ! static version using MNK="5 25, 5" ALPHA=1 BETA=0
+  call libxsmm_smm_5_25_5(a=A, b=B1, c=C1, pa=A, pb=B2, pc=C2)
+  call libxsmm_smm_5_25_5(a=A, b=B2, c=C2, pa=A, pb=B3, pc=C3)
+  call libxsmm_smm_5_25_5(a=A, b=B3, c=C3, pa=A, pb=B1, pc=C1) ! with dummy prefetch
+  return
+#endif
 
   ! matrix-matrix multiplication
   do j = 1,n3
@@ -553,17 +567,31 @@
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
+
+#ifdef XSMM
+  use my_libxsmm, only: libxsmm_smm_25_5_5
+#endif
 
   implicit none
 
   integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j
+
+#ifdef XSMM
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
+  ! static version
+  call libxsmm_smm_25_5_5(a=A1, b=B, c=C1, pa=A2, pb=B, pc=C2)
+  call libxsmm_smm_25_5_5(a=A2, b=B, c=C2, pa=A3, pb=B, pc=C3)
+  call libxsmm_smm_25_5_5(a=A3, b=B, c=C3, pa=A1, pb=B, pc=C1)
+  return
+#endif
 
   ! matrix-matrix multiplication
   do j = 1,n3
@@ -598,17 +626,54 @@
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
+
+! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
+!       however, on Intel Phi (KNC) it is still helpful (speedup +3%)
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  use my_libxsmm, only: libxsmm_smm_5_5_5
+#endif
 
   implicit none
 
   integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5,n3) :: A1,A2,A3
-  real(kind=CUSTOM_REAL),dimension(5,n2) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3) :: C1,C2,C3
+  real(kind=CUSTOM_REAL),dimension(n1,5,n3),intent(in) :: A1,A2,A3
+  real(kind=CUSTOM_REAL),dimension(5,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C1,C2,C3
 
   ! local parameters
   integer :: i,j,k
+
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  ! with A(n1,n2,n4) 5x5x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3,n4) 5x5x5-matrix
+  ! static version
+  !do k = 1,5
+  !  call libxsmm_call(xmm3, A1(:,:,k), B, C1(:,:,k))
+  !  call libxsmm_call(xmm3, A2(:,:,k), B, C2(:,:,k))
+  !  call libxsmm_call(xmm3, A3(:,:,k), B, C3(:,:,k))
+  !enddo
+
+  ! unrolled
+  call libxsmm_smm_5_5_5(a=A1(1,1,1), b=B, c=C1(1,1,1),pa=A1(1,1,1+1), pb=B, pc=C1(1,1,1+1))
+  call libxsmm_smm_5_5_5(a=A1(1,1,2), b=B, c=C1(1,1,2),pa=A1(1,1,2+1), pb=B, pc=C1(1,1,2+1))
+  call libxsmm_smm_5_5_5(a=A1(1,1,3), b=B, c=C1(1,1,3),pa=A1(1,1,3+1), pb=B, pc=C1(1,1,3+1))
+  call libxsmm_smm_5_5_5(a=A1(1,1,4), b=B, c=C1(1,1,4),pa=A1(1,1,4+1), pb=B, pc=C1(1,1,4+1))
+  call libxsmm_smm_5_5_5(a=A1(1,1,5), b=B, c=C1(1,1,5),pa=A2(1,1,1), pb=B, pc=C2(1,1,1))
+
+  call libxsmm_smm_5_5_5(a=A2(1,1,1), b=B, c=C2(1,1,1),pa=A2(1,1,1+1), pb=B, pc=C2(1,1,1+1))
+  call libxsmm_smm_5_5_5(a=A2(1,1,2), b=B, c=C2(1,1,2),pa=A2(1,1,2+1), pb=B, pc=C2(1,1,2+1))
+  call libxsmm_smm_5_5_5(a=A2(1,1,3), b=B, c=C2(1,1,3),pa=A2(1,1,3+1), pb=B, pc=C2(1,1,3+1))
+  call libxsmm_smm_5_5_5(a=A2(1,1,4), b=B, c=C2(1,1,4),pa=A2(1,1,4+1), pb=B, pc=C2(1,1,4+1))
+  call libxsmm_smm_5_5_5(a=A2(1,1,5), b=B, c=C2(1,1,5),pa=A3(1,1,1), pb=B, pc=C3(1,1,1))
+
+  call libxsmm_smm_5_5_5(a=A3(1,1,1), b=B, c=C3(1,1,1),pa=A3(1,1,1+1), pb=B, pc=C3(1,1,1+1))
+  call libxsmm_smm_5_5_5(a=A3(1,1,2), b=B, c=C3(1,1,2),pa=A3(1,1,2+1), pb=B, pc=C3(1,1,2+1))
+  call libxsmm_smm_5_5_5(a=A3(1,1,3), b=B, c=C3(1,1,3),pa=A3(1,1,3+1), pb=B, pc=C3(1,1,3+1))
+  call libxsmm_smm_5_5_5(a=A3(1,1,4), b=B, c=C3(1,1,4),pa=A3(1,1,4+1), pb=B, pc=C3(1,1,4+1))
+  call libxsmm_smm_5_5_5(a=A3(1,1,5), b=B, c=C3(1,1,5),pa=A3(1,1,5), pb=B, pc=C3(1,1,5))
+  return
+#endif
 
   ! matrix-matrix multiplication
   do k = 1,n3
@@ -659,7 +724,7 @@
 !
 !  subroutine mxm(A,n1,B,n2,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -697,7 +762,7 @@
 !
 !  subroutine mxm4(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -725,7 +790,7 @@
 !
 !  subroutine mxm5(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -754,7 +819,7 @@
 !
 !  subroutine mxm6(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -784,7 +849,7 @@
 !
 !  subroutine mxm7(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -816,7 +881,7 @@
 !
 !  subroutine mxm8(A,n1,B,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -849,7 +914,7 @@
 !
 !  subroutine mxmN(A,n1,B,n2,C,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -883,7 +948,7 @@
 !
 !  subroutine mxm_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -921,7 +986,7 @@
 !
 !  subroutine mxm4_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -959,7 +1024,7 @@
 !
 !  subroutine mxm5_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -1002,7 +1067,7 @@
 !
 !  subroutine mxm6_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -1046,7 +1111,7 @@
 !
 !  subroutine mxm7_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -1094,7 +1159,7 @@
 !
 !  subroutine mxm8_3comp(A1,A2,A3,n1,B1,B2,B3,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !
@@ -1145,7 +1210,7 @@
 !
 !  subroutine mxmN_3comp(A1,A2,A3,n1,B1,B2,B3,n2,C1,C2,C3,n3)
 !
-!  use constants_solver,only: CUSTOM_REAL
+!  use constants_solver, only: CUSTOM_REAL
 !
 !  implicit none
 !

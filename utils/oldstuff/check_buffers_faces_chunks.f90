@@ -77,13 +77,13 @@
   print *
 
 ! number of corners and faces shared between chunks and number of message types
-  if(NCHUNKS == 1 .or. NCHUNKS == 2) then
+  if (NCHUNKS == 1 .or. NCHUNKS == 2) then
     NUM_FACES = 1
     NUM_MSG_TYPES = 1
-  else if(NCHUNKS == 3) then
+  else if (NCHUNKS == 3) then
     NUM_FACES = 1
     NUM_MSG_TYPES = 3
-  else if(NCHUNKS == 6) then
+  else if (NCHUNKS == 6) then
     NUM_FACES = 4
     NUM_MSG_TYPES = 3
   else
@@ -96,7 +96,7 @@
 ! total number of messages corresponding to these common faces
   NUMMSGS_FACES = NPROC_ONE_DIRECTION*NUM_FACES*NUM_MSG_TYPES
 
-  if(NCHUNKS == 1) stop 'only one chunk, nothing to check'
+  if (NCHUNKS == 1) stop 'only one chunk, nothing to check'
 
   print *,'There are ',NUMMSGS_FACES,' messages to assemble all the faces'
   print *
@@ -110,7 +110,7 @@
   open(unit=IIN,file=trim(OUTPUT_FILES)//'/list_messages_faces.txt',status='old',action='read')
   do imsg = 1,NUMMSGS_FACES
   read(IIN,*) imsg_type(imsg),iprocfrom_faces(imsg),iprocto_faces(imsg)
-  if      (iprocfrom_faces(imsg) < 0 &
+  if (iprocfrom_faces(imsg) < 0 &
         .or. iprocto_faces(imsg) < 0 &
         .or. iprocfrom_faces(imsg) > NPROCTOT-1 &
         .or. iprocto_faces(imsg) > NPROCTOT-1) &
@@ -151,7 +151,7 @@
   read(35,*) npoin2D_receiver
 
 ! check that number of points is the same in both buffers
-  if(npoin2D_sender /= npoin2D_receiver) &
+  if (npoin2D_sender /= npoin2D_receiver) &
         stop 'different number of points in the two buffers'
 
   print *,'this message contains ',npoin2D_sender,' points'
@@ -162,7 +162,7 @@
     read(35,*) iboolreceive,xreceive,yreceive,zreceive
 
     diff = dmax1(dabs(xsend-xreceive),dabs(ysend-yreceive),dabs(zsend-zreceive))
-    if(diff > 0.0000001d0) then
+    if (diff > 0.0000001d0) then
       print *,'different : ',ipoin2D,iboolsend,iboolreceive,diff
       print *,'xsend,xreceive = ',xsend,xreceive
       print *,'ysend,yreceive = ',ysend,yreceive

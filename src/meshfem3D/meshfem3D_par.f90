@@ -41,7 +41,7 @@
 
   use constants
 
-  use shared_input_parameters,only: &
+  use shared_input_parameters, only: &
     ELLIPTICITY,GRAVITY,ROTATION,TOPOGRAPHY,OCEANS, &
     ATTENUATION,USE_FULL_TISO_MANTLE
 
@@ -250,7 +250,7 @@
 
   module create_regions_mesh_par
 
-  use constants,only: NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,NDIM,NDIM2D
+  use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,NDIM,NDIM2D
 
   implicit none
 
@@ -282,7 +282,7 @@
 
   module create_regions_mesh_par2
 
-  use constants,only: CUSTOM_REAL,N_SLS,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,N_SLS,MAX_STRING_LEN
 
   implicit none
 
@@ -381,7 +381,7 @@
 
   module create_MPI_interfaces_par
 
-  use constants,only: &
+  use constants, only: &
     CUSTOM_REAL,NDIM,IMAIN, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
@@ -456,7 +456,7 @@
 
   module MPI_crust_mantle_par
 
-  use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
 
@@ -513,7 +513,7 @@
 
   module MPI_inner_core_par
 
-  use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
 
@@ -579,7 +579,7 @@
 
   module MPI_outer_core_par
 
-  use constants,only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
+  use constants, only: CUSTOM_REAL,NUMFACES_SHARED,NB_SQUARE_EDGES_ONEDIR
 
   implicit none
 

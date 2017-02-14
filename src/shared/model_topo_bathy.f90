@@ -282,10 +282,10 @@
   ratio_lon = (xlo-lon_corner)/samples_per_degree_topo
   ratio_lat = (xlat-lat_corner)/samples_per_degree_topo
 
-  if (ratio_lon<0.0) ratio_lon=0.0
-  if (ratio_lon>1.0) ratio_lon=1.0
-  if (ratio_lat<0.0) ratio_lat=0.0
-  if (ratio_lat>1.0) ratio_lat=1.0
+  if (ratio_lon < 0.0) ratio_lon=0.0
+  if (ratio_lon > 1.0) ratio_lon=1.0
+  if (ratio_lat < 0.0) ratio_lat=0.0
+  if (ratio_lat > 1.0) ratio_lat=1.0
 
   ! convert integer value to double precision
   if (iadd1 <= NY_BATHY-1 .and. iel1 <= NX_BATHY-1) then
@@ -317,7 +317,7 @@
 
 ! stores topo_bathy image in PNM format with grey levels
 
-  use constants,only: NX_BATHY,NY_BATHY,IOUT,IMAIN,PLOT_PNM_IMAGE_TOPO_BATHY
+  use constants, only: NX_BATHY,NY_BATHY,IOUT,IMAIN,PLOT_PNM_IMAGE_TOPO_BATHY
   use shared_input_parameters, only: OUTPUT_FILES
 
   implicit none
@@ -358,8 +358,8 @@
         ival = 255 * (ibathy_topo(ix,iy) - minvalue) / (maxvalue - minvalue)
       endif
 
-      if(ival < 1) ival = 1
-      if(ival > 255) ival = 255
+      if (ival < 1) ival = 1
+      if (ival > 255) ival = 255
 
       ! write data value (red = green = blue to produce grey levels)
       write(IOUT,'(i3)') ival

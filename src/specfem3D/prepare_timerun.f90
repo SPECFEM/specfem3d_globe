@@ -354,7 +354,7 @@
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                         rmass_ocean_load, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                        nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                         my_neighbours_crust_mantle)
   endif
 
@@ -362,7 +362,7 @@
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassz_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
 
   if ((NCHUNKS_VAL /= 6 .and. ABSORBING_CONDITIONS) .or. &
@@ -370,13 +370,13 @@
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
 
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_CRUST_MANTLE, &
                            rmassy_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
   endif
 
@@ -385,13 +385,13 @@
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassx_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
 
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_CM, &
                            b_rmassy_crust_mantle, &
                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle,&
+                           nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
                            my_neighbours_crust_mantle)
     endif
   endif
@@ -402,40 +402,40 @@
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_OUTER_CORE, &
                            rmass_outer_core, &
                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                           nibool_interfaces_outer_core,ibool_interfaces_outer_core,&
+                           nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
                            my_neighbours_outer_core)
 
   ! inner core
   call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_INNER_CORE, &
                            rmassz_inner_core, &
                            num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                           nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                           nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                            my_neighbours_inner_core)
 
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                              rmassx_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                             nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                              my_neighbours_inner_core)
 
     call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                              rmassy_inner_core, &
                              num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                             nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                             nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                              my_neighbours_inner_core)
 
     if (SIMULATION_TYPE == 3) then
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                                b_rmassx_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                               nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                               nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                my_neighbours_inner_core)
 
       call assemble_MPI_scalar(NPROCTOT_VAL,NGLOB_XY_IC, &
                                b_rmassy_inner_core, &
                                num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                               nibool_interfaces_inner_core,ibool_interfaces_inner_core,&
+                               nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
                                my_neighbours_inner_core)
     endif
   endif
@@ -640,6 +640,12 @@
 
   allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating nu for 3D movie')
+
+  allocate(mask_ibool(NGLOB_CRUST_MANTLE_3DMOVIE), &
+           num_ibool_3dmovie(NGLOB_CRUST_MANTLE_3DMOVIE), &
+           mask_3dmovie(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
+           muvstore_crust_mantle_3dmovie(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),stat=ier)
+  if (ier /= 0 ) stop 'Error allocating arrays muvstore_crust_mantle_3dmovie,..'
 
   call write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool, &
                                           muvstore_crust_mantle_3dmovie,npoints_3dmovie)
@@ -858,7 +864,7 @@
   use specfem_par
   use specfem_par_crustmantle
   use specfem_par_innercore
-  use specfem_par_movie,only: muvstore_crust_mantle_3dmovie
+  use specfem_par_movie, only: muvstore_crust_mantle_3dmovie
 
   implicit none
 
@@ -867,7 +873,7 @@
 
   double precision :: scale_factor,scale_factor_minus_one
   real(kind=CUSTOM_REAL) :: mul
-  integer :: ispec,i,j,k
+  integer :: ispec,i,j,k,ier
 
   ! checks if attenuation is on and anything to do
   if (.not. ATTENUATION_VAL ) return
@@ -877,6 +883,17 @@
     write(IMAIN,*) "preparing attenuation"
     call flush_IMAIN()
   endif
+
+  ! allocates arrays
+  allocate(one_minus_sum_beta_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL), &
+           factor_scale_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT4_VAL), &
+           factor_common_crust_mantle(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT4_VAL),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays one_minus_sum_beta_crust_mantle,..'
+
+  allocate(one_minus_sum_beta_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL), &
+           factor_scale_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,ATT5_VAL), &
+           factor_common_inner_core(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,ATT5_VAL),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays one_minus_sum_beta_inner_core,..'
 
   ! reads in attenuation values
   ! CRUST_MANTLE ATTENUATION
@@ -1075,6 +1092,22 @@
     init_value = 0._CUSTOM_REAL
   endif
 
+  ! allocates arrays
+  allocate(displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE), &
+           veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE), &
+           accel_crust_mantle(NDIM,NGLOB_CRUST_MANTLE),stat=ier)
+  if (ier /= 0) stop 'Error allocating displ,veloc,accel in crust_mantle'
+
+  allocate(displ_outer_core(NGLOB_OUTER_CORE), &
+           veloc_outer_core(NGLOB_OUTER_CORE), &
+           accel_outer_core(NGLOB_OUTER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating displ,veloc,accel in outer_core'
+
+  allocate(displ_inner_core(NDIM,NGLOB_INNER_CORE), &
+           veloc_inner_core(NDIM,NGLOB_INNER_CORE), &
+           accel_inner_core(NDIM,NGLOB_INNER_CORE),stat=ier)
+  if (ier /= 0) stop 'Error allocating displ,veloc,accel in inner_core'
+
   ! initialize arrays to zero
   displ_crust_mantle(:,:) = init_value
   veloc_crust_mantle(:,:) = 0._CUSTOM_REAL
@@ -1105,6 +1138,29 @@
   endif
 
   ! sensitivity kernels
+  ! allocates arrays
+  allocate(rho_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+           beta_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT), &
+           alpha_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in crust_mantle'
+
+  allocate(rho_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+           beta_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT), &
+           alpha_kl_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in inner_core'
+
+  allocate(rho_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT), &
+           alpha_kl_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays rho_kl,.. in outer_core'
+
+  allocate(vector_accel_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
+           vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT), &
+           b_vector_displ_outer_core(NDIM,NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays vector_accel_outer_core,..'
+
+  allocate(div_displ_outer_core(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE),stat=ier)
+  if (ier /= 0) stop 'Error allocating array div_displ_outer_core'
+
   if (SIMULATION_TYPE == 3) then
     rho_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     beta_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
@@ -1117,10 +1173,10 @@
       sigma_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
-    ! approximate hessian
+    ! approximate Hessian
     if (APPROXIMATE_HESS_KL) then
       allocate( hess_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
-      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating hessian')
+      if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Hessian')
       hess_kl_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
@@ -1151,6 +1207,22 @@
     beta_kl_outer_core(:,:,:,:) = 0._CUSTOM_REAL
   endif
 
+  allocate(epsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), &
+           epsilondev_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), &
+           epsilondev_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), &
+           epsilondev_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), &
+           epsilondev_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STR_OR_ATT), &
+           eps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays epsilondev_xx_crust_mantle,..'
+
+  allocate(epsilondev_xx_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT), &
+           epsilondev_yy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT), &
+           epsilondev_xy_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT), &
+           epsilondev_xz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT), &
+           epsilondev_yz_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STR_OR_ATT), &
+           eps_trace_over_3_inner_core(NGLLX,NGLLY,NGLLZ,NSPEC_INNER_CORE_STRAIN_ONLY),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays epsilondev_xx_inner_core,..'
+
   ! initialize to be on the save side for adjoint runs SIMULATION_TYPE == 2
   ! crust/mantle
   eps_trace_over_3_crust_mantle(:,:,:,:) = init_value
@@ -1159,6 +1231,14 @@
   epsilondev_xy_crust_mantle(:,:,:,:) = init_value
   epsilondev_xz_crust_mantle(:,:,:,:) = init_value
   epsilondev_yz_crust_mantle(:,:,:,:) = init_value
+
+  ! inner core
+  eps_trace_over_3_inner_core(:,:,:,:) = init_value
+  epsilondev_xx_inner_core(:,:,:,:) = init_value
+  epsilondev_yy_inner_core(:,:,:,:) = init_value
+  epsilondev_xy_inner_core(:,:,:,:) = init_value
+  epsilondev_xz_inner_core(:,:,:,:) = init_value
+  epsilondev_yz_inner_core(:,:,:,:) = init_value
 
   ! backward/reconstructed strain fields
   if (SIMULATION_TYPE == 3) then
@@ -1207,13 +1287,13 @@
     nullify(b_eps_trace_over_3_inner_core)
   endif
 
-  ! inner core
-  eps_trace_over_3_inner_core(:,:,:,:) = init_value
-  epsilondev_xx_inner_core(:,:,:,:) = init_value
-  epsilondev_yy_inner_core(:,:,:,:) = init_value
-  epsilondev_xy_inner_core(:,:,:,:) = init_value
-  epsilondev_xz_inner_core(:,:,:,:) = init_value
-  epsilondev_yz_inner_core(:,:,:,:) = init_value
+  allocate(Iepsilondev_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
+           Iepsilondev_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
+           Iepsilondev_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
+           Iepsilondev_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
+           Iepsilondev_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
+           Ieps_trace_over_3_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays Iepsilondev_xx_crust_mantle,..'
 
   if (COMPUTE_AND_STORE_STRAIN) then
     if (MOVIE_VOLUME .and. (MOVIE_VOLUME_TYPE == 2 .or. MOVIE_VOLUME_TYPE == 3)) then
@@ -1225,6 +1305,20 @@
       Ieps_trace_over_3_crust_mantle(:,:,:,:) = 0._CUSTOM_REAL
     endif
   endif
+
+  allocate(R_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
+           R_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
+           R_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
+           R_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION), &
+           R_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_ATTENUATION),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays R_xx_crust_mantle,..'
+
+  allocate(R_xx_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
+           R_yy_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
+           R_xy_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
+           R_xz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION), &
+           R_yz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_ATTENUATION),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays R_xx_inner_core,..'
 
   ! clear memory variables if attenuation
   if (ATTENUATION_VAL) then
@@ -1242,9 +1336,43 @@
   endif
 
   if (ROTATION_VAL) then
-    A_array_rotation = 0._CUSTOM_REAL
-    B_array_rotation = 0._CUSTOM_REAL
+    allocate(A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION), &
+             B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROTATION),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays A_array_rotation,..'
+
+    A_array_rotation(:,:,:,:) = 0._CUSTOM_REAL
+    B_array_rotation(:,:,:,:) = 0._CUSTOM_REAL
   endif
+
+  ! allocates backward/reconstructed arrays (dummy in case of forward simulation)
+  allocate(b_displ_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
+           b_veloc_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT), &
+           b_accel_crust_mantle(NDIM,NGLOB_CRUST_MANTLE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in crust_mantle'
+
+  allocate(b_displ_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
+           b_veloc_outer_core(NGLOB_OUTER_CORE_ADJOINT), &
+           b_accel_outer_core(NGLOB_OUTER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in outer_core'
+
+  allocate(b_displ_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
+           b_veloc_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT), &
+           b_accel_inner_core(NDIM,NGLOB_INNER_CORE_ADJOINT),stat=ier)
+  if (ier /= 0) stop 'Error allocating b_displ,b_veloc,b_accel in inner_core'
+
+  allocate(b_R_xx_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+           b_R_yy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+           b_R_xy_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+           b_R_xz_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT), &
+           b_R_yz_crust_mantle(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_CRUST_MANTLE_STR_AND_ATT),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays b_R_xx_crust_mantle,..'
+
+  allocate(b_R_xx_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
+           b_R_yy_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
+           b_R_xy_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
+           b_R_xz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT), &
+           b_R_yz_inner_core(NGLLX,NGLLY,NGLLZ,N_SLS,NSPEC_INNER_CORE_STR_AND_ATT),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays b_R_xx_inner_core,..'
 
   ! initializes backward/reconstructed arrays
   if (SIMULATION_TYPE == 3) then
@@ -1276,8 +1404,12 @@
     b_eps_trace_over_3_inner_core = init_value
 
     if (ROTATION_VAL) then
-      b_A_array_rotation = 0._CUSTOM_REAL
-      b_B_array_rotation = 0._CUSTOM_REAL
+      allocate(b_A_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT), &
+               b_B_array_rotation(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_ROT_ADJOINT),stat=ier)
+      if (ier /= 0) stop 'Error allocating arrays b_A_array_rotation,..'
+
+      b_A_array_rotation(:,:,:,:) = 0._CUSTOM_REAL
+      b_B_array_rotation(:,:,:,:) = 0._CUSTOM_REAL
     endif
 
     if (ATTENUATION_VAL) then
@@ -1791,7 +1923,7 @@
   subroutine prepare_timerun_noise()
 
   use specfem_par
-  use specfem_par_crustmantle,only: NSPEC_TOP
+  use specfem_par_crustmantle, only: NSPEC_TOP
   use specfem_par_noise
 
   implicit none
@@ -1884,7 +2016,7 @@
   noise_surface_movie(:,:,:,:) = 0._CUSTOM_REAL
 
   ! file i/o buffer
-  ! checks integer size limit: size of buffer must fit onto an 4-byte integer (<2 GB)
+  ! checks integer size limit: size of buffer must fit onto an 4-byte integer ( < 2 GB)
   if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM * NT_DUMP_NOISE_BUFFER)) then
     print *,'buffer of noise surface_movie needed exceeds integer 4-byte limit: ',dble(reclen_noise) * dble(NT_DUMP_NOISE_BUFFER)
     print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP,NT_DUMP_NOISE_BUFFER
@@ -1907,7 +2039,7 @@
   call read_parameters_noise()
 
   ! user output
-  if(myrank == 0) then
+  if (myrank == 0) then
     ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
     write(IMAIN,*) "  ignoring CMT sources"
     select case (NOISE_TOMOGRAPHY)

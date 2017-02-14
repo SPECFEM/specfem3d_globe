@@ -28,7 +28,7 @@
 
   subroutine setup_MPI_interfaces(iregion_code)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     INCLUDE_CENTRAL_CUBE,myrank,NUMFACES_SHARED
 
   use create_MPI_interfaces_par
@@ -126,13 +126,13 @@
   subroutine setup_MPI_interfaces_cm(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                     max_nibool,ibool_neighbours)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES,MAX_STRING_LEN
 
-  use meshfem3D_par,only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
+  use meshfem3D_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use create_MPI_interfaces_par
   use MPI_crust_mantle_par
@@ -258,13 +258,13 @@
   subroutine setup_MPI_interfaces_oc(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                     max_nibool,ibool_neighbours)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES,MAX_STRING_LEN
 
-  use meshfem3D_par,only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
+  use meshfem3D_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use create_MPI_interfaces_par
   use MPI_outer_core_par
@@ -392,13 +392,13 @@
   subroutine setup_MPI_interfaces_ic(MAX_NEIGHBOURS,my_neighbours,nibool_neighbours, &
                                     max_nibool,ibool_neighbours)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
     NPROC_XI,NPROC_ETA,NPROCTOT, &
     NGLOB1D_RADIAL,NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NCHUNKS, &
     OUTPUT_FILES,IFLAG_IN_FICTITIOUS_CUBE,NGLLX,NGLLY,NGLLZ,NSPEC2D_BOTTOM,MAX_STRING_LEN
 
-  use meshfem3D_par,only: ibool,idoubling,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
+  use meshfem3D_par, only: ibool,idoubling,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
   use create_MPI_interfaces_par
   use MPI_inner_core_par

@@ -135,32 +135,32 @@ subroutine define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
 
   !--- Variables for '...AVS_DXpoints.txt'
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points/x_value", dummy_real1d)
+                                   '', "points/x_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points/y_value", dummy_real1d)
+                                   '', "points/y_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points/z_value", dummy_real1d)
+                                   '', "points/z_value", dummy_real1d)
 
   !--- Variables for AVS_DXelements.txt
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/idoubling", dummy_int1d)
+                                   '', "elements/idoubling", dummy_int1d)
 
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/num_ibool_AVS_DX_iglob1", dummy_int1d)
+                                   '', "elements/num_ibool_AVS_DX_iglob1", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/num_ibool_AVS_DX_iglob2", dummy_int1d)
+                                   '', "elements/num_ibool_AVS_DX_iglob2", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/num_ibool_AVS_DX_iglob3", dummy_int1d)
+                                   '', "elements/num_ibool_AVS_DX_iglob3", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/num_ibool_AVS_DX_iglob4", dummy_int1d)
+                                   '', "elements/num_ibool_AVS_DX_iglob4", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/num_ibool_AVS_DX_iglob5", dummy_int1d)
+                                   '', "elements/num_ibool_AVS_DX_iglob5", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/num_ibool_AVS_DX_iglob6", dummy_int1d)
+                                   '', "elements/num_ibool_AVS_DX_iglob6", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/num_ibool_AVS_DX_iglob7", dummy_int1d)
+                                   '', "elements/num_ibool_AVS_DX_iglob7", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspec, &
-                                   "", "elements/num_ibool_AVS_DX_iglob8", dummy_int1d)
+                                   '', "elements/num_ibool_AVS_DX_iglob8", dummy_int1d)
 
 end subroutine define_AVS_DX_global_data_adios
 

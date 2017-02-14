@@ -28,7 +28,7 @@
   subroutine compute_add_sources()
 
   use specfem_par
-  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
+  use specfem_par_crustmantle, only: accel_crust_mantle,ibool_crust_mantle
 
   implicit none
 
@@ -87,7 +87,7 @@
 
         else
           ! source time function value
-          stf = comp_source_time_function(timeval,hdur_gaussian(isource))
+          stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
 
           !     distinguish between single and double precision for reals
           stf_used = real(stf, kind=CUSTOM_REAL)
@@ -129,7 +129,7 @@
         timeval = time_t - tshift_cmt(isource)
 
         ! source time function value
-        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_gaussian(isource))
+        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=1 and NOISE_TOM = 0
@@ -146,7 +146,7 @@
   subroutine compute_add_sources_adjoint()
 
   use specfem_par
-  use specfem_par_crustmantle,only: accel_crust_mantle,ibool_crust_mantle
+  use specfem_par_crustmantle, only: accel_crust_mantle,ibool_crust_mantle
 
   implicit none
 
@@ -311,7 +311,7 @@
   subroutine compute_add_sources_backward()
 
   use specfem_par
-  use specfem_par_crustmantle,only: b_accel_crust_mantle,ibool_crust_mantle
+  use specfem_par_crustmantle, only: b_accel_crust_mantle,ibool_crust_mantle
   implicit none
 
   ! local parameters
@@ -413,7 +413,7 @@
         else
 
           ! see note above: time step corresponds now to NSTEP-it
-          stf = comp_source_time_function(timeval,hdur_gaussian(isource))
+          stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
 
           !     distinguish between single and double precision for reals
           stf_used = real(stf, kind=CUSTOM_REAL)
@@ -453,7 +453,7 @@
         ! sets current time for this source
         timeval = time_t - tshift_cmt(isource)
         ! source time function contribution
-        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_gaussian(isource))
+        stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
       enddo
     endif
     ! adds sources: only implements SIMTYPE=3 (and NOISE_TOM = 0)

@@ -31,7 +31,7 @@
 
 ! creates all elements belonging to different regions of the mesh
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     idoubling,is_on_a_slice_edge, &
     xstore,ystore,zstore, &
     IMAIN,myrank, &
@@ -45,7 +45,7 @@
     ratio_divide_central_cube,CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
     ner,r_top,r_bottom
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
     TRANSVERSE_ISOTROPY
 
@@ -124,8 +124,8 @@
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
-                    gammaxstore,gammaystore,gammazstore,&
+                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
+                    gammaxstore,gammaystore,gammazstore, &
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
@@ -133,8 +133,8 @@
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
-                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot,&
+                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
+                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                     ispec_is_tiso)
 
 
@@ -153,15 +153,15 @@
                     nspec_ani,c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
-                    gammaxstore,gammaystore,gammazstore,&
+                    nspec_actually,xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
+                    gammaxstore,gammaystore,gammazstore, &
                     nspec_stacey,rho_vp,rho_vs,iboun,iMPIcut_xi,iMPIcut_eta, &
                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
                     rotation_matrix,idoubling,doubling_index,USE_ONE_LAYER_SB, &
                     NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
                     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                     normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
-                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,&
+                    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
                     ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                     CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,offset_proc_xi,offset_proc_eta, &
                     ispec_is_tiso)
@@ -205,9 +205,9 @@
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
                         idoubling,iregion_code,xstore,ystore,zstore, &
-                        shape3D,rmin,rmax,rhostore,dvpstore,&
+                        shape3D,rmin,rmax,rhostore,dvpstore, &
                         kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
-                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,&
+                        xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
                         gammaxstore,gammaystore,gammazstore,nspec_actually, &
                         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &

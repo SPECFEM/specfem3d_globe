@@ -71,20 +71,20 @@
 
 ! for OpenDX *.cm format, output value of H,S or V and then three zeroes
 ! hue is an angle between 0 and 360 degrees but it is stored as a real value between 0 and 1
-      if(icomp == 1) print *,(z(i)-z(1))/(z(NUM_LINES)-z(1)),hval/360.,' 0 0 0'
-      if(icomp == 2) print *,(z(i)-z(1))/(z(NUM_LINES)-z(1)),sval,' 0 0 0'
-      if(icomp == 3) print *,(z(i)-z(1))/(z(NUM_LINES)-z(1)),vval,' 0 0 0'
+      if (icomp == 1) print *,(z(i)-z(1))/(z(NUM_LINES)-z(1)),hval/360.,' 0 0 0'
+      if (icomp == 2) print *,(z(i)-z(1))/(z(NUM_LINES)-z(1)),sval,' 0 0 0'
+      if (icomp == 3) print *,(z(i)-z(1))/(z(NUM_LINES)-z(1)),vval,' 0 0 0'
 
   enddo
 
   enddo
 
 ! output opacity, set to 1 (i.e. totally opaque)
-  if(OPACITY == 1) then
+  if (OPACITY == 1) then
     print *,'2'
     print *,'0.00000000000000000000   1.00000000000000000000  0  0  0'
     print *,'1.00000000000000000000   1.00000000000000000000  0  0  0'
-  else if(OPACITY == 2) then
+  else if (OPACITY == 2) then
     print *,'4'
     print *,'0.0000   0.00  0  0  0'
     print *,'0.5934   0.00  0  0  0'

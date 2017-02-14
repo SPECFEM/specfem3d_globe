@@ -68,7 +68,7 @@
 ! read the OLD_NPOINTS old modified points, print them only if they are in the new list
   do ipoin = 0,OLD_NPOINTS-1
     read(27,*) x(ipoin),y(ipoin),z(ipoin)
-    if(new_number_of_unique_point(ipoin) >= 0) print *,x(ipoin),y(ipoin),z(ipoin)
+    if (new_number_of_unique_point(ipoin) >= 0) print *,x(ipoin),y(ipoin),z(ipoin)
   enddo
 
 ! skip header
@@ -94,7 +94,7 @@
 ! call get_global() to check that all the points are unique
   call get_global(NSPEC,xp,yp,zp,iglob,locval,ifseg,nglob,npointot,NGNOD)
   print *,'number of unique points detected = ',nglob
-  if(nglob /= NEW_NPOINTS) then
+  if (nglob /= NEW_NPOINTS) then
     stop 'error in the total number of unique points'
   else
     print *,'this number is OK'
@@ -161,9 +161,9 @@
 ! sort within each segment
   ioff=1
   do iseg=1,nseg
-    if(j == 1) then
+    if (j == 1) then
       call rank(xp(ioff),ind,ninseg(iseg))
-    else if(j == 2) then
+    else if (j == 2) then
       call rank(yp(ioff),ind,ninseg(iseg))
     else
       call rank(zp(ioff),ind,ninseg(iseg))
@@ -174,24 +174,24 @@
 
 ! check for jumps in current coordinate
 ! compare the coordinates of the points within a small tolerance
-  if(j == 1) then
+  if (j == 1) then
     do i=2,npointot
-      if(abs(xp(i)-xp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+      if (abs(xp(i)-xp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
     enddo
-  else if(j == 2) then
+  else if (j == 2) then
     do i=2,npointot
-      if(abs(yp(i)-yp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+      if (abs(yp(i)-yp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
     enddo
   else
     do i=2,npointot
-      if(abs(zp(i)-zp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
+      if (abs(zp(i)-zp(i-1)) > SMALLVALTOL) ifseg(i)=.true.
     enddo
   endif
 
 ! count up number of different segments
   nseg=0
   do i=1,npointot
-    if(ifseg(i)) then
+    if (ifseg(i)) then
       nseg=nseg+1
       ninseg(nseg)=1
     else
@@ -203,7 +203,7 @@
 ! assign global node numbers (now sorted lexicographically)
   ig=0
   do i=1,npointot
-    if(ifseg(i)) ig=ig+1
+    if (ifseg(i)) ig=ig+1
     iglob(loc(i))=ig
   enddo
 
@@ -242,8 +242,8 @@
 
   L=n/2+1
   ir=n
-  100 CONTINUE
-   IF (l>1) THEN
+  100 continue
+   if (l > 1) then
       l=l-1
       indx=ind(l)
       q=a(indx)
@@ -259,12 +259,12 @@
    endif
    i=l
    j=l+l
-  200    CONTINUE
-   IF (J <= IR) THEN
-      IF (J<IR) THEN
-         IF ( A(IND(j))<A(IND(j+1)) ) j=j+1
+  200    continue
+   if (J <= IR) then
+      if (J < IR) then
+         if ( A(IND(j)) < A(IND(j+1)) ) j=j+1
       endif
-      IF (q<A(IND(j))) THEN
+      if (q < A(IND(j))) then
          IND(I)=IND(J)
          I=J
          J=J+J

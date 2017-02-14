@@ -60,25 +60,25 @@
   do ielem=1,nelem_lowres
 
 !! DK DK point numbers start at 0 in OpenDX, therefore add 1 to index value
-    if(.not. mask_numbered(ibool1(ielem_base_highres+1) + 1)) then
+    if (.not. mask_numbered(ibool1(ielem_base_highres+1) + 1)) then
       inewpointnumber(ibool1(ielem_base_highres+1) + 1) = ipoin_current
       ipoin_current = ipoin_current + 1
       mask_numbered(ibool1(ielem_base_highres+1) + 1) = .true.
     endif
 
-    if(.not. mask_numbered(ibool2(ielem_base_highres+13) + 1)) then
+    if (.not. mask_numbered(ibool2(ielem_base_highres+13) + 1)) then
       inewpointnumber(ibool2(ielem_base_highres+13) + 1) = ipoin_current
       ipoin_current = ipoin_current + 1
       mask_numbered(ibool2(ielem_base_highres+13) + 1) = .true.
     endif
 
-    if(.not. mask_numbered(ibool3(ielem_base_highres+4) + 1)) then
+    if (.not. mask_numbered(ibool3(ielem_base_highres+4) + 1)) then
       inewpointnumber(ibool3(ielem_base_highres+4) + 1) = ipoin_current
       ipoin_current = ipoin_current + 1
       mask_numbered(ibool3(ielem_base_highres+4) + 1) = .true.
     endif
 
-    if(.not. mask_numbered(ibool4(ielem_base_highres+16) + 1)) then
+    if (.not. mask_numbered(ibool4(ielem_base_highres+16) + 1)) then
       inewpointnumber(ibool4(ielem_base_highres+16) + 1) = ipoin_current
       ipoin_current = ipoin_current + 1
       mask_numbered(ibool4(ielem_base_highres+16) + 1) = .true.
@@ -94,7 +94,7 @@
   write(*,*) 'object 1 class array type float rank 1 shape 3 items ',npoin_lowres,' data follows'
 
   do ipoin=1,npoin
-    if(mask_numbered(ipoin)) write(*,"(f8.5,1x,f8.5,1x,f8.5)") x(ipoin),y(ipoin),z(ipoin)
+    if (mask_numbered(ipoin)) write(*,"(f8.5,1x,f8.5,1x,f8.5)") x(ipoin),y(ipoin),z(ipoin)
   enddo
 
 ! elements
@@ -114,7 +114,7 @@
   write(*,*) 'attribute "ref" string "positions"'
   write(*,*) 'object 3 class array type float rank 0 items ',npoin_lowres,' data follows'
   do ipoin=1,npoin
-    if(mask_numbered(ipoin)) write(*,501) dataval(ipoin)
+    if (mask_numbered(ipoin)) write(*,501) dataval(ipoin)
   enddo
 
   write(*,*) 'attribute "dep" string "positions"'

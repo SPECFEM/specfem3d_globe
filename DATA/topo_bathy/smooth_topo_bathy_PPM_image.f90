@@ -87,17 +87,17 @@
 !----
 
 ! smooth topography/bathymetry model
-  if(SMOOTH_THE_MODEL) then
+  if (SMOOTH_THE_MODEL) then
 
   print *
   print *,'smoothing topo file'
-  if(SIZE_FILTER_ONE_SIDE < 1) stop 'SIZE_FILTER_ONE_SIDE must be greater than 1 for filter'
+  if (SIZE_FILTER_ONE_SIDE < 1) stop 'SIZE_FILTER_ONE_SIDE must be greater than 1 for filter'
   print *,'size of window filter is ',2*SIZE_FILTER_ONE_SIDE+1,' x ',2*SIZE_FILTER_ONE_SIDE+1
   area_window = dble((2*SIZE_FILTER_ONE_SIDE+1)**2)
 
   do iy_current = 1,NY_BATHY
 
-   if(mod(iy_current,10) == 0) print *,'smoothing line ',iy_current,' out of ',NY_BATHY
+   if (mod(iy_current,10) == 0) print *,'smoothing line ',iy_current,' out of ',NY_BATHY
 
     do ix_current = 1,NX_BATHY
 
@@ -119,13 +119,13 @@
         iy_value = iy
 
 ! avoid edge effects, use periodic boundary in Xmin and Xmax
-      if(ix_value < 1) ix_value = ix_value + NX_BATHY
-      if(ix_value > NX_BATHY) ix_value = ix_value - NX_BATHY
+      if (ix_value < 1) ix_value = ix_value + NX_BATHY
+      if (ix_value > NX_BATHY) ix_value = ix_value - NX_BATHY
 
 ! avoid edge effects, use rigid boundary in Ymin and Ymax
 ! *not* periodic, because South and North poles must not be merged
-      if(iy_value < 1) iy_value = 1
-      if(iy_value > NY_BATHY) iy_value = NY_BATHY
+      if (iy_value < 1) iy_value = 1
+      if (iy_value > NY_BATHY) iy_value = NY_BATHY
 
 ! compute sum
       value_sum = value_sum + dble(ibathy_topo_ori(ix_value,iy_value))
@@ -154,7 +154,7 @@
   print *,'min and max of topography after smoothing = ',minvalue,maxvalue
 
 ! save the smoothed model
-  if(SMOOTH_THE_MODEL) then
+  if (SMOOTH_THE_MODEL) then
     print *
     print *,'saving the smoothed model'
     open(unit=13,file='topo_bathy_etopo2v2c_smoothed_window_3.dat',status='unknown')
@@ -171,8 +171,8 @@
   do iy = 1,NY_BATHY
     do ix = 1,NX_BATHY
       ibathy_topo(ix,iy) = 255 * (ibathy_topo(ix,iy) - minvalue) / (maxvalue - minvalue)
-      if(ibathy_topo(ix,iy) < 1) ibathy_topo(ix,iy) = 1
-      if(ibathy_topo(ix,iy) > 255) ibathy_topo(ix,iy) = 255
+      if (ibathy_topo(ix,iy) < 1) ibathy_topo(ix,iy) = 1
+      if (ibathy_topo(ix,iy) > 255) ibathy_topo(ix,iy) = 255
     enddo
   enddo
 

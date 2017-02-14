@@ -32,7 +32,7 @@
 
   use constants
 
-  use specfem_par,only: &
+  use specfem_par, only: &
           ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI, &
           station_name,network_name,stlat,stlon,stele,stbur, &
           DT,t0, &
@@ -41,13 +41,12 @@
           NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
           MODEL,OUTPUT_FILES
 
-  use specfem_par,only: &
-          yr=>yr_SAC,jda=>jda_SAC,ho=>ho_SAC,mi=>mi_SAC,sec=>sec_SAC, &
-          tshift_cmt=>t_cmt_SAC,t_shift=>t_shift_SAC, &
-          elat=>elat_SAC,elon=>elon_SAC,depth=>depth_SAC, &
-          event_name=>event_name_SAC,cmt_lat=>cmt_lat_SAC,cmt_lon=>cmt_lon_SAC,&
-          cmt_depth=>cmt_depth_SAC,cmt_hdur=>cmt_hdur_SAC
-
+  use specfem_par, only: &
+          yr => yr_SAC,jda => jda_SAC,ho => ho_SAC,mi => mi_SAC,sec => sec_SAC, &
+          tshift_cmt => t_cmt_SAC,t_shift => t_shift_SAC, &
+          elat => elat_SAC,elon => elon_SAC,depth => depth_SAC, &
+          event_name => event_name_SAC,cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC, &
+          cmt_depth => cmt_depth_SAC,cmt_hdur => cmt_hdur_SAC
 
   implicit none
 
@@ -276,10 +275,10 @@
    NZHOUR   = int(mod(time_sec,24*3600)/3600)
    NZMIN    = int(mod(time_sec,3600)/60)
    NZSEC    = mod(time_sec,60)
-   if (NZJDAY  > 365 .and. .not. is_leap_year(NZYEAR)) then
+   if (NZJDAY > 365 .and. .not. is_leap_year(NZYEAR)) then
       NZJDAY = mod(NZJDAY,365)
       NZYEAR = yr + 1
-   else if (NZJDAY  > 366 .and. is_leap_year(NZYEAR)) then
+   else if (NZJDAY > 366 .and. is_leap_year(NZYEAR)) then
       NZJDAY = mod(NZJDAY,366)
       NZYEAR = yr + 1
    else if (NZJDAY == 366 .and. is_leap_year(NZYEAR)) then
@@ -353,10 +352,10 @@
     ! add .sacan (sac alphanumeric) extension to seismogram file name for SAC seismograms
     write(sisname_2,"('/',a,'.sacan')") trim(sisname)
     if (seismo_offset == 0) then
-      open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2),&
+      open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2), &
         status='unknown',action='write')
     else
-      open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2),&
+      open(unit=IOUT_SAC,file=trim(OUTPUT_FILES)//trim(sisname_2), &
         status='old', position='append',action='write')
     endif
 

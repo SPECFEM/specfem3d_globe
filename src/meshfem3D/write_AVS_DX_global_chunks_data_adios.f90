@@ -175,30 +175,30 @@ contains
 
   !--- Variables for '...AVS_DXpointschunks.txt'
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points_chunks/x_value", dummy_real1d)
+                                   '', "points_chunks/x_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points_chunks/y_value", dummy_real1d)
+                                   '', "points_chunks/y_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points_chunks/z_value", dummy_real1d)
+                                   '', "points_chunks/z_value", dummy_real1d)
 
   !--- Variables for '...AVS_DXpointschunk_stability.txt'
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points_chunks/vmin", dummy_real1d)
+                                   '', "points_chunks/vmin", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points_chunks/vmax", dummy_real1d)
+                                   '', "points_chunks/vmax", dummy_real1d)
 
 !  !--- Variables for AVS_DXelementschunks.txt
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   "", "elements_chunks/idoubling", dummy_int1d)
+                                   '', "elements_chunks/idoubling", dummy_int1d)
 
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   "", "elements_chunks/num_ibool_AVS_DX_iglob1", dummy_int1d)
+                                   '', "elements_chunks/num_ibool_AVS_DX_iglob1", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   "", "elements_chunks/num_ibool_AVS_DX_iglob2", dummy_int1d)
+                                   '', "elements_chunks/num_ibool_AVS_DX_iglob2", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   "", "elements_chunks/num_ibool_AVS_DX_iglob3", dummy_int1d)
+                                   '', "elements_chunks/num_ibool_AVS_DX_iglob3", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                   "", "elements_chunks/num_ibool_AVS_DX_iglob4", dummy_int1d)
+                                   '', "elements_chunks/num_ibool_AVS_DX_iglob4", dummy_int1d)
 
   if (ISOTROPIC_3D_MANTLE) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
@@ -207,9 +207,9 @@ contains
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
 
     call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                     "", "elements_faces/dvp", dummy_real1d)
+                                     '', "elements_faces/dvp", dummy_real1d)
     call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                     "", "elements_faces/dvs", dummy_real1d)
+                                     '', "elements_faces/dvs", dummy_real1d)
   endif
 
   end subroutine define_AVS_DX_global_chunks_data
@@ -822,7 +822,7 @@ contains
 
   ! check that number of global points output is okay
   if (numpoin /= npoin) &
-    call exit_MPI(myrank,&
+    call exit_MPI(myrank, &
         'incorrect number of global points in AVS or DX file creation')
 
   ! output global AVS or DX elements
@@ -888,16 +888,16 @@ contains
                 vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                         + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
 
-                if (abs(rhostore(i,j,k,ispec))< 1.e-20) then
+                if (abs(rhostore(i,j,k,ispec)) < 1.e-20) then
                   print *,' attention: rhostore close to zero', &
                       rhostore(i,j,k,ispec),r,i,j,k,ispec
                   dvp = 0.0
                   dvs = 0.0
-                else if (abs(sngl(vp))< 1.e-20) then
+                else if (abs(sngl(vp)) < 1.e-20) then
                   print *,' attention: vp close to zero', &
                       sngl(vp),r,i,j,k,ispec
                   dvp = 0.0
-                else if (abs(sngl(vs))< 1.e-20) then
+                else if (abs(sngl(vs)) < 1.e-20) then
                   print *,' attention: vs close to zero', &
                       sngl(vs),r,i,j,k,ispec
                   dvs = 0.0

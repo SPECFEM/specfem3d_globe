@@ -70,15 +70,15 @@
   print *
 
 ! number of corners shared between chunks
-  if(NCHUNKS == 1 .or. NCHUNKS == 2 .or. NCHUNKS == 3) then
+  if (NCHUNKS == 1 .or. NCHUNKS == 2 .or. NCHUNKS == 3) then
     NCORNERSCHUNKS = 1
-  else if(NCHUNKS == 6) then
+  else if (NCHUNKS == 6) then
     NCORNERSCHUNKS = 8
   else
     stop 'number of chunks must be either 1, 2, 3 or 6'
   endif
 
-  if(NCHUNKS == 1) stop 'only one chunk, nothing to check'
+  if (NCHUNKS == 1) stop 'only one chunk, nothing to check'
 
   print *,'There are ',NCORNERSCHUNKS,' messages to assemble all the corners'
   print *
@@ -96,7 +96,7 @@
   do imsg = 1,NCORNERSCHUNKS
   read(IIN,*) iproc_master_corners(imsg),iproc_worker1_corners(imsg), &
                           iproc_worker2_corners(imsg)
-  if    (iproc_master_corners(imsg) < 0 &
+  if (iproc_master_corners(imsg) < 0 &
     .or. iproc_worker1_corners(imsg) < 0 &
     .or. iproc_worker2_corners(imsg) < 0 &
     .or. iproc_master_corners(imsg) > NPROCTOT-1 &
@@ -137,7 +137,7 @@
 
 ! second worker
 ! if only two chunks then there is no second worker
-  if(NCHUNKS /= 2) then
+  if (NCHUNKS /= 2) then
     write(filename,"('buffer_corners_chunks_worker2_msg',i6.6,'.txt')") imsg
     iproc = iproc_worker2_corners(imsg)
     call create_serial_name_database(prname,iproc,iregion_code, &
@@ -150,13 +150,13 @@
   read(34,*) npoin1D_master
   read(35,*) npoin1D_worker1
 ! if only two chunks then there is no second worker
-  if(NCHUNKS /= 2) then
+  if (NCHUNKS /= 2) then
     read(36,*) npoin1D_worker2
   else
     npoin1D_worker2 = npoin1D_worker1
   endif
 
-  if(npoin1D_master /= NGLOB1D_RADIAL(iregion_code) .or. &
+  if (npoin1D_master /= NGLOB1D_RADIAL(iregion_code) .or. &
      npoin1D_worker1 /= NGLOB1D_RADIAL(iregion_code) .or. &
      npoin1D_worker2 /= NGLOB1D_RADIAL(iregion_code)) then
               stop 'incorrect total number of points'
@@ -170,10 +170,10 @@
   read(34,*) iboolmaster,xmaster,ymaster,zmaster
   read(35,*) iboolworker1,xworker1,yworker1,zworker1
 ! if only two chunks then there is no second worker
-  if(NCHUNKS /= 2) read(36,*) iboolworker2,xworker2,yworker2,zworker2
+  if (NCHUNKS /= 2) read(36,*) iboolworker2,xworker2,yworker2,zworker2
 
   diff1 = dmax1(dabs(xmaster-xworker1),dabs(ymaster-yworker1),dabs(zmaster-zworker1))
-  if(diff1 > 0.0000001d0) then
+  if (diff1 > 0.0000001d0) then
     print *,'different : ',ipoin1D,iboolmaster,iboolworker1,diff1
     print *,'xmaster,xworker1 = ',xmaster,xworker1
     print *,'ymaster,yworker1 = ',ymaster,yworker1
@@ -182,9 +182,9 @@
   endif
 
 ! if only two chunks then there is no second worker
-  if(NCHUNKS /= 2) then
+  if (NCHUNKS /= 2) then
     diff2 = dmax1(dabs(xmaster-xworker2),dabs(ymaster-yworker2),dabs(zmaster-zworker2))
-    if(diff2 > 0.0000001d0) then
+    if (diff2 > 0.0000001d0) then
       print *,'different : ',ipoin1D,iboolmaster,iboolworker2,diff2
       print *,'xmaster,xworker2 = ',xmaster,xworker2
       print *,'ymaster,yworker2 = ',ymaster,yworker2
@@ -198,7 +198,7 @@
   close(34)
   close(35)
 ! if only two chunks then there is no second worker
-  if(NCHUNKS /= 2) close(36)
+  if (NCHUNKS /= 2) close(36)
 
   enddo
 

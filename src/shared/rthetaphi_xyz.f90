@@ -62,7 +62,7 @@
 
 ! convert x y z to r theta phi, double precision call
 
-  use constants,only: SMALL_VAL_ANGLE,ZERO
+  use constants, only: SMALL_VAL_ANGLE,ZERO
 
   implicit none
 
@@ -95,7 +95,7 @@
 
 ! convert r theta phi to x y z
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -114,7 +114,7 @@
 
 ! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)
 
-  use constants,only: RADIANS_TO_DEGREES,PI_OVER_TWO
+  use constants, only: RADIANS_TO_DEGREES,PI_OVER_TWO
 
   implicit none
 

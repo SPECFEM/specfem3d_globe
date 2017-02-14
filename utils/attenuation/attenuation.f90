@@ -46,7 +46,7 @@ program attenuation
 
   !  call attenuation_liu(t1, t2, n, Q, omega_not, tau_s, tau_e)
   call attenuation_simplex(t1, t2, n, Q, omega_not, tau_s, tau_e)
-  if(write_central_period == 0) then
+  if (write_central_period == 0) then
      write(*,*)"! define central period of source in seconds using values from Jeroen's code"
      write(*,'(A27,F20.15,A2)')'  T_c_source = 1000.d0 / ', omega_not ,'d0'
      write(*,*)
@@ -62,32 +62,32 @@ program attenuation
      write_central_period = 1
 
   endif
-  if(Q == 84.6d0) then
+  if (Q == 84.6d0) then
      write(*,*)'!--- inner core, target Q_mu: 84.60'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_INNER_CORE)'
      write(*,*)
   endif
-  if(Q == 312.0d0) then
-     write(*,*)'!--- CMB -> d670 (no attenuation in fluid outer core), target Q_mu = 312.'
+  if (Q == 312.0d0) then
+     write(*,*)'!--- CMB - > d670 (no attenuation in fluid outer core), target Q_mu = 312.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_CMB_670)'
      write(*,*)
   endif
-  if(Q == 143.0d0) then
-     write(*,*)'!--- d670 -> d220, target Q_mu: 143.'
+  if (Q == 143.0d0) then
+     write(*,*)'!--- d670 - > d220, target Q_mu: 143.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_670_220)'
      write(*,*)
   endif
-  if(Q == 80.0d0) then
-     write(*,*)'!--- d220 -> depth of 80 km, target Q_mu:  80.'
+  if (Q == 80.0d0) then
+     write(*,*)'!--- d220 - > depth of 80 km, target Q_mu:  80.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_220_80)'
      write(*,*)
   endif
-  if(Q == 600.0d0) then
-     write(*,*)'!--- depth of 80 km -> surface, target Q_mu: 600.'
+  if (Q == 600.0d0) then
+     write(*,*)'!--- depth of 80 km - > surface, target Q_mu: 600.'
      write(*,*)
      write(*,*)'  case(IREGION_ATTENUATION_80_SURFACE)'
      write(*,*)
@@ -191,7 +191,7 @@ subroutine attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu,
   scale_factor = factor_scale_mu * factor_scale_mu0
 
 !--- check that the correction factor is close to one
-  if(scale_factor < 0.9 .or. scale_factor > 1.1) &
+  if (scale_factor < 0.9 .or. scale_factor > 1.1) &
        call exit(-1)
 
 end subroutine attenuation_scale_factor
@@ -235,13 +235,13 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   integer i, j, k
 
   real(8), dimension(n)   :: gradient, dadp, dbdp, dqdp, x1, x2
-  real(8), dimension(n,n) :: hessian
+  real(8), dimension(n,n) :: Hessian
 
   real(8) a, b, demon, Q_omega, Q_ratio, F_ratio, PI2, q
   real(8) f1, f2, exp1, exp2, expo, dexp, omega, df, d2qdp2
 
   gradient(:)  = 0.0d0
-  hessian(:,:) = 0.0d0
+  Hessian(:,:) = 0.0d0
   tau_e(:)     = 0.0d0
   tau_s(:)     = 0.0d0
 
@@ -251,7 +251,7 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   f1 = 1.0d0/t1
   f2 = 1.0d0/t2
 
-  if(f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
+  if (f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
      write(*,*)'bad parameters'
      call exit(-1)
   endif
@@ -309,8 +309,8 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
         gradient(j) = gradient(j) + 2.0d0 * (Q_ratio) * dqdp(j) * F_ratio
         do k = 1,j
            d2qdp2   = -(dadp(j) * dbdp(k) + dbdp(j) * dadp(k) - 2.0d0 * (b / a) * dadp(j) * dadp(k)) / (a * a)
-           hessian(j,k) = hessian(j,k) + (2.0d0 * dqdp(j) * dqdp(k) + 2.0d0 * Q_ratio * d2qdp2) * F_ratio
-           hessian(k,j) = hessian(j,k)
+           Hessian(j,k) = Hessian(j,k) + (2.0d0 * dqdp(j) * dqdp(k) + 2.0d0 * Q_ratio * d2qdp2) * F_ratio
+           Hessian(k,j) = Hessian(j,k)
         enddo
      enddo
   enddo
@@ -319,9 +319,9 @@ subroutine attenuation_invert_SVD(t1,t2,n,Q_real,omega_not,tau_s,tau_e)
   write(*,*)
   write(*,*)gradient
   write(*,*)
-  write(*,*)hessian
+  write(*,*)Hessian
   write(*,*)
-  call invert(x1, gradient, hessian, n)
+  call invert(x1, gradient, Hessian, n)
 
   tau_e(:) = x1(:) + x2(:)
   tau_s(:) = x2(:)
@@ -372,8 +372,8 @@ end subroutine invert
 
 
 
-FUNCTION pythag_dp(a,b)
-  IMPLICIT NONE
+function pythag_dp(a,b)
+  implicit none
   INTEGER, PARAMETER :: DP = KIND(1.0D0)
   REAL(DP), INTENT(IN) :: a,b
   REAL(DP) :: pythag_dp
@@ -389,12 +389,12 @@ FUNCTION pythag_dp(a,b)
         pythag_dp=absb*sqrt(1.0d0+(absa/absb)**2)
      endif
   endif
-END FUNCTION pythag_dp
+end function pythag_dp
 
-SUBROUTINE svdcmp_dp(a,w,v,p)
-!  USE nrtype; USE nrutil, ONLY : assert_eq,nrerror,outerprod
-!  USE nr, ONLY : pythag
-  IMPLICIT NONE
+subroutine svdcmp_dp(a,w,v,p)
+!  USE nrtype; USE nrutil, only: assert_eq,nrerror,outerprod
+!  USE nr, only: pythag
+  implicit none
   integer p
   INTEGER, PARAMETER :: DP = KIND(1.0D0)
   REAL(DP), DIMENSION(p,p), INTENT(INOUT) :: a
@@ -571,5 +571,5 @@ SUBROUTINE svdcmp_dp(a,w,v,p)
         w(k)=x
      enddo
   enddo
-END SUBROUTINE svdcmp_dp
+end subroutine svdcmp_dp
 

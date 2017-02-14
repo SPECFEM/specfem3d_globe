@@ -50,58 +50,88 @@
 
   ! local parameters
   double precision :: xixd,xiyd,xizd,etaxd,etayd,etazd,gammaxd,gammayd,gammazd
+
   ! source arrays
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: G11,G12,G13,G21,G22,G23,G31,G32,G33
   double precision, dimension(NGLLX) :: hxis,hpxis
   double precision, dimension(NGLLY) :: hetas,hpetas
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
+  double precision :: hlagrange
+  double precision :: dsrc_dx, dsrc_dy, dsrc_dz
+  double precision :: dxis_dx, detas_dx, dgammas_dx
+  double precision :: dxis_dy, detas_dy, dgammas_dy
+  double precision :: dxis_dz, detas_dz, dgammas_dz
+
   integer :: k,l,m
 
-  ! calculate G_ij for general source location
-  ! the source does not necessarily correspond to a Gauss-Lobatto point
-  do m = 1,NGLLZ
-    do l = 1,NGLLY
-      do k = 1,NGLLX
-
-        xixd    = dble(xix(k,l,m))
-        xiyd    = dble(xiy(k,l,m))
-        xizd    = dble(xiz(k,l,m))
-        etaxd   = dble(etax(k,l,m))
-        etayd   = dble(etay(k,l,m))
-        etazd   = dble(etaz(k,l,m))
-        gammaxd = dble(gammax(k,l,m))
-        gammayd = dble(gammay(k,l,m))
-        gammazd = dble(gammaz(k,l,m))
-
-        G11(k,l,m) = Mxx*xixd+Mxy*xiyd+Mxz*xizd
-        G12(k,l,m) = Mxx*etaxd+Mxy*etayd+Mxz*etazd
-        G13(k,l,m) = Mxx*gammaxd+Mxy*gammayd+Mxz*gammazd
-        G21(k,l,m) = Mxy*xixd+Myy*xiyd+Myz*xizd
-        G22(k,l,m) = Mxy*etaxd+Myy*etayd+Myz*etazd
-        G23(k,l,m) = Mxy*gammaxd+Myy*gammayd+Myz*gammazd
-        G31(k,l,m) = Mxz*xixd+Myz*xiyd+Mzz*xizd
-        G32(k,l,m) = Mxz*etaxd+Myz*etayd+Mzz*etazd
-        G33(k,l,m) = Mxz*gammaxd+Myz*gammayd+Mzz*gammazd
-
-      enddo
-    enddo
-  enddo
-
 ! compute Lagrange polynomials at the source location
+! the source does not necessarily correspond to a Gauss-Lobatto point
   call lagrange_any(xi_source,NGLLX,xigll,hxis,hpxis)
   call lagrange_any(eta_source,NGLLY,yigll,hetas,hpetas)
   call lagrange_any(gamma_source,NGLLZ,zigll,hgammas,hpgammas)
 
-! calculate source array
+  dxis_dx = ZERO
+  dxis_dy = ZERO
+  dxis_dz = ZERO
+  detas_dx = ZERO
+  detas_dy = ZERO
+  detas_dz = ZERO
+  dgammas_dx = ZERO
+  dgammas_dy = ZERO
+  dgammas_dz = ZERO
+
   do m = 1,NGLLZ
-    do l = 1,NGLLY
-      do k = 1,NGLLX
-        call multiply_arrays_source(sourcearrayd,G11,G12,G13,G21,G22,G23, &
-                  G31,G32,G33,hxis,hpxis,hetas,hpetas,hgammas,hpgammas,k,l,m)
-      enddo
-    enddo
+     do l = 1,NGLLY
+        do k = 1,NGLLX
+
+           xixd    = dble(xix(k,l,m))
+           xiyd    = dble(xiy(k,l,m))
+           xizd    = dble(xiz(k,l,m))
+           etaxd   = dble(etax(k,l,m))
+           etayd   = dble(etay(k,l,m))
+           etazd   = dble(etaz(k,l,m))
+           gammaxd = dble(gammax(k,l,m))
+           gammayd = dble(gammay(k,l,m))
+           gammazd = dble(gammaz(k,l,m))
+
+           hlagrange = hxis(k) * hetas(l) * hgammas(m)
+
+           dxis_dx = dxis_dx + hlagrange * xixd
+           dxis_dy = dxis_dy + hlagrange * xiyd
+           dxis_dz = dxis_dz + hlagrange * xizd
+
+           detas_dx = detas_dx + hlagrange * etaxd
+           detas_dy = detas_dy + hlagrange * etayd
+           detas_dz = detas_dz + hlagrange * etazd
+
+           dgammas_dx = dgammas_dx + hlagrange * gammaxd
+           dgammas_dy = dgammas_dy + hlagrange * gammayd
+           dgammas_dz = dgammas_dz + hlagrange * gammazd
+
+       enddo
+     enddo
+  enddo
+
+! calculate source array
+  sourcearrayd(:,:,:,:) = ZERO
+  do m = 1,NGLLZ
+     do l = 1,NGLLY
+        do k = 1,NGLLX
+
+           dsrc_dx = (hpxis(k)*dxis_dx)*hetas(l)*hgammas(m) + hxis(k)*(hpetas(l)*detas_dx)*hgammas(m) + &
+                                                                hxis(k)*hetas(l)*(hpgammas(m)*dgammas_dx)
+           dsrc_dy = (hpxis(k)*dxis_dy)*hetas(l)*hgammas(m) + hxis(k)*(hpetas(l)*detas_dy)*hgammas(m) + &
+                                                                hxis(k)*hetas(l)*(hpgammas(m)*dgammas_dy)
+           dsrc_dz = (hpxis(k)*dxis_dz)*hetas(l)*hgammas(m) + hxis(k)*(hpetas(l)*detas_dz)*hgammas(m) + &
+                                                                hxis(k)*hetas(l)*(hpgammas(m)*dgammas_dz)
+
+           sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + (Mxx*dsrc_dx + Mxy*dsrc_dy + Mxz*dsrc_dz)
+           sourcearrayd(2,k,l,m) = sourcearrayd(2,k,l,m) + (Mxy*dsrc_dx + Myy*dsrc_dy + Myz*dsrc_dz)
+           sourcearrayd(3,k,l,m) = sourcearrayd(3,k,l,m) + (Mxz*dsrc_dx + Myz*dsrc_dy + Mzz*dsrc_dz)
+
+       enddo
+     enddo
   enddo
 
   ! distinguish between single and double precision for reals
@@ -116,7 +146,7 @@
                                            xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
-  use constants,only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
+  use constants, only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
 
   use specfem_par, only: scale_displ_inv, NUMBER_OF_SIMULTANEOUS_RUNS, READ_ADJSRC_ASDF, mygroup
 
@@ -182,7 +212,6 @@
   index_start = iadjsrc(it_sub_adj,1)
   index_end = iadjsrc(it_sub_adj,1)+NSTEP_BLOCK-1
 
-
   ! unfortunately, things become more tricky because of the Newmark time scheme at
   ! the very beginning of the time loop. however, when we read in the backward/reconstructed
   ! wavefields at the end of the first time loop, we can use the adjoint source index from 3000 down to 1.
@@ -239,7 +268,7 @@
       if (ios /= 0) then
         ! adjoint source file not found
         ! stops simulation
-        call exit_MPI(myrank,&
+        call exit_MPI(myrank, &
             'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
       endif
       !if (ios /= 0) cycle ! cycles to next file - this is too error prone and users might easily end up with wrong results
@@ -248,7 +277,7 @@
       do itime  = 1,index_start-1
         read(IIN_ADJ,*,iostat=ios) junk,junk
         if (ios /= 0) &
-          call exit_MPI(myrank,&
+          call exit_MPI(myrank, &
             'file '//trim(filename)//' has wrong length, please check with your simulation duration')
       enddo
 

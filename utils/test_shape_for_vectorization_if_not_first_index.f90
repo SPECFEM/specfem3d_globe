@@ -50,7 +50,7 @@ do l = 1,NL
   read(10,*) a_from_first_order
   difference = abs(a(l,ijk,1,1,m) - a_from_first_order)
   print *,a(l,ijk,1,1,m),difference
-  if(difference /= 0) stop 'error, difference between the two orders is not zero'
+  if (difference /= 0) stop 'error, difference between the two orders is not zero'
 enddo
 enddo
 enddo

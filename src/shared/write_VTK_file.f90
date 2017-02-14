@@ -27,7 +27,7 @@
 
 ! note: this might be a possible bug in gfortran with -mcmodel=medium on cray,
 !       but the write statement
-!         write(IOUT_VTK,*) ""
+!         write(IOUT_VTK,*) ''
 !       produces errors, relocation truncated to fit: R_X86_64_32 against `.lrodata'
 !       this can be fixed by using
 !         write(IOUT_VTK,*)
@@ -40,7 +40,7 @@
 
 ! external mesh routine for saving VTK files for points locations
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 
   implicit none
 
@@ -101,7 +101,7 @@
 !
 !! external mesh routine for saving VTK files for points locations
 !
-!  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
+!  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,IOUT_VTK
 !
 !  implicit none
 !
@@ -162,7 +162,7 @@
 
 ! routine for saving VTK file holding logical flag on each spectral element
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
@@ -203,7 +203,7 @@
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec = 1,nspec
     write(IOUT_VTK,'(9i12)') 8, &
-          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1, &
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
   write(IOUT_VTK,*)
@@ -241,7 +241,7 @@
 
 ! routine for saving VTK file holding integer value on each spectral element
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
@@ -282,7 +282,7 @@
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec = 1,nspec
     write(IOUT_VTK,'(9i12)') 8, &
-          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1, &
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
   write(IOUT_VTK,*)
@@ -307,7 +307,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-! external mesh routine for saving VTK files for custom_real values on global points
+! external mesh routine for saving VTK files for CUSTOM_REAL values on global points
 
   subroutine write_VTK_data_cr(idoubling,nspec,nglob, &
                                rstore_dummy, &
@@ -315,7 +315,7 @@
 
 ! outputs single file for each process
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
 
   implicit none
 
@@ -437,7 +437,7 @@
 !
 ! unused routine, may be used for debugging...
 !
-!! external mesh routine for saving VTK files for custom_real values on global points
+!! external mesh routine for saving VTK files for CUSTOM_REAL values on global points
 !
 !  subroutine write_VTK_data_cr_all(myrank,NPROCTOT,idoubling, &
 !                              nspec,nglob, &
@@ -446,7 +446,7 @@
 !
 !! outputs single file for all processes
 !
-!  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
+!  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NDIM,NGLLX,NGLLY,NGLLZ,IOUT_VTK,IFLAG_IN_FICTITIOUS_CUBE
 !
 !  implicit none
 !
@@ -645,9 +645,9 @@
                                     xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
                                     gll_data,prname_file)
 
-! external mesh routine for saving vtk files for custom_real values on all gll points
+! external mesh routine for saving vtk files for CUSTOM_REAL values on all GLL points
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
@@ -657,7 +657,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
   real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore_dummy,ystore_dummy,zstore_dummy
 
-  ! gll data values array
+  ! GLL data values array
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: gll_data
 
   ! file name
@@ -734,7 +734,7 @@
     write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
     do ispec=1,nspec
       write(IOUT_VTK,'(9i12)') 8, &
-            (ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3,&
+            (ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3, &
             (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
     enddo
   else
@@ -829,9 +829,9 @@
                                     xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
                                     elem_data,prname_file)
 
-! saves vtk files for custom_real values on all spectral elements
+! saves vtk files for CUSTOM_REAL values on all spectral elements
 
-  use constants,only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN,NGLLX,NGLLY,NGLLZ,IOUT_VTK
 
   implicit none
 
@@ -861,21 +861,21 @@
   do i=1,nglob
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) ''
 
   ! note: indices for vtk start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec = 1,nspec
     write(IOUT_VTK,'(9i12)') 8, &
-          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1,&
+          ibool(1,1,1,ispec)-1,ibool(NGLLX,1,1,ispec)-1,ibool(NGLLX,NGLLY,1,ispec)-1,ibool(1,NGLLY,1,ispec)-1, &
           ibool(1,1,NGLLZ,ispec)-1,ibool(NGLLX,1,NGLLZ,ispec)-1,ibool(NGLLX,NGLLY,NGLLZ,ispec)-1,ibool(1,NGLLY,NGLLZ,ispec)-1
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) ''
 
   ! type: hexahedrons
   write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec)
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) ''
 
   write(IOUT_VTK,'(a,i12)') "CELL_DATA ",nspec
   write(IOUT_VTK,'(a)') "SCALARS elem_val float"
@@ -883,7 +883,7 @@
   do ispec = 1,nspec
     write(IOUT_VTK,*) elem_data(ispec)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) ''
   close(IOUT_VTK)
 
   end subroutine write_VTK_data_elem_cr

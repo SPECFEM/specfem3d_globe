@@ -33,7 +33,7 @@ program global_slice_number
   ch_usage = 'Usage: global_slice_number elon elat slon slat nproc narc [nchunks xi_width eta_width clon clat grot] [lat0]'
 
   if (trim(ch_elon) == '' .or. trim(ch_elat) == '' .or. trim(ch_slon) == '' .or. &
-             trim(ch_slat) == '' .or. trim(ch_nproc) == '' .or. trim(ch_narc) == '')  then
+             trim(ch_slat) == '' .or. trim(ch_nproc) == '' .or. trim(ch_narc) == '') then
     print *, trim(ch_usage)
     stop
   endif

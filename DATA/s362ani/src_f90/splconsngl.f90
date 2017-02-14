@@ -26,22 +26,22 @@
   ncon=0
 
   do iver=1,nver
-  if(xlat > verlat(iver)-2.*verrad(iver)) then
-    if(xlat < verlat(iver)+2.*verrad(iver)) then
+  if (xlat > verlat(iver)-2.*verrad(iver)) then
+    if (xlat < verlat(iver)+2.*verrad(iver)) then
       ver8=xrad*(verlat(iver))
       xla8=xrad*(xlat)
       dd=sin(ver8)*sin(xla8)
       dd=dd+cos(ver8)*cos(xla8)* cos(xrad*(xlon-verlon(iver)))
       dd=acos(dd)/xrad
-      if(dd > (verrad(iver))*2.d0) then
+      if (dd > (verrad(iver))*2.d0) then
       else
         ncon=ncon+1
         icon(ncon)=iver
         rn=dd/(verrad(iver))
         dr=rn-1.d0
-        if(rn <= 1.d0) then
+        if (rn <= 1.d0) then
           con(ncon)=(0.75d0*rn-1.5d0)*(rn**2)+1.d0
-        else if(rn > 1.d0) then
+        else if (rn > 1.d0) then
           con(ncon)=((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0
         else
           con(ncon)=0.

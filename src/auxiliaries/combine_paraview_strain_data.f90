@@ -72,7 +72,7 @@ program combine_paraview_movie_data
   read(arg(5),*) comp
   read(arg(6),*) MOVIE_COARSE
 
-  if (num_node>1000) stop 'change array sizes for num_node > 1000 and recompile xcombine_paraview_movie_data'
+  if (num_node > 1000) stop 'change array sizes for num_node > 1000 and recompile xcombine_paraview_movie_data'
 
   print *, 'Number of nodes: ',num_node
   print *, ' '
@@ -129,21 +129,21 @@ program combine_paraview_movie_data
 
     open(unit = IIN,file = trim(prname)//'movie3D_x.bin',status='old',action='read', iostat = ios,form ='unformatted')
     if (ios /= 0) stop 'Error opening file x.bin'
-    if (npoint(iproc)>0) then
+    if (npoint(iproc) > 0) then
       read(IIN) xstore(1:npoint(iproc))
     endif
     close(IIN)
 
     open(unit = IIN,file = trim(prname)//'movie3D_y.bin',status='old',action='read', iostat = ios,form ='unformatted')
     if (ios /= 0) stop 'Error opening file y.bin'
-    if (npoint(iproc)>0) then
+    if (npoint(iproc) > 0) then
       read(IIN) ystore(1:npoint(iproc))
     endif
     close(IIN)
 
     open(unit = IIN,file = trim(prname)//'movie3D_z.bin',status='old',action='read', iostat = ios,form ='unformatted')
     if (ios /= 0) stop 'Error opening file z.bin'
-    if (npoint(iproc)>0) then
+    if (npoint(iproc) > 0) then
       read(IIN) zstore(1:npoint(iproc))
     endif
     close(IIN)
@@ -159,7 +159,7 @@ program combine_paraview_movie_data
         print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
-      if (npoint(iproc)>0) then
+      if (npoint(iproc) > 0) then
         read(IIN) datstore(1:npoint(iproc))
       endif
       close(IIN)
@@ -173,7 +173,7 @@ program combine_paraview_movie_data
         print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
-      if (npoint(iproc)>0) then
+      if (npoint(iproc) > 0) then
         read(IIN) SEEstore(1:npoint(iproc))
       endif
       close(IIN)
@@ -185,7 +185,7 @@ program combine_paraview_movie_data
         print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
-      if (npoint(iproc)>0) then
+      if (npoint(iproc) > 0) then
        read(IIN) SNEstore(1:npoint(iproc))
       endif
       close(IIN)
@@ -197,7 +197,7 @@ program combine_paraview_movie_data
         print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
-      if (npoint(iproc)>0) then
+      if (npoint(iproc) > 0) then
         read(IIN) SEZstore(1:npoint(iproc))
       endif
       close(IIN)
@@ -209,7 +209,7 @@ program combine_paraview_movie_data
         print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
-      if (npoint(iproc)>0) then
+      if (npoint(iproc) > 0) then
         read(IIN) SNNstore(1:npoint(iproc))
       endif
       close(IIN)
@@ -221,7 +221,7 @@ program combine_paraview_movie_data
         print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
-      if (npoint(iproc)>0) then
+      if (npoint(iproc) > 0) then
         read(IIN) SNZstore(1:npoint(iproc))
       endif
       close(IIN)
@@ -233,7 +233,7 @@ program combine_paraview_movie_data
         print *,'Error opening file: ',trim(prname)//trim(local_data_file)
         stop 'Error opening file it.bin'
       endif
-      if (npoint(iproc)>0) then
+      if (npoint(iproc) > 0) then
         read(IIN) SZZstore(1:npoint(iproc))
       endif
       close(IIN)
@@ -260,7 +260,7 @@ program combine_paraview_movie_data
 
   enddo  ! all slices for points
 
-  if (np /=  npoint_all) stop 'Error: Number of total points are not consistent'
+  if (np /= npoint_all) stop 'Error: Number of total points are not consistent'
   print *, 'Total number of points: ', np
   print *, ' '
 

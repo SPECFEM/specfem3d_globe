@@ -82,7 +82,7 @@
   ! GLOBAL INPUT:
   !    MACH:
   !=====================================================================
-  ! SUBROUTINES CALLED:
+  ! subroutines called:
   !    SACLIB:  SETMSG, APCMSG
   !=====================================================================
   ! LOCAL VARIABLES:

@@ -47,43 +47,43 @@
     read(27,*) x(ipoin),y(ipoin),z(ipoin)
 
 ! write in a nice format with full precision
-    if(abs(x(ipoin) - 0.d0) < 0.0001d0) then
+    if (abs(x(ipoin) - 0.d0) < 0.0001d0) then
       print *,' x_superbrick(',ipoin,') = 0.d0'
-    else if(abs(x(ipoin) - 0.5d0) < 0.0001d0) then
+    else if (abs(x(ipoin) - 0.5d0) < 0.0001d0) then
       print *,' x_superbrick(',ipoin,') = 1.d0 / 2.d0'
-    else if(abs(x(ipoin) - 1.d0) < 0.0001d0) then
+    else if (abs(x(ipoin) - 1.d0) < 0.0001d0) then
       print *,' x_superbrick(',ipoin,') = 1.d0'
-    else if(abs(x(ipoin) - 1.5d0) < 0.0001d0) then
+    else if (abs(x(ipoin) - 1.5d0) < 0.0001d0) then
       print *,' x_superbrick(',ipoin,') = 3.d0 / 2.d0'
-    else if(abs(x(ipoin) - 2.d0) < 0.0001d0) then
+    else if (abs(x(ipoin) - 2.d0) < 0.0001d0) then
       print *,' x_superbrick(',ipoin,') = 2.d0'
     else
       stop 'unknown coordinate found for x'
     endif
 
-    if(abs(y(ipoin) - 0.d0) < 0.0001d0) then
+    if (abs(y(ipoin) - 0.d0) < 0.0001d0) then
       print *,' y_superbrick(',ipoin,') = 0.d0'
-    else if(abs(y(ipoin) - 0.5d0) < 0.0001d0) then
+    else if (abs(y(ipoin) - 0.5d0) < 0.0001d0) then
       print *,' y_superbrick(',ipoin,') = 1.d0 / 2.d0'
-    else if(abs(y(ipoin) - 1.d0) < 0.0001d0) then
+    else if (abs(y(ipoin) - 1.d0) < 0.0001d0) then
       print *,' y_superbrick(',ipoin,') = 1.d0'
-    else if(abs(y(ipoin) - 1.5d0) < 0.0001d0) then
+    else if (abs(y(ipoin) - 1.5d0) < 0.0001d0) then
       print *,' y_superbrick(',ipoin,') = 3.d0 / 2.d0'
-    else if(abs(y(ipoin) - 2.d0) < 0.0001d0) then
+    else if (abs(y(ipoin) - 2.d0) < 0.0001d0) then
       print *,' y_superbrick(',ipoin,') = 2.d0'
     else
       stop 'unknown coordinate found for y'
     endif
 
-    if(abs(z(ipoin) - 0.d0) < 0.0001d0) then
+    if (abs(z(ipoin) - 0.d0) < 0.0001d0) then
       print *,' z_superbrick(',ipoin,') = 0.d0'
-    else if(abs(z(ipoin) - 0.5d0) < 0.0001d0) then
+    else if (abs(z(ipoin) - 0.5d0) < 0.0001d0) then
       print *,' z_superbrick(',ipoin,') = 1.d0 / 2.d0'
-    else if(abs(z(ipoin) - 1.d0) < 0.0001d0) then
+    else if (abs(z(ipoin) - 1.d0) < 0.0001d0) then
       print *,' z_superbrick(',ipoin,') = 1.d0'
-    else if(abs(z(ipoin) - 1.5d0) < 0.0001d0) then
+    else if (abs(z(ipoin) - 1.5d0) < 0.0001d0) then
       print *,' z_superbrick(',ipoin,') = 3.d0 / 2.d0'
-    else if(abs(z(ipoin) - 2.d0) < 0.0001d0) then
+    else if (abs(z(ipoin) - 2.d0) < 0.0001d0) then
       print *,' z_superbrick(',ipoin,') = 2.d0'
     else
       stop 'unknown coordinate found for z'

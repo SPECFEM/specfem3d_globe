@@ -190,7 +190,7 @@
 
   r_moho = RMOHO_ / R_EARTH_
   r_cmb = RCMB_ / R_EARTH_
-  if (radius>=r_moho .or. radius <= r_cmb) return
+  if (radius >= r_moho .or. radius <= r_cmb) return
 
   xr=-1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   if (xr > 1.0) print *,'xr > 1.0'
@@ -313,48 +313,48 @@
       I=MIN0(I,II)
 
 !   SEE IF X IS INCREASING OR DECREASING.
-      if (X(I2)-X(I1) <  0) goto 1
+      if (X(I2)-X(I1) < 0) goto 1
       if (X(I2)-X(I1) >= 0) goto 2
 
 !   X IS DECREASING.  CHANGE I AS NECESSARY.
  1    if (S-X(I) <= 0) goto 3
-      if (S-X(I) >  0) goto 4
+      if (S-X(I) > 0) goto 4
 
  4    I=I-1
 
-      if (I-I1 <  0) goto 11
+      if (I-I1 < 0) goto 11
       if (I-I1 == 0) goto 6
-      if (I-I1 >  0) goto 1
+      if (I-I1 > 0) goto 1
 
- 3    if (S-X(I+1) <  0) goto 5
+ 3    if (S-X(I+1) < 0) goto 5
       if (S-X(I+1) >= 0) goto 6
 
  5    I=I+1
 
-      if (I-II <  0) goto 3
+      if (I-II < 0) goto 3
       if (I-II == 0) goto 6
-      if (I-II >  0) goto 7
+      if (I-II > 0) goto 7
 
 !   X IS INCREASING.  CHANGE I AS NECESSARY.
  2    if (S-X(I+1) <= 0) goto 8
-      if (S-X(I+1) >  0) goto 9
+      if (S-X(I+1) > 0) goto 9
 
  9    I=I+1
 
-      if (I-II <  0) goto 2
+      if (I-II < 0) goto 2
       if (I-II == 0) goto 6
-      if (I-II >  0) goto 7
+      if (I-II > 0) goto 7
 
- 8    if (S-X(I) <  0) goto 10
+ 8    if (S-X(I) < 0) goto 10
       if (S-X(I) >= 0) goto 6
 
  10   I=I-1
-      if (I-I1 <  0) goto 11
+      if (I-I1 < 0) goto 11
       if (I-I1 == 0) goto 6
-      if (I-I1 >  0) goto 8
+      if (I-I1 > 0) goto 8
 
  7    I=II
-      GOTO 6
+      goto 6
  11   I=I1
 
 !   CALCULATE RSPLE USING SPLINE COEFFICIENTS IN Y AND Q.
@@ -369,7 +369,7 @@
 
   implicit none
 
-! Subroutine rspln computes cubic spline interpolation coefficients
+! The subroutine rspln computes cubic spline interpolation coefficients
 ! for y(x) between grid points i1 and i2 saving them in q.The
 ! interpolation is continuous with continuous first and second
 ! derivatives. It agrees exactly with y at grid points and with the
@@ -393,26 +393,26 @@
       Y0=0.0d0
 
 !   BAIL OUT IF THERE ARE LESS THAN TWO POINTS TOTAL
-      if (I2-I1  < 0) return
+      if (I2-I1 < 0) return
       if (I2-I1 == 0) goto 17
-      if (I2-I1  > 0) goto 8
+      if (I2-I1 > 0) goto 8
 
  8    A0=X(J1-1)
 !   SEARCH FOR DISCONTINUITIES.
       DO 3 I=J1,I2
       B0=A0
       A0=X(I)
-      if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) GOTO 4
- 3    CONTINUE
+      if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) goto 4
+ 3    continue
  17   J1=J1-1
       J2=I2-2
-      GOTO 5
+      goto 5
  4    J1=J1-1
       J2=I-3
 !   SEE IF THERE ARE ENOUGH POINTS TO INTERPOLATE (AT LEAST THREE).
- 5    if (J2+1-J1 <  0) goto 9
+ 5    if (J2+1-J1 < 0) goto 9
       if (J2+1-J1 == 0) goto 10
-      if (J2+1-J1 >  0) goto 11
+      if (J2+1-J1 > 0) goto 11
 
 !   ONLY TWO POINTS.  USE LINEAR INTERPOLATION.
  10   J2=J2+2
@@ -421,7 +421,7 @@
         Q(J,J1)=YY(J)
         Q(J,J2)=YY(J)
       enddo
-      GOTO 12
+      goto 12
 
 !   MORE THAN TWO POINTS.  DO SPLINE INTERPOLATION.
  11   A0 = 0.
@@ -497,7 +497,7 @@
 !   NO.  GO BACK FOR MORE.
  6    J1=J2+2
       if (J1-I2 <= 0) goto 8
-      if (J1-I2 >  0) goto 7
+      if (J1-I2 > 0) goto 7
 
 !   THERE IS ONLY ONE POINT LEFT AFTER THE LATEST DISCONTINUITY.
  7    DO J=1,3

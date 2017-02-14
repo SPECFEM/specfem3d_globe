@@ -33,7 +33,7 @@
   program xcreate_movie_AVS_DX
 
   use constants
-  use shared_parameters,only: &
+  use shared_parameters, only: &
     NEX_XI,NEX_ETA,NSTEP,NTSTEP_BETWEEN_FRAMES, &
     NCHUNKS,NPROCTOT,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
     OUTPUT_FILES,MOVIE_COARSE

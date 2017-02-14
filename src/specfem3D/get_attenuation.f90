@@ -31,7 +31,7 @@
                                       scale_factor, tau_s, vnspec)
 
   use constants_solver
-  use specfem_par,only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH, &
+  use specfem_par, only: ATTENUATION_VAL,ADIOS_FOR_ARRAYS_SOLVER,LOCAL_PATH, &
     scale_t_inv
 
   implicit none
@@ -157,8 +157,8 @@
 
   subroutine get_attenuation_scale_factor(myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)
 
-  use constants,only: ZERO,ONE,TWO,PI,GRAV,RHOAV,TWO_PI,N_SLS
-  use specfem_par,only: scale_t
+  use constants, only: ZERO,ONE,TWO,PI,GRAV,RHOAV,TWO_PI,N_SLS
+  use specfem_par, only: scale_t
 
   implicit none
 
@@ -267,4 +267,4 @@
   call bcast_all_cr_for_database(factor_common(1,1,1,1,1), size(factor_common))
   call bcast_all_dp_for_database(tau_s(1), size(tau_s))
 
-  endsubroutine bcast_attenuation_model_3D
+  end subroutine bcast_attenuation_model_3D

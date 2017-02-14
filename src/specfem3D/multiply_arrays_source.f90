@@ -46,7 +46,7 @@
 
 ! multiplies acceleration with inverse of mass matrices in crust/mantle,solid inner core region
 
-  use constants_solver,only: CUSTOM_REAL,NDIM,ROTATION_VAL
+  use constants_solver, only: CUSTOM_REAL,NDIM,ROTATION_VAL
 
   implicit none
 
@@ -120,7 +120,7 @@
 
 ! multiplies acceleration with inverse of mass matrix in outer core region
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
 
   implicit none
 
@@ -144,61 +144,6 @@
   enddo
 
   end subroutine multiply_accel_acoustic
-
-
-
-!-------------------------------------------------------------------------------------------------
-!
-! interpolated source arrays
-!
-!-------------------------------------------------------------------------------------------------
-
-  subroutine multiply_arrays_source(sourcearrayd,G11,G12,G13,G21,G22,G23, &
-                  G31,G32,G33,hxis,hpxis,hetas,hpetas,hgammas,hpgammas,k,l,m)
-
-  use constants
-
-  implicit none
-
-  ! source arrays
-  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: G11,G12,G13,G21,G22,G23,G31,G32,G33
-  double precision, dimension(NGLLX) :: hxis,hpxis
-  double precision, dimension(NGLLY) :: hetas,hpetas
-  double precision, dimension(NGLLZ) :: hgammas,hpgammas
-
-  integer :: k,l,m
-
-  ! local parameters
-  integer :: ir,it,iv
-
-  ! initializes
-  sourcearrayd(:,k,l,m) = ZERO
-
-  do iv = 1,NGLLZ
-    do it = 1,NGLLY
-      do ir = 1,NGLLX
-
-        sourcearrayd(1,k,l,m) = sourcearrayd(1,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
-                           *(G11(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
-                           +G12(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
-                           +G13(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
-
-        sourcearrayd(2,k,l,m) = sourcearrayd(2,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
-                           *(G21(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
-                           +G22(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
-                           +G23(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
-
-        sourcearrayd(3,k,l,m) = sourcearrayd(3,k,l,m) + hxis(ir)*hetas(it)*hgammas(iv) &
-                           *(G31(ir,it,iv)*hpxis(k)*hetas(l)*hgammas(m) &
-                           +G32(ir,it,iv)*hxis(k)*hpetas(l)*hgammas(m) &
-                           +G33(ir,it,iv)*hxis(k)*hetas(l)*hpgammas(m))
-
-      enddo
-    enddo
-  enddo
-
-  end subroutine multiply_arrays_source
 
 !
 !-------------------------------------------------------------------------------------------------

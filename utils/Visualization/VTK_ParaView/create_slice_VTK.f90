@@ -83,7 +83,7 @@
       print *, '   - filename:    looks for filename.bin must be array of (NGLLX,NGLLY,NGLLZ,nspec) '
       print *, '   - input_topo_dir:    includes "proc***_array_dims.txt '
       print *,  '   - input_file_dir:    includes "proc****filename.bin '
-      print *, '   - output_dir:    output mesh files go to here '
+      print *, '   - output_dir:    output mesh files goto here '
       print *, '   if region is not specified, all 3 regions will be collected, otherwise, only collect regions specified'
       print *, ' '
       stop ' Reenter command line options'
@@ -229,7 +229,7 @@
 
       ! writes out vtk file
       call write_VTK_data_gll_cr(nspec(it),nglob(it), &
-              xstore(1:nglob(it)),ystore(1:nglob(it)),zstore(1:nglob(it)),&
+              xstore(1:nglob(it)),ystore(1:nglob(it)),zstore(1:nglob(it)), &
               ibool(:,:,:,1:nspec(it)), &
               data(:,:,:,1:nspec(it)),mesh_file)
 
@@ -251,7 +251,7 @@
             xstore_dummy,ystore_dummy,zstore_dummy,ibool, &
             gll_data,prname_file)
 
-! external mesh routine for saving vtk files for custom_real values on all gll points
+! external mesh routine for saving vtk files for CUSTOM_REAL values on all GLL points
 
   implicit none
 
@@ -263,7 +263,7 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
   real(kind=CUSTOM_REAL), dimension(nglob) :: xstore_dummy,ystore_dummy,zstore_dummy
 
-! gll data values array
+! GLL data values array
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: gll_data
 
 ! file name
@@ -308,20 +308,20 @@
     i = ibool(1,NGLLY,NGLLZ,ispec)
     write(IOUT_VTK,'(3e18.6)') xstore_dummy(i),ystore_dummy(i),zstore_dummy(i)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) ''
 
   ! note: indices for vtk start at 0
   write(IOUT_VTK,'(a,i12,i12)') "CELLS ",nspec,nspec*9
   do ispec=1,nspec
-    write(IOUT_VTK,'(9i12)') 8,(ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3,&
+    write(IOUT_VTK,'(9i12)') 8,(ispec-1)*8,(ispec-1)*8+1,(ispec-1)*8+2,(ispec-1)*8+3, &
           (ispec-1)*8+4,(ispec-1)*8+5,(ispec-1)*8+6,(ispec-1)*8+7
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) ''
 
   ! type: hexahedrons
   write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",nspec
   write(IOUT_VTK,'(6i12)') (12,ispec=1,nspec)
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) ''
 
   ! writes out gll-data (velocity) for each element point
   write(IOUT_VTK,'(a,i12)') "POINT_DATA ",nspec*8
@@ -352,7 +352,7 @@
     i = ibool(1,NGLLY,NGLLZ,ispec)-1
     write(IOUT_VTK,'(3e18.6)') gll_data(1,NGLLY,NGLLZ,ispec)
   enddo
-  write(IOUT_VTK,*) ""
+  write(IOUT_VTK,*) ''
 
   close(IOUT_VTK)
 

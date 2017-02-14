@@ -53,7 +53,7 @@
   character(len=150) :: station_name
 
 ! open the large seismogram file
-  if(USE_BINARY_FOR_LARGE_FILE) then
+  if (USE_BINARY_FOR_LARGE_FILE) then
     open(unit=30,file='all_seismograms.bin',status='old',form='unformatted',action='read')
   else
     open(unit=30,file='all_seismograms.ascii',status='old',action='read')
@@ -62,7 +62,7 @@
 ! loop on all the seismogram files
   do irec = 1,NREC
 
-    if(USE_BINARY_FOR_LARGE_FILE) then
+    if (USE_BINARY_FOR_LARGE_FILE) then
       read(30) station_name
     else
       read(30,*) station_name
@@ -73,7 +73,7 @@
 
 ! suppress two leading '\' (ASCII code 92), if any
     do irepeat = 1,2
-      if(station_name(1:1) == achar(92)) station_name = station_name(2:len_trim(station_name))
+      if (station_name(1:1) == achar(92)) station_name = station_name(2:len_trim(station_name))
       station_name = adjustl(station_name)
     enddo
 
@@ -83,7 +83,7 @@
 
 ! loop on all the time steps in each seismogram
     do istep = 1,NSTEP
-      if(USE_BINARY_FOR_LARGE_FILE) then
+      if (USE_BINARY_FOR_LARGE_FILE) then
         read(30) time, U_value
       else
         read(30,*) time, U_value

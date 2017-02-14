@@ -34,7 +34,7 @@
                              yr,jda,ho,mi,sec, &
                              theta_source,phi_source)
 
-  use constants_solver,only: &
+  use constants_solver, only: &
     ELLIPTICITY_VAL,NCHUNKS_VAL,NEX_XI_VAL,NPROCTOT_VAL, &
     CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NDIM, &
     MAX_LENGTH_STATION_NAME,MAX_LENGTH_NETWORK_NAME, &
@@ -45,7 +45,7 @@
 
   use shared_input_parameters, only: OUTPUT_FILES
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     myrank,DT,NSTEP, &
     xigll,yigll,zigll, &
     STATIONS_FILE,nrec,islice_selected_rec,ispec_selected_rec, &
@@ -264,8 +264,8 @@
     station_duplet(:) = 0
     do irec = 1,nrec
       do i = 1,irec-1
-        if ((station_name(irec)==station_name(i)) .and. &
-            (network_name(irec)==network_name(i))) then
+        if ((station_name(irec) == station_name(i)) .and. &
+            (network_name(irec) == network_name(i))) then
 
             station_duplet(i)=station_duplet(i)+1
             if (len_trim(station_name(irec)) <= MAX_LENGTH_STATION_NAME-3) then

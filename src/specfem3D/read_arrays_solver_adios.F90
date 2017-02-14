@@ -44,7 +44,7 @@ subroutine read_arrays_solver_adios(iregion_code,myrank, &
 
 
   use constants_solver
-  use specfem_par,only: ABSORBING_CONDITIONS,LOCAL_PATH,ABSORBING_CONDITIONS
+  use specfem_par, only: ABSORBING_CONDITIONS,LOCAL_PATH,ABSORBING_CONDITIONS
 
   use adios_read_mod
   use adios_helpers_mod, only: check_adios_err

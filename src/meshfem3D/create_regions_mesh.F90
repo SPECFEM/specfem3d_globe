@@ -45,7 +45,7 @@
 ! ****************************************************************************************************
 !
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     ibool,idoubling,xstore,ystore,zstore, &
     xstore_glob,ystore_glob,zstore_glob, &
     IMAIN,volume_total,Earth_mass_total,Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
@@ -59,11 +59,11 @@
     ADIOS_FOR_ARRAYS_SOLVER, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION,GRAVITY_INTEGRALS
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
     OCEANS
 #ifdef CEM
-  use meshfem3D_models_par,only: CEM_REQUEST
+  use meshfem3D_models_par, only: CEM_REQUEST
 #endif
 
   use create_MPI_interfaces_par, only: &
@@ -175,7 +175,7 @@
 
 
     ! sets up Stacey absorbing boundary indices (nimin,nimax,..)
-    if (NCHUNKS /= 6) call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax,&
+    if (NCHUNKS /= 6) call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax, &
                                       njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
                                       NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
 
@@ -234,7 +234,7 @@
                                  normal_ymin,normal_ymax, &
                                  normal_bottom,normal_top, &
                                  NSPEC2D_BOTTOM,NSPEC2D_TOP, &
-                                 NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,&
+                                 NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX, &
                                  xigll,yigll,zigll)
 
 !! DK DK for gravity integrals
@@ -299,13 +299,13 @@
 
     !uncomment: adds model smoothing for point profile models
     !    if (THREE_D_MODEL == THREE_D_MODEL_PPM) then
-    !     call smooth_model(myrank, nproc_xi,nproc_eta,&
+    !     call smooth_model(myrank, nproc_xi,nproc_eta, &
     !        rho_vp,rho_vs,nspec_stacey, &
     !        iregion_code,xixstore,xiystore,xizstore, &
     !        etaxstore,etaystore,etazstore, &
     !        gammaxstore,gammaystore,gammazstore, &
     !        xstore,ystore,zstore,rhostore,dvpstore, &
-    !        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore,&
+    !        kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     !        nspec,HETEROGEN_3D_MANTLE, &
     !        NEX_XI,NCHUNKS,ABSORBING_CONDITIONS )
 
@@ -523,13 +523,13 @@
 
   use constants
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     NCHUNKS,NUMCORNERS_SHARED,NUMFACES_SHARED, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
     NGLOB1D_RADIAL,NGLOB1D_RADIAL_CORNER, &
     ATT1,ATT2,ATT3
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     ATTENUATION,ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE, &
     SAVE_BOUNDARY_MESH,AM_V
 
@@ -818,7 +818,7 @@
   subroutine crm_setup_layers(iregion_code,nspec,ipass, &
                               NEX_PER_PROC_ETA)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     ibool,idoubling,is_on_a_slice_edge, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
@@ -826,7 +826,7 @@
     R670,RMOHO,R400,RMIDDLE_CRUST,MAX_NUMBER_OF_MESH_LAYERS, &
     ner,r_top,r_bottom
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     CASE_3D,SUPPRESS_CRUSTAL_MESH,ONE_CRUST,REGIONAL_MOHO_MESH
 
   use create_regions_mesh_par
@@ -910,9 +910,9 @@
 
 ! creates global indexing array ibool
 
-  use constants,only: NGLLX,NGLLY,NGLLZ,ZERO
+  use constants, only: NGLLX,NGLLY,NGLLZ,ZERO
 
-  use meshfem3d_par,only: &
+  use meshfem3d_par, only: &
     ibool,xstore,ystore,zstore, &
     myrank
 
@@ -972,7 +972,7 @@
 
   ! check that number of points found equals theoretical value
   if (nglob_new /= nglob) then
-    write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob = ',&
+    write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob = ', &
                     myrank,nglob_new,nglob
     call exit_MPI(myrank,errmsg)
   endif
@@ -997,7 +997,7 @@
 
 ! sets up MPI cutplane arrays
 
-  use meshfem3d_par,only: &
+  use meshfem3d_par, only: &
     ibool,idoubling, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
@@ -1106,9 +1106,9 @@
 ! fills in global mesh arrays
 ! (defines on global points xstore_glob(iglob) rather than locally as in xstore(i,j,k,ispec))
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,ibool,xstore,ystore,zstore, &
     xstore_glob,ystore_glob,zstore_glob
 
@@ -1129,7 +1129,7 @@
            stat=ier)
   if (ier /= 0) call exit_mpi(myrank,'Error allocating temporary global mesh arrays')
 
-  ! fill custom_real arrays
+  ! fill CUSTOM_REAL arrays
   do ispec = 1,nspec
     do k = 1,NGLLZ
       do j = 1,NGLLY

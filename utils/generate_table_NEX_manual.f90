@@ -34,13 +34,13 @@
     do while (counter <= NB_COLUMNS_TABLE)
       c = c + 1
       NEX_XI = BASE_VALUE * c * NPROC_XI
-      if(NEX_XI >= 64 .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
+      if (NEX_XI >= 64 .and. mod(NEX_XI,2*BASE_VALUE) == 0) then
         store_NEX_XI(counter) = NEX_XI
         counter = counter + 1
       endif
     enddo
 
-    if(OUTPUT_LATEX_FORMAT) then
+    if (OUTPUT_LATEX_FORMAT) then
       write(*,"(i6,' &')") NPROC_XI
       write(*,"(i6,' &')") 6*NPROC_XI**2
       do counter = 1,NB_COLUMNS_TABLE-1

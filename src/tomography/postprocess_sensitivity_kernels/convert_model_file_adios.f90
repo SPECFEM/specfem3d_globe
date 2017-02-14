@@ -25,16 +25,16 @@
 !
 !=====================================================================
 
-! Ebru & Daniel
+! Ebru Bozdag and Daniel Peter,
 ! Nice & Zurich, September 2014
 !
 ! converts between adios and binary format for a model file 'model_gll.bp'
 
 program convert_model_file_adios
 
-  use constants,only: ADIOS_TRANSPORT_METHOD
+  use constants, only: ADIOS_TRANSPORT_METHOD
 
-  use postprocess_par,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
+  use postprocess_par, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT, &
     MAX_STRING_LEN,NPROCTOT_VAL,NSPEC_CRUST_MANTLE
 
   use adios_read_mod
@@ -220,7 +220,7 @@ program convert_model_file_adios
   model_rho(:,:,:,:) = 0.0_CUSTOM_REAL
   model_qmu(:,:,:,:) = 0.0_CUSTOM_REAL
 
-  ! gets mpi communicator for adios calls
+  ! gets MPI communicator for adios calls
   call world_duplicate(comm)
 
 !--------------------------------------------
@@ -352,7 +352,7 @@ program convert_model_file_adios
       close(IOUT)
     enddo
 
-    if (myrank==0) print *, 'done writing the model in binary format'
+    if (myrank == 0) print *, 'done writing the model in binary format'
 
 !--------------------------------------------
   else if (convert_format == 2) then ! from binaries to adios
@@ -438,16 +438,16 @@ program convert_model_file_adios
     group_size_inc = 0
     group_name = "MODELS_GROUP"
 
-    call adios_declare_group(group, group_name, "", 1, ier)
-    call adios_select_method(group, ADIOS_TRANSPORT_METHOD, "", "", ier)
-    call define_adios_scalar(group, group_size_inc, "", "NSPEC", nspec)
+    call adios_declare_group(group, group_name, '', 1, ier)
+    call adios_select_method(group, ADIOS_TRANSPORT_METHOD, '', '', ier)
+    call define_adios_scalar(group, group_size_inc, '', "NSPEC", nspec)
 
     ! Setup ADIOS for the current group
     local_dim = NGLLX * NGLLY * NGLLZ * NSPEC
 
     ! Define ADIOS Variables
     do iker=1,nparams
-      call define_adios_global_array1D(group, group_size_inc,local_dim,"",trim(model_name(iker)),model)
+      call define_adios_global_array1D(group, group_size_inc,local_dim,'',trim(model_name(iker)),model)
     enddo
 
     ! Open an handler to the ADIOS file and setup the group size
@@ -504,13 +504,13 @@ program convert_model_file_adios
                                        trim(model_name(iker)),model(:,:,:,:))
     enddo
     ! Perform the actual write to disk
-    call adios_set_path(model_handle, "", ier)
+    call adios_set_path(model_handle, '', ier)
     call adios_close(model_handle, ier)
 
-    if (myrank==0) print *, 'done writing the model in adios format'
+    if (myrank == 0) print *, 'done writing the model in adios format'
   endif
   ! user output
-  if (myrank==0) then
+  if (myrank == 0) then
     print *, ' '
     print *, 'see output file(s) in directory: ',trim(output_model_dir)
     print *, ' '

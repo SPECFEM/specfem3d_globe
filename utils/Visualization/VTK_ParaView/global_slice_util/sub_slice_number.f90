@@ -298,8 +298,8 @@ contains
     ces = cos(eo-so)
     ses = sin(eo-so)
 
-    if  (sa==ea) then
-      if (sto==epo) then
+    if (sa == ea) then
+      if (sto == epo) then
         dk =0.00
         dd =0.00
         daze=0.0
@@ -308,8 +308,8 @@ contains
       endif
     endif
 
-    if (sta==90.) then
-      if (epa==90.0) then
+    if (sta == 90.) then
+      if (epa == 90.0) then
         dk =0.00
         dd =0.00
         daze=0.00
@@ -318,8 +318,8 @@ contains
       endif
     endif
 
-    if (sta==-90.0) then
-      if (epa==-90.0) then
+    if (sta == -90.0) then
+      if (epa == -90.0) then
         dk =0.00
         dd =0.00
         daze=0.00
@@ -329,9 +329,9 @@ contains
     endif
 
     dd = ssa*sea+csa*cea*ces
-    if (dd /=0.) dd=atan(sqrt(1.0-dd*dd)/dd)
-    if (dd==0.) dd=pi/2.0
-    if (dd<0.0) dd=dd+pi
+    if (dd /= 0.) dd=atan(sqrt(1.0-dd*dd)/dd)
+    if (dd == 0.) dd=pi/2.0
+    if (dd < 0.0) dd=dd+pi
     dd = dd/rad
     dk = dd*111.19
 
@@ -339,8 +339,8 @@ contains
     daze = atan2(ses,(sea*csa/cea-ssa*ces))
     dazs = dazs/rad
     daze = daze/rad
-    if (dazs<0.00)  dazs=dazs+360.0
-    if (daze<0.00) daze=daze+360.0
+    if (dazs < 0.00)  dazs=dazs+360.0
+    if (daze < 0.00) daze=daze+360.0
 
   end subroutine distaz
 

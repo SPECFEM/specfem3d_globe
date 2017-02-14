@@ -64,10 +64,10 @@
 
 program smooth_sem_globe
 
-  use constants,only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
+  use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NDIM,IIN,IOUT, &
     GAUSSALPHA,GAUSSBETA,PI,TWO_PI,R_EARTH_KM,MAX_STRING_LEN,DEGREES_TO_RADIANS,SIZE_INTEGER,NGLLCUBE
 
-  use postprocess_par,only: &
+  use postprocess_par, only: &
     NCHUNKS_VAL,NPROC_XI_VAL,NPROC_ETA_VAL,NPROCTOT_VAL,NEX_XI_VAL,NEX_ETA_VAL, &
     ANGULAR_WIDTH_XI_IN_DEGREES_VAL,ANGULAR_WIDTH_ETA_IN_DEGREES_VAL, &
     NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,MAX_KERNEL_NAMES,LOCAL_PATH
@@ -209,10 +209,10 @@ program smooth_sem_globe
   ! check number of MPI processes
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'Expected number of MPI processes: ', NPROCTOT_VAL
       print *,'Actual number of MPI processes: ', sizeprocs
-      print *,''
+      print *
     endif
     call synchronize_all()
     stop 'Error wrong number of MPI processes'
@@ -280,7 +280,7 @@ program smooth_sem_globe
     print *,"  element size on surface (km): ",element_size
     print *
     print *,"  smoothing sigma_h , sigma_v (km)                : ",sigma_h,sigma_v
-    ! scalelength: approximately S ~ sigma * sqrt(8.0) for a gaussian smoothing
+    ! scalelength: approximately S ~ sigma * sqrt(8.0) for a Gaussian smoothing
     print *,"  smoothing scalelengths horizontal, vertical (km): ",sigma_h*sqrt(8.0),sigma_v*sqrt(8.0)
     print *
     print *,"  data name      : ",trim(kernel_name)
@@ -299,7 +299,7 @@ program smooth_sem_globe
   sigma_h = sigma_h / R_EARTH_KM ! scale
   sigma_v = sigma_v / R_EARTH_KM ! scale
 
-  sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for gaussian distribution with standard variance sigma
+  sigma_h2 = 2.0 * sigma_h ** 2  ! factor two for Gaussian distribution with standard variance sigma
   sigma_v2 = 2.0 * sigma_v ** 2
 
   ! checks
@@ -324,7 +324,7 @@ program smooth_sem_globe
   ! theoretic normal value
   ! (see integral over -inf to +inf of exp[- x*x/(2*sigma) ] = sigma * sqrt(2*pi) )
 
-! note: smoothing is using a gaussian (ellipsoid for sigma_h /= sigma_v),
+! note: smoothing is using a Gaussian (ellipsoid for sigma_h /= sigma_v),
 !          but in spherical coordinates, we use horizontal distance as epicentral distance
 !          and vertical distance as radial distance?
 
@@ -353,8 +353,8 @@ program smooth_sem_globe
   ixi = myrank - ichunk * NPROC_XI * NPROC_ETA - ieta * NPROC_XI
 
   ! get the neighboring slices:
-  call get_all_eight_slices(ichunk,ixi,ieta,&
-                            islice0(1),islice0(2),islice0(3),islice0(4),islice0(5),islice0(6),islice0(7),islice0(8),&
+  call get_all_eight_slices(ichunk,ixi,ieta, &
+                            islice0(1),islice0(2),islice0(3),islice0(4),islice0(5),islice0(6),islice0(7),islice0(8), &
                             NPROC_XI,NPROC_ETA)
 
   ! remove the repeated slices (only 8 for corner slices in global case)
@@ -535,7 +535,7 @@ program smooth_sem_globe
 
       ! read in the topology, kernel files, calculate center of elements
       ! point locations
-      ! given in cartesian coordinates
+      ! given in Cartesian coordinates
       open(IIN,file=trim(prname_lp),status='old',action='read',form='unformatted',iostat=ier)
       if (ier /= 0) then
         print *,'Error could not open database file: ',trim(prname_lp)
@@ -633,7 +633,7 @@ program smooth_sem_globe
 
       ! fills kd-tree arrays
       do ispec = 1,NSPEC_AB
-        ! adds node index ( index points to same ispec for all internal gll points)
+        ! adds node index ( index points to same ispec for all internal GLL points)
         kdtree_nodes_index(ispec) = ispec
 
         ! adds node location
@@ -769,13 +769,13 @@ program smooth_sem_globe
         DO_LOOP_IJK
 
           ! reference location
-          ! current point (i,j,k,ispec) location, cartesian coordinates
+          ! current point (i,j,k,ispec) location, Cartesian coordinates
           x0 = xx0(INDEX_IJK,ispec)
           y0 = yy0(INDEX_IJK,ispec)
           z0 = zz0(INDEX_IJK,ispec)
 
-          ! calculate weights based on gaussian smoothing
-          call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val,&
+          ! calculate weights based on Gaussian smoothing
+          call smoothing_weights_vec(x0,y0,z0,sigma_h2,sigma_v2,exp_val, &
                                      xx(:,:,:,ispec2),yy(:,:,:,ispec2),zz(:,:,:,ispec2))
 
           ! debug
@@ -800,7 +800,7 @@ program smooth_sem_globe
           ! adds contribution of element ispec2 to smoothed kernel values
           tk(INDEX_IJK,ispec) = tk(INDEX_IJK,ispec) + sum(exp_val(:,:,:) * kernel(:,:,:,ispec2))
 
-          ! normalization, integrated values of gaussian smoothing function
+          ! normalization, integrated values of Gaussian smoothing function
           bk(INDEX_IJK,ispec) = bk(INDEX_IJK,ispec) + sum(exp_val(:,:,:))
 
           ! checks number
@@ -830,8 +830,8 @@ program smooth_sem_globe
       if (DEBUG .and. myrank == 0) then
         ! debug element (tmp_ispec_dbg)
         if (ispec == tmp_ispec_dbg) then
-          ! outputs gaussian weighting function
-          write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_gaussian_proc',iproc
+          ! outputs Gaussian weighting function
+          write(filename,'(a,i4.4,a,i6.6)') trim(output_dir)//'/search_elem',tmp_ispec_dbg,'_Gaussian_proc',iproc
           call write_VTK_data_gll_cr(NSPEC_AB,NGLOB_AB,xstore,ystore,zstore,ibool,tmp_bk,filename)
           print *,'file written: ',trim(filename)//'.vtk'
         endif
@@ -896,7 +896,7 @@ program smooth_sem_globe
       ! avoids division by zero
       if (bk(INDEX_IJK,ispec) == 0.0_CUSTOM_REAL) bk(INDEX_IJK,ispec) = 1.0_CUSTOM_REAL
 
-      ! normalizes smoothed kernel values by integral value of gaussian weighting
+      ! normalizes smoothed kernel values by integral value of Gaussian weighting
       kernel_smooth(INDEX_IJK,ispec) = tk(INDEX_IJK,ispec) / bk(INDEX_IJK,ispec)
 
       ! checks number (isNaN check)

@@ -49,7 +49,7 @@
 
 ! holds input parameters given in DATA/Par_file
 
-  use constants,only: MAX_STRING_LEN
+  use constants, only: MAX_STRING_LEN
 
   implicit none
 
@@ -63,8 +63,8 @@
 
   logical :: RECEIVERS_CAN_BE_BURIED,PRINT_SOURCE_TIME_FUNCTION
   logical :: OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
-             OUTPUT_SEISMOS_ASDF,&
-             ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,&
+             OUTPUT_SEISMOS_ASDF, &
+             ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,READ_ADJSRC_ASDF
 
   ! checkpointing/restart
@@ -75,14 +75,14 @@
   integer :: NEX_XI_read,NEX_ETA_read,NPROC_XI_read,NPROC_ETA_read
   integer :: NOISE_TOMOGRAPHY
 
-  double precision :: ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES,&
+  double precision :: ANGULAR_WIDTH_XI_IN_DEGREES,ANGULAR_WIDTH_ETA_IN_DEGREES, &
                       CENTER_LONGITUDE_IN_DEGREES,CENTER_LATITUDE_IN_DEGREES,GAMMA_ROTATION_AZIMUTH
   logical :: SAVE_MESH_FILES,SAVE_FORWARD
 
   ! movies
   integer :: MOVIE_VOLUME_TYPE,MOVIE_START,MOVIE_STOP
   double precision :: HDUR_MOVIE,MOVIE_TOP_KM,MOVIE_BOTTOM_KM, &
-          MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG,&
+          MOVIE_EAST_DEG,MOVIE_WEST_DEG,MOVIE_NORTH_DEG, &
           MOVIE_SOUTH_DEG
   logical :: MOVIE_SURFACE,MOVIE_VOLUME,MOVIE_COARSE
 
@@ -121,7 +121,7 @@
 
   ! for simultaneous runs from the same batch job
   integer :: NUMBER_OF_SIMULTANEOUS_RUNS
-  logical :: BROADCAST_SAME_MESH_AND_MODEL,USE_FAILSAFE_MECHANISM
+  logical :: BROADCAST_SAME_MESH_AND_MODEL
 
   ! GPU simulations
   integer :: GPU_RUNTIME
@@ -145,7 +145,7 @@
 
   ! parameters to be computed based upon parameters above read from file
 
-  use constants,only: MAX_NUM_REGIONS,MAX_NUMBER_OF_MESH_LAYERS, &
+  use constants, only: MAX_NUM_REGIONS,MAX_NUMBER_OF_MESH_LAYERS, &
     NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE
 
   implicit none
@@ -181,7 +181,7 @@
                       RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
 
   ! movies
-  double precision :: MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST,&
+  double precision :: MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST, &
                       MOVIE_NORTH,MOVIE_SOUTH
   ! model flags
   integer :: REFERENCE_1D_MODEL,THREE_D_MODEL

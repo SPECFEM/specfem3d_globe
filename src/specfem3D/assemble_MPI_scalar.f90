@@ -363,7 +363,7 @@
 
   subroutine transfer_boundarypot_to_device(Mesh_pointer, NPROC, &
                                             buffer_recv_scalar, &
-                                            num_interfaces,max_nibool_interfaces,&
+                                            num_interfaces,max_nibool_interfaces, &
                                             request_recv_scalar, &
                                             IREGION,FORWARD_OR_ADJOINT)
 

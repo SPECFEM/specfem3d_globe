@@ -31,15 +31,15 @@
 
   use constants
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     OCEANS,TRANSVERSE_ISOTROPY,HETEROGEN_3D_MANTLE,ANISOTROPIC_3D_MANTLE, &
     ANISOTROPIC_INNER_CORE,ATTENUATION
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -326,10 +326,10 @@
 
   use constants
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,ATTENUATION,ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
-  use create_regions_mesh_par2,only: &
+  use create_regions_mesh_par2, only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     Qmu_store, &
     prname
@@ -419,7 +419,7 @@
 
   ! shear attenuation
   if (ATTENUATION) then
-    ! saves Qmu_store to full custom_real array
+    ! saves Qmu_store to full CUSTOM_REAL array
     ! uses temporary array
     allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
@@ -458,7 +458,7 @@
 
   subroutine save_arrays_solver_MPI(iregion_code)
 
-  use meshfem3D_par,only: &
+  use meshfem3D_par, only: &
     myrank,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     ADIOS_FOR_MPI_ARRAYS
@@ -625,12 +625,12 @@
 
 ! saves arrays for boundaries such as MOHO, 400 and 670 discontinuities
 
-  use constants,only: IOUT
+  use constants, only: IOUT
 
-  use meshfem3d_par,only: &
+  use meshfem3d_par, only: &
     myrank
 
-  use meshfem3D_models_par,only: &
+  use meshfem3D_models_par, only: &
     SAVE_BOUNDARY_MESH,HONOR_1D_SPHERICAL_MOHO,SUPPRESS_CRUSTAL_MESH
 
   use create_regions_mesh_par2, only: &

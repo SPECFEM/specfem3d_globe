@@ -47,19 +47,19 @@
 
 ! check if this point has previously been found, print only if not
     already_found_before = .false.
-    if(ipoin > 1) then
+    if (ipoin > 1) then
       do ipoin_previous = 1,ipoin - 1
         distance = dsqrt((x(ipoin) - x(ipoin_previous))**2 + (y(ipoin) - y(ipoin_previous))**2 + &
                          (z(ipoin) - z(ipoin_previous))**2)
 ! it is the same point as before if distance with a previous point is zero (down to roundoff error)
-        if(distance < 0.00001d0) then
+        if (distance < 0.00001d0) then
           already_found_before = .true.
 ! we can exit the loop if we have already found this point in the list
           exit
         endif
       enddo
     endif
-    if(.not. already_found_before) then
+    if (.not. already_found_before) then
       ipoin_found = ipoin_found + 1
       xnew(ipoin_found) = x(ipoin)
       ynew(ipoin_found) = y(ipoin)
@@ -69,7 +69,7 @@
 
   enddo
 
-  if(ipoin_found /= NEW_NPOINTS) then
+  if (ipoin_found /= NEW_NPOINTS) then
     print *,'ipoin_found,OLD_NPOINTS,NEW_NPOINTS = ',ipoin_found,OLD_NPOINTS,NEW_NPOINTS
     stop 'incorrect number of unique points found'
   endif
@@ -96,7 +96,7 @@
         distance = dsqrt((x(ipoin) - xnew(ipoin_found))**2 + (y(ipoin) - ynew(ipoin_found))**2 + &
                          (z(ipoin) - znew(ipoin_found))**2)
 ! it is the same point as before if distance with a previous point is zero (down to roundoff error)
-        if(distance < 0.00001d0) then
+        if (distance < 0.00001d0) then
           already_found_before = .true.
 ! we can exit the loop if we have already found this point in the list
           exit
@@ -104,11 +104,11 @@
       enddo
 
 ! problem if this point is never found
-      if(.not. already_found_before) stop 'problem, point not found'
+      if (.not. already_found_before) stop 'problem, point not found'
 
 ! in the case of OpenDX, node numbers start at zero
       point_number(ignod) = ipoin_found - 1
-      if(point_number(ignod) < 0 .or. point_number(ignod) > NEW_NPOINTS - 1) stop 'incorrect point number found'
+      if (point_number(ignod) < 0 .or. point_number(ignod) > NEW_NPOINTS - 1) stop 'incorrect point number found'
 
     enddo
 

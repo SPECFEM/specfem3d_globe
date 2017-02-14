@@ -110,7 +110,7 @@
 
 ! reads in local adjoint source files
 
-  use specfem_par,only: myrank,NPROCTOT_VAL, &
+  use specfem_par, only: myrank,NPROCTOT_VAL, &
     nrec,islice_selected_rec,station_name,network_name, &
     xi_receiver,eta_receiver,gamma_receiver,nu,xigll,yigll,zigll, &
     iadjsrc_len,iadjsrc,NSTEP_SUB_ADJ, &
@@ -151,7 +151,7 @@
   do irec = 1, nrec
     ! checks that the source slice number is okay
     if (islice_selected_rec(irec) < 0 .or. islice_selected_rec(irec) > NPROCTOT_VAL-1) then
-      print *,'Error rank ',myrank,': adjoint source slice index ',islice_selected_rec(irec),&
+      print *,'Error rank ',myrank,': adjoint source slice index ',islice_selected_rec(irec), &
              ' is out of bounds ',NPROCTOT_VAL-1
       call exit_MPI(myrank,'Error adjoint source has wrong source slice number in adjoint simulation')
     endif
@@ -245,7 +245,7 @@
     if (ier /= 0) then
       ! adjoint source file not found
       ! stops simulation
-      call exit_MPI(myrank,&
+      call exit_MPI(myrank, &
           'file '//trim(filename)//' not found, please check with your STATIONS_ADJOINT file')
     endif
 
@@ -259,7 +259,7 @@
     ! checks length
     if (itime /= NSTEP) then
       print *,'adjoint source error: ',trim(filename),' has length',itime,' but should be',NSTEP
-      call exit_MPI(myrank,&
+      call exit_MPI(myrank, &
         'file '//trim(filename)//' length is wrong, please check your adjoint sources and your simulation duration')
     endif
 

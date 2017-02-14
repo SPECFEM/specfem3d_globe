@@ -29,13 +29,13 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     ichunk,SIMULATION_TYPE,SAVE_STACEY,it, &
     wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
 
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: GPU_MODE,Mesh_pointer
 
-  use specfem_par_outercore,only: &
+  use specfem_par_outercore, only: &
     veloc_outer_core,accel_outer_core, &
     ibool_outer_core, &
     jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &
@@ -294,12 +294,12 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     ichunk,SIMULATION_TYPE,NSTEP,it
 
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: GPU_MODE,Mesh_pointer
 
-  use specfem_par_outercore,only: &
+  use specfem_par_outercore, only: &
     b_accel_outer_core, &
     ibool_outer_core, &
     nspec2D_xmin_outer_core,nspec2D_xmax_outer_core, &
@@ -500,13 +500,13 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     ichunk,SIMULATION_TYPE,SAVE_FORWARD,UNDO_ATTENUATION, &
     wgllwgll_xz,wgllwgll_yz,wgllwgll_xy
 
-  use specfem_par,only: GPU_MODE,Mesh_pointer
+  use specfem_par, only: GPU_MODE,Mesh_pointer
 
-  use specfem_par_outercore,only: &
+  use specfem_par_outercore, only: &
     b_veloc_outer_core,b_accel_outer_core, &
     ibool_outer_core, &
     jacobian2D_xmin_outer_core,jacobian2D_xmax_outer_core, &

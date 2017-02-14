@@ -128,9 +128,9 @@ USE LIB_VTK_IO
    integer :: ix_subsamp,iy_subsamp,iz_subsamp
 !!!!!!---- DK DK for ParaView / VTK output
 
-  if(mod(NX,subsampling_of_VTK_display) /= 0) stop 'error: NX must be a multiple of subsampling_of_VTK_display'
-  if(mod(NY,subsampling_of_VTK_display) /= 0) stop 'error: NY must be a multiple of subsampling_of_VTK_display'
-  if(mod(NZ,subsampling_of_VTK_display) /= 0) stop 'error: NZ must be a multiple of subsampling_of_VTK_display'
+  if (mod(NX,subsampling_of_VTK_display) /= 0) stop 'error: NX must be a multiple of subsampling_of_VTK_display'
+  if (mod(NY,subsampling_of_VTK_display) /= 0) stop 'error: NY must be a multiple of subsampling_of_VTK_display'
+  if (mod(NZ,subsampling_of_VTK_display) /= 0) stop 'error: NZ must be a multiple of subsampling_of_VTK_display'
 
   print *
   print *,'processing chunk ',ichunk
@@ -275,8 +275,8 @@ USE LIB_VTK_IO
 ! DK DK the VTK/ParaView legacy structured grid format is used
 
 ! create and open the VTK file in STRUCTURED_GRID (BINARY) format
- E_IO = VTK_INI(output_format = 'BINARY',                     &
-                filename      = 'reg_1_alpha_kernel.vtk',      &
+ E_IO = VTK_INI(output_format = 'BINARY', &
+                filename      = 'reg_1_alpha_kernel.vtk', &
                 title         = 'Structured Grid Alpha Kernel', &
                 mesh_topology = 'STRUCTURED_GRID')
 

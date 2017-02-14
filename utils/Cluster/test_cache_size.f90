@@ -70,11 +70,11 @@
 
   call c_add(a,c,NELEM_ARRAY)
 
-  if(NELEM_ARRAY <= 1000) then
+  if (NELEM_ARRAY <= 1000) then
     NLOOP = 10000000
-  else if(NELEM_ARRAY <= 10000) then
+  else if (NELEM_ARRAY <= 10000) then
     NLOOP = 600000
-  else if(NELEM_ARRAY <= 100000) then
+  else if (NELEM_ARRAY <= 100000) then
     NLOOP = 60000
   else
     NLOOP = 5000
@@ -98,7 +98,7 @@
 
   megaflops = dble(NELEM_ARRAY) * dble(NLOOP) / (time_end - time_start) / 1.d3
 
-  print *,NELEM_ARRAY,' elements -> megaflops = ',megaflops
+  print *,NELEM_ARRAY,' elements - > megaflops = ',megaflops
 
   enddo
 

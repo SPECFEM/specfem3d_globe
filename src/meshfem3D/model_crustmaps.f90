@@ -209,7 +209,7 @@
   subroutine read_general_crustmap_layer(var,var_letter,ind)
 
   use constants
-  use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
+  use model_crustmaps_par, only: CRUSTMAP_RESOLUTION
 
   implicit none
 
@@ -368,7 +368,7 @@
   integer :: i,ipoin,iupcolat,ileftlng,irightlng
 
 ! get integer colatitude and longitude of crustal cap
-! -90<lat<90 -180<lon<180
+! -90 < lat < 90 -180 < lon < 180
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
     write(*,*) lat,' ',lon, ' error in latitude/longitude range in crust'
 
@@ -455,11 +455,11 @@
     ! interpolates location and crust values
     if (iupcolat == 0) then
        weightup=weightup*2
-    else if (iupcolat==180*CRUSTMAP_RESOLUTION) then
+    else if (iupcolat == 180*CRUSTMAP_RESOLUTION) then
        weightup=2*weightup-1
     endif
 
-    if (ileftlng==360*CRUSTMAP_RESOLUTION) then
+    if (ileftlng == 360*CRUSTMAP_RESOLUTION) then
       irightlng = 1
     else
       irightlng = ileftlng+1
@@ -539,7 +539,7 @@
   subroutine ibilinearmap(lat,lng,iupcolat,ileftlng,weightup,weightleft)
 
   use constants
-  use model_crustmaps_par,only: CRUSTMAP_RESOLUTION
+  use model_crustmaps_par, only: CRUSTMAP_RESOLUTION
 
   implicit none
 
@@ -554,7 +554,7 @@
     stop 'Error in latitude/longitude range in ibilinearmap'
 
 ! map longitudes to [0,360]
-  if (lng<0) then
+  if (lng < 0) then
     xlng=lng+360.0
   else
     xlng=lng
@@ -564,16 +564,16 @@
   iupcolat=int(buffer)
   weightup=1.0-(buffer-dble(iupcolat))
 
-  if (iupcolat<0) iupcolat = 0
-  if (iupcolat>180*CRUSTMAP_RESOLUTION)  iupcolat=180*CRUSTMAP_RESOLUTION
+  if (iupcolat < 0) iupcolat = 0
+  if (iupcolat > 180*CRUSTMAP_RESOLUTION)  iupcolat=180*CRUSTMAP_RESOLUTION
 
 
   buffer=0.5+(xlng*CRUSTMAP_RESOLUTION)
   ileftlng=int(buffer)
   weightleft=1.0-(buffer-dble(ileftlng))
 
-  if (ileftlng<1) ileftlng=360*CRUSTMAP_RESOLUTION
-  if (ileftlng>360*CRUSTMAP_RESOLUTION) ileftlng=1
+  if (ileftlng < 1) ileftlng=360*CRUSTMAP_RESOLUTION
+  if (ileftlng > 360*CRUSTMAP_RESOLUTION) ileftlng=1
 
   end subroutine ibilinearmap
 

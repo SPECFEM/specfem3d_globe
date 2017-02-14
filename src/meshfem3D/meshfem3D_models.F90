@@ -26,7 +26,7 @@
 !=====================================================================
 
   subroutine meshfem3D_models_broadcast(myrank,NSPEC, &
-                                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,&
+                                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
                                         R80,R220,R670,RCMB,RICB, &
                                         LOCAL_PATH)
 
@@ -351,11 +351,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp,&
+  subroutine meshfem3D_models_get3Dmntl_val(iregion_code,r_prem,rho,dvp, &
                               vpv,vph,vsv,vsh,eta_aniso, &
                               RCMB,R670,RMOHO, &
                               xmesh,ymesh,zmesh,r, &
-                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,&
+                              c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
 #ifdef CEM
                               ,ispec,i,j,k &
@@ -475,7 +475,7 @@
         ! full_sh model
         lat = (PI/2.0d0-theta)*180.0d0/PI
         lon = phi*180.0d0/PI
-        if(lon > 180.0d0) lon = lon - 360.0d0
+        if (lon > 180.0d0) lon = lon - 360.0d0
 
         call mantle_sh(lat,lon,r_used,dvpv,dvph,dvsv,dvsh,deta,drho)
         vpv = vpv*(1.0d0+dvpv)
@@ -491,8 +491,8 @@
         vsv = vsv*(1.0d0+dvs)
         vsh = vsh*(1.0d0+dvs)
         ! use Lebedev model sea99 as background and add vp & vs perturbation from Zhao 1994 model jp3d
-        if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
-          .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
+        if (theta >= (PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta <= (PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+          .and. phi >= JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi <= JP3D_LON_MAX*DEGREES_TO_RADIANS) then
         ! makes sure radius is fine
         if (r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
             call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
@@ -511,8 +511,8 @@
 
       case (THREE_D_MODEL_JP3D)
         ! jp3d1994
-        if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
-            .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
+        if (theta >= (PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta <= (PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+            .and. phi >= JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi <= JP3D_LON_MAX*DEGREES_TO_RADIANS) then
           if (r_used > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
             call model_jp3d_iso_zhao(r_used,theta,phi,vp,vs,dvp,dvs,rho,found_crust)
             vpv = vpv*(1.0d0+dvp)
@@ -731,8 +731,8 @@
 
     case (THREE_D_MODEL_SEA99_JP3D,THREE_D_MODEL_JP3D)
       ! tries to use Zhao's model of the crust
-      if (theta>=(PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta<=(PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
-        .and. phi>=JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi<=JP3D_LON_MAX*DEGREES_TO_RADIANS) then
+      if (theta >= (PI/2.d0 - JP3D_LAT_MAX*DEGREES_TO_RADIANS) .and. theta <= (PI/2.d0 - JP3D_LAT_MIN*DEGREES_TO_RADIANS) &
+        .and. phi >= JP3D_LON_MIN*DEGREES_TO_RADIANS .and. phi <= JP3D_LON_MAX*DEGREES_TO_RADIANS) then
         ! makes sure radius is fine
         if (r > (R_EARTH - JP3D_DEP_MAX*1000.d0)/R_EARTH) then
                   call model_jp3d_iso_zhao(r,theta,phi,vpc,vsc,dvp,dvs,rhoc,found_crust)
@@ -1010,7 +1010,7 @@
 !
 
 
-  subroutine meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,&
+  subroutine meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso, &
                                          myrank,iregion_code,ispec,i,j,k)
 
 ! overwrites values with updated model values (from iteration step) here, given at all GLL points

@@ -171,23 +171,23 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
 
   !--- Variables for '...AVS_DXpointsfaces.txt'
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points_faces/x_value", dummy_real1d)
+                                   '', "points_faces/x_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points_faces/y_value", dummy_real1d)
+                                   '', "points_faces/y_value", dummy_real1d)
   call define_adios_global_array1D(adios_group, group_size_inc, npoin, &
-                                   "", "points_faces/z_value", dummy_real1d)
+                                   '', "points_faces/z_value", dummy_real1d)
   !--- Variables for AVS_DXelementsfaces.txt
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                  "", "elements_faces/idoubling", dummy_int1d)
+                                  '', "elements_faces/idoubling", dummy_int1d)
 
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                 "", "elements_faces/num_ibool_AVS_DX_iglob1", dummy_int1d)
+                                 '', "elements_faces/num_ibool_AVS_DX_iglob1", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                 "", "elements_faces/num_ibool_AVS_DX_iglob2", dummy_int1d)
+                                 '', "elements_faces/num_ibool_AVS_DX_iglob2", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc,nspecface, &
-                                 "", "elements_faces/num_ibool_AVS_DX_iglob3", dummy_int1d)
+                                 '', "elements_faces/num_ibool_AVS_DX_iglob3", dummy_int1d)
   call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                 "", "elements_faces/num_ibool_AVS_DX_iglob4", dummy_int1d)
+                                 '', "elements_faces/num_ibool_AVS_DX_iglob4", dummy_int1d)
 
   if (ISOTROPIC_3D_MANTLE) then
     allocate(avs_dx_adios%dvp(nspecface), stat=ierr)
@@ -195,9 +195,9 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
     allocate(avs_dx_adios%dvs(nspecface), stat=ierr)
     if (ierr /= 0) call exit_MPI(myrank, "Error allocating dvs.")
     call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                     "", "elements_faces/dvp", dummy_real1d)
+                                     '', "elements_faces/dvp", dummy_real1d)
     call define_adios_global_array1D(adios_group, group_size_inc, nspecface, &
-                                     "", "elements_faces/dvs", dummy_real1d)
+                                     '', "elements_faces/dvs", dummy_real1d)
   endif
 
 end subroutine define_AVS_DX_global_faces_data_adios
@@ -556,15 +556,15 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
                 vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
                         + 5.d0*vsh*vsh + (6.d0+4.d0*eta_aniso)*vsv*vsv)/15.d0)
 
-                if (abs(rhostore(i,j,k,ispec))< 1.e-20) then
+                if (abs(rhostore(i,j,k,ispec)) < 1.e-20) then
                   print *,'attention: rhostore close to zero', &
                       rhostore(i,j,k,ispec),r,i,j,k,ispec
                   dvp = 0.0
                   dvs = 0.0
-                else if (abs(sngl(vp))< 1.e-20) then
+                else if (abs(sngl(vp)) < 1.e-20) then
                   print *,' attention: vp close to zero',sngl(vp),r,i,j,k,ispec
                   dvp = 0.0
-                else if (abs(sngl(vs))< 1.e-20) then
+                else if (abs(sngl(vs)) < 1.e-20) then
                   print *,' attention: vs close to zero',sngl(vs),r,i,j,k,ispec
                   dvs = 0.0
                 else
@@ -648,7 +648,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
 
   ! check that number of surface elements output is okay
   if (ispecface /= nspecface) &
-    call exit_MPI(myrank,&
+    call exit_MPI(myrank, &
         'incorrect number of surface elements in AVS or DX file creation')
 
 end subroutine prepare_AVS_DX_global_faces_data_adios

@@ -30,7 +30,7 @@
 ! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
 
   use constants
-  use meshfem3D_par,only: RTOPDDOUBLEPRIME,RCMB
+  use meshfem3D_par, only: RTOPDDOUBLEPRIME,RCMB
 
   implicit none
 
@@ -70,13 +70,13 @@
     topocmb = -topocmb / R_EARTH_KM
 
     ! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB
-    ! and finish at RTOPDDOUBLEPRIME (D'')
+    ! and finish at RTOPDDOUBLEPRIME of D_double_prime
     r_start = (RCMB - (RTOPDDOUBLEPRIME - RCMB))/R_EARTH
     gamma = 0.0d0
     if (r >= RCMB/R_EARTH .and. r <= RTOPDDOUBLEPRIME/R_EARTH) then
       ! stretching between RCMB and RTOPDDOUBLEPRIME
       gamma = (RTOPDDOUBLEPRIME/R_EARTH - r) / (RTOPDDOUBLEPRIME/R_EARTH - RCMB/R_EARTH)
-    else if (r>= r_start .and. r <= RCMB/R_EARTH) then
+    else if (r >= r_start .and. r <= RCMB/R_EARTH) then
       ! stretching between r_start and RCMB
       gamma = (r - r_start) / (RCMB/R_EARTH - r_start)
     endif

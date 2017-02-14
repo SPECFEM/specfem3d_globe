@@ -31,5 +31,5 @@ program normal_plane
 
   write(*,'(3f10.3,a)') xc, yc, zc, '   --- center of s-r gcarc'
 
-
 end program normal_plane
+

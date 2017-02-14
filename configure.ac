@@ -79,16 +79,21 @@ fi
 AM_CONDITIONAL([COND_VECTORIZATION], [test x"$want_vec" != xno])
 
 ###
-### GPU
+### CUDA
 ###
 
 AC_ARG_WITH([cuda],
     [AC_HELP_STRING([--with-cuda],
-        [build cuda GPU enabled version @<:@default=no@:>@])],
+        [build CUDA GPU enabled version @<:@default=no@:>@])],
     [want_cuda="$withval"],
     [want_cuda=no])
 AM_CONDITIONAL([COND_CUDA], [test x"$want_cuda" != xno])
 AM_CONDITIONAL([COND_CUDA5], [test x"$want_cuda" = xcuda5])
+AM_CONDITIONAL([COND_CUDA6], [test x"$want_cuda" = xcuda6])
+AM_CONDITIONAL([COND_CUDA7], [test x"$want_cuda" = xcuda7])
+AM_CONDITIONAL([COND_CUDA8], [test x"$want_cuda" = xcuda8])
+# cuda linking for cuda 5x and 6x
+AM_CONDITIONAL([COND_CUDA_PLUS], [test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6 -o "$want_cuda" = cuda7 -o "$want_cuda" = cuda8])
 
 AC_ARG_WITH([opencl],
  [AC_HELP_STRING([--with-opencl], [build OpenCL GPU enabled version @<:@default=no@:>@])],
@@ -106,6 +111,17 @@ AC_ARG_WITH([mic],
     [want_mic="$withval"],
     [want_mic=no])
 AM_CONDITIONAL([COND_MIC], [test "$want_mic" != no])
+
+###
+### LIBXSMM (Library for small matrix-matrix multiplications targeting Intel Architecture (x86)
+###          see:https://github.com/hfp/libxsmm )
+###
+AC_ARG_WITH([xsmm],
+    [AC_HELP_STRING([--with-xsmm],
+        [build LIBXSMM (see:https://github.com/hfp/libxsmm) enabled version @<:@default=no@:>@])],
+    [want_xsmm="$withval"],
+    [want_xsmm=no])
+AM_CONDITIONAL([COND_XSMM], [test "$want_xsmm" != no])
 
 ###
 ### OpenMP
@@ -310,6 +326,20 @@ AS_IF([test x"$want_mic" != xno], [
 if test x"$want_vec" == xno && test x"$want_mic" == xyes; then
     AC_MSG_NOTICE([--enable-vectorization and --with-mic should be both specified for better performance.])
 fi
+
+###
+### LIBXSMM
+###
+
+AS_IF([test x"$want_xsmm" != xno], [
+  AS_BOX([LIBXSMM])
+  AC_MSG_NOTICE([LIBXSMM compilation is enabled])
+
+  AC_ARG_VAR(LIBXSMM_INC, [LIBXSMM include directory])
+  AC_ARG_VAR(LIBXSMM_LIBS, [LIBXSMM library directory])
+  AC_ARG_VAR(BLAS_LIBS, [LAPACK/BLAS library directory])
+])
+
 
 ###
 ### OpenMP

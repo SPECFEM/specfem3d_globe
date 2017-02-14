@@ -107,7 +107,7 @@
   integer :: i,j,ier
 
   ! open heterogen.dat
-  open(unit=IIN,file='./DATA/heterogen/heterogen.dat',access='direct',&
+  open(unit=IIN,file='./DATA/heterogen/heterogen.dat',access='direct', &
        form='formatted',recl=20,status='old',action='read',iostat=ier)
   if (ier /= 0 ) call exit_MPI(0,'Error opening model file heterogen.dat')
 

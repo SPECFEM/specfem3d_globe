@@ -47,7 +47,7 @@
                          static_memory_size)
 
   use constants
-  use shared_parameters,only: &
+  use shared_parameters, only: &
     ATT1,ATT2,ATT3, &
     APPROXIMATE_HESS_KL,ANISOTROPIC_KL,NOISE_TOMOGRAPHY, &
     EXACT_MASS_MATRIX_FOR_ROTATION, &

@@ -138,7 +138,7 @@
 
 ! updates acceleration and velocity in outer core
 
-  use constants,only: CUSTOM_REAL
+  use constants, only: CUSTOM_REAL
 
   implicit none
 
@@ -252,7 +252,7 @@
                                   deltat,alpha,beta)
 
 
-  use constants_solver,only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
+  use constants_solver, only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
 
   implicit none
 

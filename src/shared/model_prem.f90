@@ -93,19 +93,19 @@
     !
     else if (r > RTOPDDOUBLEPRIME .and. r < R670) then
       if (idoubling /= IFLAG_MANTLE_NORMAL) &
-        call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point in model_prem_iso()')
+        call exit_MPI(myrank,'wrong doubling flag for top D" to d670 point in model_prem_iso()')
     !
     !--- mantle: from d670 to d220
     !
     else if (r > R670 .and. r < R220) then
       if (idoubling /= IFLAG_670_220) &
-        call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point in model_prem_iso()')
+        call exit_MPI(myrank,'wrong doubling flag for d670 to d220 point in model_prem_iso()')
     !
     !--- mantle and crust: from d220 to MOHO and then to surface
     !
     else if (r > R220) then
       if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-        call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point in model_prem_iso()')
+        call exit_MPI(myrank,'wrong doubling flag for d220 to Moho to surface point in model_prem_iso()')
     endif
 
   endif
@@ -328,21 +328,21 @@
 !
   else if (r > RTOPDDOUBLEPRIME .and. r < R670) then
     if (idoubling /= IFLAG_MANTLE_NORMAL) &
-      call exit_MPI(myrank,'wrong doubling flag for top D" -> d670 point in model_prem_aniso()')
+      call exit_MPI(myrank,'wrong doubling flag for top D" to d670 point in model_prem_aniso()')
 
 !
 !--- mantle: from d670 to d220
 !
   else if (r > R670 .and. r < R220) then
     if (idoubling /= IFLAG_670_220) &
-      call exit_MPI(myrank,'wrong doubling flag for d670 -> d220 point in model_prem_aniso()')
+      call exit_MPI(myrank,'wrong doubling flag for d670 to d220 point in model_prem_aniso()')
 
 !
 !--- mantle and crust: from d220 to MOHO and then to surface
 !
   else if (r > R220) then
     if (idoubling /= IFLAG_220_80 .and. idoubling /= IFLAG_80_MOHO .and. idoubling /= IFLAG_CRUST) &
-      call exit_MPI(myrank,'wrong doubling flag for d220 -> Moho -> surface point in model_prem_aniso()')
+      call exit_MPI(myrank,'wrong doubling flag for d220 to Moho to surface point in model_prem_aniso()')
 
   endif
 

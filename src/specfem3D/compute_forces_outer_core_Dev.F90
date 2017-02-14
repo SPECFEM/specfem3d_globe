@@ -42,14 +42,14 @@
 
   use constants_solver
 
-  use specfem_par,only: &
+  use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
     wgll_cube, &
     minus_rho_g_over_kappa_fluid,d_ln_density_dr_table, &
     MOVIE_VOLUME, &
     USE_LDDRK,istage
 
-  use specfem_par_outercore,only: &
+  use specfem_par_outercore, only: &
     rstore => rstore_outer_core, &
     deriv => deriv_mapping_outer_core, &
     ibool => ibool_outer_core, &
@@ -57,10 +57,10 @@
     nspec_outer => nspec_outer_outer_core, &
     nspec_inner => nspec_inner_outer_core
 
-  use specfem_par,only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
+  use specfem_par, only: wgllwgll_xy_3D,wgllwgll_xz_3D,wgllwgll_yz_3D
 
 #ifdef FORCE_VECTORIZATION
-  use specfem_par_outercore,only: &
+  use specfem_par_outercore, only: &
     ibool_inv_tbl => ibool_inv_tbl_outer_core, &
     ibool_inv_st => ibool_inv_st_outer_core, &
     num_globs => num_globs_outer_core, &
@@ -493,17 +493,37 @@
 
 ! 2-dimensional arrays (25,5)/(5,25)
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
+
+#ifdef XSMM
+  use my_libxsmm, only: libxsmm_smm_5_25_5,libxsmm_smm_25_5_5
+#endif
 
   implicit none
 
   integer,intent(in) :: n1,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n3) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n3) :: C
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
 
   ! local parameters
   integer :: i,j
+
+! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
+!       however, on Intel Phi (KNC) it is still helpful
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  if (n1 == 5) then
+    ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
+    call libxsmm_smm_5_25_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+  else if (n1 == 25) then
+    ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
+    call libxsmm_smm_25_5_5(a=A, b=B, c=C, pa=A, pb=B, pc=C)
+  else
+    stop 'Invalid n1 value for LibXSMM in mxm5_single routine'
+  endif
+  return
+#endif
 
   ! matrix-matrix multiplication
   do j = 1,n3
@@ -525,17 +545,40 @@
 
 ! 3-dimensional arrays (5,5,5) for A and C
 
-  use constants_solver,only: CUSTOM_REAL
+  use constants_solver, only: CUSTOM_REAL
+
+! note: on CPUs like Haswell or Sandy Bridge, the following will slow down computations
+!       however, on Intel Phi (KNC) it is still helpful (speedup +3%)
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  use my_libxsmm, only: libxsmm_smm_5_5_5
+#endif
 
   implicit none
 
   integer,intent(in) :: n1,n2,n3
-  real(kind=CUSTOM_REAL),dimension(n1,5,n3) :: A
-  real(kind=CUSTOM_REAL),dimension(5,n2) :: B
-  real(kind=CUSTOM_REAL),dimension(n1,n2,n3) :: C
+  real(kind=CUSTOM_REAL),dimension(n1,5,n3),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
 
   ! local parameters
   integer :: i,j,k
+
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  ! with A(n1,n2,n4) 5x5x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3,n4) 5x5x5-matrix
+  ! static version
+  !do k = 1,5
+  !  call libxsmm_call(xmm3, A(:,:,k), B, C(:,:,k))
+  !enddo
+
+  ! unrolled
+  call libxsmm_smm_5_5_5(a=A(1,1,1), b=B, c=C(1,1,1),pa=A(1,1,1+1), pb=B, pc=C(1,1,1+1))
+  call libxsmm_smm_5_5_5(a=A(1,1,2), b=B, c=C(1,1,2),pa=A(1,1,2+1), pb=B, pc=C(1,1,2+1))
+  call libxsmm_smm_5_5_5(a=A(1,1,3), b=B, c=C(1,1,3),pa=A(1,1,3+1), pb=B, pc=C(1,1,3+1))
+  call libxsmm_smm_5_5_5(a=A(1,1,4), b=B, c=C(1,1,4),pa=A(1,1,4+1), pb=B, pc=C(1,1,4+1))
+  call libxsmm_smm_5_5_5(a=A(1,1,5), b=B, c=C(1,1,5),pa=A(1,1,1), pb=B, pc=C(1,1,1))
+  return
+#endif
 
   ! matrix-matrix multiplication
   do j = 1,n2

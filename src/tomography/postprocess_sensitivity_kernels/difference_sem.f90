@@ -37,7 +37,7 @@
 
 program difference_sem
 
-  use postprocess_par,only: &
+  use postprocess_par, only: &
     CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,IIN,IOUT,MAX_STRING_LEN, &
     NPROCTOT_VAL,NSPEC_CRUST_MANTLE,NSPEC_OUTER_CORE,NSPEC_INNER_CORE
 
@@ -53,7 +53,7 @@ program difference_sem
 
   real(kind=CUSTOM_REAL) :: min_val,max_val
   real(kind=CUSTOM_REAL) :: min_val_all,max_val_all
-  real(kind=CUSTOm_REAL) :: min_rel,max_rel
+  real(kind=CUSTOM_REAL) :: min_rel,max_rel
   real(kind=CUSTOM_REAL) :: min_rel_all,max_rel_all
 
   integer :: i,iproc,ier
@@ -181,7 +181,7 @@ program difference_sem
     write(file2name,'(a,i6.6,a)') trim(input2dir)//'/proc',iproc,'_'//trim(reg_name)//trim(kernel_name)//'.bin'
 
     ! reads in file from first directory
-    if(myrank==0) write(*,*) '  data_1: ',trim(file1name)
+    if (myrank == 0) write(*,*) '  data_1: ',trim(file1name)
     open(IIN,file=trim(file1name),status='old',action='read',form='unformatted',iostat=ier)
     if (ier /= 0) then
       print *,'Error opening file: ',trim(file1name)

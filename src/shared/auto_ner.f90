@@ -31,10 +31,6 @@
 !     Department of Terrestrial Magnetism / Carnegie Institute of Washington
 !     University of Rhode Island
 !
-!  <savage@uri.edu>.
-!  <savage13@gps.caltech.edu>
-!  <savage13@dtm.ciw.edu>
-!
 !  It is based partially upon formulation in:
 !
 ! @ARTICLE{KoTr02a,
@@ -52,7 +48,7 @@
 
   subroutine auto_time_stepping(WIDTH,  NEX_MAX, DT)
 
-  use constants,only: DEGREES_TO_RADIANS, NGLLX, &
+  use constants, only: DEGREES_TO_RADIANS, NGLLX, &
     REFERENCE_MODEL_PREM,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
     REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D
   use shared_compute_parameters, only: REFERENCE_1D_MODEL
@@ -182,7 +178,7 @@
 !
   subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
 
-  use constants,only: N_SLS,NGLLX
+  use constants, only: N_SLS,NGLLX
 
   implicit none
 
@@ -266,7 +262,7 @@
                       R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
                       HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
 
-  use constants,only: R_EARTH
+  use constants, only: R_EARTH
 
   implicit none
 
@@ -302,7 +298,7 @@
   !radius(7)  = 5701.00d0 !     670
   !radius(8)  = 5600.00d0 !     771
   !radius(9)  = 4712.00d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
-  !radius(10) = 3630.00d0 !     D''
+  !radius(10) = 3630.00d0 !     D_double_prime
   !radius(11) = 3480.00d0 !     CMB
   !radius(12) = 2511.00d0 !    3860 - 3rd Mesh Doubling Interface
   !radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
@@ -326,7 +322,7 @@
   radius(7)  = R670   !     670
   radius(8)  = R771   !     771
   radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
-  radius(10) = RTOPDDOUBLEPRIME   !     D'' ~ 3630
+  radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
   radius(11) = RCMB   !     CMB ~ 3480
   radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
   radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
@@ -339,10 +335,10 @@
 
   ! Mesh Doubling
   scaling(1)     = 1  ! SURFACE TO MOHO
-  scaling(2:8)   = 2  ! MOHO    TO G'' (Geochemical Mantle 1650)
-  scaling(9:11)  = 4  ! G''     TO MIC (Middle Inner Core)
+  scaling(2:8)   = 2  ! MOHO    TO G_double_prime (Geochemical Mantle 1650)
+  scaling(9:11)  = 4  ! G_double_prime    TO MIC (Middle Inner Core)
   scaling(12)    = 8  ! MIC     TO MIC-II
-  scaling(13:14) = 16 ! MIC-II  TO Central Cube -> Center of the Earth
+  scaling(13:14) = 16 ! MIC-II  TO Central Cube TO Center of the Earth
 
   ! initializes minimum Number of Elements a Region must have
   NER(:)    = 1
@@ -401,7 +397,7 @@
 
   subroutine auto_optimal_ner(NUM_REGIONS, width, NEX, r, scaling, NER, rt, rb)
 
-  use constants,only: DEGREES_TO_RADIANS
+  use constants, only: DEGREES_TO_RADIANS
 
   implicit none
 
@@ -531,7 +527,7 @@
 
   subroutine compute_nex(nex_xi, rcube, alpha, ner)
 
-  use constants,only: PI,PI_OVER_TWO,PI_OVER_FOUR
+  use constants, only: PI,PI_OVER_TWO,PI_OVER_FOUR
 
   implicit none
 
@@ -678,7 +674,7 @@
 
   subroutine compute_coordinate_central_cube(ix,iy,nbx,nby,radius, alpha, x, y)
 
-  use constants,only: PI_OVER_TWO
+  use constants, only: PI_OVER_TWO
 
   implicit none
 
@@ -710,7 +706,7 @@
 
   subroutine compute_coordinate(ix,iy,nbx, nby, rcube, ic, alpha, x, y)
 
-  use constants,only: PI_OVER_TWO,PI_OVER_FOUR
+  use constants, only: PI_OVER_TWO,PI_OVER_FOUR
 
   implicit none
 

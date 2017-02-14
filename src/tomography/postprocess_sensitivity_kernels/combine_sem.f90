@@ -87,17 +87,17 @@ program combine_sem_globe
   ! check number of MPI processes
   if (sizeprocs /= NPROCTOT_VAL) then
     if (myrank == 0) then
-      print *,''
+      print *
       print *,'Expected number of MPI processes: ', NPROCTOT_VAL
       print *,'Actual number of MPI processes: ', sizeprocs
-      print *,''
+      print *
     endif
     call synchronize_all()
     stop 'Error wrong number of MPI processes'
   endif
   call synchronize_all()
 
-  if(myrank==0) then
+  if (myrank == 0) then
     write(*,*) 'Running XCOMBINE_SEM'
     write(*,*)
   endif
@@ -118,7 +118,7 @@ program combine_sem_globe
     print *,'kernel names     : ',(trim(kernel_names(i))//' ',i=1,nker)
     print *,'input file       : ',trim(input_file)
     print *,'output directory : ',trim(output_dir)
-    print *,''
+    print *
   endif
 
   ! parse paths from INPUT_FILE
@@ -139,10 +139,10 @@ program combine_sem_globe
   ! user output
   if (myrank == 0) then
     print *,'number of events: ',npath
-    print *,''
+    print *
     print *,'summing kernels in:'
     print *,(trim(kernel_paths(i))//' ',i=1,npath)
-    print *,''
+    print *
   endif
 
   call synchronize_all()
@@ -154,7 +154,7 @@ program combine_sem_globe
   enddo
 
   ! user output
-  if(myrank==0) then
+  if (myrank == 0) then
     print *,'done writing all kernels, see directory ',trim(output_dir)
   endif
 
@@ -192,7 +192,7 @@ subroutine sum_kernel(kernel_name,kernel_paths,output_dir,npath)
   ! loops over all paths
   total_kernel = 0._CUSTOM_REAL
   do ipath = 1, npath
-    if(myrank==0) then
+    if (myrank == 0) then
     write(*,*) 'reading in event kernel for: ',trim(kernel_name)
     write(*,*) '    ',ipath, ' out of ', npath
     endif
@@ -221,7 +221,7 @@ subroutine sum_kernel(kernel_name,kernel_paths,output_dir,npath)
 
 
   ! write sum
-  if(myrank==0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
+  if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
   write(k_file,'(a,i6.6,a)') trim(output_dir)//'/'//'proc',myrank,reg//trim(kernel_name)//'.bin'
 
   open(IOUT,file=trim(k_file),form='unformatted',status='unknown',action='write',iostat=ier)
@@ -232,7 +232,7 @@ subroutine sum_kernel(kernel_name,kernel_paths,output_dir,npath)
   write(IOUT) total_kernel
   close(IOUT)
 
-  if(myrank==0) write(*,*)
+  if (myrank == 0) write(*,*)
   deallocate(kernel,total_kernel)
 
 end subroutine sum_kernel
