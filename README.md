@@ -22,9 +22,7 @@ in the
 
 [![Build Status](https://travis-ci.org/geodynamics/specfem3d_globe.svg?branch=devel)](https://travis-ci.org/geodynamics/specfem3d_globe) [![codecov](https://codecov.io/gh/geodynamics/specfem3d_globe/branch/devel/graph/badge.svg)](https://codecov.io/gh/geodynamics/specfem3d_globe)
 
-* Jenkins CI:
-
-- Comparing ADIOS kernels: [![Build
+* *Jenkins* Comparing ADIOS kernels: [![Build
   Status](https://jenkins.princeton.edu/buildStatus/icon?job=SPECFEM_ADIOS/adios_kernels)](https://jenkins.princeton.edu/job/SPECFEM_ADIOS/job/adios_kernels/)
 
 
