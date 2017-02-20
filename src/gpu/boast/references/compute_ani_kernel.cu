@@ -36,18 +36,57 @@ __device__ void compute_strain_product(realw* prod,
   b_eps[5] = b_epsdev[2];
 
   // Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
-  int p = 0;
-  for(int i=0; i<6; i++){
-    for(int j=i; j<6; j++){
-      prod[p]=eps[i]*b_eps[j];
-      if(j>i){
-        prod[p]=prod[p]+eps[j]*b_eps[i];
-        if(j>2 && i<3){ prod[p] = prod[p]*2.0f;}
-      }
-      if(i>2){ prod[p]=prod[p]*4.0f;}
-      p=p+1;
-    }
-  }
+  prod[0] = (eps[0]) * (b_eps[0]);
+  prod[1] = (eps[0]) * (b_eps[1]);
+  prod[1] = prod[1] + (eps[1]) * (b_eps[0]);
+  prod[2] = (eps[0]) * (b_eps[2]);
+  prod[2] = prod[2] + (eps[2]) * (b_eps[0]);
+  prod[3] = (eps[0]) * (b_eps[3]);
+  prod[3] = prod[3] + (eps[3]) * (b_eps[0]);
+  prod[3] = (prod[3]) * (2.0f);
+  prod[4] = (eps[0]) * (b_eps[4]);
+  prod[4] = prod[4] + (eps[4]) * (b_eps[0]);
+  prod[4] = (prod[4]) * (2.0f);
+  prod[5] = (eps[0]) * (b_eps[5]);
+  prod[5] = prod[5] + (eps[5]) * (b_eps[0]);
+  prod[5] = (prod[5]) * (2.0f);
+  prod[6] = (eps[1]) * (b_eps[1]);
+  prod[7] = (eps[1]) * (b_eps[2]);
+  prod[7] = prod[7] + (eps[2]) * (b_eps[1]);
+  prod[8] = (eps[1]) * (b_eps[3]);
+  prod[8] = prod[8] + (eps[3]) * (b_eps[1]);
+  prod[8] = (prod[8]) * (2.0f);
+  prod[9] = (eps[1]) * (b_eps[4]);
+  prod[9] = prod[9] + (eps[4]) * (b_eps[1]);
+  prod[9] = (prod[9]) * (2.0f);
+  prod[10] = (eps[1]) * (b_eps[5]);
+  prod[10] = prod[10] + (eps[5]) * (b_eps[1]);
+  prod[10] = (prod[10]) * (2.0f);
+  prod[11] = (eps[2]) * (b_eps[2]);
+  prod[12] = (eps[2]) * (b_eps[3]);
+  prod[12] = prod[12] + (eps[3]) * (b_eps[2]);
+  prod[12] = (prod[12]) * (2.0f);
+  prod[13] = (eps[2]) * (b_eps[4]);
+  prod[13] = prod[13] + (eps[4]) * (b_eps[2]);
+  prod[13] = (prod[13]) * (2.0f);
+  prod[14] = (eps[2]) * (b_eps[5]);
+  prod[14] = prod[14] + (eps[5]) * (b_eps[2]);
+  prod[14] = (prod[14]) * (2.0f);
+  prod[15] = (eps[3]) * (b_eps[3]);
+  prod[15] = (prod[15]) * (4.0f);
+  prod[16] = (eps[3]) * (b_eps[4]);
+  prod[16] = prod[16] + (eps[4]) * (b_eps[3]);
+  prod[16] = (prod[16]) * (4.0f);
+  prod[17] = (eps[3]) * (b_eps[5]);
+  prod[17] = prod[17] + (eps[5]) * (b_eps[3]);
+  prod[17] = (prod[17]) * (4.0f);
+  prod[18] = (eps[4]) * (b_eps[4]);
+  prod[18] = (prod[18]) * (4.0f);
+  prod[19] = (eps[4]) * (b_eps[5]);
+  prod[19] = prod[19] + (eps[5]) * (b_eps[4]);
+  prod[19] = (prod[19]) * (4.0f);
+  prod[20] = (eps[5]) * (b_eps[5]);
+  prod[20] = (prod[20]) * (4.0f);
 }
 
 /* ----------------------------------------------------------------------------------------------- */
@@ -69,6 +108,7 @@ __global__ void compute_ani_kernel(realw* epsilondev_xx,
                                    realw deltat) {
 
   int ispec = blockIdx.x + blockIdx.y*gridDim.x;
+  int offset = (ispec)*NGLL3*21+tx;
 
   // handles case when there is 1 extra block (due to rectangular grid)
   if(ispec < NSPEC) {
@@ -101,7 +141,7 @@ __global__ void compute_ani_kernel(realw* epsilondev_xx,
 
     // updates full anisotropic kernel
     for(int i=0;i<21;i++){
-      cijkl_kl[i + 21*ijk_ispec] += deltat * prod[i];
+      cijkl_kl[(i)*125+offset] += (deltat) * (prod[i])
     }
   }
 }

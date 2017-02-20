@@ -1,246 +1,289 @@
-// from compute_kernels_cuda.cu
+//note: please do not modify this file manually!
+//      this file has been generated automatically by BOAST version 2.0.1
+//      by: make boast_kernels
+
+/*
+!=====================================================================
+!
+!          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
+!          --------------------------------------------------
+!
+!     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
+!                        Princeton University, USA
+!                and CNRS / University of Marseille, France
+!                 (there are currently many more authors!)
+! (c) Princeton University and CNRS / University of Marseille, April 2014
+!
+! This program is free software; you can redistribute it and/or modify
+! it under the terms of the GNU General Public License as published by
+! the Free Software Foundation; either version 2 of the License, or
+! (at your option) any later version.
+!
+! This program is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+!
+! You should have received a copy of the GNU General Public License along
+! with this program; if not, write to the Free Software Foundation, Inc.,
+! 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
+!
+!=====================================================================
+*/
+
+#ifndef INDEX2
+#define INDEX2(isize,i,j) i + isize*j
+#endif
+#ifndef INDEX3
+#define INDEX3(isize,jsize,i,j,k) i + isize*(j + jsize*k)
+#endif
+#ifndef INDEX4
+#define INDEX4(isize,jsize,ksize,i,j,k,x) i + isize*(j + jsize*(k + ksize*x))
+#endif
+#ifndef INDEX5
+#define INDEX5(isize,jsize,ksize,xsize,i,j,k,x,y) i + isize*(j + jsize*(k + ksize*(x + xsize*y)))
+#endif
+
+#ifndef NDIM
+#define NDIM 3
+#endif
+#ifndef NGLLX
 #define NGLLX 5
+#endif
+#ifndef NGLL2
 #define NGLL2 25
+#endif
+#ifndef NGLL3
 #define NGLL3 125
+#endif
+#ifndef NGLL3_PADDED
 #define NGLL3_PADDED 128
+#endif
+#ifndef N_SLS
+#define N_SLS 3
+#endif
+#ifndef IREGION_CRUST_MANTLE
+#define IREGION_CRUST_MANTLE 1
+#endif
+#ifndef IREGION_INNER_CORE
+#define IREGION_INNER_CORE 3
+#endif
+#ifndef IFLAG_IN_FICTITIOUS_CUBE
+#define IFLAG_IN_FICTITIOUS_CUBE 11
+#endif
+#ifndef R_EARTH_KM
+#define R_EARTH_KM 6371.0f
+#endif
+#ifndef COLORING_MIN_NSPEC_INNER_CORE
+#define COLORING_MIN_NSPEC_INNER_CORE 1000
+#endif
+#ifndef COLORING_MIN_NSPEC_OUTER_CORE
+#define COLORING_MIN_NSPEC_OUTER_CORE 1000
+#endif
+#ifndef BLOCKSIZE_TRANSFER
+#define BLOCKSIZE_TRANSFER 256
+#endif
 
-typedef float realw;
-
-__device__ void compute_element_strain_undoatt(int ispec,int ijk_ispec,
-                                               int* d_ibool,
-                                               realw* s_dummyx_loc,
-                                               realw* s_dummyy_loc,
-                                               realw* s_dummyz_loc,
-                                               realw* d_xix,realw* d_xiy,realw* d_xiz,
-                                               realw* d_etax,realw* d_etay,realw* d_etaz,
-                                               realw* d_gammax,realw* d_gammay,realw* d_gammaz,
-                                               realw* sh_hprime_xx,
-                                               realw* epsilondev_loc,
-                                               realw* epsilon_trace_over_3) {
-
-
-  // thread id == GLL point id
-  int tx = threadIdx.x;
-  int K = (tx/NGLL2);
-  int J = ((tx-K*NGLL2)/NGLLX);
-  int I = (tx-K*NGLL2-J*NGLLX);
-
-  int offset;
-
-  realw tempx1l,tempx2l,tempx3l,tempy1l,tempy2l,tempy3l,tempz1l,tempz2l,tempz3l;
-  realw xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl;
-  realw duxdxl,duxdyl,duxdzl,duydxl,duydyl,duydzl,duzdxl,duzdyl,duzdzl;
-  realw templ;
-  realw fac1,fac2,fac3;
-
+static __device__ void compute_element_strain_undoatt(const int ispec, const int ijk_ispec, const int * d_ibool, const float * s_dummyx_loc, const float * s_dummyy_loc, const float * s_dummyz_loc, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * sh_hprime_xx, float * epsilondev_loc, float * epsilon_trace_over_3){
+  int tx;
+  int K;
+  int J;
+  int I;
   int l;
-
-// copy from global memory to shared memory
-// each thread writes one of the NGLL^3 = 125 data points
-
-  tempx1l = 0.f;
-  tempx2l = 0.f;
-  tempx3l = 0.f;
-
-  tempy1l = 0.f;
-  tempy2l = 0.f;
-  tempy3l = 0.f;
-
-  tempz1l = 0.f;
-  tempz2l = 0.f;
-  tempz3l = 0.f;
-
-  for (l=0;l<NGLLX;l++) {
-      fac1 = sh_hprime_xx[l*NGLLX+I];
-      tempx1l += s_dummyx_loc[K*NGLL2+J*NGLLX+l]*fac1;
-      tempy1l += s_dummyy_loc[K*NGLL2+J*NGLLX+l]*fac1;
-      tempz1l += s_dummyz_loc[K*NGLL2+J*NGLLX+l]*fac1;
-
-      fac2 = sh_hprime_xx[l*NGLLX+J];
-      tempx2l += s_dummyx_loc[K*NGLL2+l*NGLLX+I]*fac2;
-      tempy2l += s_dummyy_loc[K*NGLL2+l*NGLLX+I]*fac2;
-      tempz2l += s_dummyz_loc[K*NGLL2+l*NGLLX+I]*fac2;
-
-      fac3 = sh_hprime_xx[l*NGLLX+K];
-      tempx3l += s_dummyx_loc[l*NGLL2+J*NGLLX+I]*fac3;
-      tempy3l += s_dummyy_loc[l*NGLL2+J*NGLLX+I]*fac3;
-      tempz3l += s_dummyz_loc[l*NGLL2+J*NGLLX+I]*fac3;
+  int offset;
+  float tempx1l;
+  float tempx2l;
+  float tempx3l;
+  float tempy1l;
+  float tempy2l;
+  float tempy3l;
+  float tempz1l;
+  float tempz2l;
+  float tempz3l;
+  float xixl;
+  float xiyl;
+  float xizl;
+  float etaxl;
+  float etayl;
+  float etazl;
+  float gammaxl;
+  float gammayl;
+  float gammazl;
+  float duxdxl;
+  float duxdyl;
+  float duxdzl;
+  float duydxl;
+  float duydyl;
+  float duydzl;
+  float duzdxl;
+  float duzdyl;
+  float duzdzl;
+  float templ;
+  float fac1;
+  float fac2;
+  float fac3;
+  tx = threadIdx.x;
+  K = (tx) / (NGLL2);
+  J = (tx - ((K) * (NGLL2))) / (NGLLX);
+  I = tx - ((K) * (NGLL2)) - ((J) * (NGLLX));
+  tempx1l = 0.0f;
+  tempx2l = 0.0f;
+  tempx3l = 0.0f;
+  tempy1l = 0.0f;
+  tempy2l = 0.0f;
+  tempy3l = 0.0f;
+  tempz1l = 0.0f;
+  tempz2l = 0.0f;
+  tempz3l = 0.0f;
+  for (l = 0; l <= NGLLX - (1); l += 1) {
+    fac1 = sh_hprime_xx[(l) * (NGLLX) + I];
+    tempx1l = tempx1l + (s_dummyx_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
+    tempy1l = tempy1l + (s_dummyy_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
+    tempz1l = tempz1l + (s_dummyz_loc[(K) * (NGLL2) + (J) * (NGLLX) + l]) * (fac1);
+    fac2 = sh_hprime_xx[(l) * (NGLLX) + J];
+    tempx2l = tempx2l + (s_dummyx_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
+    tempy2l = tempy2l + (s_dummyy_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
+    tempz2l = tempz2l + (s_dummyz_loc[(K) * (NGLL2) + (l) * (NGLLX) + I]) * (fac2);
+    fac3 = sh_hprime_xx[(l) * (NGLLX) + K];
+    tempx3l = tempx3l + (s_dummyx_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+    tempy3l = tempy3l + (s_dummyy_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
+    tempz3l = tempz3l + (s_dummyz_loc[(l) * (NGLL2) + (J) * (NGLLX) + I]) * (fac3);
   }
-
-  // compute derivatives of ux, uy and uz with respect to x, y and z
-  offset = ispec*NGLL3_PADDED + tx;
-
+  offset = (ispec) * (NGLL3_PADDED) + tx;
   xixl = d_xix[offset];
-  xiyl = d_xiy[offset];
-  xizl = d_xiz[offset];
   etaxl = d_etax[offset];
-  etayl = d_etay[offset];
-  etazl = d_etaz[offset];
   gammaxl = d_gammax[offset];
+  xiyl = d_xiy[offset];
+  etayl = d_etay[offset];
   gammayl = d_gammay[offset];
+  xizl = d_xiz[offset];
+  etazl = d_etaz[offset];
   gammazl = d_gammaz[offset];
-
-  duxdxl = xixl*tempx1l + etaxl*tempx2l + gammaxl*tempx3l;
-  duxdyl = xiyl*tempx1l + etayl*tempx2l + gammayl*tempx3l;
-  duxdzl = xizl*tempx1l + etazl*tempx2l + gammazl*tempx3l;
-
-  duydxl = xixl*tempy1l + etaxl*tempy2l + gammaxl*tempy3l;
-  duydyl = xiyl*tempy1l + etayl*tempy2l + gammayl*tempy3l;
-  duydzl = xizl*tempy1l + etazl*tempy2l + gammazl*tempy3l;
-
-  duzdxl = xixl*tempz1l + etaxl*tempz2l + gammaxl*tempz3l;
-  duzdyl = xiyl*tempz1l + etayl*tempz2l + gammayl*tempz3l;
-  duzdzl = xizl*tempz1l + etazl*tempz2l + gammazl*tempz3l;
-
-  // computes deviatoric strain attenuation and/or for kernel calculations
-  templ = 0.33333333333333333333f * (duxdxl + duydyl + duzdzl); // 1./3. = 0.33333
-
-  // local storage: stresses at this current time step
-  epsilondev_loc[0] = duxdxl - templ;   // xx
-  epsilondev_loc[1] = duydyl - templ;   // yy
-  epsilondev_loc[2] = 0.5f * ( duxdyl + duydxl ); // xy
-  epsilondev_loc[3] = 0.5f * ( duzdxl + duxdzl ); // xz
-  epsilondev_loc[4] = 0.5f * ( duzdyl + duydzl ); // yz
-  *epsilon_trace_over_3 = templ;
+  duxdxl = (xixl) * (tempx1l) + (etaxl) * (tempx2l) + (gammaxl) * (tempx3l);
+  duxdyl = (xiyl) * (tempx1l) + (etayl) * (tempx2l) + (gammayl) * (tempx3l);
+  duxdzl = (xizl) * (tempx1l) + (etazl) * (tempx2l) + (gammazl) * (tempx3l);
+  duydxl = (xixl) * (tempy1l) + (etaxl) * (tempy2l) + (gammaxl) * (tempy3l);
+  duydyl = (xiyl) * (tempy1l) + (etayl) * (tempy2l) + (gammayl) * (tempy3l);
+  duydzl = (xizl) * (tempy1l) + (etazl) * (tempy2l) + (gammazl) * (tempy3l);
+  duzdxl = (xixl) * (tempz1l) + (etaxl) * (tempz2l) + (gammaxl) * (tempz3l);
+  duzdyl = (xiyl) * (tempz1l) + (etayl) * (tempz2l) + (gammayl) * (tempz3l);
+  duzdzl = (xizl) * (tempz1l) + (etazl) * (tempz2l) + (gammazl) * (tempz3l);
+  templ = (duxdxl + duydyl + duzdzl) * (0.3333333333333333f);
+  epsilondev_loc[0] = duxdxl - (templ);
+  epsilondev_loc[1] = duydyl - (templ);
+  epsilondev_loc[2] = (duxdyl + duydxl) * (0.5f);
+  epsilondev_loc[3] = (duzdxl + duxdzl) * (0.5f);
+  epsilondev_loc[4] = (duzdyl + duydzl) * (0.5f);
+  *(epsilon_trace_over_3) = templ;
 }
-
-/* ----------------------------------------------------------------------------------------------- */
-
-__device__ void compute_strain_product_cuda(realw* prod,
-                                            realw eps_trace_over_3,
-                                            realw* epsdev,
-                                            realw b_eps_trace_over_3,
-                                            realw* b_epsdev){
-
-  realw eps[6],b_eps[6];
-
-  // Building of the local matrix of the strain tensor
-  // for the adjoint field and the regular backward field
-
-  // note: indices are -1 compared to fortran routine because of fortran -> C array indexing
-
-  // eps11 et eps22
+static __device__ void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){
+  float eps[(6)];
+  float b_eps[(6)];
   eps[0] = epsdev[0] + eps_trace_over_3;
   eps[1] = epsdev[1] + eps_trace_over_3;
-  //eps33
-  eps[2] = - (eps[0] + eps[1]) + 3.0f*eps_trace_over_3;
-  //eps23
+  eps[2] =  -(eps[0] + eps[1]) + (eps_trace_over_3) * (3.0f);
   eps[3] = epsdev[4];
-  //eps13
   eps[4] = epsdev[3];
-  //eps12
   eps[5] = epsdev[2];
-
   b_eps[0] = b_epsdev[0] + b_eps_trace_over_3;
   b_eps[1] = b_epsdev[1] + b_eps_trace_over_3;
-  b_eps[2] = - (b_eps[0] + b_eps[1]) + 3.0f*b_eps_trace_over_3;
+  b_eps[2] =  -(b_eps[0] + b_eps[1]) + (b_eps_trace_over_3) * (3.0f);
   b_eps[3] = b_epsdev[4];
   b_eps[4] = b_epsdev[3];
   b_eps[5] = b_epsdev[2];
-
-  // Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
-  int p = 0;
-  for(int i=0; i<6; i++){
-    for(int j=i; j<6; j++){
-      prod[p]=eps[i]*b_eps[j];
-      if(j>i){
-        prod[p]=prod[p]+eps[j]*b_eps[i];
-        if(j>2 && i<3){ prod[p] = prod[p]*2.0f;}
-      }
-      if(i>2){ prod[p]=prod[p]*4.0f;}
-      p=p+1;
-    }
-  }
+  prod[0] = (eps[0]) * (b_eps[0]);
+  prod[1] = (eps[0]) * (b_eps[1]);
+  prod[1] = prod[1] + (eps[1]) * (b_eps[0]);
+  prod[2] = (eps[0]) * (b_eps[2]);
+  prod[2] = prod[2] + (eps[2]) * (b_eps[0]);
+  prod[3] = (eps[0]) * (b_eps[3]);
+  prod[3] = prod[3] + (eps[3]) * (b_eps[0]);
+  prod[3] = (prod[3]) * (2.0f);
+  prod[4] = (eps[0]) * (b_eps[4]);
+  prod[4] = prod[4] + (eps[4]) * (b_eps[0]);
+  prod[4] = (prod[4]) * (2.0f);
+  prod[5] = (eps[0]) * (b_eps[5]);
+  prod[5] = prod[5] + (eps[5]) * (b_eps[0]);
+  prod[5] = (prod[5]) * (2.0f);
+  prod[6] = (eps[1]) * (b_eps[1]);
+  prod[7] = (eps[1]) * (b_eps[2]);
+  prod[7] = prod[7] + (eps[2]) * (b_eps[1]);
+  prod[8] = (eps[1]) * (b_eps[3]);
+  prod[8] = prod[8] + (eps[3]) * (b_eps[1]);
+  prod[8] = (prod[8]) * (2.0f);
+  prod[9] = (eps[1]) * (b_eps[4]);
+  prod[9] = prod[9] + (eps[4]) * (b_eps[1]);
+  prod[9] = (prod[9]) * (2.0f);
+  prod[10] = (eps[1]) * (b_eps[5]);
+  prod[10] = prod[10] + (eps[5]) * (b_eps[1]);
+  prod[10] = (prod[10]) * (2.0f);
+  prod[11] = (eps[2]) * (b_eps[2]);
+  prod[12] = (eps[2]) * (b_eps[3]);
+  prod[12] = prod[12] + (eps[3]) * (b_eps[2]);
+  prod[12] = (prod[12]) * (2.0f);
+  prod[13] = (eps[2]) * (b_eps[4]);
+  prod[13] = prod[13] + (eps[4]) * (b_eps[2]);
+  prod[13] = (prod[13]) * (2.0f);
+  prod[14] = (eps[2]) * (b_eps[5]);
+  prod[14] = prod[14] + (eps[5]) * (b_eps[2]);
+  prod[14] = (prod[14]) * (2.0f);
+  prod[15] = (eps[3]) * (b_eps[3]);
+  prod[15] = (prod[15]) * (4.0f);
+  prod[16] = (eps[3]) * (b_eps[4]);
+  prod[16] = prod[16] + (eps[4]) * (b_eps[3]);
+  prod[16] = (prod[16]) * (4.0f);
+  prod[17] = (eps[3]) * (b_eps[5]);
+  prod[17] = prod[17] + (eps[5]) * (b_eps[3]);
+  prod[17] = (prod[17]) * (4.0f);
+  prod[18] = (eps[4]) * (b_eps[4]);
+  prod[18] = (prod[18]) * (4.0f);
+  prod[19] = (eps[4]) * (b_eps[5]);
+  prod[19] = prod[19] + (eps[5]) * (b_eps[4]);
+  prod[19] = (prod[19]) * (4.0f);
+  prod[20] = (eps[5]) * (b_eps[5]);
+  prod[20] = (prod[20]) * (4.0f);
 }
-
-/* ----------------------------------------------------------------------------------------------- */
-
-__global__ void compute_ani_undoatt_kernel(realw* epsilondev_xx,
-                                           realw* epsilondev_yy,
-                                           realw* epsilondev_xy,
-                                           realw* epsilondev_xz,
-                                           realw* epsilondev_yz,
-                                           realw* epsilon_trace_over_3,
-                                           realw* cijkl_kl,
-                                           int NSPEC,
-                                           realw deltat,
-                                           int* d_ibool,
-                                           realw* d_b_displ,
-                                           realw* d_xix,
-                                           realw* d_xiy,
-                                           realw* d_xiz,
-                                           realw* d_etax,
-                                           realw* d_etay,
-                                           realw* d_etaz,
-                                           realw* d_gammax,
-                                           realw* d_gammay,
-                                           realw* d_gammaz,
-                                           realw* d_hprime_xx) {
-
-  int ispec = blockIdx.x + blockIdx.y*gridDim.x;
-  int ijk_ispec = threadIdx.x + NGLL3*ispec;
-
-  int tx = threadIdx.x;
+__global__ void compute_ani_undoatt_kernel(const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float * epsilon_trace_over_3, float * cijkl_kl, const int NSPEC, const float deltat, const int * d_ibool, const float * d_b_displ, const float * d_xix, const float * d_xiy, const float * d_xiz, const float * d_etax, const float * d_etay, const float * d_etaz, const float * d_gammax, const float * d_gammay, const float * d_gammaz, const float * d_hprime_xx){
+  int ispec;
+  int ijk_ispec;
+  int tx;
   int iglob;
-
-  __shared__ realw s_dummyx_loc[NGLL3];
-  __shared__ realw s_dummyy_loc[NGLL3];
-  __shared__ realw s_dummyz_loc[NGLL3];
-
-  __shared__ realw sh_hprime_xx[NGLL2];
-
-  // loads element displacements
-  // all threads load their displacement into shared memory
-  if (ispec < NSPEC){
-    iglob = d_ibool[ijk_ispec]-1;
-    // changing iglob indexing to match fortran row changes fast style
-    s_dummyx_loc[tx] = d_b_displ[iglob*3];
-    s_dummyy_loc[tx] = d_b_displ[iglob*3 + 1];
-    s_dummyz_loc[tx] = d_b_displ[iglob*3 + 2];
-
-    // master thread loads hprime
-    if (threadIdx.x == 0){
-      for(int m=0; m < NGLL2; m++){
-        // hprime
-        sh_hprime_xx[m] = d_hprime_xx[m];
-      }
-    }
+  int offset;
+  float eps_trace_over_3;
+  float b_eps_trace_over_3;
+  float prod[(21)];
+  int i;
+  float epsdev[(5)];
+  float b_epsdev[(5)];
+  __shared__ float s_dummyx_loc[(NGLL3)];
+  __shared__ float s_dummyy_loc[(NGLL3)];
+  __shared__ float s_dummyz_loc[(NGLL3)];
+  __shared__ float sh_hprime_xx[(NGLL2)];
+  ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
+  ijk_ispec = threadIdx.x + (NGLL3) * (ispec);
+  tx = threadIdx.x;
+  if (tx < NGLL2) {
+    sh_hprime_xx[tx] = d_hprime_xx[tx];
   }
-
-  // synchronizes threads
+  if (ispec < NSPEC) {
+    iglob = d_ibool[ijk_ispec] - (1);
+    s_dummyx_loc[tx] = d_b_displ[0 + (3) * (iglob)];
+    s_dummyy_loc[tx] = d_b_displ[1 + (3) * (iglob)];
+    s_dummyz_loc[tx] = d_b_displ[2 + (3) * (iglob)];
+  }
   __syncthreads();
-
-  // handles case when there is 1 extra block (due to rectangular grid)
-  if(ispec < NSPEC) {
-
-    // fully anisotropic kernel contributions
-    realw eps_trace_over_3,b_eps_trace_over_3;
-    realw prod[21];
-    realw epsdev[5];
-    realw b_epsdev[5];
-
-    // strain from adjoint wavefield
+  if (ispec < NSPEC) {
     epsdev[0] = epsilondev_xx[ijk_ispec];
     epsdev[1] = epsilondev_yy[ijk_ispec];
     epsdev[2] = epsilondev_xy[ijk_ispec];
     epsdev[3] = epsilondev_xz[ijk_ispec];
     epsdev[4] = epsilondev_yz[ijk_ispec];
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];
-
-    // strain from backward/reconstructed forward wavefield
-    compute_element_strain_undoatt(ispec,ijk_ispec,
-                                   d_ibool,
-                                   s_dummyx_loc,s_dummyy_loc,s_dummyz_loc,
-                                   d_xix,d_xiy,d_xiz,d_etax,d_etay,d_etaz,d_gammax,d_gammay,d_gammaz,
-                                   sh_hprime_xx,
-                                   b_epsdev,&b_eps_trace_over_3);
-
-    // fully anisotropic kernel contributions
-    compute_strain_product(prod,eps_trace_over_3,epsdev,b_eps_trace_over_3,b_epsdev);
-
-    // updates full anisotropic kernel
-    for(int i=0;i<21;i++){
-      cijkl_kl[i + 21*ijk_ispec] += deltat * prod[i];
+    compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_epsdev,  &b_eps_trace_over_3);
+    compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);
+    offset = ((ispec) * (NGLL3)) * (21) + tx;
+    for (i = 0; i <= 20; i += 1) {
+      cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);
     }
   }
 }
