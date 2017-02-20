@@ -102,27 +102,63 @@ static __device__ void compute_strain_product(float * prod, const float eps_trac
   b_eps[3] = b_epsdev[4];
   b_eps[4] = b_epsdev[3];
   b_eps[5] = b_epsdev[2];
-  p = 0;
-  for (i = 0; i <= 5; i += 1) {
-    for (j = i; j <= 5; j += 1) {
-      prod[p] = (eps[i]) * (b_eps[j]);
-      if (j > i) {
-        prod[p] = prod[p] + (eps[j]) * (b_eps[i]);
-        if (j > 2 && i < 3) {
-          prod[p] = (prod[p]) * (2.0f);
-        }
-      }
-      if (i > 2) {
-        prod[p] = (prod[p]) * (4.0f);
-      }
-      p = p + 1;
-    }
-  }
+  prod[0] = (eps[0]) * (b_eps[0]);
+  prod[1] = (eps[0]) * (b_eps[1]);
+  prod[1] = prod[1] + (eps[1]) * (b_eps[0]);
+  prod[2] = (eps[0]) * (b_eps[2]);
+  prod[2] = prod[2] + (eps[2]) * (b_eps[0]);
+  prod[3] = (eps[0]) * (b_eps[3]);
+  prod[3] = prod[3] + (eps[3]) * (b_eps[0]);
+  prod[3] = (prod[3]) * (2.0f);
+  prod[4] = (eps[0]) * (b_eps[4]);
+  prod[4] = prod[4] + (eps[4]) * (b_eps[0]);
+  prod[4] = (prod[4]) * (2.0f);
+  prod[5] = (eps[0]) * (b_eps[5]);
+  prod[5] = prod[5] + (eps[5]) * (b_eps[0]);
+  prod[5] = (prod[5]) * (2.0f);
+  prod[6] = (eps[1]) * (b_eps[1]);
+  prod[7] = (eps[1]) * (b_eps[2]);
+  prod[7] = prod[7] + (eps[2]) * (b_eps[1]);
+  prod[8] = (eps[1]) * (b_eps[3]);
+  prod[8] = prod[8] + (eps[3]) * (b_eps[1]);
+  prod[8] = (prod[8]) * (2.0f);
+  prod[9] = (eps[1]) * (b_eps[4]);
+  prod[9] = prod[9] + (eps[4]) * (b_eps[1]);
+  prod[9] = (prod[9]) * (2.0f);
+  prod[10] = (eps[1]) * (b_eps[5]);
+  prod[10] = prod[10] + (eps[5]) * (b_eps[1]);
+  prod[10] = (prod[10]) * (2.0f);
+  prod[11] = (eps[2]) * (b_eps[2]);
+  prod[12] = (eps[2]) * (b_eps[3]);
+  prod[12] = prod[12] + (eps[3]) * (b_eps[2]);
+  prod[12] = (prod[12]) * (2.0f);
+  prod[13] = (eps[2]) * (b_eps[4]);
+  prod[13] = prod[13] + (eps[4]) * (b_eps[2]);
+  prod[13] = (prod[13]) * (2.0f);
+  prod[14] = (eps[2]) * (b_eps[5]);
+  prod[14] = prod[14] + (eps[5]) * (b_eps[2]);
+  prod[14] = (prod[14]) * (2.0f);
+  prod[15] = (eps[3]) * (b_eps[3]);
+  prod[15] = (prod[15]) * (4.0f);
+  prod[16] = (eps[3]) * (b_eps[4]);
+  prod[16] = prod[16] + (eps[4]) * (b_eps[3]);
+  prod[16] = (prod[16]) * (4.0f);
+  prod[17] = (eps[3]) * (b_eps[5]);
+  prod[17] = prod[17] + (eps[5]) * (b_eps[3]);
+  prod[17] = (prod[17]) * (4.0f);
+  prod[18] = (eps[4]) * (b_eps[4]);
+  prod[18] = (prod[18]) * (4.0f);
+  prod[19] = (eps[4]) * (b_eps[5]);
+  prod[19] = prod[19] + (eps[5]) * (b_eps[4]);
+  prod[19] = (prod[19]) * (4.0f);
+  prod[20] = (eps[5]) * (b_eps[5]);
+  prod[20] = (prod[20]) * (4.0f);
 }
 __global__ void compute_ani_kernel(const float * epsilondev_xx, const float * epsilondev_yy, const float * epsilondev_xy, const float * epsilondev_xz, const float * epsilondev_yz, const float * epsilon_trace_over_3, const float * b_epsilondev_xx, const float * b_epsilondev_yy, const float * b_epsilondev_xy, const float * b_epsilondev_xz, const float * b_epsilondev_yz, const float * b_epsilon_trace_over_3, float * cijkl_kl, const int NSPEC, const float deltat){
   int i;
   int ispec;
   int ijk_ispec;
+  int offset;
   float eps_trace_over_3;
   float b_eps_trace_over_3;
   float prod[(21)];
@@ -144,8 +180,9 @@ __global__ void compute_ani_kernel(const float * epsilondev_xx, const float * ep
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];
     b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec];
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);
+    offset = ((ispec) * (NGLL3)) * (21) + threadIdx.x;
     for (i = 0; i <= 20; i += 1) {
-      cijkl_kl[i + (21) * (ijk_ispec)] = cijkl_kl[i + (21) * (ijk_ispec)] + (deltat) * (prod[i]);
+      cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);
     }
   }
 }

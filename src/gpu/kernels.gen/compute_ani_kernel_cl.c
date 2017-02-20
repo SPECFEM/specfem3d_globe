@@ -116,27 +116,63 @@ void compute_strain_product(float * prod, const float eps_trace_over_3, const fl
   b_eps[3] = b_epsdev[4];\n\
   b_eps[4] = b_epsdev[3];\n\
   b_eps[5] = b_epsdev[2];\n\
-  p = 0;\n\
-  for (i = 0; i <= 5; i += 1) {\n\
-    for (j = i; j <= 5; j += 1) {\n\
-      prod[p] = (eps[i]) * (b_eps[j]);\n\
-      if (j > i) {\n\
-        prod[p] = prod[p] + (eps[j]) * (b_eps[i]);\n\
-        if (j > 2 && i < 3) {\n\
-          prod[p] = (prod[p]) * (2.0f);\n\
-        }\n\
-      }\n\
-      if (i > 2) {\n\
-        prod[p] = (prod[p]) * (4.0f);\n\
-      }\n\
-      p = p + 1;\n\
-    }\n\
-  }\n\
+  prod[0] = (eps[0]) * (b_eps[0]);\n\
+  prod[1] = (eps[0]) * (b_eps[1]);\n\
+  prod[1] = prod[1] + (eps[1]) * (b_eps[0]);\n\
+  prod[2] = (eps[0]) * (b_eps[2]);\n\
+  prod[2] = prod[2] + (eps[2]) * (b_eps[0]);\n\
+  prod[3] = (eps[0]) * (b_eps[3]);\n\
+  prod[3] = prod[3] + (eps[3]) * (b_eps[0]);\n\
+  prod[3] = (prod[3]) * (2.0f);\n\
+  prod[4] = (eps[0]) * (b_eps[4]);\n\
+  prod[4] = prod[4] + (eps[4]) * (b_eps[0]);\n\
+  prod[4] = (prod[4]) * (2.0f);\n\
+  prod[5] = (eps[0]) * (b_eps[5]);\n\
+  prod[5] = prod[5] + (eps[5]) * (b_eps[0]);\n\
+  prod[5] = (prod[5]) * (2.0f);\n\
+  prod[6] = (eps[1]) * (b_eps[1]);\n\
+  prod[7] = (eps[1]) * (b_eps[2]);\n\
+  prod[7] = prod[7] + (eps[2]) * (b_eps[1]);\n\
+  prod[8] = (eps[1]) * (b_eps[3]);\n\
+  prod[8] = prod[8] + (eps[3]) * (b_eps[1]);\n\
+  prod[8] = (prod[8]) * (2.0f);\n\
+  prod[9] = (eps[1]) * (b_eps[4]);\n\
+  prod[9] = prod[9] + (eps[4]) * (b_eps[1]);\n\
+  prod[9] = (prod[9]) * (2.0f);\n\
+  prod[10] = (eps[1]) * (b_eps[5]);\n\
+  prod[10] = prod[10] + (eps[5]) * (b_eps[1]);\n\
+  prod[10] = (prod[10]) * (2.0f);\n\
+  prod[11] = (eps[2]) * (b_eps[2]);\n\
+  prod[12] = (eps[2]) * (b_eps[3]);\n\
+  prod[12] = prod[12] + (eps[3]) * (b_eps[2]);\n\
+  prod[12] = (prod[12]) * (2.0f);\n\
+  prod[13] = (eps[2]) * (b_eps[4]);\n\
+  prod[13] = prod[13] + (eps[4]) * (b_eps[2]);\n\
+  prod[13] = (prod[13]) * (2.0f);\n\
+  prod[14] = (eps[2]) * (b_eps[5]);\n\
+  prod[14] = prod[14] + (eps[5]) * (b_eps[2]);\n\
+  prod[14] = (prod[14]) * (2.0f);\n\
+  prod[15] = (eps[3]) * (b_eps[3]);\n\
+  prod[15] = (prod[15]) * (4.0f);\n\
+  prod[16] = (eps[3]) * (b_eps[4]);\n\
+  prod[16] = prod[16] + (eps[4]) * (b_eps[3]);\n\
+  prod[16] = (prod[16]) * (4.0f);\n\
+  prod[17] = (eps[3]) * (b_eps[5]);\n\
+  prod[17] = prod[17] + (eps[5]) * (b_eps[3]);\n\
+  prod[17] = (prod[17]) * (4.0f);\n\
+  prod[18] = (eps[4]) * (b_eps[4]);\n\
+  prod[18] = (prod[18]) * (4.0f);\n\
+  prod[19] = (eps[4]) * (b_eps[5]);\n\
+  prod[19] = prod[19] + (eps[5]) * (b_eps[4]);\n\
+  prod[19] = (prod[19]) * (4.0f);\n\
+  prod[20] = (eps[5]) * (b_eps[5]);\n\
+  prod[20] = (prod[20]) * (4.0f);\n\
 }\n\
 __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __global float * epsilondev_yy, const __global float * epsilondev_xy, const __global float * epsilondev_xz, const __global float * epsilondev_yz, const __global float * epsilon_trace_over_3, const __global float * b_epsilondev_xx, const __global float * b_epsilondev_yy, const __global float * b_epsilondev_xy, const __global float * b_epsilondev_xz, const __global float * b_epsilondev_yz, const __global float * b_epsilon_trace_over_3, __global float * cijkl_kl, const int NSPEC, const float deltat){\n\
   int i;\n\
   int ispec;\n\
   int ijk_ispec;\n\
+  int offset;\n\
   float eps_trace_over_3;\n\
   float b_eps_trace_over_3;\n\
   float prod[(21)];\n\
@@ -158,8 +194,9 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
     eps_trace_over_3 = epsilon_trace_over_3[ijk_ispec];\n\
     b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec];\n\
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);\n\
+    offset = ((ispec) * (NGLL3)) * (21) + get_local_id(0);\n\
     for (i = 0; i <= 20; i += 1) {\n\
-      cijkl_kl[i + (21) * (ijk_ispec)] = cijkl_kl[i + (21) * (ijk_ispec)] + (deltat) * (prod[i]);\n\
+      cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);\n\
     }\n\
   }\n\
 }\n\
