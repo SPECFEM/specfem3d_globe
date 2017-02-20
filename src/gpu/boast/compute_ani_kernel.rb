@@ -1,5 +1,6 @@
 module BOAST
 
+  require './resort_array.rb'
   require './compute_strain_product_helper.rb'
 
   def BOAST::compute_ani_kernel(ref = true, n_gll3 = 125)
@@ -19,7 +20,7 @@ module BOAST
     v.push b_epsilondev_xz        = Real("b_epsilondev_xz",        :dir => :in, :dim => [Dim()] )
     v.push b_epsilondev_yz        = Real("b_epsilondev_yz",        :dir => :in, :dim => [Dim()] )
     v.push b_epsilon_trace_over_3 = Real("b_epsilon_trace_over_3", :dir => :in, :dim => [Dim()] )
-    v.push cijkl_kl               = Real("cijkl_kl",               :dir => :inout,:dim => [Dim(21),Dim()] )
+    v.push cijkl_kl               = Real("cijkl_kl",               :dir => :inout,:dim => [Dim()] )
     v.push nspec                  = Int( "NSPEC",                  :dir => :in)
     v.push deltat                 = Real("deltat",                 :dir => :in)
 
@@ -39,6 +40,7 @@ module BOAST
         decl i = Int("i")
         decl ispec = Int("ispec")
         decl ijk_ispec = Int("ijk_ispec")
+        decl offset = Int("offset")
         decl eps_trace_over_3 = Real("eps_trace_over_3")
         decl b_eps_trace_over_3 = Real("b_eps_trace_over_3")
         decl prod = Real("prod", :dim => [Dim(21)], :allocate => true)
@@ -63,9 +65,11 @@ module BOAST
 
           print sub_compute_strain_product.call(prod,eps_trace_over_3,epsdev,b_eps_trace_over_3,b_epsdev)
 
+          print offset === ispec*ngll3*21+get_local_id(0);
+
           # updates full anisotropic kernel
           print For(i, 0, 21-1) {
-            print cijkl_kl[i, ijk_ispec] === cijkl_kl[i, ijk_ispec] + deltat * prod[i]
+            print cijkl_kl[i*ngll3+offset] === cijkl_kl[i*ngll3+offset] + deltat * prod[i]
           }
         }
       close p
