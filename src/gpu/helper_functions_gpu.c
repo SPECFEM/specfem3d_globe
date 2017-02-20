@@ -283,7 +283,6 @@ void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array,
 #endif
 }
 
-
 /* ----------------------------------------------------------------------------------------------- */
 
 // creates real array on GPU
