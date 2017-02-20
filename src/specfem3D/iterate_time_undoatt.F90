@@ -40,7 +40,7 @@
 
   ! local parameters
   integer :: it_temp,seismo_current_temp
-  integer :: i,j,ier
+  integer :: ier
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_cm_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: b_displ_ic_store_buffer
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: b_displ_oc_store_buffer,b_accel_oc_store_buffer
@@ -328,18 +328,28 @@
 
         ! transfers wavefields from GPU to CPU for buffering
         if (GPU_MODE) then
+#if defined(USE_CUDA) || defined(USE_OPENCL)
+          if(it_of_this_subset .GE. 2) then
+            call unregister_host_array(b_displ_cm_store_buffer(:,:, it_of_this_subset-1))
+          endif
+          call register_host_array(NDIM*NGLOB_CRUST_MANTLE_ADJOINT, b_displ_cm_store_buffer(:,:, it_of_this_subset))
+#endif
           ! daniel debug: check if these transfers could be made async to overlap
-          call transfer_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,Mesh_pointer)
-          call transfer_b_displ_ic_from_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,Mesh_pointer)
-          call transfer_b_displ_oc_from_device(NGLOB_OUTER_CORE,b_displ_outer_core,Mesh_pointer)
-          call transfer_b_accel_oc_from_device(NGLOB_OUTER_CORE,b_accel_outer_core,Mesh_pointer)
+          call transfer_ofs_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_of_this_subset,&
+                                                   b_displ_cm_store_buffer,Mesh_pointer)
+          call transfer_ofs_b_displ_ic_from_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_of_this_subset,&
+                                                   b_displ_ic_store_buffer,Mesh_pointer)
+          call transfer_ofs_b_displ_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_this_subset,&
+                                                   b_displ_oc_store_buffer,Mesh_pointer)
+          call transfer_ofs_b_accel_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_this_subset,&
+                                                   b_accel_oc_store_buffer,Mesh_pointer)
+        else 
+          ! stores wavefield in buffers
+          b_displ_cm_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
+          b_displ_oc_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
+          b_accel_oc_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
+          b_displ_ic_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
         endif
-
-        ! stores wavefield in buffers
-        b_displ_cm_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
-        b_displ_oc_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
-        b_accel_oc_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
-        b_displ_ic_store_buffer(:,:,it_of_this_subset) = b_displ_inner_core(:,:)
 
         ! for noise kernel
         if (NOISE_TOMOGRAPHY == 3) then
@@ -360,35 +370,27 @@
         ! reads backward/reconstructed wavefield from buffers
         ! note: uses wavefield at corresponding time (NSTEP - it + 1 ), i.e. we have now time-reversed wavefields
         ! crust/mantle
-        do j = 1,NGLOB_CRUST_MANTLE_ADJOINT
-          do i = 1, NDIM
-            b_displ_crust_mantle(i,j) = b_displ_cm_store_buffer(i,j,it_subset_end-it_of_this_subset+1)
-          enddo
-        enddo
-        ! outer core
-        do j = 1,NGLOB_OUTER_CORE_ADJOINT
-            b_displ_outer_core(j) = b_displ_oc_store_buffer(j,it_subset_end-it_of_this_subset+1)
-            b_accel_outer_core(j) = b_accel_oc_store_buffer(j,it_subset_end-it_of_this_subset+1)
-        enddo
-        ! inner core
-        do j = 1,NGLOB_INNER_CORE_ADJOINT
-          do i = 1, NDIM
-            b_displ_inner_core(i,j) = b_displ_ic_store_buffer(i,j,it_subset_end-it_of_this_subset+1)
-          enddo
-        enddo
+        ! transfers wavefields from CPU to GPU
+        if (GPU_MODE) then
+          ! daniel debug: check if these transfers could be made async to overlap
+           call transfer_ofs_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_subset_end-it_of_this_subset+1, &
+                                                  b_displ_cm_store_buffer,Mesh_pointer)
+           call transfer_ofs_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1,&
+                                                  b_displ_ic_store_buffer,Mesh_pointer)
+          call transfer_ofs_b_displ_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1,&
+                                                 b_displ_oc_store_buffer,Mesh_pointer)
+          call transfer_ofs_b_accel_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1,&
+                                                 b_accel_oc_store_buffer,Mesh_pointer)
+        else
+          b_displ_crust_mantle(:,:) = b_displ_cm_store_buffer(:,:,it_subset_end-it_of_this_subset+1)
+          b_displ_outer_core(:) = b_displ_oc_store_buffer(:,it_subset_end-it_of_this_subset+1)
+          b_accel_outer_core(:) = b_accel_oc_store_buffer(:,it_subset_end-it_of_this_subset+1)
+          b_displ_inner_core(:,:) = b_displ_ic_store_buffer(:,:,it_subset_end-it_of_this_subset+1)
+        endif
 
         ! for noise kernel
         if (NOISE_TOMOGRAPHY == 3) then
           noise_surface_movie(:,:,:,:) = b_noise_surface_movie_buffer(:,:,:,:,it_subset_end-it_of_this_subset+1)
-        endif
-
-        ! transfers wavefields from CPU to GPU
-        if (GPU_MODE) then
-          ! daniel debug: check if these transfers could be made async to overlap
-          call transfer_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE,b_displ_crust_mantle,Mesh_pointer)
-          call transfer_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE,b_displ_inner_core,Mesh_pointer)
-          call transfer_b_displ_oc_to_device(NGLOB_OUTER_CORE,b_displ_outer_core,Mesh_pointer)
-          call transfer_b_accel_oc_to_device(NGLOB_OUTER_CORE,b_accel_outer_core,Mesh_pointer)
         endif
 
         it = it + 1
@@ -418,7 +420,15 @@
           call compute_forces_viscoelastic()
 
         enddo ! istage
-
+#if defined(USE_CUDA) || defined(USE_OPENCL)
+        if (GPU_MODE) then
+          call unregister_host_array(b_displ_cm_store_buffer(:,:, it_subset_end-it_of_this_subset+1))
+          if(it_of_this_subset .NE. it_subset_end) then
+            call register_host_array(NDIM*NGLOB_CRUST_MANTLE_ADJOINT, &
+                                     b_displ_cm_store_buffer(:,:, it_subset_end-it_of_this_subset))
+          endif
+        endif
+#endif
         ! write the seismograms with time shift
         call write_seismograms()
 
