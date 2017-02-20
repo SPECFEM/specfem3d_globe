@@ -34,6 +34,7 @@ cuda_kernels_OBJS := \
 	$O/outer_core_impl_kernel_forward.cuda-kernel.o \
 	$O/prepare_boundary_accel_on_device.cuda-kernel.o \
 	$O/prepare_boundary_potential_on_device.cuda-kernel.o \
+	$O/resort_array.cuda-kernel.o \
 	$O/update_accel_acoustic_kernel.cuda-kernel.o \
 	$O/update_accel_elastic_kernel.cuda-kernel.o \
 	$O/update_disp_veloc_kernel.cuda-kernel.o \

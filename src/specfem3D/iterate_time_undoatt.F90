@@ -437,6 +437,11 @@
 
  100 continue
 
+
+  if (SIMULATION_TYPE == 3 .and. GPU_MODE) then
+    call resort_array(Mesh_pointer)
+  endif
+ 
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then
     deallocate(b_displ_cm_store_buffer, &

@@ -579,6 +579,13 @@ void FC_FUNC_ (prepare_cleanup_device,
 // src/gpu/save_and_compare_cpu_vs_gpu.c
 //
 
+//
+// src/gpu/rearranging_array_gpu.c
+//
+
+void FC_FUNC_ (resort_array,
+               RESORT_ARRAY) (long *Mesh_pointer_f) {}
+
 
 //
 // src/gpu/transfer_fields_gpu.c

@@ -8,7 +8,6 @@ def rndup( val, div)
   return (val%div) == 0 ? val : val + div - (val%div)
 end
 
-# default options
 $options = {:output_dir => "./output", :elem_per_thread => 1, :langs => [:CUDA, :CL] }
 
 $parser = OptionParser::new do |opts|
@@ -76,7 +75,8 @@ small_kernels = [
 :compute_strength_noise_kernel,
 :compute_ani_undoatt_kernel,
 :compute_iso_undoatt_kernel,
-:compute_strain_kernel
+:compute_strain_kernel,
+:resort_array
 ]
 
 big_kernels = [
@@ -109,8 +109,6 @@ puts "BOAST version #{v}"
 puts "-------------------------------"
 puts "building kernel files:"
 puts "-------------------------------"
-puts "option: element per thread = #{$options[:elem_per_thread]}"
-puts ""
 
 # checks output directory
 if File.exists? "#{$options[:output_dir]}/" then
@@ -139,12 +137,7 @@ kerns.each { |kern|
     end
     # generates kernels
     if lang == :CUDA then
-      if big_kernels.include?(kern) then
-        k = BOAST::method(kern).call(false, $options[:elem_per_thread])
-      else
-        k = BOAST::method(kern).call(false)
-      end
-      #k = BOAST::method(kern).call(false)
+      k = BOAST::method(kern).call(false)
       puts "  Generated"
       k.print if $options[:display]
       filename = "#{kern}.cu"

@@ -33,6 +33,7 @@
 #include "outer_core_impl_kernel_forward_cl.c"
 #include "prepare_boundary_accel_on_device_cl.c"
 #include "prepare_boundary_potential_on_device_cl.c"
+#include "resort_array_cl.c"
 #include "update_accel_acoustic_kernel_cl.c"
 #include "update_accel_elastic_kernel_cl.c"
 #include "update_disp_veloc_kernel_cl.c"

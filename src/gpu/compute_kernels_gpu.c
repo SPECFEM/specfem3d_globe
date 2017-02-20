@@ -697,3 +697,34 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
 
   GPU_ERROR_CHECKING ("compute_hess_kernel_gpu");
 }
+
+/* ----------------------------------------------------------------------------------------------- */
+
+extern EXTERN_LANG
+void FC_FUNC_ (resort_array,
+               RESORT_ARRAY) (long *Mesh_pointer_f) {
+
+  TRACE ("resort d_cijkl_kl_crust_mantle array");
+  // debug
+
+  //get mesh pointer out of Fortran integer container
+  Mesh *mp = (Mesh *) *Mesh_pointer_f;
+
+  int blocksize = NGLL3;
+
+  // blocks
+  int num_blocks_x, num_blocks_y;
+  get_blocks_xy (mp->NSPEC_CRUST_MANTLE, &num_blocks_x, &num_blocks_y);
+
+
+#ifdef USE_CUDA
+    dim3 grid(num_blocks_x,num_blocks_y);
+    dim3 threads(blocksize,1,1);
+    if (run_cuda) {
+        resort_array<<<grid,threads,0,mp->compute_stream>>>(mp->d_cijkl_kl_crust_mantle.cuda);
+
+    }
+#endif
+
+  GPU_ERROR_CHECKING ("resort d_cijkl_kl_crust_mantle array");
+}

@@ -260,6 +260,11 @@
 
  100 continue
 
+
+  if (SIMULATION_TYPE == 3 .and. GPU_MODE) then
+    call resort_array(Mesh_pointer)
+  endif
+
   ! close the huge file that contains a dump of all the time steps to disk
   if (EXACT_UNDOING_TO_DISK) call finish_exact_undoing_to_disk()
 
