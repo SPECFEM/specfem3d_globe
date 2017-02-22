@@ -18,13 +18,13 @@ module BOAST
       make_specfem3d_header( :ngll3 => n_gll3 )
 
       open p
-        decl ispec = Int("ispec")
-        decl i = Int("i")
-        decl id = Int("id")
-        decl idx = Int("idx")
-        decl t_idx = Int("t_idx")
-        decl tx = Int("tx")
-        decl offset = Int("offset")
+        decl ispec = Int("ispec", :signed => false)
+        decl i = Int("i", :signed => false)
+        decl id = Int("id", :signed => false)
+        decl idx = Int("idx", :signed => false)
+        decl t_idx = Int("t_idx", :signed => false)
+        decl tx = Int("tx", :signed => false)
+        decl offset = Int("offset", :signed => false)
         decl sh_tmp = Real("sh_tmp",     :local => true, :dim => [Dim(21*n_gll3)] )
         
         print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
