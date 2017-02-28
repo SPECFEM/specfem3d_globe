@@ -80,7 +80,7 @@
 
   ! On the first iteration, go get the ASCII file.
   if (.not. allocated (stfArray_external)) then
-    call get_external_stf()
+    call get_EXTERNAL_SOURCE_TIME_FUNCTION()
   endif
 
   comp_source_time_function_ext = stfArray_external(it)
@@ -91,7 +91,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine get_external_stf()
+  subroutine get_EXTERNAL_SOURCE_TIME_FUNCTION()
 
   use specfem_par, only: NSTEP, stfArray_external, IIN
   implicit none
@@ -127,4 +127,4 @@
 
   close(IIN)
 
-  end subroutine get_external_stf
+  end subroutine get_EXTERNAL_SOURCE_TIME_FUNCTION
