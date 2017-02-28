@@ -196,9 +196,6 @@ static\n\
 void compute_strain_product(float * prod, const float eps_trace_over_3, const float * epsdev, const float b_eps_trace_over_3, const float * b_epsdev){\n\
   float eps[(6)];\n\
   float b_eps[(6)];\n\
-  int p;\n\
-  int i;\n\
-  int j;\n\
   eps[0] = epsdev[0] + eps_trace_over_3;\n\
   eps[1] = epsdev[1] + eps_trace_over_3;\n\
   eps[2] =  -(eps[0] + eps[1]) + (eps_trace_over_3) * (3.0f);\n\

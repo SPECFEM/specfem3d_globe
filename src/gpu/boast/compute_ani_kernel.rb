@@ -1,6 +1,5 @@
 module BOAST
 
-  require './resort_array.rb'
   require './compute_strain_product_helper.rb'
 
   def BOAST::compute_ani_kernel(ref = true, n_gll3 = 125)
