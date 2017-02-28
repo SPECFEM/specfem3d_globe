@@ -67,9 +67,9 @@ module BOAST
           print accel[id*3 + 1] === accel[id*3 + 1]*rmassy[id] - two_omega_earth*veloc[id*3    ]
           print accel[id*3 + 2] === accel[id*3 + 2]*rmassz[id]
         when :veloc_elastic
-          print veloc[id*3    ] === veloc[id*3    ] + deltatover2*accel[id*3    ]
-          print veloc[id*3 + 1] === veloc[id*3 + 1] + deltatover2*accel[id*3 + 1]
-          print veloc[id*3 + 2] === veloc[id*3 + 2] + deltatover2*accel[id*3 + 2]
+          print veloc[id] === veloc[id] + deltatover2*accel[id]
+          print veloc[size + id] === veloc[size + id] + deltatover2*accel[size + id]
+          print veloc[size+size + id] === veloc[size+size + id] + deltatover2*accel[size+size + id]
         when :accel_acoustic
           print accel[id] === accel[id]*rmass[id]
         when :veloc_acoustic
