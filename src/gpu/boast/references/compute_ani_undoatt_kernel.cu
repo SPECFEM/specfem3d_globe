@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 2.0.1
+//      this file has been generated automatically by BOAST version 2.0.2
 //      by: make boast_kernels
 
 /*
@@ -282,6 +282,7 @@ __global__ void compute_ani_undoatt_kernel(const float * epsilondev_xx, const fl
     compute_element_strain_undoatt(ispec, ijk_ispec, d_ibool, s_dummyx_loc, s_dummyy_loc, s_dummyz_loc, d_xix, d_xiy, d_xiz, d_etax, d_etay, d_etaz, d_gammax, d_gammay, d_gammaz, sh_hprime_xx, b_epsdev,  &b_eps_trace_over_3);
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);
     offset = ((ispec) * (NGLL3)) * (21) + tx;
+    // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu
     for (i = 0; i <= 20; i += 1) {
       cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);
     }

@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 2.0.1
+//      this file has been generated automatically by BOAST version 2.0.2
 //      by: make boast_kernels
 
 /*
@@ -192,6 +192,7 @@ __kernel void compute_ani_kernel(const __global float * epsilondev_xx, const __g
     b_eps_trace_over_3 = b_epsilon_trace_over_3[ijk_ispec];\n\
     compute_strain_product(prod, eps_trace_over_3, epsdev, b_eps_trace_over_3, b_epsdev);\n\
     offset = ((ispec) * (NGLL3)) * (21) + get_local_id(0);\n\
+    // attention: following array is sorted differently on GPU and CPU, -> use 'resort_array' before copying back to cpu\n\
     for (i = 0; i <= 20; i += 1) {\n\
       cijkl_kl[(i) * (NGLL3) + offset] = cijkl_kl[(i) * (NGLL3) + offset] + (deltat) * (prod[i]);\n\
     }\n\

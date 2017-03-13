@@ -41,6 +41,7 @@
   implicit none
 
   ! crust mantle
+  ! attention: cijkl_kl_crust_mantle is sorted differently on GPU and CPU
   call compute_kernels_crust_mantle()
 
   ! only information to compute the crust_mantle kernels was saved to disk

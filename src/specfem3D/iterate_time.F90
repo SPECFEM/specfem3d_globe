@@ -235,6 +235,7 @@
     call write_seismograms()
 
     ! adjoint simulations: kernels
+    ! attention: for GPU_MODE and ANISOTROPIC_KL it is necessary to use resort_array (see lines 265-268)
     if (SIMULATION_TYPE == 3) then
       call compute_kernels()
     endif
@@ -262,6 +263,7 @@
 
 
   if (SIMULATION_TYPE == 3 .and. GPU_MODE) then
+    ! attention: cijkl_kl_crust_mantle is sorted differently on GPU and CPU
     call resort_array(Mesh_pointer)
   endif
 
