@@ -118,9 +118,10 @@
   ! check stability of the code, exit if unstable
   ! negative values can occur with some compilers when the unstable value is greater
   ! than the greatest possible floating-point number of the machine
-  if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0) &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
+  if (Usolidnorm > STABILITY_THRESHOLD .or. Usolidnorm < 0 .or. Usolidnorm /= Usolidnorm) &
     call exit_MPI(myrank,'forward simulation became unstable in solid and blew up')
-  if (Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0) &
+  if (Ufluidnorm > STABILITY_THRESHOLD .or. Ufluidnorm < 0 .or. Ufluidnorm /= Ufluidnorm) &
     call exit_MPI(myrank,'forward simulation became unstable in fluid and blew up')
 
   ! compute the maximum of the maxima for all the slices using an MPI reduction
@@ -144,9 +145,10 @@
       call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
     endif
 
-    if (b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0) &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
+    if (b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0 .or. b_Usolidnorm /= b_Usolidnorm) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up  in the solid')
-    if (b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0) &
+    if (b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0 .or. b_Ufluidnorm /= b_Ufluidnorm) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up  in the fluid')
 
     ! compute the maximum of the maxima for all the slices using an MPI reduction
@@ -354,15 +356,17 @@
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0) &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
+    if (Usolidnorm_all > STABILITY_THRESHOLD .or. Usolidnorm_all < 0 .or. Usolidnorm_all /= Usolidnorm_all) &
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the solid')
-    if (Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0) &
+    if (Ufluidnorm_all > STABILITY_THRESHOLD .or. Ufluidnorm_all < 0 .or. Ufluidnorm_all /= Ufluidnorm_all) &
       call exit_MPI(myrank,'forward simulation became unstable and blew up in the fluid')
 
     if (SIMULATION_TYPE == 3 .and. .not. UNDO_ATTENUATION) then
-      if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
+      if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0 .or. b_Usolidnorm_all /= b_Usolidnorm_all) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
-      if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
+      if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0 .or. b_Ufluidnorm_all /= b_Ufluidnorm_all) &
         call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
     endif
 
@@ -379,8 +383,7 @@
 ! only for backward/reconstructed wavefield
 
   use constants, only: CUSTOM_REAL,IMAIN,R_EARTH, &
-    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE, &
-    STABILITY_THRESHOLD
+    ADD_TIME_ESTIMATE_ELSEWHERE,HOURS_TIME_DIFFERENCE,MINUTES_TIME_DIFFERENCE,STABILITY_THRESHOLD
 
   use specfem_par, only: &
     GPU_MODE,Mesh_pointer, &
@@ -428,9 +431,10 @@
     call check_norm_acoustic_from_device(b_Ufluidnorm,Mesh_pointer,3)
   endif
 
-  if (b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0) &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
+  if (b_Usolidnorm > STABILITY_THRESHOLD .or. b_Usolidnorm < 0 .or. b_Usolidnorm /= b_Usolidnorm) &
     call exit_MPI(myrank,'backward simulation became unstable and blew up  in the solid')
-  if (b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0) &
+  if (b_Ufluidnorm > STABILITY_THRESHOLD .or. b_Ufluidnorm < 0 .or. b_Ufluidnorm /= b_Ufluidnorm) &
     call exit_MPI(myrank,'backward simulation became unstable and blew up  in the fluid')
 
   ! compute the maximum of the maxima for all the slices using an MPI reduction
@@ -487,9 +491,10 @@
     ! check stability of the code, exit if unstable
     ! negative values can occur with some compilers when the unstable value is greater
     ! than the greatest possible floating-point number of the machine
-    if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0) &
+! this trick checks for NaN (Not a Number), which is not even equal to itself
+    if (b_Usolidnorm_all > STABILITY_THRESHOLD .or. b_Usolidnorm_all < 0 .or. b_Usolidnorm_all /= b_Usolidnorm_all) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up in the solid')
-    if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0) &
+    if (b_Ufluidnorm_all > STABILITY_THRESHOLD .or. b_Ufluidnorm_all < 0 .or. b_Ufluidnorm_all /= b_Ufluidnorm_all) &
       call exit_MPI(myrank,'backward simulation became unstable and blew up in the fluid')
 
   endif
