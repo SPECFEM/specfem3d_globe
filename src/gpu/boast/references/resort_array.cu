@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 2.0.1
+//      this file has been generated automatically by BOAST version 2.0.2
 //      by: make boast_kernels
 
 /*
@@ -84,26 +84,30 @@
 #define BLOCKSIZE_TRANSFER 256
 #endif
 
-__global__ void resort_array(float * old_array){
-  int ispec;
-  int i;
-  int id;
-  int idx;
-  int t_idx;
-  int tx;
-  int offset;
+__global__ void resort_array(float * old_array, const int NSPEC){
+  unsigned int ispec;
+  unsigned int i;
+  unsigned int id;
+  unsigned int idx;
+  unsigned int t_idx;
+  unsigned int tx;
+  unsigned int offset;
   __shared__ float sh_tmp[(2625)];
   ispec = blockIdx.x + (blockIdx.y) * (gridDim.x);
-  tx = threadIdx.x;
-  offset = ((ispec) * (NGLL3)) * (21) + tx;
-  for (i = 0; i <= 20; i += 1) {
-    sh_tmp[(i) * (NGLL3) + tx] = old_array[(i) * (NGLL3) + offset];
+  if (ispec < NSPEC) {
+    tx = threadIdx.x;
+    offset = ((ispec) * (NGLL3)) * (21) + tx;
+    for (i = 0; i <= 20; i += 1) {
+      sh_tmp[(i) * (NGLL3) + tx] = old_array[(i) * (NGLL3) + offset];
+    }
   }
   __syncthreads();
-  for (i = 0; i <= 20; i += 1) {
-    id = (i) * (NGLL3) + tx;
-    idx = (id) / (21);
-    t_idx =  id % 21;
-    old_array[(i) * (NGLL3) + offset] = sh_tmp[idx + (t_idx) * (NGLL3)];
+  if (ispec < NSPEC) {
+    for (i = 0; i <= 20; i += 1) {
+      id = (i) * (NGLL3) + tx;
+      idx = (id) / (21);
+      t_idx = id % 21;
+      old_array[(i) * (NGLL3) + offset] = sh_tmp[idx + (t_idx) * (NGLL3)];
+    }
   }
 }

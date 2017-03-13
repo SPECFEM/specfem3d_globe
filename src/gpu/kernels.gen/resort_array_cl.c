@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 2.0.1
+//      this file has been generated automatically by BOAST version 2.0.2
 //      by: make boast_kernels
 
 /*
@@ -95,27 +95,31 @@ inline void atomicAdd(volatile __global float *source, const float val) {\n\
 #define BLOCKSIZE_TRANSFER 256\n\
 #endif\n\
 \n\
-__kernel void resort_array(__global float * old_array){\n\
-  int ispec;\n\
-  int i;\n\
-  int id;\n\
-  int idx;\n\
-  int t_idx;\n\
-  int tx;\n\
-  int offset;\n\
+__kernel void resort_array(__global float * old_array, const int NSPEC){\n\
+  uint ispec;\n\
+  uint i;\n\
+  uint id;\n\
+  uint idx;\n\
+  uint t_idx;\n\
+  uint tx;\n\
+  uint offset;\n\
   __local float sh_tmp[(2625)];\n\
   ispec = get_group_id(0) + (get_group_id(1)) * (get_num_groups(0));\n\
-  tx = get_local_id(0);\n\
-  offset = ((ispec) * (NGLL3)) * (21) + tx;\n\
-  for (i = 0; i <= 20; i += 1) {\n\
-    sh_tmp[(i) * (NGLL3) + tx] = old_array[(i) * (NGLL3) + offset];\n\
+  if (ispec < NSPEC) {\n\
+    tx = get_local_id(0);\n\
+    offset = ((ispec) * (NGLL3)) * (21) + tx;\n\
+    for (i = 0; i <= 20; i += 1) {\n\
+      sh_tmp[(i) * (NGLL3) + tx] = old_array[(i) * (NGLL3) + offset];\n\
+    }\n\
   }\n\
   barrier(CLK_LOCAL_MEM_FENCE);\n\
-  for (i = 0; i <= 20; i += 1) {\n\
-    id = (i) * (NGLL3) + tx;\n\
-    idx = (id) / (21);\n\
-    t_idx = ((id < 0) ^ (21 < 0) ? (id % 21) + 21 : id % 21);\n\
-    old_array[(i) * (NGLL3) + offset] = sh_tmp[idx + (t_idx) * (NGLL3)];\n\
+  if (ispec < NSPEC) {\n\
+    for (i = 0; i <= 20; i += 1) {\n\
+      id = (i) * (NGLL3) + tx;\n\
+      idx = (id) / (21);\n\
+      t_idx =  id % 21;\n\
+      old_array[(i) * (NGLL3) + offset] = sh_tmp[idx + (t_idx) * (NGLL3)];\n\
+    }\n\
   }\n\
 }\n\
 ";
