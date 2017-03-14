@@ -390,6 +390,8 @@ typedef struct mesh_ {
   int NSPEC_CRUST_MANTLE;
   int NGLOB_CRUST_MANTLE;
   int NSPEC_CRUST_MANTLE_STRAIN_ONLY;
+  int NSPECMAX_TISO_MANTLE;
+  int NSPECMAX_ISO_MANTLE;
 
   // interpolators
   gpu_realw_mem d_xix_crust_mantle;
@@ -1035,20 +1037,20 @@ typedef struct mesh_ {
 /*----------------------------------------------------------------------------------------------- */
 
 // defined in helper_functions_gpu.c
-void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
-void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+void gpuCreateCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t size);
+void gpuCreateCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
 
-void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
-void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array, int size);
-void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, int size);
+void gpuCopy_todevice_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
+void gpuCopy_todevice_double (gpu_double_mem *d_array_addr_ptr, double *h_array, size_t size);
+void gpuCopy_todevice_int (gpu_int_mem *d_array_addr_ptr, int *h_array, size_t size);
 
-void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, int size);
+void gpuCopy_from_device_realw (gpu_realw_mem *d_array_addr_ptr, realw *h_array, size_t size);
 
-void gpuMalloc_int (gpu_int_mem *buffer, int size);
-void gpuMalloc_realw (gpu_realw_mem *buffer, int size);
-void gpuMalloc_double (gpu_double_mem *buffer, int size);
+void gpuMalloc_int (gpu_int_mem *buffer, size_t size);
+void gpuMalloc_realw (gpu_realw_mem *buffer, size_t size);
+void gpuMalloc_double (gpu_double_mem *buffer, size_t size);
 
-void gpuMemset_realw (gpu_realw_mem *buffer, int size, int value);
+void gpuMemset_realw (gpu_realw_mem *buffer, size_t size, int value);
 
 void gpuSetConst (gpu_realw_mem *buffer, size_t size, realw *array);
 void gpuFree (void *d_array_addr_ptr);
