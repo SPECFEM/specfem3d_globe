@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_shape2D(myrank,shape2D,dershape2D,xigll,yigll,NGLLA,NGLLB)
+  subroutine get_shape2D(shape2D,dershape2D,xigll,yigll,NGLLA,NGLLB)
 
   use constants
 
@@ -33,7 +33,7 @@
 
 ! generic routine that accepts any polynomial degree in each direction
 
-  integer NGLLA,NGLLB,myrank
+  integer NGLLA,NGLLB
 
   double precision xigll(NGLLA)
   double precision yigll(NGLLB)

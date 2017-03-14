@@ -27,7 +27,7 @@
 
 ! create AVS or DX 2D data for the faces of the global chunks,
 ! to be recombined in postprocessing
-  subroutine write_AVS_DX_global_chunks_data(myrank,prname,nspec,iboun,ibool, &
+  subroutine write_AVS_DX_global_chunks_data(prname,nspec,iboun,ibool, &
                 idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                 npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
                 ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
@@ -37,8 +37,6 @@
   use constants
 
   implicit none
-
-  integer :: myrank
 
   ! processor identification
   character(len=MAX_STRING_LEN) :: prname
@@ -185,7 +183,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -203,7 +201,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -221,7 +219,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
         if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
           r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
-          call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+          call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
           vmax = vp
           vmin = vp
         endif
@@ -239,7 +237,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
         if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
           r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
-          call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+          call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
           vmax = vp
           vmin = vp
         endif
@@ -266,7 +264,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -284,7 +282,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 + ystore(NGLLX,NGLLY,1,ispec)**2 + zstore(NGLLX,NGLLY,1,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -302,7 +300,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -320,7 +318,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 + ystore(NGLLX,1,NGLLZ,ispec)**2 + zstore(NGLLX,1,NGLLZ,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -347,7 +345,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -365,7 +363,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -383,7 +381,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 + ystore(NGLLX,1,NGLLZ,ispec)**2 + zstore(NGLLX,1,NGLLZ,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -401,7 +399,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -428,7 +426,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -446,7 +444,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 + ystore(NGLLX,NGLLY,1,ispec)**2 + zstore(NGLLX,NGLLY,1,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -464,7 +462,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -482,7 +480,7 @@
 ! particular case of the outer core (muvstore contains 1/rho)
   if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
     r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 + ystore(1,NGLLY,NGLLZ,ispec)**2 + zstore(1,NGLLY,NGLLZ,ispec)**2)
-    call prem_display_outer_core(myrank,r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
+    call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
     vmax = vp
     vmin = vp
   endif
@@ -564,7 +562,7 @@
 
 
             ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
-            call meshfem3D_models_get1D_val(myrank,iregion_code,idoubling(ispec), &
+            call meshfem3D_models_get1D_val(iregion_code,idoubling(ispec), &
                               r,rho,vpv,vph,vsv,vsh,eta_aniso, &
                               Qkappa,Qmu,RICB,RCMB, &
                               RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &

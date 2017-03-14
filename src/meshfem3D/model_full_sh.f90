@@ -56,17 +56,15 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine model_crust_sh_broadcast(myrank)
+  subroutine model_crust_sh_broadcast()
 
 ! standard routine to setup model
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,myrank
 
   use model_full_sh_crust_par
 
   implicit none
-
-  integer :: myrank
 
   ! local parameters
   integer :: ier
@@ -390,17 +388,16 @@
 !-----------------------------------------------------------------------------------------
 !
 
-  subroutine model_mantle_sh_broadcast(myrank)
+  subroutine model_mantle_sh_broadcast()
 
 ! standard routine to setup model
 
-  use constants, only: IMAIN
+  use constants, only: IMAIN,myrank
 
   use model_full_sh_mantle_par
 
   implicit none
 
-  integer :: myrank
   integer :: ier
 
   ! model_mantle_sh_variables
@@ -1066,15 +1063,13 @@
 
 ! added by JT 2015
 
-  subroutine add_topography_sh_mantle(myrank,xelm,yelm,zelm)
+  subroutine add_topography_sh_mantle(xelm,yelm,zelm)
 
   use constants
 
   use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
-
-  integer :: myrank
 
   double precision :: xelm(NGNOD)
   double precision :: yelm(NGNOD)
@@ -1239,7 +1234,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine add_topography_sh_cmb(myrank,xelm,yelm,zelm)
+  subroutine add_topography_sh_cmb(xelm,yelm,zelm)
 
 ! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
 
@@ -1248,8 +1243,6 @@
   use shared_parameters, only: RCMB,RTOPDDOUBLEPRIME
 
   implicit none
-
-  integer,intent(in) :: myrank
 
   double precision,intent(inout) :: xelm(NGNOD)
   double precision,intent(inout) :: yelm(NGNOD)

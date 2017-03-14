@@ -74,7 +74,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_crust_1_0_broadcast(myrank)
+  subroutine model_crust_1_0_broadcast()
 
 ! standard routine to setup model
 
@@ -83,7 +83,6 @@
 
   implicit none
 
-  integer :: myrank
   integer :: ier
 
   ! allocate crustal arrays

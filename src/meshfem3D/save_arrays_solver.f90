@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+  subroutine save_arrays_solver(nspec,nglob,idoubling,ibool, &
                                 iregion_code,xstore,ystore,zstore, &
                                 NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
@@ -59,7 +59,6 @@
 
   implicit none
 
-  integer,intent(in) :: myrank
   integer,intent(in) :: nspec,nglob
 
   ! doubling mesh flag
@@ -311,7 +310,7 @@
   ! uncomment for vp & vs model storage
   if (SAVE_MESH_FILES) then
     ! outputs model files in binary format
-    call save_arrays_solver_meshfiles(myrank,nspec)
+    call save_arrays_solver_meshfiles(nspec)
   endif
 
   end subroutine save_arrays_solver
@@ -320,7 +319,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_arrays_solver_meshfiles(myrank,nspec)
+  subroutine save_arrays_solver_meshfiles(nspec)
 
 ! outputs model files in binary format
 
@@ -336,7 +335,6 @@
 
   implicit none
 
-  integer :: myrank
   integer :: nspec
 
   ! local parameters
@@ -348,27 +346,36 @@
   scaleval1 = sngl( sqrt(PI*GRAV*RHOAV)*(R_EARTH/1000.0d0) )
   scaleval2 = sngl( RHOAV/1000.0d0 )
 
+  ! uses temporary array
+  allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
+  if (ier /= 0) stop 'Error allocating temp_store array'
+  temp_store(:,:,:,:) = 0._CUSTOM_REAL
+
   ! isotropic model
   ! vp
   open(unit=IOUT,file=prname(1:len_trim(prname))//'vp.bin', &
        status='unknown',form='unformatted',action='write',iostat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error opening vp.bin file')
 
-  write(IOUT) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
+  temp_store(:,:,:,:) = sqrt((kappavstore(:,:,:,:) + 4.0_CUSTOM_REAL * muvstore(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore(:,:,:,:)) &
+                        * scaleval1
+  write(IOUT) temp_store
   close(IOUT)
   ! vs
   open(unit=IOUT,file=prname(1:len_trim(prname))//'vs.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error opening vs.bin file')
 
-  write(IOUT) sqrt( muvstore/rhostore )*scaleval1
+  temp_store(:,:,:,:) = sqrt( muvstore(:,:,:,:)/rhostore(:,:,:,:) )*scaleval1
+  write(IOUT) temp_store
   close(IOUT)
   ! rho
   open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
         status='unknown',form='unformatted',action='write',iostat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error opening rho.bin file')
 
-  write(IOUT) rhostore*scaleval2
+  temp_store(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
+  write(IOUT) temp_store
   close(IOUT)
 
   ! transverse isotropic model
@@ -378,41 +385,52 @@
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening vpv.bin file')
 
-    write(IOUT) sqrt( (kappavstore+4.*muvstore/3.)/rhostore )*scaleval1
+    temp_store(:,:,:,:) = sqrt((kappavstore(:,:,:,:) + 4.0_CUSTOM_REAL * muvstore(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore(:,:,:,:)) &
+                          * scaleval1
+    write(IOUT) temp_store
     close(IOUT)
+
     ! vph
     open(unit=IOUT,file=prname(1:len_trim(prname))//'vph.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening vph.bin file')
 
-    write(IOUT) sqrt( (kappahstore+4.*muhstore/3.)/rhostore )*scaleval1
+    temp_store(:,:,:,:) = sqrt((kappahstore(:,:,:,:) + 4.0_CUSTOM_REAL * muhstore(:,:,:,:)/3.0_CUSTOM_REAL)/rhostore(:,:,:,:)) &
+                          * scaleval1
+    write(IOUT) temp_store
     close(IOUT)
+
     ! vsv
     open(unit=IOUT,file=prname(1:len_trim(prname))//'vsv.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening vsv.bin file')
 
-    write(IOUT) sqrt( muvstore/rhostore )*scaleval1
+    temp_store(:,:,:,:) = sqrt( muvstore(:,:,:,:)/rhostore(:,:,:,:) )*scaleval1
+    write(IOUT) temp_store
     close(IOUT)
+
     ! vsh
     open(unit=IOUT,file=prname(1:len_trim(prname))//'vsh.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening vsh.bin file')
 
-    write(IOUT) sqrt( muhstore/rhostore )*scaleval1
+    temp_store(:,:,:,:) = sqrt( muhstore(:,:,:,:)/rhostore(:,:,:,:) )*scaleval1
+    write(IOUT) temp_store
     close(IOUT)
+
     ! rho
     open(unit=IOUT,file=prname(1:len_trim(prname))//'rho.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening rho.bin file')
 
-    write(IOUT) rhostore*scaleval2
+    temp_store(:,:,:,:) = rhostore(:,:,:,:) * scaleval2
+    write(IOUT) temp_store
     close(IOUT)
+
     ! eta
     open(unit=IOUT,file=prname(1:len_trim(prname))//'eta.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening eta.bin file')
-
     write(IOUT) eta_anisostore
     close(IOUT)
   endif ! TRANSVERSE_ISOTROPY
@@ -420,8 +438,6 @@
   ! shear attenuation
   if (ATTENUATION) then
     ! saves Qmu_store to full CUSTOM_REAL array
-    ! uses temporary array
-    allocate(temp_store(NGLLX,NGLLY,NGLLZ,nspec))
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
       ! attenuation arrays are fully 3D
       temp_store(:,:,:,:) = Qmu_store(:,:,:,:)
@@ -442,13 +458,12 @@
     open(unit=IOUT,file=prname(1:len_trim(prname))//'qmu.bin', &
           status='unknown',form='unformatted',action='write',iostat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error opening qmu.bin file')
-
     write(IOUT) temp_store
     close(IOUT)
-
-    ! frees temporary memory
-    deallocate(temp_store)
   endif ! ATTENUATION
+
+  ! frees temporary memory
+  deallocate(temp_store)
 
   end subroutine save_arrays_solver_meshfiles
 !
@@ -459,7 +474,7 @@
   subroutine save_arrays_solver_MPI(iregion_code)
 
   use meshfem3D_par, only: &
-    myrank,LOCAL_PATH, &
+    LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     ADIOS_FOR_MPI_ARRAYS
 
@@ -477,7 +492,7 @@
   case (IREGION_CRUST_MANTLE)
     ! crust mantle
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call save_MPI_arrays_adios(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
+      call save_MPI_arrays_adios(IREGION_CRUST_MANTLE,LOCAL_PATH, &
                                   num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                                   my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
                                   ibool_interfaces_crust_mantle, &
@@ -486,7 +501,7 @@
                                   num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
                                   num_elem_colors_crust_mantle)
     else
-      call save_MPI_arrays(myrank,IREGION_CRUST_MANTLE,LOCAL_PATH, &
+      call save_MPI_arrays(IREGION_CRUST_MANTLE,LOCAL_PATH, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                             my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
                             ibool_interfaces_crust_mantle, &
@@ -499,7 +514,7 @@
   case (IREGION_OUTER_CORE)
     ! outer core
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call save_MPI_arrays_adios(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
+      call save_MPI_arrays_adios(IREGION_OUTER_CORE,LOCAL_PATH, &
                                   num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                   my_neighbours_outer_core,nibool_interfaces_outer_core, &
                                   ibool_interfaces_outer_core, &
@@ -508,7 +523,7 @@
                                   num_colors_outer_outer_core,num_colors_inner_outer_core, &
                                   num_elem_colors_outer_core)
     else
-      call save_MPI_arrays(myrank,IREGION_OUTER_CORE,LOCAL_PATH, &
+      call save_MPI_arrays(IREGION_OUTER_CORE,LOCAL_PATH, &
                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
                             my_neighbours_outer_core,nibool_interfaces_outer_core, &
                             ibool_interfaces_outer_core, &
@@ -521,7 +536,7 @@
   case (IREGION_INNER_CORE)
     ! inner core
     if (ADIOS_FOR_MPI_ARRAYS) then
-      call save_MPI_arrays_adios(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
+      call save_MPI_arrays_adios(IREGION_INNER_CORE,LOCAL_PATH, &
                                   num_interfaces_inner_core,max_nibool_interfaces_ic, &
                                   my_neighbours_inner_core,nibool_interfaces_inner_core, &
                                   ibool_interfaces_inner_core, &
@@ -530,7 +545,7 @@
                                   num_colors_outer_inner_core,num_colors_inner_inner_core, &
                                   num_elem_colors_inner_core)
     else
-      call save_MPI_arrays(myrank,IREGION_INNER_CORE,LOCAL_PATH, &
+      call save_MPI_arrays(IREGION_INNER_CORE,LOCAL_PATH, &
                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
                             my_neighbours_inner_core,nibool_interfaces_inner_core, &
                             ibool_interfaces_inner_core, &
@@ -548,7 +563,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_MPI_arrays(myrank,iregion_code,LOCAL_PATH, &
+  subroutine save_MPI_arrays(iregion_code,LOCAL_PATH, &
                                   num_interfaces,max_nibool_interfaces, &
                                   my_neighbours,nibool_interfaces, &
                                   ibool_interfaces, &
@@ -560,7 +575,7 @@
 
   implicit none
 
-  integer :: iregion_code,myrank
+  integer :: iregion_code
 
   character(len=MAX_STRING_LEN) :: LOCAL_PATH
 

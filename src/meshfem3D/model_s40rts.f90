@@ -63,7 +63,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_s40rts_broadcast(myrank)
+  subroutine model_s40rts_broadcast()
 
 ! standard routine to setup model
 
@@ -71,8 +71,6 @@
   use model_s40rts_par
 
   implicit none
-
-  integer :: myrank
 
   ! local parameters
   integer :: ier

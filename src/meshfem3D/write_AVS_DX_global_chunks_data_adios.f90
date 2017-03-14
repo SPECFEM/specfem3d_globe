@@ -45,7 +45,7 @@ contains
 
 
   subroutine define_AVS_DX_global_chunks_data(adios_group, &
-                                              myrank,nspec,iboun,ibool, &
+                                              nspec,iboun,ibool, &
                                               mask_ibool, &
                                               npointot, &
                                               ISOTROPIC_3D_MANTLE, &
@@ -59,7 +59,6 @@ contains
 
   integer(kind=8), intent(in) :: adios_group
 
-  integer :: myrank
   integer :: nspec
 
   logical :: iboun(6,nspec)
@@ -216,7 +215,7 @@ contains
 
 !===============================================================================
 
-  subroutine prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
+  subroutine prepare_AVS_DX_global_chunks_data_adios(prname,nspec, &
                                                      iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                                      npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
                                                      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
@@ -227,8 +226,6 @@ contains
   use constants
 
   implicit none
-
-  integer :: myrank
 
   ! processor identification
   character(len=MAX_STRING_LEN) :: prname
@@ -385,8 +382,7 @@ contains
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,1,1,ispec)**2 + ystore(1,1,1,ispec)**2 &
                 + zstore(1,1,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -409,8 +405,7 @@ contains
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,NGLLY,1,ispec)**2 + ystore(1,NGLLY,1,ispec)**2 &
                 + zstore(1,NGLLY,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -436,8 +431,7 @@ contains
             r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 &
                 + ystore(1,NGLLY,NGLLZ,ispec)**2 &
                 + zstore(1,NGLLY,NGLLZ,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -461,8 +455,7 @@ contains
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 + ystore(1,1,NGLLZ,ispec)**2 &
                 + zstore(1,1,NGLLZ,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -494,8 +487,7 @@ contains
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(NGLLX,1,1,ispec)**2 + ystore(NGLLX,1,1,ispec)**2 &
                 + zstore(NGLLX,1,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -521,8 +513,7 @@ contains
             r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 &
                 + ystore(NGLLX,NGLLY,1,ispec)**2 &
                 + zstore(NGLLX,NGLLY,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -548,8 +539,7 @@ contains
             r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 &
                 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 &
                 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -575,8 +565,7 @@ contains
             r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 &
                 + ystore(NGLLX,1,NGLLZ,ispec)**2 &
                 + zstore(NGLLX,1,NGLLZ,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -608,8 +597,7 @@ contains
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,1,1,ispec)**2 &
                 + ystore(1,1,1,ispec)**2 + zstore(1,1,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -632,8 +620,7 @@ contains
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(NGLLX,1,1,ispec)**2 &
                 + ystore(NGLLX,1,1,ispec)**2 + zstore(NGLLX,1,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -659,8 +646,7 @@ contains
             r = dsqrt(xstore(NGLLX,1,NGLLZ,ispec)**2 &
                 + ystore(NGLLX,1,NGLLZ,ispec)**2 &
                 + zstore(NGLLX,1,NGLLZ,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -684,8 +670,7 @@ contains
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,1,NGLLZ,ispec)**2 &
                 + ystore(1,1,NGLLZ,ispec)**2 + zstore(1,1,NGLLZ,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -717,8 +702,7 @@ contains
           if (idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
             r = dsqrt(xstore(1,NGLLY,1,ispec)**2 &
                 + ystore(1,NGLLY,1,ispec)**2 + zstore(1,NGLLY,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -744,8 +728,7 @@ contains
             r = dsqrt(xstore(NGLLX,NGLLY,1,ispec)**2 &
                 + ystore(NGLLX,NGLLY,1,ispec)**2 &
                 + zstore(NGLLX,NGLLY,1,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -773,8 +756,7 @@ contains
             r = dsqrt(xstore(NGLLX,NGLLY,NGLLZ,ispec)**2 &
                 + ystore(NGLLX,NGLLY,NGLLZ,ispec)**2 &
                 + zstore(NGLLX,NGLLY,NGLLZ,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
           vmin = vp
           endif
@@ -800,8 +782,7 @@ contains
             r = dsqrt(xstore(1,NGLLY,NGLLZ,ispec)**2 &
                 + ystore(1,NGLLY,NGLLZ,ispec)**2 &
                 + zstore(1,NGLLY,NGLLZ,ispec)**2)
-            call prem_display_outer_core(myrank,r,rho,vp,vs, &
-                Qkappa,Qmu,idoubling(ispec))
+            call prem_display_outer_core(r,rho,vp,vs,Qkappa,Qmu,idoubling(ispec))
             vmax = vp
             vmin = vp
           endif
@@ -875,7 +856,7 @@ contains
 
 
                 ! get reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
-                call meshfem3D_models_get1D_val(myrank,iregion_code, &
+                call meshfem3D_models_get1D_val(iregion_code, &
                     idoubling(ispec), &
                     r,rho,vpv,vph,vsv,vsh,eta_aniso, &
                     Qkappa,Qmu,RICB,RCMB, &

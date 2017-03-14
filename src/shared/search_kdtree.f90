@@ -184,7 +184,7 @@ contains
   do while ( i >= 1 )
     i = i / 2
     numnodes = numnodes + i
-    ! integer 32-bit limitation
+    ! integer 32-bit limitation (integer overflow)
     if (numnodes > 2147483646 - i ) stop 'Error number of nodes might exceed integer limit'
   enddo
   if (be_verbose) then

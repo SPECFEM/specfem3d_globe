@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
+  subroutine get_MPI_cutplanes_eta(prname,nspec,iMPIcut_eta,ibool, &
                                   xstore,ystore,zstore,mask_ibool,npointot, &
                                   NSPEC2D_XI_FACE,iregion,npoin2D_eta, &
                                   iboolleft_eta,iboolright_eta, &
@@ -40,7 +40,7 @@
 
   implicit none
 
-  integer :: nspec,myrank
+  integer :: nspec
 
   logical,dimension(2,nspec) :: iMPIcut_eta
 

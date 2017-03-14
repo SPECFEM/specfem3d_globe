@@ -87,23 +87,23 @@
   call init_adios_group(adios_group,group_name)
 
   !--- Define ADIOS variables -----------------------------
-  call define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
+  call define_AVS_DX_global_data_adios(adios_group, nspec, ibool, &
                                        npointot, mask_ibool, group_size_inc, avs_dx_global_vars)
 
   call define_AVS_DX_global_faces_data_adios(adios_group, &
-                                             myrank, nspec, iMPIcut_xi,iMPIcut_eta, &
+                                             nspec, iMPIcut_xi,iMPIcut_eta, &
                                              ibool,mask_ibool,npointot, &
                                              ISOTROPIC_3D_MANTLE, &
                                              group_size_inc, avs_dx_global_faces_vars)
 
   call define_AVS_DX_global_chunks_data(adios_group, &
-                                        myrank,nspec,iboun,ibool, &
+                                        nspec,iboun,ibool, &
                                         mask_ibool,npointot, &
                                         ISOTROPIC_3D_MANTLE, &
                                         group_size_inc, avs_dx_global_chunks_vars)
 
   call define_AVS_DX_surfaces_data_adios(adios_group, &
-                                         myrank,nspec,iboun,ibool, &
+                                         nspec,iboun,ibool, &
                                          mask_ibool,npointot, &
                                          ISOTROPIC_3D_MANTLE, &
                                          group_size_inc, avs_dx_surface_vars)
@@ -119,13 +119,12 @@
   call set_adios_group_size(group_size_inc)
 
   !--- Schedule writes for the previously defined ADIOS variables
-  call prepare_AVS_DX_global_data_adios(myrank, &
-                                        nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
+  call prepare_AVS_DX_global_data_adios(nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
                                         mask_ibool, npointot, avs_dx_global_vars)
 
   call write_AVS_DX_global_data_adios(file_handle_adios, myrank,sizeprocs, avs_dx_global_vars)
 
-  call prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
+  call prepare_AVS_DX_global_faces_data_adios(nspec, &
                                               iMPIcut_xi,iMPIcut_eta, &
                                               ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                               npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
@@ -137,7 +136,7 @@
   call write_AVS_DX_global_faces_data_adios(file_handle_adios, myrank, &
                                             sizeprocs, avs_dx_global_faces_vars, ISOTROPIC_3D_MANTLE)
 
-  call prepare_AVS_DX_global_chunks_data_adios(myrank,prname,nspec, &
+  call prepare_AVS_DX_global_chunks_data_adios(prname,nspec, &
                                                iboun,ibool, idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                                npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
                                                ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
@@ -148,7 +147,7 @@
   call write_AVS_DX_global_chunks_data_adios(file_handle_adios, myrank, &
                                              sizeprocs, avs_dx_global_chunks_vars, ISOTROPIC_3D_MANTLE)
 
-  call prepare_AVS_DX_surfaces_data_adios(myrank,nspec,iboun, &
+  call prepare_AVS_DX_surfaces_data_adios(nspec,iboun, &
                                           ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
                                           rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
                                           ELLIPTICITY,ISOTROPIC_3D_MANTLE, &

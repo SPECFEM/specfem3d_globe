@@ -64,7 +64,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_atten3D_QRFSI12_broadcast(myrank)
+  subroutine model_atten3D_QRFSI12_broadcast()
 
 ! standard routine to setup model
 
@@ -72,8 +72,6 @@
   use model_atten3D_QRFSI12_par
 
   implicit none
-
-  integer :: myrank
 
   ! local parameters
   integer :: ier

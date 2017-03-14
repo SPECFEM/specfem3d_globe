@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
+  subroutine initialize_layers(ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
                         shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
                         dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
                         iaddx,iaddy,iaddz,nspec,xstore,ystore,zstore,ibool,idoubling, &
@@ -42,7 +42,7 @@
 
   implicit none
 
-  integer :: myrank,ipass
+  integer :: ipass
 
   double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
   double precision wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
@@ -88,13 +88,13 @@
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
 ! get the 3-D shape functions
-  call get_shape3D(myrank,shape3D,dershape3D,xigll,yigll,zigll)
+  call get_shape3D(shape3D,dershape3D,xigll,yigll,zigll)
 
 ! get the 2-D shape functions
-  call get_shape2D(myrank,shape2D_x,dershape2D_x,yigll,zigll,NGLLY,NGLLZ)
-  call get_shape2D(myrank,shape2D_y,dershape2D_y,xigll,zigll,NGLLX,NGLLZ)
-  call get_shape2D(myrank,shape2D_bottom,dershape2D_bottom,xigll,yigll,NGLLX,NGLLY)
-  call get_shape2D(myrank,shape2D_top,dershape2D_top,xigll,yigll,NGLLX,NGLLY)
+  call get_shape2D(shape2D_x,dershape2D_x,yigll,zigll,NGLLY,NGLLZ)
+  call get_shape2D(shape2D_y,dershape2D_y,xigll,zigll,NGLLX,NGLLZ)
+  call get_shape2D(shape2D_bottom,dershape2D_bottom,xigll,yigll,NGLLX,NGLLY)
+  call get_shape2D(shape2D_top,dershape2D_top,xigll,yigll,NGLLX,NGLLY)
 
 ! create the shape of the corner nodes of a regular mesh element
   call hex_nodes(iaddx,iaddy,iaddz)

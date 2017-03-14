@@ -56,7 +56,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_eucrust_broadcast(myrank)
+  subroutine model_eucrust_broadcast()
 
 ! standard routine to setup model
 
@@ -65,7 +65,6 @@
 
   implicit none
 
-  integer :: myrank
   integer :: ier
 
   ! allocates eucrust arrays

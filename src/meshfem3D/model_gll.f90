@@ -33,7 +33,7 @@
 ! used for iterative inversion procedures
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_gll_broadcast(myrank,MGLL_V,NSPEC)
+  subroutine model_gll_broadcast(MGLL_V,NSPEC)
 
 ! standard routine to setup model
 
@@ -47,7 +47,6 @@
   type (model_gll_variables) MGLL_V
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
-  integer :: myrank
 
   ! local parameters
   double precision :: scaleval
@@ -76,9 +75,9 @@
 
   ! reads in model files for each process
   if (ADIOS_FOR_MODELS) then
-    call read_gll_model_adios(myrank,MGLL_V,NSPEC)
+    call read_gll_model_adios(MGLL_V,NSPEC)
   else
-    call read_gll_model(myrank,MGLL_V,NSPEC)
+    call read_gll_model(MGLL_V,NSPEC)
   endif
 
   ! checks velocity range
@@ -207,7 +206,7 @@
 !
 
 
-  subroutine read_gll_model(myrank,MGLL_V,NSPEC)
+  subroutine read_gll_model(MGLL_V,NSPEC)
 
   use constants
   use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY,model_gll_variables
@@ -218,7 +217,6 @@
   type (model_gll_variables) MGLL_V
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
-  integer :: myrank
 
   ! local parameters
   integer :: ier

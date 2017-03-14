@@ -175,7 +175,7 @@
 
 
     ! sets up Stacey absorbing boundary indices (nimin,nimax,..)
-    if (NCHUNKS /= 6) call get_absorb(myrank,prname,iregion_code, iboun,nspec,nimin,nimax, &
+    if (NCHUNKS /= 6) call get_absorb(prname,iregion_code, iboun,nspec,nimin,nimax, &
                                       njmin,njmax, nkmin_xi,nkmin_eta, NSPEC2DMAX_XMIN_XMAX, &
                                       NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
 
@@ -223,7 +223,7 @@
       write(IMAIN,*) '  ...precomputing Jacobian'
       call flush_IMAIN()
     endif
-    call get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
+    call get_jacobian_boundaries(iboun,nspec,xstore,ystore,zstore, &
                                  dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
                                  ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
                                  nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
@@ -299,7 +299,7 @@
 
     !uncomment: adds model smoothing for point profile models
     !    if (THREE_D_MODEL == THREE_D_MODEL_PPM) then
-    !     call smooth_model(myrank, nproc_xi,nproc_eta, &
+    !     call smooth_model(nproc_xi,nproc_eta, &
     !        rho_vp,rho_vs,nspec_stacey, &
     !        iregion_code,xixstore,xiystore,xizstore, &
     !        etaxstore,etaystore,etazstore, &
@@ -393,12 +393,12 @@
       ! saves mesh and model parameters
       if (ADIOS_FOR_ARRAYS_SOLVER) then
         if (myrank == 0) write(IMAIN,*) '    in ADIOS file format'
-        call save_arrays_solver_adios(myrank,nspec,nglob,idoubling,ibool, &
+        call save_arrays_solver_adios(nspec,nglob,idoubling,ibool, &
                                       iregion_code,xstore,ystore,zstore, &
                                       NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
                                       NSPEC2D_TOP,NSPEC2D_BOTTOM)
       else
-        call save_arrays_solver(myrank,nspec,nglob,idoubling,ibool, &
+        call save_arrays_solver(nspec,nglob,idoubling,ibool, &
                                 iregion_code,xstore,ystore,zstore, &
                                 NSPEC2D_TOP,NSPEC2D_BOTTOM)
       endif
@@ -446,13 +446,13 @@
     call crm_free_MPI_arrays(iregion_code)
 
     ! compute volume, bottom and top area of that part of the slice, and then the total
-    call compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
+    call compute_volumes_and_areas(NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
                                    xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                                    NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
                                    volume_total,RCMB,RICB,R_CENTRAL_CUBE)
 
     ! compute Earth mass of that part of the slice, and then total Earth mass
-    call compute_Earth_mass(myrank,Earth_mass_total, &
+    call compute_Earth_mass(Earth_mass_total, &
                             Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
                             nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
@@ -467,7 +467,7 @@
         call flush_IMAIN()
       endif
       ! compute gravity integrals of that part of the slice, and then total integrals for the whole Earth
-      call gravity_compute_integrals(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
+      call gravity_compute_integrals(iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
                                      xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                                      rhostore,idoubling)
 
@@ -821,7 +821,7 @@
   use meshfem3D_par, only: &
     ibool,idoubling,is_on_a_slice_edge, &
     xstore,ystore,zstore, &
-    myrank,NGLLX,NGLLY,NGLLZ, &
+    NGLLX,NGLLY,NGLLZ, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     R670,RMOHO,R400,RMIDDLE_CRUST,MAX_NUMBER_OF_MESH_LAYERS, &
     ner,r_top,r_bottom
@@ -843,7 +843,7 @@
   integer :: i,ier
 
   ! initializes element layers
-  call initialize_layers(myrank,ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
+  call initialize_layers(ipass,xigll,yigll,zigll,wxgll,wygll,wzgll, &
                          shape3D,dershape3D,shape2D_x,shape2D_y,shape2D_bottom,shape2D_top, &
                          dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
                          iaddx,iaddy,iaddz,nspec,xstore,ystore,zstore,ibool,idoubling, &
@@ -950,13 +950,20 @@
 
   ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
   ! these arrays and therefore destroy them
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec,ieoff,ilocnum)
+!$OMP DO
   do ispec = 1,nspec
     ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
     ilocnum = 0
     do k = 1,NGLLZ
       do j = 1,NGLLY
         do i = 1,NGLLX
-          ilocnum = ilocnum + 1
+          ! increases point counter
+          !ilocnum = ilocnum + 1
+          ! without dependency
+          ilocnum = i + ((j-1) + (k-1)*NGLLY) * NGLLX
+          ! fills 1D arrays
           xp(ilocnum+ieoff) = xstore(i,j,k,ispec)
           yp(ilocnum+ieoff) = ystore(i,j,k,ispec)
           zp(ilocnum+ieoff) = zstore(i,j,k,ispec)
@@ -964,6 +971,8 @@
       enddo
     enddo
   enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   call get_global(npointot,xp,yp,zp,ibool,locval,ifseg,nglob_new)
 
@@ -1000,7 +1009,7 @@
   use meshfem3d_par, only: &
     ibool,idoubling, &
     xstore,ystore,zstore, &
-    myrank,NGLLX,NGLLY,NGLLZ, &
+    NGLLX,NGLLY,NGLLZ, &
     NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER, &
     NSPEC2D_XI_FACE,NSPEC2D_ETA_FACE, &
     NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
@@ -1034,19 +1043,19 @@
   iboolright_eta(:) = 0
 
   ! gets MPI buffer indices
-  call get_MPI_cutplanes_xi(myrank,prname,nspec,iMPIcut_xi,ibool, &
+  call get_MPI_cutplanes_xi(prname,nspec,iMPIcut_xi,ibool, &
                   xstore,ystore,zstore,mask_ibool,npointot, &
                   NSPEC2D_ETA_FACE,iregion_code,npoin2D_xi, &
                   iboolleft_xi,iboolright_xi, &
                   npoin2D_xi_all,NGLOB2DMAX_XMIN_XMAX(iregion_code))
 
-  call get_MPI_cutplanes_eta(myrank,prname,nspec,iMPIcut_eta,ibool, &
+  call get_MPI_cutplanes_eta(prname,nspec,iMPIcut_eta,ibool, &
                   xstore,ystore,zstore,mask_ibool,npointot, &
                   NSPEC2D_XI_FACE,iregion_code,npoin2D_eta, &
                   iboolleft_eta,iboolright_eta, &
                   npoin2D_eta_all,NGLOB2DMAX_YMIN_YMAX(iregion_code))
 
-  call get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta, &
+  call get_MPI_1D_buffers(prname,nspec,iMPIcut_xi,iMPIcut_eta, &
                   ibool,idoubling, &
                   xstore,ystore,zstore,mask_ibool,npointot, &
                   NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion_code, &

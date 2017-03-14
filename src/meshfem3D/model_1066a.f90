@@ -50,15 +50,15 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_1066a_broadcast(myrank,CRUSTAL)
+  subroutine model_1066a_broadcast(CRUSTAL)
 
 ! standard routine to setup model
 
+  use constants, only: myrank
   use model_1066a_par
 
   implicit none
 
-  integer :: myrank
   logical :: CRUSTAL
 
   ! local parameters

@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_model(myrank,iregion_code,ispec,nspec,idoubling, &
+  subroutine get_model(iregion_code,ispec,nspec,idoubling, &
                       kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                       rhostore,dvpstore,nspec_ani, &
                       c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -48,7 +48,7 @@
 
   implicit none
 
-  integer :: myrank,iregion_code,ispec,nspec,idoubling
+  integer :: iregion_code,ispec,nspec,idoubling
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec) :: kappavstore,kappahstore, &
     muvstore,muhstore,eta_anisostore,rhostore,dvpstore
@@ -140,10 +140,10 @@
         ! checks r_prem,rmin/rmax and assigned idoubling
         call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
                             RICB,RCMB,RTOPDDOUBLEPRIME, &
-                            R220,R670,myrank)
+                            R220,R670)
 
         ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
-        call meshfem3D_models_get1D_val(myrank,iregion_code,idoubling, &
+        call meshfem3D_models_get1D_val(iregion_code,idoubling, &
                               r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
                               Qkappa,Qmu,RICB,RCMB, &
                               RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
@@ -173,8 +173,7 @@
         endif
 
         ! overwrites with tomographic model values (from iteration step) here, given at all GLL points
-        call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso, &
-                                        myrank,iregion_code,ispec,i,j,k)
+        call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,iregion_code,ispec,i,j,k)
 
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then
@@ -286,13 +285,13 @@
 
   subroutine get_model_check_idoubling(r_prem,x,y,z,rmin,rmax,idoubling, &
                             RICB,RCMB,RTOPDDOUBLEPRIME, &
-                            R220,R670,myrank)
+                            R220,R670)
 
   use meshfem3D_models_par
 
   implicit none
 
-  integer idoubling,myrank
+  integer idoubling
 
   double precision r_prem,rmin,rmax,x,y,z
 

@@ -393,7 +393,7 @@
 
       ! handles the communications with the central cube if it was included in the mesh
       ! create buffers to assemble with the central cube
-      call create_central_cube_buffers(myrank,iproc_xi,iproc_eta,ichunk, &
+      call create_central_cube_buffers(iproc_xi,iproc_eta,ichunk, &
                  NPROC_XI,NPROC_ETA,NCHUNKS, &
                  NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                  NSPEC2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NSPEC2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &

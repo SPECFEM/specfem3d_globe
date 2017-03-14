@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine add_topography_cmb(myrank,xelm,yelm,zelm)
+  subroutine add_topography_cmb(xelm,yelm,zelm)
 
 ! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine
 
@@ -33,8 +33,6 @@
   use meshfem3D_par, only: RTOPDDOUBLEPRIME,RCMB
 
   implicit none
-
-  integer,intent(in) :: myrank
 
   double precision,intent(inout) :: xelm(NGNOD)
   double precision,intent(inout) :: yelm(NGNOD)

@@ -76,7 +76,7 @@
   endif
 
   ! broadcast parameters read from master to all processes
-  call broadcast_computed_parameters(myrank)
+  call broadcast_computed_parameters()
 
   ! check that the code is running with the requested number of processes
   if (sizeprocs /= NPROCTOT) then
@@ -102,5 +102,8 @@
   if (GRAVITY_INTEGRALS) then
     call gravity_initialize_integrals()
   endif
+
+  ! OpenMP
+  call init_openmp()
 
   end subroutine initialize_mesher

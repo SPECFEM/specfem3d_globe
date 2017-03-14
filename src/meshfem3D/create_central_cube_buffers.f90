@@ -29,7 +29,7 @@
 !--- create buffers to assemble with central cube
 !
 
-  subroutine create_central_cube_buffers(myrank,iproc_xi,iproc_eta,ichunk, &
+  subroutine create_central_cube_buffers(iproc_xi,iproc_eta,ichunk, &
                    NPROC_XI,NPROC_ETA,NCHUNKS, &
                    NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                    NSPEC2DMAX_XMIN_XMAX_INNER_CORE,NSPEC2DMAX_YMIN_YMAX_INNER_CORE, &
@@ -48,7 +48,7 @@
 
   implicit none
 
-  integer, intent(in) :: myrank,iproc_xi,iproc_eta,ichunk, &
+  integer, intent(in) :: iproc_xi,iproc_eta,ichunk, &
        NPROC_XI,NPROC_ETA,NCHUNKS,NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
        NSPEC2DMAX_XMIN_XMAX_INNER_CORE,NSPEC2DMAX_YMIN_YMAX_INNER_CORE,NSPEC2D_BOTTOM_INNER_CORE
 

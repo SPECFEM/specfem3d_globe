@@ -54,6 +54,7 @@ shared_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
+	$O/init_openmp.shared.o \
 	$O/interpolate.shared.o \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \

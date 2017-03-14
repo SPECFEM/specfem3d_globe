@@ -39,7 +39,7 @@
 !--------------------------------------------------------------------------------------------------
 
 
-  subroutine model_prem_iso(myrank,x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+  subroutine model_prem_iso(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
       ONE_CRUST,check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
@@ -52,7 +52,7 @@
 
   logical CRUSTAL,ONE_CRUST,check_doubling_flag
 
-  integer idoubling,myrank
+  integer idoubling
 
   double precision x,rho,drhodr,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
@@ -272,7 +272,7 @@
 !=====================================================================
 !
 
-  subroutine model_prem_aniso(myrank,x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
+  subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
       idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
@@ -285,7 +285,7 @@
 
   logical CRUSTAL,ONE_CRUST
 
-  integer idoubling,myrank
+  integer idoubling
 
   double precision x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso,RICB,RCMB, &
       RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
@@ -527,7 +527,7 @@
 !=====================================================================
 !
 
-  subroutine prem_display_outer_core(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling)
+  subroutine prem_display_outer_core(x,rho,vp,vs,Qkappa,Qmu,idoubling)
 
 ! routine used for AVS or DX display of stability condition
 ! and number of points per wavelength only in the fluid outer core
@@ -539,7 +539,7 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  integer idoubling,myrank
+  integer idoubling
   double precision x,rho,vp,vs,Qkappa,Qmu
 
   double precision scaleval

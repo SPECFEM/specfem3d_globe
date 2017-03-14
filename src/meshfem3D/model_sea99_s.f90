@@ -59,7 +59,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_sea99_s_broadcast(myrank)
+  subroutine model_sea99_s_broadcast()
 
 ! standard routine to setup model
 
@@ -67,8 +67,6 @@
   use model_sea99_s_par
 
   implicit none
-
-  integer :: myrank
 
   integer :: ier
 

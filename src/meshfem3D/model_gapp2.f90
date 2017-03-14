@@ -48,7 +48,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_gapp2_broadcast(myrank)
+  subroutine model_gapp2_broadcast()
 
 ! standard routine to setup model
 
@@ -57,7 +57,6 @@
 
   implicit none
 
-  integer :: myrank
   integer :: ier
 
   ! allocates arrays only when called and needed

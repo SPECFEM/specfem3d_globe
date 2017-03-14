@@ -26,8 +26,7 @@
 !=====================================================================
 
 
-  subroutine setup_counters(myrank, &
-                        NSPEC1D_RADIAL,NSPEC2D_XI,NSPEC2D_ETA,NGLOB1D_RADIAL, &
+  subroutine setup_counters(NSPEC1D_RADIAL,NSPEC2D_XI,NSPEC2D_ETA,NGLOB1D_RADIAL, &
                         DIFF_NSPEC1D_RADIAL,DIFF_NSPEC2D_XI,DIFF_NSPEC2D_ETA, &
                         CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA, &
                         NPROCTOT,iproc_xi_slice,iproc_eta_slice, &
@@ -40,8 +39,6 @@
   use constants
 
   implicit none
-
-  integer myrank
 
 ! this for all the regions
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_XI,NSPEC2D_ETA, &

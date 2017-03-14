@@ -82,16 +82,17 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_s362ani_broadcast(myrank,THREE_D_MODEL)
+  subroutine model_s362ani_broadcast(THREE_D_MODEL)
 
 ! standard routine to setup model
 
+  use constants, only: myrank
   use model_s362ani_par
 
   implicit none
 
-  integer,intent(in) :: myrank
   integer,intent(in) :: THREE_D_MODEL
+
   ! local parameters
   integer :: ier
 

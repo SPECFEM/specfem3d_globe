@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
+  subroutine create_central_cube(ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
                         nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &
@@ -95,9 +95,6 @@
   integer nspec_actually
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-! proc numbers for MPI
-  integer myrank
 
 ! MPI cut-planes parameters along xi and along eta
   logical, dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
@@ -244,7 +241,7 @@
 
         ! compute several rheological and geometrical properties for this spectral element
         call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
-                         xstore,ystore,zstore,nspec,myrank, &
+                         xstore,ystore,zstore,nspec, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &

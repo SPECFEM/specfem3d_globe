@@ -26,14 +26,14 @@
 !=====================================================================
 
 ! create AVS or DX 3D data for the slice, to be recombined in postprocessing
-  subroutine write_AVS_DX_global_data(myrank,prname,nspec,ibool,idoubling, &
+  subroutine write_AVS_DX_global_data(prname,nspec,ibool,idoubling, &
                  xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot)
 
   use constants
 
   implicit none
 
-  integer nspec,myrank
+  integer nspec
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)

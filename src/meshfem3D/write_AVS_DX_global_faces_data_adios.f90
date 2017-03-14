@@ -49,7 +49,7 @@ contains
 
 !===============================================================================
 subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
-                                                  myrank, nspec, iMPIcut_xi,iMPIcut_eta, &
+                                                  nspec, iMPIcut_xi,iMPIcut_eta, &
                                                   ibool,mask_ibool, &
                                                   npointot, &
                                                   ISOTROPIC_3D_MANTLE, &
@@ -63,7 +63,7 @@ subroutine define_AVS_DX_global_faces_data_adios (adios_group, &
 
   integer(kind=8), intent(in) :: adios_group
 
-  integer :: nspec,myrank
+  integer :: nspec
   integer :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   logical :: ISOTROPIC_3D_MANTLE
@@ -204,7 +204,7 @@ end subroutine define_AVS_DX_global_faces_data_adios
 
 !===============================================================================
 
-subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
+subroutine prepare_AVS_DX_global_faces_data_adios(nspec, &
                                                   iMPIcut_xi,iMPIcut_eta, &
                                                   ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool, &
                                                   npointot,rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
@@ -217,7 +217,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
 
   implicit none
 
-  integer nspec,myrank
+  integer nspec
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)
@@ -545,7 +545,7 @@ subroutine prepare_AVS_DX_global_faces_data_adios(myrank, nspec, &
                 endif
 
                 ! gets reference model values:rho,vpv,vph,vsv,vsh and eta_aniso
-                call meshfem3D_models_get1D_val(myrank, iregion_code, &
+                call meshfem3D_models_get1D_val(iregion_code, &
                                                 idoubling(ispec), r, rho, vpv, vph, vsv, vsh, eta_aniso, &
                                                 Qkappa, Qmu, RICB, RCMB, RTOPDDOUBLEPRIME, R80, R120, &
                                                 R220, R400, R600, R670, R771, RMOHO, RMIDDLE_CRUST, ROCEAN)

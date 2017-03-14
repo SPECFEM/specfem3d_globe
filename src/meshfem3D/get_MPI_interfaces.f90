@@ -41,8 +41,7 @@
 
   real(kind=CUSTOM_REAL),dimension(NGLOB),intent(in) :: test_flag
 
-  integer,intent(in) :: max_nibool
-  integer,intent(in) :: MAX_NEIGHBOURS
+  integer,intent(in) :: max_nibool,MAX_NEIGHBOURS
   integer, dimension(MAX_NEIGHBOURS),intent(inout) :: my_neighbours,nibool_neighbours
   integer, dimension(max_nibool,MAX_NEIGHBOURS),intent(inout) :: ibool_neighbours
 

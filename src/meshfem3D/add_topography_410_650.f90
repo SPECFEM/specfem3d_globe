@@ -25,14 +25,12 @@
 !
 !=====================================================================
 
-  subroutine add_topography_410_650(myrank,xelm,yelm,zelm)
+  subroutine add_topography_410_650(xelm,yelm,zelm)
 
   use constants
   use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
-
-  integer :: myrank
 
   double precision :: xelm(NGNOD)
   double precision :: yelm(NGNOD)
@@ -160,14 +158,13 @@
   !> Hejun
   ! use GLL points to capture 410_650 topography
   ! JAN08, 2010
-  subroutine add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
+  subroutine add_topography_410_650_gll(xstore,ystore,zstore,ispec,nspec)
 
   use constants
   use meshfem3D_par, only: R220,R400,R670,R771
 
   implicit none
 
-  integer myrank
   integer:: ispec,nspec
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
 

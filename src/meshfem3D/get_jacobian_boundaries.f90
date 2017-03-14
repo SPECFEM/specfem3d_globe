@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_jacobian_boundaries(myrank,iboun,nspec,xstore,ystore,zstore, &
+  subroutine get_jacobian_boundaries(iboun,nspec,xstore,ystore,zstore, &
               dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
               ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
               nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
@@ -42,7 +42,7 @@
 
   implicit none
 
-  integer :: nspec,myrank
+  integer :: nspec
   integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
 
   integer :: nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax
@@ -141,7 +141,7 @@
           yelm(9)=ystore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
           zelm(9)=zstore(1,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
 
-          call compute_jacobian_2D(myrank,ispecb1,xelm,yelm,zelm,dershape2D_x, &
+          call compute_jacobian_2D(ispecb1,xelm,yelm,zelm,dershape2D_x, &
                     jacobian2D_xmin,normal_xmin,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
       else
           ! get 25 GLL points for xmin
@@ -153,7 +153,7 @@
              enddo
           enddo
           ! recalculate Jacobian according to 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb1,xelm2D,yelm2D,zelm2D, &
+          call recalc_jacobian_gll2D(ispecb1,xelm2D,yelm2D,zelm2D, &
                           yigll,zigll,jacobian2D_xmin,normal_xmin, &
                           NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
      endif
@@ -196,7 +196,7 @@
           yelm(9)=ystore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
           zelm(9)=zstore(NGLLX,(NGLLY+1)/2,(NGLLZ+1)/2,ispec)
 
-          call compute_jacobian_2D(myrank,ispecb2,xelm,yelm,zelm,dershape2D_x, &
+          call compute_jacobian_2D(ispecb2,xelm,yelm,zelm,dershape2D_x, &
                     jacobian2D_xmax,normal_xmax,NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
 
       else
@@ -209,7 +209,7 @@
              enddo
           enddo
           ! recalculate Jacobian according to 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb2,xelm2D,yelm2D,zelm2D, &
+          call recalc_jacobian_gll2D(ispecb2,xelm2D,yelm2D,zelm2D, &
                           yigll,zigll,jacobian2D_xmax,normal_xmax, &
                           NGLLY,NGLLZ,NSPEC2DMAX_XMIN_XMAX)
        endif
@@ -252,7 +252,7 @@
           yelm(9)=ystore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
           zelm(9)=zstore((NGLLX+1)/2,1,(NGLLZ+1)/2,ispec)
 
-          call compute_jacobian_2D(myrank,ispecb3,xelm,yelm,zelm,dershape2D_y, &
+          call compute_jacobian_2D(ispecb3,xelm,yelm,zelm,dershape2D_y, &
                     jacobian2D_ymin,normal_ymin,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
      else
@@ -265,7 +265,7 @@
              enddo
           enddo
           ! recalculate 2D Jacobian according to GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb3,xelm2D,yelm2D,zelm2D, &
+          call recalc_jacobian_gll2D(ispecb3,xelm2D,yelm2D,zelm2D, &
                           xigll,zigll,jacobian2D_ymin,normal_ymin, &
                           NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
      endif
@@ -308,7 +308,7 @@
           yelm(9)=ystore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
           zelm(9)=zstore((NGLLX+1)/2,NGLLY,(NGLLZ+1)/2,ispec)
 
-          call compute_jacobian_2D(myrank,ispecb4,xelm,yelm,zelm,dershape2D_y, &
+          call compute_jacobian_2D(ispecb4,xelm,yelm,zelm,dershape2D_y, &
                     jacobian2D_ymax,normal_ymax,NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
 
       else
@@ -321,7 +321,7 @@
              enddo
           enddo
           ! recalculate Jacobian for 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb4,xelm2D,yelm2D,zelm2D, &
+          call recalc_jacobian_gll2D(ispecb4,xelm2D,yelm2D,zelm2D, &
                           xigll,zigll,jacobian2D_ymax,normal_ymax, &
                           NGLLX,NGLLZ,NSPEC2DMAX_YMIN_YMAX)
       endif
@@ -363,7 +363,7 @@
           yelm(9)=ystore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
           zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,1,ispec)
 
-          call compute_jacobian_2D(myrank,ispecb5,xelm,yelm,zelm,dershape2D_bottom, &
+          call compute_jacobian_2D(ispecb5,xelm,yelm,zelm,dershape2D_bottom, &
                     jacobian2D_bottom,normal_bottom,NGLLX,NGLLY,NSPEC2D_BOTTOM)
 
       else
@@ -376,7 +376,7 @@
              enddo
           enddo
           ! recalculate 2D Jacobian according to GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb5,xelm2D,yelm2D,zelm2D, &
+          call recalc_jacobian_gll2D(ispecb5,xelm2D,yelm2D,zelm2D, &
                           xigll,yigll,jacobian2D_bottom,normal_bottom, &
                           NGLLX,NGLLY,NSPEC2D_BOTTOM)
      endif
@@ -419,7 +419,7 @@
           yelm(9)=ystore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
           zelm(9)=zstore((NGLLX+1)/2,(NGLLY+1)/2,NGLLZ,ispec)
 
-          call compute_jacobian_2D(myrank,ispecb6,xelm,yelm,zelm,dershape2D_top, &
+          call compute_jacobian_2D(ispecb6,xelm,yelm,zelm,dershape2D_top, &
                                   jacobian2D_top,normal_top,NGLLX,NGLLY,NSPEC2D_TOP)
       else
           ! get 25 GLL points for zmax
@@ -431,7 +431,7 @@
              enddo
           enddo
           ! recalculate Jacobian according to 2D GLL points
-          call recalc_jacobian_gll2D(myrank,ispecb6,xelm2D,yelm2D,zelm2D, &
+          call recalc_jacobian_gll2D(ispecb6,xelm2D,yelm2D,zelm2D, &
                                   xigll,yigll,jacobian2D_top,normal_top, &
                                   NGLLX,NGLLY,NSPEC2D_TOP)
 
@@ -460,7 +460,7 @@
 
 ! -------------------------------------------------------
 
-  subroutine compute_jacobian_2D(myrank,ispecb,xelm,yelm,zelm,dershape2D, &
+  subroutine compute_jacobian_2D(ispecb,xelm,yelm,zelm,dershape2D, &
                                 jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
   use constants
@@ -469,7 +469,7 @@
 
 ! generic routine that accepts any polynomial degree in each direction
 
-  integer ispecb,NGLLA,NGLLB,NSPEC2DMAX_AB,myrank
+  integer ispecb,NGLLA,NGLLB,NSPEC2DMAX_AB
 
   double precision xelm(NGNOD2D),yelm(NGNOD2D),zelm(NGNOD2D)
   double precision dershape2D(NDIM2D,NGNOD2D,NGLLA,NGLLB)

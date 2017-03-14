@@ -57,7 +57,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_s20rts_broadcast(myrank)
+  subroutine model_s20rts_broadcast()
 
 ! standard routine to setup model
 
@@ -65,8 +65,6 @@
   use model_s20rts_par
 
   implicit none
-
-  integer :: myrank
 
   ! local parameters
   integer :: ier

@@ -100,6 +100,10 @@
 !----------------------------------------------------------------
 
 ! first create the main standard mass matrix with no corrections
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec,i,j,k,iglob,weight, &
+!$OMP xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl)
+!$OMP DO
   do ispec = 1,nspec
 
     ! suppress fictitious elements in central cube
@@ -154,6 +158,8 @@
       enddo
     enddo
   enddo ! of loop on ispec
+!$OMP enddo
+!$OMP END PARALLEL
 
 ! copy the initial mass matrix if needed
   if (nglob_xy == nglob) then
@@ -277,6 +283,10 @@
 
   case (IREGION_CRUST_MANTLE, IREGION_INNER_CORE)
 
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec,i,j,k,iglob,weight, &
+!$OMP xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl)
+!$OMP DO
     do ispec = 1,nspec
 
       ! suppress fictitious elements in central cube
@@ -318,6 +328,8 @@
         enddo
       enddo
     enddo ! of loop on ispec
+!$OMP enddo
+!$OMP END PARALLEL
 
   end select
 
@@ -770,6 +782,9 @@
 
   ! add contribution of the oceans
   ! for surface elements exactly at the top of the crust (ocean bottom)
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec2D,ispec,i,j,iglob,x,y,z,r,theta,phi,lat,lon,elevation,height_oceans,weight)
+!$OMP DO
   do ispec2D = 1,NSPEC2D_TOP
 
     ! gets spectral element index
@@ -850,8 +865,9 @@
 
       enddo
     enddo
-
   enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   ! add regular mass matrix to ocean load contribution
   rmass_ocean_load(:) = rmass_ocean_load(:) + rmassz(:)

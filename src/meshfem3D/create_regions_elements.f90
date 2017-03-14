@@ -110,7 +110,7 @@
     endif
 
     ! regular mesh elements
-    call create_regular_elements(myrank,ilayer,ichunk,ispec,ipass, &
+    call create_regular_elements(ilayer,ichunk,ispec,ipass, &
                     ifirst_region,ilast_region,iregion_code, &
                     nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
                     NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -140,7 +140,7 @@
 
     ! mesh doubling elements
     if (this_region_has_a_doubling(ilayer) ) &
-      call create_doubling_elements(myrank,ilayer,ichunk,ispec,ipass, &
+      call create_doubling_elements(ilayer,ichunk,ispec,ipass, &
                     ifirst_region,ilast_region,iregion_code, &
                     nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
                     NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -200,7 +200,7 @@
     ! user output
     if (myrank == 0 ) write(IMAIN,*) '  creating central cube'
 
-    call create_central_cube(myrank,ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
+    call create_central_cube(ichunk,ispec,iaddx,iaddy,iaddz,ipass, &
                         nspec,NEX_XI,NEX_PER_PROC_XI,NEX_PER_PROC_ETA,R_CENTRAL_CUBE, &
                         iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA,ratio_divide_central_cube, &
                         iMPIcut_xi,iMPIcut_eta,iboun, &

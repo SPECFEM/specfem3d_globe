@@ -33,15 +33,13 @@
 ! by default (constants.h), it uses a smoothed ETOPO 4 dataset
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
+  subroutine model_topo_bathy_broadcast(ibathy_topo,LOCAL_PATH)
 
 ! standard routine to setup model
 
-  use constants
+  use constants, only: myrank,NX_BATHY,NY_BATHY,MAX_STRING_LEN,IMAIN,GRAVITY_INTEGRALS
 
   implicit none
-
-  integer :: myrank
 
   ! bathymetry and topography: use integer array to store values
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo

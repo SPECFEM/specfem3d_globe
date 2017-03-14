@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine add_topography_icb(myrank,xelm,yelm,zelm)
+  subroutine add_topography_icb(xelm,yelm,zelm)
 
 ! this is only a placeholder routine, which is not used yet... user must supply the sutopo_icb() routine
 
@@ -33,8 +33,6 @@
   use meshfem3D_par, only: RICB,RCMB
 
   implicit none
-
-  integer,intent(in) :: myrank
 
   double precision,intent(inout) :: xelm(NGNOD)
   double precision,intent(inout) :: yelm(NGNOD)
