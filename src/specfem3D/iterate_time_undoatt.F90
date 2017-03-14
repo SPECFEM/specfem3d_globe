@@ -424,7 +424,7 @@
 
         ! kernel computation
         ! adjoint simulations: kernels
-        ! attention: for GPU_MODE and ANISOTROPIC_KL it is necessary to use resort_array (see lines 442-445) 
+        ! attention: for GPU_MODE and ANISOTROPIC_KL it is necessary to use resort_array (see lines 442-445)
         call compute_kernels()
 
       enddo ! subset loop
@@ -443,7 +443,7 @@
     ! attention: cijkl_kl_crust_mantle is sorted differently on GPU and CPU
     call resort_array(Mesh_pointer)
   endif
- 
+
   ! frees undo_attenuation buffers
   if (SIMULATION_TYPE == 3) then
     deallocate(b_displ_cm_store_buffer, &

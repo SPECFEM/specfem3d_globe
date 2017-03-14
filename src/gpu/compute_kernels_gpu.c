@@ -706,7 +706,7 @@ void FC_FUNC_ (resort_array,
 
   TRACE ("resort d_cijkl_kl_crust_mantle array");
   // debug
-  
+
   //get mesh pointer out of Fortran integer container
   Mesh *mp = (Mesh *) *Mesh_pointer_f;
 
