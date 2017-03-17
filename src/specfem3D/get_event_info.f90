@@ -33,19 +33,18 @@
 ! Also, t_shift is added as a new parameter to be written on sac headers!
 ! by Ebru Bozdag
 
-  subroutine get_event_info_parallel(myrank,yr,jda,mo,da,ho,mi,sec, &
+  subroutine get_event_info_parallel(yr,jda,mo,da,ho,mi,sec, &
                                     event_name,tshift_cmt,t_shift, &
                                     elat,elon,depth,mb,ms,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
                                     Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
-  use constants
+  use constants, only: myrank
 
   implicit none
 
 !--- input or output arguments of the subroutine below
 
-  integer, intent(in) :: myrank
   integer, intent(in) :: NSOURCES ! must be given
 
   integer, intent(out) :: yr,mo,da,jda,ho,mi

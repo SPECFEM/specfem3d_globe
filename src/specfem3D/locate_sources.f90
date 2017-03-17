@@ -38,7 +38,7 @@
   use shared_input_parameters, only: OUTPUT_FILES
 
   use specfem_par, only: &
-    NSOURCES,myrank, &
+    NSOURCES, &
     tshift_cmt,theta_source,phi_source, &
     DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
     rspl,espl,espl2,nspl,ibathy_topo, &
@@ -782,7 +782,7 @@
 
   ! stores source mask
   if (SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3) then
-    call save_mask_source(myrank,mask_source,NSPEC,LOCAL_TMP_PATH)
+    call save_mask_source(mask_source,NSPEC,LOCAL_TMP_PATH)
     deallocate( mask_source )
   endif
 
@@ -805,8 +805,8 @@
 !
 
   subroutine calc_mask_source(mask_source,ispec,NSPEC,typical_size_squared, &
-                            x_target_source,y_target_source,z_target_source, &
-                            ibool,xstore,ystore,zstore,NGLOB)
+                              x_target_source,y_target_source,z_target_source, &
+                              ibool,xstore,ystore,zstore,NGLOB)
 
 ! calculate a Gaussian function mask in the crust_mantle region
 ! which is 0 around the source locations and 1 everywhere else
@@ -858,7 +858,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_mask_source(myrank,mask_source,NSPEC,LOCAL_TMP_PATH)
+  subroutine save_mask_source(mask_source,NSPEC,LOCAL_TMP_PATH)
 
 ! saves a mask in the crust_mantle region which is 0 around the source locations
 ! and 1 everywhere else
@@ -867,7 +867,7 @@
 
   implicit none
 
-  integer :: myrank,NSPEC
+  integer :: NSPEC
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: mask_source
   character(len=MAX_STRING_LEN) :: LOCAL_TMP_PATH

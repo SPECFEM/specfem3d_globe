@@ -75,7 +75,7 @@
   endif
 
   ! broadcast parameters read from master to all processes
-  call broadcast_computed_parameters(myrank)
+  call broadcast_computed_parameters()
 
   ! check that the code is running with the requested nb of processes
   if (sizeprocs /= NPROCTOT) then
@@ -275,6 +275,9 @@
        .and. READ_ADJSRC_ASDF) then
     call asdf_setup(current_asdf_handle, path_to_add, simul_run_flag)
   endif
+
+  ! output info for possible OpenMP
+  call init_openmp()
 
   ! synchronizes processes
   call synchronize_all()

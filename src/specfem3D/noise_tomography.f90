@@ -229,9 +229,10 @@
 
     ! compute source arrays for "ensemble forward source", which is source of "ensemble forward wavefield"
     if (nsources_local_noise > 0 .or. myrank == 0) then ! myrank == 0 is used for output only
-      call compute_arrays_source_noise(myrank, &
-                xi_receiver(irec_master_noise),eta_receiver(irec_master_noise),gamma_receiver(irec_master_noise), &
-                nu(:,:,irec_master_noise),noise_sourcearray, xigll,yigll,zigll,NSTEP)
+      call compute_arrays_source_noise(xi_receiver(irec_master_noise), &
+                                       eta_receiver(irec_master_noise), &
+                                       gamma_receiver(irec_master_noise), &
+                                       nu(:,:,irec_master_noise),noise_sourcearray, xigll,yigll,zigll,NSTEP)
     endif
   endif
 
@@ -379,8 +380,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine compute_arrays_source_noise(myrank, &
-                                         xi_noise,eta_noise,gamma_noise,nu_single,noise_sourcearray, &
+  subroutine compute_arrays_source_noise(xi_noise,eta_noise,gamma_noise,nu_single,noise_sourcearray, &
                                          xigll,yigll,zigll,NSTEP)
 
 ! reads and constructs the "source" (source time function based upon noise spectrum)
@@ -392,7 +392,7 @@
   implicit none
 
   ! input parameters
-  integer :: myrank, NSTEP
+  integer :: NSTEP
   double precision, dimension(NGLLX) :: xigll
   double precision, dimension(NGLLY) :: yigll
   double precision, dimension(NGLLZ) :: zigll

@@ -29,7 +29,7 @@
 !===============================================================================
 !> \brief Read adios attenuation arrays created by the mesher
 !         (regX_attenuation.bp)
-subroutine read_attenuation_adios(myrank, iregion_code, &
+subroutine read_attenuation_adios(iregion_code, &
                                   factor_common, scale_factor, tau_s, vnspec, T_c_source)
 
   use constants_solver
@@ -40,8 +40,6 @@ subroutine read_attenuation_adios(myrank, iregion_code, &
   use manager_adios
 
   implicit none
-
-  integer :: myrank
 
   integer :: vnspec
   real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,vnspec) :: scale_factor
