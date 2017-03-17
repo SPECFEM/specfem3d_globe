@@ -262,6 +262,18 @@
   call read_value_logical(ADIOS_FOR_UNDO_ATTENUATION, 'ADIOS_FOR_UNDO_ATTENUATION', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: ADIOS_FOR_UNDO_ATTENUATION'
 
+  ! ADIOS is very useful for very large simulations (say using 2000 MPI tasks or more)
+  ! but slows down the code if used for simulations that are small or medium size, because of the overhead any library has.
+  if (ADIOS_ENABLED .and. NCHUNKS * NPROC_XI_read * NPROC_ETA_read < 2000) then
+    print *
+    print *,'**************'
+    print *,'**************'
+    print *,'ADIOS significantly slows down small or medium-size runs, which is the case here, please consider turning it off'
+    print *,'**************'
+    print *,'**************'
+    print *
+  endif
+
   ! closes parameter file
   call close_parameter_file()
 
