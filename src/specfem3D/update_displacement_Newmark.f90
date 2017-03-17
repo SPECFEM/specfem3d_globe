@@ -74,15 +74,21 @@
     ! on CPU
 
     ! Newmark time scheme update
-    ! mantle
-    call update_displ_elastic(NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
-                                deltat,deltatover2,deltatsqover2)
-    ! outer core
-    call update_displ_acoustic(NGLOB_OUTER_CORE,displ_outer_core,veloc_outer_core,accel_outer_core, &
-                                deltat,deltatover2,deltatsqover2)
-    ! inner core
-    call update_displ_elastic(NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
-                                deltat,deltatover2,deltatsqover2)
+!    ! mantle
+!    call update_displ_elastic(NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+!                                deltat,deltatover2,deltatsqover2)
+!    ! outer core
+!    call update_displ_acoustic(NGLOB_OUTER_CORE,displ_outer_core,veloc_outer_core,accel_outer_core, &
+!                                deltat,deltatover2,deltatsqover2)
+!    ! inner core
+!    call update_displ_elastic(NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
+!                                deltat,deltatover2,deltatsqover2)
+    ! combined
+    call update_displ_elastic_acoustic(NGLOB_CRUST_MANTLE,displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &
+                                       NGLOB_INNER_CORE,displ_inner_core,veloc_inner_core,accel_inner_core, &
+                                       NGLOB_OUTER_CORE,displ_outer_core,veloc_outer_core,accel_outer_core, &
+                                       deltat,deltatover2,deltatsqover2)
+
   else
     ! on GPU
     ! Includes FORWARD_OR_ADJOINT == 1
@@ -117,15 +123,21 @@
   if (.not. GPU_MODE) then
     ! on CPU
     ! Newmark time scheme update for backward/reconstructed fields
-    ! mantle
-    call update_displ_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
-                              b_deltat,b_deltatover2,b_deltatsqover2)
-    ! outer core
-    call update_displ_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
-                              b_deltat,b_deltatover2,b_deltatsqover2)
-    ! inner core
-    call update_displ_elastic(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
-                              b_deltat,b_deltatover2,b_deltatsqover2)
+!    ! mantle
+!    call update_displ_elastic(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+!                              b_deltat,b_deltatover2,b_deltatsqover2)
+!    ! outer core
+!    call update_displ_acoustic(NGLOB_OUTER_CORE_ADJOINT,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+!                              b_deltat,b_deltatover2,b_deltatsqover2)
+!    ! inner core
+!    call update_displ_elastic(NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+!                              b_deltat,b_deltatover2,b_deltatsqover2)
+    ! combined
+    call update_displ_elastic_acoustic(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle,b_veloc_crust_mantle,b_accel_crust_mantle, &
+                                       NGLOB_INNER_CORE_ADJOINT,b_displ_inner_core,b_veloc_inner_core,b_accel_inner_core, &
+                                       NGLOB_OUTER_CORE_ADJOINT,b_displ_outer_core,b_veloc_outer_core,b_accel_outer_core, &
+                                       b_deltat,b_deltatover2,b_deltatsqover2)
+
   else
     ! on GPU
     ! Includes FORWARD_OR_ADJOINT == 3
@@ -166,7 +178,7 @@
 !$OMP deltat, deltatsqover2, deltatover2 ) &
 !$OMP PRIVATE(i)
 
-!$OMP DO SCHEDULE(GUIDED)
+!$OMP DO
     do i = 1,NGLOB * NDIM
       displ(i,1) = displ(i,1) + deltat * veloc(i,1) + deltatsqover2 * accel(i,1)
       veloc(i,1) = veloc(i,1) + deltatover2 * accel(i,1)
@@ -186,6 +198,117 @@
   endif
 
   end subroutine update_displ_elastic
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine update_displ_elastic_acoustic(NGLOB_CM,displ_cm,veloc_cm,accel_cm, &
+                                           NGLOB_IC,displ_ic,veloc_ic,accel_ic, &
+                                           NGLOB_OC,displ_oc,veloc_oc,accel_oc, &
+                                           deltat,deltatover2,deltatsqover2)
+
+! note: this subroutine updates all regions crust/mantle, inner core (elastic) and outer core (acoustic).
+!       this is to facilitate openmp statements and put all loops into the same parallel section,
+!       otherwise the scheduling times will be much higher than the actual compute time in these loops.
+
+  use constants_solver, only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL
+
+  implicit none
+
+  integer,intent(in) :: NGLOB_CM,NGLOB_IC,NGLOB_OC
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB_CM),intent(inout) :: displ_cm,veloc_cm,accel_cm
+  real(kind=CUSTOM_REAL),dimension(NDIM,NGLOB_IC),intent(inout) :: displ_ic,veloc_ic,accel_ic
+  real(kind=CUSTOM_REAL),dimension(NGLOB_OC),intent(inout) :: displ_oc,veloc_oc,accel_oc
+  real(kind=CUSTOM_REAL),intent(in) :: deltat,deltatover2,deltatsqover2
+
+  ! local parameters
+  integer :: i
+
+  ! Newmark time scheme update
+  if (FORCE_VECTORIZATION_VAL) then
+
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( deltat, deltatsqover2, deltatover2, &
+!$OMP NGLOB_CM, displ_cm, veloc_cm, accel_cm, &
+!$OMP NGLOB_IC, displ_ic, veloc_ic, accel_ic, &
+!$OMP NGLOB_OC, displ_oc, veloc_oc, accel_oc) &
+!$OMP PRIVATE(i)
+
+! note: SCHEDULE(GUIDED) leads to slower times due to scheduling overhead.
+!       SCHEDULE(STATIC) would enforce static scheduling, but that's usually default.
+!       we leave it to the OMP_SCHEDULE environment to choose the best scheduling option for the system.
+
+! crust/mantle
+!$OMP DO
+    do i = 1,NGLOB_CM * NDIM
+      displ_cm(i,1) = displ_cm(i,1) + deltat * veloc_cm(i,1) + deltatsqover2 * accel_cm(i,1)
+      veloc_cm(i,1) = veloc_cm(i,1) + deltatover2 * accel_cm(i,1)
+      accel_cm(i,1) = 0._CUSTOM_REAL
+    enddo
+!$OMP enddo NOWAIT
+
+! inner core
+!$OMP DO
+    do i = 1,NGLOB_IC * NDIM
+      displ_ic(i,1) = displ_ic(i,1) + deltat * veloc_ic(i,1) + deltatsqover2 * accel_ic(i,1)
+      veloc_ic(i,1) = veloc_ic(i,1) + deltatover2 * accel_ic(i,1)
+      accel_ic(i,1) = 0._CUSTOM_REAL
+    enddo
+!$OMP enddo  NOWAIT
+
+! outer core
+!$OMP DO
+    do i = 1,NGLOB_OC
+      displ_oc(i) = displ_oc(i) + deltat * veloc_oc(i) + deltatsqover2 * accel_oc(i)
+      veloc_oc(i) = veloc_oc(i) + deltatover2 * accel_oc(i)
+      accel_oc(i) = 0._CUSTOM_REAL
+    enddo
+!$OMP enddo
+!$OMP END PARALLEL
+
+  else
+
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( deltat, deltatsqover2, deltatover2, &
+!$OMP NGLOB_CM, displ_cm, veloc_cm, accel_cm, &
+!$OMP NGLOB_IC, displ_ic, veloc_ic, accel_ic, &
+!$OMP NGLOB_OC, displ_oc, veloc_oc, accel_oc) &
+!$OMP PRIVATE(i)
+
+! crust/mantle
+!$OMP DO
+    do i = 1,NGLOB_CM
+      displ_cm(:,i) = displ_cm(:,i) + deltat * veloc_cm(:,i) + deltatsqover2 * accel_cm(:,i)
+      veloc_cm(:,i) = veloc_cm(:,i) + deltatover2 * accel_cm(:,i)
+      accel_cm(:,i) = 0._CUSTOM_REAL
+    enddo
+!$OMP enddo  NOWAIT
+
+! inner core
+!$OMP DO
+    do i = 1,NGLOB_IC
+      displ_ic(:,i) = displ_ic(:,i) + deltat * veloc_ic(:,i) + deltatsqover2 * accel_ic(:,i)
+      veloc_ic(:,i) = veloc_ic(:,i) + deltatover2 * accel_ic(:,i)
+      accel_ic(:,i) = 0._CUSTOM_REAL
+    enddo
+!$OMP enddo  NOWAIT
+
+! outer core
+!$OMP DO
+    do i = 1,NGLOB_OC
+      displ_oc(i) = displ_oc(i) + deltat * veloc_oc(i) + deltatsqover2 * accel_oc(i)
+      veloc_oc(i) = veloc_oc(i) + deltatover2 * accel_oc(i)
+      accel_oc(i) = 0._CUSTOM_REAL
+    enddo
+!$OMP enddo
+!$OMP END PARALLEL
+
+  endif
+
+  end subroutine update_displ_elastic_acoustic
 
 
 !
@@ -212,7 +335,7 @@
 !$OMP PRIVATE(i)
 
   ! Newmark time scheme update
-!$OMP DO SCHEDULE(GUIDED)
+!$OMP DO
   do i = 1,NGLOB
     displ(i) = displ(i) + deltat * veloc(i) + deltatsqover2 * accel(i)
     veloc(i) = veloc(i) + deltatover2 * accel(i)
@@ -283,7 +406,7 @@
 !
 
   subroutine update_veloc_acoustic(NGLOB,veloc_outer_core,accel_outer_core, &
-                                  deltatover2)
+                                   deltatover2)
 
 ! updates acceleration and velocity in outer core
 
@@ -304,9 +427,15 @@
   ! Newmark time scheme
 
   ! update velocity
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED(deltatover2, NGLOB, veloc_outer_core, accel_outer_core) &
+!$OMP PRIVATE(i)
+!$OMP DO
   do i = 1,NGLOB
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2 * accel_outer_core(i)
   enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   end subroutine update_veloc_acoustic
 
@@ -409,37 +538,48 @@
   if (FORCE_VECTORIZATION_VAL) then
 
 !$OMP PARALLEL DEFAULT(NONE) &
-!$OMP SHARED( NGLOB_CM, veloc_crust_mantle, deltatover2, &
-!$OMP accel_crust_mantle, NGLOB_IC, veloc_inner_core, accel_inner_core) &
+!$OMP SHARED( deltatover2, &
+!$OMP NGLOB_CM, veloc_crust_mantle, accel_crust_mantle, &
+!$OMP NGLOB_IC, veloc_inner_core, accel_inner_core) &
 !$OMP PRIVATE(i)
 
     ! crust/mantle
-!$OMP DO SCHEDULE(GUIDED)
+!$OMP DO
     do i = 1,NGLOB_CM * NDIM
       veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
     enddo
-!$OMP enddo
+!$OMP enddo NOWAIT
 
-!$OMP DO SCHEDULE(GUIDED)
     ! inner core
+!$OMP DO
     do i = 1,NGLOB_IC * NDIM
       veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
     enddo
 !$OMP enddo
-
 !$OMP END PARALLEL
 
   else
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED( deltatover2, &
+!$OMP NGLOB_CM, veloc_crust_mantle, accel_crust_mantle, &
+!$OMP NGLOB_IC, veloc_inner_core, accel_inner_core) &
+!$OMP PRIVATE(i)
+
     ! crust/mantle
+!$OMP DO
     do i = 1,NGLOB_CM
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
     enddo
+!$OMP enddo NOWAIT
 
     ! inner core
+!$OMP DO
     do i = 1,NGLOB_IC
       veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
     enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   endif
 

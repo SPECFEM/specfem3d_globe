@@ -77,13 +77,16 @@
   if (SIMULATION_TYPE == 3 ) return
 
   ! crust & mantle
+  if (.not. GPU_MODE) then
+    ! on CPU
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec2D,ispec,i,j,k,iglob,vx,vy,vz,vn,nx,ny,nz,tx,ty,tz,weight) &
+!$OMP FIRSTPRIVATE(wgllwgll_xz,wgllwgll_yz)
 
-  !   xmin
-  ! if two chunks exclude this face for one of them
-  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
-
-    if (.not. GPU_MODE) then
-      ! on CPU
+    !   xmin
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+!$OMP DO
       do ispec2D = 1,nspec2D_xmin_crust_mantle
 
         ispec=ibelm_xmin_crust_mantle(ispec2D)
@@ -112,8 +115,11 @@
 
             weight=jacobian2D_xmin_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
 
+!$OMP ATOMIC
             accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
+!$OMP ATOMIC
             accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
+!$OMP ATOMIC
             accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
             if (SAVE_STACEY) then
@@ -124,25 +130,14 @@
           enddo
         enddo
       enddo
+!$OMP enddo NOWAIT
 
-    else
-      ! on GPU
-      if (nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_xmin_crust_mantle,0) ! <= xmin
     endif
 
-    ! writes absorbing boundary values
-    if (SAVE_STACEY .and. nspec2D_xmin_crust_mantle > 0) then
-      call write_abs(0,absorb_xmin_crust_mantle, reclen_xmin_crust_mantle,it)
-    endif
-
-  endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC
-
-  !   xmax
-  ! if two chunks exclude this face for one of them
-  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
-
-    if (.not. GPU_MODE) then
-      ! on CPU
+    !   xmax
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+!$OMP DO
       do ispec2D = 1,nspec2D_xmax_crust_mantle
 
         ispec=ibelm_xmax_crust_mantle(ispec2D)
@@ -171,8 +166,11 @@
 
             weight=jacobian2D_xmax_crust_mantle(j,k,ispec2D)*wgllwgll_yz(j,k)
 
+!$OMP ATOMIC
             accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
+!$OMP ATOMIC
             accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
+!$OMP ATOMIC
             accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
             if (SAVE_STACEY) then
@@ -184,24 +182,12 @@
           enddo
         enddo
       enddo
+!$OMP enddo NOWAIT
 
-    else
-      ! on GPU
-      if (nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_xmax_crust_mantle,1) ! <= xmin
     endif
 
-
-    ! writes absorbing boundary values
-    if (SAVE_STACEY .and. nspec2D_xmax_crust_mantle > 0) then
-      call write_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,it)
-    endif
-
-  endif ! NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB
-
-  !   ymin
-
-  if (.not. GPU_MODE) then
-    ! on CPU
+    !   ymin
+!$OMP DO
     do ispec2D = 1,nspec2D_ymin_crust_mantle
 
       ispec=ibelm_ymin_crust_mantle(ispec2D)
@@ -230,8 +216,11 @@
 
           weight=jacobian2D_ymin_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
 
+!$OMP ATOMIC
           accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
+!$OMP ATOMIC
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
+!$OMP ATOMIC
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
           if (SAVE_STACEY) then
@@ -243,21 +232,10 @@
         enddo
       enddo
     enddo
+!$OMP enddo NOWAIT
 
-  else
-    ! on GPU
-    if (nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_ymin_crust_mantle,2) ! <= ymin
-  endif
-
-  ! writes absorbing boundary values
-  if (SAVE_STACEY .and. nspec2D_ymin_crust_mantle > 0) then
-    call write_abs(2,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle,it)
-  endif
-
-  !   ymax
-
-  if (.not. GPU_MODE) then
-    ! on CPU
+    !   ymax
+!$OMP DO
     do ispec2D = 1,nspec2D_ymax_crust_mantle
 
       ispec=ibelm_ymax_crust_mantle(ispec2D)
@@ -286,8 +264,11 @@
 
           weight=jacobian2D_ymax_crust_mantle(i,k,ispec2D)*wgllwgll_xz(i,k)
 
+!$OMP ATOMIC
           accel_crust_mantle(1,iglob)=accel_crust_mantle(1,iglob) - tx*weight
+!$OMP ATOMIC
           accel_crust_mantle(2,iglob)=accel_crust_mantle(2,iglob) - ty*weight
+!$OMP ATOMIC
           accel_crust_mantle(3,iglob)=accel_crust_mantle(3,iglob) - tz*weight
 
           if (SAVE_STACEY) then
@@ -299,16 +280,39 @@
         enddo
       enddo
     enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   else
     ! on GPU
+    !   xmin
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+      if (nspec2D_xmin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_xmin_crust_mantle,0) ! <= xmin
+    endif
+    !   xmax
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+      if (nspec2D_xmax_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_xmax_crust_mantle,1) ! <= xmin
+    endif
+    ! ymin
+    if (nspec2D_ymin_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_ymin_crust_mantle,2) ! <= ymin
+    !   ymax
     if (nspec2D_ymax_crust_mantle > 0 ) call compute_stacey_elastic_gpu(Mesh_pointer,absorb_ymax_crust_mantle,3) ! <= ymax
   endif
 
   ! writes absorbing boundary values
-  if (SAVE_STACEY .and. nspec2D_ymax_crust_mantle > 0) then
-    call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
+  if (SAVE_STACEY) then
+    ! xmin
+    if (nspec2D_xmin_crust_mantle > 0) call write_abs(0,absorb_xmin_crust_mantle, reclen_xmin_crust_mantle,it)
+    ! xmax
+    if (nspec2D_xmax_crust_mantle > 0) call write_abs(1,absorb_xmax_crust_mantle,reclen_xmax_crust_mantle,it)
+    ! ymin
+    if (nspec2D_ymin_crust_mantle > 0) call write_abs(2,absorb_ymin_crust_mantle,reclen_ymin_crust_mantle,it)
+    ! ymax
+    if (nspec2D_ymax_crust_mantle > 0) call write_abs(3,absorb_ymax_crust_mantle,reclen_ymax_crust_mantle,it)
   endif
+
 
   end subroutine compute_stacey_cm_forward
 
