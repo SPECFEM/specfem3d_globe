@@ -366,8 +366,11 @@
 
   implicit none
 
+! check for imbalance of distribution of receivers or of adjoint sources
+  logical, parameter :: CHECK_FOR_IMBALANCE = .false.
+
   ! local parameters
-  integer :: irec,isource,nrec_tot_found
+  integer :: irec,isource,nrec_tot_found,i
   integer :: nrec_simulation
   integer :: nadj_files_found,nadj_files_found_tot
   integer :: ier
@@ -596,6 +599,51 @@
       write(IMAIN,*)
       call flush_IMAIN()
     endif
+  endif
+
+! check for imbalance of distribution of receivers or of adjoint sources
+  if (CHECK_FOR_IMBALANCE .and. NPROCTOT_VAL > 1) then
+    call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
+    if (myrank == 0) then
+      open(unit=9977,file='imbalance_of_nrec_local.dat',status='unknown')
+      do i = 1,NPROCTOT_VAL
+        write(9977,*) i,tmp_rec_local_all(i)
+      enddo
+      close(9977)
+    endif
+
+    call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
+    if (myrank == 0) then
+      open(unit=9977,file='imbalance_of_nadj_rec_local.dat',status='unknown')
+      do i = 1,NPROCTOT_VAL
+        write(9977,*) i,tmp_rec_local_all(i)
+      enddo
+      close(9977)
+    endif
+
+    if (myrank == 0) then
+      open(unit=9977,file='plot_imbalance_histogram.gnu',status='unknown')
+      write(9977,*) '#set terminal x11'
+      write(9977,*) 'set terminal wxt'
+      write(9977,*) '#set terminal gif'
+      write(9977,*) '#set output "imbalance_histogram.gif"'
+      write(9977,*)
+      write(9977,*) 'set xrange [1:',NPROCTOT_VAL,']'
+      write(9977,*) '#set xtics 0,0.1,1'
+      write(9977,*) 'set boxwidth 1.'
+      write(9977,*) 'set xlabel "Mesh slice number"'
+      write(9977,*)
+      write(9977,*) 'set ylabel "Number of receivers in that mesh slice"'
+      write(9977,*) 'plot "imbalance_of_nrec_local.dat" with boxes'
+      write(9977,*) 'pause -1 "hit any key..."'
+      write(9977,*)
+      write(9977,*) 'set ylabel "Number of adjoint sources in that mesh slice"'
+      write(9977,*) 'plot "imbalance_of_nadj_rec_local.dat" with boxes'
+      write(9977,*) 'pause -1 "hit any key..."'
+      close(9977)
+    endif
+
+    call synchronize_all()
   endif
 
   deallocate(tmp_rec_local_all)
