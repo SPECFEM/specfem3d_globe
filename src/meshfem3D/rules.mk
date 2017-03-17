@@ -235,6 +235,7 @@ endif
 # conditional CEM model
 ifeq ($(CEM),yes)
 meshfem3D_OBJECTS += $O/model_cem.checknetcdf.o
+meshfem3D_MODULES += $(FC_MODDIR)/cem_par.$(FC_MODEXT)
 endif
 
 
