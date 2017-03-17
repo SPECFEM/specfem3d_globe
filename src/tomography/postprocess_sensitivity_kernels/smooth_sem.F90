@@ -141,7 +141,7 @@ program smooth_sem_globe
   double precision, dimension(NGLLZ) :: zigll, wzgll
 
   ! array with all the weights in the cube
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
   real(kind=CUSTOM_REAL) :: dist_h,dist_v
   real(kind=CUSTOM_REAL) :: element_size
