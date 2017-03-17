@@ -244,13 +244,10 @@
     call mxm5_3comp_singleB_1(dummyz_loc,m2,hprime_xxT,tempz3,m1)
 #else
     ! computes 1. matrix multiplication for tempx1,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_3dmat_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m1,hprime_xxT,m1,tempx2,tempy2,tempz2,NGLLX)
     ! computes 3. matrix multiplication for tempx3,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
 #endif
 
@@ -337,13 +334,10 @@
     call mxm5_3comp_singleB_1(tempz3,m2,hprimewgll_xx,newtempz3,m1)
 #else
     ! computes 1. matrix multiplication for newtempx1,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_singleA(hprimewgll_xxT,m1,tempx1,tempy1,tempz1,newtempx1,newtempy1,newtempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_3dmat_singleB(tempx2,tempy2,tempz2,m1,hprimewgll_xx,m1,newtempx2,newtempy2,newtempz2,NGLLX)
     ! computes 3. matrix multiplication for newtempx3,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_singleB(tempx3,tempy3,tempz3,m2,hprimewgll_xx,newtempx3,newtempy3,newtempz3,m1)
 #endif
 
@@ -557,6 +551,11 @@
 
   subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
 
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleA
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_singleA
+
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
   use constants_solver, only: CUSTOM_REAL
@@ -617,6 +616,11 @@
 
   subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
 
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleB
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_singleB
+
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
   use constants_solver, only: CUSTOM_REAL
@@ -676,6 +680,11 @@
 !--------------------------------------------------------------------------------------------
 
   subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
+
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_3dmat_singleB
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_3dmat_singleB
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 

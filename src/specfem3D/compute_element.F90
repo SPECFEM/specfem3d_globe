@@ -1374,10 +1374,13 @@
 ! please leave this routine in this file, to help compilers inlining this function...
 !
 
-! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES INLINE :: compute_element_stress_attenuation_contrib
   subroutine compute_element_stress_attenuation_contrib(R_xx_loc,R_yy_loc,R_xy_loc,R_xz_loc,R_yz_loc, &
                                                         sigma_xx,sigma_yy,sigma_zz,sigma_xy,sigma_xz,sigma_yz)
+
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES INLINE :: compute_element_stress_attenuation_contrib
+! cray
+!DIR$ INLINEALWAYS compute_element_stress_attenuation_contrib
 
 ! updates stress with attenuation coontribution
 
@@ -1471,16 +1474,18 @@
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES INLINE :: compute_element_precompute_factors
   subroutine compute_element_precompute_factors(tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                                 deriv_loc,jacobianl, &
                                                 duxdxl,duydyl,duzdzl, &
                                                 duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl, &
                                                 duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl)
 
-! precomputes factors
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES INLINE :: compute_element_precompute_factors
+! cray
+!DIR$ INLINEALWAYS compute_element_precompute_factors
 
+! precomputes factors
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ
 
@@ -1571,15 +1576,17 @@
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES INLINE :: compute_element_deviatoric_strain
   subroutine compute_element_deviatoric_strain(duxdxl,duydyl,duzdzl, &
                                                duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl, &
                                                ispec,NSPEC_STRAIN_ONLY, &
                                                epsilon_trace_over_3,epsilondev_loc)
 
-! computes deviatoric strain
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES INLINE :: compute_element_deviatoric_strain
+! cray
+!DIR$ INLINEALWAYS compute_element_deviatoric_strain
 
+! computes deviatoric strain
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,ONE_THIRD
 
@@ -1659,12 +1666,15 @@
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES INLINE :: compute_element_dot_product_stress
   subroutine compute_element_dot_product_stress(deriv_loc,jacobianl, &
                                                 sigma_xx,sigma_yy,sigma_zz, &
                                                 sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                                 tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3)
+
+! we can force inlining (Intel compiler)
+!DIR$ATTRIBUTES INLINE :: compute_element_dot_product_stress
+! cray
+!DIR$ INLINEALWAYS compute_element_dot_product_stress
 
 ! computes dot product of stress tensor with test vector, non-symmetric form
 
@@ -1756,14 +1766,17 @@
 
 ! please leave this routine in this file, to help compilers inlining this function...
 
-! we can force inlining (Intel compiler)
-!DIR$ATTRIBUTES INLINE :: compute_element_gravity
   subroutine compute_element_gravity(ispec,NSPEC,NGLOB,ibool,jacobianl,wgll_cube, &
                                      gravity_pre_store,gravity_H, &
                                      dummyx_loc,dummyy_loc,dummyz_loc, &
                                      sigma_xx,sigma_yy,sigma_zz, &
                                      sigma_xy,sigma_xz,sigma_yz,sigma_yx,sigma_zx,sigma_zy, &
                                      rho_s_H)
+
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES INLINE :: compute_element_gravity
+! cray
+!DIR$ INLINEALWAYS compute_element_gravity
 
 ! computes non-symmetric stress terms for gravity
 

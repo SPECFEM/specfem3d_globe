@@ -107,7 +107,7 @@
 !$OMP xstore,ystore,zstore, &
 !$OMP kappavstore,kappahstore,muvstore,muhstore,rhostore, &
 !$OMP elemsize_min_reg,elemsize_max_reg,eig_ratio_min_reg,eig_ratio_max_reg, &
-!$OMP pmax_reg,dt_max_reg,cmax_reg,val_ispec_pmax,val_ispec_dt)
+!$OMP pmax_reg,dt_max_reg,cmax_reg,val_ispec_pmax,val_ispec_dt,DT)
 !$OMP DO
   do ispec = 1,nspec
 

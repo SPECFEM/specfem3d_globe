@@ -207,13 +207,10 @@
     ! pages 386 and 389 and Figure 8.3.1
 
     ! computes 1. matrix multiplication for tempx1,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_3dmat_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m1,hprime_xxT,m1,tempx2,tempy2,tempz2,NGLLX)
     ! computes 3. matrix multiplication for tempx1,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
 
     !
@@ -254,13 +251,10 @@
     ! pages 386 and 389 and Figure 8.3.1
 
     ! computes 1. matrix multiplication for newtempx1,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_singleA(hprimewgll_xxT,m1,tempx1,tempy1,tempz1,newtempx1,newtempy1,newtempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_3dmat_singleB(tempx2,tempy2,tempz2,m1,hprimewgll_xx,m1,newtempx2,newtempy2,newtempz2,NGLLX)
     ! computes 3. matrix multiplication for newtempx3,..
-!DIR$ FORCEINLINE
     call mxm5_3comp_singleB(tempx3,tempy3,tempz3,m2,hprimewgll_xx,newtempx3,newtempy3,newtempz3,m1)
 
     ! sums contributions
@@ -420,6 +414,11 @@
 
   subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
 
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleA
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_singleA
+
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
   use constants_solver, only: CUSTOM_REAL
@@ -451,6 +450,7 @@
   ! matrix-matrix multiplication
   do j = 1,n3
 !dir$ ivdep
+!dir$ SIMD
     do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
@@ -478,6 +478,11 @@
 !--------------------------------------------------------------------------------------------
 
   subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
+
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleB
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_singleB
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -510,6 +515,7 @@
   ! matrix-matrix multiplication
   do j = 1,n3
 !dir$ ivdep
+!dir$ SIMD
     do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
@@ -537,6 +543,11 @@
 !--------------------------------------------------------------------------------------------
 
   subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
+
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_3dmat_singleB
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_3dmat_singleB
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
@@ -593,6 +604,7 @@
   do k = 1,n3
     do j = 1,n2
 !dir$ ivdep
+!dir$ SIMD
       do i = 1,n1
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
