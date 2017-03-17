@@ -49,15 +49,13 @@
   use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
     wgll_cube, &
-    minus_gravity_table,density_table,minus_deriv_gravity_table, &
+    gravity_pre_store => gravity_pre_store_crust_mantle,gravity_H => gravity_H_crust_mantle, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_crustmantle, only: &
-    rstore => rstore_crust_mantle, &
     deriv => deriv_mapping_crust_mantle, &
-    kappavstore => kappavstore_crust_mantle,kappahstore => kappahstore_crust_mantle, &
-    muvstore => muvstore_crust_mantle,muhstore => muhstore_crust_mantle, &
-    eta_anisostore => eta_anisostore_crust_mantle, &
+    kappavstore => kappavstore_crust_mantle, &
+    muvstore => muvstore_crust_mantle, &
     c11store => c11store_crust_mantle,c12store => c12store_crust_mantle,c13store => c13store_crust_mantle, &
     c14store => c14store_crust_mantle,c15store => c15store_crust_mantle,c16store => c16store_crust_mantle, &
     c22store => c22store_crust_mantle,c23store => c23store_crust_mantle,c24store => c24store_crust_mantle, &
@@ -67,7 +65,6 @@
     c55store => c55store_crust_mantle,c56store => c56store_crust_mantle,c66store => c66store_crust_mantle, &
     ibool => ibool_crust_mantle, &
     ispec_is_tiso => ispec_is_tiso_crust_mantle, &
-    one_minus_sum_beta => one_minus_sum_beta_crust_mantle, &
     phase_ispec_inner => phase_ispec_inner_crust_mantle, &
     nspec_outer => nspec_outer_crust_mantle, &
     nspec_inner => nspec_inner_crust_mantle
@@ -138,7 +135,7 @@
   real(kind=CUSTOM_REAL) fac1,fac2,fac3
 
   ! for gravity
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
   integer :: ispec,iglob
   integer :: num_elements,ispec_p
@@ -165,23 +162,23 @@
     num_elements = nspec_inner
   endif
 
-!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP SHARED( deriv, &
 !$OMP num_elements,iphase,phase_ispec_inner, &
-!$OMP ibool,ispec_is_tiso,rstore, &
+!$OMP ibool,ispec_is_tiso, &
 !$OMP displ_crust_mantle,accel_crust_mantle, &
 !$OMP wgll_cube,hprime_xxt,hprime_xx,hprimewgll_xx,hprimewgll_xxT, &
 !$OMP wgllwgll_xy_3D, wgllwgll_xz_3D, wgllwgll_yz_3D, &
 !$OMP c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
 !$OMP c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
 !$OMP c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-!$OMP kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
+!$OMP kappavstore,muvstore, &
 !$OMP vnspec, &
-!$OMP factor_common,one_minus_sum_beta, &
+!$OMP factor_common, &
 !$OMP alphaval,betaval,gammaval, &
 !$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
 !$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3, &
-!$OMP minus_gravity_table,minus_deriv_gravity_table,density_table, &
+!$OMP gravity_pre_store,gravity_H, &
 !$OMP USE_LDDRK, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP sum_terms, &
@@ -211,6 +208,7 @@
     DO_LOOP_IJK
 
       iglob = ibool(INDEX_IJK,ispec)
+
       dummyx_loc(INDEX_IJK) = displ_crust_mantle(1,iglob)
       dummyy_loc(INDEX_IJK) = displ_crust_mantle(2,iglob)
       dummyz_loc(INDEX_IJK) = displ_crust_mantle(3,iglob)
@@ -221,21 +219,52 @@
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
 
+#ifdef DANIEL_TEST_LOOP
+    ! loop over single x/y/z-component, to test if cache utilization is better
+    ! x-comp
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleA_1(hprime_xx,m1,dummyx_loc,tempx1,m2)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_3dmat_singleB_1(dummyx_loc,m1,hprime_xxT,m1,tempx2,NGLLX)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleB_1(dummyx_loc,m2,hprime_xxT,tempx3,m1)
+    ! y-comp
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleA_1(hprime_xx,m1,dummyy_loc,tempy1,m2)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_3dmat_singleB_1(dummyy_loc,m1,hprime_xxT,m1,tempy2,NGLLX)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleB_1(dummyy_loc,m2,hprime_xxT,tempy3,m1)
+    ! z-comp
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleA_1(hprime_xx,m1,dummyz_loc,tempz1,m2)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_3dmat_singleB_1(dummyz_loc,m1,hprime_xxT,m1,tempz2,NGLLX)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleB_1(dummyz_loc,m2,hprime_xxT,tempz3,m1)
+#else
     ! computes 1. matrix multiplication for tempx1,..
+!DIR$ FORCEINLINE
     call mxm5_3comp_singleA(hprime_xx,m1,dummyx_loc,dummyy_loc,dummyz_loc,tempx1,tempy1,tempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
+!DIR$ FORCEINLINE
     call mxm5_3comp_3dmat_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m1,hprime_xxT,m1,tempx2,tempy2,tempz2,NGLLX)
     ! computes 3. matrix multiplication for tempx3,..
+!DIR$ FORCEINLINE
     call mxm5_3comp_singleB(dummyx_loc,dummyy_loc,dummyz_loc,m2,hprime_xxT,tempx3,tempy3,tempz3,m1)
+#endif
+
 
     !
     ! compute either isotropic, transverse isotropic or anisotropic elements
     !
+    ! note: for OpenMP, then non-anisotropic case leads an imbalance depending on which thread is treating what kind of element.
+    !       one could avoid it by separating the loop and looping over tiso elements and iso element separately.
+    !       using Intel VTune, it estimates a potential gain of ~4% so it's left the way it is for now...
     if (ANISOTROPIC_3D_MANTLE_VAL) then
       ! anisotropic element
       call compute_element_aniso(ispec, &
-                                 minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                 rstore, &
+                                 gravity_pre_store,gravity_H, &
                                  deriv, &
                                  wgll_cube, &
                                  c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -244,7 +273,6 @@
                                  ibool, &
                                  R_xx,R_yy,R_xy,R_xz,R_yz, &
                                  epsilon_trace_over_3, &
-                                 one_minus_sum_beta,vnspec, &
                                  tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                  dummyx_loc,dummyy_loc,dummyz_loc, &
                                  epsilondev_loc,rho_s_H)
@@ -252,30 +280,28 @@
        if (.not. ispec_is_tiso(ispec)) then
           ! isotropic element
           call compute_element_iso(ispec, &
-                                   minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                   rstore, &
+                                   gravity_pre_store,gravity_H, &
                                    deriv, &
                                    wgll_cube, &
                                    kappavstore,muvstore, &
                                    ibool, &
                                    R_xx,R_yy,R_xy,R_xz,R_yz, &
                                    epsilon_trace_over_3, &
-                                   one_minus_sum_beta,vnspec, &
                                    tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                    dummyx_loc,dummyy_loc,dummyz_loc, &
                                    epsilondev_loc,rho_s_H)
        else
           ! transverse isotropic element
           call compute_element_tiso(ispec, &
-                                     minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                     rstore, &
+                                     gravity_pre_store,gravity_H, &
                                      deriv, &
                                      wgll_cube, &
-                                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                                     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+                                     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+                                     c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
                                      ibool, &
                                      R_xx,R_yy,R_xy,R_xz,R_yz, &
                                      epsilon_trace_over_3, &
-                                     one_minus_sum_beta,vnspec, &
                                      tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                      dummyx_loc,dummyy_loc,dummyz_loc, &
                                      epsilondev_loc,rho_s_H)
@@ -286,28 +312,53 @@
     ! for incompressible fluid flow, Cambridge University Press (2002),
     ! pages 386 and 389 and Figure 8.3.1
 
+#ifdef DANIEL_TEST_LOOP
+    ! loop over single x/y/z-component, to test if cache utilization is better
+    ! x-comp
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleA_1(hprimewgll_xxT,m1,tempx1,newtempx1,m2)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_3dmat_singleB_1(tempx2,m1,hprimewgll_xx,m1,newtempx2,NGLLX)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleB_1(tempx3,m2,hprimewgll_xx,newtempx3,m1)
+    ! y-comp
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleA_1(hprimewgll_xxT,m1,tempy1,newtempy1,m2)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_3dmat_singleB_1(tempy2,m1,hprimewgll_xx,m1,newtempy2,NGLLX)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleB_1(tempy3,m2,hprimewgll_xx,newtempy3,m1)
+    ! z-comp
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleA_1(hprimewgll_xxT,m1,tempz1,newtempz1,m2)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_3dmat_singleB_1(tempz2,m1,hprimewgll_xx,m1,newtempz2,NGLLX)
+!DIR$ FORCEINLINE
+    call mxm5_3comp_singleB_1(tempz3,m2,hprimewgll_xx,newtempz3,m1)
+#else
     ! computes 1. matrix multiplication for newtempx1,..
+!DIR$ FORCEINLINE
     call mxm5_3comp_singleA(hprimewgll_xxT,m1,tempx1,tempy1,tempz1,newtempx1,newtempy1,newtempz1,m2)
     ! computes 2. matrix multiplication for tempx2,..
+!DIR$ FORCEINLINE
     call mxm5_3comp_3dmat_singleB(tempx2,tempy2,tempz2,m1,hprimewgll_xx,m1,newtempx2,newtempy2,newtempz2,NGLLX)
     ! computes 3. matrix multiplication for newtempx3,..
+!DIR$ FORCEINLINE
     call mxm5_3comp_singleB(tempx3,tempy3,tempz3,m2,hprimewgll_xx,newtempx3,newtempy3,newtempz3,m1)
+#endif
 
     ! sums contributions
     DO_LOOP_IJK
-
       fac1 = wgllwgll_yz_3D(INDEX_IJK)
       fac2 = wgllwgll_xz_3D(INDEX_IJK)
       fac3 = wgllwgll_xy_3D(INDEX_IJK)
       sum_terms(1,INDEX_IJK,ispec) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
       sum_terms(2,INDEX_IJK,ispec) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
       sum_terms(3,INDEX_IJK,ispec) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
-
     ENDDO_LOOP_IJK
 
     ! adds gravity terms
     if (GRAVITY_VAL) then
-
 #ifdef FORCE_VECTORIZATION
       do ijk = 1,NDIM*NGLLCUBE
         sum_terms(ijk,1,1,1,ispec) = sum_terms(ijk,1,1,1,ispec) + rho_s_H(ijk,1,1,1)
@@ -316,54 +367,14 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            sum_terms(1,i,j,k,ispec) = sum_terms(1,i,j,k,ispec) + rho_s_H(i,j,k,1)
-            sum_terms(2,i,j,k,ispec) = sum_terms(2,i,j,k,ispec) + rho_s_H(i,j,k,2)
-            sum_terms(3,i,j,k,ispec) = sum_terms(3,i,j,k,ispec) + rho_s_H(i,j,k,3)
+            sum_terms(1,i,j,k,ispec) = sum_terms(1,i,j,k,ispec) + rho_s_H(1,i,j,k)
+            sum_terms(2,i,j,k,ispec) = sum_terms(2,i,j,k,ispec) + rho_s_H(2,i,j,k)
+            sum_terms(3,i,j,k,ispec) = sum_terms(3,i,j,k,ispec) + rho_s_H(3,i,j,k)
           enddo
         enddo
       enddo
 #endif
-
     endif
-
-    ! updates acceleration
-#ifdef FORCE_VECTORIZATION
-    ! update will be done later at the very end..
-#else
-    ! updates for non-vectorization case
-
-! note: Critical OpenMP here might degrade performance,
-!       especially for a larger number of threads (>8).
-!       Using atomic operations can partially help.
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP CRITICAL
-#endif
-! we can force vectorization using a compiler directive here because we know that there is no dependency
-! inside a given spectral element, since all the global points of a local elements are different by definition
-! (only common points between different elements can be the same)
-! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
-!IBM* ASSERT (NODEPS)
-!pgi$ ivdep
-!DIR$ IVDEP
-    DO_LOOP_IJK
-      iglob = ibool(INDEX_IJK,ispec)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,INDEX_IJK,ispec)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,INDEX_IJK,ispec)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,INDEX_IJK,ispec)
-    ENDDO_LOOP_IJK
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP END CRITICAL
-#endif
-#endif
 
     ! update memory variables based upon the Runge-Kutta scheme
     ! convention for attenuation
@@ -431,6 +442,46 @@
       accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,ijk_spec,1,1,1)
       accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
     enddo
+  enddo
+!$OMP enddo
+
+#else
+    ! updates for non-vectorization case
+!$OMP DO SCHEDULE(GUIDED)
+  do ispec_p = 1,num_elements
+    ! only compute elements which belong to current phase (inner or outer elements)
+    ispec = phase_ispec_inner(ispec_p,iphase)
+! note: Critical OpenMP here might degrade performance,
+!       especially for a larger number of threads (>8).
+!       Using atomic operations can partially help.
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
+! we can force vectorization using a compiler directive here because we know that there is no dependency
+! inside a given spectral element, since all the global points of a local elements are different by definition
+! (only common points between different elements can be the same)
+! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
+!IBM* ASSERT (NODEPS)
+!pgi$ ivdep
+!DIR$ IVDEP
+    DO_LOOP_IJK
+      iglob = ibool(INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sum_terms(1,INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sum_terms(2,INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,INDEX_IJK,ispec)
+    ENDDO_LOOP_IJK
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP END CRITICAL
+#endif
   enddo
 !$OMP enddo
 #endif
@@ -536,7 +587,8 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
-!dir$ ivdep
+!DIR$ IVDEP
+!DIR$ SIMD
     do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
@@ -595,7 +647,8 @@
 
   ! matrix-matrix multiplication
   do j = 1,n3
-!dir$ ivdep
+!DIR$ IVDEP
+!DIR$ SIMD
     do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
@@ -678,7 +731,8 @@
   ! matrix-matrix multiplication
   do k = 1,n3
     do j = 1,n2
-!dir$ ivdep
+!DIR$ IVDEP
+!DIR$ SIMD
       do i = 1,n1
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &
@@ -703,7 +757,126 @@
 
   end subroutine mxm5_3comp_3dmat_singleB
 
+
+!--------------------------------------------------------------------------------------------
+
+#ifdef DANIEL_TEST_LOOP
+
+! loops over single x/y/z-component
+! test if cache utilization is better
+
+  subroutine mxm5_3comp_singleA_1(A,n1,B,C,n3)
+  use constants_solver, only: CUSTOM_REAL
+#ifdef XSMM
+  use my_libxsmm, only: libxsmm_smm_5_25_5
+#endif
+  implicit none
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
+  ! local parameters
+  integer :: i,j
+#ifdef XSMM
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
+  ! static version using MNK="5 25, 5" ALPHA=1 BETA=0
+  call libxsmm_smm_5_25_5(a=A, b=B, c=C)
+  return
+#endif
+  ! matrix-matrix multiplication
+  do j = 1,n3
+!dir$ ivdep
+    do i = 1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j)
+    enddo
+  enddo
+
+  end subroutine mxm5_3comp_singleA_1
+
+
+  subroutine mxm5_3comp_singleB_1(A,n1,B,C,n3)
+  use constants_solver, only: CUSTOM_REAL
+#ifdef XSMM
+  use my_libxsmm, only: libxsmm_smm_25_5_5
+#endif
+  implicit none
+  integer,intent(in) :: n1,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n3),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n3),intent(out) :: C
+  ! local parameters
+  integer :: i,j
+#ifdef XSMM
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
+  ! static version
+  call libxsmm_smm_25_5_5(a=A, b=B, c=C)
+  return
+#endif
+  ! matrix-matrix multiplication
+  do j = 1,n3
+!dir$ ivdep
+    do i = 1,n1
+      C(i,j) =  A(i,1) * B(1,j) &
+              + A(i,2) * B(2,j) &
+              + A(i,3) * B(3,j) &
+              + A(i,4) * B(4,j) &
+              + A(i,5) * B(5,j)
+    enddo
+  enddo
+  end subroutine mxm5_3comp_singleB_1
+
+
+  subroutine mxm5_3comp_3dmat_singleB_1(A,n1,B,n2,C,n3)
+  use constants_solver, only: CUSTOM_REAL
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  use my_libxsmm, only: libxsmm_smm_5_5_5
+#endif
+  implicit none
+  integer,intent(in) :: n1,n2,n3
+  real(kind=CUSTOM_REAL),dimension(n1,5,n3),intent(in) :: A
+  real(kind=CUSTOM_REAL),dimension(5,n2),intent(in) :: B
+  real(kind=CUSTOM_REAL),dimension(n1,n2,n3),intent(out) :: C
+  ! local parameters
+  integer :: i,j,k
+#if defined(XSMM_FORCE_EVEN_IF_SLOWER) || ( defined(XSMM) && defined(__MIC__) )
+  ! matrix-matrix multiplication C = alpha A * B + beta C
+  ! with A(n1,n2,n4) 5x5x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3,n4) 5x5x5-matrix
+  call libxsmm_smm_5_5_5(a=A(1,1,1), b=B, c=C(1,1,1))
+  call libxsmm_smm_5_5_5(a=A(1,1,2), b=B, c=C(1,1,2))
+  call libxsmm_smm_5_5_5(a=A(1,1,3), b=B, c=C(1,1,3))
+  call libxsmm_smm_5_5_5(a=A(1,1,4), b=B, c=C(1,1,4))
+  call libxsmm_smm_5_5_5(a=A(1,1,5), b=B, c=C(1,1,5))
+  return
+#endif
+  ! matrix-matrix multiplication
+  do k = 1,n3
+    do j = 1,n2
+!dir$ ivdep
+      do i = 1,n1
+        C(i,j,k) =  A(i,1,k) * B(1,j) &
+                  + A(i,2,k) * B(2,j) &
+                  + A(i,3,k) * B(3,j) &
+                  + A(i,4,k) * B(4,j) &
+                  + A(i,5,k) * B(5,j)
+      enddo
+    enddo
+  enddo
+  end subroutine mxm5_3comp_3dmat_singleB_1
+#endif
+
+
+!--------------------------------------------------------------------------------------------
+
+
+
   end subroutine compute_forces_crust_mantle_Dev
+
 
 
 ! please leave for reference...

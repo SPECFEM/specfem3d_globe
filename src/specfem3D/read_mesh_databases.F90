@@ -232,8 +232,7 @@
            zstore_crust_mantle(NGLOB_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating x/y/zstore in crust_mantle'
 
-  allocate(rmass_ocean_load(NGLOB_CRUST_MANTLE_OCEANS), &
-           updated_dof_ocean_load(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
+  allocate(rmass_ocean_load(NGLOB_CRUST_MANTLE_OCEANS),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays rmass_ocean_load,..'
 
   allocate(ibool_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE), &
@@ -258,28 +257,55 @@
            eta_anisostore_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating arrays kappahstore_crust_mantle,..'
 
-  allocate(c11store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c12store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c13store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c14store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c15store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c16store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c22store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c23store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c24store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c25store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c26store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c33store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c34store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c35store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c36store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c44store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c45store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c46store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c55store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c56store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
-           c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
+  if (.not. ANISOTROPIC_3D_MANTLE_VAL) then
+    ! allocates c11stores,.. for tiso elements
+    allocate(c11store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c12store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c13store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c14store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c15store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c16store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c22store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c23store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c24store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c25store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c26store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c33store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c34store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c35store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c36store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c44store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c45store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c46store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c55store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c56store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE), &
+             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_TISO_MANTLE),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
+  else
+    ! allocates c11stores,.. for aniso elements
+    allocate(c11store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c12store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c13store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c14store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c15store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c16store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c22store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c23store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c24store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c25store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c26store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c33store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c34store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c35store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c36store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c44store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c45store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c46store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c55store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c56store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE), &
+             c66store_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPECMAX_ANISO_MANTLE),stat=ier)
+    if (ier /= 0) stop 'Error allocating arrays c11store_crust_mantle,..'
+  endif
 
   allocate(ispec_is_tiso_crust_mantle(NSPEC_CRUST_MANTLE),stat=ier)
   if (ier /= 0) stop 'Error allocating array ispec_is_tiso_crust_mantle'
@@ -291,7 +317,7 @@
   ! reads databases file
   if (I_should_read_the_database) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
-      call read_arrays_solver_adios(IREGION_CRUST_MANTLE,myrank, &
+      call read_arrays_solver_adios(IREGION_CRUST_MANTLE, &
                                     NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
                                     nspec_iso,nspec_tiso,nspec_ani, &
                                     rho_vp_crust_mantle,rho_vs_crust_mantle, &
@@ -314,7 +340,7 @@
                                     READ_KAPPA_MU,READ_TISO, &
                                     b_rmassx_crust_mantle,b_rmassy_crust_mantle)
     else
-      call read_arrays_solver(IREGION_CRUST_MANTLE,myrank, &
+      call read_arrays_solver(IREGION_CRUST_MANTLE, &
                               NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,NGLOB_XY_CM, &
                               nspec_iso,nspec_tiso,nspec_ani, &
                               rho_vp_crust_mantle,rho_vs_crust_mantle, &
@@ -473,7 +499,7 @@
   ! reads in mesh arrays
   if (I_should_read_the_database) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
-      call read_arrays_solver_adios(IREGION_OUTER_CORE,myrank, &
+      call read_arrays_solver_adios(IREGION_OUTER_CORE, &
                                     NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
                                     nspec_iso,nspec_tiso,nspec_ani, &
                                     vp_outer_core,dummy_array, &
@@ -496,7 +522,7 @@
                                     READ_KAPPA_MU,READ_TISO, &
                                     dummy_rmass,dummy_rmass)
     else
-      call read_arrays_solver(IREGION_OUTER_CORE,myrank, &
+      call read_arrays_solver(IREGION_OUTER_CORE, &
                               NSPEC_OUTER_CORE,NGLOB_OUTER_CORE,NGLOB_XY_dummy, &
                               nspec_iso,nspec_tiso,nspec_ani, &
                               vp_outer_core,dummy_array, &
@@ -635,7 +661,7 @@
   ! reads in arrays
   if (I_should_read_the_database) then
     if (ADIOS_FOR_ARRAYS_SOLVER) then
-      call read_arrays_solver_adios(IREGION_INNER_CORE,myrank, &
+      call read_arrays_solver_adios(IREGION_INNER_CORE, &
                                     NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
                                     nspec_iso,nspec_tiso,nspec_ani, &
                                     dummy_array,dummy_array, &
@@ -658,7 +684,7 @@
                                     READ_KAPPA_MU,READ_TISO, &
                                     b_rmassx_inner_core,b_rmassy_inner_core)
     else
-      call read_arrays_solver(IREGION_INNER_CORE,myrank, &
+      call read_arrays_solver(IREGION_INNER_CORE, &
                               NSPEC_INNER_CORE,NGLOB_INNER_CORE,NGLOB_XY_IC, &
                               nspec_iso,nspec_tiso,nspec_ani, &
                               dummy_array,dummy_array, &
@@ -834,7 +860,7 @@
       read(IIN) njunk1
       read(IIN) njunk2
 
-    ! boundary parameters
+      ! boundary parameters
       read(IIN) ibelm_xmin_crust_mantle
       read(IIN) ibelm_xmax_crust_mantle
       read(IIN) ibelm_ymin_crust_mantle
@@ -1003,7 +1029,11 @@
     k_bot = NGLLZ
 
     ! initialization
-    moho_kl(:,:,:) = 0.; d400_kl(:,:,:) = 0.; d670_kl(:,:,:) = 0.; cmb_kl(:,:,:) = 0.; icb_kl(:,:,:) = 0.
+    moho_kl(:,:,:) = 0._CUSTOM_REAL
+    d400_kl(:,:,:) = 0._CUSTOM_REAL
+    d670_kl(:,:,:) = 0._CUSTOM_REAL
+    cmb_kl(:,:,:) = 0._CUSTOM_REAL
+    icb_kl(:,:,:) = 0._CUSTOM_REAL
   endif
 
   end subroutine read_mesh_databases_coupling

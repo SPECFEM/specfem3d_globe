@@ -34,15 +34,10 @@ module constants_solver
   implicit none
 
 ! daniel debug: todo
-#ifndef DANIEL_DEBUG
-
-  ! include values created by the mesher
-  ! done for performance only using static allocation to allow for loop unrolling
-  include "OUTPUT_FILES/values_from_mesher.h"
-
-#else
+#ifdef DANIEL_DEBUG_FUTURE_VERSION
   ! for future compilation
-  ! no static compilation, will use dynamic arrays
+  ! no static compilation, will use dynamic arrays:
+  ! all these parameters must be stored in mesh files and read in by solver before allocating arrays...
 
   ! mesh
   integer :: NEX_XI_VAL
@@ -166,6 +161,14 @@ module constants_solver
   double precision :: CENTER_LATITUDE_IN_DEGREES_VAL
   double precision :: CENTER_LONGITUDE_IN_DEGREES_VAL
   double precision :: GAMMA_ROTATION_AZIMUTH_VAL
+
+#else
+  ! static compilation
+
+  ! include values created by the mesher
+  ! done for performance only using static allocation to allow for loop unrolling
+  include "OUTPUT_FILES/values_from_mesher.h"
+
 #endif
 
 end module constants_solver
@@ -192,7 +195,7 @@ module specfem_par
   double precision, dimension(NGLLZ) :: zigll,wzgll
 
   ! product of weights for gravity term
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
   ! array with derivatives of Lagrange polynomials and precalculated products
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx,hprimewgll_xx
@@ -229,9 +232,6 @@ module specfem_par
   ! additional mass matrix for ocean load
   real(kind=CUSTOM_REAL), dimension(:),allocatable :: rmass_ocean_load
 
-  ! flag to mask ocean-bottom degrees of freedom for ocean load
-  logical, dimension(:), allocatable :: updated_dof_ocean_load
-
   integer :: npoin_oceans
   integer, dimension(:),allocatable :: ibool_ocean_load
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: normal_ocean_load
@@ -262,6 +262,13 @@ module specfem_par
   real(kind=CUSTOM_REAL) :: minus_g_cmb,minus_g_icb
   double precision, dimension(NRAD_GRAVITY) :: minus_gravity_table, &
     minus_deriv_gravity_table,density_table,d_ln_density_dr_table,minus_rho_g_over_kappa_fluid
+
+  ! pre-computed vectors
+  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: gravity_pre_store_outer_core,gravity_pre_store_crust_mantle, &
+    gravity_pre_store_inner_core
+  real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: gravity_H_crust_mantle,gravity_H_inner_core
+
+
 
   !-----------------------------------------------------------------
   ! sources
@@ -357,8 +364,6 @@ module specfem_par
   ! MPI partitions
   !-----------------------------------------------------------------
 
-  ! proc numbers for MPI
-  integer :: myrank
   integer :: ichunk ! needed for Stacey boundaries
   integer, dimension(:,:,:), allocatable :: addressing
 

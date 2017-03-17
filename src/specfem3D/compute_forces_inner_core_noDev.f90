@@ -43,11 +43,10 @@
   use specfem_par, only: &
     hprime_xx,hprime_yy,hprime_zz,hprimewgll_xx,hprimewgll_yy,hprimewgll_zz, &
     wgllwgll_xy,wgllwgll_xz,wgllwgll_yz,wgll_cube, &
-    minus_gravity_table,density_table,minus_deriv_gravity_table, &
+    gravity_pre_store => gravity_pre_store_inner_core,gravity_H => gravity_H_inner_core, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_innercore, only: &
-    rstore => rstore_inner_core, &
     xix => xix_inner_core,xiy => xiy_inner_core,xiz => xiz_inner_core, &
     etax => etax_inner_core,etay => etay_inner_core,etaz => etaz_inner_core, &
     gammax => gammax_inner_core,gammay => gammay_inner_core,gammaz => gammaz_inner_core, &
@@ -56,10 +55,10 @@
     c11store => c11store_inner_core,c12store => c12store_inner_core,c13store => c13store_inner_core, &
     c33store => c33store_inner_core,c44store => c44store_inner_core, &
     ibool => ibool_inner_core,idoubling => idoubling_inner_core, &
-    one_minus_sum_beta => one_minus_sum_beta_inner_core, &
     phase_ispec_inner => phase_ispec_inner_inner_core, &
     nspec_outer => nspec_outer_inner_core, &
     nspec_inner => nspec_inner_inner_core
+    !not needed: one_minus_sum_beta => one_minus_sum_beta_inner_core
 
   implicit none
 
@@ -118,7 +117,7 @@
   real(kind=CUSTOM_REAL) kappal
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: sum_terms
 
-  real(kind=CUSTOM_REAL) minus_sum_beta
+!  real(kind=CUSTOM_REAL) minus_sum_beta
   real(kind=CUSTOM_REAL) c11l,c33l,c12l,c13l,c44l
 
   real(kind=CUSTOM_REAL) tempx1l,tempx2l,tempx3l
@@ -130,15 +129,10 @@
   integer :: i_SLS
 
   ! for gravity
-  double precision radius,rho,minus_g,minus_dg
-  double precision minus_g_over_radius,minus_dg_plus_g_over_radius
-  double precision cos_theta,sin_theta,cos_phi,sin_phi
-  double precision cos_theta_sq,sin_theta_sq,cos_phi_sq,sin_phi_sq
-  double precision theta,phi,factor,gxl,gyl,gzl,sx_l,sy_l,sz_l
-  double precision Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
+  real(kind=CUSTOM_REAL) factor,gxl,gyl,gzl,sx_l,sy_l,sz_l
+  real(kind=CUSTOM_REAL) Hxxl,Hyyl,Hzzl,Hxyl,Hxzl,Hyzl
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
   real(kind=CUSTOM_REAL) sigma_yx,sigma_zx,sigma_zy
-  integer :: int_radius
 
 !  integer :: computed_elements
   integer :: num_elements,ispec_p
@@ -282,19 +276,20 @@
               c44l = c44store(i,j,k,ispec)
 
               ! use unrelaxed parameters if attenuation
-              if (ATTENUATION_VAL) then
-                if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-                  minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
-                else
-                  minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
-                endif
-                mul = muvstore(i,j,k,ispec)
-                c11l = c11l + FOUR_THIRDS * minus_sum_beta * mul
-                c12l = c12l - TWO_THIRDS * minus_sum_beta * mul
-                c13l = c13l - TWO_THIRDS * minus_sum_beta * mul
-                c33l = c33l + FOUR_THIRDS * minus_sum_beta * mul
-                c44l = c44l + minus_sum_beta * mul
-              endif
+              ! already done in prepare_timerun_elastic_elements() routine...
+              !if (ATTENUATION_VAL) then
+              !  if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+              !    minus_sum_beta =  one_minus_sum_beta(i,j,k,ispec) - 1.0_CUSTOM_REAL
+              !  else
+              !    minus_sum_beta =  one_minus_sum_beta(1,1,1,ispec) - 1.0_CUSTOM_REAL
+              !  endif
+              !  mul = muvstore(i,j,k,ispec)
+              !  c11l = c11l + FOUR_THIRDS * minus_sum_beta * mul
+              !  c12l = c12l - TWO_THIRDS * minus_sum_beta * mul
+              !  c13l = c13l - TWO_THIRDS * minus_sum_beta * mul
+              !  c33l = c33l + FOUR_THIRDS * minus_sum_beta * mul
+              !  c44l = c44l + minus_sum_beta * mul
+              !endif
 
               sigma_xx = c11l*duxdxl + c12l*duydyl + c13l*duzdzl
               sigma_yy = c12l*duxdxl + c11l*duydyl + c13l*duzdzl
@@ -310,16 +305,17 @@
               mul = muvstore(i,j,k,ispec)
 
               ! use unrelaxed parameters if attenuation
-              if (ATTENUATION_VAL) then
-                if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
-                  mul = mul * one_minus_sum_beta(i,j,k,ispec)
-                else
-                  mul = mul * one_minus_sum_beta(1,1,1,ispec)
-                endif
-              endif
+              ! already done in prepare_timerun_elastic_elements() routine...
+              !if (ATTENUATION_VAL) then
+              !  if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+              !    mul = mul * one_minus_sum_beta(i,j,k,ispec)
+              !  else
+              !    mul = mul * one_minus_sum_beta(1,1,1,ispec)
+              !  endif
+              !endif
 
               lambdalplus2mul = kappal + FOUR_THIRDS * mul
-              lambdal = lambdalplus2mul - 2.*mul
+              lambdal = lambdalplus2mul - 2._CUSTOM_REAL * mul
 
               ! compute stress sigma
               sigma_xx = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
@@ -353,81 +349,47 @@
 
             ! compute non-symmetric terms for gravity
             if (GRAVITY_VAL) then
-
               ! use mesh coordinates to get theta and phi
               ! x y and z contain r theta and phi
               iglob = ibool(i,j,k,ispec)
-              radius = dble(rstore(1,iglob))
-              theta = dble(rstore(2,iglob))
-              phi = dble(rstore(3,iglob))
-
-              ! make sure radius is never zero even for points at center of cube
-              ! because we later divide by radius
-              if (radius < 100.d0 / R_EARTH) radius = 100.d0 / R_EARTH
-
-              cos_theta = dcos(theta)
-              sin_theta = dsin(theta)
-              cos_phi = dcos(phi)
-              sin_phi = dsin(phi)
-
-              ! get g, rho and dg/dr=dg
-              ! spherical components of the gravitational acceleration
-              ! for efficiency replace with lookup table every 100 m in radial direction
-              ! make sure we never use zero for point exactly at the center of the Earth
-              int_radius = max(1,nint(radius * R_EARTH_KM * 10.d0))
-              minus_g = minus_gravity_table(int_radius)
-              minus_dg = minus_deriv_gravity_table(int_radius)
-              rho = density_table(int_radius)
 
               ! Cartesian components of the gravitational acceleration
-              gxl = minus_g*sin_theta*cos_phi
-              gyl = minus_g*sin_theta*sin_phi
-              gzl = minus_g*cos_theta
+              gxl = gravity_pre_store(1,iglob) ! minus_g*sin_theta*cos_phi * rho
+              gyl = gravity_pre_store(2,iglob) ! minus_g*sin_theta*sin_phi * rho
+              gzl = gravity_pre_store(3,iglob) ! minus_g*cos_theta * rho
 
               ! Cartesian components of gradient of gravitational acceleration
-              ! obtained from spherical components
-              minus_g_over_radius = minus_g / radius
-              minus_dg_plus_g_over_radius = minus_dg - minus_g_over_radius
-
-              cos_theta_sq = cos_theta**2
-              sin_theta_sq = sin_theta**2
-              cos_phi_sq = cos_phi**2
-              sin_phi_sq = sin_phi**2
-
-              Hxxl = minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq
-              Hyyl = minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq
-              Hzzl = cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq
-              Hxyl = cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq
-              Hxzl = cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta
-              Hyzl = cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta
-
-              iglob = ibool(i,j,k,ispec)
-
               ! get displacement and multiply by density to compute G tensor
-              sx_l = rho * dble(displ_inner_core(1,iglob))
-              sy_l = rho * dble(displ_inner_core(2,iglob))
-              sz_l = rho * dble(displ_inner_core(3,iglob))
+              sx_l = displ_inner_core(1,iglob)
+              sy_l = displ_inner_core(2,iglob)
+              sz_l = displ_inner_core(3,iglob)
 
               ! compute G tensor from s . g and add to sigma (not symmetric)
-              sigma_xx = sigma_xx + real(sy_l*gyl + sz_l*gzl, kind=CUSTOM_REAL)
-              sigma_yy = sigma_yy + real(sx_l*gxl + sz_l*gzl, kind=CUSTOM_REAL)
-              sigma_zz = sigma_zz + real(sx_l*gxl + sy_l*gyl, kind=CUSTOM_REAL)
+              sigma_xx = sigma_xx + sy_l * gyl + sz_l * gzl
+              sigma_yy = sigma_yy + sx_l * gxl + sz_l * gzl
+              sigma_zz = sigma_zz + sx_l * gxl + sy_l * gyl
 
-              sigma_xy = sigma_xy - real(sx_l * gyl, kind=CUSTOM_REAL)
-              sigma_yx = sigma_yx - real(sy_l * gxl, kind=CUSTOM_REAL)
+              sigma_xy = sigma_xy - sx_l * gyl
+              sigma_yx = sigma_yx - sy_l * gxl
 
-              sigma_xz = sigma_xz - real(sx_l * gzl, kind=CUSTOM_REAL)
-              sigma_zx = sigma_zx - real(sz_l * gxl, kind=CUSTOM_REAL)
+              sigma_xz = sigma_xz - sx_l * gzl
+              sigma_zx = sigma_zx - sz_l * gxl
 
-              sigma_yz = sigma_yz - real(sy_l * gzl, kind=CUSTOM_REAL)
-              sigma_zy = sigma_zy - real(sz_l * gyl, kind=CUSTOM_REAL)
+              sigma_yz = sigma_yz - sy_l * gzl
+              sigma_zy = sigma_zy - sz_l * gyl
+
+              Hxxl = gravity_H(1,iglob) ! minus_g_over_radius*(cos_phi_sq*cos_theta_sq + sin_phi_sq) + cos_phi_sq*minus_dg*sin_theta_sq * rho
+              Hyyl = gravity_H(2,iglob) ! minus_g_over_radius*(cos_phi_sq + cos_theta_sq*sin_phi_sq) + minus_dg*sin_phi_sq*sin_theta_sq * rho
+              Hzzl = gravity_H(3,iglob) ! cos_theta_sq*minus_dg + minus_g_over_radius*sin_theta_sq * rho
+              Hxyl = gravity_H(4,iglob) ! cos_phi*minus_dg_plus_g_over_radius*sin_phi*sin_theta_sq * rho
+              Hxzl = gravity_H(5,iglob) ! cos_phi*cos_theta*minus_dg_plus_g_over_radius*sin_theta * rho
+              Hyzl = gravity_H(6,iglob) ! cos_theta*minus_dg_plus_g_over_radius*sin_phi*sin_theta * rho
 
               ! precompute vector
-              factor = dble(jacobianl) * wgll_cube(i,j,k)
-              rho_s_H(i,j,k,1) = real(factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl), kind=CUSTOM_REAL)
-              rho_s_H(i,j,k,2) = real(factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl), kind=CUSTOM_REAL)
-              rho_s_H(i,j,k,3) = real(factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl), kind=CUSTOM_REAL)
-
+              factor = jacobianl * wgll_cube(i,j,k)
+              rho_s_H(1,i,j,k) = factor * (sx_l * Hxxl + sy_l * Hxyl + sz_l * Hxzl)
+              rho_s_H(2,i,j,k) = factor * (sx_l * Hxyl + sy_l * Hyyl + sz_l * Hyzl)
+              rho_s_H(3,i,j,k) = factor * (sx_l * Hxzl + sy_l * Hyzl + sz_l * Hzzl)
             endif  ! end of section with gravity terms
 
             ! form dot product with test vector, non-symmetric form
@@ -493,9 +455,9 @@
             sum_terms(i,j,k,3) = - (fac1*tempz1l + fac2*tempz2l + fac3*tempz3l)
 
             if (GRAVITY_VAL) then
-              sum_terms(i,j,k,1) = sum_terms(i,j,k,1) + rho_s_H(i,j,k,1)
-              sum_terms(i,j,k,2) = sum_terms(i,j,k,2) + rho_s_H(i,j,k,2)
-              sum_terms(i,j,k,3) = sum_terms(i,j,k,3) + rho_s_H(i,j,k,3)
+              sum_terms(i,j,k,1) = sum_terms(i,j,k,1) + rho_s_H(1,i,j,k)
+              sum_terms(i,j,k,2) = sum_terms(i,j,k,2) + rho_s_H(2,i,j,k)
+              sum_terms(i,j,k,3) = sum_terms(i,j,k,3) + rho_s_H(3,i,j,k)
             endif
           enddo
         enddo

@@ -25,6 +25,12 @@
 !
 !=====================================================================
 
+! we switch between vectorized and non-vectorized version by using pre-processor flag FORCE_VECTORIZATION
+! and macros INDEX_IJK, DO_LOOP_IJK, ENDDO_LOOP_IJK defined in config.fh
+#include "config.fh"
+
+
+
   subroutine save_kernels()
 
   use constants_solver, only: SAVE_BOUNDARY_MESH
@@ -49,6 +55,10 @@
 
   ! dump kernel arrays
   if (SIMULATION_TYPE == 3) then
+
+    ! restores relaxed elastic moduli after being shifted to unrelaxed values before time loop
+    call restore_relaxed_moduli()
+
     ! crust mantle
     call save_kernels_crust_mantle()
 
@@ -87,6 +97,86 @@
   endif
 
   end subroutine save_kernels
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine restore_relaxed_moduli()
+
+  use specfem_par
+  use specfem_par_crustmantle
+  use specfem_par_innercore
+
+  implicit none
+
+  ! local parameters
+  real(kind=CUSTOM_REAL) :: one_minus_sum_beta_use,mul
+  integer :: ispec
+#ifdef FORCE_VECTORIZATION
+! in this vectorized version we have to assume that N_SLS == 3 in order to be able to unroll and thus suppress
+! an inner loop that would otherwise prevent vectorization; this is safe in practice in all cases because N_SLS == 3
+! in all known applications, and in the main program we check that N_SLS == 3 if FORCE_VECTORIZATION is used and we stop
+  integer :: ijk
+#else
+  integer :: i,j,k
+#endif
+
+  ! check if anything to do
+  if (.not. ATTENUATION_VAL) return
+  if (GPU_MODE) return
+
+  ! only muvstore is used further and needs to be restored
+
+  ! crust/mantle
+  do ispec = 1,NSPEC_CRUST_MANTLE
+    ! isotropic and tiso elements
+    DO_LOOP_IJK
+
+      ! layer with no transverse isotropy, use kappav and muv
+      mul = muvstore_crust_mantle(INDEX_IJK,ispec)
+
+      ! precompute terms for attenuation if needed
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+        one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(INDEX_IJK,ispec)
+      else
+        one_minus_sum_beta_use = one_minus_sum_beta_crust_mantle(1,1,1,ispec)
+      endif
+
+      ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
+      mul = mul / one_minus_sum_beta_use
+
+      ! stores relaxed shear moduli for kernel computations
+      muvstore_crust_mantle(INDEX_IJK,ispec) = mul
+    ENDDO_LOOP_IJK
+  enddo
+
+  ! inner core
+  do ispec = 1,NSPEC_INNER_CORE
+    ! exclude fictitious elements in central cube
+    if (idoubling_inner_core(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    ! isotropic element
+    DO_LOOP_IJK
+
+      ! layer with no transverse isotropy, use kappav and muv
+      mul = muvstore_inner_core(INDEX_IJK,ispec)
+
+      ! precompute terms for attenuation if needed
+      if (ATTENUATION_3D_VAL .or. ATTENUATION_1D_WITH_3D_STORAGE_VAL) then
+        one_minus_sum_beta_use = one_minus_sum_beta_inner_core(INDEX_IJK,ispec)
+      else
+        one_minus_sum_beta_use = one_minus_sum_beta_inner_core(1,1,1,ispec)
+      endif
+
+      ! returns to the relaxed moduli Mu_r = Mu_u / [1 - sum(1 - tau_strain/tau_stress) ]
+      mul = mul / one_minus_sum_beta_use
+
+      ! stores relaxed shear moduli for kernel computations
+      muvstore_inner_core(INDEX_IJK,ispec) = mul
+    ENDDO_LOOP_IJK
+  enddo
+
+  end subroutine restore_relaxed_moduli
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -813,11 +903,11 @@
 
   ! scale the boundary kernels properly: *scale_kl gives s/km^3 and 1.d3 gives
   ! the relative boundary kernels (for every 1 km) in s/km^2
-  moho_kl = moho_kl * scale_kl * 1.d3
-  d400_kl = d400_kl * scale_kl * 1.d3
-  d670_kl = d670_kl * scale_kl * 1.d3
-  cmb_kl = cmb_kl * scale_kl * 1.d3
-  icb_kl = icb_kl * scale_kl * 1.d3
+  moho_kl(:,:,:) = moho_kl(:,:,:) * scale_kl * 1.d3
+  d400_kl(:,:,:) = d400_kl(:,:,:) * scale_kl * 1.d3
+  d670_kl(:,:,:) = d670_kl(:,:,:) * scale_kl * 1.d3
+  cmb_kl(:,:,:) = cmb_kl(:,:,:) * scale_kl * 1.d3
+  icb_kl(:,:,:) = icb_kl(:,:,:) * scale_kl * 1.d3
 
   ! writes out kernels to file
   if (ADIOS_FOR_KERNELS) then
