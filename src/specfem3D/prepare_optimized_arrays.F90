@@ -709,7 +709,8 @@
 ! NVIDIA K20: theoretical 250 GB/s
 !      single-precision peak performance: 3.95 TFlop/s -> corner arithmetic intensity = 3950 / 250 ~ 15.8 flop/byte
 !      hand-count performance: 0.166 flop/byte ~ 1% of the peak performance ~ 2.5 GB/s
-! Intel(R) Xeon(R) Haswell CPU (E5-2680 v3 @ 2.50GHz): http://ark.intel.com/products/81908/Intel-Xeon-Processor-E5-2680-v3-30M-Cache-2_50-GHz
+! Intel(R) Xeon(R) Haswell CPU (E5-2680 v3 @ 2.50GHz):
+!      http://ark.intel.com/products/81908/Intel-Xeon-Processor-E5-2680-v3-30M-Cache-2_50-GHz
 !      Max Memory Bandwidth 68 GB/s
 
   ! output bandwidth

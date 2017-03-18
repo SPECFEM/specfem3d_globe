@@ -143,8 +143,8 @@
        radius = dble(int_radius) / (R_EARTH_KM * 10.d0)
        idoubling = 0
        call model_prem_iso(radius,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,.false., &
-           ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
-           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                           ONE_CRUST,.false.,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                           R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
        d_ln_density_dr_table(int_radius) = drhodr/rho
     enddo

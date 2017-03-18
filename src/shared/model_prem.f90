@@ -40,8 +40,8 @@
 
 
   subroutine model_prem_iso(x,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
-      ONE_CRUST,check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                            ONE_CRUST,check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   use constants
 
@@ -50,14 +50,14 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical CRUSTAL,ONE_CRUST,check_doubling_flag
+  logical :: CRUSTAL,ONE_CRUST,check_doubling_flag
 
-  integer idoubling
+  integer :: idoubling
 
-  double precision x,rho,drhodr,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
+  double precision :: x,rho,drhodr,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
-  double precision r,scaleval
+  double precision :: r,scaleval
 
 ! compute real physical radius in meters
   r = x * R_EARTH
@@ -260,11 +260,11 @@
 
 ! non-dimensionalize
 ! time scaling (s^{-1}) is done with scaleval
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  drhodr=drhodr*1000.0d0/RHOAV
-  rho=rho*1000.0d0/RHOAV
-  vp=vp*1000.0d0/(R_EARTH*scaleval)
-  vs=vs*1000.0d0/(R_EARTH*scaleval)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  drhodr = drhodr * 1000.0d0/RHOAV
+  rho = rho * 1000.0d0/RHOAV
+  vp = vp * 1000.0d0/(R_EARTH*scaleval)
+  vs = vs * 1000.0d0/(R_EARTH*scaleval)
 
   end subroutine model_prem_iso
 
@@ -273,8 +273,8 @@
 !
 
   subroutine model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-      idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                              idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                              R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   use constants
 
@@ -283,15 +283,15 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical CRUSTAL,ONE_CRUST
+  logical :: CRUSTAL,ONE_CRUST
 
-  integer idoubling
+  integer :: idoubling
 
-  double precision x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso,RICB,RCMB, &
+  double precision :: x,rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso,RICB,RCMB, &
       RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
-  double precision r
-  double precision scaleval
+  double precision :: r
+  double precision :: scaleval
 
 ! compute real physical radius in meters
   r = x * R_EARTH
@@ -514,12 +514,12 @@
 ! non-dimensionalize
 ! time scaling (s^{-1}) is done with scaleval
 ! do not scale anisotropy parameter eta_aniso, which is dimensionless
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  rho=rho*1000.0d0/RHOAV
-  vpv=vpv*1000.0d0/(R_EARTH*scaleval)
-  vsv=vsv*1000.0d0/(R_EARTH*scaleval)
-  vph=vph*1000.0d0/(R_EARTH*scaleval)
-  vsh=vsh*1000.0d0/(R_EARTH*scaleval)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  rho = rho * 1000.0d0/RHOAV
+  vpv = vpv * 1000.0d0/(R_EARTH*scaleval)
+  vsv = vsv * 1000.0d0/(R_EARTH*scaleval)
+  vph = vph * 1000.0d0/(R_EARTH*scaleval)
+  vsh = vsh * 1000.0d0/(R_EARTH*scaleval)
 
   end subroutine model_prem_aniso
 
@@ -539,10 +539,10 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  integer idoubling
-  double precision x,rho,vp,vs,Qkappa,Qmu
+  integer :: idoubling
+  double precision :: x,rho,vp,vs,Qkappa,Qmu
 
-  double precision scaleval
+  double precision :: scaleval
 
   if (idoubling /= IFLAG_OUTER_CORE_NORMAL) &
     call exit_MPI(myrank,'wrong doubling flag for outer core point in prem_display_outer_core()')
@@ -550,11 +550,11 @@
 !
 !--- outer core
 !
-  rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
-  vp=11.0487d0-4.0362d0*x+4.8023d0*x*x-13.5732d0*x*x*x
-  vs=0.0d0
-  Qmu=0.0d0
-  Qkappa=57827.0d0
+  rho    = 12.5815d0-1.2638d0 * x - 3.6426d0 * x*x - 5.5281d0 * x*x*x
+  vp     = 11.0487d0-4.0362d0 * x + 4.8023d0 * x*x - 13.5732d0 * x*x*x
+  vs     = 0.0d0
+  Qmu    = 0.0d0
+  Qkappa = 57827.0d0
 
 ! non-dimensionalize
 ! time scaling (s^{-1}) is done with scaleval
@@ -570,18 +570,18 @@
 !
 
   subroutine prem_density(x,rho,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-      R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+                          R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
 
   use constants
 
   implicit none
 
-  double precision x,rho,RICB,RCMB,RTOPDDOUBLEPRIME, &
+  double precision :: x,rho,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
 
-  logical ONE_CRUST
+  logical :: ONE_CRUST
 
-  double precision r
+  double precision :: r
 
   ! compute real physical radius in meters
   r = x * R_EARTH
@@ -621,7 +621,7 @@
     endif
   endif
 
-  rho=rho*1000.0d0/RHOAV
+  rho = rho * 1000.0d0 / RHOAV
 
   end subroutine prem_density
 

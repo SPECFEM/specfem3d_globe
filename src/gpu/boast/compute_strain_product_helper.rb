@@ -28,17 +28,17 @@ module BOAST
       print b_eps[5] === b_epsdev[2]
 
       # Computing the 21 strain products without assuming eps(i)*b_eps(j) = eps(j)*b_eps(i)
-      print prod[0] === (eps[0]) * (b_eps[0]);                                                                                                                                                                                                                
-      print prod[1] === (eps[0]) * (b_eps[1]);                                                                                                                                                                                                                
-      print prod[1] === prod[1] + (eps[1]) * (b_eps[0]);                                                                                                                                                                                                      
-      print prod[2] === (eps[0]) * (b_eps[2]);                                                                                                                                                                                                                
-      print prod[2] === prod[2] + (eps[2]) * (b_eps[0]);                                                                                                                                                                                                      
-      print prod[3] === (eps[0]) * (b_eps[3]);                                                                                                                                                                                                                
-      print prod[3] === prod[3] + (eps[3]) * (b_eps[0]);                                                                                                                                                                                                      
-      print prod[3] === (prod[3]) * (2.0);                                                                                                                                                                                                                   
-      print prod[4] === (eps[0]) * (b_eps[4]);                                                                                                                                                                                                                
-      print prod[4] === prod[4] + (eps[4]) * (b_eps[0]);                                                                                                                                                                                                      
-      print prod[4] === (prod[4]) * (2.0);                                                                                                                                                                                                                   
+      print prod[0] === (eps[0]) * (b_eps[0]);
+      print prod[1] === (eps[0]) * (b_eps[1]);
+      print prod[1] === prod[1] + (eps[1]) * (b_eps[0]);
+      print prod[2] === (eps[0]) * (b_eps[2]);
+      print prod[2] === prod[2] + (eps[2]) * (b_eps[0]);
+      print prod[3] === (eps[0]) * (b_eps[3]);
+      print prod[3] === prod[3] + (eps[3]) * (b_eps[0]);
+      print prod[3] === (prod[3]) * (2.0);
+      print prod[4] === (eps[0]) * (b_eps[4]);
+      print prod[4] === prod[4] + (eps[4]) * (b_eps[0]);
+      print prod[4] === (prod[4]) * (2.0);
       print prod[5] === (eps[0]) * (b_eps[5]);
       print prod[5] === prod[5] + (eps[5]) * (b_eps[0]);
       print prod[5] === (prod[5]) * (2.0);
