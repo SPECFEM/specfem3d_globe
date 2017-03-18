@@ -1,5 +1,0 @@
-<map id="prepare_timerun_gravity" name="prepare_timerun_gravity">
-<area shape="rect" id="node2" href="$db/df0/make__gravity_8f90.html#ac7194d7b7a572492f526eff732b016c1" title="make_gravity" alt="" coords="232,5,333,32"/>
-<area shape="rect" id="node3" href="$de/d92/spline__routines_8f90.html#aadd8c5cf711f6176dbdecb5d94ab0a3d" title="spline_evaluation" alt="" coords="220,56,345,83"/>
-<area shape="rect" id="node4" href="$df/d47/model__prem_8f90.html#ad89d06cf728360baaaa4f882c0970396" title="model_prem_iso" alt="" coords="223,107,343,133"/>
-</map>

@@ -312,7 +312,7 @@
               nspec_beta_kl_outer_core,deviatoric_outercore)
 
   use constants_solver
-  use specfem_par, only: deltat,hprime_xx,hprime_yy,hprime_zz,myrank
+  use specfem_par, only: deltat,hprime_xx,hprime_yy,hprime_zz
   use specfem_par, only: GPU_MODE,Mesh_pointer
 
   implicit none
@@ -368,7 +368,7 @@
     ! on CPU
 
     allocate(mask_ibool(NGLOB_OUTER_CORE),stat=ier)
-    if (ier /= 0) call exit_MPI(myrank,'Error allocating mask_ibool array in routine compute_boundary_kernels()')
+    if (ier /= 0) call exit_MPI(myrank,'Error allocating mask_ibool array in routine compute_kernels_outer_core()')
     mask_ibool(:) = .false.
 
     ! pre-calculates gradients in outer core on CPU
@@ -819,7 +819,7 @@
   ! This then gives how the 21 kernels are organized
   ! For crust_mantle
 
-  use constants
+  use constants_solver
 
   implicit none
 

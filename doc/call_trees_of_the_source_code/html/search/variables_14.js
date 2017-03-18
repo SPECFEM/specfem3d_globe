@@ -1,12 +1,8 @@
 var searchData=
 [
   ['undo_5fattenuation',['undo_attenuation',['../d2/d88/structmesh__.html#af9ed3392c5155cd8ef14831c97fb8e4a',1,'mesh_::undo_attenuation()'],['../d1/d30/namespaceshared__input__parameters.html#a05826a7a515907bf729c29c0f3f3dbc6',1,'shared_input_parameters::undo_attenuation()']]],
-  ['undo_5fattenuation_5fval',['undo_attenuation_val',['../db/dd6/namespaceconstants__solver.html#aa98ccca53f46c5941c6dbb2fca0b5031',1,'constants_solver']]],
-  ['updated_5fdof_5focean_5fload',['updated_dof_ocean_load',['../db/da6/namespacespecfem__par.html#aa5f51cebd953d8714240cc28ae26ee67',1,'specfem_par']]],
   ['use_5f3d_5fattenuation_5farrays',['use_3d_attenuation_arrays',['../d2/d88/structmesh__.html#a1b723b9bc383b498b998e58cd965cfff',1,'mesh_']]],
   ['use_5fbinary_5ffor_5flarge_5ffile',['use_binary_for_large_file',['../d1/d30/namespaceshared__input__parameters.html#afacc9dcc130a40d402e0b3ab3aa65fc0',1,'shared_input_parameters']]],
-  ['use_5fdeville_5fproducts_5fval',['use_deville_products_val',['../db/dd6/namespaceconstants__solver.html#aa4b15466fd7b4bf781f14c9d7f49b9da',1,'constants_solver']]],
-  ['use_5ffailsafe_5fmechanism',['use_failsafe_mechanism',['../d1/d30/namespaceshared__input__parameters.html#afb621f942cc0db3eaaf0eeed16db1b86',1,'shared_input_parameters']]],
   ['use_5ffull_5ftiso_5fmantle',['use_full_tiso_mantle',['../d1/d30/namespaceshared__input__parameters.html#a71d73293ff87ff7d7d0b247290c1d8fa',1,'shared_input_parameters']]],
   ['use_5finversed_5farrays',['use_inversed_arrays',['../db/da6/namespacespecfem__par.html#a3e5dea04f53ea38213a6d8f8c66c1882',1,'specfem_par']]],
   ['use_5flddrk',['use_lddrk',['../d2/d88/structmesh__.html#a15ae83652e680fc48864f8f787eb3960',1,'mesh_::use_lddrk()'],['../d1/d30/namespaceshared__input__parameters.html#a0fa9abc7d25c0a34bf21f4bb87f4b68a',1,'shared_input_parameters::use_lddrk()']]],

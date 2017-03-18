@@ -40,10 +40,8 @@
 
   ! local parameters
   integer :: ier
-  integer :: i,j,k,ispec,ispec2D,ipoin,iglob
   real :: free_mb,used_mb,total_mb
   ! dummy CUSTOM_REAL variables to convert from double precision
-  real(kind=CUSTOM_REAL),dimension(:,:,:),allocatable:: cr_wgll_cube
   real(kind=CUSTOM_REAL),dimension(:),allocatable:: &
     cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
     cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
@@ -83,6 +81,7 @@
                                 islice_selected_rec,ispec_selected_rec, &
                                 NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE, &
                                 NSPEC_CRUST_MANTLE_STRAIN_ONLY, &
+                                NSPECMAX_ISO_MANTLE,NSPECMAX_TISO_MANTLE, &
                                 NSPEC_OUTER_CORE,NGLOB_OUTER_CORE, &
                                 NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
                                 NSPEC_INNER_CORE_STRAIN_ONLY, &
@@ -129,7 +128,6 @@
 
   ! prepares arrays related to gravity
   ! note: GPU will use only single-precision (or double precision) for all calculations
-  !          we convert to wgll_cube to custom real (by default single-precision),
   !          using implicit conversion
   if (myrank == 0) then
     write(IMAIN,*) "  loading non-gravity/gravity arrays"
@@ -145,9 +143,6 @@
            stat=ier)
   if (ier /= 0 ) stop 'Error allocating cr_minus_rho_g_over_kappa_fluid, etc...'
 
-  allocate(cr_wgll_cube(NGLLX,NGLLY,NGLLZ),stat=ier)
-  if (ier /= 0 ) stop 'Error allocating cr_wgll_cube'
-
   ! d_ln_density_dr_table needed for no gravity case
   cr_d_ln_density_dr_table(:) = real(d_ln_density_dr_table(:), kind=CUSTOM_REAL)
   ! these are needed for gravity cases only
@@ -155,7 +150,6 @@
   cr_minus_gravity_table(:) = real(minus_gravity_table(:), kind=CUSTOM_REAL)
   cr_minus_deriv_gravity_table(:) = real(minus_deriv_gravity_table(:), kind=CUSTOM_REAL)
   cr_density_table(:) = real(density_table(:), kind=CUSTOM_REAL)
-  cr_wgll_cube(:,:,:) = real(wgll_cube(:,:,:), kind=CUSTOM_REAL)
 
   ! prepares on GPU
   call prepare_fields_gravity_device(Mesh_pointer, &
@@ -164,15 +158,14 @@
                                      cr_minus_gravity_table, &
                                      cr_minus_deriv_gravity_table, &
                                      cr_density_table, &
-                                     cr_wgll_cube, &
+                                     wgll_cube, &
                                      NRAD_GRAVITY, &
                                      minus_g_icb,minus_g_cmb, &
                                      RHO_BOTTOM_OC,RHO_TOP_OC)
 
   deallocate(cr_d_ln_density_dr_table,cr_minus_rho_g_over_kappa_fluid, &
-            cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
-            cr_density_table)
-  deallocate(cr_wgll_cube)
+             cr_minus_gravity_table,cr_minus_deriv_gravity_table, &
+             cr_density_table)
   call synchronize_all()
 
   ! prepares attenuation arrays
@@ -342,71 +335,10 @@
     endif
     call synchronize_all()
 
-    ! prepares GPU arrays for coupling with oceans
-    !
-    ! note: handling of coupling on GPU is slightly different than in CPU routine to avoid using a mutex
-    !          to update acceleration; tests so far have shown, that with a simple mutex implementation
-    !          the results differ between successive runs (probably still due to some race conditions?)
-    !          here we now totally avoid mutex usage and still update each global point only once
-
-    ! counts global points on surface to oceans
-    updated_dof_ocean_load(:) = .false.
-    ipoin = 0
-    do ispec2D = 1,NSPEC_TOP
-      ispec = ibelm_top_crust_mantle(ispec2D)
-      k = NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          ! get global point number
-          iglob = ibool_crust_mantle(i,j,k,ispec)
-          if (.not. updated_dof_ocean_load(iglob)) then
-            ipoin = ipoin + 1
-            updated_dof_ocean_load(iglob) = .true.
-          endif
-        enddo
-      enddo
-    enddo
-
-    ! allocates arrays with all global points on ocean surface
-    npoin_oceans = ipoin
-    allocate(ibool_ocean_load(npoin_oceans), &
-             normal_ocean_load(NDIM,npoin_oceans), &
-             rmass_ocean_load_selected(npoin_oceans), &
-             stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating oceans arrays')
-
-    ! fills arrays for coupling surface at oceans
-    updated_dof_ocean_load(:) = .false.
-    ipoin = 0
-    do ispec2D = 1,NSPEC_TOP
-      ispec = ibelm_top_crust_mantle(ispec2D)
-      k = NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          ! get global point number
-          iglob = ibool_crust_mantle(i,j,k,ispec)
-          if (.not. updated_dof_ocean_load(iglob)) then
-            ipoin = ipoin + 1
-            ! fills arrays
-            ibool_ocean_load(ipoin) = iglob
-            rmass_ocean_load_selected(ipoin) = rmass_ocean_load(iglob)
-            normal_ocean_load(:,ipoin) = normal_top_crust_mantle(:,i,j,ispec2D)
-            ! masks this global point
-            updated_dof_ocean_load(iglob) = .true.
-          endif
-        enddo
-      enddo
-    enddo
-
-    ! prepares arrays on GPU
     call prepare_oceans_device(Mesh_pointer,npoin_oceans, &
                               ibool_ocean_load, &
                               rmass_ocean_load_selected, &
                               normal_ocean_load)
-
-    ! frees memory
-    deallocate(ibool_ocean_load,rmass_ocean_load_selected,normal_ocean_load)
-
   endif
   call synchronize_all()
 

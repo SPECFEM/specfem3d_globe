@@ -34,7 +34,7 @@
 ! version with rank number printed in the error message
   subroutine exit_MPI(myrank,error_msg)
 
-  use constants
+  use constants, only: IMAIN,ISTANDARD_OUTPUT
   use shared_input_parameters, only: OUTPUT_FILES
 
   implicit none

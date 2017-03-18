@@ -58,7 +58,7 @@
 !
 
 
-  subroutine model_crustmaps_broadcast(myrank)
+  subroutine model_crustmaps_broadcast()
 
 ! standard routine to setup model
 
@@ -66,8 +66,6 @@
   use model_crustmaps_par
 
   implicit none
-
-  integer :: myrank
 
   ! local parameters
   integer :: ier

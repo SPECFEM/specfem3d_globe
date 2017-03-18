@@ -34,8 +34,7 @@
 
 ! optimizes array memory layout to increase computational efficiency
 
-  use constants, only: IMAIN
-  use specfem_par, only: myrank
+  use constants, only: myrank,IMAIN
 
   implicit none
 
@@ -51,13 +50,13 @@
   ! prepare fused array for computational kernel
   call prepare_fused_array()
 
-  ! check OpenMP support
-  call prepare_openmp()
-
 #ifdef XSMM
   ! prepares LIBXSMM small matrix multiplication functions
   call prepare_xsmm()
 #endif
+
+  ! a memory bandwidth benchmark
+  call prepare_bandwidth_test()
 
   end subroutine prepare_optimized_arrays
 
@@ -82,6 +81,24 @@
 
   ! inverse arrays use 1D indexing for better compiler vectorization
   ! only used for Deville routines and FORCE_VECTORIZATION)
+
+  ! optimization infos
+  ! user output
+  if (myrank == 0) then
+    ! vectorization
+#ifdef FORCE_VECTORIZATION
+    write(IMAIN,*)"  using force vectorization"
+#else
+    write(IMAIN,*)"  without force vectorization"
+#endif
+    ! Deville
+    if (USE_DEVILLE_PRODUCTS_VAL) then
+      write(IMAIN,*)"  using Deville products"
+    else
+      write(IMAIN,*)"  without Deville products"
+    endif
+    call flush_IMAIN()
+  endif
 
   ! checks if used
   if (USE_DEVILLE_PRODUCTS_VAL) then
@@ -231,7 +248,7 @@
     integer :: num_alloc_ibool_inv_tbl,num_alloc_ibool_inv_tbl_theor
     integer :: num_used_ibool_inv_tbl
     integer :: ip, iglob, ispec_p, ispec, iglob_p, ier
-    integer :: inum
+    integer :: inum,nspec_used
 #ifdef FORCE_VECTORIZATION
     integer :: ijk
 #else
@@ -257,6 +274,7 @@
     if (ier /= 0) stop 'Error allocating ibool_inv_num array'
 
     ! gets valence of global degrees of freedom for current phase (inner/outer) elements
+    nspec_used = 0
     ibool_inv_num(:) = 0
     do ispec_p = 1,phase_nspec
       ispec = phase_ispec(ispec_p,iphase)
@@ -271,6 +289,8 @@
         ! increases valence counter
         ibool_inv_num(iglob) = ibool_inv_num(iglob) + 1
       ENDDO_LOOP_IJK
+      ! counter
+      nspec_used = nspec_used + 1
     enddo
 
     ! gets maximum valence value
@@ -280,8 +300,14 @@
     num_alloc_ibool_inv_tbl_theor = N_TOL*(NGLLX*NGLLY*NGLLZ*nspec/nglob+1)
 
     ! checks valence
-    if (num_alloc_ibool_inv_tbl < 1 .or. num_alloc_ibool_inv_tbl > num_alloc_ibool_inv_tbl_theor) then
+    if (nspec_used > 0 .and. (num_alloc_ibool_inv_tbl < 1 .or. num_alloc_ibool_inv_tbl > num_alloc_ibool_inv_tbl_theor)) then
       print *,'Error invalid maximum valence:'
+      if (is_inner_core) then
+        print *,'rank ',myrank,' invalid in inner core:'
+      else
+        print *,'rank ',myrank,' invalid in crust/mantle:'
+      endif
+      print *,'phase_nspec / nglob / nspec_used = ',phase_nspec,nglob,nspec_used
       print *,'valence value = ',num_alloc_ibool_inv_tbl,' - theoretical maximum = ',num_alloc_ibool_inv_tbl_theor
       stop 'Error invalid maximum valence value'
     endif
@@ -559,3 +585,154 @@
 
   end subroutine prepare_xsmm
 #endif
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine prepare_bandwidth_test()
+
+! outputs memory bandwidth performance to know more about the memory bandwidth. this should indicate how fast we can go,
+! since our routines are memory-bound...
+!
+! motivated by: STEAM benchmarks
+! http://www.cs.virginia.edu/stream/ref.html
+
+  use constants_solver, only: CUSTOM_REAL,NDIM,FORCE_VECTORIZATION_VAL,IMAIN,myrank
+  use specfem_par, only: deltat
+  use specfem_par_crustmantle, only: &
+    displ => displ_crust_mantle,veloc => veloc_crust_mantle, accel => accel_crust_mantle, &
+    NGLOB => NGLOB_CRUST_MANTLE
+
+  implicit none
+
+  ! local parameters
+  integer :: i,ier
+  ! timing
+  integer :: k
+  double precision :: t_s,t_e,t_avg,t_min,t_max,mem
+  double precision, external :: wtime
+  real(kind=CUSTOM_REAL),dimension(:,:), allocatable :: displ0,veloc0,accel0
+  ! repeats test
+  integer, parameter :: NTIMES = 15
+
+  ! note: we want to use the actual arrays displ/veloc/accel which will be used later in the code
+  !       but they might have initial values read in, so we need to temporarily store them
+
+  ! stores original values
+  allocate(displ0(NDIM,NGLOB),veloc0(NDIM,NGLOB),accel0(NDIM,NGLOB),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays displ0,...'
+  displ0(:,:) = displ(:,:)
+  veloc0(:,:) = veloc(:,:)
+  accel0(:,:) = accel(:,:)
+
+  ! stream benchmark uses initial values
+  displ(:,:) = 3.0_CUSTOM_REAL
+  veloc(:,:) = 2.0_CUSTOM_REAL
+  accel(:,:) = 1.0_CUSTOM_REAL
+
+  ! synchronizes processes
+  call synchronize_all()
+
+  ! repeat timing exercise for more reliable measure
+  t_avg = 0.d0
+  t_min = 1.e30
+  t_max = 0.d0
+
+  do k = 1,NTIMES
+
+    ! timing
+    t_s = wtime()
+
+    ! Newmark time scheme update
+    if (FORCE_VECTORIZATION_VAL) then
+
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED(displ,veloc,accel,deltat) &
+!$OMP PRIVATE(i)
+!$OMP DO
+      do i = 1,NGLOB * NDIM
+        ! following STREAM benchmark: TRIAD a = b + fac * c
+        ! we use here the wavefield allocated earlier, since this test could lead to different result
+        ! when newly allocated arrays are used
+
+        ! counts:
+        ! + 2 FLOP
+        !
+        ! + 3 * 1 float = 3 * 4 BYTE
+        accel(i,1) = veloc(i,1) + deltat * displ(i,1)
+      enddo
+!$OMP enddo
+!$OMP END PARALLEL
+
+    else
+
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED(displ,veloc,accel,deltat) &
+!$OMP PRIVATE(i)
+!$OMP DO
+      do i = 1,NGLOB
+        accel(1,i) = veloc(1,i) + deltat * displ(1,i)
+      enddo
+!$OMP enddo
+!$OMP END PARALLEL
+
+    endif
+
+    ! synchronizes processes
+    call synchronize_all()
+
+    ! timing
+    t_e = wtime()
+
+    ! for average time, skips first 5 measurements
+    if (k > 5) then
+      t_avg = t_avg + (t_e - t_s)
+      ! min/max
+      if (t_min > (t_e - t_s)) t_min = t_e - t_s
+      if (t_max < (t_e - t_s)) t_max = t_e - t_s
+    endif
+  enddo
+  ! takes average
+  t_avg = t_avg / dble(NTIMES - 5)
+
+  ! total memory (in MB)
+  mem = NGLOB * NDIM * 3.d0 * dble(CUSTOM_REAL) / 1024.d0 / 1024.d0
+
+! total counts:
+!  2 FLOP / 12 BYTE = 0.166 FLOP/BYTE
+!
+! total memory accesses:
+!  NGLOB * NDIM * 3 * 4 BYTE
+!
+! memory bandwidth
+! NVIDIA K20: theoretical 250 GB/s
+!      single-precision peak performance: 3.95 TFlop/s -> corner arithmetic intensity = 3950 / 250 ~ 15.8 flop/byte
+!      hand-count performance: 0.166 flop/byte ~ 1% of the peak performance ~ 2.5 GB/s
+! Intel(R) Xeon(R) Haswell CPU (E5-2680 v3 @ 2.50GHz):
+!      http://ark.intel.com/products/81908/Intel-Xeon-Processor-E5-2680-v3-30M-Cache-2_50-GHz
+!      Max Memory Bandwidth 68 GB/s
+
+  ! output bandwidth
+  if (myrank == 0) then
+    write(IMAIN,*) "  bandwidth test (STREAM TRIAD): "
+    write(IMAIN,*) "     memory accesses = ",sngl(mem),'MB'
+    write(IMAIN,*) "     timing  min/max = ",sngl(t_min),'s / ',sngl(t_max),'s'
+    write(IMAIN,*) "     timing      avg = ",sngl(t_avg),'s'
+    write(IMAIN,*) "     bandwidth       = ",sngl(mem / t_avg / 1024.d0),'GB/s'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
+  ! re-store initial wavefield values
+  displ(:,:) = displ0(:,:)
+  veloc(:,:) = veloc0(:,:)
+  accel(:,:) = accel0(:,:)
+
+  ! free temporary arrays
+  deallocate(displ0,veloc0,accel0)
+
+  ! todo: would be interesting for GPU bandwidth as well...
+
+  end subroutine prepare_bandwidth_test
+

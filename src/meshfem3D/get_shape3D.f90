@@ -25,13 +25,11 @@
 !
 !=====================================================================
 
-  subroutine get_shape3D(myrank,shape3D,dershape3D,xigll,yigll,zigll)
+  subroutine get_shape3D(shape3D,dershape3D,xigll,yigll,zigll)
 
   use constants
 
   implicit none
-
-  integer myrank
 
 ! Gauss-Lobatto-Legendre points of integration
   double precision xigll(NGLLX)

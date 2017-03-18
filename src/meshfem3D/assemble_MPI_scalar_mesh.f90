@@ -29,7 +29,7 @@
 !---- assemble the contributions between slices and chunks using MPI
 !----
 
-  subroutine assemble_MPI_scalar_block(myrank,array_val,nglob, &
+  subroutine assemble_MPI_scalar_block(array_val,nglob, &
             iproc_xi,iproc_eta,ichunk,addressing, &
             iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &
             npoin2D_faces,npoin2D_xi,npoin2D_eta, &
@@ -48,7 +48,7 @@
 
   implicit none
 
-  integer myrank,nglob,NCHUNKS
+  integer nglob,NCHUNKS
 
 ! array to assemble
   real(kind=CUSTOM_REAL), dimension(nglob) :: array_val

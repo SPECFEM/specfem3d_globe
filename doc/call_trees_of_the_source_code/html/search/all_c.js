@@ -10,7 +10,6 @@ var searchData=
   ['lat_5fobservation',['lat_observation',['../d6/d6a/namespacemeshfem3d__par.html#aac85c2a043feb5d439d8db30490792ed',1,'meshfem3d_par']]],
   ['latitude_5fmax',['latitude_max',['../da/de3/namespacemodel__eucrust__par.html#a3bec2133efed60ccc1099421d7b9fd70',1,'model_eucrust_par']]],
   ['latitude_5fmin',['latitude_min',['../da/de3/namespacemodel__eucrust__par.html#a51385e116d7d313c6b7570d672902140',1,'model_eucrust_par']]],
-  ['launch_5fmin_5fblocks',['LAUNCH_MIN_BLOCKS',['../dd/d2b/mesh__constants__gpu_8h.html#abbfb05078721935b8cdd42ad92c15fe8',1,'mesh_constants_gpu.h']]],
   ['layer_5fshift',['layer_shift',['../d6/d83/namespacecreate__regions__mesh__par2.html#abf47fc38106e7bb1d1e0d4d20120d584',1,'create_regions_mesh_par2']]],
   ['lecmod',['lecmod',['../df/ddc/model__aniso__mantle_8f90.html#aaea48b142841a8031739f46ab19084bb',1,'model_aniso_mantle.f90']]],
   ['left',['left',['../d4/dda/structkdtree__search_1_1kdtree__node.html#add74b84151c4b4d13334f8821b39f3c8',1,'kdtree_search::kdtree_node']]],

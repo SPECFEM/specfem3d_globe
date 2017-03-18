@@ -147,9 +147,6 @@
   ! correct number of spectral elements in each block depending on chunk type
   integer :: npointot
 
-  ! proc number for MPI process
-  integer :: myrank
-
   ! check area and volume of the final mesh
   double precision :: volume_total
 

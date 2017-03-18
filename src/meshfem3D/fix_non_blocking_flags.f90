@@ -49,10 +49,12 @@
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
 
   ! local parameters
-  logical, dimension(nglob) :: mask_ibool
-  integer :: ipoin,ispec,i,j,k
+  logical, dimension(:),allocatable :: mask_ibool
+  integer :: ipoin,ispec,i,j,k,ier
 
 ! clean the mask
+  allocate(mask_ibool(nglob),stat=ier)
+  if (ier /= 0) stop 'Error allocating mask in fix_non_blocking_slices routine'
   mask_ibool(:) = .false.
 
 ! mark all the points that are in the MPI buffers to assemble inside each chunk
@@ -90,6 +92,8 @@
     enddo
   888 continue
   enddo
+
+  deallocate(mask_ibool)
 
   end subroutine fix_non_blocking_slices
 

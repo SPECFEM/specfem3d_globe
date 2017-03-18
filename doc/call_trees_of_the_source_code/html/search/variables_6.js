@@ -11,7 +11,6 @@ var searchData=
   ['g_5fzz',['g_zz',['../d6/d6a/namespacemeshfem3d__par.html#af6504a4485cbb638638482f5eb2b71dc',1,'meshfem3d_par']]],
   ['gamma_5freceiver',['gamma_receiver',['../db/da6/namespacespecfem__par.html#a4c4559a2ac5feb514c959aa8b8bad15b',1,'specfem_par']]],
   ['gamma_5frotation_5fazimuth',['gamma_rotation_azimuth',['../d1/d30/namespaceshared__input__parameters.html#a677e2a63be74fde6d371910353ef9e3e',1,'shared_input_parameters']]],
-  ['gamma_5frotation_5fazimuth_5fval',['gamma_rotation_azimuth_val',['../db/dd6/namespaceconstants__solver.html#aa325d43342933864213aba119acc083c',1,'constants_solver']]],
   ['gamma_5fsource',['gamma_source',['../db/da6/namespacespecfem__par.html#ab6013c1e675dec734e8063ec184a6e92',1,'specfem_par']]],
   ['gammaval',['gammaval',['../db/da6/namespacespecfem__par.html#a1bff53d8ce4e2da9592c2aa37989a78a',1,'specfem_par']]],
   ['gammax_5fcrust_5fmantle',['gammax_crust_mantle',['../d6/dc0/namespacespecfem__par__crustmantle.html#a67edb26ca7094d88d36b2f0f4a7e6883',1,'specfem_par_crustmantle']]],
@@ -32,5 +31,9 @@ var searchData=
   ['gpu_5fplatform',['gpu_platform',['../d1/d30/namespaceshared__input__parameters.html#a84b96c5bd6c26103aab637331159a0a2',1,'shared_input_parameters']]],
   ['gpu_5fruntime',['gpu_runtime',['../d1/d30/namespaceshared__input__parameters.html#aca94f5f7e3bb4d01707edebd71812cc9',1,'shared_input_parameters']]],
   ['gravity',['gravity',['../d2/d88/structmesh__.html#add67861d6106aea8784d1998c5f1bf9d',1,'mesh_::gravity()'],['../d1/d30/namespaceshared__input__parameters.html#a2d168f99500e7a03e0d42f2d30df6219',1,'shared_input_parameters::gravity()']]],
-  ['gravity_5fval',['gravity_val',['../db/dd6/namespaceconstants__solver.html#a4b4837517e26fa34a3555d4bdc030bae',1,'constants_solver']]]
+  ['gravity_5fh_5fcrust_5fmantle',['gravity_h_crust_mantle',['../db/da6/namespacespecfem__par.html#a60130cdb0cb198ca2ee2d9a515ac0b15',1,'specfem_par']]],
+  ['gravity_5fh_5finner_5fcore',['gravity_h_inner_core',['../db/da6/namespacespecfem__par.html#acff485b79f9d0f43b1b96ddd3a234fcd',1,'specfem_par']]],
+  ['gravity_5fpre_5fstore_5fcrust_5fmantle',['gravity_pre_store_crust_mantle',['../db/da6/namespacespecfem__par.html#a9c80046d679de86332f706d26571589f',1,'specfem_par']]],
+  ['gravity_5fpre_5fstore_5finner_5fcore',['gravity_pre_store_inner_core',['../db/da6/namespacespecfem__par.html#ac70b216c68fae04c5bbf80a38a844ff7',1,'specfem_par']]],
+  ['gravity_5fpre_5fstore_5fouter_5fcore',['gravity_pre_store_outer_core',['../db/da6/namespacespecfem__par.html#a347361a33f6898fcf7adc7175e2e79ef',1,'specfem_par']]]
 ];

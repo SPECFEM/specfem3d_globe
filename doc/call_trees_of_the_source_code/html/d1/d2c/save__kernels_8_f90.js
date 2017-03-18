@@ -1,5 +1,6 @@
 var save__kernels_8_f90 =
 [
+    [ "restore_relaxed_moduli", "d1/d2c/save__kernels_8_f90.html#a8f8c139ab4127fde433fb360d3e65a33", null ],
     [ "rotate_kernels_dble", "d1/d2c/save__kernels_8_f90.html#a63bd825a7bd8783becdc96be004bacb5", null ],
     [ "save_kernels", "d1/d2c/save__kernels_8_f90.html#a360ff85de23b7b08351364bec45125b1", null ],
     [ "save_kernels_boundary_kl", "d1/d2c/save__kernels_8_f90.html#a0b30f5ef278ccee09ddcdc84bb5f23f9", null ],

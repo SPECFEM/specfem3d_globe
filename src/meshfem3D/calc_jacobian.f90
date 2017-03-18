@@ -40,19 +40,19 @@
 !         gammaxstore,gammaystore,gammazstore ------ parameters used to calculate Jacobian
 
 
-  subroutine recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll, &
+  subroutine recalc_jacobian_gll3D(xstore,ystore,zstore,xigll,yigll,zigll, &
                                    ispec,nspec, &
                                    xixstore,xiystore,xizstore, &
                                    etaxstore,etaystore,etazstore, &
                                    gammaxstore,gammaystore,gammazstore)
 
-  use constants, only: NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,SIZE_REAL, &
+  use constants, only: myrank,NGLLX,NGLLY,NGLLZ,CUSTOM_REAL,SIZE_REAL, &
     ZERO,ONE,TINYVAL,VERYSMALLVAL,R_EARTH_KM,RADIANS_TO_DEGREES
 
   implicit none
 
   ! input parameter
-  integer::myrank,ispec,nspec
+  integer:: ispec,nspec
 
   double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
 
@@ -250,7 +250,7 @@
   !                     xigll,yigll,NSPEC2DMAX_AB,NGLLA,NGLLB
 
   ! output results:     jacobian2D,normal
-  subroutine recalc_jacobian_gll2D(myrank,ispecb, &
+  subroutine recalc_jacobian_gll2D(ispecb, &
                                 xelm2D,yelm2D,zelm2D,xigll,yigll, &
                                 jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
@@ -259,7 +259,7 @@
   implicit none
 
   ! input parameters
-  integer::myrank,ispecb,NSPEC2DMAX_AB,NGLLA,NGLLB
+  integer:: ispecb,NSPEC2DMAX_AB,NGLLA,NGLLB
 
   double precision,dimension(NGLLA,NGLLB)::xelm2D,yelm2D,zelm2D
 

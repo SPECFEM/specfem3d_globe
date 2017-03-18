@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
+  subroutine get_jacobian_discontinuities(ispec,ix_elem,iy_elem,rmin,rmax,r1,r2,r3,r4,r5,r6,r7,r8, &
                      xstore,ystore,zstore,dershape2D_bottom, &
                      ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
                      normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
@@ -38,7 +38,7 @@
   implicit none
 
   ! input
-  integer myrank, ispec, ix_elem, iy_elem
+  integer ispec, ix_elem, iy_elem
   double precision rmin,rmax
   double precision xstore(NGLLX,NGLLY,NGLLZ)
   double precision ystore(NGLLX,NGLLY,NGLLZ)
@@ -62,7 +62,8 @@
   double precision :: r1, r2, r3, r4, r5, r6, r7, r8
   double precision :: target_moho_high, target_moho_low, target_400_high, target_400_low, target_670_high, target_670_low
   integer :: nele_sub_block, ispec_list(16), map_irem_ix_12(8), map_irem_ix_34(8), map_irem_iy_odd(8), map_irem_iy_even(8)
-  integer :: map_isub_ix(4), map_isub_iy(4), map_ix(NSPEC_DOUBLING_SUPERBRICK),  map_iy(NSPEC_DOUBLING_SUPERBRICK)
+  integer :: map_isub_ix(4), map_isub_iy(4)
+  integer :: map_ix(NSPEC_DOUBLING_SUPERBRICK),  map_iy(NSPEC_DOUBLING_SUPERBRICK)
   integer :: i, ispec_superbrick_current, isub_block, irem_block, irem_ix, irem_iy, ix,iy,ix_top,iy_top, ispec2D_moho_bot_map
 
   ! ======================
@@ -114,7 +115,7 @@
     if (USE_ONE_LAYER_SB) then
       nele_sub_block = 7
       ispec_list=(/1,2,4,6,8,9,11,13,15,16,18,20,22,23,25,27/)
-   else
+    else
       nele_sub_block = 8
       ispec_list=(/1,2,4,6,9,10,12,14,17,18,20,22,25,26,28,30/)
     endif
@@ -125,7 +126,7 @@
     map_iy(1:NSPEC_DOUBLING_SUPERBRICK) = 0
 
     do i = 1, 16
-      ispec_superbrick_current=ispec_list(i)
+      ispec_superbrick_current = ispec_list(i)
       isub_block = ispec_superbrick_current/nele_sub_block + 1
       irem_block = mod(ispec_superbrick_current,nele_sub_block)
 
@@ -153,46 +154,47 @@
     if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO .and. &
                abs(rmin-r_moho)/r_moho < SMALLVAL .and. r1 < target_moho_high .and. r2 < target_moho_high &
                .and. r3 < target_moho_high .and. r4 < target_moho_high) then
-        ispec2D_moho_top = ispec2D_moho_top + 1
-        ibelm_moho_top(ispec2D_moho_top) = ispec
-        call compute_jacobian_2D(myrank,ispec2D_moho_top,xelm2,yelm2,zelm2,dershape2D_bottom, &
-                   jacobian2D_moho,normal_moho,NGLLX,NGLLY,NSPEC2D_MOHO)
+      ispec2D_moho_top = ispec2D_moho_top + 1
+      ibelm_moho_top(ispec2D_moho_top) = ispec
+      call compute_jacobian_2D(ispec2D_moho_top,xelm2,yelm2,zelm2,dershape2D_bottom, &
+                               jacobian2D_moho,normal_moho,NGLLX,NGLLY,NSPEC2D_MOHO)
 ! 400 top
-  else if (abs(rmin-r_400)/r_400 < SMALLVAL .and. r1 < target_400_high .and. r2 < target_400_high &
+    else if (abs(rmin-r_400)/r_400 < SMALLVAL .and. r1 < target_400_high .and. r2 < target_400_high &
              .and. r3 < target_400_high .and. r4 < target_400_high) then
-    ispec2D_400_top = ispec2D_400_top + 1
-    ibelm_400_top(ispec2D_400_top) = ispec
-    call compute_jacobian_2D(myrank,ispec2D_400_top,xelm2,yelm2,zelm2,dershape2D_bottom, &
-               jacobian2D_400,normal_400,NGLLX,NGLLY,NSPEC2D_400)
+      ispec2D_400_top = ispec2D_400_top + 1
+      ibelm_400_top(ispec2D_400_top) = ispec
+      call compute_jacobian_2D(ispec2D_400_top,xelm2,yelm2,zelm2,dershape2D_bottom, &
+                               jacobian2D_400,normal_400,NGLLX,NGLLY,NSPEC2D_400)
 
 ! 400 bot
-  else if (abs(rmax-r_400)/r_400 < SMALLVAL .and. r5 > target_400_low .and. r6 > target_400_low &
+    else if (abs(rmax-r_400)/r_400 < SMALLVAL .and. r5 > target_400_low .and. r6 > target_400_low &
              .and. r7 > target_400_low .and. r8 > target_400_low) then
-    ispec2D_400_bot = ispec2D_400_bot + 1
-    ibelm_400_bot(ispec2D_400_bot) = ispec
+      ispec2D_400_bot = ispec2D_400_bot + 1
+      ibelm_400_bot(ispec2D_400_bot) = ispec
 
 ! 670 top
-  else if (abs(rmin-r_670)/r_670 < SMALLVAL .and. r1 < target_670_high .and. r2 < target_670_high &
+    else if (abs(rmin-r_670)/r_670 < SMALLVAL .and. r1 < target_670_high .and. r2 < target_670_high &
              .and. r3 < target_670_high .and. r4 < target_670_high) then
-    ispec2D_670_top = ispec2D_670_top + 1
-    ibelm_670_top(ispec2D_670_top) = ispec
-    call compute_jacobian_2D(myrank,ispec2D_670_top,xelm2,yelm2,zelm2,dershape2D_bottom, &
-               jacobian2D_670,normal_670,NGLLX,NGLLY,NSPEC2D_670)
+      ispec2D_670_top = ispec2D_670_top + 1
+      ibelm_670_top(ispec2D_670_top) = ispec
+      call compute_jacobian_2D(ispec2D_670_top,xelm2,yelm2,zelm2,dershape2D_bottom, &
+                               jacobian2D_670,normal_670,NGLLX,NGLLY,NSPEC2D_670)
 ! 670 bot
-  else if (abs(rmax-r_670)/r_670 < SMALLVAL .and. r5 > target_670_low .and. r6 > target_670_low &
+    else if (abs(rmax-r_670)/r_670 < SMALLVAL .and. r5 > target_670_low .and. r6 > target_670_low &
              .and. r7 > target_670_low .and. r8 > target_670_low) then
-    ispec2D_670_bot = ispec2D_670_bot + 1
-    ibelm_670_bot(ispec2D_670_bot) = ispec
-  endif
+      ispec2D_670_bot = ispec2D_670_bot + 1
+      ibelm_670_bot(ispec2D_670_bot) = ispec
+    endif
 
-  else ! superbrick case
+  else
+    ! superbrick case
     ! Moho bot (special care should be taken to deal with mapping 2D element indices)
     if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO .and. &
                abs(rmax-r_moho)/r_moho < SMALLVAL .and. r5 > target_moho_low .and. r6 > target_moho_low &
                .and. r7 > target_moho_low .and. r8 > target_moho_low) then
       ispec2D_moho_bot = ispec2D_moho_bot + 1
-      ix=map_ix(ispec_superbrick)
-      iy=map_iy(ispec_superbrick)
+      ix = map_ix(ispec_superbrick)
+      iy = map_iy(ispec_superbrick)
       if (ix == 0 .or. iy == 0) call exit_mpi(myrank, 'Check (ix,iy) on the Moho bot is 0')
       ix_top = (ix_elem - 1)  + ix
       iy_top = (iy_elem - 1)  + iy

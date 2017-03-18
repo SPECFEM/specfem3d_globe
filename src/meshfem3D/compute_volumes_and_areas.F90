@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine compute_volumes_and_areas(myrank,NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
+  subroutine compute_volumes_and_areas(NCHUNKS,iregion_code,nspec,wxgll,wygll,wzgll, &
                                   xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore, &
                                   NSPEC2D_BOTTOM,jacobian2D_bottom,NSPEC2D_TOP,jacobian2D_top,idoubling, &
                                   volume_total,RCMB,RICB,R_CENTRAL_CUBE)
@@ -39,7 +39,7 @@
   integer :: nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 
-  integer :: myrank,NCHUNKS,iregion_code
+  integer :: NCHUNKS,iregion_code
 
   double precision :: volume_total
   double precision :: RCMB,RICB,R_CENTRAL_CUBE
@@ -176,7 +176,7 @@
 
   ! compute Earth mass of that part of the slice and then total Earth mass
 
-  subroutine compute_Earth_mass(myrank,Earth_mass_total, &
+  subroutine compute_Earth_mass(Earth_mass_total, &
                             Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total, &
                             nspec,wxgll,wygll,wzgll,xstore,ystore,zstore,xixstore,xiystore,xizstore, &
                             etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,rhostore,idoubling)
@@ -188,7 +188,6 @@
   double precision :: Earth_mass_total
   double precision :: Earth_center_of_mass_x_total,Earth_center_of_mass_y_total,Earth_center_of_mass_z_total
 
-  integer :: myrank
   integer :: nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 

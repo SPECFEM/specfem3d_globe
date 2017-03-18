@@ -35,7 +35,7 @@
 !--------------------------------------------------------------------------------------------------
 
 
-  subroutine model_iasp91(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &
+  subroutine model_iasp91(x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &
                      RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
 
@@ -52,7 +52,7 @@
 
   logical check_doubling_flag
 
-  integer idoubling,myrank
+  integer idoubling
 
   double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
     R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST

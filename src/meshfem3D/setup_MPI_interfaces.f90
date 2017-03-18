@@ -57,6 +57,8 @@
   allocate(my_neighbours(MAX_NEIGHBOURS), &
           nibool_neighbours(MAX_NEIGHBOURS),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating my_neighbours array')
+  my_neighbours(:) = -1
+  nibool_neighbours(:) = 0
 
   ! estimates initial maximum ibool array
   max_nibool = npoin2D_max_all_CM_IC * NUMFACES_SHARED &
@@ -64,6 +66,7 @@
 
   allocate(ibool_neighbours(max_nibool,MAX_NEIGHBOURS), stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating ibool_neighbours')
+  ibool_neighbours(:,:) = 0
 
   ! sets up MPI interfaces between different processes
   select case (iregion_code)
@@ -138,9 +141,9 @@
   use MPI_crust_mantle_par
   implicit none
 
-  integer :: MAX_NEIGHBOURS,max_nibool
-  integer, dimension(MAX_NEIGHBOURS) :: my_neighbours,nibool_neighbours
-  integer, dimension(max_nibool,MAX_NEIGHBOURS) :: ibool_neighbours
+  integer,intent(in) :: MAX_NEIGHBOURS,max_nibool
+  integer, dimension(MAX_NEIGHBOURS),intent(inout) :: my_neighbours,nibool_neighbours
+  integer, dimension(max_nibool,MAX_NEIGHBOURS),intent(inout) :: ibool_neighbours
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -158,46 +161,52 @@
   ! sets up MPI interfaces
   ! crust mantle region
   if (myrank == 0 ) write(IMAIN,*) 'crust mantle MPI:'
-  allocate(test_flag(NGLOB_CRUST_MANTLE), &
-          stat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag')
 
-  ! sets flag to rank id (+1 to avoid problems with zero rank)
-  test_flag(:) = myrank + 1.0
+  if (NPROCTOT > 1) then
+    allocate(test_flag(NGLOB_CRUST_MANTLE), &
+            stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag')
 
-  ! assembles values
-  call assemble_MPI_scalar_block(myrank,test_flag, &
-            NGLOB_CRUST_MANTLE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
-            npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
-            iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
-            NGLOB2DMAX_XY,NCHUNKS)
+    ! sets flag to rank id (+1 to avoid problems with zero rank)
+    test_flag(:) = myrank + 1.0
 
-  ! removes own myrank id (+1)
-  test_flag(:) = test_flag(:) - ( myrank + 1.0)
+    ! assembles values
+    call assemble_MPI_scalar_block(test_flag,NGLOB_CRUST_MANTLE, &
+              iproc_xi,iproc_eta,ichunk,addressing, &
+              iboolleft_xi_crust_mantle,iboolright_xi_crust_mantle,iboolleft_eta_crust_mantle,iboolright_eta_crust_mantle, &
+              npoin2D_faces_crust_mantle,npoin2D_xi_crust_mantle,npoin2D_eta_crust_mantle, &
+              iboolfaces_crust_mantle,iboolcorner_crust_mantle, &
+              iprocfrom_faces,iprocto_faces,imsg_type, &
+              iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+              buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+              buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+              NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+              NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_CRUST_MANTLE), &
+              NGLOB2DMAX_XMIN_XMAX(IREGION_CRUST_MANTLE),NGLOB2DMAX_YMIN_YMAX(IREGION_CRUST_MANTLE), &
+              NGLOB2DMAX_XY,NCHUNKS)
 
-  allocate(dummy_i(NSPEC_CRUST_MANTLE),stat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
+    ! removes own myrank id (+1)
+    test_flag(:) = test_flag(:) - ( myrank + 1.0)
 
-  ! determines neighbor rank for shared faces
-  call get_MPI_interfaces(myrank,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
-                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-                            num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                            max_nibool,MAX_NEIGHBOURS, &
-                            ibool,is_on_a_slice_edge, &
-                            IREGION_CRUST_MANTLE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+    allocate(dummy_i(NSPEC_CRUST_MANTLE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
+    dummy_i(:) = 0
 
-  deallocate(test_flag)
-  deallocate(dummy_i)
+    ! determines neighbor rank for shared faces
+    call get_MPI_interfaces(myrank,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
+                              test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
+                              num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
+                              max_nibool,MAX_NEIGHBOURS, &
+                              ibool,is_on_a_slice_edge, &
+                              IREGION_CRUST_MANTLE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
+                              xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+
+    deallocate(test_flag)
+    deallocate(dummy_i)
+  else
+    ! no interfaces
+    num_interfaces_crust_mantle = 0
+  endif
 
   ! stores MPI interfaces information
   allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
@@ -291,63 +300,68 @@
   ! outer core region
   if (myrank == 0 ) write(IMAIN,*) 'outer core MPI:'
 
-  allocate(test_flag(NGLOB_OUTER_CORE), &
-          stat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag outer core')
+  if (NPROCTOT > 1) then
+    allocate(test_flag(NGLOB_OUTER_CORE), &
+            stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag outer core')
 
-  ! sets flag to rank id (+1 to avoid problems with zero rank)
-  test_flag(:) = myrank + 1.0
+    ! sets flag to rank id (+1 to avoid problems with zero rank)
+    test_flag(:) = myrank + 1.0
 
-  ! assembles values
-  call assemble_MPI_scalar_block(myrank,test_flag, &
-                                 NGLOB_OUTER_CORE, &
-                                 iproc_xi,iproc_eta,ichunk,addressing, &
-                                 iboolleft_xi_outer_core,iboolright_xi_outer_core, &
-                                 iboolleft_eta_outer_core,iboolright_eta_outer_core, &
-                                 npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
-                                 iboolfaces_outer_core,iboolcorner_outer_core, &
-                                 iprocfrom_faces,iprocto_faces,imsg_type, &
-                                 iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-                                 buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-                                 buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-                                 NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-                                 NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
-                                 NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
-                                 NGLOB2DMAX_XY,NCHUNKS)
+    ! assembles values
+    call assemble_MPI_scalar_block(test_flag,NGLOB_OUTER_CORE, &
+                                   iproc_xi,iproc_eta,ichunk,addressing, &
+                                   iboolleft_xi_outer_core,iboolright_xi_outer_core, &
+                                   iboolleft_eta_outer_core,iboolright_eta_outer_core, &
+                                   npoin2D_faces_outer_core,npoin2D_xi_outer_core,npoin2D_eta_outer_core, &
+                                   iboolfaces_outer_core,iboolcorner_outer_core, &
+                                   iprocfrom_faces,iprocto_faces,imsg_type, &
+                                   iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+                                   buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+                                   buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+                                   NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+                                   NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_OUTER_CORE), &
+                                   NGLOB2DMAX_XMIN_XMAX(IREGION_OUTER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_OUTER_CORE), &
+                                   NGLOB2DMAX_XY,NCHUNKS)
 
 
-  ! removes own myrank id (+1)
-  test_flag(:) = test_flag(:) - ( myrank + 1.0)
+    ! removes own myrank id (+1)
+    test_flag(:) = test_flag(:) - ( myrank + 1.0)
 
-  allocate(dummy_i(NSPEC_OUTER_CORE),stat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
+    allocate(dummy_i(NSPEC_OUTER_CORE),stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy_i')
+    dummy_i(:) = 0
 
-  ! determines neighbor rank for shared faces
-  call get_MPI_interfaces(myrank,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
-                          test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-                          num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                          max_nibool,MAX_NEIGHBOURS, &
-                          ibool,is_on_a_slice_edge, &
-                          IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
-                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+    ! determines neighbor rank for shared faces
+    call get_MPI_interfaces(myrank,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
+                            test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
+                            num_interfaces_outer_core,max_nibool_interfaces_oc, &
+                            max_nibool,MAX_NEIGHBOURS, &
+                            ibool,is_on_a_slice_edge, &
+                            IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
+                            xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
 
-  deallocate(test_flag)
-  deallocate(dummy_i)
+    deallocate(test_flag)
+    deallocate(dummy_i)
+  else
+    ! no interfaces
+    num_interfaces_outer_core = 0
+  endif
 
   ! stores MPI interfaces information
   allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
           nibool_interfaces_outer_core(num_interfaces_outer_core), &
           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbours_outer_core etc.')
-  my_neighbours_outer_core = -1
-  nibool_interfaces_outer_core = 0
+  my_neighbours_outer_core(:) = -1
+  nibool_interfaces_outer_core(:) = 0
 
   ! copies interfaces arrays
   if (num_interfaces_outer_core > 0) then
     allocate(ibool_interfaces_outer_core(max_nibool_interfaces_oc,num_interfaces_outer_core), &
            stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
-    ibool_interfaces_outer_core = 0
+    ibool_interfaces_outer_core(:,:) = 0
 
     ! ranks of neighbour processes
     my_neighbours_outer_core(:) = my_neighbours(1:num_interfaces_outer_core)
@@ -426,121 +440,125 @@
   ! inner core
   if (myrank == 0 ) write(IMAIN,*) 'inner core MPI:'
 
-  allocate(test_flag(NGLOB_INNER_CORE), &
-          stat=ier)
-  if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag inner core')
+  if (NPROCTOT > 1) then
+    allocate(test_flag(NGLOB_INNER_CORE), &
+            stat=ier)
+    if (ier /= 0 ) call exit_mpi(myrank,'Error allocating test_flag inner core')
 
-  ! sets flag to rank id (+1 to avoid problems with zero rank)
-  test_flag(:) = 0.0
-  do ispec = 1,NSPEC_INNER_CORE
-    ! suppress fictitious elements in central cube
-    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
-    ! sets flags
-    do k = 1,NGLLZ
-      do j = 1,NGLLY
-        do i = 1,NGLLX
-          iglob = ibool(i,j,k,ispec)
-          test_flag(iglob) = myrank + 1.0
+    ! sets flag to rank id (+1 to avoid problems with zero rank)
+    test_flag(:) = 0.0
+    do ispec = 1,NSPEC_INNER_CORE
+      ! suppress fictitious elements in central cube
+      if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+      ! sets flags
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = ibool(i,j,k,ispec)
+            test_flag(iglob) = myrank + 1.0
+          enddo
         enddo
       enddo
     enddo
-  enddo
 
-  ! assembles values
-  call assemble_MPI_scalar_block(myrank,test_flag, &
-            NGLOB_INNER_CORE, &
-            iproc_xi,iproc_eta,ichunk,addressing, &
-            iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
-            npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
-            iboolfaces_inner_core,iboolcorner_inner_core, &
-            iprocfrom_faces,iprocto_faces,imsg_type, &
-            iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
-            buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
-            buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
-            NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
-            NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
-            NGLOB2DMAX_XY,NCHUNKS)
+    ! assembles values
+    call assemble_MPI_scalar_block(test_flag,NGLOB_INNER_CORE, &
+              iproc_xi,iproc_eta,ichunk,addressing, &
+              iboolleft_xi_inner_core,iboolright_xi_inner_core,iboolleft_eta_inner_core,iboolright_eta_inner_core, &
+              npoin2D_faces_inner_core,npoin2D_xi_inner_core,npoin2D_eta_inner_core, &
+              iboolfaces_inner_core,iboolcorner_inner_core, &
+              iprocfrom_faces,iprocto_faces,imsg_type, &
+              iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
+              buffer_send_faces_scalar,buffer_received_faces_scalar,npoin2D_max_all_CM_IC, &
+              buffer_send_chunkcorn_scalar,buffer_recv_chunkcorn_scalar, &
+              NUMMSGS_FACES,NUM_MSG_TYPES,NCORNERSCHUNKS, &
+              NPROC_XI,NPROC_ETA,NGLOB1D_RADIAL(IREGION_INNER_CORE), &
+              NGLOB2DMAX_XMIN_XMAX(IREGION_INNER_CORE),NGLOB2DMAX_YMIN_YMAX(IREGION_INNER_CORE), &
+              NGLOB2DMAX_XY,NCHUNKS)
 
-  ! debug: idoubling inner core
-  if (DEBUG) then
-    write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
-    call write_VTK_data_elem_i(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
-                               xstore_glob,ystore_glob,zstore_glob, &
-                               ibool,idoubling,filename)
-    call synchronize_all()
+    ! debug: idoubling inner core
+    if (DEBUG) then
+      write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/MPI_idoubling_inner_core_proc',myrank
+      call write_VTK_data_elem_i(NSPEC_INNER_CORE,NGLOB_INNER_CORE, &
+                                 xstore_glob,ystore_glob,zstore_glob, &
+                                 ibool,idoubling,filename)
+      call synchronize_all()
+    endif
+
+    ! including central cube
+    if (INCLUDE_CENTRAL_CUBE) then
+      ! user output
+      if (myrank == 0 ) write(IMAIN,*) 'inner core with central cube MPI:'
+
+      ! test_flag is a scalar, not a vector
+      ndim_assemble = 1
+
+      ! use central cube buffers to assemble the inner core mass matrix with the central cube
+      call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
+                   npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
+                   buffer_slices, buffer_slices2, ibool_central_cube, &
+                   receiver_cube_from_slices, ibool, &
+                   idoubling, NSPEC_INNER_CORE, &
+                   ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
+                   NGLOB_INNER_CORE, &
+                   test_flag,ndim_assemble, &
+                   iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
+
+      ! frees array not needed anymore
+      deallocate(ibelm_bottom_inner_core)
+
+    endif
+
+    ! removes own myrank id (+1)
+    test_flag = test_flag - ( myrank + 1.0)
+    where( test_flag < 0.0 ) test_flag = 0.0
+
+    ! debug: in sequential order, for testing purpose
+    !do i = 0,NPROCTOT - 1
+    !  if (myrank == i) then
+    !    ! gets new interfaces for inner_core without central cube yet
+    !    ! determines neighbor rank for shared faces
+    !    call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+    !                          test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
+    !                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
+    !                          max_nibool,MAX_NEIGHBOURS, &
+    !                          ibool,is_on_a_slice_edge, &
+    !                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
+    !                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+    !  endif
+    !  call synchronize_all()
+    !enddo
+
+    ! gets new interfaces for inner_core without central cube yet
+    ! determines neighbor rank for shared faces
+    call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
+                          test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
+                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
+                          max_nibool,MAX_NEIGHBOURS, &
+                          ibool,is_on_a_slice_edge, &
+                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
+                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
+
+    deallocate(test_flag)
+  else
+    ! no interfaces
+    num_interfaces_inner_core = 0
   endif
-
-  ! including central cube
-  if (INCLUDE_CENTRAL_CUBE) then
-    ! user output
-    if (myrank == 0 ) write(IMAIN,*) 'inner core with central cube MPI:'
-
-    ! test_flag is a scalar, not a vector
-    ndim_assemble = 1
-
-    ! use central cube buffers to assemble the inner core mass matrix with the central cube
-    call assemble_MPI_central_cube_block(ichunk,nb_msgs_theor_in_cube, sender_from_slices_to_cube, &
-                 npoin2D_cube_from_slices, buffer_all_cube_from_slices, &
-                 buffer_slices, buffer_slices2, ibool_central_cube, &
-                 receiver_cube_from_slices, ibool, &
-                 idoubling, NSPEC_INNER_CORE, &
-                 ibelm_bottom_inner_core, NSPEC2D_BOTTOM(IREGION_INNER_CORE), &
-                 NGLOB_INNER_CORE, &
-                 test_flag,ndim_assemble, &
-                 iproc_eta,addressing,NCHUNKS,NPROC_XI,NPROC_ETA)
-
-    ! frees array not needed anymore
-    deallocate(ibelm_bottom_inner_core)
-
-  endif
-
-  ! removes own myrank id (+1)
-  test_flag = test_flag - ( myrank + 1.0)
-  where( test_flag < 0.0 ) test_flag = 0.0
-
-  ! debug: in sequential order, for testing purpose
-  !do i = 0,NPROCTOT - 1
-  !  if (myrank == i) then
-  !    ! gets new interfaces for inner_core without central cube yet
-  !    ! determines neighbor rank for shared faces
-  !    call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-  !                          test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-  !                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-  !                          max_nibool,MAX_NEIGHBOURS, &
-  !                          ibool,is_on_a_slice_edge, &
-  !                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
-  !                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
-  !  endif
-  !  call synchronize_all()
-  !enddo
-
-  ! gets new interfaces for inner_core without central cube yet
-  ! determines neighbor rank for shared faces
-  call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
-                        test_flag,my_neighbours,nibool_neighbours,ibool_neighbours, &
-                        num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                        max_nibool,MAX_NEIGHBOURS, &
-                        ibool,is_on_a_slice_edge, &
-                        IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
-                        xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
-
-  deallocate(test_flag)
 
   ! stores MPI interfaces information
   allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
           nibool_interfaces_inner_core(num_interfaces_inner_core), &
           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array my_neighbours_inner_core etc.')
-  my_neighbours_inner_core = -1
-  nibool_interfaces_inner_core = 0
+  my_neighbours_inner_core(:) = -1
+  nibool_interfaces_inner_core(:) = 0
 
   ! copies interfaces arrays
   if (num_interfaces_inner_core > 0) then
     allocate(ibool_interfaces_inner_core(max_nibool_interfaces_ic,num_interfaces_inner_core), &
            stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
-    ibool_interfaces_inner_core = 0
+    ibool_interfaces_inner_core(:,:) = 0
 
     ! ranks of neighbour processes
     my_neighbours_inner_core(:) = my_neighbours(1:num_interfaces_inner_core)

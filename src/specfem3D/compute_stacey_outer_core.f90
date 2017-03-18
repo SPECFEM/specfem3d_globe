@@ -74,16 +74,21 @@
 
   ! outer core
 
-  !   xmin
-  ! if two chunks exclude this face for one of them
-  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
-    if (nspec2D_xmin_outer_core > 0) then
-      ! adds boundary contributions
-      if (.not. GPU_MODE) then
-        ! on CPU
+  if (.not. GPU_MODE) then
+    ! on CPU
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ispec2D,ispec,i,j,k,iglob,sn,weight) &
+!$OMP FIRSTPRIVATE(wgllwgll_xy,wgllwgll_xz,wgllwgll_yz)
+
+    !   xmin
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+      if (nspec2D_xmin_outer_core > 0) then
+        ! adds boundary contributions
+!$OMP DO
         do ispec2D = 1,nspec2D_xmin_outer_core
 
-          ispec=ibelm_xmin_outer_core(ispec2D)
+          ispec = ibelm_xmin_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi_outer_core(1,ispec2D) == 0 .or. njmin_outer_core(1,ispec2D) == 0) cycle
@@ -97,6 +102,7 @@
 
               weight = jacobian2D_xmin_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
 
+!$OMP ATOMIC
               accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
               if (SAVE_STACEY) then
@@ -105,29 +111,19 @@
             enddo
           enddo
         enddo
-
-      else
-        ! on GPU
-        call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_xmin_outer_core,4) ! <= xmin
-      endif
-
-      ! writes absorbing boundary values to file
-      if (SAVE_STACEY) then
-        call write_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,it)
+!$OMP enddo NOWAIT
       endif
     endif
-  endif
 
-  !   xmax
-  ! if two chunks exclude this face for one of them
-  if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
-    if (nspec2D_xmax_outer_core > 0) then
-      ! adds boundary contributions
-      if (.not. GPU_MODE) then
-        ! on CPU
+    !   xmax
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+      if (nspec2D_xmax_outer_core > 0) then
+        ! adds boundary contributions
+!$OMP DO
         do ispec2D = 1,nspec2D_xmax_outer_core
 
-          ispec=ibelm_xmax_outer_core(ispec2D)
+          ispec = ibelm_xmax_outer_core(ispec2D)
 
           ! exclude elements that are not on absorbing edges
           if (nkmin_xi_outer_core(2,ispec2D) == 0 .or. njmin_outer_core(2,ispec2D) == 0) cycle
@@ -141,6 +137,7 @@
 
               weight = jacobian2D_xmax_outer_core(j,k,ispec2D)*wgllwgll_yz(j,k)
 
+!$OMP ATOMIC
               accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
               if (SAVE_STACEY) then
@@ -150,27 +147,17 @@
             enddo
           enddo
         enddo
-
-      else
-        ! on GPU
-        call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_xmax_outer_core,5) ! <= xmax
-      endif
-
-      if (SAVE_STACEY) then
-        call write_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,it)
+!$OMP enddo NOWAIT
       endif
     endif
 
-  endif
-
-  !   ymin
-  if (nspec2D_ymin_outer_core > 0) then
-    ! adds boundary contributions
-    if (.not. GPU_MODE) then
-      ! on CPU
+    !   ymin
+    if (nspec2D_ymin_outer_core > 0) then
+      ! adds boundary contributions
+!$OMP DO
       do ispec2D = 1,nspec2D_ymin_outer_core
 
-        ispec=ibelm_ymin_outer_core(ispec2D)
+        ispec = ibelm_ymin_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
         if (nkmin_eta_outer_core(1,ispec2D) == 0 .or. nimin_outer_core(1,ispec2D) == 0) cycle
@@ -182,8 +169,9 @@
 
             sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
 
-            weight=jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
+            weight = jacobian2D_ymin_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
 
+!$OMP ATOMIC
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
             if (SAVE_STACEY) then
@@ -193,24 +181,16 @@
           enddo
         enddo
       enddo
-    else
-      ! on GPU
-      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymin_outer_core,6) ! <= ymin
+!$OMP enddo NOWAIT
     endif
 
-    if (SAVE_STACEY) then
-      call write_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,it)
-    endif
-  endif
-
-  !   ymax
-  if (nspec2D_ymax_outer_core > 0) then
-    ! adds boundary contributions
-    if (.not. GPU_MODE) then
-      ! on CPU
+    !   ymax
+    if (nspec2D_ymax_outer_core > 0) then
+      ! adds boundary contributions
+!$OMP DO
       do ispec2D = 1,nspec2D_ymax_outer_core
 
-        ispec=ibelm_ymax_outer_core(ispec2D)
+        ispec = ibelm_ymax_outer_core(ispec2D)
 
         ! exclude elements that are not on absorbing edges
         if (nkmin_eta_outer_core(2,ispec2D) == 0 .or. nimin_outer_core(2,ispec2D) == 0) cycle
@@ -222,8 +202,9 @@
 
             sn = veloc_outer_core(iglob)/vp_outer_core(i,j,k,ispec)
 
-            weight=jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
+            weight = jacobian2D_ymax_outer_core(i,k,ispec2D)*wgllwgll_xz(i,k)
 
+!$OMP ATOMIC
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
             if (SAVE_STACEY) then
@@ -233,23 +214,14 @@
           enddo
         enddo
       enddo
-    else
-      ! on GPU
-      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymax_outer_core,7) ! <= ymax
+!$OMP enddo NOWAIT
     endif
 
-    if (SAVE_STACEY) then
-      call write_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,it)
-    endif
-  endif
-
-  ! zmin
-
-  ! for surface elements exactly on the ICB
-  if (nspec2D_zmin_outer_core > 0) then
-    ! adds boundary contributions
-    if (.not. GPU_MODE) then
-      ! on CPU
+    ! zmin
+    ! for surface elements exactly on the ICB
+    if (nspec2D_zmin_outer_core > 0) then
+      ! adds boundary contributions
+!$OMP DO
       do ispec2D = 1,nspec2D_zmin_outer_core
 
         ispec = ibelm_bottom_outer_core(ispec2D)
@@ -263,6 +235,7 @@
 
             weight = jacobian2D_bottom_outer_core(i,j,ispec2D)*wgllwgll_xy(i,j)
 
+!$OMP ATOMIC
             accel_outer_core(iglob) = accel_outer_core(iglob) - weight*sn
 
             if (SAVE_STACEY) then
@@ -272,15 +245,85 @@
           enddo
         enddo
       enddo
-    else
-      ! on GPU
-      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_zmin_outer_core,8) ! <= zmin
+!$OMP enddo NOWAIT
     endif
 
-    if (SAVE_STACEY) then
-      call write_abs(8,absorb_zmin_outer_core,reclen_zmin,it)
+!$OMP END PARALLEL
+
+  else
+    ! on GPU
+
+    ! xmin
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+      if (nspec2D_xmin_outer_core > 0) then
+        ! adds boundary contributions
+        call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_xmin_outer_core,4) ! <= xmin
+      endif
+    endif
+
+    !   xmax
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+      if (nspec2D_xmax_outer_core > 0) then
+        call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_xmax_outer_core,5) ! <= xmax
+      endif
+    endif
+
+    !   ymin
+    if (nspec2D_ymin_outer_core > 0) then
+      ! adds boundary contributions
+      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymin_outer_core,6) ! <= ymin
+    endif
+
+    !   ymax
+    if (nspec2D_ymax_outer_core > 0) then
+      ! adds boundary contributions
+      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_ymax_outer_core,7) ! <= ymax
+    endif
+
+    ! zmin
+    ! for surface elements exactly on the ICB
+    if (nspec2D_zmin_outer_core > 0) then
+      ! adds boundary contributions
+      call compute_stacey_acoustic_gpu(Mesh_pointer,absorb_zmin_outer_core,8) ! <= zmin
     endif
   endif
+
+  ! writes absorbing boundary values to file
+  if (SAVE_STACEY) then
+    ! xmin
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AC) then
+      if (nspec2D_xmin_outer_core > 0) then
+        call write_abs(4,absorb_xmin_outer_core,reclen_xmin_outer_core,it)
+      endif
+    endif
+
+    !   xmax
+    ! if two chunks exclude this face for one of them
+    if (NCHUNKS_VAL == 1 .or. ichunk == CHUNK_AB) then
+      if (nspec2D_xmax_outer_core > 0) then
+        call write_abs(5,absorb_xmax_outer_core,reclen_xmax_outer_core,it)
+      endif
+    endif
+
+    !   ymin
+    if (nspec2D_ymin_outer_core > 0) then
+      call write_abs(6,absorb_ymin_outer_core,reclen_ymin_outer_core,it)
+    endif
+
+    !   ymax
+    if (nspec2D_ymax_outer_core > 0) then
+      call write_abs(7,absorb_ymax_outer_core,reclen_ymax_outer_core,it)
+    endif
+
+    ! zmin
+    ! for surface elements exactly on the ICB
+    if (nspec2D_zmin_outer_core > 0) then
+      call write_abs(8,absorb_zmin_outer_core,reclen_zmin,it)
+    endif
+  endif ! SAVE_STACEY
 
   end subroutine compute_stacey_oc_forward
 

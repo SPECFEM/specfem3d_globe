@@ -121,7 +121,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_jp3d_broadcast(myrank)
+  subroutine model_jp3d_broadcast()
 
 ! standard routine to setup model
 
@@ -130,7 +130,6 @@
 
   implicit none
 
-  integer :: myrank
   integer :: ier
 
   ! allocates arrays

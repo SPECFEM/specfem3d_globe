@@ -10,9 +10,9 @@ var model__attenuation_8f90 =
     [ "fminsearch", "d2/d2c/model__attenuation_8f90.html#a1332ec42a63774c5e0fa7d8e0663b492", null ],
     [ "max_size_simplex", "d2/d2c/model__attenuation_8f90.html#a3f3e7c079757fe5735f73b2867ea8268", null ],
     [ "max_value", "d2/d2c/model__attenuation_8f90.html#a143b75a40f0cf8027066efee57dbe2c5", null ],
-    [ "model_attenuation_broadcast", "d2/d2c/model__attenuation_8f90.html#a2e461f5430d1f63d26db9616c58b65ae", null ],
+    [ "model_attenuation_broadcast", "d2/d2c/model__attenuation_8f90.html#a99c4aed02d34fbd73c178c76243d0fb8", null ],
     [ "model_attenuation_getstored_tau", "d2/d2c/model__attenuation_8f90.html#a22533e26244b9fa6eeaae249eaec38c3", null ],
-    [ "model_attenuation_setup", "d2/d2c/model__attenuation_8f90.html#a14d97ce0422ea660f9c1779a3064bf94", null ],
+    [ "model_attenuation_setup", "d2/d2c/model__attenuation_8f90.html#adad501987bfa3f86074c504228dba3b2", null ],
     [ "model_attenuation_storage", "d2/d2c/model__attenuation_8f90.html#a610dc0b96c48f66a9eb8955d365c8011", null ],
     [ "read_attenuation_model", "d2/d2c/model__attenuation_8f90.html#a84b2f788d16d8c34200a57b2d5a79d08", null ]
 ];

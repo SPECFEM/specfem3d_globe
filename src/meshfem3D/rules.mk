@@ -178,6 +178,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/gll_library.shared.o \
 	$O/heap_sort.shared.o \
 	$O/hex_nodes.shared.o \
+	$O/init_openmp.shared.o \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \
@@ -234,6 +235,7 @@ endif
 # conditional CEM model
 ifeq ($(CEM),yes)
 meshfem3D_OBJECTS += $O/model_cem.checknetcdf.o
+meshfem3D_MODULES += $(FC_MODDIR)/cem_par.$(FC_MODEXT)
 endif
 
 

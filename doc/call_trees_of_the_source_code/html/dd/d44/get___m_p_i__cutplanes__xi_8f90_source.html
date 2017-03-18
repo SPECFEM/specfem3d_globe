@@ -138,12 +138,12 @@ $(document).ready(function(){initNavTree('dd/d44/get___m_p_i__cutplanes__xi_8f90
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="comment">!</span></div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="comment">!=====================================================================</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90.html#a698f25d30155693ecced4bd47086fccd">get_mpi_cutplanes_xi</a>(myrank,prname,nspec,iMPIcut_xi,ibool, &amp;</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90.html#a6f50154798b935fe7c3566001c7aa960">get_mpi_cutplanes_xi</a>(prname,nspec,iMPIcut_xi,ibool, &amp;</div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;                                  xstore,ystore,zstore,mask_ibool,npointot, &amp;</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;                                  nspec2d_eta_face,iregion,npoin2d_xi, &amp;</div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;                                  iboolleft_xi,iboolright_xi, &amp;</div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;                                  npoin2d_xi_all,nglob2dmax_xmin_xmax)</div>
-<div class="line"><a name="l00033"></a><span class="lineno"><a class="line" href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90.html#a698f25d30155693ecced4bd47086fccd">   33</a></span>&#160;</div>
+<div class="line"><a name="l00033"></a><span class="lineno"><a class="line" href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90.html#a6f50154798b935fe7c3566001c7aa960">   33</a></span>&#160;</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="comment">! this routine detects cut planes along xi</span></div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="comment">! In principle the left cut plane of the first slice</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;<span class="comment">! and the right cut plane of the last slice are not used</span></div>
@@ -153,7 +153,7 @@ $(document).ready(function(){initNavTree('dd/d44/get___m_p_i__cutplanes__xi_8f90
 <div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;  <span class="keywordtype">implicit none</span></div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;  <span class="keywordtype">integer</span> :: nspec,myrank</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;  <span class="keywordtype">integer</span> :: nspec</div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;  <span class="keywordtype">logical</span>,<span class="keywordtype">dimension(2,nspec)</span> :: iMPIcut_xi</div>
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
@@ -206,7 +206,7 @@ $(document).ready(function(){initNavTree('dd/d44/get___m_p_i__cutplanes__xi_8f90
 <div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    <span class="comment">! global point number and coordinates left MPI cut-plane</span></div>
 <div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    <span class="keyword">open</span>(unit=iout,file=prname(1:len_trim(prname))//<span class="stringliteral">&#39;iboolleft_xi.txt&#39;</span>,status=<span class="stringliteral">&#39;unknown&#39;</span>,iostat=ier)</div>
 <div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    <span class="keywordflow">if</span> (ier /= 0) <span class="keywordflow">then</span></div>
-<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;      <span class="keywordflow">if</span> (myrank == 0) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == 0) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;        <span class="keyword">write</span>(imain,*)</div>
 <div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;        <span class="keyword">write</span>(imain,*) <span class="stringliteral">&#39;Error creating file: &#39;</span></div>
 <div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        <span class="keyword">write</span>(imain,*) prname(1:len_trim(prname))//<span class="stringliteral">&#39;iboolleft_xi.txt&#39;</span></div>
@@ -215,7 +215,7 @@ $(document).ready(function(){initNavTree('dd/d44/get___m_p_i__cutplanes__xi_8f90
 <div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;        <span class="keyword">write</span>(imain,*)</div>
 <div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;        <span class="keyword">call </span>flush_imain()</div>
 <div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;<span class="keywordflow">      endif</span></div>
-<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;      <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;Error creating iboolleft_xi.txt, please check your Par_file LOCAL_PATH setting&#39;</span>)</div>
+<div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;      <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;Error creating iboolleft_xi.txt, please check your Par_file LOCAL_PATH setting&#39;</span>)</div>
 <div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;<span class="keywordflow">    endif</span></div>
 <div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;<span class="keywordflow">  endif</span></div>
 <div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;</div>
@@ -268,13 +268,13 @@ $(document).ready(function(){initNavTree('dd/d44/get___m_p_i__cutplanes__xi_8f90
 <div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;  <span class="comment">! compare number of surface elements detected to analytical value</span></div>
 <div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;  <span class="keywordflow">if</span> (ispecc1 /= nspec2dtheor) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    <span class="keyword">write</span>(errmsg,*) <span class="stringliteral">&#39;Error MPI cut-planes detection in xi=left T=&#39;</span>,nspec2dtheor,<span class="stringliteral">&#39; C=&#39;</span>,ispecc1</div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;    <span class="keyword">call </span>exit_mpi(myrank,errmsg)</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;    <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,errmsg)</div>
 <div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;<span class="keywordflow">  endif</span></div>
 <div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;</div>
 <div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;  <span class="comment">! subtract the line that contains the flag after the last point</span></div>
 <div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;  npoin2d_xi_all(1) = npoin2d_xi_all(1) - 1</div>
 <div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;  <span class="keywordflow">if</span> (npoin2d_xi_all(1) &gt; nglob2dmax_xmin_xmax .or. npoin2d_xi_all(1) /= npoin2d_xi) &amp;</div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;    <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;incorrect iboolleft_xi read&#39;</span>)</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;    <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;incorrect iboolleft_xi read&#39;</span>)</div>
 <div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;</div>
 <div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;</div>
 <div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;<span class="comment">!</span></div>
@@ -285,7 +285,7 @@ $(document).ready(function(){initNavTree('dd/d44/get___m_p_i__cutplanes__xi_8f90
 <div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;  <span class="keywordflow">if</span> (debug) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;    <span class="comment">! global point number and coordinates right MPI cut-plane</span></div>
 <div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;    <span class="keyword">open</span>(unit=iout,file=prname(1:len_trim(prname))//<span class="stringliteral">&#39;iboolright_xi.txt&#39;</span>,status=<span class="stringliteral">&#39;unknown&#39;</span>,iostat=ier)</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;    <span class="keywordflow">if</span> (ier /= 0 ) <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;Error creating iboolright_xi.txt for this process&#39;</span>)</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;    <span class="keywordflow">if</span> (ier /= 0 ) <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;Error creating iboolright_xi.txt for this process&#39;</span>)</div>
 <div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;<span class="keywordflow">  endif</span></div>
 <div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;</div>
 <div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;  <span class="comment">! erase the logical mask used to mark points already found</span></div>
@@ -337,18 +337,19 @@ $(document).ready(function(){initNavTree('dd/d44/get___m_p_i__cutplanes__xi_8f90
 <div class="line"><a name="l00224"></a><span class="lineno">  224</span>&#160;  <span class="comment">! compare number of surface elements detected to analytical value</span></div>
 <div class="line"><a name="l00225"></a><span class="lineno">  225</span>&#160;  <span class="keywordflow">if</span> (ispecc2 /= nspec2dtheor) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00226"></a><span class="lineno">  226</span>&#160;    <span class="keyword">write</span>(errmsg,*) <span class="stringliteral">&#39;Error MPI cut-planes detection in xi=right T=&#39;</span>,nspec2dtheor,<span class="stringliteral">&#39; C=&#39;</span>,ispecc2</div>
-<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;    <span class="keyword">call </span>exit_mpi(myrank,errmsg)</div>
+<div class="line"><a name="l00227"></a><span class="lineno">  227</span>&#160;    <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,errmsg)</div>
 <div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;<span class="keywordflow">  endif</span></div>
 <div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;</div>
 <div class="line"><a name="l00230"></a><span class="lineno">  230</span>&#160;  <span class="comment">! subtract the line that contains the flag after the last point</span></div>
 <div class="line"><a name="l00231"></a><span class="lineno">  231</span>&#160;  npoin2d_xi_all(2) = npoin2d_xi_all(2) - 1</div>
 <div class="line"><a name="l00232"></a><span class="lineno">  232</span>&#160;  <span class="keywordflow">if</span> (npoin2d_xi_all(2) &gt; nglob2dmax_xmin_xmax .or. npoin2d_xi_all(2) /= npoin2d_xi) &amp;</div>
-<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;      <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;incorrect iboolright_xi read&#39;</span>)</div>
+<div class="line"><a name="l00233"></a><span class="lineno">  233</span>&#160;      <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;incorrect iboolright_xi read&#39;</span>)</div>
 <div class="line"><a name="l00234"></a><span class="lineno">  234</span>&#160;</div>
-<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90.html#a698f25d30155693ecced4bd47086fccd">get_mpi_cutplanes_xi</a></div>
+<div class="line"><a name="l00235"></a><span class="lineno">  235</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90.html#a6f50154798b935fe7c3566001c7aa960">get_mpi_cutplanes_xi</a></div>
 <div class="line"><a name="l00236"></a><span class="lineno">  236</span>&#160;</div>
-<div class="ttc" id="get___m_p_i__cutplanes__xi_8f90_html_a698f25d30155693ecced4bd47086fccd"><div class="ttname"><a href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90.html#a698f25d30155693ecced4bd47086fccd">get_mpi_cutplanes_xi</a></div><div class="ttdeci">subroutine get_mpi_cutplanes_xi(myrank, prname, nspec, iMPIcut_xi, ibool,                                                                                                                                   xstore, ystore, zstore, mask_ibool, npointot,                                                                                                                                   NSPEC2D_ETA_FACE, iregion, npoin2D_xi,                                                                                                                                   iboolleft_xi, iboolright_xi,                                                                                                                                   npoin2D_xi_all, NGLOB2DMAX_XMIN_XMAX)</div><div class="ttdef"><b>Definition:</b> <a href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90_source.html#l00033">get_MPI_cutplanes_xi.f90:33</a></div></div>
 <div class="ttc" id="namespaceconstants_html"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html">constants</a></div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00028">shared_par.f90:28</a></div></div>
+<div class="ttc" id="get___m_p_i__cutplanes__xi_8f90_html_a6f50154798b935fe7c3566001c7aa960"><div class="ttname"><a href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90.html#a6f50154798b935fe7c3566001c7aa960">get_mpi_cutplanes_xi</a></div><div class="ttdeci">subroutine get_mpi_cutplanes_xi(prname, nspec, iMPIcut_xi, ibool,                                                                                                                                   xstore, ystore, zstore, mask_ibool, npointot,                                                                                                                                   NSPEC2D_ETA_FACE, iregion, npoin2D_xi,                                                                                                                                   iboolleft_xi, iboolright_xi,                                                                                                                                   npoin2D_xi_all, NGLOB2DMAX_XMIN_XMAX)</div><div class="ttdef"><b>Definition:</b> <a href="../../dd/d44/get___m_p_i__cutplanes__xi_8f90_source.html#l00033">get_MPI_cutplanes_xi.f90:33</a></div></div>
+<div class="ttc" id="namespaceconstants_html_a2cf2f5b4da613a2ca04aa91059a965d5"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">constants::myrank</a></div><div class="ttdeci">integer myrank</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00033">shared_par.f90:33</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- custom-made footer -->

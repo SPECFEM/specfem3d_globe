@@ -27,7 +27,7 @@
 
 ! create AVS or DX 2D data for the surface of the model
 ! to be recombined in postprocessing
-  subroutine write_AVS_DX_surface_data(myrank,prname,nspec,iboun, &
+  subroutine write_AVS_DX_surface_data(prname,nspec,iboun, &
      ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
      rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
      ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
@@ -38,7 +38,7 @@
 
   implicit none
 
-  integer nspec,myrank
+  integer nspec
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)
@@ -230,7 +230,7 @@
 
 
                        ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
-                       call meshfem3D_models_get1D_val(myrank,iregion_code,idoubling(ispec), &
+                       call meshfem3D_models_get1D_val(iregion_code,idoubling(ispec), &
                             r,rho,vpv,vph,vsv,vsh,eta_aniso, &
                             Qkappa,Qmu,RICB,RCMB, &
                             RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &

@@ -56,6 +56,10 @@
 
   if (.not. GPU_MODE) then
     ! on CPU
+!$OMP PARALLEL if (NSOURCES > 100) &
+!$OMP DEFAULT(SHARED) &
+!$OMP PRIVATE(isource,timeval,iglob,f0,stf_used,stf,ispec,i,j,k)
+!$OMP DO
     do isource = 1,NSOURCES
 
       ! add only if this proc carries the source
@@ -69,9 +73,9 @@
 
           ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
           iglob = ibool_crust_mantle(nint(xi_source(isource)), &
-                         nint(eta_source(isource)), &
-                         nint(gamma_source(isource)), &
-                         ispec_selected_source(isource))
+                                     nint(eta_source(isource)), &
+                                     nint(gamma_source(isource)), &
+                                     ispec_selected_source(isource))
 
           !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
@@ -111,6 +115,8 @@
       endif
 
     enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   else
     ! on GPU

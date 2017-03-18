@@ -57,7 +57,7 @@ subroutine compute_kernel_integral_iso()
   double precision, dimension(NGLLY) :: yigll, wygll
   double precision, dimension(NGLLZ) :: zigll, wzgll
   ! array with all the weights in the cube
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
   integer :: iglob
   integer :: i,j,k,ispec,ier
@@ -259,7 +259,7 @@ subroutine compute_kernel_integral_tiso()
   double precision, dimension(NGLLY) :: yigll, wygll
   double precision, dimension(NGLLZ) :: zigll, wzgll
   ! array with all the weights in the cube
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
   integer :: iglob
   integer :: i,j,k,ispec,ier
@@ -278,7 +278,7 @@ subroutine compute_kernel_integral_tiso()
   if (ier /= 0) stop 'Error allocating jacobian array'
 
   ! GLL points
-  wgll_cube = 0.0d0
+  wgll_cube = 0.0
   call zwgljd(xigll,wxgll,NGLLX,GAUSSALPHA,GAUSSBETA)
   call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)

@@ -27,7 +27,7 @@
 
 ! compute several rheological and geometrical properties for a given spectral element
   subroutine compute_element_properties(ispec,iregion_code,idoubling,ipass, &
-                                        xstore,ystore,zstore,nspec,myrank, &
+                                        xstore,ystore,zstore,nspec, &
                                         xelm,yelm,zelm,shape3D, &
                                         rmin,rmax, &
                                         rhostore,dvpstore, &
@@ -82,9 +82,6 @@
   integer :: nspec_actually
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
-
-! proc numbers for MPI
-  integer :: myrank
 
 ! Stacey, indices for Clayton-Engquist absorbing conditions
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
@@ -195,7 +192,7 @@
   ! computes velocity/density/... values for the chosen Earth model
   ! (only needed for second meshing phase)
   if (ipass == 2) then
-    call get_model(myrank,iregion_code,ispec,nspec,idoubling(ispec), &
+    call get_model(iregion_code,ispec,nspec,idoubling(ispec), &
                    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                    rhostore,dvpstore,nspec_ani, &
                    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
@@ -222,10 +219,10 @@
       ! stretches mesh between surface and R220 accordingly
       if (USE_GLL) then
         ! stretches every GLL point accordingly
-        call add_topography_gll(myrank,xstore,ystore,zstore,ispec,nspec,ibathy_topo)
+        call add_topography_gll(xstore,ystore,zstore,ispec,nspec,ibathy_topo)
       else
         ! stretches anchor points only, interpolates GLL points later on
-        call add_topography(myrank,xelm,yelm,zelm,ibathy_topo)
+        call add_topography(xelm,yelm,zelm,ibathy_topo)
       endif
     endif
   endif
@@ -240,10 +237,10 @@
           idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
         if (USE_GLL) then
           ! stretches every GLL point accordingly
-          call add_topography_410_650_gll(myrank,xstore,ystore,zstore,ispec,nspec)
+          call add_topography_410_650_gll(xstore,ystore,zstore,ispec,nspec)
         else
           ! stretches anchor points only, interpolates GLL points later on
-          call add_topography_410_650(myrank,xelm,yelm,zelm)
+          call add_topography_410_650(xelm,yelm,zelm)
         endif
       endif
     endif
@@ -255,14 +252,14 @@
       ! stretching between 220 and 770
       if (idoubling(ispec) == IFLAG_670_220 .or. &
           idoubling(ispec) == IFLAG_MANTLE_NORMAL) then
-        call add_topography_sh_mantle(myrank,xelm,yelm,zelm)
+        call add_topography_sh_mantle(xelm,yelm,zelm)
       endif
 
       ! CMB topography
       ! stretching lower mantle/outer core
       if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. &
           idoubling(ispec) == IFLAG_OUTER_CORE_NORMAL) then
-        call add_topography_sh_cmb(myrank,xelm,yelm,zelm)
+        call add_topography_sh_cmb(xelm,yelm,zelm)
       endif
     endif
 
@@ -272,14 +269,14 @@
     ! CMB topography
     !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_MANTLE_NORMAL &
     ! .or. idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL)) &
-    !           call add_topography_cmb(myrank,xelm,yelm,zelm)
+    !           call add_topography_cmb(xelm,yelm,zelm)
 
     ! ICB topography
     !  if (THREE_D_MODEL == THREE_D_MODEL_S362ANI .and. (idoubling(ispec)==IFLAG_OUTER_CORE_NORMAL &
     ! .or. idoubling(ispec)==IFLAG_INNER_CORE_NORMAL .or. idoubling(ispec)==IFLAG_MIDDLE_CENTRAL_CUBE &
     ! .or. idoubling(ispec)==IFLAG_BOTTOM_CENTRAL_CUBE .or. idoubling(ispec)==IFLAG_TOP_CENTRAL_CUBE &
     ! .or. idoubling(ispec)==IFLAG_IN_FICTITIOUS_CUBE)) &
-    !           call add_topography_icb(myrank,xelm,yelm,zelm)
+    !           call add_topography_icb(xelm,yelm,zelm)
   endif
 
 
@@ -308,7 +305,7 @@
   ! updates Jacobian
   ! (only needed for second meshing phase)
   if (ipass == 2) then
-    call recalc_jacobian_gll3D(myrank,xstore,ystore,zstore,xigll,yigll,zigll, &
+    call recalc_jacobian_gll3D(xstore,ystore,zstore,xigll,yigll,zigll, &
                                 ispec,nspec, &
                                 xixstore,xiystore,xizstore, &
                                 etaxstore,etaystore,etazstore, &

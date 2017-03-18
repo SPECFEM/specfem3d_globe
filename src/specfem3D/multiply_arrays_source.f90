@@ -40,9 +40,11 @@
 !-------------------------------------------------------------------------------------------------
 
 
-  subroutine multiply_accel_elastic(NGLOB,veloc,accel, &
-                                    two_omega_earth, &
-                                    rmassx,rmassy,rmassz)
+  subroutine multiply_accel_elastic(two_omega_earth, &
+                                    NGLOB_CM,veloc_cm,accel_cm, &
+                                    rmassx_cm,rmassy_cm,rmassz_cm, &
+                                    NGLOB_IC,veloc_ic,accel_ic, &
+                                    rmassx_ic,rmassy_ic,rmassz_ic)
 
 ! multiplies acceleration with inverse of mass matrices in crust/mantle,solid inner core region
 
@@ -50,15 +52,23 @@
 
   implicit none
 
-  integer :: NGLOB
+  real(kind=CUSTOM_REAL),intent(in) :: two_omega_earth
 
+  ! crust/mantle
+  integer,intent(in) :: NGLOB_CM
   ! velocity & acceleration
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB) :: veloc,accel
-
-  real(kind=CUSTOM_REAL) :: two_omega_earth
-
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM),intent(in) :: veloc_cm
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CM),intent(inout) :: accel_cm
   ! mass matrices
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: rmassx,rmassy,rmassz
+  real(kind=CUSTOM_REAL), dimension(NGLOB_CM),intent(in) :: rmassx_cm,rmassy_cm,rmassz_cm
+
+  ! inner core
+  integer,intent(in) :: NGLOB_IC
+  ! velocity & acceleration
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC),intent(in) :: veloc_ic
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_IC),intent(inout) :: accel_ic
+  ! mass matrices
+  real(kind=CUSTOM_REAL), dimension(NGLOB_IC),intent(in) :: rmassx_ic,rmassy_ic,rmassz_ic
 
   ! local parameters
   integer :: i
@@ -81,28 +91,57 @@
   if (ROTATION_VAL) then
     ! adds contributions due to rotation
 !$OMP PARALLEL DEFAULT(NONE) &
-!$OMP SHARED(NGLOB, accel, rmassx, rmassy, rmassz, two_omega_earth, veloc) &
+!$OMP SHARED(two_omega_earth, &
+!$OMP NGLOB_CM, accel_cm, veloc_cm, rmassx_cm, rmassy_cm, rmassz_cm, &
+!$OMP NGLOB_IC, accel_ic, veloc_ic, rmassx_ic, rmassy_ic, rmassz_ic) &
 !$OMP PRIVATE(i)
-!$OMP DO SCHEDULE(GUIDED)
-    do i = 1,NGLOB
-      accel(1,i) = accel(1,i)*rmassx(i) + two_omega_earth*veloc(2,i)
-      accel(2,i) = accel(2,i)*rmassy(i) - two_omega_earth*veloc(1,i)
-      accel(3,i) = accel(3,i)*rmassz(i)
+
+    ! crust/mantle
+!$OMP DO
+    do i = 1,NGLOB_CM
+      accel_cm(1,i) = accel_cm(1,i)*rmassx_cm(i) + two_omega_earth * veloc_cm(2,i)
+      accel_cm(2,i) = accel_cm(2,i)*rmassy_cm(i) - two_omega_earth * veloc_cm(1,i)
+      accel_cm(3,i) = accel_cm(3,i)*rmassz_cm(i)
+    enddo
+!$OMP enddo NOWAIT
+
+    ! inner core
+!$OMP DO
+    do i = 1,NGLOB_IC
+      accel_ic(1,i) = accel_ic(1,i)*rmassx_ic(i) + two_omega_earth * veloc_ic(2,i)
+      accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i) - two_omega_earth * veloc_ic(1,i)
+      accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
     enddo
 !$OMP enddo
 !$OMP END PARALLEL
+
   else
+    ! no rotation
 !$OMP PARALLEL DEFAULT(NONE) &
-!$OMP SHARED(NGLOB, accel, rmassx, rmassy, rmassz) &
+!$OMP SHARED(two_omega_earth, &
+!$OMP NGLOB_CM, accel_cm, veloc_cm, rmassx_cm, rmassy_cm, rmassz_cm, &
+!$OMP NGLOB_IC, accel_ic, veloc_ic, rmassx_ic, rmassy_ic, rmassz_ic) &
 !$OMP PRIVATE(i)
-!$OMP DO SCHEDULE(GUIDED)
-    do i = 1,NGLOB
-      accel(1,i) = accel(1,i)*rmassx(i)
-      accel(2,i) = accel(2,i)*rmassy(i)
-      accel(3,i) = accel(3,i)*rmassz(i)
+
+    ! crust/mantle
+!$OMP DO
+    do i = 1,NGLOB_CM
+      accel_cm(1,i) = accel_cm(1,i)*rmassx_cm(i)
+      accel_cm(2,i) = accel_cm(2,i)*rmassy_cm(i)
+      accel_cm(3,i) = accel_cm(3,i)*rmassz_cm(i)
+    enddo
+!$OMP enddo NOWAIT
+
+    ! inner core
+!$OMP DO
+    do i = 1,NGLOB_IC
+      accel_ic(1,i) = accel_ic(1,i)*rmassx_ic(i)
+      accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i)
+      accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
     enddo
 !$OMP enddo
 !$OMP END PARALLEL
+
   endif
 
   end subroutine multiply_accel_elastic
@@ -139,9 +178,15 @@
   ! note: mass matrices for fluid region has no Stacey or rotation correction
   !       it is also the same for forward and backward/reconstructed wavefields
 
+!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP SHARED(NGLOB, accel, rmass) &
+!$OMP PRIVATE(i)
+!$OMP DO
   do i = 1,NGLOB
     accel(i) = accel(i)*rmass(i)
   enddo
+!$OMP enddo
+!$OMP END PARALLEL
 
   end subroutine multiply_accel_acoustic
 

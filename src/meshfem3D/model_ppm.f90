@@ -92,7 +92,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_ppm_broadcast(myrank)
+  subroutine model_ppm_broadcast()
 
 ! standard routine to setup model
 
@@ -100,8 +100,6 @@
   use model_ppm_par
 
   implicit none
-
-  integer :: myrank
 
   ! upper mantle structure
   if (myrank == 0) call read_model_ppm()
@@ -498,7 +496,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine smooth_model(myrank, nproc_xi,nproc_eta, &
+  subroutine smooth_model(nproc_xi,nproc_eta, &
                           rho_vp,rho_vs,nspec_stacey, &
                           iregion_code,xixstore,xiystore,xizstore, &
                           etaxstore,etaystore,etazstore, &
@@ -516,7 +514,7 @@
 
   implicit none
 
-  integer :: myrank, nproc_xi, nproc_eta
+  integer :: nproc_xi, nproc_eta
 
   integer NEX_XI
 
@@ -585,7 +583,7 @@
   double precision, dimension(NGLLZ) :: zigll, wzgll
 
   ! array with all the weights in the cube
-  double precision, dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ) :: wgll_cube
 
   real(kind=CUSTOM_REAL), parameter :: ZERO_ = 0.0_CUSTOM_REAL
 

@@ -126,27 +126,21 @@ Include dependency graph for get_absorb_adios.F90:</div>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions/Subroutines</h2></td></tr>
-<tr class="memitem:a73941965a08b7d418d57ec64dc8f923f"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d91/get__absorb__adios_8_f90.html#a73941965a08b7d418d57ec64dc8f923f">get_absorb_adios</a> (myrank, iregion,                                                                                                                   nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta,                                                                                                                   NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX)</td></tr>
-<tr class="separator:a73941965a08b7d418d57ec64dc8f923f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af6586546baf5f5eb93eee9962643d1a3"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../da/d91/get__absorb__adios_8_f90.html#af6586546baf5f5eb93eee9962643d1a3">get_absorb_adios</a> (iregion,                                                                                                                   nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta,                                                                                                                   NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX)</td></tr>
+<tr class="separator:af6586546baf5f5eb93eee9962643d1a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
 <div class="textblock"><dl class="section author"><dt>Author</dt><dd>MPBL </dd></dl>
 
 <p>Definition in file <a class="el" href="../../da/d91/get__absorb__adios_8_f90_source.html">get_absorb_adios.F90</a>.</p>
 </div><h2 class="groupheader">Function/Subroutine Documentation</h2>
-<a class="anchor" id="a73941965a08b7d418d57ec64dc8f923f"></a>
+<a class="anchor" id="af6586546baf5f5eb93eee9962643d1a3"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">subroutine get_absorb_adios </td>
           <td>(</td>
-          <td class="paramtype">integer&#160;</td>
-          <td class="paramname"><em>myrank</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">integer&#160;</td>
           <td class="paramname"><em>iregion</em>, </td>
         </tr>
@@ -209,7 +203,6 @@ Functions/Subroutines</h2></td></tr>
 <p>Write Stacey boundary conditions to a single file using ADIOS. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">myrank</td><td>The MPI rank of the current process </td></tr>
     <tr><td class="paramname">iregion</td><td>The region the absorbing condition is written for. Check constant.h files to see what these regions are. </td></tr>
     <tr><td class="paramname">nimin</td><td>An array to be written </td></tr>
     <tr><td class="paramname">nimax</td><td>An array to be written </td></tr>
@@ -222,15 +215,15 @@ Functions/Subroutines</h2></td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>This routine only call adios to write the file to disk, Note that he necessary data preparation is done by the <a class="el" href="../../d2/d6c/get__absorb_8f90.html#a0e77629b455479f34813e1e801273fe2">get_absorb()</a> routine. </dd></dl>
+<dl class="section note"><dt>Note</dt><dd>This routine only call adios to write the file to disk, Note that he necessary data preparation is done by the <a class="el" href="../../d2/d6c/get__absorb_8f90.html#aab6eed908b7c1f0bb1ee411913f34a17">get_absorb()</a> routine. </dd></dl>
 
-<p>Definition at line <a class="el" href="../../da/d91/get__absorb__adios_8_f90_source.html#l00058">58</a> of file <a class="el" href="../../da/d91/get__absorb__adios_8_f90_source.html">get_absorb_adios.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../da/d91/get__absorb__adios_8_f90_source.html#l00057">57</a> of file <a class="el" href="../../da/d91/get__absorb__adios_8_f90_source.html">get_absorb_adios.F90</a>.</p>
 
 <p><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../da/d91/get__absorb__adios_8_f90_a73941965a08b7d418d57ec64dc8f923f_cgraph.png" border="0" usemap="#da/d91/get__absorb__adios_8_f90_a73941965a08b7d418d57ec64dc8f923f_cgraph" alt=""/></div>
-<map name="da/d91/get__absorb__adios_8_f90_a73941965a08b7d418d57ec64dc8f923f_cgraph" id="da/d91/get__absorb__adios_8_f90_a73941965a08b7d418d57ec64dc8f923f_cgraph">
+<div class="center"><img src="../../da/d91/get__absorb__adios_8_f90_af6586546baf5f5eb93eee9962643d1a3_cgraph.png" border="0" usemap="#da/d91/get__absorb__adios_8_f90_af6586546baf5f5eb93eee9962643d1a3_cgraph" alt=""/></div>
+<map name="da/d91/get__absorb__adios_8_f90_af6586546baf5f5eb93eee9962643d1a3_cgraph" id="da/d91/get__absorb__adios_8_f90_af6586546baf5f5eb93eee9962643d1a3_cgraph">
 <area shape="rect" id="node2" href="../../d9/dff/namespacemanager__adios.html#a73b0afa46e5475dd6f3afd90c490d17a" title="manager_adios::close\l_file_adios" alt="" coords="181,5,333,47"/>
 </map>
 </div>
@@ -239,9 +232,9 @@ Here is the call graph for this function:</div>
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../da/d91/get__absorb__adios_8_f90_a73941965a08b7d418d57ec64dc8f923f_icgraph.png" border="0" usemap="#da/d91/get__absorb__adios_8_f90_a73941965a08b7d418d57ec64dc8f923f_icgraph" alt=""/></div>
-<map name="da/d91/get__absorb__adios_8_f90_a73941965a08b7d418d57ec64dc8f923f_icgraph" id="da/d91/get__absorb__adios_8_f90_a73941965a08b7d418d57ec64dc8f923f_icgraph">
-<area shape="rect" id="node2" href="../../d2/d6c/get__absorb_8f90.html#a0e77629b455479f34813e1e801273fe2" title="get_absorb" alt="" coords="181,5,271,32"/>
+<div class="center"><img src="../../da/d91/get__absorb__adios_8_f90_af6586546baf5f5eb93eee9962643d1a3_icgraph.png" border="0" usemap="#da/d91/get__absorb__adios_8_f90_af6586546baf5f5eb93eee9962643d1a3_icgraph" alt=""/></div>
+<map name="da/d91/get__absorb__adios_8_f90_af6586546baf5f5eb93eee9962643d1a3_icgraph" id="da/d91/get__absorb__adios_8_f90_af6586546baf5f5eb93eee9962643d1a3_icgraph">
+<area shape="rect" id="node2" href="../../d2/d6c/get__absorb_8f90.html#aab6eed908b7c1f0bb1ee411913f34a17" title="get_absorb" alt="" coords="181,5,271,32"/>
 </map>
 </div>
 </p>

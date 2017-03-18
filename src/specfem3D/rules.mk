@@ -84,11 +84,18 @@ specfem3D_OBJECTS += \
 	$O/locate_sources.solverstatic.o \
 	$O/multiply_arrays_source.solverstatic.o \
 	$O/noise_tomography.solverstatic.o \
+	$O/prepare_attenuation.solverstatic.o \
+	$O/prepare_elastic_elements.solverstatic.o \
 	$O/prepare_gpu.solverstatic.o \
-	$O/prepare_openmp.solverstatic.o \
+	$O/prepare_gravity.solverstatic.o \
+	$O/prepare_movie.solverstatic.o \
+	$O/prepare_noise.solverstatic.o \
+	$O/prepare_oceans.solverstatic.o \
 	$O/prepare_optimized_arrays.solverstatic.o \
+	$O/prepare_stacey.solverstatic.o \
 	$O/prepare_timerun.solverstatic.o \
 	$O/prepare_vtk_window.solverstatic.o \
+	$O/prepare_wavefields.solverstatic.o \
 	$O/read_adjoint_sources.solverstatic.o \
 	$O/read_arrays_solver.solverstatic.o \
 	$O/read_forward_arrays.solverstatic.o \
@@ -140,6 +147,7 @@ specfem3D_SHARED_OBJECTS = \
 	$O/get_timestep_and_layers.shared.o \
 	$O/gll_library.shared.o \
 	$O/hex_nodes.shared.o \
+	$O/init_openmp.shared.o \
 	$O/intgrl.shared.o \
 	$O/lagrange_poly.shared.o \
 	$O/make_ellipticity.shared.o \

@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_absorb(myrank,prname,iregion,iboun,nspec, &
+  subroutine get_absorb(prname,iregion,iboun,nspec, &
                         nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
@@ -36,7 +36,7 @@
 
   implicit none
 
-  integer :: nspec,myrank,iregion
+  integer :: nspec,iregion
 
   integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
 
@@ -138,7 +138,7 @@
   ! This files will be saved with the help of ADIOS if the
   ! ADIOS_FOR_ARRAYS_SOLVER flag is set to true in the Par_file
   if (ADIOS_FOR_ARRAYS_SOLVER) then
-    call get_absorb_adios(myrank, iregion, &
+    call get_absorb_adios(iregion, &
                           nimin, nimax, njmin, njmax, nkmin_xi, nkmin_eta, &
                           NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX)
   else

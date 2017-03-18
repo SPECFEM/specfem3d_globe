@@ -25,7 +25,8 @@
 !
 !=====================================================================
 
-subroutine parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
+
+  subroutine parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
 
   use postprocess_par, only: MAX_STRING_LEN, MAX_KERNEL_NAMES
 
@@ -67,7 +68,7 @@ subroutine parse_kernel_names(kernel_names_comma_delimited,kernel_names,nker)
     endif
   enddo
 
-end subroutine parse_kernel_names
+  end subroutine parse_kernel_names
 
 
 !
@@ -76,7 +77,7 @@ end subroutine parse_kernel_names
 
 ! The following utility function was modified from http://fortranwiki.org/fortran/show/strtok
 !
-subroutine strtok (source_string, delimiter, token)
+  subroutine strtok (source_string, delimiter, token)
 
 !     @(#) Tokenize a string in a similar manner to C routine strtok(3c).
 !
@@ -157,5 +158,5 @@ subroutine strtok (source_string, delimiter, token)
   token = saved_string(ibegin:ifinish-1)
   isaved_start = ifinish
 
-end subroutine strtok
+  end subroutine strtok
 

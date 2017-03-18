@@ -105,7 +105,7 @@ program combine_vol_data
 #endif
 
 #ifdef ADIOS_INPUT
-  integer :: sizeprocs,myrank
+  integer :: sizeprocs
   character(len=MAX_STRING_LEN) :: var_name, value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
 #else

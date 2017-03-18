@@ -54,7 +54,7 @@ contains
 !! \param adios_group ADIOS group where the variables belong
 !! \param group_size_inc The size of the ADIOS group to increment
 !! \param avs_dx_adios The structure holding the data to be allocated
-subroutine define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
+subroutine define_AVS_DX_global_data_adios(adios_group, nspec, ibool, &
                                            npointot, mask_ibool, group_size_inc, avs_dx_adios)
 
   use constants
@@ -65,7 +65,7 @@ subroutine define_AVS_DX_global_data_adios(adios_group, myrank, nspec, ibool, &
 
   !--- Arguments -------------------------------------------
   integer(kind=8), intent(in) :: adios_group
-  integer(kind=4), intent(in) :: nspec, npointot, myrank
+  integer(kind=4), intent(in) :: nspec, npointot
   integer(kind=4), intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
   logical, intent(inout) :: mask_ibool(npointot)
   integer(kind=8), intent(inout) :: group_size_inc
@@ -168,12 +168,10 @@ end subroutine define_AVS_DX_global_data_adios
 !===============================================================================
 !> Prepare the global AVS/DX data to be written; fill the structure.
 !! \param adios_handle The handle to the ADIOS file to be written.
-!! \param myrank The MPI rank of the current process.
 !! \param avs_dx_adios The structure to be filled.
 !!
 !! Create AVS or DX 3D data for the slice, to be recombined in postprocessing.
-  subroutine prepare_AVS_DX_global_data_adios(myrank, &
-                                              nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
+  subroutine prepare_AVS_DX_global_data_adios(nspec, ibool, idoubling, xstore, ystore, zstore, num_ibool_AVS_DX, &
                                               mask_ibool, npointot, avs_dx_adios)
 
   use constants
@@ -181,7 +179,7 @@ end subroutine define_AVS_DX_global_data_adios
 
   implicit none
 
-  integer nspec,myrank
+  integer nspec
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)

@@ -1,5 +1,0 @@
-<map id="prepare_timerun_attenuation" name="prepare_timerun_attenuation">
-<area shape="rect" id="node2" href="$d8/d7b/get__attenuation_8f90.html#a7da9980bfd11370786863cf2fc9cc8ff" title="get_attenuation_model_3d" alt="" coords="253,5,433,32"/>
-<area shape="rect" id="node3" href="$d8/d7b/get__attenuation_8f90.html#abd848eeacd939cd749a7346de3717c4e" title="bcast_attenuation_model_3d" alt="" coords="247,56,440,83"/>
-<area shape="rect" id="node4" href="$d8/d7b/get__attenuation_8f90.html#ac3c30b819473bc98eacf7127f77f0fb6" title="get_attenuation_memory\l_values" alt="" coords="259,107,428,149"/>
-</map>

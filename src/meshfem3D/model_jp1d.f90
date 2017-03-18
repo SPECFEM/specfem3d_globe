@@ -32,7 +32,7 @@
 !--------------------------------------------------------------------------------------------------
 
 
-  subroutine model_jp1d(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling, &
+  subroutine model_jp1d(x,rho,vp,vs,Qkappa,Qmu,idoubling, &
                         check_doubling_flag,RICB,RCMB,RTOPDDOUBLEPRIME, &
                         R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
 
@@ -44,7 +44,7 @@
   ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
   logical check_doubling_flag
-  integer idoubling,myrank
+  integer idoubling
 
   double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
       R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST

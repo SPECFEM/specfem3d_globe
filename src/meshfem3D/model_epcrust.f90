@@ -59,14 +59,14 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_epcrust_broadcast(myrank)
+  subroutine model_epcrust_broadcast()
 
   use constants
   use model_epcrust_par
 
   implicit none
 
-  integer :: myrank,ier
+  integer :: ier
 
   ! allocates arrays for model
   allocate(lon_ep(EPCRUST_NLON,EPCRUST_NLAT), &

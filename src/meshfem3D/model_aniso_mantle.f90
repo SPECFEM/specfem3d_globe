@@ -53,15 +53,14 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_aniso_mantle_broadcast(myrank)
+  subroutine model_aniso_mantle_broadcast()
 
 ! standard routine to setup model
 
+  use constants, only: myrank
   use model_aniso_mantle_par
 
   implicit none
-
-  integer :: myrank
 
   ! local parameters
   integer :: ier

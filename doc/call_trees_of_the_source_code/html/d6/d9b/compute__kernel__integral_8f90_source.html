@@ -170,7 +170,7 @@ $(document).ready(function(){initNavTree('d6/d9b/compute__kernel__integral_8f90_
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;  <span class="keywordtype">double precision</span>, <span class="keywordtype">dimension(NGLLY)</span> :: yigll, wygll</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;  <span class="keywordtype">double precision</span>, <span class="keywordtype">dimension(NGLLZ)</span> :: zigll, wzgll</div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;  <span class="comment">! array with all the weights in the cube</span></div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;  <span class="keywordtype">double precision</span>, <span class="keywordtype">dimension(NGLLX,NGLLY,NGLLZ)</span> :: wgll_cube</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;  <span class="keywordtype">real(kind=CUSTOM_REAL)</span>, <span class="keywordtype">dimension(NGLLX,NGLLY,NGLLZ)</span> :: wgll_cube</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;  <span class="keywordtype">integer</span> :: iglob</div>
 <div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;  <span class="keywordtype">integer</span> :: i,j,k,ispec,ier</div>
@@ -372,7 +372,7 @@ $(document).ready(function(){initNavTree('d6/d9b/compute__kernel__integral_8f90_
 <div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;  <span class="keywordtype">double precision</span>, <span class="keywordtype">dimension(NGLLY)</span> :: yigll, wygll</div>
 <div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;  <span class="keywordtype">double precision</span>, <span class="keywordtype">dimension(NGLLZ)</span> :: zigll, wzgll</div>
 <div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;  <span class="comment">! array with all the weights in the cube</span></div>
-<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;  <span class="keywordtype">double precision</span>, <span class="keywordtype">dimension(NGLLX,NGLLY,NGLLZ)</span> :: wgll_cube</div>
+<div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;  <span class="keywordtype">real(kind=CUSTOM_REAL)</span>, <span class="keywordtype">dimension(NGLLX,NGLLY,NGLLZ)</span> :: wgll_cube</div>
 <div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;</div>
 <div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;  <span class="keywordtype">integer</span> :: iglob</div>
 <div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;  <span class="keywordtype">integer</span> :: i,j,k,ispec,ier</div>
@@ -391,7 +391,7 @@ $(document).ready(function(){initNavTree('d6/d9b/compute__kernel__integral_8f90_
 <div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;  <span class="keywordflow">if</span> (ier /= 0) stop <span class="stringliteral">&#39;Error allocating jacobian array&#39;</span></div>
 <div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;</div>
 <div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;  <span class="comment">! GLL points</span></div>
-<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;  wgll_cube = 0.0d0</div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;  wgll_cube = 0.0</div>
 <div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;  <span class="keyword">call </span><a class="code" href="../../d9/d8b/gll__library_8f90.html#a68aedab4dc03cb19ac8e993e358555c5">zwgljd</a>(xigll,wxgll,ngllx,gaussalpha,gaussbeta)</div>
 <div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;  <span class="keyword">call </span><a class="code" href="../../d9/d8b/gll__library_8f90.html#a68aedab4dc03cb19ac8e993e358555c5">zwgljd</a>(yigll,wygll,nglly,gaussalpha,gaussbeta)</div>
 <div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;  <span class="keyword">call </span><a class="code" href="../../d9/d8b/gll__library_8f90.html#a68aedab4dc03cb19ac8e993e358555c5">zwgljd</a>(zigll,wzgll,ngllz,gaussalpha,gaussbeta)</div>

@@ -33,7 +33,7 @@
 ! used for iterative inversion procedures
 !--------------------------------------------------------------------------------------------------
 
-subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
+subroutine read_gll_model_adios(MGLL_V,NSPEC)
 
   use constants
 
@@ -49,7 +49,6 @@ subroutine read_gll_model_adios(myrank,MGLL_V,NSPEC)
   type (model_gll_variables) MGLL_V
 
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
-  integer :: myrank
 
   ! local parameters
   integer :: local_dim

@@ -37,8 +37,7 @@
 
   use constants
 
-  use meshfem3D_par, only: myrank, &
-    g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz
+  use meshfem3D_par, only: g_x,g_y,g_z,G_xx,G_yy,G_zz,G_xy,G_xz,G_yz
 
   implicit none
 
@@ -101,7 +100,7 @@
 
   use constants
 
-  use meshfem3D_par, only: myrank,x_observation,y_observation,z_observation, &
+  use meshfem3D_par, only: x_observation,y_observation,z_observation, &
                            lon_observation,lat_observation,ELLIPTICITY,TOPOGRAPHY,OUTPUT_FILES
 
   use meshfem3D_models_par, only: nspl,rspl,espl,espl2,ibathy_topo
@@ -301,7 +300,7 @@
 
   ! compute gravity integrals of that part of the slice, and then total integrals for the whole Earth
 
-  subroutine gravity_compute_integrals(myrank,iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
+  subroutine gravity_compute_integrals(iregion_code,nspec,wxgll,wygll,wzgll,xstore,ystore,zstore, &
                                        xixstore,xiystore,xizstore, &
                                        etaxstore,etaystore,etazstore, &
                                        gammaxstore,gammaystore,gammazstore, &
@@ -314,7 +313,7 @@
 
   implicit none
 
-  integer :: myrank,iregion_code,nspec
+  integer :: iregion_code,nspec
   double precision :: wxgll(NGLLX),wygll(NGLLY),wzgll(NGLLZ)
 
   integer,dimension(nspec) :: idoubling

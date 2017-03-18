@@ -43,7 +43,7 @@ module AVS_DX_surface_mod
 contains
 
 subroutine define_AVS_DX_surfaces_data_adios(adios_group, &
-                                             myrank,nspec,iboun, &
+                                             nspec,iboun, &
                                              ibool,mask_ibool,npointot, &
                                              ISOTROPIC_3D_MANTLE, &
                                              group_size_inc, avs_dx_adios)
@@ -56,7 +56,7 @@ subroutine define_AVS_DX_surfaces_data_adios(adios_group, &
 
   integer(kind=8), intent(in) :: adios_group
 
-  integer :: nspec,myrank
+  integer :: nspec
 
   logical :: iboun(6,nspec)
   integer :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
@@ -166,7 +166,7 @@ end subroutine define_AVS_DX_surfaces_data_adios
 
 !===============================================================================
 
-  subroutine prepare_AVS_DX_surfaces_data_adios(myrank,nspec,iboun, &
+  subroutine prepare_AVS_DX_surfaces_data_adios(nspec,iboun, &
                                                 ibool,idoubling,xstore,ystore,zstore,num_ibool_AVS_DX,mask_ibool,npointot, &
                                                 rhostore,kappavstore,muvstore,nspl,rspl,espl,espl2, &
                                                 ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
@@ -178,7 +178,7 @@ end subroutine define_AVS_DX_surfaces_data_adios
 
   implicit none
 
-  integer nspec,myrank
+  integer nspec
   integer ibool(NGLLX,NGLLY,NGLLZ,nspec)
 
   integer idoubling(nspec)
@@ -356,7 +356,7 @@ end subroutine define_AVS_DX_surfaces_data_adios
                 endif
 
                 ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
-                call meshfem3D_models_get1D_val(myrank,iregion_code, &
+                call meshfem3D_models_get1D_val(iregion_code, &
                                                 idoubling(ispec), &
                                                 r,rho,vpv,vph,vsv,vsh,eta_aniso, &
                                                 Qkappa,Qmu,RICB,RCMB, &

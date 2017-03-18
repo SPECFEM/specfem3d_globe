@@ -27,7 +27,7 @@
 
 ! read arrays created by the mesher
 
-  subroutine read_arrays_solver(iregion_code,myrank, &
+  subroutine read_arrays_solver(iregion_code, &
                                 nspec,nglob,nglob_xy, &
                                 nspec_iso,nspec_tiso,nspec_ani, &
                                 rho_vp,rho_vs,xstore,ystore,zstore, &
@@ -49,7 +49,7 @@
 
   implicit none
 
-  integer :: iregion_code,myrank
+  integer :: iregion_code
   integer :: nspec,nglob,nglob_xy
   integer :: nspec_iso,nspec_tiso,nspec_ani
 

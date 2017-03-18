@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_MPI_1D_buffers(myrank,prname,nspec,iMPIcut_xi,iMPIcut_eta, &
+  subroutine get_MPI_1D_buffers(prname,nspec,iMPIcut_xi,iMPIcut_eta, &
                                 ibool,idoubling,xstore,ystore,zstore,mask_ibool,npointot, &
                                 NSPEC1D_RADIAL_CORNER,NGLOB1D_RADIAL_CORNER,iregion, &
                                 ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
@@ -40,7 +40,7 @@
 
   implicit none
 
-  integer :: nspec,myrank
+  integer :: nspec
 
   logical,dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
 

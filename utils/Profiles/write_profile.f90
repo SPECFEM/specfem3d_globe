@@ -128,9 +128,8 @@
 
   ! distributes 3D models
   print *,'Reading 3D models'
-  call meshfem3D_models_broadcast(myrank,NSPEC, &
-       MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-       R80,R220,R670,RCMB,RICB)
+  call meshfem3D_models_broadcast(NSPEC,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
+                                  R80,R220,R670,RCMB,RICB)
   print *,'Done reading 3D models'
 
 !!    call meshfem3D_output_info(myrank,sizeprocs,NEX_XI,NEX_ETA, &
@@ -294,10 +293,10 @@
         ! checks r_prem,rmin/rmax and assigned idoubling
         call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
                             RICB,RCMB,RTOPDDOUBLEPRIME, &
-                            R220,R670,myrank)
+                            R220,R670)
 
         ! gets reference model values: rho,vpv,vph,vsv,vsh and eta_aniso
-        call meshfem3D_models_get1D_val(myrank,iregion_code,idoubling, &
+        call meshfem3D_models_get1D_val(iregion_code,idoubling, &
                               r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
                               Qkappa,Qmu,RICB,RCMB, &
                               RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
@@ -323,8 +322,7 @@
 
 !!! VH  commented out following two lines from get_model
 !        ! overwrites with tomographic model values (from iteration step) here, given at all GLL points
-!        call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso, &
-!                                        myrank,iregion_code,ispec,i,j,k)
+!        call meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,iregion_code,ispec,i,j,k)
 
         ! checks vpv: if close to zero then there is probably an error
         if (vpv < TINYVAL) then

@@ -25,14 +25,12 @@
 !
 !=====================================================================
 
-  subroutine broadcast_computed_parameters(myrank)
+  subroutine broadcast_computed_parameters()
 
-  use constants
+  use constants, only: myrank
   use shared_parameters
 
   implicit none
-
-  integer,intent(in) :: myrank
 
   ! local parameters
   ! broadcast parameter arrays

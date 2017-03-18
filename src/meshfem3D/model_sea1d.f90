@@ -48,14 +48,14 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_sea1d_broadcast(myrank,CRUSTAL)
+  subroutine model_sea1d_broadcast(CRUSTAL)
 
 ! standard routine to setup model
+  use constants, only: myrank
   use model_sea1d_par
 
   implicit none
 
-  integer :: myrank
   logical :: CRUSTAL
 
   ! local parameters

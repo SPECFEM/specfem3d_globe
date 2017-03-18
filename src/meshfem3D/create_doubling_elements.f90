@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_doubling_elements(myrank,ilayer,ichunk,ispec,ipass, &
+  subroutine create_doubling_elements(ilayer,ichunk,ispec,ipass, &
                     ifirst_region,ilast_region,iregion_code, &
                     nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS, &
                     NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
@@ -58,7 +58,7 @@
 
   implicit none
 
-  integer :: myrank,ilayer,ichunk,ispec,ipass,ifirst_region,ilast_region
+  integer :: ilayer,ichunk,ispec,ipass,ifirst_region,ilast_region
   ! code for the four regions of the mesh
   integer iregion_code
   ! correct number of spectral elements in each block depending on chunk type
@@ -156,6 +156,8 @@
   logical, dimension(NSPEC_DOUBLING_SUPERBRICK,6) :: iboun_sb
   logical :: is_superbrick
 
+  integer, dimension(:), allocatable :: map_ispec
+  integer :: nelements,ispec0,ielem,ier
 
 ! If there is a doubling at the top of this region, let us add these elements.
 ! The superbrick implements a symmetric four-to-two doubling and therefore replaces
@@ -184,7 +186,40 @@
     iz_elem = ner(ilayer) - 1
   endif
 
+  ! stores original value
+  ispec0 = ispec
+
+  ! counts number of elements for this layer
+  nelements = NEX_PER_PROC_XI/(step_mult*ratio_sampling_array(ilayer)) &
+            * NEX_PER_PROC_ETA/(step_mult*ratio_sampling_array(ilayer)) &
+            * nspec_sb
+
+  ! fill mapping to be able to parallelize loops below
+  allocate(map_ispec(nelements),stat=ier)
+  if (ier /= 0) stop 'Error allocating map_ispec'
+
+  do ix_elem = 1,NEX_PER_PROC_XI,step_mult*ratio_sampling_array(ilayer)
+    do iy_elem = 1,NEX_PER_PROC_ETA,step_mult*ratio_sampling_array(ilayer)
+      do ispec_superbrick = 1,nspec_sb
+        ! counts in increasing order 1,2,3,..
+        ielem = ispec_superbrick + nspec_sb * ( (iy_elem-1)/(step_mult*ratio_sampling_array(ilayer)) &
+                                            +   (ix_elem-1)/(step_mult*ratio_sampling_array(ilayer)) &
+                                                * NEX_PER_PROC_ETA/(step_mult*ratio_sampling_array(ilayer)))
+        map_ispec(ielem) = ispec0 + ielem
+        ! check
+        if (map_ispec(ielem) > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
+      enddo
+    enddo
+  enddo
+
   ! loop on all the elements in the 2 x 2 blocks
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ix_elem,iy_elem,ispec_superbrick,ignod, &
+!$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &
+!$OMP case_xi,case_eta,subblock_num, &
+!$OMP r1,r2,r3,r4,r5,r6,r7,r8, &
+!$OMP is_superbrick,ispec,ielem)
+!$OMP DO
   do ix_elem = 1,NEX_PER_PROC_XI,step_mult*ratio_sampling_array(ilayer)
     do iy_elem = 1,NEX_PER_PROC_ETA,step_mult*ratio_sampling_array(ilayer)
 
@@ -251,6 +286,7 @@
         call define_basic_doubling_brick(x_superbrick,y_superbrick, &
                         z_superbrick,ibool_superbrick,iboun_sb,subblock_num)
       endif
+
       ! loop on all the elements in the mesh doubling superbrick
       do ispec_superbrick = 1,nspec_sb
         ! loop on all the corner nodes of this element
@@ -274,7 +310,13 @@
            NCHUNKS,INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
 
         ! add one spectral element to the list
-        ispec = ispec + 1
+        !ispec = ispec + 1
+
+        ! counts in increasing order 1,2,3,..
+        ielem = ispec_superbrick + nspec_sb * ( (iy_elem-1)/(step_mult*ratio_sampling_array(ilayer)) &
+                                            +   (ix_elem-1)/(step_mult*ratio_sampling_array(ilayer)) &
+                                                * NEX_PER_PROC_ETA/(step_mult*ratio_sampling_array(ilayer)))
+        ispec = map_ispec(ielem)
         if (ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
 
         ! new get_flag_boundaries
@@ -309,19 +351,19 @@
 
         ! save the radii of the nodes before modified through compute_element_properties()
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-          r1=sqrt(xelm(1)**2+yelm(1)**2+zelm(1)**2)
-          r2=sqrt(xelm(2)**2+yelm(2)**2+zelm(2)**2)
-          r3=sqrt(xelm(3)**2+yelm(3)**2+zelm(3)**2)
-          r4=sqrt(xelm(4)**2+yelm(4)**2+zelm(4)**2)
-          r5=sqrt(xelm(5)**2+yelm(5)**2+zelm(5)**2)
-          r6=sqrt(xelm(6)**2+yelm(6)**2+zelm(6)**2)
-          r7=sqrt(xelm(7)**2+yelm(7)**2+zelm(7)**2)
-          r8=sqrt(xelm(8)**2+yelm(8)**2+zelm(8)**2)
+          r1 = sqrt(xelm(1)*xelm(1) + yelm(1)*yelm(1) + zelm(1)*zelm(1))
+          r2 = sqrt(xelm(2)*xelm(2) + yelm(2)*yelm(2) + zelm(2)*zelm(2))
+          r3 = sqrt(xelm(3)*xelm(3) + yelm(3)*yelm(3) + zelm(3)*zelm(3))
+          r4 = sqrt(xelm(4)*xelm(4) + yelm(4)*yelm(4) + zelm(4)*zelm(4))
+          r5 = sqrt(xelm(5)*xelm(5) + yelm(5)*yelm(5) + zelm(5)*zelm(5))
+          r6 = sqrt(xelm(6)*xelm(6) + yelm(6)*yelm(6) + zelm(6)*zelm(6))
+          r7 = sqrt(xelm(7)*xelm(7) + yelm(7)*yelm(7) + zelm(7)*zelm(7))
+          r8 = sqrt(xelm(8)*xelm(8) + yelm(8)*yelm(8) + zelm(8)*zelm(8))
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
         call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
-                         xstore,ystore,zstore,nspec,myrank, &
+                         xstore,ystore,zstore,nspec, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
                          xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -335,8 +377,8 @@
 
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
-          is_superbrick=.true.
-          call get_jacobian_discontinuities(myrank,ispec,ix_elem,iy_elem,rmin,rmax, &
+          is_superbrick = .true.
+          call get_jacobian_discontinuities(ispec,ix_elem,iy_elem,rmin,rmax, &
               r1,r2,r3,r4,r5,r6,r7,r8, &
               xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
               ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
@@ -351,5 +393,13 @@
       enddo
     enddo
   enddo
+!$OMP enddo
+!$OMP END PARALLEL
+
+  ! end index
+  ispec = ispec0 + nelements
+
+  ! free array
+  deallocate(map_ispec)
 
   end subroutine create_doubling_elements

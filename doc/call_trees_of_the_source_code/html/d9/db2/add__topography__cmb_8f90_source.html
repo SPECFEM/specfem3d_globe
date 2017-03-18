@@ -138,8 +138,8 @@ $(document).ready(function(){initNavTree('d9/db2/add__topography__cmb_8f90_sourc
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="comment">!</span></div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="comment">!=====================================================================</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d9/db2/add__topography__cmb_8f90.html#aaa56b33fa8fdb17554d85af6c4575806">add_topography_cmb</a>(myrank,xelm,yelm,zelm)</div>
-<div class="line"><a name="l00029"></a><span class="lineno"><a class="line" href="../../d9/db2/add__topography__cmb_8f90.html#aaa56b33fa8fdb17554d85af6c4575806">   29</a></span>&#160;</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d9/db2/add__topography__cmb_8f90.html#a9069171bdc26002423275e2dd0af7a15">add_topography_cmb</a>(xelm,yelm,zelm)</div>
+<div class="line"><a name="l00029"></a><span class="lineno"><a class="line" href="../../d9/db2/add__topography__cmb_8f90.html#a9069171bdc26002423275e2dd0af7a15">   29</a></span>&#160;</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="comment">! this is only a placeholder function, which is not used yet...user must supply the subtopo_cmb() routine</span></div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;  <span class="keywordtype">use </span><a class="code" href="../../d7/d28/namespaceconstants.html">constants</a></div>
@@ -147,65 +147,64 @@ $(document).ready(function(){initNavTree('d9/db2/add__topography__cmb_8f90_sourc
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;  <span class="keywordtype">implicit none</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;  <span class="keywordtype">integer</span>,<span class="keywordtype">intent(in)</span> :: myrank</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
-<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;  <span class="keywordtype">double precision</span>,<span class="keywordtype">intent(inout)</span> :: xelm(ngnod)</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;  <span class="keywordtype">double precision</span>,<span class="keywordtype">intent(inout)</span> :: yelm(ngnod)</div>
-<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;  <span class="keywordtype">double precision</span>,<span class="keywordtype">intent(inout)</span> :: zelm(ngnod)</div>
-<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;  <span class="comment">! local parameters</span></div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;  <span class="keywordtype">integer</span> :: ia</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;  <span class="keywordtype">double precision</span>,<span class="keywordtype">intent(inout)</span> :: xelm(ngnod)</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;  <span class="keywordtype">double precision</span>,<span class="keywordtype">intent(inout)</span> :: yelm(ngnod)</div>
+<div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;  <span class="keywordtype">double precision</span>,<span class="keywordtype">intent(inout)</span> :: zelm(ngnod)</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;</div>
+<div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;  <span class="comment">! local parameters</span></div>
+<div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;  <span class="keywordtype">integer</span> :: ia</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;  <span class="keywordtype">double precision</span> :: r_start,topocmb</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;  <span class="keywordtype">double precision</span> :: r_start,topocmb</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;  <span class="keywordtype">double precision</span> :: r,lat,lon</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;  <span class="keywordtype">double precision</span> :: x,y,z</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;  <span class="keywordtype">double precision</span> :: gamma</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;</div>
-<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;<span class="comment">! we loop on all the points of the element</span></div>
-<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;  <span class="keywordflow">do</span> ia = 1,ngnod</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    x = xelm(ia)</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    y = yelm(ia)</div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    z = zelm(ia)</div>
-<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    <span class="comment">! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)</span></div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    <span class="keyword">call </span><a class="code" href="../../d9/df1/rthetaphi__xyz_8f90.html#ab38048ac848cabe5ca2bb2fd39b3aa7d">xyz_2_rlatlon_dble</a>(x,y,z,r,lat,lon)</div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;</div>
-<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    <span class="comment">! compute topography on CMB; routine subtopo_cmb needs to be supplied by the user</span></div>
-<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    <span class="comment">! (see for example routine subtopo_sh_cmb() in model_full_sh.f90)</span></div>
-<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    <span class="comment">!   call subtopo_cmb(lat,lon,topocmb)</span></div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    <span class="comment">! until then, no topography pertubations...</span></div>
-<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    topocmb = 0.0d0</div>
-<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;</div>
-<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    <span class="comment">! non-dimensionalize the topography, which is in km</span></div>
-<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;    <span class="comment">! positive for a depression, so change the sign for a perturbation in radius</span></div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    topocmb = -topocmb / r_earth_km</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;</div>
-<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    <span class="comment">! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB</span></div>
-<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    <span class="comment">! and finish at RTOPDDOUBLEPRIME (D&#39;&#39;)</span></div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    r_start = (rcmb - (rtopddoubleprime - rcmb))/r_earth</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;    gamma = 0.0d0</div>
-<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    <span class="keywordflow">if</span> (r &gt;= rcmb/r_earth .and. r &lt;= rtopddoubleprime/r_earth) <span class="keywordflow">then</span></div>
-<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;      <span class="comment">! stretching between RCMB and RTOPDDOUBLEPRIME</span></div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;      gamma = (rtopddoubleprime/r_earth - r) / (rtopddoubleprime/r_earth - rcmb/r_earth)</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (r &gt;= r_start .and. r &lt;= rcmb/r_earth) <span class="keywordflow">then</span></div>
-<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;      <span class="comment">! stretching between r_start and RCMB</span></div>
-<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;      gamma = (r - r_start) / (rcmb/r_earth - r_start)</div>
-<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;<span class="keywordflow">    endif</span></div>
-<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    <span class="keywordflow">if</span> (gamma &lt; -0.0001 .or. gamma &gt; 1.0001) <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;incorrect value of gamma for CMB topography&#39;</span>)</div>
-<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    xelm(ia) = x*(one + gamma * topocmb / r)</div>
-<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    yelm(ia) = y*(one + gamma * topocmb / r)</div>
-<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    zelm(ia) = z*(one + gamma * topocmb / r)</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;  <span class="keywordtype">double precision</span> :: r,lat,lon</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;  <span class="keywordtype">double precision</span> :: x,y,z</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;  <span class="keywordtype">double precision</span> :: gamma</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;<span class="comment">! we loop on all the points of the element</span></div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;  <span class="keywordflow">do</span> ia = 1,ngnod</div>
+<div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
+<div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;    x = xelm(ia)</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    y = yelm(ia)</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    z = zelm(ia)</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    <span class="comment">! converts geocentric coordinates x/y/z to geographic radius/latitude/longitude (in degrees)</span></div>
+<div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <span class="keyword">call </span><a class="code" href="../../d9/df1/rthetaphi__xyz_8f90.html#ab38048ac848cabe5ca2bb2fd39b3aa7d">xyz_2_rlatlon_dble</a>(x,y,z,r,lat,lon)</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;    <span class="comment">! compute topography on CMB; routine subtopo_cmb needs to be supplied by the user</span></div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;    <span class="comment">! (see for example routine subtopo_sh_cmb() in model_full_sh.f90)</span></div>
+<div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;    <span class="comment">!   call subtopo_cmb(lat,lon,topocmb)</span></div>
+<div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;    <span class="comment">! until then, no topography pertubations...</span></div>
+<div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;    topocmb = 0.0d0</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;</div>
+<div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160;    <span class="comment">! non-dimensionalize the topography, which is in km</span></div>
+<div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;    <span class="comment">! positive for a depression, so change the sign for a perturbation in radius</span></div>
+<div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;    topocmb = -topocmb / r_earth_km</div>
+<div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;    <span class="comment">! start stretching a distance RTOPDDOUBLEPRIME - RCMB below the CMB</span></div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    <span class="comment">! and finish at RTOPDDOUBLEPRIME of D_double_prime</span></div>
+<div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;    r_start = (rcmb - (rtopddoubleprime - rcmb))/r_earth</div>
+<div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;    gamma = 0.0d0</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <span class="keywordflow">if</span> (r &gt;= rcmb/r_earth .and. r &lt;= rtopddoubleprime/r_earth) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;      <span class="comment">! stretching between RCMB and RTOPDDOUBLEPRIME</span></div>
+<div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;      gamma = (rtopddoubleprime/r_earth - r) / (rtopddoubleprime/r_earth - rcmb/r_earth)</div>
+<div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (r &gt;= r_start .and. r &lt;= rcmb/r_earth) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;      <span class="comment">! stretching between r_start and RCMB</span></div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;      gamma = (r - r_start) / (rcmb/r_earth - r_start)</div>
+<div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;<span class="keywordflow">    endif</span></div>
+<div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;    <span class="keywordflow">if</span> (gamma &lt; -0.0001 .or. gamma &gt; 1.0001) <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;incorrect value of gamma for CMB topography&#39;</span>)</div>
+<div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;</div>
+<div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;    xelm(ia) = x*(one + gamma * topocmb / r)</div>
+<div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;    yelm(ia) = y*(one + gamma * topocmb / r)</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;    zelm(ia) = z*(one + gamma * topocmb / r)</div>
+<div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;</div>
+<div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;<span class="keywordflow">  enddo</span></div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;</div>
-<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="keywordflow">  enddo</span></div>
+<div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d9/db2/add__topography__cmb_8f90.html#a9069171bdc26002423275e2dd0af7a15">add_topography_cmb</a></div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
-<div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d9/db2/add__topography__cmb_8f90.html#aaa56b33fa8fdb17554d85af6c4575806">add_topography_cmb</a></div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;</div>
 <div class="ttc" id="namespaceconstants_html"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html">constants</a></div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00028">shared_par.f90:28</a></div></div>
 <div class="ttc" id="rthetaphi__xyz_8f90_html_ab38048ac848cabe5ca2bb2fd39b3aa7d"><div class="ttname"><a href="../../d9/df1/rthetaphi__xyz_8f90.html#ab38048ac848cabe5ca2bb2fd39b3aa7d">xyz_2_rlatlon_dble</a></div><div class="ttdeci">subroutine xyz_2_rlatlon_dble(x, y, z, r, lat, lon)</div><div class="ttdef"><b>Definition:</b> <a href="../../d9/df1/rthetaphi__xyz_8f90_source.html#l00114">rthetaphi_xyz.f90:114</a></div></div>
-<div class="ttc" id="add__topography__cmb_8f90_html_aaa56b33fa8fdb17554d85af6c4575806"><div class="ttname"><a href="../../d9/db2/add__topography__cmb_8f90.html#aaa56b33fa8fdb17554d85af6c4575806">add_topography_cmb</a></div><div class="ttdeci">subroutine add_topography_cmb(myrank, xelm, yelm, zelm)</div><div class="ttdef"><b>Definition:</b> <a href="../../d9/db2/add__topography__cmb_8f90_source.html#l00029">add_topography_cmb.f90:29</a></div></div>
+<div class="ttc" id="namespaceconstants_html_a2cf2f5b4da613a2ca04aa91059a965d5"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">constants::myrank</a></div><div class="ttdeci">integer myrank</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00033">shared_par.f90:33</a></div></div>
+<div class="ttc" id="add__topography__cmb_8f90_html_a9069171bdc26002423275e2dd0af7a15"><div class="ttname"><a href="../../d9/db2/add__topography__cmb_8f90.html#a9069171bdc26002423275e2dd0af7a15">add_topography_cmb</a></div><div class="ttdeci">subroutine add_topography_cmb(xelm, yelm, zelm)</div><div class="ttdef"><b>Definition:</b> <a href="../../d9/db2/add__topography__cmb_8f90_source.html#l00029">add_topography_cmb.f90:29</a></div></div>
 <div class="ttc" id="namespacemeshfem3d__par_html"><div class="ttname"><a href="../../d6/d6a/namespacemeshfem3d__par.html">meshfem3d_par</a></div><div class="ttdef"><b>Definition:</b> <a href="../../df/d9f/meshfem3_d__par_8f90_source.html#l00137">meshfem3D_par.f90:137</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

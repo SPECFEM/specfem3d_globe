@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine meshfem3D_models_broadcast(myrank,NSPEC, &
+  subroutine meshfem3D_models_broadcast(NSPEC, &
                                         MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
                                         R80,R220,R670,RCMB,RICB, &
                                         LOCAL_PATH)
@@ -36,7 +36,6 @@
 
   implicit none
 
-  integer :: myrank
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC
 
   integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
@@ -65,7 +64,7 @@
   if (ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   ! read topography and bathymetry file
-  if (TOPOGRAPHY) call model_topo_bathy_broadcast(myrank,ibathy_topo,LOCAL_PATH)
+  if (TOPOGRAPHY) call model_topo_bathy_broadcast(ibathy_topo,LOCAL_PATH)
 
   ! reads 1D reference models
   ! re-defines/initializes models 1066a and ak135 and ref
@@ -73,16 +72,16 @@
   !    it strips the 1-D crustal profile and replaces it with mantle properties)
   select case (REFERENCE_1D_MODEL)
     case (REFERENCE_MODEL_1066A)
-      call model_1066a_broadcast(myrank,CRUSTAL)
+      call model_1066a_broadcast(CRUSTAL)
 
     case (REFERENCE_MODEL_AK135F_NO_MUD)
-      call model_ak135_broadcast(myrank,CRUSTAL)
+      call model_ak135_broadcast(CRUSTAL)
 
     case (REFERENCE_MODEL_1DREF)
       call model_1dref_broadcast(CRUSTAL)
 
     case (REFERENCE_MODEL_SEA1D)
-      call model_sea1d_broadcast(myrank,CRUSTAL)
+      call model_sea1d_broadcast(CRUSTAL)
   end select
 
 
@@ -92,43 +91,43 @@
     select case (THREE_D_MODEL)
 
       case (THREE_D_MODEL_S20RTS)
-        call model_s20rts_broadcast(myrank)
+        call model_s20rts_broadcast()
 
       case (THREE_D_MODEL_S40RTS)
-        call model_s40rts_broadcast(myrank)
+        call model_s40rts_broadcast()
 
       case(THREE_D_MODEL_MANTLE_SH)
-        call model_mantle_sh_broadcast(myrank)
+        call model_mantle_sh_broadcast()
 
       case (THREE_D_MODEL_SEA99_JP3D)
         ! the variables read are declared and stored in structure model_sea99_s_par and model_jp3d_par
-        call model_sea99_s_broadcast(myrank)
-        call model_jp3d_broadcast(myrank)
+        call model_sea99_s_broadcast()
+        call model_jp3d_broadcast()
 
       case (THREE_D_MODEL_SEA99)
         ! the variables read are declared and stored in structure model_sea99_s_par
-        call model_sea99_s_broadcast(myrank)
+        call model_sea99_s_broadcast()
 
       case (THREE_D_MODEL_JP3D)
         ! the variables read are declared and stored in structure model_jp3d_par
-        call model_jp3d_broadcast(myrank)
+        call model_jp3d_broadcast()
 
       case (THREE_D_MODEL_S362ANI,THREE_D_MODEL_S362WMANI, &
             THREE_D_MODEL_S362ANI_PREM,THREE_D_MODEL_S29EA)
         ! the variables read are declared and stored in structure model_s362ani_par
-        call model_s362ani_broadcast(myrank,THREE_D_MODEL)
+        call model_s362ani_broadcast(THREE_D_MODEL)
 
       case (THREE_D_MODEL_PPM)
         ! Point Profile Models
         ! the variables read are declared and stored in structure model_ppm_par
-        call model_ppm_broadcast(myrank)
+        call model_ppm_broadcast()
 
         ! could use EUcrust07 Vp crustal structure
-        !call model_eucrust_broadcast(myrank)
+        !call model_eucrust_broadcast()
 
       case (THREE_D_MODEL_GAPP2)
         ! GAP model
-        call model_gapp2_broadcast(myrank)
+        call model_gapp2_broadcast()
 
       case default
         call exit_MPI(myrank,'3D model not defined')
@@ -139,39 +138,39 @@
 
   ! arbitrary mantle models
   if (HETEROGEN_3D_MANTLE) &
-    call model_heterogen_mntl_broadcast(myrank)
+    call model_heterogen_mntl_broadcast()
 
   ! anisotropic mantle
   if (ANISOTROPIC_3D_MANTLE) &
-    call model_aniso_mantle_broadcast(myrank)
+    call model_aniso_mantle_broadcast()
 
   ! Enclose this in an ifdef so we don't link to netcdf
   ! if we don't need it.
 #ifdef CEM
   if (CEM_REQUEST .or. CEM_ACCEPT) &
-    call model_cem_broadcast(myrank)
+    call model_cem_broadcast()
 #endif
 
   ! crustal model
   if (CRUSTAL) &
-    call meshfem3D_crust_broadcast(myrank)
+    call meshfem3D_crust_broadcast()
 
   ! GLL model
   if (MGLL_V%MODEL_GLL ) &
-    call model_gll_broadcast(myrank,MGLL_V,NSPEC)
+    call model_gll_broadcast(MGLL_V,NSPEC)
 
   ! attenuation
   if (ATTENUATION) then
-    call model_attenuation_broadcast(myrank,AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+    call model_attenuation_broadcast(AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 
     ! 3D attenuation
     if (ATTENUATION_3D) then
       ! Colleen's model defined originally between 24.4km and 650km
-      call model_atten3D_QRFSI12_broadcast(myrank)
+      call model_atten3D_QRFSI12_broadcast()
     else
       ! sets up attenuation coefficients according to the chosen, "pure" 1D model
       ! (including their 1D-crustal profiles)
-      call model_attenuation_setup(myrank,REFERENCE_1D_MODEL,RICB,RCMB, &
+      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB, &
                                    R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
     endif
 
@@ -185,15 +184,13 @@
 !
 
 
-  subroutine meshfem3D_crust_broadcast(myrank)
+  subroutine meshfem3D_crust_broadcast()
 
 ! preparing model parameter coefficients on all processes
 
   use meshfem3D_models_par
 
   implicit none
-
-  integer myrank
 
 !---
 !
@@ -205,24 +202,24 @@
 
     case (ICRUST_CRUST1)
       ! crust 1.0
-      call model_crust_1_0_broadcast(myrank)
+      call model_crust_1_0_broadcast()
 
     case (ICRUST_CRUST2)
       ! default
       ! crust 2.0
-      call model_crust_2_0_broadcast(myrank)
+      call model_crust_2_0_broadcast()
 
     case (ICRUST_CRUSTMAPS)
       ! general crustmaps
-      call model_crustmaps_broadcast(myrank)
+      call model_crustmaps_broadcast()
 
     case (ICRUST_EPCRUST)
       ! EPcrust
-      call model_epcrust_broadcast(myrank)
+      call model_epcrust_broadcast()
 
     case (ICRUST_CRUST_SH)
       ! SH crustmaps
-      call model_crust_sh_broadcast(myrank)
+      call model_crust_sh_broadcast()
 
     case default
       stop 'crustal model type not defined'
@@ -236,7 +233,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine meshfem3D_models_get1D_val(myrank,iregion_code,idoubling, &
+  subroutine meshfem3D_models_get1D_val(iregion_code,idoubling, &
                               r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
                               Qkappa,Qmu,RICB,RCMB, &
                               RTOPDDOUBLEPRIME,R80,R120,R220,R400,R600,R670,R771, &
@@ -256,7 +253,7 @@
 
   implicit none
 
-  integer myrank,iregion_code,idoubling
+  integer iregion_code,idoubling
   double precision r_prem,rho
   double precision vpv,vph,vsv,vsh,eta_aniso
   double precision Qkappa,Qmu
@@ -279,12 +276,12 @@
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
       if (TRANSVERSE_ISOTROPY) then
         ! get the anisotropic PREM parameters
-        call model_prem_aniso(myrank,r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+        call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
                   Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
                   R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
       else
         ! isotropic model
-        call model_prem_iso(myrank,r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
+        call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
                   ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                   R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
       endif
@@ -313,13 +310,13 @@
 
     case (REFERENCE_MODEL_IASP91)
       ! IASP91 (by Kennett & Engdahl) - pure isotropic model, used in 1D model mode only
-      call model_iasp91(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
+      call model_iasp91(r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
                     ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                     R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
     case (REFERENCE_MODEL_JP1D)
       !JP1D (by Zhao et al.) - pure isotropic model, used also as background for 3D models
-      call model_jp1d(myrank,r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
+      call model_jp1d(r_prem,rho,vp,vs,Qkappa,Qmu,idoubling, &
                       .true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                       R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST)
 
@@ -1010,8 +1007,7 @@
 !
 
 
-  subroutine meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso, &
-                                         myrank,iregion_code,ispec,i,j,k)
+  subroutine meshfem3D_models_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,iregion_code,ispec,i,j,k)
 
 ! overwrites values with updated model values (from iteration step) here, given at all GLL points
 
@@ -1020,7 +1016,7 @@
   implicit none
 
   double precision :: vpv,vph,vsv,vsh,rho,dvp,eta_aniso
-  integer :: myrank,iregion_code,ispec,i,j,k
+  integer :: iregion_code,ispec,i,j,k
 
   ! local parameters
   double precision :: vp,vs

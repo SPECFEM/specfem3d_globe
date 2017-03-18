@@ -178,13 +178,12 @@
   if (.not. SUPPRESS_CRUSTAL_MESH .and. HONOR_1D_SPHERICAL_MOHO) then
     call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
                                        nspec_crust_mantle,iregion_code, &
-                                       ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                       ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                        hprime_xx,hprime_yy,hprime_zz, &
                                        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                                       kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
                                        c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
                                        c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
                                        c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
@@ -195,13 +194,12 @@
 
     call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
                                        nspec_crust_mantle,iregion_code, &
-                                       ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                       ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                        xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                        etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                        gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                        hprime_xx,hprime_yy,hprime_zz, &
                                        rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                                       kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
                                        c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
                                        c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
                                        c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
@@ -210,19 +208,18 @@
                                        c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                                        k_bot,ibelm_moho_bot,normal_moho,moho_kl_bot,fluid_solid_boundary,NSPEC2D_MOHO)
 
-    moho_kl = moho_kl + (moho_kl_top - moho_kl_bot) * deltat
+    moho_kl(:,:,:) = moho_kl(:,:,:) + (moho_kl_top(:,:,:) - moho_kl_bot(:,:,:)) * deltat
   endif
 
   ! 400
   call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
                                      nspec_crust_mantle,iregion_code, &
-                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
                                      c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
                                      c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
                                      c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
@@ -233,13 +230,12 @@
 
   call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
                                      nspec_crust_mantle,iregion_code, &
-                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
                                      c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
                                      c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
                                      c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
@@ -248,18 +244,17 @@
                                      c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                                      k_bot,ibelm_400_bot,normal_400,d400_kl_bot,fluid_solid_boundary,NSPEC2D_400)
 
-  d400_kl = d400_kl + (d400_kl_top - d400_kl_bot) * deltat
+  d400_kl(:,:,:) = d400_kl(:,:,:) + (d400_kl_top(:,:,:) - d400_kl_bot(:,:,:)) * deltat
 
   ! 670
   call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
                                      nspec_crust_mantle,iregion_code, &
-                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
                                      c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
                                      c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
                                      c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
@@ -270,13 +265,12 @@
 
   call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
                                      nspec_crust_mantle,iregion_code, &
-                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle,muvstore_crust_mantle, &
-                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
                                      c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
                                      c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
                                      c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
@@ -285,7 +279,7 @@
                                      c55store_crust_mantle,c56store_crust_mantle,c66store_crust_mantle, &
                                      k_bot,ibelm_670_bot,normal_670,d670_kl_bot,fluid_solid_boundary,NSPEC2D_670)
 
-  d670_kl = d670_kl + (d670_kl_top - d670_kl_bot) * deltat
+  d670_kl(:,:,:) = d670_kl(:,:,:) + (d670_kl_top(:,:,:) - d670_kl_bot(:,:,:)) * deltat
 
   ! CMB
   fluid_solid_boundary = .true.
@@ -293,13 +287,12 @@
 
   call compute_boundary_kernel_depth(displ_crust_mantle,accel_crust_mantle,b_displ_crust_mantle, &
                                      nspec_crust_mantle,iregion_code, &
-                                     ystore_crust_mantle,zstore_crust_mantle,ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
+                                     ibool_crust_mantle,ispec_is_tiso_crust_mantle, &
                                      xix_crust_mantle,xiy_crust_mantle,xiz_crust_mantle, &
                                      etax_crust_mantle,etay_crust_mantle,etaz_crust_mantle, &
                                      gammax_crust_mantle,gammay_crust_mantle,gammaz_crust_mantle, &
                                      hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_crust_mantle,kappavstore_crust_mantle, muvstore_crust_mantle, &
-                                     kappahstore_crust_mantle,muhstore_crust_mantle,eta_anisostore_crust_mantle, &
                                      c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
                                      c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle, &
                                      c23store_crust_mantle,c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle, &
@@ -316,13 +309,13 @@
   dummy_ispec_is_tiso(:) = .false.
 
   call compute_boundary_kernel_depth(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
-                                     nspec_outer_core, &
-                                     iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
+                                     nspec_outer_core,iregion_code, &
+                                     ibool_outer_core,dummy_ispec_is_tiso, &
                                      xix_outer_core,xiy_outer_core,xiz_outer_core, &
                                      etax_outer_core,etay_outer_core,etaz_outer_core, &
-                                     gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
+                                     gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+                                     hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-                                     dummy_array,dummy_array,dummy_array, &
                                      dummy_array,dummy_array,dummy_array,dummy_array, &
                                      dummy_array,dummy_array,dummy_array, &
                                      dummy_array,dummy_array,dummy_array,dummy_array, &
@@ -332,18 +325,18 @@
                                      k_bot,ibelm_top_outer_core,normal_top_outer_core, &
                                      cmb_kl_bot,fluid_solid_boundary,NSPEC2D_CMB)
 
-  cmb_kl = cmb_kl + (cmb_kl_top - cmb_kl_bot) * deltat
+  cmb_kl(:,:,:) = cmb_kl(:,:,:) + (cmb_kl_top(:,:,:) - cmb_kl_bot(:,:,:)) * deltat
 
   ! ICB
   fluid_solid_boundary = .true.
   call compute_boundary_kernel_depth(vector_displ_outer_core,vector_accel_outer_core,b_vector_displ_outer_core, &
-                                     nspec_outer_core, &
-                                     iregion_code,ystore_outer_core,zstore_outer_core,ibool_outer_core,dummy_ispec_is_tiso, &
+                                     nspec_outer_core,iregion_code, &
+                                     ibool_outer_core,dummy_ispec_is_tiso, &
                                      xix_outer_core,xiy_outer_core,xiz_outer_core, &
                                      etax_outer_core,etay_outer_core,etaz_outer_core, &
-                                     gammax_outer_core,gammay_outer_core,gammaz_outer_core,hprime_xx,hprime_yy,hprime_zz, &
+                                     gammax_outer_core,gammay_outer_core,gammaz_outer_core, &
+                                     hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_outer_core,kappavstore_outer_core,dummy_array, &
-                                     dummy_array,dummy_array,dummy_array, &
                                      dummy_array,dummy_array,dummy_array,dummy_array, &
                                      dummy_array,dummy_array,dummy_array, &
                                      dummy_array,dummy_array,dummy_array,dummy_array, &
@@ -364,12 +357,12 @@
 
   call compute_boundary_kernel_depth(displ_inner_core,accel_inner_core,b_displ_inner_core, &
                                      nspec_inner_core,iregion_code, &
-                                     ystore_inner_core,zstore_inner_core,ibool_inner_core,dummy_ispec_is_tiso, &
+                                     ibool_inner_core,dummy_ispec_is_tiso, &
                                      xix_inner_core,xiy_inner_core,xiz_inner_core, &
                                      etax_inner_core,etay_inner_core,etaz_inner_core, &
-                                     gammax_inner_core,gammay_inner_core,gammaz_inner_core,hprime_xx,hprime_yy,hprime_zz, &
+                                     gammax_inner_core,gammay_inner_core,gammaz_inner_core, &
+                                     hprime_xx,hprime_yy,hprime_zz, &
                                      rhostore_inner_core,kappavstore_inner_core,muvstore_inner_core, &
-                                     dummy_array,dummy_array,dummy_array, &
                                      c11store_inner_core,c12store_inner_core,c13store_inner_core,dummy_array, &
                                      dummy_array,dummy_array,dummy_array, &
                                      dummy_array,dummy_array,dummy_array,dummy_array, &
@@ -380,7 +373,7 @@
                                      icb_kl_bot,fluid_solid_boundary,NSPEC2D_ICB)
   deallocate(dummy_ispec_is_tiso)
 
-  icb_kl = icb_kl + (icb_kl_top - icb_kl_bot) * deltat
+  icb_kl(:,:,:) = icb_kl(:,:,:) + (icb_kl_top(:,:,:) - icb_kl_bot(:,:,:)) * deltat
 
   end subroutine compute_boundary_kernels
 
@@ -390,10 +383,10 @@
 
   subroutine compute_boundary_kernel_depth(displ,accel,b_displ, &
                                            nspec,iregion_code, &
-                                           ystore,zstore,ibool,ispec_is_tiso, &
+                                           ibool,ispec_is_tiso, &
                                            xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz, &
                                            hprime_xx,hprime_yy,hprime_zz, &
-                                           rhostore,kappavstore,muvstore,kappahstore,muhstore,eta_anisostore, &
+                                           rhostore,kappavstore,muvstore, &
                                            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                                            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                                            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
@@ -404,17 +397,15 @@
   implicit none
 
   real(kind=CUSTOM_REAL), dimension(NDIM,*) :: displ,accel,b_displ
-  integer nspec, iregion_code
+  integer :: nspec, iregion_code
   integer, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
   logical, dimension(*) :: ispec_is_tiso
-  real(kind=CUSTOM_REAL), dimension(*) :: ystore,zstore
 
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLX) :: hprime_xx
   real(kind=CUSTOM_REAL), dimension(NGLLY,NGLLY) :: hprime_yy
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NGLLZ) :: hprime_zz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: rhostore, kappavstore,muvstore
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: kappahstore,muhstore,eta_anisostore
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: c11store,c12store,c13store,c14store,c15store,c16store, &
              c22store,c23store,c24store,c25store,c26store,c33store, c34store,c35store,c36store, &
              c44store,c45store,c46store,c55store,c56store,c66store
@@ -437,7 +428,7 @@
   ! ------
 
   ! initialization
-  b_kl = 0.
+  b_kl(:,:,:) = 0._CUSTOM_REAL
 
   do ispec2D = 1, NSPEC2D_DISC
 
@@ -488,11 +479,11 @@
 
           ! ------ adjoint stress -------
           call compute_stress_from_strain(dsdx(:,:,i,j,k),sigma(:,:,i,j,k),i,j,k,ispec,iregion_code, &
-                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                     kappavstore,muvstore, &
                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                     ystore,zstore,ibool,ispec_is_tiso)
+                     ispec_is_tiso)
 
           ! ----- forward strain -------
           temp1(:) = matmul(b_displl(:,:,j,k), hprime_xx(i,:))
@@ -513,11 +504,11 @@
 
           ! ----- forward stress ---------
           call compute_stress_from_strain(b_dsdx(:,:,i,j,k),b_sigma(:,:,i,j,k),i,j,k,ispec,iregion_code, &
-                     kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+                     kappavstore,muvstore, &
                      c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
                      c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
                      c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-                     ystore,zstore,ibool,ispec_is_tiso)
+                     ispec_is_tiso)
 
           ! ---- precompute K_d for F-S boundaries ----
           if (fluid_solid_boundary) then
@@ -595,11 +586,11 @@
 ! ==========================================================================================
 
   subroutine compute_stress_from_strain(dsdx,sigma,i,j,k,ispec,iregion_code, &
-           kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+           kappavstore,muvstore, &
            c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
            c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
            c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
-           ystore,zstore,ibool,ispec_is_tiso)
+           ispec_is_tiso)
 
   use constants_solver
 
@@ -607,32 +598,35 @@
 
   real(kind=CUSTOM_REAL) :: dsdx(NDIM,NDIM), sigma(NDIM,NDIM)
   integer i, j, k, ispec, iregion_code
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: kappavstore,muvstore, &
-        kappahstore,muhstore,eta_anisostore
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: kappavstore,muvstore
+
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: &
         c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
         c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
         c36store,c44store,c45store,c46store,c55store,c56store,c66store
-  real(kind=CUSTOM_REAL), dimension(*) :: ystore,zstore
-  integer, dimension(NGLLX,NGLLY,NGLLZ,*) :: ibool
+
   logical, dimension(*) :: ispec_is_tiso
+
+!  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,*) :: kappahstore,muhstore,eta_anisostore
+!  real(kind=CUSTOM_REAL), dimension(*) :: ystore,zstore
+!  integer, dimension(NGLLX,NGLLY,NGLLZ,*) :: ibool
 
 ! --- local variables ---
   real(kind=CUSTOM_REAL) :: duxdxl_plus_duydyl,duxdxl_plus_duzdzl,duydyl_plus_duzdzl
   real(kind=CUSTOM_REAL) :: duxdyl_plus_duydxl,duzdxl_plus_duxdzl,duzdyl_plus_duydzl
   real(kind=CUSTOM_REAL) :: duxdxl,duydyl,duzdzl,duxdxl_plus_duydyl_plus_duzdzl
-  real(kind=CUSTOM_REAL) c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
-  real(kind=CUSTOM_REAL) kappal,mul,kappavl,kappahl,muvl,muhl,lambdal,lambdalplus2mul
-  real(kind=CUSTOM_REAL) rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
-             cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
-             costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
-             sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta
-  real(kind=CUSTOM_REAL) two_rhovpvsq,two_rhovphsq,two_rhovsvsq,two_rhovshsq
-  real(kind=CUSTOM_REAL) four_rhovpvsq,four_rhovphsq,four_rhovsvsq,four_rhovshsq
-  real(kind=CUSTOM_REAL) twoetaminone,etaminone,eta_aniso
-  real(kind=CUSTOM_REAL) two_eta_aniso,four_eta_aniso,six_eta_aniso
-
-  integer :: iglob
+  real(kind=CUSTOM_REAL) :: c11,c22,c33,c44,c55,c66,c12,c13,c23,c14,c24,c34,c15,c25,c35,c45,c16,c26,c36,c46,c56
+  real(kind=CUSTOM_REAL) :: kappal,mul,lambdal,lambdalplus2mul
+!  real(kind=CUSTOM_REAL) kappavl,kappahl,muvl,muhl
+!  real(kind=CUSTOM_REAL) rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
+!             cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
+!             costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
+!             sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta
+!  real(kind=CUSTOM_REAL) two_rhovpvsq,two_rhovphsq,two_rhovsvsq,two_rhovshsq
+!  real(kind=CUSTOM_REAL) four_rhovpvsq,four_rhovphsq,four_rhovsvsq,four_rhovshsq
+!  real(kind=CUSTOM_REAL) twoetaminone,etaminone,eta_aniso
+!  real(kind=CUSTOM_REAL) two_eta_aniso,four_eta_aniso,six_eta_aniso
+!  integer :: iglob
 
   ! --- precompute sum ---
 
@@ -714,181 +708,205 @@
 
      ! transverse isotropic elements
 
-     kappavl = kappavstore(i,j,k,ispec)
-     muvl = muvstore(i,j,k,ispec)
+     ! uses pre-computed factors
+     c11 = c11store(i,j,k,ispec)
+     c12 = c12store(i,j,k,ispec)
+     c13 = c13store(i,j,k,ispec)
+     c14 = c14store(i,j,k,ispec)
+     c15 = c15store(i,j,k,ispec)
+     c16 = c16store(i,j,k,ispec)
+     c22 = c22store(i,j,k,ispec)
+     c23 = c23store(i,j,k,ispec)
+     c24 = c24store(i,j,k,ispec)
+     c25 = c25store(i,j,k,ispec)
+     c26 = c26store(i,j,k,ispec)
+     c33 = c33store(i,j,k,ispec)
+     c34 = c34store(i,j,k,ispec)
+     c35 = c35store(i,j,k,ispec)
+     c36 = c36store(i,j,k,ispec)
+     c44 = c44store(i,j,k,ispec)
+     c45 = c45store(i,j,k,ispec)
+     c46 = c46store(i,j,k,ispec)
+     c55 = c55store(i,j,k,ispec)
+     c56 = c56store(i,j,k,ispec)
+     c66 = c66store(i,j,k,ispec)
 
-     kappahl = kappahstore(i,j,k,ispec)
-     muhl = muhstore(i,j,k,ispec)
-
-     rhovpvsq = kappavl + FOUR_THIRDS * muvl  !!! that is C
-     rhovphsq = kappahl + FOUR_THIRDS * muhl  !!! that is A
-
-     rhovsvsq = muvl  !!! that is L
-     rhovshsq = muhl  !!! that is N
-
-     eta_aniso = eta_anisostore(i,j,k,ispec)  !!! that is  F / (A - 2 L)
-
-     ! use mesh coordinates to get theta and phi
-     ! ystore and zstore contain theta and phi
-
-     iglob = ibool(i,j,k,ispec)
-     theta = ystore(iglob)
-     phi = zstore(iglob)
-
-     costheta = cos(theta)
-     sintheta = sin(theta)
-     cosphi = cos(phi)
-     sinphi = sin(phi)
-
-     costhetasq = costheta * costheta
-     sinthetasq = sintheta * sintheta
-     cosphisq = cosphi * cosphi
-     sinphisq = sinphi * sinphi
-
-     costhetafour = costhetasq * costhetasq
-     sinthetafour = sinthetasq * sinthetasq
-     cosphifour = cosphisq * cosphisq
-     sinphifour = sinphisq * sinphisq
-
-     costwotheta = cos(2.*theta)
-     sintwotheta = sin(2.*theta)
-     costwophi = cos(2.*phi)
-     sintwophi = sin(2.*phi)
-
-     cosfourtheta = cos(4.*theta)
-     cosfourphi = cos(4.*phi)
-
-     costwothetasq = costwotheta * costwotheta
-
-     costwophisq = costwophi * costwophi
-     sintwophisq = sintwophi * sintwophi
-
-     etaminone = eta_aniso - 1.
-     twoetaminone = 2. * eta_aniso - 1.
-
-     ! precompute some products to reduce the CPU time
-
-     two_eta_aniso = 2.*eta_aniso
-     four_eta_aniso = 4.*eta_aniso
-     six_eta_aniso = 6.*eta_aniso
-
-     two_rhovpvsq = 2.*rhovpvsq
-     two_rhovphsq = 2.*rhovphsq
-     two_rhovsvsq = 2.*rhovsvsq
-     two_rhovshsq = 2.*rhovshsq
-
-     four_rhovpvsq = 4.*rhovpvsq
-     four_rhovphsq = 4.*rhovphsq
-     four_rhovsvsq = 4.*rhovsvsq
-     four_rhovshsq = 4.*rhovshsq
-
-     ! the 21 anisotropic coefficients computed using Mathematica
-
-     c11 = rhovphsq*sinphifour + 2.*cosphisq*sinphisq* &
-                (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
-                sinthetasq) + cosphifour* &
-                (rhovphsq*costhetafour + 2.*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
-                costhetasq*sinthetasq + rhovpvsq*sinthetafour)
-
-     c12 = ((rhovphsq - two_rhovshsq)*(3. + cosfourphi)*costhetasq)/4. - &
-                four_rhovshsq*cosphisq*costhetasq*sinphisq + &
-                (rhovphsq*(11. + 4.*costwotheta + cosfourtheta)*sintwophisq)/32. + &
-                eta_aniso*(rhovphsq - two_rhovsvsq)*(cosphifour + &
-                2.*cosphisq*costhetasq*sinphisq + sinphifour)*sinthetasq + &
-                rhovpvsq*cosphisq*sinphisq*sinthetafour - &
-                rhovsvsq*sintwophisq*sinthetafour
-
-     c13 = (cosphisq*(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq - &
-                12.*eta_aniso*rhovsvsq + (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - &
-                four_eta_aniso*rhovsvsq)*cosfourtheta))/8. + &
-                sinphisq*(eta_aniso*(rhovphsq - two_rhovsvsq)*costhetasq + &
-                (rhovphsq - two_rhovshsq)*sinthetasq)
-
-     c14 = costheta*sinphi*((cosphisq* &
-                (-rhovphsq + rhovpvsq + four_rhovshsq - four_rhovsvsq + &
-                (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
-                four_eta_aniso*rhovsvsq)*costwotheta))/2. + &
-                (etaminone*rhovphsq + 2.*(rhovshsq - eta_aniso*rhovsvsq))*sinphisq)* sintheta
-
-     c15 = cosphi*costheta*((cosphisq* (-rhovphsq + rhovpvsq + &
-                (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
-                costwotheta))/2. + etaminone*(rhovphsq - two_rhovsvsq)*sinphisq)*sintheta
-
-     c16 = (cosphi*sinphi*(cosphisq* (-rhovphsq + rhovpvsq + &
-                (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
-                four_eta_aniso*rhovsvsq)*costwotheta) + &
-                2.*etaminone*(rhovphsq - two_rhovsvsq)*sinphisq)*sinthetasq)/2.
-
-     c22 = rhovphsq*cosphifour + 2.*cosphisq*sinphisq* &
-                (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
-                sinthetasq) + sinphifour* &
-                (rhovphsq*costhetafour + 2.*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
-                costhetasq*sinthetasq + rhovpvsq*sinthetafour)
-
-     c23 = ((rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq - 12.*eta_aniso*rhovsvsq + &
-                (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
-                cosfourtheta)*sinphisq)/8. + &
-                cosphisq*(eta_aniso*(rhovphsq - two_rhovsvsq)*costhetasq + &
-                (rhovphsq - two_rhovshsq)*sinthetasq)
-
-     c24 = costheta*sinphi*(etaminone*(rhovphsq - two_rhovsvsq)*cosphisq + &
-                ((-rhovphsq + rhovpvsq + (twoetaminone*rhovphsq - rhovpvsq + &
-                four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)*sintheta
-
-     c25 = cosphi*costheta*((etaminone*rhovphsq + 2.*(rhovshsq - eta_aniso*rhovsvsq))* &
-                cosphisq + ((-rhovphsq + rhovpvsq + four_rhovshsq - four_rhovsvsq + &
-                (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
-                four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)*sintheta
-
-     c26 = (cosphi*sinphi*(2.*etaminone*(rhovphsq - two_rhovsvsq)*cosphisq + &
-                (-rhovphsq + rhovpvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
-                four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)*sinthetasq)/2.
-
-     c33 = rhovpvsq*costhetafour + 2.*(eta_aniso*(rhovphsq - two_rhovsvsq) + two_rhovsvsq)* &
-                costhetasq*sinthetasq + rhovphsq*sinthetafour
-
-     c34 = -((rhovphsq - rhovpvsq + (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq &
-                - four_eta_aniso*rhovsvsq)*costwotheta)*sinphi*sintwotheta)/4.
-
-     c35 = -(cosphi*(rhovphsq - rhovpvsq + &
-                (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
-                costwotheta)*sintwotheta)/4.
-
-     c36 = -((rhovphsq - rhovpvsq - four_rhovshsq + four_rhovsvsq + &
-                (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
-                costwotheta)*sintwophi*sinthetasq)/4.
-
-     c44 = cosphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) + &
-                sinphisq*(rhovsvsq*costwothetasq + &
-                (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq)*costhetasq* sinthetasq)
-
-     c45 = ((rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
-                four_eta_aniso*rhovsvsq + (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + &
-                4.*etaminone*rhovsvsq)*costwotheta)*sintwophi*sinthetasq)/4.
-
-     c46 = -(cosphi*costheta*((rhovshsq - rhovsvsq)*cosphisq - &
-                ((rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
-                four_eta_aniso*rhovsvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + &
-                four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)* sintheta)
-
-     c55 = sinphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) + &
-                cosphisq*(rhovsvsq*costwothetasq + &
-                (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq)*costhetasq* sinthetasq)
-
-     c56 = costheta*sinphi*((cosphisq* &
-                (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
-                four_eta_aniso*rhovsvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + &
-                four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta))/2. + &
-                (-rhovshsq + rhovsvsq)*sinphisq)*sintheta
-
-     c66 = rhovshsq*costwophisq*costhetasq - &
-                2.*(rhovphsq - two_rhovshsq)*cosphisq*costhetasq*sinphisq + &
-                (rhovphsq*(11. + 4.*costwotheta + cosfourtheta)*sintwophisq)/32. - &
-                (rhovsvsq*(-6. - 2.*cosfourphi + cos(4.*phi - 2.*theta) - 2.*costwotheta + &
-                cos(2.*(2.*phi + theta)))*sinthetasq)/8. + &
-                rhovpvsq*cosphisq*sinphisq*sinthetafour - &
-                (eta_aniso*(rhovphsq - two_rhovsvsq)*sintwophisq*sinthetafour)/2.
-
+! old routine for reference...
+!     kappavl = kappavstore(i,j,k,ispec)
+!     muvl = muvstore(i,j,k,ispec)
+!
+!     kappahl = kappahstore(i,j,k,ispec)
+!     muhl = muhstore(i,j,k,ispec)
+!
+!     rhovpvsq = kappavl + FOUR_THIRDS * muvl  !!! that is C
+!     rhovphsq = kappahl + FOUR_THIRDS * muhl  !!! that is A
+!
+!     rhovsvsq = muvl  !!! that is L
+!     rhovshsq = muhl  !!! that is N
+!
+!     eta_aniso = eta_anisostore(i,j,k,ispec)  !!! that is  F / (A - 2 L)
+!
+!     ! use mesh coordinates to get theta and phi
+!     ! ystore and zstore contain theta and phi
+!
+!     iglob = ibool(i,j,k,ispec)
+!     theta = ystore(iglob)
+!     phi = zstore(iglob)
+!
+!     costheta = cos(theta)
+!     sintheta = sin(theta)
+!     cosphi = cos(phi)
+!     sinphi = sin(phi)
+!
+!     costhetasq = costheta * costheta
+!     sinthetasq = sintheta * sintheta
+!     cosphisq = cosphi * cosphi
+!     sinphisq = sinphi * sinphi
+!
+!     costhetafour = costhetasq * costhetasq
+!     sinthetafour = sinthetasq * sinthetasq
+!     cosphifour = cosphisq * cosphisq
+!     sinphifour = sinphisq * sinphisq
+!
+!     costwotheta = cos(2.*theta)
+!     sintwotheta = sin(2.*theta)
+!     costwophi = cos(2.*phi)
+!     sintwophi = sin(2.*phi)
+!
+!     cosfourtheta = cos(4.*theta)
+!     cosfourphi = cos(4.*phi)
+!
+!     costwothetasq = costwotheta * costwotheta
+!
+!     costwophisq = costwophi * costwophi
+!     sintwophisq = sintwophi * sintwophi
+!
+!     etaminone = eta_aniso - 1.
+!     twoetaminone = 2. * eta_aniso - 1.
+!
+!     ! precompute some products to reduce the CPU time
+!
+!     two_eta_aniso = 2.*eta_aniso
+!     four_eta_aniso = 4.*eta_aniso
+!     six_eta_aniso = 6.*eta_aniso
+!
+!     two_rhovpvsq = 2.*rhovpvsq
+!     two_rhovphsq = 2.*rhovphsq
+!     two_rhovsvsq = 2.*rhovsvsq
+!     two_rhovshsq = 2.*rhovshsq
+!
+!     four_rhovpvsq = 4.*rhovpvsq
+!     four_rhovphsq = 4.*rhovphsq
+!     four_rhovsvsq = 4.*rhovsvsq
+!     four_rhovshsq = 4.*rhovshsq
+!
+!     ! the 21 anisotropic coefficients computed using Mathematica
+!
+!     c11 = rhovphsq*sinphifour + 2.*cosphisq*sinphisq* &
+!                (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
+!                sinthetasq) + cosphifour* &
+!                (rhovphsq*costhetafour + 2.*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
+!                costhetasq*sinthetasq + rhovpvsq*sinthetafour)
+!
+!     c12 = ((rhovphsq - two_rhovshsq)*(3. + cosfourphi)*costhetasq)/4. - &
+!                four_rhovshsq*cosphisq*costhetasq*sinphisq + &
+!                (rhovphsq*(11. + 4.*costwotheta + cosfourtheta)*sintwophisq)/32. + &
+!                eta_aniso*(rhovphsq - two_rhovsvsq)*(cosphifour + &
+!                2.*cosphisq*costhetasq*sinphisq + sinphifour)*sinthetasq + &
+!                rhovpvsq*cosphisq*sinphisq*sinthetafour - &
+!                rhovsvsq*sintwophisq*sinthetafour
+!
+!     c13 = (cosphisq*(rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq - &
+!                12.*eta_aniso*rhovsvsq + (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - &
+!                four_eta_aniso*rhovsvsq)*cosfourtheta))/8. + &
+!                sinphisq*(eta_aniso*(rhovphsq - two_rhovsvsq)*costhetasq + &
+!                (rhovphsq - two_rhovshsq)*sinthetasq)
+!
+!     c14 = costheta*sinphi*((cosphisq* &
+!                (-rhovphsq + rhovpvsq + four_rhovshsq - four_rhovsvsq + &
+!                (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
+!                four_eta_aniso*rhovsvsq)*costwotheta))/2. + &
+!                (etaminone*rhovphsq + 2.*(rhovshsq - eta_aniso*rhovsvsq))*sinphisq)* sintheta
+!
+!     c15 = cosphi*costheta*((cosphisq* (-rhovphsq + rhovpvsq + &
+!                (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
+!                costwotheta))/2. + etaminone*(rhovphsq - two_rhovsvsq)*sinphisq)*sintheta
+!
+!     c16 = (cosphi*sinphi*(cosphisq* (-rhovphsq + rhovpvsq + &
+!                (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
+!                four_eta_aniso*rhovsvsq)*costwotheta) + &
+!                2.*etaminone*(rhovphsq - two_rhovsvsq)*sinphisq)*sinthetasq)/2.
+!
+!     c22 = rhovphsq*cosphifour + 2.*cosphisq*sinphisq* &
+!                (rhovphsq*costhetasq + (eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
+!                sinthetasq) + sinphifour* &
+!                (rhovphsq*costhetafour + 2.*(eta_aniso*rhovphsq + two_rhovsvsq - two_eta_aniso*rhovsvsq)* &
+!                costhetasq*sinthetasq + rhovpvsq*sinthetafour)
+!
+!     c23 = ((rhovphsq + six_eta_aniso*rhovphsq + rhovpvsq - four_rhovsvsq - 12.*eta_aniso*rhovsvsq + &
+!                (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
+!                cosfourtheta)*sinphisq)/8. + &
+!                cosphisq*(eta_aniso*(rhovphsq - two_rhovsvsq)*costhetasq + &
+!                (rhovphsq - two_rhovshsq)*sinthetasq)
+!
+!     c24 = costheta*sinphi*(etaminone*(rhovphsq - two_rhovsvsq)*cosphisq + &
+!                ((-rhovphsq + rhovpvsq + (twoetaminone*rhovphsq - rhovpvsq + &
+!                four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)*sintheta
+!
+!     c25 = cosphi*costheta*((etaminone*rhovphsq + 2.*(rhovshsq - eta_aniso*rhovsvsq))* &
+!                cosphisq + ((-rhovphsq + rhovpvsq + four_rhovshsq - four_rhovsvsq + &
+!                (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
+!                four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)*sintheta
+!
+!     c26 = (cosphi*sinphi*(2.*etaminone*(rhovphsq - two_rhovsvsq)*cosphisq + &
+!                (-rhovphsq + rhovpvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + four_rhovsvsq - &
+!                four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)*sinthetasq)/2.
+!
+!     c33 = rhovpvsq*costhetafour + 2.*(eta_aniso*(rhovphsq - two_rhovsvsq) + two_rhovsvsq)* &
+!                costhetasq*sinthetasq + rhovphsq*sinthetafour
+!
+!     c34 = -((rhovphsq - rhovpvsq + (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq &
+!                - four_eta_aniso*rhovsvsq)*costwotheta)*sinphi*sintwotheta)/4.
+!
+!     c35 = -(cosphi*(rhovphsq - rhovpvsq + &
+!                (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
+!                costwotheta)*sintwotheta)/4.
+!
+!     c36 = -((rhovphsq - rhovpvsq - four_rhovshsq + four_rhovsvsq + &
+!                (twoetaminone*rhovphsq - rhovpvsq + four_rhovsvsq - four_eta_aniso*rhovsvsq)* &
+!                costwotheta)*sintwophi*sinthetasq)/4.
+!
+!     c44 = cosphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) + &
+!                sinphisq*(rhovsvsq*costwothetasq + &
+!                (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq)*costhetasq* sinthetasq)
+!
+!     c45 = ((rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
+!                four_eta_aniso*rhovsvsq + (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + &
+!                4.*etaminone*rhovsvsq)*costwotheta)*sintwophi*sinthetasq)/4.
+!
+!     c46 = -(cosphi*costheta*((rhovshsq - rhovsvsq)*cosphisq - &
+!                ((rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
+!                four_eta_aniso*rhovsvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + &
+!                four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta)*sinphisq)/2.)* sintheta)
+!
+!     c55 = sinphisq*(rhovsvsq*costhetasq + rhovshsq*sinthetasq) + &
+!                cosphisq*(rhovsvsq*costwothetasq + &
+!                (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq + four_eta_aniso*rhovsvsq)*costhetasq* sinthetasq)
+!
+!     c56 = costheta*sinphi*((cosphisq* &
+!                (rhovphsq - two_eta_aniso*rhovphsq + rhovpvsq - two_rhovshsq - two_rhovsvsq + &
+!                four_eta_aniso*rhovsvsq + (-rhovphsq + two_eta_aniso*rhovphsq - rhovpvsq + &
+!                four_rhovsvsq - four_eta_aniso*rhovsvsq)*costwotheta))/2. + &
+!                (-rhovshsq + rhovsvsq)*sinphisq)*sintheta
+!
+!     c66 = rhovshsq*costwophisq*costhetasq - &
+!                2.*(rhovphsq - two_rhovshsq)*cosphisq*costhetasq*sinphisq + &
+!                (rhovphsq*(11. + 4.*costwotheta + cosfourtheta)*sintwophisq)/32. - &
+!                (rhovsvsq*(-6. - 2.*cosfourphi + cos(4.*phi - 2.*theta) - 2.*costwotheta + &
+!                cos(2.*(2.*phi + theta)))*sinthetasq)/8. + &
+!                rhovpvsq*cosphisq*sinphisq*sinthetafour - &
+!                (eta_aniso*(rhovphsq - two_rhovsvsq)*sintwophisq*sinthetafour)/2.
+!
      ! general expression of stress tensor for full Cijkl with 21 coefficients
 
      sigma(1,1) = c11*duxdxl + c16*duxdyl_plus_duydxl + c12*duydyl + &
@@ -972,8 +990,7 @@
      lambdalplus2mul = kappal + FOUR_THIRDS * mul
      lambdal = lambdalplus2mul - 2.*mul
 
-! compute stress sigma
-
+     ! compute stress sigma
      sigma(1,1) = lambdalplus2mul*duxdxl + lambdal*duydyl_plus_duzdzl
      sigma(2,2) = lambdalplus2mul*duydyl + lambdal*duxdxl_plus_duzdzl
      sigma(3,3) = lambdalplus2mul*duzdzl + lambdal*duxdxl_plus_duydyl
@@ -986,7 +1003,7 @@
 
  endif
 
-! define symmetric components of sigma for gravity
+  ! define symmetric components of sigma for gravity
   sigma(2,1) = sigma(1,2)
   sigma(3,1) = sigma(1,3)
   sigma(3,2) = sigma(2,3)

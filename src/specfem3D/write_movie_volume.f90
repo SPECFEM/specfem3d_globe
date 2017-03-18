@@ -318,7 +318,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_movie_volume_strains(myrank,npoints_3dmovie, &
+  subroutine write_movie_volume_strains(npoints_3dmovie, &
                                         LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE,MOVIE_COARSE, &
                                         it,vnspec, &
                                         eps_trace_over_3_crust_mantle, &
@@ -334,7 +334,7 @@
   implicit none
 
   ! input
-  integer,intent(in) :: myrank,npoints_3dmovie,MOVIE_VOLUME_TYPE,it
+  integer,intent(in) :: npoints_3dmovie,MOVIE_VOLUME_TYPE,it
 
   integer,intent(in) :: vnspec
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,vnspec),intent(in) :: eps_trace_over_3_crust_mantle
@@ -478,7 +478,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine write_movie_volume_vector(myrank,it,npoints_3dmovie,LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
+  subroutine write_movie_volume_vector(it,npoints_3dmovie,LOCAL_TMP_PATH,MOVIE_VOLUME_TYPE, &
                                       MOVIE_COARSE,ibool_crust_mantle,vector_crust_mantle, &
                                       scalingval,mask_3dmovie,nu_3dmovie)
 
@@ -489,7 +489,7 @@
   implicit none
 
   ! input
-  integer :: myrank,it
+  integer :: it
   integer :: npoints_3dmovie
   integer :: MOVIE_VOLUME_TYPE
   logical :: MOVIE_COARSE
@@ -594,7 +594,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_divcurl(myrank,it,eps_trace_over_3_crust_mantle, &
+ subroutine write_movie_volume_divcurl(it,eps_trace_over_3_crust_mantle, &
                                        div_displ_outer_core, &
                                        accel_outer_core,kappavstore_outer_core,rhostore_outer_core,ibool_outer_core, &
                                        eps_trace_over_3_inner_core, &
@@ -610,7 +610,7 @@
 
   implicit none
 
-  integer :: myrank,it
+  integer :: it
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_STRAIN_ONLY) :: eps_trace_over_3_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC_OUTER_CORE_3DMOVIE) :: div_displ_outer_core
 
@@ -784,7 +784,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_displnorm(myrank,it,LOCAL_TMP_PATH, &
+ subroutine write_movie_volume_displnorm(it,LOCAL_TMP_PATH, &
                                       displ_crust_mantle,displ_inner_core,displ_outer_core, &
                                       ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
@@ -795,7 +795,7 @@
 
   implicit none
 
-  integer :: myrank,it
+  integer :: it
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: displ_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: displ_inner_core
@@ -903,7 +903,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_velnorm(myrank,it,LOCAL_TMP_PATH, &
+ subroutine write_movie_volume_velnorm(it,LOCAL_TMP_PATH, &
                                       veloc_crust_mantle,veloc_inner_core,veloc_outer_core, &
                                       ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
@@ -914,7 +914,7 @@
 
   implicit none
 
-  integer :: myrank,it
+  integer :: it
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: veloc_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NGLOB_OUTER_CORE) :: veloc_outer_core
@@ -1021,7 +1021,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
- subroutine write_movie_volume_accelnorm(myrank,it,LOCAL_TMP_PATH, &
+ subroutine write_movie_volume_accelnorm(it,LOCAL_TMP_PATH, &
                                       accel_crust_mantle,accel_inner_core,accel_outer_core, &
                                       ibool_crust_mantle,ibool_inner_core,ibool_outer_core)
 
@@ -1032,7 +1032,7 @@
 
   implicit none
 
-  integer :: myrank,it
+  integer :: it
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_CRUST_MANTLE) :: accel_crust_mantle
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLOB_INNER_CORE) :: accel_inner_core

@@ -69,15 +69,15 @@
 !
 
 
-  subroutine model_ak135_broadcast(myrank,CRUSTAL)
+  subroutine model_ak135_broadcast(CRUSTAL)
 
 ! standard routine to setup model
 
+  use constants, only: myrank
   use model_ak135_par
 
   implicit none
 
-  integer :: myrank
   logical :: CRUSTAL
 
   ! local parameters

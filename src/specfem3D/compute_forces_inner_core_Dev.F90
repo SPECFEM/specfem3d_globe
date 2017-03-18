@@ -49,11 +49,10 @@
   use specfem_par, only: &
     hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
     wgll_cube, &
-    minus_gravity_table,density_table,minus_deriv_gravity_table, &
+    gravity_pre_store => gravity_pre_store_inner_core,gravity_H => gravity_H_inner_core, &
     COMPUTE_AND_STORE_STRAIN,USE_LDDRK
 
   use specfem_par_innercore, only: &
-    rstore => rstore_inner_core, &
     deriv => deriv_mapping_inner_core, &
     kappavstore => kappavstore_inner_core, &
     muvstore => muvstore_inner_core, &
@@ -61,7 +60,6 @@
     c33store => c33store_inner_core,c44store => c44store_inner_core, &
     ibool => ibool_inner_core, &
     idoubling => idoubling_inner_core, &
-    one_minus_sum_beta => one_minus_sum_beta_inner_core, &
     phase_ispec_inner => phase_ispec_inner_inner_core, &
     nspec_outer => nspec_outer_inner_core, &
     nspec_inner => nspec_inner_inner_core
@@ -90,7 +88,7 @@
   ! for attenuation
   ! memory variables R_ij are stored at the local rather than global level
   ! to allow for optimization of cache access by compiler
-  ! variable lengths for factor_common and one_minus_sum_beta
+  ! variable lengths for factor_common (and one_minus_sum_beta)
   integer :: vnspec
   real(kind=CUSTOM_REAL), dimension(ATT1_VAL,ATT2_VAL,ATT3_VAL,N_SLS,vnspec) :: factor_common
   real(kind=CUSTOM_REAL), dimension(N_SLS) :: alphaval,betaval,gammaval
@@ -124,7 +122,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,5) :: epsilondev_loc
   real(kind=CUSTOM_REAL) :: fac1,fac2,fac3
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NDIM) :: rho_s_H
+  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: rho_s_H
 
   integer :: ispec,iglob
   integer :: num_elements,ispec_p
@@ -156,18 +154,18 @@
 !$OMP PARALLEL DEFAULT( NONE ) &
 !$OMP SHARED( deriv, &
 !$OMP num_elements,iphase,phase_ispec_inner, &
-!$OMP ibool,idoubling,rstore, &
+!$OMP ibool,idoubling, &
 !$OMP displ_inner_core,accel_inner_core, &
 !$OMP wgll_cube,hprime_xx,hprime_xxT,hprimewgll_xx,hprimewgll_xxT, &
 !$OMP wgllwgll_yz_3D,wgllwgll_xz_3D, wgllwgll_xy_3D, &
 !$OMP c11store,c12store,c13store,c33store,c44store, &
 !$OMP muvstore, kappavstore, &
 !$OMP vnspec, &
-!$OMP factor_common,one_minus_sum_beta, &
+!$OMP factor_common, &
 !$OMP alphaval,betaval,gammaval, &
 !$OMP R_xx,R_yy,R_xy,R_xz,R_yz, &
 !$OMP epsilondev_xx,epsilondev_yy,epsilondev_xy,epsilondev_xz,epsilondev_yz,epsilon_trace_over_3, &
-!$OMP minus_gravity_table,minus_deriv_gravity_table,density_table, &
+!$OMP gravity_pre_store,gravity_H, &
 !$OMP USE_LDDRK, &
 !$OMP R_xx_lddrk,R_yy_lddrk,R_xy_lddrk,R_xz_lddrk,R_yz_lddrk, &
 !$OMP sum_terms, &
@@ -192,19 +190,16 @@
   do ispec_p = 1,num_elements
 
     ! only compute element which belong to current phase (inner or outer elements)
-
     ispec = phase_ispec_inner(ispec_p,iphase)
 
     ! exclude fictitious elements in central cube
     if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
 
     DO_LOOP_IJK
-
       iglob = ibool(INDEX_IJK,ispec)
       dummyx_loc(INDEX_IJK) = displ_inner_core(1,iglob)
       dummyy_loc(INDEX_IJK) = displ_inner_core(2,iglob)
       dummyz_loc(INDEX_IJK) = displ_inner_core(3,iglob)
-
     ENDDO_LOOP_IJK
 
     ! subroutines adapted from Deville, Fischer and Mund, High-order methods
@@ -224,15 +219,13 @@
     if (ANISOTROPIC_INNER_CORE_VAL) then
       ! anisotropic elements
       call compute_element_aniso_ic(ispec, &
-                                    minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                    rstore, &
+                                    gravity_pre_store,gravity_H, &
                                     deriv, &
                                     wgll_cube, &
                                     c11store,c12store,c13store,c33store,c44store, &
                                     ibool, &
                                     R_xx,R_yy,R_xy,R_xz,R_yz, &
                                     epsilon_trace_over_3, &
-                                    one_minus_sum_beta,vnspec, &
                                     tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                     dummyx_loc,dummyy_loc,dummyz_loc, &
                                     epsilondev_loc,rho_s_H)
@@ -241,15 +234,13 @@
     else
       ! isotropic elements
       call compute_element_iso_ic(ispec, &
-                                  minus_gravity_table,density_table,minus_deriv_gravity_table, &
-                                  rstore, &
+                                  gravity_pre_store,gravity_H, &
                                   deriv, &
                                   wgll_cube, &
                                   kappavstore,muvstore, &
                                   ibool, &
                                   R_xx,R_yy,R_xy,R_xz,R_yz, &
                                   epsilon_trace_over_3, &
-                                  one_minus_sum_beta,vnspec, &
                                   tempx1,tempx2,tempx3,tempy1,tempy2,tempy3,tempz1,tempz2,tempz3, &
                                   dummyx_loc,dummyy_loc,dummyz_loc, &
                                   epsilondev_loc,rho_s_H)
@@ -268,19 +259,16 @@
 
     ! sums contributions
     DO_LOOP_IJK
-
       fac1 = wgllwgll_yz_3D(INDEX_IJK)
       fac2 = wgllwgll_xz_3D(INDEX_IJK)
       fac3 = wgllwgll_xy_3D(INDEX_IJK)
       sum_terms(1,INDEX_IJK,ispec) = - (fac1*newtempx1(INDEX_IJK) + fac2*newtempx2(INDEX_IJK) + fac3*newtempx3(INDEX_IJK))
       sum_terms(2,INDEX_IJK,ispec) = - (fac1*newtempy1(INDEX_IJK) + fac2*newtempy2(INDEX_IJK) + fac3*newtempy3(INDEX_IJK))
       sum_terms(3,INDEX_IJK,ispec) = - (fac1*newtempz1(INDEX_IJK) + fac2*newtempz2(INDEX_IJK) + fac3*newtempz3(INDEX_IJK))
-
     ENDDO_LOOP_IJK
 
     ! adds gravity
     if (GRAVITY_VAL) then
-
 #ifdef FORCE_VECTORIZATION
       do ijk = 1,NDIM*NGLLCUBE
         sum_terms(ijk,1,1,1,ispec) = sum_terms(ijk,1,1,1,ispec) + rho_s_H(ijk,1,1,1)
@@ -289,55 +277,14 @@
       do k = 1,NGLLZ
         do j = 1,NGLLY
           do i = 1,NGLLX
-            sum_terms(1,INDEX_IJK,ispec) = sum_terms(1,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,1)
-            sum_terms(2,INDEX_IJK,ispec) = sum_terms(2,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,2)
-            sum_terms(3,INDEX_IJK,ispec) = sum_terms(3,INDEX_IJK,ispec) + rho_s_H(INDEX_IJK,3)
+            sum_terms(1,INDEX_IJK,ispec) = sum_terms(1,INDEX_IJK,ispec) + rho_s_H(1,INDEX_IJK)
+            sum_terms(2,INDEX_IJK,ispec) = sum_terms(2,INDEX_IJK,ispec) + rho_s_H(2,INDEX_IJK)
+            sum_terms(3,INDEX_IJK,ispec) = sum_terms(3,INDEX_IJK,ispec) + rho_s_H(3,INDEX_IJK)
           enddo
         enddo
       enddo
 #endif
-
     endif
-
-    ! updates acceleration
-    ! sum contributions from each element to the global mesh and add gravity terms
-#ifdef FORCE_VECTORIZATION
-  ! update will be done later at the very end..
-#else
-  ! updates acceleration (for non-vectorization case)
-
-! note: Critical OpenMP here might degrade performance,
-!       especially for a larger number of threads (>8).
-!       Using atomic operations can partially help.
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP CRITICAL
-#endif
-! we can force vectorization using a compiler directive here because we know that there is no dependency
-! inside a given spectral element, since all the global points of a local elements are different by definition
-! (only common points between different elements can be the same)
-! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
-!IBM* ASSERT (NODEPS)
-!pgi$ ivdep
-!DIR$ IVDEP
-  DO_LOOP_IJK
-    iglob = ibool(INDEX_IJK,ispec)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-    accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,INDEX_IJK,ispec)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-    accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,INDEX_IJK,ispec)
-#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP ATOMIC
-#endif
-    accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,INDEX_IJK,ispec)
-  ENDDO_LOOP_IJK
-#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-!$OMP END CRITICAL
-#endif
-#endif
 
     ! use Runge-Kutta scheme to march memory variables in time
     ! convention for attenuation
@@ -385,8 +332,9 @@
   enddo ! of spectral element loop
 !$OMP enddo
 
+  ! updates acceleration
+  ! sum contributions from each element to the global mesh
 #ifdef FORCE_VECTORIZATION
-  ! sum contributions from each element to the global mesh and add gravity terms
 !$OMP DO
   do iglob_p = 1,num_globs(iphase)
     iglob = phase_iglob(iglob_p,iphase)
@@ -394,13 +342,53 @@
     do ip = ibool_inv_st(iglob_p,iphase),ibool_inv_st(iglob_p+1,iphase)-1
       ! local 1D index from array ibool
       ijk_spec = ibool_inv_tbl(ip,iphase)
-
       ! do NOT use array syntax ":" for the three statements below
       ! otherwise most compilers will not be able to vectorize the outer loop
       accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,ijk_spec,1,1,1)
       accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,ijk_spec,1,1,1)
       accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
     enddo
+  enddo
+!$OMP enddo
+#else
+!$OMP DO
+  do ispec_p = 1,num_elements
+    ! only compute element which belong to current phase (inner or outer elements)
+    ispec = phase_ispec_inner(ispec_p,iphase)
+    ! exclude fictitious elements in central cube
+    if (idoubling(ispec) == IFLAG_IN_FICTITIOUS_CUBE) cycle
+    ! updates acceleration (for non-vectorization case)
+! note: Critical OpenMP here might degrade performance,
+!       especially for a larger number of threads (>8).
+!       Using atomic operations can partially help.
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP CRITICAL
+#endif
+! we can force vectorization using a compiler directive here because we know that there is no dependency
+! inside a given spectral element, since all the global points of a local elements are different by definition
+! (only common points between different elements can be the same)
+! IBM, Portland PGI, and Intel and Cray syntax (Intel and Cray are the same)
+!IBM* ASSERT (NODEPS)
+!pgi$ ivdep
+!DIR$ IVDEP
+    DO_LOOP_IJK
+      iglob = ibool(INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_inner_core(1,iglob) = accel_inner_core(1,iglob) + sum_terms(1,INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_inner_core(2,iglob) = accel_inner_core(2,iglob) + sum_terms(2,INDEX_IJK,ispec)
+#ifdef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP ATOMIC
+#endif
+      accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,INDEX_IJK,ispec)
+    ENDDO_LOOP_IJK
+#ifndef USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
+!$OMP END CRITICAL
+#endif
   enddo
 !$OMP enddo
 #endif
@@ -425,6 +413,11 @@
 ! please leave the routines here to help compilers inlining the code
 
   subroutine mxm5_3comp_singleA(A,n1,B1,B2,B3,C1,C2,C3,n3)
+
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleA
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_singleA
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -457,6 +450,7 @@
   ! matrix-matrix multiplication
   do j = 1,n3
 !dir$ ivdep
+!dir$ SIMD
     do i = 1,n1
       C1(i,j) =  A(i,1) * B1(1,j) &
                + A(i,2) * B1(2,j) &
@@ -484,6 +478,11 @@
 !--------------------------------------------------------------------------------------------
 
   subroutine mxm5_3comp_singleB(A1,A2,A3,n1,B,C1,C2,C3,n3)
+
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_singleB
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_singleB
 
 ! 3 different arrays for x/y/z-components, 2-dimensional arrays (25,5)/(5,25), same B matrix for all 3 component arrays
 
@@ -516,6 +515,7 @@
   ! matrix-matrix multiplication
   do j = 1,n3
 !dir$ ivdep
+!dir$ SIMD
     do i = 1,n1
       C1(i,j) =  A1(i,1) * B(1,j) &
                + A1(i,2) * B(2,j) &
@@ -543,6 +543,11 @@
 !--------------------------------------------------------------------------------------------
 
   subroutine mxm5_3comp_3dmat_singleB(A1,A2,A3,n1,B,n2,C1,C2,C3,n3)
+
+! we can force inlining (Intel compiler)
+!DIR$ ATTRIBUTES FORCEINLINE :: mxm5_3comp_3dmat_singleB
+! cray
+!DIR$ INLINEALWAYS mxm5_3comp_3dmat_singleB
 
 ! 3 different arrays for x/y/z-components, 3-dimensional arrays (5,5,5), same B matrix for all 3 component arrays
 
@@ -599,6 +604,7 @@
   do k = 1,n3
     do j = 1,n2
 !dir$ ivdep
+!dir$ SIMD
       do i = 1,n1
         C1(i,j,k) =  A1(i,1,k) * B(1,j) &
                    + A1(i,2,k) * B(2,j) &

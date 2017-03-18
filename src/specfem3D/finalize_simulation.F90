@@ -185,8 +185,6 @@
   endif
   deallocate(rstore_crust_mantle)
 
-  deallocate(rmass_ocean_load)
-
   ! optimized arrays
   if (USE_DEVILLE_PRODUCTS_VAL) then
     deallocate(sum_terms_crust_mantle,sum_terms_inner_core,sum_terms_outer_core)
@@ -201,6 +199,7 @@
   ! outer core
   if (SIMULATION_TYPE == 3 ) nullify(b_rmass_outer_core)
   deallocate(rstore_outer_core)
+  deallocate(gravity_pre_store_outer_core)
 
   ! inner core
   if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
@@ -208,6 +207,7 @@
   else
     nullify(rmassx_inner_core,rmassy_inner_core)
   endif
+
   if (SIMULATION_TYPE == 3) then
     if (ROTATION_VAL .and. EXACT_MASS_MATRIX_FOR_ROTATION_VAL) then
       deallocate(b_rmassx_inner_core,b_rmassy_inner_core)
@@ -311,6 +311,12 @@
                mask_noise,noise_surface_movie)
     ! file i/o buffer
     deallocate(noise_buffer)
+  endif
+
+  ! oceans
+  if (OCEANS_VAL) then
+    ! frees memory
+    deallocate(ibool_ocean_load,rmass_ocean_load_selected,normal_ocean_load)
   endif
 
   ! VTK visualization

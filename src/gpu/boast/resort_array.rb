@@ -10,9 +10,9 @@ module BOAST
     v.push nspec                  = Int( "NSPEC",                :dir => :in)
 
     ngll3 = Int("NGLL3", :const => n_gll3)
-    
+
     p = Procedure(function_name, v)
-    
+
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CL or get_lang == CUDA) then
@@ -31,9 +31,9 @@ module BOAST
         print ispec === get_group_id(0) + get_group_id(1)*get_num_groups(0)
 
         print If(ispec < nspec) {
-          
+
           print tx === get_local_id(0)
-        
+
           print offset === ispec*ngll3*21+tx
 
           print For(i, 0, 21-1) {
@@ -49,7 +49,7 @@ module BOAST
             print t_idx === Modulo(id, 21)
             print old_array[i*ngll3+offset] === sh_tmp[idx + t_idx*ngll3 ]
           }
-	}
+  }
       close p
     else
       raise "Unsupported language!"

@@ -45,7 +45,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_heterogen_mntl_broadcast(myrank)
+  subroutine model_heterogen_mntl_broadcast()
 
 ! standard routine to setup model
 
@@ -53,8 +53,6 @@
   use model_heterogen_mantle_par
 
   implicit none
-
-  integer :: myrank
 
   ! local parameters
   integer :: ier

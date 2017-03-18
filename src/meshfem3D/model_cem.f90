@@ -65,17 +65,16 @@ end module cem_par
 !-------------------------------------------------------------------------------------------
 !
 
-  subroutine model_cem_broadcast (myrank)
+  subroutine model_cem_broadcast()
 
+  use constants, only: myrank
   use cem_par
   use netcdf
   use meshfem3D_models_par, only: CEM_ACCEPT
 
-  integer, intent (in) :: myrank
   integer              :: wSize
 
   ! initializes
-
   rank = myrank
   call world_size (wSize)
 
@@ -225,11 +224,10 @@ end module cem_par
   integer, dimension (NDIMS_WRITE) :: start, count, ids
 
   integer :: ncid, paramDimID, procDimID, varidX, varidY, varidZ
-  integer :: varidR, iregion_code, commWorldSize, Comm, myRank, info
+  integer :: varidR, iregion_code, commWorldSize, Comm, info
   character (len = MAX_STRING_LEN) :: fileName, fileNameTrim, formatString
 
   ! Get the total number of processors.
-  call world_rank(myRank)
   call world_size(commWorldSize)
   call world_duplicate(Comm)
   call world_get_info_null(info)

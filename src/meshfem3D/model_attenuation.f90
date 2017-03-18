@@ -58,7 +58,7 @@
 !
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_attenuation_broadcast(myrank,AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+  subroutine model_attenuation_broadcast(AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 
 ! standard routine to setup model
 
@@ -70,7 +70,6 @@
   type (model_attenuation_variables) :: AM_V
 
   integer :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
-  integer :: myrank
   integer :: ier
 
   allocate(AM_V%Qtau_s(N_SLS),stat=ier)
@@ -121,7 +120,7 @@
 !
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epsilon ( or tau_mu) )
-  subroutine model_attenuation_setup(myrank,REFERENCE_1D_MODEL,RICB,RCMB, &
+  subroutine model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB, &
                                     R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
 
   use constants
@@ -146,7 +145,7 @@
   type (model_attenuation_storage_var) :: AM_S
   type (attenuation_simplex_variables) :: AS_V
 
-  integer :: myrank,REFERENCE_1D_MODEL
+  integer :: REFERENCE_1D_MODEL
   double precision :: RICB, RCMB, R670, R220, R80
   logical :: CRUSTAL
 
@@ -296,7 +295,6 @@
 
   ! local parameters
   double precision :: Qmu_new
-  integer :: myrank
   integer :: Qtmp
   integer, save :: first_time_called = 1
 
@@ -316,7 +314,6 @@
     write(IMAIN,*) 'Attenuation Value out of Range: Min, Max ', 0, AM_S%Q_max
     call flush_IMAIN()
     ! stop
-    call world_rank(myrank)
     call exit_MPI(myrank, 'Attenuation Value out of Range')
   endif
 
@@ -425,7 +422,6 @@
   type (attenuation_simplex_variables) :: AS_V
 
   ! Input / Output
-  integer myrank
   double precision  t1, t2
   double precision  Q_real
   double precision  omega_not
@@ -455,7 +451,6 @@
   exp2 = log10(f2)
 
   if (f2 < f1 .or. Q_real < 0.0d0 .or. n < 1) then
-    call world_rank(myrank)
     call exit_MPI(myrank, 'frequencies flipped or Q less than zero or N_SLS < 0')
   endif
 
@@ -492,7 +487,6 @@
      write(*,*)'    Iterations: ', iterations
      write(*,*)'    Min Value:  ', min_value
      write(*,*)'    Aborting program'
-     call world_rank(myrank)
      call exit_MPI(myrank,'attenuation_simplex: Search for Strain relaxation times did not converge')
   endif
   deallocate(f)
