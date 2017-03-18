@@ -148,9 +148,9 @@ $(document).ready(function(){initNavTree('d0/d38/model__iasp91_8f90_source.html'
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="comment">!--------------------------------------------------------------------------------------------------</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;</div>
-<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d0/d38/model__iasp91_8f90.html#a8b671c362215d135669d8b3139fbaad6">model_iasp91</a>(myrank,x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &amp;</div>
+<div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d0/d38/model__iasp91_8f90.html#a59812f048769491927c8bf3bc657abed">model_iasp91</a>(x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &amp;</div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;                     ricb,rcmb,rtopddoubleprime,r771,r670,r400,r220,r120,rmoho,rmiddle_crust)</div>
-<div class="line"><a name="l00040"></a><span class="lineno"><a class="line" href="../../d0/d38/model__iasp91_8f90.html#a8b671c362215d135669d8b3139fbaad6">   40</a></span>&#160;</div>
+<div class="line"><a name="l00040"></a><span class="lineno"><a class="line" href="../../d0/d38/model__iasp91_8f90.html#a59812f048769491927c8bf3bc657abed">   40</a></span>&#160;</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;</div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;<span class="comment">! we use the density model of PREM (or close to PREM in the crust)</span></div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;<span class="comment">! because IASP91 does not provide a density model.</span></div>
@@ -165,7 +165,7 @@ $(document).ready(function(){initNavTree('d0/d38/model__iasp91_8f90_source.html'
 <div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;  <span class="keywordtype">logical</span> check_doubling_flag</div>
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;</div>
-<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;  <span class="keywordtype">integer</span> idoubling,myrank</div>
+<div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;  <span class="keywordtype">integer</span> idoubling</div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;</div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;  <span class="keywordtype">double precision</span> x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &amp;</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST</div>
@@ -195,42 +195,42 @@ $(document).ready(function(){initNavTree('d0/d38/model__iasp91_8f90_source.html'
 <div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;         idoubling /= iflag_bottom_central_cube .and. &amp;</div>
 <div class="line"><a name="l00083"></a><span class="lineno">   83</span>&#160;         idoubling /= iflag_top_central_cube .and. &amp;</div>
 <div class="line"><a name="l00084"></a><span class="lineno">   84</span>&#160;         idoubling /= iflag_in_fictitious_cube) &amp;</div>
-<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;           <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;wrong doubling flag for inner core point&#39;</span>)</div>
+<div class="line"><a name="l00085"></a><span class="lineno">   85</span>&#160;           <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;wrong doubling flag for inner core point&#39;</span>)</div>
 <div class="line"><a name="l00086"></a><span class="lineno">   86</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00087"></a><span class="lineno">   87</span>&#160;    <span class="comment">!--- outer core</span></div>
 <div class="line"><a name="l00088"></a><span class="lineno">   88</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00089"></a><span class="lineno">   89</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (r &gt; ricb .and. r &lt; rcmb) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;</div>
 <div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;      <span class="keywordflow">if</span> (idoubling /= iflag_outer_core_normal) &amp;</div>
-<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;wrong doubling flag for outer core point&#39;</span>)</div>
+<div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;        <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;wrong doubling flag for outer core point&#39;</span>)</div>
 <div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;    <span class="comment">!--- D&quot; at the base of the mantle</span></div>
 <div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (r &gt; rcmb .and. r &lt; rtopddoubleprime) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;</div>
 <div class="line"><a name="l00098"></a><span class="lineno">   98</span>&#160;      <span class="keywordflow">if</span> (idoubling /= iflag_mantle_normal) &amp;</div>
-<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;wrong doubling flag for D&quot; point&#39;</span>)</div>
+<div class="line"><a name="l00099"></a><span class="lineno">   99</span>&#160;        <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;wrong doubling flag for D&quot; point&#39;</span>)</div>
 <div class="line"><a name="l00100"></a><span class="lineno">  100</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00101"></a><span class="lineno">  101</span>&#160;    <span class="comment">!--- mantle: from top of D&quot; to d670</span></div>
 <div class="line"><a name="l00102"></a><span class="lineno">  102</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (r &gt; rtopddoubleprime .and. r &lt; r670) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;</div>
 <div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;      <span class="keywordflow">if</span> (idoubling /= iflag_mantle_normal) &amp;</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;wrong doubling flag for top D&quot; to d670 point&#39;</span>)</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;wrong doubling flag for top D&quot; to d670 point&#39;</span>)</div>
 <div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;    <span class="comment">!--- mantle: from d670 to d220</span></div>
 <div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (r &gt; r670 .and. r &lt; r220) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;</div>
 <div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;      <span class="keywordflow">if</span> (idoubling /= iflag_670_220) &amp;</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;        <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;wrong doubling flag for d670 to d220 point&#39;</span>)</div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;        <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;wrong doubling flag for d670 to d220 point&#39;</span>)</div>
 <div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;    <span class="comment">!--- mantle and crust: from d220 to MOHO and then to surface</span></div>
 <div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;    <span class="comment">!</span></div>
 <div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (r &gt; r220) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;</div>
 <div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;      <span class="keywordflow">if</span> (idoubling /= iflag_220_80 .and. idoubling /= iflag_80_moho .and. idoubling /= iflag_crust) &amp;</div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;        <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;wrong doubling flag for d220 to Moho to surface point&#39;</span>)</div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;        <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;wrong doubling flag for d220 to Moho to surface point&#39;</span>)</div>
 <div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;</div>
 <div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;<span class="keywordflow">    endif</span> <span class="comment">! r</span></div>
 <div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;</div>
@@ -360,10 +360,11 @@ $(document).ready(function(){initNavTree('d0/d38/model__iasp91_8f90_source.html'
 <div class="line"><a name="l00247"></a><span class="lineno">  247</span>&#160;  vp=vp*1000.0d0/(r_earth*scaleval)</div>
 <div class="line"><a name="l00248"></a><span class="lineno">  248</span>&#160;  vs=vs*1000.0d0/(r_earth*scaleval)</div>
 <div class="line"><a name="l00249"></a><span class="lineno">  249</span>&#160;</div>
-<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d0/d38/model__iasp91_8f90.html#a8b671c362215d135669d8b3139fbaad6">model_iasp91</a></div>
+<div class="line"><a name="l00250"></a><span class="lineno">  250</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d0/d38/model__iasp91_8f90.html#a59812f048769491927c8bf3bc657abed">model_iasp91</a></div>
 <div class="line"><a name="l00251"></a><span class="lineno">  251</span>&#160;</div>
 <div class="ttc" id="namespaceconstants_html"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html">constants</a></div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00028">shared_par.f90:28</a></div></div>
-<div class="ttc" id="model__iasp91_8f90_html_a8b671c362215d135669d8b3139fbaad6"><div class="ttname"><a href="../../d0/d38/model__iasp91_8f90.html#a8b671c362215d135669d8b3139fbaad6">model_iasp91</a></div><div class="ttdeci">subroutine model_iasp91(myrank, x, rho, vp, vs, Qkappa, Qmu, idoubling, ONE_CRUST, check_doubling_flag,                                                                               RICB, RCMB, RTOPDDOUBLEPRIME, R771, R670, R400, R220, R120, RMOHO, RMIDDLE_CRUST)</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d38/model__iasp91_8f90_source.html#l00040">model_iasp91.f90:40</a></div></div>
+<div class="ttc" id="model__iasp91_8f90_html_a59812f048769491927c8bf3bc657abed"><div class="ttname"><a href="../../d0/d38/model__iasp91_8f90.html#a59812f048769491927c8bf3bc657abed">model_iasp91</a></div><div class="ttdeci">subroutine model_iasp91(x, rho, vp, vs, Qkappa, Qmu, idoubling, ONE_CRUST, check_doubling_flag,                                                                               RICB, RCMB, RTOPDDOUBLEPRIME, R771, R670, R400, R220, R120, RMOHO, RMIDDLE_CRUST)</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d38/model__iasp91_8f90_source.html#l00040">model_iasp91.f90:40</a></div></div>
+<div class="ttc" id="namespaceconstants_html_a2cf2f5b4da613a2ca04aa91059a965d5"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">constants::myrank</a></div><div class="ttdeci">integer myrank</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00033">shared_par.f90:33</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- custom-made footer -->

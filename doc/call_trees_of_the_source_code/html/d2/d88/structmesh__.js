@@ -343,6 +343,8 @@ var structmesh__ =
     [ "nspec_outer_crust_mantle", "d2/d88/structmesh__.html#ac40025a666d151f55f4d8c1ff1555ca0", null ],
     [ "nspec_outer_inner_core", "d2/d88/structmesh__.html#a732e614647c2628f1855044c8665e774", null ],
     [ "nspec_outer_outer_core", "d2/d88/structmesh__.html#af5011e99c154470d6c0b9c5ad34e9c19", null ],
+    [ "NSPECMAX_ISO_MANTLE", "d2/d88/structmesh__.html#ae5930b1804b9467a2fae667e6625de0e", null ],
+    [ "NSPECMAX_TISO_MANTLE", "d2/d88/structmesh__.html#a0b6e864e47b2edfac43670ba4f4c30ed", null ],
     [ "num_colors_inner_crust_mantle", "d2/d88/structmesh__.html#a6818d1f46200cabba20c1405a1c613e8", null ],
     [ "num_colors_inner_inner_core", "d2/d88/structmesh__.html#a0f86cbc257331ac61ed26e5c223bcd46", null ],
     [ "num_colors_inner_outer_core", "d2/d88/structmesh__.html#a6a72c219cab018873d6f7b665190db6f", null ],

@@ -139,14 +139,14 @@ $(document).ready(function(){initNavTree('dc/d75/write___a_v_s___d_x__global__da
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="comment">!=====================================================================</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="comment">! create AVS or DX 3D data for the slice, to be recombined in postprocessing</span></div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#a0e3c885124ff346d34b636da9529a2ab">write_avs_dx_global_data</a>(myrank,prname,nspec,ibool,idoubling, &amp;</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#a244878f980dff68ff3b41b9464522cdf">write_avs_dx_global_data</a>(prname,nspec,ibool,idoubling, &amp;</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;                 xstore,ystore,zstore,num_ibool_avs_dx,mask_ibool,npointot)</div>
-<div class="line"><a name="l00031"></a><span class="lineno"><a class="line" href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#a0e3c885124ff346d34b636da9529a2ab">   31</a></span>&#160;</div>
+<div class="line"><a name="l00031"></a><span class="lineno"><a class="line" href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#a244878f980dff68ff3b41b9464522cdf">   31</a></span>&#160;</div>
 <div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;  <span class="keywordtype">use </span><a class="code" href="../../d7/d28/namespaceconstants.html">constants</a></div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;  <span class="keywordtype">implicit none</span></div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;</div>
-<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;  <span class="keywordtype">integer</span> nspec,myrank</div>
+<div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;  <span class="keywordtype">integer</span> nspec</div>
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;  <span class="keywordtype">integer</span> ibool(ngllx,nglly,ngllz,nspec)</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;  <span class="keywordtype">integer</span> idoubling(nspec)</div>
@@ -275,7 +275,7 @@ $(document).ready(function(){initNavTree('dc/d75/write___a_v_s___d_x__global__da
 <div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;</div>
 <div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;<span class="comment">! check that number of global points output is okay</span></div>
 <div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;  <span class="keywordflow">if</span> (numpoin /= npoin) &amp;</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;    <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;incorrect number of global points in AVS or DX file creation&#39;</span>)</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;    <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;incorrect number of global points in AVS or DX file creation&#39;</span>)</div>
 <div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;</div>
 <div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;  <span class="keyword">close</span>(iout)</div>
 <div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;</div>
@@ -304,7 +304,7 @@ $(document).ready(function(){initNavTree('dc/d75/write___a_v_s___d_x__global__da
 <div class="line"><a name="l00191"></a><span class="lineno">  191</span>&#160;</div>
 <div class="line"><a name="l00192"></a><span class="lineno">  192</span>&#160;  <span class="keyword">close</span>(iout)</div>
 <div class="line"><a name="l00193"></a><span class="lineno">  193</span>&#160;</div>
-<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#a0e3c885124ff346d34b636da9529a2ab">write_avs_dx_global_data</a></div>
+<div class="line"><a name="l00194"></a><span class="lineno">  194</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#a244878f980dff68ff3b41b9464522cdf">write_avs_dx_global_data</a></div>
 <div class="line"><a name="l00195"></a><span class="lineno">  195</span>&#160;</div>
 <div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;<span class="comment">!</span></div>
 <div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;<span class="comment">!-------------------------------------------------------------------------------------------------</span></div>
@@ -480,9 +480,10 @@ $(document).ready(function(){initNavTree('dc/d75/write___a_v_s___d_x__global__da
 <div class="line"><a name="l00368"></a><span class="lineno">  368</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#aa7c3678352c60fbb0a15f2269cc6aa72">write_avs_dx_global_data_gll</a></div>
 <div class="line"><a name="l00369"></a><span class="lineno">  369</span>&#160;</div>
 <div class="line"><a name="l00370"></a><span class="lineno">  370</span>&#160;</div>
-<div class="ttc" id="write___a_v_s___d_x__global__data_8f90_html_a0e3c885124ff346d34b636da9529a2ab"><div class="ttname"><a href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#a0e3c885124ff346d34b636da9529a2ab">write_avs_dx_global_data</a></div><div class="ttdeci">subroutine write_avs_dx_global_data(myrank, prname, nspec, ibool, idoubling,                                                               xstore, ystore, zstore, num_ibool_AVS_DX, mask_ibool, npointot)</div><div class="ttdef"><b>Definition:</b> <a href="../../dc/d75/write___a_v_s___d_x__global__data_8f90_source.html#l00031">write_AVS_DX_global_data.f90:31</a></div></div>
 <div class="ttc" id="namespaceconstants_html"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html">constants</a></div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00028">shared_par.f90:28</a></div></div>
+<div class="ttc" id="write___a_v_s___d_x__global__data_8f90_html_a244878f980dff68ff3b41b9464522cdf"><div class="ttname"><a href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#a244878f980dff68ff3b41b9464522cdf">write_avs_dx_global_data</a></div><div class="ttdeci">subroutine write_avs_dx_global_data(prname, nspec, ibool, idoubling,                                                               xstore, ystore, zstore, num_ibool_AVS_DX, mask_ibool, npointot)</div><div class="ttdef"><b>Definition:</b> <a href="../../dc/d75/write___a_v_s___d_x__global__data_8f90_source.html#l00031">write_AVS_DX_global_data.f90:31</a></div></div>
 <div class="ttc" id="write___a_v_s___d_x__global__data_8f90_html_aa7c3678352c60fbb0a15f2269cc6aa72"><div class="ttname"><a href="../../dc/d75/write___a_v_s___d_x__global__data_8f90.html#aa7c3678352c60fbb0a15f2269cc6aa72">write_avs_dx_global_data_gll</a></div><div class="ttdeci">subroutine write_avs_dx_global_data_gll(prname, nspec,                                                               xstore, ystore, zstore, rhostore, kappavstore, muvstore, Qmustore,                                                               ATTENUATION)</div><div class="ttdoc">Hejun. </div><div class="ttdef"><b>Definition:</b> <a href="../../dc/d75/write___a_v_s___d_x__global__data_8f90_source.html#l00205">write_AVS_DX_global_data.f90:205</a></div></div>
+<div class="ttc" id="namespaceconstants_html_a2cf2f5b4da613a2ca04aa91059a965d5"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">constants::myrank</a></div><div class="ttdeci">integer myrank</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00033">shared_par.f90:33</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- custom-made footer -->

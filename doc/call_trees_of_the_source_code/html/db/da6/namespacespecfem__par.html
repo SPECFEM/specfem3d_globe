@@ -128,8 +128,8 @@ Variables</h2></td></tr>
 <tr class="separator:a764fdb6556ff3f491f3f87459eaa87fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a318419edeb4bf1ba20d67ffc6033b9a1"><td class="memItemLeft" align="right" valign="top">double precision, dimension(ngllz)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a318419edeb4bf1ba20d67ffc6033b9a1">wzgll</a></td></tr>
 <tr class="separator:a318419edeb4bf1ba20d67ffc6033b9a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a510fc90896011b1c98457c67f82b890c"><td class="memItemLeft" align="right" valign="top">double precision, dimension(ngllx, nglly, ngllz)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a510fc90896011b1c98457c67f82b890c">wgll_cube</a></td></tr>
-<tr class="separator:a510fc90896011b1c98457c67f82b890c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f09000cd6c235fa717d988ca2c20ecc"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(ngllx, nglly, ngllz)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a4f09000cd6c235fa717d988ca2c20ecc">wgll_cube</a></td></tr>
+<tr class="separator:a4f09000cd6c235fa717d988ca2c20ecc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a60616e200eb41010f5076260d21d7850"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(ngllx, ngllx)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a60616e200eb41010f5076260d21d7850">hprime_xx</a></td></tr>
 <tr class="separator:a60616e200eb41010f5076260d21d7850"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a946c397ab3a64844982373d660e0cbd9"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(ngllx, ngllx)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a946c397ab3a64844982373d660e0cbd9">hprimewgll_xx</a></td></tr>
@@ -176,8 +176,6 @@ Variables</h2></td></tr>
 <tr class="separator:af56c20ae309a4d6e189177371a4ce0d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa16506ab6aa51df3d48089d697ec560"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#aaa16506ab6aa51df3d48089d697ec560">rmass_ocean_load</a></td></tr>
 <tr class="separator:aaa16506ab6aa51df3d48089d697ec560"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa5f51cebd953d8714240cc28ae26ee67"><td class="memItemLeft" align="right" valign="top">logical, dimension(:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#aa5f51cebd953d8714240cc28ae26ee67">updated_dof_ocean_load</a></td></tr>
-<tr class="separator:aa5f51cebd953d8714240cc28ae26ee67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ffd52e5f97dac39af9929875097ffa8"><td class="memItemLeft" align="right" valign="top">integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a5ffd52e5f97dac39af9929875097ffa8">npoin_oceans</a></td></tr>
 <tr class="separator:a5ffd52e5f97dac39af9929875097ffa8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a69efa4598c64f0bab13f370ebab1513f"><td class="memItemLeft" align="right" valign="top">integer, dimension(:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a69efa4598c64f0bab13f370ebab1513f">ibool_ocean_load</a></td></tr>
@@ -212,6 +210,16 @@ Variables</h2></td></tr>
 <tr class="separator:add310657fc343aca4beb0444b63c696e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa436134d42e4e7b7684eb61dd9199c4e"><td class="memItemLeft" align="right" valign="top">double precision, dimension(nrad_gravity)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#aa436134d42e4e7b7684eb61dd9199c4e">minus_rho_g_over_kappa_fluid</a></td></tr>
 <tr class="separator:aa436134d42e4e7b7684eb61dd9199c4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a347361a33f6898fcf7adc7175e2e79ef"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a347361a33f6898fcf7adc7175e2e79ef">gravity_pre_store_outer_core</a></td></tr>
+<tr class="separator:a347361a33f6898fcf7adc7175e2e79ef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9c80046d679de86332f706d26571589f"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a9c80046d679de86332f706d26571589f">gravity_pre_store_crust_mantle</a></td></tr>
+<tr class="separator:a9c80046d679de86332f706d26571589f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac70b216c68fae04c5bbf80a38a844ff7"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#ac70b216c68fae04c5bbf80a38a844ff7">gravity_pre_store_inner_core</a></td></tr>
+<tr class="separator:ac70b216c68fae04c5bbf80a38a844ff7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a60130cdb0cb198ca2ee2d9a515ac0b15"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a60130cdb0cb198ca2ee2d9a515ac0b15">gravity_h_crust_mantle</a></td></tr>
+<tr class="separator:a60130cdb0cb198ca2ee2d9a515ac0b15"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acff485b79f9d0f43b1b96ddd3a234fcd"><td class="memItemLeft" align="right" valign="top">real(kind=custom_real), dimension(:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#acff485b79f9d0f43b1b96ddd3a234fcd">gravity_h_inner_core</a></td></tr>
+<tr class="separator:acff485b79f9d0f43b1b96ddd3a234fcd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea1fca219d1f757235a8d2f525f02356"><td class="memItemLeft" align="right" valign="top">integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#aea1fca219d1f757235a8d2f525f02356">nsources_local</a></td></tr>
 <tr class="separator:aea1fca219d1f757235a8d2f525f02356"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a198df046c7d8538505a228c2be96bec6"><td class="memItemLeft" align="right" valign="top">integer, dimension(:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a198df046c7d8538505a228c2be96bec6">islice_selected_source</a></td></tr>
@@ -406,8 +414,6 @@ Variables</h2></td></tr>
 <tr class="separator:adfb65bcade633504337e243273edf27f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7269099590cb09c28da4f91ba340ef3b"><td class="memItemLeft" align="right" valign="top">character(len=max_string_len)&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a7269099590cb09c28da4f91ba340ef3b">prname</a></td></tr>
 <tr class="separator:a7269099590cb09c28da4f91ba340ef3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7a1b580ac383ff5c8731025449fb41e2"><td class="memItemLeft" align="right" valign="top">integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a7a1b580ac383ff5c8731025449fb41e2">myrank</a></td></tr>
-<tr class="separator:a7a1b580ac383ff5c8731025449fb41e2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:accb88b9595eacfcfc43e11e1509b5c49"><td class="memItemLeft" align="right" valign="top">integer&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#accb88b9595eacfcfc43e11e1509b5c49">ichunk</a></td></tr>
 <tr class="separator:accb88b9595eacfcfc43e11e1509b5c49"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a559759e47084397a601fbc4088f5660d"><td class="memItemLeft" align="right" valign="top">integer, dimension(:,:,:), allocatable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../db/da6/namespacespecfem__par.html#a559759e47084397a601fbc4088f5660d">addressing</a></td></tr>
@@ -568,7 +574,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00355">355</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00368">368</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -582,7 +588,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00298">298</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00313">313</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -596,7 +602,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00207">207</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00218">218</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -610,7 +616,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00209">209</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00220">220</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -624,7 +630,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00209">209</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00220">220</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -638,7 +644,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00396">396</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00409">409</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -652,7 +658,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00372">372</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00385">385</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -666,7 +672,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00384">384</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00397">397</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -680,7 +686,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00396">396</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00409">409</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -694,7 +700,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00372">372</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00385">385</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -708,7 +714,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00384">384</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00397">397</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -722,7 +728,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00432">432</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00445">445</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -736,7 +742,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00432">432</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00445">445</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -750,7 +756,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00432">432</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00445">445</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -764,7 +770,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00209">209</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00220">220</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -778,7 +784,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00399">399</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00412">412</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -792,7 +798,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00375">375</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00388">388</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -806,7 +812,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00387">387</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00400">400</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -820,7 +826,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00399">399</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00412">412</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -834,7 +840,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00375">375</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00388">388</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -848,7 +854,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00387">387</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00400">400</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -862,7 +868,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00247">247</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00255">255</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -876,7 +882,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00207">207</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00218">218</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -890,7 +896,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00454">454</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00467">467</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -904,7 +910,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00395">395</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00408">408</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -918,7 +924,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00371">371</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00384">384</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -932,7 +938,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00383">383</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00396">396</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -946,7 +952,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00395">395</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00408">408</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -960,7 +966,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00371">371</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00384">384</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -974,7 +980,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00383">383</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00396">396</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -988,7 +994,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00300">300</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00315">315</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1002,7 +1008,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00331">331</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00346">346</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1016,7 +1022,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00331">331</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00346">346</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1030,7 +1036,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00331">331</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00346">346</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1044,7 +1050,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00331">331</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00346">346</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1058,7 +1064,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00343">343</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00358">358</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1072,7 +1078,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00412">412</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00425">425</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1086,7 +1092,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00418">418</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00431">431</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1100,7 +1106,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00255">255</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00263">263</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1114,7 +1120,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00336">336</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00351">351</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1128,7 +1134,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00342">342</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1142,7 +1148,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00430">430</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00443">443</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1156,7 +1162,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00430">430</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00443">443</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1170,7 +1176,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00430">430</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00443">443</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1184,7 +1190,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00255">255</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00263">263</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1198,7 +1204,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00331">331</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00346">346</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1212,7 +1218,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00331">331</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00346">346</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1226,7 +1232,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00331">331</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00346">346</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1240,7 +1246,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00238">238</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00246">246</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1254,7 +1260,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00238">238</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00246">246</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1268,7 +1274,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00286">286</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00301">301</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1282,7 +1288,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00269">269</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00284">284</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1296,7 +1302,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00333">333</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00348">348</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1310,7 +1316,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00286">286</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00301">301</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1324,7 +1330,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00269">269</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00284">284</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1338,7 +1344,77 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00207">207</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00218">218</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a60130cdb0cb198ca2ee2d9a515ac0b15"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real(kind=custom_real), dimension(:,:), allocatable specfem_par::gravity_h_crust_mantle</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00269">269</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="acff485b79f9d0f43b1b96ddd3a234fcd"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real(kind=custom_real), dimension(:,:), allocatable specfem_par::gravity_h_inner_core</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00269">269</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a9c80046d679de86332f706d26571589f"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real(kind=custom_real), dimension(:,:), allocatable specfem_par::gravity_pre_store_crust_mantle</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00267">267</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="ac70b216c68fae04c5bbf80a38a844ff7"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real(kind=custom_real), dimension(:,:), allocatable specfem_par::gravity_pre_store_inner_core</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00267">267</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+
+</div>
+</div>
+<a class="anchor" id="a347361a33f6898fcf7adc7175e2e79ef"></a>
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">real(kind=custom_real), dimension(:,:), allocatable specfem_par::gravity_pre_store_outer_core</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00267">267</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1352,7 +1428,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00270">270</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00285">285</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1366,7 +1442,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00270">270</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00285">285</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1380,7 +1456,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00294">294</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00309">309</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1394,7 +1470,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00294">294</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00309">309</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1408,7 +1484,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00295">295</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00310">310</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1422,7 +1498,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00336">336</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00351">351</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1436,7 +1512,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00342">342</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1450,7 +1526,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00312">312</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1464,7 +1540,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00312">312</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1478,7 +1554,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00190">190</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00201">201</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1492,7 +1568,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00191">191</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00202">202</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1506,7 +1582,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00192">192</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00203">203</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1520,7 +1596,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00193">193</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00204">204</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1534,7 +1610,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00190">190</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00201">201</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1548,7 +1624,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00191">191</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00202">202</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1562,7 +1638,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00192">192</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00203">203</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1576,7 +1652,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00193">193</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00204">204</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1590,7 +1666,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00312">312</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1604,7 +1680,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00294">294</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00309">309</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1618,7 +1694,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00445">445</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00458">458</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1632,7 +1708,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00306">306</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00321">321</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1646,7 +1722,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00305">305</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00320">320</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1660,7 +1736,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00306">306</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00321">321</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1674,7 +1750,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00219">219</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00230">230</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1688,7 +1764,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00369">369</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00382">382</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1702,7 +1778,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00381">381</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00394">394</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1716,7 +1792,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00393">393</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00406">406</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1730,7 +1806,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00228">228</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00236">236</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1744,7 +1820,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00354">354</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00367">367</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1758,7 +1834,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00453">453</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00466">466</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1772,7 +1848,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00284">284</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00299">299</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1786,7 +1862,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00264">264</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00279">279</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1800,7 +1876,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00284">284</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00299">299</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1814,7 +1890,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00264">264</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00279">279</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1828,7 +1904,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00435">435</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00448">448</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1842,7 +1918,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00424">424</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00437">437</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1856,7 +1932,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00324">324</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00339">339</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1870,7 +1946,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00320">320</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00335">335</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1884,7 +1960,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00320">320</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00335">335</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1898,7 +1974,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00455">455</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00468">468</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1912,7 +1988,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00456">456</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00469">469</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1926,7 +2002,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00456">456</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00469">469</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1940,7 +2016,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00456">456</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00469">469</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1954,7 +2030,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00440">440</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00453">453</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1968,7 +2044,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00441">441</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00454">454</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1982,7 +2058,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00440">440</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00453">453</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -1996,7 +2072,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00336">336</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00351">351</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2010,7 +2086,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00342">342</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2024,7 +2100,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00272">272</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2038,7 +2114,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00367">367</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00380">380</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2052,7 +2128,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00379">379</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00392">392</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2066,7 +2142,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00391">391</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00404">404</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2080,7 +2156,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00329">329</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00344">344</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2094,7 +2170,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00406">406</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00419">419</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2108,7 +2184,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00336">336</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00351">351</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2122,7 +2198,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00342">342</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2136,7 +2212,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00255">255</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00263">263</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2150,7 +2226,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00254">254</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00262">262</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2164,7 +2240,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00254">254</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00262">262</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2178,7 +2254,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00255">255</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00263">263</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2192,7 +2268,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00255">255</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00263">263</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2206,7 +2282,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00336">336</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00351">351</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2220,7 +2296,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00342">342</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2234,7 +2310,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00309">309</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00324">324</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2248,7 +2324,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00272">272</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2262,7 +2338,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00272">272</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2276,7 +2352,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00272">272</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2290,7 +2366,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00272">272</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2304,7 +2380,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00340">340</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00355">355</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2318,7 +2394,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00272">272</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2332,7 +2408,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00272">272</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2346,7 +2422,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00272">272</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2360,7 +2436,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00268">268</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00283">283</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2374,7 +2450,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00268">268</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00283">283</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2388,7 +2464,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00268">268</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00283">283</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2402,7 +2478,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00368">368</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00381">381</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2416,7 +2492,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00380">380</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00393">393</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2430,21 +2506,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00392">392</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="a7a1b580ac383ff5c8731025449fb41e2"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">integer specfem_par::myrank</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00353">353</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00405">405</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2458,7 +2520,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00268">268</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00283">283</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2472,7 +2534,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00268">268</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00283">283</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2486,7 +2548,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00268">268</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00283">283</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2500,7 +2562,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00302">302</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00317">317</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2514,7 +2576,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00290">290</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00305">305</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2528,7 +2590,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00368">368</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00381">381</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2542,7 +2604,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00380">380</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00393">393</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2556,7 +2618,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00392">392</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00405">405</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2570,7 +2632,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00229">229</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00237">237</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2584,7 +2646,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00227">227</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00235">235</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2598,7 +2660,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00283">283</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00298">298</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2612,7 +2674,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00283">283</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00298">298</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2626,7 +2688,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00263">263</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00278">278</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2640,7 +2702,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00237">237</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00245">245</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2654,7 +2716,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00435">435</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00448">448</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2668,7 +2730,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00303">303</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00318">318</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2682,7 +2744,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00439">439</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00452">452</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2696,7 +2758,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00439">439</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00452">452</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2710,7 +2772,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00287">287</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00302">302</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2724,7 +2786,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00266">266</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00281">281</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2738,7 +2800,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00366">366</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00379">379</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2752,7 +2814,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00378">378</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00391">391</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2766,7 +2828,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00390">390</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00403">403</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2780,7 +2842,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00285">285</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00300">300</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2794,7 +2856,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00271">271</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00286">286</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2808,7 +2870,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00346">346</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00361">361</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2822,7 +2884,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00398">398</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00411">411</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2836,7 +2898,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00374">374</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00387">387</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2850,7 +2912,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00386">386</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00399">399</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2864,7 +2926,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00398">398</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00411">411</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2878,7 +2940,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00374">374</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00387">387</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2892,7 +2954,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00386">386</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00399">399</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2906,7 +2968,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00222">222</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00233">233</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2920,7 +2982,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00230">230</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00238">238</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2934,7 +2996,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00238">238</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00246">246</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2948,7 +3010,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00462">462</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00475">475</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2962,7 +3024,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00427">427</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00440">440</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2976,7 +3038,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00427">427</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00440">440</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -2990,7 +3052,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00427">427</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00440">440</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3004,7 +3066,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00427">427</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00440">440</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3018,7 +3080,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00427">427</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00440">440</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3032,7 +3094,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00337">337</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00352">352</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3046,7 +3108,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00328">328</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00343">343</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3060,7 +3122,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00322">322</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00337">337</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3074,7 +3136,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00322">322</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00337">337</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3088,7 +3150,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00321">321</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00336">336</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3102,7 +3164,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00311">311</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00326">326</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3116,7 +3178,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00310">310</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00325">325</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3130,7 +3192,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00265">265</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00280">280</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3144,7 +3206,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00289">289</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00304">304</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3158,7 +3220,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00291">291</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00306">306</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3172,7 +3234,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00288">288</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00303">303</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3186,7 +3248,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00288">288</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00303">303</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3200,7 +3262,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00276">276</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00291">291</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3214,7 +3276,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00288">288</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00303">303</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3228,7 +3290,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00288">288</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00303">303</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3242,7 +3304,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00311">311</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00326">326</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3256,7 +3318,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00273">273</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00288">288</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3270,7 +3332,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00330">330</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00345">345</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3284,7 +3346,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00330">330</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00345">345</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3298,7 +3360,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00436">436</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00449">449</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3312,7 +3374,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00212">212</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00223">223</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3326,7 +3388,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00271">271</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00286">286</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3340,7 +3402,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00358">358</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00371">371</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3354,7 +3416,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00270">270</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00285">285</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3368,21 +3430,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00245">245</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
-
-</div>
-</div>
-<a class="anchor" id="aa5f51cebd953d8714240cc28ae26ee67"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">logical, dimension(:), allocatable specfem_par::updated_dof_ocean_load</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00225">225</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00253">253</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3396,21 +3444,21 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00459">459</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00472">472</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
-<a class="anchor" id="a510fc90896011b1c98457c67f82b890c"></a>
+<a class="anchor" id="a4f09000cd6c235fa717d988ca2c20ecc"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">double precision, dimension(ngllx,nglly,ngllz) specfem_par::wgll_cube</td>
+          <td class="memname">real(kind=custom_real), dimension(ngllx,nglly,ngllz) specfem_par::wgll_cube</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00187">187</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00198">198</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3424,7 +3472,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00195">195</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00206">206</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3438,7 +3486,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00200">200</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00211">211</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3452,7 +3500,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00196">196</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00207">207</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3466,7 +3514,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00200">200</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00211">211</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3480,7 +3528,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00197">197</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00208">208</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3494,7 +3542,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00200">200</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00211">211</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3508,7 +3556,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00182">182</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00193">193</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3522,7 +3570,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00183">183</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00194">194</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3536,7 +3584,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00184">184</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00195">195</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3550,7 +3598,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00286">286</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00301">301</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3564,7 +3612,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00269">269</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00284">284</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3578,7 +3626,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00182">182</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00193">193</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3592,7 +3640,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00183">183</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00194">194</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3606,7 +3654,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00336">336</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00351">351</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3620,7 +3668,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00327">327</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00342">342</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>
@@ -3634,7 +3682,7 @@ Variables</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00184">184</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
+<p>Definition at line <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html#l00195">195</a> of file <a class="el" href="../../d7/dda/specfem3_d__par_8_f90_source.html">specfem3D_par.F90</a>.</p>
 
 </div>
 </div>

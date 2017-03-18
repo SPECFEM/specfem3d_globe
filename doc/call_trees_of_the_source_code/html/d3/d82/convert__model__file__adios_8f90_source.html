@@ -551,16 +551,16 @@ $(document).ready(function(){initNavTree('d3/d82/convert__model__file__adios_8f9
 <div class="line"><a name="l00438"></a><span class="lineno">  438</span>&#160;    group_size_inc = 0</div>
 <div class="line"><a name="l00439"></a><span class="lineno">  439</span>&#160;    group_name = <span class="stringliteral">&quot;MODELS_GROUP&quot;</span></div>
 <div class="line"><a name="l00440"></a><span class="lineno">  440</span>&#160;</div>
-<div class="line"><a name="l00441"></a><span class="lineno">  441</span>&#160;    <span class="keyword">call </span>adios_declare_group(group, group_name, <span class="stringliteral">&quot;&quot;</span>, 1, ier)</div>
-<div class="line"><a name="l00442"></a><span class="lineno">  442</span>&#160;    <span class="keyword">call </span>adios_select_method(group, adios_transport_method, <span class="stringliteral">&quot;&quot;</span>, <span class="stringliteral">&quot;&quot;</span>, ier)</div>
-<div class="line"><a name="l00443"></a><span class="lineno">  443</span>&#160;    <span class="keyword">call </span>define_adios_scalar(group, group_size_inc, <span class="stringliteral">&quot;&quot;</span>, <span class="stringliteral">&quot;NSPEC&quot;</span>, nspec)</div>
+<div class="line"><a name="l00441"></a><span class="lineno">  441</span>&#160;    <span class="keyword">call </span>adios_declare_group(group, group_name, <span class="stringliteral">&#39;&#39;</span>, 1, ier)</div>
+<div class="line"><a name="l00442"></a><span class="lineno">  442</span>&#160;    <span class="keyword">call </span>adios_select_method(group, adios_transport_method, <span class="stringliteral">&#39;&#39;</span>, <span class="stringliteral">&#39;&#39;</span>, ier)</div>
+<div class="line"><a name="l00443"></a><span class="lineno">  443</span>&#160;    <span class="keyword">call </span>define_adios_scalar(group, group_size_inc, <span class="stringliteral">&#39;&#39;</span>, <span class="stringliteral">&quot;NSPEC&quot;</span>, nspec)</div>
 <div class="line"><a name="l00444"></a><span class="lineno">  444</span>&#160;</div>
 <div class="line"><a name="l00445"></a><span class="lineno">  445</span>&#160;    <span class="comment">! Setup ADIOS for the current group</span></div>
 <div class="line"><a name="l00446"></a><span class="lineno">  446</span>&#160;    local_dim = ngllx * nglly * ngllz * nspec</div>
 <div class="line"><a name="l00447"></a><span class="lineno">  447</span>&#160;</div>
 <div class="line"><a name="l00448"></a><span class="lineno">  448</span>&#160;    <span class="comment">! Define ADIOS Variables</span></div>
 <div class="line"><a name="l00449"></a><span class="lineno">  449</span>&#160;    <span class="keywordflow">do</span> iker=1,nparams</div>
-<div class="line"><a name="l00450"></a><span class="lineno">  450</span>&#160;      <span class="keyword">call </span>define_adios_global_array1d(group, group_size_inc,local_dim,<span class="stringliteral">&quot;&quot;</span>,trim(model_name(iker)),model)</div>
+<div class="line"><a name="l00450"></a><span class="lineno">  450</span>&#160;      <span class="keyword">call </span>define_adios_global_array1d(group, group_size_inc,local_dim,<span class="stringliteral">&#39;&#39;</span>,trim(model_name(iker)),model)</div>
 <div class="line"><a name="l00451"></a><span class="lineno">  451</span>&#160;<span class="keywordflow">    enddo</span></div>
 <div class="line"><a name="l00452"></a><span class="lineno">  452</span>&#160;</div>
 <div class="line"><a name="l00453"></a><span class="lineno">  453</span>&#160;    <span class="comment">! Open an handler to the ADIOS file and setup the group size</span></div>
@@ -617,7 +617,7 @@ $(document).ready(function(){initNavTree('d3/d82/convert__model__file__adios_8f9
 <div class="line"><a name="l00504"></a><span class="lineno">  504</span>&#160;                                       trim(model_name(iker)),model(:,:,:,:))</div>
 <div class="line"><a name="l00505"></a><span class="lineno">  505</span>&#160;<span class="keywordflow">    enddo</span></div>
 <div class="line"><a name="l00506"></a><span class="lineno">  506</span>&#160;    <span class="comment">! Perform the actual write to disk</span></div>
-<div class="line"><a name="l00507"></a><span class="lineno">  507</span>&#160;    <span class="keyword">call </span>adios_set_path(model_handle, <span class="stringliteral">&quot;&quot;</span>, ier)</div>
+<div class="line"><a name="l00507"></a><span class="lineno">  507</span>&#160;    <span class="keyword">call </span>adios_set_path(model_handle, <span class="stringliteral">&#39;&#39;</span>, ier)</div>
 <div class="line"><a name="l00508"></a><span class="lineno">  508</span>&#160;    <span class="keyword">call </span>adios_close(model_handle, ier)</div>
 <div class="line"><a name="l00509"></a><span class="lineno">  509</span>&#160;</div>
 <div class="line"><a name="l00510"></a><span class="lineno">  510</span>&#160;    <span class="keywordflow">if</span> (myrank == 0) print *, <span class="stringliteral">&#39;done writing the model in adios format&#39;</span></div>
@@ -633,7 +633,7 @@ $(document).ready(function(){initNavTree('d3/d82/convert__model__file__adios_8f9
 <div class="line"><a name="l00520"></a><span class="lineno">  520</span>&#160;  <span class="keyword">call </span><a class="code" href="../../db/d8f/parallel_8f90.html#ac422b103fe555bf7e5c01684fc30634b">finalize_mpi</a>()</div>
 <div class="line"><a name="l00521"></a><span class="lineno">  521</span>&#160;</div>
 <div class="line"><a name="l00522"></a><span class="lineno">  522</span>&#160;<span class="keyword">end program </span><a class="code" href="../../d3/d82/convert__model__file__adios_8f90.html#a0412fb5fbcaa9a218bb21b53bb72e2d6">convert_model_file_adios</a></div>
-<div class="ttc" id="parallel_8f90_html_af9aafd1831ffab5bb90f71c0d82df5a7"><div class="ttname"><a href="../../db/d8f/parallel_8f90.html#af9aafd1831ffab5bb90f71c0d82df5a7">world_duplicate</a></div><div class="ttdeci">subroutine world_duplicate(comm)</div><div class="ttdef"><b>Definition:</b> <a href="../../db/d8f/parallel_8f90_source.html#l01762">parallel.f90:1762</a></div></div>
+<div class="ttc" id="parallel_8f90_html_af9aafd1831ffab5bb90f71c0d82df5a7"><div class="ttname"><a href="../../db/d8f/parallel_8f90.html#af9aafd1831ffab5bb90f71c0d82df5a7">world_duplicate</a></div><div class="ttdeci">subroutine world_duplicate(comm)</div><div class="ttdef"><b>Definition:</b> <a href="../../db/d8f/parallel_8f90_source.html#l01752">parallel.f90:1752</a></div></div>
 <div class="ttc" id="parallel_8f90_html_a0f27a8b922f3b4c44530e0c923bf38e5"><div class="ttname"><a href="../../db/d8f/parallel_8f90.html#a0f27a8b922f3b4c44530e0c923bf38e5">init_mpi</a></div><div class="ttdeci">subroutine init_mpi()</div><div class="ttdef"><b>Definition:</b> <a href="../../db/d8f/parallel_8f90_source.html#l00074">parallel.f90:74</a></div></div>
 <div class="ttc" id="namespacemanager__adios_html_a9454863b300d731b76db349c77976ee9"><div class="ttname"><a href="../../d9/dff/namespacemanager__adios.html#a9454863b300d731b76db349c77976ee9">manager_adios::initialize_adios</a></div><div class="ttdeci">subroutine, public initialize_adios()</div><div class="ttdef"><b>Definition:</b> <a href="../../d6/d93/adios__manager_8_f90_source.html#l00102">adios_manager.F90:102</a></div></div>
 <div class="ttc" id="namespacepostprocess__par_html"><div class="ttname"><a href="../../d1/d36/namespacepostprocess__par.html">postprocess_par</a></div><div class="ttdef"><b>Definition:</b> <a href="../../dc/d54/postprocess__par_8f90_source.html#l00029">postprocess_par.f90:29</a></div></div>

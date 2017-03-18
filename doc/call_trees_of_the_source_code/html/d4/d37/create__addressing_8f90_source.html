@@ -139,15 +139,15 @@ $(document).ready(function(){initNavTree('d4/d37/create__addressing_8f90_source.
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="comment">!=====================================================================</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;</div>
-<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d4/d37/create__addressing_8f90.html#af4aaeb0d7d85dedec11350cbb3dc5884">create_addressing</a>(myrank,NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT, &amp;</div>
+<div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d4/d37/create__addressing_8f90.html#ae08a37525294dc7ae4976aec028c24d5">create_addressing</a>(NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT, &amp;</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;                        addressing,ichunk_slice,iproc_xi_slice,iproc_eta_slice, &amp;</div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;                        output_files)</div>
-<div class="line"><a name="l00032"></a><span class="lineno"><a class="line" href="../../d4/d37/create__addressing_8f90.html#af4aaeb0d7d85dedec11350cbb3dc5884">   32</a></span>&#160;</div>
+<div class="line"><a name="l00032"></a><span class="lineno"><a class="line" href="../../d4/d37/create__addressing_8f90.html#ae08a37525294dc7ae4976aec028c24d5">   32</a></span>&#160;</div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;  <span class="keywordtype">use </span><a class="code" href="../../d7/d28/namespaceconstants.html">constants</a></div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;</div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;  <span class="keywordtype">implicit none</span></div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160;</div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;  <span class="keywordtype">integer</span> :: myrank,NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;  <span class="keywordtype">integer</span> :: NCHUNKS,NPROC,NPROC_ETA,NPROC_XI,NPROCTOT</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;</div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;  <span class="keywordtype">integer</span>, <span class="keywordtype">dimension(NCHUNKS,0:NPROC_XI-1,0:NPROC_ETA-1)</span> :: addressing</div>
 <div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;  <span class="keywordtype">integer</span>, <span class="keywordtype">dimension(0:NPROCTOT-1)</span> :: ichunk_slice,iproc_xi_slice,iproc_eta_slice</div>
@@ -164,9 +164,9 @@ $(document).ready(function(){initNavTree('d4/d37/create__addressing_8f90_source.
 <div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;  iproc_eta_slice(:) = 0</div>
 <div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;  <span class="comment">! loop on all the chunks to create global slice addressing for solver</span></div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;  <span class="keywordflow">if</span> (myrank == 0) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;  <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == 0) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;    <span class="keyword">open</span>(unit=iout,file=trim(output_files)//<span class="stringliteral">&#39;/addressing.txt&#39;</span>,status=<span class="stringliteral">&#39;unknown&#39;</span>,iostat=ier)</div>
-<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    <span class="keywordflow">if</span> (ier /= 0 ) <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;Error opening addressing.txt&#39;</span>)</div>
+<div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;    <span class="keywordflow">if</span> (ier /= 0 ) <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;Error opening addressing.txt&#39;</span>)</div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;    <span class="keyword">write</span>(imain,*) <span class="stringliteral">&#39;creating global slice addressing&#39;</span></div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    <span class="keyword">write</span>(imain,*)</div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;    <span class="keyword">call </span>flush_imain()</div>
@@ -180,15 +180,15 @@ $(document).ready(function(){initNavTree('d4/d37/create__addressing_8f90_source.
 <div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;        ichunk_slice(iprocnum) = ichunk</div>
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;        iproc_xi_slice(iprocnum) = iproc_xi</div>
 <div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;        iproc_eta_slice(iprocnum) = iproc_eta</div>
-<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        <span class="keywordflow">if</span> (myrank == 0) <span class="keyword">write</span>(iout,*) iprocnum,ichunk,iproc_xi,iproc_eta</div>
+<div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;        <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == 0) <span class="keyword">write</span>(iout,*) iprocnum,ichunk,iproc_xi,iproc_eta</div>
 <div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;<span class="keywordflow">      enddo</span></div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;<span class="keywordflow">    enddo</span></div>
 <div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;<span class="keywordflow">  enddo</span></div>
 <div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;</div>
-<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;  <span class="keywordflow">if</span> (myrank == 0) <span class="keyword">close</span>(iout)</div>
+<div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160;  <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == 0) <span class="keyword">close</span>(iout)</div>
 <div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;</div>
 <div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;  <span class="comment">! output a topology map of slices - fix 20x by nproc</span></div>
-<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;  <span class="keywordflow">if</span> (myrank == 0) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;  <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == 0) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    <span class="keywordflow">if</span> (nchunks == 6 .and. nproctot &lt; 1000) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;      <span class="keyword">write</span>(imain,*) <span class="stringliteral">&#39;Spatial distribution of the slices&#39;</span></div>
 <div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;      <span class="keywordflow">do</span> iproc_xi = nproc_xi-1, 0, -1</div>
@@ -241,9 +241,10 @@ $(document).ready(function(){initNavTree('d4/d37/create__addressing_8f90_source.
 <div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;<span class="keywordflow">    endif</span></div>
 <div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;<span class="keywordflow">  endif</span></div>
 <div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d4/d37/create__addressing_8f90.html#af4aaeb0d7d85dedec11350cbb3dc5884">create_addressing</a></div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d4/d37/create__addressing_8f90.html#ae08a37525294dc7ae4976aec028c24d5">create_addressing</a></div>
 <div class="ttc" id="namespaceconstants_html"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html">constants</a></div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00028">shared_par.f90:28</a></div></div>
-<div class="ttc" id="create__addressing_8f90_html_af4aaeb0d7d85dedec11350cbb3dc5884"><div class="ttname"><a href="../../d4/d37/create__addressing_8f90.html#af4aaeb0d7d85dedec11350cbb3dc5884">create_addressing</a></div><div class="ttdeci">subroutine create_addressing(myrank, NCHUNKS, NPROC, NPROC_ETA, NPROC_XI, NPROCTOT,                                                                                           addressing, ichunk_slice, iproc_xi_slice, iproc_eta_slice,                                                                                           OUTPUT_FILES)</div><div class="ttdef"><b>Definition:</b> <a href="../../d4/d37/create__addressing_8f90_source.html#l00032">create_addressing.f90:32</a></div></div>
+<div class="ttc" id="create__addressing_8f90_html_ae08a37525294dc7ae4976aec028c24d5"><div class="ttname"><a href="../../d4/d37/create__addressing_8f90.html#ae08a37525294dc7ae4976aec028c24d5">create_addressing</a></div><div class="ttdeci">subroutine create_addressing(NCHUNKS, NPROC, NPROC_ETA, NPROC_XI, NPROCTOT,                                                                                           addressing, ichunk_slice, iproc_xi_slice, iproc_eta_slice,                                                                                           OUTPUT_FILES)</div><div class="ttdef"><b>Definition:</b> <a href="../../d4/d37/create__addressing_8f90_source.html#l00032">create_addressing.f90:32</a></div></div>
+<div class="ttc" id="namespaceconstants_html_a2cf2f5b4da613a2ca04aa91059a965d5"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">constants::myrank</a></div><div class="ttdeci">integer myrank</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00033">shared_par.f90:33</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- custom-made footer -->

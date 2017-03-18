@@ -118,19 +118,19 @@ $(document).ready(function(){initNavTree('d8/d7b/get__attenuation_8f90.html','..
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions/Subroutines</h2></td></tr>
-<tr class="memitem:a7da9980bfd11370786863cf2fc9cc8ff"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7b/get__attenuation_8f90.html#a7da9980bfd11370786863cf2fc9cc8ff">get_attenuation_model_3d</a> (myrank, iregion_code,                                                                                                                                                   one_minus_sum_beta,                                                                                                                                                   factor_common,                                                                                                                                                   scale_factor, tau_s, vnspec)</td></tr>
-<tr class="separator:a7da9980bfd11370786863cf2fc9cc8ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4982e46ba18cb0d626e472387c6f5130"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7b/get__attenuation_8f90.html#a4982e46ba18cb0d626e472387c6f5130">get_attenuation_model_3d</a> (iregion_code,                                                                                                                                                   one_minus_sum_beta,                                                                                                                                                   factor_common,                                                                                                                                                   factor_scale, tau_s, vnspec)</td></tr>
+<tr class="separator:a4982e46ba18cb0d626e472387c6f5130"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2784bac3affdea606e0fb23c3896909"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7b/get__attenuation_8f90.html#ac2784bac3affdea606e0fb23c3896909">get_attenuation_property_values</a> (tau_s, tau_e, factor_common, one_minus_sum_beta)</td></tr>
 <tr class="separator:ac2784bac3affdea606e0fb23c3896909"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a88a4c0a53d59030af8efad3821198793"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7b/get__attenuation_8f90.html#a88a4c0a53d59030af8efad3821198793">get_attenuation_scale_factor</a> (myrank, T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)</td></tr>
-<tr class="separator:a88a4c0a53d59030af8efad3821198793"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a79220c5d567435746b66f7189a9b67fd"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7b/get__attenuation_8f90.html#a79220c5d567435746b66f7189a9b67fd">get_attenuation_scale_factor</a> (T_c_source, tau_mu, tau_sigma, Q_mu, scale_factor)</td></tr>
+<tr class="separator:a79220c5d567435746b66f7189a9b67fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac3c30b819473bc98eacf7127f77f0fb6"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7b/get__attenuation_8f90.html#ac3c30b819473bc98eacf7127f77f0fb6">get_attenuation_memory_values</a> (tau_s, deltat, alphaval, betaval, gammaval)</td></tr>
 <tr class="separator:ac3c30b819473bc98eacf7127f77f0fb6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abd848eeacd939cd749a7346de3717c4e"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7b/get__attenuation_8f90.html#abd848eeacd939cd749a7346de3717c4e">bcast_attenuation_model_3d</a> (one_minus_sum_beta, factor_common, scale_factor, tau_s, vnspec)</td></tr>
-<tr class="separator:abd848eeacd939cd749a7346de3717c4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa7e0041b75e8ab1206a86b0bce950b5"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/d7b/get__attenuation_8f90.html#aaa7e0041b75e8ab1206a86b0bce950b5">bcast_attenuation_model_3d</a> (one_minus_sum_beta, factor_common, factor_scale, tau_s, vnspec)</td></tr>
+<tr class="separator:aaa7e0041b75e8ab1206a86b0bce950b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function/Subroutine Documentation</h2>
-<a class="anchor" id="abd848eeacd939cd749a7346de3717c4e"></a>
+<a class="anchor" id="aaa7e0041b75e8ab1206a86b0bce950b5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -150,7 +150,7 @@ Functions/Subroutines</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">real(kind=custom_real), dimension(att1_val,att2_val,att3_val,vnspec)&#160;</td>
-          <td class="paramname"><em>scale_factor</em>, </td>
+          <td class="paramname"><em>factor_scale</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -172,14 +172,14 @@ Functions/Subroutines</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00254">254</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00257">257</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d8/d7b/get__attenuation_8f90_abd848eeacd939cd749a7346de3717c4e_icgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_abd848eeacd939cd749a7346de3717c4e_icgraph" alt=""/></div>
-<map name="d8/d7b/get__attenuation_8f90_abd848eeacd939cd749a7346de3717c4e_icgraph" id="d8/d7b/get__attenuation_8f90_abd848eeacd939cd749a7346de3717c4e_icgraph">
-<area shape="rect" id="node2" href="../../d2/d6c/prepare__timerun_8f90.html#a986fd50ebf2ce960c1ceb93461a6f7e9" title="prepare_timerun_attenuation" alt="" coords="247,5,440,32"/>
+<div class="center"><img src="../../d8/d7b/get__attenuation_8f90_aaa7e0041b75e8ab1206a86b0bce950b5_icgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_aaa7e0041b75e8ab1206a86b0bce950b5_icgraph" alt=""/></div>
+<map name="d8/d7b/get__attenuation_8f90_aaa7e0041b75e8ab1206a86b0bce950b5_icgraph" id="d8/d7b/get__attenuation_8f90_aaa7e0041b75e8ab1206a86b0bce950b5_icgraph">
+<area shape="rect" id="node2" href="../../db/d21/prepare__attenuation_8f90.html#aa87223fc620da54b414dea740c48bee6" title="prepare_attenuation" alt="" coords="247,5,388,32"/>
 </map>
 </div>
 </p>
@@ -228,33 +228,27 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00226">226</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00229">229</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="../../d8/d7b/get__attenuation_8f90_ac3c30b819473bc98eacf7127f77f0fb6_icgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_ac3c30b819473bc98eacf7127f77f0fb6_icgraph" alt=""/></div>
 <map name="d8/d7b/get__attenuation_8f90_ac3c30b819473bc98eacf7127f77f0fb6_icgraph" id="d8/d7b/get__attenuation_8f90_ac3c30b819473bc98eacf7127f77f0fb6_icgraph">
-<area shape="rect" id="node2" href="../../d2/d6c/prepare__timerun_8f90.html#a986fd50ebf2ce960c1ceb93461a6f7e9" title="prepare_timerun_attenuation" alt="" coords="223,13,416,39"/>
+<area shape="rect" id="node2" href="../../db/d21/prepare__attenuation_8f90.html#aa87223fc620da54b414dea740c48bee6" title="prepare_attenuation" alt="" coords="223,13,364,39"/>
 </map>
 </div>
 </p>
 
 </div>
 </div>
-<a class="anchor" id="a7da9980bfd11370786863cf2fc9cc8ff"></a>
+<a class="anchor" id="a4982e46ba18cb0d626e472387c6f5130"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">subroutine get_attenuation_model_3d </td>
           <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>myrank</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">integer, intent(in)&#160;</td>
           <td class="paramname"><em>iregion_code</em>, </td>
         </tr>
@@ -274,7 +268,7 @@ Here is the caller graph for this function:</div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">real(kind=custom_real), dimension(att1_val,att2_val,att3_val,vnspec), intent(out)&#160;</td>
-          <td class="paramname"><em>scale_factor</em>, </td>
+          <td class="paramname"><em>factor_scale</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -296,16 +290,16 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00032">32</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00033">33</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d8/d7b/get__attenuation_8f90_a7da9980bfd11370786863cf2fc9cc8ff_cgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_a7da9980bfd11370786863cf2fc9cc8ff_cgraph" alt=""/></div>
-<map name="d8/d7b/get__attenuation_8f90_a7da9980bfd11370786863cf2fc9cc8ff_cgraph" id="d8/d7b/get__attenuation_8f90_a7da9980bfd11370786863cf2fc9cc8ff_cgraph">
-<area shape="rect" id="node2" href="../../d5/d59/read__attenuation__adios_8f90.html#a409c4d52b429d2c143235b55bd9258a7" title="Read adios attenuation arrays created by the mesher. " alt="" coords="238,5,399,32"/>
+<div class="center"><img src="../../d8/d7b/get__attenuation_8f90_a4982e46ba18cb0d626e472387c6f5130_cgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_a4982e46ba18cb0d626e472387c6f5130_cgraph" alt=""/></div>
+<map name="d8/d7b/get__attenuation_8f90_a4982e46ba18cb0d626e472387c6f5130_cgraph" id="d8/d7b/get__attenuation_8f90_a4982e46ba18cb0d626e472387c6f5130_cgraph">
+<area shape="rect" id="node2" href="../../d5/d59/read__attenuation__adios_8f90.html#a3e9fd69063a9862b928c590fd920c1ff" title="Read adios attenuation arrays created by the mesher. " alt="" coords="238,5,399,32"/>
 <area shape="rect" id="node3" href="../../d8/d7b/get__attenuation_8f90.html#ac2784bac3affdea606e0fb23c3896909" title="get_attenuation_property\l_values" alt="" coords="233,57,404,98"/>
-<area shape="rect" id="node4" href="../../d8/d7b/get__attenuation_8f90.html#a88a4c0a53d59030af8efad3821198793" title="get_attenuation_scale\l_factor" alt="" coords="243,122,395,163"/>
+<area shape="rect" id="node4" href="../../d8/d7b/get__attenuation_8f90.html#a79220c5d567435746b66f7189a9b67fd" title="get_attenuation_scale\l_factor" alt="" coords="243,122,395,163"/>
 </map>
 </div>
 </p>
@@ -313,9 +307,9 @@ Here is the call graph for this function:</div>
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d8/d7b/get__attenuation_8f90_a7da9980bfd11370786863cf2fc9cc8ff_icgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_a7da9980bfd11370786863cf2fc9cc8ff_icgraph" alt=""/></div>
-<map name="d8/d7b/get__attenuation_8f90_a7da9980bfd11370786863cf2fc9cc8ff_icgraph" id="d8/d7b/get__attenuation_8f90_a7da9980bfd11370786863cf2fc9cc8ff_icgraph">
-<area shape="rect" id="node2" href="../../d2/d6c/prepare__timerun_8f90.html#a986fd50ebf2ce960c1ceb93461a6f7e9" title="prepare_timerun_attenuation" alt="" coords="233,5,427,32"/>
+<div class="center"><img src="../../d8/d7b/get__attenuation_8f90_a4982e46ba18cb0d626e472387c6f5130_icgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_a4982e46ba18cb0d626e472387c6f5130_icgraph" alt=""/></div>
+<map name="d8/d7b/get__attenuation_8f90_a4982e46ba18cb0d626e472387c6f5130_icgraph" id="d8/d7b/get__attenuation_8f90_a4982e46ba18cb0d626e472387c6f5130_icgraph">
+<area shape="rect" id="node2" href="../../db/d21/prepare__attenuation_8f90.html#aa87223fc620da54b414dea740c48bee6" title="prepare_attenuation" alt="" coords="233,5,375,32"/>
 </map>
 </div>
 </p>
@@ -358,33 +352,27 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00122">122</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00125">125</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="../../d8/d7b/get__attenuation_8f90_ac2784bac3affdea606e0fb23c3896909_icgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_ac2784bac3affdea606e0fb23c3896909_icgraph" alt=""/></div>
 <map name="d8/d7b/get__attenuation_8f90_ac2784bac3affdea606e0fb23c3896909_icgraph" id="d8/d7b/get__attenuation_8f90_ac2784bac3affdea606e0fb23c3896909_icgraph">
-<area shape="rect" id="node2" href="../../d8/d7b/get__attenuation_8f90.html#a7da9980bfd11370786863cf2fc9cc8ff" title="get_attenuation_model_3d" alt="" coords="224,13,404,39"/>
+<area shape="rect" id="node2" href="../../d8/d7b/get__attenuation_8f90.html#a4982e46ba18cb0d626e472387c6f5130" title="get_attenuation_model_3d" alt="" coords="224,13,404,39"/>
 </map>
 </div>
 </p>
 
 </div>
 </div>
-<a class="anchor" id="a88a4c0a53d59030af8efad3821198793"></a>
+<a class="anchor" id="a79220c5d567435746b66f7189a9b67fd"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">subroutine get_attenuation_scale_factor </td>
           <td>(</td>
-          <td class="paramtype">integer, intent(in)&#160;</td>
-          <td class="paramname"><em>myrank</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">double precision, intent(in)&#160;</td>
           <td class="paramname"><em>T_c_source</em>, </td>
         </tr>
@@ -420,14 +408,14 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00159">159</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html#l00163">163</a> of file <a class="el" href="../../d8/d7b/get__attenuation_8f90_source.html">get_attenuation.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d8/d7b/get__attenuation_8f90_a88a4c0a53d59030af8efad3821198793_icgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_a88a4c0a53d59030af8efad3821198793_icgraph" alt=""/></div>
-<map name="d8/d7b/get__attenuation_8f90_a88a4c0a53d59030af8efad3821198793_icgraph" id="d8/d7b/get__attenuation_8f90_a88a4c0a53d59030af8efad3821198793_icgraph">
-<area shape="rect" id="node2" href="../../d8/d7b/get__attenuation_8f90.html#a7da9980bfd11370786863cf2fc9cc8ff" title="get_attenuation_model_3d" alt="" coords="205,13,385,39"/>
+<div class="center"><img src="../../d8/d7b/get__attenuation_8f90_a79220c5d567435746b66f7189a9b67fd_icgraph.png" border="0" usemap="#d8/d7b/get__attenuation_8f90_a79220c5d567435746b66f7189a9b67fd_icgraph" alt=""/></div>
+<map name="d8/d7b/get__attenuation_8f90_a79220c5d567435746b66f7189a9b67fd_icgraph" id="d8/d7b/get__attenuation_8f90_a79220c5d567435746b66f7189a9b67fd_icgraph">
+<area shape="rect" id="node2" href="../../d8/d7b/get__attenuation_8f90.html#a4982e46ba18cb0d626e472387c6f5130" title="get_attenuation_model_3d" alt="" coords="205,13,385,39"/>
 </map>
 </div>
 </p>

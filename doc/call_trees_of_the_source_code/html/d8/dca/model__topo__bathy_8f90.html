@@ -118,8 +118,8 @@ $(document).ready(function(){initNavTree('d8/dca/model__topo__bathy_8f90.html','
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions/Subroutines</h2></td></tr>
-<tr class="memitem:aef224cf038c59aaecfeca3c3e0e8cd51"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dca/model__topo__bathy_8f90.html#aef224cf038c59aaecfeca3c3e0e8cd51">model_topo_bathy_broadcast</a> (myrank, ibathy_topo, LOCAL_PATH)</td></tr>
-<tr class="separator:aef224cf038c59aaecfeca3c3e0e8cd51"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a549bad6fc65eee04c2697197476449c8"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dca/model__topo__bathy_8f90.html#a549bad6fc65eee04c2697197476449c8">model_topo_bathy_broadcast</a> (ibathy_topo, LOCAL_PATH)</td></tr>
+<tr class="separator:a549bad6fc65eee04c2697197476449c8"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a19fbef8ce862066b9afc7452f5f12e82"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dca/model__topo__bathy_8f90.html#a19fbef8ce862066b9afc7452f5f12e82">read_topo_bathy_file</a> (ibathy_topo)</td></tr>
 <tr class="separator:a19fbef8ce862066b9afc7452f5f12e82"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a17cf266bf44b87bb2ef6230019322efe"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d8/dca/model__topo__bathy_8f90.html#a17cf266bf44b87bb2ef6230019322efe">save_topo_bathy_database</a> (ibathy_topo, LOCAL_PATH)</td></tr>
@@ -168,15 +168,15 @@ Functions/Subroutines</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00231">231</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00229">229</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="../../d8/dca/model__topo__bathy_8f90_abcd25c844d4d671def57035eebe09bf8_icgraph.png" border="0" usemap="#d8/dca/model__topo__bathy_8f90_abcd25c844d4d671def57035eebe09bf8_icgraph" alt=""/></div>
 <map name="d8/dca/model__topo__bathy_8f90_abcd25c844d4d671def57035eebe09bf8_icgraph" id="d8/dca/model__topo__bathy_8f90_abcd25c844d4d671def57035eebe09bf8_icgraph">
-<area shape="rect" id="node2" href="../../df/d65/add__topography_8f90.html#acea53a9935394d5479776141922dbe82" title="add_topography" alt="" coords="190,5,309,32"/>
-<area shape="rect" id="node3" href="../../df/d65/add__topography_8f90.html#aee6a6ff9aa58c6a816fbd7339fea9d36" title="Hejun. " alt="" coords="180,56,319,83"/>
+<area shape="rect" id="node2" href="../../df/d65/add__topography_8f90.html#aefcfb0e5beae45824ef2a3855815ea68" title="add_topography" alt="" coords="190,5,309,32"/>
+<area shape="rect" id="node3" href="../../df/d65/add__topography_8f90.html#a1b5c30c6bef20413b42591a374caa9f6" title="Hejun. " alt="" coords="180,56,319,83"/>
 <area shape="rect" id="node4" href="../../d9/d5a/create__mass__matrices_8f90.html#ad8794ba763397c54c138a002041779f1" title="create_mass_matrices\l_ocean_load" alt="" coords="171,107,327,149"/>
 <area shape="rect" id="node5" href="../../da/d96/gravity__integrals_8_f90.html#a5dd43bac48044cc7d985c9b7078529e9" title="gravity_observation\l_surface" alt="" coords="181,173,318,214"/>
 <area shape="rect" id="node6" href="../../d7/dd8/locate__receivers_8f90.html#a3f7476862404a106ad4a16a5591b94f6" title="locate_receivers" alt="" coords="190,239,309,265"/>
@@ -189,19 +189,13 @@ Here is the caller graph for this function:</div>
 
 </div>
 </div>
-<a class="anchor" id="aef224cf038c59aaecfeca3c3e0e8cd51"></a>
+<a class="anchor" id="a549bad6fc65eee04c2697197476449c8"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">subroutine model_topo_bathy_broadcast </td>
           <td>(</td>
-          <td class="paramtype">integer&#160;</td>
-          <td class="paramname"><em>myrank</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">integer, dimension(nx_bathy,ny_bathy)&#160;</td>
           <td class="paramname"><em>ibathy_topo</em>, </td>
         </tr>
@@ -224,8 +218,8 @@ Here is the caller graph for this function:</div>
 <p><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d8/dca/model__topo__bathy_8f90_aef224cf038c59aaecfeca3c3e0e8cd51_cgraph.png" border="0" usemap="#d8/dca/model__topo__bathy_8f90_aef224cf038c59aaecfeca3c3e0e8cd51_cgraph" alt=""/></div>
-<map name="d8/dca/model__topo__bathy_8f90_aef224cf038c59aaecfeca3c3e0e8cd51_cgraph" id="d8/dca/model__topo__bathy_8f90_aef224cf038c59aaecfeca3c3e0e8cd51_cgraph">
+<div class="center"><img src="../../d8/dca/model__topo__bathy_8f90_a549bad6fc65eee04c2697197476449c8_cgraph.png" border="0" usemap="#d8/dca/model__topo__bathy_8f90_a549bad6fc65eee04c2697197476449c8_cgraph" alt=""/></div>
+<map name="d8/dca/model__topo__bathy_8f90_a549bad6fc65eee04c2697197476449c8_cgraph" id="d8/dca/model__topo__bathy_8f90_a549bad6fc65eee04c2697197476449c8_cgraph">
 <area shape="rect" id="node2" href="../../d8/dca/model__topo__bathy_8f90.html#a19fbef8ce862066b9afc7452f5f12e82" title="read_topo_bathy_file" alt="" coords="270,5,417,32"/>
 <area shape="rect" id="node3" href="../../d8/dca/model__topo__bathy_8f90.html#a17cf266bf44b87bb2ef6230019322efe" title="save_topo_bathy_database" alt="" coords="251,56,436,83"/>
 </map>
@@ -235,9 +229,9 @@ Here is the call graph for this function:</div>
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d8/dca/model__topo__bathy_8f90_aef224cf038c59aaecfeca3c3e0e8cd51_icgraph.png" border="0" usemap="#d8/dca/model__topo__bathy_8f90_aef224cf038c59aaecfeca3c3e0e8cd51_icgraph" alt=""/></div>
-<map name="d8/dca/model__topo__bathy_8f90_aef224cf038c59aaecfeca3c3e0e8cd51_icgraph" id="d8/dca/model__topo__bathy_8f90_aef224cf038c59aaecfeca3c3e0e8cd51_icgraph">
-<area shape="rect" id="node2" href="../../d0/dad/meshfem3_d__models_8_f90.html#aad8fb131d37375dc1b6e92591cf24a96" title="meshfem3d_models_broadcast" alt="" coords="251,5,459,32"/>
+<div class="center"><img src="../../d8/dca/model__topo__bathy_8f90_a549bad6fc65eee04c2697197476449c8_icgraph.png" border="0" usemap="#d8/dca/model__topo__bathy_8f90_a549bad6fc65eee04c2697197476449c8_icgraph" alt=""/></div>
+<map name="d8/dca/model__topo__bathy_8f90_a549bad6fc65eee04c2697197476449c8_icgraph" id="d8/dca/model__topo__bathy_8f90_a549bad6fc65eee04c2697197476449c8_icgraph">
+<area shape="rect" id="node2" href="../../d0/dad/meshfem3_d__models_8_f90.html#a6a7b79f82404dc9605de497f55fd078d" title="meshfem3d_models_broadcast" alt="" coords="251,5,459,32"/>
 </map>
 </div>
 </p>
@@ -258,7 +252,7 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00317">317</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00315">315</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
@@ -297,7 +291,7 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00175">175</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00173">173</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the call graph for this function:</div>
@@ -337,7 +331,7 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00077">77</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00075">75</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the call graph for this function:</div>
@@ -354,7 +348,7 @@ Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="../../d8/dca/model__topo__bathy_8f90_a19fbef8ce862066b9afc7452f5f12e82_icgraph.png" border="0" usemap="#d8/dca/model__topo__bathy_8f90_a19fbef8ce862066b9afc7452f5f12e82_icgraph" alt=""/></div>
 <map name="d8/dca/model__topo__bathy_8f90_a19fbef8ce862066b9afc7452f5f12e82_icgraph" id="d8/dca/model__topo__bathy_8f90_a19fbef8ce862066b9afc7452f5f12e82_icgraph">
-<area shape="rect" id="node2" href="../../d8/dca/model__topo__bathy_8f90.html#aef224cf038c59aaecfeca3c3e0e8cd51" title="model_topo_bathy_broadcast" alt="" coords="200,5,397,32"/>
+<area shape="rect" id="node2" href="../../d8/dca/model__topo__bathy_8f90.html#a549bad6fc65eee04c2697197476449c8" title="model_topo_bathy_broadcast" alt="" coords="200,5,397,32"/>
 <area shape="rect" id="node3" href="../../d8/dca/model__topo__bathy_8f90.html#a9ae2097b0c4bb1f815c36a95de69aacf" title="read_topo_bathy_database" alt="" coords="207,56,391,83"/>
 <area shape="rect" id="node4" href="../../d8/da0/create__cross__section_8_f90.html#adb3f95e59a8b7e40df4652435a9d2f0e" title="set_horiz_cross_section\l_points" alt="" coords="216,107,381,149"/>
 <area shape="rect" id="node5" href="../../d8/da0/create__cross__section_8_f90.html#a367388a06f33a85bb5e1987010f6c332" title="set_vertical_cross\l_section_points" alt="" coords="234,173,363,214"/>
@@ -388,14 +382,14 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00136">136</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html#l00134">134</a> of file <a class="el" href="../../d8/dca/model__topo__bathy_8f90_source.html">model_topo_bathy.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="../../d8/dca/model__topo__bathy_8f90_a17cf266bf44b87bb2ef6230019322efe_icgraph.png" border="0" usemap="#d8/dca/model__topo__bathy_8f90_a17cf266bf44b87bb2ef6230019322efe_icgraph" alt=""/></div>
 <map name="d8/dca/model__topo__bathy_8f90_a17cf266bf44b87bb2ef6230019322efe_icgraph" id="d8/dca/model__topo__bathy_8f90_a17cf266bf44b87bb2ef6230019322efe_icgraph">
-<area shape="rect" id="node2" href="../../d8/dca/model__topo__bathy_8f90.html#aef224cf038c59aaecfeca3c3e0e8cd51" title="model_topo_bathy_broadcast" alt="" coords="239,5,436,32"/>
+<area shape="rect" id="node2" href="../../d8/dca/model__topo__bathy_8f90.html#a549bad6fc65eee04c2697197476449c8" title="model_topo_bathy_broadcast" alt="" coords="239,5,436,32"/>
 <area shape="rect" id="node3" href="../../d8/dca/model__topo__bathy_8f90.html#a9ae2097b0c4bb1f815c36a95de69aacf" title="read_topo_bathy_database" alt="" coords="245,56,429,83"/>
 </map>
 </div>

@@ -6,7 +6,6 @@ var searchData=
   ['earth_5fmass_5ftotal',['earth_mass_total',['../d6/d6a/namespacemeshfem3d__par.html#a932ab76a693185359cd1df7d7b577a48',1,'meshfem3d_par']]],
   ['elat_5fsac',['elat_sac',['../db/da6/namespacespecfem__par.html#a44316712122a41c35a4ea4738f194726',1,'specfem_par']]],
   ['ellipticity',['ellipticity',['../d1/d30/namespaceshared__input__parameters.html#a2195805a2957d431e7d68e1134416d97',1,'shared_input_parameters']]],
-  ['ellipticity_5fval',['ellipticity_val',['../db/dd6/namespaceconstants__solver.html#a8a2e44e9c48b23c9f530125534b72c1a',1,'constants_solver']]],
   ['elon_5fsac',['elon_sac',['../db/da6/namespacespecfem__par.html#ab4ba1a53623232ae9d43145144f803b4',1,'specfem_par']]],
   ['emulate_5fonly',['emulate_only',['../dc/df5/namespaceshared__compute__parameters.html#aae1487349e7a5c1918e06a5ac3234323',1,'shared_compute_parameters']]],
   ['epcrust_5flat_5fmax',['epcrust_lat_max',['../db/d9d/namespacemodel__epcrust__par.html#a5f78758acd68109b2e43179c1f0e6e55',1,'model_epcrust_par']]],
@@ -57,6 +56,5 @@ var searchData=
   ['eucrust_5fvp_5fuppercrust',['eucrust_vp_uppercrust',['../da/de3/namespacemodel__eucrust__par.html#a902821ff575c30f75fcc1b961c005470',1,'model_eucrust_par']]],
   ['event',['event',['../d6/d02/structasdf__data_1_1asdf__event.html#afc0452ebc0db5d137a25d160b79de4a5',1,'asdf_data::asdf_event']]],
   ['event_5fname_5fsac',['event_name_sac',['../db/da6/namespacespecfem__par.html#ac86d4f8d26a0452c0aa721e14930f0f4',1,'specfem_par']]],
-  ['exact_5fmass_5fmatrix_5ffor_5frotation',['exact_mass_matrix_for_rotation',['../d2/d88/structmesh__.html#a74dea8a7b542a54c994df906d0d6ff20',1,'mesh_::exact_mass_matrix_for_rotation()'],['../d1/d30/namespaceshared__input__parameters.html#ac5706d20f5bd943a9d0bcf981f211cac',1,'shared_input_parameters::exact_mass_matrix_for_rotation()']]],
-  ['exact_5fmass_5fmatrix_5ffor_5frotation_5fval',['exact_mass_matrix_for_rotation_val',['../db/dd6/namespaceconstants__solver.html#a11c60fe35d90b22bead8b48f140fc01e',1,'constants_solver']]]
+  ['exact_5fmass_5fmatrix_5ffor_5frotation',['exact_mass_matrix_for_rotation',['../d2/d88/structmesh__.html#a74dea8a7b542a54c994df906d0d6ff20',1,'mesh_::exact_mass_matrix_for_rotation()'],['../d1/d30/namespaceshared__input__parameters.html#ac5706d20f5bd943a9d0bcf981f211cac',1,'shared_input_parameters::exact_mass_matrix_for_rotation()']]]
 ];

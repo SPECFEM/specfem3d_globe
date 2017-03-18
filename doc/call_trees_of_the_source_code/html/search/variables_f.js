@@ -1,7 +1,6 @@
 var searchData=
 [
   ['partial_5fphys_5fdispersion_5fonly',['partial_phys_dispersion_only',['../d2/d88/structmesh__.html#a9dc8d971c041bd9ed76db6efa94b2f95',1,'mesh_::partial_phys_dispersion_only()'],['../d1/d30/namespaceshared__input__parameters.html#a49040231e220303741224f53bc22fffa',1,'shared_input_parameters::partial_phys_dispersion_only()']]],
-  ['partial_5fphys_5fdispersion_5fonly_5fval',['partial_phys_dispersion_only_val',['../db/dd6/namespaceconstants__solver.html#a4a60e680db0138e08ee9416d8d6c83fa',1,'constants_solver']]],
   ['pathname_5fepcrust',['pathname_epcrust',['../db/d9d/namespacemodel__epcrust__par.html#a5141edc0773fa997a2f8bdd204dd263b',1,'model_epcrust_par']]],
   ['percent_5fof_5fmem_5fto_5fuse_5fper_5fcore',['percent_of_mem_to_use_per_core',['../d1/d30/namespaceshared__input__parameters.html#a8b50bd54e6e77626c6385d98bebc581b',1,'shared_input_parameters']]],
   ['perm_5flayer',['perm_layer',['../d6/d83/namespacecreate__regions__mesh__par2.html#a7c28592311aeb4f86d6a3b3799cb4e04',1,'create_regions_mesh_par2']]],

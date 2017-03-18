@@ -56,6 +56,7 @@ var specfem3_d__gpu__method__stubs_8c =
     [ "FC_FUNC_", "da/dab/specfem3_d__gpu__method__stubs_8c.html#a1fb637e9bd4eb6b0d84ea9dbbd0255da", null ],
     [ "FC_FUNC_", "da/dab/specfem3_d__gpu__method__stubs_8c.html#aa829f29876036a73c32d61e10e70c297", null ],
     [ "FC_FUNC_", "da/dab/specfem3_d__gpu__method__stubs_8c.html#ab22dd16e2fb2cdbb7ab4fbcc80d14339", null ],
+    [ "FC_FUNC_", "da/dab/specfem3_d__gpu__method__stubs_8c.html#aeadf4ef43105135b44ee43b19b91c736", null ],
     [ "FC_FUNC_", "da/dab/specfem3_d__gpu__method__stubs_8c.html#a2ceddfc6518d0b3f16935609cd1c213c", null ],
     [ "FC_FUNC_", "da/dab/specfem3_d__gpu__method__stubs_8c.html#a55317b97a3da75879e4fd3e5ff9dda19", null ],
     [ "FC_FUNC_", "da/dab/specfem3_d__gpu__method__stubs_8c.html#ad75811dab5e61e8470be9c12a78e68e5", null ],

@@ -142,7 +142,7 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">!---- assemble the contributions between slices and chunks using MPI</span></div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;<span class="comment">!----</span></div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;</div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#ae074d65851a0c47cf202e7729990dd85">assemble_mpi_scalar_block</a>(myrank,array_val,nglob, &amp;</div>
+<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#a5ec28f223e64927f60d80a8f70fb21ac">assemble_mpi_scalar_block</a>(array_val,nglob, &amp;</div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160;            iproc_xi,iproc_eta,ichunk,addressing, &amp;</div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;            iboolleft_xi,iboolright_xi,iboolleft_eta,iboolright_eta, &amp;</div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;            npoin2d_faces,npoin2d_xi,npoin2d_eta, &amp;</div>
@@ -154,14 +154,14 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;            nummsgs_faces,num_msg_types,ncornerschunks, &amp;</div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;            nproc_xi,nproc_eta,nglob1d_radial, &amp;</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;            nglob2dmax_xmin_xmax,nglob2dmax_ymin_ymax,nglob2dmax_xy,nchunks)</div>
-<div class="line"><a name="l00044"></a><span class="lineno"><a class="line" href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#ae074d65851a0c47cf202e7729990dd85">   44</a></span>&#160;</div>
+<div class="line"><a name="l00044"></a><span class="lineno"><a class="line" href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#a5ec28f223e64927f60d80a8f70fb21ac">   44</a></span>&#160;</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;<span class="comment">! this version of the routine is based on blocking MPI calls</span></div>
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;</div>
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;  <span class="keywordtype">use </span><a class="code" href="../../d7/d28/namespaceconstants.html">constants</a></div>
 <div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;</div>
 <div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;  <span class="keywordtype">implicit none</span></div>
 <div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;</div>
-<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;  <span class="keywordtype">integer</span> myrank,nglob,NCHUNKS</div>
+<div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160;  <span class="keywordtype">integer</span> nglob,NCHUNKS</div>
 <div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;</div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;<span class="comment">! array to assemble</span></div>
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;  <span class="keywordtype">real(kind=CUSTOM_REAL)</span>, <span class="keywordtype">dimension(nglob)</span> :: array_val</div>
@@ -367,9 +367,9 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;</div>
 <div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;    icount_faces = 0</div>
 <div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;    <span class="keywordflow">do</span> imsg = 1,nummsgs_faces</div>
-<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;      <span class="keywordflow">if</span> (myrank == iprocfrom_faces(imsg) .or. &amp;</div>
-<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;           myrank == iprocto_faces(imsg)) icount_faces = icount_faces + 1</div>
-<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;      <span class="keywordflow">if</span> (myrank == iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocfrom_faces(imsg) .or. &amp;</div>
+<div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;           <a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocto_faces(imsg)) icount_faces = icount_faces + 1</div>
+<div class="line"><a name="l00259"></a><span class="lineno">  259</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00260"></a><span class="lineno">  260</span>&#160;        sender = iprocfrom_faces(imsg)</div>
 <div class="line"><a name="l00261"></a><span class="lineno">  261</span>&#160;        npoin2d_chunks = npoin2d_faces(icount_faces)</div>
 <div class="line"><a name="l00262"></a><span class="lineno">  262</span>&#160;        <span class="keyword">call </span>recv_cr(buffer_received_faces_scalar,npoin2d_chunks,sender,itag)</div>
@@ -385,9 +385,9 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00272"></a><span class="lineno">  272</span>&#160;    <span class="comment">!---- a given slice can belong to at most two faces</span></div>
 <div class="line"><a name="l00273"></a><span class="lineno">  273</span>&#160;    icount_faces = 0</div>
 <div class="line"><a name="l00274"></a><span class="lineno">  274</span>&#160;    <span class="keywordflow">do</span> imsg = 1,nummsgs_faces</div>
-<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;      <span class="keywordflow">if</span> (myrank == iprocfrom_faces(imsg) .or. &amp;</div>
-<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;           myrank == iprocto_faces(imsg)) icount_faces = icount_faces + 1</div>
-<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;      <span class="keywordflow">if</span> (myrank == iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00275"></a><span class="lineno">  275</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocfrom_faces(imsg) .or. &amp;</div>
+<div class="line"><a name="l00276"></a><span class="lineno">  276</span>&#160;           <a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocto_faces(imsg)) icount_faces = icount_faces + 1</div>
+<div class="line"><a name="l00277"></a><span class="lineno">  277</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;        receiver = iprocto_faces(imsg)</div>
 <div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;        npoin2d_chunks = npoin2d_faces(icount_faces)</div>
 <div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;        <span class="keywordflow">do</span> ipoin2d = 1,npoin2d_chunks</div>
@@ -406,9 +406,9 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;</div>
 <div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;    icount_faces = 0</div>
 <div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;    <span class="keywordflow">do</span> imsg = 1,nummsgs_faces</div>
-<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;      <span class="keywordflow">if</span> (myrank == iprocfrom_faces(imsg) .or. &amp;</div>
-<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;           myrank == iprocto_faces(imsg)) icount_faces = icount_faces + 1</div>
-<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;      <span class="keywordflow">if</span> (myrank == iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocfrom_faces(imsg) .or. &amp;</div>
+<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;           <a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocto_faces(imsg)) icount_faces = icount_faces + 1</div>
+<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocfrom_faces(imsg) .and. imsg_type(imsg) == imsg_loop) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;        sender = iprocto_faces(imsg)</div>
 <div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;        npoin2d_chunks = npoin2d_faces(icount_faces)</div>
 <div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;        <span class="keyword">call </span>recv_cr(buffer_received_faces_scalar,npoin2d_chunks,sender,itag)</div>
@@ -423,9 +423,9 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;    <span class="comment">!---- a given slice can belong to at most two faces</span></div>
 <div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;    icount_faces = 0</div>
 <div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;    <span class="keywordflow">do</span> imsg = 1,nummsgs_faces</div>
-<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;      <span class="keywordflow">if</span> (myrank == iprocfrom_faces(imsg) .or. &amp;</div>
-<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;           myrank == iprocto_faces(imsg)) icount_faces = icount_faces + 1</div>
-<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;      <span class="keywordflow">if</span> (myrank == iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocfrom_faces(imsg) .or. &amp;</div>
+<div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;           <a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocto_faces(imsg)) icount_faces = icount_faces + 1</div>
+<div class="line"><a name="l00315"></a><span class="lineno">  315</span>&#160;      <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iprocto_faces(imsg) .and. imsg_type(imsg) == imsg_loop) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00316"></a><span class="lineno">  316</span>&#160;        receiver = iprocfrom_faces(imsg)</div>
 <div class="line"><a name="l00317"></a><span class="lineno">  317</span>&#160;        npoin2d_chunks = npoin2d_faces(icount_faces)</div>
 <div class="line"><a name="l00318"></a><span class="lineno">  318</span>&#160;        <span class="keywordflow">do</span> ipoin2d = 1,npoin2d_chunks</div>
@@ -452,12 +452,12 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00339"></a><span class="lineno">  339</span>&#160;</div>
 <div class="line"><a name="l00340"></a><span class="lineno">  340</span>&#160;  <span class="keywordflow">do</span> imsg = 1,ncornerschunks</div>
 <div class="line"><a name="l00341"></a><span class="lineno">  341</span>&#160;</div>
-<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;    <span class="keywordflow">if</span> (myrank == iproc_master_corners(imsg) .or. &amp;</div>
-<div class="line"><a name="l00343"></a><span class="lineno">  343</span>&#160;       myrank == iproc_worker1_corners(imsg) .or. &amp;</div>
-<div class="line"><a name="l00344"></a><span class="lineno">  344</span>&#160;       (nchunks /= 2 .and. myrank == iproc_worker2_corners(imsg))) icount_corners = icount_corners + 1</div>
+<div class="line"><a name="l00342"></a><span class="lineno">  342</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_master_corners(imsg) .or. &amp;</div>
+<div class="line"><a name="l00343"></a><span class="lineno">  343</span>&#160;       <a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_worker1_corners(imsg) .or. &amp;</div>
+<div class="line"><a name="l00344"></a><span class="lineno">  344</span>&#160;       (nchunks /= 2 .and. <a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_worker2_corners(imsg))) icount_corners = icount_corners + 1</div>
 <div class="line"><a name="l00345"></a><span class="lineno">  345</span>&#160;</div>
 <div class="line"><a name="l00346"></a><span class="lineno">  346</span>&#160;    <span class="comment">!---- receive messages from the two workers on the master</span></div>
-<div class="line"><a name="l00347"></a><span class="lineno">  347</span>&#160;    <span class="keywordflow">if</span> (myrank == iproc_master_corners(imsg)) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00347"></a><span class="lineno">  347</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_master_corners(imsg)) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00348"></a><span class="lineno">  348</span>&#160;</div>
 <div class="line"><a name="l00349"></a><span class="lineno">  349</span>&#160;      <span class="comment">! receive from worker #1 and add to local array</span></div>
 <div class="line"><a name="l00350"></a><span class="lineno">  350</span>&#160;      sender = iproc_worker1_corners(imsg)</div>
@@ -482,8 +482,8 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00369"></a><span class="lineno">  369</span>&#160;<span class="keywordflow">    endif</span></div>
 <div class="line"><a name="l00370"></a><span class="lineno">  370</span>&#160;</div>
 <div class="line"><a name="l00371"></a><span class="lineno">  371</span>&#160;    <span class="comment">!---- send messages from the two workers to the master</span></div>
-<div class="line"><a name="l00372"></a><span class="lineno">  372</span>&#160;    <span class="keywordflow">if</span> (myrank == iproc_worker1_corners(imsg) .or. &amp;</div>
-<div class="line"><a name="l00373"></a><span class="lineno">  373</span>&#160;                (nchunks /= 2 .and. myrank == iproc_worker2_corners(imsg))) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00372"></a><span class="lineno">  372</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_worker1_corners(imsg) .or. &amp;</div>
+<div class="line"><a name="l00373"></a><span class="lineno">  373</span>&#160;                (nchunks /= 2 .and. <a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_worker2_corners(imsg))) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00374"></a><span class="lineno">  374</span>&#160;</div>
 <div class="line"><a name="l00375"></a><span class="lineno">  375</span>&#160;      receiver = iproc_master_corners(imsg)</div>
 <div class="line"><a name="l00376"></a><span class="lineno">  376</span>&#160;      <span class="keywordflow">do</span> ipoin1d = 1,nglob1d_radial</div>
@@ -498,8 +498,8 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00385"></a><span class="lineno">  385</span>&#160;    <span class="comment">! *********************************************************************</span></div>
 <div class="line"><a name="l00386"></a><span class="lineno">  386</span>&#160;</div>
 <div class="line"><a name="l00387"></a><span class="lineno">  387</span>&#160;    <span class="comment">!---- receive messages from the master on the two workers</span></div>
-<div class="line"><a name="l00388"></a><span class="lineno">  388</span>&#160;    <span class="keywordflow">if</span> (myrank == iproc_worker1_corners(imsg) .or. &amp;</div>
-<div class="line"><a name="l00389"></a><span class="lineno">  389</span>&#160;                (nchunks /= 2 .and. myrank == iproc_worker2_corners(imsg))) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00388"></a><span class="lineno">  388</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_worker1_corners(imsg) .or. &amp;</div>
+<div class="line"><a name="l00389"></a><span class="lineno">  389</span>&#160;                (nchunks /= 2 .and. <a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_worker2_corners(imsg))) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00390"></a><span class="lineno">  390</span>&#160;</div>
 <div class="line"><a name="l00391"></a><span class="lineno">  391</span>&#160;      <span class="comment">! receive from master and copy to local array</span></div>
 <div class="line"><a name="l00392"></a><span class="lineno">  392</span>&#160;      sender = iproc_master_corners(imsg)</div>
@@ -512,7 +512,7 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00399"></a><span class="lineno">  399</span>&#160;<span class="keywordflow">    endif</span></div>
 <div class="line"><a name="l00400"></a><span class="lineno">  400</span>&#160;</div>
 <div class="line"><a name="l00401"></a><span class="lineno">  401</span>&#160;    <span class="comment">!---- send messages from the master to the two workers</span></div>
-<div class="line"><a name="l00402"></a><span class="lineno">  402</span>&#160;    <span class="keywordflow">if</span> (myrank == iproc_master_corners(imsg)) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00402"></a><span class="lineno">  402</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == iproc_master_corners(imsg)) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00403"></a><span class="lineno">  403</span>&#160;</div>
 <div class="line"><a name="l00404"></a><span class="lineno">  404</span>&#160;      <span class="keywordflow">do</span> ipoin1d = 1,nglob1d_radial</div>
 <div class="line"><a name="l00405"></a><span class="lineno">  405</span>&#160;        buffer_send_chunkcorn_scalar(ipoin1d) = array_val(iboolcorner(ipoin1d,icount_corners))</div>
@@ -532,7 +532,7 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00419"></a><span class="lineno">  419</span>&#160;</div>
 <div class="line"><a name="l00420"></a><span class="lineno">  420</span>&#160;<span class="keywordflow">  enddo</span></div>
 <div class="line"><a name="l00421"></a><span class="lineno">  421</span>&#160;</div>
-<div class="line"><a name="l00422"></a><span class="lineno">  422</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#ae074d65851a0c47cf202e7729990dd85">assemble_mpi_scalar_block</a></div>
+<div class="line"><a name="l00422"></a><span class="lineno">  422</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#a5ec28f223e64927f60d80a8f70fb21ac">assemble_mpi_scalar_block</a></div>
 <div class="line"><a name="l00423"></a><span class="lineno">  423</span>&#160;</div>
 <div class="line"><a name="l00424"></a><span class="lineno">  424</span>&#160;<span class="comment">!</span></div>
 <div class="line"><a name="l00425"></a><span class="lineno">  425</span>&#160;<span class="comment">!-------------------------------------------------------------------------------------------------</span></div>
@@ -634,9 +634,10 @@ $(document).ready(function(){initNavTree('d8/d9d/assemble___m_p_i__scalar__mesh_
 <div class="line"><a name="l00521"></a><span class="lineno">  521</span>&#160;</div>
 <div class="line"><a name="l00522"></a><span class="lineno">  522</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#adb1983f36bf485d1678541a8944d8587">assemble_mpi_scalar</a></div>
 <div class="line"><a name="l00523"></a><span class="lineno">  523</span>&#160;</div>
-<div class="ttc" id="parallel_8f90_html_a6ef8c65c8ed6d9fd962f5792446b0079"><div class="ttname"><a href="../../db/d8f/parallel_8f90.html#a6ef8c65c8ed6d9fd962f5792446b0079">sendrecv_cr</a></div><div class="ttdeci">subroutine sendrecv_cr(sendbuf, sendcount, dest, sendtag,                                                                                               recvbuf, recvcount, source, recvtag)</div><div class="ttdef"><b>Definition:</b> <a href="../../db/d8f/parallel_8f90_source.html#l01387">parallel.f90:1387</a></div></div>
+<div class="ttc" id="assemble___m_p_i__scalar__mesh_8f90_html_a5ec28f223e64927f60d80a8f70fb21ac"><div class="ttname"><a href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#a5ec28f223e64927f60d80a8f70fb21ac">assemble_mpi_scalar_block</a></div><div class="ttdeci">subroutine assemble_mpi_scalar_block(array_val, nglob,                                           iproc_xi, iproc_eta, ichunk, addressing,                                           iboolleft_xi, iboolright_xi, iboolleft_eta, iboolright_eta,                                           npoin2D_faces, npoin2D_xi, npoin2D_eta,                                           iboolfaces, iboolcorner,                                           iprocfrom_faces, iprocto_faces, imsg_type,                                           iproc_master_corners, iproc_worker1_corners, iproc_worker2_corners,                                           buffer_send_faces_scalar, buffer_received_faces_scalar, npoin2D_max_all_CM_IC,                                           buffer_send_chunkcorn_scalar, buffer_recv_chunkcorn_scalar,                                           NUMMSGS_FACES, NUM_MSG_TYPES, NCORNERSCHUNKS,                                           NPROC_XI, NPROC_ETA, NGLOB1D_RADIAL,                                           NGLOB2DMAX_XMIN_XMAX, NGLOB2DMAX_YMIN_YMAX, NGLOB2DMAX_XY, NCHUNKS)</div><div class="ttdef"><b>Definition:</b> <a href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90_source.html#l00044">assemble_MPI_scalar_mesh.f90:44</a></div></div>
+<div class="ttc" id="parallel_8f90_html_a6ef8c65c8ed6d9fd962f5792446b0079"><div class="ttname"><a href="../../db/d8f/parallel_8f90.html#a6ef8c65c8ed6d9fd962f5792446b0079">sendrecv_cr</a></div><div class="ttdeci">subroutine sendrecv_cr(sendbuf, sendcount, dest, sendtag,                                                                                               recvbuf, recvcount, source, recvtag)</div><div class="ttdef"><b>Definition:</b> <a href="../../db/d8f/parallel_8f90_source.html#l01377">parallel.f90:1377</a></div></div>
 <div class="ttc" id="namespaceconstants_html"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html">constants</a></div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00028">shared_par.f90:28</a></div></div>
-<div class="ttc" id="assemble___m_p_i__scalar__mesh_8f90_html_ae074d65851a0c47cf202e7729990dd85"><div class="ttname"><a href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#ae074d65851a0c47cf202e7729990dd85">assemble_mpi_scalar_block</a></div><div class="ttdeci">subroutine assemble_mpi_scalar_block(myrank, array_val, nglob,                                           iproc_xi, iproc_eta, ichunk, addressing,                                           iboolleft_xi, iboolright_xi, iboolleft_eta, iboolright_eta,                                           npoin2D_faces, npoin2D_xi, npoin2D_eta,                                           iboolfaces, iboolcorner,                                           iprocfrom_faces, iprocto_faces, imsg_type,                                           iproc_master_corners, iproc_worker1_corners, iproc_worker2_corners,                                           buffer_send_faces_scalar, buffer_received_faces_scalar, npoin2D_max_all_CM_IC,                                           buffer_send_chunkcorn_scalar, buffer_recv_chunkcorn_scalar,                                           NUMMSGS_FACES, NUM_MSG_TYPES, NCORNERSCHUNKS,                                           NPROC_XI, NPROC_ETA, NGLOB1D_RADIAL,                                           NGLOB2DMAX_XMIN_XMAX, NGLOB2DMAX_YMIN_YMAX, NGLOB2DMAX_XY, NCHUNKS)</div><div class="ttdef"><b>Definition:</b> <a href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90_source.html#l00044">assemble_MPI_scalar_mesh.f90:44</a></div></div>
+<div class="ttc" id="namespaceconstants_html_a2cf2f5b4da613a2ca04aa91059a965d5"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">constants::myrank</a></div><div class="ttdeci">integer myrank</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00033">shared_par.f90:33</a></div></div>
 <div class="ttc" id="assemble___m_p_i__scalar__mesh_8f90_html_adb1983f36bf485d1678541a8944d8587"><div class="ttname"><a href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#adb1983f36bf485d1678541a8944d8587">assemble_mpi_scalar</a></div><div class="ttdeci">subroutine assemble_mpi_scalar(NPROC, NGLOB_AB, array_val,                                                                                           num_interfaces, max_nibool_interfaces,                                                                                           nibool_interfaces, ibool_interfaces,                                                                                           my_neighbours)</div><div class="ttdef"><b>Definition:</b> <a href="../../d8/d9d/assemble___m_p_i__scalar__mesh_8f90_source.html#l00432">assemble_MPI_scalar_mesh.f90:432</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->

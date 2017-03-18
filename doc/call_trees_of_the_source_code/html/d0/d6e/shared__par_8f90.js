@@ -79,6 +79,7 @@ var shared__par_8f90 =
     [ "movie_west", "d0/d6e/shared__par_8f90.html#a29bcab059fa584fae9fc84df8741c229", null ],
     [ "movie_west_deg", "d0/d6e/shared__par_8f90.html#a316ce70b1de66355260619ae0de98247", null ],
     [ "mygroup", "d0/d6e/shared__par_8f90.html#acbc59502912ab72aa7e78a609a0cbd7d", null ],
+    [ "myrank", "d0/d6e/shared__par_8f90.html#a2cf2f5b4da613a2ca04aa91059a965d5", null ],
     [ "nchunks", "d0/d6e/shared__par_8f90.html#a4f90fdd2562d406968c042d4adbcfc00", null ],
     [ "ner", "d0/d6e/shared__par_8f90.html#a6e6d54a05145ff53777dee4ba87f4fac", null ],
     [ "ner_220_80", "d0/d6e/shared__par_8f90.html#ac454d6eabb7a654098630bd6d905b13a", null ],
@@ -181,7 +182,6 @@ var shared__par_8f90 =
     [ "transverse_isotropy", "d0/d6e/shared__par_8f90.html#a35c1208bf51d9e85f88d6845f60a7867", null ],
     [ "undo_attenuation", "d0/d6e/shared__par_8f90.html#a05826a7a515907bf729c29c0f3f3dbc6", null ],
     [ "use_binary_for_large_file", "d0/d6e/shared__par_8f90.html#afacc9dcc130a40d402e0b3ab3aa65fc0", null ],
-    [ "use_failsafe_mechanism", "d0/d6e/shared__par_8f90.html#afb621f942cc0db3eaaf0eeed16db1b86", null ],
     [ "use_full_tiso_mantle", "d0/d6e/shared__par_8f90.html#a71d73293ff87ff7d7d0b247290c1d8fa", null ],
     [ "use_lddrk", "d0/d6e/shared__par_8f90.html#a0fa9abc7d25c0a34bf21f4bb87f4b68a", null ],
     [ "write_seismograms_by_master", "d0/d6e/shared__par_8f90.html#a389a87e925a5b9f9193066f0298f5537", null ]

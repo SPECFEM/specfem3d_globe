@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# changes to wiki/ directory
+# changes to doxygen directory
 if [ -d ../call_trees_of_the_source_code ]; then
   cd ../call_trees_of_the_source_code/
 else

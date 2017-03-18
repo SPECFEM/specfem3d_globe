@@ -21,7 +21,6 @@ var searchData=
   ['topo_5fep',['topo_ep',['../db/d9d/namespacemodel__epcrust__par.html#ad1d5016e8284af6ef6379e2acdedde9e',1,'model_epcrust_par']]],
   ['topography',['topography',['../d1/d30/namespaceshared__input__parameters.html#ad468ce7bbd77ecb607eaa09dc0e45fad',1,'shared_input_parameters']]],
   ['transverse_5fisotropy',['transverse_isotropy',['../dc/df5/namespaceshared__compute__parameters.html#a35c1208bf51d9e85f88d6845f60a7867',1,'shared_compute_parameters']]],
-  ['transverse_5fisotropy_5fval',['transverse_isotropy_val',['../db/dd6/namespaceconstants__solver.html#a99da1b7691635ea89df3d483caf60385',1,'constants_solver']]],
   ['tshift_5fcmt',['tshift_cmt',['../db/da6/namespacespecfem__par.html#a8a77359d57b8b833acdf09abd5e2e0cc',1,'specfem_par']]],
   ['two_5fomega_5fearth',['two_omega_earth',['../d2/d88/structmesh__.html#a5a8e4f4b71f788c730e63c7ef8a9290a',1,'mesh_::two_omega_earth()'],['../db/da6/namespacespecfem__par.html#ae5ae79e5caaab8fbe5ca026a8950a298',1,'specfem_par::two_omega_earth()']]]
 ];

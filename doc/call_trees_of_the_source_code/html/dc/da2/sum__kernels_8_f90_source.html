@@ -376,7 +376,7 @@ $(document).ready(function(){initNavTree('dc/da2/sum__kernels_8_f90_source.html'
 <div class="line"><a name="l00263"></a><span class="lineno">  263</span>&#160;    <span class="keyword">call </span>init_adios_group(group,group_name)</div>
 <div class="line"><a name="l00264"></a><span class="lineno">  264</span>&#160;</div>
 <div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;    <span class="comment">! defines group size</span></div>
-<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;    <span class="keyword">call </span>define_adios_scalar(group, group_size_inc, <span class="stringliteral">&quot;&quot;</span>, <span class="stringliteral">&quot;NSPEC&quot;</span>, nspec_crust_mantle)</div>
+<div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;    <span class="keyword">call </span>define_adios_scalar(group, group_size_inc, <span class="stringliteral">&#39;&#39;</span>, <span class="stringliteral">&quot;NSPEC&quot;</span>, nspec_crust_mantle)</div>
 <div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;</div>
 <div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;    <span class="comment">! defines all arrays</span></div>
 <div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;    <span class="keywordflow">if</span> (use_iso_kernels) <span class="keywordflow">then</span></div>
@@ -391,7 +391,7 @@ $(document).ready(function(){initNavTree('dc/da2/sum__kernels_8_f90_source.html'
 <div class="line"><a name="l00278"></a><span class="lineno">  278</span>&#160;<span class="keywordflow">    endif</span></div>
 <div class="line"><a name="l00279"></a><span class="lineno">  279</span>&#160;    <span class="keywordflow">do</span> iker = is,ie</div>
 <div class="line"><a name="l00280"></a><span class="lineno">  280</span>&#160;      local_dim = ngllx * nglly * ngllz * nspec_crust_mantle</div>
-<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;      <span class="keyword">call </span>define_adios_global_array1d(group, group_size_inc, local_dim, <span class="stringliteral">&quot;&quot;</span>, trim(kl_name(iker)), total_kernel(:,:,:,:))</div>
+<div class="line"><a name="l00281"></a><span class="lineno">  281</span>&#160;      <span class="keyword">call </span>define_adios_global_array1d(group, group_size_inc, local_dim, <span class="stringliteral">&#39;&#39;</span>, trim(kl_name(iker)), total_kernel(:,:,:,:))</div>
 <div class="line"><a name="l00282"></a><span class="lineno">  282</span>&#160;<span class="keywordflow">    enddo</span></div>
 <div class="line"><a name="l00283"></a><span class="lineno">  283</span>&#160;</div>
 <div class="line"><a name="l00284"></a><span class="lineno">  284</span>&#160;    <span class="comment">! opens new adios model file</span></div>

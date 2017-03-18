@@ -43,7 +43,6 @@ var searchData=
   ['transfer_5fboundarypot_5fto_5fdevice',['transfer_boundarypot_to_device',['../d1/d2e/assemble___m_p_i__scalar_8f90.html#a664f054af3b37921c01e946f7c4e2121',1,'assemble_MPI_scalar.f90']]],
   ['transfer_5ffields_5fgpu_2ec',['transfer_fields_gpu.c',['../db/d29/transfer__fields__gpu_8c.html',1,'']]],
   ['transverse_5fisotropy',['transverse_isotropy',['../dc/df5/namespaceshared__compute__parameters.html#a35c1208bf51d9e85f88d6845f60a7867',1,'shared_compute_parameters']]],
-  ['transverse_5fisotropy_5fval',['transverse_isotropy_val',['../db/dd6/namespaceconstants__solver.html#a99da1b7691635ea89df3d483caf60385',1,'constants_solver']]],
   ['trim_5fand_5fdefault',['trim_and_default',['../d9/d76/initialize__gpu_8c.html#ac4e7ef3bcb4d32e0e0901d1b23dc52e1',1,'initialize_gpu.c']]],
   ['tshift_5fcmt',['tshift_cmt',['../db/da6/namespacespecfem__par.html#a8a77359d57b8b833acdf09abd5e2e0cc',1,'specfem_par']]],
   ['two_5fomega_5fearth',['two_omega_earth',['../d2/d88/structmesh__.html#a5a8e4f4b71f788c730e63c7ef8a9290a',1,'mesh_::two_omega_earth()'],['../db/da6/namespacespecfem__par.html#ae5ae79e5caaab8fbe5ca026a8950a298',1,'specfem_par::two_omega_earth()']]]

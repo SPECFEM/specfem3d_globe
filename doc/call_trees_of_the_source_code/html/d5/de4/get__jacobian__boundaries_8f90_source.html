@@ -138,7 +138,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00025"></a><span class="lineno">   25</span>&#160;<span class="comment">!</span></div>
 <div class="line"><a name="l00026"></a><span class="lineno">   26</span>&#160;<span class="comment">!=====================================================================</span></div>
 <div class="line"><a name="l00027"></a><span class="lineno">   27</span>&#160;</div>
-<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a7ed9968ee820ae12217276a20ea8c780">get_jacobian_boundaries</a>(myrank,iboun,nspec,xstore,ystore,zstore, &amp;</div>
+<div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a26409e7905f8763cb2b70142f34b5efc">get_jacobian_boundaries</a>(iboun,nspec,xstore,ystore,zstore, &amp;</div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;              dershape2d_x,dershape2d_y,dershape2d_bottom,dershape2d_top, &amp;</div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160;              ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &amp;</div>
 <div class="line"><a name="l00031"></a><span class="lineno">   31</span>&#160;              nspec2d_xmin,nspec2d_xmax,nspec2d_ymin,nspec2d_ymax, &amp;</div>
@@ -150,12 +150,12 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;              normal_bottom,normal_top, &amp;</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160;              nspec2d_bottom,nspec2d_top, &amp;</div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;              nspec2dmax_xmin_xmax,nspec2dmax_ymin_ymax,xigll,yigll,zigll)</div>
-<div class="line"><a name="l00040"></a><span class="lineno"><a class="line" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a7ed9968ee820ae12217276a20ea8c780">   40</a></span>&#160;</div>
+<div class="line"><a name="l00040"></a><span class="lineno"><a class="line" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a26409e7905f8763cb2b70142f34b5efc">   40</a></span>&#160;</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;  <span class="keywordtype">use </span><a class="code" href="../../d7/d28/namespaceconstants.html">constants</a></div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;  <span class="keywordtype">implicit none</span></div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;</div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;  <span class="keywordtype">integer</span> :: nspec,myrank</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;  <span class="keywordtype">integer</span> :: nspec</div>
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;  <span class="keywordtype">integer</span> :: NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX</div>
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;</div>
 <div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;  <span class="keywordtype">integer</span> :: nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax</div>
@@ -203,8 +203,8 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00090"></a><span class="lineno">   90</span>&#160;  <span class="keywordtype">double precision</span>,<span class="keywordtype">dimension(NGLLZ)</span>:: zigll</div>
 <div class="line"><a name="l00091"></a><span class="lineno">   91</span>&#160;</div>
 <div class="line"><a name="l00092"></a><span class="lineno">   92</span>&#160;<span class="comment">! check that the parameter file is correct</span></div>
-<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;  <span class="keywordflow">if</span> (ngnod /= 27) <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;elements should have 27 control nodes&#39;</span>)</div>
-<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;  <span class="keywordflow">if</span> (ngnod2d /= 9) <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;surface elements should have 9 control nodes&#39;</span>)</div>
+<div class="line"><a name="l00093"></a><span class="lineno">   93</span>&#160;  <span class="keywordflow">if</span> (ngnod /= 27) <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;elements should have 27 control nodes&#39;</span>)</div>
+<div class="line"><a name="l00094"></a><span class="lineno">   94</span>&#160;  <span class="keywordflow">if</span> (ngnod2d /= 9) <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;surface elements should have 9 control nodes&#39;</span>)</div>
 <div class="line"><a name="l00095"></a><span class="lineno">   95</span>&#160;</div>
 <div class="line"><a name="l00096"></a><span class="lineno">   96</span>&#160;  ispecb1 = 0</div>
 <div class="line"><a name="l00097"></a><span class="lineno">   97</span>&#160;  ispecb2 = 0</div>
@@ -254,7 +254,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;          yelm(9)=ystore(1,(nglly+1)/2,(ngllz+1)/2,ispec)</div>
 <div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;          zelm(9)=zstore(1,(nglly+1)/2,(ngllz+1)/2,ispec)</div>
 <div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;</div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a>(myrank,ispecb1,xelm,yelm,zelm,dershape2d_x, &amp;</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a>(ispecb1,xelm,yelm,zelm,dershape2d_x, &amp;</div>
 <div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;                    jacobian2d_xmin,normal_xmin,nglly,ngllz,nspec2dmax_xmin_xmax)</div>
 <div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;      <span class="keywordflow">else</span></div>
 <div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;          <span class="comment">! get 25 GLL points for xmin</span></div>
@@ -266,7 +266,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;<span class="keywordflow">             enddo</span></div>
 <div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;<span class="keywordflow">          enddo</span></div>
 <div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;          <span class="comment">! recalculate Jacobian according to 2D GLL points</span></div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#ac16e94d40ae1ed76bf66ecd0c6bb0f46">recalc_jacobian_gll2d</a>(myrank,ispecb1,xelm2d,yelm2d,zelm2d, &amp;</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#a842a5cb4967fd371cc84847547b5f843">recalc_jacobian_gll2d</a>(ispecb1,xelm2d,yelm2d,zelm2d, &amp;</div>
 <div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;                          yigll,zigll,jacobian2d_xmin,normal_xmin, &amp;</div>
 <div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;                          nglly,ngllz,nspec2dmax_xmin_xmax)</div>
 <div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;<span class="keywordflow">     endif</span></div>
@@ -309,7 +309,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00196"></a><span class="lineno">  196</span>&#160;          yelm(9)=ystore(ngllx,(nglly+1)/2,(ngllz+1)/2,ispec)</div>
 <div class="line"><a name="l00197"></a><span class="lineno">  197</span>&#160;          zelm(9)=zstore(ngllx,(nglly+1)/2,(ngllz+1)/2,ispec)</div>
 <div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;</div>
-<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a>(myrank,ispecb2,xelm,yelm,zelm,dershape2d_x, &amp;</div>
+<div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a>(ispecb2,xelm,yelm,zelm,dershape2d_x, &amp;</div>
 <div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;                    jacobian2d_xmax,normal_xmax,nglly,ngllz,nspec2dmax_xmin_xmax)</div>
 <div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;</div>
 <div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160;      <span class="keywordflow">else</span></div>
@@ -322,7 +322,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00209"></a><span class="lineno">  209</span>&#160;<span class="keywordflow">             enddo</span></div>
 <div class="line"><a name="l00210"></a><span class="lineno">  210</span>&#160;<span class="keywordflow">          enddo</span></div>
 <div class="line"><a name="l00211"></a><span class="lineno">  211</span>&#160;          <span class="comment">! recalculate Jacobian according to 2D GLL points</span></div>
-<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#ac16e94d40ae1ed76bf66ecd0c6bb0f46">recalc_jacobian_gll2d</a>(myrank,ispecb2,xelm2d,yelm2d,zelm2d, &amp;</div>
+<div class="line"><a name="l00212"></a><span class="lineno">  212</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#a842a5cb4967fd371cc84847547b5f843">recalc_jacobian_gll2d</a>(ispecb2,xelm2d,yelm2d,zelm2d, &amp;</div>
 <div class="line"><a name="l00213"></a><span class="lineno">  213</span>&#160;                          yigll,zigll,jacobian2d_xmax,normal_xmax, &amp;</div>
 <div class="line"><a name="l00214"></a><span class="lineno">  214</span>&#160;                          nglly,ngllz,nspec2dmax_xmin_xmax)</div>
 <div class="line"><a name="l00215"></a><span class="lineno">  215</span>&#160;<span class="keywordflow">       endif</span></div>
@@ -365,7 +365,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00252"></a><span class="lineno">  252</span>&#160;          yelm(9)=ystore((ngllx+1)/2,1,(ngllz+1)/2,ispec)</div>
 <div class="line"><a name="l00253"></a><span class="lineno">  253</span>&#160;          zelm(9)=zstore((ngllx+1)/2,1,(ngllz+1)/2,ispec)</div>
 <div class="line"><a name="l00254"></a><span class="lineno">  254</span>&#160;</div>
-<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a>(myrank,ispecb3,xelm,yelm,zelm,dershape2d_y, &amp;</div>
+<div class="line"><a name="l00255"></a><span class="lineno">  255</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a>(ispecb3,xelm,yelm,zelm,dershape2d_y, &amp;</div>
 <div class="line"><a name="l00256"></a><span class="lineno">  256</span>&#160;                    jacobian2d_ymin,normal_ymin,ngllx,ngllz,nspec2dmax_ymin_ymax)</div>
 <div class="line"><a name="l00257"></a><span class="lineno">  257</span>&#160;</div>
 <div class="line"><a name="l00258"></a><span class="lineno">  258</span>&#160;     <span class="keywordflow">else</span></div>
@@ -378,7 +378,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00265"></a><span class="lineno">  265</span>&#160;<span class="keywordflow">             enddo</span></div>
 <div class="line"><a name="l00266"></a><span class="lineno">  266</span>&#160;<span class="keywordflow">          enddo</span></div>
 <div class="line"><a name="l00267"></a><span class="lineno">  267</span>&#160;          <span class="comment">! recalculate 2D Jacobian according to GLL points</span></div>
-<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#ac16e94d40ae1ed76bf66ecd0c6bb0f46">recalc_jacobian_gll2d</a>(myrank,ispecb3,xelm2d,yelm2d,zelm2d, &amp;</div>
+<div class="line"><a name="l00268"></a><span class="lineno">  268</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#a842a5cb4967fd371cc84847547b5f843">recalc_jacobian_gll2d</a>(ispecb3,xelm2d,yelm2d,zelm2d, &amp;</div>
 <div class="line"><a name="l00269"></a><span class="lineno">  269</span>&#160;                          xigll,zigll,jacobian2d_ymin,normal_ymin, &amp;</div>
 <div class="line"><a name="l00270"></a><span class="lineno">  270</span>&#160;                          ngllx,ngllz,nspec2dmax_ymin_ymax)</div>
 <div class="line"><a name="l00271"></a><span class="lineno">  271</span>&#160;<span class="keywordflow">     endif</span></div>
@@ -421,7 +421,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00308"></a><span class="lineno">  308</span>&#160;          yelm(9)=ystore((ngllx+1)/2,nglly,(ngllz+1)/2,ispec)</div>
 <div class="line"><a name="l00309"></a><span class="lineno">  309</span>&#160;          zelm(9)=zstore((ngllx+1)/2,nglly,(ngllz+1)/2,ispec)</div>
 <div class="line"><a name="l00310"></a><span class="lineno">  310</span>&#160;</div>
-<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a>(myrank,ispecb4,xelm,yelm,zelm,dershape2d_y, &amp;</div>
+<div class="line"><a name="l00311"></a><span class="lineno">  311</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a>(ispecb4,xelm,yelm,zelm,dershape2d_y, &amp;</div>
 <div class="line"><a name="l00312"></a><span class="lineno">  312</span>&#160;                    jacobian2d_ymax,normal_ymax,ngllx,ngllz,nspec2dmax_ymin_ymax)</div>
 <div class="line"><a name="l00313"></a><span class="lineno">  313</span>&#160;</div>
 <div class="line"><a name="l00314"></a><span class="lineno">  314</span>&#160;      <span class="keywordflow">else</span></div>
@@ -434,7 +434,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00321"></a><span class="lineno">  321</span>&#160;<span class="keywordflow">             enddo</span></div>
 <div class="line"><a name="l00322"></a><span class="lineno">  322</span>&#160;<span class="keywordflow">          enddo</span></div>
 <div class="line"><a name="l00323"></a><span class="lineno">  323</span>&#160;          <span class="comment">! recalculate Jacobian for 2D GLL points</span></div>
-<div class="line"><a name="l00324"></a><span class="lineno">  324</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#ac16e94d40ae1ed76bf66ecd0c6bb0f46">recalc_jacobian_gll2d</a>(myrank,ispecb4,xelm2d,yelm2d,zelm2d, &amp;</div>
+<div class="line"><a name="l00324"></a><span class="lineno">  324</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#a842a5cb4967fd371cc84847547b5f843">recalc_jacobian_gll2d</a>(ispecb4,xelm2d,yelm2d,zelm2d, &amp;</div>
 <div class="line"><a name="l00325"></a><span class="lineno">  325</span>&#160;                          xigll,zigll,jacobian2d_ymax,normal_ymax, &amp;</div>
 <div class="line"><a name="l00326"></a><span class="lineno">  326</span>&#160;                          ngllx,ngllz,nspec2dmax_ymin_ymax)</div>
 <div class="line"><a name="l00327"></a><span class="lineno">  327</span>&#160;<span class="keywordflow">      endif</span></div>
@@ -476,7 +476,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00363"></a><span class="lineno">  363</span>&#160;          yelm(9)=ystore((ngllx+1)/2,(nglly+1)/2,1,ispec)</div>
 <div class="line"><a name="l00364"></a><span class="lineno">  364</span>&#160;          zelm(9)=zstore((ngllx+1)/2,(nglly+1)/2,1,ispec)</div>
 <div class="line"><a name="l00365"></a><span class="lineno">  365</span>&#160;</div>
-<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a>(myrank,ispecb5,xelm,yelm,zelm,dershape2d_bottom, &amp;</div>
+<div class="line"><a name="l00366"></a><span class="lineno">  366</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a>(ispecb5,xelm,yelm,zelm,dershape2d_bottom, &amp;</div>
 <div class="line"><a name="l00367"></a><span class="lineno">  367</span>&#160;                    jacobian2d_bottom,normal_bottom,ngllx,nglly,nspec2d_bottom)</div>
 <div class="line"><a name="l00368"></a><span class="lineno">  368</span>&#160;</div>
 <div class="line"><a name="l00369"></a><span class="lineno">  369</span>&#160;      <span class="keywordflow">else</span></div>
@@ -489,7 +489,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00376"></a><span class="lineno">  376</span>&#160;<span class="keywordflow">             enddo</span></div>
 <div class="line"><a name="l00377"></a><span class="lineno">  377</span>&#160;<span class="keywordflow">          enddo</span></div>
 <div class="line"><a name="l00378"></a><span class="lineno">  378</span>&#160;          <span class="comment">! recalculate 2D Jacobian according to GLL points</span></div>
-<div class="line"><a name="l00379"></a><span class="lineno">  379</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#ac16e94d40ae1ed76bf66ecd0c6bb0f46">recalc_jacobian_gll2d</a>(myrank,ispecb5,xelm2d,yelm2d,zelm2d, &amp;</div>
+<div class="line"><a name="l00379"></a><span class="lineno">  379</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#a842a5cb4967fd371cc84847547b5f843">recalc_jacobian_gll2d</a>(ispecb5,xelm2d,yelm2d,zelm2d, &amp;</div>
 <div class="line"><a name="l00380"></a><span class="lineno">  380</span>&#160;                          xigll,yigll,jacobian2d_bottom,normal_bottom, &amp;</div>
 <div class="line"><a name="l00381"></a><span class="lineno">  381</span>&#160;                          ngllx,nglly,nspec2d_bottom)</div>
 <div class="line"><a name="l00382"></a><span class="lineno">  382</span>&#160;<span class="keywordflow">     endif</span></div>
@@ -532,7 +532,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00419"></a><span class="lineno">  419</span>&#160;          yelm(9)=ystore((ngllx+1)/2,(nglly+1)/2,ngllz,ispec)</div>
 <div class="line"><a name="l00420"></a><span class="lineno">  420</span>&#160;          zelm(9)=zstore((ngllx+1)/2,(nglly+1)/2,ngllz,ispec)</div>
 <div class="line"><a name="l00421"></a><span class="lineno">  421</span>&#160;</div>
-<div class="line"><a name="l00422"></a><span class="lineno">  422</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a>(myrank,ispecb6,xelm,yelm,zelm,dershape2d_top, &amp;</div>
+<div class="line"><a name="l00422"></a><span class="lineno">  422</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a>(ispecb6,xelm,yelm,zelm,dershape2d_top, &amp;</div>
 <div class="line"><a name="l00423"></a><span class="lineno">  423</span>&#160;                                  jacobian2d_top,normal_top,ngllx,nglly,nspec2d_top)</div>
 <div class="line"><a name="l00424"></a><span class="lineno">  424</span>&#160;      <span class="keywordflow">else</span></div>
 <div class="line"><a name="l00425"></a><span class="lineno">  425</span>&#160;          <span class="comment">! get 25 GLL points for zmax</span></div>
@@ -544,7 +544,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00431"></a><span class="lineno">  431</span>&#160;<span class="keywordflow">             enddo</span></div>
 <div class="line"><a name="l00432"></a><span class="lineno">  432</span>&#160;<span class="keywordflow">          enddo</span></div>
 <div class="line"><a name="l00433"></a><span class="lineno">  433</span>&#160;          <span class="comment">! recalculate Jacobian according to 2D GLL points</span></div>
-<div class="line"><a name="l00434"></a><span class="lineno">  434</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#ac16e94d40ae1ed76bf66ecd0c6bb0f46">recalc_jacobian_gll2d</a>(myrank,ispecb6,xelm2d,yelm2d,zelm2d, &amp;</div>
+<div class="line"><a name="l00434"></a><span class="lineno">  434</span>&#160;          <span class="keyword">call </span><a class="code" href="../../d9/d24/calc__jacobian_8f90.html#a842a5cb4967fd371cc84847547b5f843">recalc_jacobian_gll2d</a>(ispecb6,xelm2d,yelm2d,zelm2d, &amp;</div>
 <div class="line"><a name="l00435"></a><span class="lineno">  435</span>&#160;                                  xigll,yigll,jacobian2d_top,normal_top, &amp;</div>
 <div class="line"><a name="l00436"></a><span class="lineno">  436</span>&#160;                                  ngllx,nglly,nspec2d_top)</div>
 <div class="line"><a name="l00437"></a><span class="lineno">  437</span>&#160;</div>
@@ -558,31 +558,31 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00445"></a><span class="lineno">  445</span>&#160;<span class="comment">! check theoretical value of elements at the bottom</span></div>
 <div class="line"><a name="l00446"></a><span class="lineno">  446</span>&#160;  <span class="keywordflow">if</span> (ispecb5 /= nspec2d_bottom) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00447"></a><span class="lineno">  447</span>&#160;    print *,<span class="stringliteral">&#39;Error ispecb5:&#39;</span>,ispecb5,nspec2d_bottom</div>
-<div class="line"><a name="l00448"></a><span class="lineno">  448</span>&#160;    <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;ispecb5 should equal NSPEC2D_BOTTOM&#39;</span>)</div>
+<div class="line"><a name="l00448"></a><span class="lineno">  448</span>&#160;    <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;ispecb5 should equal NSPEC2D_BOTTOM&#39;</span>)</div>
 <div class="line"><a name="l00449"></a><span class="lineno">  449</span>&#160;<span class="keywordflow">  endif</span></div>
 <div class="line"><a name="l00450"></a><span class="lineno">  450</span>&#160;</div>
 <div class="line"><a name="l00451"></a><span class="lineno">  451</span>&#160;<span class="comment">! check theoretical value of elements at the top</span></div>
-<div class="line"><a name="l00452"></a><span class="lineno">  452</span>&#160;  <span class="keywordflow">if</span> (ispecb6 /= nspec2d_top) <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;ispecb6 should equal NSPEC2D_TOP&#39;</span>)</div>
+<div class="line"><a name="l00452"></a><span class="lineno">  452</span>&#160;  <span class="keywordflow">if</span> (ispecb6 /= nspec2d_top) <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;ispecb6 should equal NSPEC2D_TOP&#39;</span>)</div>
 <div class="line"><a name="l00453"></a><span class="lineno">  453</span>&#160;</div>
 <div class="line"><a name="l00454"></a><span class="lineno">  454</span>&#160;  nspec2d_xmin = ispecb1</div>
 <div class="line"><a name="l00455"></a><span class="lineno">  455</span>&#160;  nspec2d_xmax = ispecb2</div>
 <div class="line"><a name="l00456"></a><span class="lineno">  456</span>&#160;  nspec2d_ymin = ispecb3</div>
 <div class="line"><a name="l00457"></a><span class="lineno">  457</span>&#160;  nspec2d_ymax = ispecb4</div>
 <div class="line"><a name="l00458"></a><span class="lineno">  458</span>&#160;</div>
-<div class="line"><a name="l00459"></a><span class="lineno">  459</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a7ed9968ee820ae12217276a20ea8c780">get_jacobian_boundaries</a></div>
+<div class="line"><a name="l00459"></a><span class="lineno">  459</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a26409e7905f8763cb2b70142f34b5efc">get_jacobian_boundaries</a></div>
 <div class="line"><a name="l00460"></a><span class="lineno">  460</span>&#160;</div>
 <div class="line"><a name="l00461"></a><span class="lineno">  461</span>&#160;<span class="comment">! -------------------------------------------------------</span></div>
 <div class="line"><a name="l00462"></a><span class="lineno">  462</span>&#160;</div>
-<div class="line"><a name="l00463"></a><span class="lineno">  463</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a>(myrank,ispecb,xelm,yelm,zelm,dershape2D, &amp;</div>
+<div class="line"><a name="l00463"></a><span class="lineno">  463</span>&#160;<span class="keyword">  subroutine </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a>(ispecb,xelm,yelm,zelm,dershape2D, &amp;</div>
 <div class="line"><a name="l00464"></a><span class="lineno">  464</span>&#160;                                jacobian2d,normal,nglla,ngllb,nspec2dmax_ab)</div>
-<div class="line"><a name="l00465"></a><span class="lineno"><a class="line" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">  465</a></span>&#160;</div>
+<div class="line"><a name="l00465"></a><span class="lineno"><a class="line" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">  465</a></span>&#160;</div>
 <div class="line"><a name="l00466"></a><span class="lineno">  466</span>&#160;  <span class="keywordtype">use </span><a class="code" href="../../d7/d28/namespaceconstants.html">constants</a></div>
 <div class="line"><a name="l00467"></a><span class="lineno">  467</span>&#160;</div>
 <div class="line"><a name="l00468"></a><span class="lineno">  468</span>&#160;  <span class="keywordtype">implicit none</span></div>
 <div class="line"><a name="l00469"></a><span class="lineno">  469</span>&#160;</div>
 <div class="line"><a name="l00470"></a><span class="lineno">  470</span>&#160;<span class="comment">! generic routine that accepts any polynomial degree in each direction</span></div>
 <div class="line"><a name="l00471"></a><span class="lineno">  471</span>&#160;</div>
-<div class="line"><a name="l00472"></a><span class="lineno">  472</span>&#160;  <span class="keywordtype">integer</span> ispecb,NGLLA,NGLLB,NSPEC2DMAX_AB,myrank</div>
+<div class="line"><a name="l00472"></a><span class="lineno">  472</span>&#160;  <span class="keywordtype">integer</span> ispecb,NGLLA,NGLLB,NSPEC2DMAX_AB</div>
 <div class="line"><a name="l00473"></a><span class="lineno">  473</span>&#160;</div>
 <div class="line"><a name="l00474"></a><span class="lineno">  474</span>&#160;  <span class="keywordtype">double precision</span> xelm(ngnod2d),yelm(ngnod2d),zelm(ngnod2d)</div>
 <div class="line"><a name="l00475"></a><span class="lineno">  475</span>&#160;  <span class="keywordtype">double precision</span> dershape2D(ndim2d,ngnod2d,nglla,ngllb)</div>
@@ -619,7 +619,7 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00506"></a><span class="lineno">  506</span>&#160;    unz=xxi*yeta-xeta*yxi</div>
 <div class="line"><a name="l00507"></a><span class="lineno">  507</span>&#160;    jacobian=dsqrt(unx**2+uny**2+unz**2)</div>
 <div class="line"><a name="l00508"></a><span class="lineno">  508</span>&#160;</div>
-<div class="line"><a name="l00509"></a><span class="lineno">  509</span>&#160;    <span class="keywordflow">if</span> (jacobian &lt;= zero) <span class="keyword">call </span>exit_mpi(myrank,<span class="stringliteral">&#39;2D Jacobian undefined&#39;</span>)</div>
+<div class="line"><a name="l00509"></a><span class="lineno">  509</span>&#160;    <span class="keywordflow">if</span> (jacobian &lt;= zero) <span class="keyword">call </span>exit_mpi(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>,<span class="stringliteral">&#39;2D Jacobian undefined&#39;</span>)</div>
 <div class="line"><a name="l00510"></a><span class="lineno">  510</span>&#160;</div>
 <div class="line"><a name="l00511"></a><span class="lineno">  511</span>&#160;    <span class="comment">!   normalize normal vector and store surface Jacobian</span></div>
 <div class="line"><a name="l00512"></a><span class="lineno">  512</span>&#160;</div>
@@ -632,12 +632,13 @@ $(document).ready(function(){initNavTree('d5/de4/get__jacobian__boundaries_8f90_
 <div class="line"><a name="l00519"></a><span class="lineno">  519</span>&#160;<span class="keywordflow">    enddo</span></div>
 <div class="line"><a name="l00520"></a><span class="lineno">  520</span>&#160;<span class="keywordflow">  enddo</span></div>
 <div class="line"><a name="l00521"></a><span class="lineno">  521</span>&#160;</div>
-<div class="line"><a name="l00522"></a><span class="lineno">  522</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a></div>
+<div class="line"><a name="l00522"></a><span class="lineno">  522</span>&#160;<span class="keyword">  end subroutine </span><a class="code" href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a></div>
 <div class="line"><a name="l00523"></a><span class="lineno">  523</span>&#160;</div>
-<div class="ttc" id="get__jacobian__boundaries_8f90_html_a3e48b623420000c2ee2f7b2a4d681a5b"><div class="ttname"><a href="../../d5/de4/get__jacobian__boundaries_8f90.html#a3e48b623420000c2ee2f7b2a4d681a5b">compute_jacobian_2d</a></div><div class="ttdeci">subroutine compute_jacobian_2d(myrank, ispecb, xelm, yelm, zelm, dershape2D,                                                                                                                           jacobian2D, normal, NGLLA, NGLLB, NSPEC2DMAX_AB)</div><div class="ttdef"><b>Definition:</b> <a href="../../d5/de4/get__jacobian__boundaries_8f90_source.html#l00465">get_jacobian_boundaries.f90:465</a></div></div>
 <div class="ttc" id="namespaceconstants_html"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html">constants</a></div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00028">shared_par.f90:28</a></div></div>
-<div class="ttc" id="get__jacobian__boundaries_8f90_html_a7ed9968ee820ae12217276a20ea8c780"><div class="ttname"><a href="../../d5/de4/get__jacobian__boundaries_8f90.html#a7ed9968ee820ae12217276a20ea8c780">get_jacobian_boundaries</a></div><div class="ttdeci">subroutine get_jacobian_boundaries(myrank, iboun, nspec, xstore, ystore, zstore,                                                   dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top,                                                   ibelm_xmin, ibelm_xmax, ibelm_ymin, ibelm_ymax, ibelm_bottom, ibelm_top,                                                   nspec2D_xmin, nspec2D_xmax, nspec2D_ymin, nspec2D_ymax,                                                   jacobian2D_xmin, jacobian2D_xmax,                                                   jacobian2D_ymin, jacobian2D_ymax,                                                   jacobian2D_bottom, jacobian2D_top,                                                   normal_xmin, normal_xmax,                                                   normal_ymin, normal_ymax,                                                   normal_bottom, normal_top,                                                   NSPEC2D_BOTTOM, NSPEC2D_TOP,                                                   NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, xigll, yigll, zigll)</div><div class="ttdef"><b>Definition:</b> <a href="../../d5/de4/get__jacobian__boundaries_8f90_source.html#l00040">get_jacobian_boundaries.f90:40</a></div></div>
-<div class="ttc" id="calc__jacobian_8f90_html_ac16e94d40ae1ed76bf66ecd0c6bb0f46"><div class="ttname"><a href="../../d9/d24/calc__jacobian_8f90.html#ac16e94d40ae1ed76bf66ecd0c6bb0f46">recalc_jacobian_gll2d</a></div><div class="ttdeci">subroutine recalc_jacobian_gll2d(myrank, ispecb,                                                                                                                           xelm2D, yelm2D, zelm2D, xigll, yigll,                                                                                                                           jacobian2D, normal, NGLLA, NGLLB, NSPEC2DMAX_AB)</div><div class="ttdef"><b>Definition:</b> <a href="../../d9/d24/calc__jacobian_8f90_source.html#l00256">calc_jacobian.f90:256</a></div></div>
+<div class="ttc" id="get__jacobian__boundaries_8f90_html_a26409e7905f8763cb2b70142f34b5efc"><div class="ttname"><a href="../../d5/de4/get__jacobian__boundaries_8f90.html#a26409e7905f8763cb2b70142f34b5efc">get_jacobian_boundaries</a></div><div class="ttdeci">subroutine get_jacobian_boundaries(iboun, nspec, xstore, ystore, zstore,                                                   dershape2D_x, dershape2D_y, dershape2D_bottom, dershape2D_top,                                                   ibelm_xmin, ibelm_xmax, ibelm_ymin, ibelm_ymax, ibelm_bottom, ibelm_top,                                                   nspec2D_xmin, nspec2D_xmax, nspec2D_ymin, nspec2D_ymax,                                                   jacobian2D_xmin, jacobian2D_xmax,                                                   jacobian2D_ymin, jacobian2D_ymax,                                                   jacobian2D_bottom, jacobian2D_top,                                                   normal_xmin, normal_xmax,                                                   normal_ymin, normal_ymax,                                                   normal_bottom, normal_top,                                                   NSPEC2D_BOTTOM, NSPEC2D_TOP,                                                   NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, xigll, yigll, zigll)</div><div class="ttdef"><b>Definition:</b> <a href="../../d5/de4/get__jacobian__boundaries_8f90_source.html#l00040">get_jacobian_boundaries.f90:40</a></div></div>
+<div class="ttc" id="get__jacobian__boundaries_8f90_html_aac6e84b772353f3e6053e313d5881cc6"><div class="ttname"><a href="../../d5/de4/get__jacobian__boundaries_8f90.html#aac6e84b772353f3e6053e313d5881cc6">compute_jacobian_2d</a></div><div class="ttdeci">subroutine compute_jacobian_2d(ispecb, xelm, yelm, zelm, dershape2D,                                                                                                                           jacobian2D, normal, NGLLA, NGLLB, NSPEC2DMAX_AB)</div><div class="ttdef"><b>Definition:</b> <a href="../../d5/de4/get__jacobian__boundaries_8f90_source.html#l00465">get_jacobian_boundaries.f90:465</a></div></div>
+<div class="ttc" id="namespaceconstants_html_a2cf2f5b4da613a2ca04aa91059a965d5"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">constants::myrank</a></div><div class="ttdeci">integer myrank</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00033">shared_par.f90:33</a></div></div>
+<div class="ttc" id="calc__jacobian_8f90_html_a842a5cb4967fd371cc84847547b5f843"><div class="ttname"><a href="../../d9/d24/calc__jacobian_8f90.html#a842a5cb4967fd371cc84847547b5f843">recalc_jacobian_gll2d</a></div><div class="ttdeci">subroutine recalc_jacobian_gll2d(ispecb,                                                                                                                           xelm2D, yelm2D, zelm2D, xigll, yigll,                                                                                                                           jacobian2D, normal, NGLLA, NGLLB, NSPEC2DMAX_AB)</div><div class="ttdef"><b>Definition:</b> <a href="../../d9/d24/calc__jacobian_8f90_source.html#l00256">calc_jacobian.f90:256</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- custom-made footer -->

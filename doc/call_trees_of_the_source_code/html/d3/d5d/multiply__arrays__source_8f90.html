@@ -118,12 +118,10 @@ $(document).ready(function(){initNavTree('d3/d5d/multiply__arrays__source_8f90.h
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
 Functions/Subroutines</h2></td></tr>
-<tr class="memitem:a05ae110d69b09574d1cc63b166b1e9a3"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d5d/multiply__arrays__source_8f90.html#a05ae110d69b09574d1cc63b166b1e9a3">multiply_accel_elastic</a> (NGLOB, veloc, accel,                                                                                                                                           two_omega_earth,                                                                                                                                           rmassx, rmassy, rmassz)</td></tr>
-<tr class="separator:a05ae110d69b09574d1cc63b166b1e9a3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5fc7cf02fbee158a659b2ae0192853b5"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d5d/multiply__arrays__source_8f90.html#a5fc7cf02fbee158a659b2ae0192853b5">multiply_accel_elastic</a> (two_omega_earth,                                                                                                                                           NGLOB_CM, veloc_cm, accel_cm,                                                                                                                                           rmassx_cm, rmassy_cm, rmassz_cm,                                                                                                                                           NGLOB_IC, veloc_ic, accel_ic,                                                                                                                                           rmassx_ic, rmassy_ic, rmassz_ic)</td></tr>
+<tr class="separator:a5fc7cf02fbee158a659b2ae0192853b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab5b7c529a0cbe86e8db4f3f36d19950c"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d5d/multiply__arrays__source_8f90.html#ab5b7c529a0cbe86e8db4f3f36d19950c">multiply_accel_acoustic</a> (NGLOB, accel, rmass)</td></tr>
 <tr class="separator:ab5b7c529a0cbe86e8db4f3f36d19950c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47f3f21af7c4bc3bba683869a9093ecb"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d5d/multiply__arrays__source_8f90.html#a47f3f21af7c4bc3bba683869a9093ecb">multiply_arrays_source</a> (sourcearrayd, G11, G12, G13, G21, G22, G23,                                                                   G31, G32, G33, hxis, hpxis, hetas, hpetas, hgammas, hpgammas, k, l, m)</td></tr>
-<tr class="separator:a47f3f21af7c4bc3bba683869a9093ecb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d0bd8244039b288a5ec41fdf7cbb41b"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../d3/d5d/multiply__arrays__source_8f90.html#a7d0bd8244039b288a5ec41fdf7cbb41b">multiply_arrays_adjoint</a> (sourcearrayd, hxir, hetar, hgammar, adj_src_ud)</td></tr>
 <tr class="separator:a7d0bd8244039b288a5ec41fdf7cbb41b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -158,7 +156,7 @@ Functions/Subroutines</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html#l00120">120</a> of file <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html">multiply_arrays_source.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html#l00159">159</a> of file <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html">multiply_arrays_source.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
@@ -173,51 +171,87 @@ Here is the caller graph for this function:</div>
 
 </div>
 </div>
-<a class="anchor" id="a05ae110d69b09574d1cc63b166b1e9a3"></a>
+<a class="anchor" id="a5fc7cf02fbee158a659b2ae0192853b5"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
           <td class="memname">subroutine multiply_accel_elastic </td>
           <td>(</td>
-          <td class="paramtype">integer&#160;</td>
-          <td class="paramname"><em>NGLOB</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(ndim,nglob)&#160;</td>
-          <td class="paramname"><em>veloc</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(ndim,nglob)&#160;</td>
-          <td class="paramname"><em>accel</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real)&#160;</td>
+          <td class="paramtype">real(kind=custom_real), intent(in)&#160;</td>
           <td class="paramname"><em>two_omega_earth</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(nglob)&#160;</td>
-          <td class="paramname"><em>rmassx</em>, </td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>NGLOB_CM</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(nglob)&#160;</td>
-          <td class="paramname"><em>rmassy</em>, </td>
+          <td class="paramtype">real(kind=custom_real), dimension(ndim,nglob_cm), intent(in)&#160;</td>
+          <td class="paramname"><em>veloc_cm</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(nglob)&#160;</td>
-          <td class="paramname"><em>rmassz</em>&#160;</td>
+          <td class="paramtype">real(kind=custom_real), dimension(ndim,nglob_cm), intent(inout)&#160;</td>
+          <td class="paramname"><em>accel_cm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(nglob_cm), intent(in)&#160;</td>
+          <td class="paramname"><em>rmassx_cm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(nglob_cm), intent(in)&#160;</td>
+          <td class="paramname"><em>rmassy_cm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(nglob_cm), intent(in)&#160;</td>
+          <td class="paramname"><em>rmassz_cm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">integer, intent(in)&#160;</td>
+          <td class="paramname"><em>NGLOB_IC</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ndim,nglob_ic), intent(in)&#160;</td>
+          <td class="paramname"><em>veloc_ic</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(ndim,nglob_ic), intent(inout)&#160;</td>
+          <td class="paramname"><em>accel_ic</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(nglob_ic), intent(in)&#160;</td>
+          <td class="paramname"><em>rmassx_ic</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(nglob_ic), intent(in)&#160;</td>
+          <td class="paramname"><em>rmassy_ic</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">real(kind=custom_real), dimension(nglob_ic), intent(in)&#160;</td>
+          <td class="paramname"><em>rmassz_ic</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -227,13 +261,13 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html#l00046">46</a> of file <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html">multiply_arrays_source.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html#l00048">48</a> of file <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html">multiply_arrays_source.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../d3/d5d/multiply__arrays__source_8f90_a05ae110d69b09574d1cc63b166b1e9a3_icgraph.png" border="0" usemap="#d3/d5d/multiply__arrays__source_8f90_a05ae110d69b09574d1cc63b166b1e9a3_icgraph" alt=""/></div>
-<map name="d3/d5d/multiply__arrays__source_8f90_a05ae110d69b09574d1cc63b166b1e9a3_icgraph" id="d3/d5d/multiply__arrays__source_8f90_a05ae110d69b09574d1cc63b166b1e9a3_icgraph">
+<div class="center"><img src="../../d3/d5d/multiply__arrays__source_8f90_a5fc7cf02fbee158a659b2ae0192853b5_icgraph.png" border="0" usemap="#d3/d5d/multiply__arrays__source_8f90_a5fc7cf02fbee158a659b2ae0192853b5_icgraph" alt=""/></div>
+<map name="d3/d5d/multiply__arrays__source_8f90_a5fc7cf02fbee158a659b2ae0192853b5_icgraph" id="d3/d5d/multiply__arrays__source_8f90_a5fc7cf02fbee158a659b2ae0192853b5_icgraph">
 <area shape="rect" id="node2" href="../../d5/d71/compute__forces__viscoelastic__calling__routine_8_f90.html#ad861052a974f995b94bb0cab9ec41cca" title="compute_forces_viscoelastic" alt="" coords="204,5,396,32"/>
 <area shape="rect" id="node3" href="../../d5/d71/compute__forces__viscoelastic__calling__routine_8_f90.html#a128d40298a0bcc0f380b4b3fc322c32e" title="compute_forces_viscoelastic\l_backward" alt="" coords="204,57,396,98"/>
 </map>
@@ -284,7 +318,7 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html#l00208">208</a> of file <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html">multiply_arrays_source.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html#l00198">198</a> of file <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html">multiply_arrays_source.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
@@ -292,146 +326,6 @@ Here is the caller graph for this function:</div>
 <div class="center"><img src="../../d3/d5d/multiply__arrays__source_8f90_a7d0bd8244039b288a5ec41fdf7cbb41b_icgraph.png" border="0" usemap="#d3/d5d/multiply__arrays__source_8f90_a7d0bd8244039b288a5ec41fdf7cbb41b_icgraph" alt=""/></div>
 <map name="d3/d5d/multiply__arrays__source_8f90_a7d0bd8244039b288a5ec41fdf7cbb41b_icgraph" id="d3/d5d/multiply__arrays__source_8f90_a7d0bd8244039b288a5ec41fdf7cbb41b_icgraph">
 <area shape="rect" id="node2" href="../../da/d19/compute__arrays__source_8f90.html#a28155dc37e72d3c7c29284a3e4c04c47" title="compute_arrays_source\l_adjoint" alt="" coords="212,5,377,47"/>
-</map>
-</div>
-</p>
-
-</div>
-</div>
-<a class="anchor" id="a47f3f21af7c4bc3bba683869a9093ecb"></a>
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">subroutine multiply_arrays_source </td>
-          <td>(</td>
-          <td class="paramtype">double precision, dimension(ndim,ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>sourcearrayd</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G11</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G12</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G13</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G21</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G22</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G23</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G31</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G32</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx,nglly,ngllz)&#160;</td>
-          <td class="paramname"><em>G33</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx)&#160;</td>
-          <td class="paramname"><em>hxis</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllx)&#160;</td>
-          <td class="paramname"><em>hpxis</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(nglly)&#160;</td>
-          <td class="paramname"><em>hetas</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(nglly)&#160;</td>
-          <td class="paramname"><em>hpetas</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllz)&#160;</td>
-          <td class="paramname"><em>hgammas</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">double precision, dimension(ngllz)&#160;</td>
-          <td class="paramname"><em>hpgammas</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer&#160;</td>
-          <td class="paramname"><em>k</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer&#160;</td>
-          <td class="paramname"><em>l</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer&#160;</td>
-          <td class="paramname"><em>m</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Definition at line <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html#l00158">158</a> of file <a class="el" href="../../d3/d5d/multiply__arrays__source_8f90_source.html">multiply_arrays_source.f90</a>.</p>
-
-<p><div class="dynheader">
-Here is the caller graph for this function:</div>
-<div class="dyncontent">
-<div class="center"><img src="../../d3/d5d/multiply__arrays__source_8f90_a47f3f21af7c4bc3bba683869a9093ecb_icgraph.png" border="0" usemap="#d3/d5d/multiply__arrays__source_8f90_a47f3f21af7c4bc3bba683869a9093ecb_icgraph" alt=""/></div>
-<map name="d3/d5d/multiply__arrays__source_8f90_a47f3f21af7c4bc3bba683869a9093ecb_icgraph" id="d3/d5d/multiply__arrays__source_8f90_a47f3f21af7c4bc3bba683869a9093ecb_icgraph">
-<area shape="rect" id="node2" href="../../da/d19/compute__arrays__source_8f90.html#a45142e8fde5b2a9cc699665cc6c641ef" title="compute_arrays_source" alt="" coords="212,5,377,32"/>
 </map>
 </div>
 </p>

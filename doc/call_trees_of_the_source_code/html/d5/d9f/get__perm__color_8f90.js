@@ -1,11 +1,11 @@
 var get__perm__color_8f90 =
 [
-    [ "balance_colors_droux", "d5/d9f/get__perm__color_8f90.html#a0554dd8a3c8b4d5c34228d371ee8d4d9", null ],
-    [ "balance_colors_simple", "d5/d9f/get__perm__color_8f90.html#a2c6284f09918c5c97fdda0e19794b409", null ],
-    [ "count_mesh_valence", "d5/d9f/get__perm__color_8f90.html#af5a17266e1994980e539c0e1d2730f20", null ],
-    [ "get_color_faster", "d5/d9f/get__perm__color_8f90.html#a53386f671425ccb2b320204ba2b7fb0d", null ],
+    [ "balance_colors_droux", "d5/d9f/get__perm__color_8f90.html#a5a7705632b9c261d341d7fd6a03f76ef", null ],
+    [ "balance_colors_simple", "d5/d9f/get__perm__color_8f90.html#afe0e0f66044d92679e98fa3d436f2c52", null ],
+    [ "count_mesh_valence", "d5/d9f/get__perm__color_8f90.html#a872913a7ae5191753a791a7d8b7ddf1e", null ],
+    [ "get_color_faster", "d5/d9f/get__perm__color_8f90.html#a8302d46a4cfb59fb10655ad0872d970f", null ],
     [ "get_final_perm", "d5/d9f/get__perm__color_8f90.html#ad54e44d23d43ce15837569722a70f54b", null ],
-    [ "get_perm_color_faster", "d5/d9f/get__perm__color_8f90.html#a10129ac9a1d31ef2928fa7d629a2a6b8", null ],
+    [ "get_perm_color_faster", "d5/d9f/get__perm__color_8f90.html#a94bc846f812931ba815199ee71aa4901", null ],
     [ "permute_elements_dble", "d5/d9f/get__perm__color_8f90.html#a47d43932acd5de74b724aedd30f86c7a", null ],
     [ "permute_elements_dble1", "d5/d9f/get__perm__color_8f90.html#a16af1f9792ca0d36d1f7a90213240a1d", null ],
     [ "permute_elements_dble_sls", "d5/d9f/get__perm__color_8f90.html#a6f1216c7dcc1a3a4aa0658d0881f3f7f", null ],

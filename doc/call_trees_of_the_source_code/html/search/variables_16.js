@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['wgll_5fcube',['wgll_cube',['../db/da6/namespacespecfem__par.html#a510fc90896011b1c98457c67f82b890c',1,'specfem_par']]],
+  ['wgll_5fcube',['wgll_cube',['../db/da6/namespacespecfem__par.html#a4f09000cd6c235fa717d988ca2c20ecc',1,'specfem_par']]],
   ['wgllwgll_5fxy',['wgllwgll_xy',['../db/da6/namespacespecfem__par.html#a057d0a51882459a828b7a9e937d753b1',1,'specfem_par']]],
   ['wgllwgll_5fxy_5f3d',['wgllwgll_xy_3d',['../db/da6/namespacespecfem__par.html#a178e205210e85474dd8384d8c1f15fb1',1,'specfem_par']]],
   ['wgllwgll_5fxz',['wgllwgll_xz',['../db/da6/namespacespecfem__par.html#a057ef3d321ba6202f13dea7df0b06aaf',1,'specfem_par']]],

@@ -218,7 +218,7 @@ $(document).ready(function(){initNavTree('d8/d5e/combine__vol__data_8_f90_source
 <div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;<span class="preprocessor">#endif</span></div>
 <div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;<span class="preprocessor"></span></div>
 <div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;<span class="preprocessor">#ifdef ADIOS_INPUT</span></div>
-<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;<span class="preprocessor"></span>  <span class="keywordtype">integer</span> :: sizeprocs,myrank</div>
+<div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;<span class="preprocessor"></span>  <span class="keywordtype">integer</span> :: sizeprocs</div>
 <div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;  <span class="keywordtype">character(len=MAX_STRING_LEN)</span> :: var_name, value_file_name, mesh_file_name</div>
 <div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;  <span class="keywordtype">integer(kind=8)</span> :: value_handle, mesh_handle</div>
 <div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;<span class="preprocessor">#else</span></div>
@@ -239,9 +239,9 @@ $(document).ready(function(){initNavTree('d8/d5e/combine__vol__data_8_f90_source
 <div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;  <span class="comment">! checks number of processes</span></div>
 <div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;  <span class="comment">! note: must run as a single process with: mpirun -np 1 ..</span></div>
 <div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;  <span class="keywordflow">if</span> (sizeprocs /= 1) <span class="keywordflow">then</span></div>
-<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;    <span class="keyword">call </span>world_rank(myrank)</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;    <span class="keyword">call </span>world_rank(<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a>)</div>
 <div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;    <span class="comment">! usage info</span></div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;    <span class="keywordflow">if</span> (myrank == 0) <span class="keywordflow">then</span></div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;    <span class="keywordflow">if</span> (<a class="code" href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">myrank</a> == 0) <span class="keywordflow">then</span></div>
 <div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;      print *, <span class="stringliteral">&quot;ADIOS requires MPI functionality. However, this program executes as sequential program.&quot;</span></div>
 <div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;      print *, <span class="stringliteral">&quot;Invalid number of processes used: &quot;</span>, sizeprocs, <span class="stringliteral">&quot; procs&quot;</span></div>
 <div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;      print *</div>
@@ -760,7 +760,7 @@ $(document).ready(function(){initNavTree('d8/d5e/combine__vol__data_8_f90_source
 <div class="line"><a name="l00647"></a><span class="lineno">  647</span>&#160;    <span class="keywordflow">do</span> i = 1,np</div>
 <div class="line"><a name="l00648"></a><span class="lineno">  648</span>&#160;      <span class="keyword">write</span>(iout_vtk,<span class="stringliteral">&#39;(3e18.6)&#39;</span>) total_dat_xyz(1,i),total_dat_xyz(2,i),total_dat_xyz(3,i)</div>
 <div class="line"><a name="l00649"></a><span class="lineno">  649</span>&#160;<span class="keywordflow">    enddo</span></div>
-<div class="line"><a name="l00650"></a><span class="lineno">  650</span>&#160;    <span class="keyword">write</span>(iout_vtk,*) <span class="stringliteral">&quot;&quot;</span></div>
+<div class="line"><a name="l00650"></a><span class="lineno">  650</span>&#160;    <span class="keyword">write</span>(iout_vtk,*) <span class="stringliteral">&#39;&#39;</span></div>
 <div class="line"><a name="l00651"></a><span class="lineno">  651</span>&#160;</div>
 <div class="line"><a name="l00652"></a><span class="lineno">  652</span>&#160;    <span class="comment">! cells</span></div>
 <div class="line"><a name="l00653"></a><span class="lineno">  653</span>&#160;    <span class="comment">! note: indices for VTK start at 0</span></div>
@@ -769,12 +769,12 @@ $(document).ready(function(){initNavTree('d8/d5e/combine__vol__data_8_f90_source
 <div class="line"><a name="l00656"></a><span class="lineno">  656</span>&#160;      <span class="keyword">write</span>(iout_vtk,<span class="stringliteral">&#39;(9i12)&#39;</span>) 8,total_dat_con(1,i),total_dat_con(2,i),total_dat_con(3,i),total_dat_con(4,i), &amp;</div>
 <div class="line"><a name="l00657"></a><span class="lineno">  657</span>&#160;                            total_dat_con(5,i),total_dat_con(6,i),total_dat_con(7,i),total_dat_con(8,i)</div>
 <div class="line"><a name="l00658"></a><span class="lineno">  658</span>&#160;<span class="keywordflow">    enddo</span></div>
-<div class="line"><a name="l00659"></a><span class="lineno">  659</span>&#160;    <span class="keyword">write</span>(iout_vtk,*) <span class="stringliteral">&quot;&quot;</span></div>
+<div class="line"><a name="l00659"></a><span class="lineno">  659</span>&#160;    <span class="keyword">write</span>(iout_vtk,*) <span class="stringliteral">&#39;&#39;</span></div>
 <div class="line"><a name="l00660"></a><span class="lineno">  660</span>&#160;    <span class="comment">! VTK</span></div>
 <div class="line"><a name="l00661"></a><span class="lineno">  661</span>&#160;    <span class="comment">! type: hexahedrons</span></div>
 <div class="line"><a name="l00662"></a><span class="lineno">  662</span>&#160;    <span class="keyword">write</span>(iout_vtk,<span class="stringliteral">&#39;(a,i12)&#39;</span>) <span class="stringliteral">&quot;CELL_TYPES &quot;</span>,ne</div>
 <div class="line"><a name="l00663"></a><span class="lineno">  663</span>&#160;    <span class="keyword">write</span>(iout_vtk,<span class="stringliteral">&#39;(6i12)&#39;</span>) (12,it = 1,ne)</div>
-<div class="line"><a name="l00664"></a><span class="lineno">  664</span>&#160;    <span class="keyword">write</span>(iout_vtk,*) <span class="stringliteral">&quot;&quot;</span></div>
+<div class="line"><a name="l00664"></a><span class="lineno">  664</span>&#160;    <span class="keyword">write</span>(iout_vtk,*) <span class="stringliteral">&#39;&#39;</span></div>
 <div class="line"><a name="l00665"></a><span class="lineno">  665</span>&#160;</div>
 <div class="line"><a name="l00666"></a><span class="lineno">  666</span>&#160;    <span class="keyword">write</span>(iout_vtk,<span class="stringliteral">&#39;(a,i12)&#39;</span>) <span class="stringliteral">&quot;POINT_DATA &quot;</span>,np</div>
 <div class="line"><a name="l00667"></a><span class="lineno">  667</span>&#160;    <span class="keyword">write</span>(iout_vtk,<span class="stringliteral">&#39;(a)&#39;</span>) <span class="stringliteral">&quot;SCALARS &quot;</span>//trim(filename)//<span class="stringliteral">&quot; float&quot;</span></div>
@@ -782,7 +782,7 @@ $(document).ready(function(){initNavTree('d8/d5e/combine__vol__data_8_f90_source
 <div class="line"><a name="l00669"></a><span class="lineno">  669</span>&#160;    <span class="keywordflow">do</span> i = 1,np</div>
 <div class="line"><a name="l00670"></a><span class="lineno">  670</span>&#160;        <span class="keyword">write</span>(iout_vtk,*) total_dat(i)</div>
 <div class="line"><a name="l00671"></a><span class="lineno">  671</span>&#160;<span class="keywordflow">    enddo</span></div>
-<div class="line"><a name="l00672"></a><span class="lineno">  672</span>&#160;    <span class="keyword">write</span>(iout_vtk,*) <span class="stringliteral">&quot;&quot;</span></div>
+<div class="line"><a name="l00672"></a><span class="lineno">  672</span>&#160;    <span class="keyword">write</span>(iout_vtk,*) <span class="stringliteral">&#39;&#39;</span></div>
 <div class="line"><a name="l00673"></a><span class="lineno">  673</span>&#160;    <span class="keyword">close</span>(iout_vtk)</div>
 <div class="line"><a name="l00674"></a><span class="lineno">  674</span>&#160;</div>
 <div class="line"><a name="l00675"></a><span class="lineno">  675</span>&#160;    <span class="comment">! free arrays for this region</span></div>
@@ -828,6 +828,7 @@ $(document).ready(function(){initNavTree('d8/d5e/combine__vol__data_8_f90_source
 <div class="ttc" id="make__ellipticity_8f90_html_a262844ad90503fde29debea93ebf91f7"><div class="ttname"><a href="../../d0/d61/make__ellipticity_8f90.html#a262844ad90503fde29debea93ebf91f7">revert_ellipticity</a></div><div class="ttdeci">subroutine revert_ellipticity(x, y, z, nspl, rspl, espl, espl2)</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d61/make__ellipticity_8f90_source.html#l00196">make_ellipticity.f90:196</a></div></div>
 <div class="ttc" id="parallel_8f90_html_ac422b103fe555bf7e5c01684fc30634b"><div class="ttname"><a href="../../db/d8f/parallel_8f90.html#ac422b103fe555bf7e5c01684fc30634b">finalize_mpi</a></div><div class="ttdeci">subroutine finalize_mpi()</div><div class="ttdef"><b>Definition:</b> <a href="../../db/d8f/parallel_8f90_source.html#l00116">parallel.f90:116</a></div></div>
 <div class="ttc" id="namespacecombine__vol__data__adios__mod_html_ad36f49d59e4eca218d446956370634d9"><div class="ttname"><a href="../../dd/d1c/namespacecombine__vol__data__adios__mod.html#ad36f49d59e4eca218d446956370634d9">combine_vol_data_adios_mod::read_scalars_adios_mesh</a></div><div class="ttdeci">subroutine read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob, nspec)</div><div class="ttdef"><b>Definition:</b> <a href="../../dd/d0a/combine__vol__data__adios__impl_8f90_source.html#l00171">combine_vol_data_adios_impl.f90:171</a></div></div>
+<div class="ttc" id="namespaceconstants_html_a2cf2f5b4da613a2ca04aa91059a965d5"><div class="ttname"><a href="../../d7/d28/namespaceconstants.html#a2cf2f5b4da613a2ca04aa91059a965d5">constants::myrank</a></div><div class="ttdeci">integer myrank</div><div class="ttdef"><b>Definition:</b> <a href="../../d0/d6e/shared__par_8f90_source.html#l00033">shared_par.f90:33</a></div></div>
 <div class="ttc" id="namespacecombine__vol__data__adios__mod_html_a6b0b8c14aaa8493dbf562c0926ab393f"><div class="ttname"><a href="../../dd/d1c/namespacecombine__vol__data__adios__mod.html#a6b0b8c14aaa8493dbf562c0926ab393f">combine_vol_data_adios_mod::init_adios</a></div><div class="ttdeci">subroutine init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle)</div><div class="ttdoc">Open ADIOS value and mesh files, read mode. </div><div class="ttdef"><b>Definition:</b> <a href="../../dd/d0a/combine__vol__data__adios__impl_8f90_source.html#l00128">combine_vol_data_adios_impl.f90:128</a></div></div>
 <div class="ttc" id="combine__vol__data_8_f90_html_a8fd5a67759ffb2101952305e19d8db0c"><div class="ttname"><a href="../../d8/d5e/combine__vol__data_8_f90.html#a8fd5a67759ffb2101952305e19d8db0c">combine_vol_data</a></div><div class="ttdeci">program combine_vol_data</div><div class="ttdef"><b>Definition:</b> <a href="../../d8/d5e/combine__vol__data_8_f90_source.html#l00028">combine_vol_data.F90:28</a></div></div>
 <div class="ttc" id="namespacecombine__vol__data__adios__mod_html_adf3294d6859627f8ee343bbabbf521ff"><div class="ttname"><a href="../../dd/d1c/namespacecombine__vol__data__adios__mod.html#adf3294d6859627f8ee343bbabbf521ff">combine_vol_data_adios_mod::clean_adios</a></div><div class="ttdeci">subroutine clean_adios(value_handle, mesh_handle)</div><div class="ttdoc">Open ADIOS value and mesh files, read mode. </div><div class="ttdef"><b>Definition:</b> <a href="../../dd/d0a/combine__vol__data__adios__impl_8f90_source.html#l00155">combine_vol_data_adios_impl.f90:155</a></div></div>

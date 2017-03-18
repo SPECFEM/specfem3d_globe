@@ -1,7 +1,0 @@
-<map id="compute_element_gravity" name="compute_element_gravity">
-<area shape="rect" id="node2" href="$d5/d80/compute__element_8_f90.html#a5b22a6b076b57b2a58ddb02c7b28331d" title="compute_element_iso" alt="" coords="244,5,396,32"/>
-<area shape="rect" id="node3" href="$d5/d80/compute__element_8_f90.html#a1aa6e1ea4ae5352627d14424136a3aa3" title="compute_element_iso_ic" alt="" coords="235,56,405,83"/>
-<area shape="rect" id="node4" href="$d5/d80/compute__element_8_f90.html#aa6a5cadabdab11adeab8f77e202ba211" title="compute_element_tiso" alt="" coords="242,107,398,133"/>
-<area shape="rect" id="node5" href="$d5/d80/compute__element_8_f90.html#aa2f979ae7628f5de63ff7b479150d919" title="compute_element_aniso" alt="" coords="237,157,403,184"/>
-<area shape="rect" id="node6" href="$d5/d80/compute__element_8_f90.html#a678579254a1a115875aad37e3213ba93" title="compute_element_aniso_ic" alt="" coords="228,208,412,235"/>
-</map>

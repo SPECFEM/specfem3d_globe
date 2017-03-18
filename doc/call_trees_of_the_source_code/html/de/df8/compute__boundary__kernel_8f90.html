@@ -120,13 +120,13 @@ $(document).ready(function(){initNavTree('de/df8/compute__boundary__kernel_8f90.
 Functions/Subroutines</h2></td></tr>
 <tr class="memitem:a53ba65db0c17912ba2c4d594ed785a8c"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/df8/compute__boundary__kernel_8f90.html#a53ba65db0c17912ba2c4d594ed785a8c">compute_boundary_kernels</a> ()</td></tr>
 <tr class="separator:a53ba65db0c17912ba2c4d594ed785a8c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d4444ebcb46b0509fdedc567930d9a2"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/df8/compute__boundary__kernel_8f90.html#a5d4444ebcb46b0509fdedc567930d9a2">compute_boundary_kernel_depth</a> (displ, accel, b_displ,                                                                                                                                                                       nspec, iregion_code,                                                                                                                                                                       ystore, zstore, ibool, ispec_is_tiso,                                                                                                                                                                       xix, xiy, xiz, etax, etay, etaz, gammax, gammay, gammaz,                                                                                                                                                                       hprime_xx, hprime_yy, hprime_zz,                                                                                                                                                                       rhostore, kappavstore, muvstore, kappahstore, muhstore, eta_anisostore,                                                                                                                                                                       c11store, c12store, c13store, c14store, c15store, c16store, c22store,                                                                                                                                                                       c23store, c24store, c25store, c26store, c33store, c34store, c35store,                                                                                                                                                                       c36store, c44store, c45store, c46store, c55store, c56store, c66store,                                                                                                                                                                       k_disc, ibelm_disc, normal_disc, b_kl, fluid_solid_boundary, NSPEC2D_DISC)</td></tr>
-<tr class="separator:a5d4444ebcb46b0509fdedc567930d9a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aac62fe60a6c6864f3c2574639df12fa1"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/df8/compute__boundary__kernel_8f90.html#aac62fe60a6c6864f3c2574639df12fa1">compute_stress_from_strain</a> (dsdx, sigma, i, j, k, ispec, iregion_code,                                       kappavstore, kappahstore, muvstore, muhstore, eta_anisostore,                                       c11store, c12store, c13store, c14store, c15store, c16store, c22store,                                       c23store, c24store, c25store, c26store, c33store, c34store, c35store,                                       c36store, c44store, c45store, c46store, c55store, c56store, c66store,                                       ystore, zstore, ibool, ispec_is_tiso)</td></tr>
-<tr class="separator:aac62fe60a6c6864f3c2574639df12fa1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54dd1cc60a51e66922b0395de82104ff"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/df8/compute__boundary__kernel_8f90.html#a54dd1cc60a51e66922b0395de82104ff">compute_boundary_kernel_depth</a> (displ, accel, b_displ,                                                                                                                                                                       nspec, iregion_code,                                                                                                                                                                       ibool, ispec_is_tiso,                                                                                                                                                                       xix, xiy, xiz, etax, etay, etaz, gammax, gammay, gammaz,                                                                                                                                                                       hprime_xx, hprime_yy, hprime_zz,                                                                                                                                                                       rhostore, kappavstore, muvstore,                                                                                                                                                                       c11store, c12store, c13store, c14store, c15store, c16store, c22store,                                                                                                                                                                       c23store, c24store, c25store, c26store, c33store, c34store, c35store,                                                                                                                                                                       c36store, c44store, c45store, c46store, c55store, c56store, c66store,                                                                                                                                                                       k_disc, ibelm_disc, normal_disc, b_kl, fluid_solid_boundary, NSPEC2D_DISC)</td></tr>
+<tr class="separator:a54dd1cc60a51e66922b0395de82104ff"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5bc5eb3e775bdcf79d3a5533456d9f1d"><td class="memItemLeft" align="right" valign="top">subroutine&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="../../de/df8/compute__boundary__kernel_8f90.html#a5bc5eb3e775bdcf79d3a5533456d9f1d">compute_stress_from_strain</a> (dsdx, sigma, i, j, k, ispec, iregion_code,                                       kappavstore, muvstore,                                       c11store, c12store, c13store, c14store, c15store, c16store, c22store,                                       c23store, c24store, c25store, c26store, c33store, c34store, c35store,                                       c36store, c44store, c45store, c46store, c55store, c56store, c66store,                                       ispec_is_tiso)</td></tr>
+<tr class="separator:a5bc5eb3e775bdcf79d3a5533456d9f1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Function/Subroutine Documentation</h2>
-<a class="anchor" id="a5d4444ebcb46b0509fdedc567930d9a2"></a>
+<a class="anchor" id="a54dd1cc60a51e66922b0395de82104ff"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -159,18 +159,6 @@ Functions/Subroutines</h2></td></tr>
           <td></td>
           <td class="paramtype">integer&#160;</td>
           <td class="paramname"><em>iregion_code</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(*)&#160;</td>
-          <td class="paramname"><em>ystore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(*)&#160;</td>
-          <td class="paramname"><em>zstore</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -273,24 +261,6 @@ Functions/Subroutines</h2></td></tr>
           <td></td>
           <td class="paramtype">real(kind=custom_real), dimension(ngllx,nglly,ngllz,*)&#160;</td>
           <td class="paramname"><em>muvstore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(ngllx,nglly,ngllz,*)&#160;</td>
-          <td class="paramname"><em>kappahstore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(ngllx,nglly,ngllz,*)&#160;</td>
-          <td class="paramname"><em>muhstore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(ngllx,nglly,ngllz,*)&#160;</td>
-          <td class="paramname"><em>eta_anisostore</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -462,14 +432,14 @@ Functions/Subroutines</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../de/df8/compute__boundary__kernel_8f90_source.html#l00401">401</a> of file <a class="el" href="../../de/df8/compute__boundary__kernel_8f90_source.html">compute_boundary_kernel.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../de/df8/compute__boundary__kernel_8f90_source.html#l00394">394</a> of file <a class="el" href="../../de/df8/compute__boundary__kernel_8f90_source.html">compute_boundary_kernel.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../de/df8/compute__boundary__kernel_8f90_a5d4444ebcb46b0509fdedc567930d9a2_cgraph.png" border="0" usemap="#de/df8/compute__boundary__kernel_8f90_a5d4444ebcb46b0509fdedc567930d9a2_cgraph" alt=""/></div>
-<map name="de/df8/compute__boundary__kernel_8f90_a5d4444ebcb46b0509fdedc567930d9a2_cgraph" id="de/df8/compute__boundary__kernel_8f90_a5d4444ebcb46b0509fdedc567930d9a2_cgraph">
-<area shape="rect" id="node2" href="../../de/df8/compute__boundary__kernel_8f90.html#aac62fe60a6c6864f3c2574639df12fa1" title="compute_stress_from\l_strain" alt="" coords="233,5,384,47"/>
+<div class="center"><img src="../../de/df8/compute__boundary__kernel_8f90_a54dd1cc60a51e66922b0395de82104ff_cgraph.png" border="0" usemap="#de/df8/compute__boundary__kernel_8f90_a54dd1cc60a51e66922b0395de82104ff_cgraph" alt=""/></div>
+<map name="de/df8/compute__boundary__kernel_8f90_a54dd1cc60a51e66922b0395de82104ff_cgraph" id="de/df8/compute__boundary__kernel_8f90_a54dd1cc60a51e66922b0395de82104ff_cgraph">
+<area shape="rect" id="node2" href="../../de/df8/compute__boundary__kernel_8f90.html#a5bc5eb3e775bdcf79d3a5533456d9f1d" title="compute_stress_from\l_strain" alt="" coords="233,5,384,47"/>
 </map>
 </div>
 </p>
@@ -477,8 +447,8 @@ Here is the call graph for this function:</div>
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../de/df8/compute__boundary__kernel_8f90_a5d4444ebcb46b0509fdedc567930d9a2_icgraph.png" border="0" usemap="#de/df8/compute__boundary__kernel_8f90_a5d4444ebcb46b0509fdedc567930d9a2_icgraph" alt=""/></div>
-<map name="de/df8/compute__boundary__kernel_8f90_a5d4444ebcb46b0509fdedc567930d9a2_icgraph" id="de/df8/compute__boundary__kernel_8f90_a5d4444ebcb46b0509fdedc567930d9a2_icgraph">
+<div class="center"><img src="../../de/df8/compute__boundary__kernel_8f90_a54dd1cc60a51e66922b0395de82104ff_icgraph.png" border="0" usemap="#de/df8/compute__boundary__kernel_8f90_a54dd1cc60a51e66922b0395de82104ff_icgraph" alt=""/></div>
+<map name="de/df8/compute__boundary__kernel_8f90_a54dd1cc60a51e66922b0395de82104ff_icgraph" id="de/df8/compute__boundary__kernel_8f90_a54dd1cc60a51e66922b0395de82104ff_icgraph">
 <area shape="rect" id="node2" href="../../de/df8/compute__boundary__kernel_8f90.html#a53ba65db0c17912ba2c4d594ed785a8c" title="compute_boundary_kernels" alt="" coords="233,13,420,39"/>
 </map>
 </div>
@@ -506,7 +476,7 @@ Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="../../de/df8/compute__boundary__kernel_8f90_a53ba65db0c17912ba2c4d594ed785a8c_cgraph.png" border="0" usemap="#de/df8/compute__boundary__kernel_8f90_a53ba65db0c17912ba2c4d594ed785a8c_cgraph" alt=""/></div>
 <map name="de/df8/compute__boundary__kernel_8f90_a53ba65db0c17912ba2c4d594ed785a8c_cgraph" id="de/df8/compute__boundary__kernel_8f90_a53ba65db0c17912ba2c4d594ed785a8c_cgraph">
-<area shape="rect" id="node2" href="../../de/df8/compute__boundary__kernel_8f90.html#a5d4444ebcb46b0509fdedc567930d9a2" title="compute_boundary_kernel\l_depth" alt="" coords="240,5,420,47"/>
+<area shape="rect" id="node2" href="../../de/df8/compute__boundary__kernel_8f90.html#a54dd1cc60a51e66922b0395de82104ff" title="compute_boundary_kernel\l_depth" alt="" coords="240,5,420,47"/>
 </map>
 </div>
 </p>
@@ -523,7 +493,7 @@ Here is the caller graph for this function:</div>
 
 </div>
 </div>
-<a class="anchor" id="aac62fe60a6c6864f3c2574639df12fa1"></a>
+<a class="anchor" id="a5bc5eb3e775bdcf79d3a5533456d9f1d"></a>
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
@@ -579,25 +549,7 @@ Here is the caller graph for this function:</div>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">real(kind=custom_real), dimension(ngllx,nglly,ngllz,*)&#160;</td>
-          <td class="paramname"><em>kappahstore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(ngllx,nglly,ngllz,*)&#160;</td>
           <td class="paramname"><em>muvstore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(ngllx,nglly,ngllz,*)&#160;</td>
-          <td class="paramname"><em>muhstore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(ngllx,nglly,ngllz,*)&#160;</td>
-          <td class="paramname"><em>eta_anisostore</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -728,24 +680,6 @@ Here is the caller graph for this function:</div>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(*)&#160;</td>
-          <td class="paramname"><em>ystore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">real(kind=custom_real), dimension(*)&#160;</td>
-          <td class="paramname"><em>zstore</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">integer, dimension(ngllx,nglly,ngllz,*)&#160;</td>
-          <td class="paramname"><em>ibool</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
           <td class="paramtype">logical, dimension(*)&#160;</td>
           <td class="paramname"><em>ispec_is_tiso</em>&#160;</td>
         </tr>
@@ -757,14 +691,14 @@ Here is the caller graph for this function:</div>
       </table>
 </div><div class="memdoc">
 
-<p>Definition at line <a class="el" href="../../de/df8/compute__boundary__kernel_8f90_source.html#l00603">603</a> of file <a class="el" href="../../de/df8/compute__boundary__kernel_8f90_source.html">compute_boundary_kernel.f90</a>.</p>
+<p>Definition at line <a class="el" href="../../de/df8/compute__boundary__kernel_8f90_source.html#l00594">594</a> of file <a class="el" href="../../de/df8/compute__boundary__kernel_8f90_source.html">compute_boundary_kernel.f90</a>.</p>
 
 <p><div class="dynheader">
 Here is the caller graph for this function:</div>
 <div class="dyncontent">
-<div class="center"><img src="../../de/df8/compute__boundary__kernel_8f90_aac62fe60a6c6864f3c2574639df12fa1_icgraph.png" border="0" usemap="#de/df8/compute__boundary__kernel_8f90_aac62fe60a6c6864f3c2574639df12fa1_icgraph" alt=""/></div>
-<map name="de/df8/compute__boundary__kernel_8f90_aac62fe60a6c6864f3c2574639df12fa1_icgraph" id="de/df8/compute__boundary__kernel_8f90_aac62fe60a6c6864f3c2574639df12fa1_icgraph">
-<area shape="rect" id="node2" href="../../de/df8/compute__boundary__kernel_8f90.html#a5d4444ebcb46b0509fdedc567930d9a2" title="compute_boundary_kernel\l_depth" alt="" coords="204,5,384,47"/>
+<div class="center"><img src="../../de/df8/compute__boundary__kernel_8f90_a5bc5eb3e775bdcf79d3a5533456d9f1d_icgraph.png" border="0" usemap="#de/df8/compute__boundary__kernel_8f90_a5bc5eb3e775bdcf79d3a5533456d9f1d_icgraph" alt=""/></div>
+<map name="de/df8/compute__boundary__kernel_8f90_a5bc5eb3e775bdcf79d3a5533456d9f1d_icgraph" id="de/df8/compute__boundary__kernel_8f90_a5bc5eb3e775bdcf79d3a5533456d9f1d_icgraph">
+<area shape="rect" id="node2" href="../../de/df8/compute__boundary__kernel_8f90.html#a54dd1cc60a51e66922b0395de82104ff" title="compute_boundary_kernel\l_depth" alt="" coords="204,5,384,47"/>
 </map>
 </div>
 </p>
