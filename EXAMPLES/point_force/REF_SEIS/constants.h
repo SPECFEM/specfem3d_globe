@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-! @configure_input@
+! setup/constants.h.  Generated from constants.h.in by configure.
 
 !
 !--- user can modify parameters below
@@ -44,7 +44,7 @@
 
 ! set to SIZE_REAL to run in single precision
 ! set to SIZE_DOUBLE to run in double precision (increases memory size by 2)
-  integer, parameter :: CUSTOM_REAL = @CUSTOM_REAL@
+  integer, parameter :: CUSTOM_REAL = SIZE_REAL
 
 !*********************************************************************************************************
 
@@ -62,7 +62,7 @@
 ! to local files in create_serial_name_database.f90 ("20 format ...")
 ! Flag is used only when one checks the mesh with the serial codes
 ! ("xcheck_buffers_1D" etc.), ignore it if you do not plan to use them
-  logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .@LOCAL_PATH_IS_ALSO_GLOBAL@.
+  logical, parameter :: LOCAL_PATH_IS_ALSO_GLOBAL = .true.
 
 ! maximum length of strings used for paths, reading from files, etc.
   integer, parameter :: MAX_STRING_LEN = 512
@@ -263,6 +263,13 @@
   integer, parameter :: NSOURCES_SUBSET_MAX = 100
   integer, parameter :: NREC_SUBSET_MAX = 200
 
+! use a force source located exactly at a grid point instead of a CMTSOLUTION source
+! this can be useful e.g. for asteroid impact simulations
+! in which the source is a vertical force, normal force, impact etc.
+  logical, parameter :: USE_FORCE_POINT_SOURCE = .false.
+  double precision, parameter :: FACTOR_FORCE_SOURCE = 1.d15
+  integer, parameter :: COMPONENT_FORCE_SOURCE = 3  ! takes direction in comp E/N/Z = 1/2/3
+
 ! use this t0 as earliest starting time rather than the automatically calculated one
 ! (must be positive and bigger than the automatically one to be effective;
 !  simulation will start at t = - t0)
@@ -368,7 +375,7 @@
   integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX"
-  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ''
+  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ""
 
 !!-----------------------------------------------------------
 !!
@@ -394,7 +401,7 @@
 !! new version compatibility
 !!
 !!-----------------------------------------------------------
-! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), CUSTOM_REAL for attenuation arrays (Qmu_store, tau_e_store)
+! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), custom_real for attenuation arrays (Qmu_store, tau_e_store)
 ! new version uses optional full 3d attenuation
   logical, parameter :: USE_OLD_VERSION_5_1_5_FORMAT = .false.
 
@@ -442,7 +449,6 @@
 !! for gravity integrals
 !!
 !!-----------------------------------------------------------
-! (for using gravity integral computations, please make sure you compile with double-precision --enable-double-precision)
 
   logical, parameter :: GRAVITY_INTEGRALS = .false.
 
@@ -491,6 +497,9 @@
 
 ! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
   integer, parameter :: NSPEC_DISPLAY_INTERVAL = 100
+
+! for the FORCE_VECTORIZATION 1D version of some loops
+  integer, parameter :: NTOTAL_OBSERVATION = NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX
 
 
 !!-----------------------------------------------------------
@@ -901,14 +910,14 @@
 
 ! coefficients from Table 1, Berland et al. (2006)
   real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: ALPHA_LDDRK = &
-    (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL, &
+    (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
       -0.744739003780_CUSTOM_REAL,-1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/)
 
   real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: BETA_LDDRK = &
-    (/0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,0.381530948900_CUSTOM_REAL, &
+    (/0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,0.381530948900_CUSTOM_REAL,&
       0.200092213184_CUSTOM_REAL,1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/)
 
   real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: C_LDDRK = &
-    (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL, &
+    (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL,&
       0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
 

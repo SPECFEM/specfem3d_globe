@@ -185,6 +185,7 @@
   endif
 
   ! point force sources will start depending on the frequency given by hdur
+    !-------------POINT FORCE-----------------------------------------------
   if (USE_FORCE_POINT_SOURCE) then
     ! note: point force sources will give the dominant frequency in hdur,
     !          thus the main period is 1/hdur.
@@ -192,6 +193,7 @@
     !          for a Ricker source time function, a start time ~1.2 * main_period is a good choice
     t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
   endif
+    !-------------POINT FORCE-----------------------------------------------
 
   ! checks if user set USER_T0 to fix simulation start time
   ! note: USER_T0 has to be positive
@@ -837,6 +839,7 @@
                           xigll,yigll,zigll)
 
       ! point forces, initializes sourcearray, used for simplified CUDA routines
+    !-------------POINT FORCE-----------------------------------------------
       if (USE_FORCE_POINT_SOURCE) then
         ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
         iglob = ibool_crust_mantle(nint(xi),nint(eta),nint(gamma),ispec)
@@ -853,6 +856,7 @@
           enddo
         enddo
       endif
+    !-------------POINT FORCE-----------------------------------------------
 
       ! stores source excitations
       sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)

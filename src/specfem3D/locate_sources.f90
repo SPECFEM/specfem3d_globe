@@ -366,6 +366,7 @@
         endif
 
         ! define the interval in which we look for points
+    !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
           ! force sources will be put on an exact GLL point
           imin = 1
@@ -378,6 +379,7 @@
           kmax = NGLLZ
 
         else
+    !-------------POINT FORCE-----------------------------------------------
           ! double-couple CMTSOLUTION
           ! loop only on points inside the element
           ! exclude edges to ensure this point is not shared with other elements
@@ -439,6 +441,7 @@
 
       ! for point sources, the location will be exactly at a GLL point
       ! otherwise this tries to find best location
+    !-------------POINT FORCE-----------------------------------------------
       if (USE_FORCE_POINT_SOURCE) then
         ! store xi,eta,gamma and x,y,z of point found
         ! note: they have range [1.0d0,NGLLX/Y/Z], used for point sources
@@ -460,6 +463,7 @@
                 (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
 
       else
+    !-------------POINT FORCE-----------------------------------------------
 
         ! define coordinates of the control points of the element
         do ia = 1,NGNOD
@@ -639,6 +643,7 @@
         write(IMAIN,*) '               in element ',ispec_selected_source(isource_in_this_subset)
         write(IMAIN,*)
         ! different output for force point sources
+    !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
           write(IMAIN,*) '  i index of source in that element: ',nint(xi_source(isource))
           write(IMAIN,*) '  j index of source in that element: ',nint(eta_source(isource))
@@ -663,6 +668,7 @@
           write(IMAIN,*)
           write(IMAIN,*) '  half duration in frequency: ',hdur(isource),' seconds**(-1)'
         else
+    !-------------POINT FORCE-----------------------------------------------
           write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
           write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
           write(IMAIN,*) 'gamma coordinate of source in that element: ',gamma_source(isource)
@@ -957,7 +963,9 @@
   ! note: this calculation here is only used for outputting the plot_source_time_function file
   !          (see setup_sources_receivers.f90)
   t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
+    !-------------POINT FORCE-----------------------------------------------
   if (USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
+    !-------------POINT FORCE-----------------------------------------------
 
   t_cmt_used(:) = tshift_cmt(:)
   if (USER_T0 > 0.d0) then
@@ -974,12 +982,14 @@
   ! writes out source time function to file
   do it = 1,NSTEP
     time_source = dble(it-1)*DT-t0-t_cmt_used(isource)
+    !-------------POINT FORCE-----------------------------------------------
     if (USE_FORCE_POINT_SOURCE) then
       ! Ricker source time function
       f0 = hdur(isource)
       write(IOUT,*) sngl(dble(it-1)*DT-t0), &
         sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
     else
+    !-------------POINT FORCE-----------------------------------------------
       ! Gaussian source time function
       write(IOUT,*) sngl(dble(it-1)*DT-t0), &
         sngl(scalar_moment*comp_source_time_function(time_source,hdur_Gaussian(isource)))

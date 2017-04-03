@@ -308,6 +308,7 @@
     read(string(5:len_trim(string)),*) moment_tensor(6,isource)
 
     ! checks half-duration
+    !-------------POINT FORCE-----------------------------------------------
     if (USE_FORCE_POINT_SOURCE) then
       ! half-duration is the dominant frequency of the source
       ! point forces use a Ricker source time function
@@ -315,6 +316,7 @@
       ! (see constants.h: TINYVAL = 1.d-9 )
       if (hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
     else
+    !-------------POINT FORCE-----------------------------------------------
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
       if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT

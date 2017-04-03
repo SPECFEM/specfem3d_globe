@@ -69,6 +69,7 @@
         timeval = time_t - tshift_cmt(isource)
 
         ! adds source contribution
+        !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
 
           ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
@@ -88,6 +89,7 @@
           ! e.g. nu_source(3,:) here would be a source normal to the surface (z-direction).
           accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
                            + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+        !-------------POINT FORCE-----------------------------------------------
 
         else
           ! source time function value
@@ -121,6 +123,7 @@
   else
     ! on GPU
     ! prepares buffer with source time function values, to be copied onto GPU
+    !-------------POINT FORCE-----------------------------------------------
     if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
         ! sets current time for this source
@@ -130,6 +133,7 @@
         stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
       enddo
     else
+    !-------------POINT FORCE-----------------------------------------------
       do isource = 1,NSOURCES
         ! sets current time for this source
         timeval = time_t - tshift_cmt(isource)
@@ -390,7 +394,8 @@
 
         ! sets current time for this source
         timeval = time_t - tshift_cmt(isource)
-
+  
+        !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
 
            ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
@@ -417,6 +422,7 @@
                               + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
 
         else
+        !-------------POINT FORCE-----------------------------------------------
 
           ! see note above: time step corresponds now to NSTEP-it
           stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
@@ -447,6 +453,7 @@
   else
     ! on GPU
     ! prepares buffer with source time function values, to be copied onto GPU
+    !-------------POINT FORCE-----------------------------------------------
     if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
         ! sets current time for this source
@@ -455,6 +462,7 @@
         stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
       enddo
     else
+    !-------------POINT FORCE-----------------------------------------------
       do isource = 1,NSOURCES
         ! sets current time for this source
         timeval = time_t - tshift_cmt(isource)
