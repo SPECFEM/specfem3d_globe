@@ -28,8 +28,8 @@
   subroutine get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
                      DT,NSOURCES,min_tshift_cmt_original)
 
-  use constants, only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
-    RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
+  use constants, only: IIN,IMAIN,EXTERNAL_SOURCE_TIME_FUNCTION, &
+    RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup !,USE_FORCE_POINT_SOURCE
 
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
 
@@ -308,19 +308,19 @@
     read(string(5:len_trim(string)),*) moment_tensor(6,isource)
 
     ! checks half-duration
-    !-------------POINT FORCE-----------------------------------------------
-    if (USE_FORCE_POINT_SOURCE) then
-      ! half-duration is the dominant frequency of the source
-      ! point forces use a Ricker source time function
-      ! null half-duration indicates a very low-frequency source
-      ! (see constants.h: TINYVAL = 1.d-9 )
-      if (hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
-    else
+    !!-------------POINT FORCE-----------------------------------------------
+    !if (USE_FORCE_POINT_SOURCE) then
+    !  ! half-duration is the dominant frequency of the source
+    !  ! point forces use a Ricker source time function
+    !  ! null half-duration indicates a very low-frequency source
+    !  ! (see constants.h: TINYVAL = 1.d-9 )
+    !  if (hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
+    !else
     !-------------POINT FORCE-----------------------------------------------
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
       if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
-    endif
+    !endif
 
   enddo
 

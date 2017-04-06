@@ -186,6 +186,10 @@
   call read_value_integer(NTSTEP_BETWEEN_READ_ADJSRC, 'NTSTEP_BETWEEN_READ_ADJSRC', ier)
   if (ier /= 0) return
 
+  ! point force sourse
+  call read_value_logical(USE_FORCE_POINT_SOURCE, 'USE_FORCE_POINT_SOURCE', ier)
+  if (ier /= 0) stop 'an error occurred while reading the parameter file: USE_FORCE_POINT_SOURCE'
+
   ! seismogram output
   call read_value_logical(OUTPUT_SEISMOS_ASCII_TEXT, 'OUTPUT_SEISMOS_ASCII_TEXT', ier)
   if (ier /= 0) stop 'an error occurred while reading the parameter file: OUTPUT_SIESMOS_ASCII_TEXT'
