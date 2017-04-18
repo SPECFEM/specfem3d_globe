@@ -1,6 +1,6 @@
 FORCE  001
 time shift:     0.0000
-half duration:  0.5
+half duration:  0.5 ! half suration for Step function, frequency for Ricker
 latitude:        39.0
 longitude:       70.3167
 depth:           10.0
