@@ -78,7 +78,7 @@
 
   ! local parameters
   double precision :: min_tshift_src_original
-  integer :: isource
+  integer :: isource,sum_stf
   character(len=MAX_STRING_LEN) :: filename
   integer :: ier
 
@@ -199,7 +199,14 @@
     !          thus the main period is 1/hdur.
     !          also, these sources use a Ricker source time function instead of a Gaussian.
     !          for a Ricker source time function, a start time ~1.2 * main_period is a good choice
-    t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
+    sum_stf=sum(force_stf)
+    if(sum_stf.eq.NSOURCES)then
+      t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
+    elseif(sum_stf.eq.0)then
+      ! defined above
+    else
+      stop 'mixed force_stf values not supported!'
+    endif
   endif
     !-------------POINT FORCE-----------------------------------------------
 
@@ -262,7 +269,7 @@
     do isource = 1,NSOURCES
         ! print source time function and spectrum
          call print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                        tshift_src,hdur,min_tshift_src_original,NSTEP,DT)
+                        tshift_src,hdur,force_stf,min_tshift_src_original,NSTEP,DT)
     enddo
   endif
 
@@ -810,7 +817,7 @@
   implicit none
 
   ! local parameters
-  integer :: isource,iglob,i,j,k,ispec
+  integer :: isource,i,j,k,ispec !,iglob
 
   double precision, dimension(NGLLX) :: hxis,hpxis                               
   double precision, dimension(NGLLY) :: hetas,hpetas                             

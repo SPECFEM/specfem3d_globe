@@ -1,10 +1,11 @@
 FORCE  001
 time shift:     0.0000
-f0:             0.5
-latorUTM:       67000.0
-longorUTM:      67000.0
-depth:          25.05
+half duration:  0.5
+latitude:        39.0
+longitude:       70.3167
+depth:           10.0
+source time function: 0 ! 0=Step function 1: Ricker wavelet
 factor force source:             1.d15
 component dir vect source E:     1.d0
-component dir vect source N:     -2.d0
-component dir vect source Z_UP:  -1.d0
+component dir vect source N:     0.d0
+component dir vect source Z_UP:  0.d0

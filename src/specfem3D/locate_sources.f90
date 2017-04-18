@@ -945,7 +945,7 @@
 !
 
   subroutine print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                      tshift_src,hdur,min_tshift_src_original,NSTEP,DT)
+                      tshift_src,hdur,force_stf,min_tshift_src_original,NSTEP,DT)
 
 ! prints source time function
 
@@ -958,6 +958,7 @@
 
   double precision,dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
   double precision,dimension(NSOURCES) :: tshift_src,hdur
+  integer,dimension(NSOURCES) :: force_stf
 
   double precision :: min_tshift_src_original
   integer :: NSTEP
@@ -965,7 +966,7 @@
 
 
   ! local parameters
-  integer :: it,iom,ier
+  integer :: it,iom,ier,sum_stf
   double precision :: scalar_moment
   double precision :: t0, hdur_Gaussian(NSOURCES)
   double precision :: t_cmt_used(NSOURCES)
@@ -1012,7 +1013,16 @@
   !          (see setup_sources_receivers.f90)
   t0 = - 1.5d0*minval( tshift_src(:) - hdur(:) )
     !-------------POINT FORCE-----------------------------------------------
-  if (USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
+  if (USE_FORCE_POINT_SOURCE )then
+    sum_stf=sum(force_stf)
+    if(sum_stf.eq.NSOURCES)then
+      t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
+    elseif(sum_stf.eq.0)then
+      ! defined above
+    else
+      stop 'mixed force_stf not supported!'
+    endif
+  endif 
     !-------------POINT FORCE-----------------------------------------------
 
   t_cmt_used(:) = tshift_src(:)

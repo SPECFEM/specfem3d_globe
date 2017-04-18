@@ -74,17 +74,27 @@
         !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
 
-          ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
-          iglob = ibool_crust_mantle(nint(xi_source(isource)), &
-                                     nint(eta_source(isource)), &
-                                     nint(gamma_source(isource)), &
-                                     ispec_selected_source(isource))
+          !! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
+          !iglob = ibool_crust_mantle(nint(xi_source(isource)), &
+          !                           nint(eta_source(isource)), &
+          !                           nint(gamma_source(isource)), &
+          !                           ispec_selected_source(isource))
 
-          !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
-          f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
+          if(force_stf(isource).eq.0)then
+            ! source time function value
+            stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
 
-          ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-          stf_used = comp_source_time_function_rickr(timeval,f0)
+            !     distinguish between single and double precision for reals
+            stf_used = real(stf, kind=CUSTOM_REAL)
+          elseif(force_stf(isource).eq.1)then
+            !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
+            f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
+
+            ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
+            stf_used = comp_source_time_function_rickr(timeval,f0)
+          else
+            stop 'unsupported force_stf value!'
+          endif
 
           ! we use a force in a single direction along one of the components:
           !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
@@ -143,8 +153,15 @@
         timeval = time_t - tshift_src(isource)
 
         ! source time function value
-        !stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
-        stf_pre_compute(isource) = comp_source_time_function_rickr(timeval,f0)
+        if(force_stf(isource).eq.0)then
+          stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
+        elseif(force_stf(isource).eq.1)then
+          f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
+          !stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
+          stf_pre_compute(isource) = comp_source_time_function_rickr(timeval,f0)
+        else
+          stop 'unsupported force_stf value!'
+        endif
       enddo
     else
     !-------------POINT FORCE-----------------------------------------------
@@ -414,23 +431,28 @@
         !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
 
-           ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
-           iglob = ibool_crust_mantle(nint(xi_source(isource)), &
-                         nint(eta_source(isource)), &
-                         nint(gamma_source(isource)), &
-                         ispec_selected_source(isource))
+           !! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
+           !iglob = ibool_crust_mantle(nint(xi_source(isource)), &
+           !              nint(eta_source(isource)), &
+           !              nint(gamma_source(isource)), &
+           !              ispec_selected_source(isource))
 
            !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
-           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
+           if(force_stf(isource).eq.0)then
+             ! source time function value
+             stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
 
-           !if (it == 1 .and. myrank == 0) then
-           !   write(IMAIN,*) 'using a source of dominant frequency ',f0
-           !   write(IMAIN,*) 'lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
-           !   write(IMAIN,*) 'lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-           !endif
+             !     distinguish between single and double precision for reals
+             stf_used = real(stf, kind=CUSTOM_REAL)
+           elseif(force_stf(isource).eq.1)then
+             !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
+             f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
-           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-           stf_used = comp_source_time_function_rickr(timeval,f0)
+             ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
+             stf_used = comp_source_time_function_rickr(timeval,f0)
+           else
+             stop 'unsupported force_stf value!'
+           endif
 
            ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
            ! note: time step is now at NSTEP-it
@@ -486,8 +508,15 @@
         ! sets current time for this source
         timeval = time_t - tshift_src(isource)
         ! source time function contribution
-        !stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
-        stf_pre_compute(isource) = comp_source_time_function_rickr(timeval,f0)
+        if(force_stf(isource).eq.0)then
+          stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
+        elseif(force_stf(isource).eq.1)then
+          f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
+          !stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
+          stf_pre_compute(isource) = comp_source_time_function_rickr(timeval,f0)
+        else
+          stop 'unsupported force_stf value!'
+        endif
       enddo
     else
     !-------------POINT FORCE-----------------------------------------------
