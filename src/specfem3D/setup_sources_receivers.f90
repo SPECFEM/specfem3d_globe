@@ -120,6 +120,14 @@
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
+  if (USE_FORCE_POINT_SOURCE) then                                               
+    allocate(factor_force_source(NSOURCES), &                                    
+             comp_dir_vect_source_E(NSOURCES), &                                 
+             comp_dir_vect_source_N(NSOURCES), &                                 
+             comp_dir_vect_source_Z_UP(NSOURCES),stat=ier)                       
+    if (ier /= 0) stop 'error allocating arrays for force point sources'         
+  endif
+
   ! sources
   ! BS BS moved open statement and writing of first lines into sr.vtk before the
   ! call to locate_sources, where further write statements to that file follow

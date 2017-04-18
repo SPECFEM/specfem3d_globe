@@ -107,7 +107,7 @@
     ! to
     ! read(string(6:len_trim(string)),*) hdur(isource)
     read(IIN,"(a)") string
-    read(string(4:len_trim(string)),*) hdur(isource)
+    read(string(6:len_trim(string)),*) hdur(isource)
 
     ! read latitude
     read(IIN,"(a)") string
