@@ -34,7 +34,7 @@
 ! by Ebru Bozdag
 
   subroutine get_event_info_parallel(yr,jda,mo,da,ho,mi,sec, &
-                                    event_name,tshift_cmt,t_shift, &
+                                    event_name,tshift_src,t_shift, &
                                     elat,elon,depth,mb,ms,cmt_lat, &
                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
                                     Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
@@ -50,7 +50,7 @@
   integer, intent(out) :: yr,mo,da,jda,ho,mi
   double precision, intent(out) :: sec
   real, intent(out) :: mb,ms
-  double precision, intent(out) :: tshift_cmt,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
+  double precision, intent(out) :: tshift_src,elat,elon,depth,cmt_lat,cmt_lon,cmt_depth,cmt_hdur
   double precision, intent(out) :: Mrr, Mtt, Mpp, Mrt, Mrp, Mtp
   double precision, intent(out) :: t_shift
 
@@ -62,7 +62,7 @@
     ! note: mb as (body wave) moment magnitude is not used any further,
     !       see comment in write_output_SAC() routine
 
-    call get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift, &
+    call get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_src,t_shift, &
                         elat,elon,depth,mb,ms, &
                         cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
                         Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
@@ -87,7 +87,7 @@
 
   call bcast_all_singledp(sec)
 
-  call bcast_all_singledp(tshift_cmt)
+  call bcast_all_singledp(tshift_src)
   call bcast_all_singledp(t_shift)
 
   ! event location given on first, PDE line
@@ -127,7 +127,7 @@
 ! Time-shifts of all sources can be read and the minimum t_shift is taken to be written in sac headers!
 ! by Ebru
 
-  subroutine get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_cmt,t_shift, &
+  subroutine get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_src,t_shift, &
                             elat_pde,elon_pde,depth_pde,mb,ms, &
                             cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
                             Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
@@ -143,7 +143,7 @@
 
   integer, intent(out) :: yr,jda,mo,da,ho,mi
   double precision, intent(out) :: sec
-  double precision, intent(out) :: tshift_cmt,t_shift
+  double precision, intent(out) :: tshift_src,t_shift
   double precision, intent(out) :: elat_pde,elon_pde,depth_pde
   real, intent(out) :: mb, ms
   double precision, intent(out) :: cmt_lat,cmt_lon,cmt_depth,cmt_hdur
@@ -224,8 +224,8 @@
 
   enddo
 
-  ! sets tshift_cmt to zero
-  tshift_cmt = 0.
+  ! sets tshift_src to zero
+  tshift_src = 0.
 
   ! takes first event id as event_name
   event_name = e_n(1)

@@ -31,7 +31,7 @@
 
   subroutine locate_sources(nspec,nglob,ibool, &
                             xstore,ystore,zstore, &
-                            ELLIPTICITY,min_tshift_cmt_original)
+                            ELLIPTICITY,min_tshift_src_original)
 
   use constants_solver
 
@@ -39,14 +39,16 @@
 
   use specfem_par, only: &
     NSOURCES, &
-    tshift_cmt,theta_source,phi_source, &
+    tshift_src,theta_source,phi_source, &
     DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
     rspl,espl,espl2,nspl,ibathy_topo, &
     LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
     xigll,yigll,zigll, &
     xi_source,eta_source,gamma_source,nu_source, &
     islice_selected_source,ispec_selected_source, &
-    SAVE_SOURCE_MASK
+    SAVE_SOURCE_MASK, &
+    USE_FORCE_POINT_SOURCE,force_stf,factor_force_source, &
+    comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
 
   use specfem_par_movie, only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
@@ -60,7 +62,7 @@
 
   logical,intent(in) :: ELLIPTICITY
 
-  double precision,intent(out) :: min_tshift_cmt_original
+  double precision,intent(out) :: min_tshift_src_original
 
   ! local parameters
   integer :: isource
@@ -152,10 +154,13 @@
     ! point forces                                                               
     if (myrank == 0) then                                                        
       ! only master process reads in FORCESOLUTION file                          
-      call get_force(tshift_src,hdur,lat,long,depth,NSOURCES,min_tshift_src_original,factor_force_source, &
-                     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
+      call get_force(tshift_src,hdur,lat,long,depth,NSOURCES,                  &
+                     min_tshift_src_original,force_stf,factor_force_source,    &
+                     comp_dir_vect_source_E,comp_dir_vect_source_N,            &
+                     comp_dir_vect_source_Z_UP)
     endif                                                                        
     ! broadcasts specific point force infos                                      
+    call bcast_all_i(force_stf,NSOURCES)                              
     call bcast_all_dp(factor_force_source,NSOURCES)                              
     call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)                           
     call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)                           
@@ -164,20 +169,20 @@
     ! CMT moment tensors
     if (myrank == 0) then
       ! only master process reads in CMTSOLUTION file
-      call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
-                   DT,NSOURCES,min_tshift_cmt_original)
+      call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,lat,long,depth,moment_tensor, &
+                   DT,NSOURCES,min_tshift_src_original)
     endif
     ! broadcast ispecific moment tensor infos
     call bcast_all_dp(moment_tensor,6*NSOURCES)
   endif
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_dp(tshift_cmt,NSOURCES)
+  call bcast_all_dp(tshift_src,NSOURCES)
   call bcast_all_dp(hdur,NSOURCES)
   call bcast_all_dp(lat,NSOURCES)
   call bcast_all_dp(long,NSOURCES)
   call bcast_all_dp(depth,NSOURCES)
-  call bcast_all_singledp(min_tshift_cmt_original)
+  call bcast_all_singledp(min_tshift_src_original)
 
   ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
@@ -707,7 +712,7 @@
           write(IMAIN,*) '  using a source of dominant frequency ',f0
           write(IMAIN,*) '  lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
           write(IMAIN,*) '  lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-          write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_cmt = ',tshift_cmt(isource)
+          write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_src = ',tshift_src(isource)
           write(IMAIN,*)
           write(IMAIN,*) '  half duration in frequency: ',hdur(isource),' seconds**(-1)'
         else
@@ -724,7 +729,7 @@
           write(IMAIN,*)
           write(IMAIN,*) ' half duration: ',hdur(isource),' seconds'
         endif
-        write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
+        write(IMAIN,*) '    time shift: ',tshift_src(isource),' seconds'
         write(IMAIN,*)
         write(IMAIN,*) 'magnitude of the source:'
         M0 = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
@@ -940,7 +945,7 @@
 !
 
   subroutine print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                      tshift_cmt,hdur,min_tshift_cmt_original,NSTEP,DT)
+                      tshift_src,hdur,min_tshift_src_original,NSTEP,DT)
 
 ! prints source time function
 
@@ -952,9 +957,9 @@
   integer :: NSOURCES,isource
 
   double precision,dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
-  double precision,dimension(NSOURCES) :: tshift_cmt,hdur
+  double precision,dimension(NSOURCES) :: tshift_src,hdur
 
-  double precision :: min_tshift_cmt_original
+  double precision :: min_tshift_src_original
   integer :: NSTEP
   double precision :: DT
 
@@ -1005,15 +1010,15 @@
   ! define t0 as the earliest start time
   ! note: this calculation here is only used for outputting the plot_source_time_function file
   !          (see setup_sources_receivers.f90)
-  t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
+  t0 = - 1.5d0*minval( tshift_src(:) - hdur(:) )
     !-------------POINT FORCE-----------------------------------------------
-  if (USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
+  if (USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
     !-------------POINT FORCE-----------------------------------------------
 
-  t_cmt_used(:) = tshift_cmt(:)
+  t_cmt_used(:) = tshift_src(:)
   if (USER_T0 > 0.d0) then
-    if (t0 <= USER_T0 + min_tshift_cmt_original) then
-      t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original
+    if (t0 <= USER_T0 + min_tshift_src_original) then
+      t_cmt_used(:) = tshift_src(:) + min_tshift_src_original
       t0 = USER_T0
     endif
   endif
@@ -1030,7 +1035,8 @@
       ! Ricker source time function
       f0 = hdur(isource)
       write(IOUT,*) sngl(dble(it-1)*DT-t0), &
-        sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
+        !sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
+        sngl(comp_source_time_function_rickr(time_source,f0))
     else
     !-------------POINT FORCE-----------------------------------------------
       ! Gaussian source time function

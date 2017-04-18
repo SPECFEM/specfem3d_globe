@@ -25,8 +25,10 @@
 !
 !=====================================================================
 
-  subroutine get_force(tshift_force,hdur,lat,long,depth,NSOURCES,min_tshift_force_original,factor_force_source, &
-                      comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
+  subroutine get_force(tshift_force,hdur,lat,long,depth,NSOURCES,              &
+                      min_tshift_force_original,force_stf,factor_force_source, &
+                      comp_dir_vect_source_E,comp_dir_vect_source_N,           &
+                      comp_dir_vect_source_Z_UP)
 
   use constants,only: IIN,MAX_STRING_LEN,TINYVAL,mygroup
   use shared_parameters,only: NUMBER_OF_SIMULTANEOUS_RUNS
@@ -37,6 +39,7 @@
 
   integer, intent(in) :: NSOURCES
 
+  integer, dimension(NSOURCES), intent(out) :: force_stf
   double precision, intent(out) :: min_tshift_force_original
   double precision, dimension(NSOURCES), intent(out) :: tshift_force,hdur,lat,long,depth,factor_force_source
   double precision, dimension(NSOURCES), intent(out) :: comp_dir_vect_source_E
@@ -59,6 +62,7 @@
   t_shift(:) = 0.d0
   tshift_force(:) = 0.d0
   hdur(:) = 0.d0
+  force_stf(:) = 0
   factor_force_source(:) = 0.d0
   comp_dir_vect_source_E(:) = 0.d0
   comp_dir_vect_source_N(:) = 0.d0
@@ -107,7 +111,7 @@
     ! to
     ! read(string(6:len_trim(string)),*) hdur(isource)
     read(IIN,"(a)") string
-    read(string(6:len_trim(string)),*) hdur(isource)
+    read(string(15:len_trim(string)),*) hdur(isource)
 
     ! read latitude
     read(IIN,"(a)") string
@@ -121,6 +125,10 @@
     read(IIN,"(a)") string
     read(string(7:len_trim(string)),*) depth(isource)
 
+    ! source time function
+    read(IIN,"(a)") string
+    read(string(22:len_trim(string)),*) force_stf(isource)
+    
     ! read magnitude
     read(IIN,"(a)") string
     read(string(21:len_trim(string)),*) factor_force_source(isource)

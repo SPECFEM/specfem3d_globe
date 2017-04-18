@@ -64,9 +64,11 @@
 
       ! add only if this proc carries the source
       if (myrank == islice_selected_source(isource)) then
+        
+        ispec = ispec_selected_source(isource)
 
         ! sets current time for this source
-        timeval = time_t - tshift_cmt(isource)
+        timeval = time_t - tshift_src(isource)
 
         ! adds source contribution
         !-------------POINT FORCE-----------------------------------------------
@@ -82,13 +84,25 @@
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
           ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-          stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
+          stf_used = comp_source_time_function_rickr(timeval,f0)
 
           ! we use a force in a single direction along one of the components:
           !  x/y/z or E/N/Z-direction would correspond to 1/2/3 = COMPONENT_FORCE_SOURCE
           ! e.g. nu_source(3,:) here would be a source normal to the surface (z-direction).
-          accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                           + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+          !accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
+          !                 + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+          !     add the tilted point force source array
+          do k = 1,NGLLZ
+            do j = 1,NGLLY
+              do i = 1,NGLLX
+                iglob = ibool_crust_mantle(i,j,k,ispec)
+
+                accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
+                  + sourcearrays(:,i,j,k,isource)*stf_used
+
+              enddo
+            enddo
+          enddo
         !-------------POINT FORCE-----------------------------------------------
 
         else
@@ -99,7 +113,6 @@
           stf_used = real(stf, kind=CUSTOM_REAL)
 
           !     add source array
-          ispec = ispec_selected_source(isource)
           do k = 1,NGLLZ
             do j = 1,NGLLY
               do i = 1,NGLLX
@@ -127,16 +140,17 @@
     if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
         ! sets current time for this source
-        timeval = time_t - tshift_cmt(isource)
+        timeval = time_t - tshift_src(isource)
 
         ! source time function value
-        stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
+        !stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
+        stf_pre_compute(isource) = comp_source_time_function_rickr(timeval,f0)
       enddo
     else
     !-------------POINT FORCE-----------------------------------------------
       do isource = 1,NSOURCES
         ! sets current time for this source
-        timeval = time_t - tshift_cmt(isource)
+        timeval = time_t - tshift_src(isource)
 
         ! source time function value
         stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
@@ -375,7 +389,7 @@
   !       the wavefields, that is b_displ( it=1) would correspond to time (NSTEP -1 - 1)*DT - t0.
   !       however, we read in the backward/reconstructed wavefields at the end of the Newmark time scheme
   !       in the first (it=1) time loop.
-  !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_cmt for the source time function here
+  !       this leads to the timing (NSTEP-(it-1)-1)*DT-t0-tshift_src for the source time function here
   !
   ! sets current initial time
   if (USE_LDDRK) then
@@ -392,8 +406,10 @@
       !   add the source (only if this proc carries the source)
       if (myrank == islice_selected_source(isource)) then
 
+        ispec = ispec_selected_source(isource)
+        
         ! sets current time for this source
-        timeval = time_t - tshift_cmt(isource)
+        timeval = time_t - tshift_src(isource)
   
         !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
@@ -414,12 +430,24 @@
            !endif
 
            ! This is the expression of a Ricker; should be changed according maybe to the Par_file.
-           stf_used = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
+           stf_used = comp_source_time_function_rickr(timeval,f0)
 
            ! e.g. we use nu_source(3,:) here if we want a source normal to the surface.
            ! note: time step is now at NSTEP-it
-           b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
-                              + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+           !b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
+           !                   + sngl( nu_source(COMPONENT_FORCE_SOURCE,:,isource) ) * stf_used
+          !     add tilted point force source array
+          do k = 1,NGLLZ
+            do j = 1,NGLLY
+              do i = 1,NGLLX
+                iglob = ibool_crust_mantle(i,j,k,ispec)
+
+                b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
+                  + sourcearrays(:,i,j,k,isource)*stf_used
+
+              enddo
+            enddo
+          enddo
 
         else
         !-------------POINT FORCE-----------------------------------------------
@@ -431,7 +459,6 @@
           stf_used = real(stf, kind=CUSTOM_REAL)
 
           !     add source array
-          ispec = ispec_selected_source(isource)
           do k = 1,NGLLZ
             do j = 1,NGLLY
               do i = 1,NGLLX
@@ -457,15 +484,16 @@
     if (USE_FORCE_POINT_SOURCE) then
       do isource = 1,NSOURCES
         ! sets current time for this source
-        timeval = time_t - tshift_cmt(isource)
+        timeval = time_t - tshift_src(isource)
         ! source time function contribution
-        stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
+        !stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
+        stf_pre_compute(isource) = comp_source_time_function_rickr(timeval,f0)
       enddo
     else
     !-------------POINT FORCE-----------------------------------------------
       do isource = 1,NSOURCES
         ! sets current time for this source
-        timeval = time_t - tshift_cmt(isource)
+        timeval = time_t - tshift_src(isource)
         ! source time function contribution
         stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
       enddo

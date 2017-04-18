@@ -77,7 +77,7 @@
   implicit none
 
   ! local parameters
-  double precision :: min_tshift_cmt_original
+  double precision :: min_tshift_src_original
   integer :: isource
   character(len=MAX_STRING_LEN) :: filename
   integer :: ier
@@ -108,7 +108,7 @@
            gamma_source(NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
-  allocate(tshift_cmt(NSOURCES), &
+  allocate(tshift_src(NSOURCES), &
            hdur(NSOURCES), &
            hdur_Gaussian(NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
@@ -121,7 +121,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
   if (USE_FORCE_POINT_SOURCE) then                                               
-    allocate(factor_force_source(NSOURCES), &                                    
+    allocate(force_stf(NSOURCES),factor_force_source(NSOURCES), &                                    
              comp_dir_vect_source_E(NSOURCES), &                                 
              comp_dir_vect_source_N(NSOURCES), &                                 
              comp_dir_vect_source_Z_UP(NSOURCES),stat=ier)                       
@@ -149,10 +149,10 @@
   ! locate sources in the mesh
   call locate_sources(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                     ELLIPTICITY_VAL,min_tshift_cmt_original)
+                     ELLIPTICITY_VAL,min_tshift_src_original)
 
-  if (abs(minval(tshift_cmt)) > TINYVAL) &
-    call exit_MPI(myrank,'one tshift_cmt must be zero, others must be positive')
+  if (abs(minval(tshift_src)) > TINYVAL) &
+    call exit_MPI(myrank,'one tshift_src must be zero, others must be positive')
 
   ! count number of sources located in this slice
   nsources_local = 0
@@ -184,7 +184,7 @@
   hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! define t0 as the earliest start time
-  t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
+  t0 = - 1.5d0*minval( tshift_src(:) - hdur(:) )
 
   ! uses an external file for source time function, which starts at time 0.0
   if (EXTERNAL_SOURCE_TIME_FUNCTION) then
@@ -199,7 +199,7 @@
     !          thus the main period is 1/hdur.
     !          also, these sources use a Ricker source time function instead of a Gaussian.
     !          for a Ricker source time function, a start time ~1.2 * main_period is a good choice
-    t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
+    t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
   endif
     !-------------POINT FORCE-----------------------------------------------
 
@@ -213,17 +213,17 @@
     ! notifies user
     if (myrank == 0) then
       write(IMAIN,*) 'USER_T0: ',USER_T0
-      write(IMAIN,*) 't0: ',t0,'min_tshift_cmt_original: ',min_tshift_cmt_original
+      write(IMAIN,*) 't0: ',t0,'min_tshift_src_original: ',min_tshift_src_original
       write(IMAIN,*)
     endif
 
     ! checks if automatically set t0 is too small
-    ! note: min_tshift_cmt_original can be a positive or negative time shift (minimum from all tshift)
-    if (t0 <= USER_T0 + min_tshift_cmt_original) then
-      ! by default, tshift_cmt(:) holds relative time shifts with a minimum time shift set to zero
+    ! note: min_tshift_src_original can be a positive or negative time shift (minimum from all tshift)
+    if (t0 <= USER_T0 + min_tshift_src_original) then
+      ! by default, tshift_src(:) holds relative time shifts with a minimum time shift set to zero
       ! re-adds (minimum) original time shift such that sources will kick in
       ! according to their absolute time shift
-      tshift_cmt(:) = tshift_cmt(:) + min_tshift_cmt_original
+      tshift_src(:) = tshift_src(:) + min_tshift_src_original
 
       ! sets new simulation start time such that
       ! simulation starts at t = - t0 = - USER_T0
@@ -240,7 +240,7 @@
       if (myrank == 0) then
         write(IMAIN,*) 'Error: USER_T0 is too small'
         write(IMAIN,*) '       must make one of three adjustments:'
-        write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-min_tshift_cmt_original
+        write(IMAIN,*) '       - increase USER_T0 to be at least: ',t0-min_tshift_src_original
         write(IMAIN,*) '       - decrease time shift in CMTSOLUTION file'
         write(IMAIN,*) '       - decrease hdur in CMTSOLUTION file'
         call flush_IMAIN()
@@ -262,7 +262,7 @@
     do isource = 1,NSOURCES
         ! print source time function and spectrum
          call print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                        tshift_cmt,hdur,min_tshift_cmt_original,NSTEP,DT)
+                        tshift_src,hdur,min_tshift_src_original,NSTEP,DT)
     enddo
   endif
 
@@ -811,8 +811,17 @@
 
   ! local parameters
   integer :: isource,iglob,i,j,k,ispec
+
+  double precision, dimension(NGLLX) :: hxis,hpxis                               
+  double precision, dimension(NGLLY) :: hetas,hpetas                             
+  double precision, dimension(NGLLZ) :: hgammas,hpgammas
+
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
+  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
+
   double precision :: xi,eta,gamma
+  double precision :: hlagrange                                                  
+  double precision :: norm
 
   do isource = 1,NSOURCES
 
@@ -833,43 +842,107 @@
       if (ispec < 1 .or. ispec > NSPEC_CRUST_MANTLE ) &
         call exit_MPI(myrank,'Error: source ispec number invalid')
 
-      ! gets source location
-      xi = xi_source(isource)
-      eta = eta_source(isource)
-      gamma = gamma_source(isource)
-
-      ! pre-computes source contribution on GLL points
-      call compute_arrays_source(sourcearray,xi,eta,gamma, &
-                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource), &
-                          xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
-                          etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
-                          gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec), &
+!      ! gets source location
+!      xi = xi_source(isource)
+!      eta = eta_source(isource)
+!      gamma = gamma_source(isource)
+!
+!      ! pre-computes source contribution on GLL points
+!      call compute_arrays_source(sourcearray,xi,eta,gamma, &
+!                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource), &
+!                          xix_crust_mantle(:,:,:,ispec),xiy_crust_mantle(:,:,:,ispec),xiz_crust_mantle(:,:,:,ispec), &
+!                          etax_crust_mantle(:,:,:,ispec),etay_crust_mantle(:,:,:,ispec),etaz_crust_mantle(:,:,:,ispec), &
+!                          gammax_crust_mantle(:,:,:,ispec),gammay_crust_mantle(:,:,:,ispec),gammaz_crust_mantle(:,:,:,ispec), &
+!                          xigll,yigll,zigll)
+!
+!      ! point forces, initializes sourcearray, used for simplified CUDA routines
+!    !-------------POINT FORCE-----------------------------------------------
+!      if (USE_FORCE_POINT_SOURCE) then
+!        ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
+!        iglob = ibool_crust_mantle(nint(xi),nint(eta),nint(gamma),ispec)
+!
+!        ! sets sourcearrays
+!        do k = 1,NGLLZ
+!          do j = 1,NGLLY
+!            do i = 1,NGLLX
+!              if (ibool_crust_mantle(i,j,k,ispec) == iglob) then
+!                ! elastic source components
+!                sourcearray(:,i,j,k) = nu_source(COMPONENT_FORCE_SOURCE,:,isource)
+!              endif
+!            enddo
+!          enddo
+!        enddo
+!      endif
+!    !-------------POINT FORCE-----------------------------------------------
+!
+!      ! stores source excitations
+!      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
+!    endif
+  
+      ! compute Lagrange polynomials at the source location                    
+      call lagrange_any(xi_source(isource),NGLLX,xigll,hxis,hpxis)             
+      call lagrange_any(eta_source(isource),NGLLY,yigll,hetas,hpetas)          
+      call lagrange_any(gamma_source(isource),NGLLZ,zigll,hgammas,hpgammas)    
+                                                                               
+      if (USE_FORCE_POINT_SOURCE) then ! use of FORCESOLUTION files            
+                                                                             
+        ! note: for use_force_point_source xi/eta/gamma are also in the range [-1,1], for exact positioning
+                                                                               
+        ! initializes source array                                             
+        sourcearrayd(:,:,:,:) = 0.0d0                                          
+                                                                               
+        ! calculates source array for interpolated location                    
+        do k=1,NGLLZ                                                           
+          do j=1,NGLLY                                                         
+            do i=1,NGLLX                                                       
+              hlagrange = hxis(i) * hetas(j) * hgammas(k)                      
+                                                                               
+              ! elastic source                                                 
+              norm = sqrt( comp_dir_vect_source_E(isource)**2 &              
+                         + comp_dir_vect_source_N(isource)**2 &              
+                         + comp_dir_vect_source_Z_UP(isource)**2 )           
+                                                                               
+              ! checks norm of component vector                              
+              if (norm < TINYVAL) then                                       
+                call exit_MPI(myrank,'error force point source: component vector has (almost) zero norm')
+              endif                                                          
+                                                                               
+              ! we use an tilted force defined by its magnitude and the projections
+              ! of an arbitrary (non-unitary) direction vector on the E/N/Z_UP basis
+              sourcearrayd(:,i,j,k) = factor_force_source(isource) * hlagrange * &
+                                      ( nu_source(1,:,isource) * comp_dir_vect_source_E(isource) + &
+                                        nu_source(2,:,isource) * comp_dir_vect_source_N(isource) + &
+                                        nu_source(3,:,isource) * comp_dir_vect_source_Z_UP(isource) ) / norm
+                                                                               
+            enddo                                                              
+          enddo                                                                
+        enddo                                                                  
+                                                                               
+        ! distinguish between single and double precision for reals            
+        sourcearray(:,:,:,:) = real(sourcearrayd(:,:,:,:),kind=CUSTOM_REAL)    
+                                                                             
+      else ! use of CMTSOLUTION files                                          
+                                                                             
+        call compute_arrays_source(sourcearray,xi,eta,gamma, &
+                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource), &
+                          Mxz(isource),Myz(isource),                           &
+                          xix_crust_mantle(:,:,:,ispec),                       &
+                          xiy_crust_mantle(:,:,:,ispec),                       &
+                          xiz_crust_mantle(:,:,:,ispec),                       &
+                          etax_crust_mantle(:,:,:,ispec),                      &
+                          etay_crust_mantle(:,:,:,ispec),                      &
+                          etaz_crust_mantle(:,:,:,ispec),                      &
+                          gammax_crust_mantle(:,:,:,ispec),                    &
+                          gammay_crust_mantle(:,:,:,ispec),                    &
+                          gammaz_crust_mantle(:,:,:,ispec), &
                           xigll,yigll,zigll)
-
-      ! point forces, initializes sourcearray, used for simplified CUDA routines
-    !-------------POINT FORCE-----------------------------------------------
-      if (USE_FORCE_POINT_SOURCE) then
-        ! note: for use_force_point_source xi/eta/gamma are in the range [1,NGLL*]
-        iglob = ibool_crust_mantle(nint(xi),nint(eta),nint(gamma),ispec)
-
-        ! sets sourcearrays
-        do k = 1,NGLLZ
-          do j = 1,NGLLY
-            do i = 1,NGLLX
-              if (ibool_crust_mantle(i,j,k,ispec) == iglob) then
-                ! elastic source components
-                sourcearray(:,i,j,k) = nu_source(COMPONENT_FORCE_SOURCE,:,isource)
-              endif
-            enddo
-          enddo
-        enddo
-      endif
-    !-------------POINT FORCE-----------------------------------------------
-
-      ! stores source excitations
-      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
-    endif
-
+                                                                                   
+      endif                                                                    
+                                                                                 
+      ! stores source excitations                                              
+      sourcearrays(isource,:,:,:,:) = sourcearray(:,:,:,:)                     
+                                                                                 
+    endif                               
   enddo
 
   end subroutine setup_sources_receivers_srcarr
