@@ -849,11 +849,11 @@
       if (ispec < 1 .or. ispec > NSPEC_CRUST_MANTLE ) &
         call exit_MPI(myrank,'Error: source ispec number invalid')
 
-!      ! gets source location
-!      xi = xi_source(isource)
-!      eta = eta_source(isource)
-!      gamma = gamma_source(isource)
-!
+      ! gets source location
+      xi = xi_source(isource)
+      eta = eta_source(isource)
+      gamma = gamma_source(isource)
+
 !      ! pre-computes source contribution on GLL points
 !      call compute_arrays_source(sourcearray,xi,eta,gamma, &
 !                          Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource), &
@@ -887,9 +887,9 @@
 !    endif
   
       ! compute Lagrange polynomials at the source location                    
-      call lagrange_any(xi_source(isource),NGLLX,xigll,hxis,hpxis)             
-      call lagrange_any(eta_source(isource),NGLLY,yigll,hetas,hpetas)          
-      call lagrange_any(gamma_source(isource),NGLLZ,zigll,hgammas,hpgammas)    
+      call lagrange_any(xi,NGLLX,xigll,hxis,hpxis)             
+      call lagrange_any(eta,NGLLY,yigll,hetas,hpetas)          
+      call lagrange_any(gamma,NGLLZ,zigll,hgammas,hpgammas)    
                                                                                
       if (USE_FORCE_POINT_SOURCE) then ! use of FORCESOLUTION files            
                                                                              
@@ -947,7 +947,7 @@
       endif                                                                    
                                                                                  
       ! stores source excitations                                              
-      sourcearrays(isource,:,:,:,:) = sourcearray(:,:,:,:)                     
+      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)                     
                                                                                  
     endif                               
   enddo
