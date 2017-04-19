@@ -178,4 +178,4 @@ $O/%.shared_asdf.o: $S/%.f90
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.cc.o: $S/%.c ${SETUP}/config.h
-	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $< 
+	${CC} -c $(CPPFLAGS) $(CFLAGS) -o $@ $<

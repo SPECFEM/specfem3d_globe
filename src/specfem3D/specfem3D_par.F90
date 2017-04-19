@@ -370,11 +370,11 @@ module specfem_par
   ! time loop timing
   double precision :: time_start
 
-  ! parameters for a force source located exactly at a grid point                  
-  integer, dimension(:), allocatable :: force_stf             
-  double precision, dimension(:), allocatable :: factor_force_source             
-  double precision, dimension(:), allocatable :: comp_dir_vect_source_E          
-  double precision, dimension(:), allocatable :: comp_dir_vect_source_N          
+  ! parameters for a force source located exactly at a grid point
+  integer, dimension(:), allocatable :: force_stf
+  double precision, dimension(:), allocatable :: factor_force_source
+  double precision, dimension(:), allocatable :: comp_dir_vect_source_E
+  double precision, dimension(:), allocatable :: comp_dir_vect_source_N
   double precision, dimension(:), allocatable :: comp_dir_vect_source_Z_UP
 
   !-----------------------------------------------------------------

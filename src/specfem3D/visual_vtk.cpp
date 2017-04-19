@@ -3,7 +3,7 @@
  !
  !          S p e c f e m 3 D  G l o b e  V e r s i o n  7 . 0
  !          --------------------------------------------------
- ! 
+ !
  !     Main historical authors: Dimitri Komatitsch and Jeroen Tromp
  !                        Princeton University, USA
  !                and CNRS / University of Marseille, France
@@ -111,12 +111,12 @@ class Visualization {
     vtkPoints* points2D;
     vtkDoubleArray* data_array2D;
     vtkCellArray* cells2D;
-  
+
     vtkUnstructuredGrid* volume2D;
 
     vtkDataSetMapper* mapMesh2D;
     vtkActor* actor2D;
-  
+
     // 3D volume data
     vtkPoints* points3D;
     vtkDoubleArray* data_array3D;
@@ -134,11 +134,11 @@ class Visualization {
     vtkTableBasedClipDataSet* clip1;
     vtkTableBasedClipDataSet* clip2;
     vtkTableBasedClipDataSet* clip1m;
-  
+
     // visualizing
     vtkAppendFilter *merger;
     vtkDataSetSurfaceFilter* clippersurface;
-  
+
     // colors
     vtkLookupTable* lut2D;
     vtkLookupTable* lut;
@@ -166,11 +166,11 @@ class Visualization {
     double pcam[3]; // camera position
     double rclip[2]; // clipping range
     double pfocal[3]; // focal point
-  
+
     // source sphere
     vtkSphereSource* sphere;
     vtkPolyDataMapper* mapperSphere;
-    vtkActor* actorSphere;  
+    vtkActor* actorSphere;
     double pos_source[3]; // source location
 
     // countours
@@ -182,20 +182,20 @@ class Visualization {
 class VTKmesh{
   public:
     int np;
-    int nspec;  
+    int nspec;
 };
 
 class VTKState {
   public:
     // VTK rendering
     Visualization vtk;
-    
+
     // meshes
     VTKmesh freesurface;
     VTKmesh volume;
 
     // timing
-    vtkTimerLog* timer;  
+    vtkTimerLog* timer;
 };
 
 // global VTK state variable
@@ -223,14 +223,14 @@ void save_snapshot_vtu() {
   printf("writing unstructured grid data...\n");
 
   std::string filename = "test_snapshot.vtu";
-  
+
   // creates writer
   vtkXMLUnstructuredGridWriter* writer = vtkXMLUnstructuredGridWriter::New();
   writer->SetFileName(filename.c_str());
   writer->SetInput(fs.vtk.volume3D);
   writer->SetDataModeToAscii();
   writer->Write();
-  
+
   //clean up
   writer->Delete();
 
@@ -241,32 +241,32 @@ void save_snapshot_vtu() {
 void save_snapshot_jpg(int it) {
   // Write vtu file
   printf("writing jpg image...\n");
-  
+
   //std::string filename = "test_snapshot.jpg";
-  
+
   char filename[180];
   if (it > 0 ) {
     sprintf(filename,"test_snapshot.%6.6d.jpg",it);
   }else{
     sprintf(filename,"test_snapshot.jpg");
   }
-  
+
   // window filter
   vtkWindowToImageFilter* w2i = vtkWindowToImageFilter::New();
   w2i->SetInput(fs.vtk.renWin);
   w2i->Update();
-  
+
   // creates writer
   vtkJPEGWriter* writer = vtkJPEGWriter::New();
   //writer->SetFileName(filename.c_str());
   writer->SetFileName(filename);
   writer->SetInputConnection(w2i->GetOutputPort());
   writer->Write();
-  
+
   //clean up
   writer->Delete();
   w2i->Delete();
-  
+
   printf("snapshot written to file: %s\n\n",filename);
 }
 
@@ -280,7 +280,7 @@ void set_color_scale(int icolor) {
     gcolor_min = 0.0;
     fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
     fs.vtk.lut->SetScaleToLinear();
-    
+
     fs.vtk.lut->SetValueRange( 0.6, 1.0 );
     fs.vtk.lut->SetHueRange( 0.66667, 0.0 );
     fs.vtk.lut->SetSaturationRange( 1.0, 1.0 );
@@ -301,7 +301,7 @@ void set_color_scale(int icolor) {
     gcolor_min = 1.e-3*gcolor_max;
     fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
     fs.vtk.lut->SetScaleToLog10();
-    
+
     fs.vtk.lut->SetValueRange( 0.4, 1.0 );
     fs.vtk.lut->SetHueRange( 0.0, 0.4 );
     fs.vtk.lut->SetSaturationRange( 0.5, 0.0 );
@@ -310,7 +310,7 @@ void set_color_scale(int icolor) {
     gcolor_min = 1.e-3*gcolor_max;
     fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
     fs.vtk.lut->SetScaleToLog10();
-    
+
     fs.vtk.lut->SetValueRange( 0.4, 1.0 );
     fs.vtk.lut->SetHueRange( 0.6, 0.6 );
     fs.vtk.lut->SetSaturationRange( 0.5, 0.0 );
@@ -319,7 +319,7 @@ void set_color_scale(int icolor) {
     gcolor_min = 1.e-3*gcolor_max;
     fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
     fs.vtk.lut->SetScaleToLog10();
-    
+
     fs.vtk.lut->SetValueRange( 0.4, 1.0 ); // from black to white
     fs.vtk.lut->SetHueRange( 0.0, 1.0 );
     fs.vtk.lut->SetSaturationRange( 0.0, 0.0 ); // no color saturation
@@ -333,7 +333,7 @@ void set_color_scale(int icolor) {
     gcolor_min = 0.0;
     fs.vtk.lut->SetTableRange( gcolor_min, gcolor_max );
     fs.vtk.lut->SetScaleToLinear();
-    
+
     fs.vtk.lut->SetValueRange( 0.6, 1.0 );
     fs.vtk.lut->SetHueRange( 0.66667, 0.0 );
     fs.vtk.lut->SetSaturationRange( 1.0, 1.0 );
@@ -365,7 +365,7 @@ class MyInteractor{
           fs.vtk.renWin->Render();
           fs.vtk.help->Delete();
           fs.vtk.helpOn = 0;
-        }                
+        }
       }
       // changes color scales
       if (string(fs.vtk.iren->GetKeySym()) == "c") {
@@ -384,7 +384,7 @@ class MyInteractor{
         }
         set_color_scale(fs.vtk.icolor);
         fs.vtk.renWin->Render();
-      }      
+      }
       // saves vtu snapshot
       if (string(fs.vtk.iren->GetKeySym()) == "s") {
         save_snapshot_vtu();
@@ -404,8 +404,8 @@ class MyInteractor{
       if (string(fs.vtk.iren->GetKeySym()) == "space" || string(fs.vtk.iren->GetKeySym()) == "q") {
         // updates text
         fs.vtk.text->SetInput( "...continue simulation " );
-        fs.vtk.renWin->Render();        
-        
+        fs.vtk.renWin->Render();
+
         // stops interactive renderer
         fs.vtk.iren->TerminateApp();
       }
@@ -424,8 +424,8 @@ class MyInteractor{
         // view
         fs.vtk.camera->SetViewAngle( 30.0 );
         fs.vtk.camera->SetViewUp( 0.0, 0.0, 1.0 );
-        
-        fs.vtk.renWin->Render();        
+
+        fs.vtk.renWin->Render();
       }
       // changes color scale maximum values
       if (string(fs.vtk.iren->GetKeySym()) == "Up") {
@@ -470,7 +470,7 @@ class MyInteractor{
           }
           fs.vtk.renWin->Render();
         }
-      }      
+      }
     }
 };
 
@@ -512,11 +512,11 @@ void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
   // renderer
   fs.vtk.ren = vtkRenderer::New();
   fs.vtk.ren->SetActiveCamera(fs.vtk.camera);
-  
+
   // Background color white
   fs.vtk.bgBlackOn = 0;
   fs.vtk.ren->SetBackground(1,1,1);
-  
+
   // text actors
   // GPU flag
   fs.vtk.textGPU = vtkTextActor::New();
@@ -530,7 +530,7 @@ void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
     fs.vtk.textGPU->GetTextProperty()->SetColor( 0.8,0.2,0.2 );
   }
   fs.vtk.ren->AddActor2D( fs.vtk.textGPU );
-  
+
   // progress text
   fs.vtk.text = vtkTextActor::New();
   fs.vtk.text->GetTextProperty()->SetFontSize ( 16 );
@@ -543,7 +543,7 @@ void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
   int tableSize = 256;
   fs.vtk.icolor = 0; // from blue to red
   fs.vtk.colorAdjustOn = 1; // automatic adjust
-  
+
   fs.vtk.lut = vtkLookupTable::New();
   fs.vtk.lut->SetNumberOfColors( tableSize );
 
@@ -556,7 +556,7 @@ void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
 
   fs.vtk.renWin->SetPosition(500,0);
   fs.vtk.renWin->SetSize(900,600);
-  
+
   // window interactor
   fs.vtk.iren = vtkRenderWindowInteractor::New();
   fs.vtk.iren->SetRenderWindow(fs.vtk.renWin);
@@ -571,7 +571,7 @@ void FC_FUNC_(initialize_vtkwindow,INITIALIZE_VTKWINDOW)(int* GPU_MODE) {
 
   // timer
   fs.timer = vtkTimerLog::New();
-  
+
   //printf("      initialized VTK window successfully\n");
 }
 
@@ -581,13 +581,13 @@ extern "C"
 void FC_FUNC_(prepare_vtksource,PREPARE_VTKSOURCE)(float* xs_x,float* xs_y, float* xs_z) {
 
   double xyz[3];
-  
+
   // sets source location
   fs.vtk.pos_source[0] = *xs_x;
   fs.vtk.pos_source[1] = *xs_y;
   fs.vtk.pos_source[2] = *xs_z;
   printf("     sphere location: %f %f %f \n",fs.vtk.pos_source[0],fs.vtk.pos_source[1],fs.vtk.pos_source[2]);
-  
+
   // creates sphere around source location
   fs.vtk.sphere = vtkSphereSource::New();
   fs.vtk.sphere->SetCenter(fs.vtk.pos_source);
@@ -595,7 +595,7 @@ void FC_FUNC_(prepare_vtksource,PREPARE_VTKSOURCE)(float* xs_x,float* xs_y, floa
 
   fs.vtk.mapperSphere = vtkPolyDataMapper::New();
   fs.vtk.mapperSphere->SetInputConnection(fs.vtk.sphere->GetOutputPort());
- 
+
   fs.vtk.actorSphere = vtkActor::New();
   fs.vtk.actorSphere->SetMapper(fs.vtk.mapperSphere);
 
@@ -618,13 +618,13 @@ void FC_FUNC_(prepare_vtkfreesurface,PREPARE_VTKFREESURFACE)(int* free_np,
                                                              int* free_conn) {
   double xyz[3];
   int id1,id2,id3,id4;
-  
+
   // user output
   //printf("    prepare VTK freesurface...\n");
 
   // initializes
   SHOW_FREESURFACE = 1;
-  
+
   // number of points
   fs.freesurface.np = *free_np;
   printf("     free surface points: %d\n", fs.freesurface.np);
@@ -659,7 +659,7 @@ void FC_FUNC_(prepare_vtkfreesurface,PREPARE_VTKFREESURFACE)(int* free_np,
   printf("     topo: min = %f max = %f\n", min,max);
 
   // black color scale
-  int tableSize = 256;  
+  int tableSize = 256;
   fs.vtk.lut2D = vtkLookupTable::New();
   fs.vtk.lut2D->SetNumberOfColors(tableSize);
   fs.vtk.lut2D->SetValueRange( 0.4, 1.0 ); // from black to white
@@ -667,7 +667,7 @@ void FC_FUNC_(prepare_vtkfreesurface,PREPARE_VTKFREESURFACE)(int* free_np,
   fs.vtk.lut2D->SetSaturationRange( 0.0, 0.0 ); // no color saturation
   fs.vtk.lut2D->SetTableRange( min, max );
   fs.vtk.lut2D->Build();
-  
+
   // creates cell connectivity
   fs.freesurface.nspec = *free_nspec;
 
@@ -712,19 +712,19 @@ void FC_FUNC_(prepare_vtkfreesurface,PREPARE_VTKFREESURFACE)(int* free_np,
   fs.vtk.contourMapper = vtkPolyDataMapper::New();
   fs.vtk.contourMapper->SetInputConnection(0, fs.vtk.contour->GetOutputPort() );
   fs.vtk.contourMapper->ScalarVisibilityOff();
-  
+
   fs.vtk.contourActor = vtkActor::New();
   fs.vtk.contourActor->SetMapper( fs.vtk.contourMapper );
   fs.vtk.contourActor->GetProperty()->SetOpacity( 1.0 );
   fs.vtk.contourActor->SetScale( 1.001,1.001,1.001 );
   fs.vtk.contourActor->GetProperty()->SetColor( 0.5, 0.5, 0.5 );
-  
+
   fs.vtk.ren->AddActor(fs.vtk.contourActor);
-  
+
   // mapping
   fs.vtk.mapMesh2D = vtkDataSetMapper::New();
   fs.vtk.mapMesh2D->SetInput( fs.vtk.volume2D );
-  
+
   fs.vtk.mapMesh2D->SetLookupTable(fs.vtk.lut2D);
   fs.vtk.mapMesh2D->SetColorModeToMapScalars();
   fs.vtk.mapMesh2D->SetScalarModeToUsePointData();
@@ -757,23 +757,23 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
 
   double xyz[3];
   double data_bounds[2];
-  double model_bounds[6];  
+  double model_bounds[6];
   int id1,id2,id3,id4,id5,id6,id7,id8;
   static int debug_file = 0;
-  
+
   // user output
   //printf("    prepare VTK wavefield ...\n");
 
   // initializes
   SHOW_VOLUMEDATA = 1;
-  
+
   // volumetric wavefield
   // text
   fs.vtk.text->SetInput( "...adding wavefield " );
-  
+
   // update view
   fs.vtk.renWin->Render();
-  
+
   // volume mesh
   fs.volume.np = *vol_np;
   printf("     volume points: %d\n", fs.volume.np);
@@ -783,7 +783,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
     fprintf(stderr,"Error: VTK_MODE without 3D volume points \n");
     exit(1);
   }
-      
+
   // volume data
   // point locations
   fs.vtk.points3D = vtkPoints::New();
@@ -793,7 +793,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   fs.vtk.data_array3D = vtkDoubleArray::New();
   fs.vtk.data_array3D->SetNumberOfComponents(1);
   fs.vtk.data_array3D->SetName("vnorm");
-  fs.vtk.data_array3D->SetNumberOfValues(fs.volume.np);    
+  fs.vtk.data_array3D->SetNumberOfValues(fs.volume.np);
 
   for(int i = 0;i<fs.volume.np;i++) {
     xyz[0] = vol_x[i];
@@ -821,7 +821,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   printf("     model: xmin/xmax = %f / %f\n",xmin,xmax);
   printf("     model: ymin/ymax = %f / %f\n",ymin,ymax);
   printf("     model: zmin/zmax = %f / %f\n",zmin,zmax);
-  
+
   // adjusts camera settings
   fs.vtk.rclip[0] = xmin - 0.1*(xmax-xmin);
   fs.vtk.rclip[1] = xmax + 0.1*(xmax-xmin);
@@ -831,14 +831,14 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   fs.vtk.pcam[0] = fs.vtk.pos_source[0] + 0.5*(zmax-zmin); // (xmax-xmin)/2.0 - 0.1*(xmax-xmin);
   fs.vtk.pcam[1] = fs.vtk.pos_source[1] + 0.5*(zmax-zmin); // (ymax-ymin)/2.0 + 0.1*(ymax-ymin);
   fs.vtk.pcam[2] = fs.vtk.pos_source[2] + 0.5*(zmax-zmin); // (zmax-zmin)/2.0 + 0.5*(zmax-zmin);
-  
+
   // range
   fs.vtk.camera->SetClippingRange( fs.vtk.rclip );
   // camer focal point
   fs.vtk.camera->SetFocalPoint( fs.vtk.pfocal );
   // camer position
   fs.vtk.camera->SetPosition( fs.vtk.pcam );
-  
+
   //
   // unstructured grid
   //
@@ -865,10 +865,10 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
     hex->GetPointIds()->SetId(5,id6);
     hex->GetPointIds()->SetId(6,id7);
     hex->GetPointIds()->SetId(7,id8);
-    fs.vtk.cells->InsertNextCell(hex);      
+    fs.vtk.cells->InsertNextCell(hex);
   }
   hex->Delete();
-  
+
   fs.vtk.volume3D = vtkUnstructuredGrid::New();
   // points
   fs.vtk.volume3D->SetPoints(fs.vtk.points3D);
@@ -897,7 +897,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
     v[1] = 0.0;
     v[2] = 1.0;
   }
-  
+
   // source location vector / perpendicular vectors
   //
   // vectorproduct(vector1, vector2, product)
@@ -910,7 +910,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
     p1[0] = 0.0;
     p1[1] = 0.0;
     p1[2] = 1.0;
-    
+
     p2[0] = 0.0;
     p2[1] = 1.0;
     p2[2] = 0.0;
@@ -918,7 +918,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
     p1[0] = 0.0;
     p1[1] = 1.0;
     p1[2] = 0.0;
-    
+
     p2[0] = 1.0;
     p2[1] = 0.0;
     p2[2] = 0.0;
@@ -931,7 +931,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   pn2[0] = v[1]*p2[2] - v[2]*p2[1];
   pn2[1] = -v[0]*p2[2] + v[2]*p2[0];
   pn2[2] = v[0]*p2[1] - v[1]*p2[0];
-  
+
   // flips normal depending on location of source
   if (fabs(v[0]-xmin) < fabs(v[0]-xmax) ) {
     pn1[0] *= -1.0;
@@ -943,7 +943,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
     pn2[1] *= -1.0;
     pn2[2] *= -1.0;
   }
-  
+
   // plane through source location
   fs.vtk.clipPlane1 = vtkPlane::New();
   fs.vtk.clipPlane1->SetNormal( pn1 );
@@ -976,7 +976,7 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   fs.vtk.merger->AddInput( fs.vtk.clip1->GetOutput() );
   fs.vtk.merger->AddInput( fs.vtk.clip2->GetOutput() );
   fs.vtk.merger->Update();
-  
+
   // test file
   if (debug_file == 1) {
     vtkUnstructuredGrid* data = fs.vtk.merger->GetOutput();
@@ -995,12 +995,12 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
     writer->Delete();
     printf("snapshot written to file: %s\n\n",filename.c_str());
   }
-  
+
   // clipper surface
   fs.vtk.clippersurface = vtkDataSetSurfaceFilter::New();
   fs.vtk.clippersurface->SetInputConnection(0, fs.vtk.merger->GetOutputPort());
   fs.vtk.clippersurface->Update();
-  
+
   // cell connectivity mapping
   fs.vtk.mapMesh3D = vtkDataSetMapper::New();
   fs.vtk.mapMesh3D->SetInputConnection(fs.vtk.clippersurface->GetOutputPort());
@@ -1010,16 +1010,16 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   fs.vtk.mapMesh3D->SetScalarModeToUsePointData();
   fs.vtk.mapMesh3D->ScalarVisibilityOn();
   fs.vtk.mapMesh3D->UseLookupTableScalarRangeOn();
-  
+
   //actor
   fs.vtk.actor3D = vtkActor::New();
   fs.vtk.actor3D->SetMapper(fs.vtk.mapMesh3D);
   //fs.vtk.actor3D->GetProperty()->SetRepresentationToSurface();
   //fs.vtk.actor3D->GetProperty()->SetEdgeVisibility(1);
-  
+
   // 3D actor
   fs.vtk.ren->AddActor(fs.vtk.actor3D);
-  
+
   // legend for colors
   fs.vtk.legendcolor = vtkScalarBarActor::New();
   fs.vtk.legendcolor->SetLookupTable(fs.vtk.lut);
@@ -1042,9 +1042,9 @@ void FC_FUNC_(prepare_vtkfield,PREPARE_VTKFIELD)(int* vol_np,
   // error in X11: GLXBadCurrentWindow
   interactor_usage();
   fs.vtk.iren->Start();
-  
+
   // starts timer
-  fs.timer->StartTimer();  
+  fs.timer->StartTimer();
 }
 
 
@@ -1056,19 +1056,19 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
   double xyz[3];
   double bounds[2];
   double min,max;
-  
+
   static int VERBOSE = 1;
-  
+
   int it = *it_h;
   float time = *time_h;
-  
+
   if (VERBOSE) printf("     visual: it = %d time = %f \n",it,time);
 
   // time for calculating new wavefield
   fs.timer->StopTimer();
   double timeInSeconds = fs.timer->GetElapsedTime();
   fs.timer->StartTimer();
-  
+
   // frames per second (based on computing new wavefield
   double fps = 1.0/timeInSeconds;
   // updates time string
@@ -1088,7 +1088,7 @@ void FC_FUNC_(visualize_vtkdata,VISUALIZE_VTKDATA)(int* it_h,float* time_h, floa
     fs.vtk.data_array3D->GetValueRange(bounds);
     min = bounds[0];
     max = bounds[1];
-    
+
     // adjusts color maximum
     if (fs.vtk.colorAdjustOn) {
       if (gcolor_max < 0.0 ) gcolor_max = 1.e-10;
@@ -1127,7 +1127,7 @@ void FC_FUNC_(finish_vtkwindow,FINISH_VTKWINDOW)() {
 
   // text
   fs.vtk.text->SetInput( "...change view with mouse/keyboard, then press <space> to finish " );
-  
+
   // render window
   fs.vtk.renWin->Render();
 
@@ -1139,7 +1139,7 @@ void FC_FUNC_(finish_vtkwindow,FINISH_VTKWINDOW)() {
 
   fs.timer->StopTimer();
   fs.timer->Delete();
-  
+
   // free arrays
   if (SHOW_FREESURFACE == 1) {
     fs.vtk.points2D->Delete();
@@ -1152,9 +1152,9 @@ void FC_FUNC_(finish_vtkwindow,FINISH_VTKWINDOW)() {
     fs.vtk.contourActor->Delete();
     fs.vtk.contourMapper->Delete();
     fs.vtk.contour->Delete();
-    
+
     fs.vtk.actor2D->Delete();
-    fs.vtk.mapMesh2D->Delete();    
+    fs.vtk.mapMesh2D->Delete();
   }
 
   if (SHOW_VOLUMEDATA == 1) {
@@ -1167,14 +1167,14 @@ void FC_FUNC_(finish_vtkwindow,FINISH_VTKWINDOW)() {
 
     fs.vtk.clipPlane1->Delete();
     fs.vtk.clipPlane2->Delete();
-    
+
     fs.vtk.clippersurface->Delete();
     fs.vtk.merger->Delete();
-    
+
     fs.vtk.clip1->Delete();
     fs.vtk.clip1m->Delete();
     fs.vtk.clip2->Delete();
-    
+
     fs.vtk.actor3D->Delete();
     fs.vtk.mapMesh3D->Delete();
   }
@@ -1190,7 +1190,7 @@ void FC_FUNC_(finish_vtkwindow,FINISH_VTKWINDOW)() {
   fs.vtk.iren->Delete();
   fs.vtk.renWin->Delete();
   fs.vtk.ren->Delete();
-  fs.vtk.camera->Delete();  
+  fs.vtk.camera->Delete();
 }
 
 

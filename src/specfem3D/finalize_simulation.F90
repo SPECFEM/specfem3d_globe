@@ -259,13 +259,13 @@
   deallocate(xi_source,eta_source,gamma_source)
   deallocate(tshift_src,hdur,hdur_Gaussian)
   deallocate(nu_source)
-  ! point force source                                           
-  if (USE_FORCE_POINT_SOURCE) then                                               
-    deallocate(force_stf)                                              
-    deallocate(factor_force_source)                                              
-    deallocate(comp_dir_vect_source_E)                                           
-    deallocate(comp_dir_vect_source_N)                                           
-    deallocate(comp_dir_vect_source_Z_UP)                                        
+  ! point force source
+  if (USE_FORCE_POINT_SOURCE) then
+    deallocate(force_stf)
+    deallocate(factor_force_source)
+    deallocate(comp_dir_vect_source_E)
+    deallocate(comp_dir_vect_source_N)
+    deallocate(comp_dir_vect_source_Z_UP)
   endif
 
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) deallocate(sourcearrays)

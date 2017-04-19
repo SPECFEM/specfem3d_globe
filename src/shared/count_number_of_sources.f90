@@ -43,11 +43,11 @@
   character(len=MAX_STRING_LEN) :: dummystring
 
   if (USE_FORCE_POINT_SOURCE) then
-  ! FORCESOLUTION file            
+  ! FORCESOLUTION file
     SOURCE_FILE = 'DATA/FORCESOLUTION'
     nline=NLINES_PER_FORCESOLUTION_SOURCE
   else
-  ! CMTSOLUTION file            
+  ! CMTSOLUTION file
     SOURCE_FILE = 'DATA/CMTSOLUTION'
     nline=NLINES_PER_CMTSOLUTION_SOURCE
   endif

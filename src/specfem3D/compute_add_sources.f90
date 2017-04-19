@@ -64,7 +64,7 @@
 
       ! add only if this proc carries the source
       if (myrank == islice_selected_source(isource)) then
-        
+
         ispec = ispec_selected_source(isource)
 
         ! sets current time for this source
@@ -424,10 +424,10 @@
       if (myrank == islice_selected_source(isource)) then
 
         ispec = ispec_selected_source(isource)
-        
+
         ! sets current time for this source
         timeval = time_t - tshift_src(isource)
-  
+
         !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
 

@@ -120,12 +120,12 @@
   allocate(nu_source(NDIM,NDIM,NSOURCES),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating source arrays')
 
-  if (USE_FORCE_POINT_SOURCE) then                                               
-    allocate(force_stf(NSOURCES),factor_force_source(NSOURCES), &                                    
-             comp_dir_vect_source_E(NSOURCES), &                                 
-             comp_dir_vect_source_N(NSOURCES), &                                 
-             comp_dir_vect_source_Z_UP(NSOURCES),stat=ier)                       
-    if (ier /= 0) stop 'error allocating arrays for force point sources'         
+  if (USE_FORCE_POINT_SOURCE) then
+    allocate(force_stf(NSOURCES),factor_force_source(NSOURCES), &
+             comp_dir_vect_source_E(NSOURCES), &
+             comp_dir_vect_source_N(NSOURCES), &
+             comp_dir_vect_source_Z_UP(NSOURCES),stat=ier)
+    if (ier /= 0) stop 'error allocating arrays for force point sources'
   endif
 
   ! sources
@@ -819,15 +819,15 @@
   ! local parameters
   integer :: isource,i,j,k,ispec !,iglob
 
-  double precision, dimension(NGLLX) :: hxis,hpxis                               
-  double precision, dimension(NGLLY) :: hetas,hpetas                             
+  double precision, dimension(NGLLX) :: hxis,hpxis
+  double precision, dimension(NGLLY) :: hetas,hpetas
   double precision, dimension(NGLLZ) :: hgammas,hpgammas
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearray
   double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
 
   double precision :: xi,eta,gamma
-  double precision :: hlagrange                                                  
+  double precision :: hlagrange
   double precision :: norm
 
   do isource = 1,NSOURCES
@@ -885,51 +885,51 @@
 !      ! stores source excitations
 !      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
 !    endif
-  
-      ! compute Lagrange polynomials at the source location                    
-      call lagrange_any(xi,NGLLX,xigll,hxis,hpxis)             
-      call lagrange_any(eta,NGLLY,yigll,hetas,hpetas)          
-      call lagrange_any(gamma,NGLLZ,zigll,hgammas,hpgammas)    
-                                                                               
-      if (USE_FORCE_POINT_SOURCE) then ! use of FORCESOLUTION files            
-                                                                             
+
+      ! compute Lagrange polynomials at the source location
+      call lagrange_any(xi,NGLLX,xigll,hxis,hpxis)
+      call lagrange_any(eta,NGLLY,yigll,hetas,hpetas)
+      call lagrange_any(gamma,NGLLZ,zigll,hgammas,hpgammas)
+
+      if (USE_FORCE_POINT_SOURCE) then ! use of FORCESOLUTION files
+
         ! note: for use_force_point_source xi/eta/gamma are also in the range [-1,1], for exact positioning
-                                                                               
-        ! initializes source array                                             
-        sourcearrayd(:,:,:,:) = 0.0d0                                          
-                                                                               
-        ! calculates source array for interpolated location                    
-        do k=1,NGLLZ                                                           
-          do j=1,NGLLY                                                         
-            do i=1,NGLLX                                                       
-              hlagrange = hxis(i) * hetas(j) * hgammas(k)                      
-                                                                               
-              ! elastic source                                                 
-              norm = sqrt( comp_dir_vect_source_E(isource)**2 &              
-                         + comp_dir_vect_source_N(isource)**2 &              
-                         + comp_dir_vect_source_Z_UP(isource)**2 )           
-                                                                               
-              ! checks norm of component vector                              
-              if (norm < TINYVAL) then                                       
+
+        ! initializes source array
+        sourcearrayd(:,:,:,:) = 0.0d0
+
+        ! calculates source array for interpolated location
+        do k=1,NGLLZ
+          do j=1,NGLLY
+            do i=1,NGLLX
+              hlagrange = hxis(i) * hetas(j) * hgammas(k)
+
+              ! elastic source
+              norm = sqrt( comp_dir_vect_source_E(isource)**2 &
+                         + comp_dir_vect_source_N(isource)**2 &
+                         + comp_dir_vect_source_Z_UP(isource)**2 )
+
+              ! checks norm of component vector
+              if (norm < TINYVAL) then
                 call exit_MPI(myrank,'error force point source: component vector has (almost) zero norm')
-              endif                                                          
-                                                                               
+              endif
+
               ! we use an tilted force defined by its magnitude and the projections
               ! of an arbitrary (non-unitary) direction vector on the E/N/Z_UP basis
               sourcearrayd(:,i,j,k) = factor_force_source(isource) * hlagrange * &
                                       ( nu_source(1,:,isource) * comp_dir_vect_source_E(isource) + &
                                         nu_source(2,:,isource) * comp_dir_vect_source_N(isource) + &
                                         nu_source(3,:,isource) * comp_dir_vect_source_Z_UP(isource) ) / norm
-                                                                               
-            enddo                                                              
-          enddo                                                                
-        enddo                                                                  
-                                                                               
-        ! distinguish between single and double precision for reals            
-        sourcearray(:,:,:,:) = real(sourcearrayd(:,:,:,:),kind=CUSTOM_REAL)    
-                                                                             
-      else ! use of CMTSOLUTION files                                          
-                                                                             
+
+            enddo
+          enddo
+        enddo
+
+        ! distinguish between single and double precision for reals
+        sourcearray(:,:,:,:) = real(sourcearrayd(:,:,:,:),kind=CUSTOM_REAL)
+
+      else ! use of CMTSOLUTION files
+
         call compute_arrays_source(sourcearray,xi,eta,gamma, &
                           Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource), &
                           Mxz(isource),Myz(isource),                           &
@@ -943,13 +943,13 @@
                           gammay_crust_mantle(:,:,:,ispec),                    &
                           gammaz_crust_mantle(:,:,:,ispec), &
                           xigll,yigll,zigll)
-                                                                                   
-      endif                                                                    
-                                                                                 
-      ! stores source excitations                                              
-      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)                     
-                                                                                 
-    endif                               
+
+      endif
+
+      ! stores source excitations
+      sourcearrays(:,:,:,:,isource) = sourcearray(:,:,:,:)
+
+    endif
   enddo
 
   end subroutine setup_sources_receivers_srcarr

@@ -150,22 +150,22 @@
   final_distance_source(:) = HUGEVAL
 
   ! read all the sources
-  if (USE_FORCE_POINT_SOURCE) then                                               
-    ! point forces                                                               
-    if (myrank == 0) then                                                        
-      ! only master process reads in FORCESOLUTION file                          
+  if (USE_FORCE_POINT_SOURCE) then
+    ! point forces
+    if (myrank == 0) then
+      ! only master process reads in FORCESOLUTION file
       call get_force(tshift_src,hdur,lat,long,depth,NSOURCES,                  &
                      min_tshift_src_original,force_stf,factor_force_source,    &
                      comp_dir_vect_source_E,comp_dir_vect_source_N,            &
                      comp_dir_vect_source_Z_UP)
-    endif                                                                        
-    ! broadcasts specific point force infos                                      
-    call bcast_all_i(force_stf,NSOURCES)                              
-    call bcast_all_dp(factor_force_source,NSOURCES)                              
-    call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)                           
-    call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)                           
-    call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)                        
-  else                                                                           
+    endif
+    ! broadcasts specific point force infos
+    call bcast_all_i(force_stf,NSOURCES)
+    call bcast_all_dp(factor_force_source,NSOURCES)
+    call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)
+    call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)
+    call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)
+  else
     ! CMT moment tensors
     if (myrank == 0) then
       ! only master process reads in CMTSOLUTION file
@@ -400,14 +400,14 @@
           !kmin = 1
           !kmax = NGLLZ
           !! VM VM exclude edges to ensure this point is not shared with other elements
-          !! unless a error location on source can occurs with FORCE POINTSOURCE   
-          imin = 2                                                                 
-          imax = NGLLX - 1                                                         
-                                                                                   
-          jmin = 2                                                                 
-          jmax = NGLLY - 1                                                         
-                                                                                   
-          kmin = 2                                                                 
+          !! unless a error location on source can occurs with FORCE POINTSOURCE
+          imin = 2
+          imax = NGLLX - 1
+
+          jmin = 2
+          jmax = NGLLY - 1
+
+          kmin = 2
           kmax = NGLLZ - 1
         else
     !-------------POINT FORCE-----------------------------------------------
@@ -476,7 +476,7 @@
       xi_source_subset(isource_in_this_subset) = dble(ix_initial_guess_source)
       eta_source_subset(isource_in_this_subset) = dble(iy_initial_guess_source)
       gamma_source_subset(isource_in_this_subset) = dble(iz_initial_guess_source)
-      
+
 !      ! for point sources, the location will be exactly at a GLL point
 !      ! otherwise this tries to find best location
 !    !-------------POINT FORCE-----------------------------------------------
@@ -683,12 +683,12 @@
         ! different output for force point sources
     !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
-          write(IMAIN,*) 'using force point source: '                            
+          write(IMAIN,*) 'using force point source: '
           write(IMAIN,*) '  xi coordinate of source in that element: ',xi_source(isource)
           write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
           write(IMAIN,*) '  gamma coordinate of source in that element: ',gamma_source(isource)
-                                                                                 
-          write(IMAIN,*)                                                         
+
+          write(IMAIN,*)
           write(IMAIN,*) '  component of direction vector in East direction: ',comp_dir_vect_source_E(isource)
           write(IMAIN,*) '  component of direction vector in North direction: ',comp_dir_vect_source_N(isource)
           write(IMAIN,*) '  component of direction vector in Vertical direction: ',comp_dir_vect_source_Z_UP(isource)
@@ -1022,7 +1022,7 @@
     else
       stop 'mixed force_stf not supported!'
     endif
-  endif 
+  endif
     !-------------POINT FORCE-----------------------------------------------
 
   t_cmt_used(:) = tshift_src(:)

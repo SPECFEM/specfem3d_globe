@@ -128,7 +128,7 @@
     ! source time function
     read(IIN,"(a)") string
     read(string(22:len_trim(string)),*) force_stf(isource)
-    
+
     ! read magnitude
     read(IIN,"(a)") string
     read(string(21:len_trim(string)),*) factor_force_source(isource)

@@ -70,8 +70,8 @@
              ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER, &
              SAVE_ALL_SEISMOS_IN_ONE_FILE,USE_BINARY_FOR_LARGE_FILE,READ_ADJSRC_ASDF
 
-  ! sources                                                                      
-  logical :: USE_FORCE_POINT_SOURCE                                              
+  ! sources
+  logical :: USE_FORCE_POINT_SOURCE
   logical :: USE_RICKER_TIME_FUNCTION,PRINT_SOURCE_TIME_FUNCTION
 
   ! checkpointing/restart
