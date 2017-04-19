@@ -186,6 +186,7 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
 # # - the corresponding time-shift parameter,                                      
 # # - the half duration parameter of the source,                                   
 # # - the coordinates of the source,                                               
+# # - the source time function of the source,                                           
 # # - the magnitude of the force source,                                           
 # # - the components of a (non necessarily unitary) direction vector for the force source in the E/N/Z_UP basis.
 # # The direction vector is made unitary internally in the code and thus only its direction matters here;

@@ -1,9 +1,8 @@
 #!/bin/bash
 #
-# global simulation example
+# global simulation example with a point force source
 #
 # script runs mesher and solver using mpirun
-# on 6 CPU-cores
 #
 # modify accordingly for your own system specifics
 ##################################################
