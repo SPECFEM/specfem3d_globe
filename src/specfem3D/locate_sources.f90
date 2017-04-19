@@ -154,9 +154,9 @@
     ! point forces
     if (myrank == 0) then
       ! only master process reads in FORCESOLUTION file
-      call get_force(tshift_src,hdur,lat,long,depth,NSOURCES,                  &
-                     min_tshift_src_original,force_stf,factor_force_source,    &
-                     comp_dir_vect_source_E,comp_dir_vect_source_N,            &
+      call get_force(tshift_src,hdur,lat,long,depth,NSOURCES, &
+                     min_tshift_src_original,force_stf,factor_force_source, &
+                     comp_dir_vect_source_E,comp_dir_vect_source_N, &
                      comp_dir_vect_source_Z_UP)
     endif
     ! broadcasts specific point force infos
@@ -1013,11 +1013,11 @@
   !          (see setup_sources_receivers.f90)
   t0 = - 1.5d0*minval( tshift_src(:) - hdur(:) )
     !-------------POINT FORCE-----------------------------------------------
-  if (USE_FORCE_POINT_SOURCE )then
+  if (USE_FORCE_POINT_SOURCE ) then
     sum_stf=sum(force_stf)
-    if(sum_stf.eq.NSOURCES)then
+    if (sum_stf == NSOURCES) then
       t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
-    elseif(sum_stf.eq.0)then
+    else if (sum_stf == 0) then
       ! defined above
     else
       stop 'mixed force_stf not supported!'

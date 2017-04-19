@@ -80,13 +80,13 @@
           !                           nint(gamma_source(isource)), &
           !                           ispec_selected_source(isource))
 
-          if(force_stf(isource).eq.0)then
+          if (force_stf(isource) == 0) then
             ! source time function value
             stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
 
             !     distinguish between single and double precision for reals
             stf_used = real(stf, kind=CUSTOM_REAL)
-          elseif(force_stf(isource).eq.1)then
+          else if (force_stf(isource) == 1) then
             !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
             f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
@@ -153,9 +153,9 @@
         timeval = time_t - tshift_src(isource)
 
         ! source time function value
-        if(force_stf(isource).eq.0)then
+        if (force_stf(isource) == 0) then
           stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
-        elseif(force_stf(isource).eq.1)then
+        else if (force_stf(isource) == 1) then
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
           !stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
           stf_pre_compute(isource) = comp_source_time_function_rickr(timeval,f0)
@@ -438,13 +438,13 @@
            !              ispec_selected_source(isource))
 
            !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
-           if(force_stf(isource).eq.0)then
+           if (force_stf(isource) == 0) then
              ! source time function value
              stf = comp_source_time_function(timeval,hdur_Gaussian(isource))
 
              !     distinguish between single and double precision for reals
              stf_used = real(stf, kind=CUSTOM_REAL)
-           elseif(force_stf(isource).eq.1)then
+           else if (force_stf(isource) == 1) then
              !! question from DK DK: not sure how the line below works, how can a duration be used as a frequency???
              f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
 
@@ -508,9 +508,9 @@
         ! sets current time for this source
         timeval = time_t - tshift_src(isource)
         ! source time function contribution
-        if(force_stf(isource).eq.0)then
+        if (force_stf(isource) == 0) then
           stf_pre_compute(isource) = comp_source_time_function(timeval,hdur_Gaussian(isource))
-        elseif(force_stf(isource).eq.1)then
+        else if (force_stf(isource) == 1) then
           f0 = hdur(isource) !! using hdur as a FREQUENCY just to avoid changing CMTSOLUTION file format
           !stf_pre_compute(isource) = FACTOR_FORCE_SOURCE * comp_source_time_function_rickr(timeval,f0)
           stf_pre_compute(isource) = comp_source_time_function_rickr(timeval,f0)

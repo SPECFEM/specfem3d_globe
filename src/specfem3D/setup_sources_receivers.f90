@@ -200,9 +200,9 @@
     !          also, these sources use a Ricker source time function instead of a Gaussian.
     !          for a Ricker source time function, a start time ~1.2 * main_period is a good choice
     sum_stf=sum(force_stf)
-    if(sum_stf.eq.NSOURCES)then
+    if (sum_stf == NSOURCES) then
       t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
-    elseif(sum_stf.eq.0)then
+    else if (sum_stf == 0) then
       ! defined above
     else
       stop 'mixed force_stf values not supported!'
@@ -932,15 +932,15 @@
 
         call compute_arrays_source(sourcearray,xi,eta,gamma, &
                           Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource), &
-                          Mxz(isource),Myz(isource),                           &
-                          xix_crust_mantle(:,:,:,ispec),                       &
-                          xiy_crust_mantle(:,:,:,ispec),                       &
-                          xiz_crust_mantle(:,:,:,ispec),                       &
-                          etax_crust_mantle(:,:,:,ispec),                      &
-                          etay_crust_mantle(:,:,:,ispec),                      &
-                          etaz_crust_mantle(:,:,:,ispec),                      &
-                          gammax_crust_mantle(:,:,:,ispec),                    &
-                          gammay_crust_mantle(:,:,:,ispec),                    &
+                          Mxz(isource),Myz(isource), &
+                          xix_crust_mantle(:,:,:,ispec), &
+                          xiy_crust_mantle(:,:,:,ispec), &
+                          xiz_crust_mantle(:,:,:,ispec), &
+                          etax_crust_mantle(:,:,:,ispec), &
+                          etay_crust_mantle(:,:,:,ispec), &
+                          etaz_crust_mantle(:,:,:,ispec), &
+                          gammax_crust_mantle(:,:,:,ispec), &
+                          gammay_crust_mantle(:,:,:,ispec), &
                           gammaz_crust_mantle(:,:,:,ispec), &
                           xigll,yigll,zigll)
 

@@ -25,13 +25,13 @@
 !
 !=====================================================================
 
-  subroutine get_force(tshift_force,hdur,lat,long,depth,NSOURCES,              &
+  subroutine get_force(tshift_force,hdur,lat,long,depth,NSOURCES, &
                       min_tshift_force_original,force_stf,factor_force_source, &
-                      comp_dir_vect_source_E,comp_dir_vect_source_N,           &
+                      comp_dir_vect_source_E,comp_dir_vect_source_N, &
                       comp_dir_vect_source_Z_UP)
 
-  use constants,only: IIN,MAX_STRING_LEN,TINYVAL,mygroup
-  use shared_parameters,only: NUMBER_OF_SIMULTANEOUS_RUNS
+  use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 

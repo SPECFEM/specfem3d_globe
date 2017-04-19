@@ -70,7 +70,7 @@
   enddo
   close(IIN)
 
-  if (mod(icounter,nline) /= 0)then
+  if (mod(icounter,nline) /= 0) then
     if (USE_FORCE_POINT_SOURCE) then
       stop 'total number of lines in FORCESOLUTION file should be a multiple of NLINES_PER_FORCESOLUTION_SOURCE'
     else
