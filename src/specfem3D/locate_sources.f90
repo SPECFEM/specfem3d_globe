@@ -31,7 +31,7 @@
 
   subroutine locate_sources(nspec,nglob,ibool, &
                             xstore,ystore,zstore, &
-                            ELLIPTICITY,min_tshift_cmt_original)
+                            ELLIPTICITY,min_tshift_src_original)
 
   use constants_solver
 
@@ -39,14 +39,16 @@
 
   use specfem_par, only: &
     NSOURCES, &
-    tshift_cmt,theta_source,phi_source, &
+    tshift_src,theta_source,phi_source, &
     DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
     rspl,espl,espl2,nspl,ibathy_topo, &
     LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
     xigll,yigll,zigll, &
     xi_source,eta_source,gamma_source,nu_source, &
     islice_selected_source,ispec_selected_source, &
-    SAVE_SOURCE_MASK
+    SAVE_SOURCE_MASK, &
+    USE_FORCE_POINT_SOURCE,force_stf,factor_force_source, &
+    comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
 
   use specfem_par_movie, only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
@@ -60,7 +62,7 @@
 
   logical,intent(in) :: ELLIPTICITY
 
-  double precision,intent(out) :: min_tshift_cmt_original
+  double precision,intent(out) :: min_tshift_src_original
 
   ! local parameters
   integer :: isource
@@ -148,22 +150,39 @@
   final_distance_source(:) = HUGEVAL
 
   ! read all the sources
-  if (myrank == 0) then
-    ! only master process reads in CMTSOLUTION file
-    call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
-                 DT,NSOURCES,min_tshift_cmt_original)
+  if (USE_FORCE_POINT_SOURCE) then                                               
+    ! point forces                                                               
+    if (myrank == 0) then                                                        
+      ! only master process reads in FORCESOLUTION file                          
+      call get_force(tshift_src,hdur,lat,long,depth,NSOURCES,                  &
+                     min_tshift_src_original,force_stf,factor_force_source,    &
+                     comp_dir_vect_source_E,comp_dir_vect_source_N,            &
+                     comp_dir_vect_source_Z_UP)
+    endif                                                                        
+    ! broadcasts specific point force infos                                      
+    call bcast_all_i(force_stf,NSOURCES)                              
+    call bcast_all_dp(factor_force_source,NSOURCES)                              
+    call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)                           
+    call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)                           
+    call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)                        
+  else                                                                           
+    ! CMT moment tensors
+    if (myrank == 0) then
+      ! only master process reads in CMTSOLUTION file
+      call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,lat,long,depth,moment_tensor, &
+                   DT,NSOURCES,min_tshift_src_original)
+    endif
+    ! broadcast ispecific moment tensor infos
+    call bcast_all_dp(moment_tensor,6*NSOURCES)
   endif
 
   ! broadcast the information read on the master to the nodes
-  call bcast_all_dp(tshift_cmt,NSOURCES)
+  call bcast_all_dp(tshift_src,NSOURCES)
   call bcast_all_dp(hdur,NSOURCES)
   call bcast_all_dp(lat,NSOURCES)
   call bcast_all_dp(long,NSOURCES)
   call bcast_all_dp(depth,NSOURCES)
-
-  call bcast_all_dp(moment_tensor,6*NSOURCES)
-
-  call bcast_all_singledp(min_tshift_cmt_original)
+  call bcast_all_singledp(min_tshift_src_original)
 
   ! define topology of the control element
   call hex_nodes(iaddx,iaddy,iaddr)
@@ -349,9 +368,12 @@
 
       ! flag to check that we located at least one target element
       located_target = .false.
-      ix_initial_guess_source = 0
-      iy_initial_guess_source = 0
-      iz_initial_guess_source = 0
+      !ix_initial_guess_source = 0
+      !iy_initial_guess_source = 0
+      !iz_initial_guess_source = 0
+      ix_initial_guess_source = 1
+      iy_initial_guess_source = 1
+      iz_initial_guess_source = 1
 
       do ispec = 1,nspec
 
@@ -366,18 +388,29 @@
         endif
 
         ! define the interval in which we look for points
+    !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
           ! force sources will be put on an exact GLL point
-          imin = 1
-          imax = NGLLX
+          !imin = 1
+          !imax = NGLLX
 
-          jmin = 1
-          jmax = NGLLY
+          !jmin = 1
+          !jmax = NGLLY
 
-          kmin = 1
-          kmax = NGLLZ
-
+          !kmin = 1
+          !kmax = NGLLZ
+          !! VM VM exclude edges to ensure this point is not shared with other elements
+          !! unless a error location on source can occurs with FORCE POINTSOURCE   
+          imin = 2                                                                 
+          imax = NGLLX - 1                                                         
+                                                                                   
+          jmin = 2                                                                 
+          jmax = NGLLY - 1                                                         
+                                                                                   
+          kmin = 2                                                                 
+          kmax = NGLLZ - 1
         else
+    !-------------POINT FORCE-----------------------------------------------
           ! double-couple CMTSOLUTION
           ! loop only on points inside the element
           ! exclude edges to ensure this point is not shared with other elements
@@ -437,29 +470,43 @@
         iz_initial_guess_source = MIDZ
       endif
 
-      ! for point sources, the location will be exactly at a GLL point
-      ! otherwise this tries to find best location
-      if (USE_FORCE_POINT_SOURCE) then
-        ! store xi,eta,gamma and x,y,z of point found
-        ! note: they have range [1.0d0,NGLLX/Y/Z], used for point sources
-        !          see e.g. in compute_add_sources.f90
-        xi_source_subset(isource_in_this_subset) = dble(ix_initial_guess_source)
-        eta_source_subset(isource_in_this_subset) = dble(iy_initial_guess_source)
-        gamma_source_subset(isource_in_this_subset) = dble(iz_initial_guess_source)
+      ! store xi,eta,gamma and x,y,z of point found
+      ! note: they have range [1.0d0,NGLLX/Y/Z], used for point sources
+      !          see e.g. in compute_add_sources.f90
+      xi_source_subset(isource_in_this_subset) = dble(ix_initial_guess_source)
+      eta_source_subset(isource_in_this_subset) = dble(iy_initial_guess_source)
+      gamma_source_subset(isource_in_this_subset) = dble(iz_initial_guess_source)
+      
+!      ! for point sources, the location will be exactly at a GLL point
+!      ! otherwise this tries to find best location
+!    !-------------POINT FORCE-----------------------------------------------
+!      if (USE_FORCE_POINT_SOURCE) then
+!        ! store xi,eta,gamma and x,y,z of point found
+!        ! note: they have range [1.0d0,NGLLX/Y/Z], used for point sources
+!        !          see e.g. in compute_add_sources.f90
+!        xi_source_subset(isource_in_this_subset) = dble(ix_initial_guess_source)
+!        eta_source_subset(isource_in_this_subset) = dble(iy_initial_guess_source)
+!        gamma_source_subset(isource_in_this_subset) = dble(iz_initial_guess_source)
+!
+!        iglob = ibool(ix_initial_guess_source,iy_initial_guess_source, &
+!            iz_initial_guess_source,ispec_selected_source_subset(isource_in_this_subset))
+!        x_found_source(isource_in_this_subset) = xstore(iglob)
+!        y_found_source(isource_in_this_subset) = ystore(iglob)
+!        z_found_source(isource_in_this_subset) = zstore(iglob)
+!
+!        ! compute final distance between asked and found (converted to km)
+!        final_distance_source_subset(isource_in_this_subset) = &
+!          dsqrt((x_target_source-x_found_source(isource_in_this_subset))**2 + &
+!                (y_target_source-y_found_source(isource_in_this_subset))**2 + &
+!                (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
+!
+!      else
+!    !-------------POINT FORCE-----------------------------------------------
 
-        iglob = ibool(ix_initial_guess_source,iy_initial_guess_source, &
-            iz_initial_guess_source,ispec_selected_source_subset(isource_in_this_subset))
-        x_found_source(isource_in_this_subset) = xstore(iglob)
-        y_found_source(isource_in_this_subset) = ystore(iglob)
-        z_found_source(isource_in_this_subset) = zstore(iglob)
-
-        ! compute final distance between asked and found (converted to km)
-        final_distance_source_subset(isource_in_this_subset) = &
-          dsqrt((x_target_source-x_found_source(isource_in_this_subset))**2 + &
-                (y_target_source-y_found_source(isource_in_this_subset))**2 + &
-                (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
-
-      else
+        ! use initial guess in xi, eta and gamma
+        xi = xigll(ix_initial_guess_source)
+        eta = yigll(iy_initial_guess_source)
+        gamma = zigll(iz_initial_guess_source)
 
         ! define coordinates of the control points of the element
         do ia = 1,NGNOD
@@ -503,11 +550,6 @@
           zelm(ia) = dble(zstore(iglob))
 
         enddo
-
-        ! use initial guess in xi, eta and gamma
-        xi = xigll(ix_initial_guess_source)
-        eta = yigll(iy_initial_guess_source)
-        gamma = zigll(iz_initial_guess_source)
 
         ! iterate to solve the non linear system
         do iter_loop = 1,NUM_ITER
@@ -568,7 +610,7 @@
                 (y_target_source-y)**2 + &
                 (z_target_source-z)**2)*R_EARTH/1000.d0
 
-      endif ! USE_FORCE_POINT_SOURCE
+!      endif ! USE_FORCE_POINT_SOURCE
 
     ! end of loop on all the sources
     enddo
@@ -639,12 +681,23 @@
         write(IMAIN,*) '               in element ',ispec_selected_source(isource_in_this_subset)
         write(IMAIN,*)
         ! different output for force point sources
+    !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
-          write(IMAIN,*) '  i index of source in that element: ',nint(xi_source(isource))
-          write(IMAIN,*) '  j index of source in that element: ',nint(eta_source(isource))
-          write(IMAIN,*) '  k index of source in that element: ',nint(gamma_source(isource))
-          write(IMAIN,*)
-          write(IMAIN,*) '  component direction: ',COMPONENT_FORCE_SOURCE
+          write(IMAIN,*) 'using force point source: '                            
+          write(IMAIN,*) '  xi coordinate of source in that element: ',xi_source(isource)
+          write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
+          write(IMAIN,*) '  gamma coordinate of source in that element: ',gamma_source(isource)
+                                                                                 
+          write(IMAIN,*)                                                         
+          write(IMAIN,*) '  component of direction vector in East direction: ',comp_dir_vect_source_E(isource)
+          write(IMAIN,*) '  component of direction vector in North direction: ',comp_dir_vect_source_N(isource)
+          write(IMAIN,*) '  component of direction vector in Vertical direction: ',comp_dir_vect_source_Z_UP(isource)
+
+          !write(IMAIN,*) '  i index of source in that element: ',nint(xi_source(isource))
+          !write(IMAIN,*) '  j index of source in that element: ',nint(eta_source(isource))
+          !write(IMAIN,*) '  k index of source in that element: ',nint(gamma_source(isource))
+          !write(IMAIN,*)
+          !write(IMAIN,*) '  component direction: ',COMPONENT_FORCE_SOURCE
           write(IMAIN,*)
           write(IMAIN,*) '  nu1 = ',nu_source(1,:,isource)
           write(IMAIN,*) '  nu2 = ',nu_source(2,:,isource)
@@ -659,10 +712,11 @@
           write(IMAIN,*) '  using a source of dominant frequency ',f0
           write(IMAIN,*) '  lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
           write(IMAIN,*) '  lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-          write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_cmt = ',tshift_cmt(isource)
+          write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_src = ',tshift_src(isource)
           write(IMAIN,*)
           write(IMAIN,*) '  half duration in frequency: ',hdur(isource),' seconds**(-1)'
         else
+    !-------------POINT FORCE-----------------------------------------------
           write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
           write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
           write(IMAIN,*) 'gamma coordinate of source in that element: ',gamma_source(isource)
@@ -675,7 +729,7 @@
           write(IMAIN,*)
           write(IMAIN,*) ' half duration: ',hdur(isource),' seconds'
         endif
-        write(IMAIN,*) '    time shift: ',tshift_cmt(isource),' seconds'
+        write(IMAIN,*) '    time shift: ',tshift_src(isource),' seconds'
         write(IMAIN,*)
         write(IMAIN,*) 'magnitude of the source:'
         M0 = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
@@ -891,7 +945,7 @@
 !
 
   subroutine print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                      tshift_cmt,hdur,min_tshift_cmt_original,NSTEP,DT)
+                      tshift_src,hdur,force_stf,min_tshift_src_original,NSTEP,DT)
 
 ! prints source time function
 
@@ -903,15 +957,16 @@
   integer :: NSOURCES,isource
 
   double precision,dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
-  double precision,dimension(NSOURCES) :: tshift_cmt,hdur
+  double precision,dimension(NSOURCES) :: tshift_src,hdur
+  integer,dimension(NSOURCES) :: force_stf
 
-  double precision :: min_tshift_cmt_original
+  double precision :: min_tshift_src_original
   integer :: NSTEP
   double precision :: DT
 
 
   ! local parameters
-  integer :: it,iom,ier
+  integer :: it,iom,ier,sum_stf
   double precision :: scalar_moment
   double precision :: t0, hdur_Gaussian(NSOURCES)
   double precision :: t_cmt_used(NSOURCES)
@@ -956,13 +1011,24 @@
   ! define t0 as the earliest start time
   ! note: this calculation here is only used for outputting the plot_source_time_function file
   !          (see setup_sources_receivers.f90)
-  t0 = - 1.5d0*minval( tshift_cmt(:) - hdur(:) )
-  if (USE_FORCE_POINT_SOURCE ) t0 = - 1.2d0 * minval(tshift_cmt(:) - 1.0d0/hdur(:))
+  t0 = - 1.5d0*minval( tshift_src(:) - hdur(:) )
+    !-------------POINT FORCE-----------------------------------------------
+  if (USE_FORCE_POINT_SOURCE )then
+    sum_stf=sum(force_stf)
+    if(sum_stf.eq.NSOURCES)then
+      t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
+    elseif(sum_stf.eq.0)then
+      ! defined above
+    else
+      stop 'mixed force_stf not supported!'
+    endif
+  endif 
+    !-------------POINT FORCE-----------------------------------------------
 
-  t_cmt_used(:) = tshift_cmt(:)
+  t_cmt_used(:) = tshift_src(:)
   if (USER_T0 > 0.d0) then
-    if (t0 <= USER_T0 + min_tshift_cmt_original) then
-      t_cmt_used(:) = tshift_cmt(:) + min_tshift_cmt_original
+    if (t0 <= USER_T0 + min_tshift_src_original) then
+      t_cmt_used(:) = tshift_src(:) + min_tshift_src_original
       t0 = USER_T0
     endif
   endif
@@ -974,12 +1040,15 @@
   ! writes out source time function to file
   do it = 1,NSTEP
     time_source = dble(it-1)*DT-t0-t_cmt_used(isource)
+    !-------------POINT FORCE-----------------------------------------------
     if (USE_FORCE_POINT_SOURCE) then
       ! Ricker source time function
       f0 = hdur(isource)
       write(IOUT,*) sngl(dble(it-1)*DT-t0), &
-        sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
+        !sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
+        sngl(comp_source_time_function_rickr(time_source,f0))
     else
+    !-------------POINT FORCE-----------------------------------------------
       ! Gaussian source time function
       write(IOUT,*) sngl(dble(it-1)*DT-t0), &
         sngl(scalar_moment*comp_source_time_function(time_source,hdur_Gaussian(isource)))

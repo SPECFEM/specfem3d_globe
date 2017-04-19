@@ -25,11 +25,11 @@
 !
 !=====================================================================
 
-  subroutine get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_cmt,hdur,lat,long,depth,moment_tensor, &
-                     DT,NSOURCES,min_tshift_cmt_original)
+  subroutine get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,lat,long,depth,moment_tensor, &
+                     DT,NSOURCES,min_tshift_src_original)
 
-  use constants, only: IIN,IMAIN,USE_FORCE_POINT_SOURCE,EXTERNAL_SOURCE_TIME_FUNCTION, &
-    RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup
+  use constants, only: IIN,IMAIN,EXTERNAL_SOURCE_TIME_FUNCTION, &
+    RHOAV,R_EARTH,PI,GRAV,TINYVAL,MAX_STRING_LEN,mygroup !,USE_FORCE_POINT_SOURCE
 
   use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,NOISE_TOMOGRAPHY
 
@@ -41,8 +41,8 @@
   double precision, intent(in) :: DT
 
   integer, intent(out) :: yr,jda,ho,mi,mo,da
-  double precision, intent(out) :: sec,min_tshift_cmt_original
-  double precision, dimension(NSOURCES), intent(out) :: tshift_cmt,hdur,lat,long,depth
+  double precision, intent(out) :: sec,min_tshift_src_original
+  double precision, dimension(NSOURCES), intent(out) :: tshift_src,hdur,lat,long,depth
   double precision, dimension(6,NSOURCES), intent(out) :: moment_tensor
 
   ! local variables below
@@ -59,7 +59,7 @@
   long(:) = 0.d0
   depth(:) = 0.d0
   t_shift(:) = 0.d0
-  tshift_cmt(:) = 0.d0
+  tshift_src(:) = 0.d0
   hdur(:) = 0.d0
   moment_tensor(:,:) = 0.d0
 
@@ -222,7 +222,7 @@
       write(IMAIN,*) 'Error reading time shift in source ',isource
       stop 'Error reading time shift in station in CMTSOLUTION file'
     endif
-    !read(string(12:len_trim(string)),*) tshift_cmt(isource)
+    !read(string(12:len_trim(string)),*) tshift_src(isource)
     read(string(12:len_trim(string)),*) t_shift(isource)
 
     ! read half duration
@@ -308,17 +308,19 @@
     read(string(5:len_trim(string)),*) moment_tensor(6,isource)
 
     ! checks half-duration
-    if (USE_FORCE_POINT_SOURCE) then
-      ! half-duration is the dominant frequency of the source
-      ! point forces use a Ricker source time function
-      ! null half-duration indicates a very low-frequency source
-      ! (see constants.h: TINYVAL = 1.d-9 )
-      if (hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
-    else
+    !!-------------POINT FORCE-----------------------------------------------
+    !if (USE_FORCE_POINT_SOURCE) then
+    !  ! half-duration is the dominant frequency of the source
+    !  ! point forces use a Ricker source time function
+    !  ! null half-duration indicates a very low-frequency source
+    !  ! (see constants.h: TINYVAL = 1.d-9 )
+    !  if (hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
+    !else
+    !-------------POINT FORCE-----------------------------------------------
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
       if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
-    endif
+    !endif
 
   enddo
 
@@ -332,13 +334,13 @@
 
   close(IIN)
 
-  ! Sets tshift_cmt to zero to initiate the simulation!
+  ! Sets tshift_src to zero to initiate the simulation!
   if (NSOURCES == 1) then
-      tshift_cmt = 0.d0
-      min_tshift_cmt_original = t_shift(1)
+      tshift_src = 0.d0
+      min_tshift_src_original = t_shift(1)
   else
-      tshift_cmt(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
-      min_tshift_cmt_original = minval(t_shift)
+      tshift_src(1:NSOURCES) = t_shift(1:NSOURCES)-minval(t_shift)
+      min_tshift_src_original = minval(t_shift)
   endif
 
 !

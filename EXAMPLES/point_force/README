@@ -1,0 +1,21 @@
+------------------------------------
+README
+------------------------------------
+
+Example of a global simulation with a point force source 
+
+This example creates a global mesh, using a 3D shear-wave speed model S362ANI (Kustowski et al. [2006], 
+and runs a spectral-element simulation with a point force source.
+
+
+1. forward simulation:
+----------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+Please modify the setup and scripts according to your specifics.
+

@@ -263,13 +263,6 @@
   integer, parameter :: NSOURCES_SUBSET_MAX = 100
   integer, parameter :: NREC_SUBSET_MAX = 200
 
-! use a force source located exactly at a grid point instead of a CMTSOLUTION source
-! this can be useful e.g. for asteroid impact simulations
-! in which the source is a vertical force, normal force, impact etc.
-  logical, parameter :: USE_FORCE_POINT_SOURCE = .false.
-  double precision, parameter :: FACTOR_FORCE_SOURCE = 1.d15
-  integer, parameter :: COMPONENT_FORCE_SOURCE = 3  ! takes direction in comp E/N/Z = 1/2/3
-
 ! use this t0 as earliest starting time rather than the automatically calculated one
 ! (must be positive and bigger than the automatically one to be effective;
 !  simulation will start at t = - t0)
@@ -769,6 +762,7 @@
 
 ! number of lines per source in CMTSOLUTION file
   integer, parameter :: NLINES_PER_CMTSOLUTION_SOURCE = 13
+  integer, parameter :: NLINES_PER_FORCESOLUTION_SOURCE = 11
 
 ! number of iterations to solve the system for xi and eta
 ! setting it to 5 instead of 4 ensures that the result obtained is not compiler dependent

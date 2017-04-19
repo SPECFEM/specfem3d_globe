@@ -42,6 +42,7 @@ specfem3D_OBJECTS = \
 	$O/force_ftz.cc.o \
 	$O/get_backazimuth.solver.o \
 	$O/get_cmt.solver.o \
+	$O/get_force.solver.o \
 	$O/get_event_info.solver.o \
 	$O/make_gravity.solver.o \
 	$O/netlib_specfun_erf.solver.o \
