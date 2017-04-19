@@ -83,9 +83,9 @@
   integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
 
   ! local parameters
-  integer(kind=8) :: filesize
-  integer(kind=2) :: ival
-  integer :: indx,itopo_x,itopo_y
+  integer(kind=8) :: filesize   ! 8-bytes / 64-bits
+  integer(kind=2) :: ival       ! 2-bytes / 16-bits
+  integer :: indx,itopo_x,itopo_y,itmp
   logical :: byteswap
   integer(kind=2) :: HEADER_IS_BYTE_SWAPPED
   data HEADER_IS_BYTE_SWAPPED/z'3412'/
@@ -105,7 +105,12 @@
       indx = indx + 1
       call read_abs(10, ival, 2, indx)
       if (byteswap) then
-        ival = ishftc(ival, 8, 16)
+        ! note: ibm's xlf compiler warns about ishftc() with integer(2) input. ival should have type integer.
+        !       other compilers would use iishift for integer(2) types.
+        !ival = ishftc(ival, 8, 16)
+        ! work-around
+        itmp = ival
+        ival = ishftc(itmp, 8, 16)
       endif
 
       ! checks values
