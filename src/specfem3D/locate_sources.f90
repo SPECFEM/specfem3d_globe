@@ -154,9 +154,9 @@
     ! point forces
     if (myrank == 0) then
       ! only master process reads in FORCESOLUTION file
-      call get_force(tshift_src,hdur,lat,long,depth,NSOURCES, &
-                     min_tshift_src_original,force_stf,factor_force_source, &
-                     comp_dir_vect_source_E,comp_dir_vect_source_N, &
+      call get_force(tshift_src,hdur,lat,long,depth,DT,NSOURCES,               &
+                     min_tshift_src_original,force_stf,factor_force_source,    &
+                     comp_dir_vect_source_E,comp_dir_vect_source_N,            &
                      comp_dir_vect_source_Z_UP)
     endif
     ! broadcasts specific point force infos
