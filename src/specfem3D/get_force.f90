@@ -25,13 +25,13 @@
 !
 !=====================================================================
 
-  subroutine get_force(tshift_force,hdur,lat,long,depth,DT,NSOURCES,           &
+  subroutine get_force(tshift_force,hdur,lat,long,depth,DT,NSOURCES, &
                       min_tshift_force_original,force_stf,factor_force_source, &
                       comp_dir_vect_source_E,comp_dir_vect_source_N, &
                       comp_dir_vect_source_Z_UP)
 
-  use constants,only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,RHOAV,R_EARTH,PI,GRAV
-  use shared_parameters,only: NUMBER_OF_SIMULTANEOUS_RUNS
+  use constants, only: IIN,MAX_STRING_LEN,TINYVAL,mygroup,RHOAV,R_EARTH,PI,GRAV
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
 
   implicit none
 
@@ -146,14 +146,14 @@
     ! read direction vector's vertical component
     read(IIN,"(a)") string
     read(string(32:len_trim(string)),*) comp_dir_vect_source_Z_UP(isource)
-    
+
     ! checks half-duration
-    if(force_stf(isource).eq.0)then
+    if (force_stf(isource) == 0) then
       ! Step source time function
       ! null half-duration indicates a Heaviside
       ! replace with very short error function
       if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
-    elseif(force_stf(isource).eq.1)then
+    else if (force_stf(isource) == 1) then
       ! Ricker source time function
       ! half-duration is the dominant frequency for the
       ! null half-duration indicates a very low-frequency source
@@ -193,7 +193,7 @@
       stop 'error set force point normal length, make sure all forces have a non null direction vector'
     endif
   enddo
-  
+
   ! scale and non-dimensionalize the factor_force_source
   ! factor_force_source in FORCESOLUTION file is in Newton
   ! 1 Newton is 1 kg * 1 m / (1 second)^2
