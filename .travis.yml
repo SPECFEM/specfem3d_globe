@@ -41,6 +41,9 @@ env:
     # run example 2 (global)
     - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=2
 
+    # run example 2 (global with openmp)
+    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=2
+
     # run example with debug bounds checking (regional)
     - TEST="--enable-debug" TESTCOV=0 TESTMAKE=3
 
