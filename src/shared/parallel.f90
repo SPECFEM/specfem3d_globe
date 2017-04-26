@@ -124,7 +124,6 @@ end module my_mpi
   call world_unsplit()
 
 ! stop all the MPI processes, and exit
-  ! do NOT remove the barrier here, it is critical in order for the failsafe mechanism to work fine when it is activated
   call MPI_BARRIER(MPI_COMM_WORLD,ier)
   call MPI_FINALIZE(ier)
   if (ier /= 0) stop 'Error finalizing MPI'
@@ -694,35 +693,6 @@ end module my_mpi
 
   end subroutine bcast_all_r_for_database
 
-!
-!---- broadcast using MPI_COMM_WORLD
-!
-
-!  subroutine bcast_all_singlei_world(buffer)
-!  end subroutine bcast_all_singlei_world
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-!  subroutine bcast_all_singlel_world(buffer)
-!  end subroutine bcast_all_singlel_world
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-!  subroutine bcast_all_singledp_world(buffer)
-!  end subroutine bcast_all_singledp_world
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-!  subroutine bcast_all_string_world(buffer)
-!  end subroutine bcast_all_string_world
-
-
 !-------------------------------------------------------------------------------------------------
 !
 ! MPI math helper
@@ -780,7 +750,7 @@ end module my_mpi
   !! DK DK: yes, I confirm, using MPI_IN_PLACE is tricky
   !! DK DK (see the answer at http://stackoverflow.com/questions/17741574/in-place-mpi-reduce-crashes-with-openmpi
   !! DK DK      for how to use it right)
-  !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, countval, MPI_INTEGER, MPI_MAX, MPI_COMM_WORLD, ier)
+  !call MPI_ALLREDUCE(MPI_IN_PLACE, buffer, countval, MPI_INTEGER, MPI_MAX, my_local_mpi_comm_world, ier)
 
   send(:) = buffer(:)
 
