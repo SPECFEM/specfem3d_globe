@@ -237,7 +237,7 @@ void gpuCopy_todevice_realw_offset (gpu_realw_mem *d_array_addr_ptr, realw *h_ar
 
 /*----------------------------------------------------------------------------------------------- */
 
-// (un)register CPU host real array 
+// (un)register CPU host real array
 
 void gpuRegisterHost_realw ( realw *h_array, const size_t size) {
 

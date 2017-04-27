@@ -329,21 +329,21 @@
         ! transfers wavefields from GPU to CPU for buffering
         if (GPU_MODE) then
 #if defined(USE_CUDA) || defined(USE_OPENCL)
-          if(it_of_this_subset .GE. 2) then
+          if (it_of_this_subset >= 2) then
             call unregister_host_array(b_displ_cm_store_buffer(:,:, it_of_this_subset-1))
           endif
           call register_host_array(NDIM*NGLOB_CRUST_MANTLE_ADJOINT, b_displ_cm_store_buffer(:,:, it_of_this_subset))
 #endif
           ! daniel debug: check if these transfers could be made async to overlap
-          call transfer_ofs_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_of_this_subset,&
+          call transfer_ofs_b_displ_cm_from_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_of_this_subset, &
                                                    b_displ_cm_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_displ_ic_from_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_of_this_subset,&
+          call transfer_ofs_b_displ_ic_from_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_of_this_subset, &
                                                    b_displ_ic_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_displ_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_this_subset,&
+          call transfer_ofs_b_displ_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_this_subset, &
                                                    b_displ_oc_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_accel_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_this_subset,&
+          call transfer_ofs_b_accel_oc_from_device(NGLOB_OUTER_CORE_ADJOINT,it_of_this_subset, &
                                                    b_accel_oc_store_buffer,Mesh_pointer)
-        else 
+        else
           ! stores wavefield in buffers
           b_displ_cm_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
           b_displ_oc_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
@@ -375,11 +375,11 @@
           ! daniel debug: check if these transfers could be made async to overlap
            call transfer_ofs_b_displ_cm_to_device(NDIM*NGLOB_CRUST_MANTLE_ADJOINT,it_subset_end-it_of_this_subset+1, &
                                                   b_displ_cm_store_buffer,Mesh_pointer)
-           call transfer_ofs_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1,&
+           call transfer_ofs_b_displ_ic_to_device(NDIM*NGLOB_INNER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
                                                   b_displ_ic_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_displ_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1,&
+          call transfer_ofs_b_displ_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
                                                  b_displ_oc_store_buffer,Mesh_pointer)
-          call transfer_ofs_b_accel_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1,&
+          call transfer_ofs_b_accel_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
                                                  b_accel_oc_store_buffer,Mesh_pointer)
         else
           b_displ_crust_mantle(:,:) = b_displ_cm_store_buffer(:,:,it_subset_end-it_of_this_subset+1)
@@ -423,7 +423,7 @@
 #if defined(USE_CUDA) || defined(USE_OPENCL)
         if (GPU_MODE) then
           call unregister_host_array(b_displ_cm_store_buffer(:,:, it_subset_end-it_of_this_subset+1))
-          if(it_of_this_subset .NE. it_subset_end) then
+          if (it_of_this_subset /= it_subset_end) then
             call register_host_array(NDIM*NGLOB_CRUST_MANTLE_ADJOINT, &
                                      b_displ_cm_store_buffer(:,:, it_subset_end-it_of_this_subset))
           endif
