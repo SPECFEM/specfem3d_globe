@@ -43,7 +43,8 @@
 
 ! creates the inner core cube of the mesh
 
-  use meshfem3D_models_par
+  use constants
+  use meshfem3D_models_par, only: myrank
 
   implicit none
 
@@ -118,8 +119,6 @@
   integer nx_central_cube,ny_central_cube,nz_central_cube
   ! the height at which the central cube is cut
   integer :: nz_inf_limit
-
-
 
   ! create the shape of a regular mesh element in the inner core
   call hex_nodes(iaddx,iaddy,iaddz)

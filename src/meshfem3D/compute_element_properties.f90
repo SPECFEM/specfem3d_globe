@@ -40,13 +40,16 @@
                                         nspec_ani,nspec_stacey, &
                                         rho_vp,rho_vs, &
                                         xigll,yigll,zigll,ispec_is_tiso)
-
-  use meshfem3D_models_par
+  use constants
+  use meshfem3D_models_par, only: myrank, &
+    TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
+    TRANSVERSE_ISOTROPY,USE_FULL_TISO_MANTLE,REFERENCE_1D_MODEL,THREE_D_MODEL, &
+    ibathy_topo,nspl,rspl,espl,espl2
 
   implicit none
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer ispec,nspec,nspec_stacey
+  integer :: ispec,nspec,nspec_stacey
 
 ! arrays with the mesh in double precision
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
@@ -93,10 +96,11 @@
 
   logical, dimension(nspec) :: ispec_is_tiso
 
+  ! local parameters
   ! Parameter used to decide whether this element is in the crust or not
-  logical:: elem_in_crust,elem_in_mantle
+  logical :: elem_in_crust,elem_in_mantle
   ! flag for transverse isotropic elements
-  logical:: elem_is_tiso
+  logical :: elem_is_tiso
 
   ! note: at this point, the mesh is still perfectly spherical
 
@@ -247,7 +251,6 @@
 
     ! full_sh model
     if (THREE_D_MODEL == THREE_D_MODEL_MANTLE_SH) then
-
       ! 410/650 topography
       ! stretching between 220 and 770
       if (idoubling(ispec) == IFLAG_670_220 .or. &

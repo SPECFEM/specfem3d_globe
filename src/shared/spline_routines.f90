@@ -108,6 +108,8 @@
   do while (index_higher - index_lower > 1)
 ! compute the middle of the interval
     index_loop = (index_higher + index_lower) / 2
+    if (index_loop < 1) index_loop = 1
+
     if (xpoint(index_loop) > x_evaluate_spline) then
       index_higher = index_loop
     else

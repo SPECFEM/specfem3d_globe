@@ -44,6 +44,9 @@
 
   character(len=MAX_STRING_LEN) :: LOCAL_PATH
 
+  ! local parameters
+  integer :: ier
+
 !---
 !
 ! ADD YOUR MODEL HERE
@@ -64,7 +67,17 @@
   if (ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
   ! read topography and bathymetry file
-  if (TOPOGRAPHY) call model_topo_bathy_broadcast(ibathy_topo,LOCAL_PATH)
+  if (TOPOGRAPHY) then
+    ! arrays for elevations
+    allocate(ibathy_topo(NX_BATHY,NY_BATHY),stat=ier)
+    if (ier /= 0) stop 'Error allocating ibathy_topo array'
+
+    ! initializes
+    ibathy_topo(:,:) = 0
+
+    ! sets up topo/bathy
+    call model_topo_bathy_broadcast(ibathy_topo,LOCAL_PATH)
+  endif
 
   ! reads 1D reference models
   ! re-defines/initializes models 1066a and ak135 and ref
@@ -402,10 +415,10 @@
   dvsh = ZERO
   deta = ZERO
 
-  xdvpv = 0.
-  xdvph = 0.
-  xdvsv = 0.
-  xdvsh = 0.
+  xdvpv = 0.d0
+  xdvph = 0.d0
+  xdvsv = 0.d0
+  xdvsh = 0.d0
 
   r_used = ZERO
   suppress_mantle_extension = .false.
@@ -769,23 +782,23 @@
       c11 = rho*vpv*vpv
       c12 = rho*(vpv*vpv-2.*vsv*vsv)
       c13 = c12
-      c14 = 0.
-      c15 = 0.
-      c16 = 0.
+      c14 = 0.d0
+      c15 = 0.d0
+      c16 = 0.d0
       c22 = c11
       c23 = c12
-      c24 = 0.
-      c25 = 0.
-      c26 = 0.
+      c24 = 0.d0
+      c25 = 0.d0
+      c26 = 0.d0
       c33 = c11
-      c34 = 0.
-      c35 = 0.
-      c36 = 0.
+      c34 = 0.d0
+      c35 = 0.d0
+      c36 = 0.d0
       c44 = rho*vsv*vsv
-      c45 = 0.
-      c46 = 0.
+      c45 = 0.d0
+      c46 = 0.d0
       c55 = c44
-      c56 = 0.
+      c56 = 0.d0
       c66 = c44
     endif
   endif

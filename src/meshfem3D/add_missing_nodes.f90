@@ -125,11 +125,11 @@
 ! node numbers for edge centers start at 9
     ignod = (iedge - 1) + 9
 
-    offset_x(ignod) = (offset_x(list_corners_edge(iedge,1)) + offset_x(list_corners_edge(iedge,2))) / 2.d0
+    offset_x(ignod) = (offset_x(list_corners_edge(iedge,1)) + offset_x(list_corners_edge(iedge,2))) * 0.5d0
 
-    offset_y(ignod) = (offset_y(list_corners_edge(iedge,1)) + offset_y(list_corners_edge(iedge,2))) / 2.d0
+    offset_y(ignod) = (offset_y(list_corners_edge(iedge,1)) + offset_y(list_corners_edge(iedge,2))) * 0.5d0
 
-    offset_z(ignod) = (offset_z(list_corners_edge(iedge,1)) + offset_z(list_corners_edge(iedge,2))) / 2.d0
+    offset_z(ignod) = (offset_z(list_corners_edge(iedge,1)) + offset_z(list_corners_edge(iedge,2))) * 0.5d0
 
   enddo
 
@@ -142,17 +142,17 @@
     offset_x(ignod) = (offset_x(list_corners_face(iface,1)) + &
                        offset_x(list_corners_face(iface,2)) + &
                        offset_x(list_corners_face(iface,3)) + &
-                       offset_x(list_corners_face(iface,4))) / 4.d0
+                       offset_x(list_corners_face(iface,4))) * 0.25d0
 
     offset_y(ignod) = (offset_y(list_corners_face(iface,1)) + &
                        offset_y(list_corners_face(iface,2)) + &
                        offset_y(list_corners_face(iface,3)) + &
-                       offset_y(list_corners_face(iface,4))) / 4.d0
+                       offset_y(list_corners_face(iface,4))) * 0.25d0
 
     offset_z(ignod) = (offset_z(list_corners_face(iface,1)) + &
                        offset_z(list_corners_face(iface,2)) + &
                        offset_z(list_corners_face(iface,3)) + &
-                       offset_z(list_corners_face(iface,4))) / 4.d0
+                       offset_z(list_corners_face(iface,4))) * 0.25d0
 
   enddo
 

@@ -279,16 +279,16 @@
   ! convert integer value to double precision
   !  value = dble(ibathy_topo(iel1,iadd1))
 
-  lon_corner=iel1*samples_per_degree_topo
-  lat_corner=90.d0-iadd1*samples_per_degree_topo
+  lon_corner = iel1 * samples_per_degree_topo
+  lat_corner = 90.d0 - iadd1 * samples_per_degree_topo
 
   ratio_lon = (xlo-lon_corner)/samples_per_degree_topo
   ratio_lat = (xlat-lat_corner)/samples_per_degree_topo
 
-  if (ratio_lon < 0.0) ratio_lon=0.0
-  if (ratio_lon > 1.0) ratio_lon=1.0
-  if (ratio_lat < 0.0) ratio_lat=0.0
-  if (ratio_lat > 1.0) ratio_lat=1.0
+  if (ratio_lon < 0.0) ratio_lon = 0.0
+  if (ratio_lon > 1.0) ratio_lon = 1.0
+  if (ratio_lat < 0.0) ratio_lat = 0.0
+  if (ratio_lat > 1.0) ratio_lat = 1.0
 
   ! convert integer value to double precision
   if (iadd1 <= NY_BATHY-1 .and. iel1 <= NX_BATHY-1) then

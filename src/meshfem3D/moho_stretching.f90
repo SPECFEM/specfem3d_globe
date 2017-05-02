@@ -370,11 +370,11 @@
 
   implicit none
 
-  integer ia
+  integer :: ia
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
+  double precision :: xelm(NGNOD)
+  double precision :: yelm(NGNOD)
+  double precision :: zelm(NGNOD)
 
   double precision :: x,y,z
 
@@ -520,11 +520,11 @@
 
   implicit none
 
-  integer ia
+  integer :: ia
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
+  double precision :: xelm(NGNOD)
+  double precision :: yelm(NGNOD)
+  double precision :: zelm(NGNOD)
 
   double precision :: r,moho
   double precision :: x,y,z
@@ -642,11 +642,11 @@
 
   implicit none
 
-  integer ia
+  integer :: ia
 
-  double precision xelm(NGNOD)
-  double precision yelm(NGNOD)
-  double precision zelm(NGNOD)
+  double precision :: xelm(NGNOD)
+  double precision :: yelm(NGNOD)
+  double precision :: zelm(NGNOD)
 
   double precision :: x,y,z
 

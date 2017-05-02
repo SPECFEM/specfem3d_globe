@@ -63,7 +63,7 @@
   real(kind=4),dimension(:,:),allocatable :: ylmcof
   real(kind=4),dimension(:),allocatable :: wk1,wk2,wk3
 
-  integer, dimension(maxhpa) :: lmxhpa,itypehpa,numcoe,nconpt
+  integer, dimension(:),allocatable :: lmxhpa,itypehpa,numcoe,nconpt
 
   integer,dimension(:,:),allocatable :: itpspl,iconpt
   integer,dimension(:),allocatable :: ihpakern,ivarkern
@@ -114,6 +114,36 @@
            ivarkern(maxker), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating s362ani arrays')
+
+  ! initializes
+  conpt(:,:) = 0.0
+  xlaspl(:,:) = 0.0
+  xlospl(:,:) = 0.0
+  radspl(:,:) = 0.0
+  coe(:,:) = 0.0
+
+  vercof(:) = 0.0
+  vercofd(:) = 0.0
+
+  ylmcof(:,:) = 0.0
+  wk1(:) = 0.0
+  wk2(:) = 0.0
+  wk3(:) = 0.0
+
+  itpspl(:,:) = 0
+  iconpt(:,:) = 0
+  ihpakern(:) = 0
+  ivarkern(:) = 0
+
+  ! allocates
+  allocate(lmxhpa(maxhpa),itypehpa(maxhpa),numcoe(maxhpa),nconpt(maxhpa),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating s362ani lmxhpa, .. arrays')
+
+  ! initializes
+  lmxhpa(:) = 0
+  itypehpa(:) = 0
+  numcoe(:) = 0
+  nconpt(:) = 0
 
   ! master process
   if (myrank == 0) call read_model_s362ani(THREE_D_MODEL)
@@ -194,8 +224,10 @@
   do ihpa = 1,numhpa
     if (itypehpa(ihpa) == 1) then
       if (lmxhpa(ihpa) > maxl) stop 'lmxhpa(ihpa) > maxl in read_model_s362ani() routine'
+
     else if (itypehpa(ihpa) == 2) then
       if (numcoe(ihpa) > maxcoe) stop 'numcoe(ihpa) > maxcoe in read_model_s362ani() routine'
+
     else
       stop 'problem with itypehpa'
     endif
@@ -223,8 +255,8 @@
 
   character(len=80) string
 
-  logical upper,upper_650
-  logical lower,lower_650
+  logical :: upper,upper_650
+  logical :: lower,lower_650
 
   real(kind=4), parameter :: r0 = R_EARTH_KM ! 6371.0
   real(kind=4), parameter :: rmoho = r0 - 24.4  ! subtracting the thickness here
@@ -237,13 +269,13 @@
   real(kind=4) :: u,u2,ddep,radius2,radius,depth
 
   ierror = 0
-  lstr=len_trim(string)
+  lstr = len_trim(string)
 
-  radius=r0-depth
-  ddep=0.1
-  radius2=r0-depth+ddep
-  upper=.false.
-  lower=.false.
+  radius = r0-depth
+  ddep = 0.1
+  radius2 = r0-depth+ddep
+  upper = .false.
+  lower = .false.
   if (radius > rcmb .and. radius < r670) then
     lower=.true.
   else if (radius >= r670 .and. radius < rmoho) then
@@ -764,7 +796,7 @@
    1.00196657023780,1.0015515913133,1.0012554932754,1.0010368069141, &
    1.00087070107920,1.0007415648034 /
 
-  if (kmax > 13) stop ' kmax exceeds the limit in chebyfun'
+  if (kmax > 13) stop 'Error kmax exceeds the limit in chebyfun'
 
   f(0)=1.0
   f(1)=u
@@ -852,45 +884,45 @@
                 hsplfile,refmodel,kernstri,desckern)
 
   if (nhorpar <= maxhpa) then
-    numhpa=nhorpar
+    numhpa = nhorpar
   else
-    ierror=ierror+1
+    ierror = ierror+1
   endif
 
   if (nmodkern <= maxker) then
-    numker=nmodkern
+    numker = nmodkern
   else
-    ierror=ierror+1
+    ierror = ierror+1
   endif
 
   do i = 1,nmodkern
-    ihpakern(i)=ihorpar(i)
-    dskker(i)=desckern(i)
+    ihpakern(i) = ihorpar(i)
+    dskker(i) = desckern(i)
     do j = 1,ncoefhor(ihpakern(i))
-      coe(j,i)=coef(j,i)
+      coe(j,i) = coef(j,i)
       !   if (j == 1) write(6,"(e12.4)") coe(j,i)
     enddo
   enddo
 
   do i = 1,nhorpar
-    numcoe(i)=ncoefhor(i)
-    lmxhpa(i)=lmaxhor(i)
-    itypehpa(i)=ityphpar(i)
+    numcoe(i) = ncoefhor(i)
+    lmxhpa(i) = lmaxhor(i)
+    itypehpa(i) = ityphpar(i)
     if (itypehpa(i) == 2) then
       do j = 1,ncoefhor(i)
-        itpspl(j,i)=ixlspl(j,i)
-        xlatspl(j,i)=xlaspl(j,i)
-        xlonspl(j,i)=xlospl(j,i)
-        radispl(j,i)=xraspl(j,i)
+        itpspl(j,i) = ixlspl(j,i)
+        xlatspl(j,i) = xlaspl(j,i)
+        xlonspl(j,i) = xlospl(j,i)
+        radispl(j,i) = xraspl(j,i)
       enddo
     endif
-    hsplfl(i)=hsplfile(i)
+    hsplfl(i) = hsplfile(i)
   enddo
 
   numvar = 0
   do i = 1,nmodkern
-    string=dskker(i)
-    lstr=len_trim(string)
+    string = dskker(i)
+    lstr = len_trim(string)
     j = 1
     do while(string(j:j) /= ',' .and. j < lstr)
       j = j+1
@@ -898,13 +930,13 @@
     ivarkern(i) = 0
     do k = 1,numvar
       if (string(1:j) == varstr(k)(1:j)) then
-        ivarkern(i)=k
+        ivarkern(i) = k
       endif
     enddo
     if (ivarkern(i) == 0) then
-      numvar=numvar+1
-      varstr(numvar)=string(1:j)
-      ivarkern(i)=numvar
+      numvar = numvar+1
+      varstr(numvar) = string(1:j)
+      ivarkern(i) = numvar
     endif
   enddo
 
@@ -1099,10 +1131,10 @@
   double precision, dimension(maxcoe) :: dd
 
   ! local parameters
-  double precision rn
-  double precision dr
-  double precision ver8
-  double precision xla8
+  double precision :: rn
+  double precision :: dr
+  double precision :: ver8
+  double precision :: xla8
 
   integer :: iver
   real(kind=4) :: xlat,xlon
@@ -1110,36 +1142,35 @@
   ! safety check
   if (numcoe > maxcoe ) stop 'Error: numcoe > maxver in splcon() routine'
 
-
   do iver = 1,numcoe
     if (abs(xlat - verlat(iver)) < 2.*verrad(iver)) then
-      ver8=DEGREES_TO_RADIANS*(verlat(iver))
-      xla8=DEGREES_TO_RADIANS*(xlat)
-      dd(iver)=sin(ver8)*sin(xla8) + cos(ver8)*cos(xla8)* cos(DEGREES_TO_RADIANS*(xlon-verlon(iver)))
-      dd(iver)=acos(dd(iver)) * RADIANS_TO_DEGREES
+      ver8 = DEGREES_TO_RADIANS*(verlat(iver))
+      xla8 = DEGREES_TO_RADIANS*(xlat)
+      dd(iver) = sin(ver8)*sin(xla8) + cos(ver8)*cos(xla8)* cos(DEGREES_TO_RADIANS*(xlon-verlon(iver)))
+      dd(iver) = acos(dd(iver)) * RADIANS_TO_DEGREES
     else
       ! acos can never be negative, thus use -1 to mark "invalid"
-      dd(iver)=-1.0
+      dd(iver) = -1.0
     endif
   enddo
 
   ncon = 0
   do iver = 1,numcoe
     if (dd(iver) >= 0.0 .and. .not. (dd(iver) > (verrad(iver))*2.d0)) then
-      ncon=ncon+1
+      ncon = ncon + 1
 
 !! DK DK added this safety test
       if (ncon > maxver) stop 'Error: ncon > maxver in splcon() routine'
 
-      icon(ncon)=iver
-      rn=dd(iver)/verrad(iver)
-      dr=rn-1.d0
+      icon(ncon) = iver
+      rn = dd(iver)/verrad(iver)
+      dr = rn - 1.d0
       if (rn <= 1.d0) then
-        con(ncon)=(0.75d0*rn-1.5d0)*(rn**2)+1.d0
+        con(ncon) = (0.75d0*rn-1.5d0)*(rn**2)+1.d0
       else if (rn > 1.d0) then
-        con(ncon)=((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0
+        con(ncon) = ((-0.25d0*dr+0.75d0)*dr-0.75d0)*dr+0.25d0
       else
-        con(ncon)=0.0
+        con(ncon) = 0.0
       endif
     endif
   enddo
@@ -1164,11 +1195,11 @@
 
   ! local parameters
   ! --- model evaluation
-  integer ish ! --- 0 if SV, 1 if SH
-  integer ieval     ! --- 1 for velocity, 2 for anisotropy
+  integer :: ish ! --- 0 if SV, 1 if SH
+  integer :: ieval     ! --- 1 for velocity, 2 for anisotropy
   real(kind=4) :: valu(2)    ! --- valu(1) if S; valu(1)=velo, valu(2)=aniso
   real(kind=4) :: valueval   ! --- used in single evaluation of perturbation
-  integer isel      ! --- if variable should be included
+  integer :: isel      ! --- if variable should be included
   real(kind=4) :: depth      ! --- depth
   real(kind=4) :: x,y  ! --- lat lon
   real(kind=4) :: vsh3drel   ! --- relative perturbation
@@ -1193,22 +1224,24 @@
   if (ierror /= 0) stop 'ierror evradker'
 
   ! loop over sv and sh (sv = 0,sh=1)
-  do ish=0,1
+  do ish = 0,1
 
     ! contributing horizontal basis functions at xlat,xlon
-    y=90.0-xcolat
-    x=xlon
+    y = 90.0-xcolat
+    x = xlon
 
     do ihpa = 1,numhpa
       if (itypehpa(ihpa) == 1) then
-        lmax=lmxhpa(ihpa)
+        lmax = lmxhpa(ihpa)
         call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
+
       else if (itypehpa(ihpa) == 2) then
         numcof = numcoe(ihpa)
         ! spline setup
         call splcon(y,x,numcof,xlaspl(1,ihpa), &
                     xlospl(1,ihpa),radspl(1,ihpa), &
                     nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa),dd)
+
       else
         write(6,"('problem 1')")
       endif
@@ -1245,12 +1278,14 @@
               do i = 1,nylm
                 valueval=valueval+vercof(iker)*ylmcof(i,ihpa)*coe(i,iker)
               enddo
+
             else if (itypehpa(ihpakern(iker)) == 2) then
               ihpa=ihpakern(iker)
               do i = 1,nconpt(ihpa)
                 iver=iconpt(i,ihpa)
                 valueval=valueval+vercof(iker)*conpt(i,ihpa)*coe(iver,iker)
               enddo
+
             else
               stop 'problem 2'
             endif ! --- itypehpa
@@ -1273,10 +1308,10 @@
   enddo ! --- by ish
 
   ! evaluate perturbations
-  dvsh=vsh3drel
-  dvsv=vsv3drel
-  dvph=0.55*dvsh    ! scaling used in the inversion
-  dvpv=0.55*dvsv    ! scaling used in the inversion
+  dvsh = vsh3drel
+  dvsv = vsv3drel
+  dvph = 0.55*dvsh    ! scaling used in the inversion
+  dvpv = 0.55*dvsv    ! scaling used in the inversion
 
   end subroutine model_s362ani_subshsv
 
@@ -1292,8 +1327,8 @@
 
   implicit none
 
-  real(kind=4) :: xcolat,xlon
-  real(kind=4) :: topo410,topo650
+  real(kind=4),intent(in) :: xcolat,xlon
+  real(kind=4),intent(out) :: topo410,topo650
 
   ! --- model evaluation
   integer :: ieval     ! --- 1 for velocity, 2 for anisotropy
@@ -1311,17 +1346,20 @@
 
 
   ! contributing horizontal basis functions at xlat,xlon
-  y=90.0-xcolat
-  x=xlon
+  y = 90.0 - xcolat
+  x = xlon
+
   do ihpa = 1,numhpa
     if (itypehpa(ihpa) == 1) then
-      lmax=lmxhpa(ihpa)
+      lmax = lmxhpa(ihpa)
       call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
+
     else if (itypehpa(ihpa) == 2) then
-      numcof=numcoe(ihpa)
+      numcof = numcoe(ihpa)
       call splcon(y,x,numcof,xlaspl(1,ihpa), &
                   xlospl(1,ihpa),radspl(1,ihpa), &
                   nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa),dd)
+
     else
       write(6,"('problem 1')")
     endif
@@ -1329,11 +1367,11 @@
 
   ! evaluate topography (depression) in km
 
-  valu(1)=0.0 ! --- 410
-  valu(2)=0.0 ! --- 650
+  valu(1) = 0.0 ! --- 410
+  valu(2) = 0.0 ! --- 650
 
   do ieval = 1,2
-    valueval=0.0
+    valueval = 0.0
     do iker = 1,numker
       isel = 0
       lstr=len_trim(varstr(ivarkern(iker)))
@@ -1350,29 +1388,31 @@
 
       if (isel == 1) then
         if (itypehpa(ihpakern(iker)) == 1) then
-          ihpa=ihpakern(iker)
-          nylm=(lmxhpa(ihpakern(iker))+1)**2
+          ihpa = ihpakern(iker)
+          nylm = (lmxhpa(ihpakern(iker))+1)**2
           do i = 1,nylm
-            valueval=valueval+ylmcof(i,ihpa)*coe(i,iker)
+            valueval = valueval + ylmcof(i,ihpa)*coe(i,iker)
           enddo
+
         else if (itypehpa(ihpakern(iker)) == 2) then
-          ihpa=ihpakern(iker)
+          ihpa = ihpakern(iker)
           do i = 1,nconpt(ihpa)
-            iver=iconpt(i,ihpa)
-            valueval=valueval+conpt(i,ihpa)*coe(iver,iker)
+            iver = iconpt(i,ihpa)
+            valueval = valueval + conpt(i,ihpa)*coe(iver,iker)
           enddo
+
         else
           stop 'problem 2'
         endif ! --- itypehpa
       endif ! --- isel == 1
     enddo ! --- end of do iker = 1,numker
 
-    valu(ieval)=valueval
+    valu(ieval) = valueval
 
   enddo ! --- ieval
 
-  topo410=valu(1)
-  topo650=valu(2)
+  topo410 = valu(1)
+  topo650 = valu(2)
 
   end subroutine model_s362ani_subtopo
 
@@ -1411,17 +1451,17 @@
   interval = 0
   ik = 1
   do while(interval == 0 .and. ik < np)
-    ik=ik+1
+    ik = ik+1
     if (x >= xarr(ik-1) .and. x <= xarr(ik)) interval=ik-1
   enddo
   if (x > xarr(np)) then
-    interval=np
+    interval = np
   endif
 
   do ib = 1,np
 
-  val=0.0
-  vald=0.0
+  val = 0.0
+  vald = 0.0
 
   if (ib == 1) then
 
@@ -1712,8 +1752,8 @@
     endif
   endif
 
-  splcon(ib)=val
-  splcond(ib)=vald
+  splcon(ib) = val
+  splcond(ib) = vald
 
   enddo
 
@@ -1727,7 +1767,7 @@
 
   implicit none
 
-  complex TEMP,FAC,DFAC
+  complex :: TEMP,FAC,DFAC
 
   integer :: LMAX
 

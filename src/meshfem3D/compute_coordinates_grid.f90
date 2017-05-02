@@ -26,42 +26,44 @@
 !=====================================================================
 
   subroutine compute_coord_main_mesh(offset_x,offset_y,offset_z,xelm,yelm,zelm, &
-               ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
-               NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
-               r_top,r_bottom,ner,ilayer,ichunk,rotation_matrix,NCHUNKS, &
-               INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
+                                     ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,iproc_xi,iproc_eta, &
+                                     NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
+                                     r_top,r_bottom,ner,ilayer,ichunk,rotation_matrix,NCHUNKS, &
+                                     INCLUDE_CENTRAL_CUBE,NUMBER_OF_MESH_LAYERS)
 
   use constants
 
   implicit none
 
-  double precision, dimension(NGNOD) :: xelm,yelm,zelm,offset_x,offset_y,offset_z
+  double precision, dimension(NGNOD),intent(out) :: xelm,yelm,zelm
+  double precision, dimension(NGNOD),intent(in) :: offset_x,offset_y,offset_z
 
 ! rotation matrix from Euler angles
-  double precision, dimension(NDIM,NDIM) :: rotation_matrix
+  double precision, dimension(NDIM,NDIM),intent(in) :: rotation_matrix
 
   integer, intent(in) :: iproc_xi,iproc_eta,NPROC_XI,NPROC_ETA, &
                    NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ner,ilayer,ichunk,NCHUNKS
 
-  double precision :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,r_top,r_bottom
+  double precision,intent(in) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD,r_top,r_bottom
 
-  logical :: INCLUDE_CENTRAL_CUBE
-  integer :: NUMBER_OF_MESH_LAYERS
+  logical,intent(in) :: INCLUDE_CENTRAL_CUBE
+  integer,intent(in) :: NUMBER_OF_MESH_LAYERS
 
 ! local variables
   integer :: i,j,ignod
 
-  double precision :: xi,eta,gamma,x,y,x_,y_,z,rgb,rgt,rn
+  double precision :: xi,eta,gamma,x,y,z,rgb,rgt,rn
   double precision :: x_bot,y_bot,z_bot
   double precision :: x_top,y_top,z_top
+!  double precision :: x_,y_
 
   double precision, dimension(NDIM) :: vector_ori,vector_rotated
 
   double precision :: ratio_xi, ratio_eta, fact_xi, fact_eta, fact_xi_,fact_eta_
 
 ! to avoid compiler warnings
-  x_ = 0
-  y_ = 0
+!  x_ = 0
+!  y_ = 0
 
 ! loop on all the nodes in this element
   do ignod = 1,NGNOD
@@ -162,7 +164,7 @@
       rgt = (r_top / R_EARTH)*gamma
       rgb = (r_bottom / R_EARTH)*gamma
 
-    ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
+      ! define the mesh points on the top and the bottom in the six regions of the cubed sphere
       select case (ichunk)
 
         case (CHUNK_AB)
@@ -230,10 +232,10 @@
 
       end select
 
-    ! rotate the chunk to the right location if we do not mesh the full Earth
+      ! rotate the chunk to the right location if we do not mesh the full Earth
       if (NCHUNKS /= 6) then
 
-    ! rotate bottom
+        ! rotate bottom
         vector_ori(1) = x_bot
         vector_ori(2) = y_bot
         vector_ori(3) = z_bot
@@ -247,7 +249,7 @@
         y_bot = vector_rotated(2)
         z_bot = vector_rotated(3)
 
-    ! rotate top
+        ! rotate top
         vector_ori(1) = x_top
         vector_ori(2) = y_top
         vector_ori(3) = z_top
@@ -263,7 +265,7 @@
 
       endif
 
-    ! compute the position of the point
+      ! compute the position of the point
       rn = offset_z(ignod) / dble(ner)
       xelm(ignod) = x_top*rn + x_bot*(ONE-rn)
       yelm(ignod) = y_top*rn + y_bot*(ONE-rn)

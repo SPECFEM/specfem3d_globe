@@ -291,12 +291,12 @@
 
   implicit none
 
-  integer idoubling
+  integer :: idoubling
 
-  double precision r_prem,rmin,rmax,x,y,z
+  double precision :: r_prem,rmin,rmax,x,y,z
 
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220
-  double precision r_m,r,theta,phi
+  double precision :: RICB,RCMB,RTOPDDOUBLEPRIME,R670,R220
+  double precision :: r_m,r,theta,phi
 
   ! compute real physical radius in meters
   r_m = r_prem * R_EARTH

@@ -55,7 +55,7 @@
 
   implicit none
 
-! model_attenuation_variables
+  ! model_attenuation_variables
   type model_attenuation_variables
     sequence
     double precision :: min_period, max_period
@@ -75,9 +75,9 @@
     integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
   type (model_attenuation_variables) AM_V
-! model_attenuation_variables
+  ! model_attenuation_variables
 
-! model_attenuation_storage_var
+  ! model_attenuation_storage_var
   type model_attenuation_storage_var
     sequence
     double precision, dimension(:,:), allocatable :: tau_e_storage
@@ -86,9 +86,9 @@
     integer :: Q_max
   end type model_attenuation_storage_var
   type (model_attenuation_storage_var) AM_S
-! model_attenuation_storage_var
+  ! model_attenuation_storage_var
 
-! attenuation_simplex_variables
+  ! attenuation_simplex_variables
   type attenuation_simplex_variables
     sequence
     double precision :: Q  ! Q     = Desired Value of Attenuation or Q
@@ -102,9 +102,9 @@
     integer :: nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
   type(attenuation_simplex_variables) AS_V
-! attenuation_simplex_variables
+  ! attenuation_simplex_variables
 
-! GLL model_variables
+  ! GLL model_variables
   type model_gll_variables
     sequence
     ! tomographic iteration model on GLL points
@@ -119,10 +119,10 @@
   end type model_gll_variables
   type (model_gll_variables) MGLL_V
 
-! bathymetry and topography: use integer array to store values
-  integer, dimension(NX_BATHY,NY_BATHY) :: ibathy_topo
+  ! bathymetry and topography: use integer array to store values
+  integer, dimension(:,:),allocatable :: ibathy_topo
 
-! for ellipticity
+  ! for ellipticity
   double precision,dimension(NR) :: rspl,espl,espl2
   integer :: nspl
 

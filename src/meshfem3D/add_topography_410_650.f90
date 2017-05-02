@@ -168,11 +168,11 @@
   integer:: ispec,nspec
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec):: xstore,ystore,zstore
 
-  integer i,j,k
+  integer :: i,j,k
 
-  real(kind=4) xcolat,xlon
-  real(kind=4) topo410out,topo650out
-  double precision topo410,topo650
+  real(kind=4) :: xcolat,xlon
+  real(kind=4) :: topo410out,topo650out
+  double precision :: topo410,topo650
 
   double precision :: r,lat,lon,theta,phi
   double precision :: gamma
