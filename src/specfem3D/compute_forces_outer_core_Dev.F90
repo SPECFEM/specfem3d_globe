@@ -418,7 +418,7 @@
       accelfluid(iglob) = accelfluid(iglob) + sum_terms(ijk_spec,1,1,1)
     enddo
   enddo
-!OMP enddo
+!$OMP enddo
 #else
   ! updates for non-vectorization case
 !$OMP DO SCHEDULE(GUIDED)

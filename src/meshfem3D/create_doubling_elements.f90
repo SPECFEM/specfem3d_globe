@@ -54,94 +54,96 @@
 
 ! adds doubling elements to the different regions of the mesh
 
-  use meshfem3D_models_par
+  use constants
+  use meshfem3D_models_par, only: myrank,HONOR_1D_SPHERICAL_MOHO
 
   implicit none
 
-  integer :: ilayer,ichunk,ispec,ipass,ifirst_region,ilast_region
+  integer,intent(in) :: ilayer,ichunk,ipass,ifirst_region,ilast_region
+  integer,intent(inout) :: ispec
   ! code for the four regions of the mesh
-  integer iregion_code
+  integer,intent(in) :: iregion_code
   ! correct number of spectral elements in each block depending on chunk type
-  integer nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS
-  integer NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer,intent(in) :: nspec,NCHUNKS,NUMBER_OF_MESH_LAYERS
+  integer,intent(in) :: NPROC_XI,NPROC_ETA,NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: ner,ratio_sampling_array
-  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: r_bottom,r_top
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS),intent(in) :: ner,ratio_sampling_array
+  double precision, dimension(MAX_NUMBER_OF_MESH_LAYERS),intent(in) :: r_bottom,r_top
 
 ! arrays with the mesh in double precision
-  double precision xstore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision ystore(NGLLX,NGLLY,NGLLZ,nspec)
-  double precision zstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,intent(inout) :: xstore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,intent(inout) :: ystore(NGLLX,NGLLY,NGLLZ,nspec)
+  double precision,intent(inout) :: zstore(NGLLX,NGLLY,NGLLZ,nspec)
 
 ! Gauss-Lobatto-Legendre points and weights of integration
-  double precision xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
+  double precision,intent(in) :: xigll(NGLLX),yigll(NGLLY),zigll(NGLLZ)
 
 ! 3D shape functions and their derivatives
-  double precision shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
+  double precision,intent(in) :: shape3D(NGNOD,NGLLX,NGLLY,NGLLZ)
 
 ! 2D shape functions and their derivatives
-  double precision dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
+  double precision,intent(in) :: dershape2D_bottom(NDIM2D,NGNOD2D,NGLLX,NGLLY)
 
-  logical INCLUDE_CENTRAL_CUBE
+  logical,intent(in) :: INCLUDE_CENTRAL_CUBE
 
 ! parameters needed to store the radii of the grid points in the spherically symmetric Earth
-  double precision rmin,rmax
-  double precision r_moho,r_400,r_670
+  double precision,intent(in) :: rmin,rmax
+  double precision,intent(in) :: r_moho,r_400,r_670
 
 ! for model density and anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: &
     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
-  integer nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
+  integer,intent(in) :: nspec_ani
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani),intent(inout) :: &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
 ! arrays with mesh parameters
-  integer nspec_actually
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually) :: &
+  integer,intent(in) :: nspec_actually
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually),intent(inout) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
 ! Stacey, indices for Clayton-Engquist absorbing conditions
-  integer nspec_stacey
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
+  integer,intent(in) :: nspec_stacey
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey),intent(inout) :: rho_vp,rho_vs
 
 ! boundary locator
-  logical iboun(6,nspec)
+  logical,intent(inout) :: iboun(6,nspec)
 
 ! MPI cut-planes parameters along xi and along eta
-  logical, dimension(2,nspec) :: iMPIcut_xi,iMPIcut_eta
+  logical, dimension(2,nspec),intent(inout) :: iMPIcut_xi,iMPIcut_eta
 
-  double precision ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
-  integer iproc_xi,iproc_eta
+  double precision,intent(in) :: ANGULAR_WIDTH_XI_RAD,ANGULAR_WIDTH_ETA_RAD
+  integer,intent(in) :: iproc_xi,iproc_eta
 
 ! rotation matrix from Euler angles
-  double precision, dimension(NDIM,NDIM) :: rotation_matrix
+  double precision, dimension(NDIM,NDIM),intent(in) :: rotation_matrix
 
-  integer idoubling(nspec)
-  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS) :: doubling_index
-  logical :: USE_ONE_LAYER_SB
+  integer,intent(inout) :: idoubling(nspec)
+  integer, dimension(MAX_NUMBER_OF_MESH_LAYERS),intent(in) :: doubling_index
+  logical,intent(in) :: USE_ONE_LAYER_SB
 
 ! Boundary Mesh
-  integer NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
-  integer ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO)
-  integer ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400)
-  integer ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670)
-  real(kind=CUSTOM_REAL) normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
-  real(kind=CUSTOM_REAL) normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
-  real(kind=CUSTOM_REAL) normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
-  real(kind=CUSTOM_REAL) jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
-  real(kind=CUSTOM_REAL) jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
-  real(kind=CUSTOM_REAL) jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
+  integer :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
+  integer :: ibelm_moho_top(NSPEC2D_MOHO),ibelm_moho_bot(NSPEC2D_MOHO)
+  integer :: ibelm_400_top(NSPEC2D_400),ibelm_400_bot(NSPEC2D_400)
+  integer :: ibelm_670_top(NSPEC2D_670),ibelm_670_bot(NSPEC2D_670)
+  real(kind=CUSTOM_REAL) :: normal_moho(NDIM,NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL) :: normal_400(NDIM,NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL) :: normal_670(NDIM,NGLLX,NGLLY,NSPEC2D_670)
+  real(kind=CUSTOM_REAL) :: jacobian2D_moho(NGLLX,NGLLY,NSPEC2D_MOHO)
+  real(kind=CUSTOM_REAL) :: jacobian2D_400(NGLLX,NGLLY,NSPEC2D_400)
+  real(kind=CUSTOM_REAL) :: jacobian2D_670(NGLLX,NGLLY,NSPEC2D_670)
 
-  integer ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
+  integer :: ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
 
-  integer :: offset_proc_xi,offset_proc_eta
-  logical :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
+  integer,intent(in) :: offset_proc_xi,offset_proc_eta
+  logical,intent(in) :: CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA
 
-  logical, dimension(nspec) :: ispec_is_tiso
+  logical, dimension(nspec),intent(inout) :: ispec_is_tiso
 
   ! local parameters
   double precision, dimension(NGLOB_DOUBLING_SUPERBRICK) :: x_superbrick,y_superbrick,z_superbrick
@@ -157,7 +159,7 @@
   logical :: is_superbrick
 
   integer, dimension(:), allocatable :: map_ispec
-  integer :: nelements,ispec0,ielem,ier
+  integer :: nelements,ispec0,ielem,ier,ispec_loc
 
 ! If there is a doubling at the top of this region, let us add these elements.
 ! The superbrick implements a symmetric four-to-two doubling and therefore replaces
@@ -197,6 +199,7 @@
   ! fill mapping to be able to parallelize loops below
   allocate(map_ispec(nelements),stat=ier)
   if (ier /= 0) stop 'Error allocating map_ispec'
+  map_ispec(:) = 0
 
   do ix_elem = 1,NEX_PER_PROC_XI,step_mult*ratio_sampling_array(ilayer)
     do iy_elem = 1,NEX_PER_PROC_ETA,step_mult*ratio_sampling_array(ilayer)
@@ -213,13 +216,15 @@
   enddo
 
   ! loop on all the elements in the 2 x 2 blocks
-!$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(ix_elem,iy_elem,ispec_superbrick,ignod, &
-!$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &
-!$OMP case_xi,case_eta,subblock_num, &
-!$OMP r1,r2,r3,r4,r5,r6,r7,r8, &
-!$OMP is_superbrick,ispec,ielem)
-!$OMP DO
+
+!daniel: still debugging...
+!!$OMP PARALLEL DEFAULT(SHARED) &
+!!$OMP PRIVATE(ix_elem,iy_elem,ispec_superbrick,ignod, &
+!!$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &
+!!$OMP case_xi,case_eta,subblock_num, &
+!!$OMP r1,r2,r3,r4,r5,r6,r7,r8, &
+!!$OMP is_superbrick,ispec_loc,ielem)
+!!$OMP DO
   do ix_elem = 1,NEX_PER_PROC_XI,step_mult*ratio_sampling_array(ilayer)
     do iy_elem = 1,NEX_PER_PROC_ETA,step_mult*ratio_sampling_array(ilayer)
 
@@ -316,38 +321,38 @@
         ielem = ispec_superbrick + nspec_sb * ( (iy_elem-1)/(step_mult*ratio_sampling_array(ilayer)) &
                                             +   (ix_elem-1)/(step_mult*ratio_sampling_array(ilayer)) &
                                                 * NEX_PER_PROC_ETA/(step_mult*ratio_sampling_array(ilayer)))
-        ispec = map_ispec(ielem)
-        if (ispec > nspec) call exit_MPI(myrank,'ispec greater than nspec in mesh creation')
+        ispec_loc = map_ispec(ielem)
+        if (ispec_loc > nspec .or. ispec_loc < 1) call exit_MPI(myrank,'invalid ispec_loc in mesh creation')
 
         ! new get_flag_boundaries
         ! xmin & xmax
         if (ix_elem == 1) then
-            iMPIcut_xi(1,ispec) = iboun_sb(ispec_superbrick,1)
-            if (iproc_xi == 0) iboun(1,ispec)= iboun_sb(ispec_superbrick,1)
+            iMPIcut_xi(1,ispec_loc) = iboun_sb(ispec_superbrick,1)
+            if (iproc_xi == 0) iboun(1,ispec_loc)= iboun_sb(ispec_superbrick,1)
         endif
         if (ix_elem == (NEX_PER_PROC_XI-step_mult*ratio_sampling_array(ilayer)+1)) then
-            iMPIcut_xi(2,ispec) = iboun_sb(ispec_superbrick,2)
-            if (iproc_xi == NPROC_XI-1) iboun(2,ispec)= iboun_sb(ispec_superbrick,2)
+            iMPIcut_xi(2,ispec_loc) = iboun_sb(ispec_superbrick,2)
+            if (iproc_xi == NPROC_XI-1) iboun(2,ispec_loc)= iboun_sb(ispec_superbrick,2)
         endif
         !! ymin & ymax
         if (iy_elem == 1) then
-            iMPIcut_eta(1,ispec) = iboun_sb(ispec_superbrick,3)
-            if (iproc_eta == 0) iboun(3,ispec)= iboun_sb(ispec_superbrick,3)
+            iMPIcut_eta(1,ispec_loc) = iboun_sb(ispec_superbrick,3)
+            if (iproc_eta == 0) iboun(3,ispec_loc)= iboun_sb(ispec_superbrick,3)
         endif
         if (iy_elem == (NEX_PER_PROC_ETA-step_mult*ratio_sampling_array(ilayer)+1)) then
-            iMPIcut_eta(2,ispec) = iboun_sb(ispec_superbrick,4)
-            if (iproc_eta == NPROC_ETA-1) iboun(4,ispec)= iboun_sb(ispec_superbrick,4)
+            iMPIcut_eta(2,ispec_loc) = iboun_sb(ispec_superbrick,4)
+            if (iproc_eta == NPROC_ETA-1) iboun(4,ispec_loc)= iboun_sb(ispec_superbrick,4)
         endif
         ! zmax only
         if (ilayer == ifirst_region) then
-          iboun(6,ispec)= iboun_sb(ispec_superbrick,6)
+          iboun(6,ispec_loc)= iboun_sb(ispec_superbrick,6)
         endif
         if (ilayer == ilast_region .and. iz_elem == 1) then
-          iboun(5,ispec)= iboun_sb(ispec_superbrick,5)
+          iboun(5,ispec_loc)= iboun_sb(ispec_superbrick,5)
         endif
 
         ! define the doubling flag of this element
-        idoubling(ispec) = doubling_index(ilayer)
+        idoubling(ispec_loc) = doubling_index(ilayer)
 
         ! save the radii of the nodes before modified through compute_element_properties()
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
@@ -362,7 +367,7 @@
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
-        call compute_element_properties(ispec,iregion_code,idoubling,ipass, &
+        call compute_element_properties(ispec_loc,iregion_code,idoubling,ipass, &
                          xstore,ystore,zstore,nspec, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
                          kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -378,9 +383,9 @@
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
           is_superbrick = .true.
-          call get_jacobian_discontinuities(ispec,ix_elem,iy_elem,rmin,rmax, &
+          call get_jacobian_discontinuities(ispec_loc,ix_elem,iy_elem,rmin,rmax, &
               r1,r2,r3,r4,r5,r6,r7,r8, &
-              xstore(:,:,:,ispec),ystore(:,:,:,ispec),zstore(:,:,:,ispec),dershape2D_bottom, &
+              xstore(:,:,:,ispec_loc),ystore(:,:,:,ispec_loc),zstore(:,:,:,ispec_loc),dershape2D_bottom, &
               ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
               normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
               ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top, &
@@ -393,8 +398,10 @@
       enddo
     enddo
   enddo
-!$OMP enddo
-!$OMP END PARALLEL
+
+!daniel: still debugging...
+!!$OMP enddo
+!!$OMP END PARALLEL
 
   ! end index
   ispec = ispec0 + nelements

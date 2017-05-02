@@ -951,7 +951,7 @@
   ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
   ! these arrays and therefore destroy them
 !$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(ispec,ieoff,ilocnum)
+!$OMP PRIVATE(ispec,ieoff,ilocnum,i,j,k)
 !$OMP DO
   do ispec = 1,nspec
     ieoff = NGLLX * NGLLY * NGLLZ * (ispec-1)
@@ -981,8 +981,7 @@
 
   ! check that number of points found equals theoretical value
   if (nglob_new /= nglob) then
-    write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob = ', &
-                    myrank,nglob_new,nglob
+    write(errmsg,*) 'incorrect total number of points found: myrank,nglob_new,nglob = ',myrank,nglob_new,nglob
     call exit_MPI(myrank,errmsg)
   endif
   if (minval(ibool) /= 1 .or. maxval(ibool) /= nglob) &
