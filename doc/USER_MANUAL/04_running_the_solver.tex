@@ -11,7 +11,7 @@ as well as the setting of certain flags.
 
 The solver needs three input files in the \texttt{DATA} directory
 to run: the \texttt{Par\_file} that was discussed in detail in Chapter~\ref{cha:Running-the-Mesher},
-the earthquake source parameter file \texttt{CMTSOLUTION}, and the
+the earthquake source parameter file \texttt{CMTSOLUTION} or the force source parameter file {\texttt{FORCESOLUTION}}, and the
 stations file \texttt{STATIONS}. Most parameters in the \texttt{Par\_file}
 should be set prior to running the mesher. Only the following parameters
 may be changed after running the mesher:
@@ -145,6 +145,41 @@ used is shown in Fig~\ref{fig:gauss.vs.triangle}. For finite fault
 simulations it is usually not advisable to use a zero half duration
 and convolve afterwards, since the half duration is generally fixed
 by the finite fault model.
+
+\vspace{1cm}
+
+\noindent The \texttt{FORCESOLUTION} file should be edited in the
+following way:
+\begin{itemize}
+\item The first line is only the header for the force solution, which can
+be used as the identifier for the force source.
+\item \texttt{time shift:} For a single force source, set
+this  parameter equal to $0.0$ (The solver will not run otherwise!); the time
+shift parameter would simply apply an overall time shift to the synthetics,
+something that can be done in the post-processing (see Section \ref{sec:Process-data-and-syn}).
+\item \texttt{half duration:} Set the half duration value (s) for Step source time
+function. In case that the solver uses a (pseudo) Dirac delta source time function to represent
+a force point source, a very short duration of five time steps is automatically set by default. For a Ricker source time function, set the dominant frequency value (Hz). See the parameter \texttt{source time function:} below for source time functions.
+\item \texttt{latitude:} Set the latitude of the force source.
+\item \texttt{longitude:} Set the longitude of the force source.
+\item \texttt{depth:} Set the depth of the force source (km).
+\item \texttt{source time function:} Set the type of source time function. 0 = Step function, 1= Ricker function.
+\item \texttt{factor force source:} Set the magnitude of the force source.
+\item \texttt{component dir vect source E:} Set the East component of a direction vector for the force
+source. Direction vector is not necessarily a unit vector.
+\item \texttt{component dir vect source N:} Set the North component of a direction vector for the force
+source.
+\item \texttt{component dir vect source Z\_up:} Set the vertical component of a direction vector for the force
+source. Sign convnetion follows the positive upward drection.
+\end{itemize}
+\noindent Where necessary, set a \texttt{FORCESOLUTION} file in the
+same way you configure a \texttt{CMTSOLUTION} file with $N_{\mathrm{sources}}$
+entries, one for each subevent (i.e., concatenate $N_{\mathrm{sources}}$
+\texttt{FORCESOLUTION} files to a single \texttt{FORCESOLUTION} file).
+At least one entry (not necessarily the first) must have a zero \texttt{time
+shift}, and all the other entries must have non-negative \texttt{time shift}.
+Each subevent can have its own set of parameters \texttt{latitude}, \texttt{longitude}, \texttt{depth:},
+\texttt{half duration}, etc.
 
 %
 \begin{figure}[htp]
