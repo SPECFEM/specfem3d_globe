@@ -125,6 +125,7 @@
 
   integer :: iorientation
   double precision :: stazi,stdip,thetan,phin,n(3)
+  double precision :: f(3)
   integer :: imin,imax,jmin,jmax,kmin,kmax
   double precision :: f0,t0_ricker
 
@@ -321,14 +322,14 @@
         phin=stazi*DEGREES_TO_RADIANS
 
         ! we use the same convention as in Harvard normal modes for the orientation
-
+        
         !   vertical component
         n(1) = dcos(thetan)
         !   N-S component
         n(2) = - dsin(thetan)*dcos(phin)
         !   E-W component
         n(3) = dsin(thetan)*dsin(phin)
-
+        
         !   get the Cartesian components of n in the model: nu
         nu_source(iorientation,1,isource) = n(1)*st*cp+n(2)*ct*cp-n(3)*sp
         nu_source(iorientation,2,isource) = n(1)*st*sp+n(2)*ct*sp+n(3)*cp
