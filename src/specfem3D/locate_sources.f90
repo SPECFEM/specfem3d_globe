@@ -125,7 +125,6 @@
 
   integer :: iorientation
   double precision :: stazi,stdip,thetan,phin,n(3)
-  double precision :: f(3)
   integer :: imin,imax,jmin,jmax,kmin,kmax
   double precision :: f0,t0_ricker
 
