@@ -2,7 +2,7 @@ FORCE  001
 time shift:     0.0000 ! s
 half duration:  0.5 ! Half suration (s) for Step function, frequency (Hz) for Ricker
 latitude:        39.0 ! Degree
-longitude:       70.3167 ! Degree
+longitude:       70.0 ! Degree
 depth:           10.0 ! km
 source time function: 0 ! 0=Step function, 1=Ricker wavelet
 factor force source:             1.d15 ! Newton

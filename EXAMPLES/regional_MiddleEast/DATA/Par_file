@@ -193,6 +193,11 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000
 # # its norm is ignored and the norm of the force used is the factor force source times the source time function.
 USE_FORCE_POINT_SOURCE          = .false.
 
+# option to save strain seismograms
+# this option is useful for strain Green's tensor
+# this feature is currently under development
+SAVE_SEISMOGRAMS_STRAIN         = .false.
+
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
@@ -299,6 +304,10 @@ NUMBER_OF_SIMULTANEOUS_RUNS     = 1
 # directories) in each of the run0001, run0002,... directories, it is sufficient to have one in run0001
 # and the code will broadcast it to the others)
 BROADCAST_SAME_MESH_AND_MODEL   = .false.
+
+# if one or a few of these simultaneous runs fail, kill all the runs or let the others finish using a fail-safe mechanism
+# (in most cases, should be set to false)
+USE_FAILSAFE_MECHANISM          = .false.
 
 #-----------------------------------------------------------
 
