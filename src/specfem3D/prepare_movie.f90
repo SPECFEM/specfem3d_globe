@@ -155,17 +155,17 @@
   if (MOVIE_VOLUME_TYPE < 1 .or. MOVIE_VOLUME_TYPE > 9) &
     stop 'MOVIE_VOLUME_TYPE has to be in range from 1 to 9'
 
-  ! counts total number of points for movie file output
-  call movie_volume_count_points()
-
-  allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating nu for 3D movie')
-
   allocate(mask_ibool(NGLOB_CRUST_MANTLE_3DMOVIE), &
            num_ibool_3dmovie(NGLOB_CRUST_MANTLE_3DMOVIE), &
            mask_3dmovie(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE), &
            muvstore_crust_mantle_3dmovie(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_3DMOVIE),stat=ier)
   if (ier /= 0 ) stop 'Error allocating arrays muvstore_crust_mantle_3dmovie,..'
+
+  ! counts total number of points for movie file output
+  call movie_volume_count_points()
+
+  allocate(nu_3dmovie(3,3,npoints_3dmovie),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating nu for 3D movie')
 
   call write_movie_volume_mesh(nu_3dmovie,num_ibool_3dmovie,mask_3dmovie,mask_ibool, &
                                           muvstore_crust_mantle_3dmovie,npoints_3dmovie)
