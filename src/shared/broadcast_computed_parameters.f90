@@ -37,7 +37,7 @@
   integer, parameter :: nparam_i = 45
   integer, dimension(nparam_i) :: bcast_integer
 
-  integer, parameter :: nparam_l = 63
+  integer, parameter :: nparam_l = 64
   logical, dimension(nparam_l) :: bcast_logical
 
   integer, parameter :: nparam_dp = 34
@@ -84,7 +84,7 @@
             ABSORBING_CONDITIONS,INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE,SAVE_FORWARD,CASE_3D, &
             CUT_SUPERBRICK_XI,CUT_SUPERBRICK_ETA,SAVE_ALL_SEISMOS_IN_ONE_FILE, &
             HONOR_1D_SPHERICAL_MOHO,MOVIE_COARSE, &
-            USE_FORCE_POINT_SOURCE,SAVE_SEISMOGRAMS_STRAIN, &
+            USE_FORCE_POINT_SOURCE,SAVE_SEISMOGRAMS_STRAIN,SAVE_SEISMOGRAMS_IN_ADJOINT_RUN, &
             OUTPUT_SEISMOS_ASCII_TEXT,OUTPUT_SEISMOS_SAC_ALPHANUM,OUTPUT_SEISMOS_SAC_BINARY, &
             OUTPUT_SEISMOS_ASDF, &
             ROTATE_SEISMOGRAMS_RT,WRITE_SEISMOGRAMS_BY_MASTER,USE_BINARY_FOR_LARGE_FILE, &
@@ -235,38 +235,39 @@
     MOVIE_COARSE= bcast_logical(29)
     USE_FORCE_POINT_SOURCE= bcast_logical(30)
     SAVE_SEISMOGRAMS_STRAIN= bcast_logical(31)
-    OUTPUT_SEISMOS_ASCII_TEXT= bcast_logical(32)
-    OUTPUT_SEISMOS_SAC_ALPHANUM= bcast_logical(33)
-    OUTPUT_SEISMOS_SAC_BINARY= bcast_logical(34)
-    OUTPUT_SEISMOS_ASDF = bcast_logical(35)
-    ROTATE_SEISMOGRAMS_RT= bcast_logical(36)
-    WRITE_SEISMOGRAMS_BY_MASTER= bcast_logical(37)
-    USE_BINARY_FOR_LARGE_FILE= bcast_logical(38)
-    READ_ADJSRC_ASDF = bcast_logical(39)
-    SAVE_REGULAR_KL = bcast_logical(40)
-    PARTIAL_PHYS_DISPERSION_ONLY = bcast_logical(41)
-    UNDO_ATTENUATION = bcast_logical(42)
-    USE_LDDRK = bcast_logical(43)
-    INCREASE_CFL_FOR_LDDRK = bcast_logical(44)
-    ANISOTROPIC_KL = bcast_logical(45)
-    SAVE_TRANSVERSE_KL_ONLY = bcast_logical(46)
-    APPROXIMATE_HESS_KL = bcast_logical(47)
-    USE_FULL_TISO_MANTLE = bcast_logical(48)
-    SAVE_SOURCE_MASK = bcast_logical(49)
-    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(50)
-    GPU_MODE = bcast_logical(51)
-    ADIOS_ENABLED = bcast_logical(52)
-    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(53)
-    ADIOS_FOR_MPI_ARRAYS = bcast_logical(54)
-    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(55)
-    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(56)
-    ADIOS_FOR_AVS_DX = bcast_logical(57)
-    ADIOS_FOR_KERNELS = bcast_logical(58)
-    ADIOS_FOR_MODELS = bcast_logical(59)
-    ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(60)
-    CEM_REQUEST = bcast_logical(61)
-    CEM_ACCEPT = bcast_logical(62)
-    BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(63)
+    SAVE_SEISMOGRAMS_IN_ADJOINT_RUN= bcast_logical(32)
+    OUTPUT_SEISMOS_ASCII_TEXT= bcast_logical(33)
+    OUTPUT_SEISMOS_SAC_ALPHANUM= bcast_logical(34)
+    OUTPUT_SEISMOS_SAC_BINARY= bcast_logical(35)
+    OUTPUT_SEISMOS_ASDF = bcast_logical(36)
+    ROTATE_SEISMOGRAMS_RT= bcast_logical(37)
+    WRITE_SEISMOGRAMS_BY_MASTER= bcast_logical(38)
+    USE_BINARY_FOR_LARGE_FILE= bcast_logical(39)
+    READ_ADJSRC_ASDF = bcast_logical(40)
+    SAVE_REGULAR_KL = bcast_logical(41)
+    PARTIAL_PHYS_DISPERSION_ONLY = bcast_logical(42)
+    UNDO_ATTENUATION = bcast_logical(43)
+    USE_LDDRK = bcast_logical(44)
+    INCREASE_CFL_FOR_LDDRK = bcast_logical(45)
+    ANISOTROPIC_KL = bcast_logical(46)
+    SAVE_TRANSVERSE_KL_ONLY = bcast_logical(47)
+    APPROXIMATE_HESS_KL = bcast_logical(48)
+    USE_FULL_TISO_MANTLE = bcast_logical(49)
+    SAVE_SOURCE_MASK = bcast_logical(50)
+    EXACT_MASS_MATRIX_FOR_ROTATION = bcast_logical(51)
+    GPU_MODE = bcast_logical(52)
+    ADIOS_ENABLED = bcast_logical(53)
+    ADIOS_FOR_FORWARD_ARRAYS = bcast_logical(54)
+    ADIOS_FOR_MPI_ARRAYS = bcast_logical(55)
+    ADIOS_FOR_ARRAYS_SOLVER = bcast_logical(56)
+    ADIOS_FOR_SOLVER_MESHFILES = bcast_logical(57)
+    ADIOS_FOR_AVS_DX = bcast_logical(58)
+    ADIOS_FOR_KERNELS = bcast_logical(59)
+    ADIOS_FOR_MODELS = bcast_logical(60)
+    ADIOS_FOR_UNDO_ATTENUATION = bcast_logical(61)
+    CEM_REQUEST = bcast_logical(62)
+    CEM_ACCEPT = bcast_logical(63)
+    BROADCAST_SAME_MESH_AND_MODEL = bcast_logical(64)
 
     ! double precisions
     DT = bcast_double_precision(1)

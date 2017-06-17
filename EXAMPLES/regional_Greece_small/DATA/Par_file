@@ -198,6 +198,10 @@ USE_FORCE_POINT_SOURCE          = .false.
 # this feature is currently under development
 SAVE_SEISMOGRAMS_STRAIN         = .false.
 
+# save seismograms also when running the adjoint runs for an inverse problem
+# (usually they are unused and not very meaningful, leave this off in almost all cases)
+SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .false.
+
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
 OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
