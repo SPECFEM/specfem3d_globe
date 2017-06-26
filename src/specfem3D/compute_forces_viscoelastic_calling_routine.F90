@@ -117,7 +117,7 @@
                         buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                         nibool_interfaces_crust_mantle, &
-                        my_neighbours_crust_mantle, &
+                        my_neighbors_crust_mantle, &
                         request_send_vector_cm,request_recv_vector_cm)
         endif
       endif
@@ -136,7 +136,7 @@
                         buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                         num_interfaces_inner_core,max_nibool_interfaces_ic, &
                         nibool_interfaces_inner_core, &
-                        my_neighbours_inner_core, &
+                        my_neighbors_inner_core, &
                         request_send_vector_ic,request_recv_vector_ic)
         endif
       endif
@@ -208,7 +208,7 @@
                         buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                         num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                         nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-                        my_neighbours_crust_mantle, &
+                        my_neighbors_crust_mantle, &
                         request_send_vector_cm,request_recv_vector_cm)
           ! inner core
           call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
@@ -216,7 +216,7 @@
                         buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                         num_interfaces_inner_core,max_nibool_interfaces_ic, &
                         nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                        my_neighbours_inner_core, &
+                        my_neighbors_inner_core, &
                         request_send_vector_ic,request_recv_vector_ic)
         else
           ! on GPU
@@ -241,14 +241,14 @@
                           buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle, &
                           num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                           nibool_interfaces_crust_mantle, &
-                          my_neighbours_crust_mantle, &
+                          my_neighbors_crust_mantle, &
                           request_send_vector_cm,request_recv_vector_cm)
             ! inner core
             call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                           buffer_send_vector_inner_core,buffer_recv_vector_inner_core, &
                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
                           nibool_interfaces_inner_core, &
-                          my_neighbours_inner_core, &
+                          my_neighbors_inner_core, &
                           request_send_vector_ic,request_recv_vector_ic)
           endif
         endif ! GPU_MODE
@@ -479,7 +479,7 @@
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle, &
-                      my_neighbours_crust_mantle, &
+                      my_neighbors_crust_mantle, &
                       b_request_send_vector_cm,b_request_recv_vector_cm)
       endif
 
@@ -497,7 +497,7 @@
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core, &
-                      my_neighbours_inner_core, &
+                      my_neighbors_inner_core, &
                       b_request_send_vector_ic,b_request_recv_vector_ic)
       endif
 
@@ -557,7 +557,7 @@
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-                      my_neighbours_crust_mantle, &
+                      my_neighbors_crust_mantle, &
                       b_request_send_vector_cm,b_request_recv_vector_cm)
         ! inner core
         call assemble_MPI_vector_s(NPROCTOT_VAL,NGLOB_INNER_CORE, &
@@ -565,7 +565,7 @@
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                      my_neighbours_inner_core, &
+                      my_neighbors_inner_core, &
                       b_request_send_vector_ic,b_request_recv_vector_ic)
       else
         ! on GPU
@@ -590,14 +590,14 @@
                       b_buffer_send_vector_cm,b_buffer_recv_vector_cm, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle, &
-                      my_neighbours_crust_mantle, &
+                      my_neighbors_crust_mantle, &
                       b_request_send_vector_cm,b_request_recv_vector_cm)
           ! inner core
           call assemble_MPI_vector_send_gpu(NPROCTOT_VAL, &
                       b_buffer_send_vector_inner_core,b_buffer_recv_vector_inner_core, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core, &
-                      my_neighbours_inner_core, &
+                      my_neighbors_inner_core, &
                       b_request_send_vector_ic,b_request_recv_vector_ic)
         endif
       endif ! GPU

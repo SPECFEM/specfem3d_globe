@@ -1,6 +1,0 @@
-<map id="FC_FUNC_" name="FC_FUNC_">
-<area shape="rect" id="node2" href="$dd/de1/helper__functions__gpu_8c.html#a6aa349a4d68c77c7cb8053c22c69025d" title="exit_on_error" alt="" coords="383,12,483,38"/>
-<area shape="rect" id="node3" href="$df/def/check__fields__gpu_8c.html#a41d7c5291f8ff8d6f193b4c521bccd31" title="get_device_array_maximum\l_value" alt="" coords="145,34,335,75"/>
-<area shape="rect" id="node4" href="$dd/de1/helper__functions__gpu_8c.html#a74245d737869ee492a4ca8998783602b" title="synchronize_mpi" alt="" coords="179,100,301,126"/>
-<area shape="rect" id="node5" href="$dd/d2b/mesh__constants__gpu_8h.html#a8bfa3716eff7e36136643375026c81e1" title="get_blocks_xy" alt="" coords="187,150,293,177"/>
-</map>

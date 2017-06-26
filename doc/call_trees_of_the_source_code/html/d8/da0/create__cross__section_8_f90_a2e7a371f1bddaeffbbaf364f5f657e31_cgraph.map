@@ -1,9 +1,0 @@
-<map id="get_model_values_cross_section" name="get_model_values_cross_section">
-<area shape="rect" id="node2" href="$d1/d68/namespacekdtree__search.html#a0634ab6a3eed0caeaf500811a61ea94f" title="kdtree_search::kdtree\l_find_nearest_neighbor" alt="" coords="239,5,401,47"/>
-<area shape="rect" id="node3" href="$d1/d68/namespacekdtree__search.html#a0d7bf866ddc668b694ea41b6921601b3" title="kdtree_search::kdtree\l_count_nearest_n_neighbors" alt="" coords="223,71,417,112"/>
-<area shape="rect" id="node4" href="$d1/d68/namespacekdtree__search.html#a2b6ac464fbd444afa29d3cd9af0b3482" title="kdtree_search::kdtree\l_get_nearest_n_neighbors" alt="" coords="230,136,410,177"/>
-<area shape="rect" id="node5" href="$d8/da0/create__cross__section_8_f90.html#a8e5ff56d5e422f37857d29fbf31ea6b1" title="check_point_result" alt="" coords="253,202,387,229"/>
-<area shape="rect" id="node6" href="$d8/da0/create__cross__section_8_f90.html#ac981321eedee1b0c81c6e42f604eaefb" title="locate_single_point" alt="" coords="252,253,388,279"/>
-<area shape="rect" id="node7" href="$d8/da0/create__cross__section_8_f90.html#a4788c0e449bd430128cbb8cb22ec5ad6" title="check_location" alt="" coords="265,303,375,330"/>
-<area shape="rect" id="node8" href="$d8/da0/create__cross__section_8_f90.html#a11ceedaa0a8210431bb371729c8b4236" title="set_interpolated_value" alt="" coords="242,354,398,381"/>
-</map>

@@ -1,6 +1,0 @@
-<map id="create_regular_elements" name="create_regular_elements">
-<area shape="rect" id="node2" href="$d1/de9/add__missing__nodes_8f90.html#abf4fcb19e9e59bd08815ec5e81b9bdc7" title="add_missing_nodes" alt="" coords="250,5,390,32"/>
-<area shape="rect" id="node3" href="$d8/da9/compute__coordinates__grid_8f90.html#ac1377c3852be82c809b7e3151deb6c73" title="compute_coord_main_mesh" alt="" coords="225,56,415,83"/>
-<area shape="rect" id="node4" href="$d5/d73/compute__element__properties_8f90.html#a88f0d1fcd2dd09ad92980a883309da9a" title="compute_element_properties" alt="" coords="223,107,417,133"/>
-<area shape="rect" id="node5" href="$d7/da3/get__jacobian__discontinuities_8f90.html#a8e6e65aaa7bbe6972144b9769de24517" title="get_jacobian_discontinuities" alt="" coords="225,157,415,184"/>
-</map>

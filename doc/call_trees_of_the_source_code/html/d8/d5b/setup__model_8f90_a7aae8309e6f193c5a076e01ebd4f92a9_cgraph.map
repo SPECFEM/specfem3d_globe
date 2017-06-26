@@ -1,6 +1,0 @@
-<map id="setup_model" name="setup_model">
-<area shape="rect" id="node2" href="$d8/d5b/setup__model_8f90.html#a58ea5e0eff13dd2e1283def7b53f893b" title="sm_output_info" alt="" coords="199,5,313,32"/>
-<area shape="rect" id="node3" href="$d4/d37/create__addressing_8f90.html#ae08a37525294dc7ae4976aec028c24d5" title="create_addressing" alt="" coords="190,56,322,83"/>
-<area shape="rect" id="node4" href="$de/de1/setup__counters_8f90.html#a9a7c5429add01d397dd049454ce9672b" title="setup_counters" alt="" coords="199,107,313,133"/>
-<area shape="rect" id="node5" href="$d0/dad/meshfem3_d__models_8_f90.html#a6a7b79f82404dc9605de497f55fd078d" title="meshfem3d_models_broadcast" alt="" coords="152,157,360,184"/>
-</map>

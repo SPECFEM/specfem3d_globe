@@ -1047,7 +1047,7 @@
 !! \param LOCAL_PATH The full path to the output directory
 !! \param num_interfaces The number of interfaces between processors
 !! \param max_nibool_interfaces
-!! \param my_neighbours
+!! \param my_neighbors
 !! \param nibool_interfaces
 !! \param ibool_interfaces
 !! \param nspec_inner Number of spectral elements in the inner core
@@ -1058,7 +1058,7 @@
 !! \param num_colors_outer Number of colors for GPU computing in the outer core.
 
   subroutine save_mpi_arrays_adios(iregion_code,LOCAL_PATH, &
-                                   num_interfaces,max_nibool_interfaces, my_neighbours,nibool_interfaces, &
+                                   num_interfaces,max_nibool_interfaces, my_neighbors,nibool_interfaces, &
                                    ibool_interfaces, nspec_inner,nspec_outer, num_phase_ispec, &
                                    phase_ispec_inner, num_colors_outer,num_colors_inner, num_elem_colors)
 
@@ -1075,7 +1075,7 @@
   character(len=MAX_STRING_LEN) :: LOCAL_PATH
   ! MPI interfaces
   integer :: num_interfaces,max_nibool_interfaces
-  integer, dimension(num_interfaces) :: my_neighbours
+  integer, dimension(num_interfaces) :: my_neighbors
   integer, dimension(num_interfaces) :: nibool_interfaces
   integer, dimension(max_nibool_interfaces,num_interfaces) :: &
       ibool_interfaces
@@ -1143,7 +1143,7 @@
   if (num_interfaces > 0) then
     call define_adios_scalar (adios_group, group_size_inc, region_name_scalar, STRINGIFY_VAR(max_nibool_interfaces))
     local_dim = num_interfaces_wmax
-    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(my_neighbours))
+    call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(my_neighbors))
     local_dim = num_interfaces_wmax
     call define_adios_global_array1D(adios_group, group_size_inc, local_dim, region_name, STRINGIFY_VAR(nibool_interfaces))
     local_dim = max_nibool_interfaces_wmax * num_interfaces_wmax
@@ -1192,7 +1192,7 @@
     !local_dim = num_interfaces_wmax
     !call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, &
                                      !local_dim, trim(region_name) // &
-                                     !STRINGIFY_VAR(my_neighbours))
+                                     !STRINGIFY_VAR(my_neighbors))
     !call write_adios_global_1d_array(file_handle_adios, myrank, sizeprocs_adios, &
                                      !local_dim,  trim(region_name) // &
                                      !STRINGIFY_VAR(nibool_interfaces))
@@ -1202,14 +1202,14 @@
                                      !local_dim, trim(region_name) // &
                                      !STRINGIFY_VAR(ibool_interfaces))
 
-    call adios_write(file_handle_adios, trim(region_name) // "my_neighbours/local_dim", &
+    call adios_write(file_handle_adios, trim(region_name) // "my_neighbors/local_dim", &
                      num_interfaces, adios_err)
-    call adios_write(file_handle_adios, trim(region_name) // "my_neighbours/global_dim", &
+    call adios_write(file_handle_adios, trim(region_name) // "my_neighbors/global_dim", &
                      num_interfaces_wmax*sizeprocs_adios, adios_err)
-    call adios_write(file_handle_adios, trim(region_name) // "my_neighbours/offset", &
+    call adios_write(file_handle_adios, trim(region_name) // "my_neighbors/offset", &
                      num_interfaces_wmax*myrank, adios_err)
-    call adios_write(file_handle_adios, trim(region_name) // "my_neighbours/array", &
-                     my_neighbours, adios_err)
+    call adios_write(file_handle_adios, trim(region_name) // "my_neighbors/array", &
+                     my_neighbors, adios_err)
 
     call adios_write(file_handle_adios, trim(region_name) // "nibool_interfaces/local_dim", &
                      num_interfaces, adios_err)

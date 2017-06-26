@@ -1,5 +1,0 @@
-<map id="create_central_cube" name="create_central_cube">
-<area shape="rect" id="node2" href="$d9/dfa/hex__nodes_8f90.html#ae07f707d9b9719a0c2f6d5b86bee639d" title="hex_nodes" alt="" coords="251,5,338,32"/>
-<area shape="rect" id="node3" href="$d8/da9/compute__coordinates__grid_8f90.html#ac2606042b77bbaec57db96bccca53f16" title="compute_coord_central_cube" alt="" coords="196,56,393,83"/>
-<area shape="rect" id="node4" href="$d5/d73/compute__element__properties_8f90.html#a88f0d1fcd2dd09ad92980a883309da9a" title="compute_element_properties" alt="" coords="197,107,392,133"/>
-</map>

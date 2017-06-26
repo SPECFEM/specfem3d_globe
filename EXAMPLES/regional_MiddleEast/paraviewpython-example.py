@@ -13,9 +13,9 @@ from paraview import servermanager
 
 number = ""
 
-## input: 
+## input:
 if len(sys.argv) == 2:
-  filename = str(sys.argv[1])  
+  filename = str(sys.argv[1])
 else :
   if len(sys.argv) == 3:
     filename = str(sys.argv[1])
@@ -23,7 +23,7 @@ else :
   else :
     print "usage: /paraviewpython-example.py alpha_kernel.pvsm "
     sys.exit()
-  
+
 outfile = "image"+number
 print "file root: ",outfile
 

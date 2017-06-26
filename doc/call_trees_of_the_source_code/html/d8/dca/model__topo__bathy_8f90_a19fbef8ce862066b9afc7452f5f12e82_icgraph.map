@@ -1,6 +1,0 @@
-<map id="read_topo_bathy_file" name="read_topo_bathy_file">
-<area shape="rect" id="node2" href="$d8/dca/model__topo__bathy_8f90.html#a549bad6fc65eee04c2697197476449c8" title="model_topo_bathy_broadcast" alt="" coords="200,5,397,32"/>
-<area shape="rect" id="node3" href="$d8/dca/model__topo__bathy_8f90.html#a9ae2097b0c4bb1f815c36a95de69aacf" title="read_topo_bathy_database" alt="" coords="207,56,391,83"/>
-<area shape="rect" id="node4" href="$d8/da0/create__cross__section_8_f90.html#adb3f95e59a8b7e40df4652435a9d2f0e" title="set_horiz_cross_section\l_points" alt="" coords="216,107,381,149"/>
-<area shape="rect" id="node5" href="$d8/da0/create__cross__section_8_f90.html#a367388a06f33a85bb5e1987010f6c332" title="set_vertical_cross\l_section_points" alt="" coords="234,173,363,214"/>
-</map>

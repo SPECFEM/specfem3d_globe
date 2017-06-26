@@ -1,4 +1,0 @@
-<map id="model_topo_bathy_broadcast" name="model_topo_bathy_broadcast">
-<area shape="rect" id="node2" href="$d8/dca/model__topo__bathy_8f90.html#a19fbef8ce862066b9afc7452f5f12e82" title="read_topo_bathy_file" alt="" coords="270,5,417,32"/>
-<area shape="rect" id="node3" href="$d8/dca/model__topo__bathy_8f90.html#a17cf266bf44b87bb2ef6230019322efe" title="save_topo_bathy_database" alt="" coords="251,56,436,83"/>
-</map>

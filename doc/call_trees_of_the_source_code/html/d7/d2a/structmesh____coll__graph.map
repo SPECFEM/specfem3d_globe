@@ -1,5 +1,0 @@
-<map id="mesh_" name="mesh_">
-<area shape="rect" id="node2" href="$db/d6e/uniongpu__int__mem.html" title="gpu_int_mem" alt="" coords="5,5,108,32"/>
-<area shape="rect" id="node3" href="$dc/d96/uniongpu__realw__mem.html" title="gpu_realw_mem" alt="" coords="162,5,282,32"/>
-<area shape="rect" id="node4" href="$d5/da2/uniongpu__double__mem.html" title="gpu_double_mem" alt="" coords="336,5,465,32"/>
-</map>

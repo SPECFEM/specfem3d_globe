@@ -1,5 +1,0 @@
-<map id="create_name_database_adios" name="create_name_database_adios">
-<area shape="rect" id="node2" href="$d8/d80/save__arrays__solver__adios_8_f90.html#a14067a4330bdbcea43a23ceb8d04a8bd" title="Main routine to save the arrays from the mesher to the solver with the help of ADIOS. " alt="" coords="229,5,366,47"/>
-<area shape="rect" id="node3" href="$d8/d80/save__arrays__solver__adios_8_f90.html#a641f30147f27dc15335095e488ce02bb" title="Save the arrays use by the solver for MPI communications. " alt="" coords="216,71,379,98"/>
-<area shape="rect" id="node4" href="$d3/d9b/write___a_v_s___d_x__output__adios_8f90.html#a18f29b23b4b4b7daccc763cdd6080ff6" title="write_avs_dx_output\l_adios" alt="" coords="225,123,369,164"/>
-</map>

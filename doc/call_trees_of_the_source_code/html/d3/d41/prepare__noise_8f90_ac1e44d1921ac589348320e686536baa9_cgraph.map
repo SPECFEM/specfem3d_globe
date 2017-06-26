@@ -1,5 +1,0 @@
-<map id="prepare_noise" name="prepare_noise">
-<area shape="rect" id="node2" href="$d1/d52/noise__tomography_8f90.html#ac5b8c1f637d73094e772e71f250a924e" title="check_parameters_noise" alt="" coords="160,5,331,32"/>
-<area shape="rect" id="node3" href="$d1/d52/noise__tomography_8f90.html#a92a2bae0bf51bd3ae57665ef999fc3b7" title="read_parameters_noise" alt="" coords="164,56,327,83"/>
-<area shape="rect" id="node4" href="$d1/d52/noise__tomography_8f90.html#ad5246f66444d89f645e4de696e5e7196" title="print_master_distances\l_noise" alt="" coords="165,107,325,149"/>
-</map>

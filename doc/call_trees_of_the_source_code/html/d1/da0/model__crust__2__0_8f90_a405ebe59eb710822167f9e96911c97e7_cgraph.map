@@ -1,6 +1,0 @@
-<map id="crust_2_0_capsmoothed" name="crust_2_0_capsmoothed">
-<area shape="rect" id="node2" href="$d1/da0/model__crust__2__0_8f90.html#a62cd2cfc5f84629bf00f2a7065513ebb" title="hash_crustal_type" alt="" coords="239,5,369,32"/>
-<area shape="rect" id="node3" href="$dd/d0f/smooth__weights__vec_8_f90.html#a396f02f5c9090ffe262cdcc9f6934292" title="smooth_weights_cap\l_vardegree" alt="" coords="231,57,377,98"/>
-<area shape="rect" id="node4" href="$d1/da0/model__crust__2__0_8f90.html#a7db5f8487312fe1c3a20bb6981e9af02" title="icolat_ilon" alt="" coords="263,123,345,149"/>
-<area shape="rect" id="node5" href="$d1/da0/model__crust__2__0_8f90.html#abe5e304882e1b7ff01ecf99853100df1" title="get_crust_2_0_structure" alt="" coords="221,173,387,200"/>
-</map>

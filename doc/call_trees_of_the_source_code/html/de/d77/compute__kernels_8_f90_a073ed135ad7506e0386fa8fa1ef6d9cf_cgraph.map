@@ -1,8 +1,0 @@
-<map id="compute_kernels" name="compute_kernels">
-<area shape="rect" id="node2" href="$de/d77/compute__kernels_8_f90.html#a3c203f34b44c0d2bf723aa104a975d2b" title="compute_kernels_crust\l_mantle" alt="" coords="195,5,355,47"/>
-<area shape="rect" id="node3" href="$de/d77/compute__kernels_8_f90.html#aaecf48d2e5d02b38991a8592b8051522" title="compute_kernels_outer_core" alt="" coords="177,71,372,98"/>
-<area shape="rect" id="node4" href="$de/d77/compute__kernels_8_f90.html#a15f6f5092b8c2757bc180065502fc3c7" title="compute_kernels_inner_core" alt="" coords="178,122,371,149"/>
-<area shape="rect" id="node5" href="$d1/d52/noise__tomography_8f90.html#a3ec118b744fc37feb8bbfbb3779955c6" title="compute_kernels_strength\l_noise" alt="" coords="185,173,364,215"/>
-<area shape="rect" id="node6" href="$de/df8/compute__boundary__kernel_8f90.html#a53ba65db0c17912ba2c4d594ed785a8c" title="compute_boundary_kernels" alt="" coords="181,239,368,266"/>
-<area shape="rect" id="node7" href="$de/d77/compute__kernels_8_f90.html#a9176d14fd383213ceace920862c78341" title="compute_kernels_hessian" alt="" coords="186,290,363,317"/>
-</map>

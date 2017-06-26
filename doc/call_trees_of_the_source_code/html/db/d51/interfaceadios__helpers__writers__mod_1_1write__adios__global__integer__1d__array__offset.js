@@ -1,4 +1,0 @@
-var interfaceadios__helpers__writers__mod_1_1write__adios__global__integer__1d__array__offset =
-[
-    [ "write_adios_global_1d_integer_1d_offset", "db/d51/interfaceadios__helpers__writers__mod_1_1write__adios__global__integer__1d__array__offset.html#a8b6891f7ec2d76d72b5db72dfa7271da", null ]
-];

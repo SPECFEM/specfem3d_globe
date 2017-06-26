@@ -16,8 +16,8 @@ MPI_INC := -I/usr/include/openmpi-x86_64/ -I/usr/lib/openmpi/include
 PY_CFLAGS := $(shell python3-config --includes) -DPYTHON_MOD_PATH=$(shell pwd)
 PY_LDFLAGS := $(shell python3-config --libs)
 
-SO_CFLAGS := -fPIC 
-SO_LDFLAGS := -fPIC -rdynamic -shared  $(PY_LDFLAGS) 
+SO_CFLAGS := -fPIC
+SO_LDFLAGS := -fPIC -rdynamic -shared  $(PY_LDFLAGS)
 
 CFLAGS := $(SO_CFLAGS) -g -O0 -std=gnu99 -Werror -Wall -pedantic -Wno-format-security $(MPI_INC)
 
@@ -42,7 +42,7 @@ endif
 
 all : $(SO_NAME)
 
-$(SO_NAME) : $(GPU_INSTR) gpu_helper_py.o ldChecker.o 
+$(SO_NAME) : $(GPU_INSTR) gpu_helper_py.o ldChecker.o
 	gcc -o $@ $^ $(SO_LDFLAGS) -lpython3.3m
 
 gpu_helper_py.o : gpu_helper_py.c $(HELPER_HEADER)
@@ -54,7 +54,7 @@ ldChecker.o : ldChecker.c ldChecker.h $(HELPER_HEADER)
 clean : clean-python
 	rm -fv *.o *.so
 
-clean-python : 
+clean-python :
 	rm -rf __pycache__
 
 get_env_preload :
@@ -65,7 +65,7 @@ get_env_preload :
 ################
 
 instr-ocl.o : instr-ocl.c ocl_helper.h ldChecker.h
-	gcc -o $@ -c $< $(CFLAGS) 
+	gcc -o $@ -c $< $(CFLAGS)
 
 ##############
 ### CUDA  ####
@@ -74,7 +74,7 @@ instr-ocl.o : instr-ocl.c ocl_helper.h ldChecker.h
 cuda_helper_preprocessed.c : cuda_helper_preprocessor.py $(CUDA_BIN)
 	python3 $< $(CUDA_BIN) > $@
 
-instr-cuda.o : instr-cuda.c $(CUDA_HELPER) ldChecker.o 
-	gcc -o $@ -c $< $(CFLAGS) $(CUDA_CFLAGS) 
+instr-cuda.o : instr-cuda.c $(CUDA_HELPER) ldChecker.o
+	gcc -o $@ -c $< $(CFLAGS) $(CUDA_CFLAGS)
 
 

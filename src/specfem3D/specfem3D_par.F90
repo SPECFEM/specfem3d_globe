@@ -385,7 +385,7 @@ module specfem_par
   ! MPI crust/mantle mesh
   integer :: num_interfaces_crust_mantle
   integer :: max_nibool_interfaces_cm
-  integer, dimension(:), allocatable :: my_neighbours_crust_mantle,nibool_interfaces_crust_mantle
+  integer, dimension(:), allocatable :: my_neighbors_crust_mantle,nibool_interfaces_crust_mantle
   integer, dimension(:,:), allocatable :: ibool_interfaces_crust_mantle
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_crust_mantle,buffer_recv_vector_crust_mantle
@@ -397,7 +397,7 @@ module specfem_par
   ! MPI inner core mesh
   integer :: num_interfaces_inner_core
   integer :: max_nibool_interfaces_ic
-  integer, dimension(:), allocatable :: my_neighbours_inner_core,nibool_interfaces_inner_core
+  integer, dimension(:), allocatable :: my_neighbors_inner_core,nibool_interfaces_inner_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_inner_core
 
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_send_vector_inner_core,buffer_recv_vector_inner_core
@@ -409,7 +409,7 @@ module specfem_par
   ! MPI outer core mesh
   integer :: num_interfaces_outer_core
   integer :: max_nibool_interfaces_oc
-  integer, dimension(:), allocatable :: my_neighbours_outer_core,nibool_interfaces_outer_core
+  integer, dimension(:), allocatable :: my_neighbors_outer_core,nibool_interfaces_outer_core
   integer, dimension(:,:), allocatable :: ibool_interfaces_outer_core
 
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core

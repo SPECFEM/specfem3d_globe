@@ -1,4 +1,0 @@
-<map id="adios_helpers_definitions_mod::define_adios_global_dims_1d" name="adios_helpers_definitions_mod::define_adios_global_dims_1d">
-<area shape="rect" id="node2" href="$d3/dda/namespaceadios__helpers__definitions__mod.html#ad7459a08eb39182a99df220407daca1b" title="Define an ADIOS scalar integer variable and autoincrement the adios group size by (4)..." alt="" coords="235,5,464,47"/>
-<area shape="rect" id="node3" href="$d3/dda/namespaceadios__helpers__definitions__mod.html#a22705156ae8ccf7d8c06d680d50a8910" title="Define an ADIOS scalar long integer variable and autoincrement the adios group size by (8)..." alt="" coords="243,71,456,112"/>
-</map>

@@ -1,8 +1,0 @@
-<map id="compute_element_iso" name="compute_element_iso">
-<area shape="rect" id="node2" href="$d5/d80/compute__element_8_f90.html#a66eb916d3bf4b095e8544cc9db7db10e" title="compute_element_precompute\l_factors" alt="" coords="205,5,411,47"/>
-<area shape="rect" id="node3" href="$d5/d80/compute__element_8_f90.html#a0a57ea31a6952ec6d1765142394f9cb9" title="compute_element_deviatoric\l_strain" alt="" coords="212,71,404,112"/>
-<area shape="rect" id="node4" href="$d5/d80/compute__element_8_f90.html#acc4ef343e9507253123bd938c4283b8d" title="compute_element_stress\l_attenuation_contrib" alt="" coords="223,136,393,177"/>
-<area shape="rect" id="node5" href="$d5/d80/compute__element_8_f90.html#a225d92f8cfaa85539bcc170d389e8360" title="compute_element_gravity" alt="" coords="221,202,395,229"/>
-<area shape="rect" id="node6" href="$d5/d80/compute__element_8_f90.html#a9357c6c60cf200c6d0ff5e1859a706dc" title="compute_element_dot\l_product_stress" alt="" coords="231,253,385,295"/>
-<area shape="rect" id="node7" href="$dd/d21/intgrl_8f90.html#a949c66a37b3b8091cbf4b01837c285c3" title="deriv" alt="" coords="283,319,333,346"/>
-</map>

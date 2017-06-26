@@ -1,6 +1,0 @@
-<map id="manager_adios::finalize_adios" name="manager_adios::finalize_adios">
-<area shape="rect" id="node2" href="$df/dfc/finalize__mesher_8f90.html#a25083e2638473ccf26b388b6e0a1a94d" title="finalize_mesher" alt="" coords="227,5,343,32"/>
-<area shape="rect" id="node3" href="$d4/dad/finalize__simulation_8_f90.html#a3fad035abbce376264a29c45e327ed5e" title="finalize_simulation" alt="" coords="219,56,350,83"/>
-<area shape="rect" id="node4" href="$d4/d58/interpolate__model_8_f90.html#a5d498b55440eaa97251daa50fdc2212c" title="interpolate_model" alt="" coords="221,107,349,133"/>
-<area shape="rect" id="node5" href="$dc/da2/sum__kernels_8_f90.html#aefd110537449bab81a99f09813e2bded" title="sum_kernels_globe" alt="" coords="216,157,353,184"/>
-</map>

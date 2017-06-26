@@ -1,8 +1,0 @@
-<map id="set_horiz_cross_section_points" name="set_horiz_cross_section_points">
-<area shape="rect" id="node2" href="$d0/d61/make__ellipticity_8f90.html#a00d7ff778cd886f933e87a10dc9cfd54" title="make_ellipticity" alt="" coords="245,5,357,32"/>
-<area shape="rect" id="node3" href="$d8/dca/model__topo__bathy_8f90.html#a19fbef8ce862066b9afc7452f5f12e82" title="read_topo_bathy_file" alt="" coords="227,56,374,83"/>
-<area shape="rect" id="node4" href="$d8/da0/create__cross__section_8_f90.html#a155a004c9927ab1793b87706f93fe9c9" title="get_geocentric_thetaphi" alt="" coords="219,107,383,133"/>
-<area shape="rect" id="node5" href="$d9/d27/reduce_8f90.html#a9759e908a22dc5603fa4394a09fc996b" title="reduce" alt="" coords="269,157,332,184"/>
-<area shape="rect" id="node6" href="$d8/dca/model__topo__bathy_8f90.html#abcd25c844d4d671def57035eebe09bf8" title="get_topo_bathy" alt="" coords="244,208,357,235"/>
-<area shape="rect" id="node7" href="$de/d92/spline__routines_8f90.html#aadd8c5cf711f6176dbdecb5d94ab0a3d" title="spline_evaluation" alt="" coords="238,259,363,285"/>
-</map>

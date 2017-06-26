@@ -1,7 +1,0 @@
-<map id="finalize_simulation" name="finalize_simulation">
-<area shape="rect" id="node2" href="$d0/d1f/save__forward__arrays_8f90.html#a81e5f48d9cffa915a3fbf725ce84f437" title="Save the values of the arrays used for forward simulations. " alt="" coords="192,5,339,32"/>
-<area shape="rect" id="node3" href="$d1/d2c/save__kernels_8_f90.html#a360ff85de23b7b08351364bec45125b1" title="save_kernels" alt="" coords="215,56,315,83"/>
-<area shape="rect" id="node4" href="$d9/dff/namespacemanager__adios.html#a5dec530bb016f2c79cdc74911d7e8387" title="manager_adios::finalize\l_adios" alt="" coords="184,107,347,149"/>
-<area shape="rect" id="node5" href="$d8/d83/asdf__manager_8f90.html#a7b7d4eaad49a82a182a32e2ac3816383" title="Finalize ASDF. Called once all adjoint sources have been read from the file. " alt="" coords="215,173,316,200"/>
-<area shape="rect" id="node6" href="$d4/dad/finalize__simulation_8_f90.html#a840110244aee2d670e2c7747c98fab3c" title="finalize_simulation\l_cleanup" alt="" coords="200,225,331,266"/>
-</map>

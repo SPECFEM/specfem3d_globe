@@ -1,8 +1,0 @@
-<map id="read_compute_parameters" name="read_compute_parameters">
-<area shape="rect" id="node2" href="$d7/dbb/combine___a_v_s___d_x_8f90.html#a94e3fe25c684956baed5bca038c6114d" title="combine_avs_dx" alt="" coords="262,5,385,32"/>
-<area shape="rect" id="node3" href="$dd/db6/create__movie___a_v_s___d_x_8f90.html#aafb0552f5f29c1e8e470f5ef96688560" title="read_avs_dx_parameters" alt="" coords="237,56,410,83"/>
-<area shape="rect" id="node4" href="$d0/d14/create__movie___g_m_t__global_8f90.html#ad0de4ace8f3d48d3f8364e23e8b2e7c9" title="create_movie_gmt_global" alt="" coords="236,107,411,133"/>
-<area shape="rect" id="node5" href="$d5/d2b/create__header__file_8f90.html#a5431fdfe652ee5eae2a73c217752621f" title="xcreate_header_file" alt="" coords="254,157,393,184"/>
-<area shape="rect" id="node6" href="$dc/de4/initialize__mesher_8f90.html#afb8f938c43e41489d153eb6cc2b90de3" title="initialize_mesher" alt="" coords="263,208,384,235"/>
-<area shape="rect" id="node7" href="$d8/d84/initialize__simulation_8f90.html#a4df54f4e2a18386a47efaae76cebf247" title="initialize_simulation" alt="" coords="255,259,392,285"/>
-</map>

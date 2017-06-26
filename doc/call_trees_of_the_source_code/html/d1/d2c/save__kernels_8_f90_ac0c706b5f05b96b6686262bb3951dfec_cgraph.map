@@ -1,6 +1,0 @@
-<map id="save_kernels_crust_mantle_ani" name="save_kernels_crust_mantle_ani">
-<area shape="rect" id="node2" href="$d1/d2c/save__kernels_8_f90.html#a63bd825a7bd8783becdc96be004bacb5" title="rotate_kernels_dble" alt="" coords="207,5,345,32"/>
-<area shape="rect" id="node3" href="$d0/d00/save__kernels__adios_8_f90.html#a9b8b404e6a38eeae8800018f9d1929d4" title="Schedule ADIOS writes for kernel variables related to the crust mantle. " alt="" coords="201,57,351,98"/>
-<area shape="rect" id="node4" href="$d8/df4/read__write__netcdf_8f90.html#a3736fa3e1ea0a18a4ce88d9726e1a0c2" title="write_kernel_netcdf" alt="" coords="207,123,345,149"/>
-<area shape="rect" id="node5" href="$d8/df4/read__write__netcdf_8f90.html#a31f62a338a139d5ec2d952bc60cc2796" title="write_coordinates_netcdf" alt="" coords="191,173,361,200"/>
-</map>

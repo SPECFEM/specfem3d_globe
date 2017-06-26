@@ -1,6 +1,0 @@
-<map id="create_mass_matrices_ocean_load" name="create_mass_matrices_ocean_load">
-<area shape="rect" id="node2" href="$d9/df1/rthetaphi__xyz_8f90.html#a9a2d6558f7f1b34dfd37aa834f59ec97" title="xyz_2_rthetaphi_dble" alt="" coords="237,5,386,32"/>
-<area shape="rect" id="node3" href="$d9/d27/reduce_8f90.html#a9759e908a22dc5603fa4394a09fc996b" title="reduce" alt="" coords="280,56,343,83"/>
-<area shape="rect" id="node4" href="$d9/df1/rthetaphi__xyz_8f90.html#a606ed866ba0717c1a16bfe88714bc93c" title="geocentric_2_geographic_dble" alt="" coords="209,107,413,133"/>
-<area shape="rect" id="node5" href="$d8/dca/model__topo__bathy_8f90.html#abcd25c844d4d671def57035eebe09bf8" title="get_topo_bathy" alt="" coords="255,157,368,184"/>
-</map>

@@ -1,6 +1,0 @@
-<map id="mxm5_3comp_singleb" name="mxm5_3comp_singleb">
-<area shape="rect" id="node2" href="$df/d7e/compute__element__strain_8_f90.html#a288da849421cdfdf6fe7a58fd87b90b8" title="compute_element_strain\l_undoatt_dev" alt="" coords="209,5,377,47"/>
-<area shape="rect" id="node3" href="$df/d7e/compute__element__strain_8_f90.html#aab694b45ebabda5ea14671d1b1eb371f" title="compute_element_strain\l_att_dev" alt="" coords="209,71,377,112"/>
-<area shape="rect" id="node4" href="$dd/d70/compute__forces__crust__mantle___dev_8_f90.html#a9a3c7fb2f4a49501222a42f023e0583f" title="compute_forces_crust\l_mantle_dev" alt="" coords="217,136,370,177"/>
-<area shape="rect" id="node5" href="$d5/d00/compute__forces__inner__core___dev_8_f90.html#a52cb5e7e73c0b6d1da9139d578a4929d" title="compute_forces_inner\l_core_dev" alt="" coords="217,201,370,243"/>
-</map>

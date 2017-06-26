@@ -1,7 +1,0 @@
-<map id="meshfem3d_crust_broadcast" name="meshfem3d_crust_broadcast">
-<area shape="rect" id="node2" href="$d6/d0f/model__crust__1__0_8f90.html#a905ab32e3aa611f75a894fc043ac45a1" title="model_crust_1_0_broadcast" alt="" coords="248,5,439,32"/>
-<area shape="rect" id="node3" href="$d1/da0/model__crust__2__0_8f90.html#a846d4b7b5777e7c6f9f9e87b08643399" title="model_crust_2_0_broadcast" alt="" coords="248,56,439,83"/>
-<area shape="rect" id="node4" href="$d2/d5f/model__crustmaps_8f90.html#a9203b6fb68bc440da2c62154fc980ddb" title="model_crustmaps_broadcast" alt="" coords="247,107,440,133"/>
-<area shape="rect" id="node5" href="$de/d3a/model__epcrust_8f90.html#aec2355e03b7ba82fec3f379164bda4f7" title="model_epcrust_broadcast" alt="" coords="255,157,431,184"/>
-<area shape="rect" id="node6" href="$d7/d5a/model__full__sh_8f90.html#a26ca68ec19551b03b5a15d8be53a16fa" title="model_crust_sh_broadcast" alt="" coords="252,208,435,235"/>
-</map>

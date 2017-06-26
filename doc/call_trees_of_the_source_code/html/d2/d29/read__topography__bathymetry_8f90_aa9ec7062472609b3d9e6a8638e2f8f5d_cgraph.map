@@ -1,5 +1,0 @@
-<map id="read_topography_bathymetry" name="read_topography_bathymetry">
-<area shape="rect" id="node2" href="$d0/d61/make__ellipticity_8f90.html#a00d7ff778cd886f933e87a10dc9cfd54" title="make_ellipticity" alt="" coords="285,5,397,32"/>
-<area shape="rect" id="node3" href="$d8/dca/model__topo__bathy_8f90.html#a9ae2097b0c4bb1f815c36a95de69aacf" title="read_topo_bathy_database" alt="" coords="249,56,433,83"/>
-<area shape="rect" id="node4" href="$d2/d29/read__topography__bathymetry_8f90.html#a2c9175a3038800410e970c45b733c141" title="bcast_ibathy_topo" alt="" coords="276,107,407,133"/>
-</map>

@@ -1,6 +1,0 @@
-<map id="add_topography_sh_mantle" name="add_topography_sh_mantle">
-<area shape="rect" id="node2" href="$d9/df1/rthetaphi__xyz_8f90.html#a9a2d6558f7f1b34dfd37aa834f59ec97" title="xyz_2_rthetaphi_dble" alt="" coords="421,5,571,32"/>
-<area shape="rect" id="node3" href="$d9/d27/reduce_8f90.html#a9759e908a22dc5603fa4394a09fc996b" title="reduce" alt="" coords="465,68,527,95"/>
-<area shape="rect" id="node4" href="$d9/df1/rthetaphi__xyz_8f90.html#ab38048ac848cabe5ca2bb2fd39b3aa7d" title="xyz_2_rlatlon_dble" alt="" coords="240,31,373,57"/>
-<area shape="rect" id="node5" href="$d7/d5a/model__full__sh_8f90.html#af161cf751a3d623faf46936b5670f203" title="subtopo_sh" alt="" coords="261,132,352,159"/>
-</map>

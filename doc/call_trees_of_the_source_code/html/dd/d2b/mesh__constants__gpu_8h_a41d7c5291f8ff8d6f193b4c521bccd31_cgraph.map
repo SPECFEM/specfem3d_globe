@@ -1,5 +1,0 @@
-<map id="get_device_array_maximum_value" name="get_device_array_maximum_value">
-<area shape="rect" id="node2" href="$dd/de1/helper__functions__gpu_8c.html#a8188c1c360944920584b2a0a1f9bf8ac" title="gpuSynchronize" alt="" coords="262,5,379,32"/>
-<area shape="rect" id="node3" href="$dd/de1/helper__functions__gpu_8c.html#a6aa349a4d68c77c7cb8053c22c69025d" title="exit_on_error" alt="" coords="271,56,371,83"/>
-<area shape="rect" id="node4" href="$dd/de1/helper__functions__gpu_8c.html#abe9eb115d687953ac06c32b9be326a82" title="gpuCopy_from_device\l_realw" alt="" coords="243,107,399,149"/>
-</map>

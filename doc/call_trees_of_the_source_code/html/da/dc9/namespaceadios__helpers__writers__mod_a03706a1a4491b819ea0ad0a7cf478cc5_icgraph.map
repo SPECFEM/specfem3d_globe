@@ -1,7 +1,0 @@
-<map id="adios_helpers_writers_mod::write_1d_global_array_adios_dims_offset" name="adios_helpers_writers_mod::write_1d_global_array_adios_dims_offset">
-<area shape="rect" id="node2" href="$da/dc9/namespaceadios__helpers__writers__mod.html#a228a35afa4a3501cb00dbd8e1e975fcb" title="Schedule an ADIOS single precision global 1D array for write. " alt="" coords="228,5,401,61"/>
-<area shape="rect" id="node3" href="$da/dc9/namespaceadios__helpers__writers__mod.html#a2cbd1286d0ec13aae090c358244201ac" title="Schedule an ADIOS double precision global 1D array for write. " alt="" coords="228,85,401,141"/>
-<area shape="rect" id="node4" href="$da/dc9/namespaceadios__helpers__writers__mod.html#a46004e65feafa1a16f3571c118f6b4d7" title="Schedule an ADIOS integer global 1D array for write. " alt="" coords="228,165,401,221"/>
-<area shape="rect" id="node5" href="$da/dc9/namespaceadios__helpers__writers__mod.html#a28d051b82f5f771537eb80cec41ca07c" title="Schedule an ADIOS long global 1D array for write. " alt="" coords="228,245,401,301"/>
-<area shape="rect" id="node6" href="$da/dc9/namespaceadios__helpers__writers__mod.html#a57b93475421b30e62279341e023cacc1" title="Schedule an ADIOS logical global 1D array for write. " alt="" coords="228,325,401,381"/>
-</map>

@@ -1,7 +1,0 @@
-<map id="model_attenuation_setup" name="model_attenuation_setup">
-<area shape="rect" id="node2" href="$d3/d03/model__ak135_8f90.html#a3be789df8e7f965dc94b2d133d69bf8d" title="define_model_ak135" alt="" coords="263,5,408,32"/>
-<area shape="rect" id="node3" href="$db/d38/model__1066a_8f90.html#ad7909d96403969a6347474382006029e" title="define_model_1066a" alt="" coords="262,56,409,83"/>
-<area shape="rect" id="node4" href="$d4/d3d/model__1dref_8f90.html#af64d5affb8baf9e6b1dd313a9a9b5975" title="define_model_1dref" alt="" coords="265,107,405,133"/>
-<area shape="rect" id="node5" href="$df/d4e/model__sea1d_8f90.html#a72bf6a397aac2e239c85745addb3f37c" title="define_model_sea1d" alt="" coords="263,157,408,184"/>
-<area shape="rect" id="node6" href="$d2/d2c/model__attenuation_8f90.html#a22533e26244b9fa6eeaae249eaec38c3" title="model_attenuation_getstored_tau" alt="" coords="225,208,445,235"/>
-</map>

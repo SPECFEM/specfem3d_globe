@@ -1,7 +1,0 @@
-<map id="init_mpi" name="init_mpi">
-<area shape="rect" id="node2" href="$d4/d1e/read__value__parameters_8f90.html#a462eefda2b471191d804a7ea8f096ab7" title="open_parameter_file\l_from_master_only" alt="" coords="121,5,265,47"/>
-<area shape="rect" id="node3" href="$d4/d1e/read__value__parameters_8f90.html#a8d76dcfbe05459b675c01f375a33222a" title="close_parameter_file" alt="" coords="313,42,459,69"/>
-<area shape="rect" id="node4" href="$d4/d1e/read__value__parameters_8f90.html#a50ade02e8d7a8381912bab8f0d7185e0" title="read_value_integer" alt="" coords="125,122,261,149"/>
-<area shape="rect" id="node5" href="$d4/d1e/read__value__parameters_8f90.html#aae7e28fe40425fadb339117576c6e3ea" title="read_value_logical" alt="" coords="127,173,260,199"/>
-<area shape="rect" id="node6" href="$db/d8f/parallel_8f90.html#a2550ba897b6279981b4935b676c81975" title="world_split" alt="" coords="151,223,236,250"/>
-</map>

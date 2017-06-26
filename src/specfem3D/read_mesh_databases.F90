@@ -1292,11 +1292,11 @@
 
   ! MPI interfaces
   read(IIN) num_interfaces_crust_mantle
-  allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
+  allocate(my_neighbors_crust_mantle(num_interfaces_crust_mantle), &
           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
           stat=ier)
   if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array my_neighbours_crust_mantle etc.')
+    call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
 
   if (num_interfaces_crust_mantle > 0) then
     read(IIN) max_nibool_interfaces_cm
@@ -1304,7 +1304,7 @@
             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
 
-    read(IIN) my_neighbours_crust_mantle
+    read(IIN) my_neighbors_crust_mantle
     read(IIN) nibool_interfaces_crust_mantle
     read(IIN) ibool_interfaces_crust_mantle
   else
@@ -1377,11 +1377,11 @@
 
   ! MPI interfaces
   read(IIN) num_interfaces_outer_core
-  allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
+  allocate(my_neighbors_outer_core(num_interfaces_outer_core), &
           nibool_interfaces_outer_core(num_interfaces_outer_core), &
           stat=ier)
   if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array my_neighbours_outer_core etc.')
+    call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
 
   if (num_interfaces_outer_core > 0) then
     read(IIN) max_nibool_interfaces_oc
@@ -1389,7 +1389,7 @@
             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_outer_core')
 
-    read(IIN) my_neighbours_outer_core
+    read(IIN) my_neighbors_outer_core
     read(IIN) nibool_interfaces_outer_core
     read(IIN) ibool_interfaces_outer_core
   else
@@ -1461,11 +1461,11 @@
 
   ! MPI interfaces
   read(IIN) num_interfaces_inner_core
-  allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
+  allocate(my_neighbors_inner_core(num_interfaces_inner_core), &
           nibool_interfaces_inner_core(num_interfaces_inner_core), &
           stat=ier)
   if (ier /= 0 ) &
-    call exit_mpi(myrank,'Error allocating array my_neighbours_inner_core etc.')
+    call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')
 
   if (num_interfaces_inner_core > 0) then
     read(IIN) max_nibool_interfaces_ic
@@ -1473,7 +1473,7 @@
             stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
 
-    read(IIN) my_neighbours_inner_core
+    read(IIN) my_neighbors_inner_core
     read(IIN) nibool_interfaces_inner_core
     read(IIN) ibool_interfaces_inner_core
   else
@@ -1956,11 +1956,11 @@
   ! could also test for not allocated, only reader processes have
   ! allocated these arrays.
   if (.not. I_should_read_the_database) then
-    allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
+    allocate(my_neighbors_crust_mantle(num_interfaces_crust_mantle), &
             nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
             stat=ier)
     if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array my_neighbours_crust_mantle etc.')
+      call exit_mpi(myrank,'Error allocating array my_neighbors_crust_mantle etc.')
   endif
   if (num_interfaces_crust_mantle > 0) then
     call bcast_all_i_for_database(max_nibool_interfaces_cm, 1)
@@ -1970,7 +1970,7 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_crust_mantle')
     endif
 
-    call bcast_all_i_for_database(my_neighbours_crust_mantle(1), size(my_neighbours_crust_mantle))
+    call bcast_all_i_for_database(my_neighbors_crust_mantle(1), size(my_neighbors_crust_mantle))
     call bcast_all_i_for_database(nibool_interfaces_crust_mantle(1), size(nibool_interfaces_crust_mantle))
     call bcast_all_i_for_database(ibool_interfaces_crust_mantle(1,1), size(ibool_interfaces_crust_mantle))
   else
@@ -2044,11 +2044,11 @@
   ! MPI interfaces
   call bcast_all_i_for_database(num_interfaces_outer_core, 1)
   if (.not. I_should_read_the_database) then
-    allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
+    allocate(my_neighbors_outer_core(num_interfaces_outer_core), &
             nibool_interfaces_outer_core(num_interfaces_outer_core), &
             stat=ier)
     if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array my_neighbours_outer_core etc.')
+      call exit_mpi(myrank,'Error allocating array my_neighbors_outer_core etc.')
   endif
 
   if (num_interfaces_outer_core > 0) then
@@ -2061,7 +2061,7 @@
   endif
 
   if (num_interfaces_outer_core > 0) then
-    call bcast_all_i_for_database(my_neighbours_outer_core(1), size(my_neighbours_outer_core))
+    call bcast_all_i_for_database(my_neighbors_outer_core(1), size(my_neighbors_outer_core))
     call bcast_all_i_for_database(nibool_interfaces_outer_core(1), size(nibool_interfaces_outer_core))
     call bcast_all_i_for_database(ibool_interfaces_outer_core(1,1), size(ibool_interfaces_outer_core))
   else
@@ -2135,11 +2135,11 @@
   ! MPI interfaces
   call bcast_all_i_for_database(num_interfaces_inner_core, 1)
   if (.not. I_should_read_the_database) then
-    allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
+    allocate(my_neighbors_inner_core(num_interfaces_inner_core), &
             nibool_interfaces_inner_core(num_interfaces_inner_core), &
             stat=ier)
     if (ier /= 0 ) &
-      call exit_mpi(myrank,'Error allocating array my_neighbours_inner_core etc.')
+      call exit_mpi(myrank,'Error allocating array my_neighbors_inner_core etc.')
   endif
 
   if (num_interfaces_inner_core > 0) then
@@ -2150,7 +2150,7 @@
       if (ier /= 0 ) call exit_mpi(myrank,'Error allocating array ibool_interfaces_inner_core')
     endif
 
-    call bcast_all_i_for_database(my_neighbours_inner_core(1), size(my_neighbours_inner_core))
+    call bcast_all_i_for_database(my_neighbors_inner_core(1), size(my_neighbors_inner_core))
     call bcast_all_i_for_database(nibool_interfaces_inner_core(1), size(nibool_interfaces_inner_core))
     call bcast_all_i_for_database(ibool_interfaces_inner_core(1,1), size(ibool_interfaces_inner_core))
   else

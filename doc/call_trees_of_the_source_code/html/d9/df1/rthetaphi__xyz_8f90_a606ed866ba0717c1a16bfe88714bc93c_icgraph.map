@@ -1,7 +1,0 @@
-<map id="geocentric_2_geographic_dble" name="geocentric_2_geographic_dble">
-<area shape="rect" id="node2" href="$d9/d5a/create__mass__matrices_8f90.html#ad8794ba763397c54c138a002041779f1" title="create_mass_matrices\l_ocean_load" alt="" coords="275,5,431,47"/>
-<area shape="rect" id="node3" href="$d9/df1/rthetaphi__xyz_8f90.html#ab38048ac848cabe5ca2bb2fd39b3aa7d" title="xyz_2_rlatlon_dble" alt="" coords="286,71,419,98"/>
-<area shape="rect" id="node4" href="$d9/df1/rthetaphi__xyz_8f90.html#a1dfb2bf26b2e5d3d61d59e663d1776ce" title="geocentric_2_geographic_cr" alt="" coords="257,122,448,149"/>
-<area shape="rect" id="node5" href="$df/dde/save__header__file_8_f90.html#a4363853726f81e0cf4c3d52760b73b00" title="save_header_file" alt="" coords="291,173,415,199"/>
-<area shape="rect" id="node6" href="$d7/d12/locate__sources_8f90.html#a508d209e59474733bb965348c291bd62" title="locate_sources" alt="" coords="297,223,409,250"/>
-</map>

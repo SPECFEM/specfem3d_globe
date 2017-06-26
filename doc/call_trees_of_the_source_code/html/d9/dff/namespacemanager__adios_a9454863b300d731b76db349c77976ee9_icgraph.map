@@ -1,7 +1,0 @@
-<map id="manager_adios::initialize_adios" name="manager_adios::initialize_adios">
-<area shape="rect" id="node2" href="$dc/de4/initialize__mesher_8f90.html#afb8f938c43e41489d153eb6cc2b90de3" title="initialize_mesher" alt="" coords="231,5,352,32"/>
-<area shape="rect" id="node3" href="$d8/d84/initialize__simulation_8f90.html#a4df54f4e2a18386a47efaae76cebf247" title="initialize_simulation" alt="" coords="223,56,360,83"/>
-<area shape="rect" id="node4" href="$d3/d82/convert__model__file__adios_8f90.html#a0412fb5fbcaa9a218bb21b53bb72e2d6" title="convert_model_file\l_adios" alt="" coords="225,107,358,149"/>
-<area shape="rect" id="node5" href="$d4/d58/interpolate__model_8_f90.html#a5d498b55440eaa97251daa50fdc2212c" title="interpolate_model" alt="" coords="227,173,355,200"/>
-<area shape="rect" id="node6" href="$dc/da2/sum__kernels_8_f90.html#aefd110537449bab81a99f09813e2bded" title="sum_kernels_globe" alt="" coords="223,224,360,251"/>
-</map>

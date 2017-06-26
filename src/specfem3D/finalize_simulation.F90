@@ -235,11 +235,11 @@
                b_request_send_vector_ic,b_request_recv_vector_ic)
   endif
 
-  deallocate(my_neighbours_crust_mantle,nibool_interfaces_crust_mantle)
+  deallocate(my_neighbors_crust_mantle,nibool_interfaces_crust_mantle)
   deallocate(ibool_interfaces_crust_mantle)
-  deallocate(my_neighbours_outer_core,nibool_interfaces_outer_core)
+  deallocate(my_neighbors_outer_core,nibool_interfaces_outer_core)
   deallocate(ibool_interfaces_outer_core)
-  deallocate(my_neighbours_inner_core,nibool_interfaces_inner_core)
+  deallocate(my_neighbors_inner_core,nibool_interfaces_inner_core)
   deallocate(ibool_interfaces_inner_core)
 
   ! inner/outer elements

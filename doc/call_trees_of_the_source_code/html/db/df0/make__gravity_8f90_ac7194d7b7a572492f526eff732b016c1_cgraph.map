@@ -1,5 +1,0 @@
-<map id="make_gravity" name="make_gravity">
-<area shape="rect" id="node2" href="$df/d47/model__prem_8f90.html#a799797160b498f8023ea065943c67c8d" title="prem_density" alt="" coords="171,5,274,32"/>
-<area shape="rect" id="node3" href="$dd/d21/intgrl_8f90.html#ae87433bca0cecc549c2792c6ac22bc26" title="intgrl" alt="" coords="197,56,248,83"/>
-<area shape="rect" id="node4" href="$de/d92/spline__routines_8f90.html#a84a64d235cf91eef11b423d9a14bf14f" title="spline_construction" alt="" coords="155,107,291,133"/>
-</map>

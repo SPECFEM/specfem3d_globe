@@ -5,13 +5,13 @@
 from vtk import *
 import sys
 
-# input: 
+# input:
 if len(sys.argv) == 2:
-  modelfile = str(sys.argv[1])  
+  modelfile = str(sys.argv[1])
 else :
   print "Usage: python plot_VTK_gray.py OUTPUT_FILES/bin_movie_009000.d.vtk"
   sys.exit(1)
-  
+
 print "modelfile: ",modelfile
 
 
@@ -19,7 +19,7 @@ print "modelfile: ",modelfile
 # graticule
 latLevel = 3
 lngLevel = 3
-pname = "eqc" # equidistant cylindrical (plate caree) 
+pname = "eqc" # equidistant cylindrical (plate caree)
 pcs = vtkGeoProjection()
 pcs.SetName( pname )
 pcs.SetCentralMeridian( 0. )
@@ -47,7 +47,7 @@ xf3.SetInputConnection( delaunay2D.GetOutputPort() )
 
 
 # coloring
-#output from: ./convert_cpt_lookuptable_python.bash gray_pyramid_inv.cpt 
+#output from: ./convert_cpt_lookuptable_python.bash gray_pyramid_inv.cpt
 colortable = vtkLookupTable()
 colortable.SetNumberOfTableValues(25)
 colortable.SetTableValue(  0 , 1.0 , 1.0 , 1.0 , 1 )
@@ -82,8 +82,8 @@ colortable.SetTableRange(0.0,255.0)
 mapper3 = vtkPolyDataMapper()
 mapper3.SetInputConnection( xf3.GetOutputPort() )
 mapper3.SetScalarRange(0.0,255.0)
-mapper3.ColorArrayName= "displacement" 
-mapper3.ColorAttributeType= 0 
+mapper3.ColorArrayName= "displacement"
+mapper3.ColorAttributeType= 0
 mapper3.SetLookupTable( colortable )
 
 actor3 = vtkActor()

@@ -1,4 +1,0 @@
-<map id="read_mesh_databases_coupling" name="read_mesh_databases_coupling">
-<area shape="rect" id="node2" href="$de/d3c/read__mesh__databases__adios_8f90.html#ae870bd91e02b72bbf0936da5c38c10e1" title="Read adios boundary arrays created by the mesher (file: regX_boundary.bp) " alt="" coords="213,5,371,47"/>
-<area shape="rect" id="node3" href="$d6/d3d/read__mesh__databases_8_f90.html#a34d7a2e2cc787bd5a200f1e01a899008" title="bcast_mesh_databases\l_coupling" alt="" coords="211,71,373,112"/>
-</map>

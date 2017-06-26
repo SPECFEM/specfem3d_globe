@@ -1,9 +1,0 @@
-<map id="initialize_simulation" name="initialize_simulation">
-<area shape="rect" id="node2" href="$db/d2a/read__compute__parameters_8f90.html#a834f551a35dc275050223d6cc275436f" title="read_compute_parameters" alt="" coords="191,5,373,32"/>
-<area shape="rect" id="node3" href="$db/d45/broadcast__computed__parameters_8f90.html#a02b043d3ca83491dbe8e22868c244378" title="broadcast_computed\l_parameters" alt="" coords="209,57,355,98"/>
-<area shape="rect" id="node4" href="$d8/d84/initialize__simulation_8f90.html#adba7413b5a22e1b6bf57c12ba6635ecf" title="initialize_simulation\l_check" alt="" coords="213,122,351,163"/>
-<area shape="rect" id="node5" href="$d8/d84/initialize__simulation_8f90.html#afe650aee6019b23f5b5acf3a885ddc70" title="initialize_gpu" alt="" coords="233,188,331,215"/>
-<area shape="rect" id="node6" href="$d9/dff/namespacemanager__adios.html#a9454863b300d731b76db349c77976ee9" title="manager_adios::initialize\l_adios" alt="" coords="197,239,367,281"/>
-<area shape="rect" id="node7" href="$d8/d83/asdf__manager_8f90.html#ad46856ade4ea219440f6bf6682ea5f87" title="Initialize ASDF for reading the adjoint sources. " alt="" coords="239,305,325,332"/>
-<area shape="rect" id="node8" href="$d6/d20/init__openmp_8_f90.html#a8ef45844ec18716ffd9d64fbc334fed2" title="init_openmp" alt="" coords="235,356,329,383"/>
-</map>

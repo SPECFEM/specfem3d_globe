@@ -1,7 +1,0 @@
-<map id="convert_model_file_adios" name="convert_model_file_adios">
-<area shape="rect" id="node2" href="$db/d8f/parallel_8f90.html#a0f27a8b922f3b4c44530e0c923bf38e5" title="init_mpi" alt="" coords="237,5,305,32"/>
-<area shape="rect" id="node3" href="$db/d8f/parallel_8f90.html#a2cb16ba0f972c8309ad9d4925c7031f2" title="abort_mpi" alt="" coords="231,56,312,83"/>
-<area shape="rect" id="node4" href="$d9/dff/namespacemanager__adios.html#a9454863b300d731b76db349c77976ee9" title="manager_adios::initialize\l_adios" alt="" coords="187,107,356,149"/>
-<area shape="rect" id="node5" href="$db/d8f/parallel_8f90.html#af9aafd1831ffab5bb90f71c0d82df5a7" title="world_duplicate" alt="" coords="404,144,519,171"/>
-<area shape="rect" id="node6" href="$db/d8f/parallel_8f90.html#ac422b103fe555bf7e5c01684fc30634b" title="finalize_mpi" alt="" coords="225,224,317,251"/>
-</map>

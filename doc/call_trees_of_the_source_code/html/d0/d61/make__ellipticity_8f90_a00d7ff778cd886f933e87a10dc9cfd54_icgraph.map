@@ -1,7 +1,0 @@
-<map id="make_ellipticity" name="make_ellipticity">
-<area shape="rect" id="node2" href="$d8/d5e/combine__vol__data_8_f90.html#a8fd5a67759ffb2101952305e19d8db0c" title="combine_vol_data" alt="" coords="204,5,335,32"/>
-<area shape="rect" id="node3" href="$d0/dad/meshfem3_d__models_8_f90.html#a6a7b79f82404dc9605de497f55fd078d" title="meshfem3d_models_broadcast" alt="" coords="165,56,373,83"/>
-<area shape="rect" id="node4" href="$d2/d29/read__topography__bathymetry_8f90.html#aa9ec7062472609b3d9e6a8638e2f8f5d" title="read_topography_bathymetry" alt="" coords="171,107,367,133"/>
-<area shape="rect" id="node5" href="$d8/da0/create__cross__section_8_f90.html#adb3f95e59a8b7e40df4652435a9d2f0e" title="set_horiz_cross_section\l_points" alt="" coords="187,158,352,199"/>
-<area shape="rect" id="node6" href="$d8/da0/create__cross__section_8_f90.html#a367388a06f33a85bb5e1987010f6c332" title="set_vertical_cross\l_section_points" alt="" coords="205,223,334,265"/>
-</map>

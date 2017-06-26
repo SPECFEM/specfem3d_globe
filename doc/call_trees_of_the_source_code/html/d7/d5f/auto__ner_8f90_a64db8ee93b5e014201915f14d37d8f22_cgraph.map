@@ -1,6 +1,0 @@
-<map id="find_r_central_cube" name="find_r_central_cube">
-<area shape="rect" id="node2" href="$d7/d5f/auto__ner_8f90.html#ac583acebfc0c908532e6b34658b5c57b" title="compute_nex" alt="" coords="207,5,310,32"/>
-<area shape="rect" id="node3" href="$d7/d5f/auto__ner_8f90.html#a7f873a82d15f7a8dcd31b67e15ef7082" title="compute_ic_mesh" alt="" coords="193,56,324,83"/>
-<area shape="rect" id="node4" href="$d7/d5f/auto__ner_8f90.html#a27d4069c8dfa00e000a6cda28226cf19" title="get_element" alt="" coords="211,107,307,133"/>
-<area shape="rect" id="node5" href="$d7/d5f/auto__ner_8f90.html#aeb73f7319f1961487afd9eeee4716a10" title="get_size_min_max" alt="" coords="192,157,325,184"/>
-</map>

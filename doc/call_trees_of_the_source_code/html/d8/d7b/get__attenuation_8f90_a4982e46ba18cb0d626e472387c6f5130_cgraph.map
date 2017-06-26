@@ -1,5 +1,0 @@
-<map id="get_attenuation_model_3d" name="get_attenuation_model_3d">
-<area shape="rect" id="node2" href="$d5/d59/read__attenuation__adios_8f90.html#a3e9fd69063a9862b928c590fd920c1ff" title="Read adios attenuation arrays created by the mesher. " alt="" coords="238,5,399,32"/>
-<area shape="rect" id="node3" href="$d8/d7b/get__attenuation_8f90.html#ac2784bac3affdea606e0fb23c3896909" title="get_attenuation_property\l_values" alt="" coords="233,57,404,98"/>
-<area shape="rect" id="node4" href="$d8/d7b/get__attenuation_8f90.html#a79220c5d567435746b66f7189a9b67fd" title="get_attenuation_scale\l_factor" alt="" coords="243,122,395,163"/>
-</map>

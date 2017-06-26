@@ -1,6 +1,0 @@
-<map id="gpuCopy_from_device_realw" name="gpuCopy_from_device_realw">
-<area shape="rect" id="node2" href="$dd/d2b/mesh__constants__gpu_8h.html#a41d7c5291f8ff8d6f193b4c521bccd31" title="get_device_array_maximum\l_value" alt="" coords="209,5,399,47"/>
-<area shape="rect" id="node3" href="$df/def/check__fields__gpu_8c.html#a4b2a5cc3700c77b020fb75a3a21c01fd" title="FC_FUNC_" alt="" coords="447,42,539,69"/>
-<area shape="rect" id="node4" href="$d8/d88/write__seismograms__gpu_8c.html#a528e71346f832921d1a9eaf5dc6f2c31" title="write_seismograms_transfer\l_from_device" alt="" coords="209,123,399,164"/>
-<area shape="rect" id="node5" href="$d8/d88/write__seismograms__gpu_8c.html#a341a3bdc0493ff5e2d8d9e9d3cf00af2" title="write_seismograms_transfer\l_strain_from_device" alt="" coords="209,188,399,229"/>
-</map>

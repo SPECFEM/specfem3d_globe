@@ -1,7 +1,0 @@
-<map id="abort_mpi" name="abort_mpi">
-<area shape="rect" id="node2" href="$d8/d5e/combine__vol__data_8_f90.html#a8fd5a67759ffb2101952305e19d8db0c" title="combine_vol_data" alt="" coords="147,5,277,32"/>
-<area shape="rect" id="node3" href="$d1/d8d/exit__mpi_8f90.html#a2fd678d359c8593333a61eb4924e3b21" title="exit_mpi_without_rank" alt="" coords="135,56,289,83"/>
-<area shape="rect" id="node4" href="$d3/d82/convert__model__file__adios_8f90.html#a0412fb5fbcaa9a218bb21b53bb72e2d6" title="convert_model_file\l_adios" alt="" coords="145,107,279,149"/>
-<area shape="rect" id="node5" href="$d8/da0/create__cross__section_8_f90.html#aa60453bd400840f608716a2c3bc7bc9a" title="cross_section" alt="" coords="160,173,264,200"/>
-<area shape="rect" id="node6" href="$d4/d58/interpolate__model_8_f90.html#a5d498b55440eaa97251daa50fdc2212c" title="interpolate_model" alt="" coords="148,224,276,251"/>
-</map>

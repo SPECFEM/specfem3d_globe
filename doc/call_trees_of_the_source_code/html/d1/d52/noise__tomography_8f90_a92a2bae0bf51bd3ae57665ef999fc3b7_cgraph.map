@@ -1,5 +1,0 @@
-<map id="read_parameters_noise" name="read_parameters_noise">
-<area shape="rect" id="node2" href="$d1/d52/noise__tomography_8f90.html#a29d2602497a206b4dcc99404775f3fbc" title="compute_arrays_source\l_noise" alt="" coords="216,5,381,47"/>
-<area shape="rect" id="node3" href="$d1/d52/noise__tomography_8f90.html#ac386f36517f88c0f8e8b872841875b82" title="noise_distribution\l_direction" alt="" coords="236,71,361,112"/>
-<area shape="rect" id="node4" href="$d1/d52/noise__tomography_8f90.html#a7c599527a4b43dce896d69a2dbef7f0a" title="save_mask_noise" alt="" coords="234,137,363,163"/>
-</map>

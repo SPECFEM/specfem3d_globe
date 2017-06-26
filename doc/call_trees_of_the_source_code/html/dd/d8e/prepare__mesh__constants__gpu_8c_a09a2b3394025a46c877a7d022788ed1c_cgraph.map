@@ -1,9 +1,0 @@
-<map id="FC_FUNC_" name="FC_FUNC_">
-<area shape="rect" id="node2" href="$dd/de1/helper__functions__gpu_8c.html#a6aa349a4d68c77c7cb8053c22c69025d" title="exit_on_error" alt="" coords="192,5,292,32"/>
-<area shape="rect" id="node3" href="$dd/de1/helper__functions__gpu_8c.html#a70831dfa9eb078c2c90ca3ca274d5f55" title="gpuMalloc_realw" alt="" coords="181,56,303,83"/>
-<area shape="rect" id="node4" href="$db/d78/mesh__constants__cuda_8h.html#ab7e8a3159637a67955a4bbfd9784a5f7" title="print_CUDA_error_if_any" alt="" coords="387,157,559,184"/>
-<area shape="rect" id="node5" href="$dd/de1/helper__functions__gpu_8c.html#a7b57b86aa5bd81985fff0efc4fcbab5f" title="gpuCreateCopy_todevice_int" alt="" coords="145,157,339,184"/>
-<area shape="rect" id="node6" href="$dd/de1/helper__functions__gpu_8c.html#ac563655f9043254d9a5fcf4ec032c74d" title="gpuCreateCopy_todevice\l_realw" alt="" coords="156,209,328,250"/>
-<area shape="rect" id="node7" href="$dd/de1/helper__functions__gpu_8c.html#acefd1c2612c9642983d172793eca9cf7" title="gpuMemset_realw" alt="" coords="177,275,307,301"/>
-<area shape="rect" id="node8" href="$dd/de1/helper__functions__gpu_8c.html#a8188c1c360944920584b2a0a1f9bf8ac" title="gpuSynchronize" alt="" coords="183,325,301,352"/>
-</map>

@@ -1,8 +1,0 @@
-<map id="band_instrument_code" name="band_instrument_code">
-<area shape="rect" id="node2" href="$da/d19/compute__arrays__source_8f90.html#a28155dc37e72d3c7c29284a3e4c04c47" title="compute_arrays_source\l_adjoint" alt="" coords="223,5,389,47"/>
-<area shape="rect" id="node3" href="$d7/dd8/locate__receivers_8f90.html#a3f7476862404a106ad4a16a5591b94f6" title="locate_receivers" alt="" coords="247,71,365,98"/>
-<area shape="rect" id="node4" href="$dd/da7/read__adjoint__sources_8f90.html#a9f3f5e70bc0cd1a72fd97105b6dd90c9" title="check_adjoint_sources" alt="" coords="227,122,385,149"/>
-<area shape="rect" id="node5" href="$d7/d17/read__adjoint__sources___a_s_d_f_8f90.html#a36051290977f48797273eb688add9b87" title="check_adjoint_sources_asdf" alt="" coords="211,173,401,199"/>
-<area shape="rect" id="node6" href="$dd/dde/write__seismograms_8f90.html#a600a5e64e46efefcdc62d9ce0415739c" title="write_one_seismogram" alt="" coords="226,223,386,250"/>
-<area shape="rect" id="node7" href="$dd/dde/write__seismograms_8f90.html#a54f3a74272f004473a34cffff0b63068" title="write_adj_seismograms" alt="" coords="225,274,387,301"/>
-</map>

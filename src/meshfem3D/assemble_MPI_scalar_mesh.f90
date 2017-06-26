@@ -428,7 +428,7 @@
   subroutine assemble_MPI_scalar(NPROC,NGLOB_AB,array_val, &
                         num_interfaces,max_nibool_interfaces, &
                         nibool_interfaces,ibool_interfaces, &
-                        my_neighbours)
+                        my_neighbors)
 
 ! blocking send/receive
 
@@ -443,7 +443,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLOB_AB) :: array_val
 
   integer :: num_interfaces,max_nibool_interfaces
-  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbours
+  integer, dimension(num_interfaces) :: nibool_interfaces,my_neighbors
   integer, dimension(max_nibool_interfaces,num_interfaces) :: ibool_interfaces
 
   ! local parameters
@@ -481,14 +481,14 @@
       ! non-blocking synchronous send request
       call isend_cr(buffer_send_scalar(1:nibool_interfaces(iinterface),iinterface), &
            nibool_interfaces(iinterface), &
-           my_neighbours(iinterface), &
+           my_neighbors(iinterface), &
            itag, &
            request_send_scalar(iinterface) &
            )
       ! receive request
       call irecv_cr(buffer_recv_scalar(1:nibool_interfaces(iinterface),iinterface), &
            nibool_interfaces(iinterface), &
-           my_neighbours(iinterface), &
+           my_neighbors(iinterface), &
            itag, &
            request_recv_scalar(iinterface) &
            )
@@ -499,7 +499,7 @@
       call wait_req(request_recv_scalar(iinterface))
     enddo
 
-    ! adding contributions of neighbours
+    ! adding contributions of neighbors
     do iinterface = 1, num_interfaces
       do ipoin = 1, nibool_interfaces(iinterface)
         array_val(ibool_interfaces(ipoin,iinterface)) = &

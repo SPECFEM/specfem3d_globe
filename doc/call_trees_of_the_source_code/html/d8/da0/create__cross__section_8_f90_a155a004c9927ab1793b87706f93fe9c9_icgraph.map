@@ -1,5 +1,0 @@
-<map id="get_geocentric_thetaphi" name="get_geocentric_thetaphi">
-<area shape="rect" id="node2" href="$d8/da0/create__cross__section_8_f90.html#aa60453bd400840f608716a2c3bc7bc9a" title="cross_section" alt="" coords="431,34,535,60"/>
-<area shape="rect" id="node3" href="$d8/da0/create__cross__section_8_f90.html#adb3f95e59a8b7e40df4652435a9d2f0e" title="set_horiz_cross_section\l_points" alt="" coords="217,26,383,68"/>
-<area shape="rect" id="node4" href="$d8/da0/create__cross__section_8_f90.html#a367388a06f33a85bb5e1987010f6c332" title="set_vertical_cross\l_section_points" alt="" coords="235,92,365,133"/>
-</map>

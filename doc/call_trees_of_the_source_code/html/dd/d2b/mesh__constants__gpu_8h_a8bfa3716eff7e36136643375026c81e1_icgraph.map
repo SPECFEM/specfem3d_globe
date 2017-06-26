@@ -1,8 +1,0 @@
-<map id="get_blocks_xy" name="get_blocks_xy">
-<area shape="rect" id="node2" href="$d3/ddc/assemble___m_p_i__scalar__gpu_8c.html#a13e886b0f7ed5cf4e048d5161a8af658" title="FC_FUNC_" alt="" coords="209,5,301,32"/>
-<area shape="rect" id="node3" href="$db/d0f/compute__forces__crust__mantle__gpu_8c.html#aa3dfd9fab9bd138f9726744cc33028a7" title="crust_mantle" alt="" coords="205,56,304,83"/>
-<area shape="rect" id="node4" href="$d3/df2/compute__forces__inner__core__gpu_8c.html#a7c8b4e7cd509478a6712299ff8574f85" title="inner_core" alt="" coords="212,107,297,133"/>
-<area shape="rect" id="node5" href="$d0/d88/compute__forces__outer__core__gpu_8c.html#a74e32b373820da0d9c540ea82b2897d5" title="outer_core" alt="" coords="212,157,297,184"/>
-<area shape="rect" id="node6" href="$d8/d88/write__seismograms__gpu_8c.html#a528e71346f832921d1a9eaf5dc6f2c31" title="write_seismograms_transfer\l_from_device" alt="" coords="160,209,349,250"/>
-<area shape="rect" id="node7" href="$d8/d88/write__seismograms__gpu_8c.html#a341a3bdc0493ff5e2d8d9e9d3cf00af2" title="write_seismograms_transfer\l_strain_from_device" alt="" coords="160,274,349,315"/>
-</map>

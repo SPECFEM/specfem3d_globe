@@ -1,5 +1,0 @@
-<map id="FC_FUNC_" name="FC_FUNC_">
-<area shape="rect" id="node2" href="$dd/de1/helper__functions__gpu_8c.html#a7b57b86aa5bd81985fff0efc4fcbab5f" title="gpuCreateCopy_todevice_int" alt="" coords="145,5,339,32"/>
-<area shape="rect" id="node3" href="$db/d78/mesh__constants__cuda_8h.html#ab7e8a3159637a67955a4bbfd9784a5f7" title="print_CUDA_error_if_any" alt="" coords="387,56,559,83"/>
-<area shape="rect" id="node4" href="$dd/de1/helper__functions__gpu_8c.html#a70831dfa9eb078c2c90ca3ca274d5f55" title="gpuMalloc_realw" alt="" coords="181,107,303,133"/>
-</map>

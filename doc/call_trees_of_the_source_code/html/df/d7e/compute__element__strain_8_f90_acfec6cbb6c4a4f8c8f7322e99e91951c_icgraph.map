@@ -1,5 +1,0 @@
-<map id="compute_element_strain_undoatt_nodev" name="compute_element_strain_undoatt_nodev">
-<area shape="rect" id="node2" href="$de/d77/compute__kernels_8_f90.html#a3c203f34b44c0d2bf723aa104a975d2b" title="compute_kernels_crust\l_mantle" alt="" coords="238,5,398,47"/>
-<area shape="rect" id="node3" href="$de/d77/compute__kernels_8_f90.html#a15f6f5092b8c2757bc180065502fc3c7" title="compute_kernels_inner_core" alt="" coords="221,71,415,98"/>
-<area shape="rect" id="node4" href="$d0/d57/compute__seismograms_8_f90.html#a696f2d55fa58c0b3887f73bc454d4574" title="compute_seismograms\l_adjoint" alt="" coords="238,123,398,164"/>
-</map>

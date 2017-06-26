@@ -1,8 +1,0 @@
-<map id="cmi_get_buffers" name="cmi_get_buffers">
-<area shape="rect" id="node2" href="$d9/d12/create___m_p_i__interfaces_8f90.html#aaeb3d0d55d388df48eb323d3504c2002" title="cmi_read_buffer_data" alt="" coords="200,5,352,32"/>
-<area shape="rect" id="node3" href="$d8/d29/fix__non__blocking__flags_8f90.html#ab7b47a629b10a90db23b2097c275608f" title="fix_non_blocking_slices" alt="" coords="195,56,357,83"/>
-<area shape="rect" id="node4" href="$dd/d16/write___v_t_k__file_8f90.html#aa2dc7a7d86f53f093b851e9290d4016c" title="write_vtk_data_elem_l" alt="" coords="199,107,353,133"/>
-<area shape="rect" id="node5" href="$d2/d7c/create__central__cube__buffers_8f90.html#a1ba4054dc4661b303e6c1bceef92c246" title="comp_central_cube_buffer_size" alt="" coords="171,157,381,184"/>
-<area shape="rect" id="node6" href="$d2/d7c/create__central__cube__buffers_8f90.html#a85e8cbe0a2685d0f9b260dade9fecc5d" title="create_central_cube\l_buffers" alt="" coords="205,209,347,250"/>
-<area shape="rect" id="node7" href="$d8/d29/fix__non__blocking__flags_8f90.html#aa47f637c4dd7e269423a9e020576854a" title="fix_non_blocking_central_cube" alt="" coords="173,275,379,301"/>
-</map>

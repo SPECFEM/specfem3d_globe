@@ -1,6 +1,0 @@
-<map id="system_command" name="system_command">
-<area shape="rect" id="node2" href="$d1/da0/combine__surf__data_8f90.html#a65d2870cfe3966d4aa7ff14e8c2b6688" title="combine_surf_data" alt="" coords="201,5,337,32"/>
-<area shape="rect" id="node3" href="$d8/d5e/combine__vol__data_8_f90.html#a8fd5a67759ffb2101952305e19d8db0c" title="combine_vol_data" alt="" coords="204,56,335,83"/>
-<area shape="rect" id="node4" href="$d4/daa/setup__sources__receivers_8f90.html#af5148d6f26bf45cf014f66f1ea42f11d" title="setup_sources_receivers\l_vtkfile" alt="" coords="184,107,355,149"/>
-<area shape="rect" id="node5" href="$de/d06/write__movie__output_8f90.html#af639f3e4c5c6672e58765b7b37088733" title="write_movie_output" alt="" coords="201,173,338,200"/>
-</map>
