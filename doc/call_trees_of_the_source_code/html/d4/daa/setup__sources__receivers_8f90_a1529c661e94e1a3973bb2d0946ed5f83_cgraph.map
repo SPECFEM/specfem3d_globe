@@ -1,7 +1,0 @@
-<map id="setup_sources_receivers" name="setup_sources_receivers">
-<area shape="rect" id="node2" href="$d4/daa/setup__sources__receivers_8f90.html#afe21871cbd5751b9a1a47216ef7189ff" title="setup_sources" alt="" coords="281,5,390,32"/>
-<area shape="rect" id="node3" href="$d4/daa/setup__sources__receivers_8f90.html#a3564b238897125a8726abe23aaf0c792" title="setup_receivers" alt="" coords="277,56,393,83"/>
-<area shape="rect" id="node4" href="$d4/daa/setup__sources__receivers_8f90.html#af5148d6f26bf45cf014f66f1ea42f11d" title="setup_sources_receivers\l_vtkfile" alt="" coords="250,107,421,149"/>
-<area shape="rect" id="node5" href="$d4/daa/setup__sources__receivers_8f90.html#ab4fa45833e0b0b178568caf599b2b8d6" title="setup_sources_precompute\l_arrays" alt="" coords="242,173,429,214"/>
-<area shape="rect" id="node6" href="$d4/daa/setup__sources__receivers_8f90.html#ae01ff4e8b3b98dd425e21258b90cb872" title="setup_receivers_precompute_intp" alt="" coords="224,239,447,265"/>
-</map>

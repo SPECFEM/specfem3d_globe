@@ -1,4 +1,0 @@
-<map id="plot_topo_bathy_pnm" name="plot_topo_bathy_pnm">
-<area shape="rect" id="node2" href="$d8/dca/model__topo__bathy_8f90.html#a19fbef8ce862066b9afc7452f5f12e82" title="read_topo_bathy_file" alt="" coords="204,5,351,32"/>
-<area shape="rect" id="node3" href="$d8/dca/model__topo__bathy_8f90.html#a9ae2097b0c4bb1f815c36a95de69aacf" title="read_topo_bathy_database" alt="" coords="399,31,583,57"/>
-</map>

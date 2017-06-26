@@ -494,7 +494,7 @@
     if (ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(IREGION_CRUST_MANTLE,LOCAL_PATH, &
                                   num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                                  my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
+                                  my_neighbors_crust_mantle,nibool_interfaces_crust_mantle, &
                                   ibool_interfaces_crust_mantle, &
                                   nspec_inner_crust_mantle,nspec_outer_crust_mantle, &
                                   num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
@@ -503,7 +503,7 @@
     else
       call save_MPI_arrays(IREGION_CRUST_MANTLE,LOCAL_PATH, &
                             num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                            my_neighbours_crust_mantle,nibool_interfaces_crust_mantle, &
+                            my_neighbors_crust_mantle,nibool_interfaces_crust_mantle, &
                             ibool_interfaces_crust_mantle, &
                             nspec_inner_crust_mantle,nspec_outer_crust_mantle, &
                             num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
@@ -516,7 +516,7 @@
     if (ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(IREGION_OUTER_CORE,LOCAL_PATH, &
                                   num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                                  my_neighbours_outer_core,nibool_interfaces_outer_core, &
+                                  my_neighbors_outer_core,nibool_interfaces_outer_core, &
                                   ibool_interfaces_outer_core, &
                                   nspec_inner_outer_core,nspec_outer_outer_core, &
                                   num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
@@ -525,7 +525,7 @@
     else
       call save_MPI_arrays(IREGION_OUTER_CORE,LOCAL_PATH, &
                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                            my_neighbours_outer_core,nibool_interfaces_outer_core, &
+                            my_neighbors_outer_core,nibool_interfaces_outer_core, &
                             ibool_interfaces_outer_core, &
                             nspec_inner_outer_core,nspec_outer_outer_core, &
                             num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
@@ -538,7 +538,7 @@
     if (ADIOS_FOR_MPI_ARRAYS) then
       call save_MPI_arrays_adios(IREGION_INNER_CORE,LOCAL_PATH, &
                                   num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                                  my_neighbours_inner_core,nibool_interfaces_inner_core, &
+                                  my_neighbors_inner_core,nibool_interfaces_inner_core, &
                                   ibool_interfaces_inner_core, &
                                   nspec_inner_inner_core,nspec_outer_inner_core, &
                                   num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
@@ -547,7 +547,7 @@
     else
       call save_MPI_arrays(IREGION_INNER_CORE,LOCAL_PATH, &
                             num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                            my_neighbours_inner_core,nibool_interfaces_inner_core, &
+                            my_neighbors_inner_core,nibool_interfaces_inner_core, &
                             ibool_interfaces_inner_core, &
                             nspec_inner_inner_core,nspec_outer_inner_core, &
                             num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
@@ -565,7 +565,7 @@
 
   subroutine save_MPI_arrays(iregion_code,LOCAL_PATH, &
                                   num_interfaces,max_nibool_interfaces, &
-                                  my_neighbours,nibool_interfaces, &
+                                  my_neighbors,nibool_interfaces, &
                                   ibool_interfaces, &
                                   nspec_inner,nspec_outer, &
                                   num_phase_ispec,phase_ispec_inner, &
@@ -581,7 +581,7 @@
 
   ! MPI interfaces
   integer :: num_interfaces,max_nibool_interfaces
-  integer, dimension(num_interfaces) :: my_neighbours
+  integer, dimension(num_interfaces) :: my_neighbors
   integer, dimension(num_interfaces) :: nibool_interfaces
   integer, dimension(max_nibool_interfaces,num_interfaces) :: &
     ibool_interfaces
@@ -611,7 +611,7 @@
   write(IOUT) num_interfaces
   if (num_interfaces > 0) then
     write(IOUT) max_nibool_interfaces
-    write(IOUT) my_neighbours
+    write(IOUT) my_neighbors
     write(IOUT) nibool_interfaces
     write(IOUT) ibool_interfaces
   endif

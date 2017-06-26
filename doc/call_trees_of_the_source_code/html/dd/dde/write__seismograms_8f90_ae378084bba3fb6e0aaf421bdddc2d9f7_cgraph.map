@@ -1,6 +1,0 @@
-<map id="write_seismograms_to_file" name="write_seismograms_to_file">
-<area shape="rect" id="node2" href="$da/d19/write__output___a_s_d_f_8f90.html#a9746c01110efb799ad3da9a5e4153b65" title="Initializes the data structure for ASDF. " alt="" coords="261,5,366,32"/>
-<area shape="rect" id="node3" href="$dd/dde/write__seismograms_8f90.html#a600a5e64e46efefcdc62d9ce0415739c" title="write_one_seismogram" alt="" coords="233,56,393,83"/>
-<area shape="rect" id="node4" href="$da/d19/write__output___a_s_d_f_8f90.html#a31b90cdfaa7f3c3d14095e27aa65f4bb" title="Writes the ASDF data structure to the file. " alt="" coords="272,107,355,133"/>
-<area shape="rect" id="node5" href="$da/d19/write__output___a_s_d_f_8f90.html#a2bb7ed46827e07dbf4dbf7600d6cb88f" title="Closes the ASDF data structure by deallocating all arrays. " alt="" coords="254,157,373,184"/>
-</map>

@@ -1,5 +1,0 @@
-<map id="finalize_mesher" name="finalize_mesher">
-<area shape="rect" id="node2" href="$df/dde/save__header__file_8_f90.html#a4363853726f81e0cf4c3d52760b73b00" title="save_header_file" alt="" coords="191,5,315,32"/>
-<area shape="rect" id="node3" href="$da/d96/gravity__integrals_8_f90.html#a0dfcf20196906767472cbbbf3c15330e" title="finalize_gravity_integrals" alt="" coords="169,56,337,83"/>
-<area shape="rect" id="node4" href="$d9/dff/namespacemanager__adios.html#a5dec530bb016f2c79cdc74911d7e8387" title="manager_adios::finalize\l_adios" alt="" coords="172,107,335,149"/>
-</map>

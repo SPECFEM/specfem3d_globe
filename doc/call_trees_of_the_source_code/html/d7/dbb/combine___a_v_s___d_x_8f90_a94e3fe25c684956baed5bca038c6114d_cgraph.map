@@ -1,8 +1,0 @@
-<map id="combine_avs_dx" name="combine_avs_dx">
-<area shape="rect" id="node2" href="$db/d2a/read__compute__parameters_8f90.html#a834f551a35dc275050223d6cc275436f" title="read_compute_parameters" alt="" coords="179,5,361,32"/>
-<area shape="rect" id="node3" href="$d4/d7a/create__serial__name__database_8f90.html#a8fe305fce11e2987e7d5732937225b9d" title="create_serial_name\l_database" alt="" coords="201,57,339,98"/>
-<area shape="rect" id="node4" href="$de/d0b/get__cmt_8f90.html#a015127890f832f6f3f7a0fbadd2e5180" title="get_cmt" alt="" coords="235,123,305,149"/>
-<area shape="rect" id="node5" href="$d9/df1/rthetaphi__xyz_8f90.html#a9a2d6558f7f1b34dfd37aa834f59ec97" title="xyz_2_rthetaphi_dble" alt="" coords="195,173,345,200"/>
-<area shape="rect" id="node6" href="$d9/d27/reduce_8f90.html#a9759e908a22dc5603fa4394a09fc996b" title="reduce" alt="" coords="239,224,301,251"/>
-<area shape="rect" id="node7" href="$d9/df1/rthetaphi__xyz_8f90.html#a9af5f6ff33af317e6e54e70f647c5d60" title="lat_2_geocentric_colat_dble" alt="" coords="176,275,364,301"/>
-</map>

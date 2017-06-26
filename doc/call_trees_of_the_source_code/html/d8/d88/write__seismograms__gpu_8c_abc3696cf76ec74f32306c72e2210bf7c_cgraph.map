@@ -1,5 +1,0 @@
-<map id="FC_FUNC_" name="FC_FUNC_">
-<area shape="rect" id="node2" href="$d8/d88/write__seismograms__gpu_8c.html#a528e71346f832921d1a9eaf5dc6f2c31" title="write_seismograms_transfer\l_from_device" alt="" coords="145,5,335,47"/>
-<area shape="rect" id="node3" href="$d8/d88/write__seismograms__gpu_8c.html#a341a3bdc0493ff5e2d8d9e9d3cf00af2" title="write_seismograms_transfer\l_strain_from_device" alt="" coords="145,71,335,112"/>
-<area shape="rect" id="node4" href="$dd/de1/helper__functions__gpu_8c.html#a6aa349a4d68c77c7cb8053c22c69025d" title="exit_on_error" alt="" coords="190,137,290,163"/>
-</map>

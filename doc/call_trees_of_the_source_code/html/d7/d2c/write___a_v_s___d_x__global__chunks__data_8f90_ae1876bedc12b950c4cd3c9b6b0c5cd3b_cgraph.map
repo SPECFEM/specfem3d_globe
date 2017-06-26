@@ -1,6 +1,0 @@
-<map id="write_avs_dx_global_chunks_data" name="write_avs_dx_global_chunks_data">
-<area shape="rect" id="node2" href="$df/d47/model__prem_8f90.html#a969992110f3107ef7831ac249657d3d3" title="prem_display_outer_core" alt="" coords="213,5,385,32"/>
-<area shape="rect" id="node3" href="$d9/df1/rthetaphi__xyz_8f90.html#a9a2d6558f7f1b34dfd37aa834f59ec97" title="xyz_2_rthetaphi_dble" alt="" coords="225,56,374,83"/>
-<area shape="rect" id="node4" href="$de/d92/spline__routines_8f90.html#aadd8c5cf711f6176dbdecb5d94ab0a3d" title="spline_evaluation" alt="" coords="237,107,362,133"/>
-<area shape="rect" id="node5" href="$d0/dad/meshfem3_d__models_8_f90.html#a315b651872585ad2f696b75834dacee9" title="meshfem3d_models_get1d_val" alt="" coords="196,157,403,184"/>
-</map>

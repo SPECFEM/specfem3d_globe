@@ -721,7 +721,7 @@ subroutine read_mesh_databases_MPI_CM_adios()
   integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
-  integer :: offset_my_neighbours, offset_nibool_interfaces, &
+  integer :: offset_my_neighbors, offset_nibool_interfaces, &
              offset_ibool_interfaces, offset_phase_ispec_inner, &
              offset_num_elem_colors
 
@@ -758,8 +758,8 @@ subroutine read_mesh_databases_MPI_CM_adios()
   call adios_selection_writeblock(sel, myrank)
   if (num_interfaces_crust_mantle > 0) then
     call adios_schedule_read(file_handle_adios, sel, &
-                             trim(region_name) // "my_neighbours/offset", &
-                             0, 1,  offset_my_neighbours, adios_err)
+                             trim(region_name) // "my_neighbors/offset", &
+                             0, 1,  offset_my_neighbors, adios_err)
     call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "nibool_interfaces/offset", &
                              0, 1, offset_nibool_interfaces, adios_err)
@@ -780,11 +780,11 @@ subroutine read_mesh_databases_MPI_CM_adios()
   call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  allocate(my_neighbours_crust_mantle(num_interfaces_crust_mantle), &
+  allocate(my_neighbors_crust_mantle(num_interfaces_crust_mantle), &
           nibool_interfaces_crust_mantle(num_interfaces_crust_mantle), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
-      'Error allocating array my_neighbours_crust_mantle etc.')
+      'Error allocating array my_neighbors_crust_mantle etc.')
 
   if (num_interfaces_crust_mantle > 0) then
     call adios_selection_writeblock(sel, myrank)
@@ -798,11 +798,11 @@ subroutine read_mesh_databases_MPI_CM_adios()
     if (ierr /= 0 ) call exit_mpi(myrank, &
         'Error allocating array ibool_interfaces_crust_mantle')
 
-    start(1) = offset_my_neighbours
+    start(1) = offset_my_neighbors
     count(1) = num_interfaces_crust_mantle
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
-      my_neighbours_crust_mantle, adios_err)
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbors/array", 0, 1, &
+      my_neighbors_crust_mantle, adios_err)
     call check_adios_err(myrank,adios_err)
     call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nibool_interfaces/array", &
       0, 1, nibool_interfaces_crust_mantle, adios_err)
@@ -919,7 +919,7 @@ subroutine read_mesh_databases_MPI_OC_adios()
   integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
-  integer :: offset_my_neighbours, offset_nibool_interfaces, &
+  integer :: offset_my_neighbors, offset_nibool_interfaces, &
              offset_ibool_interfaces, offset_phase_ispec_inner, &
              offset_num_elem_colors
 
@@ -950,11 +950,11 @@ subroutine read_mesh_databases_MPI_OC_adios()
   call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  allocate(my_neighbours_outer_core(num_interfaces_outer_core), &
+  allocate(my_neighbors_outer_core(num_interfaces_outer_core), &
           nibool_interfaces_outer_core(num_interfaces_outer_core), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
-      'Error allocating array my_neighbours_outer_coreetc.')
+      'Error allocating array my_neighbors_outer_coreetc.')
 
   !--------------------------------------.
   ! Get offsets to avoid buffer overflow |
@@ -962,8 +962,8 @@ subroutine read_mesh_databases_MPI_OC_adios()
   call adios_selection_writeblock(sel, myrank)
   if (num_interfaces_outer_core > 0) then
     call adios_schedule_read(file_handle_adios, sel, &
-                             trim(region_name) // "my_neighbours/offset", &
-                             0, 1,  offset_my_neighbours, adios_err)
+                             trim(region_name) // "my_neighbors/offset", &
+                             0, 1,  offset_my_neighbors, adios_err)
     call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "nibool_interfaces/offset", &
                              0, 1, offset_nibool_interfaces, adios_err)
@@ -996,11 +996,11 @@ subroutine read_mesh_databases_MPI_OC_adios()
     if (ierr /= 0 ) call exit_mpi(myrank, &
         'Error allocating array ibool_interfaces_outer_core')
 
-    start(1) = offset_my_neighbours
+    start(1) = offset_my_neighbors
     count(1) = num_interfaces_outer_core
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
-      my_neighbours_outer_core, adios_err)
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbors/array", 0, 1, &
+      my_neighbors_outer_core, adios_err)
     call check_adios_err(myrank,adios_err)
     call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nibool_interfaces/array", &
       0, 1, nibool_interfaces_outer_core, adios_err)
@@ -1115,7 +1115,7 @@ subroutine read_mesh_databases_MPI_IC_adios()
   integer(kind=8)         :: sel
   integer(kind=8), dimension(1) :: start, count
 
-  integer :: offset_my_neighbours, offset_nibool_interfaces, &
+  integer :: offset_my_neighbors, offset_nibool_interfaces, &
              offset_ibool_interfaces, offset_phase_ispec_inner, &
              offset_num_elem_colors
 
@@ -1153,8 +1153,8 @@ subroutine read_mesh_databases_MPI_IC_adios()
   call adios_selection_writeblock(sel, myrank)
   if (num_interfaces_inner_core > 0) then
     call adios_schedule_read(file_handle_adios, sel, &
-                             trim(region_name) // "my_neighbours/offset", &
-                             0, 1,  offset_my_neighbours, adios_err)
+                             trim(region_name) // "my_neighbors/offset", &
+                             0, 1,  offset_my_neighbors, adios_err)
     call adios_schedule_read(file_handle_adios, sel, &
                              trim(region_name) // "nibool_interfaces/offset", &
                              0, 1, offset_nibool_interfaces, adios_err)
@@ -1175,11 +1175,11 @@ subroutine read_mesh_databases_MPI_IC_adios()
   call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)
 
-  allocate(my_neighbours_inner_core(num_interfaces_inner_core), &
+  allocate(my_neighbors_inner_core(num_interfaces_inner_core), &
           nibool_interfaces_inner_core(num_interfaces_inner_core), &
           stat=ierr)
   if (ierr /= 0 ) call exit_mpi(myrank, &
-      'Error allocating array my_neighbours_inner_core etc.')
+      'Error allocating array my_neighbors_inner_core etc.')
 
   if (num_interfaces_inner_core > 0) then
     call adios_selection_writeblock(sel, myrank)
@@ -1194,11 +1194,11 @@ subroutine read_mesh_databases_MPI_IC_adios()
     if (ierr /= 0 ) call exit_mpi(myrank, &
         'Error allocating array ibool_interfaces_inner_core')
 
-    start(1) = offset_my_neighbours
+    start(1) = offset_my_neighbors
     count(1) = num_interfaces_inner_core
     call adios_selection_boundingbox (sel , 1, start, count)
-    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbours/array", 0, 1, &
-      my_neighbours_inner_core, adios_err)
+    call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "my_neighbors/array", 0, 1, &
+      my_neighbors_inner_core, adios_err)
     call check_adios_err(myrank,adios_err)
     call adios_schedule_read(file_handle_adios, sel, trim(region_name) // "nibool_interfaces/array", &
       0, 1, nibool_interfaces_inner_core, adios_err)

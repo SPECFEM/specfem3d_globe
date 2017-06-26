@@ -1,5 +1,0 @@
-<map id="prepare_vtk_window" name="prepare_vtk_window">
-<area shape="rect" id="node2" href="$d9/df1/rthetaphi__xyz_8f90.html#ac6fd8ceb5b874b8179483efde03f315e" title="rthetaphi_2_xyz" alt="" coords="197,5,313,32"/>
-<area shape="rect" id="node3" href="$db/d8f/parallel_8f90.html#ad81f5ffd7c57cb8dd3bfb1546bf415fb" title="gatherv_all_r" alt="" coords="206,56,305,83"/>
-<area shape="rect" id="node4" href="$db/d8f/parallel_8f90.html#a9ced9af50af70ea1c37f3ef88ddc454d" title="gatherv_all_i" alt="" coords="207,107,304,133"/>
-</map>

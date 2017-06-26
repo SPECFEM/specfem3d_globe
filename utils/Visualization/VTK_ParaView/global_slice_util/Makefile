@@ -1,7 +1,7 @@
 F90 = ifort
 F90_FLAGS = -O3
 
-LIB = 
+LIB =
 
 SUB_MOD = sub_slice_number
 SRC_ALL = global_slice_number normal_plane make_az_stations
@@ -23,5 +23,5 @@ $(SRC_ALL): % : %.f90 $(SUB_MOD_OBJ) constants.h
 $(SUB_MOD_OBJ): $(OBJ_DIR)/%.o : %.f90
 	$(F90) -c -o $(OBJ_DIR)/$*.o $*.f90 -module $(MOD_DIR)
 
-clean: 
+clean:
 	\rm -f $(MOD_DIR)/*.mod $(OBJ_DIR)/*.o *.o *.mod *~ garc_station.txt  xsection_translate.txt xglobal_slice_number xmake_az_stations xnormal_plane

@@ -1,5 +1,0 @@
-<map id="print_master_distances_noise" name="print_master_distances_noise">
-<area shape="rect" id="node2" href="$d9/df1/rthetaphi__xyz_8f90.html#a9af5f6ff33af317e6e54e70f647c5d60" title="lat_2_geocentric_colat_dble" alt="" coords="213,5,401,32"/>
-<area shape="rect" id="node3" href="$d9/d27/reduce_8f90.html#a9759e908a22dc5603fa4394a09fc996b" title="reduce" alt="" coords="276,56,339,83"/>
-<area shape="rect" id="node4" href="$d7/dd8/locate__receivers_8f90.html#a468e3e265c9e9f6c09f187bf350a3242" title="heap_sort_distances" alt="" coords="235,107,380,133"/>
-</map>

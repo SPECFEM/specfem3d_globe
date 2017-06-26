@@ -1,9 +1,0 @@
-<map id="setup_mpi_interfaces_ic" name="setup_mpi_interfaces_ic">
-<area shape="rect" id="node2" href="$d8/d9d/assemble___m_p_i__scalar__mesh_8f90.html#a5ec28f223e64927f60d80a8f70fb21ac" title="assemble_mpi_scalar\l_block" alt="" coords="221,5,372,47"/>
-<area shape="rect" id="node3" href="$dd/d16/write___v_t_k__file_8f90.html#a93154416d732ab974cb9665cde6b3af6" title="write_vtk_data_elem_i" alt="" coords="219,71,374,98"/>
-<area shape="rect" id="node4" href="$d1/df5/assemble___m_p_i__central__cube__mesh_8f90.html#a4715407e6dd4652759430de0fd898d0c" title="assemble_mpi_central\l_cube_block" alt="" coords="219,123,375,164"/>
-<area shape="rect" id="node5" href="$d3/dea/get___m_p_i__interfaces_8f90.html#a7abd1e2656233ddaa8f1e77c65b8910b" title="get_mpi_interfaces" alt="" coords="229,189,364,215"/>
-<area shape="rect" id="node6" href="$dd/d16/write___v_t_k__file_8f90.html#afd6c5e82eefb74837d730667277ce080" title="write_vtk_data_points" alt="" coords="221,239,372,266"/>
-<area shape="rect" id="node7" href="$d2/db0/test___m_p_i__interfaces_8f90.html#a62468361e3f2a4bf2359112664035a69" title="test_mpi_neighbours" alt="" coords="224,290,369,317"/>
-<area shape="rect" id="node8" href="$d2/db0/test___m_p_i__interfaces_8f90.html#a61396f69621b863890eab1f6d8e3f369" title="test_mpi_ic" alt="" coords="252,341,341,367"/>
-</map>

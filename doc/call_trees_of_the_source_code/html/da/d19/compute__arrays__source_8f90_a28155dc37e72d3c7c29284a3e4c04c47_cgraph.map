@@ -1,6 +1,0 @@
-<map id="compute_arrays_source_adjoint" name="compute_arrays_source_adjoint">
-<area shape="rect" id="node2" href="$dd/dde/write__seismograms_8f90.html#a51c1acfe46e81f6baee28db417367c2c" title="band_instrument_code" alt="" coords="231,5,389,32"/>
-<area shape="rect" id="node3" href="$d7/d17/read__adjoint__sources___a_s_d_f_8f90.html#a5307a2c6d3dc4a3bbee1f24acfca10bd" title="read_adjoint_sources_asdf" alt="" coords="219,56,401,83"/>
-<area shape="rect" id="node4" href="$dc/d7c/lagrange__poly_8f90.html#a39932627e6d212a19fe7225b9a8c25e7" title="lagrange_any" alt="" coords="259,107,361,133"/>
-<area shape="rect" id="node5" href="$d3/d5d/multiply__arrays__source_8f90.html#a7d0bd8244039b288a5ec41fdf7cbb41b" title="multiply_arrays_adjoint" alt="" coords="231,157,389,184"/>
-</map>

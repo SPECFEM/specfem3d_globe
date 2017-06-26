@@ -1,7 +1,0 @@
-<map id="compute_element_stress_attenuation_contrib" name="compute_element_stress_attenuation_contrib">
-<area shape="rect" id="node2" href="$d5/d80/compute__element_8_f90.html#aeef0ef734fc81b12ffc9451a43938182" title="compute_element_iso" alt="" coords="240,5,392,32"/>
-<area shape="rect" id="node3" href="$d5/d80/compute__element_8_f90.html#ad2c36e91104e0ef5e2d0b40626de3bde" title="compute_element_iso_ic" alt="" coords="231,56,401,83"/>
-<area shape="rect" id="node4" href="$d5/d80/compute__element_8_f90.html#aba7d04e46a8f23ede25a82ef1191674d" title="compute_element_tiso" alt="" coords="238,107,394,133"/>
-<area shape="rect" id="node5" href="$d5/d80/compute__element_8_f90.html#abafe2d17d344a3738093219037fafedd" title="compute_element_aniso" alt="" coords="233,157,399,184"/>
-<area shape="rect" id="node6" href="$d5/d80/compute__element_8_f90.html#a3e244d63eea1ba05e933c76b8ac3ecc7" title="compute_element_aniso_ic" alt="" coords="224,208,408,235"/>
-</map>

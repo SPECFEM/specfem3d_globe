@@ -1,7 +1,0 @@
-<map id="write_one_seismogram" name="write_one_seismogram">
-<area shape="rect" id="node2" href="$dd/dde/write__seismograms_8f90.html#a51c1acfe46e81f6baee28db417367c2c" title="band_instrument_code" alt="" coords="213,5,371,32"/>
-<area shape="rect" id="node3" href="$da/dae/get__backazimuth_8f90.html#a385efea9f10632222a70afa8594299ea" title="get_backazimuth" alt="" coords="231,56,353,83"/>
-<area shape="rect" id="node4" href="$d5/d9b/write__output___s_a_c_8f90.html#a81b94faeb1a817e8cafb621cd4374568" title="write_output_sac" alt="" coords="231,107,353,133"/>
-<area shape="rect" id="node5" href="$dd/d5b/write__output___a_s_c_i_i_8f90.html#aaf39f7ae1a06afccd496b781a5ce0301" title="write_output_ascii" alt="" coords="227,157,357,184"/>
-<area shape="rect" id="node6" href="$da/d19/write__output___a_s_d_f_8f90.html#a1cc6c3ed4635aa62777be758b7441efb" title="Stores the records into the ASDF structure. " alt="" coords="233,208,351,235"/>
-</map>

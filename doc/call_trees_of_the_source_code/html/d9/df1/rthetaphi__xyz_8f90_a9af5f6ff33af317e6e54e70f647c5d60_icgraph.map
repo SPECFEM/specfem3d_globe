@@ -1,6 +1,0 @@
-<map id="lat_2_geocentric_colat_dble" name="lat_2_geocentric_colat_dble">
-<area shape="rect" id="node2" href="$d7/dbb/combine___a_v_s___d_x_8f90.html#a94e3fe25c684956baed5bca038c6114d" title="combine_avs_dx" alt="" coords="260,5,383,32"/>
-<area shape="rect" id="node3" href="$d7/dd8/locate__receivers_8f90.html#a3f7476862404a106ad4a16a5591b94f6" title="locate_receivers" alt="" coords="262,56,381,83"/>
-<area shape="rect" id="node4" href="$d7/d12/locate__sources_8f90.html#a508d209e59474733bb965348c291bd62" title="locate_sources" alt="" coords="265,107,377,133"/>
-<area shape="rect" id="node5" href="$d1/d52/noise__tomography_8f90.html#ad5246f66444d89f645e4de696e5e7196" title="print_master_distances\l_noise" alt="" coords="241,158,401,199"/>
-</map>

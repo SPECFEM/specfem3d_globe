@@ -1,7 +1,0 @@
-<map id="write_avs_dx_output" name="write_avs_dx_output">
-<area shape="rect" id="node2" href="$d3/d9b/write___a_v_s___d_x__output__adios_8f90.html#a18f29b23b4b4b7daccc763cdd6080ff6" title="write_avs_dx_output\l_adios" alt="" coords="217,5,361,47"/>
-<area shape="rect" id="node3" href="$dc/d75/write___a_v_s___d_x__global__data_8f90.html#a244878f980dff68ff3b41b9464522cdf" title="write_avs_dx_global_data" alt="" coords="201,71,377,98"/>
-<area shape="rect" id="node4" href="$d3/d74/write___a_v_s___d_x__global__faces__data_8f90.html#a2aff3bd785ed7cbf61007a1669f5f77a" title="write_avs_dx_global\l_faces_data" alt="" coords="218,123,361,164"/>
-<area shape="rect" id="node5" href="$d7/d2c/write___a_v_s___d_x__global__chunks__data_8f90.html#ae1876bedc12b950c4cd3c9b6b0c5cd3b" title="write_avs_dx_global\l_chunks_data" alt="" coords="218,188,361,229"/>
-<area shape="rect" id="node6" href="$d0/d6c/write___a_v_s___d_x__surface__data_8f90.html#aaa42b778977dd3ea732f0b94720d69aa" title="write_avs_dx_surface_data" alt="" coords="197,254,381,281"/>
-</map>

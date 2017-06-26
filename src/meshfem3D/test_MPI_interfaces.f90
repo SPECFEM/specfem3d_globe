@@ -26,9 +26,9 @@
 !=====================================================================
 
 
-  subroutine test_MPI_neighbours(iregion_code, &
+  subroutine test_MPI_neighbors(iregion_code, &
                                  num_interfaces,max_nibool_interfaces, &
-                                 my_neighbours,nibool_interfaces, &
+                                 my_neighbors,nibool_interfaces, &
                                  ibool_interfaces)
 
   use constants
@@ -41,14 +41,14 @@
 
   integer,intent(in) :: iregion_code
   integer,intent(in) :: num_interfaces,max_nibool_interfaces
-  integer,dimension(num_interfaces),intent(in) :: my_neighbours,nibool_interfaces
+  integer,dimension(num_interfaces),intent(in) :: my_neighbors,nibool_interfaces
   integer,dimension(max_nibool_interfaces,num_interfaces),intent(in):: ibool_interfaces
 
   ! local parameters
   integer,dimension(:),allocatable :: dummy_i
   integer,dimension(:,:),allocatable :: test_interfaces
   integer,dimension(:,:),allocatable :: test_interfaces_nibool
-  integer :: ineighbour,iproc,inum,i,j,ier,ipoints,max_num,iglob
+  integer :: ineighbor,iproc,inum,i,j,ier,ipoints,max_num,iglob
   logical :: is_okay
   logical,dimension(:),allocatable :: mask
 
@@ -57,7 +57,7 @@
   !  if (myrank == iproc) then
   !    print *, 'MPI rank',myrank,'interfaces : ',num_interfaces,'region',iregion_code
   !    do j = 1,num_interfaces
-  !      print *, '  my_neighbours: ',my_neighbours(j),nibool_interfaces(j)
+  !      print *, '  my_neighbors: ',my_neighbors(j),nibool_interfaces(j)
   !    enddo
   !    print *
   !  endif
@@ -149,7 +149,7 @@
     dummy_i(:) = 0
 
     ! sets info for master process
-    test_interfaces(1:num_interfaces,0) = my_neighbours(1:num_interfaces)
+    test_interfaces(1:num_interfaces,0) = my_neighbors(1:num_interfaces)
     test_interfaces_nibool(1:num_interfaces,0) = nibool_interfaces(1:num_interfaces)
     dummy_i(0) = num_interfaces
 
@@ -167,7 +167,7 @@
     ! sends info to master process
     call send_singlei(num_interfaces,0,itag)
     if (num_interfaces > 0) then
-      call send_i(my_neighbours(1:num_interfaces),num_interfaces,0,itag)
+      call send_i(my_neighbors(1:num_interfaces),num_interfaces,0,itag)
       call send_i(nibool_interfaces(1:num_interfaces),num_interfaces,0,itag)
     endif
   endif
@@ -179,44 +179,44 @@
     do iproc = 0,NPROCTOT-1
       ! loops over all neighbors
       do i = 1,dummy_i(iproc)
-        ! gets neighbour rank and number of points on interface with it
-        ineighbour = test_interfaces(i,iproc)
+        ! gets neighbor rank and number of points on interface with it
+        ineighbor = test_interfaces(i,iproc)
         ipoints = test_interfaces_nibool(i,iproc)
 
         ! checks values
-        if (ineighbour < 0 .or. ineighbour > NPROCTOT-1) then
-          print *,'Error neighbour:',iproc,ineighbour
-          call exit_mpi(myrank,'Error ineighbour')
+        if (ineighbor < 0 .or. ineighbor > NPROCTOT-1) then
+          print *,'Error neighbor:',iproc,ineighbor
+          call exit_mpi(myrank,'Error ineighbor')
         endif
         if (ipoints <= 0) then
-          print *,'Error neighbour points:',iproc,ipoints
-          call exit_mpi(myrank,'Error ineighbour points')
+          print *,'Error neighbor points:',iproc,ipoints
+          call exit_mpi(myrank,'Error ineighbor points')
         endif
 
-        ! looks up corresponding entry in neighbour array
+        ! looks up corresponding entry in neighbor array
         is_okay = .false.
-        do j = 1,dummy_i(ineighbour)
-          if (test_interfaces(j,ineighbour) == iproc) then
-            ! checks if same number of interface points with this neighbour
-            if (test_interfaces_nibool(j,ineighbour) == ipoints) then
+        do j = 1,dummy_i(ineighbor)
+          if (test_interfaces(j,ineighbor) == iproc) then
+            ! checks if same number of interface points with this neighbor
+            if (test_interfaces_nibool(j,ineighbor) == ipoints) then
               is_okay = .true.
             else
-              print *,'Error ',iproc,'neighbour ',ineighbour,' points =',ipoints
-              print *,'  ineighbour has points = ',test_interfaces_nibool(j,ineighbour)
+              print *,'Error ',iproc,'neighbor ',ineighbor,' points =',ipoints
+              print *,'  ineighbor has points = ',test_interfaces_nibool(j,ineighbor)
               print *
-              call exit_mpi(myrank,'Error ineighbour points differ')
+              call exit_mpi(myrank,'Error ineighbor points differ')
             endif
             exit
           endif
         enddo
         if (.not. is_okay) then
-          print *,'Error ',iproc,' neighbour not found: ',ineighbour
+          print *,'Error ',iproc,' neighbor not found: ',ineighbor
           print *,'iproc ',iproc,' interfaces:'
           print *,test_interfaces(1:dummy_i(iproc),iproc)
-          print *,'ineighbour ',ineighbour,' interfaces:'
-          print *,test_interfaces(1:dummy_i(ineighbour),ineighbour)
+          print *,'ineighbor ',ineighbor,' interfaces:'
+          print *,test_interfaces(1:dummy_i(ineighbor),ineighbor)
           print *
-          call exit_mpi(myrank,'Error ineighbour not found')
+          call exit_mpi(myrank,'Error ineighbor not found')
         endif
       enddo
     enddo
@@ -233,7 +233,7 @@
   endif
   call synchronize_all()
 
-  end subroutine test_MPI_neighbours
+  end subroutine test_MPI_neighbors
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -301,7 +301,7 @@
                       test_flag_vector, &
                       num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
                       nibool_interfaces_crust_mantle,ibool_interfaces_crust_mantle, &
-                      my_neighbours_crust_mantle)
+                      my_neighbors_crust_mantle)
 
   ! removes initial flag
   test_flag_vector(:,:) = test_flag_vector(:,:) - 1.0_CUSTOM_REAL
@@ -412,7 +412,7 @@
                                 test_flag, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                                my_neighbours_outer_core)
+                                my_neighbors_outer_core)
 
 
   ! removes initial flag
@@ -522,7 +522,7 @@
                       test_flag_vector, &
                       num_interfaces_inner_core,max_nibool_interfaces_ic, &
                       nibool_interfaces_inner_core,ibool_interfaces_inner_core, &
-                      my_neighbours_inner_core)
+                      my_neighbors_inner_core)
 
   ! removes initial flag
   test_flag_vector(:,:) = test_flag_vector(:,:) - 1.0_CUSTOM_REAL

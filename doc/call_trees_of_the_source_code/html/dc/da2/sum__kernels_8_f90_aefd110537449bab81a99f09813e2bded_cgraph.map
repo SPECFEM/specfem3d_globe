@@ -1,7 +1,0 @@
-<map id="sum_kernels_globe" name="sum_kernels_globe">
-<area shape="rect" id="node2" href="$db/d8f/parallel_8f90.html#a0f27a8b922f3b4c44530e0c923bf38e5" title="init_mpi" alt="" coords="241,5,309,32"/>
-<area shape="rect" id="node3" href="$d9/dff/namespacemanager__adios.html#a9454863b300d731b76db349c77976ee9" title="manager_adios::initialize\l_adios" alt="" coords="191,57,360,98"/>
-<area shape="rect" id="node4" href="$d2/d4d/combine__sem_8f90.html#a0e7c98949184913cac9dd34cf632408a" title="sum_kernel" alt="" coords="230,123,321,149"/>
-<area shape="rect" id="node5" href="$d9/dff/namespacemanager__adios.html#a5dec530bb016f2c79cdc74911d7e8387" title="manager_adios::finalize\l_adios" alt="" coords="194,174,357,215"/>
-<area shape="rect" id="node6" href="$db/d8f/parallel_8f90.html#ac422b103fe555bf7e5c01684fc30634b" title="finalize_mpi" alt="" coords="229,240,321,267"/>
-</map>

@@ -1,5 +1,0 @@
-<map id="compute_kernels_crust_mantle" name="compute_kernels_crust_mantle">
-<area shape="rect" id="node2" href="$df/d7e/compute__element__strain_8_f90.html#a288da849421cdfdf6fe7a58fd87b90b8" title="compute_element_strain\l_undoatt_dev" alt="" coords="213,5,381,47"/>
-<area shape="rect" id="node3" href="$df/d7e/compute__element__strain_8_f90.html#acfec6cbb6c4a4f8c8f7322e99e91951c" title="compute_element_strain\l_undoatt_nodev" alt="" coords="213,71,381,112"/>
-<area shape="rect" id="node4" href="$de/d77/compute__kernels_8_f90.html#a84bd6e80155e467bf8a8a7fcc2943392" title="compute_strain_product" alt="" coords="215,137,380,163"/>
-</map>

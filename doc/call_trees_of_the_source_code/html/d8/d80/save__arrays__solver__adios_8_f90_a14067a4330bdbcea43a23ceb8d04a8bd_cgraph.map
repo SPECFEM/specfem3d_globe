@@ -1,7 +1,0 @@
-<map id="save_arrays_solver_adios" name="save_arrays_solver_adios">
-<area shape="rect" id="node2" href="$d6/d4c/create__name__database_8f90.html#a583a4cce11faa006fbbbe724eb3cfa1b" title="create_name_database\l_adios" alt="" coords="191,5,353,47"/>
-<area shape="rect" id="node3" href="$d9/dff/namespacemanager__adios.html#a73b0afa46e5475dd6f3afd90c490d17a" title="manager_adios::close\l_file_adios" alt="" coords="401,119,553,160"/>
-<area shape="rect" id="node4" href="$db/d8f/parallel_8f90.html#ad8bfdd84a9e86a4e3276a4cfc2f4248e" title="max_allreduce_i" alt="" coords="213,122,331,149"/>
-<area shape="rect" id="node5" href="$d8/d80/save__arrays__solver__adios_8_f90.html#afee50e53cdd61e98744feff8602da430" title="Save the meshfiles that will be used by the solver in an ADIOS format. " alt="" coords="203,173,341,215"/>
-<area shape="rect" id="node6" href="$d7/d7d/save__arrays__solver_8f90.html#a8c75c78fb23f1e9930b9fceeb3ae466a" title="save_arrays_solver\l_meshfiles" alt="" coords="203,239,341,280"/>
-</map>

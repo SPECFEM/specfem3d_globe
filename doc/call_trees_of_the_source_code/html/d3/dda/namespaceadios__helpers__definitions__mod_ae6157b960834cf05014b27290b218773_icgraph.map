@@ -1,8 +1,0 @@
-<map id="adios_helpers_definitions_mod::define_adios_global_dims_1d" name="adios_helpers_definitions_mod::define_adios_global_dims_1d">
-<area shape="rect" id="node2" href="$d3/dda/namespaceadios__helpers__definitions__mod.html#a8ad32ad33c0a7cec83b72e3f7750885f" title="Define a real global array in ADIOS regardless of the array shape. " alt="" coords="235,5,416,61"/>
-<area shape="rect" id="node3" href="$d3/dda/namespaceadios__helpers__definitions__mod.html#a4b1362fc1c44d35adc946f4a30f26dc8" title="Define a double global array in ADIOS regardless of the array shape. " alt="" coords="235,85,416,141"/>
-<area shape="rect" id="node4" href="$d3/dda/namespaceadios__helpers__definitions__mod.html#a01eda4b44b12ddd8ea7455d7b9a7d2d7" title="Define a integer global array in ADIOS regardless of the array shape. " alt="" coords="235,165,416,221"/>
-<area shape="rect" id="node5" href="$d3/dda/namespaceadios__helpers__definitions__mod.html#af6d17b71aaa94fa15b8ac060e98af209" title="Define a long integer global array in ADIOS regardless of the array shape. " alt="" coords="235,245,416,301"/>
-<area shape="rect" id="node6" href="$d3/dda/namespaceadios__helpers__definitions__mod.html#af5a869e542cce7ad1b91cc891a2902bc" title="Define a logical global array in ADIOS regardless of the array shape. " alt="" coords="235,325,416,381"/>
-<area shape="rect" id="node7" href="$d3/dda/namespaceadios__helpers__definitions__mod.html#a2f16569c6daed7cd9d2779c778156c3d" title="adios_helpers_definitions\l_mod::define_adios_global\l_1d_string_generic" alt="" coords="235,405,416,461"/>
-</map>

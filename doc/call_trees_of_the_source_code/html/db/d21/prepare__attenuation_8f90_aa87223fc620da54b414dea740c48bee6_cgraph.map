@@ -1,5 +1,0 @@
-<map id="prepare_attenuation" name="prepare_attenuation">
-<area shape="rect" id="node2" href="$d8/d7b/get__attenuation_8f90.html#a4982e46ba18cb0d626e472387c6f5130" title="get_attenuation_model_3d" alt="" coords="201,5,381,32"/>
-<area shape="rect" id="node3" href="$d8/d7b/get__attenuation_8f90.html#aaa7e0041b75e8ab1206a86b0bce950b5" title="bcast_attenuation_model_3d" alt="" coords="195,56,388,83"/>
-<area shape="rect" id="node4" href="$d8/d7b/get__attenuation_8f90.html#ac3c30b819473bc98eacf7127f77f0fb6" title="get_attenuation_memory\l_values" alt="" coords="207,107,376,149"/>
-</map>

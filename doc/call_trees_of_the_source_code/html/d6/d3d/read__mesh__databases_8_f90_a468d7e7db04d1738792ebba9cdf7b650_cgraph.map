@@ -1,5 +1,0 @@
-<map id="read_mesh_databases_cm" name="read_mesh_databases_cm">
-<area shape="rect" id="node2" href="$d9/dd3/read__arrays__solver__adios_8_f90.html#a110fe5070cebcbdff4346547339c0388" title="Read adios arrays created by the mesher (file: regX_solver_data.bp) " alt="" coords="262,5,398,47"/>
-<area shape="rect" id="node3" href="$d1/d20/read__arrays__solver_8f90.html#a9fce3b89312a3f8906ffa3eb6753e4f1" title="read_arrays_solver" alt="" coords="262,71,398,98"/>
-<area shape="rect" id="node4" href="$d6/d3d/read__mesh__databases_8_f90.html#a76a0071be1193a5e8beb26992480836d" title="bcast_mesh_databases_cm" alt="" coords="236,122,424,149"/>
-</map>

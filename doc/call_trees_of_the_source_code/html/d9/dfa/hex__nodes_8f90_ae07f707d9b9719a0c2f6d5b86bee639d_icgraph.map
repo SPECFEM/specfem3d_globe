@@ -1,9 +1,0 @@
-<map id="hex_nodes" name="hex_nodes">
-<area shape="rect" id="node2" href="$dc/d88/create__central__cube_8f90.html#a7c49c765e67b504224184d7d860876ff" title="create_central_cube" alt="" coords="140,5,283,32"/>
-<area shape="rect" id="node3" href="$d6/d61/initialize__layers_8f90.html#ad5e77b0e058c9a1216f447e4cb3ae24d" title="initialize_layers" alt="" coords="155,56,267,83"/>
-<area shape="rect" id="node4" href="$d7/dd8/locate__receivers_8f90.html#a3f7476862404a106ad4a16a5591b94f6" title="locate_receivers" alt="" coords="152,107,271,133"/>
-<area shape="rect" id="node5" href="$d4/d4a/locate__regular__points_8f90.html#a38c6062fa05487bf5974cc83dfde0f5c" title="hex_nodes2" alt="" coords="164,157,259,184"/>
-<area shape="rect" id="node6" href="$d7/d12/locate__sources_8f90.html#a508d209e59474733bb965348c291bd62" title="locate_sources" alt="" coords="155,208,267,235"/>
-<area shape="rect" id="node7" href="$d8/da0/create__cross__section_8_f90.html#aa60453bd400840f608716a2c3bc7bc9a" title="cross_section" alt="" coords="159,259,263,285"/>
-<area shape="rect" id="node8" href="$d4/d58/interpolate__model_8_f90.html#a5d498b55440eaa97251daa50fdc2212c" title="interpolate_model" alt="" coords="147,309,275,336"/>
-</map>

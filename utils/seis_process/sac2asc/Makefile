@@ -15,4 +15,4 @@ $(PROG): $(OBJS)
 	$(CC) $(CFLAGS) -o $(PROG) $(OBJS)
 
 clean:
-	rm -f $(PROG) $(OBJS) core *~ 
+	rm -f $(PROG) $(OBJS) core *~

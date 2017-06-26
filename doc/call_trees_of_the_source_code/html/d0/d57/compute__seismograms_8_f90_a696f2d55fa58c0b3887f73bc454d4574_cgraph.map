@@ -1,5 +1,0 @@
-<map id="compute_seismograms_adjoint" name="compute_seismograms_adjoint">
-<area shape="rect" id="node2" href="$df/d7e/compute__element__strain_8_f90.html#acfec6cbb6c4a4f8c8f7322e99e91951c" title="compute_element_strain\l_undoatt_nodev" alt="" coords="224,5,392,47"/>
-<area shape="rect" id="node3" href="$d7/dcf/compute__adj__source__frechet_8f90.html#ae3bb3628bbfdcc7d69d317cad1fd388a" title="compute_adj_source\l_frechet" alt="" coords="235,71,381,112"/>
-<area shape="rect" id="node4" href="$dc/df3/comp__source__time__function_8f90.html#aa74f0b5f16f6c44f2b552e46d69bd3c9" title="comp_source_time_function" alt="" coords="213,137,403,163"/>
-</map>

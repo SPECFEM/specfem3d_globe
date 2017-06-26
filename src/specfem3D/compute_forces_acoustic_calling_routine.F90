@@ -87,7 +87,7 @@
                                              buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                              num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                              nibool_interfaces_outer_core, &
-                                             my_neighbours_outer_core, &
+                                             my_neighbors_outer_core, &
                                              request_send_scalar_oc,request_recv_scalar_oc)
         endif
       endif
@@ -118,7 +118,7 @@
                                      buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                      num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                      nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                                     my_neighbours_outer_core, &
+                                     my_neighbors_outer_core, &
                                      request_send_scalar_oc,request_recv_scalar_oc)
         else
           ! on GPU
@@ -138,7 +138,7 @@
                                                buffer_send_scalar_outer_core,buffer_recv_scalar_outer_core, &
                                                num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                                nibool_interfaces_outer_core, &
-                                               my_neighbours_outer_core, &
+                                               my_neighbors_outer_core, &
                                                request_send_scalar_oc,request_recv_scalar_oc)
           endif
         endif
@@ -296,7 +296,7 @@
                               b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
                               nibool_interfaces_outer_core, &
-                              my_neighbours_outer_core, &
+                              my_neighbors_outer_core, &
                               b_request_send_scalar_oc,b_request_recv_scalar_oc)
       endif
 
@@ -334,7 +334,7 @@
                               b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                               num_interfaces_outer_core,max_nibool_interfaces_oc, &
                               nibool_interfaces_outer_core,ibool_interfaces_outer_core, &
-                              my_neighbours_outer_core, &
+                              my_neighbors_outer_core, &
                               b_request_send_scalar_oc,b_request_recv_scalar_oc)
       else
         ! on GPU
@@ -354,7 +354,7 @@
                                 b_buffer_send_scalar_outer_core,b_buffer_recv_scalar_outer_core, &
                                 num_interfaces_outer_core,max_nibool_interfaces_oc, &
                                 nibool_interfaces_outer_core, &
-                                my_neighbours_outer_core, &
+                                my_neighbors_outer_core, &
                                 b_request_send_scalar_oc,b_request_recv_scalar_oc)
         endif
       endif ! GPU

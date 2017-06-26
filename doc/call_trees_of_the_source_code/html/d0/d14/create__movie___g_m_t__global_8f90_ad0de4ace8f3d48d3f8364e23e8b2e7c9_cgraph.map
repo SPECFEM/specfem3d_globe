@@ -1,6 +1,0 @@
-<map id="create_movie_gmt_global" name="create_movie_gmt_global">
-<area shape="rect" id="node2" href="$db/d2a/read__compute__parameters_8f90.html#a834f551a35dc275050223d6cc275436f" title="read_compute_parameters" alt="" coords="232,5,415,32"/>
-<area shape="rect" id="node3" href="$d9/df1/rthetaphi__xyz_8f90.html#ac6fd8ceb5b874b8179483efde03f315e" title="rthetaphi_2_xyz" alt="" coords="265,56,381,83"/>
-<area shape="rect" id="node4" href="$d9/df1/rthetaphi__xyz_8f90.html#a53871ebe2210660e56f091569a9d2968" title="xyz_2_rthetaphi" alt="" coords="265,107,381,133"/>
-<area shape="rect" id="node5" href="$d9/df1/rthetaphi__xyz_8f90.html#a1dfb2bf26b2e5d3d61d59e663d1776ce" title="geocentric_2_geographic_cr" alt="" coords="228,157,419,184"/>
-</map>

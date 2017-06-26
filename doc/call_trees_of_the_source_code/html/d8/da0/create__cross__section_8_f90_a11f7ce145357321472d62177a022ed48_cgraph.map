@@ -1,6 +1,0 @@
-<map id="get_cross_section_avg" name="get_cross_section_avg">
-<area shape="rect" id="node2" href="$d9/df1/rthetaphi__xyz_8f90.html#a9a2d6558f7f1b34dfd37aa834f59ec97" title="xyz_2_rthetaphi_dble" alt="" coords="212,5,361,32"/>
-<area shape="rect" id="node3" href="$d9/d27/reduce_8f90.html#a9759e908a22dc5603fa4394a09fc996b" title="reduce" alt="" coords="255,56,318,83"/>
-<area shape="rect" id="node4" href="$d8/da0/create__cross__section_8_f90.html#a6a35ba2dc5564e0b0f4b7879e76a0a01" title="get_regular_lat_lon\l_cell_area" alt="" coords="219,107,355,149"/>
-<area shape="rect" id="node5" href="$d8/da0/create__cross__section_8_f90.html#acaf000895ceb489f93ad7dc4812dd980" title="get_vertical_lat_lon\l_section_area" alt="" coords="218,173,355,214"/>
-</map>

@@ -64,7 +64,7 @@ def analyze_results(scenarii):
     seismo_glob = "{}/inout/OUTPUT_FILES/*.ascii".format(VERSIONS_TO_TEST[0])
     to_plot.append("set terminal pdf")
     to_plot.append("set output 'out.pdf'")
-    
+
     for seismo in sh.glob(seismo_glob):
         plot = "plot "
         for i, version in enumerate(VERSIONS_TO_TEST):
@@ -82,7 +82,7 @@ def set_config_options(options=CONFFILE_DEFAULT_OPT):
             continue
         with open(PAR_FILE, "a+") as par_file:
             print("{} = {}".format(opt, val), file=par_file)
-    
+
 class Scenario:
     built_runtimes = []
     scenarii = []
@@ -90,26 +90,26 @@ class Scenario:
     def __init__(self, runtime, make_flags=[], config_options={}):
         self.uid = Scenario.cpt
         Scenario.cpt += 1
-        
+
         self.runtime = runtime
         self.make_flags = make_flags
         self.config_options = config_options
-        
+
         Scenario.scenarii.append(self)
 
     def run(self):
         print("------<Test #{}>----------".format(Scenario.cpt))
-        
+
         scenario.initialize_build_dir()
         scenario.setup_environment()
         scenario.run_execution()
         print("------</Test #{}>----------\n".format(Scenario.cpt))
-        
+
     def initialize_build_dir(self):
         if self.runtime in Scenario.built_runtimes:
             set_config_options()
             return
-        
+
         cd(BUILD_DIR)
         mkdir("{}".format(self.runtime), "-p")
         cd("{}".format(self.runtime))
@@ -117,20 +117,20 @@ class Scenario:
         print(configure(CONFIGURE_OPT[self.runtime]))
 
         set_config_options()
-        
+
         Scenario.built_runtimes.append(self.runtime)
 
     def setup_environment(self):
         print("prepare the example")
         make("prepare-example")
         set_config_options(self.config_options)
-        
+
         print("building the example")
         cflags = "'{}'".format(" ".join(["-D{}".format(flag) for flag in self.make_flags])) if self.make_flags else ""
-        
+
         print(make("CFLAGS={}".format(cflags), _out=process_output, _err=process_output))
         print(make("build-example", _out=process_output, _err=process_output))
-         
+
     def run_execution(self):
         print("run the example")
         print(make("run-example"))
@@ -140,21 +140,21 @@ class Scenario:
 
 if __name__ == "__main__":
     mkdir(BUILD_DIR, "-p")
-    
+
     for rt in RUNTIMES:
         if rt == OPENCL: continue
         if rt == BOTH:
             for each in (OPENCL, CUDA):
                 Scenario(rt, config_options={"GPU_RUNTIME" : GPU_RUNTIME_OPT[each]})
             continue
-        
+
         Scenario(rt)
         for flag in FLAGS:
             Scenario(rt, [flag])
 
     for scenario in Scenario.scenarii:
         scenario.run()
-        
-        
+
+
     analyze_results(Scenario.scenarii)
-        
+

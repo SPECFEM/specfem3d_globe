@@ -1,7 +1,0 @@
-<map id="exit_on_error" name="exit_on_error">
-<area shape="rect" id="node2" href="$d3/ddc/assemble___m_p_i__scalar__gpu_8c.html#a13e886b0f7ed5cf4e048d5161a8af658" title="FC_FUNC_" alt="" coords="202,5,294,32"/>
-<area shape="rect" id="node3" href="$dd/d2b/mesh__constants__gpu_8h.html#a41d7c5291f8ff8d6f193b4c521bccd31" title="get_device_array_maximum\l_value" alt="" coords="153,57,343,98"/>
-<area shape="rect" id="node4" href="$db/d0f/compute__forces__crust__mantle__gpu_8c.html#aa3dfd9fab9bd138f9726744cc33028a7" title="crust_mantle" alt="" coords="199,123,297,149"/>
-<area shape="rect" id="node5" href="$d3/df2/compute__forces__inner__core__gpu_8c.html#a7c8b4e7cd509478a6712299ff8574f85" title="inner_core" alt="" coords="205,173,291,200"/>
-<area shape="rect" id="node6" href="$d0/d88/compute__forces__outer__core__gpu_8c.html#a74e32b373820da0d9c540ea82b2897d5" title="outer_core" alt="" coords="205,224,291,251"/>
-</map>

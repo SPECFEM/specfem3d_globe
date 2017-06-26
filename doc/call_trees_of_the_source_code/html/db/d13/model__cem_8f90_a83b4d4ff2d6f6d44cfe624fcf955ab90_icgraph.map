@@ -1,5 +1,0 @@
-<map id="checknc" name="checknc">
-<area shape="rect" id="node2" href="$db/d13/model__cem_8f90.html#a5df5ff1333bade3fe2d1f13f4a2a7ea0" title="write_cem_request" alt="" coords="142,5,277,32"/>
-<area shape="rect" id="node3" href="$d8/df4/read__write__netcdf_8f90.html#a31f62a338a139d5ec2d952bc60cc2796" title="write_coordinates_netcdf" alt="" coords="124,56,295,83"/>
-<area shape="rect" id="node4" href="$d8/df4/read__write__netcdf_8f90.html#a3736fa3e1ea0a18a4ce88d9726e1a0c2" title="write_kernel_netcdf" alt="" coords="141,107,278,133"/>
-</map>

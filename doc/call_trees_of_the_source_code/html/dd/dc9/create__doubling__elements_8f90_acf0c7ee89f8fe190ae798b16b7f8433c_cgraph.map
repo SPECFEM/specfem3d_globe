@@ -1,9 +1,0 @@
-<map id="create_doubling_elements" name="create_doubling_elements">
-<area shape="rect" id="node2" href="$d0/de0/define__superbrick_8f90.html#a84c9a64ec8a9d5bc6385d9c3a4d2402b" title="define_superbrick_one\l_layer" alt="" coords="251,5,408,47"/>
-<area shape="rect" id="node3" href="$d0/de0/define__superbrick_8f90.html#afb71c1290b0e3cd2d6ef1f9c88fc926f" title="define_superbrick" alt="" coords="266,71,393,98"/>
-<area shape="rect" id="node4" href="$d0/de0/define__superbrick_8f90.html#ac9964f6e42de5868ec9e42d9a74a4534" title="define_basic_doubling\l_brick" alt="" coords="252,123,407,164"/>
-<area shape="rect" id="node5" href="$d1/de9/add__missing__nodes_8f90.html#abf4fcb19e9e59bd08815ec5e81b9bdc7" title="add_missing_nodes" alt="" coords="259,189,399,215"/>
-<area shape="rect" id="node6" href="$d8/da9/compute__coordinates__grid_8f90.html#ac1377c3852be82c809b7e3151deb6c73" title="compute_coord_main_mesh" alt="" coords="234,239,425,266"/>
-<area shape="rect" id="node7" href="$d5/d73/compute__element__properties_8f90.html#a88f0d1fcd2dd09ad92980a883309da9a" title="compute_element_properties" alt="" coords="232,290,427,317"/>
-<area shape="rect" id="node8" href="$d7/da3/get__jacobian__discontinuities_8f90.html#a8e6e65aaa7bbe6972144b9769de24517" title="get_jacobian_discontinuities" alt="" coords="235,341,424,367"/>
-</map>

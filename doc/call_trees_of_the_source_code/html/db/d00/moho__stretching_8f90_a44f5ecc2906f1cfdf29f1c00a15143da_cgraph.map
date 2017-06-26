@@ -1,8 +1,0 @@
-<map id="moho_stretching_honor_crust_reg" name="moho_stretching_honor_crust_reg">
-<area shape="rect" id="node2" href="$d9/df1/rthetaphi__xyz_8f90.html#a9a2d6558f7f1b34dfd37aa834f59ec97" title="xyz_2_rthetaphi_dble" alt="" coords="436,11,585,38"/>
-<area shape="rect" id="node3" href="$d9/d27/reduce_8f90.html#a9759e908a22dc5603fa4394a09fc996b" title="reduce" alt="" coords="479,74,542,101"/>
-<area shape="rect" id="node4" href="$d9/df1/rthetaphi__xyz_8f90.html#ab38048ac848cabe5ca2bb2fd39b3aa7d" title="xyz_2_rlatlon_dble" alt="" coords="235,37,369,63"/>
-<area shape="rect" id="node5" href="$d0/dad/meshfem3_d__models_8_f90.html#afd5d3b26384169ab1c82e317f368ea59" title="meshfem3d_model_crust" alt="" coords="216,138,388,165"/>
-<area shape="rect" id="node6" href="$db/d00/moho__stretching_8f90.html#ad49c6e54936c855e1283db92075e64da" title="stretch_deep_moho" alt="" coords="232,189,372,215"/>
-<area shape="rect" id="node7" href="$db/d00/moho__stretching_8f90.html#a4b5434200e137c965186982ec834c25e" title="stretch_moho" alt="" coords="251,239,353,266"/>
-</map>

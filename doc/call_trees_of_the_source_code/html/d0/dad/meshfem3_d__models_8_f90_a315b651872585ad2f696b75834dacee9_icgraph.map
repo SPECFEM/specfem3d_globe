@@ -1,9 +1,0 @@
-<map id="meshfem3d_models_get1d_val" name="meshfem3d_models_get1d_val">
-<area shape="rect" id="node2" href="$d4/d58/get__model_8_f90.html#abc4cd355edece304e06bfddd561a2acf" title="get_model" alt="" coords="311,5,395,32"/>
-<area shape="rect" id="node3" href="$d7/d2c/write___a_v_s___d_x__global__chunks__data_8f90.html#ae1876bedc12b950c4cd3c9b6b0c5cd3b" title="write_avs_dx_global\l_chunks_data" alt="" coords="282,57,425,98"/>
-<area shape="rect" id="node4" href="$d9/d5d/namespaceavs__dx__global__chunks__mod.html#aebd475ddacab33fcadd5ed8692efcfc2" title="avs_dx_global_chunks\l_mod::prepare_avs_dx\l_global_chunks_data_adios" alt="" coords="260,123,447,179"/>
-<area shape="rect" id="node5" href="$d3/d74/write___a_v_s___d_x__global__faces__data_8f90.html#a2aff3bd785ed7cbf61007a1669f5f77a" title="write_avs_dx_global\l_faces_data" alt="" coords="282,203,425,245"/>
-<area shape="rect" id="node6" href="$de/d7a/namespaceavs__dx__global__faces__mod.html#a0f104d0238b02efc468e971baa5d976c" title="avs_dx_global_faces\l_mod::prepare_avs_dx\l_global_faces_data_adios" alt="" coords="265,269,442,325"/>
-<area shape="rect" id="node7" href="$d0/d6c/write___a_v_s___d_x__surface__data_8f90.html#aaa42b778977dd3ea732f0b94720d69aa" title="write_avs_dx_surface_data" alt="" coords="261,349,445,376"/>
-<area shape="rect" id="node8" href="$d7/dff/namespaceavs__dx__surface__mod.html#ad5eacdf294092dae6a7b57b210925419" title="avs_dx_surface_mod\l::prepare_avs_dx_surfaces\l_data_adios" alt="" coords="262,400,445,456"/>
-</map>

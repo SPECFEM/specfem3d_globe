@@ -1,6 +1,0 @@
-<map id="write_seismograms" name="write_seismograms">
-<area shape="rect" id="node2" href="$d0/d57/compute__seismograms_8_f90.html#aa5cf23304e2389bc301a98482e882f4c" title="compute_seismograms" alt="" coords="201,5,361,32"/>
-<area shape="rect" id="node3" href="$d0/d57/compute__seismograms_8_f90.html#a696f2d55fa58c0b3887f73bc454d4574" title="compute_seismograms\l_adjoint" alt="" coords="201,57,361,98"/>
-<area shape="rect" id="node4" href="$dd/dde/write__seismograms_8f90.html#ae378084bba3fb6e0aaf421bdddc2d9f7" title="write_seismograms_to_file" alt="" coords="191,123,371,149"/>
-<area shape="rect" id="node5" href="$dd/dde/write__seismograms_8f90.html#a54f3a74272f004473a34cffff0b63068" title="write_adj_seismograms" alt="" coords="199,173,362,200"/>
-</map>

@@ -760,7 +760,7 @@
 !
 ! Smith, Oliver K. (April 1961),
 ! Eigenvalues of a symmetric 3 x 3 matrix,
-! Communications of the ACM 4 (4): 168, doi:10.1145/355578.366316
+! communications of the ACM 4 (4): 168, doi:10.1145/355578.366316
 !
 ! Given a real symmetric 3x3 matrix A, compute the eigenvalues
 !

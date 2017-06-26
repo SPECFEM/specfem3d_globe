@@ -1,9 +1,9 @@
 # Makefile
 
 #############################################################
-## modify to match your compiler defaults 
+## modify to match your compiler defaults
 
-F90 = gfortran 
+F90 = gfortran
 CC = gcc
 
 # modify to point to your own SAC installation path
@@ -36,7 +36,7 @@ CVS_LIBDIR = $(SAC_LIB) #formats
 
 INCS = -I$(CVS_INCDIR) -DSAC_NULL
 CFLAGS = $(INCS)
-LIBS = -L$(CVS_LIBDIR) -lsac -lsacio -lm #-lformats 
+LIBS = -L$(CVS_LIBDIR) -lsac -lsacio -lm #-lformats
 
 
 all :  $(PROG)
@@ -62,10 +62,10 @@ $(F90OBJ_LIB) : %.o : %.f90
 	$(F90)  $(F90FLAGS) -c $*.f90
 
 $(COBJ_LIB): %.o : %.c
-	$(CC) $(CCFLAGS) -c $*.c 
+	$(CC) $(CCFLAGS) -c $*.c
 
 
-clean: 
+clean:
 	\rm -f $(OBJS) *~ *.o $(PROG) $(OBJS) *~ core convolve_stf
 
 cleanall:

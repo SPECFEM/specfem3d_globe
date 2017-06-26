@@ -1,8 +1,0 @@
-<map id="initialize_mesher" name="initialize_mesher">
-<area shape="rect" id="node2" href="$db/d2a/read__compute__parameters_8f90.html#a834f551a35dc275050223d6cc275436f" title="read_compute_parameters" alt="" coords="175,5,357,32"/>
-<area shape="rect" id="node3" href="$db/d45/broadcast__computed__parameters_8f90.html#a02b043d3ca83491dbe8e22868c244378" title="broadcast_computed\l_parameters" alt="" coords="193,57,339,98"/>
-<area shape="rect" id="node4" href="$d9/ddf/euler__angles_8f90.html#a9060474b7d57a99380a608e120e99f73" title="euler_angles" alt="" coords="217,123,315,149"/>
-<area shape="rect" id="node5" href="$d9/dff/namespacemanager__adios.html#a9454863b300d731b76db349c77976ee9" title="manager_adios::initialize\l_adios" alt="" coords="181,174,351,215"/>
-<area shape="rect" id="node6" href="$da/d96/gravity__integrals_8_f90.html#ae70ddd1f8d9998f213a45663fe3f3d91" title="gravity_initialize\l_integrals" alt="" coords="208,239,324,281"/>
-<area shape="rect" id="node7" href="$d6/d20/init__openmp_8_f90.html#a8ef45844ec18716ffd9d64fbc334fed2" title="init_openmp" alt="" coords="219,305,313,332"/>
-</map>

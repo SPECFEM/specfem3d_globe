@@ -1,5 +1,0 @@
-<map id="gravity_observation_surface" name="gravity_observation_surface">
-<area shape="rect" id="node2" href="$d9/df1/rthetaphi__xyz_8f90.html#ab38048ac848cabe5ca2bb2fd39b3aa7d" title="xyz_2_rlatlon_dble" alt="" coords="194,5,327,32"/>
-<area shape="rect" id="node3" href="$d4/d78/get__ellipticity_8f90.html#abb738dc19b1213d3938c79dd704b4012" title="get_ellipticity_single\l_point" alt="" coords="191,57,331,98"/>
-<area shape="rect" id="node4" href="$d8/dca/model__topo__bathy_8f90.html#abcd25c844d4d671def57035eebe09bf8" title="get_topo_bathy" alt="" coords="204,123,317,149"/>
-</map>

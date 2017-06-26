@@ -11,7 +11,7 @@
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
+# the Free Software Foundation; either version 3 of the License, or
 # (at your option) any later version.
 #
 # This program is distributed in the hope that it will be useful,
@@ -60,7 +60,7 @@ gpu_specfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ifeq ($(CUDA),yes)
-  cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o 
+  cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o
   include $(BOAST_DIR)/kernel_cuda.mk # defines $(cuda_kernels_OBJS)
 endif
 

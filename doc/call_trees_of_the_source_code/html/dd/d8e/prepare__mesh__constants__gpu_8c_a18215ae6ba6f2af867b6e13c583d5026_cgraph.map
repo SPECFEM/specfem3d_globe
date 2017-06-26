@@ -1,6 +1,0 @@
-<map id="FC_FUNC_" name="FC_FUNC_">
-<area shape="rect" id="node2" href="$dd/de1/helper__functions__gpu_8c.html#a6aa349a4d68c77c7cb8053c22c69025d" title="exit_on_error" alt="" coords="192,5,292,32"/>
-<area shape="rect" id="node3" href="$dd/de1/helper__functions__gpu_8c.html#ac563655f9043254d9a5fcf4ec032c74d" title="gpuCreateCopy_todevice\l_realw" alt="" coords="156,57,328,98"/>
-<area shape="rect" id="node4" href="$dd/de1/helper__functions__gpu_8c.html#a7b57b86aa5bd81985fff0efc4fcbab5f" title="gpuCreateCopy_todevice_int" alt="" coords="145,123,339,149"/>
-<area shape="rect" id="node5" href="$dd/de1/helper__functions__gpu_8c.html#a70831dfa9eb078c2c90ca3ca274d5f55" title="gpuMalloc_realw" alt="" coords="181,173,303,200"/>
-</map>

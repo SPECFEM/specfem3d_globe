@@ -8,10 +8,10 @@
 !                and CNRS / University of Marseille, France
 !                 (there are currently many more authors!)
 ! (c) Princeton University and CNRS / University of Marseille, April 2014
-!  
+!
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation; either version 2 of the License, or
+! the Free Software Foundation; either version 3 of the License, or
 ! (at your option) any later version.
 !
 ! This program is distributed in the hope that it will be useful,
@@ -40,7 +40,7 @@
 #define PACKAGE_STRING "@PACKAGE_STRING@"
 
 !> \def STRINGIFY_VAR(a)
-!! Macro taking a variable and returning the stringified variable and 
+!! Macro taking a variable and returning the stringified variable and
 !! the variable itself.
 !! STRINGIFY_VAR(x) expand as:
 !!   "x", x
@@ -75,7 +75,7 @@
 #  define INDEX_IJK  i,j,k
 #endif
 
-! switches do-loops between: do k=1,NGLLZ; do j=1,NGLLY; do i=1,NGLLX  <-> do ijk=1,NGLLCUBE
+! switches do-loops between: do k=1,NGLLZ; do j=1,NGLLY; do i=1,NGLLX <-> do ijk=1,NGLLCUBE
 #ifdef FORCE_VECTORIZATION
 #  define DO_LOOP_IJK  do ijk=1,NGLLCUBE
 #else
