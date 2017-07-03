@@ -61,7 +61,7 @@ gpu_specfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ifeq ($(CUDA),yes)
-  cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o 
+  cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o
   include $(BOAST_DIR)/kernel_cuda.mk # defines $(cuda_kernels_OBJS)
 endif
 

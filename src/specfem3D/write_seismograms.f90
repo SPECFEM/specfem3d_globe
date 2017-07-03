@@ -78,7 +78,7 @@
         endif
      ! for forward and kernel simulations, seismograms are computed by the GPU, thus no need to transfer the wavefield
      else
-       if (.not. ( SIMULATION_TYPE==3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
+       if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
          call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,scale_displ,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP)
      endif
 
@@ -99,7 +99,7 @@
                                        moment_der,sloc_der,stshift_der,shdur_der, &
                                        seismograms)
     case (3)
-      if (.not. GPU_MODE .or. (.not. ( SIMULATION_TYPE==3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) ) &
+      if (.not. GPU_MODE .or. (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) ) &
         call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
                                  seismo_current,seismograms)
     end select
@@ -118,7 +118,7 @@
       select case (SIMULATION_TYPE)
       case (1,3)
         ! forward/reconstructed wavefields
-        if (.not. ( SIMULATION_TYPE==3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
+        if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
           call write_seismograms_to_file()
       case (2)
         ! adjoint wavefield

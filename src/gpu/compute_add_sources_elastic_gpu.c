@@ -303,7 +303,7 @@ void FC_FUNC_(transfer_adj_to_device,
   irec_local = 0;
   for (irec = 0; irec < nrec; irec++) {
     if (mp->myrank == h_islice_selected_rec[irec]) {
-      // takes only local sources        
+      // takes only local sources
         mp->h_source_adjoint[INDEX2(NDIM,0,irec_local)]
               = h_source_adjoint[INDEX2(NDIM,0,irec_local)];
 
@@ -312,7 +312,7 @@ void FC_FUNC_(transfer_adj_to_device,
 
         mp->h_source_adjoint[INDEX2(NDIM,2,irec_local)]
               = h_source_adjoint[INDEX2(NDIM,2,irec_local)];
- 
+
       // increases local receivers counter
       irec_local++;
     }
@@ -378,7 +378,7 @@ please check mesh_constants_cuda.h");
   irec_local = 0;
   for (irec = 0; irec < nrec; irec++) {
     if (mp->myrank == h_islice_selected_rec[irec]) {
-      // takes only local sources        
+      // takes only local sources
         mp->h_source_adjoint[INDEX2(NDIM,0,irec_local)]
               = h_source_adjoint[INDEX2(NDIM,0,irec_local)];
 
@@ -387,7 +387,7 @@ please check mesh_constants_cuda.h");
 
         mp->h_source_adjoint[INDEX2(NDIM,2,irec_local)]
               = h_source_adjoint[INDEX2(NDIM,2,irec_local)];
- 
+
       // increases local receivers counter
       irec_local++;
     }

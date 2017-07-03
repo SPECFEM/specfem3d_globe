@@ -12,7 +12,7 @@
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation; either version 2 of the License, or
+! the Free Software Foundation; either version 3 of the License, or
 ! (at your option) any later version.
 !
 ! This program is distributed in the hope that it will be useful,
@@ -305,7 +305,7 @@ void FC_FUNC_ (prepare_constants_device,
     gpuCreateCopy_todevice_int (&mp->d_number_receiver_global, h_number_receiver_global, mp->nrec_local);
     // for seismograms
     if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
-   
+
       realw * xir    = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * etar   = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
       realw * gammar = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
@@ -423,7 +423,7 @@ void FC_FUNC_ (prepare_constants_device,
       mp->h_source_adjoint = (realw *) malloc (mp->nadj_rec_local * NDIM * sizeof (realw));
       if (mp->h_source_adjoint == NULL) exit_on_error ("h_source_adjoint_slice not allocated\n");
     }
-    gpuMalloc_realw (&mp->d_source_adjoint, mp->nadj_rec_local * NDIM );   
+    gpuMalloc_realw (&mp->d_source_adjoint, mp->nadj_rec_local * NDIM );
   }
 
   // for rotation and new attenuation

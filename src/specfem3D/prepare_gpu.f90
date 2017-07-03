@@ -97,7 +97,7 @@
                                 USE_MESH_COLORING_GPU, &
                                 ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
                                 deltat,b_deltat, &
-                                GPU_ASYNC_COPY,&
+                                GPU_ASYNC_COPY, &
                                 hxir_store,hetar_store,hgammar_store,nu)
   call synchronize_all()
 
