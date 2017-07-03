@@ -12,7 +12,7 @@
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation; either version 3 of the License, or
+! the Free Software Foundation; either version 2 of the License, or
 ! (at your option) any later version.
 !
 ! This program is distributed in the hope that it will be useful,
@@ -100,7 +100,8 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *USE_MESH_COLORING_GPU_f,
                                           int *ANISOTROPIC_KL_f, int *APPROXIMATE_HESS_KL_f,
                                           realw *deltat_f, realw *b_deltat_f,
-                                          int *GPU_ASYNC_COPY_f) {
+                                          int *GPU_ASYNC_COPY_f,
+                                          double * h_xir,double * h_etar,double * h_gammar,double * h_nu ) {
 
   TRACE ("prepare_constants_device");
 
@@ -303,29 +304,63 @@ void FC_FUNC_ (prepare_constants_device,
   if (mp->nrec_local > 0) {
     gpuCreateCopy_todevice_int (&mp->d_number_receiver_global, h_number_receiver_global, mp->nrec_local);
     // for seismograms
-    gpuMalloc_realw (&mp->d_station_seismo_field, NDIM * NGLL3 * mp->nrec_local);
-
-    // for transferring values from GPU to CPU
-    if (GPU_ASYNC_COPY) {
-#ifdef USE_OPENCL
-      if (run_opencl) {
-        ALLOC_PINNED_BUFFER_OCL (station_seismo_field, NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
+    if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
+   
+      realw * xir    = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
+      realw * etar   = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
+      realw * gammar = (realw *)malloc(NGLLX * mp->nrec_local*sizeof(realw));
+      int i;
+      for (i=0;i<NGLLX * mp->nrec_local;i++){
+        xir[i]    = (realw)h_xir[i];
+        etar[i]   = (realw)h_etar[i];
+        gammar[i] = (realw)h_gammar[i];
       }
+      gpuCreateCopy_todevice_realw (&mp->d_xir   , xir     , NGLLX * mp->nrec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_etar  , etar    , NGLLX * mp->nrec_local);
+      gpuCreateCopy_todevice_realw (&mp->d_gammar, gammar  , NGLLX * mp->nrec_local);
+      free(xir);
+      free(etar);
+      free(gammar);
+
+      gpuMalloc_realw (&mp->d_seismograms, NDIM * mp->nrec_local);
+
+      float* nu;
+      nu=(float*)malloc(9 * sizeof(float) * mp->nrec_local);
+      int irec_loc=0;
+
+      for (i=0;i < (*nrec);i++)
+      {
+        if ( mp->myrank == h_islice_selected_rec[i])
+        {
+         int j;
+         for (j=0;j < 9;j++) nu[j + 9*irec_loc] = (float)h_nu[j + 9*i];
+         irec_loc = irec_loc + 1;
+        }
+      }
+      gpuCreateCopy_todevice_realw (&mp->d_nu, nu, 3*3* mp->nrec_local);
+      free(nu);
+
+    } else if (mp->simulation_type == 2) {
+
+      // for transferring values from GPU to CPU
+      if (GPU_ASYNC_COPY) {
+#ifdef USE_OPENCL
+        if (run_opencl) {
+          ALLOC_PINNED_BUFFER_OCL (station_seismo_field, NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
+        }
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) {
-        // TODO
-        // only pinned memory can handle memcpy calls asynchronously
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_station_seismo_field), NDIM*NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
-      }
+        if (run_cuda) {
+          // TODO
+          // only pinned memory can handle memcpy calls asynchronously
+          print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_station_seismo_field), NDIM*NGLL3*(mp->nrec_local)*sizeof(realw)),4015);
+        }
 #endif
-    } else {
-      mp->h_station_seismo_field = (realw *) malloc (NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
-      if (mp->h_station_seismo_field == NULL) { exit_on_error("h_station_seismo_field not allocated \n"); }
-    }
-
-    // for adjoint strain
-    if (mp->simulation_type == 2) {
+      } else {
+        mp->h_station_seismo_field = (realw *) malloc (NDIM * NGLL3 * mp->nrec_local * sizeof(realw));
+        if (mp->h_station_seismo_field == NULL) { exit_on_error("h_station_seismo_field not allocated \n"); }
+      }
+      gpuMalloc_realw (&mp->d_station_seismo_field, NDIM * NGLL3 * mp->nrec_local);
       gpuMalloc_realw (&mp->d_station_strain_field, NGLL3 * mp->nrec_local);
 
       mp->h_station_strain_field = (realw *) malloc (NGLL3 * mp->nrec_local * sizeof(realw));
@@ -374,22 +409,21 @@ void FC_FUNC_ (prepare_constants_device,
     if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
       if (run_opencl) {
-        ALLOC_PINNED_BUFFER_OCL(adj_sourcearrays_slice, mp->nadj_rec_local * NDIM * NGLL3 * sizeof(realw));
+        ALLOC_PINNED_BUFFER_OCL(source_adjoint, mp->nadj_rec_local * NDIM * sizeof(realw));
       }
 #endif
 #ifdef USE_CUDA
       if (run_cuda) {
         // note: Allocate pinned buffers otherwise cudaMemcpyAsync() will behave like cudaMemcpy(), i.e. synchronously.
-        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_adj_sourcearrays_slice),
-                                               (mp->nadj_rec_local)*NDIM*NGLL3*sizeof(realw)),6011);
+        print_CUDA_error_if_any(cudaMallocHost((void**)&(mp->h_source_adjoint),
+                                               (mp->nadj_rec_local)*NDIM*sizeof(realw)),6011);
       }
 #endif
     } else {
-      mp->h_adj_sourcearrays_slice = (realw *) malloc (mp->nadj_rec_local * NDIM * NGLL3 * sizeof (realw));
-      if (mp->h_adj_sourcearrays_slice == NULL) exit_on_error ("h_adj_sourcearrays_slice not allocated\n");
+      mp->h_source_adjoint = (realw *) malloc (mp->nadj_rec_local * NDIM * sizeof (realw));
+      if (mp->h_source_adjoint == NULL) exit_on_error ("h_source_adjoint_slice not allocated\n");
     }
-
-    gpuMalloc_realw (&mp->d_adj_sourcearrays, mp->nadj_rec_local * NDIM * NGLL3);
+    gpuMalloc_realw (&mp->d_source_adjoint, mp->nadj_rec_local * NDIM );   
   }
 
   // for rotation and new attenuation
@@ -2515,15 +2549,18 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
   // receiver seismograms
   if (mp->nrec_local > 0) {
-    if (GPU_ASYNC_COPY) {
+
+    if (mp->simulation_type == 2 ) {
+      if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
-      if (run_opencl) RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
+        if (run_opencl) RELEASE_PINNED_BUFFER_OCL (station_seismo_field);
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) cudaFreeHost(mp->h_station_seismo_field);
+        if (run_cuda) cudaFreeHost(mp->h_station_seismo_field);
 #endif
-    } else {
-      free (mp->h_station_seismo_field);
+      } else {
+        free (mp->h_station_seismo_field);
+      }
     }
   }
 
@@ -2531,13 +2568,13 @@ void FC_FUNC_ (prepare_cleanup_device,
   if (mp->nadj_rec_local > 0) {
     if (GPU_ASYNC_COPY) {
 #ifdef USE_OPENCL
-      if (run_opencl) RELEASE_PINNED_BUFFER_OCL (adj_sourcearrays_slice);
+      if (run_opencl) RELEASE_PINNED_BUFFER_OCL (source_adjoint);
 #endif
 #ifdef USE_CUDA
-      if (run_cuda) cudaFreeHost(mp->h_adj_sourcearrays_slice);
+      if (run_cuda) cudaFreeHost(mp->h_source_adjoint);
 #endif
     } else {
-      free (mp->h_adj_sourcearrays_slice);
+      free (mp->h_source_adjoint);
     }
   }
 
@@ -2645,14 +2682,20 @@ void FC_FUNC_ (prepare_cleanup_device,
   //------------------------------------------
   if (mp->nrec_local > 0) {
     gpuFree (&mp->d_number_receiver_global);
-    gpuFree (&mp->d_station_seismo_field);
-    if (mp->simulation_type == 2) {
+    if (mp->simulation_type == 1 || mp->simulation_type == 3 ) {
+      gpuFree (&mp->d_xir);
+      gpuFree (&mp->d_etar);
+      gpuFree (&mp->d_gammar);
+      gpuFree (&mp->d_nu);
+      gpuFree (&mp->d_seismograms);
+    }else {
+      gpuFree (&mp->d_station_seismo_field);
       gpuFree (&mp->d_station_strain_field);
     }
   }
   gpuFree (&mp->d_ispec_selected_rec);
   if (mp->nadj_rec_local > 0) {
-    gpuFree (&mp->d_adj_sourcearrays);
+    gpuFree (&mp->d_source_adjoint);
     gpuFree (&mp->d_pre_computed_irec);
   }
 

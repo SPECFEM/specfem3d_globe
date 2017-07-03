@@ -514,7 +514,7 @@
   endif
   call synchronize_all()
 
-  ! statistics about allocation memory for seismograms & adj_sourcearrays
+  ! statistics about allocation memory for seismograms & source_adjoint
   ! gathers info about receivers on master
   if (myrank == 0) then
     ! only master process needs full arrays allocated
@@ -598,9 +598,9 @@
       !    maxproc = i-1
       !  endif
       !enddo
-      ! adj_sourcearrays size in MB
-      ! adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
-      sizeval = dble(maxrec) * dble(NDIM * NGLLX * NGLLY * NGLLZ * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
+      ! source_adjoint size in MB
+      ! source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC)
+      sizeval = dble(maxrec) * dble(NDIM * NTSTEP_BETWEEN_READ_ADJSRC * CUSTOM_REAL / 1024. / 1024. )
       ! note: in case IO_ASYNC_COPY is set, and depending of NSTEP_SUB_ADJ,
       !       this memory requirement might double.
       !       at this point, NSTEP_SUB_ADJ is not set yet...
@@ -762,33 +762,30 @@
     NSTEP_SUB_ADJ = ceiling( dble(NSTEP)/dble(NTSTEP_BETWEEN_READ_ADJSRC) )
 
     if (nadj_rec_local > 0) then
-      ! allocate adjoint source arrays
-      allocate(adj_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
+      allocate(source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
                stat=ier)
       if (ier /= 0 ) then
-        print *,'Error rank ',myrank,': allocating adjoint sourcearrays failed! Please check your memory usage...'
+        print *,'Error rank ',myrank,': allocating source_adjoint failed! Please check your memory usage...'
         print *,'  failed number of local adjoint sources = ',nadj_rec_local,' steps = ',NTSTEP_BETWEEN_READ_ADJSRC
         call exit_MPI(myrank,'Error allocating adjoint sourcearrays')
       endif
-      ! initializes
-      adj_sourcearrays(:,:,:,:,:,:) = 0._CUSTOM_REAL
 
       ! additional buffer for asynchronous file i/o
       if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1) then
         ! allocates read buffer
-        allocate(buffer_sourcearrays(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
+        allocate(buffer_source_adjoint(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC), &
                  stat=ier)
-        if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array buffer_sourcearrays')
+        if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array buffer_source_adjoint')
 
         ! array size in bytes (note: the multiplication is split into two line to avoid integer-overflow)
-        arraysize = NDIM * NGLLX * NGLLY * NGLLZ * CUSTOM_REAL
+        arraysize = NDIM *  CUSTOM_REAL
         arraysize = arraysize * nadj_rec_local * NTSTEP_BETWEEN_READ_ADJSRC
 
         ! debug
         !print *,'buffer_sourcearrays: size = ',arraysize,' Bytes = ',arraysize/1024./1024.,'MB'
 
         ! initializes io thread
-        call prepare_adj_io_thread(buffer_sourcearrays,arraysize,nadj_rec_local)
+        call prepare_adj_io_thread(buffer_source_adjoint,arraysize,nadj_rec_local)
       endif
 
       ! allocate indexing arrays

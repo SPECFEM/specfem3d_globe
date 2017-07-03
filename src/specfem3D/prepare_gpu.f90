@@ -97,7 +97,8 @@
                                 USE_MESH_COLORING_GPU, &
                                 ANISOTROPIC_KL,APPROXIMATE_HESS_KL, &
                                 deltat,b_deltat, &
-                                GPU_ASYNC_COPY)
+                                GPU_ASYNC_COPY,&
+                                hxir_store,hetar_store,hgammar_store,nu)
   call synchronize_all()
 
   ! prepares rotation arrays
@@ -594,8 +595,8 @@
     ! d_ispec_selected_rec
     memory_size = memory_size + nrec * dble(SIZE_INTEGER)
 
-    ! d_adj_sourcearrays
-    memory_size = memory_size + NDIM * NGLL3 * nadj_rec_local * dble(CUSTOM_REAL)
+    ! d_adj_source_adjoint
+    memory_size = memory_size + NDIM *  nadj_rec_local * dble(CUSTOM_REAL)
 
     ! rotation
     if (ROTATION_VAL) then

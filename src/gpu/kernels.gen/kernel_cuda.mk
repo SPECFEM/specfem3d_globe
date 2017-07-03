@@ -15,6 +15,7 @@ cuda_kernels_OBJS := \
 	$O/compute_iso_kernel.cuda-kernel.o \
 	$O/compute_iso_undoatt_kernel.cuda-kernel.o \
 	$O/compute_rho_kernel.cuda-kernel.o \
+	$O/compute_seismograms_kernel.cuda-kernel.o \
 	$O/compute_stacey_acoustic_backward_kernel.cuda-kernel.o \
 	$O/compute_stacey_acoustic_kernel.cuda-kernel.o \
 	$O/compute_stacey_elastic_backward_kernel.cuda-kernel.o \

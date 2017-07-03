@@ -802,14 +802,22 @@ typedef struct mesh_ {
   gpu_realw_mem d_station_seismo_field;
   realw *h_station_seismo_field;
 
+  gpu_realw_mem d_nu;
+  gpu_realw_mem d_seismograms;
+
   gpu_realw_mem d_station_strain_field;
   realw* h_station_strain_field;
 
   // adjoint receivers/sources
   int nadj_rec_local;
-  gpu_realw_mem d_adj_sourcearrays;
-  realw *h_adj_sourcearrays_slice;
+  gpu_realw_mem d_source_adjoint;
+  realw *h_source_adjoint;
   gpu_int_mem d_pre_computed_irec;
+
+  // lagrange weights of receivers
+  gpu_realw_mem d_xir;
+  gpu_realw_mem d_etar;
+  gpu_realw_mem d_gammar;
 
   // norm checking
   gpu_realw_mem d_norm_max;
@@ -958,7 +966,7 @@ typedef struct mesh_ {
 #ifdef USE_OPENCL
   // pinned memory allocated by ALLOC_PINNED_BUFFER_OCL
   cl_mem h_pinned_station_seismo_field;
-  cl_mem h_pinned_adj_sourcearrays_slice;
+  cl_mem h_pinned_source_adjoint;
 
   // crust mantle
   cl_mem h_pinned_send_accel_buffer_cm;

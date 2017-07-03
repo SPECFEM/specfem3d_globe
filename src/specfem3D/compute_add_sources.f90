@@ -238,10 +238,10 @@
               !           corresponding iadj_vec(it) goes from
               !           iadj_vec(1) = 1000, iadj_vec(2) = 999 to iadj_vec(1000) = 1,
               !           that is, originally the idea was
-              !           adj_sourcearrays(.. iadj_vec(1) ) corresponds to adjoint source trace at time index 3000
-              !           adj_sourcearrays(.. iadj_vec(2) ) corresponds to adjoint source trace at time index 2999
+              !           source_adjoint(.. iadj_vec(1) ) corresponds to adjoint source trace at time index 3000
+              !           source_adjoint(.. iadj_vec(2) ) corresponds to adjoint source trace at time index 2999
               !           ..
-              !           adj_sourcearrays(.. iadj_vec(1000) ) corresponds to adjoint source trace at time index 2001
+              !           source_adjoint(.. iadj_vec(1000) ) corresponds to adjoint source trace at time index 2001
               !           then a new block will be read, etc, and it is going down till to adjoint source trace at time index 1
               !
               ! now comes the tricky part:
@@ -284,8 +284,8 @@
               !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
               !           have a zero contribution to adjoint kernels.
               accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                            + adj_sourcearrays(:,i,j,k,irec_local,ivec_index)
-
+                            + source_adjoint(:,irec_local,ivec_index)*(hxir_store(irec_local,i)*&
+                                             hetar_store(irec_local,j)*hgammar_store(irec_local,k))
             enddo
           enddo
         enddo
@@ -306,13 +306,13 @@
       ! only synchronously transfers array at beginning or whenever new arrays were read in
       if (ibool_read_adj_arrays) then
         ! transfers adjoint arrays to GPU device memory
-        ! note: function call passes pointer to array adj_sourcearrays at corresponding time slice
-        call transfer_adj_to_device(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
+        ! note: function call passes pointer to array source_adjoint at corresponding time slice
+        call transfer_adj_to_device(Mesh_pointer,nrec,source_adjoint(1,1,ivec_index), &
                                     islice_selected_rec)
       endif
     else
       ! synchronously transfers adjoint arrays to GPU device memory before adding adjoint sources on GPU
-      call transfer_adj_to_device(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
+      call transfer_adj_to_device(Mesh_pointer,nrec,source_adjoint(1,1,ivec_index), &
                                   islice_selected_rec)
     endif
 
@@ -321,7 +321,7 @@
 
     if (GPU_ASYNC_COPY) then
       ! starts asynchronously transfer of next adjoint arrays to GPU device memory
-      ! (making sure the next adj_sourcearrays values were already read in)
+      ! (making sure the next source_adjoint values were already read in)
       if ((.not. ibool_read_adj_arrays) .and. &
           (.not. mod(it,NTSTEP_BETWEEN_READ_ADJSRC) == 0) .and. &
           (.not. it == it_end)) then
@@ -336,7 +336,7 @@
         endif
 
         ! asynchronously transfers next time slice
-        call transfer_adj_to_device_async(Mesh_pointer,nrec,adj_sourcearrays(1,1,1,1,1,ivec_index), &
+        call transfer_adj_to_device_async(Mesh_pointer,nrec,source_adjoint(1,1,ivec_index), &
                                           islice_selected_rec)
       endif
     endif

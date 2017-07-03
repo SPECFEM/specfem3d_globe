@@ -326,7 +326,7 @@ GPU_INT_BUFFER (d_number_receiver_global);
 GPU_INT_BUFFER (d_ispec_selected_rec);
 GPU_INT_BUFFER (d_islice_selected_rec);
 GPU_REALW_BUFFER (d_station_seismo_field);
-GPU_REALW_BUFFER (d_adj_sourcearrays);
+GPU_REALW_BUFFER (d_source_adjoint);
 GPU_INT_BUFFER (d_pre_computed_irec);
 
 GPU_REALW_BUFFER (d_norm_max);

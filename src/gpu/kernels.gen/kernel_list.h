@@ -14,6 +14,7 @@ BOAST_KERNEL(compute_hess_kernel);
 BOAST_KERNEL(compute_iso_kernel);
 BOAST_KERNEL(compute_iso_undoatt_kernel);
 BOAST_KERNEL(compute_rho_kernel);
+BOAST_KERNEL(compute_seismograms_kernel);
 BOAST_KERNEL(compute_stacey_acoustic_backward_kernel);
 BOAST_KERNEL(compute_stacey_acoustic_kernel);
 BOAST_KERNEL(compute_stacey_elastic_backward_kernel);

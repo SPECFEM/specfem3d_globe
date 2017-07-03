@@ -130,13 +130,13 @@ void FC_FUNC_ (compute_add_sources_adjoint_gpu,
 void FC_FUNC_(transfer_adj_to_device,
               TRANSFER_ADJ_TO_DEVICE)(long* Mesh_pointer_f,
                                       int* h_nrec,
-                                      realw* h_adj_sourcearrays,
+                                      realw* h_source_adjoint,
                                       int* h_islice_selected_rec) {}
 
 void FC_FUNC_(transfer_adj_to_device_async,
               TRANSFER_ADJ_TO_DEVICE_ASYNC)(long *Mesh_pointer_f,
                                             int *h_nrec,
-                                            realw *h_adj_sourcearrays,
+                                            realw *h_source_adjoint,
                                             int *h_islice_selected_rec) {}
 
 
@@ -221,6 +221,13 @@ void FC_FUNC_ (compute_kernels_hess_gpu,
 void FC_FUNC_ (resort_array,
                RESORT_ARRAY) (long *Mesh_pointer_f) {}
 
+//
+// src/gpu/compute_seismograms_gpu.c
+//
+void FC_FUNC_ (compute_seismograms_gpu,
+               COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer_f,
+                                         realw* seismograms,
+                                         int* seismo_currentf) {}
 
 //
 // src/gpu/compute_stacey_acoustic_gpu.c
@@ -346,7 +353,8 @@ void FC_FUNC_ (prepare_constants_device,
                                           int *USE_MESH_COLORING_GPU_f,
                                           int *ANISOTROPIC_KL_f, int *APPROXIMATE_HESS_KL_f,
                                           realw *deltat_f, realw *b_deltat_f,
-                                          int *GPU_ASYNC_COPY_f) {}
+                                          int *GPU_ASYNC_COPY_f,
+                                          double * h_xir,double * h_etar,double * h_gammar) {}
 
 void FC_FUNC_ (prepare_fields_rotation_device,
                PREPARE_FIELDS_ROTATION_DEVICE) (long *Mesh_pointer_f,

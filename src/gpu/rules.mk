@@ -46,6 +46,7 @@ gpu_specfem3D_OBJECTS = \
 	$O/compute_forces_inner_core_gpu.o \
 	$O/compute_forces_outer_core_gpu.o \
 	$O/compute_kernels_gpu.o \
+	$O/compute_seismograms_gpu.o \
 	$O/compute_stacey_acoustic_gpu.o \
 	$O/compute_stacey_elastic_gpu.o \
 	$O/compute_strain_gpu.o \
@@ -60,7 +61,7 @@ gpu_specfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 ifeq ($(CUDA),yes)
-  cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o
+  cuda_specfem3D_DEVICE_OBJ =  $O/cuda_device_obj.o 
   include $(BOAST_DIR)/kernel_cuda.mk # defines $(cuda_kernels_OBJS)
 endif
 

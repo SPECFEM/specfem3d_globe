@@ -117,7 +117,7 @@ __kernel void resort_array(__global float * old_array, const int NSPEC){\n\
     for (i = 0; i <= 20; i += 1) {\n\
       id = (i) * (NGLL3) + tx;\n\
       idx = (id) / (21);\n\
-      t_idx =  id % 21;\n\
+      t_idx = ((id < 0) ^ (21 < 0) ? (id % 21) + 21 : id % 21);\n\
       old_array[(i) * (NGLL3) + offset] = sh_tmp[idx + (t_idx) * (NGLL3)];\n\
     }\n\
   }\n\

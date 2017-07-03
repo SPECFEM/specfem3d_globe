@@ -272,8 +272,8 @@
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     deallocate(iadj_vec)
     if (nadj_rec_local > 0) then
-      deallocate(adj_sourcearrays)
-      if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) deallocate(buffer_sourcearrays)
+      deallocate(source_adjoint)
+      if (IO_ASYNC_COPY .and. NSTEP_SUB_ADJ > 1 ) deallocate(buffer_source_adjoint)
       deallocate(iadjsrc,iadjsrc_len)
     endif
   endif

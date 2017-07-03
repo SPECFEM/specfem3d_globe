@@ -310,9 +310,10 @@ module specfem_par
   double precision, dimension(:,:,:,:), allocatable :: hlagrange_store
 
   ! ADJOINT sources
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: adj_sourcearrays
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: source_adjoint
   ! asynchronous read buffer when IO_ASYNC_COPY is set
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:,:), allocatable :: buffer_sourcearrays
+  real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: buffer_source_adjoint
+
 
   integer :: nadj_rec_local
   integer :: NSTEP_SUB_ADJ  ! to read input in chunks

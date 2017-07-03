@@ -142,8 +142,8 @@
 !================================================================
 
   subroutine compute_arrays_source_adjoint(myrank, adj_source_file, &
-                                           xi_receiver,eta_receiver,gamma_receiver, nu,adj_sourcearray, &
-                                           xigll,yigll,zigll,NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
+                                           nu,source_adjoint, &
+                                           NSTEP_BLOCK,iadjsrc,it_sub_adj,NSTEP_SUB_ADJ, &
                                            NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
   use constants, only: CUSTOM_REAL,SIZE_REAL,NDIM,NGLLX,NGLLY,NGLLZ,IIN_ADJ,R_EARTH,MAX_STRING_LEN
@@ -158,21 +158,14 @@
 ! instead NSTEP_BLOCK = iadjsrc_len(it_sub_adj), the length of this specific block
 
   integer,intent(in) :: myrank
-
   character(len=*),intent(in) :: adj_source_file
 
-  double precision,intent(in) :: xi_receiver, eta_receiver, gamma_receiver
   double precision, dimension(NDIM,NDIM),intent(in) :: nu
 
 
   ! output
   integer,intent(in) :: NTSTEP_BETWEEN_READ_ADJSRC
-  real(kind=CUSTOM_REAL),intent(out) :: adj_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC)
-
-  ! Gauss-Lobatto-Legendre points of integration and weights
-  double precision, dimension(NGLLX),intent(in) :: xigll
-  double precision, dimension(NGLLY),intent(in) :: yigll
-  double precision, dimension(NGLLZ),intent(in) :: zigll
+  real(kind=CUSTOM_REAL),intent(out) :: source_adjoint(NDIM,NTSTEP_BETWEEN_READ_ADJSRC)
 
   integer,intent(in) :: NSTEP_SUB_ADJ
   integer, dimension(NSTEP_SUB_ADJ,2),intent(in) :: iadjsrc
@@ -183,9 +176,6 @@
   double precision,intent(in) :: DT
 
   ! local parameters
-  double precision :: hxir(NGLLX), hpxir(NGLLX), hetar(NGLLY), hpetar(NGLLY), hgammar(NGLLZ), hpgammar(NGLLZ)
-  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
-
   double precision, dimension(NDIM,NSTEP_BLOCK) :: adj_src_u
 
   real(kind=CUSTOM_REAL), dimension(NDIM,NSTEP_BLOCK) :: adj_src
@@ -320,20 +310,9 @@
                        + nu(3,:) * adj_src(3,itime)
   enddo
 
-  ! receiver interpolators
-  call lagrange_any(xi_receiver,NGLLX,xigll,hxir,hpxir)
-  call lagrange_any(eta_receiver,NGLLY,yigll,hetar,hpetar)
-  call lagrange_any(gamma_receiver,NGLLZ,zigll,hgammar,hpgammar)
-
-  ! adds interpolated source contribution to all GLL points within this element
-  do itime = 1, NSTEP_BLOCK
-
-    ! multiply with interpolators
-    call multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_u(:,itime))
-
-    ! distinguish between single and double precision for reals
-    adj_sourcearray(:,:,:,:,itime) = real(sourcearrayd(:,:,:,:), kind=CUSTOM_REAL)
-
+  do icomp = 1, NDIM
+    source_adjoint(icomp,:) = adj_src_u(icomp,:)
   enddo
+
 
   end subroutine compute_arrays_source_adjoint

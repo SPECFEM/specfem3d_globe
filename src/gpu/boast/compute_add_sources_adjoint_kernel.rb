@@ -5,7 +5,10 @@ module BOAST
     function_name = "compute_add_sources_adjoint_kernel"
     accel =              Real("accel",             :dir => :inout,:dim => [ Dim() ])
     nrec =               Int( "nrec",              :dir => :in)
-    adj_sourcearrays =   Real("adj_sourcearrays",  :dir => :in,   :dim => [ Dim() ])
+    source_adjoint =     Real("source_adjoint",    :dir => :in,   :dim => [ Dim() ]) 
+    xir =                Real("xir",               :dir => :in,   :dim => [ Dim() ])
+    etar =               Real("etar",              :dir => :in,   :dim => [ Dim() ])
+    gammar =             Real("gammar",            :dir => :in,   :dim => [ Dim() ])
     ibool =              Int( "ibool",             :dir => :in,   :dim => [ Dim() ])
     ispec_selected_rec = Int( "ispec_selected_rec",:dir => :in,   :dim => [ Dim() ])
     pre_computed_irec =  Int( "pre_computed_irec", :dir => :in,   :dim => [ Dim() ])
@@ -13,7 +16,7 @@ module BOAST
 
     ndim =               Int( "NDIM",              :const => n_dim)
     ngllx =              Int( "NGLLX",             :const => n_gllx)
-    p = Procedure(function_name, [accel,nrec,adj_sourcearrays,ibool,ispec_selected_rec,pre_computed_irec,nadj_rec_local])
+     p = Procedure(function_name, [accel,nrec,source_adjoint,xir,etar,gammar,ibool,ispec_selected_rec,pre_computed_irec,nadj_rec_local])
     if (get_lang == CUDA and ref) then
       get_output.print File::read("references/#{function_name}.cu")
     elsif(get_lang == CUDA or get_lang == CL) then
@@ -43,7 +46,7 @@ module BOAST
         print k === get_local_id(2)
         print iglob === ibool[INDEX4(ngllx,ngllx,ngllx,i,j,k,ispec)] - 1
         (0..2).each { |indx|
-          print atomicAdd(accel+iglob*3+indx, adj_sourcearrays[INDEX5(ndim,ngllx,ngllx,ngllx,indx,i,j,k,irec_local)])
+           print atomicAdd(accel+iglob*3+indx, source_adjoint[INDEX2(ndim,indx,irec_local)]*xir[INDEX2(nadj_rec_local,irec_local,i)]*etar[INDEX2(nadj_rec_local,irec_local,j)]*gammar[INDEX2(nadj_rec_local,irec_local,k)]);
         }
       }
       close p

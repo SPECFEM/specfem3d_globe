@@ -36,8 +36,8 @@
 !       while the main processes can continue computing. we thus overlap file i/o with computations.
 !       in case the heavy computations take long enough, this overlap should perfectly hide the i/o latency.
 !
-!       the costs are then for the additional memory, i.e. buffer array (buffer_sourcearrays), and the
-!       copying operation of data from the buffer array to the actual adj_sourcearrays array.
+!       the costs are then for the additional memory, i.e. buffer array (buffer_source_adjoint), and the
+!       copying operation of data from the buffer array to the actual adj_source_adjoint array.
 
   use specfem_par
 
@@ -70,13 +70,13 @@
 
       ! first chunk of adjoint sources must ready at beginning, so we wait.
       ! waits for previous read to finish and
-      ! copy over buffered data into tmp_sourcearray
-      call sync_adj_io_thread(adj_sourcearrays)
+      ! copy over buffered data into tmp_source_adjoint
+      call sync_adj_io_thread(source_adjoint)
 
     else
       ! waits for previous read to finish and
-      ! copy over buffered data into tmp_sourcearray
-      call sync_adj_io_thread(adj_sourcearrays)
+      ! copy over buffered data into tmp_source_adjoint
+      call sync_adj_io_thread(source_adjoint)
     endif
 
     ! checks if next chunk necessary
@@ -92,7 +92,7 @@
     ! synchronous read routine
 
     ! reads in local adjoint sources
-    call read_adjoint_sources_local(adj_sourcearrays,nadj_rec_local,it_sub_adj)
+    call read_adjoint_sources_local(source_adjoint,nadj_rec_local,it_sub_adj)
 
   endif
 
@@ -106,13 +106,13 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine read_adjoint_sources_local(sourcearrays,nadj_rec_local,it_sub_adj)
+  subroutine read_adjoint_sources_local(source_adjoint,nadj_rec_local,it_sub_adj)
 
 ! reads in local adjoint source files
 
   use specfem_par, only: myrank,NPROCTOT_VAL, &
     nrec,islice_selected_rec,station_name,network_name, &
-    xi_receiver,eta_receiver,gamma_receiver,nu,xigll,yigll,zigll, &
+    nu, &
     iadjsrc_len,iadjsrc,NSTEP_SUB_ADJ, &
     DT,CUSTOM_REAL,NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC,MAX_STRING_LEN,READ_ADJSRC_ASDF
 
@@ -120,10 +120,10 @@
 
   integer,intent(in) :: nadj_rec_local
   integer,intent(in) :: it_sub_adj
-  real(kind=CUSTOM_REAL), dimension(NDIM,NGLLX,NGLLY,NGLLZ,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC) :: sourcearrays
+  real(kind=CUSTOM_REAL), dimension(NDIM,nadj_rec_local,NTSTEP_BETWEEN_READ_ADJSRC) :: source_adjoint
 
   ! local parameters
-  real(kind=CUSTOM_REAL), dimension(:,:,:,:,:), allocatable :: tmp_sourcearray
+  real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: tmp_source_adjoint
   integer :: irec,irec_local,itime,ier
   character(len=MAX_STRING_LEN) :: adj_source_file
 
@@ -138,11 +138,11 @@
   endif
 
   ! allocates temporary source array
-  allocate(tmp_sourcearray(NDIM,NGLLX,NGLLY,NGLLZ,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
-  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array tmp_sourcearray')
+  allocate(tmp_source_adjoint(NDIM,NTSTEP_BETWEEN_READ_ADJSRC),stat=ier)
+  if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array tmp_source_adjoint')
 
   ! initializes
-  tmp_sourcearray(:,:,:,:,:) = 0._CUSTOM_REAL
+  tmp_source_adjoint(:,:) = 0._CUSTOM_REAL
 
   ! counter
   irec_local = 0
@@ -170,17 +170,15 @@
 
       ! reads in *.adj files
       call compute_arrays_source_adjoint(myrank,adj_source_file, &
-                                         xi_receiver(irec),eta_receiver(irec),gamma_receiver(irec), &
-                                         nu(:,:,irec),tmp_sourcearray, &
-                                         xigll,yigll,zigll, &
+                                         nu(:,:,irec),tmp_source_adjoint, &
                                          iadjsrc_len(it_sub_adj),iadjsrc,it_sub_adj, &
                                          NSTEP_SUB_ADJ,NTSTEP_BETWEEN_READ_ADJSRC,DT)
 
       ! stores source array
-      ! note: the adj_sourcearrays has a time stepping from 1 to NTSTEP_BETWEEN_READ_ADJSRC
+      ! note: the source_adjoint has a time stepping from 1 to NTSTEP_BETWEEN_READ_ADJSRC
       !          this gets overwritten every time a new block/chunk is read in
       do itime = 1,NTSTEP_BETWEEN_READ_ADJSRC
-        sourcearrays(:,:,:,:,irec_local,itime) = tmp_sourcearray(:,:,:,:,itime)
+        source_adjoint(:,irec_local,itime) = tmp_source_adjoint(:,itime)
       enddo
 
     endif
@@ -192,7 +190,7 @@
   endif
 
   ! frees temporary array
-  deallocate(tmp_sourcearray)
+  deallocate(tmp_source_adjoint)
 
   end subroutine read_adjoint_sources_local
 
