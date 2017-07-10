@@ -231,8 +231,32 @@
     ! create one large file instead of one small file per station to avoid file system overload
     if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
+  elseif (WRITE_SEISMOGRAMS_BY_MASTER .and. OUTPUT_SEISMOS_ASDF) then
+    ! BS BS 
+    ! The writing of seismograms by the master proc is handled within
+    ! write_asdf()
+    ! initializes the ASDF data structure by allocating arrays
+    call init_asdf_data(nrec_local)
+    call synchronize_all()
+    do irec_local = 1,nrec_local
+
+      ! get global number of that receiver
+      irec = number_receiver_global(irec_local)
+
+      one_seismogram(:,:) = seismograms(:,irec_local,:)
+
+      ! write this seismogram
+      ! note: ASDF data structure is given in module
+      !       stores all traces into ASDF container in case
+      call write_one_seismogram(one_seismogram,irec,irec_local)
+    enddo
+    call write_asdf()
+    call synchronize_all()
+    ! deallocate the container
+    call close_asdf_data()
+
   else
-    ! WRITE_SEISMOGRAMS_BY_MASTER
+    ! WRITE_SEISMOGRAMS_BY_MASTER .and. .not. OUTPUT_SEISMOS_ASDF
 
     ! only the master process does the writing of seismograms and
     ! collects the data from all other processes
@@ -343,6 +367,7 @@
         enddo
       endif
     endif
+
   endif ! WRITE_SEISMOGRAMS_BY_MASTER
 
   deallocate(one_seismogram)
