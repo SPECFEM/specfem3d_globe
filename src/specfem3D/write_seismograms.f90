@@ -231,7 +231,7 @@
     ! create one large file instead of one small file per station to avoid file system overload
     if (OUTPUT_SEISMOS_ASCII_TEXT .and. SAVE_ALL_SEISMOS_IN_ONE_FILE) close(IOUT)
 
-  elseif (WRITE_SEISMOGRAMS_BY_MASTER .and. OUTPUT_SEISMOS_ASDF) then
+  else if (WRITE_SEISMOGRAMS_BY_MASTER .and. OUTPUT_SEISMOS_ASDF) then
     ! BS BS
     ! The writing of seismograms by the master proc is handled within
     ! write_asdf()

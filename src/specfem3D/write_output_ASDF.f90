@@ -521,7 +521,7 @@
 
             call send_cr(one_seismogram,NDIM*seismo_current,receiver,itag)
 
-          elseif (myrank == 0) then
+          else if (myrank == 0) then
 
             call recv_cr(one_seismogram,NDIM*seismo_current,sender,itag)
 
