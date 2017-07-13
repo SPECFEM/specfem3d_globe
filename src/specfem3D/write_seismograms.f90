@@ -34,8 +34,8 @@
   use specfem_par, only: myrank,Mesh_pointer,GPU_MODE,GPU_ASYNC_COPY,SIMULATION_TYPE, &
     nrec_local,number_receiver_global,ispec_selected_rec,ispec_selected_source, &
     it,it_begin,it_end,seismo_current,seismo_offset, seismograms,NTSTEP_BETWEEN_OUTPUT_SEISMOS, &
-    WRITE_SEISMOGRAMS_BY_MASTER,OUTPUT_SEISMOS_ASDF, &
-    it_adj_written,moment_der,sloc_der,shdur_der,stshift_der
+    WRITE_SEISMOGRAMS_BY_MASTER,OUTPUT_SEISMOS_ASDF, SAVE_SEISMOGRAMS_IN_ADJOINT_RUN, &
+    it_adj_written,moment_der,sloc_der,shdur_der,stshift_der,scale_displ,NSTEP
 
   use specfem_par_crustmantle, only: displ_crust_mantle,b_displ_crust_mantle, &
     eps_trace_over_3_crust_mantle,epsilondev_xx_crust_mantle,epsilondev_xy_crust_mantle,epsilondev_xz_crust_mantle, &
@@ -58,7 +58,9 @@
     if (GPU_MODE) then
       ! gets field values from GPU
       ! this transfers fields only in elements with stations for efficiency
-      call write_seismograms_transfer_gpu(Mesh_pointer, &
+      if (SIMULATION_TYPE == 2) then
+
+        call write_seismograms_transfer_gpu(Mesh_pointer, &
                                           displ_crust_mantle,b_displ_crust_mantle, &
                                           eps_trace_over_3_crust_mantle, &
                                           epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
@@ -67,12 +69,17 @@
                                           ispec_selected_rec,ispec_selected_source, &
                                           ibool_crust_mantle)
 
-      ! synchronizes field values from GPU
-      if (GPU_ASYNC_COPY) then
-        call transfer_seismo_from_device_async(Mesh_pointer, &
+        ! synchronizes field values from GPU
+        if (GPU_ASYNC_COPY) then
+          call transfer_seismo_from_device_async(Mesh_pointer, &
                                                displ_crust_mantle,b_displ_crust_mantle, &
                                                number_receiver_global,ispec_selected_rec,ispec_selected_source, &
                                                ibool_crust_mantle)
+        endif
+      ! for forward and kernel simulations, seismograms are computed by the GPU, thus no need to transfer the wavefield
+    else
+      if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) & 
+        call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,scale_displ,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP)
       endif
 
     endif
@@ -80,10 +87,11 @@
     ! computes traces at interpolated receiver locations
     select case (SIMULATION_TYPE)
     case (1)
-      call compute_seismograms(NGLOB_CRUST_MANTLE,displ_crust_mantle, &
+      if (.not. GPU_MODE) &
+        call compute_seismograms(NGLOB_CRUST_MANTLE,displ_crust_mantle, &
                                seismo_current,seismograms)
     case (2)
-      call compute_seismograms_adjoint(displ_crust_mantle, &
+        call compute_seismograms_adjoint(displ_crust_mantle, &
                                        eps_trace_over_3_crust_mantle, &
                                        epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
                                        epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
@@ -91,7 +99,8 @@
                                        moment_der,sloc_der,stshift_der,shdur_der, &
                                        seismograms)
     case (3)
-      call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
+      if (.not. GPU_MODE .or. (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) ) &
+        call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
                                seismo_current,seismograms)
     end select
   endif ! nrec_local
@@ -109,7 +118,8 @@
       select case (SIMULATION_TYPE)
       case (1,3)
         ! forward/reconstructed wavefields
-        call write_seismograms_to_file()
+        if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
+          call write_seismograms_to_file()
       case (2)
         ! adjoint wavefield
         call write_adj_seismograms(it_adj_written)
