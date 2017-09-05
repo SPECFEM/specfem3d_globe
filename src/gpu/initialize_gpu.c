@@ -935,7 +935,7 @@ void FC_FUNC_ (initialize_gpu_device,
 
   TRACE ("initialize_device");
 
-  const int STRING_LENGTH = 12; // GPU_PLATFORM and GPU_DEVICE string length (as defined in shared_par.f90 module)
+  const int STRING_LENGTH = 128; // GPU_PLATFORM and GPU_DEVICE string length (as defined in shared_par.f90 module)
 
   char *platform_filter;
   char *device_filter;
