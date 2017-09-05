@@ -134,8 +134,8 @@
 
   ! GPU simulations
   integer :: GPU_RUNTIME
-  character(len=12) :: GPU_PLATFORM
-  character(len=12) :: GPU_DEVICE
+  character(len=128) :: GPU_PLATFORM
+  character(len=128) :: GPU_DEVICE
   logical :: GPU_MODE
 
   ! adios file output
