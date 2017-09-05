@@ -901,7 +901,7 @@ static char *trim_and_default(char *s, int max_string_length)
 
   // note: the platform_filter argument acts weird on e.g. apple platforms,
   //       giving a string "NVIDIA   Geforce", instead of just "NVIDIA" and "Geforce"
-  //       here we assume that maximum length of GPU_PLATFORM is 12 characters
+  //       here we assume that maximum length of GPU_PLATFORM is 128 characters
   // todo - find better way to avoid this?
   // debug
   //printf("string: %s has length %i \n",s,strlen(s));
@@ -935,7 +935,7 @@ void FC_FUNC_ (initialize_gpu_device,
 
   TRACE ("initialize_device");
 
-  const int STRING_LENGTH = 12; // GPU_PLATFORM and GPU_DEVICE string length (as defined in shared_par.f90 module)
+  const int STRING_LENGTH = 128; // GPU_PLATFORM and GPU_DEVICE string length (as defined in shared_par.f90 module)
 
   char *platform_filter;
   char *device_filter;
