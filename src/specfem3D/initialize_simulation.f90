@@ -524,7 +524,7 @@
   subroutine initialize_GPU()
 
 ! initialization for GPU cards
-
+  use iso_c_binding
   use specfem_par
   implicit none
   ! local parameters
@@ -598,7 +598,7 @@
     endif
 
     ! initializes GPU and outputs info to files for all processes
-    call initialize_gpu_device(GPU_RUNTIME,trim(GPU_PLATFORM),trim(GPU_DEVICE),myrank,ngpu_devices)
+    call initialize_gpu_device(GPU_RUNTIME,trim(GPU_PLATFORM)//C_NULL_CHAR,trim(GPU_DEVICE)//C_NULL_CHAR,myrank,ngpu_devices)
   endif
 
   ! collects min/max of local devices found for statistics
