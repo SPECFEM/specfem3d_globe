@@ -105,7 +105,7 @@ contains
   use constants, only: ADIOS_BUFFER_SIZE_IN_MB
 
 #ifdef ADIOS_INPUT
-  use adios_write_mod, only: adios_init_noxml,adios_allocate_buffer
+  use adios_write_mod, only: adios_init_noxml,adios_set_max_buffer_size
 #endif
 
   implicit none
@@ -138,7 +138,7 @@ contains
   !print *,'adios init return: ',ier
   !if (ier /= 0 ) stop 'Error setting up ADIOS: calling adios_init_noxml() routine failed'
 
-  call adios_allocate_buffer(ADIOS_BUFFER_SIZE_IN_MB, ier)
+  call adios_set_max_buffer_size(ADIOS_BUFFER_SIZE_IN_MB)
   ! note: return codes for this function have been fixed for ADIOS versions >= 1.6
   !       e.g., version 1.5.0 returns 1 if called first time, 0 if already called
   !print *,'adios allocate buffer return: ',ier
