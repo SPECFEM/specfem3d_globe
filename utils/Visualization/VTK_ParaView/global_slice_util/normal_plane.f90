@@ -10,10 +10,10 @@ program normal_plane
   character(len=100) :: ch_lats, ch_lons, ch_latr, ch_lonr
   real(kind=CUSTOM_REAL) :: lats, lons, latr, lonr, xs, ys, zs, nx, ny, nz, xc, yc, zc
 
-  call getarg(1,ch_lats)
-  call getarg(2,ch_lons)
-  call getarg(3,ch_latr)
-  call getarg(4,ch_lonr)
+  call get_command_argument(1,ch_lats)
+  call get_command_argument(2,ch_lons)
+  call get_command_argument(3,ch_latr)
+  call get_command_argument(4,ch_lonr)
 
   if (trim(ch_lats) == '' .or. trim(ch_lons) == '' .or. trim(ch_latr) == '' .or. trim(ch_lonr) == '') &
              stop 'Usage: normal_plane lats lons latr lonr'

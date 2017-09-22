@@ -21,16 +21,16 @@ implicit none
   call MPI_COMM_SIZE(MPI_COMM_WORLD,sizeprocs,ier)
   call MPI_COMM_RANK(MPI_COMM_WORLD,myrank,ier)
 
-  call getarg(1,old_machine_file)
-  call getarg(2,junk)
+  call get_command_argument(1,old_machine_file)
+  call get_command_argument(2,junk)
   if (trim(old_machine_file) == '' .or. trim(junk) == '') call exit_mpi(myrank,'Usage: remap old-mach num-slice [old-jobid new-jobid]')
   read(junk,*) num_slices
 
-  call getarg(3,junk2)
+  call get_command_argument(3,junk2)
   if (trim(junk2) == '') then
      use_jobid=.false.
   else
-     call getarg(4,junk3)
+     call get_command_argument(4,junk3)
      if (trim(junk3) == '') call exit_mpi(myrank,'Usage: remap old-mach num-slice [old-jobid new-jobid]')
      read(junk2,*) old_jobid
      read(junk3,*) new_jobid

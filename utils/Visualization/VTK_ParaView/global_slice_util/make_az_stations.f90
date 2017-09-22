@@ -17,9 +17,9 @@ program make_az_stations
 
   ! set up the input arguments
 
-  call getarg(1,ch_elon)
-  call getarg(2,ch_elat)
-  call getarg(3,ch_az)
+  call get_command_argument(1,ch_elon)
+  call get_command_argument(2,ch_elat)
+  call get_command_argument(3,ch_az)
 
   if (trim(ch_elon) == '' .or. trim(ch_elat) == '' .or. trim(ch_az) == '') then
     print *, 'Usage: xmake_az_stations elon elat az [dist(degrees)]'
@@ -51,7 +51,7 @@ program make_az_stations
   open(11,file=trim(filename),status='unknown')
 
   ! read in extra distance argument
-  call getarg(4,ch_dist)
+  call get_command_argument(4,ch_dist)
   if (trim(ch_dist) /= '') then
     read(ch_dist,*) dist
     np = 1

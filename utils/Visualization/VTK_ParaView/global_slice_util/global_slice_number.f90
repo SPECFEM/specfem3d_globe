@@ -23,12 +23,12 @@ program global_slice_number
 
   ! set up the input arguments
 
-  call getarg(1,ch_elon)
-  call getarg(2,ch_elat)
-  call getarg(3,ch_slon)
-  call getarg(4,ch_slat)
-  call getarg(5,ch_nproc)
-  call getarg(6,ch_narc)
+  call get_command_argument(1,ch_elon)
+  call get_command_argument(2,ch_elat)
+  call get_command_argument(3,ch_slon)
+  call get_command_argument(4,ch_slat)
+  call get_command_argument(5,ch_nproc)
+  call get_command_argument(6,ch_narc)
 
   ch_usage = 'Usage: global_slice_number elon elat slon slat nproc narc [nchunks xi_width eta_width clon clat grot] [lat0]'
 
@@ -45,14 +45,14 @@ program global_slice_number
   read(ch_nproc,*) nproc
   read(ch_narc,*) narc
 
-  call getarg(7,ch_arg7)
+  call get_command_argument(7,ch_arg7)
   if (trim(ch_arg7) == '') then
     belt_region = .false.
     nchunks = 6
     xi_width = 90.
     eta_width = 90.
   else
-    call getarg(8,ch_arg8)
+    call get_command_argument(8,ch_arg8)
     if (trim(ch_arg8) == '') then
       belt_region = .true.
       nchunks = 6
@@ -62,10 +62,10 @@ program global_slice_number
     else
       read(ch_arg7,*) nchunks
       read(ch_arg8,*) xi_width
-      call getarg(9,ch_eta_width)
-      call getarg(10,ch_clon)
-      call getarg(11,ch_clat)
-      call getarg(12,ch_grot)
+      call get_command_argument(9,ch_eta_width)
+      call get_command_argument(10,ch_clon)
+      call get_command_argument(11,ch_clat)
+      call get_command_argument(12,ch_grot)
       if (trim(ch_eta_width) == '' .or. trim(ch_clon) == '' .or. trim(ch_clat) == '' .or. trim(ch_grot) == '') then
         print *, trim(ch_usage)
         stop
@@ -75,7 +75,7 @@ program global_slice_number
         read(ch_clat,*) clat
         read(ch_grot,*) grot
 
-        call getarg(13,ch_arg13)
+        call get_command_argument(13,ch_arg13)
         if (trim(ch_arg13) == '') then
           belt_region = .false.
         else
