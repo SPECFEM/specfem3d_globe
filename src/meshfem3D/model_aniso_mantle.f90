@@ -389,17 +389,18 @@
   AMM_V_npar1 = (np2 - np1 + 1)
 
 !
-! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
-!
-  open(IIN,file=glob_prem3sm01,status='old',action='read',iostat=ier)
-  if (ier /= 0 ) stop 'Error opening file DATA/Montagner_model/glob-prem3sm01'
-
-!
 ! read the models
 !
 ! reference model: PREM or ACY400
 !
   call lecmod(nri,pari,ra)
+
+!
+! glob-prem3sm01: model with rho,A,L,xi-1,1-phi,eta
+!
+  open(IIN,file=glob_prem3sm01,status='old',action='read',iostat=ier)
+  if (ier /= 0 ) stop 'Error opening file DATA/Montagner_model/glob-prem3sm01'
+
 !
 ! read tomographic model (equivalent T.I. model)
 !
