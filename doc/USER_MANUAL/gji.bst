@@ -1177,6 +1177,12 @@ FUNCTION {book}
     }
   if$
   format.edition output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1190,6 +1196,12 @@ FUNCTION {booklet}
   format.title "title" output.check
   howpublished output
   address output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1223,6 +1235,12 @@ FUNCTION {inbook}
     }
   if$
   format.edition output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1247,6 +1265,12 @@ FUNCTION {incollection}
       format.chapter.pages output
     }
   if$
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1276,6 +1300,12 @@ FUNCTION {inproceedings}
       format.pages output
     }
   if$
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1292,6 +1322,12 @@ FUNCTION {manual}
   organization output
   address output
   format.edition output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1306,6 +1342,12 @@ FUNCTION {mastersthesis}
   bbl.mthesis format.thesis.type output.nonnull
   school "school" output.check
   address output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1318,6 +1360,12 @@ FUNCTION {misc}
   new.block
   format.title output
   howpublished output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1332,6 +1380,12 @@ FUNCTION {phdthesis}
   bbl.phdthesis format.thesis.type output.nonnull
   school "school" output.check
   address output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1348,6 +1402,12 @@ FUNCTION {proceedings}
   address output
   organization output
   publisher output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
@@ -1362,6 +1422,12 @@ FUNCTION {techreport}
   format.tr.number output.nonnull
   institution "institution" output.check
   address output
+%% DK DK dec 2017, added this for DOI support
+   doi empty$
+   'skip$
+   {"doi: " doi * output}
+   if$
+%% DK DK dec 2017, added this for DOI support
   note output
   fin.entry
 }
