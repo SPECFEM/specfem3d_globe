@@ -9,7 +9,7 @@
 # if you want to compile with OpenMP, add this to the flags listed below, depending on the compiler you use:
 #
 #   -fopenmp for GNU gfortran
-#   -openmp for Intel ifort
+#   -qopenmp for Intel ifort
 #   -mp for Portland pgfortran
 #   -qsmp=omp for IBM xlf
 
