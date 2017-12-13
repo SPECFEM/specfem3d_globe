@@ -247,7 +247,7 @@ FUNCTION {bbl.edby}
 { "edited by" }
 
 FUNCTION {bbl.edition}
-{ "edn." }
+{ "edition." }
 
 FUNCTION {bbl.volume}
 { "vol." }
