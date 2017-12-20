@@ -345,6 +345,10 @@
                                                    b_accel_oc_store_buffer,Mesh_pointer)
         else
           ! stores wavefield in buffers
+! only the displacement needs to be stored in memory buffers in order to compute the sensitivity kernels,
+! not the memory variables R_ij, because the sensitivity kernel calculations only involve the displacement
+! and the strain, not the stress, and the strain can be recomputed on the fly by computing the gradient
+! of the displacement read back from the memory buffers (see also https://github.com/geodynamics/specfem3d_globe/issues/194)
           b_displ_cm_store_buffer(:,:,it_of_this_subset) = b_displ_crust_mantle(:,:)
           b_displ_oc_store_buffer(:,it_of_this_subset) = b_displ_outer_core(:)
           b_accel_oc_store_buffer(:,it_of_this_subset) = b_accel_outer_core(:)
@@ -382,6 +386,10 @@
           call transfer_ofs_b_accel_oc_to_device(NGLOB_OUTER_CORE_ADJOINT,it_subset_end-it_of_this_subset+1, &
                                                  b_accel_oc_store_buffer,Mesh_pointer)
         else
+! only the displacement needs to be stored in memory buffers in order to compute the sensitivity kernels,
+! not the memory variables R_ij, because the sensitivity kernel calculations only involve the displacement
+! and the strain, not the stress, and the strain can be recomputed on the fly by computing the gradient
+! of the displacement read back from the memory buffers (see also https://github.com/geodynamics/specfem3d_globe/issues/194)
           b_displ_crust_mantle(:,:) = b_displ_cm_store_buffer(:,:,it_subset_end-it_of_this_subset+1)
           b_displ_outer_core(:) = b_displ_oc_store_buffer(:,it_subset_end-it_of_this_subset+1)
           b_accel_outer_core(:) = b_accel_oc_store_buffer(:,it_subset_end-it_of_this_subset+1)
