@@ -230,7 +230,7 @@
     ! global iglob point ids on each interface
     ibool_interfaces_crust_mantle(:,:) = ibool_neighbors(1:max_nibool_interfaces_cm,1:num_interfaces_crust_mantle)
   else
-    ! dummy allocation (fortran90 should allow allocate statement with zero array size)
+    ! dummy allocation (Fortran90 should allow allocate statement with zero array size)
     max_nibool_interfaces_cm = 0
     allocate(ibool_interfaces_crust_mantle(0,0),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating dummy array ibool_interfaces_crust_mantle')
@@ -370,7 +370,7 @@
     ! global iglob point ids on each interface
     ibool_interfaces_outer_core(:,:) = ibool_neighbors(1:max_nibool_interfaces_oc,1:num_interfaces_outer_core)
   else
-    ! dummy allocation (fortran90 should allow allocate statement with zero array size)
+    ! dummy allocation (Fortran90 should allow allocate statement with zero array size)
     max_nibool_interfaces_oc = 0
     allocate(ibool_interfaces_outer_core(0,0),stat=ier)
   endif
@@ -567,7 +567,7 @@
     ! global iglob point ids on each interface
     ibool_interfaces_inner_core(:,:) = ibool_neighbors(1:max_nibool_interfaces_ic,1:num_interfaces_inner_core)
   else
-    ! dummy allocation (fortran90 should allow allocate statement with zero array size)
+    ! dummy allocation (Fortran90 should allow allocate statement with zero array size)
     max_nibool_interfaces_ic = 0
     allocate(ibool_interfaces_inner_core(0,0),stat=ier)
   endif

@@ -164,7 +164,7 @@
   use asdf_data, only: asdf_container
 
   use iso_c_binding
-  use iso_fortran_env
+  use iso_Fortran_env
 
   use specfem_par
 

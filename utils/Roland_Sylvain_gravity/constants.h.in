@@ -59,7 +59,7 @@
 
 ! input, output and main MPI I/O files
 ! note: careful with these unit numbers, we mostly use units in the 40-50 range.
-!       cray fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
+!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
   integer, parameter :: ISTANDARD_OUTPUT = 6
   integer, parameter :: IIN = 40,IOUT = 41
 ! uncomment this to write messages to a text file

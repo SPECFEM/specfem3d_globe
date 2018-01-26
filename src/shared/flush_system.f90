@@ -67,7 +67,7 @@
   !
   ! otherwise:
   !   a) comment out the line below
-  !   b) try to use other function implementation: e.g. fortran 2008 supports
+  !   b) try to use other function implementation: e.g. Fortran 2008 supports
   !      call execute_command_line(trim(command))
 
   call system(trim(command))

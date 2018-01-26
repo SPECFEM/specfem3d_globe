@@ -126,7 +126,7 @@
   if (NSPEC_TOP > 2147483646 / (CUSTOM_REAL * NGLLX * NGLLY * NDIM * NT_DUMP_NOISE_BUFFER)) then
     print *,'buffer of noise surface_movie needed exceeds integer 4-byte limit: ',dble(reclen_noise) * dble(NT_DUMP_NOISE_BUFFER)
     print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP,NT_DUMP_NOISE_BUFFER
-    print *,'bit size fortran: ',bit_size(NSPEC_TOP)
+    print *,'bit size Fortran: ',bit_size(NSPEC_TOP)
     print *,'NT_DUMP_NOISE_BUFFER: ',NT_DUMP_NOISE_BUFFER
     print *,'Please reduce size of noise buffer for file i/o ...'
     call exit_MPI(myrank,"Error NT_DUMP_NOISE_BUFFER leads to buffer length exceeding integer limit (2 GB)")

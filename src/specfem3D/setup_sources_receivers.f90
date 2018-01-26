@@ -692,7 +692,7 @@
   "('sed -e ',a1,'s/POINTS.*/POINTS',i6,' float/',a1,' < ',a,' > ',a)")&
       "'",NSOURCES + nrec,"'",trim(filename),trim(filename_new)
 
-    ! note: this system() routine is non-standard fortran
+    ! note: this system() routine is non-standard Fortran
     call system_command(command)
 
     ! only extract receiver locations and remove temporary file
@@ -702,7 +702,7 @@
    &print ',a1,'POINTS',i6,' float',a1,';if (NR > 5+',i6,')print $0}',a1,' < ',a,' > ',a)")&
       "'",'"',nrec,'"',NSOURCES,"'",trim(filename),trim(filename_new)
 
-    ! note: this system() routine is non-standard fortran
+    ! note: this system() routine is non-standard Fortran
     call system_command(command)
 
     ! only extract source locations and remove temporary file
@@ -711,7 +711,7 @@
   "('awk ',a1,'{if (NR < 6 + ',i6,') print $0}END{print}',a1,' < ',a,' > ',a,'; rm -f ',a)")&
       "'",NSOURCES,"'",trim(filename),trim(filename_new),trim(filename)
 
-    ! note: this system() routine is non-standard fortran
+    ! note: this system() routine is non-standard Fortran
     call system_command(command)
 
   endif
@@ -1114,7 +1114,7 @@
     it_adj_written = 0
   else
     ! allocates dummy array since we need it to pass as argument e.g. in write_seismograms() routine
-    ! note: nrec_local is zero, fortran 90/95 should allow zero-sized array allocation...
+    ! note: nrec_local is zero, Fortran 90/95 should allow zero-sized array allocation...
     allocate(seismograms(NDIM,0,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
     if (ier /= 0) stop 'Error while allocating zero seismograms'
   endif

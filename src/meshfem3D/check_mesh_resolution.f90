@@ -756,7 +756,7 @@
 
   subroutine get_eigenvalues_sym(A,eig1,eig2,eig3)
 
-! modified to fortran from: https://en.wikipedia.org/wiki/Eigenvalue_algorithm#3.C3.973_matrices
+! modified to Fortran from: https://en.wikipedia.org/wiki/Eigenvalue_algorithm#3.C3.973_matrices
 !
 ! Smith, Oliver K. (April 1961),
 ! Eigenvalues of a symmetric 3 x 3 matrix,

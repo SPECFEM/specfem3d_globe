@@ -166,7 +166,7 @@
     print *,'size of noise surface movie array needed exceeds integer 4-byte limit: ', &
       dble(CUSTOM_REAL * NGLLX * NGLLY * NDIM) * dble(NSPEC_TOP),reclen_noise
     print *,'  ',CUSTOM_REAL, NDIM, NGLLX * NGLLY, NSPEC_TOP
-    print *,'bit size fortran: ',bit_size(NSPEC_TOP)
+    print *,'bit size Fortran: ',bit_size(NSPEC_TOP)
     call exit_MPI(myrank,"Error NSPEC_TOP leads to noise surface array exceeding integer limit (2 GB)")
   endif
 
