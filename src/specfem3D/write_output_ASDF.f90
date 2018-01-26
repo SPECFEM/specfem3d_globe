@@ -158,6 +158,7 @@
 !> Writes the ASDF data structure to the file
   subroutine write_asdf()
 
+  use constants, only: OUTPUT_PROVENANCE
   use constants_solver, only: NDIM,itag
 
   use asdf_data, only: asdf_container
@@ -167,7 +168,7 @@
 
   use specfem_par
 
-  use my_mpi
+  !use my_mpi
 
   implicit none
 
@@ -269,13 +270,15 @@
   ! Generate minimal QuakeML for SPECFEM3D_GLOBE
   call cmt_to_quakeml(quakeml, pde_start_time_string, cmt_start_time_string)
 
-  ! Generate specfem provenance string
-  call ASDF_generate_sf_provenance_f(trim(start_time_string)//C_NULL_CHAR, &
+  if (OUTPUT_PROVENANCE) then
+    ! Generate specfem provenance string
+    call ASDF_generate_sf_provenance_f(trim(start_time_string)//C_NULL_CHAR, &
                                    trim(end_time_string)//C_NULL_CHAR, cptr, len_prov)
-  call c_f_pointer(cptr, fptr, [len_prov])
-  allocate(provenance(len_prov+1))
-  provenance(1:len_prov) = fptr(1:len_prov)
-  provenance(len_prov+1) = C_NULL_CHAR
+    call c_f_pointer(cptr, fptr, [len_prov])
+    allocate(provenance(len_prov+1))
+    provenance(1:len_prov) = fptr(1:len_prov)
+    provenance(len_prov+1) = C_NULL_CHAR
+  endif
 
   allocate(networks_names(num_stations), stat=ier)
   allocate(stations_names(num_stations), stat=ier)
@@ -417,15 +420,18 @@
                                            "1.0.0" // C_NULL_CHAR, ier)
 
         call ASDF_write_quakeml_f(current_asdf_handle, trim(quakeml) // C_NULL_CHAR, ier)
-        call ASDF_write_provenance_data_f(current_asdf_handle, provenance(1:len_prov+1), ier)
 
-        call read_file("setup/constants.h", sf_constants, len_constants)
-        call read_file("DATA/Par_file", sf_parfile, len_Parfile)
+        if (OUTPUT_PROVENANCE) then
+          call ASDF_write_provenance_data_f(current_asdf_handle, provenance(1:len_prov+1), ier)
+
+          call read_file("setup/constants.h", sf_constants, len_constants)
+          call read_file("DATA/Par_file", sf_parfile, len_Parfile)
 
 
-        call ASDF_write_auxiliary_data_f(current_asdf_handle, trim(sf_constants) // &
+          call ASDF_write_auxiliary_data_f(current_asdf_handle, trim(sf_constants) // &
                                          C_NULL_CHAR, trim(sf_parfile(1:len_Parfile)) // &
                                          C_NULL_CHAR, ier)
+        endif
 
         call ASDF_create_waveforms_group_f(current_asdf_handle, waveforms_grp)
 
