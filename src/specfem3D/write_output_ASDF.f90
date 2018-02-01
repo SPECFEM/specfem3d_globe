@@ -629,7 +629,7 @@
   !--------------------------------------------------------
 
 
-  deallocate(provenance)
+  if (OUTPUT_PROVENANCE) deallocate(provenance)
   deallocate(station_names_gather)
   deallocate(network_names_gather)
   deallocate(component_names_gather)
