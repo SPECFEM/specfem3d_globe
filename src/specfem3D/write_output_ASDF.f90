@@ -674,7 +674,7 @@
   write(cmt_lat_str, "(g12.5)") cmt_lat
   write(cmt_lon_str, "(g12.5)") cmt_lon
   write(cmt_depth_str, "(g12.5)") cmt_depth*1000 ! km to m conversion
-  write(hdur_str, "(g12.5)") hdur
+  write(hdur_str, "(g12.5)") hdur*2
   write(M0_str, "(g12.5)") M0*1e-7 ! dyn-cm to N-m conversion
   write(mb_str, "(g12.5)") mb
   write(ms_str, "(g12.5)") ms
