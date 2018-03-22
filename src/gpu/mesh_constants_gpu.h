@@ -75,10 +75,6 @@ typedef float realw;
 #else
 #define TRACE(x)
 #endif
-
-// debug: outputs maximum values of wavefields
-#define DEBUG_FIELDS 0
-
 // more outputs
 #define MAXDEBUG 0
 #if MAXDEBUG == 1
@@ -116,6 +112,12 @@ typedef float realw;
 #define DEBUG_BACKWARD_TRANSFER()
 #define DEBUG_BACKWARD_UPDATE()
 #endif
+
+// debug: outputs maximum values of wavefields
+#define DEBUG_FIELDS 0
+
+// debug: outputs maximum and preferred work group size (for OpenCL kernels)
+#define DEBUG_KERNEL_WORK_GROUP_SIZE 0
 
 // error checking after cuda function calls
 // (note: this synchronizes many calls, thus e.g. no asynchronous memcpy possible)
@@ -233,7 +235,10 @@ typedef float realw;
 
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
-//
+#ifdef GPU_DEVICE_Maxwell
+#undef USE_LAUNCH_BOUNDS
+#endif
+
 #ifdef GPU_DEVICE_K20
 // note: main kernel is Kernel_2_crust_mantle_impl() which is limited by register usage to only 5 active blocks
 //       while shared memory usage would allow up to 7 blocks (see profiling with nvcc...)
@@ -252,7 +257,8 @@ typedef float realw;
 #define USE_LAUNCH_BOUNDS
 #define LAUNCH_MIN_BLOCKS 7
 #endif
-#ifdef GPU_DEVICE_P100
+
+#ifdef GPU_DEVICE_Pascal
 // Pascal P100: by default, the crust_mantle_impl_kernel_forward kernel uses 80 registers.
 //              80 * 128 threads -> 10240 registers    for Pascal: total of 65536 -> limits active blocks to 6
 //              using launch bounds to increase the number of blocks will lead to register spilling.
@@ -261,6 +267,9 @@ typedef float realw;
 #define LAUNCH_MIN_BLOCKS 6
 #endif
 
+#ifdef GPU_DEVICE_Volta
+#undef USE_LAUNCH_BOUNDS
+#endif
 
 
 /*----------------------------------------------------------------------------------------------- */

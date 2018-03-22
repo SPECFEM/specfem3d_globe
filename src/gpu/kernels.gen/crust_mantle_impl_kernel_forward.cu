@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 2.0.2
+//      this file has been generated automatically by BOAST version 2.1.0
 //      by: make boast_kernels
 
 /*
@@ -448,7 +448,7 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
 // main function
 /*----------------------------------------------*/
 
-__global__
+__global__ 
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif

@@ -738,12 +738,11 @@ void FC_FUNC_ (resort_array,
   }
 #endif
 #ifdef USE_CUDA
-    if (run_cuda) {
-        dim3 grid(num_blocks_x,num_blocks_y);
-        dim3 threads(blocksize,1,1);
-        resort_array<<<grid,threads,0,mp->compute_stream>>>(mp->d_cijkl_kl_crust_mantle.cuda, mp->NSPEC_CRUST_MANTLE);
-
-    }
+  if (run_cuda) {
+      dim3 grid(num_blocks_x,num_blocks_y);
+      dim3 threads(blocksize,1,1);
+      resort_array<<<grid,threads,0,mp->compute_stream>>>(mp->d_cijkl_kl_crust_mantle.cuda, mp->NSPEC_CRUST_MANTLE);
+  }
 #endif
 
   GPU_ERROR_CHECKING ("resort d_cijkl_kl_crust_mantle array");

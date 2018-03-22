@@ -437,7 +437,7 @@ static void initialize_ocl_device(const char *platform_filter, const char *devic
   build_kernels();
 
   // debugging
-  if (DEBUG_VERBOSE_OUTPUT){
+  if (DEBUG_KERNEL_WORK_GROUP_SIZE){
     // Get the maximum work group size for executing each kernel on the device
     // and preferred size multiple for each kernel CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE
 #undef BOAST_KERNEL
