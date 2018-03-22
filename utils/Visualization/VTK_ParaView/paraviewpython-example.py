@@ -43,6 +43,11 @@ view.OrientationAxesVisibility = 0
 # to avoid segmentation fault
 view.UseOffscreenRenderingForScreenshots = 0
 
+# sets view size for display
+#view.ViewSize = [1920,1080] # width x height
+print "view size: " + str(view.ViewSize)
+
+
 ## save as jpeg
 jpegfilename = outfile + ".jpg"
 print "plot to: " + jpegfilename
