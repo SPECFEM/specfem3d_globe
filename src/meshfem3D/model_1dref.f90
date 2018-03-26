@@ -57,10 +57,10 @@
   integer, parameter :: NR_REF = 750
 
   ! model_1dref_variables
-  double precision, dimension(NR_REF) :: Mref_V_radius_ref,Mref_V_density_ref, &
-                                         Mref_V_vpv_ref,Mref_V_vph_ref, &
-                                         Mref_V_vsv_ref,Mref_V_vsh_ref, &
-                                         Mref_V_eta_ref,Mref_V_Qkappa_ref,Mref_V_Qmu_ref
+  double precision, dimension(:),allocatable :: Mref_V_radius_ref,Mref_V_density_ref, &
+                                                Mref_V_vpv_ref,Mref_V_vph_ref, &
+                                                Mref_V_vsv_ref,Mref_V_vsh_ref, &
+                                                Mref_V_eta_ref,Mref_V_Qkappa_ref,Mref_V_Qmu_ref
 
   end module model_1dref_par
 
@@ -77,6 +77,22 @@
   implicit none
 
   logical :: CRUSTAL
+
+  ! local parameters
+  integer :: ier
+
+  ! allocates arrays
+  allocate(Mref_V_radius_ref(NR_REF), &
+           Mref_V_density_ref(NR_REF), &
+           Mref_V_vpv_ref(NR_REF), &
+           Mref_V_vph_ref(NR_REF), &
+           Mref_V_vsv_ref(NR_REF), &
+           Mref_V_vsh_ref(NR_REF), &
+           Mref_V_eta_ref(NR_REF), &
+           Mref_V_Qkappa_ref(NR_REF), &
+           Mref_V_Qmu_ref(NR_REF), &
+           stat=ier)
+  if (ier /= 0 ) stop 'Error allocating 1d_ref arrays'
 
   ! all processes will define same parameters
   call define_model_1dref(CRUSTAL)
@@ -174,12 +190,12 @@
 
   ! non-dimensionalize
   ! time scaling (s^{-1}) is done with scaleval
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  rho=rho/RHOAV
-  vpv=vpv/(R_EARTH*scaleval)
-  vph=vph/(R_EARTH*scaleval)
-  vsv=vsv/(R_EARTH*scaleval)
-  vsh=vsh/(R_EARTH*scaleval)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  rho = rho/RHOAV
+  vpv = vpv/(R_EARTH*scaleval)
+  vph = vph/(R_EARTH*scaleval)
+  vsv = vsv/(R_EARTH*scaleval)
+  vsh = vsh/(R_EARTH*scaleval)
 
   end subroutine model_1dref
 
