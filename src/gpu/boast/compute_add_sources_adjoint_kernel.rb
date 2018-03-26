@@ -5,7 +5,7 @@ module BOAST
     function_name = "compute_add_sources_adjoint_kernel"
     accel =              Real("accel",             :dir => :inout,:dim => [ Dim() ])
     nrec =               Int( "nrec",              :dir => :in)
-    source_adjoint =     Real("source_adjoint",    :dir => :in,   :dim => [ Dim() ]) 
+    source_adjoint =     Real("source_adjoint",    :dir => :in,   :dim => [ Dim() ])
     xir =                Real("xir",               :dir => :in,   :dim => [ Dim() ])
     etar =               Real("etar",              :dir => :in,   :dim => [ Dim() ])
     gammar =             Real("gammar",            :dir => :in,   :dim => [ Dim() ])

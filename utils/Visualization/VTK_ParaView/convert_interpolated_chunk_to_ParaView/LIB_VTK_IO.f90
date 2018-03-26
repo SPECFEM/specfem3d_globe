@@ -4702,7 +4702,7 @@ endmodule LIB_VTK_IO
 !!
 !!This program is free software: you can redistribute it and/or modify
 !!it under the terms of the GNU General Public License as published by
-!!the Free Software Foundation, either version 2 of the License, or
+!!the Free Software Foundation, either version 3 of the License, or
 !!(at your option) any later version.
 !!
 !!This program is distributed in the hope that it will be useful,
@@ -4750,4 +4750,4 @@ endmodule LIB_VTK_IO
 !!\end{enumerate}
 
 !(doc)footer
->>>>>>> f12ccc8... switches from getarg() to get_command_argument(); updates formatting
+ >  >  >  >  >  >  > f12ccc8... switches from getarg() to get_command_argument(); updates formatting
