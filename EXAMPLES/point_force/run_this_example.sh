@@ -31,6 +31,7 @@ cd ../../
 
 # compiles for a forward simulation
 cp $currentdir/DATA/Par_file DATA/Par_file
+cp $currentdir/DATA/FORCESOLUTION DATA/
 make clean
 make -j4 all
 
@@ -54,9 +55,9 @@ cp ../../bin/xcombine_vol_data_vtk ./bin/
 
 # links data directories needed to run example in this current directory with s362ani
 cd DATA/
+ln -s ../../../DATA/s40rts
+ln -s ../../../DATA/s20rts
 ln -s ../../../DATA/crust2.0
-ln -s ../../../DATA/s362ani
-ln -s ../../../DATA/QRFSI12
 ln -s ../../../DATA/topo_bathy
 cd ../
 

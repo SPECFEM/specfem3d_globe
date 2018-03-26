@@ -1,11 +1,11 @@
 FORCE  001
-time shift:     0.0000 ! s
-half duration:  0.5 ! Half duration (s) for Step function, frequency (Hz) for Ricker
-latitude:        39.0 ! Degree
-longitude:       70.0 ! Degree
-depth:           10.0 ! km
-source time function: 0 ! 0=Step function, 1=Ricker wavelet
-factor force source:             1.d15 ! Newton
-component dir vect source E:     1.d0
-component dir vect source N:     0.d0
-component dir vect source Z_UP:  0.d0
+time shift:        0.0000    ! s
+half duration:    16.28      ! Half duration (s) for Gaussian/Step function, frequency (Hz) for Ricker
+latitude:         35.0278    ! Degree (Barringer Crater 35.0278 N, 111.0222 W)
+longitude:      -111.0222    ! Degree
+depth:             0.0       ! km
+source time function: 0      ! 0=Gaussian function, 1=Ricker wavelet, 2=Step function
+factor force source:              9.39d+13   ! Newton
+component dir vect source E:      0.d0
+component dir vect source N:     -1.d0       ! 45-degree impact, heading South
+component dir vect source Z_UP:  -1.d0

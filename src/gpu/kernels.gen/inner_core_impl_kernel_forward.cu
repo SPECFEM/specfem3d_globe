@@ -229,7 +229,7 @@ static __device__ void compute_element_ic_gravity(const int tx, const int iglob,
 // main function
 /*----------------------------------------------*/
 
-__global__ 
+__global__
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif

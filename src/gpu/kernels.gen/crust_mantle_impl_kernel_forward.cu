@@ -448,7 +448,7 @@ static __device__ void compute_element_cm_tiso(const int offset, const float * d
 // main function
 /*----------------------------------------------*/
 
-__global__ 
+__global__
 #ifdef USE_LAUNCH_BOUNDS
 __launch_bounds__(NGLL3_PADDED, LAUNCH_MIN_BLOCKS)
 #endif

@@ -49,7 +49,7 @@ NPROC_ETA                       = 1
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = 1D_iasp91
+MODEL                           = 1D_iasp91_onecrust
 
 # parameters describing the Earth model
 OCEANS                          = .false.
@@ -63,7 +63,7 @@ ATTENUATION                     = .true.
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 3.0d0
+RECORD_LENGTH_IN_MINUTES        = 0.5d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
@@ -167,7 +167,7 @@ LOCAL_PATH                      = ./DATABASES_MPI
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 500
+NTSTEP_BETWEEN_OUTPUT_INFO      = 100
 
 #-----------------------------------------------------------
 #
@@ -192,15 +192,6 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
 # # The direction vector is made unitary internally in the code and thus only its direction matters here;
 # # its norm is ignored and the norm of the force used is the factor force source times the source time function.
 USE_FORCE_POINT_SOURCE          = .true.
-
-# option to save strain seismograms
-# this option is useful for strain Green's tensor
-# this feature is currently under development
-SAVE_SEISMOGRAMS_STRAIN         = .false.
-
-# save seismograms also when running the adjoint runs for an inverse problem
-# (usually they are unused and not very meaningful, leave this off in almost all cases)
-SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .false.
 
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
@@ -258,7 +249,7 @@ USE_FULL_TISO_MANTLE            = .false.
 SAVE_SOURCE_MASK                = .true.
 
 # output kernels on a regular grid instead of on the GLL mesh points (a bit expensive)
-SAVE_REGULAR_KL                 = .false.
+SAVE_REGULAR_KL                 = .true.
 
 #-----------------------------------------------------------
 

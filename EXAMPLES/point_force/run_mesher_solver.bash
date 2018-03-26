@@ -19,7 +19,7 @@ mkdir -p $BASEMPIDIR
 # backup files used for this simulation
 cp DATA/Par_file OUTPUT_FILES/
 cp DATA/STATIONS OUTPUT_FILES/
-cp DATA/CMTSOLUTION OUTPUT_FILES/
+cp DATA/FORCESOLUTION OUTPUT_FILES/
 
 ##
 ## mesh generation

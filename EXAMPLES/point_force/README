@@ -4,8 +4,43 @@ README
 
 Example of a global simulation with a point force source 
 
-This example creates a global mesh, using a 3D shear-wave speed model S362ANI (Kustowski et al. [2006], 
+This example creates a global mesh, using a 1D wave-speed model IASP91 (Kennett and Engdahl, 1991), 
 and runs a spectral-element simulation with a point force source.
+
+0. Setup:
+---------
+
+The point force is applied to the Earth surface at the Barringer Meteorite Crater site, US, named after Daniel Moreau Barringer:
+https://www.barringercrater.com/
+
+The crater was formed by the impact of a meteorite which supposedly had a diameter of 30-50 m, weighted 300,000 tons and 
+traveled at a speed of 12 km/s. After the impact, the crater was about 1 km wide and 230 m deep. Most impact angles are around 45 degrees and
+Barringer estimated that due the almost symmetrical distribution of meteorite fragments in north-south direction, the meteorite struck 
+coming from north and would be located in the south rim of the crater.
+
+Note that for the given weight, a nearly spherical meteorite made of iron (density of 7870 kg/m**3) would be close to a 42 m diameter.
+
+For the energy released, the kinetic energy is: 
+E_kinetic = 1/2 m v**2 = 2.16 * 10**16 (J = N m = kg m**2 s**-2)
+
+The force can be calculated by assuming the stop distance of 230m:             
+F = E_kinetic / d = 9.39e+13 (N)
+
+We will use these as settings for the FORCESOLUTION file.
+
+Note that for seismic energy and sources (see e.g. Meschede et al. 2011), only a portion of the kinetic energy is converted to seismic energy.
+The seismic efficiency factor k, which is defined by E_seis = k * E_kinetic, is around 10**-2 for a small meteorite (see Shishkin 2007).
+
+The total seismic energy emitted by a point force according to Madariaga (2007) can be calculated 
+for a Gaussian source time function depending on the source time duration (T) (eq. 6 in Meschede et al., 2011):
+E_seis = F**2 * pi**(3/2) / (2**(5/2) * T**3 * rho) * (1./(3. * alpha**3) + 2./(3. * beta**3))
+for a homogeneous medium. 
+
+Using IASP91 crust, with rho = 2720.0 kg/m**3, alpha = 5800.0 m/s, beta = 3360.0 m/s), 
+the radiated energy for T = 0.6 s would have a seismic energy E_seis = 2.27 * 10**14 (J) (seismic efficieny factor k ~ 10**-2).
+Given the coarse mesh resolution of this example however, we use a larger half duration of the Gaussian source time function.
+
+
 
 
 1. forward simulation:
@@ -18,4 +53,18 @@ to setup this directory for the simulation and to run a corresponding
 script "run_mesher_solver.bash".
 
 Please modify the setup and scripts according to your specifics.
+
+
+
+Further reading:   
+- Barringer Meteorite Crater: 
+  https://www.barringercrater.com/the-crater/
+- Meschede et al., 2011, Antipodal focusing of seismic waves due to large meteorite impacts on Earth,
+  Geophys. J. Int., 187, 529-537.
+- Melosh & Collins, 2005, Planetary science: Meteor Crater formed by low-velocity impact,
+  Nature, 434 (157), doi:10.1038/434157a. http://www.nature.com/articles/434157a
+- Shishkin, 2007, Seismic efficiency of a contact explosion and a high-velocity impact,
+  J. appl. Mech. Tech. Phys.
+- Madriaga, 2007, Seismic Source Theory, 
+  Treatise on Geophysics, 4, 59-82.
 
