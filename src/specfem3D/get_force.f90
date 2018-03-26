@@ -61,9 +61,11 @@
   lat(:) = 0.d0
   long(:) = 0.d0
   depth(:) = 0.d0
+
   t_shift(:) = 0.d0
   tshift_force(:) = 0.d0
   hdur(:) = 0.d0
+
   force_stf(:) = 0
   factor_force_source(:) = 0.d0
   comp_dir_vect_source_E(:) = 0.d0
@@ -90,7 +92,7 @@
   endif
 
 ! read source number isource
-  do isource=1,NSOURCES
+  do isource = 1,NSOURCES
 
     read(IIN,"(a)") string
     ! skips empty lines
@@ -148,20 +150,26 @@
     read(string(32:len_trim(string)),*) comp_dir_vect_source_Z_UP(isource)
 
     ! checks half-duration
-    if (force_stf(isource) == 0) then
-      ! Step source time function
-      ! null half-duration indicates a Heaviside
-      ! replace with very short error function
+    select  case(force_stf(isource))
+    case (0)
+      ! Gaussian
+      ! null half-duration indicates a Dirac
+      ! replace with very short Gaussian function
       if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
-    else if (force_stf(isource) == 1) then
+    case (1)
       ! Ricker source time function
       ! half-duration is the dominant frequency for the
       ! null half-duration indicates a very low-frequency source
       ! (see constants.h: TINYVAL = 1.d-9 )
       if (hdur(isource) < TINYVAL ) hdur(isource) = TINYVAL
-    else
+    case (2)
+      ! Step (Heaviside) source time function
+      ! null half-duration indicates a Heaviside
+      ! replace with very short error function
+      if (hdur(isource) < 5. * DT ) hdur(isource) = 5. * DT
+    case default
       stop 'unsupported force_stf value!'
-    endif
+    end select
 
   enddo
 
@@ -176,7 +184,7 @@
     min_tshift_force_original = minval(t_shift)
   endif
 
-  do isource=1,NSOURCES
+  do isource = 1,NSOURCES
     ! checks half-duration
     ! half-duration is the dominant frequency of the source
     ! point forces use a Ricker source time function
@@ -186,11 +194,11 @@
 
     ! check (tilted) force source direction vector
     length = sqrt( comp_dir_vect_source_E(isource)**2 + comp_dir_vect_source_N(isource)**2 + &
-         comp_dir_vect_source_Z_UP(isource)**2)
+                   comp_dir_vect_source_Z_UP(isource)**2)
     if (length < TINYVAL) then
       print *, 'normal length: ', length
       print *, 'isource: ',isource
-      stop 'error set force point normal length, make sure all forces have a non null direction vector'
+      stop 'Error set force point normal length, make sure all forces have a non-zero direction vector'
     endif
   enddo
 
