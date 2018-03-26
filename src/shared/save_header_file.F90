@@ -80,7 +80,7 @@
     MOVIE_VOLUME,MOVIE_VOLUME_TYPE,NTSTEP_BETWEEN_FRAMES,SIMULATION_TYPE,MOVIE_SURFACE, &
     UNDO_ATTENUATION,MEMORY_INSTALLED_PER_CORE_IN_GB,NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
     this_region_has_a_doubling,doubling_index,ner,ratio_sampling_array, &
-    RECORD_LENGTH_IN_MINUTES,NSTEP
+    RECORD_LENGTH_IN_MINUTES,NSTEP,NM_KL_REG_PTS
 
   implicit none
 
@@ -742,7 +742,7 @@
   endif
 
   if (SAVE_REGULAR_KL) then
-    write(IOUT,*) 'integer, parameter :: NM_KL_REG_PTS_VAL = NM_KL_REG_PTS'
+    write(IOUT,*) 'integer, parameter :: NM_KL_REG_PTS_VAL = ',NM_KL_REG_PTS
   else
     write(IOUT,*) 'integer, parameter :: NM_KL_REG_PTS_VAL = 1'
   endif

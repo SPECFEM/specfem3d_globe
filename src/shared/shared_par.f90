@@ -155,7 +155,7 @@
   ! parameters to be computed based upon parameters above read from file
 
   use constants, only: MAX_NUM_REGIONS,MAX_NUMBER_OF_MESH_LAYERS, &
-    NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE
+    NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE,NM_KL_REG_PTS
 
   implicit none
 

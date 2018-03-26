@@ -25,9 +25,10 @@
 !
 !=====================================================================
 
+
   subroutine read_kl_regular_grid(GRID)
 
-  use constants, only: IIN,NM_KL_REG_LAYER,PATHNAME_KL_REG, &
+  use constants, only: IIN,IMAIN,NM_KL_REG_LAYER,PATHNAME_KL_REG, &
     KL_REG_MIN_LAT,KL_REG_MAX_LAT,KL_REG_MIN_LON,KL_REG_MAX_LON
 
   use specfem_par, only: myrank
@@ -50,17 +51,40 @@
   type (kl_reg_grid_variables), intent(inout) :: GRID
 
   integer :: ios,nlayer,i,nlat,nlon,npts_this_layer
+  character(len=256) :: line
   real :: r
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  regular grid input file  : ',trim(PATHNAME_KL_REG)
+    call flush_IMAIN()
+  endif
 
   ! improvements to make: read-in by master and broadcast to all slaves
   open(IIN,file=trim(PATHNAME_KL_REG),status='old',action='read',iostat=ios)
-  if (ios /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(PATHNAME_KL_REG)//'in read_kl_regular_grid() routine')
+  if (ios /= 0 ) call exit_MPI(myrank,'Error opening file '//trim(PATHNAME_KL_REG)//' in read_kl_regular_grid() routine')
 
-  read(IIN,*) GRID%dlat, GRID%dlon
+  ! grid increments
+  read(IIN,'(a256)') line
+  ! skip comment lines
+  do while (line(1:1) == '#')
+    read(IIN,'(a256)') line
+  enddo
+
+  read(line,*) GRID%dlat, GRID%dlon
 
   nlayer = 0
   do
-    read(IIN,*,iostat=ios) r, i
+    read(IIN,'(a256)',iostat=ios) line
+    if (ios /= 0) exit
+
+    ! skip comment lines
+    do while (line(1:1) == '#')
+      read(IIN,'(a256)',iostat=ios) line
+      if (ios /= 0) exit
+    enddo
+
+    read(line,*,iostat=ios) r, i
     if (ios /= 0) exit
 
     if (nlayer >= NM_KL_REG_LAYER) then
@@ -68,6 +92,7 @@
     endif
 
     nlayer = nlayer + 1
+
     GRID%rlayer(nlayer) = r
     GRID%ndoubling(nlayer) = i
   enddo
@@ -88,6 +113,15 @@
   enddo
   if (GRID%npts_total <= 0) then
     call exit_MPI(myrank, 'No Model points read in')
+  endif
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  grid increments (lat/lon): ',GRID%dlat,GRID%dlon
+    write(IMAIN,*) '  number of layers         : ',GRID%nlayer
+    write(IMAIN,*) '  total number of points   : ',GRID%npts_total
+    write(IMAIN,*) ''
+    call flush_IMAIN()
   endif
 
   end subroutine read_kl_regular_grid
@@ -130,7 +164,8 @@
     call exit_MPI(myrank, 'Only deal with 6 chunks at this moment')
   endif
 
-  xi_width=PI/2; eta_width=PI/2; nproc=NPROC_XI_VAL
+  xi_width = PI/2; eta_width = PI/2
+  nproc = NPROC_XI_VAL
   ilayer = 0
 
   do isp = 1,GRID%npts_total
@@ -164,7 +199,7 @@
 !==============================================================
 
 ! how about using single precision for the iterations?
-  subroutine locate_regular_points(npoints_slice,points_slice,GRID, &
+  subroutine locate_regular_points(npoints_slice_reg,points_slice_reg,GRID, &
                                    nspec,xstore,ystore,zstore,ibool, &
                                    xigll,yigll,zigll,ispec_reg, &
                                    hxir_reg,hetar_reg,hgammar_reg)
@@ -178,8 +213,8 @@
   implicit none
 
   ! declarations of regular grid model
-  integer, intent(in) :: npoints_slice
-  integer, dimension(NM_KL_REG_PTS_VAL), intent(in) :: points_slice
+  integer, intent(in) :: npoints_slice_reg
+  integer, dimension(NM_KL_REG_PTS_VAL), intent(in) :: points_slice_reg
 
   type kl_reg_grid_variables
     sequence
@@ -236,13 +271,13 @@
   call hex_nodes2(iaddx,iaddy,iaddr)
 
   ! compute typical size of elements at the surface
-  typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.*NEX_XI)
+  typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.0 * NEX_XI)
 
   ! use 10 times the distance as a criterion for source detection
-  typical_size_squared = (10. * typical_size_squared)**2
+  typical_size_squared = (10.0 * typical_size_squared)**2
 
-  do ipoint = 1, npoints_slice
-    isp = points_slice(ipoint)
+  do ipoint = 1, npoints_slice_reg
+    isp = points_slice_reg(ipoint)
     do ilayer = 1, GRID%nlayer
       if (isp <= GRID%npts_before_layer(ilayer+1)) exit
     enddo
@@ -256,7 +291,7 @@
     ! convert radius to meters and then scale
     radius = GRID%rlayer(ilayer) * 1000.0 / R_EARTH
     ! (x,y,z) for isp point
-    th = (90 - lat) * DEGREES_TO_RADIANS; ph = lon * DEGREES_TO_RADIANS
+    th = (90.0 - lat) * DEGREES_TO_RADIANS; ph = lon * DEGREES_TO_RADIANS
     x_target = radius * sin(th) * cos(ph)
     y_target = radius * sin(th) * sin(ph)
     z_target = radius * cos(th)
@@ -300,7 +335,8 @@
     enddo
 
     if (.not. locate_target) then
-      print *, 'Looking for point', isp, ilayer, ilat, ilon, lat, lon, x_target, y_target, z_target, myrank
+      print *, 'Looking for point:', isp, 'layer',ilayer,'ilat/ilon',ilat, ilon
+      print *, '  lat/lon = ',lat, lon,'x/y/z = ',x_target, y_target, z_target,'rank', myrank
       call exit_MPI(myrank, 'Error in point_source() array')
     endif
 

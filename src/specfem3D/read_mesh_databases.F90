@@ -1630,15 +1630,32 @@
   end type kl_reg_grid_variables
   type (kl_reg_grid_variables) KL_REG_GRID
 
+  ! checks if anything to do; setup only needed for kernel simulations
+  if (SIMULATION_TYPE /= 3) return
+
+  ! checks setup
+  if (ADIOS_FOR_KERNELS) &
+    call exit_mpi(myrank,'saving regular kernels in ADIOS file format is not supported yet')
+  ! assuming 6 chunks full global simulations right now
+  if (NCHUNKS_VAL /= 6 .or. NPROC_XI_VAL /= NPROC_ETA_VAL) &
+    call exit_MPI(myrank, 'Only deal with 6 chunks at this moment')
+
   ! allocates arrays
-  allocate(points_slice(NM_KL_REG_PTS_VAL), &
+  allocate(points_slice_reg(NM_KL_REG_PTS_VAL), &
            ispec_reg(NM_KL_REG_PTS_VAL), &
            hxir_reg(NGLLX, NM_KL_REG_PTS_VAL), &
            hetar_reg(NGLLY, NM_KL_REG_PTS_VAL), &
            hgammar_reg(NGLLZ, NM_KL_REG_PTS_VAL),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays points_slice,..'
+  if (ier /= 0) stop 'Error allocating arrays points_slice_reg,..'
 
+  ! reads in mesh inputs from file (see: PATHNAME_KL_REG = 'DATA/kl_reg_grid.txt' in constants.h)
   call read_kl_regular_grid(KL_REG_GRID)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  locating regular kernel grid points...'
+    call flush_IMAIN()
+  endif
 
   if (myrank == 0) then
     ! master process
@@ -1649,19 +1666,19 @@
     call find_regular_grid_slice_number(slice_number, KL_REG_GRID)
 
     do i = NPROCTOT_VAL-1,0,-1
-      npoints_slice = 0
+      npoints_slice_reg = 0
       do isp = 1,KL_REG_GRID%npts_total
         if (slice_number(isp) == i) then
-          npoints_slice = npoints_slice + 1
-          if (npoints_slice > NM_KL_REG_PTS) stop 'Exceeding NM_KL_REG_PTS limit'
-          points_slice(npoints_slice) = isp
+          npoints_slice_reg = npoints_slice_reg + 1
+          if (npoints_slice_reg > NM_KL_REG_PTS) stop 'Exceeding NM_KL_REG_PTS limit'
+          points_slice_reg(npoints_slice_reg) = isp
         endif
       enddo
 
       if (i /= 0) then
-        call send_singlei(npoints_slice,i,i)
-        if (npoints_slice > 0) then
-          call send_i(points_slice,npoints_slice,i,2*i)
+        call send_singlei(npoints_slice_reg,i,i)
+        if (npoints_slice_reg > 0) then
+          call send_i(points_slice_reg,npoints_slice_reg,i,2*i)
         endif
       endif
     enddo
@@ -1674,16 +1691,16 @@
     deallocate(slice_number)
   else
     ! slave processes
-    call recv_singlei(npoints_slice,0,myrank)
-    if (npoints_slice > 0) then
-      call recv_i(points_slice,npoints_slice,0,2*myrank)
+    call recv_singlei(npoints_slice_reg,0,myrank)
+    if (npoints_slice_reg > 0) then
+      call recv_i(points_slice_reg,npoints_slice_reg,0,2*myrank)
     endif
   endif
 
   ! this is the core part that takes up most of the computation time,
   ! and presumably the more processors involved the faster.
-  if (npoints_slice > 0) then
-    call locate_regular_points(npoints_slice, points_slice, KL_REG_GRID, &
+  if (npoints_slice_reg > 0) then
+    call locate_regular_points(npoints_slice_reg, points_slice_reg, KL_REG_GRID, &
                                NSPEC_CRUST_MANTLE, &
                                xstore_crust_mantle, ystore_crust_mantle, zstore_crust_mantle, &
                                ibool_crust_mantle, &
@@ -1693,8 +1710,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) ' '
-    write(IMAIN,*) 'Finished locating kernel output regular grid'
+    write(IMAIN,*) '  Finished locating kernel output regular grid'
     write(IMAIN,*) ' '
     call flush_IMAIN()
   endif

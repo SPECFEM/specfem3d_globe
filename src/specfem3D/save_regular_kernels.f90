@@ -72,37 +72,37 @@
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 
   ! allocates temporary arrays
-  allocate(rho_kl_crust_mantle_reg(npoints_slice), &
-           beta_kl_crust_mantle_reg(npoints_slice), &
-           alpha_kl_crust_mantle_reg(npoints_slice))
+  allocate(rho_kl_crust_mantle_reg(npoints_slice_reg), &
+           beta_kl_crust_mantle_reg(npoints_slice_reg), &
+           alpha_kl_crust_mantle_reg(npoints_slice_reg))
 
   if (ANISOTROPIC_KL) then
-    allocate(cijkl_kl_crust_mantle_reg(21, npoints_slice))
+    allocate(cijkl_kl_crust_mantle_reg(21, npoints_slice_reg))
     if (SAVE_TRANSVERSE_KL_ONLY) then
       ! transverse isotropic kernel arrays for file output
-      allocate(alphav_kl_crust_mantle(npoints_slice), &
-               alphah_kl_crust_mantle(npoints_slice), &
-               betav_kl_crust_mantle(npoints_slice), &
-               betah_kl_crust_mantle(npoints_slice), &
-               eta_kl_crust_mantle(npoints_slice))
+      allocate(alphav_kl_crust_mantle(npoints_slice_reg), &
+               alphah_kl_crust_mantle(npoints_slice_reg), &
+               betav_kl_crust_mantle(npoints_slice_reg), &
+               betah_kl_crust_mantle(npoints_slice_reg), &
+               eta_kl_crust_mantle(npoints_slice_reg))
 
       ! isotropic kernel arrays for file output
-      allocate(bulk_c_kl_crust_mantle(npoints_slice), &
-               bulk_betav_kl_crust_mantle(npoints_slice), &
-               bulk_betah_kl_crust_mantle(npoints_slice), &
-               bulk_beta_kl_crust_mantle(npoints_slice))
+      allocate(bulk_c_kl_crust_mantle(npoints_slice_reg), &
+               bulk_betav_kl_crust_mantle(npoints_slice_reg), &
+               bulk_betah_kl_crust_mantle(npoints_slice_reg), &
+               bulk_beta_kl_crust_mantle(npoints_slice_reg))
     endif
   else
     ! allocates temporary isotropic kernel arrays for file output
-    allocate(bulk_c_kl_crust_mantle(npoints_slice), &
-             bulk_beta_kl_crust_mantle(npoints_slice))
-    allocate(mu_kl_crust_mantle(npoints_slice), &
-             kappa_kl_crust_mantle(npoints_slice), &
-             rhonotprime_kl_crust_mantle(npoints_slice))
+    allocate(bulk_c_kl_crust_mantle(npoints_slice_reg), &
+             bulk_beta_kl_crust_mantle(npoints_slice_reg))
+    allocate(mu_kl_crust_mantle(npoints_slice_reg), &
+             kappa_kl_crust_mantle(npoints_slice_reg), &
+             rhonotprime_kl_crust_mantle(npoints_slice_reg))
   endif
 
   ! crust_mantle
-  do ipoint = 1, npoints_slice
+  do ipoint = 1, npoints_slice_reg
     ispec = ispec_reg(ipoint)
     rho_kl_crust_mantle_reg(ipoint) = 0.0
     alpha_kl_crust_mantle_reg(ipoint) = 0.0

@@ -342,7 +342,8 @@ module specfem_par
   ! for SAC headers for seismograms
   integer :: yr_SAC,jda_SAC,mo_SAC,da_SAC,ho_SAC,mi_SAC
   double precision :: sec_SAC
-  real :: mb_SAC
+  real :: mb_SAC ! body-wave magnitude
+  real :: ms_SAC ! surface-wave magnitude (for ASDF QuakeML file)
   double precision :: t_cmt_SAC,t_shift_SAC
   double precision :: elat_SAC,elon_SAC,depth_SAC, &
     cmt_lat_SAC,cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC
@@ -351,9 +352,6 @@ module specfem_par
   ! for ASDF start time
   integer :: yr, jda, mo, da, ho, mi
   double precision :: sec
-
-  ! for ASDF QuakeML file
-  real :: ms
 
   ! strain flag
   logical :: COMPUTE_AND_STORE_STRAIN
@@ -648,8 +646,8 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: cmb_kl, cmb_kl_top, cmb_kl_bot
 
   ! For saving kernels on a regular grid
-  integer :: npoints_slice
-  integer, dimension(:), allocatable :: points_slice
+  integer :: npoints_slice_reg
+  integer, dimension(:), allocatable :: points_slice_reg
   integer, dimension(:), allocatable :: ispec_reg
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: hxir_reg
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: hetar_reg
