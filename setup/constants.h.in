@@ -690,19 +690,19 @@
   integer, parameter :: REFERENCE_MODEL_SEA1D = 7
 
 ! define flag for 3D Earth model
-  integer, parameter :: THREE_D_MODEL_S20RTS   = 1
-  integer, parameter :: THREE_D_MODEL_S362ANI   = 2
-  integer, parameter :: THREE_D_MODEL_S362WMANI = 3
-  integer, parameter :: THREE_D_MODEL_S362ANI_PREM  = 4
-  integer, parameter :: THREE_D_MODEL_S29EA  = 5
-  integer, parameter :: THREE_D_MODEL_SEA99_JP3D  = 6
-  integer, parameter :: THREE_D_MODEL_SEA99  = 7
-  integer, parameter :: THREE_D_MODEL_JP3D  = 8
-  integer, parameter :: THREE_D_MODEL_PPM  = 9     ! format for point profile models
-  integer, parameter :: THREE_D_MODEL_GLL  = 10    ! format for iterations with GLL mesh
-  integer, parameter :: THREE_D_MODEL_S40RTS = 11
-  integer, parameter :: THREE_D_MODEL_GAPP2  = 12
-  integer, parameter :: THREE_D_MODEL_MANTLE_SH  = 13
+  integer, parameter :: THREE_D_MODEL_S20RTS   = 101
+  integer, parameter :: THREE_D_MODEL_S362ANI   = 102
+  integer, parameter :: THREE_D_MODEL_S362WMANI = 103
+  integer, parameter :: THREE_D_MODEL_S362ANI_PREM  = 104
+  integer, parameter :: THREE_D_MODEL_S29EA  = 105
+  integer, parameter :: THREE_D_MODEL_SEA99_JP3D  = 106
+  integer, parameter :: THREE_D_MODEL_SEA99  = 107
+  integer, parameter :: THREE_D_MODEL_JP3D  = 108
+  integer, parameter :: THREE_D_MODEL_PPM  = 109     ! format for point profile models
+  integer, parameter :: THREE_D_MODEL_GLL  = 110    ! format for iterations with GLL mesh
+  integer, parameter :: THREE_D_MODEL_S40RTS = 111
+  integer, parameter :: THREE_D_MODEL_GAPP2  = 112
+  integer, parameter :: THREE_D_MODEL_MANTLE_SH  = 113
 
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3

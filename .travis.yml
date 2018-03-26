@@ -4,7 +4,7 @@
 #       this is using C as a base and installs gfortran in the test environment
 
 language: c
-
+dist: trusty
 sudo: required
 
 os: linux
@@ -22,30 +22,42 @@ env:
     # for test cases, we use
     #   TEST    - flags used for configuration
     #   TESTCOV - determines whether or not (0/1) code coverage flags are used
+    #   CUDA    - flag for compilation with CUDA
+    #   CUDA_VERSION - specifies CUDA toolkit version
 
-    # run default test (with > make tests)
-    - TEST="" TESTCOV=0 TESTMAKE=0
+    # code coverage: using coverage flags
+    - TEST="" TESTCOV=1 TESTMAKE=1 CUDA=false
 
-    # run default (regional)
-    - TEST="" TESTCOV=0 TESTMAKE=1
+    # code coverage: vectorization & openmp, using coverage flags
+    - TEST="--enable-vectorization" TESTCOV=1 TESTMAKE=2 CUDA=false
 
-    # run vectorization (regional)
-    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=1
+    # default test (with > make tests)
+    - TEST="" TESTCOV=0 TESTMAKE=0 CUDA=false
 
-    # run vectorization & openmp (regional)
-    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=1
+    # regional example w/ default configuration
+    - TEST="" TESTCOV=0 TESTMAKE=1 CUDA=false
 
-    # run vectorization & openmp, using coverage flags (regional)
-    - TEST="--enable-vectorization" TESTCOV=1 TESTMAKE=1
+    # regional example w/ vectorization
+    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=1 CUDA=false
 
-    # run example 2 (global)
-    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=2
+    # regional example w/ vectorization & openmp
+    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=1 CUDA=false
 
-    # run example 2 (global with openmp)
-    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=2
+    # regional example with debug bounds checking
+    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=2 CUDA=false
 
-    # run example with debug bounds checking (regional)
-    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=3
+    # regional example with NGLL = 6
+    - TEST="" TESTCOV=0 TESTMAKE=3 CUDA=false
+
+    # globe_small example
+    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=4 CUDA=false
+
+    # globe_small example with openmp
+    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=4 CUDA=false
+
+    # point force example
+    - TEST="" TESTCOV=0 TESTMAKE=5 CUDA=false
+
 
 before_install:
   # informations on git
@@ -65,120 +77,14 @@ before_install:
   # updates repository
   - sudo apt-get update
 
+
 install:
-  # fortran/openMPI compiler
-  - sudo apt-get install gfortran libgomp1 openmpi-bin libopenmpi-dev
+  - bash .travis/run_install.sh
 
-  # python script needs numpy
-  - sudo apt-get install -qq python-numpy #python-scipy
-
-  # version infos
-  - echo "compiler versions:" ${FC} ${MPIFC} ${CC}
-  - ${FC} --version
-  - ${MPIFC} --version
-  - ${CC} --version
 
 script:
-  ###########################################################
-  # setup
-  ###########################################################
-  # info
-  - |
-    echo $TRAVIS_BUILD_DIR
-    echo $WORKDIR
-    echo "configuration test:" ${TEST} ${TESTFLAGS}
+  - bash .travis/run_tests.sh
 
-  # bash function for checking seismogram output with reference solutions
-  - |
-    my_report(){
-      # report example
-      if [ -f OUTPUT_FILES/output_mesher.txt ]; then cat OUTPUT_FILES/output_mesher.txt; else exit 1; fi
-      if [ -f OUTPUT_FILES/output_solver.txt ]; then cat OUTPUT_FILES/output_solver.txt; else exit 1; fi
-    }
-
-  - |
-    my_test(){
-      echo "testing seismograms:"
-      ln -s $WORKDIR/utils/compare_seismogram_correlations.py
-      ./compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/
-      if [[ $? -ne 0 ]]; then exit 1; fi
-      ./compare_seismogram_correlations.py OUTPUT_FILES/ REF_SEIS/ | grep min/max | cut -d \| -f 3 | awk '{print "correlation:",$1; if ($1 < 0.9 ){print $1,"failed"; exit 1;}else{ print $1,"good"; exit 0;}}'
-      if [[ $? -ne 0 ]]; then exit 1; fi
-      rm -rf OUTPUT_FILES/
-    }
-
-
-  ###########################################################
-  # configuration & compilation
-  ###########################################################
-  # configuration
-  - |
-    if [ "$TESTCOV" == "1" ]; then
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0"
-    else
-      ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
-    fi
-
-  # we need to output to console output, otherwise tests will fail by timeout
-  - sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
-
-  # compilation (only cleaning)
-  - make clean
-
-  ###########################################################
-  # test examples
-  ###########################################################
-  # testing small example (short & quick for all configurations)
-  - |
-    # chooses example directory
-    case "$TESTMAKE" in
-    0) dir=./ ;;
-    1) dir=EXAMPLES/regional_Greece_small/ ;;
-    2) dir=EXAMPLES/global_small/ ;;
-    3) dir=EXAMPLES/regional_Greece_small/ ;;
-    *) dir=EXAMPLES/regional_Greece_small/ ;;
-    esac
-    # runs test
-    echo "##########################################################"
-    echo "test directory: $dir"
-    echo "##########################################################"
-    # changes to example directory
-    cd $dir
-    if [ "$TESTMAKE" == "0" ]; then
-      # runs default tests
-      make tests
-    else
-      # limit number of time steps
-      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
-      if [ "$TESTMAKE" == "2" ]; then
-        sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
-      fi
-      if [ "$TESTMAKE" == "3" ] || [ "$TESTCOV" == "1" ]; then
-        sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-      fi
-      # default script
-      ./run_this_example.sh
-      # compares seismograms
-      if [ ! "$TESTMAKE" == "3" ] && [ ! "$TESTCOV" == "1" ]; then
-        my_test
-      fi
-      cd $WORKDIR
-    fi
-
-  # additional code coverage testing
-  - |
-    if [ "$TESTCOV" == "1" ]; then
-      # we need to output to console output, otherwise tests will fail by timeout
-      sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
-      # changes to example directory
-      cd EXAMPLES/global_small/
-      sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
-      ./run_this_example.sh
-      cd $WORKDIR
-    fi
-
-  # done
-  - echo `pwd`
 
 after_success:
   ###########################################################
@@ -199,5 +105,7 @@ after_success:
       find obj/ -iname '*.o' | sort | awk '{print "gcov -o obj/ "$1;}' | sh
     fi
 
-  # code coverage: see example https://github.com/codecov/example-fortran/blob/master/.travis.yml
+  # code coverage:
+  # see script : https://github.com/codecov/codecov-bash/blob/master/codecov
+  # see example: https://github.com/codecov/example-fortran/blob/master/.travis.yml
   - if [ "$TESTCOV" == "1" ]; then bash <(curl -s https://codecov.io/bash) -X gcov; fi
