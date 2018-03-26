@@ -201,7 +201,6 @@
   real(kind=4) :: splpts(NKQ),splcon(NKQ),splcond(NKQ)
   real(kind=4) :: depth,ylat,xlon
   real(kind=4) :: shdep(NSQ)
-  real(kind=4) :: wk1(NSQ),wk2(NSQ),wk3(NSQ)
   real(kind=4) :: xlmvec(NSQ**2)
 
   double precision, parameter :: rmoho_prem = R_EARTH_KM - 24.4d0
@@ -213,8 +212,8 @@
   ! debug
   !  print *,'entering QRFSI12 subroutine'
 
-  ylat=90.0d0-theta
-  xlon=phi
+  ylat = 90.0d0 - theta
+  xlon = phi
 
   ! only checks radius for crust, idoubling is misleading for oceanic crust
   ! when we want to expand mantle up to surface...
@@ -261,27 +260,27 @@
       write(6,"('problem finding reference Q value at depth: ',f8.3)") depth
       stop
     endif
-    smallq_ref=QRFSI12_Q_refqmu(ifnd)
+    smallq_ref = QRFSI12_Q_refqmu(ifnd)
     smallq = smallq_ref
 
 ! Colleen's model is only defined between depths of 24.4 and 650km
     if (depth < 650.d0) then
       do j = 1,NSQ
-        shdep(j) = 0.
+        shdep(j) = 0.0
       enddo
       do n = 1,NKQ
-        splpts(n)=QRFSI12_Q_spknt(n)
+        splpts(n) = QRFSI12_Q_spknt(n)
       enddo
       call vbspl(depth,NKQ,splpts,splcon,splcond)
       do n = 1,NKQ
         do j = 1,NSQ
-          shdep(j)=shdep(j)+(splcon(n)*QRFSI12_Q_dqmu(n,j))
+          shdep(j) = shdep(j)+(splcon(n)*QRFSI12_Q_dqmu(n,j))
         enddo
       enddo
-      call ylm(ylat,xlon,MAXL_Q,xlmvec,wk1,wk2,wk3)
-      dqmu = 0.
+      call ylm(ylat,xlon,MAXL_Q,xlmvec)
+      dqmu = 0.0
       do k = 1,NSQ
-        dqmu=dqmu+xlmvec(k)*shdep(k)
+        dqmu = dqmu+xlmvec(k)*shdep(k)
       enddo
       smallq = smallq_ref + dqmu
     endif

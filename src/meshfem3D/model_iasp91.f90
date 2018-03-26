@@ -36,13 +36,14 @@
 
 
   subroutine model_iasp91(x,rho,vp,vs,Qkappa,Qmu,idoubling,ONE_CRUST,check_doubling_flag, &
-                     RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
+                          RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST)
 
 
 ! we use the density model of PREM (or close to PREM in the crust)
 ! because IASP91 does not provide a density model.
 ! Note that "ttimes" from the official IASP91 package uses a slightly different
 ! model: scaling of the P wave velocity based on Birch's law. Both options are fine.
+
   use constants
 
   implicit none
@@ -50,18 +51,19 @@
 ! given a normalized radius x, gives the non-dimensionalized density rho,
 ! speeds vp and vs, and the quality factors Qkappa and Qmu
 
-  logical check_doubling_flag
+  logical,intent(in) :: check_doubling_flag
 
-  integer idoubling
+  integer,intent(in) :: idoubling
 
-  double precision x,rho,vp,vs,Qkappa,Qmu,RICB,RCMB,RTOPDDOUBLEPRIME, &
-    R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST
+  double precision,intent(in) :: x
+  double precision,intent(inout) :: rho,vp,vs,Qkappa,Qmu
+  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R771,R670,R400,R220,R120,RMOHO,RMIDDLE_CRUST
 
-  logical ONE_CRUST
+  logical,intent(in) :: ONE_CRUST
 
-  double precision r,scaleval
-
-  double precision x1,x2
+! local parameters
+  double precision :: r,scaleval
+  double precision :: x1,x2
 
 ! compute real physical radius in meters
   r = x * R_EARTH
@@ -130,83 +132,83 @@
   !--- inner core
   !
   if (r >= 0.d0 .and. r <= RICB) then
-    rho=13.0885d0-8.8381d0*x*x
-    vp=11.24094-4.09689*x**2
-    vs=3.56454-3.45241*x**2
-    Qmu=84.6d0
-    Qkappa=1327.7d0
+    rho = 13.0885d0-8.8381d0*x*x
+    vp = 11.24094-4.09689*x**2
+    vs = 3.56454-3.45241*x**2
+    Qmu = 84.6d0
+    Qkappa = 1327.7d0
   !
   !--- outer core
   !
   else if (r > RICB .and. r <= RCMB) then
-    rho=12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
-    vp=10.03904+3.75665*x-13.67046*x**2
-    vs=0.0d0
-    Qmu=0.0d0
-    Qkappa=57827.0d0
+    rho = 12.5815d0-1.2638d0*x-3.6426d0*x*x-5.5281d0*x*x*x
+    vp = 10.03904+3.75665*x-13.67046*x**2
+    vs = 0.0d0
+    Qmu = 0.0d0
+    Qkappa = 57827.0d0
   !
   !--- D" at the base of the mantle
   !
   else if (r > RCMB .and. r <= RTOPDDOUBLEPRIME) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vp=14.49470-1.47089*x
-    vs=8.16616-1.58206*x
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    vp = 14.49470-1.47089*x
+    vs = 8.16616-1.58206*x
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
   !
   !--- mantle: from top of D" to d670
   !
   else if (r > RTOPDDOUBLEPRIME .and. r <= R771) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vp=25.1486-41.1538*x+51.9932*x**2-26.6083*x**3
-    vs=12.9303-21.2590*x+27.8988*x**2-14.1080*x**3
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    vp = 25.1486-41.1538*x+51.9932*x**2-26.6083*x**3
+    vs = 12.9303-21.2590*x+27.8988*x**2-14.1080*x**3
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
   else if (r > R771 .and. r <= R670) then
-    rho=7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
-    vp=25.96984-16.93412*x
-    vs=20.76890-16.53147*x
-    Qmu=312.0d0
-    Qkappa=57827.0d0
+    rho = 7.9565d0-6.4761d0*x+5.5283d0*x*x-3.0807d0*x*x*x
+    vp = 25.96984-16.93412*x
+    vs = 20.76890-16.53147*x
+    Qmu = 312.0d0
+    Qkappa = 57827.0d0
   !
   !--- mantle: above d670
   !
   else if (r > R670 .and. r <= R400) then
-    rho=5.3197d0-1.4836d0*x
-    vp=29.38896-21.40656*x
-    vs=17.70732-13.50652*x
-    Qmu=143.0d0
-    Qkappa=57827.0d0
+    rho = 5.3197d0-1.4836d0*x
+    vp = 29.38896-21.40656*x
+    vs = 17.70732-13.50652*x
+    Qmu = 143.0d0
+    Qkappa = 57827.0d0
 
   else if (r > R400 .and. r <= R220) then
-    rho=7.1089d0-3.8045d0*x
-    vp=30.78765-23.25415*x
-    vs=15.24213-11.08552*x
-    Qmu=143.0d0
-    Qkappa=57827.0d0
+    rho = 7.1089d0-3.8045d0*x
+    vp = 30.78765-23.25415*x
+    vs = 15.24213-11.08552*x
+    Qmu = 143.0d0
+    Qkappa = 57827.0d0
 
   else if (r > R220 .and. r <= R120) then
-    rho=2.6910d0+0.6924d0*x
-    vp=25.41389-17.69722*x
-    vs=5.75020-1.27420*x
-    Qmu=80.0d0
-    Qkappa=57827.0d0
+    rho = 2.6910d0+0.6924d0*x
+    vp = 25.41389-17.69722*x
+    vs = 5.75020-1.27420*x
+    Qmu = 80.0d0
+    Qkappa = 57827.0d0
 
   else if (r > R120 .and. r <= RMOHO) then
       vp = 8.78541d0-0.74953d0*x
       vs = 6.706231d0-2.248585d0*x
       rho = 3.3713d0 + (3.3198d0-3.3713d0)*(x-x1)/(x2-x1)
       if (rho < 3.30d0 .or. rho > 3.38d0) stop 'incorrect density computed for IASP91'
-      Qmu=600.0d0
-      Qkappa=57827.0d0
+      Qmu = 600.0d0
+      Qkappa = 57827.0d0
 
   else if (SUPPRESS_CRUSTAL_MESH) then
   !! DK DK extend the Moho up to the surface instead of the crust
           vp = 8.78541d0-0.74953d0*(RMOHO / R_EARTH)
           vs = 6.706231d0-2.248585d0*(RMOHO / R_EARTH)
           rho = 3.3198d0
-          Qmu=600.0d0
-          Qkappa=57827.0d0
+          Qmu = 600.0d0
+          Qkappa = 57827.0d0
 
   else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
       vp = 6.5d0
@@ -215,21 +217,21 @@
       Qmu=600.0d0
       Qkappa=57827.0d0
 
-  ! same properties everywhere in PREM crust if we decide to define only one layer in the crust
+  ! same properties everywhere in IASP91 crust if we decide to define only one layer in the crust
       if (ONE_CRUST) then
         vp = 5.8d0
         vs = 3.36d0
         rho = 2.72d0
-        Qmu=600.0d0
-        Qkappa=57827.0d0
+        Qmu = 600.0d0
+        Qkappa = 57827.0d0
       endif
 
   else
       vp = 5.8d0
       vs = 3.36d0
       rho = 2.72d0
-      Qmu=600.0d0
-      Qkappa=57827.0d0
+      Qmu = 600.0d0
+      Qkappa = 57827.0d0
   endif
 
   ! make sure Vs is zero in the outer core even if roundoff errors on depth
@@ -242,10 +244,11 @@
 
   ! non-dimensionalize
   ! time scaling (s^{-1}) is done with scaleval
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  rho=rho*1000.0d0/RHOAV
-  vp=vp*1000.0d0/(R_EARTH*scaleval)
-  vs=vs*1000.0d0/(R_EARTH*scaleval)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+
+  rho = rho*1000.0d0/RHOAV
+  vp = vp*1000.0d0/(R_EARTH*scaleval)
+  vs = vs*1000.0d0/(R_EARTH*scaleval)
 
   end subroutine model_iasp91
 

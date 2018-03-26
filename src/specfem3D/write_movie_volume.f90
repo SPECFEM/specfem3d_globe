@@ -519,9 +519,9 @@
 
   ! allocates arrays
   allocate(store_val3d_N(npoints_3dmovie), &
-          store_val3d_E(npoints_3dmovie), &
-          store_val3d_Z(npoints_3dmovie), &
-          stat=ier)
+           store_val3d_E(npoints_3dmovie), &
+           store_val3d_Z(npoints_3dmovie), &
+           stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating store_val3d_N,.. movie arrays')
 
   if (MOVIE_VOLUME_TYPE == 5) then

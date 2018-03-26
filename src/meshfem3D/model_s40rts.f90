@@ -76,13 +76,13 @@
   integer :: ier
 
   allocate(S40RTS_V_dvs_a(0:NK_20,0:NS_40,0:NS_40), &
-          S40RTS_V_dvs_b(0:NK_20,0:NS_40,0:NS_40), &
-          S40RTS_V_dvp_a(0:NK_20,0:NS_40,0:NS_40), &
-          S40RTS_V_dvp_b(0:NK_20,0:NS_40,0:NS_40), &
-          S40RTS_V_spknt(NK_20+1), &
-          S40RTS_V_qq0(NK_20+1,NK_20+1), &
-          S40RTS_V_qq(3,NK_20+1,NK_20+1), &
-          stat=ier)
+           S40RTS_V_dvs_b(0:NK_20,0:NS_40,0:NS_40), &
+           S40RTS_V_dvp_a(0:NK_20,0:NS_40,0:NS_40), &
+           S40RTS_V_dvp_b(0:NK_20,0:NS_40,0:NS_40), &
+           S40RTS_V_spknt(NK_20+1), &
+           S40RTS_V_qq0(NK_20+1,NK_20+1), &
+           S40RTS_V_qq(3,NK_20+1,NK_20+1), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating S40RTS_V arrays')
 
   ! the variables read are declared and stored in structure S40RTS_V

@@ -266,15 +266,15 @@
 
   implicit none
 
-  integer iregion_code,idoubling
-  double precision r_prem,rho
-  double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision Qkappa,Qmu
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R80,R120,R220,R400, &
+  integer :: iregion_code,idoubling
+  double precision :: r_prem,rho
+  double precision :: vpv,vph,vsv,vsh,eta_aniso
+  double precision :: Qkappa,Qmu
+  double precision :: RICB,RCMB,RTOPDDOUBLEPRIME,R80,R120,R220,R400, &
     R600,R670,R771,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   ! local parameters
-  double precision drhodr,vp,vs
+  double precision :: drhodr,vp,vs
 
 !---
 !
@@ -626,7 +626,7 @@
         endif
       endif
       call model_aniso_mantle(r_used,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
-                        c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+                              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
     else
       ! fills the rest of the mantle with the isotropic model

@@ -314,5 +314,31 @@
     source_adjoint(icomp,:) = adj_src_u(icomp,:)
   enddo
 
+  contains
+
+    subroutine multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_ud)
+
+    use constants
+
+    implicit none
+
+    double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
+    double precision, dimension(NGLLX) :: hxir
+    double precision, dimension(NGLLY) :: hetar
+    double precision, dimension(NGLLZ) :: hgammar
+    double precision, dimension(NDIM) :: adj_src_ud
+
+    integer :: i,j,k
+
+    ! adds interpolated source contribution to all GLL points within this element
+    do k = 1, NGLLZ
+      do j = 1, NGLLY
+        do i = 1, NGLLX
+          sourcearrayd(:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_ud(:)
+        enddo
+      enddo
+    enddo
+
+    end subroutine multiply_arrays_adjoint
 
   end subroutine compute_arrays_source_adjoint

@@ -120,7 +120,7 @@
     write(IMAIN,*) '  grid increments (lat/lon): ',GRID%dlat,GRID%dlon
     write(IMAIN,*) '  number of layers         : ',GRID%nlayer
     write(IMAIN,*) '  total number of points   : ',GRID%npts_total
-    write(IMAIN,*) ''
+    write(IMAIN,*)
     call flush_IMAIN()
   endif
 

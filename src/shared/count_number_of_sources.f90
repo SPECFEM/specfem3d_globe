@@ -43,13 +43,13 @@
   character(len=MAX_STRING_LEN) :: dummystring
 
   if (USE_FORCE_POINT_SOURCE) then
-  ! FORCESOLUTION file
+    ! FORCESOLUTION file
     SOURCE_FILE = 'DATA/FORCESOLUTION'
-    nline=NLINES_PER_FORCESOLUTION_SOURCE
+    nline = NLINES_PER_FORCESOLUTION_SOURCE
   else
-  ! CMTSOLUTION file
+    ! CMTSOLUTION file
     SOURCE_FILE = 'DATA/CMTSOLUTION'
-    nline=NLINES_PER_CMTSOLUTION_SOURCE
+    nline = NLINES_PER_CMTSOLUTION_SOURCE
   endif
 
   if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
@@ -59,8 +59,8 @@
 
   open(unit=IIN,file=trim(SOURCE_FILE),status='old',action='read',iostat=ios)
   if (ios /= 0) then
-    print *,'Error opening CMTSOLUTION file: ',trim(SOURCE_FILE)
-    stop 'Error opening CMTSOLUTION file'
+    print *,'Error opening source SOLUTION file: ',trim(SOURCE_FILE)
+    stop 'Error opening source SOLUTION file'
   endif
 
   icounter = 0
@@ -80,7 +80,10 @@
 
   NSOURCES = icounter / nline
 
-  if (NSOURCES < 1) stop 'need at least one source in CMTSOLUTION or FORCESOLUTION file'
+  if (NSOURCES < 1) then
+    print *,'Error: ',trim(SOURCE_FILE),' has ',icounter,'lines but need ',nline,'per source... ',NSOURCES
+    stop 'need at least one source in CMTSOLUTION or FORCESOLUTION file'
+  endif
 
   end subroutine count_number_of_sources
 

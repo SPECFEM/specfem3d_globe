@@ -251,7 +251,7 @@
           theta = rstore_crust_mantle(2,iglob)
           phi = rstore_crust_mantle(3,iglob)
 
-           ! precompute some products to reduce the CPU time
+          ! precompute some products to reduce the CPU time
 
           costheta = cos(theta)
           sintheta = sin(theta)

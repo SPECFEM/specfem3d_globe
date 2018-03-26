@@ -76,6 +76,7 @@ shared_OBJECTS = \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
+	$O/ylm.shared.o \
 	$(EMPTY_MACRO)
 
 shared_MODULES = \

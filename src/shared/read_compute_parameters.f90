@@ -241,16 +241,16 @@
 !! DK DK July 2013: to save a huge amount of memory, when 3D attenuation is off it is sufficient to save a single point
 !! DK DK July 2013: per spectral element because the Q attenuation factor is then constant per layer of the geological model
     if (ATTENUATION_3D .or. ATTENUATION_1D_WITH_3D_STORAGE) then
-      ATT1     = NGLLX
-      ATT2     = NGLLY
-      ATT3     = NGLLZ
+      ATT1 = NGLLX
+      ATT2 = NGLLY
+      ATT3 = NGLLZ
     else
-      ATT1     = 1
-      ATT2     = 1
-      ATT3     = 1
+      ATT1 = 1
+      ATT2 = 1
+      ATT3 = 1
     endif
-    ATT4     = NSPEC(IREGION_CRUST_MANTLE)
-    ATT5     = NSPEC(IREGION_INNER_CORE)
+    ATT4 = NSPEC(IREGION_CRUST_MANTLE)
+    ATT5 = NSPEC(IREGION_INNER_CORE)
   else
      ATT1 = 1
      ATT2 = 1

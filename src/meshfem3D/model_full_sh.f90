@@ -120,9 +120,6 @@
   ! for moho statistics
   integer :: i,j
   real(kind=4) :: shcof(NSH_40)
-  real(kind=4) :: work1(NS_40+1)
-  real(kind=4) :: work2(NS_40+1)
-  real(kind=4) :: work3(NS_40+1)
   real(kind=4) :: xlat,xlon
   double precision :: moho,moho_min,moho_max
 
@@ -230,7 +227,7 @@
       ! lat/lon in degrees
       xlat = i * 1.0
       xlon = j * 1.0
-      call ylm(xlat,xlon,NS_40,shcof,work1,work2,work3)
+      call ylm(xlat,xlon,NS_40,shcof)
 
       ! gets moho depth (in km)
       moho = ZERO
@@ -280,15 +277,12 @@
   double precision :: depth,scaleval
   integer :: l
   real(kind=4) :: shcof(NSH_40)
-  real(kind=4) :: work1(NS_40+1)
-  real(kind=4) :: work2(NS_40+1)
-  real(kind=4) :: work3(NS_40+1)
   real(kind=4) :: xlat,xlon
 
   ! gets coefficient for location
   xlat = sngl(lat)
   xlon = sngl(lon)
-  call ylm(xlat,xlon,NS_40,shcof,work1,work2,work3)
+  call ylm(xlat,xlon,NS_40,shcof)
 
   ! calculates model values
   vsvc = ZERO !km/s
@@ -464,9 +458,6 @@
   ! for statistics
   integer :: i,j
   real(kind=4) :: shcof(NSH_20)
-  real(kind=4) :: work1(NS_20+1)
-  real(kind=4) :: work2(NS_20+1)
-  real(kind=4) :: work3(NS_20+1)
   real(kind=4) :: xlat,xlon
   double precision :: cmb,cmb_min,cmb_max
   double precision :: t410,t410_min,t410_max
@@ -651,7 +642,7 @@
       ! lat/lon in degrees
       xlat = i * 1.0
       xlon = j * 1.0
-      call ylm(xlat,xlon,NS_20,shcof,work1,work2,work3)
+      call ylm(xlat,xlon,NS_20,shcof)
 
       ! gets topos (in km)
       t410 = ZERO
@@ -708,9 +699,6 @@
   double precision :: r_moho,r_cmb,xr
   double precision :: mantle_sh_rsple,radial_basis(0:NK_20),xmap(NSH_20)
   real(kind=4) :: shcof(NSH_20)
-  real(kind=4) :: work1(NS_20+1)
-  real(kind=4) :: work2(NS_20+1)
-  real(kind=4) :: work3(NS_20+1)
   real(kind=4) :: xlat,xlon
 
   dvsv = ZERO
@@ -727,7 +715,7 @@
   ! get spherical harmonics coefficients
   xlat = sngl(lat)
   xlon = sngl(lon)
-  call ylm(xlat,xlon,NS_20,shcof,work1,work2,work3)
+  call ylm(xlat,xlon,NS_20,shcof)
 
   xr = -1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   do k = 0,NK_20
@@ -1202,24 +1190,21 @@
 
   subroutine subtopo_sh(lat,lon,topo410,topo660)
 
-  use model_full_sh_mantle_par
+  use model_full_sh_mantle_par, only: NSH_20,NS_20,MANTLE_SH_V_t410,MANTLE_SH_V_t660
 
   implicit none
 
-  double precision :: lat,lon
-  double precision :: topo410,topo660
+  double precision,intent(in) :: lat,lon
+  double precision,intent(out) :: topo410,topo660
 
   ! local parameter
   integer :: l
   real(kind=4) :: shcof(NSH_20)
-  real(kind=4) :: work1(NS_20+1)
-  real(kind=4) :: work2(NS_20+1)
-  real(kind=4) :: work3(NS_20+1)
   real(kind=4) :: xlat,xlon
 
   xlat = sngl(lat)
   xlon = sngl(lon)
-  call ylm(xlat,xlon,NS_20,shcof,work1,work2,work3)
+  call ylm(xlat,xlon,NS_20,shcof)
 
   topo410 = 0.d0
   topo660 = 0.d0
@@ -1254,9 +1239,7 @@
 
   ! local parameters
   integer :: ia
-
   double precision :: r_start,topocmb
-
   double precision :: r,lat,lon
   double precision :: x,y,z
   double precision :: gamma
@@ -1318,7 +1301,7 @@
 !  RTOPDDOUBLEPRIME = 3630000.d0
 !  RCMB = 3480000.d0
 
-  use model_full_sh_mantle_par
+  use model_full_sh_mantle_par, only: NSH_20,NS_20,MANTLE_SH_V_tcmb
 
   implicit none
 
@@ -1328,14 +1311,11 @@
   ! local parameters
   integer :: l
   real(kind=4) :: shcof(NSH_20)
-  real(kind=4) :: work1(NS_20+1)
-  real(kind=4) :: work2(NS_20+1)
-  real(kind=4) :: work3(NS_20+1)
   real(kind=4) :: xlat,xlon
 
   xlat = sngl(lat)
   xlon = sngl(lon)
-  call ylm(xlat,xlon,NS_20,shcof,work1,work2,work3)
+  call ylm(xlat,xlon,NS_20,shcof)
 
   topocmb = 0.0d0
   do l = 1,NSH_20

@@ -90,21 +90,21 @@
 
   implicit none
 
-  character(len=MAX_STRING_LEN) MODEL
+  character(len=MAX_STRING_LEN) :: MODEL
 
-  integer REFERENCE_1D_MODEL,THREE_D_MODEL
+  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
 
-  logical ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
+  logical :: ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
          CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
          ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
          CEM_REQUEST,CEM_ACCEPT
-  logical OCEANS,TOPOGRAPHY
+  logical :: OCEANS,TOPOGRAPHY
 
   ! local parameters
-  character(len=4) ending
-  character(len=8) ending_1Dcrust
+  character(len=4) :: ending
+  character(len=8) :: ending_1Dcrust
 
-  character(len=MAX_STRING_LEN) MODEL_ROOT
+  character(len=MAX_STRING_LEN) :: MODEL_ROOT
   logical :: impose_1Dcrust
 
   ! defaults:
@@ -172,6 +172,9 @@
   ! no crustal mesh stretching and 3D crust models by default
   CASE_3D = .false.
   CRUSTAL = .false.
+
+  ! by default, crust will be split into upper and lower crust using 2 element layers
+  ! (if set to true, this uses 1 element layer only for the crust and assign a single crustal material)
   ONE_CRUST = .false.
 
   ! uses no 3D heterogeneity mantle by default
@@ -198,8 +201,8 @@
     TRANSVERSE_ISOTROPY = .true.
 
   else if (MODEL_ROOT == '1D_iasp91' .or. MODEL_ROOT == '1D_1066a' .or. &
-          MODEL_ROOT == '1D_ak135f_no_mud' .or. MODEL_ROOT == '1D_jp3d' .or. &
-          MODEL_ROOT == '1D_sea99') then
+           MODEL_ROOT == '1D_ak135f_no_mud' .or. MODEL_ROOT == '1D_jp3d' .or. &
+           MODEL_ROOT == '1D_sea99') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     if (MODEL_ROOT == '1D_iasp91') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91

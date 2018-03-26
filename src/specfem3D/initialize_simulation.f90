@@ -175,7 +175,7 @@
       write(IMAIN,*) '  no crustal variations'
     endif
     if (ONE_CRUST) then
-      write(IMAIN,*) '  using one layer only in PREM crust'
+      write(IMAIN,*) '  using one layer only in crust'
     else
       write(IMAIN,*) '  using unmodified 1D crustal model with two layers'
     endif

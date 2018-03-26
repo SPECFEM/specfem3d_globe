@@ -126,6 +126,7 @@
           call moho_stretching_honor_crust(myrank,xelm,yelm,zelm, &
                                            elem_in_crust,elem_in_mantle)
         endif
+
       else
         ! element below 220km
         ! sets element flag for mantle
@@ -206,7 +207,6 @@
                    xstore,ystore,zstore, &
                    rmin,rmax, &
                    elem_in_crust,elem_in_mantle)
-
   endif
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
@@ -295,6 +295,7 @@
     endif
   endif
 
+
   ! re-interpolates and creates the GLL point locations since the anchor points might have moved
   !
   ! note: velocity values associated for each GLL point will "move" along together with
@@ -302,18 +303,19 @@
   !          models are/should be referenced with respect to a spherical Earth.
   if (.not. USE_GLL) then
     call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                      xstore,ystore,zstore,shape3D)
+                                       xstore,ystore,zstore,shape3D)
   endif
 
   ! updates Jacobian
   ! (only needed for second meshing phase)
   if (ipass == 2) then
     call recalc_jacobian_gll3D(xstore,ystore,zstore,xigll,yigll,zigll, &
-                                ispec,nspec, &
-                                xixstore,xiystore,xizstore, &
-                                etaxstore,etaystore,etazstore, &
-                                gammaxstore,gammaystore,gammazstore)
+                               ispec,nspec, &
+                               xixstore,xiystore,xizstore, &
+                               etaxstore,etaystore,etazstore, &
+                               gammaxstore,gammaystore,gammazstore)
   endif
+
 
   end subroutine compute_element_properties
 
@@ -322,7 +324,7 @@
 !
 
   subroutine compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                      xstore,ystore,zstore,shape3D)
+                                           xstore,ystore,zstore,shape3D)
 
   use constants
 
@@ -350,11 +352,9 @@
 
         ! interpolates the location using 3D shape functions
         do ia = 1,NGNOD
-
           xmesh = xmesh + shape3D(ia,i,j,k)*xelm(ia)
           ymesh = ymesh + shape3D(ia,i,j,k)*yelm(ia)
           zmesh = zmesh + shape3D(ia,i,j,k)*zelm(ia)
-
         enddo
 
         ! stores mesh coordinates
