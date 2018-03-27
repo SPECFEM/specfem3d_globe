@@ -121,7 +121,7 @@
 ! All this subroutine does is define the Attenuation vs Radius and then Compute the Attenuation
 ! Variables (tau_sigma and tau_epsilon ( or tau_mu) )
   subroutine model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB, &
-                                    R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
+                                     R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
 
   use constants
   use meshfem3D_models_par, only: model_attenuation_variables,model_attenuation_storage_var
@@ -510,11 +510,16 @@
   deallocate(AS_V%f)
   deallocate(AS_V%tau_s)
 
-end subroutine attenuation_simplex_finish
+  end subroutine attenuation_simplex_finish
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
 
 !   - Inserts necessary parameters into the module attenuation_simplex_variables
 !   - See module for explanation
-subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
+  subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   use meshfem3D_models_par, only: attenuation_simplex_variables
 
@@ -522,20 +527,21 @@ subroutine attenuation_simplex_setup(nf_in,nsls_in,f_in,Q_in,tau_s_in,AS_V)
 
   type (attenuation_simplex_variables) :: AS_V
 
-  integer nf_in, nsls_in
-  double precision Q_in
+  integer :: nf_in, nsls_in
+  double precision :: Q_in
   double precision, dimension(nf_in)   :: f_in
   double precision, dimension(nsls_in) :: tau_s_in
 
-  allocate(AS_V%f(nf_in))
-  allocate(AS_V%tau_s(nsls_in))
+  allocate(AS_V%f(nf_in), &
+           AS_V%tau_s(nsls_in),stat=ier)
+  if (ier /= 0) stop 'Error allocating AS_V arrays'
 
-  AS_V%nf    = nf_in
-  AS_V%nsls  = nsls_in
-  AS_V%f     = f_in
-  AS_V%Q     = Q_in
-  AS_V%iQ    = 1.0d0/AS_V%Q
-  AS_V%tau_s = tau_s_in
+  AS_V%nf       = nf_in
+  AS_V%nsls     = nsls_in
+  AS_V%f(:)     = f_in(:)
+  AS_V%Q        = Q_in
+  AS_V%iQ       = 1.0d0/AS_V%Q
+  AS_V%tau_s(:) = tau_s_in(:)
 
   end subroutine attenuation_simplex_setup
 
