@@ -662,7 +662,7 @@
         ! + 3 * 1 float = 3 * 4 BYTE
         accel(i,1) = veloc(i,1) + deltat * displ(i,1)
       enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
     else
@@ -674,7 +674,7 @@
       do i = 1,NGLOB
         accel(1,i) = veloc(1,i) + deltat * displ(1,i)
       enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
     endif

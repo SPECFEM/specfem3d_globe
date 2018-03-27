@@ -330,7 +330,7 @@
     endif
 
   enddo ! of spectral element loop
-!$OMP enddo
+!$OMP ENDDO
 
   ! updates acceleration
   ! sum contributions from each element to the global mesh
@@ -349,7 +349,7 @@
       accel_inner_core(3,iglob) = accel_inner_core(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 #else
 !$OMP DO
   do ispec_p = 1,num_elements
@@ -390,7 +390,7 @@
 !$OMP END CRITICAL
 #endif
   enddo
-!$OMP enddo
+!$OMP ENDDO
 #endif
 
 !$OMP END PARALLEL
