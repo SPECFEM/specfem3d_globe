@@ -154,6 +154,7 @@
   ! local parameters
   integer :: ios,julian_day
   integer :: isource,idummy
+  integer :: i,istart,iend,ier
   double precision, dimension(NSOURCES) :: t_s,hdur,lat,lon,depth
   character(len=20), dimension(NSOURCES) :: e_n
   character(len=5) :: datasource
@@ -288,9 +289,41 @@
     ! read source number isource
     do isource = 1,NSOURCES
 
+      ! gets header line
+      read(IIN,"(a256)",iostat=ier) string
+      if (ier /= 0) then
+        write(IMAIN,*) 'Error reading header line in source ',isource
+        stop 'Error reading header line in station in CMTSOLUTION file'
+      endif
+
+      ! reads header line with event information (free format)
+      ! gets rid of the first datasource qualifyer string which can have variable length, like:
+      ! "PDE 2014 9 3 .."
+      ! " PDEQ2014 9 3 .."
+      ! " MLI   1971   1   1 .."
+      ! note: globalcmt.org solutions might have missing spaces after datasource qualifier
+      !
+      ! reads in year,month,day,hour,minutes,seconds
+      istart = 1
+      iend = len_trim(string)
+      ! determines where first number starts
+      do i = 1,len_trim(string)
+        if (is_numeric(string(i:i))) then
+          istart = i
+          exit
+        endif
+      enddo
+      if ( istart >= iend ) stop 'Error determining datasource length in header line in CMTSOLUTION file'
+      if ( istart <= 1 ) stop 'Error determining datasource length in header line in CMTSOLUTION file'
+
+      ! debug
+      !print *,'line ----',string(istart:iend),'----'
+
       ! read header with event information
-      read(IIN,*) datasource,yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
-      jda=julian_day(yr,mo,da)
+      read(string(1:istart-1),*) datasource
+      read(string(istart:iend),*) yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
+
+      jda = julian_day(yr,mo,da)
 
       ! read line with event name
       read(IIN,"(a)") string
@@ -353,6 +386,25 @@
     ! takes minimum time shift of all given sources
     t_shift = minval(t_s(1:NSOURCES))
   endif
+
+contains
+
+  !--------------------------------------------------------------
+
+  logical function is_numeric(char)
+
+  ! returns .true. if input character is a number
+
+  implicit none
+  character(len=1), intent(in) :: char
+
+  is_numeric = .false.
+
+  if ( index('0123456789', char) /= 0) then
+    is_numeric = .true.
+  endif
+
+  end function
 
   end subroutine get_event_info_serial
 
