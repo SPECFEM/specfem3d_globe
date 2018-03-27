@@ -174,7 +174,7 @@
 
   ! attenuation
   if (ATTENUATION) then
-    call model_attenuation_broadcast(AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+    call model_attenuation_broadcast(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 
     ! 3D attenuation
     if (ATTENUATION_3D) then
@@ -183,8 +183,7 @@
     else
       ! sets up attenuation coefficients according to the chosen, "pure" 1D model
       ! (including their 1D-crustal profiles)
-      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB, &
-                                   R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
+      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,CRUSTAL)
     endif
 
   endif
@@ -674,7 +673,7 @@
 !         !call model_attenuation_1D_PREM(r_prem, Qmu, idoubling)
 !          call model_atten3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,idoubling)
 !          ! Get tau_e from tau_s and Qmu
-!         call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
+!         call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e)
 !       endif
 
   end subroutine meshfem3D_models_get3Dmntl_val
@@ -1010,7 +1009,7 @@
   endif
 
   ! Get tau_e from tau_s and Qmu
-  call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
+  call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e)
 
   end subroutine meshfem3D_models_getatten_val
 
