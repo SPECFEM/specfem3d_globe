@@ -195,7 +195,6 @@ __kernel void compute_iso_undoatt_kernel(const __global float * epsilondev_xx, c
   int ijk_ispec;\n\
   int tx;\n\
   int iglob;\n\
-  int offset;\n\
   float eps_trace_over_3;\n\
   float b_eps_trace_over_3;\n\
   float epsdev[(5)];\n\
