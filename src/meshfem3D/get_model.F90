@@ -97,7 +97,9 @@
         vph = 0.d0
         vsv = 0.d0
         vsh = 0.d0
-        eta_aniso = 0.d0
+
+        eta_aniso = 1.d0 ! default for isotropic element
+
         c11 = 0.d0
         c12 = 0.d0
         c13 = 0.d0
