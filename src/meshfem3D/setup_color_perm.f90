@@ -609,7 +609,7 @@
     NCHUNKS,NSPEC2D_TOP,NSPEC2D_BOTTOM, &
     xstore,ystore,zstore,idoubling,xstore_glob,ystore_glob,zstore_glob
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &

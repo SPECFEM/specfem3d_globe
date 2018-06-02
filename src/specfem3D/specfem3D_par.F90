@@ -129,9 +129,6 @@ module constants_solver
   integer :: NGLOB_CRUST_MANTLE_3DMOVIE
   integer :: NSPEC_OUTER_CORE_3DMOVIE
 
-  ! regular kernels
-  integer :: NM_KL_REG_PTS_VAL
-
   integer :: NGLOB_XY_CM
   integer :: NGLOB_XY_IC
   integer :: NT_DUMP_ATTENUATION_VAL
@@ -645,6 +642,7 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: d670_kl, d670_kl_top, d670_kl_bot
   real(kind=CUSTOM_REAL), dimension(:,:,:), allocatable :: cmb_kl, cmb_kl_top, cmb_kl_bot
 
+  ! regular kernels
   ! For saving kernels on a regular grid
   integer :: npoints_slice_reg
   integer, dimension(:), allocatable :: points_slice_reg
@@ -652,6 +650,19 @@ module specfem_par_crustmantle
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: hxir_reg
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: hetar_reg
   real(kind=CUSTOM_REAL), dimension(:,:), allocatable :: hgammar_reg
+  type kl_reg_grid_variables
+    sequence
+    real :: dlat
+    real :: dlon
+    real,dimension(:),allocatable :: rlayer
+    integer :: nlayer
+    integer :: npts_total ! order matters with sequence keyword, otherwise a misalignement warning appears
+    integer,dimension(:),allocatable :: ndoubling
+    integer,dimension(:),allocatable :: nlat
+    integer,dimension(:),allocatable :: nlon
+    integer,dimension(:),allocatable :: npts_before_layer
+  end type kl_reg_grid_variables
+  type(kl_reg_grid_variables) :: kl_reg_grid
 
   ! inner / outer elements crust/mantle region
   integer :: num_phase_ispec_crust_mantle

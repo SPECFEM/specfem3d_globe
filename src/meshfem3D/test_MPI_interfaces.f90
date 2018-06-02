@@ -242,7 +242,8 @@
   subroutine test_MPI_cm()
 
   use meshfem3D_par, only: NPROCTOT,myrank
-  use create_MPI_interfaces_par
+
+  use MPI_interfaces_par
   use MPI_crust_mantle_par
 
   implicit none
@@ -358,7 +359,8 @@
   subroutine test_MPI_oc()
 
   use meshfem3D_par, only: NPROCTOT,myrank
-  use create_MPI_interfaces_par
+
+  use MPI_interfaces_par
   use MPI_outer_core_par
 
   implicit none
@@ -467,7 +469,8 @@
   subroutine test_MPI_ic()
 
   use meshfem3D_par, only: NPROCTOT,myrank
-  use create_MPI_interfaces_par
+
+  use MPI_interfaces_par
   use MPI_inner_core_par
 
   implicit none

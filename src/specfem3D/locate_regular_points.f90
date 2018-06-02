@@ -32,24 +32,12 @@
     KL_REG_MIN_LAT,KL_REG_MAX_LAT,KL_REG_MIN_LON,KL_REG_MAX_LON
 
   use specfem_par, only: myrank
-
+  use specfem_par_crustmantle, only: kl_reg_grid_variables
   implicit none
-
-  type kl_reg_grid_variables
-    sequence
-    real dlat
-    real dlon
-    integer nlayer
-    real rlayer(NM_KL_REG_LAYER)
-    integer ndoubling(NM_KL_REG_LAYER)
-    integer nlat(NM_KL_REG_LAYER)
-    integer nlon(NM_KL_REG_LAYER)
-    integer npts_total
-    integer npts_before_layer(NM_KL_REG_LAYER+1)
-  end type kl_reg_grid_variables
 
   type (kl_reg_grid_variables), intent(inout) :: GRID
 
+  ! local parameters
   integer :: ios,nlayer,i,nlat,nlon,npts_this_layer
   character(len=256) :: line
   real :: r
@@ -136,22 +124,12 @@
   use specfem_par, only: myrank, addressing, &
     NCHUNKS_VAL, NPROC_XI_VAL, NPROC_ETA_VAL
 
+  use specfem_par_crustmantle, only: kl_reg_grid_variables
+
   implicit none
 
   integer, intent(out) :: slice_number(*)
 
-  type kl_reg_grid_variables
-    sequence
-    real dlat
-    real dlon
-    integer nlayer
-    real rlayer(NM_KL_REG_LAYER)
-    integer ndoubling(NM_KL_REG_LAYER)
-    integer nlat(NM_KL_REG_LAYER)
-    integer nlon(NM_KL_REG_LAYER)
-    integer npts_total
-    integer npts_before_layer(NM_KL_REG_LAYER+1)
-  end type kl_reg_grid_variables
   type (kl_reg_grid_variables), intent(in) :: GRID
 
   real(kind=CUSTOM_REAL) :: xi_width, eta_width
@@ -206,28 +184,17 @@
 
   use constants_solver, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD,NUM_ITER, &
     DEGREES_TO_RADIANS,HUGEVAL,TWO_PI,R_UNIT_SPHERE,R_EARTH, &
-    NM_KL_REG_PTS_VAL,NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
+    NM_KL_REG_PTS,NM_KL_REG_LAYER,KL_REG_MIN_LAT,KL_REG_MIN_LON
 
   use specfem_par, only: myrank, NEX_XI
+
+  use specfem_par_crustmantle, only: kl_reg_grid_variables
 
   implicit none
 
   ! declarations of regular grid model
   integer, intent(in) :: npoints_slice_reg
-  integer, dimension(NM_KL_REG_PTS_VAL), intent(in) :: points_slice_reg
-
-  type kl_reg_grid_variables
-    sequence
-    real dlat
-    real dlon
-    integer nlayer
-    real rlayer(NM_KL_REG_LAYER)
-    integer ndoubling(NM_KL_REG_LAYER)
-    integer nlat(NM_KL_REG_LAYER)
-    integer nlon(NM_KL_REG_LAYER)
-    integer npts_total
-    integer npts_before_layer(NM_KL_REG_LAYER+1)
-  end type kl_reg_grid_variables
+  integer, dimension(NM_KL_REG_PTS), intent(in) :: points_slice_reg
   type (kl_reg_grid_variables), intent(in) :: GRID
 
   ! simulation geometry
@@ -241,10 +208,10 @@
   double precision, dimension(NGLLZ), intent(in) :: zigll
 
   ! output
-  integer, dimension(NM_KL_REG_PTS_VAL), intent(out) :: ispec_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NM_KL_REG_PTS_VAL), intent(out) :: hxir_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLY,NM_KL_REG_PTS_VAL), intent(out) :: hetar_reg
-  real(kind=CUSTOM_REAL), dimension(NGLLZ,NM_KL_REG_PTS_VAL), intent(out) :: hgammar_reg
+  integer, dimension(NM_KL_REG_PTS), intent(out) :: ispec_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NM_KL_REG_PTS), intent(out) :: hxir_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLY,NM_KL_REG_PTS), intent(out) :: hetar_reg
+  real(kind=CUSTOM_REAL), dimension(NGLLZ,NM_KL_REG_PTS), intent(out) :: hgammar_reg
 
   ! GLL number of anchors
   integer, dimension(NGNOD) :: iaddx, iaddy, iaddr

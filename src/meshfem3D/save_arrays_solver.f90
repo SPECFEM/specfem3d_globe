@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine save_arrays_solver(nspec,nglob,idoubling,ibool, &
+  subroutine save_arrays_solver(idoubling,ibool, &
                                 iregion_code,xstore,ystore,zstore, &
                                 NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
@@ -37,9 +37,11 @@
 
   use meshfem3D_par, only: &
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION, &
+    nspec,nglob, &
+    OUTPUT_FILES,xstore_glob,ystore_glob,zstore_glob
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -59,8 +61,6 @@
 
   implicit none
 
-  integer,intent(in) :: nspec,nglob
-
   ! doubling mesh flag
   integer,dimension(nspec),intent(in) :: idoubling
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
@@ -76,6 +76,10 @@
   ! local parameters
   integer :: i,j,k,ispec,iglob,ier
   real(kind=CUSTOM_REAL),dimension(:),allocatable :: tmp_array
+
+  ! debug file output
+  character(len=MAX_STRING_LEN) :: filename
+  logical,parameter :: DEBUG = .false.
 
   ! mesh databases
   open(unit=IOUT,file=prname(1:len_trim(prname))//'solver_data.bin', &
@@ -310,7 +314,16 @@
   ! uncomment for vp & vs model storage
   if (SAVE_MESH_FILES) then
     ! outputs model files in binary format
-    call save_arrays_solver_meshfiles(nspec)
+    call save_arrays_solver_meshfiles()
+  endif
+
+  ! debug outputs flags as vtk file
+  if (DEBUG) then
+    if (iregion_code == IREGION_CRUST_MANTLE) then
+      write(filename,'(a,i6.6)') trim(OUTPUT_FILES)//'/ispec_is_tiso',myrank
+      call write_VTK_data_elem_l(nspec,nglob,xstore_glob,ystore_glob,zstore_glob,ibool, &
+                                 ispec_is_tiso,filename)
+    endif
   endif
 
   end subroutine save_arrays_solver
@@ -319,23 +332,23 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_arrays_solver_meshfiles(nspec)
+  subroutine save_arrays_solver_meshfiles()
 
 ! outputs model files in binary format
 
   use constants
 
+  use meshfem3D_par, only: nspec
+
   use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,ATTENUATION,ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     Qmu_store, &
     prname
 
   implicit none
-
-  integer :: nspec
 
   ! local parameters
   integer :: i,j,k,ispec,ier
@@ -478,7 +491,7 @@
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     ADIOS_FOR_MPI_ARRAYS
 
-!  use create_MPI_interfaces_par
+!  use MPI_interfaces_par
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -648,7 +661,8 @@
   use meshfem3D_models_par, only: &
     SAVE_BOUNDARY_MESH,HONOR_1D_SPHERICAL_MOHO,SUPPRESS_CRUSTAL_MESH
 
-  use create_regions_mesh_par2, only: &
+! boundary kernels
+  use regions_mesh_par2, only: &
     NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, &
     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
     ibelm_670_top,ibelm_670_bot,normal_moho,normal_400,normal_670, &

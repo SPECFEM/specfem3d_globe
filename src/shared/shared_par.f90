@@ -155,7 +155,7 @@
   ! parameters to be computed based upon parameters above read from file
 
   use constants, only: MAX_NUM_REGIONS,MAX_NUMBER_OF_MESH_LAYERS, &
-    NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE,NM_KL_REG_PTS
+    NB_SQUARE_CORNERS,NB_SQUARE_EDGES_ONEDIR,NB_CUT_CASE
 
   implicit none
 
@@ -207,13 +207,13 @@
   logical :: HONOR_1D_SPHERICAL_MOHO,CASE_3D
 
   ! this for all the regions
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC
+  integer, dimension(MAX_NUM_REGIONS) :: NSPEC_REGIONS
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_XI,NSPEC2D_ETA
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC2D_BOTTOM,NSPEC2D_TOP
   integer, dimension(MAX_NUM_REGIONS) :: NSPEC1D_RADIAL
 
-  integer, dimension(MAX_NUM_REGIONS) :: NGLOB
+  integer, dimension(MAX_NUM_REGIONS) :: NGLOB_REGIONS
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX
   integer, dimension(MAX_NUM_REGIONS) :: NGLOB1D_RADIAL
 

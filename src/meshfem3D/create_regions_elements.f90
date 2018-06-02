@@ -25,14 +25,16 @@
 !
 !=====================================================================
 
-  subroutine create_regions_elements(iregion_code,nspec,ipass, &
+  subroutine create_regions_elements(iregion_code,ipass, &
                                      NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                                      offset_proc_xi,offset_proc_eta)
 
 ! creates all elements belonging to different regions of the mesh
 
+  use constants, only: CUSTOM_REAL,MAX_STRING_LEN
+
   use meshfem3D_par, only: &
-    idoubling,is_on_a_slice_edge, &
+    nspec,idoubling,is_on_a_slice_edge, &
     xstore,ystore,zstore, &
     IMAIN,myrank, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
@@ -49,12 +51,31 @@
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
     TRANSVERSE_ISOTROPY
 
-  use create_regions_mesh_par
-  use create_regions_mesh_par2
+  use regions_mesh_par,only: &
+    xigll,yigll,zigll,iaddx,iaddy,iaddz,shape3D,dershape2D_bottom
+    
+  use regions_mesh_par2,only: &
+    USE_ONE_LAYER_SB,ispec_is_tiso,ifirst_region,ilast_region,perm_layer,NUMBER_OF_MESH_LAYERS, &
+    nspec_ani,nspec_actually,nspec_stacey,iMPIcut_xi,iMPIcut_eta, &
+    stretch_tab, &
+    rhostore,dvpstore,rho_vp,rho_vs, &
+    kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
+    c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
+    c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
+    c36store,c44store,c45store,c46store,c55store,c56store,c66store, &
+    xixstore,xiystore,xizstore, &
+    etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore,iboun
+
+! boundary mesh
+  use regions_mesh_par2,only: &
+    r_moho,r_400,r_670,NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho, &
+    ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot,ibelm_670_top,ibelm_670_bot, &
+    normal_moho,normal_400,normal_670,jacobian2D_moho,jacobian2D_400,jacobian2D_670, &
+    ispec2D_moho_top,ispec2D_moho_bot,ispec2D_400_top,ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot
 
   implicit none
 
-  integer,intent(in) :: iregion_code,nspec
+  integer,intent(in) :: iregion_code
   integer,intent(in) :: ipass
 
   integer :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA

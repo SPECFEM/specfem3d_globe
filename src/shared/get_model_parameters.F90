@@ -543,15 +543,15 @@
 !---
 
   ! default: PREM
-  ROCEAN = 6368000.d0
-  RMIDDLE_CRUST = 6356000.d0 ! at 15km depth
-  RMOHO = 6346600.d0  ! at 24.4km depth
+  ROCEAN = 6368000.d0         ! at 3km depth
+  RMIDDLE_CRUST = 6356000.d0  ! at 15km depth
+  RMOHO = 6346600.d0          ! at 24.4km depth
   R80  = 6291000.d0
-  R120 = -1.d0   ! by default there is no d120 discontinuity, except in IASP91, therefore set to fictitious value
+  R120 = -1.d0                ! by default there is no d120 discontinuity, except in IASP91, therefore set to fictitious value
   R220 = 6151000.d0
   R400 = 5971000.d0
   R600 = 5771000.d0
-  R670 = 5701000.d0
+  R670 = 5701000.d0           ! at 670km depth
   R771 = 5600000.d0
   RTOPDDOUBLEPRIME = 3630000.d0
   RCMB = 3480000.d0
@@ -568,7 +568,7 @@
     ! IASP91
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6351000.d0
-    RMOHO = 6336000.d0 ! ! at 35km depth
+    RMOHO = 6336000.d0          ! at 35km depth
     R80  = 6291000.d0
     R120 = 6251000.d0
     R220 = 6161000.d0
@@ -591,7 +591,7 @@
 
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6351000.d0
-    RMOHO  = 6336000.d0 ! at 35km depth
+    RMOHO  = 6336000.d0         ! at 35km depth
     R80    = 6293500.d0
     R220   = 6161000.d0
     R400   = 5961000.d0
@@ -634,14 +634,14 @@
 
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     ! REF
-    ROCEAN = 6368000.d0
-    RMIDDLE_CRUST = 6356000.d0
-    RMOHO = 6346600.d0 ! at 24.4km depth
+    ROCEAN = 6368000.d0         ! at 3km depth
+    RMIDDLE_CRUST = 6356000.d0  ! at 15km
+    RMOHO = 6346600.d0          ! at 24.4km depth
     R80  = 6291000.d0
     R220 = 6151000.d0
-    R400 = 5961000.d0 ! 410km discontinuity
+    R400 = 5961000.d0           ! 410km discontinuity
     R600 = 5771000.d0
-    R670 = 5721000.d0 ! 650km discontinuity
+    R670 = 5721000.d0           ! 650km discontinuity
     R771 = 5600000.d0
     RTOPDDOUBLEPRIME = 3630000.d0
     RCMB = 3479958.d0

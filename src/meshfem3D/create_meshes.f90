@@ -28,6 +28,7 @@
   subroutine create_meshes()
 
   use meshfem3D_par
+
   implicit none
 
   ! local parameters
@@ -108,29 +109,33 @@
       call flush_IMAIN()
     endif
 
+    ! number of spectral elements
+    nspec = NSPEC_REGIONS(iregion_code)
+
+    ! number of global GLL points
+    nglob = NGLOB_REGIONS(iregion_code)
+
     ! compute maximum number of points
-    npointot = NSPEC(iregion_code) * NGLLX * NGLLY * NGLLZ
+    npointot = nspec * NGLLX * NGLLY * NGLLZ
 
     ! use dynamic allocation to allocate memory for arrays
-    allocate(idoubling(NSPEC(iregion_code)), &
-             ibool(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-             xstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-             ystore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
-             zstore(NGLLX,NGLLY,NGLLZ,NSPEC(iregion_code)), &
+    allocate(idoubling(nspec), &
+             ibool(NGLLX,NGLLY,NGLLZ,nspec), &
+             xstore(NGLLX,NGLLY,NGLLZ,nspec), &
+             ystore(NGLLX,NGLLY,NGLLZ,nspec), &
+             zstore(NGLLX,NGLLY,NGLLZ,nspec), &
              stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
 
     ! this for non blocking MPI
-    allocate(is_on_a_slice_edge(NSPEC(iregion_code)), &
-            stat=ier)
+    allocate(is_on_a_slice_edge(nspec),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating is_on_a_slice_edge array')
 
 
     ! create all the regions of the mesh
     ! perform two passes in this part to be able to save memory
     do ipass = 1,2
-      call create_regions_mesh(iregion_code, &
-                               NSPEC(iregion_code),NGLOB(iregion_code),npointot, &
+      call create_regions_mesh(iregion_code,npointot, &
                                NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                                NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
                                NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &

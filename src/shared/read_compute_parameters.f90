@@ -204,10 +204,11 @@
                         DEPTH_FOURTH_DOUBLING_REAL,distance,distance_min,zval, &
                         doubling_index,rmins,rmaxs)
 
-  ! calculates number of elements (NSPEC)
+  ! calculates number of elements (NSPEC_REGIONS)
   call count_elements(NEX_XI,NEX_ETA,NEX_PER_PROC_XI,NPROC, &
                         NEX_PER_PROC_ETA,ratio_divide_central_cube, &
-                        NSPEC,NSPEC2D_XI,NSPEC2D_ETA, &
+                        NSPEC_REGIONS, &
+                        NSPEC2D_XI,NSPEC2D_ETA, &
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM,NSPEC2D_TOP, &
                         NSPEC1D_RADIAL, &
                         NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
@@ -222,10 +223,11 @@
                         tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h, &
                         nglob_edge_v,to_remove)
 
-  ! calculates number of points (NGLOB)
+  ! calculates number of points (NGLOB_REGIONS)
   call count_points(NEX_PER_PROC_XI,NEX_PER_PROC_ETA,ratio_divide_central_cube, &
                         NSPEC1D_RADIAL,NGLOB1D_RADIAL, &
-                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX,NGLOB, &
+                        NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX, &
+                        NGLOB_REGIONS, &
                         nblocks_xi,nblocks_eta,ner,ratio_sampling_array, &
                         this_region_has_a_doubling, &
                         ifirst_region, ilast_region, iter_region, iter_layer, &
@@ -249,8 +251,8 @@
       ATT2 = 1
       ATT3 = 1
     endif
-    ATT4 = NSPEC(IREGION_CRUST_MANTLE)
-    ATT5 = NSPEC(IREGION_INNER_CORE)
+    ATT4 = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+    ATT5 = NSPEC_REGIONS(IREGION_INNER_CORE)
   else
      ATT1 = 1
      ATT2 = 1

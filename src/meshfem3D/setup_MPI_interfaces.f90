@@ -31,7 +31,7 @@
   use meshfem3D_par, only: &
     INCLUDE_CENTRAL_CUBE,myrank,NUMFACES_SHARED
 
-  use create_MPI_interfaces_par
+  use MPI_interfaces_par
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -137,8 +137,9 @@
 
   use meshfem3D_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
-  use create_MPI_interfaces_par
+  use MPI_interfaces_par
   use MPI_crust_mantle_par
+
   implicit none
 
   integer,intent(in) :: MAX_NEIGHBORS,max_nibool
@@ -275,8 +276,9 @@
 
   use meshfem3D_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
-  use create_MPI_interfaces_par
+  use MPI_interfaces_par
   use MPI_outer_core_par
+
   implicit none
 
   integer :: MAX_NEIGHBORS,max_nibool
@@ -414,7 +416,7 @@
 
   use meshfem3D_par, only: ibool,idoubling,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
-  use create_MPI_interfaces_par
+  use MPI_interfaces_par
   use MPI_inner_core_par
 
   implicit none

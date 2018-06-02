@@ -194,36 +194,36 @@
   if (xr > 1.0) print *,'xr > 1.0'
   if (xr < -1.0) print *,'xr < -1.0'
   do k = 0,NK_20
-    radial_basis(k)=s40rts_rsple(1,NK_20+1,S40RTS_V_spknt(1),S40RTS_V_qq0(1,NK_20+1-k),S40RTS_V_qq(1,1,NK_20+1-k),xr)
+    radial_basis(k) = s40rts_rsple(1,NK_20+1,S40RTS_V_spknt(1),S40RTS_V_qq0(1,NK_20+1-k),S40RTS_V_qq(1,1,NK_20+1-k),xr)
   enddo
 
   do l = 0,NS_40
-    sint=dsin(theta)
-    cost=dcos(theta)
+    sint = dsin(theta)
+    cost = dcos(theta)
     call lgndr(l,cost,sint,x,dx)
 
-    dvs_alm=0.0d0
-    dvp_alm=0.0d0
+    dvs_alm = 0.0d0
+    dvp_alm = 0.0d0
     do k = 0,NK_20
-      dvs_alm=dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,0)
-      dvp_alm=dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,0)
+      dvs_alm = dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,0)
+      dvp_alm = dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,0)
     enddo
-    dvs=dvs+dvs_alm*x(1)
-    dvp=dvp+dvp_alm*x(1)
+    dvs = dvs+dvs_alm*x(1)
+    dvp = dvp+dvp_alm*x(1)
 
     do m = 1,l
-      dvs_alm=0.0d0
-      dvp_alm=0.0d0
-      dvs_blm=0.0d0
-      dvp_blm=0.0d0
+      dvs_alm = 0.0d0
+      dvp_alm = 0.0d0
+      dvs_blm = 0.0d0
+      dvp_blm = 0.0d0
       do k = 0,NK_20
-        dvs_alm=dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,m)
-        dvp_alm=dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,m)
-        dvs_blm=dvs_blm+radial_basis(k)*S40RTS_V_dvs_b(k,l,m)
-        dvp_blm=dvp_blm+radial_basis(k)*S40RTS_V_dvp_b(k,l,m)
+        dvs_alm = dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,m)
+        dvp_alm = dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,m)
+        dvs_blm = dvs_blm+radial_basis(k)*S40RTS_V_dvs_b(k,l,m)
+        dvp_blm = dvp_blm+radial_basis(k)*S40RTS_V_dvp_b(k,l,m)
       enddo
-      dvs=dvs+(dvs_alm*dcos(dble(m)*phi)+dvs_blm*dsin(dble(m)*phi))*x(m+1)
-      dvp=dvp+(dvp_alm*dcos(dble(m)*phi)+dvp_blm*dsin(dble(m)*phi))*x(m+1)
+      dvs = dvs+(dvs_alm*dcos(dble(m)*phi)+dvs_blm*dsin(dble(m)*phi))*x(m+1)
+      dvp = dvp+(dvp_alm*dcos(dble(m)*phi)+dvp_blm*dsin(dble(m)*phi))*x(m+1)
     enddo
 
   enddo

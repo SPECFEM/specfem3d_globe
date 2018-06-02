@@ -405,6 +405,8 @@
 ! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), CUSTOM_REAL for attenuation arrays (Qmu_store, tau_e_store)
 ! new version uses optional full 3d attenuation
   logical, parameter :: USE_OLD_VERSION_5_1_5_FORMAT = .false.
+! for comparison against older versions: in version 7.0 tiso was constrained to below moho, new version allows also in crust
+  logical, parameter :: USE_OLD_VERSION_7_0_0_FORMAT = .false.
 
 
 !!-----------------------------------------------------------

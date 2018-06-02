@@ -120,9 +120,9 @@ meshfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 meshfem3D_MODULES = \
-	$(FC_MODDIR)/create_regions_mesh_par.$(FC_MODEXT) \
-	$(FC_MODDIR)/create_regions_mesh_par2.$(FC_MODEXT) \
-	$(FC_MODDIR)/create_mpi_interfaces_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/regions_mesh_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/regions_mesh_par2.$(FC_MODEXT) \
+	$(FC_MODDIR)/mpi_interfaces_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/gapp2_mantle_model_constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/meshfem3d_models_par.$(FC_MODEXT) \

@@ -188,19 +188,17 @@
 
   implicit none
 
-  if (SAVE_REGULAR_KL) then
-    ! stores kernels on a regular grid
-    call save_regular_kernels_cm()
+  ! outputs sensitivity kernels (in SEM-format) to file
+  if (ANISOTROPIC_KL) then
+    ! anisotropic kernels
+    call save_kernels_crust_mantle_ani()
   else
-    ! outputs sensitivity kernels (in SEM-format) to file
-    if (ANISOTROPIC_KL) then
-      ! anisotropic kernels
-      call save_kernels_crust_mantle_ani()
-    else
-      ! isotropic kernels
-      call save_kernels_crust_mantle_iso()
-    endif
+    ! isotropic kernels
+    call save_kernels_crust_mantle_iso()
   endif
+
+  ! stores additional kernels on a regular grid
+  if (SAVE_REGULAR_KL) call save_regular_kernels_cm()
 
   end subroutine save_kernels_crust_mantle
 
@@ -263,7 +261,6 @@
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 
-
   ! allocates temporary arrays
   if (SAVE_TRANSVERSE_KL_ONLY) then
     ! transverse isotropic kernel arrays for file output
@@ -300,7 +297,6 @@
 
   allocate(rhonotprime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0 ) stop 'Error allocating transverse kernels rhonotprime_kl_crust_mantle'
-
 
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE

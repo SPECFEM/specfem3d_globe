@@ -379,7 +379,7 @@
 
 ! Set the Tau_sigma (tau_s) to be equally spaced in log10 frequency
 
-  use constants,only: PI
+  use constants, only: PI
 
   implicit none
 
@@ -412,7 +412,7 @@
 
   subroutine attenuation_invert_by_simplex(t2, t1, n, Q_real, omega_not, tau_s, tau_e)
 
-  use constants,only: PI,myrank
+  use constants, only: PI,myrank
   use meshfem3D_models_par, only: attenuation_simplex_variables
 
   implicit none

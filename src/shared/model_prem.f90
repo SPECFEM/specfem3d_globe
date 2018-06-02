@@ -442,46 +442,64 @@
     Qkappa=57827.0d0
 
   else
-  if (CRUSTAL) then
+    if (CRUSTAL) then
 ! fill with PREM mantle and later add CRUST2.0
-    if (r > R80) then
-      rho=2.6910d0+0.6924d0*x
-      vpv=0.8317d0+7.2180d0*x
-      vph=3.5908d0+4.6172d0*x
-      vsv=5.8582d0-1.4678d0*x
-      vsh=-1.0839d0+5.7176d0*x
-      eta_aniso=3.3687d0-2.4778d0*x
-      Qmu=600.0d0
-      Qkappa=57827.0d0
-    endif
-  else
+      if (r > R80) then
+        rho=2.6910d0+0.6924d0*x
+        vpv=0.8317d0+7.2180d0*x
+        vph=3.5908d0+4.6172d0*x
+        vsv=5.8582d0-1.4678d0*x
+        vsh=-1.0839d0+5.7176d0*x
+        eta_aniso=3.3687d0-2.4778d0*x
+        Qmu=600.0d0
+        Qkappa=57827.0d0
+      endif
+    else
 ! use PREM crust
-    if (r > R80 .and. r <= RMOHO) then
+      if (r > R80 .and. r <= RMOHO) then
 
 ! anisotropy in PREM only above 220 km
 
-      rho=2.6910d0+0.6924d0*x
-      vpv=0.8317d0+7.2180d0*x
-      vph=3.5908d0+4.6172d0*x
-      vsv=5.8582d0-1.4678d0*x
-      vsh=-1.0839d0+5.7176d0*x
-      eta_aniso=3.3687d0-2.4778d0*x
-      Qmu=600.0d0
-      Qkappa=57827.0d0
+        rho=2.6910d0+0.6924d0*x
+        vpv=0.8317d0+7.2180d0*x
+        vph=3.5908d0+4.6172d0*x
+        vsv=5.8582d0-1.4678d0*x
+        vsh=-1.0839d0+5.7176d0*x
+        eta_aniso=3.3687d0-2.4778d0*x
+        Qmu=600.0d0
+        Qkappa=57827.0d0
 
 ! no anisotropy in the crust in PREM
 
-    else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
-      rho=2.9d0
-      vpv=6.8d0
-      vsv=3.9d0
-      vph=vpv
-      vsh=vsv
-      Qmu=600.0d0
-      Qkappa=57827.0d0
+      else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
+        rho=2.9d0
+        vpv=6.8d0
+        vsv=3.9d0
+        vph=vpv
+        vsh=vsv
+        Qmu=600.0d0
+        Qkappa=57827.0d0
 
 ! same properties everywhere in PREM crust (only one layer in the crust)
-      if (ONE_CRUST) then
+        if (ONE_CRUST) then
+          rho=2.6d0
+          vpv=5.8d0
+          vsv=3.2d0
+          vph=vpv
+          vsh=vsv
+          Qmu=600.0d0
+          Qkappa=57827.0d0
+        endif
+
+      else if (r > RMIDDLE_CRUST .and. r <= ROCEAN) then
+        rho=2.6d0
+        vpv=5.8d0
+        vsv=3.2d0
+        vph=vpv
+        vsh=vsv
+        Qmu=600.0d0
+        Qkappa=57827.0d0
+      else if (r > ROCEAN) then
         rho=2.6d0
         vpv=5.8d0
         vsv=3.2d0
@@ -490,25 +508,7 @@
         Qmu=600.0d0
         Qkappa=57827.0d0
       endif
-
-    else if (r > RMIDDLE_CRUST .and. r <= ROCEAN) then
-      rho=2.6d0
-      vpv=5.8d0
-      vsv=3.2d0
-      vph=vpv
-      vsh=vsv
-      Qmu=600.0d0
-      Qkappa=57827.0d0
-    else if (r > ROCEAN) then
-      rho=2.6d0
-      vpv=5.8d0
-      vsv=3.2d0
-      vph=vpv
-      vsh=vsv
-      Qmu=600.0d0
-      Qkappa=57827.0d0
     endif
-  endif
   endif
 
 ! non-dimensionalize

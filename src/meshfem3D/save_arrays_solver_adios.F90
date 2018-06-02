@@ -48,7 +48,7 @@
 !!                    in argument
 !! \param NSPEC2D_BOTTOM Integer to compute the size of the arrays
 !!                       in argument
-  subroutine save_arrays_solver_adios(nspec,nglob,idoubling,ibool, &
+  subroutine save_arrays_solver_adios(idoubling,ibool, &
                                       iregion_code,xstore,ystore,zstore, &
                                       NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
                                       NSPEC2D_TOP,NSPEC2D_BOTTOM)
@@ -62,9 +62,10 @@
   use meshfem3D_par, only: &
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, LOCAL_PATH, &
     ADIOS_FOR_SOLVER_MESHFILES, &
-    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION
+    ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION, &
+    nspec,nglob
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore, &
     rhostore,dvpstore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
@@ -89,8 +90,6 @@
   use manager_adios
 
   implicit none
-
-  integer :: nspec,nglob
 
   ! doubling mesh flag
   integer, dimension(nspec) :: idoubling
@@ -832,7 +831,7 @@
   if (SAVE_MESH_FILES) then
     ! outputs model files in binary format
     if (ADIOS_FOR_SOLVER_MESHFILES) then
-      call save_arrays_solver_meshfiles_adios(iregion_code,nspec)
+      call save_arrays_solver_meshfiles_adios(iregion_code)
     else
       call save_arrays_solver_meshfiles(nspec)
     endif
@@ -850,18 +849,18 @@
 !! \param iregion_code Code of the region considered. See constant.h for details
 !! \param reg_name Output file prefix with the name of the region included
 !! \param nspec Number of GLL points per spectral elements
-  subroutine save_arrays_solver_meshfiles_adios(iregion_code, nspec)
+  subroutine save_arrays_solver_meshfiles_adios(iregion_code)
 
   use constants
 
   use meshfem3D_par, only: &
-    LOCAL_PATH
+    LOCAL_PATH,nspec
 
   use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,ATTENUATION, &
     ATTENUATION_3D,ATTENUATION_1D_WITH_3D_STORAGE
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     rhostore,kappavstore,kappahstore,muvstore,muhstore,eta_anisostore, &
     Qmu_store
 
@@ -1293,7 +1292,7 @@
     HONOR_1D_SPHERICAL_MOHO
     !SAVE_BOUNDARY_MESH,HONOR_1D_SPHERICAL_MOHO,SUPPRESS_CRUSTAL_MESH
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     NSPEC2D_MOHO, NSPEC2D_400, NSPEC2D_670, &
     ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
     ibelm_670_top,ibelm_670_bot,normal_moho,normal_400,normal_670, &

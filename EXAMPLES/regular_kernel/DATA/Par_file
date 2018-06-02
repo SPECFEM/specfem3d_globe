@@ -49,7 +49,7 @@ NPROC_ETA                       = 1
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
 # e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
-MODEL                           = 1D_iasp91_onecrust
+MODEL                           = s40rts
 
 # parameters describing the Earth model
 OCEANS                          = .false.
@@ -57,19 +57,19 @@ ELLIPTICITY                     = .false.
 TOPOGRAPHY                      = .false.
 GRAVITY                         = .true.
 ROTATION                        = .true.
-ATTENUATION                     = .true.
+ATTENUATION                     = .false.
 
 # absorbing boundary conditions for a regional simulation
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 0.5d0
+RECORD_LENGTH_IN_MINUTES        = 1.0d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)
 # but requires a significant amount of disk space for temporary storage.
 PARTIAL_PHYS_DISPERSION_ONLY    = .false.
-UNDO_ATTENUATION                = .true.
+UNDO_ATTENUATION                = .false.
 # How much memory (in GB) is installed on your machine per CPU core (only used for UNDO_ATTENUATION, can be ignored otherwise)
 #         (or per GPU card or per INTEL MIC Phi board)
 #   Beware, this value MUST be given per core, i.e. per MPI thread, i.e. per MPI rank, NOT per node.
@@ -106,7 +106,7 @@ PERCENT_OF_MEM_TO_USE_PER_CORE  = 85.d0
 # Set it to .true. if you have ABSORBING_CONDITIONS above, because in that case the code will use the three mass matrices anyway
 # and thus there is no additional cost.
 # this flag is of course unused if ROTATION above is set to .false.
-EXACT_MASS_MATRIX_FOR_ROTATION  = .false.
+EXACT_MASS_MATRIX_FOR_ROTATION  = .true.
 
 #-----------------------------------------------------------
 
@@ -167,7 +167,7 @@ LOCAL_PATH                      = ./DATABASES_MPI
 LOCAL_TMP_PATH                  = ./DATABASES_MPI
 
 # interval at which we output time step info and max of norm of displacement
-NTSTEP_BETWEEN_OUTPUT_INFO      = 100
+NTSTEP_BETWEEN_OUTPUT_INFO      = 200
 
 #-----------------------------------------------------------
 #
@@ -191,7 +191,7 @@ NTSTEP_BETWEEN_READ_ADJSRC      = 1000000
 # - the components of a (non necessarily unitary) direction vector for the force source in the E/N/Z_UP basis.
 # The direction vector is made unitary internally in the code and thus only its direction matters here;
 # its norm is ignored and the norm of the force used is the factor force source times the source time function.
-USE_FORCE_POINT_SOURCE          = .true.
+USE_FORCE_POINT_SOURCE          = .false.
 
 # option to save strain seismograms
 # this option is useful for strain Green's tensor
@@ -200,19 +200,19 @@ SAVE_SEISMOGRAMS_STRAIN         = .false.
 
 # save seismograms also when running the adjoint runs for an inverse problem
 # (usually they are unused and not very meaningful, leave this off in almost all cases)
-SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .false.
+SAVE_SEISMOGRAMS_IN_ADJOINT_RUN = .true.
 
 # output format for the seismograms (one can use either or all of the three formats)
 OUTPUT_SEISMOS_ASCII_TEXT       = .true.
-OUTPUT_SEISMOS_SAC_ALPHANUM     = .true.
-OUTPUT_SEISMOS_SAC_BINARY       = .false.
+OUTPUT_SEISMOS_SAC_ALPHANUM     = .false.
+OUTPUT_SEISMOS_SAC_BINARY       = .true.
 OUTPUT_SEISMOS_ASDF             = .false.
 
 # rotate seismograms to Radial-Transverse-Z or use default North-East-Z reference frame
 ROTATE_SEISMOGRAMS_RT           = .false.
 
 # decide if master process writes all the seismograms or if all processes do it in parallel
-WRITE_SEISMOGRAMS_BY_MASTER     = .false.
+WRITE_SEISMOGRAMS_BY_MASTER     = .true.
 
 # save all seismograms in one large combined file instead of one file per seismogram
 # to avoid overloading shared non-local file systems such as LUSTRE or GPFS for instance

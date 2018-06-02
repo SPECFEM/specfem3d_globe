@@ -343,7 +343,7 @@
 
   ! needs to set vpv,vph,vsv,vsh and eta_aniso for isotropic models
   if (.not. TRANSVERSE_ISOTROPY) then
-     ! in the case of s362iso we want to save the anisotropic constants for the Voight average
+     ! in the case of s362iso we want to save the anisotropic constants for the Voigt average
      if (.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF .and. ISOTROPIC_3D_MANTLE)) then
       vpv = vp
       vph = vp
@@ -439,7 +439,7 @@
 
   ! gets parameters for isotropic 3D mantle model
   !
-  ! note: there can be transverse isotropy in the mantle, but only Lam'e parameters
+  ! note: there can be transverse isotropy in the mantle, but only Lame parameters
   !           like kappav,kappah,muv,muh and eta_aniso are used for these simulations
   !
   ! note: in general, models here make use of perturbation values with respect to their
@@ -566,7 +566,7 @@
           vph = vp
           vsv = vs
           vsh = vs
-          eta_aniso=1.0d0
+          eta_aniso = 1.0d0
         endif
 
       case (THREE_D_MODEL_PPM )
@@ -778,8 +778,10 @@
 
     ! sets anisotropy in crustal region as well
     if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-      c11 = rho*vpv*vpv
-      c12 = rho*(vpv*vpv-2.*vsv*vsv)
+      ! equivalent with an isotropic elastic tensor (given vpv and vsv as isotropic wave speeds)
+      ! note: todo - this could be written as a transversely isotropic tensor (given vphc,vpvc,vshc,vsvc and etac from above)
+      c11 = rho * vpv*vpv
+      c12 = rho * (vpv*vpv - 2.d0*vsv*vsv)
       c13 = c12
       c14 = 0.d0
       c15 = 0.d0
@@ -793,7 +795,7 @@
       c34 = 0.d0
       c35 = 0.d0
       c36 = 0.d0
-      c44 = rho*vsv*vsv
+      c44 = rho * vsv*vsv
       c45 = 0.d0
       c46 = 0.d0
       c55 = c44

@@ -6612,6 +6612,11 @@
   3200.d0, &
   3200.d0 /)
 
+! anisotropy defined between layer
+!   5980000.0   = depth at 391km
+! to
+!   6346600.0   = depth at 24.4km (PREM moho depth)
+
   Mref_V_eta_ref( 1 : 30 ) = (/ &
   1.d0, &
   1.d0, &

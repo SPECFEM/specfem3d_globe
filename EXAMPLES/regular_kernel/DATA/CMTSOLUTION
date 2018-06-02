@@ -1,13 +1,13 @@
-PDEW 2008  1  6  5 14 23.70  37.2200   22.6900  75.0 6.1 6.2 SOUTHERN GREECE
-event name:      cmt1
-time shift:      0.0
-half duration:   1.0
-latitude:        39.0
-longitude:       70.3167
-depth:           10.0
-Mrr:         7.74e+24
-Mtt:        -1.83e+25
-Mpp:         1.06e+25
-Mrt:         1.29e+25
-Mrp:        -8.45e+24
-Mtp:        -4.43e+24
+ PDEW2017  7 20 22 31 11.20  36.9200   27.4100   7.0 0.0 6.6 DODECANESE ISLANDS, GREE
+event name:     201707202231A
+time shift:      5.1600
+half duration:   5.1000
+latitude:       36.7900
+longitude:      27.5600
+depth:          12.0000
+Mrr:      -1.060000e+26
+Mtt:       1.130000e+26
+Mpp:      -7.910000e+24
+Mrt:      -3.850000e+25
+Mrp:      -7.640000e+24
+Mtp:      -5.870000e+24

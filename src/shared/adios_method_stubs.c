@@ -43,8 +43,7 @@ void FC_FUNC_(get_absorb_adios,GET_ABSORB_ADIOS)(int* iregion,
 
 void FC_FUNC_(read_gll_model_adios,READ_GLL_MODEL_ADIOS)(void) {}
 
-void FC_FUNC_(save_arrays_solver_adios,SAVE_ARRAYS_SOLVER_ADIOS)(int* nspec, int* nglob,
-                                                                 int* idoubling, int* ibool,
+void FC_FUNC_(save_arrays_solver_adios,SAVE_ARRAYS_SOLVER_ADIOS)(int* idoubling, int* ibool,
                                                                  int* iregion_code,
                                                                  realw* xstore, realw* ystore, realw* zstore,
                                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX,
@@ -56,7 +55,7 @@ void FC_FUNC_(save_arrays_boundary_adios,SAVE_ARRAYS_BOUNDARY_ADIOS)(void) {}
 
 void FC_FUNC_(save_mpi_arrays_adios,SAVE_MPI_ARRAYS_ADIOS)(void) {}
 
-void FC_FUNC_(write_avs_dx_output_adios,WRITE_AVS_DX_OUTPUT_ADIOS)(int* nspec, int* npointot, int* iregion_code,
+void FC_FUNC_(write_avs_dx_output_adios,WRITE_AVS_DX_OUTPUT_ADIOS)(int* npointot, int* iregion_code,
                                                                    int* num_ibool_AVS_DX, int* mask_ibool) {}
 
 // for xspecfem3D compilation

@@ -51,9 +51,9 @@
                                      Earth_center_of_mass_y_total**2 + &
                                      Earth_center_of_mass_z_total**2) / Earth_mass_total) / 1000.d0
 
-    numelem_crust_mantle = NSPEC(IREGION_CRUST_MANTLE)
-    numelem_outer_core = NSPEC(IREGION_OUTER_CORE)
-    numelem_inner_core = NSPEC(IREGION_INNER_CORE)
+    numelem_crust_mantle = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+    numelem_outer_core = NSPEC_REGIONS(IREGION_OUTER_CORE)
+    numelem_inner_core = NSPEC_REGIONS(IREGION_INNER_CORE)
 
     numelem_total = numelem_crust_mantle + numelem_outer_core + numelem_inner_core
 
@@ -116,7 +116,7 @@
     call flush_IMAIN()
 
     ! create include file for the solver
-    call save_header_file(NSPEC,NGLOB,NPROC,NPROCTOT, &
+    call save_header_file(NSPEC_REGIONS,NGLOB_REGIONS,NPROC,NPROCTOT, &
                           static_memory_size, &
                           NSPEC2D_TOP,NSPEC2D_BOTTOM, &
                           NSPEC2DMAX_YMIN_YMAX,NSPEC2DMAX_XMIN_XMAX, &

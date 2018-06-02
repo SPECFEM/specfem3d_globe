@@ -1134,6 +1134,11 @@
     ! note: nrec_local is zero, Fortran 90/95 should allow zero-sized array allocation...
     allocate(seismograms(NDIM,0,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
     if (ier /= 0) stop 'Error while allocating zero seismograms'
+    ! dummy allocation
+    allocate(hxir_store(1,1), &
+             hetar_store(1,1), &
+             hgammar_store(1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating dummy receiver interpolators')
   endif
 
   end subroutine setup_receivers_precompute_intp
