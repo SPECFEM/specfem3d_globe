@@ -287,10 +287,19 @@
     case (REFERENCE_MODEL_PREM)
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
       if (TRANSVERSE_ISOTROPY) then
-        ! get the anisotropic PREM parameters
-        call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                  Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                  R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        ! specific 3D models with PREM references which would become too fast at shorter periods (<40s Love waves)
+        if (THREE_D_MODEL == THREE_D_MODEL_S20RTS &
+            .or. THREE_D_MODEL == THREE_D_MODEL_S40RTS) then
+          ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
+          call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                    Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        else
+          ! gets anisotropic PREM parameters, with radial anisotropic extension (from moho to surface for crustal model)
+          call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                    Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        endif
       else
         ! isotropic model
         call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &

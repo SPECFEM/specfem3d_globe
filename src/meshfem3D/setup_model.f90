@@ -28,7 +28,7 @@
   subroutine setup_model()
 
   use meshfem3D_par
-  
+
   implicit none
 
   ! user output

@@ -189,73 +189,73 @@
     Qmu=80.0d0
     Qkappa=57827.0d0
   else
-  if (CRUSTAL .and. .not. SUPPRESS_CRUSTAL_MESH) then
+    if (CRUSTAL .and. .not. SUPPRESS_CRUSTAL_MESH) then
 ! fill with PREM mantle and later add CRUST2.0
-    if (r > R80) then
-      ! density/velocity from mantle just below moho
-      drhodr=0.6924d0
-      rho=2.6910d0+0.6924d0*x
-      vp=4.1875d0+3.9382d0*x
-      vs=2.1519d0+2.3481d0*x
-      ! shear attenuation for R80 to surface
-      Qmu=600.0d0
-      Qkappa=57827.0d0
-    endif
-  else
+      if (r > R80) then
+        ! density/velocity from mantle just below moho
+        drhodr=0.6924d0
+        rho=2.6910d0+0.6924d0*x
+        vp=4.1875d0+3.9382d0*x
+        vs=2.1519d0+2.3481d0*x
+        ! shear attenuation for R80 to surface
+        Qmu=600.0d0
+        Qkappa=57827.0d0
+      endif
+    else
 ! use PREM crust
-    if (r > R80 .and. r <= RMOHO) then
-      drhodr=0.6924d0
-      rho=2.6910d0+0.6924d0*x
-      vp=4.1875d0+3.9382d0*x
-      vs=2.1519d0+2.3481d0*x
-      Qmu=600.0d0
-      Qkappa=57827.0d0
+      if (r > R80 .and. r <= RMOHO) then
+        drhodr=0.6924d0
+        rho=2.6910d0+0.6924d0*x
+        vp=4.1875d0+3.9382d0*x
+        vs=2.1519d0+2.3481d0*x
+        Qmu=600.0d0
+        Qkappa=57827.0d0
 
-    else if (SUPPRESS_CRUSTAL_MESH) then
+      else if (SUPPRESS_CRUSTAL_MESH) then
 !! DK DK extend the Moho up to the surface instead of the crust
-      drhodr=0.6924d0
-      rho = 2.6910d0+0.6924d0*(RMOHO / R_EARTH)
-      vp = 4.1875d0+3.9382d0*(RMOHO / R_EARTH)
-      vs = 2.1519d0+2.3481d0*(RMOHO / R_EARTH)
-      Qmu=600.0d0
-      Qkappa=57827.0d0
+        drhodr=0.6924d0
+        rho = 2.6910d0+0.6924d0*(RMOHO / R_EARTH)
+        vp = 4.1875d0+3.9382d0*(RMOHO / R_EARTH)
+        vs = 2.1519d0+2.3481d0*(RMOHO / R_EARTH)
+        Qmu=600.0d0
+        Qkappa=57827.0d0
 
-    else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
-      drhodr=0.0d0
-      rho=2.9d0
-      vp=6.8d0
-      vs=3.9d0
-      Qmu=600.0d0
-      Qkappa=57827.0d0
+      else if (r > RMOHO .and. r <= RMIDDLE_CRUST) then
+        drhodr=0.0d0
+        rho=2.9d0
+        vp=6.8d0
+        vs=3.9d0
+        Qmu=600.0d0
+        Qkappa=57827.0d0
 
 ! same properties everywhere in PREM crust if we decide to define only one layer in the crust
-      if (ONE_CRUST) then
+        if (ONE_CRUST) then
+          drhodr=0.0d0
+          rho=2.6d0
+          vp=5.8d0
+          vs=3.2d0
+          Qmu=600.0d0
+          Qkappa=57827.0d0
+        endif
+
+      else if (r > RMIDDLE_CRUST .and. r <= ROCEAN) then
         drhodr=0.0d0
         rho=2.6d0
         vp=5.8d0
         vs=3.2d0
         Qmu=600.0d0
         Qkappa=57827.0d0
-      endif
-
-    else if (r > RMIDDLE_CRUST .and. r <= ROCEAN) then
-      drhodr=0.0d0
-      rho=2.6d0
-      vp=5.8d0
-      vs=3.2d0
-      Qmu=600.0d0
-      Qkappa=57827.0d0
 ! for density profile for gravity, we do not check that r <= R_EARTH
-    else if (r > ROCEAN) then
-      drhodr=0.0d0
-      rho=2.6d0
-      vp=5.8d0
-      vs=3.2d0
-      Qmu=600.0d0
-      Qkappa=57827.0d0
+      else if (r > ROCEAN) then
+        drhodr=0.0d0
+        rho=2.6d0
+        vp=5.8d0
+        vs=3.2d0
+        Qmu=600.0d0
+        Qkappa=57827.0d0
 
+      endif
     endif
-  endif
   endif
 
 ! non-dimensionalize
@@ -522,6 +522,113 @@
   vsh = vsh * 1000.0d0/(R_EARTH*scaleval)
 
   end subroutine model_prem_aniso
+
+!
+!=====================================================================
+!
+
+  subroutine model_prem_aniso_extended_isotropic(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
+                                     idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                                     R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+! note: for 3D crustal models, we extend the mantle reference up to the surface and then superimpose the crustal values later.
+!       however, PREM mantle is anisotropic (eta < 1 and vsh > vsv) and the extension continues with strong TISO, thus
+!       extending it with anisotropic values up to the surface will create very fast, strong mantle elements
+!       below thin oceanic crust. in particular, oceanic paths will see Love waves becoming too fast for mantle models
+!       like S20RTS using PREM as reference model.
+!
+!       here, we will extend the mantle with isotropic values (averaged), and no radial anisotropy above moho depths.
+
+  use constants
+
+  implicit none
+
+! given a normalized radius x, gives the non-dimensionalized density rho,
+! speeds vp and vs, and the quality factors Qkappa and Qmu
+
+  double precision,intent(in) :: x
+  double precision,intent(out) :: rho,Qkappa,Qmu,vpv,vph,vsv,vsh,eta_aniso
+
+  logical,intent(in) :: CRUSTAL,ONE_CRUST
+  integer,intent(in) :: idoubling
+  double precision,intent(in) :: RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN
+
+  ! local parameters
+  double precision :: r,vp,vs
+  double precision :: scaleval
+
+  ! gets default values
+  call model_prem_aniso(x,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
+                        idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                        R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
+  if (CRUSTAL) then
+    ! adds crustal model like CRUST2.0 later on top
+
+    ! compute real physical radius in meters
+    r = x * R_EARTH
+
+    ! fills with PREM mantle only till moho depth
+    if (r > R80 .and. r <= RMOHO) then
+      rho = 2.6910d0 + 0.6924d0*x
+      vpv = 0.8317d0 + 7.2180d0*x
+      vph = 3.5908d0 + 4.6172d0*x
+      vsv = 5.8582d0 - 1.4678d0*x
+      vsh = -1.0839d0 + 5.7176d0*x
+      eta_aniso = 3.3687d0 - 2.4778d0*x
+
+      ! non-dimensionalize
+      ! time scaling (s^{-1}) is done with scaleval
+      ! do not scale anisotropy parameter eta_aniso, which is dimensionless
+      scaleval = dsqrt(PI*GRAV*RHOAV)
+      rho = rho * 1000.0d0/RHOAV
+      vpv = vpv * 1000.0d0/(R_EARTH*scaleval)
+      vsv = vsv * 1000.0d0/(R_EARTH*scaleval)
+      vph = vph * 1000.0d0/(R_EARTH*scaleval)
+      vsh = vsh * 1000.0d0/(R_EARTH*scaleval)
+
+    ! extension to surface
+    else if (r > RMOHO) then
+      ! extends the mantle up to the surface
+      ! uses isotropic values (averaged), no anisotropy above moho depths
+
+      ! continues mantle trend
+      rho = 2.6910d0 + 0.6924d0*x
+
+      ! P-velocity
+      vpv = 0.8317d0 + 7.2180d0*x
+      vph = 3.5908d0 + 4.6172d0*x
+      ! Voigt average:  v_avg**2 = ( 2 vpv**2 + vph**2 ) / 3
+      vp = sqrt(2.d0 * vpv**2 + vph**2) / 3.d0
+
+      vpv = vp
+      vph = vp
+
+      ! S-velocity
+      vsv = 5.8582d0 - 1.4678d0*x
+      vsh = -1.0839d0 + 5.7176d0*x
+      ! Voigt average:  v_avg**2 = ( 2 vsv**2 + vsh**2 ) / 3
+      vs = sqrt(2.d0 * vsv**2 + vsh**2) / 3.d0
+
+      vsv = vs
+      vsh = vs
+
+      ! no radial anisotropy by default
+      eta_aniso = 1.0
+
+      ! non-dimensionalize
+      ! time scaling (s^{-1}) is done with scaleval
+      ! do not scale anisotropy parameter eta_aniso, which is dimensionless
+      scaleval = dsqrt(PI*GRAV*RHOAV)
+      rho = rho * 1000.0d0/RHOAV
+      vpv = vpv * 1000.0d0/(R_EARTH*scaleval)
+      vsv = vsv * 1000.0d0/(R_EARTH*scaleval)
+      vph = vph * 1000.0d0/(R_EARTH*scaleval)
+      vsh = vsh * 1000.0d0/(R_EARTH*scaleval)
+    endif
+  endif ! CRUSTAL
+
+  end subroutine model_prem_aniso_extended_isotropic
 
 !
 !=====================================================================

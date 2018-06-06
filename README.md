@@ -20,7 +20,8 @@ in the
 
 * Travis tests:
 
-[![Build Status](https://travis-ci.org/geodynamics/specfem3d_globe.svg?branch=devel)](https://travis-ci.org/geodynamics/specfem3d_globe) [![codecov](https://codecov.io/gh/geodynamics/specfem3d_globe/branch/devel/graph/badge.svg)](https://codecov.io/gh/geodynamics/specfem3d_globe)
+[![Build Status](https://travis-ci.org/geodynamics/specfem3d_globe.svg?branch=devel)](https://travis-ci.org/geodynamics/specfem3d_globe) [![codecov](https://codecov.io/gh/geodynamics/specfem3d_globe/branch/devel/graph/badge.svg)](https://codecov.io/gh/geodynamics/specfem3d_globe)[![Documentation Status](https://readthedocs.org/projects/specfem3d-globe/badge/?version=latest)](https://specfem3d-globe.readthedocs.io/en/latest/?badge=latest)
+
 
 * *Jenkins* Comparing ADIOS kernels: [![Build
   Status](https://jenkins.princeton.edu/buildStatus/icon?job=SPECFEM_ADIOS/adios_kernels)](https://jenkins.princeton.edu/job/SPECFEM_ADIOS/job/adios_kernels/)
