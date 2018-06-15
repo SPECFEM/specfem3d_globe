@@ -313,7 +313,7 @@
 
   subroutine model_ppm(radius,theta,phi,dvs,dvp,drho)
 
-! returns dvs,dvp and drho for given radius,theta,phi  location
+! returns dvs,dvp and drho for given radius,theta,phi location
 
   use constants
   use model_ppm_par
@@ -377,7 +377,7 @@
         g_dvs = g_dvs*g_weight
         weight_prod = weight_prod * g_weight
 
-        !vertical weighting
+        ! vertical weighting
         x = g_depth-r_depth
         call get_Gaussianweight(x,sigma_v,g_weight)
         g_dvs = g_dvs*g_weight
