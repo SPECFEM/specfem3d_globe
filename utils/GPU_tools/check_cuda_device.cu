@@ -5,19 +5,19 @@ check_cuda_device utility
 
 **************************
 
-this utility program will output GPU device informations helpful for debugging CUDA.
+this utility program will output GPU device information
 
 
 for compilation, see the command-line examples given here:
 
 - example without MPI support:
 
-nvcc -o check_cuda_device check_cuda_device.cu
+nvcc --gpu-architecture=sm_60 -o check_cuda_device check_cuda_device.cu
 ./check_cuda_device
 
 - example with MPI support:
 
-nvcc -DWITH_MPI -I/usr/lib/openmpi/include -o check_cuda_device check_cuda_device.cu -lmpi -L/usr/lib/openmpi/lib
+nvcc -arch=sm_60 -DWITH_MPI -I/usr/lib/openmpi/include -o check_cuda_device check_cuda_device.cu -lmpi -L/usr/lib/openmpi/lib
 mpirun -np 2 ./check_cuda_device
 
 
@@ -27,7 +27,7 @@ mpirun -np 2 ./check_cuda_device
 #include <cuda.h>
 
 #ifdef WITH_MPI
-#include <mpi.h>
+// #include <mpi.h>
 #endif
 
 #include <sys/time.h>
