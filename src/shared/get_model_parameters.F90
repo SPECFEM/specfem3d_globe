@@ -370,6 +370,24 @@
     THREE_D_MODEL = THREE_D_MODEL_S29EA
     TRANSVERSE_ISOTROPY = .true.
 
+  else if (MODEL_ROOT == 'sglobe') then
+    ! uses PREM as reference
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ONE_CRUST = .true.
+    THREE_D_MODEL = THREE_D_MODEL_SGLOBE
+    TRANSVERSE_ISOTROPY = .true.
+
+  else if (MODEL_ROOT == 'sglobe_iso') then
+    ! uses PREM as reference
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ONE_CRUST = .true.
+    THREE_D_MODEL = THREE_D_MODEL_SGLOBE
+    TRANSVERSE_ISOTROPY = .false. ! converts to isotropic model
+
   else if (MODEL_ROOT == '3D_attenuation') then
     ATTENUATION_3D = .true.
     CASE_3D = .true.

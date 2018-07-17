@@ -142,6 +142,10 @@
         ! GAP model
         call model_gapp2_broadcast()
 
+      case (THREE_D_MODEL_SGLOBE)
+        ! SGLOBE-rani model
+        call model_sglobe_broadcast()
+
       case default
         call exit_MPI(myrank,'3D model not defined')
 
@@ -289,7 +293,8 @@
       if (TRANSVERSE_ISOTROPY) then
         ! specific 3D models with PREM references which would become too fast at shorter periods (<40s Love waves)
         if (THREE_D_MODEL == THREE_D_MODEL_S20RTS &
-            .or. THREE_D_MODEL == THREE_D_MODEL_S40RTS) then
+            .or. THREE_D_MODEL == THREE_D_MODEL_S40RTS &
+            .or. THREE_D_MODEL == THREE_D_MODEL_SGLOBE) then
           ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
           call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
                     Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
@@ -558,15 +563,18 @@
         endif
 
         if (TRANSVERSE_ISOTROPY) then
+          ! tiso perturbation
           vpv = vpv*(1.0d0+dble(xdvpv))
           vph = vph*(1.0d0+dble(xdvph))
           vsv = vsv*(1.0d0+dble(xdvsv))
           vsh = vsh*(1.0d0+dble(xdvsh))
         else
+          ! isotropic model
           vpv = vpv+xdvpv
           vph = vph+xdvph
           vsv = vsv+xdvsv
           vsh = vsh+xdvsh
+          ! isotropic average (considers anisotropic parameterization eta,vsv,vsh,vpv,vph)
           vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                     + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
           vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
@@ -578,7 +586,7 @@
           eta_aniso = 1.0d0
         endif
 
-      case (THREE_D_MODEL_PPM )
+      case (THREE_D_MODEL_PPM)
         ! point profile model
         call model_PPM(r_used,theta,phi,dvs,dvp,drho)
         vpv = vpv*(1.0d0+dvp)
@@ -587,13 +595,40 @@
         vsh = vsh*(1.0d0+dvs)
         rho = rho*(1.0d0+drho)
 
-      case (THREE_D_MODEL_GAPP2 )
+      case (THREE_D_MODEL_GAPP2)
         ! 3D GAP model (Obayashi)
         call mantle_gapmodel(r_used,theta,phi,dvs,dvp,drho)
         vpv = vpv*(1.0d0+dvp)
         vph = vph*(1.0d0+dvp)
         vsv = vsv*(1.0d0+dvs)
         vsh = vsh*(1.0d0+dvs)
+        rho = rho*(1.0d0+drho)
+
+      case (THREE_D_MODEL_SGLOBE)
+        ! 3D SGLOBE-rani model (Chang)
+        call mantle_sglobe(r_used,theta,phi,dvsv,dvsh,dvp,drho)
+
+        if (TRANSVERSE_ISOTROPY) then
+          ! tiso perturbation
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvsv)
+          vsh = vsh*(1.0d0+dvsh)
+        else
+          ! isotropic model
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvsv)
+          vsh = vsh*(1.0d0+dvsh)
+          ! Voigt average
+          vp = sqrt( (2.0*vpv**2 + vph**2)/3.d0 )
+          vs = sqrt( (2.0*vsv**2 + vsh**2)/3.d0 )
+          vph = vp
+          vpv = vp
+          vsh = vs
+          vsv = vs
+          eta_aniso = 1.d0
+        endif
         rho = rho*(1.0d0+drho)
 
       case default

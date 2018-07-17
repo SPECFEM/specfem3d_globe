@@ -103,6 +103,7 @@ meshfem3D_OBJECTS = \
 	$O/model_s40rts.check.o \
 	$O/model_s362ani.check.o \
 	$O/model_sea99_s.check.o \
+	$O/model_sglobe.check.o \
 	$O/moho_stretching.check.o \
 	$O/save_arrays_solver.check.o \
 	$O/setup_color_perm.check.o \
@@ -150,6 +151,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_s40rts_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sea1d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sea99_s_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_sglobe_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_chunks_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_faces_mod.$(FC_MODEXT) \

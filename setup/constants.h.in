@@ -705,6 +705,7 @@
   integer, parameter :: THREE_D_MODEL_S40RTS = 111
   integer, parameter :: THREE_D_MODEL_GAPP2  = 112
   integer, parameter :: THREE_D_MODEL_MANTLE_SH  = 113
+  integer, parameter :: THREE_D_MODEL_SGLOBE = 114
 
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3

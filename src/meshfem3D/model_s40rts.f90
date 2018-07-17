@@ -46,7 +46,7 @@
   integer, parameter :: NK_20 = 20
   integer, parameter :: NS_40 = 40
 
-  ! model_s20rts_variables
+  ! model_s40rts_variables
   !a = positive m  (radial, theta, phi) --> (k,l,m) (maybe other way around??)
   !b = negative m  (radial, theta, phi) --> (k,l,-m)
   double precision,dimension(:,:,:),allocatable :: &
@@ -190,7 +190,7 @@
   r_cmb = RCMB_ / R_EARTH_
   if (radius >= r_moho .or. radius <= r_cmb) return
 
-  xr=-1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
+  xr = -1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   if (xr > 1.0) print *,'xr > 1.0'
   if (xr < -1.0) print *,'xr < -1.0'
   do k = 0,NK_20

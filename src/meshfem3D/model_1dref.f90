@@ -211,6 +211,7 @@
   logical :: USE_EXTERNAL_CRUSTAL_MODEL
 
   ! define the 1D REF model of Kustowski et al. (2007)
+  ! table starts at inner core and moves up till surface
 
   Mref_V_radius_ref( 1 : 30 ) = (/ &
   0.d0, &
@@ -902,7 +903,7 @@
   5948334.d0, &
   5954666.d0, &
   5961000.d0, &
-  5961000.d0, &
+  5961000.d0, & ! 410km depth
   5967334.d0, &
   5973666.d0, &
   5980000.d0, &
@@ -935,7 +936,7 @@
   6138334.d0, &
   6144666.d0, &
   6151000.d0, &
-  6151000.d0, &
+  6151000.d0, & ! 220km depth
   6157087.d0, &
   6163174.d0, &
   6169261.d0, &
@@ -961,7 +962,7 @@
   6278826.d0, &
   6284913.d0, &
   6291000.d0, &
-  6291000.d0, &
+  6291000.d0, & ! 80km depth
   6294971.d0, &
   6298943.d0, &
   6302914.d0, &
@@ -976,7 +977,7 @@
   6338657.d0, &
   6342629.d0, &
   6346600.d0, &
-  6346600.d0, &
+  6346600.d0, & ! crustal model: moho depth at 24.4km
   6347540.d0, &
   6348480.d0 /)
 
@@ -999,7 +1000,7 @@
   6364400.d0, &
   6365600.d0, &
   6366800.d0, &
-  6368000.d0, &
+  6368000.d0, & ! 3km depth
   6368000.d0, &
   6368300.d0, &
   6368600.d0, &
@@ -7307,11 +7308,11 @@
   1.d0, &
   1.d0, &
   1.d0, &
+  1.d0, &  ! 410km depth
   1.d0, &
   1.d0, &
-  1.d0, &
-  1.d0, &
-  0.99999d0, &
+  1.d0, &      ! 391km depth
+  0.99999d0, & ! 384.666km depth, at r = 5986.334km
   0.99997d0, &
   0.99995d0, &
   0.99994d0, &
@@ -7380,8 +7381,8 @@
   0.91135d0, &
   0.9114d0, &
   0.91147d0, &
-  0.91155d0, &
-  1.d0, &
+  0.91155d0, &       ! index 717
+  1.d0, &            ! index 718 - crustal model: moho depth at 24.4km
   1.d0, &
   1.d0 /)
 
@@ -7427,6 +7428,7 @@
     Mref_V_vsh_ref(718:750) = Mref_V_vsh_ref(717)
     Mref_V_Qmu_ref(718:750) = Mref_V_Qmu_ref(717)
     Mref_V_Qkappa_ref(718:750) = Mref_V_Qkappa_ref(717)
+    ! daniel: eta missing? Mref_V_eta_ref
   endif
 
   end subroutine define_model_1dref
