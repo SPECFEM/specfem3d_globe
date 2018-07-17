@@ -205,8 +205,8 @@
 
   call d2id(d,nnr,dep,id,icon)
   if (icon /= 0) then
-     write(6,*)icon
-     write(6,*) radius,theta,phi,dvp,dvs,drho
+     write(*,*)icon
+     write(*,*) radius,theta,phi,dvp,dvs,drho
   endif
 
   ! latitude

@@ -212,7 +212,7 @@
     val_ispec_dt(ispec) = dt_max
 
   enddo ! ispec
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   ! collects for all slices

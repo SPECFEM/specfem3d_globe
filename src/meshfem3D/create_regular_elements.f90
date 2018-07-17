@@ -334,7 +334,7 @@
         endif
 
   enddo ! i_elem
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   ! end index

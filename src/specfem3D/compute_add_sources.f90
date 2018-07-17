@@ -90,7 +90,7 @@
       endif
 
     enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   else

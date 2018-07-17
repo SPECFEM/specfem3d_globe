@@ -257,7 +257,7 @@
       endif
     enddo
     if (ifnd == 0) then
-      write(6,"('problem finding reference Q value at depth: ',f8.3)") depth
+      write(*,"('problem finding reference Q value at depth: ',f8.3)") depth
       stop
     endif
     smallq_ref = QRFSI12_Q_refqmu(ifnd)

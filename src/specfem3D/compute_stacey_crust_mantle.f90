@@ -130,7 +130,7 @@
           enddo
         enddo
       enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
 
     endif
 
@@ -182,7 +182,7 @@
           enddo
         enddo
       enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
 
     endif
 
@@ -232,7 +232,7 @@
         enddo
       enddo
     enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
 
     !   ymax
 !$OMP DO
@@ -280,7 +280,7 @@
         enddo
       enddo
     enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   else

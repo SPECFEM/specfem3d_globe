@@ -143,16 +143,16 @@
 !               lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
 !               nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
 !               coe,vercof,vercofd,ylmcof,wk1,wk2,wk3,kerstr,varstr)
-!  write(6,"('    dvsh      dvsv      dvph      dvpv    ')")
-!  write(6,"(6f10.5)") 100.0*dvsh,100.0*dvsv,100.0*dvph,100.0*dvpv
+!  write(*,"('    dvsh      dvsv      dvph      dvpv    ')")
+!  write(*,"(6f10.5)") 100.0*dvsh,100.0*dvsv,100.0*dvph,100.0*dvpv
 !
 !  call subtopo(xcolat,xlon,topo410,topo650, &
 !               numker,numhpa,numcof,ihpa,lmax,nylm, &
 !               lmxhpa,itypehpa,ihpakern,numcoe,ivarkern, &
 !               nconpt,iver,iconpt,conpt,xlaspl,xlospl,radspl, &
 !               coe,ylmcof,wk1,wk2,wk3,varstr)
-!  write(6,"('   topo410    topo650 ')")
-!  write(6,"(2f11.5)") topo410,topo650
+!  write(*,"('   topo410    topo650 ')")
+!  write(*,"(2f11.5)") topo410,topo650
 !
 
 ! ocean-continent function (km)

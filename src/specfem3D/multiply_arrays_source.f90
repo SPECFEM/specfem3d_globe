@@ -103,7 +103,7 @@
       accel_cm(2,i) = accel_cm(2,i)*rmassy_cm(i) - two_omega_earth * veloc_cm(1,i)
       accel_cm(3,i) = accel_cm(3,i)*rmassz_cm(i)
     enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
 
     ! inner core
 !$OMP DO
@@ -112,7 +112,7 @@
       accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i) - two_omega_earth * veloc_ic(1,i)
       accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
     enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   else
@@ -130,7 +130,7 @@
       accel_cm(2,i) = accel_cm(2,i)*rmassy_cm(i)
       accel_cm(3,i) = accel_cm(3,i)*rmassz_cm(i)
     enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
 
     ! inner core
 !$OMP DO
@@ -139,7 +139,7 @@
       accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i)
       accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
     enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   endif
@@ -185,7 +185,7 @@
   do i = 1,NGLOB
     accel(i) = accel(i)*rmass(i)
   enddo
-!$OMP ENDDO
+!$OMP enddo
 !$OMP END PARALLEL
 
   end subroutine multiply_accel_acoustic

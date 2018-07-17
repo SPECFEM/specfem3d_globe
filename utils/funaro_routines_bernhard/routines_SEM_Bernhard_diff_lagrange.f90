@@ -51,7 +51,7 @@ DO j=0,N
 
   xi(j)=ET(j)
 
-!WRITE(6,*)ET(j),VN(j)
+!write(*,*)ET(j),VN(j)
 enddo
 !CLOSE(5)
 !CLOSE(6)

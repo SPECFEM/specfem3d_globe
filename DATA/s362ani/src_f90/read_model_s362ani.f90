@@ -41,7 +41,7 @@
         numvar,ivarkern,varstr, &
         refmdl,kerstr,hsplfl,dskker,ierror)
   else
-    write(6,"('the model ',a,' does not exits')") &
+    write(*,"('the model ',a,' does not exits')") &
              modeldef(1:len_trim(modeldef))
   endif
 

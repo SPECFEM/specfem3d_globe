@@ -58,7 +58,7 @@
   if (upper) then
     u=(radius+radius-rmoho-r670)/(rmoho-r670)
     u2=(radius2+radius2-rmoho-r670)/(rmoho-r670)
-!          write(6,"('upper mantle:',2f10.3)") u,u2
+!          write(*,"('upper mantle:',2f10.3)") u,u2
     call chebyfun(u,13,chebyshev)
     do i=1+nskip,nskip+nupper
       vercof(i)=chebyshev(i-nskip)
@@ -70,7 +70,7 @@
   else if (lower) then
     u=(radius+radius-r670-rcmb)/(r670-rcmb)
     u2=(radius2+radius2-r670-rcmb)/(r670-rcmb)
-!          write(6,"('lower mantle:',2f10.3)") u,u2
+!          write(*,"('lower mantle:',2f10.3)") u,u2
     call chebyfun(u,13,chebyshev)
     do i=1+nskip+nupper,nskip+nupper+nlower
       vercof(i)=chebyshev(i-nskip-nupper)

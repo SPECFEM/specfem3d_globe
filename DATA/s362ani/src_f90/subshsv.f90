@@ -53,7 +53,7 @@
               xlospl(1,ihpa),radspl(1,ihpa), &
               nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
       else
-        write(6,"('problem 1')")
+        write(*,"('problem 1')")
       endif
   enddo
 
@@ -99,7 +99,7 @@
                           *coe(iver,iker)
               enddo
             else
-              write(6,"('problem 2')")
+              write(*,"('problem 2')")
               stop
             endif ! --- itypehpa
         endif ! --- vercof(iker) /= 0.

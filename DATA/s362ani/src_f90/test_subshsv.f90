@@ -27,12 +27,12 @@
   call subshsv(xcolat,xlon,xrad, &
                    vshout,vsvout,vphout,vpvout,etaout,rhoout, &
                      ifknowmodel)
-  write(6,"('    vsh       vsv       vph       vpv       eta    rho    ')")
-  write(6,"(6f10.5)") vshout,vsvout,vphout,vpvout,etaout,rhoout
+  write(*,"('    vsh       vsv       vph       vpv       eta    rho    ')")
+  write(*,"(6f10.5)") vshout,vsvout,vphout,vpvout,etaout,rhoout
 
   call subtopo(xcolat,xlon,topo410out,topo650out,ifknowmodel)
-  write(6,"('   topo410    topo650 ')")
-  write(6,"(2f11.5)") topo410out,topo650out
+  write(*,"('   topo410    topo650 ')")
+  write(*,"(2f11.5)") topo410out,topo650out
 
   end program test_subshsv
 

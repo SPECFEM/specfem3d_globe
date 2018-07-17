@@ -37,7 +37,7 @@
 !
 ! NOTE: Kustowski et al., 2008 and Chang et al., 2014 showed that the anisotropic structure in the lowermost mantle
 !       retrieved from global tomographic inversions can be strongly affected by leakage effects, so we discourage
-!       interpreting SGLOBE-rani’s anisotropic structure below ~1500 km depth.
+!       interpreting SGLOBE-rani's anisotropic structure below ~1500 km depth.
 !
 ! reference:
 !   Chang, S.-J., A.M.G. Ferreira, J. Ritsema, H.J. van Heijst, and J.H. Woodhouse (2015),

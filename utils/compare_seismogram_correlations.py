@@ -326,7 +326,7 @@ def plot_correlations(out_dir,ref_dir):
     else:
         print("              no poor correlations found")
     print("")
-    
+
     print("L2-error    : values 0.0 perfect, > %.2f poor match" % TOL_ERR)
     if err_max > TOL_ERR:
         print("              poor matching seismograms found")

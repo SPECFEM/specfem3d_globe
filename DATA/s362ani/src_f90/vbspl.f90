@@ -38,11 +38,11 @@
   endif
 
   if (interval == 0) then
-!        write(6,"('low value:',2f10.3)") x,xarr(1)
+!        write(*,"('low value:',2f10.3)") x,xarr(1)
   else if (interval > 0 .and. interval < np) then
-!        write(6,"('bracket:',i5,3f10.3)") interval,xarr(interval),x,xarr(interval+1)
+!        write(*,"('bracket:',i5,3f10.3)") interval,xarr(interval),x,xarr(interval+1)
   else
-!        write(6,"('high value:',2f10.3)") xarr(np),x
+!        write(*,"('high value:',2f10.3)") xarr(np),x
   endif
 
   do ib=1,np
