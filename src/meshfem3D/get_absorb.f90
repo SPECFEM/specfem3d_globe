@@ -25,20 +25,20 @@
 !
 !=====================================================================
 
-  subroutine get_absorb(prname,iregion,iboun,nspec, &
+  subroutine get_absorb(prname,iregion,iboun, &
                         nimin,nimax,njmin,njmax,nkmin_xi,nkmin_eta, &
                         NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM)
 
 ! Stacey, define flags for absorbing boundaries
 
   use constants
-  use meshfem3D_par, only: ADIOS_FOR_ARRAYS_SOLVER
+  use meshfem3D_par, only: ADIOS_FOR_ARRAYS_SOLVER,nspec
 
   implicit none
 
-  integer :: nspec,iregion
+  integer,intent(in) :: iregion
 
-  integer :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
+  integer,intent(in) :: NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX,NSPEC2D_BOTTOM
 
   integer,dimension(2,NSPEC2DMAX_YMIN_YMAX) :: nimin,nimax
   integer,dimension(2,NSPEC2DMAX_XMIN_XMAX) :: njmin,njmax

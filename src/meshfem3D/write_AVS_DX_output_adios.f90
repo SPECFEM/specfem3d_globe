@@ -26,11 +26,11 @@
 !=====================================================================
 
 
-  subroutine write_AVS_DX_output_adios(nspec,npointot,iregion_code, &
+  subroutine write_AVS_DX_output_adios(npointot,iregion_code, &
                                        num_ibool_AVS_DX, mask_ibool)
 
   use meshfem3d_par, only: &
-    ibool,idoubling, &
+    nspec,ibool,idoubling, &
     xstore,ystore,zstore, &
     myrank,NGLLX,NGLLY,NGLLZ, &
     RICB,RCMB,RTOPDDOUBLEPRIME,R600,R670,R220,R771,R400,R120,R80,RMOHO, &
@@ -41,7 +41,7 @@
     ELLIPTICITY,ISOTROPIC_3D_MANTLE, &
     nspl,rspl,espl,espl2
 
-  use create_regions_mesh_par2
+  use regions_mesh_par2
 
   ! Modules for temporary AVS/DX data
   use AVS_DX_global_mod
@@ -55,7 +55,7 @@
   implicit none
 
   ! number of spectral elements in each block
-  integer,intent(in) :: nspec,npointot,iregion_code
+  integer,intent(in) :: npointot,iregion_code
 
   ! arrays used for AVS or DX files
   integer, dimension(npointot), intent(inout) :: num_ibool_AVS_DX

@@ -124,6 +124,7 @@
             scale_factor_minus_one = scale_factor - 1.d0
 
             mul = c44store_crust_mantle(i,j,k,ispec)
+
             c11store_crust_mantle(i,j,k,ispec) = c11store_crust_mantle(i,j,k,ispec) &
                     + FOUR_THIRDS * scale_factor_minus_one * mul
             c12store_crust_mantle(i,j,k,ispec) = c12store_crust_mantle(i,j,k,ispec) &

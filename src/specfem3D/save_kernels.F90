@@ -188,19 +188,17 @@
 
   implicit none
 
-  if (SAVE_REGULAR_KL) then
-    ! stores kernels on a regular grid
-    call save_regular_kernels_cm()
+  ! outputs sensitivity kernels (in SEM-format) to file
+  if (ANISOTROPIC_KL) then
+    ! anisotropic kernels
+    call save_kernels_crust_mantle_ani()
   else
-    ! outputs sensitivity kernels (in SEM-format) to file
-    if (ANISOTROPIC_KL) then
-      ! anisotropic kernels
-      call save_kernels_crust_mantle_ani()
-    else
-      ! isotropic kernels
-      call save_kernels_crust_mantle_iso()
-    endif
+    ! isotropic kernels
+    call save_kernels_crust_mantle_iso()
   endif
+
+  ! stores additional kernels on a regular grid
+  if (SAVE_REGULAR_KL) call save_regular_kernels_cm()
 
   end subroutine save_kernels_crust_mantle
 
@@ -263,7 +261,6 @@
   ! final unit : [s km^(-3) (kg/m^3)^(-1)]
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 
-
   ! allocates temporary arrays
   if (SAVE_TRANSVERSE_KL_ONLY) then
     ! transverse isotropic kernel arrays for file output
@@ -301,7 +298,6 @@
   allocate(rhonotprime_kl_crust_mantle(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE_ADJOINT),stat=ier)
   if (ier /= 0 ) stop 'Error allocating transverse kernels rhonotprime_kl_crust_mantle'
 
-
   ! crust_mantle
   do ispec = 1, NSPEC_CRUST_MANTLE
     do k = 1, NGLLZ
@@ -315,9 +311,10 @@
           ! ystore and zstore are thetaval and phival (line 2252) -- dangerous
           theta = rstore_crust_mantle(2,iglob)
           phi = rstore_crust_mantle(3,iglob)
+
           call rotate_kernels_dble(cijkl_kl_crust_mantle(:,i,j,k,ispec),cijkl_kl_local(:),theta,phi)
 
-          cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local * scale_kl_ani
+          cijkl_kl_crust_mantle(:,i,j,k,ispec) = cijkl_kl_local(:) * scale_kl_ani
           rho_kl_crust_mantle(i,j,k,ispec) = rho_kl_crust_mantle(i,j,k,ispec) * scale_kl_rho
 
           ! transverse isotropic kernel calculations
@@ -375,13 +372,13 @@
             ! Purpose : compute the kernels for the An coeffs (an_kl)
             ! from the kernels for Cij (cijkl_kl_local)
             ! At r,theta,phi fixed
-            ! kernel def : dx = kij * dcij + krho * drho
-            !                = kAn * dAn  + krho * drho
+            ! kernel def : dx = k_cij * dcij + k_rho * drho
+            !                 = k_An * dAn  + k_rho * drho
 
             ! Definition of the input array cij_kl :
-            ! cij_kl(1) = C11 ; cij_kl(2) = C12 ; cij_kl(3) = C13
-            ! cij_kl(4) = C14 ; cij_kl(5) = C15 ; cij_kl(6) = C16
-            ! cij_kl(7) = C22 ; cij_kl(8) = C23 ; cij_kl(9) = C24
+            ! cij_kl(1)  = C11 ; cij_kl(2)  = C12 ; cij_kl(3)  = C13
+            ! cij_kl(4)  = C14 ; cij_kl(5)  = C15 ; cij_kl(6)  = C16
+            ! cij_kl(7)  = C22 ; cij_kl(8)  = C23 ; cij_kl(9)  = C24
             ! cij_kl(10) = C25 ; cij_kl(11) = C26 ; cij_kl(12) = C33
             ! cij_kl(13) = C34 ; cij_kl(14) = C35 ; cij_kl(15) = C36
             ! cij_kl(16) = C44 ; cij_kl(17) = C45 ; cij_kl(18) = C46
@@ -393,29 +390,73 @@
             ! From the relations giving Cij in function of An
             ! Checked with Min Chen's results (routine build_cij)
 
-            an_kl(1) = cijkl_kl_local(1)+cijkl_kl_local(2)+cijkl_kl_local(7)  !A
-            an_kl(2) = cijkl_kl_local(12)                                     !C
-            an_kl(3) = -2*cijkl_kl_local(2)+cijkl_kl_local(21)                !N
-            an_kl(4) = cijkl_kl_local(16)+cijkl_kl_local(19)                  !L
-            an_kl(5) = cijkl_kl_local(3)+cijkl_kl_local(8)                    !F
+            ! note: kernel with respect to anisotropic model parameters
+            !       see Sieminski (2007b) and Zhu (2015)
+            !
+            ! kernels for model parameterization (A,C,N,L,F):
+            !
+            ! A = 1/8 (3 C11 + 3 C22 + 2 C12 + 4 C66)       -> kernel K_A = K_C11 + K_C12 + K_C22
+            ! C = C33                                       -> kernel K_C = K_C33
+            ! N = 1/8 (C11 + C22 - 2 C12 + 4 C66)           -> kernel K_N = K_C66 - 2 K_C12
+            ! L = 1/2 (C44 + C55)                           -> kernel K_L = K_C44 + K_C55
+            ! F = 1/2 (C13 + C23)                           -> kernel K_F = K_C13 + K_C23
+
+            an_kl(1) = cijkl_kl_local(1) + cijkl_kl_local(2) + cijkl_kl_local(7)  ! A
+            an_kl(2) = cijkl_kl_local(12)                                         ! C
+            an_kl(3) = -2 * cijkl_kl_local(2) + cijkl_kl_local(21)                ! N
+            an_kl(4) = cijkl_kl_local(16) + cijkl_kl_local(19)                    ! L
+            an_kl(5) = cijkl_kl_local(3) + cijkl_kl_local(8)                      ! F
 
             ! not used yet
-            !an_kl(6)=2*cijkl_kl_local(5)+2*cijkl_kl_local(10)+2*cijkl_kl_local(14)          !Jc
-            !an_kl(7)=2*cijkl_kl_local(4)+2*cijkl_kl_local(9)+2*cijkl_kl_local(13)           !Js
-            !an_kl(8)=-2*cijkl_kl_local(14)                                  !Kc
-            !an_kl(9)=-2*cijkl_kl_local(13)                                  !Ks
-            !an_kl(10)=-2*cijkl_kl_local(10)+cijkl_kl_local(18)                      !Mc
-            !an_kl(11)=2*cijkl_kl_local(4)-cijkl_kl_local(20)                        !Ms
-            !an_kl(12)=cijkl_kl_local(1)-cijkl_kl_local(7)                           !Bc
-            !an_kl(13)=-1./2.*(cijkl_kl_local(6)+cijkl_kl_local(11))                 !Bs
-            !an_kl(14)=cijkl_kl_local(3)-cijkl_kl_local(8)                           !Hc
-            !an_kl(15)=-cijkl_kl_local(15)                                   !Hs
-            !an_kl(16)=-cijkl_kl_local(16)+cijkl_kl_local(19)                        !Gc
-            !an_kl(17)=-cijkl_kl_local(17)                                   !Gs
-            !an_kl(18)=cijkl_kl_local(5)-cijkl_kl_local(10)-cijkl_kl_local(18)               !Dc
-            !an_kl(19)=cijkl_kl_local(4)-cijkl_kl_local(9)+cijkl_kl_local(20)                !Ds
-            !an_kl(20)=cijkl_kl_local(1)-cijkl_kl_local(2)+cijkl_kl_local(7)-cijkl_kl_local(21)      !Ec
-            !an_kl(21)=-cijkl_kl_local(6)+cijkl_kl_local(11)                         !Es
+            !
+            ! additional primitive kernels for "asymptotic parameters" (Chen & Tromp 2007):
+            !
+            !an_kl(6)  = 2*cijkl_kl_local(5)+2*cijkl_kl_local(10)+2*cijkl_kl_local(14)          !Jc
+            !an_kl(7)  = 2*cijkl_kl_local(4)+2*cijkl_kl_local(9)+2*cijkl_kl_local(13)           !Js
+            !an_kl(8)  = -2*cijkl_kl_local(14)                                                  !Kc
+            !an_kl(9)  = -2*cijkl_kl_local(13)                                                  !Ks
+            !an_kl(10) = -2*cijkl_kl_local(10)+cijkl_kl_local(18)                               !Mc
+            !an_kl(11) = 2*cijkl_kl_local(4)-cijkl_kl_local(20)                                 !Ms
+            !an_kl(12) = cijkl_kl_local(1)-cijkl_kl_local(7)                                    !Bc
+            !an_kl(13) = -1./2.*(cijkl_kl_local(6)+cijkl_kl_local(11))                          !Bs
+            !an_kl(14) = cijkl_kl_local(3)-cijkl_kl_local(8)                                    !Hc
+            !an_kl(15) = -cijkl_kl_local(15)                                                    !Hs
+            !an_kl(16) = -cijkl_kl_local(16)+cijkl_kl_local(19)                                 !Gc
+            !an_kl(17) = -cijkl_kl_local(17)                                                    !Gs
+            !an_kl(18) = cijkl_kl_local(5)-cijkl_kl_local(10)-cijkl_kl_local(18)                !Dc
+            !an_kl(19) = cijkl_kl_local(4)-cijkl_kl_local(9)+cijkl_kl_local(20)                 !Ds
+            !an_kl(20) = cijkl_kl_local(1)-cijkl_kl_local(2)+cijkl_kl_local(7)-cijkl_kl_local(21)      !Ec
+            !an_kl(21) = -cijkl_kl_local(6)+cijkl_kl_local(11)                                  !Es
+
+            ! more parameterizations:
+            !
+            ! see Zhu (2015, GJI, appendix A2):
+            ! - kernels for model parameterization (L, N, Gc, Gs):
+            !
+            ! L  = 1/2 (C44 + C55)                          -> kernel K_L  = K_C44 + K_C55
+            ! N  = 1/8 (C11 + C22 - 2 C12 + 4 C66)          -> kernel K_N  = K_C66 - 2 K_C12
+            ! Gc = 1/2 (C55 - C44)                          -> kernel K_Gc = K_C55 - K_C44
+            ! Gs = - C45                                    -> kernel K_Gs = - K_C45
+            !
+            ! - kernels for model parameterization (dln(beta_v), dln(beta_h), Gc_prime, Gs_prime) (dimension-less):
+            !
+            ! beta_v = sqrt(L/rho)                          -> kernel K_beta_v = 2 L K_L - 4 L eta K_F
+            ! beta_h = sqrt(N/rho)                          -> kernel K_beta_h = 2 N K_N
+            ! Gc_prime = Gc / (rho beta_0**2)               -> kernel K_Gc_prime = rho beta_0**2 K_Gc
+            ! Gs_prime = Gs / (rho beta_0**2)               -> kernel K_Gs_prime = rho beta_0**2 K_Gs
+            !
+            ! with beta_0 being the isotropic shear wave speed in the 1-D reference model
+            !
+            ! note: for azimuthal anisotropy, Gs and Gc will provide the fast axis angle \zeta = 1/2 arctan( Gs / Gc )
+            !
+            !       Convention here is a Cartesian reference frame (x,y,z) where x points East, y points North and z points up.
+            !       And
+            !         Gs = - C54    (as compared to Gs = C54 used e.g. by Montagner, 2002, Seismic Anisotropy Tomography)
+            !       and
+            !         angle \zeta is measured counter-clockwise from South
+            !
+
+
 
             ! K_rho (primary kernel, for a parameterization (A,C,L,N,F,rho) )
             rhonotprime_kl_crust_mantle(i,j,k,ispec) = rhol * rho_kl_crust_mantle(i,j,k,ispec) / scale_kl_rho
@@ -430,19 +471,20 @@
 
             ! for parameterization: ( alpha_v, alpha_h, beta_v, beta_h, eta, rho )
             ! K_alpha_v
-            alphav_kl_crust_mantle(i,j,k,ispec) = 2*C*an_kl(2)
+            alphav_kl_crust_mantle(i,j,k,ispec) = 2 * C * an_kl(2)
             ! K_alpha_h
-            alphah_kl_crust_mantle(i,j,k,ispec) = 2*A*an_kl(1) + 2*A*eta*an_kl(5)
+            alphah_kl_crust_mantle(i,j,k,ispec) = 2 * A * an_kl(1) + 2 * A * eta * an_kl(5)
             ! K_beta_v
-            betav_kl_crust_mantle(i,j,k,ispec) = 2*L*an_kl(4) - 4*L*eta*an_kl(5)
+            betav_kl_crust_mantle(i,j,k,ispec) = 2 * L * an_kl(4) - 4 * L * eta * an_kl(5)
             ! K_beta_h
-            betah_kl_crust_mantle(i,j,k,ispec) = 2*N*an_kl(3)
+            betah_kl_crust_mantle(i,j,k,ispec) = 2 * N * an_kl(3)
             ! K_eta
-            eta_kl_crust_mantle(i,j,k,ispec) = F*an_kl(5)
+            eta_kl_crust_mantle(i,j,k,ispec) = F * an_kl(5)
+
             ! K_rhoprime  (for a parameterization (alpha_v, ..., rho) )
-            rho_kl_crust_mantle(i,j,k,ispec) = A*an_kl(1) + C*an_kl(2) &
-                                            + N*an_kl(3) + L*an_kl(4) + F*an_kl(5) &
-                                            + rhonotprime_kl_crust_mantle(i,j,k,ispec)
+            rho_kl_crust_mantle(i,j,k,ispec) = A * an_kl(1) + C * an_kl(2) &
+                                             + N * an_kl(3) + L * an_kl(4) + F * an_kl(5) &
+                                             + rhonotprime_kl_crust_mantle(i,j,k,ispec)
 
             ! write the kernel in physical units
             rhonotprime_kl_crust_mantle(i,j,k,ispec) = - rhonotprime_kl_crust_mantle(i,j,k,ispec) * scale_kl
@@ -1065,9 +1107,9 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine rotate_kernels_dble(cij_kl,cij_kll,theta_in,phi_in)
+  subroutine rotate_kernels_dble(cij_kl,cij_kl_spherical,theta_in,phi_in)
 
-! Purpose : compute the kernels in r,theta,phi (cij_kll)
+! Purpose : compute the kernels in r,theta,phi (cij_kl_spherical)
 ! from the kernels in x,y,z (cij_kl) (x,y,z to r,theta,phi)
 ! At r,theta,phi fixed
 ! theta and phi are in radians
@@ -1075,14 +1117,14 @@
 ! Coeff from Min's routine rotate_anisotropic_tensor
 ! with the help of Collect[Expand[cij],{dij}] in Mathematica
 
-! Definition of the output array cij_kll :
-! cij_kll(1) = C11 ; cij_kll(2) = C12 ; cij_kll(3) = C13
-! cij_kll(4) = C14 ; cij_kll(5) = C15 ; cij_kll(6) = C16
-! cij_kll(7) = C22 ; cij_kll(8) = C23 ; cij_kll(9) = C24
-! cij_kll(10) = C25 ; cij_kll(11) = C26 ; cij_kll(12) = C33
-! cij_kll(13) = C34 ; cij_kll(14) = C35 ; cij_kll(15) = C36
-! cij_kll(16) = C44 ; cij_kll(17) = C45 ; cij_kll(18) = C46
-! cij_kll(19) = C55 ; cij_kll(20) = C56 ; cij_kll(21) = C66
+! Definition of the output array cij_kl_spherical :
+! cij_kl_spherical(1) = C11 ; cij_kl_spherical(2) = C12 ; cij_kl_spherical(3) = C13
+! cij_kl_spherical(4) = C14 ; cij_kl_spherical(5) = C15 ; cij_kl_spherical(6) = C16
+! cij_kl_spherical(7) = C22 ; cij_kl_spherical(8) = C23 ; cij_kl_spherical(9) = C24
+! cij_kl_spherical(10) = C25 ; cij_kl_spherical(11) = C26 ; cij_kl_spherical(12) = C33
+! cij_kl_spherical(13) = C34 ; cij_kl_spherical(14) = C35 ; cij_kl_spherical(15) = C36
+! cij_kl_spherical(16) = C44 ; cij_kl_spherical(17) = C45 ; cij_kl_spherical(18) = C46
+! cij_kl_spherical(19) = C55 ; cij_kl_spherical(20) = C56 ; cij_kl_spherical(21) = C66
 ! where the Cij (Voigt's notation) are defined as function of
 ! the components of the elastic tensor in spherical coordinates
 ! by eq. (A.1) of Chen & Tromp, GJI 168 (2007)
@@ -1091,11 +1133,12 @@
 
   implicit none
 
+  real(kind=CUSTOM_REAL), dimension(21), intent(in) :: cij_kl
+  real(kind=CUSTOM_REAL), dimension(21), intent(out) :: cij_kl_spherical
+
   real(kind=CUSTOM_REAL), intent(in) :: theta_in,phi_in
 
-  real(kind=CUSTOM_REAL), dimension(21), intent(in) :: cij_kl
-  real(kind=CUSTOM_REAL), dimension(21), intent(out) :: cij_kll
-
+  ! local parameters
   double precision :: theta,phi
   double precision :: costheta,sintheta,cosphi,sinphi
   double precision :: costhetasq,sinthetasq,cosphisq,sinphisq
@@ -1140,7 +1183,7 @@
   sintwothetasq = sintwotheta * sintwotheta
   sintwophisq = sintwophi * sintwophi
 
- cij_kll(1) = ONE_SIXTEENTH * (cij_kl(16) - cij_kl(16)* costwophi + &
+ cij_kl_spherical(1) = ONE_SIXTEENTH * (cij_kl(16) - cij_kl(16)* costwophi + &
      16.d0* cosphi*cosphisq* costhetafour* (cij_kl(1)* cosphi + cij_kl(6)* sinphi) + &
      2.d0* (cij_kl(15) + cij_kl(17))* sintwophi* sintwothetasq - &
      2.d0* (cij_kl(16)* cosfourtheta* sinphisq + &
@@ -1158,7 +1201,7 @@
      cij_kl(9)* sinphisq)* sintwotheta + &
      sinphi* (-cij_kl(13) + cij_kl(9)* sinphisq)* sinfourtheta))
 
- cij_kll(2) = ONE_FOURTH * (costhetasq* (cij_kl(1) + 3.d0* cij_kl(2) + cij_kl(7) - &
+ cij_kl_spherical(2) = ONE_FOURTH * (costhetasq* (cij_kl(1) + 3.d0* cij_kl(2) + cij_kl(7) - &
       cij_kl(21) + (-cij_kl(1) + cij_kl(2) - cij_kl(7) + &
       cij_kl(21))* cosfourphi + (-cij_kl(6) + cij_kl(11))* sinfourphi) + &
       4.d0* (cij_kl(8)* cosphisq - cij_kl(15)* cosphi* sinphi + &
@@ -1168,7 +1211,7 @@
       (cij_kl(5) - cij_kl(18))* cosphi* sinphisq + &
       cij_kl(4)* sinphisq*sinphi)* sintwotheta)
 
- cij_kll(3) = ONE_EIGHTH * (sintwophi* (3.d0* cij_kl(15) - cij_kl(17) + &
+ cij_kl_spherical(3) = ONE_EIGHTH * (sintwophi* (3.d0* cij_kl(15) - cij_kl(17) + &
      4.d0* (cij_kl(2) + cij_kl(21))* costhetasq* sintwophi* sinthetasq) + &
      4.d0* cij_kl(12)* sintwothetasq + 4.d0* cij_kl(1)* cosphifour* sintwothetasq + &
      2.d0* cosphi*cosphisq* (8.d0* cij_kl(6)* costhetasq* sinphi* sinthetasq + &
@@ -1183,7 +1226,7 @@
      8.d0* cij_kl(11)* costhetasq* sinphi*sinphisq* sinthetasq + &
      (-cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq)*sinfourtheta))
 
- cij_kll(4) = ONE_EIGHTH * (cosphi* costheta *(5.d0* cij_kl(4) - &
+ cij_kl_spherical(4) = ONE_EIGHTH * (cosphi* costheta *(5.d0* cij_kl(4) - &
      cij_kl(9) + 4.d0* cij_kl(13) - &
      3.d0* cij_kl(20) + (cij_kl(4) + 3.d0* cij_kl(9) - &
      4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + &
@@ -1205,7 +1248,7 @@
      2.d0* cij_kl(17))* sintheta + &
      (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + cij_kl(17)))* sinthreetheta))
 
- cij_kll(5) = ONE_FOURTH * (2.d0* (cij_kl(4) + &
+ cij_kl_spherical(5) = ONE_FOURTH * (2.d0* (cij_kl(4) + &
      cij_kl(20))* cosphisq* (costwotheta + cosfourtheta)* sinphi + &
      2.d0* cij_kl(9)* (costwotheta + cosfourtheta)* sinphi*sinphisq + &
      16.d0* cij_kl(1)* cosphifour* costheta*costhetasq* sintheta + &
@@ -1223,7 +1266,7 @@
      (cij_kl(3) - cij_kl(16) + cij_kl(19))* costwophi + &
      (cij_kl(15) + cij_kl(17))* sintwophi)* sinfourtheta)
 
- cij_kll(6) = ONE_HALF * costheta*costhetasq* ((cij_kl(6) + cij_kl(11))* costwophi + &
+ cij_kl_spherical(6) = ONE_HALF * costheta*costhetasq* ((cij_kl(6) + cij_kl(11))* costwophi + &
       (cij_kl(6) - cij_kl(11))* cosfourphi + 2.d0* (-cij_kl(1) + cij_kl(7))* sintwophi + &
       (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(21))* sinfourphi) + &
       ONE_FOURTH* costhetasq* (-(cij_kl(4) + 3* cij_kl(9) + cij_kl(20))* cosphi - &
@@ -1234,12 +1277,12 @@
       (-cij_kl(3) + cij_kl(8) + cij_kl(16) - cij_kl(19))* sintwophi)* sinthetasq + &
       (-cij_kl(13)* cosphi + cij_kl(14)* sinphi)* sintheta*sinthetasq
 
- cij_kll(7) = cij_kl(7) * cosphifour - cij_kl(11)* cosphi*cosphisq* sinphi + &
+ cij_kl_spherical(7) = cij_kl(7) * cosphifour - cij_kl(11)* cosphi*cosphisq* sinphi + &
       (cij_kl(2) + cij_kl(21))* cosphisq* sinphisq - &
       cij_kl(6)* cosphi* sinphi*sinphisq + &
       cij_kl(1)* sinphifour
 
- cij_kll(8) = ONE_HALF * (2.d0* costhetasq* sinphi* (-cij_kl(15)* cosphi + &
+ cij_kl_spherical(8) = ONE_HALF * (2.d0* costhetasq* sinphi* (-cij_kl(15)* cosphi + &
       cij_kl(3)* sinphi) + 2.d0* cij_kl(2)* cosphifour* sinthetasq + &
       (2.d0* cij_kl(2)* sinphifour + &
       (cij_kl(1) + cij_kl(7) - cij_kl(21))* sintwophisq)* sinthetasq + &
@@ -1251,7 +1294,7 @@
       cosphisq* (2.d0* cij_kl(8)* costhetasq + &
       (cij_kl(9) - cij_kl(20))* sinphi* sintwotheta))
 
- cij_kll(9) = cij_kl(11) * cosphifour* sintheta - sinphi*sinphisq* (cij_kl(5)* costheta + &
+ cij_kl_spherical(9) = cij_kl(11) * cosphifour* sintheta - sinphi*sinphisq* (cij_kl(5)* costheta + &
       cij_kl(6)* sinphi* sintheta) +  cosphisq* sinphi* (-(cij_kl(10) + &
       cij_kl(18))* costheta + &
       3.d0* (cij_kl(6) - cij_kl(11))* sinphi* sintheta) + &
@@ -1260,7 +1303,7 @@
       cosphi*cosphisq* (cij_kl(9)* costheta - 2.d0* (cij_kl(2) - 2.d0* cij_kl(7) + &
       cij_kl(21))* sinphi* sintheta)
 
- cij_kll(10) = ONE_FOURTH * (4.d0* costwotheta* (cij_kl(10)* cosphi*cosphisq + &
+ cij_kl_spherical(10) = ONE_FOURTH * (4.d0* costwotheta* (cij_kl(10)* cosphi*cosphisq + &
       (cij_kl(9) - cij_kl(20))* cosphisq* sinphi + &
       (cij_kl(5) - cij_kl(18))* cosphi* sinphisq + &
       cij_kl(4)* sinphi*sinphisq) + (cij_kl(1) + 3.d0* cij_kl(2) - &
@@ -1270,7 +1313,7 @@
       2.d0* cij_kl(15)* sintwophi + &
       (-cij_kl(6) + cij_kl(11))* sinfourphi)* sintwotheta)
 
- cij_kll(11) = ONE_FOURTH * (2.d0* costheta* ((cij_kl(6) + cij_kl(11))* costwophi + &
+ cij_kl_spherical(11) = ONE_FOURTH * (2.d0* costheta* ((cij_kl(6) + cij_kl(11))* costwophi + &
       (-cij_kl(6) + cij_kl(11))* cosfourphi + &
       2.d0* (-cij_kl(1) + cij_kl(7))* sintwophi + &
       (cij_kl(1) - cij_kl(2) + cij_kl(7) - cij_kl(21))* sinfourphi) + &
@@ -1279,7 +1322,7 @@
       (3.d0* cij_kl(5) + cij_kl(10) + cij_kl(18))* sinphi + &
       (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sintheta)
 
- cij_kll(12) = ONE_SIXTEENTH * (cij_kl(16) - 2.d0* cij_kl(16)* cosfourtheta* sinphisq + &
+ cij_kl_spherical(12) = ONE_SIXTEENTH * (cij_kl(16) - 2.d0* cij_kl(16)* cosfourtheta* sinphisq + &
       costwophi* (-cij_kl(16) + 8.d0* costheta* sinthetasq* ((cij_kl(3) - &
       cij_kl(8) + cij_kl(19))* costheta + &
       (cij_kl(5) - cij_kl(10) - cij_kl(18))* cosphi* sintheta)) + &
@@ -1300,7 +1343,7 @@
       cij_kl(19)* sintwothetasq + cij_kl(13)* sinphi* sinfourtheta - &
       cij_kl(9)* sinphi*sinphisq* sinfourtheta))
 
- cij_kll(13) = ONE_EIGHTH * (cosphi* costheta* (cij_kl(4) + 3.d0* cij_kl(9) + &
+ cij_kl_spherical(13) = ONE_EIGHTH * (cosphi* costheta* (cij_kl(4) + 3.d0* cij_kl(9) + &
       4.d0* cij_kl(13) + cij_kl(20) - (cij_kl(4) + 3.d0* cij_kl(9) - &
       4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + 4.d0* (-cij_kl(1) - &
       cij_kl(3) + cij_kl(7) + cij_kl(8) + cij_kl(16) - cij_kl(19) + &
@@ -1318,7 +1361,7 @@
       (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + &
       cij_kl(17)))* sinthreetheta))
 
- cij_kll(14) = ONE_FOURTH * (2.d0* cij_kl(13)* (costwotheta + cosfourtheta)* sinphi + &
+ cij_kl_spherical(14) = ONE_FOURTH * (2.d0* cij_kl(13)* (costwotheta + cosfourtheta)* sinphi + &
       8.d0* costheta*costhetasq* (-2.d0* cij_kl(12) + cij_kl(8)* sinphisq)* sintheta + &
       4.d0* (cij_kl(4) + cij_kl(20))* cosphisq* (1.d0 + &
       2.d0* costwotheta)* sinphi* sinthetasq + &
@@ -1334,7 +1377,7 @@
       (cij_kl(3) + cij_kl(16) + cij_kl(19) + (cij_kl(3) - cij_kl(16) + &
       cij_kl(19))* costwophi + (cij_kl(15) + cij_kl(17))* sintwophi)* sinfourtheta)
 
- cij_kll(15) = costwophi * costheta* (-cij_kl(17) + (cij_kl(15) + cij_kl(17))* costhetasq) + &
+ cij_kl_spherical(15) = costwophi * costheta* (-cij_kl(17) + (cij_kl(15) + cij_kl(17))* costhetasq) + &
        ONE_SIXTEENTH* (-((11.d0* cij_kl(4) + cij_kl(9) + 4.d0* cij_kl(13) - &
        5.d0* cij_kl(20))* cosphi + (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi - &
        (cij_kl(5) + 11.d0* cij_kl(10) + 4.d0* cij_kl(14) - &
@@ -1351,7 +1394,7 @@
        (3.d0* cij_kl(5) + cij_kl(10) - 4.d0* cij_kl(14) + cij_kl(18))* sinphi + &
        3.d0* (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sinthreetheta)
 
- cij_kll(16) = ONE_FOURTH *(cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
+ cij_kl_spherical(16) = ONE_FOURTH *(cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
        cij_kl(19) + cij_kl(21) + 2.d0*(cij_kl(16) - cij_kl(19))*costwophi* costhetasq + &
        (-cij_kl(1) + cij_kl(2) - cij_kl(7) + cij_kl(16) + &
        cij_kl(19) - cij_kl(21))*costwotheta - 2.d0* cij_kl(17)* costhetasq* sintwophi + &
@@ -1361,7 +1404,7 @@
        (-cij_kl(4) + cij_kl(9) + cij_kl(20))* sinphi - &
        (cij_kl(4) - cij_kl(9) + cij_kl(20))* sinthreephi)* sintwotheta)
 
- cij_kll(17) = ONE_EIGHTH * (4.d0* costwophi* costheta* (cij_kl(6) + cij_kl(11) - &
+ cij_kl_spherical(17) = ONE_EIGHTH * (4.d0* costwophi* costheta* (cij_kl(6) + cij_kl(11) - &
        2.d0* cij_kl(15) - (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + &
        cij_kl(17)))* costwotheta) - (2.d0* cosphi* (-3.d0* cij_kl(4) +&
        cij_kl(9) + 2.d0* cij_kl(13) + cij_kl(20) + (cij_kl(4) - cij_kl(9) + &
@@ -1377,7 +1420,7 @@
        (3.d0* cij_kl(5) + cij_kl(10) - 4.d0* cij_kl(14) + cij_kl(18))* sinphi + &
        3.d0* (-cij_kl(5) + cij_kl(10) + cij_kl(18))* sinthreephi)* sinthreetheta)
 
- cij_kll(18) = ONE_HALF * ((cij_kl(5) - cij_kl(10) + cij_kl(18))* cosphi* costwotheta - &
+ cij_kl_spherical(18) = ONE_HALF * ((cij_kl(5) - cij_kl(10) + cij_kl(18))* cosphi* costwotheta - &
        (cij_kl(5) - cij_kl(10) - cij_kl(18))* costhreephi* costwotheta - &
        2.d0* (cij_kl(4) - cij_kl(9) + &
        (cij_kl(4) - cij_kl(9) + cij_kl(20))* costwophi)* costwotheta* sinphi + &
@@ -1387,7 +1430,7 @@
        cij_kl(17)* sintwophi + &
        (-cij_kl(6) + cij_kl(11))* sinfourphi)* sintwotheta)
 
- cij_kll(19) = ONE_FOURTH * (cij_kl(16) - cij_kl(16)* costwophi + &
+ cij_kl_spherical(19) = ONE_FOURTH * (cij_kl(16) - cij_kl(16)* costwophi + &
       (-cij_kl(15) + cij_kl(17))* sintwophi + &
       4.d0* cij_kl(12)* sintwothetasq + &
       2.d0* (2.d0* cij_kl(1)* cosphifour* sintwothetasq + &
@@ -1401,7 +1444,7 @@
       cosphi* (8.d0* cij_kl(11)* costhetasq* sinphi*sinphisq* sinthetasq + &
       (-cij_kl(14) + (cij_kl(10) + cij_kl(18))* sinphisq)* sinfourtheta)))
 
- cij_kll(20) = ONE_EIGHTH * (2.d0* cosphi* costheta* (-3.d0* cij_kl(4) - cij_kl(9) + &
+ cij_kl_spherical(20) = ONE_EIGHTH * (2.d0* cosphi* costheta* (-3.d0* cij_kl(4) - cij_kl(9) + &
       4.d0* cij_kl(13) + cij_kl(20) + (cij_kl(4) + 3.d0* cij_kl(9) - &
       4.d0* cij_kl(13) + cij_kl(20))* costwotheta) + &
       (cij_kl(4) - cij_kl(9) + cij_kl(20))* costhreephi* (costheta + &
@@ -1421,7 +1464,7 @@
       2.d0* cij_kl(17))* sintheta + &
       (cij_kl(6) + cij_kl(11) - 2.d0* (cij_kl(15) + cij_kl(17)))* sinthreetheta))
 
- cij_kll(21) = ONE_FOURTH * (cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
+ cij_kl_spherical(21) = ONE_FOURTH * (cij_kl(1) - cij_kl(2) + cij_kl(7) + cij_kl(16) + &
       cij_kl(19) + cij_kl(21) - 2.d0* (cij_kl(1) - cij_kl(2) + cij_kl(7) - &
       cij_kl(21))* cosfourphi* costhetasq + &
       (cij_kl(1) - cij_kl(2) + cij_kl(7) - cij_kl(16) - cij_kl(19) + &

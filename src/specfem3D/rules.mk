@@ -97,6 +97,7 @@ specfem3D_OBJECTS += \
 	$O/prepare_timerun.solverstatic.o \
 	$O/prepare_vtk_window.solverstatic.o \
 	$O/prepare_wavefields.solverstatic.o \
+	$O/print_stf_file.solverstatic.o \
 	$O/read_adjoint_sources.solverstatic.o \
 	$O/read_arrays_solver.solverstatic.o \
 	$O/read_forward_arrays.solverstatic.o \

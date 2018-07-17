@@ -126,7 +126,7 @@
   integer :: iorientation
   double precision :: stazi,stdip,thetan,phin,n(3)
   integer :: imin,imax,jmin,jmax,kmin,kmax
-  double precision :: f0,t0_ricker
+  double precision :: f0,t0_ricker,scaleF
 
   double precision, external :: get_cmt_scalar_moment
   double precision, external :: get_cmt_moment_magnitude
@@ -142,6 +142,16 @@
   double precision :: time_start,tCPU
   double precision, external :: wtime
 
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) '********************'
+    write(IMAIN,*) ' locating sources'
+    write(IMAIN,*) '********************'
+    write(IMAIN,*)
+    call flush_IMAIN()
+  endif
+
   ! get MPI starting time for all sources
   time_start = wtime()
 
@@ -156,8 +166,7 @@
       ! only master process reads in FORCESOLUTION file
       call get_force(tshift_src,hdur,lat,long,depth,DT,NSOURCES, &
                      min_tshift_src_original,force_stf,factor_force_source, &
-                     comp_dir_vect_source_E,comp_dir_vect_source_N, &
-                     comp_dir_vect_source_Z_UP)
+                     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
     endif
     ! broadcasts specific point force infos
     call bcast_all_i(force_stf,NSOURCES)
@@ -280,21 +289,21 @@
       Mtp = moment_tensor(6,isource)
 
       ! convert from a spherical to a Cartesian representation of the moment tensor
-      st=dsin(theta)
-      ct=dcos(theta)
-      sp=dsin(phi)
-      cp=dcos(phi)
+      st = dsin(theta)
+      ct = dcos(theta)
+      sp = dsin(phi)
+      cp = dcos(phi)
 
-      Mxx(isource)=st*st*cp*cp*Mrr+ct*ct*cp*cp*Mtt+sp*sp*Mpp &
+      Mxx(isource) = st*st*cp*cp*Mrr+ct*ct*cp*cp*Mtt+sp*sp*Mpp &
           +2.0d0*st*ct*cp*cp*Mrt-2.0d0*st*sp*cp*Mrp-2.0d0*ct*sp*cp*Mtp
-      Myy(isource)=st*st*sp*sp*Mrr+ct*ct*sp*sp*Mtt+cp*cp*Mpp &
+      Myy(isource) = st*st*sp*sp*Mrr+ct*ct*sp*sp*Mtt+cp*cp*Mpp &
           +2.0d0*st*ct*sp*sp*Mrt+2.0d0*st*sp*cp*Mrp+2.0d0*ct*sp*cp*Mtp
-      Mzz(isource)=ct*ct*Mrr+st*st*Mtt-2.0d0*st*ct*Mrt
-      Mxy(isource)=st*st*sp*cp*Mrr+ct*ct*sp*cp*Mtt-sp*cp*Mpp &
+      Mzz(isource) = ct*ct*Mrr+st*st*Mtt-2.0d0*st*ct*Mrt
+      Mxy(isource) = st*st*sp*cp*Mrr+ct*ct*sp*cp*Mtt-sp*cp*Mpp &
           +2.0d0*st*ct*sp*cp*Mrt+st*(cp*cp-sp*sp)*Mrp+ct*(cp*cp-sp*sp)*Mtp
-      Mxz(isource)=st*ct*cp*Mrr-st*ct*cp*Mtt &
+      Mxz(isource) = st*ct*cp*Mrr-st*ct*cp*Mtt &
           +(ct*ct-st*st)*cp*Mrt-ct*sp*Mrp+st*sp*Mtp
-      Myz(isource)=st*ct*sp*Mrr-st*ct*sp*Mtt &
+      Myz(isource) = st*ct*sp*Mrr-st*ct*sp*Mtt &
           +(ct*ct-st*st)*sp*Mrt+ct*cp*Mrp-st*cp*Mtp
 
       ! record three components for each station
@@ -317,8 +326,8 @@
         endif
 
         !   get the orientation of the seismometer
-        thetan=(90.0d0+stdip)*DEGREES_TO_RADIANS
-        phin=stazi*DEGREES_TO_RADIANS
+        thetan = (90.0d0+stdip)*DEGREES_TO_RADIANS
+        phin = stazi*DEGREES_TO_RADIANS
 
         ! we use the same convention as in Harvard normal modes for the orientation
 
@@ -330,9 +339,9 @@
         n(3) = dsin(thetan)*dsin(phin)
 
         !   get the Cartesian components of n in the model: nu
-        nu_source(iorientation,1,isource) = n(1)*st*cp+n(2)*ct*cp-n(3)*sp
-        nu_source(iorientation,2,isource) = n(1)*st*sp+n(2)*ct*sp+n(3)*cp
-        nu_source(iorientation,3,isource) = n(1)*ct-n(2)*st
+        nu_source(iorientation,1,isource) = n(1)*st*cp + n(2)*ct*cp - n(3)*sp
+        nu_source(iorientation,2,isource) = n(1)*st*sp + n(2)*ct*sp + n(3)*cp
+        nu_source(iorientation,3,isource) = n(1)*ct - n(2)*st
 
       enddo
 
@@ -388,7 +397,6 @@
         endif
 
         ! define the interval in which we look for points
-    !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
           ! force sources will be put on an exact GLL point
           !imin = 1
@@ -410,7 +418,6 @@
           kmin = 2
           kmax = NGLLZ - 1
         else
-    !-------------POINT FORCE-----------------------------------------------
           ! double-couple CMTSOLUTION
           ! loop only on points inside the element
           ! exclude edges to ensure this point is not shared with other elements
@@ -672,26 +679,24 @@
         enddo
         final_distance_source(isource) = distmin_not_squared
 
+        ! source info
         write(IMAIN,*)
-        write(IMAIN,*) '*************************************'
-        write(IMAIN,*) ' locating source ',isource
-        write(IMAIN,*) '*************************************'
+        write(IMAIN,*) 'source # ',isource
         write(IMAIN,*)
-        write(IMAIN,*) 'source located in slice ',islice_selected_source(isource_in_this_subset)
-        write(IMAIN,*) '               in element ',ispec_selected_source(isource_in_this_subset)
+        write(IMAIN,*) '  source located in slice ',islice_selected_source(isource_in_this_subset)
+        write(IMAIN,*) '                 in element ',ispec_selected_source(isource_in_this_subset)
         write(IMAIN,*)
         ! different output for force point sources
-    !-------------POINT FORCE-----------------------------------------------
         if (USE_FORCE_POINT_SOURCE) then
-          write(IMAIN,*) 'using force point source: '
-          write(IMAIN,*) '  xi coordinate of source in that element: ',xi_source(isource)
-          write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
-          write(IMAIN,*) '  gamma coordinate of source in that element: ',gamma_source(isource)
+          write(IMAIN,*) '  using force point source: '
+          write(IMAIN,*) '    xi coordinate of source in that element: ',xi_source(isource)
+          write(IMAIN,*) '    eta coordinate of source in that element: ',eta_source(isource)
+          write(IMAIN,*) '    gamma coordinate of source in that element: ',gamma_source(isource)
 
           write(IMAIN,*)
-          write(IMAIN,*) '  component of direction vector in East direction: ',comp_dir_vect_source_E(isource)
-          write(IMAIN,*) '  component of direction vector in North direction: ',comp_dir_vect_source_N(isource)
-          write(IMAIN,*) '  component of direction vector in Vertical direction: ',comp_dir_vect_source_Z_UP(isource)
+          write(IMAIN,*) '    component of direction vector in East direction: ',comp_dir_vect_source_E(isource)
+          write(IMAIN,*) '    component of direction vector in North direction: ',comp_dir_vect_source_N(isource)
+          write(IMAIN,*) '    component of direction vector in Vertical direction: ',comp_dir_vect_source_Z_UP(isource)
 
           !write(IMAIN,*) '  i index of source in that element: ',nint(xi_source(isource))
           !write(IMAIN,*) '  j index of source in that element: ',nint(eta_source(isource))
@@ -699,45 +704,92 @@
           !write(IMAIN,*)
           !write(IMAIN,*) '  component direction: ',COMPONENT_FORCE_SOURCE
           write(IMAIN,*)
-          write(IMAIN,*) '  nu1 = ',nu_source(1,:,isource)
-          write(IMAIN,*) '  nu2 = ',nu_source(2,:,isource)
-          write(IMAIN,*) '  nu3 = ',nu_source(3,:,isource)
+          write(IMAIN,*) '    nu1 = ',nu_source(1,:,isource),'North'
+          write(IMAIN,*) '    nu2 = ',nu_source(2,:,isource),'East'
+          write(IMAIN,*) '    nu3 = ',nu_source(3,:,isource),'Vertical'
           write(IMAIN,*)
-          write(IMAIN,*) '  at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset), &
+          write(IMAIN,*) '    at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset), &
             y_found_source(isource_in_this_subset),z_found_source(isource_in_this_subset)
-
-          ! prints frequency content for point forces
-          f0 = hdur(isource)
-          t0_ricker = 1.2d0/f0
-          write(IMAIN,*) '  using a source of dominant frequency ',f0
-          write(IMAIN,*) '  lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
-          write(IMAIN,*) '  lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
-          write(IMAIN,*) '  t0_ricker = ',t0_ricker,'tshift_src = ',tshift_src(isource)
-          write(IMAIN,*)
-          write(IMAIN,*) '  half duration in frequency: ',hdur(isource),' seconds**(-1)'
         else
-    !-------------POINT FORCE-----------------------------------------------
-          write(IMAIN,*) '   xi coordinate of source in that element: ',xi_source(isource)
-          write(IMAIN,*) '  eta coordinate of source in that element: ',eta_source(isource)
-          write(IMAIN,*) 'gamma coordinate of source in that element: ',gamma_source(isource)
-          ! add message if source is a Heaviside
-          if (hdur(isource) <= 5.*DT) then
-            write(IMAIN,*)
-            write(IMAIN,*) 'Source time function is a Heaviside, convolve later'
-            write(IMAIN,*)
-          endif
+          ! moment tensor
+          write(IMAIN,*) '  using moment tensor source: '
+          write(IMAIN,*) '    xi coordinate of source in that element: ',xi_source(isource)
+          write(IMAIN,*) '    eta coordinate of source in that element: ',eta_source(isource)
+          write(IMAIN,*) '    gamma coordinate of source in that element: ',gamma_source(isource)
+        endif
+        write(IMAIN,*)
+
+        ! source time function info
+        write(IMAIN,*) '  source time function:'
+        if (EXTERNAL_SOURCE_TIME_FUNCTION) then
+          ! external STF
+          write(IMAIN,*) '    using external source time function'
           write(IMAIN,*)
-          write(IMAIN,*) ' half duration: ',hdur(isource),' seconds'
+        else
+          ! frequency/half-duration
+          if (USE_FORCE_POINT_SOURCE) then
+            ! single point force
+            ! prints frequency content for point forces
+            select case(force_stf(isource))
+            case (0)
+              ! Gaussian
+              write(IMAIN,*) '    using Gaussian source time function'
+              write(IMAIN,*) '             half duration: ',hdur(isource),' seconds'
+              write(IMAIN,*) '    Gaussian half duration: ',hdur(isource)/SOURCE_DECAY_MIMIC_TRIANGLE,' seconds'
+            case (1)
+              ! Ricker
+              write(IMAIN,*) '    using Ricker source time function'
+              ! prints frequency content for point forces
+              f0 = hdur(isource)
+              t0_ricker = 1.2d0/f0
+              write(IMAIN,*)
+              write(IMAIN,*) '    using a source of dominant frequency ',f0
+              write(IMAIN,*) '    t0_ricker = ',t0_ricker,'tshift_src = ',tshift_src(isource)
+              write(IMAIN,*)
+              write(IMAIN,*) '    lambda_S at dominant frequency = ',3000./sqrt(3.)/f0
+              write(IMAIN,*) '    lambda_S at highest significant frequency = ',3000./sqrt(3.)/(2.5*f0)
+              write(IMAIN,*)
+              write(IMAIN,*) '    half duration in frequency: ',hdur(isource),' seconds**(-1)'
+            case (2)
+              ! Heaviside
+              write(IMAIN,*) '    using (quasi) Heaviside source time function'
+              write(IMAIN,*) '             half duration: ',hdur(isource),' seconds'
+            case default
+              stop 'unsupported force_stf value!'
+            end select
+          else
+            ! moment tensor
+            write(IMAIN,*) '    using (quasi) Heaviside source time function'
+            ! add message if source is a Heaviside
+            if (hdur(isource) <= 5.0*DT) then
+              write(IMAIN,*)
+              write(IMAIN,*) '    Source time function is a Heaviside, convolve later'
+              write(IMAIN,*)
+            endif
+            write(IMAIN,*)
+            write(IMAIN,*) '    half duration: ',hdur(isource),' seconds'
+          endif
         endif
         write(IMAIN,*) '    time shift: ',tshift_src(isource),' seconds'
         write(IMAIN,*)
-        write(IMAIN,*) 'magnitude of the source:'
-        M0 = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
-        write(IMAIN,*) '     scalar moment M0 = ', M0,' dyne-cm'
-        Mw =  get_cmt_moment_magnitude(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
-        write(IMAIN,*) '  moment magnitude Mw = ', Mw
-        write(IMAIN,*)
 
+        ! magnitude
+        write(IMAIN,*) '  magnitude of the source:'
+        if (USE_FORCE_POINT_SOURCE) then
+          ! single point force
+          ! scale and non-dimensionalize the factor_force_source
+          ! factor_force_source in FORCESOLUTION file is in Newton
+          ! 1 Newton is 1 kg * 1 m / (1 second)^2
+          scaleF = RHOAV * (R_EARTH**4) * PI*GRAV*RHOAV
+          write(IMAIN,*) '    force = ', sngl(factor_force_source(isource) * scaleF),'(Newton)' ! dimensionalized
+        else
+          ! moment-tensor
+          M0 = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
+          Mw =  get_cmt_moment_magnitude(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
+          write(IMAIN,*) '       scalar moment M0 = ', M0,' dyne-cm'
+          write(IMAIN,*) '    moment magnitude Mw = ', Mw
+        endif
+        write(IMAIN,*)
 
         ! writes out actual source position to VTK file
         write(IOUT_VTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
@@ -758,23 +810,23 @@
         if (phi_source(isource) > PI) phi_source(isource)=phi_source(isource)-TWO_PI
 
         write(IMAIN,*)
-        write(IMAIN,*) 'original (requested) position of the source:'
+        write(IMAIN,*) '  original (requested) position of the source:'
         write(IMAIN,*)
-        write(IMAIN,*) '      latitude: ',lat(isource)
-        write(IMAIN,*) '     longitude: ',long(isource)
-        write(IMAIN,*) '         depth: ',depth(isource),' km'
+        write(IMAIN,*) '        latitude: ',lat(isource)
+        write(IMAIN,*) '       longitude: ',long(isource)
+        write(IMAIN,*) '           depth: ',depth(isource),' km'
         write(IMAIN,*)
 
         ! compute real position of the source
-        write(IMAIN,*) 'position of the source that will be used:'
+        write(IMAIN,*) '  position of the source that will be used:'
         write(IMAIN,*)
-        write(IMAIN,*) '      latitude: ',(PI_OVER_TWO-colat_source)*RADIANS_TO_DEGREES
-        write(IMAIN,*) '     longitude: ',phi_source(isource)*RADIANS_TO_DEGREES
-        write(IMAIN,*) '         depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
+        write(IMAIN,*) '        latitude: ',(PI_OVER_TWO-colat_source)*RADIANS_TO_DEGREES
+        write(IMAIN,*) '       longitude: ',phi_source(isource)*RADIANS_TO_DEGREES
+        write(IMAIN,*) '           depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
         write(IMAIN,*)
 
         ! display error in location estimate
-        write(IMAIN,*) 'Error in location of the source: ',sngl(final_distance_source(isource)),' km'
+        write(IMAIN,*) '  Error in location of the source: ',sngl(final_distance_source(isource)),' km'
 
         ! add warning if estimate is poor
         ! (usually means source outside the mesh given by the user)
@@ -940,148 +992,3 @@
 
   end subroutine save_mask_source
 
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                      tshift_src,hdur,force_stf,min_tshift_src_original,NSTEP,DT)
-
-! prints source time function
-
-  use constants
-  use shared_input_parameters
-
-  implicit none
-
-  integer :: NSOURCES,isource
-
-  double precision,dimension(NSOURCES) :: Mxx,Myy,Mzz,Mxy,Mxz,Myz
-  double precision,dimension(NSOURCES) :: tshift_src,hdur
-  integer,dimension(NSOURCES) :: force_stf
-
-  double precision :: min_tshift_src_original
-  integer :: NSTEP
-  double precision :: DT
-
-
-  ! local parameters
-  integer :: it,iom,ier,sum_stf
-  double precision :: scalar_moment
-  double precision :: t0, hdur_Gaussian(NSOURCES)
-  double precision :: t_cmt_used(NSOURCES)
-  double precision time_source,om
-  double precision :: f0
-
-  double precision, external :: comp_source_time_function,comp_source_spectrum
-  double precision, external :: comp_source_time_function_rickr
-  double precision, external :: get_cmt_scalar_moment
-
-  character(len=MAX_STRING_LEN) :: plot_file
-
-  ! number of points to plot the source time function and spectrum
-  integer, parameter :: NSAMP_PLOT_SOURCE = 1000
-
-  ! user output
-  write(IMAIN,*)
-  write(IMAIN,*) 'printing the source-time function'
-  call flush_IMAIN()
-
-  ! print the source-time function
-  if (NSOURCES == 1) then
-    plot_file = '/plot_source_time_function.txt'
-  else
-   if (isource < 10) then
-      write(plot_file,"('/plot_source_time_function',i1,'.txt')") isource
-    else if (isource < 100) then
-      write(plot_file,"('/plot_source_time_function',i2,'.txt')") isource
-    else
-      write(plot_file,"('/plot_source_time_function',i3,'.txt')") isource
-    endif
-  endif
-
-  ! output file
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
-        status='unknown',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(0,'Error opening plot_source_time_function file')
-
-  ! calculates scalar moment M0
-  scalar_moment = get_cmt_scalar_moment(Mxx(isource),Myy(isource),Mzz(isource),Mxy(isource),Mxz(isource),Myz(isource))
-
-  ! define t0 as the earliest start time
-  ! note: this calculation here is only used for outputting the plot_source_time_function file
-  !          (see setup_sources_receivers.f90)
-  t0 = - 1.5d0*minval( tshift_src(:) - hdur(:) )
-    !-------------POINT FORCE-----------------------------------------------
-  if (USE_FORCE_POINT_SOURCE ) then
-    sum_stf=sum(force_stf)
-    if (sum_stf == NSOURCES) then
-      t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
-    else if (sum_stf == 0) then
-      ! defined above
-    else
-      stop 'mixed force_stf not supported!'
-    endif
-  endif
-    !-------------POINT FORCE-----------------------------------------------
-
-  t_cmt_used(:) = tshift_src(:)
-  if (USER_T0 > 0.d0) then
-    if (t0 <= USER_T0 + min_tshift_src_original) then
-      t_cmt_used(:) = tshift_src(:) + min_tshift_src_original
-      t0 = USER_T0
-    endif
-  endif
-  ! convert the half duration for triangle STF to the one for Gaussian STF
-  ! note: this calculation here is only used for outputting the plot_source_time_function file
-  !          (see setup_sources_receivers.f90)
-  hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
-
-  ! writes out source time function to file
-  do it = 1,NSTEP
-    time_source = dble(it-1)*DT-t0-t_cmt_used(isource)
-    !-------------POINT FORCE-----------------------------------------------
-    if (USE_FORCE_POINT_SOURCE) then
-      ! Ricker source time function
-      f0 = hdur(isource)
-      write(IOUT,*) sngl(dble(it-1)*DT-t0), &
-        !sngl(FACTOR_FORCE_SOURCE*comp_source_time_function_rickr(time_source,f0))
-        sngl(comp_source_time_function_rickr(time_source,f0))
-    else
-    !-------------POINT FORCE-----------------------------------------------
-      ! Gaussian source time function
-      write(IOUT,*) sngl(dble(it-1)*DT-t0), &
-        sngl(scalar_moment*comp_source_time_function(time_source,hdur_Gaussian(isource)))
-    endif
-  enddo
-  close(IOUT)
-
-  write(IMAIN,*)
-  write(IMAIN,*) 'printing the source spectrum'
-  call flush_IMAIN()
-
-  ! print the spectrum of the derivative of the source from 0 to 1/8 Hz
-  if (NSOURCES == 1) then
-    plot_file = '/plot_source_spectrum.txt'
-  else
-   if (isource < 10) then
-      write(plot_file,"('/plot_source_spectrum',i1,'.txt')") isource
-    else if (isource < 100) then
-      write(plot_file,"('/plot_source_spectrum',i2,'.txt')") isource
-    else
-      write(plot_file,"('/plot_source_spectrum',i3,'.txt')") isource
-    endif
-  endif
-
-  open(unit=IOUT,file=trim(OUTPUT_FILES)//plot_file, &
-        status='unknown',iostat=ier)
-  if (ier /= 0 ) call exit_mpi(0,'Error opening plot_source_spectrum file')
-
-  do iom = 1,NSAMP_PLOT_SOURCE
-    om=TWO_PI*(1.0d0/8.0d0)*(iom-1)/dble(NSAMP_PLOT_SOURCE-1)
-    write(IOUT,*) sngl(om/TWO_PI), &
-      sngl(scalar_moment*om*comp_source_spectrum(om,hdur(isource)))
-  enddo
-  close(IOUT)
-
-  end subroutine print_stf

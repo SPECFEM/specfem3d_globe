@@ -181,7 +181,7 @@ void FC_FUNC_ (prepare_constants_device,
     // checks that realw is a float
     if (sizeof(realw) != sizeof(float)) exit_on_error("TEXTURES only work with realw selected as float");
 
-    // note: device memory returned by cudaMalloc guarantee that the offset is 0,
+    // note: device memory returned by cudaMalloc guarantees that the offset is 0,
     //       however here we use the global memory array d_hprime_xx and need to provide an offset variable
     size_t offset;
 

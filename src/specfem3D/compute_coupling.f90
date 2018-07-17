@@ -263,7 +263,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo NOWAIT
+!$OMP ENDDO NOWAIT
 
   ! for surface elements exactly on the ICB
 !$OMP DO
@@ -307,7 +307,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine compute_coupling_fluid_CMB_ICB
@@ -396,7 +396,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine compute_coupling_fluid_CMB
@@ -485,7 +485,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine compute_coupling_fluid_ICB
@@ -764,7 +764,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo NOWAIT
+!$OMP ENDDO NOWAIT
 
 !$OMP DO
   do ispec2D = 1,nspec2D_top ! NSPEC2D_TOP(IREGION_INNER_CORE)
@@ -812,7 +812,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine compute_coupling_CMB_ICB_fluid
@@ -909,7 +909,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine compute_coupling_CMB_fluid
@@ -1007,7 +1007,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine compute_coupling_ICB_fluid
@@ -1084,7 +1084,7 @@
     accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term_y * ny
     accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term_z * nz
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine compute_coupling_ocean

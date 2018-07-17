@@ -34,10 +34,10 @@
 ! by Ebru Bozdag
 
   subroutine get_event_info_parallel(yr,jda,mo,da,ho,mi,sec, &
-                                    event_name,tshift_src,t_shift, &
-                                    elat,elon,depth,mb,ms,cmt_lat, &
-                                    cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
-                                    Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
+                                     event_name,tshift_src,t_shift, &
+                                     elat,elon,depth,mb,ms,cmt_lat, &
+                                     cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
+                                     Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
   use constants, only: myrank
 
@@ -63,9 +63,9 @@
     !       see comment in write_output_SAC() routine
 
     call get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_src,t_shift, &
-                        elat,elon,depth,mb,ms, &
-                        cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
-                        Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
+                               elat,elon,depth,mb,ms, &
+                               cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
+                               Mrr, Mtt, Mpp, Mrt, Mrp, Mtp)
 
     ! create the event name
     !write(ename(1:12),'(a12)') region(1:12)
@@ -128,12 +128,12 @@
 ! by Ebru
 
   subroutine get_event_info_serial(yr,jda,mo,da,ho,mi,sec,event_name,tshift_src,t_shift, &
-                            elat_pde,elon_pde,depth_pde,mb,ms, &
-                            cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
-                            Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
+                                   elat_pde,elon_pde,depth_pde,mb,ms, &
+                                   cmt_lat,cmt_lon,cmt_depth,cmt_hdur,NSOURCES, &
+                                   Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
 
   use constants
-  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS
+  use shared_parameters, only: NUMBER_OF_SIMULTANEOUS_RUNS,USE_FORCE_POINT_SOURCE
 
   implicit none
 
@@ -153,79 +153,224 @@
 
   ! local parameters
   integer :: ios,julian_day
-  integer :: isource
+  integer :: isource,idummy
+  integer :: i,istart,iend,ier
   double precision, dimension(NSOURCES) :: t_s,hdur,lat,lon,depth
   character(len=20), dimension(NSOURCES) :: e_n
   character(len=5) :: datasource
   character(len=256) :: string
 
-  character(len=MAX_STRING_LEN) :: CMTSOLUTION_FILE, path_to_add
+  character(len=MAX_STRING_LEN) :: SOLUTION_FILE, path_to_add
 
-!
-!---- read hypocenter info
-  CMTSOLUTION_FILE = 'DATA/CMTSOLUTION'
+  ! initializes
+  yr = 0
+  jda = 0
+  mo = 0
+  da = 0
+  ho = 0
+  mi = 0
+  sec = 0.d0
 
-  if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
-    write(path_to_add,"('run',i4.4,'/')") mygroup + 1
-    CMTSOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//CMTSOLUTION_FILE(1:len_trim(CMTSOLUTION_FILE))
+  event_name = ''
+
+  tshift_src = 0.d0  ! t_cmt_SAC
+  t_shift = 0.d0
+
+  elat_pde = 0.d0
+  elon_pde = 0.d0
+  depth_pde = 0.d0
+
+  mb = 0.0 ! body-wave magnitude
+  ms = 0.0 ! surface-wave magnitude
+
+  cmt_lat = -1e8
+  cmt_lon = -1e8
+  cmt_depth = -1e8
+  cmt_hdur = -1e8
+
+  Mrr = 0.d0
+  Mtt = 0.d0
+  Mpp = 0.d0
+  Mrt = 0.d0
+  Mrp = 0.d0
+  Mtp = 0.d0
+
+  ! reads in source file
+  if (USE_FORCE_POINT_SOURCE) then
+    ! force solution has no time information
+    SOLUTION_FILE = 'DATA/FORCESOLUTION'
+
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      SOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//SOLUTION_FILE(1:len_trim(SOLUTION_FILE))
+    endif
+
+    open(unit=IIN,file=trim(SOLUTION_FILE),status='old',action='read',iostat=ios)
+    if (ios /= 0) stop 'Error opening DATA/FORCESOLUTION file (in get_event_info_serial)'
+
+    ! read source number isource
+    do isource = 1,NSOURCES
+
+      ! example header line of FORCESOLUTION file
+      !FORCE 001
+
+      read(IIN,"(a)") string
+      ! skips empty lines
+      do while (len_trim(string) == 0)
+        read(IIN,"(a)") string
+      enddo
+
+      ! read header with event information
+      read(string,"(a6,i4)") e_n(isource),idummy
+
+      ! read time shift
+      read(IIN,"(a)") string
+      read(string(12:len_trim(string)),*) t_s(isource)
+
+      read(IIN,"(a)") string
+      read(string(15:len_trim(string)),*) hdur(isource)
+
+      ! read latitude
+      read(IIN,"(a)") string
+      read(string(10:len_trim(string)),*) lat(isource)
+
+      ! read longitude
+      read(IIN,"(a)") string
+      read(string(11:len_trim(string)),*) lon(isource)
+
+      ! read depth
+      read(IIN,"(a)") string
+      read(string(7:len_trim(string)),*) depth(isource)
+
+      ! source time function
+      read(IIN,"(a)") string
+      read(string(22:len_trim(string)),*) idummy ! force_stf(isource)
+
+      ! read magnitude
+      read(IIN,"(a)") string
+      read(string(21:len_trim(string)),*) mb ! factor_force_source(isource)
+
+      ! read direction vector's East component
+      read(IIN,"(a)") string
+      read(string(29:len_trim(string)),*) Mpp ! Mcomp_dir_vect_source_E(isource)
+
+      ! read direction vector's North component
+      read(IIN,"(a)") string
+      read(string(29:len_trim(string)),*) Mtt ! comp_dir_vect_source_N(isource)
+
+      ! read direction vector's vertical component
+      read(IIN,"(a)") string
+      read(string(32:len_trim(string)),*) Mrr ! comp_dir_vect_source_Z_UP(isource)
+
+    enddo
+
+    close(IIN)
+
+    ! no magnitudes, but force strengths
+    ms = mb
+
+  else
+    ! CMT sources
+    !---- read hypocenter info
+    SOLUTION_FILE = 'DATA/CMTSOLUTION'
+
+    if (NUMBER_OF_SIMULTANEOUS_RUNS > 1 .and. mygroup >= 0) then
+      write(path_to_add,"('run',i4.4,'/')") mygroup + 1
+      SOLUTION_FILE = path_to_add(1:len_trim(path_to_add))//SOLUTION_FILE(1:len_trim(SOLUTION_FILE))
+    endif
+
+    open(unit=IIN,file=trim(SOLUTION_FILE),status='old',action='read',iostat=ios)
+    if (ios /= 0) stop 'Error opening DATA/CMTSOLUTION file (in get_event_info_serial)'
+
+    ! example header line of CMTSOLUTION file
+    !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
+    ! which is: event_id, date,origin time,latitude,longitude,depth, mb, MS, region
+
+    ! read source number isource
+    do isource = 1,NSOURCES
+
+      ! gets header line
+      read(IIN,"(a256)",iostat=ier) string
+      if (ier /= 0) then
+        write(IMAIN,*) 'Error reading header line in source ',isource
+        stop 'Error reading header line in station in CMTSOLUTION file'
+      endif
+
+      ! reads header line with event information (free format)
+      ! gets rid of the first datasource qualifyer string which can have variable length, like:
+      ! "PDE 2014 9 3 .."
+      ! " PDEQ2014 9 3 .."
+      ! " MLI   1971   1   1 .."
+      ! note: globalcmt.org solutions might have missing spaces after datasource qualifier
+      !
+      ! reads in year,month,day,hour,minutes,seconds
+      istart = 1
+      iend = len_trim(string)
+      ! determines where first number starts
+      do i = 1,len_trim(string)
+        if (is_numeric(string(i:i))) then
+          istart = i
+          exit
+        endif
+      enddo
+      if ( istart >= iend ) stop 'Error determining datasource length in header line in CMTSOLUTION file'
+      if ( istart <= 1 ) stop 'Error determining datasource length in header line in CMTSOLUTION file'
+
+      ! debug
+      !print *,'line ----',string(istart:iend),'----'
+
+      ! read header with event information
+      read(string(1:istart-1),*) datasource
+      read(string(istart:iend),*) yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
+
+      jda = julian_day(yr,mo,da)
+
+      ! read line with event name
+      read(IIN,"(a)") string
+      read(string(12:len_trim(string)),*) e_n(isource)
+
+      ! read time shift
+      read(IIN,"(a)") string
+      read(string(12:len_trim(string)),*) t_s(isource)
+
+      ! read half duration
+      read(IIN,"(a)") string
+      read(string(15:len_trim(string)),*) hdur(isource)
+
+      ! read latitude
+      read(IIN,"(a)") string
+      read(string(10:len_trim(string)),*) lat(isource)
+
+      ! read longitude
+      read(IIN,"(a)") string
+      read(string(11:len_trim(string)),*) lon(isource)
+
+      ! read depth
+      read(IIN,"(a)") string
+      read(string(7:len_trim(string)),*) depth(isource)
+
+      ! read the last 6 lines with moment tensor info
+      read(IIN,"(a)") string
+      read(string(5:len_trim(string)),*) Mrr
+      read(IIN,"(a)") string
+      read(string(5:len_trim(string)),*) Mtt
+      read(IIN,"(a)") string
+      read(string(5:len_trim(string)),*) Mpp
+      read(IIN,"(a)") string
+      read(string(5:len_trim(string)),*) Mrt
+      read(IIN,"(a)") string
+      read(string(5:len_trim(string)),*) Mrp
+      read(IIN,"(a)") string
+      read(string(5:len_trim(string)),*) Mtp
+
+    enddo
+
+    close(IIN)
+
   endif
-!
-  open(unit=IIN,file=trim(CMTSOLUTION_FILE),status='old',action='read',iostat=ios)
-  if (ios /= 0) stop 'Error opening DATA/CMTSOLUTION file (in get_event_info_serial)'
-
-  ! example header line of CMTSOLUTION file
-  !PDE 2003 09 25 19 50 08.93  41.78  144.08  18.0 7.9 8.0 Hokkaido, Japan
-  ! which is: event_id, date,origin time,latitude,longitude,depth, mb, MS, region
-
-  ! read source number isource
-  do isource = 1,NSOURCES
-
-    ! read header with event information
-    read(IIN,*) datasource,yr,mo,da,ho,mi,sec,elat_pde,elon_pde,depth_pde,mb,ms
-    jda=julian_day(yr,mo,da)
-
-    ! read line with event name
-    read(IIN,"(a)") string
-    read(string(12:len_trim(string)),*) e_n(isource)
-
-    ! read time shift
-    read(IIN,"(a)") string
-    read(string(12:len_trim(string)),*) t_s(isource)
-
-    ! read half duration
-    read(IIN,"(a)") string
-    read(string(15:len_trim(string)),*) hdur(isource)
-
-    ! read latitude
-    read(IIN,"(a)") string
-    read(string(10:len_trim(string)),*) lat(isource)
-
-    ! read longitude
-    read(IIN,"(a)") string
-    read(string(11:len_trim(string)),*) lon(isource)
-
-    ! read depth
-    read(IIN,"(a)") string
-    read(string(7:len_trim(string)),*) depth(isource)
-
-    ! read the last 6 lines with moment tensor info
-    read(IIN,"(a)") string
-    read(string(5:len_trim(string)),*) Mrr
-    read(IIN,"(a)") string
-    read(string(5:len_trim(string)),*) Mtt
-    read(IIN,"(a)") string
-    read(string(5:len_trim(string)),*) Mpp
-    read(IIN,"(a)") string
-    read(string(5:len_trim(string)),*) Mrt
-    read(IIN,"(a)") string
-    read(string(5:len_trim(string)),*) Mrp
-    read(IIN,"(a)") string
-    read(string(5:len_trim(string)),*) Mtp
-
-  enddo
 
   ! sets tshift_src to zero
-  tshift_src = 0.
+  tshift_src = 0.d0
 
   ! takes first event id as event_name
   event_name = e_n(1)
@@ -238,15 +383,28 @@
     cmt_hdur = hdur(1)
     t_shift = t_s(1)
   else
-    cmt_lat = -1e8
-    cmt_lon = -1e8
-    cmt_depth = -1e8
-    cmt_hdur = -1e8
     ! takes minimum time shift of all given sources
     t_shift = minval(t_s(1:NSOURCES))
   endif
 
-  close(IIN)
+contains
+
+  !--------------------------------------------------------------
+
+  logical function is_numeric(char)
+
+  ! returns .true. if input character is a number
+
+  implicit none
+  character(len=1), intent(in) :: char
+
+  is_numeric = .false.
+
+  if ( index('0123456789', char) /= 0) then
+    is_numeric = .true.
+  endif
+
+  end function
 
   end subroutine get_event_info_serial
 

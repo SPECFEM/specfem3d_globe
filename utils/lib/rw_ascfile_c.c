@@ -51,7 +51,10 @@ void dwrite_ascfile_c_(const char *ascfile,
   tmp = *dt;
   tmp0 = *t0;
   for (i=0; i< *n; i++) {
-    fprintf(fd,"%14.7g %18.7g\n", tmp0+i*tmp, data[i]);
+    // format:        -7.175                  0
+    //fprintf(fd,"%14.7g %18.7g\n", tmp0+i*tmp, data[i]);
+    // format:-7.1749997        0.000000
+    fprintf(fd,"% .7f  \t  %f\n", tmp0+i*tmp, data[i]);
   }
   if (fclose(fd) != 0) {
     printf("file %s cannot be closed\n",ascfile);

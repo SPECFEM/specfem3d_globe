@@ -25,6 +25,7 @@
 !
 !=====================================================================
 
+
   subroutine save_regular_kernels_cm()
 
   use specfem_par
@@ -63,6 +64,9 @@
   real(kind=CUSTOM_REAL) :: muvl,kappavl,muhl,kappahl
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
 
+  ! checks if anything to do
+  if (.not. SAVE_REGULAR_KL) return
+
   ! scaling factors
   scale_kl = scale_t * scale_displ_inv * 1.d9
   ! For anisotropic kernels
@@ -72,37 +76,37 @@
   scale_kl_rho = scale_t * scale_displ_inv / RHOAV * 1.d9
 
   ! allocates temporary arrays
-  allocate(rho_kl_crust_mantle_reg(npoints_slice), &
-           beta_kl_crust_mantle_reg(npoints_slice), &
-           alpha_kl_crust_mantle_reg(npoints_slice))
+  allocate(rho_kl_crust_mantle_reg(npoints_slice_reg), &
+           beta_kl_crust_mantle_reg(npoints_slice_reg), &
+           alpha_kl_crust_mantle_reg(npoints_slice_reg))
 
   if (ANISOTROPIC_KL) then
-    allocate(cijkl_kl_crust_mantle_reg(21, npoints_slice))
+    allocate(cijkl_kl_crust_mantle_reg(21, npoints_slice_reg))
     if (SAVE_TRANSVERSE_KL_ONLY) then
       ! transverse isotropic kernel arrays for file output
-      allocate(alphav_kl_crust_mantle(npoints_slice), &
-               alphah_kl_crust_mantle(npoints_slice), &
-               betav_kl_crust_mantle(npoints_slice), &
-               betah_kl_crust_mantle(npoints_slice), &
-               eta_kl_crust_mantle(npoints_slice))
+      allocate(alphav_kl_crust_mantle(npoints_slice_reg), &
+               alphah_kl_crust_mantle(npoints_slice_reg), &
+               betav_kl_crust_mantle(npoints_slice_reg), &
+               betah_kl_crust_mantle(npoints_slice_reg), &
+               eta_kl_crust_mantle(npoints_slice_reg))
 
       ! isotropic kernel arrays for file output
-      allocate(bulk_c_kl_crust_mantle(npoints_slice), &
-               bulk_betav_kl_crust_mantle(npoints_slice), &
-               bulk_betah_kl_crust_mantle(npoints_slice), &
-               bulk_beta_kl_crust_mantle(npoints_slice))
+      allocate(bulk_c_kl_crust_mantle(npoints_slice_reg), &
+               bulk_betav_kl_crust_mantle(npoints_slice_reg), &
+               bulk_betah_kl_crust_mantle(npoints_slice_reg), &
+               bulk_beta_kl_crust_mantle(npoints_slice_reg))
     endif
   else
     ! allocates temporary isotropic kernel arrays for file output
-    allocate(bulk_c_kl_crust_mantle(npoints_slice), &
-             bulk_beta_kl_crust_mantle(npoints_slice))
-    allocate(mu_kl_crust_mantle(npoints_slice), &
-             kappa_kl_crust_mantle(npoints_slice), &
-             rhonotprime_kl_crust_mantle(npoints_slice))
+    allocate(bulk_c_kl_crust_mantle(npoints_slice_reg), &
+             bulk_beta_kl_crust_mantle(npoints_slice_reg))
+    allocate(mu_kl_crust_mantle(npoints_slice_reg), &
+             kappa_kl_crust_mantle(npoints_slice_reg), &
+             rhonotprime_kl_crust_mantle(npoints_slice_reg))
   endif
 
   ! crust_mantle
-  do ipoint = 1, npoints_slice
+  do ipoint = 1, npoints_slice_reg
     ispec = ispec_reg(ipoint)
     rho_kl_crust_mantle_reg(ipoint) = 0.0
     alpha_kl_crust_mantle_reg(ipoint) = 0.0
@@ -393,49 +397,49 @@
       if (SAVE_TRANSVERSE_KL_ONLY) then
         ! transverse isotropic kernels
         ! (alpha_v, alpha_h, beta_v, beta_h, eta, rho ) parameterization
-        open(unit=IOUT,file=trim(prname)//'alphav_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'alphav_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) alphav_kl_crust_mantle
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'alphah_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'alphah_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) alphah_kl_crust_mantle
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'betav_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'betav_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) betav_kl_crust_mantle
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'betah_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'betah_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) betah_kl_crust_mantle
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'eta_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'eta_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) eta_kl_crust_mantle
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'rho_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) rho_kl_crust_mantle_reg
         close(IOUT)
 
         ! in case one is interested in primary kernel K_rho
-        !open(unit=IOUT,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
+        !open(unit=IOUT,file=trim(prname)//'rhonotprime_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         !write(IOUT) rhonotprime_kl_crust_mantle
         !close(IOUT)
 
         ! (bulk, beta_v, beta_h, eta, rho ) parameterization: K_eta and K_rho same as above
-        open(unit=IOUT,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'bulk_c_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) bulk_c_kl_crust_mantle
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'bulk_betav_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'bulk_betav_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) bulk_betav_kl_crust_mantle
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'bulk_betah_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'bulk_betah_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) bulk_betah_kl_crust_mantle
         close(IOUT)
 
         ! to check: isotropic kernels
-        open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'alpha_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) alpha_kl_crust_mantle_reg
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'beta_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) beta_kl_crust_mantle_reg
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) bulk_beta_kl_crust_mantle
         close(IOUT)
 
@@ -444,10 +448,10 @@
         ! fully anisotropic kernels
         ! note: the C_ij and density kernels are not for relative perturbations (delta ln( m_i) = delta m_i / m_i),
         !          but absolute perturbations (delta m_i = m_i - m_0)
-        open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'rho_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) - rho_kl_crust_mantle_reg
         close(IOUT)
-        open(unit=IOUT,file=trim(prname)//'cijkl_kernel.bin',status='unknown',form='unformatted',action='write')
+        open(unit=IOUT,file=trim(prname)//'cijkl_kernel_regular.bin',status='unknown',form='unformatted',action='write')
         write(IOUT) - cijkl_kl_crust_mantle_reg
         close(IOUT)
 
@@ -455,32 +459,32 @@
 
     else
       ! primary kernels: (rho,kappa,mu) parameterization
-      open(unit=IOUT,file=trim(prname)//'rhonotprime_kernel.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(prname)//'rhonotprime_kernel_regular.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) rhonotprime_kl_crust_mantle
       close(IOUT)
-      open(unit=IOUT,file=trim(prname)//'kappa_kernel.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(prname)//'kappa_kernel_regular.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) kappa_kl_crust_mantle
       close(IOUT)
-      open(unit=IOUT,file=trim(prname)//'mu_kernel.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(prname)//'mu_kernel_regular.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) mu_kl_crust_mantle
       close(IOUT)
 
       ! (rho, alpha, beta ) parameterization
-      open(unit=IOUT,file=trim(prname)//'rho_kernel.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(prname)//'rho_kernel_regular.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) rho_kl_crust_mantle_reg
       close(IOUT)
-      open(unit=IOUT,file=trim(prname)//'alpha_kernel.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(prname)//'alpha_kernel_regular.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) alpha_kl_crust_mantle_reg
       close(IOUT)
-      open(unit=IOUT,file=trim(prname)//'beta_kernel.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(prname)//'beta_kernel_regular.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) beta_kl_crust_mantle_reg
       close(IOUT)
 
       ! (rho, bulk, beta ) parameterization, K_rho same as above
-      open(unit=IOUT,file=trim(prname)//'bulk_c_kernel.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(prname)//'bulk_c_kernel_regular.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) bulk_c_kl_crust_mantle
       close(IOUT)
-      open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel.bin',status='unknown',form='unformatted',action='write')
+      open(unit=IOUT,file=trim(prname)//'bulk_beta_kernel_regular.bin',status='unknown',form='unformatted',action='write')
       write(IOUT) bulk_beta_kl_crust_mantle
       close(IOUT)
 

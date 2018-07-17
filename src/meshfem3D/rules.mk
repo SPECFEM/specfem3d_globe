@@ -103,6 +103,7 @@ meshfem3D_OBJECTS = \
 	$O/model_s40rts.check.o \
 	$O/model_s362ani.check.o \
 	$O/model_sea99_s.check.o \
+	$O/model_sglobe.check.o \
 	$O/moho_stretching.check.o \
 	$O/save_arrays_solver.check.o \
 	$O/setup_color_perm.check.o \
@@ -120,9 +121,9 @@ meshfem3D_OBJECTS = \
 	$(EMPTY_MACRO)
 
 meshfem3D_MODULES = \
-	$(FC_MODDIR)/create_regions_mesh_par.$(FC_MODEXT) \
-	$(FC_MODDIR)/create_regions_mesh_par2.$(FC_MODEXT) \
-	$(FC_MODDIR)/create_mpi_interfaces_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/regions_mesh_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/regions_mesh_par2.$(FC_MODEXT) \
+	$(FC_MODDIR)/mpi_interfaces_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/gapp2_mantle_model_constants.$(FC_MODEXT) \
 	$(FC_MODDIR)/manager_adios_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/meshfem3d_models_par.$(FC_MODEXT) \
@@ -150,6 +151,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_s40rts_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sea1d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_sea99_s_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_sglobe_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_chunks_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_mod.$(FC_MODEXT) \
 	$(FC_MODDIR)/avs_dx_global_faces_mod.$(FC_MODEXT) \
@@ -197,6 +199,7 @@ meshfem3D_SHARED_OBJECTS = \
 	$O/sort_array_coordinates.shared.o \
 	$O/spline_routines.shared.o \
 	$O/write_VTK_file.shared.o \
+	$O/ylm.shared.o \
 	$(EMPTY_MACRO)
 
 ###

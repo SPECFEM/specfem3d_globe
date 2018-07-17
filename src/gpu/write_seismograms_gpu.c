@@ -267,12 +267,14 @@ void FC_FUNC_ (write_seismograms_transfer_gpu,
   // transfers displacement values in receiver elements from GPU to CPU
   switch (mp->simulation_type) {
   case 1:
+    // forward simulation
     write_seismograms_transfer_from_device (mp, &mp->d_displ_crust_mantle, displ,
                                             number_receiver_global, &mp->d_ispec_selected_rec,
                                             ispec_selected_rec, ibool);
     break;
 
   case 2:
+    // adjoint simulation
     write_seismograms_transfer_from_device (mp, &mp->d_displ_crust_mantle, displ,
                                             number_receiver_global, &mp->d_ispec_selected_source,
                                             ispec_selected_source, ibool);
@@ -300,6 +302,7 @@ void FC_FUNC_ (write_seismograms_transfer_gpu,
     break;
 
   case 3:
+    // kernel simulation
     write_seismograms_transfer_from_device (mp, &mp->d_b_displ_crust_mantle, b_displ,
                                             number_receiver_global, &mp->d_ispec_selected_rec,
                                             ispec_selected_rec, ibool);

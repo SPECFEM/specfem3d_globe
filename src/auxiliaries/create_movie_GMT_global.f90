@@ -62,7 +62,7 @@
   logical, parameter :: MUTE_SOURCE = .true.
   real(kind=CUSTOM_REAL) :: RADIUS_TO_MUTE = 0.5    ! start radius in degrees
   real(kind=CUSTOM_REAL) :: STARTTIME_TO_MUTE = 0.5 ! adds seconds to shift starttime
-
+  real(kind=CUSTOM_REAL) :: MUTE_SOURCE_MINIMAL_DISTANCE = 2.0 ! minimum taper around the source (in case of displacement movies)
 
 !---------------------
 
@@ -156,7 +156,15 @@
   if (it1 < 1 ) stop 'the first time step must be >= 1'
   if (it2 == -1 ) it2 = NSTEP
 
-
+  ! user info
+  print *, 'Movie surface:'
+  print *, '  moviedata*** files read in directory: ',trim(OUTPUT_FILES)
+  if (MOVIE_VOLUME_TYPE == 5) then
+    print *, '  movie output    : displacement'
+  else
+    print *, '  movie output    : velocity'
+  endif
+  print *, '  time steps every: ',NTSTEP_BETWEEN_FRAMES
   print *
   print *,'There are ',NPROCTOT,' slices numbered from 0 to ',NPROCTOT-1
   print *
@@ -250,7 +258,6 @@
 
   allocate(field_display(npointot),stat=ierror)
   if (ierror /= 0) stop 'Error while allocating field_display'
-
 
   ! initializes maxima history
   if (USE_AVERAGED_MAXIMUM) then
@@ -414,6 +421,8 @@
         ! (~3.5 km/s wave speed for surface waves)
         distance = 3.5 * ((it-1)*DT-t0) / R_EARTH_KM * RADIANS_TO_DEGREES
 
+        print *,'distance approximate: ',distance,'(degrees)'
+
         ! approximate distance to source (in degrees)
         ! (shrinks if waves travel back from antipode)
         !do while ( distance > 360. )
@@ -421,6 +430,7 @@
         !enddo
         ! waves are back at origin, no source tapering anymore
         if (distance > 360.0 ) distance = 0.0
+
         ! shrinks when waves reached antipode
         !if (distance > 180. ) distance = 360. - distance
         ! shrinks when waves reached half-way to antipode
@@ -429,6 +439,12 @@
         ! limit size around source (in degrees)
         if (distance < 0.0 ) distance = 0.0
         if (distance > 80.0 ) distance = 80.0
+
+        ! minimal taper
+        if (MOVIE_VOLUME_TYPE == 5) then
+          ! in case movie shows displacement, there will be a static offset at the source which will tamper all waves
+          if (distance <= TINYVAL) distance = MUTE_SOURCE_MINIMAL_DISTANCE
+        endif
 
         print *,'muting radius: ',0.7 * distance,'(degrees)'
 

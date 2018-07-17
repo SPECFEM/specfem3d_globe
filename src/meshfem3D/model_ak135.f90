@@ -85,12 +85,12 @@
 
   ! allocates model arrays
   allocate(Mak135_V_radius_ak135(NR_AK135F_NO_MUD), &
-          Mak135_V_density_ak135(NR_AK135F_NO_MUD), &
-          Mak135_V_vp_ak135(NR_AK135F_NO_MUD), &
-          Mak135_V_vs_ak135(NR_AK135F_NO_MUD), &
-          Mak135_V_Qkappa_ak135(NR_AK135F_NO_MUD), &
-          Mak135_V_Qmu_ak135(NR_AK135F_NO_MUD), &
-          stat=ier)
+           Mak135_V_density_ak135(NR_AK135F_NO_MUD), &
+           Mak135_V_vp_ak135(NR_AK135F_NO_MUD), &
+           Mak135_V_vs_ak135(NR_AK135F_NO_MUD), &
+           Mak135_V_Qkappa_ak135(NR_AK135F_NO_MUD), &
+           Mak135_V_Qmu_ak135(NR_AK135F_NO_MUD), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating Mak135_V arrays')
 
   ! all processes will define same parameters
@@ -172,10 +172,10 @@
 
 ! non-dimensionalize
 ! time scaling (s^{-1}) is done with scaleval
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  rho=rho*1000.0d0/RHOAV
-  vp=vp*1000.0d0/(R_EARTH*scaleval)
-  vs=vs*1000.0d0/(R_EARTH*scaleval)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  rho = rho*1000.0d0/RHOAV
+  vp = vp*1000.0d0/(R_EARTH*scaleval)
+  vs = vs*1000.0d0/(R_EARTH*scaleval)
 
   end subroutine model_ak135
 

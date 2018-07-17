@@ -70,13 +70,13 @@
 
   ! allocates arrays for model
   allocate(lon_ep(EPCRUST_NLON,EPCRUST_NLAT), &
-          lat_ep(EPCRUST_NLON,EPCRUST_NLAT), &
-          topo_ep(EPCRUST_NLON,EPCRUST_NLAT), &
-          thickness_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
-          vp_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
-          vs_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
-          rho_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
-          stat=ier)
+           lat_ep(EPCRUST_NLON,EPCRUST_NLAT), &
+           topo_ep(EPCRUST_NLON,EPCRUST_NLAT), &
+           thickness_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
+           vp_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
+           vs_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
+           rho_ep(EPCRUST_NLON,EPCRUST_NLAT,EPCRUST_NLAYER), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating EPcrust arrays')
 
   ! read EPCRUST model on master

@@ -103,12 +103,16 @@
   logical :: elem_is_tiso
 
   ! note: at this point, the mesh is still perfectly spherical
+  elem_is_tiso = .false.
+
+  ! flag if element completely in crust (all corners above moho)
+  elem_in_crust = .false.
+
+  ! flag if element completely in mantle (all corners below moho)
+  elem_in_mantle = .false.
 
   ! add topography of the Moho *before* adding the 3D crustal velocity model so that the stretched
   ! mesh gets assigned the right model values
-  elem_in_crust = .false.
-  elem_in_mantle = .false.
-  elem_is_tiso = .false.
   if (iregion_code == IREGION_CRUST_MANTLE) then
     if (CRUSTAL .and. CASE_3D) then
       ! 3D crustal models
@@ -148,9 +152,18 @@
       if (USE_FULL_TISO_MANTLE) then
         ! all elements below the actual moho will be used for transverse isotropy
         ! note: this will increase the computation time by ~ 45 %
-        if (elem_in_mantle) then
-          elem_is_tiso = .true.
+        if (USE_OLD_VERSION_7_0_0_FORMAT) then
+          if (elem_in_mantle) elem_is_tiso = .true.
+        else
+          if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
+            .or. idoubling(ispec) == IFLAG_670_220 &
+            .or. idoubling(ispec) == IFLAG_220_80 &
+            .or. idoubling(ispec) == IFLAG_80_MOHO &
+            .or. idoubling(ispec) == IFLAG_CRUST) then
+            elem_is_tiso = .true.
+          endif
         endif
+
       else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
         ! transverse isotropic mantle between fictitious moho to 670km depth
         ! preferred for Harvard (Kustowski's) models using STW 1D reference, i.e.
@@ -166,21 +179,63 @@
             .or. idoubling(ispec) == IFLAG_670_220) then
             elem_is_tiso = .true.
           endif
+        else if (USE_OLD_VERSION_7_0_0_FORMAT) then
+          ! assigns TI to elements in mantle elements just below actual moho down to 670
+          if (idoubling(ispec) == IFLAG_670_220 &
+              .or. idoubling(ispec) == IFLAG_220_80 &
+              .or. idoubling(ispec) == IFLAG_80_MOHO &
+              .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle) ) then
+            elem_is_tiso = .true.
+          endif
         else
+          ! assigns TI to elements in crust and mantle down to 670
+          if (idoubling(ispec) == IFLAG_670_220 &
+              .or. idoubling(ispec) == IFLAG_220_80 &
+              .or. idoubling(ispec) == IFLAG_80_MOHO &
+              .or. idoubling(ispec) == IFLAG_CRUST) then
+            elem_is_tiso = .true.
+          endif
+          ! S362wmani allows radial anisotropy throughout the mantle
+          if (THREE_D_MODEL == THREE_D_MODEL_S362WMANI) then
+            ! allows tiso down to CMB
+            if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. elem_in_mantle) elem_is_tiso = .true.
+          endif
+        endif
+
+      else
+        ! default reference models
+        ! for example, PREM assigns transverse isotropy between Moho and 220km
+        if (USE_OLD_VERSION_5_1_5_FORMAT) then
+          ! assigns TI only to elements below (2-layer) fictitious moho down to 670
+          if (idoubling(ispec) == IFLAG_220_80 &
+              .or. idoubling(ispec) == IFLAG_80_MOHO) then
+            ! default case for PREM reference models:
+            ! models use only transverse isotropy between moho and 220 km depth
+            elem_is_tiso = .true.
+            ! checks mantle flag to be sure
+            if (elem_in_mantle .eqv. .false. ) stop 'Error mantle flag confused between moho and 220'
+          endif
+        else if (USE_OLD_VERSION_7_0_0_FORMAT) then
           ! assigns TI to elements in mantle elements just below actual moho down to 670
           if (idoubling(ispec) == IFLAG_220_80 &
-            .or. idoubling(ispec) == IFLAG_80_MOHO &
-            .or. idoubling(ispec) == IFLAG_670_220 &
-            .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle )) then
+              .or. idoubling(ispec) == IFLAG_80_MOHO &
+              .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle )) then
+            ! default case for PREM reference models:
+            ! models use only transverse isotropy between moho and 220 km depth
+            elem_is_tiso = .true.
+          endif
+        else
+          ! assigns TI to elements in crust and mantle elements down to 670,
+          ! to allow for tiso in crust and below actual moho (especially for oceanic crusts);
+          ! the crustal models will decide if model parameters are tiso or iso
+          if (idoubling(ispec) == IFLAG_220_80 &
+              .or. idoubling(ispec) == IFLAG_80_MOHO &
+              .or. idoubling(ispec) == IFLAG_CRUST) then
+            ! default case for PREM reference models:
+            ! models use only transverse isotropy between moho and 220 km depth
             elem_is_tiso = .true.
           endif
         endif
-      else if (idoubling(ispec) == IFLAG_220_80 .or. idoubling(ispec) == IFLAG_80_MOHO) then
-        ! default case for PREM reference models:
-        ! models use only transverse isotropy between moho and 220 km depth
-        elem_is_tiso = .true.
-        ! checks mantle flag to be sure
-        !if (elem_in_mantle .eqv. .false. ) stop 'Error mantle flag confused between moho and 220'
       endif
     endif
 
@@ -206,7 +261,6 @@
                    xstore,ystore,zstore, &
                    rmin,rmax, &
                    elem_in_crust,elem_in_mantle)
-
   endif
 
   ! either use GLL points or anchor points to capture TOPOGRAPHY and ELLIPTICITY
@@ -295,6 +349,7 @@
     endif
   endif
 
+
   ! re-interpolates and creates the GLL point locations since the anchor points might have moved
   !
   ! note: velocity values associated for each GLL point will "move" along together with
@@ -302,18 +357,19 @@
   !          models are/should be referenced with respect to a spherical Earth.
   if (.not. USE_GLL) then
     call compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                      xstore,ystore,zstore,shape3D)
+                                       xstore,ystore,zstore,shape3D)
   endif
 
   ! updates Jacobian
   ! (only needed for second meshing phase)
   if (ipass == 2) then
     call recalc_jacobian_gll3D(xstore,ystore,zstore,xigll,yigll,zigll, &
-                                ispec,nspec, &
-                                xixstore,xiystore,xizstore, &
-                                etaxstore,etaystore,etazstore, &
-                                gammaxstore,gammaystore,gammazstore)
+                               ispec,nspec, &
+                               xixstore,xiystore,xizstore, &
+                               etaxstore,etaystore,etazstore, &
+                               gammaxstore,gammaystore,gammazstore)
   endif
+
 
   end subroutine compute_element_properties
 
@@ -322,7 +378,7 @@
 !
 
   subroutine compute_element_GLL_locations(xelm,yelm,zelm,ispec,nspec, &
-                                      xstore,ystore,zstore,shape3D)
+                                           xstore,ystore,zstore,shape3D)
 
   use constants
 
@@ -350,11 +406,9 @@
 
         ! interpolates the location using 3D shape functions
         do ia = 1,NGNOD
-
           xmesh = xmesh + shape3D(ia,i,j,k)*xelm(ia)
           ymesh = ymesh + shape3D(ia,i,j,k)*yelm(ia)
           zmesh = zmesh + shape3D(ia,i,j,k)*zelm(ia)
-
         enddo
 
         ! stores mesh coordinates

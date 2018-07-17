@@ -175,7 +175,7 @@
       write(IMAIN,*) '  no crustal variations'
     endif
     if (ONE_CRUST) then
-      write(IMAIN,*) '  using one layer only in PREM crust'
+      write(IMAIN,*) '  using one layer only in crust'
     else
       write(IMAIN,*) '  using unmodified 1D crustal model with two layers'
     endif
@@ -294,19 +294,19 @@
   implicit none
 
   ! check that the code has been compiled with the right values
-  if (NSPEC(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then
-      if (myrank == 0) write(IMAIN,*) 'NSPEC_CRUST_MANTLE:',NSPEC(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE
-      write(*,*) 'NSPEC_CRUST_MANTLE:', NSPEC(IREGION_CRUST_MANTLE), NSPEC_CRUST_MANTLE
+  if (NSPEC_REGIONS(IREGION_CRUST_MANTLE) /= NSPEC_CRUST_MANTLE) then
+      if (myrank == 0) write(IMAIN,*) 'NSPEC_CRUST_MANTLE:',NSPEC_REGIONS(IREGION_CRUST_MANTLE),NSPEC_CRUST_MANTLE
+      write(*,*) 'NSPEC_CRUST_MANTLE:', NSPEC_REGIONS(IREGION_CRUST_MANTLE), NSPEC_CRUST_MANTLE
       call exit_MPI(myrank,'Error in compiled parameters, please recompile solver 1')
   endif
-  if (NSPEC(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE) then
-      if (myrank == 0) write(IMAIN,*) 'NSPEC_OUTER_CORE:',NSPEC(IREGION_OUTER_CORE),NSPEC_OUTER_CORE
-      write(*,*) 'NSPEC_OUTER_CORE:', NSPEC(IREGION_OUTER_CORE), NSPEC_OUTER_CORE
+  if (NSPEC_REGIONS(IREGION_OUTER_CORE) /= NSPEC_OUTER_CORE) then
+      if (myrank == 0) write(IMAIN,*) 'NSPEC_OUTER_CORE:',NSPEC_REGIONS(IREGION_OUTER_CORE),NSPEC_OUTER_CORE
+      write(*,*) 'NSPEC_OUTER_CORE:', NSPEC_REGIONS(IREGION_OUTER_CORE), NSPEC_OUTER_CORE
       call exit_MPI(myrank,'Error in compiled parameters, please recompile solver 2')
   endif
-  if (NSPEC(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then
-      if (myrank == 0) write(IMAIN,*) 'NSPEC_INNER_CORE:',NSPEC(IREGION_INNER_CORE),NSPEC_INNER_CORE
-      write(*,*) 'NSPEC_INNER_CORE:', NSPEC(IREGION_INNER_CORE), NSPEC_INNER_CORE
+  if (NSPEC_REGIONS(IREGION_INNER_CORE) /= NSPEC_INNER_CORE) then
+      if (myrank == 0) write(IMAIN,*) 'NSPEC_INNER_CORE:',NSPEC_REGIONS(IREGION_INNER_CORE),NSPEC_INNER_CORE
+      write(*,*) 'NSPEC_INNER_CORE:', NSPEC_REGIONS(IREGION_INNER_CORE), NSPEC_INNER_CORE
       call exit_MPI(myrank,'Error in compiled parameters, please recompile solver 3')
   endif
   if (ATTENUATION_3D .neqv. ATTENUATION_3D_VAL) then

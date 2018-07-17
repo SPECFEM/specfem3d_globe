@@ -209,25 +209,21 @@
   ! loop on all the elements
 
 !daniel: still debugging...
-!!$OMP PARALLEL DEFAULT(SHARED) &
-!!$OMP PRIVATE(ix_elem,iy_elem,iz_elem,ix,iy,iz,ignod, &
-!!$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &
-!!$OMP r1,r2,r3,r4,r5,r6,r7,r8, &
-!!$OMP ispec_superbrick,is_superbrick,ispec_loc,ielem)
-!!$OMP DO
-!  do ielem = 1,nelements
-!        ! gets indices back from ielem
-!        ix = (ielem-1) / (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer) * ner_without_doubling)
-!        iy = ((ielem-1) - ix * (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer) * ner_without_doubling)) / ner_without_doubling
-!        iz = (ielem-1) - ix * (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer) * ner_without_doubling) &
-!              - iy * (ner_without_doubling)
-!        ix_elem = ix * ratio_sampling_array(ilayer) + 1
-!        iy_elem = iy * ratio_sampling_array(ilayer) + 1
-!        iz_elem = iz + 1
-
-  do ix_elem = 1,NEX_PER_PROC_XI,ratio_sampling_array(ilayer)
-    do iy_elem = 1,NEX_PER_PROC_ETA,ratio_sampling_array(ilayer)
-      do iz_elem = 1,ner_without_doubling
+!$OMP PARALLEL DEFAULT(SHARED) &
+!$OMP PRIVATE(ielem,ix_elem,iy_elem,iz_elem,ix,iy,iz,ignod, &
+!$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &
+!$OMP r1,r2,r3,r4,r5,r6,r7,r8, &
+!$OMP ispec_superbrick,is_superbrick,ispec_loc)
+!$OMP DO
+  do ielem = 1,nelements
+        ! gets indices back from ielem
+        ix = (ielem-1) / (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer) * ner_without_doubling)
+        iy = ((ielem-1) - ix * (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer) * ner_without_doubling)) / ner_without_doubling
+        iz = (ielem-1) - ix * (NEX_PER_PROC_ETA/ratio_sampling_array(ilayer) * ner_without_doubling) &
+              - iy * (ner_without_doubling)
+        ix_elem = ix * ratio_sampling_array(ilayer) + 1
+        iy_elem = iy * ratio_sampling_array(ilayer) + 1
+        iz_elem = iz + 1
 
         ! loop on all the corner nodes of this element
         do ignod = 1,NGNOD_EIGHT_CORNERS
@@ -263,13 +259,6 @@
         endif
 
         ! add one spectral element to the list
-        !ispec = ispec + 1
-
-        ! counts in increasing order 1,2,3,..
-        ielem = iz_elem + ( (iy_elem-1)/ratio_sampling_array(ilayer) &
-                            +   (ix_elem-1)/ratio_sampling_array(ilayer) * NEX_PER_PROC_ETA/ratio_sampling_array(ilayer)) &
-                               * ner_without_doubling
-
         ispec_loc = map_ispec(ielem)
         if (ispec_loc > nspec .or. ispec_loc < 1) call exit_MPI(myrank,'invalid ispec_loc in mesh creation')
 
@@ -316,7 +305,6 @@
         endif
 
         ! compute several rheological and geometrical properties for this spectral element
-!!$OMP CRITICAL
         call compute_element_properties(ispec_loc,iregion_code,idoubling,ipass, &
                          xstore,ystore,zstore,nspec, &
                          xelm,yelm,zelm,shape3D,rmin,rmax,rhostore,dvpstore, &
@@ -329,13 +317,11 @@
                          nspec_ani,nspec_stacey, &
                          rho_vp,rho_vs, &
                          xigll,yigll,zigll,ispec_is_tiso)
-!!$OMP END CRITICAL
 
         ! boundary mesh
         if (ipass == 2 .and. SAVE_BOUNDARY_MESH .and. iregion_code == IREGION_CRUST_MANTLE) then
           is_superbrick = .false.
           ispec_superbrick = 0 ! dummy value, will not be used
-!!$OMP CRITICAL
           call get_jacobian_discontinuities(ispec_loc,ix_elem,iy_elem,rmin,rmax, &
                    r1,r2,r3,r4,r5,r6,r7,r8, &
                    xstore(:,:,:,ispec_loc),ystore(:,:,:,ispec_loc),zstore(:,:,:,ispec_loc),dershape2D_bottom, &
@@ -345,18 +331,11 @@
                    ispec2D_400_bot,ispec2D_670_top,ispec2D_670_bot, &
                    NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,r_moho,r_400,r_670, &
                    is_superbrick,USE_ONE_LAYER_SB,ispec_superbrick,nex_eta_moho,HONOR_1D_SPHERICAL_MOHO)
-!!$OMP END CRITICAL
         endif
 
-      ! end of loop on all the regular elements
-      enddo ! iz_elem
-    enddo ! iy_elem
-  enddo ! ix_elem
-
-!daniel: still debugging...
-!  enddo ! i_elem
-!!$OMP enddo
-!!$OMP END PARALLEL
+  enddo ! i_elem
+!$OMP ENDDO
+!$OMP END PARALLEL
 
   ! end index
   ispec = ispec0 + nelements

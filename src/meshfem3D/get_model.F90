@@ -43,7 +43,7 @@
 
   use meshfem3D_models_par
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     Qmu_store,tau_e_store,tau_s,T_c_source
 
   implicit none
@@ -97,7 +97,9 @@
         vph = 0.d0
         vsv = 0.d0
         vsh = 0.d0
-        eta_aniso = 0.d0
+
+        eta_aniso = 1.d0 ! default for isotropic element
+
         c11 = 0.d0
         c12 = 0.d0
         c13 = 0.d0
@@ -119,6 +121,7 @@
         c55 = 0.d0
         c56 = 0.d0
         c66 = 0.d0
+
         Qmu = 0.d0
         Qkappa = 0.d0 ! not used, not stored so far...
         tau_e(:) = 0.d0

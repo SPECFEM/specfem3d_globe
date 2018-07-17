@@ -165,7 +165,7 @@
 !$OMP ATOMIC
         icount = icount + 1
       enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
       ! user output
@@ -251,7 +251,7 @@
           theta = rstore_crust_mantle(2,iglob)
           phi = rstore_crust_mantle(3,iglob)
 
-           ! precompute some products to reduce the CPU time
+          ! precompute some products to reduce the CPU time
 
           costheta = cos(theta)
           sintheta = sin(theta)
@@ -437,7 +437,7 @@
         icount_iso = icount_iso + 1
       endif ! ispec_is_tiso_crust_mantle(ispec)
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
     ! user output
@@ -483,7 +483,7 @@
           enddo
         ENDDO_LOOP_IJK
       enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
     endif
   endif
@@ -570,7 +570,7 @@
 !$OMP ATOMIC
         icount = icount + 1
       enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
       ! user output
@@ -623,7 +623,7 @@
 !$OMP ATOMIC
         icount_iso = icount_iso + 1
       enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
       ! user output
@@ -668,7 +668,7 @@
         enddo
       ENDDO_LOOP_IJK
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
   endif
 

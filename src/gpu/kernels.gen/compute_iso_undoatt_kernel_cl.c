@@ -1,5 +1,5 @@
 //note: please do not modify this file manually!
-//      this file has been generated automatically by BOAST version 2.0.2
+//      this file has been generated automatically by BOAST version 2.1.0
 //      by: make boast_kernels
 
 /*
@@ -195,7 +195,6 @@ __kernel void compute_iso_undoatt_kernel(const __global float * epsilondev_xx, c
   int ijk_ispec;\n\
   int tx;\n\
   int iglob;\n\
-  int offset;\n\
   float eps_trace_over_3;\n\
   float b_eps_trace_over_3;\n\
   float epsdev[(5)];\n\

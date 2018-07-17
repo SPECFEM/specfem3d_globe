@@ -90,21 +90,21 @@
 
   implicit none
 
-  character(len=MAX_STRING_LEN) MODEL
+  character(len=MAX_STRING_LEN) :: MODEL
 
-  integer REFERENCE_1D_MODEL,THREE_D_MODEL
+  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
 
-  logical ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
+  logical :: ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
          CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
          ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
          CEM_REQUEST,CEM_ACCEPT
-  logical OCEANS,TOPOGRAPHY
+  logical :: OCEANS,TOPOGRAPHY
 
   ! local parameters
-  character(len=4) ending
-  character(len=8) ending_1Dcrust
+  character(len=4) :: ending
+  character(len=8) :: ending_1Dcrust
 
-  character(len=MAX_STRING_LEN) MODEL_ROOT
+  character(len=MAX_STRING_LEN) :: MODEL_ROOT
   logical :: impose_1Dcrust
 
   ! defaults:
@@ -172,6 +172,9 @@
   ! no crustal mesh stretching and 3D crust models by default
   CASE_3D = .false.
   CRUSTAL = .false.
+
+  ! by default, crust will be split into upper and lower crust using 2 element layers
+  ! (if set to true, this uses 1 element layer only for the crust and assign a single crustal material)
   ONE_CRUST = .false.
 
   ! uses no 3D heterogeneity mantle by default
@@ -198,8 +201,8 @@
     TRANSVERSE_ISOTROPY = .true.
 
   else if (MODEL_ROOT == '1D_iasp91' .or. MODEL_ROOT == '1D_1066a' .or. &
-          MODEL_ROOT == '1D_ak135f_no_mud' .or. MODEL_ROOT == '1D_jp3d' .or. &
-          MODEL_ROOT == '1D_sea99') then
+           MODEL_ROOT == '1D_ak135f_no_mud' .or. MODEL_ROOT == '1D_jp3d' .or. &
+           MODEL_ROOT == '1D_sea99') then
     HONOR_1D_SPHERICAL_MOHO = .true.
     if (MODEL_ROOT == '1D_iasp91') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
@@ -367,6 +370,24 @@
     THREE_D_MODEL = THREE_D_MODEL_S29EA
     TRANSVERSE_ISOTROPY = .true.
 
+  else if (MODEL_ROOT == 'sglobe') then
+    ! uses PREM as reference
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ONE_CRUST = .true.
+    THREE_D_MODEL = THREE_D_MODEL_SGLOBE
+    TRANSVERSE_ISOTROPY = .true.
+
+  else if (MODEL_ROOT == 'sglobe_iso') then
+    ! uses PREM as reference
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ISOTROPIC_3D_MANTLE = .true.
+    ONE_CRUST = .true.
+    THREE_D_MODEL = THREE_D_MODEL_SGLOBE
+    TRANSVERSE_ISOTROPY = .false. ! converts to isotropic model
+
   else if (MODEL_ROOT == '3D_attenuation') then
     ATTENUATION_3D = .true.
     CASE_3D = .true.
@@ -418,7 +439,8 @@
   else if (MODEL_ROOT == 'GLL' .or. MODEL_ROOT == 'gll') then
     ! model will be given on local basis, at all GLL points,
     ! as from meshfem3d output from routine save_arrays_solver()
-    ! based on model S29EA
+    !
+    ! reference model set in constants.h: GLL_REFERENCE_MODEL and GLL_REFERENCE_1D_MODEL
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -540,15 +562,15 @@
 !---
 
   ! default: PREM
-  ROCEAN = 6368000.d0
-  RMIDDLE_CRUST = 6356000.d0 ! at 15km depth
-  RMOHO = 6346600.d0  ! at 24.4km depth
+  ROCEAN = 6368000.d0         ! at 3km depth
+  RMIDDLE_CRUST = 6356000.d0  ! at 15km depth
+  RMOHO = 6346600.d0          ! at 24.4km depth
   R80  = 6291000.d0
-  R120 = -1.d0   ! by default there is no d120 discontinuity, except in IASP91, therefore set to fictitious value
+  R120 = -1.d0                ! by default there is no d120 discontinuity, except in IASP91, therefore set to fictitious value
   R220 = 6151000.d0
   R400 = 5971000.d0
   R600 = 5771000.d0
-  R670 = 5701000.d0
+  R670 = 5701000.d0           ! at 670km depth
   R771 = 5600000.d0
   RTOPDDOUBLEPRIME = 3630000.d0
   RCMB = 3480000.d0
@@ -565,7 +587,7 @@
     ! IASP91
     ROCEAN = 6371000.d0
     RMIDDLE_CRUST = 6351000.d0
-    RMOHO = 6336000.d0 ! ! at 35km depth
+    RMOHO = 6336000.d0          ! at 35km depth
     R80  = 6291000.d0
     R120 = 6251000.d0
     R220 = 6161000.d0
@@ -588,7 +610,7 @@
 
     ROCEAN = 6368000.d0
     RMIDDLE_CRUST = 6351000.d0
-    RMOHO  = 6336000.d0 ! at 35km depth
+    RMOHO  = 6336000.d0         ! at 35km depth
     R80    = 6293500.d0
     R220   = 6161000.d0
     R400   = 5961000.d0
@@ -631,14 +653,14 @@
 
   else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
     ! REF
-    ROCEAN = 6368000.d0
-    RMIDDLE_CRUST = 6356000.d0
-    RMOHO = 6346600.d0 ! at 24.4km depth
+    ROCEAN = 6368000.d0         ! at 3km depth
+    RMIDDLE_CRUST = 6356000.d0  ! at 15km
+    RMOHO = 6346600.d0          ! at 24.4km depth
     R80  = 6291000.d0
     R220 = 6151000.d0
-    R400 = 5961000.d0 ! 410km discontinuity
+    R400 = 5961000.d0           ! 410km discontinuity
     R600 = 5771000.d0
-    R670 = 5721000.d0 ! 650km discontinuity
+    R670 = 5721000.d0           ! 650km discontinuity
     R771 = 5600000.d0
     RTOPDDOUBLEPRIME = 3630000.d0
     RCMB = 3479958.d0

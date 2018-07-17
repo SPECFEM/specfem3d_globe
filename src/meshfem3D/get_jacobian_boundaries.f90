@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine get_jacobian_boundaries(iboun,nspec,xstore,ystore,zstore, &
+  subroutine get_jacobian_boundaries(iboun,xstore,ystore,zstore, &
               dershape2D_x,dershape2D_y,dershape2D_bottom,dershape2D_top, &
               ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax,ibelm_bottom,ibelm_top, &
               nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
@@ -40,9 +40,10 @@
 
   use constants
 
+  use meshfem3D_par, only: nspec
+
   implicit none
 
-  integer :: nspec
   integer :: NSPEC2D_BOTTOM,NSPEC2D_TOP,NSPEC2DMAX_XMIN_XMAX,NSPEC2DMAX_YMIN_YMAX
 
   integer :: nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax

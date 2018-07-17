@@ -656,7 +656,7 @@
     cmt_lat => cmt_lat_SAC,cmt_lon => cmt_lon_SAC,cmt_depth => cmt_depth_SAC, &
     hdur => cmt_hdur_SAC,M0,Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,event_name_SAC, &
     pde_lat => elat_SAC,pde_lon => elon_SAC,pde_depth => depth_SAC, &
-    mb => mb_SAC,ms,Mw
+    mb => mb_SAC,ms => ms_SAC,Mw
 
   implicit none
   character(len=*) :: quakemlstring

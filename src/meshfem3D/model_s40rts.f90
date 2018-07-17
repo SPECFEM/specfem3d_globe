@@ -46,7 +46,7 @@
   integer, parameter :: NK_20 = 20
   integer, parameter :: NS_40 = 40
 
-  ! model_s20rts_variables
+  ! model_s40rts_variables
   !a = positive m  (radial, theta, phi) --> (k,l,m) (maybe other way around??)
   !b = negative m  (radial, theta, phi) --> (k,l,-m)
   double precision,dimension(:,:,:),allocatable :: &
@@ -76,13 +76,13 @@
   integer :: ier
 
   allocate(S40RTS_V_dvs_a(0:NK_20,0:NS_40,0:NS_40), &
-          S40RTS_V_dvs_b(0:NK_20,0:NS_40,0:NS_40), &
-          S40RTS_V_dvp_a(0:NK_20,0:NS_40,0:NS_40), &
-          S40RTS_V_dvp_b(0:NK_20,0:NS_40,0:NS_40), &
-          S40RTS_V_spknt(NK_20+1), &
-          S40RTS_V_qq0(NK_20+1,NK_20+1), &
-          S40RTS_V_qq(3,NK_20+1,NK_20+1), &
-          stat=ier)
+           S40RTS_V_dvs_b(0:NK_20,0:NS_40,0:NS_40), &
+           S40RTS_V_dvp_a(0:NK_20,0:NS_40,0:NS_40), &
+           S40RTS_V_dvp_b(0:NK_20,0:NS_40,0:NS_40), &
+           S40RTS_V_spknt(NK_20+1), &
+           S40RTS_V_qq0(NK_20+1,NK_20+1), &
+           S40RTS_V_qq(3,NK_20+1,NK_20+1), &
+           stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating S40RTS_V arrays')
 
   ! the variables read are declared and stored in structure S40RTS_V
@@ -190,40 +190,40 @@
   r_cmb = RCMB_ / R_EARTH_
   if (radius >= r_moho .or. radius <= r_cmb) return
 
-  xr=-1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
+  xr = -1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   if (xr > 1.0) print *,'xr > 1.0'
   if (xr < -1.0) print *,'xr < -1.0'
   do k = 0,NK_20
-    radial_basis(k)=s40rts_rsple(1,NK_20+1,S40RTS_V_spknt(1),S40RTS_V_qq0(1,NK_20+1-k),S40RTS_V_qq(1,1,NK_20+1-k),xr)
+    radial_basis(k) = s40rts_rsple(1,NK_20+1,S40RTS_V_spknt(1),S40RTS_V_qq0(1,NK_20+1-k),S40RTS_V_qq(1,1,NK_20+1-k),xr)
   enddo
 
   do l = 0,NS_40
-    sint=dsin(theta)
-    cost=dcos(theta)
+    sint = dsin(theta)
+    cost = dcos(theta)
     call lgndr(l,cost,sint,x,dx)
 
-    dvs_alm=0.0d0
-    dvp_alm=0.0d0
+    dvs_alm = 0.0d0
+    dvp_alm = 0.0d0
     do k = 0,NK_20
-      dvs_alm=dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,0)
-      dvp_alm=dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,0)
+      dvs_alm = dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,0)
+      dvp_alm = dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,0)
     enddo
-    dvs=dvs+dvs_alm*x(1)
-    dvp=dvp+dvp_alm*x(1)
+    dvs = dvs+dvs_alm*x(1)
+    dvp = dvp+dvp_alm*x(1)
 
     do m = 1,l
-      dvs_alm=0.0d0
-      dvp_alm=0.0d0
-      dvs_blm=0.0d0
-      dvp_blm=0.0d0
+      dvs_alm = 0.0d0
+      dvp_alm = 0.0d0
+      dvs_blm = 0.0d0
+      dvp_blm = 0.0d0
       do k = 0,NK_20
-        dvs_alm=dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,m)
-        dvp_alm=dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,m)
-        dvs_blm=dvs_blm+radial_basis(k)*S40RTS_V_dvs_b(k,l,m)
-        dvp_blm=dvp_blm+radial_basis(k)*S40RTS_V_dvp_b(k,l,m)
+        dvs_alm = dvs_alm+radial_basis(k)*S40RTS_V_dvs_a(k,l,m)
+        dvp_alm = dvp_alm+radial_basis(k)*S40RTS_V_dvp_a(k,l,m)
+        dvs_blm = dvs_blm+radial_basis(k)*S40RTS_V_dvs_b(k,l,m)
+        dvp_blm = dvp_blm+radial_basis(k)*S40RTS_V_dvp_b(k,l,m)
       enddo
-      dvs=dvs+(dvs_alm*dcos(dble(m)*phi)+dvs_blm*dsin(dble(m)*phi))*x(m+1)
-      dvp=dvp+(dvp_alm*dcos(dble(m)*phi)+dvp_blm*dsin(dble(m)*phi))*x(m+1)
+      dvs = dvs+(dvs_alm*dcos(dble(m)*phi)+dvs_blm*dsin(dble(m)*phi))*x(m+1)
+      dvp = dvp+(dvp_alm*dcos(dble(m)*phi)+dvp_blm*dsin(dble(m)*phi))*x(m+1)
     enddo
 
   enddo

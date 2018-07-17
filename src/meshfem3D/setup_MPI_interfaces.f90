@@ -31,7 +31,7 @@
   use meshfem3D_par, only: &
     INCLUDE_CENTRAL_CUBE,myrank,NUMFACES_SHARED
 
-  use create_MPI_interfaces_par
+  use MPI_interfaces_par
 
   use MPI_crust_mantle_par
   use MPI_outer_core_par
@@ -44,18 +44,18 @@
   ! local parameters
   ! assigns initial maximum arrays
   ! for global slices, maximum number of neighbor is around 17 ( 8 horizontal, max of 8 on bottom )
-  integer :: MAX_neighborS,max_nibool
+  integer :: MAX_NEIGHBORS,max_nibool
   integer, dimension(:),allocatable :: my_neighbors,nibool_neighbors
   integer, dimension(:,:),allocatable :: ibool_neighbors
   integer :: ier
 
   ! allocates temporary arrays for setup routines
   ! estimates a maximum size of needed arrays
-  MAX_neighborS = 8 + NCORNERSCHUNKS
-  if (INCLUDE_CENTRAL_CUBE ) MAX_neighborS = MAX_neighborS + NUMMSGS_FACES
+  MAX_NEIGHBORS = 8 + NCORNERSCHUNKS
+  if (INCLUDE_CENTRAL_CUBE ) MAX_NEIGHBORS = MAX_NEIGHBORS + NUMMSGS_FACES
 
-  allocate(my_neighbors(MAX_neighborS), &
-          nibool_neighbors(MAX_neighborS),stat=ier)
+  allocate(my_neighbors(MAX_NEIGHBORS), &
+           nibool_neighbors(MAX_NEIGHBORS),stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating my_neighbors array')
   my_neighbors(:) = -1
   nibool_neighbors(:) = 0
@@ -64,7 +64,7 @@
   max_nibool = npoin2D_max_all_CM_IC * NUMFACES_SHARED &
                + non_zero_nb_msgs_theor_in_cube*npoin2D_cube_from_slices
 
-  allocate(ibool_neighbors(max_nibool,MAX_neighborS), stat=ier)
+  allocate(ibool_neighbors(max_nibool,MAX_NEIGHBORS), stat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error allocating ibool_neighbors')
   ibool_neighbors(:,:) = 0
 
@@ -72,18 +72,18 @@
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
     ! crust/mantle
-    call setup_MPI_interfaces_cm(MAX_neighborS,my_neighbors,nibool_neighbors, &
-                                max_nibool,ibool_neighbors)
+    call setup_MPI_interfaces_cm(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                 max_nibool,ibool_neighbors)
 
   case (IREGION_OUTER_CORE)
     ! outer core
-    call setup_MPI_interfaces_oc(MAX_neighborS,my_neighbors,nibool_neighbors, &
-                                max_nibool,ibool_neighbors)
+    call setup_MPI_interfaces_oc(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                 max_nibool,ibool_neighbors)
 
   case (IREGION_INNER_CORE)
     ! inner core
-    call setup_MPI_interfaces_ic(MAX_neighborS,my_neighbors,nibool_neighbors, &
-                                max_nibool,ibool_neighbors)
+    call setup_MPI_interfaces_ic(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                 max_nibool,ibool_neighbors)
   end select
 
   ! frees temporary array
@@ -126,8 +126,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine setup_MPI_interfaces_cm(MAX_neighborS,my_neighbors,nibool_neighbors, &
-                                    max_nibool,ibool_neighbors)
+  subroutine setup_MPI_interfaces_cm(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                     max_nibool,ibool_neighbors)
 
   use meshfem3D_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
@@ -137,13 +137,14 @@
 
   use meshfem3D_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
-  use create_MPI_interfaces_par
+  use MPI_interfaces_par
   use MPI_crust_mantle_par
+
   implicit none
 
-  integer,intent(in) :: MAX_neighborS,max_nibool
-  integer, dimension(MAX_neighborS),intent(inout) :: my_neighbors,nibool_neighbors
-  integer, dimension(max_nibool,MAX_neighborS),intent(inout) :: ibool_neighbors
+  integer,intent(in) :: MAX_NEIGHBORS,max_nibool
+  integer, dimension(MAX_NEIGHBORS),intent(inout) :: my_neighbors,nibool_neighbors
+  integer, dimension(max_nibool,MAX_NEIGHBORS),intent(inout) :: ibool_neighbors
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -196,7 +197,7 @@
     call get_MPI_interfaces(myrank,NGLOB_CRUST_MANTLE,NSPEC_CRUST_MANTLE, &
                               test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
                               num_interfaces_crust_mantle,max_nibool_interfaces_cm, &
-                              max_nibool,MAX_neighborS, &
+                              max_nibool,MAX_NEIGHBORS, &
                               ibool,is_on_a_slice_edge, &
                               IREGION_CRUST_MANTLE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
                               xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
@@ -264,8 +265,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine setup_MPI_interfaces_oc(MAX_neighborS,my_neighbors,nibool_neighbors, &
-                                    max_nibool,ibool_neighbors)
+  subroutine setup_MPI_interfaces_oc(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                     max_nibool,ibool_neighbors)
 
   use meshfem3D_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
@@ -275,13 +276,14 @@
 
   use meshfem3D_par, only: ibool,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
-  use create_MPI_interfaces_par
+  use MPI_interfaces_par
   use MPI_outer_core_par
+
   implicit none
 
-  integer :: MAX_neighborS,max_nibool
-  integer, dimension(MAX_neighborS) :: my_neighbors,nibool_neighbors
-  integer, dimension(max_nibool,MAX_neighborS) :: ibool_neighbors
+  integer :: MAX_NEIGHBORS,max_nibool
+  integer, dimension(MAX_NEIGHBORS) :: my_neighbors,nibool_neighbors
+  integer, dimension(max_nibool,MAX_NEIGHBORS) :: ibool_neighbors
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -336,7 +338,7 @@
     call get_MPI_interfaces(myrank,NGLOB_OUTER_CORE,NSPEC_OUTER_CORE, &
                             test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
                             num_interfaces_outer_core,max_nibool_interfaces_oc, &
-                            max_nibool,MAX_neighborS, &
+                            max_nibool,MAX_NEIGHBORS, &
                             ibool,is_on_a_slice_edge, &
                             IREGION_OUTER_CORE,.false.,dummy_i,INCLUDE_CENTRAL_CUBE, &
                             xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
@@ -403,8 +405,8 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine setup_MPI_interfaces_ic(MAX_neighborS,my_neighbors,nibool_neighbors, &
-                                    max_nibool,ibool_neighbors)
+  subroutine setup_MPI_interfaces_ic(MAX_NEIGHBORS,my_neighbors,nibool_neighbors, &
+                                     max_nibool,ibool_neighbors)
 
   use meshfem3D_par, only: &
     myrank,iproc_xi,iproc_eta,ichunk,addressing,INCLUDE_CENTRAL_CUBE, &
@@ -414,14 +416,14 @@
 
   use meshfem3D_par, only: ibool,idoubling,is_on_a_slice_edge,xstore_glob,ystore_glob,zstore_glob
 
-  use create_MPI_interfaces_par
+  use MPI_interfaces_par
   use MPI_inner_core_par
 
   implicit none
 
-  integer :: MAX_neighborS,max_nibool
-  integer, dimension(MAX_neighborS) :: my_neighbors,nibool_neighbors
-  integer, dimension(max_nibool,MAX_neighborS) :: ibool_neighbors
+  integer :: MAX_NEIGHBORS,max_nibool
+  integer, dimension(MAX_NEIGHBORS) :: my_neighbors,nibool_neighbors
+  integer, dimension(max_nibool,MAX_NEIGHBORS) :: ibool_neighbors
 
   ! local parameters
   ! temporary buffers for send and receive between faces of the slices and the chunks
@@ -521,7 +523,7 @@
     !    call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
     !                          test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
     !                          num_interfaces_inner_core,max_nibool_interfaces_ic, &
-    !                          max_nibool,MAX_neighborS, &
+    !                          max_nibool,MAX_NEIGHBORS, &
     !                          ibool,is_on_a_slice_edge, &
     !                          IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
     !                          xstore_glob,ystore_glob,zstore_glob,NPROCTOT)
@@ -534,7 +536,7 @@
     call get_MPI_interfaces(myrank,NGLOB_INNER_CORE,NSPEC_INNER_CORE, &
                           test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
                           num_interfaces_inner_core,max_nibool_interfaces_ic, &
-                          max_nibool,MAX_neighborS, &
+                          max_nibool,MAX_NEIGHBORS, &
                           ibool,is_on_a_slice_edge, &
                           IREGION_INNER_CORE,.false.,idoubling,INCLUDE_CENTRAL_CUBE, &
                           xstore_glob,ystore_glob,zstore_glob,NPROCTOT)

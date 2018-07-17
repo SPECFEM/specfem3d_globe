@@ -494,7 +494,6 @@
                                            epsilon_trace_over_3,epsilondev_loc)
   endif
 
-
   !
   ! compute either transversely isotropic elements
   !

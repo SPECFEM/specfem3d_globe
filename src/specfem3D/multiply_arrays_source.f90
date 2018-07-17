@@ -103,7 +103,7 @@
       accel_cm(2,i) = accel_cm(2,i)*rmassy_cm(i) - two_omega_earth * veloc_cm(1,i)
       accel_cm(3,i) = accel_cm(3,i)*rmassz_cm(i)
     enddo
-!$OMP enddo NOWAIT
+!$OMP ENDDO NOWAIT
 
     ! inner core
 !$OMP DO
@@ -112,7 +112,7 @@
       accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i) - two_omega_earth * veloc_ic(1,i)
       accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   else
@@ -130,7 +130,7 @@
       accel_cm(2,i) = accel_cm(2,i)*rmassy_cm(i)
       accel_cm(3,i) = accel_cm(3,i)*rmassz_cm(i)
     enddo
-!$OMP enddo NOWAIT
+!$OMP ENDDO NOWAIT
 
     ! inner core
 !$OMP DO
@@ -139,7 +139,7 @@
       accel_ic(2,i) = accel_ic(2,i)*rmassy_ic(i)
       accel_ic(3,i) = accel_ic(3,i)*rmassz_ic(i)
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   endif
@@ -185,37 +185,8 @@
   do i = 1,NGLOB
     accel(i) = accel(i)*rmass(i)
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine multiply_accel_acoustic
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine multiply_arrays_adjoint(sourcearrayd,hxir,hetar,hgammar,adj_src_ud)
-
-  use constants
-
-  implicit none
-
-  double precision, dimension(NDIM,NGLLX,NGLLY,NGLLZ) :: sourcearrayd
-  double precision, dimension(NGLLX) :: hxir
-  double precision, dimension(NGLLY) :: hetar
-  double precision, dimension(NGLLZ) :: hgammar
-  double precision, dimension(NDIM) :: adj_src_ud
-
-  integer :: i,j,k
-
-  ! adds interpolated source contribution to all GLL points within this element
-  do k = 1, NGLLZ
-    do j = 1, NGLLY
-      do i = 1, NGLLX
-        sourcearrayd(:,i,j,k) = hxir(i) * hetar(j) * hgammar(k) * adj_src_ud(:)
-      enddo
-    enddo
-  enddo
-
-  end subroutine multiply_arrays_adjoint
 

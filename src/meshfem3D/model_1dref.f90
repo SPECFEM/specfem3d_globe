@@ -57,10 +57,10 @@
   integer, parameter :: NR_REF = 750
 
   ! model_1dref_variables
-  double precision, dimension(NR_REF) :: Mref_V_radius_ref,Mref_V_density_ref, &
-                                         Mref_V_vpv_ref,Mref_V_vph_ref, &
-                                         Mref_V_vsv_ref,Mref_V_vsh_ref, &
-                                         Mref_V_eta_ref,Mref_V_Qkappa_ref,Mref_V_Qmu_ref
+  double precision, dimension(:),allocatable :: Mref_V_radius_ref,Mref_V_density_ref, &
+                                                Mref_V_vpv_ref,Mref_V_vph_ref, &
+                                                Mref_V_vsv_ref,Mref_V_vsh_ref, &
+                                                Mref_V_eta_ref,Mref_V_Qkappa_ref,Mref_V_Qmu_ref
 
   end module model_1dref_par
 
@@ -77,6 +77,22 @@
   implicit none
 
   logical :: CRUSTAL
+
+  ! local parameters
+  integer :: ier
+
+  ! allocates arrays
+  allocate(Mref_V_radius_ref(NR_REF), &
+           Mref_V_density_ref(NR_REF), &
+           Mref_V_vpv_ref(NR_REF), &
+           Mref_V_vph_ref(NR_REF), &
+           Mref_V_vsv_ref(NR_REF), &
+           Mref_V_vsh_ref(NR_REF), &
+           Mref_V_eta_ref(NR_REF), &
+           Mref_V_Qkappa_ref(NR_REF), &
+           Mref_V_Qmu_ref(NR_REF), &
+           stat=ier)
+  if (ier /= 0 ) stop 'Error allocating 1d_ref arrays'
 
   ! all processes will define same parameters
   call define_model_1dref(CRUSTAL)
@@ -174,12 +190,12 @@
 
   ! non-dimensionalize
   ! time scaling (s^{-1}) is done with scaleval
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  rho=rho/RHOAV
-  vpv=vpv/(R_EARTH*scaleval)
-  vph=vph/(R_EARTH*scaleval)
-  vsv=vsv/(R_EARTH*scaleval)
-  vsh=vsh/(R_EARTH*scaleval)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  rho = rho/RHOAV
+  vpv = vpv/(R_EARTH*scaleval)
+  vph = vph/(R_EARTH*scaleval)
+  vsv = vsv/(R_EARTH*scaleval)
+  vsh = vsh/(R_EARTH*scaleval)
 
   end subroutine model_1dref
 
@@ -195,6 +211,7 @@
   logical :: USE_EXTERNAL_CRUSTAL_MODEL
 
   ! define the 1D REF model of Kustowski et al. (2007)
+  ! table starts at inner core and moves up till surface
 
   Mref_V_radius_ref( 1 : 30 ) = (/ &
   0.d0, &
@@ -886,7 +903,7 @@
   5948334.d0, &
   5954666.d0, &
   5961000.d0, &
-  5961000.d0, &
+  5961000.d0, & ! 410km depth
   5967334.d0, &
   5973666.d0, &
   5980000.d0, &
@@ -919,7 +936,7 @@
   6138334.d0, &
   6144666.d0, &
   6151000.d0, &
-  6151000.d0, &
+  6151000.d0, & ! 220km depth
   6157087.d0, &
   6163174.d0, &
   6169261.d0, &
@@ -945,7 +962,7 @@
   6278826.d0, &
   6284913.d0, &
   6291000.d0, &
-  6291000.d0, &
+  6291000.d0, & ! 80km depth
   6294971.d0, &
   6298943.d0, &
   6302914.d0, &
@@ -960,7 +977,7 @@
   6338657.d0, &
   6342629.d0, &
   6346600.d0, &
-  6346600.d0, &
+  6346600.d0, & ! crustal model: moho depth at 24.4km
   6347540.d0, &
   6348480.d0 /)
 
@@ -983,7 +1000,7 @@
   6364400.d0, &
   6365600.d0, &
   6366800.d0, &
-  6368000.d0, &
+  6368000.d0, & ! 3km depth
   6368000.d0, &
   6368300.d0, &
   6368600.d0, &
@@ -6596,6 +6613,11 @@
   3200.d0, &
   3200.d0 /)
 
+! anisotropy defined between layer
+!   5980000.0   = depth at 391km
+! to
+!   6346600.0   = depth at 24.4km (PREM moho depth)
+
   Mref_V_eta_ref( 1 : 30 ) = (/ &
   1.d0, &
   1.d0, &
@@ -7286,11 +7308,11 @@
   1.d0, &
   1.d0, &
   1.d0, &
+  1.d0, &  ! 410km depth
   1.d0, &
   1.d0, &
-  1.d0, &
-  1.d0, &
-  0.99999d0, &
+  1.d0, &      ! 391km depth
+  0.99999d0, & ! 384.666km depth, at r = 5986.334km
   0.99997d0, &
   0.99995d0, &
   0.99994d0, &
@@ -7359,8 +7381,8 @@
   0.91135d0, &
   0.9114d0, &
   0.91147d0, &
-  0.91155d0, &
-  1.d0, &
+  0.91155d0, &       ! index 717
+  1.d0, &            ! index 718 - crustal model: moho depth at 24.4km
   1.d0, &
   1.d0 /)
 
@@ -7406,6 +7428,7 @@
     Mref_V_vsh_ref(718:750) = Mref_V_vsh_ref(717)
     Mref_V_Qmu_ref(718:750) = Mref_V_Qmu_ref(717)
     Mref_V_Qkappa_ref(718:750) = Mref_V_Qkappa_ref(717)
+    ! daniel: eta missing? Mref_V_eta_ref
   endif
 
   end subroutine define_model_1dref

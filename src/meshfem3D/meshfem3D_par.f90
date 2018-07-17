@@ -74,7 +74,7 @@
     integer :: Qn                 ! Number of points
     integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_attenuation_variables
-  type (model_attenuation_variables) AM_V
+  type (model_attenuation_variables) :: AM_V
   ! model_attenuation_variables
 
   ! model_attenuation_storage_var
@@ -85,7 +85,7 @@
     integer :: Q_resolution
     integer :: Q_max
   end type model_attenuation_storage_var
-  type (model_attenuation_storage_var) AM_S
+  type (model_attenuation_storage_var) :: AM_S
   ! model_attenuation_storage_var
 
   ! attenuation_simplex_variables
@@ -101,7 +101,6 @@
     integer :: nf          ! nf    = Number of Frequencies
     integer :: nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
-  type(attenuation_simplex_variables) AS_V
   ! attenuation_simplex_variables
 
   ! GLL model_variables
@@ -117,7 +116,7 @@
     logical :: MODEL_GLL
     logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
   end type model_gll_variables
-  type (model_gll_variables) MGLL_V
+  type (model_gll_variables) :: MGLL_V
 
   ! bathymetry and topography: use integer array to store values
   integer, dimension(:,:),allocatable :: ibathy_topo
@@ -239,13 +238,19 @@
   ! mesh minimum period resolved
   real(kind=CUSTOM_REAL) :: pmax_glob
 
+  ! number of spectral elements (in current region)
+  integer :: nspec
+
+  ! number of global GLL points (in current region)
+  integer :: nglob
+
   end module meshfem3D_par
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  module create_regions_mesh_par
+  module regions_mesh_par
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NGNOD,NGNOD2D,NDIM,NDIM2D
 
@@ -271,13 +276,13 @@
   double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLZ) :: dershape2D_y
   double precision, dimension(NDIM2D,NGNOD2D,NGLLX,NGLLY) :: dershape2D_bottom,dershape2D_top
 
-  end module create_regions_mesh_par
+  end module regions_mesh_par
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  module create_regions_mesh_par2
+  module regions_mesh_par2
 
   use constants, only: CUSTOM_REAL,N_SLS,MAX_STRING_LEN
 
@@ -353,7 +358,7 @@
   ! layer stretching
   double precision, dimension(:,:), allocatable :: stretch_tab
 
-  ! Boundary Mesh
+  ! Boundary kernel Mesh
   integer :: NSPEC2D_MOHO,NSPEC2D_400,NSPEC2D_670,nex_eta_moho
   integer, dimension(:), allocatable :: ibelm_moho_top,ibelm_moho_bot,ibelm_400_top,ibelm_400_bot, &
     ibelm_670_top,ibelm_670_bot
@@ -370,13 +375,13 @@
   ! name of the database file
   character(len=MAX_STRING_LEN) :: prname, prname_adios
 
-  end module create_regions_mesh_par2
+  end module regions_mesh_par2
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  module create_MPI_interfaces_par
+  module MPI_interfaces_par
 
   use constants, only: &
     CUSTOM_REAL,NDIM,IMAIN, &
@@ -445,7 +450,7 @@
   real(kind=CUSTOM_REAL), dimension(:,:),allocatable :: &
      buffer_send_chunkcorn_vector,buffer_recv_chunkcorn_vector
 
-  end module create_MPI_interfaces_par
+  end module MPI_interfaces_par
 
 !
 !-------------------------------------------------------------------------------------------------

@@ -1,0 +1,12 @@
+# regular mesh locations
+#
+# see parameters in setup/constants.h
+# dimension set by: KL_REG_MIN_LON,KL_REG_MAX_LON
+#                   KL_REG_MIN_LAT,KL_REG_MAX_LAT
+#
+#DLON   #DLAT increments
+2.0   2.0
+#r (radius in km) #i (number of doublings)
+6371.0    1
+6321.0    1
+6271.0    1

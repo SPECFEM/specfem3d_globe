@@ -142,6 +142,10 @@
         ! GAP model
         call model_gapp2_broadcast()
 
+      case (THREE_D_MODEL_SGLOBE)
+        ! SGLOBE-rani model
+        call model_sglobe_broadcast()
+
       case default
         call exit_MPI(myrank,'3D model not defined')
 
@@ -174,7 +178,7 @@
 
   ! attenuation
   if (ATTENUATION) then
-    call model_attenuation_broadcast(AM_V,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+    call model_attenuation_broadcast(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
 
     ! 3D attenuation
     if (ATTENUATION_3D) then
@@ -183,8 +187,7 @@
     else
       ! sets up attenuation coefficients according to the chosen, "pure" 1D model
       ! (including their 1D-crustal profiles)
-      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB, &
-                                   R670,R220,R80,AM_V,AM_S,AS_V,CRUSTAL)
+      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,CRUSTAL)
     endif
 
   endif
@@ -266,15 +269,15 @@
 
   implicit none
 
-  integer iregion_code,idoubling
-  double precision r_prem,rho
-  double precision vpv,vph,vsv,vsh,eta_aniso
-  double precision Qkappa,Qmu
-  double precision RICB,RCMB,RTOPDDOUBLEPRIME,R80,R120,R220,R400, &
+  integer :: iregion_code,idoubling
+  double precision :: r_prem,rho
+  double precision :: vpv,vph,vsv,vsh,eta_aniso
+  double precision :: Qkappa,Qmu
+  double precision :: RICB,RCMB,RTOPDDOUBLEPRIME,R80,R120,R220,R400, &
     R600,R670,R771,RMOHO,RMIDDLE_CRUST,ROCEAN
 
   ! local parameters
-  double precision drhodr,vp,vs
+  double precision :: drhodr,vp,vs
 
 !---
 !
@@ -288,10 +291,20 @@
     case (REFERENCE_MODEL_PREM)
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
       if (TRANSVERSE_ISOTROPY) then
-        ! get the anisotropic PREM parameters
-        call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                  Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                  R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
+        if (THREE_D_MODEL == THREE_D_MODEL_S20RTS &
+            .or. THREE_D_MODEL == THREE_D_MODEL_S40RTS &
+            .or. THREE_D_MODEL == THREE_D_MODEL_SGLOBE) then
+          ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
+          call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                    Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        else
+          ! gets anisotropic PREM parameters, with radial anisotropic extension (from moho to surface for crustal model)
+          call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                    Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        endif
       else
         ! isotropic model
         call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
@@ -344,7 +357,7 @@
 
   ! needs to set vpv,vph,vsv,vsh and eta_aniso for isotropic models
   if (.not. TRANSVERSE_ISOTROPY) then
-     ! in the case of s362iso we want to save the anisotropic constants for the Voight average
+     ! in the case of s362iso we want to save the anisotropic constants for the Voigt average
      if (.not. (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF .and. ISOTROPIC_3D_MANTLE)) then
       vpv = vp
       vph = vp
@@ -440,7 +453,7 @@
 
   ! gets parameters for isotropic 3D mantle model
   !
-  ! note: there can be transverse isotropy in the mantle, but only Lam'e parameters
+  ! note: there can be transverse isotropy in the mantle, but only Lame parameters
   !           like kappav,kappah,muv,muh and eta_aniso are used for these simulations
   !
   ! note: in general, models here make use of perturbation values with respect to their
@@ -550,15 +563,18 @@
         endif
 
         if (TRANSVERSE_ISOTROPY) then
+          ! tiso perturbation
           vpv = vpv*(1.0d0+dble(xdvpv))
           vph = vph*(1.0d0+dble(xdvph))
           vsv = vsv*(1.0d0+dble(xdvsv))
           vsh = vsh*(1.0d0+dble(xdvsh))
         else
+          ! isotropic model
           vpv = vpv+xdvpv
           vph = vph+xdvph
           vsv = vsv+xdvsv
           vsh = vsh+xdvsh
+          ! isotropic average (considers anisotropic parameterization eta,vsv,vsh,vpv,vph)
           vp = sqrt(((8.d0+4.d0*eta_aniso)*vph*vph + 3.d0*vpv*vpv &
                     + (8.d0 - 8.d0*eta_aniso)*vsv*vsv)/15.d0)
           vs = sqrt(((1.d0-2.d0*eta_aniso)*vph*vph + vpv*vpv &
@@ -567,10 +583,10 @@
           vph = vp
           vsv = vs
           vsh = vs
-          eta_aniso=1.0d0
+          eta_aniso = 1.0d0
         endif
 
-      case (THREE_D_MODEL_PPM )
+      case (THREE_D_MODEL_PPM)
         ! point profile model
         call model_PPM(r_used,theta,phi,dvs,dvp,drho)
         vpv = vpv*(1.0d0+dvp)
@@ -579,13 +595,40 @@
         vsh = vsh*(1.0d0+dvs)
         rho = rho*(1.0d0+drho)
 
-      case (THREE_D_MODEL_GAPP2 )
+      case (THREE_D_MODEL_GAPP2)
         ! 3D GAP model (Obayashi)
         call mantle_gapmodel(r_used,theta,phi,dvs,dvp,drho)
         vpv = vpv*(1.0d0+dvp)
         vph = vph*(1.0d0+dvp)
         vsv = vsv*(1.0d0+dvs)
         vsh = vsh*(1.0d0+dvs)
+        rho = rho*(1.0d0+drho)
+
+      case (THREE_D_MODEL_SGLOBE)
+        ! 3D SGLOBE-rani model (Chang)
+        call mantle_sglobe(r_used,theta,phi,dvsv,dvsh,dvp,drho)
+
+        if (TRANSVERSE_ISOTROPY) then
+          ! tiso perturbation
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvsv)
+          vsh = vsh*(1.0d0+dvsh)
+        else
+          ! isotropic model
+          vpv = vpv*(1.0d0+dvp)
+          vph = vph*(1.0d0+dvp)
+          vsv = vsv*(1.0d0+dvsv)
+          vsh = vsh*(1.0d0+dvsh)
+          ! Voigt average
+          vp = sqrt( (2.0*vpv**2 + vph**2)/3.d0 )
+          vs = sqrt( (2.0*vsv**2 + vsh**2)/3.d0 )
+          vph = vp
+          vpv = vp
+          vsh = vs
+          vsv = vs
+          eta_aniso = 1.d0
+        endif
         rho = rho*(1.0d0+drho)
 
       case default
@@ -626,7 +669,7 @@
         endif
       endif
       call model_aniso_mantle(r_used,theta,phi,rho,c11,c12,c13,c14,c15,c16, &
-                        c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
+                              c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66)
 
     else
       ! fills the rest of the mantle with the isotropic model
@@ -674,7 +717,7 @@
 !         !call model_attenuation_1D_PREM(r_prem, Qmu, idoubling)
 !          call model_atten3D_QRFSI12(r_prem*R_EARTH_KM,theta_degrees,phi_degrees,Qmu,idoubling)
 !          ! Get tau_e from tau_s and Qmu
-!         call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
+!         call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e)
 !       endif
 
   end subroutine meshfem3D_models_get3Dmntl_val
@@ -779,8 +822,10 @@
 
     ! sets anisotropy in crustal region as well
     if (ANISOTROPIC_3D_MANTLE .and. iregion_code == IREGION_CRUST_MANTLE) then
-      c11 = rho*vpv*vpv
-      c12 = rho*(vpv*vpv-2.*vsv*vsv)
+      ! equivalent with an isotropic elastic tensor (given vpv and vsv as isotropic wave speeds)
+      ! note: todo - this could be written as a transversely isotropic tensor (given vphc,vpvc,vshc,vsvc and etac from above)
+      c11 = rho * vpv*vpv
+      c12 = rho * (vpv*vpv - 2.d0*vsv*vsv)
       c13 = c12
       c14 = 0.d0
       c15 = 0.d0
@@ -794,7 +839,7 @@
       c34 = 0.d0
       c35 = 0.d0
       c36 = 0.d0
-      c44 = rho*vsv*vsv
+      c44 = rho * vsv*vsv
       c45 = 0.d0
       c46 = 0.d0
       c55 = c44
@@ -1010,7 +1055,7 @@
   endif
 
   ! Get tau_e from tau_s and Qmu
-  call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e, AM_V, AM_S, AS_V)
+  call model_attenuation_getstored_tau(Qmu, T_c_source, tau_s, tau_e)
 
   end subroutine meshfem3D_models_getatten_val
 

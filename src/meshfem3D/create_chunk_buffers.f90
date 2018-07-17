@@ -27,17 +27,18 @@
 
 ! subroutine to create MPI buffers to assemble between chunks
 
-  subroutine create_chunk_buffers(iregion_code,nspec,ibool,idoubling, &
-                                  xstore,ystore,zstore,nglob_ori, &
+  subroutine create_chunk_buffers(iregion_code,ibool,idoubling, &
+                                  xstore,ystore,zstore, &
                                   NGLOB1D_RADIAL_CORNER,NGLOB1D_RADIAL_MAX, &
                                   NGLOB2DMAX_XMIN_XMAX,NGLOB2DMAX_YMIN_YMAX)
 
   use meshfem3D_par, only: &
+    nspec, nglob, &
     myrank,LOCAL_PATH,NCHUNKS,addressing, &
     ichunk_slice,iproc_xi_slice,iproc_eta_slice, &
     NPROC_XI,NPROC_ETA,NPROC,NPROCTOT
 
-  use create_MPI_interfaces_par, only: &
+  use MPI_interfaces_par, only: &
     ibool1D_leftxi_lefteta,ibool1D_rightxi_lefteta, &
     ibool1D_leftxi_righteta,ibool1D_rightxi_righteta, &
     xyz1D_leftxi_lefteta,xyz1D_rightxi_lefteta, &
@@ -47,7 +48,7 @@
     iproc_master_corners,iproc_worker1_corners,iproc_worker2_corners, &
     npoin2D_faces,iboolfaces,iboolcorner
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     nspec2D_xmin,nspec2D_xmax,nspec2D_ymin,nspec2D_ymax, &
     ibelm_xmin,ibelm_xmax,ibelm_ymin,ibelm_ymax
 
@@ -55,8 +56,7 @@
 
   implicit none
 
-  integer :: iregion_code
-  integer :: nspec
+  integer,intent(in) :: iregion_code
 
   ! array with the local to global mapping per slice
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
@@ -64,8 +64,6 @@
 
   ! arrays with the mesh
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
-
-  integer :: nglob_ori
 
   integer, dimension(MAX_NUM_REGIONS,NB_SQUARE_CORNERS) :: NGLOB1D_RADIAL_CORNER
 
@@ -246,8 +244,7 @@
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary arrays in create_chunk_buffers')
 
   ! allocate mask for ibool
-  allocate(mask_ibool(nglob_ori), &
-          stat=ier)
+  allocate(mask_ibool(nglob),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary mask in create_chunk_buffers')
 
   ! file output
@@ -519,7 +516,7 @@
               iproc_eta /= 0 .and. iproc_eta /= NPROC_ETA-1) &
               call exit_MPI(myrank,'slice not on any edge')
 
-            nglob_buffer = nglob_ori
+            nglob_buffer = nglob
 
             ! check that iboolmax == nglob_buffer
             if (minval(ibool(:,:,:,1:nspec)) /= 1 .or. maxval(ibool(:,:,:,1:nspec)) /= nglob_buffer) &

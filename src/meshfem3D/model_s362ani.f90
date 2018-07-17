@@ -57,15 +57,12 @@
   integer, parameter :: maxver = 1000
   integer, parameter :: maxhpa = 2
 
-  real(kind=4),dimension(:,:),allocatable :: conpt,xlaspl,xlospl,radspl,coe
+  real(kind=4),dimension(:,:),allocatable :: xlaspl,xlospl,radspl,coe
   real(kind=4),dimension(:),allocatable :: vercof,vercofd
 
-  real(kind=4),dimension(:,:),allocatable :: ylmcof
-  real(kind=4),dimension(:),allocatable :: wk1,wk2,wk3
+  integer, dimension(:),allocatable :: lmxhpa,itypehpa,numcoe
 
-  integer, dimension(:),allocatable :: lmxhpa,itypehpa,numcoe,nconpt
-
-  integer,dimension(:,:),allocatable :: itpspl,iconpt
+  integer,dimension(:,:),allocatable :: itpspl
   integer,dimension(:),allocatable :: ihpakern,ivarkern
 
   integer :: numker,numhpa
@@ -97,26 +94,19 @@
   integer :: ier
 
   ! allocates model arrays
-  allocate(conpt(maxver,maxhpa), &
-           xlaspl(maxcoe,maxhpa), &
+  allocate(xlaspl(maxcoe,maxhpa), &
            xlospl(maxcoe,maxhpa), &
            radspl(maxcoe,maxhpa), &
            coe(maxcoe,maxker), &
            vercof(maxker), &
            vercofd(maxker), &
-           ylmcof((maxl+1)**2,maxhpa), &
-           wk1(maxl+1), &
-           wk2(maxl+1), &
-           wk3(maxl+1), &
            itpspl(maxcoe,maxhpa), &
-           iconpt(maxver,maxhpa), &
            ihpakern(maxker), &
            ivarkern(maxker), &
            stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating s362ani arrays')
 
   ! initializes
-  conpt(:,:) = 0.0
   xlaspl(:,:) = 0.0
   xlospl(:,:) = 0.0
   radspl(:,:) = 0.0
@@ -125,25 +115,18 @@
   vercof(:) = 0.0
   vercofd(:) = 0.0
 
-  ylmcof(:,:) = 0.0
-  wk1(:) = 0.0
-  wk2(:) = 0.0
-  wk3(:) = 0.0
-
   itpspl(:,:) = 0
-  iconpt(:,:) = 0
   ihpakern(:) = 0
   ivarkern(:) = 0
 
   ! allocates
-  allocate(lmxhpa(maxhpa),itypehpa(maxhpa),numcoe(maxhpa),nconpt(maxhpa),stat=ier)
+  allocate(lmxhpa(maxhpa),itypehpa(maxhpa),numcoe(maxhpa),stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating s362ani lmxhpa, .. arrays')
 
   ! initializes
   lmxhpa(:) = 0
   itypehpa(:) = 0
   numcoe(:) = 0
-  nconpt(:) = 0
 
   ! master process
   if (myrank == 0) call read_model_s362ani(THREE_D_MODEL)
@@ -271,26 +254,26 @@
   ierror = 0
   lstr = len_trim(string)
 
-  radius = r0-depth
+  radius = r0 - depth
   ddep = 0.1
-  radius2 = r0-depth+ddep
+  radius2 = r0 - depth + ddep
   upper = .false.
   lower = .false.
   if (radius > rcmb .and. radius < r670) then
-    lower=.true.
+    lower = .true.
   else if (radius >= r670 .and. radius < rmoho) then
-    upper=.true.
+    upper = .true.
   endif
-  upper_650=.false.
-  lower_650=.false.
+  upper_650 = .false.
+  lower_650 = .false.
   if (radius > rcmb .and. radius < r650) then
-    lower_650=.true.
+    lower_650 = .true.
   else if (radius >= r650 .and. radius < rmoho) then
-    upper_650=.true.
+    upper_650 = .true.
   endif
   do iker = 1,nker
-    vercof(iker)=0.0
-    dvercof(iker)=0.0
+    vercof(iker) = 0.0
+    dvercof(iker) = 0.0
   enddo
 
   if (string(1:16) == 'WDC+SPC_U4L8CHEB') then
@@ -298,28 +281,28 @@
     nlower = 9
     nskip = 2
     if (upper) then
-      u=(radius+radius-rmoho-r670)/(rmoho-r670)
-      u2=(radius2+radius2-rmoho-r670)/(rmoho-r670)
+      u = (radius+radius-rmoho-r670)/(rmoho-r670)
+      u2 = (radius2+radius2-rmoho-r670)/(rmoho-r670)
   !   write(6,"('upper mantle:',2f10.3)") u,u2
       call chebyfun(u,13,chebyshev)
       do i = 1+nskip,nskip+nupper
-        vercof(i)=chebyshev(i-nskip)
+        vercof(i) = chebyshev(i-nskip)
       enddo
       call chebyfun(u2,13,chebyshev2)
       do i = 1+nskip,nskip+nupper
-        dvercof(i)=(chebyshev2(i-nskip)-chebyshev(i-nskip))/ddep
+        dvercof(i) = (chebyshev2(i-nskip)-chebyshev(i-nskip))/ddep
       enddo
     else if (lower) then
-      u=(radius+radius-r670-rcmb)/(r670-rcmb)
-      u2=(radius2+radius2-r670-rcmb)/(r670-rcmb)
+      u = (radius+radius-r670-rcmb)/(r670-rcmb)
+      u2 = (radius2+radius2-r670-rcmb)/(r670-rcmb)
   !   write(6,"('lower mantle:',2f10.3)") u,u2
       call chebyfun(u,13,chebyshev)
       do i = 1+nskip+nupper,nskip+nupper+nlower
-        vercof(i)=chebyshev(i-nskip-nupper)
+        vercof(i) = chebyshev(i-nskip-nupper)
       enddo
       call chebyfun(u2,13,chebyshev2)
       do i = 1+nskip+nupper,nskip+nupper+nlower
-        dvercof(i)=(chebyshev2(i-nskip-nupper) - chebyshev(i-nskip-nupper))/ddep
+        dvercof(i) = (chebyshev2(i-nskip-nupper) - chebyshev(i-nskip-nupper))/ddep
       enddo
     endif
   else if (string(1:13) == 'WDC+SHSVWM20A') then
@@ -784,30 +767,30 @@
 
   integer :: kmax
 
-  real(kind=4) :: chebycoeff(0:13),f(0:kmax),u
+  real(kind=4),intent(in) :: u
+  real(kind=4),intent(out) :: f(0:kmax)
 
+  ! local parameters
   integer :: k
-
   real(kind=4) :: twou
-
-  data chebycoeff / &
-   0.70710678118655,1.2247448713916,1.0350983390135,1.0145993123918, &
-   1.00803225754840,1.0050890913907,1.0035149493262,1.0025740068320, &
-   1.00196657023780,1.0015515913133,1.0012554932754,1.0010368069141, &
-   1.00087070107920,1.0007415648034 /
+  real(kind=4), dimension(0:13), parameter :: chebycoeff = &
+    (/ 0.70710678118655,1.2247448713916,1.0350983390135,1.0145993123918, &
+       1.00803225754840,1.0050890913907,1.0035149493262,1.0025740068320, &
+       1.00196657023780,1.0015515913133,1.0012554932754,1.0010368069141, &
+       1.00087070107920,1.0007415648034 /)
 
   if (kmax > 13) stop 'Error kmax exceeds the limit in chebyfun'
 
-  f(0)=1.0
-  f(1)=u
-  twou=2.0*u
+  f(0) = 1.0
+  f(1) = u
+  twou = 2.0*u
 
-  do k=2,kmax
+  do k = 2,kmax
    f(k) = twou*f(k-1)-f(k-2)
   enddo
 
   do k = 0,kmax
-   f(k)=f(k)*chebycoeff(k)
+   f(k) = f(k)*chebycoeff(k)
   enddo
 
   end subroutine chebyfun
@@ -1110,7 +1093,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine splcon(xlat,xlon,numcoe,verlat,verlon,verrad,ncon,icon,con,dd)
+  subroutine splcon(xlat,xlon,numcoe,verlat,verlon,verrad,ncon,icon,con)
 
   use constants, only: DEGREES_TO_RADIANS,RADIANS_TO_DEGREES
 
@@ -1118,26 +1101,26 @@
 
   implicit none
 
+  real(kind=4),intent(in) :: xlat,xlon
+
   integer, intent(in) :: numcoe
-  integer, intent(out) :: ncon
 
   real(kind=4), intent(in) :: verlat(numcoe)
   real(kind=4), intent(in) :: verlon(numcoe)
   real(kind=4), intent(in) :: verrad(numcoe)
 
+  integer, intent(out) :: ncon
   integer, intent(out) :: icon(maxver)
   real(kind=4), intent(out) :: con(maxver)
-
-  double precision, dimension(maxcoe) :: dd
 
   ! local parameters
   double precision :: rn
   double precision :: dr
   double precision :: ver8
   double precision :: xla8
+  double precision, dimension(maxcoe) :: dd
 
   integer :: iver
-  real(kind=4) :: xlat,xlon
 
   ! safety check
   if (numcoe > maxcoe ) stop 'Error: numcoe > maxver in splcon() routine'
@@ -1210,8 +1193,12 @@
   character(len=40) :: vstr
   integer :: lstr
   integer :: ierror
-
-  double precision, dimension(maxcoe) :: dd
+  ! spherical harmonics
+  real(kind=4),dimension((maxl+1)**2,maxhpa) :: ylmcof
+  ! splines
+  real(kind=4),dimension(maxver,maxhpa) :: conpt
+  integer,dimension(maxhpa) :: nconpt
+  integer,dimension(maxver,maxhpa) :: iconpt
 
   real(kind=4), parameter :: r0 = R_EARTH_KM ! 6371.0
 
@@ -1227,21 +1214,22 @@
   do ish = 0,1
 
     ! contributing horizontal basis functions at xlat,xlon
-    y = 90.0-xcolat
+    y = 90.0 - xcolat
     x = xlon
 
+    ! sets up coefficients
     do ihpa = 1,numhpa
       if (itypehpa(ihpa) == 1) then
+        ! spherical harmonic expansion
         lmax = lmxhpa(ihpa)
-        call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
+        call ylm(y,x,lmax,ylmcof(1,ihpa))
 
       else if (itypehpa(ihpa) == 2) then
-        numcof = numcoe(ihpa)
         ! spline setup
+        numcof = numcoe(ihpa)
         call splcon(y,x,numcof,xlaspl(1,ihpa), &
                     xlospl(1,ihpa),radspl(1,ihpa), &
-                    nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa),dd)
-
+                    nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
       else
         write(6,"('problem 1')")
       endif
@@ -1249,15 +1237,16 @@
 
     ! evaluate 3-D perturbations in velocity and anisotropy
 
-    valu(1)=0.0 ! --- velocity
-    valu(2)=0.0 ! --- anisotropy
+    valu(1) = 0.0 ! --- velocity
+    valu(2) = 0.0 ! --- anisotropy
 
     do ieval = 1,2
-      valueval=0.0
+      valueval = 0.0
+
       do iker = 1,numker
         isel = 0
-        lstr=len_trim(varstr(ivarkern(iker)))
-        vstr=(varstr(ivarkern(iker)))
+        lstr = len_trim(varstr(ivarkern(iker)))
+        vstr = (varstr(ivarkern(iker)))
         if (ieval == 1) then
           if (vstr(1:lstr) == 'UM (SH+SV)*0.5,' .or. vstr(1:lstr) == 'LM (SH+SV)*0.5,' .or. &
              vstr(1:lstr) == 'EA (SH+SV)*0.5,') then
@@ -1273,17 +1262,19 @@
         if (isel == 1) then
           if (vercof(iker) /= 0.0) then
             if (itypehpa(ihpakern(iker)) == 1) then
-              ihpa=ihpakern(iker)
-              nylm=(lmxhpa(ihpakern(iker))+1)**2
+              ! spherical harmonics
+              ihpa = ihpakern(iker)
+              nylm = (lmxhpa(ihpakern(iker))+1)**2
               do i = 1,nylm
-                valueval=valueval+vercof(iker)*ylmcof(i,ihpa)*coe(i,iker)
+                valueval = valueval + vercof(iker)*ylmcof(i,ihpa)*coe(i,iker)
               enddo
 
             else if (itypehpa(ihpakern(iker)) == 2) then
-              ihpa=ihpakern(iker)
+              ! splines
+              ihpa = ihpakern(iker)
               do i = 1,nconpt(ihpa)
-                iver=iconpt(i,ihpa)
-                valueval=valueval+vercof(iker)*conpt(i,ihpa)*coe(iver,iker)
+                iver = iconpt(i,ihpa)
+                valueval = valueval + vercof(iker)*conpt(i,ihpa)*coe(iver,iker)
               enddo
 
             else
@@ -1293,14 +1284,15 @@
         endif ! --- isel == 1
       enddo ! --- end of do iker = 1,numker
 
-      valu(ieval)=valueval
+      valu(ieval) = valueval
+
     enddo ! --- ieval
 
     ! evaluate perturbations in vsh and vsv
     if (ish == 1) then
-      vsh3drel=valu(1)+0.5*valu(2)
+      vsh3drel = valu(1) + 0.5*valu(2)
     else if (ish == 0) then
-      vsv3drel=valu(1)-0.5*valu(2)
+      vsv3drel = valu(1) - 0.5*valu(2)
     else
       stop 'something is wrong in model_s362ani_subshsv'
     endif
@@ -1323,7 +1315,10 @@
 
   subroutine model_s362ani_subtopo(xcolat,xlon,topo410,topo650)
 
-  use model_s362ani_par
+  use model_s362ani_par, only: numhpa,itypehpa,lmxhpa,maxcoe,numcoe,coe, &
+    xlaspl,xlospl,radspl, &
+    numker,ihpakern,ivarkern,varstr, &
+    maxl,maxhpa,maxver,maxhpa
 
   implicit none
 
@@ -1341,24 +1336,30 @@
   integer :: lmax,nylm,numcof
   character(len=40) :: vstr
   integer :: lstr
-
-  double precision, dimension(maxcoe) :: dd
-
+  ! spherical harmonics
+  real(kind=4),dimension((maxl+1)**2,maxhpa) :: ylmcof
+  ! splines
+  real(kind=4),dimension(maxver,maxhpa) :: conpt
+  integer,dimension(maxhpa) :: nconpt
+  integer,dimension(maxver,maxhpa) :: iconpt
 
   ! contributing horizontal basis functions at xlat,xlon
   y = 90.0 - xcolat
   x = xlon
 
+  ! sets up coefficients
   do ihpa = 1,numhpa
     if (itypehpa(ihpa) == 1) then
+      ! spherical harmonics
       lmax = lmxhpa(ihpa)
-      call ylm(y,x,lmax,ylmcof(1,ihpa),wk1,wk2,wk3)
+      call ylm(y,x,lmax,ylmcof(1,ihpa))
 
     else if (itypehpa(ihpa) == 2) then
+      ! splines
       numcof = numcoe(ihpa)
       call splcon(y,x,numcof,xlaspl(1,ihpa), &
                   xlospl(1,ihpa),radspl(1,ihpa), &
-                  nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa),dd)
+                  nconpt(ihpa),iconpt(1,ihpa),conpt(1,ihpa))
 
     else
       write(6,"('problem 1')")
@@ -1370,24 +1371,32 @@
   valu(1) = 0.0 ! --- 410
   valu(2) = 0.0 ! --- 650
 
+  ! evaluates topography perturbation for 410/670 discontinuities
   do ieval = 1,2
     valueval = 0.0
+
     do iker = 1,numker
       isel = 0
-      lstr=len_trim(varstr(ivarkern(iker)))
-      vstr=(varstr(ivarkern(iker)))
+      lstr = len_trim(varstr(ivarkern(iker)))
+      vstr = (varstr(ivarkern(iker)))
+
+      ! selects discontinuity
       if (ieval == 1) then
+        ! treats discontinuity 410
         if (vstr(1:lstr) == 'Topo 400,') then
           isel = 1
         endif
       else if (ieval == 2) then
+        ! treats discontinuity 670
         if (vstr(1:lstr) == 'Topo 670,') then
           isel = 1
         endif
       endif
 
+      ! evaluates value
       if (isel == 1) then
         if (itypehpa(ihpakern(iker)) == 1) then
+          ! spherical harmonics
           ihpa = ihpakern(iker)
           nylm = (lmxhpa(ihpakern(iker))+1)**2
           do i = 1,nylm
@@ -1395,6 +1404,7 @@
           enddo
 
         else if (itypehpa(ihpakern(iker)) == 2) then
+          ! splines
           ihpa = ihpakern(iker)
           do i = 1,nconpt(ihpa)
             iver = iconpt(i,ihpa)
@@ -1465,290 +1475,290 @@
 
   if (ib == 1) then
 
-    r1=(x-xarr(1))/(xarr(2)-xarr(1))
-    r2=(xarr(3)-x)/(xarr(3)-xarr(1))
-    r4=(xarr(2)-x)/(xarr(2)-xarr(1))
-    r5=(x-xarr(1))/(xarr(2)-xarr(1))
-    r6=(xarr(3)-x)/(xarr(3)-xarr(1))
-   r10=(xarr(2)-x)/(xarr(2)-xarr(1))
-   r11=(x-xarr(1))  /(xarr(2)-xarr(1))
-   r12=(xarr(3)-x)/(xarr(3)-xarr(2))
-   r13=(xarr(2)-x)/(xarr(2)-xarr(1))
+    r1 = (x-xarr(1))/(xarr(2)-xarr(1))
+    r2 = (xarr(3)-x)/(xarr(3)-xarr(1))
+    r4 = (xarr(2)-x)/(xarr(2)-xarr(1))
+    r5 = (x-xarr(1))/(xarr(2)-xarr(1))
+    r6 = (xarr(3)-x)/(xarr(3)-xarr(1))
+    r10 = (xarr(2)-x)/(xarr(2)-xarr(1))
+    r11 = (x-xarr(1))  /(xarr(2)-xarr(1))
+    r12 = (xarr(3)-x)/(xarr(3)-xarr(2))
+    r13 = (xarr(2)-x)/(xarr(2)-xarr(1))
 
-    r1d=1.0/(xarr(2)-xarr(1))
-    r2d=-1.0/(xarr(3)-xarr(1))
-    r4d=-1.0/(xarr(2)-xarr(1))
-    r5d=1.0/(xarr(2)-xarr(1))
-    r6d=-1.0/(xarr(3)-xarr(1))
-   r10d=-1.0/(xarr(2)-xarr(1))
-   r11d=1.0/(xarr(2)-xarr(1))
-   r12d=-1.0/(xarr(3)-xarr(2))
-   r13d=-1.0/(xarr(2)-xarr(1))
+    r1d = 1.0/(xarr(2)-xarr(1))
+    r2d = -1.0/(xarr(3)-xarr(1))
+    r4d = -1.0/(xarr(2)-xarr(1))
+    r5d = 1.0/(xarr(2)-xarr(1))
+    r6d = -1.0/(xarr(3)-xarr(1))
+    r10d = -1.0/(xarr(2)-xarr(1))
+    r11d = 1.0/(xarr(2)-xarr(1))
+    r12d = -1.0/(xarr(3)-xarr(2))
+    r13d = -1.0/(xarr(2)-xarr(1))
 
     if (interval == ib .or. interval == 0) then
 
-         if (iflag == 0) then
-           val=r1*r4*r10 + r2*r5*r10 + r2*r6*r11 +r13**3
-           vald=r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
-           vald=vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
-           vald=vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
-           vald=vald+3.*r13d*r13**2
-         else if (iflag == 1) then
-           val=0.6667*(r1*r4*r10 + r2*r5*r10 + r2*r6*r11 + 1.5*r13**3)
-           vald=r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
-           vald=vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
-           vald=vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
-           vald=vald+4.5*r13d*r13**2
-           vald=0.6667*vald
-         endif
+      if (iflag == 0) then
+        val = r1*r4*r10 + r2*r5*r10 + r2*r6*r11 +r13**3
+        vald = r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
+        vald = vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
+        vald = vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
+        vald = vald+3.*r13d*r13**2
+      else if (iflag == 1) then
+        val = 0.6667*(r1*r4*r10 + r2*r5*r10 + r2*r6*r11 + 1.5*r13**3)
+        vald = r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
+        vald = vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
+        vald = vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
+        vald = vald+4.5*r13d*r13**2
+        vald = 0.6667*vald
+      endif
     else if (interval == ib+1) then
-         if (iflag == 0) then
-           val=r2*r6*r12
-           vald=r2d*r6*r12+r2*r6d*r12+r2*r6*r12d
-         else if (iflag == 1) then
-           val=0.6667*r2*r6*r12
-           vald=0.6667*(r2d*r6*r12+r2*r6d*r12+r2*r6*r12d)
-         endif
+      if (iflag == 0) then
+        val = r2*r6*r12
+        vald = r2d*r6*r12+r2*r6d*r12+r2*r6*r12d
+      else if (iflag == 1) then
+        val = 0.6667*r2*r6*r12
+        vald = 0.6667*(r2d*r6*r12+r2*r6d*r12+r2*r6*r12d)
+      endif
     else
-      val=0.0
+      val = 0.0
     endif
 
   else if (ib == 2) then
 
-    rr1=(x-xarr(1))/(xarr(2)-xarr(1))
-    rr2=(xarr(3)-x)/(xarr(3)-xarr(1))
-    rr4=(xarr(2)-x)/(xarr(2)-xarr(1))
-    rr5=(x-xarr(1))/(xarr(2)-xarr(1))
-    rr6=(xarr(3)-x)/(xarr(3)-xarr(1))
-   rr10=(xarr(2)-x)/(xarr(2)-xarr(1))
-   rr11=(x-xarr(1))  /(xarr(2)-xarr(1))
-   rr12=(xarr(3)-x)/(xarr(3)-xarr(2))
+    rr1 = (x-xarr(1))/(xarr(2)-xarr(1))
+    rr2 = (xarr(3)-x)/(xarr(3)-xarr(1))
+    rr4 = (xarr(2)-x)/(xarr(2)-xarr(1))
+    rr5 = (x-xarr(1))/(xarr(2)-xarr(1))
+    rr6 = (xarr(3)-x)/(xarr(3)-xarr(1))
+    rr10 = (xarr(2)-x)/(xarr(2)-xarr(1))
+    rr11 = (x-xarr(1))  /(xarr(2)-xarr(1))
+    rr12 = (xarr(3)-x)/(xarr(3)-xarr(2))
 
-    rr1d=1.0/(xarr(2)-xarr(1))
-    rr2d=-1.0/(xarr(3)-xarr(1))
-    rr4d=-1.0/(xarr(2)-xarr(1))
-    rr5d=1.0/(xarr(2)-xarr(1))
-    rr6d=-1.0/(xarr(3)-xarr(1))
-   rr10d=-1.0/(xarr(2)-xarr(1))
-   rr11d=1.0/(xarr(2)-xarr(1))
-   rr12d=-1.0/(xarr(3)-xarr(2))
+    rr1d = 1.0/(xarr(2)-xarr(1))
+    rr2d = -1.0/(xarr(3)-xarr(1))
+    rr4d = -1.0/(xarr(2)-xarr(1))
+    rr5d = 1.0/(xarr(2)-xarr(1))
+    rr6d = -1.0/(xarr(3)-xarr(1))
+    rr10d = -1.0/(xarr(2)-xarr(1))
+    rr11d = 1.0/(xarr(2)-xarr(1))
+    rr12d = -1.0/(xarr(3)-xarr(2))
 
-    r1=(x-xarr(ib-1))/(xarr(ib+1)-xarr(ib-1))
-    r2=(xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib-1))
-    r3=(x-xarr(ib-1))/(xarr(ib)-xarr(ib-1))
-    r4=(xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib-1))
-    r5=(x-xarr(ib-1))/(xarr(ib+1)-xarr(ib-1))
-    r6=(xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib))
-    r8=(xarr(ib)-x)/  (xarr(ib)-xarr(ib-1))
-    r9=(x-xarr(ib-1))/(xarr(ib)-xarr(ib-1))
-   r10=(xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib))
-   r11=(x-xarr(ib))  /(xarr(ib+1)-xarr(ib))
-   r12=(xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib+1))
+    r1 = (x-xarr(ib-1))/(xarr(ib+1)-xarr(ib-1))
+    r2 = (xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib-1))
+    r3 = (x-xarr(ib-1))/(xarr(ib)-xarr(ib-1))
+    r4 = (xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib-1))
+    r5 = (x-xarr(ib-1))/(xarr(ib+1)-xarr(ib-1))
+    r6 = (xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib))
+    r8 = (xarr(ib)-x)/  (xarr(ib)-xarr(ib-1))
+    r9 = (x-xarr(ib-1))/(xarr(ib)-xarr(ib-1))
+    r10 = (xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib))
+    r11 = (x-xarr(ib))  /(xarr(ib+1)-xarr(ib))
+    r12 = (xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib+1))
 
-    r1d=1.0/(xarr(ib+1)-xarr(ib-1))
-    r2d=-1.0/(xarr(ib+2)-xarr(ib-1))
-    r3d=1.0/(xarr(ib)-xarr(ib-1))
-    r4d=-1.0/(xarr(ib+1)-xarr(ib-1))
-    r5d=1.0/(xarr(ib+1)-xarr(ib-1))
-    r6d=-1.0/(xarr(ib+2)-xarr(ib))
-    r8d=-1.0/  (xarr(ib)-xarr(ib-1))
-    r9d=1.0/(xarr(ib)-xarr(ib-1))
-   r10d=-1.0/(xarr(ib+1)-xarr(ib))
-   r11d=1.0/(xarr(ib+1)-xarr(ib))
-   r12d=-1.0/(xarr(ib+2)-xarr(ib+1))
+    r1d = 1.0/(xarr(ib+1)-xarr(ib-1))
+    r2d = -1.0/(xarr(ib+2)-xarr(ib-1))
+    r3d = 1.0/(xarr(ib)-xarr(ib-1))
+    r4d = -1.0/(xarr(ib+1)-xarr(ib-1))
+    r5d = 1.0/(xarr(ib+1)-xarr(ib-1))
+    r6d = -1.0/(xarr(ib+2)-xarr(ib))
+    r8d = -1.0/  (xarr(ib)-xarr(ib-1))
+    r9d = 1.0/(xarr(ib)-xarr(ib-1))
+    r10d = -1.0/(xarr(ib+1)-xarr(ib))
+    r11d = 1.0/(xarr(ib+1)-xarr(ib))
+    r12d = -1.0/(xarr(ib+2)-xarr(ib+1))
 
     if (interval == ib-1 .or. interval == 0) then
-         val=r1*r3*r8 + r1*r4*r9 + r2*r5*r9
-         vald=r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
-         vald=vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
-         vald=vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
-         if (iflag == 1) then
-           val=val+0.3333*(rr1*rr4*rr10 + rr2*rr5*rr10 + rr2*rr6*rr11)
-           vald=vald+0.3333*(rr1d*rr4*rr10+rr1*rr4d*rr10+ rr1*rr4*rr10d)
-           vald=vald+0.3333*(rr2d*rr5*rr10+rr2*rr5d*rr10+ rr2*rr5*rr10d)
-           vald=vald+0.3333*(rr2d*rr6*rr11+rr2*rr6d*rr11+ rr2*rr6*rr11d)
-         endif
+      val = r1*r3*r8 + r1*r4*r9 + r2*r5*r9
+      vald = r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
+      vald = vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
+      vald = vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
+      if (iflag == 1) then
+        val = val+0.3333*(rr1*rr4*rr10 + rr2*rr5*rr10 + rr2*rr6*rr11)
+        vald = vald+0.3333*(rr1d*rr4*rr10+rr1*rr4d*rr10+ rr1*rr4*rr10d)
+        vald = vald+0.3333*(rr2d*rr5*rr10+rr2*rr5d*rr10+ rr2*rr5*rr10d)
+        vald = vald+0.3333*(rr2d*rr6*rr11+rr2*rr6d*rr11+ rr2*rr6*rr11d)
+      endif
     else if (interval == ib) then
-         val=r1*r4*r10 + r2*r5*r10 + r2*r6*r11
-         vald=r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
-         vald=vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
-         vald=vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
-         if (iflag == 1) then
-           val=val+0.3333*rr2*rr6*rr12
-           vald=vald+0.3333*(rr2d*rr6*rr12+rr2*rr6d*rr12+ rr2*rr6*rr12d)
-         endif
+      val = r1*r4*r10 + r2*r5*r10 + r2*r6*r11
+      vald = r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
+      vald = vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
+      vald = vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
+      if (iflag == 1) then
+        val = val+0.3333*rr2*rr6*rr12
+        vald = vald+0.3333*(rr2d*rr6*rr12+rr2*rr6d*rr12+ rr2*rr6*rr12d)
+      endif
     else if (interval == ib+1) then
-         val=r2*r6*r12
-         vald=r2d*r6*r12+r2*r6d*r12+r2*r6*r12d
+      val = r2*r6*r12
+      vald = r2d*r6*r12+r2*r6d*r12+r2*r6*r12d
     else
-         val=0.0
+      val = 0.0
     endif
 
   else if (ib == np-1) then
 
-    rr1=(x-xarr(np-2))/(xarr(np)-xarr(np-2))
-    rr2=(xarr(np)-x)/(xarr(np)-xarr(np-1))
-    rr3=(x-xarr(np-2))/(xarr(np)-xarr(np-2))
-    rr4=(xarr(np)-x)/(xarr(np)-xarr(np-1))
-    rr5=(x-xarr(np-1))/(xarr(np)-xarr(np-1))
-    rr7=(x-xarr(np-2))/(xarr(np-1)-xarr(np-2))
-    rr8=(xarr(np)-x)/  (xarr(np)-xarr(np-1))
-    rr9=(x-xarr(np-1))/(xarr(np)-xarr(np-1))
+    rr1 = (x-xarr(np-2))/(xarr(np)-xarr(np-2))
+    rr2 = (xarr(np)-x)/(xarr(np)-xarr(np-1))
+    rr3 = (x-xarr(np-2))/(xarr(np)-xarr(np-2))
+    rr4 = (xarr(np)-x)/(xarr(np)-xarr(np-1))
+    rr5 = (x-xarr(np-1))/(xarr(np)-xarr(np-1))
+    rr7 = (x-xarr(np-2))/(xarr(np-1)-xarr(np-2))
+    rr8 = (xarr(np)-x)/  (xarr(np)-xarr(np-1))
+    rr9 = (x-xarr(np-1))/(xarr(np)-xarr(np-1))
 
-    rr1d=1.0/(xarr(np)-xarr(np-2))
-    rr2d=-1.0/(xarr(np)-xarr(np-1))
-    rr3d=1.0/(xarr(np)-xarr(np-2))
-    rr4d=-1.0/(xarr(np)-xarr(np-1))
-    rr5d=1.0/(xarr(np)-xarr(np-1))
-    rr7d=1.0/(xarr(np-1)-xarr(np-2))
-    rr8d=-1.0/  (xarr(np)-xarr(np-1))
-    rr9d=1.0/(xarr(np)-xarr(np-1))
+    rr1d = 1.0/(xarr(np)-xarr(np-2))
+    rr2d = -1.0/(xarr(np)-xarr(np-1))
+    rr3d = 1.0/(xarr(np)-xarr(np-2))
+    rr4d = -1.0/(xarr(np)-xarr(np-1))
+    rr5d = 1.0/(xarr(np)-xarr(np-1))
+    rr7d = 1.0/(xarr(np-1)-xarr(np-2))
+    rr8d = -1.0/  (xarr(np)-xarr(np-1))
+    rr9d = 1.0/(xarr(np)-xarr(np-1))
 
-    r1=(x-xarr(ib-2))/(xarr(ib+1)-xarr(ib-2))
-    r2=(xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib-1))
-    r3=(x-xarr(ib-2))/(xarr(ib)-xarr(ib-2))
-    r4=(xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib-1))
-    r5=(x-xarr(ib-1))/(xarr(ib+1)-xarr(ib-1))
-    r6=(xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib))
-    r7=(x-xarr(ib-2))/(xarr(ib-1)-xarr(ib-2))
-    r8=(xarr(ib)-x)/  (xarr(ib)-xarr(ib-1))
-    r9=(x-xarr(ib-1))/(xarr(ib)-xarr(ib-1))
-   r10=(xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib))
-   r11=(x-xarr(ib))  /(xarr(ib+1)-xarr(ib))
+    r1 = (x-xarr(ib-2))/(xarr(ib+1)-xarr(ib-2))
+    r2 = (xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib-1))
+    r3 = (x-xarr(ib-2))/(xarr(ib)-xarr(ib-2))
+    r4 = (xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib-1))
+    r5 = (x-xarr(ib-1))/(xarr(ib+1)-xarr(ib-1))
+    r6 = (xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib))
+    r7 = (x-xarr(ib-2))/(xarr(ib-1)-xarr(ib-2))
+    r8 = (xarr(ib)-x)/  (xarr(ib)-xarr(ib-1))
+    r9 = (x-xarr(ib-1))/(xarr(ib)-xarr(ib-1))
+    r10 = (xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib))
+    r11 = (x-xarr(ib))  /(xarr(ib+1)-xarr(ib))
 
-    r1d=1.0/(xarr(ib+1)-xarr(ib-2))
-    r2d=-1.0/(xarr(ib+1)-xarr(ib-1))
-    r3d=1.0/(xarr(ib)-xarr(ib-2))
-    r4d=-1.0/(xarr(ib+1)-xarr(ib-1))
-    r5d=1.0/(xarr(ib+1)-xarr(ib-1))
-    r6d=-1.0/(xarr(ib+1)-xarr(ib))
-    r7d=1.0/(xarr(ib-1)-xarr(ib-2))
-    r8d=-1.0/(xarr(ib)-xarr(ib-1))
-    r9d=1.0/(xarr(ib)-xarr(ib-1))
-   r10d=-1.0/(xarr(ib+1)-xarr(ib))
-   r11d=1.0/(xarr(ib+1)-xarr(ib))
+    r1d = 1.0/(xarr(ib+1)-xarr(ib-2))
+    r2d = -1.0/(xarr(ib+1)-xarr(ib-1))
+    r3d = 1.0/(xarr(ib)-xarr(ib-2))
+    r4d = -1.0/(xarr(ib+1)-xarr(ib-1))
+    r5d = 1.0/(xarr(ib+1)-xarr(ib-1))
+    r6d = -1.0/(xarr(ib+1)-xarr(ib))
+    r7d = 1.0/(xarr(ib-1)-xarr(ib-2))
+    r8d = -1.0/(xarr(ib)-xarr(ib-1))
+    r9d = 1.0/(xarr(ib)-xarr(ib-1))
+    r10d = -1.0/(xarr(ib+1)-xarr(ib))
+    r11d = 1.0/(xarr(ib+1)-xarr(ib))
 
     if (interval == ib-2) then
-         val=r1*r3*r7
-         vald=r1d*r3*r7+r1*r3d*r7+r1*r3*r7d
+      val = r1*r3*r7
+      vald = r1d*r3*r7+r1*r3d*r7+r1*r3*r7d
     else if (interval == ib-1) then
-         val=r1*r3*r8 + r1*r4*r9 + r2*r5*r9
-         vald=r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
-         vald=vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
-         vald=vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
-         if (iflag == 1) then
-           val=val+0.3333*rr1*rr3*rr7
-           vald=vald+0.3333*(rr1d*rr3*rr7+rr1*rr3d*rr7+ rr1*rr3*rr7d)
-         endif
+      val = r1*r3*r8 + r1*r4*r9 + r2*r5*r9
+      vald = r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
+      vald = vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
+      vald = vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
+      if (iflag == 1) then
+        val = val+0.3333*rr1*rr3*rr7
+        vald = vald+0.3333*(rr1d*rr3*rr7+rr1*rr3d*rr7+ rr1*rr3*rr7d)
+      endif
     else if (interval == ib .or. interval == np) then
-         val=r1*r4*r10 + r2*r5*r10 + r2*r6*r11
-         vald=r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
-         vald=vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
-         vald=vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
-         if (iflag == 1) then
-           val=val+0.3333*(rr1*rr3*rr8 + rr1*rr4*rr9 + rr2*rr5*rr9)
-           vald=vald+0.3333*(rr1d*rr3*rr8+rr1*rr3d*rr8+ rr1*rr3*rr8d)
-           vald=vald+0.3333*(rr1d*rr4*rr9+rr1*rr4d*rr9+ rr1*rr4*rr9d)
-           vald=vald+0.3333*(rr2d*rr5*rr9+rr2*rr5d*rr9+ rr2*rr5*rr9d)
-         endif
+      val = r1*r4*r10 + r2*r5*r10 + r2*r6*r11
+      vald = r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
+      vald = vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
+      vald = vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
+      if (iflag == 1) then
+        val = val+0.3333*(rr1*rr3*rr8 + rr1*rr4*rr9 + rr2*rr5*rr9)
+        vald = vald+0.3333*(rr1d*rr3*rr8+rr1*rr3d*rr8+ rr1*rr3*rr8d)
+        vald = vald+0.3333*(rr1d*rr4*rr9+rr1*rr4d*rr9+ rr1*rr4*rr9d)
+        vald = vald+0.3333*(rr2d*rr5*rr9+rr2*rr5d*rr9+ rr2*rr5*rr9d)
+      endif
     else
-      val=0.0
+      val = 0.0
     endif
 
   else if (ib == np) then
 
-    r1=(x-xarr(np-2))/(xarr(np)-xarr(np-2))
-    r2=(xarr(np)-x)/(xarr(np)-xarr(np-1))
-    r3=(x-xarr(np-2))/(xarr(np)-xarr(np-2))
-    r4=(xarr(np)-x)/(xarr(np)-xarr(np-1))
-    r5=(x-xarr(np-1))/(xarr(np)-xarr(np-1))
-    r7=(x-xarr(np-2))/(xarr(np-1)-xarr(np-2))
-    r8=(xarr(np)-x)/  (xarr(np)-xarr(np-1))
-    r9=(x-xarr(np-1))/(xarr(np)-xarr(np-1))
-    r13=(x-xarr(np-1))/(xarr(np)-xarr(np-1))
+    r1 = (x-xarr(np-2))/(xarr(np)-xarr(np-2))
+    r2 = (xarr(np)-x)/(xarr(np)-xarr(np-1))
+    r3 = (x-xarr(np-2))/(xarr(np)-xarr(np-2))
+    r4 = (xarr(np)-x)/(xarr(np)-xarr(np-1))
+    r5 = (x-xarr(np-1))/(xarr(np)-xarr(np-1))
+    r7 = (x-xarr(np-2))/(xarr(np-1)-xarr(np-2))
+    r8 = (xarr(np)-x)/  (xarr(np)-xarr(np-1))
+    r9 = (x-xarr(np-1))/(xarr(np)-xarr(np-1))
+    r13 = (x-xarr(np-1))/(xarr(np)-xarr(np-1))
 
-    r1d=1.0/(xarr(np)-xarr(np-2))
-    r2d=-1.0/(xarr(np)-xarr(np-1))
-    r3d=1.0/(xarr(np)-xarr(np-2))
-    r4d=-1.0/(xarr(np)-xarr(np-1))
-    r5d=1.0/(xarr(np)-xarr(np-1))
-    r7d=1.0/(xarr(np-1)-xarr(np-2))
-    r8d=-1.0/  (xarr(np)-xarr(np-1))
-    r9d=1.0/(xarr(np)-xarr(np-1))
-    r13d=1.0/(xarr(np)-xarr(np-1))
+    r1d = 1.0/(xarr(np)-xarr(np-2))
+    r2d = -1.0/(xarr(np)-xarr(np-1))
+    r3d = 1.0/(xarr(np)-xarr(np-2))
+    r4d = -1.0/(xarr(np)-xarr(np-1))
+    r5d = 1.0/(xarr(np)-xarr(np-1))
+    r7d = 1.0/(xarr(np-1)-xarr(np-2))
+    r8d = -1.0/  (xarr(np)-xarr(np-1))
+    r9d = 1.0/(xarr(np)-xarr(np-1))
+    r13d = 1.0/(xarr(np)-xarr(np-1))
 
     if (interval == np-2) then
-         if (iflag == 0) then
-           val=r1*r3*r7
-           vald=r1d*r3*r7+r1*r3d*r7+r1*r3*r7d
-         else if (iflag == 1) then
-           val=0.6667*r1*r3*r7
-           vald=0.6667*(r1d*r3*r7+r1*r3d*r7+r1*r3*r7d)
-         endif
+      if (iflag == 0) then
+        val = r1*r3*r7
+        vald = r1d*r3*r7+r1*r3d*r7+r1*r3*r7d
+      else if (iflag == 1) then
+        val = 0.6667*r1*r3*r7
+        vald = 0.6667*(r1d*r3*r7+r1*r3d*r7+r1*r3*r7d)
+      endif
     else if (interval == np-1 .or. interval == np) then
-         if (iflag == 0) then
-           val=r1*r3*r8 + r1*r4*r9 + r2*r5*r9 + r13**3
-           vald=r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
-           vald=vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
-           vald=vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
-           vald=vald+3.*r13d*r13**2
-         else if (iflag == 1) then
-           val=0.6667*(r1*r3*r8 + r1*r4*r9 + r2*r5*r9 + 1.5*r13**3)
-           vald=r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
-           vald=vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
-           vald=vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
-           vald=vald+4.5*r13d*r13**2
-           vald=0.6667*vald
-         endif
+      if (iflag == 0) then
+        val = r1*r3*r8 + r1*r4*r9 + r2*r5*r9 + r13**3
+        vald = r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
+        vald = vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
+        vald = vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
+        vald = vald+3.*r13d*r13**2
+      else if (iflag == 1) then
+        val = 0.6667*(r1*r3*r8 + r1*r4*r9 + r2*r5*r9 + 1.5*r13**3)
+        vald = r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
+        vald = vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
+        vald = vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
+        vald = vald+4.5*r13d*r13**2
+        vald = 0.6667*vald
+      endif
     else
-      val=0.0
+      val = 0.0
     endif
   else
 
-    r1=(x-xarr(ib-2))/(xarr(ib+1)-xarr(ib-2))
-    r2=(xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib-1))
-    r3=(x-xarr(ib-2))/(xarr(ib)-xarr(ib-2))
-    r4=(xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib-1))
-    r5=(x-xarr(ib-1))/(xarr(ib+1)-xarr(ib-1))
-    r6=(xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib))
-    r7=(x-xarr(ib-2))/(xarr(ib-1)-xarr(ib-2))
-    r8=(xarr(ib)-x)/  (xarr(ib)-xarr(ib-1))
-    r9=(x-xarr(ib-1))/(xarr(ib)-xarr(ib-1))
-   r10=(xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib))
-   r11=(x-xarr(ib))  /(xarr(ib+1)-xarr(ib))
-   r12=(xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib+1))
+    r1 = (x-xarr(ib-2))/(xarr(ib+1)-xarr(ib-2))
+    r2 = (xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib-1))
+    r3 = (x-xarr(ib-2))/(xarr(ib)-xarr(ib-2))
+    r4 = (xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib-1))
+    r5 = (x-xarr(ib-1))/(xarr(ib+1)-xarr(ib-1))
+    r6 = (xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib))
+    r7 = (x-xarr(ib-2))/(xarr(ib-1)-xarr(ib-2))
+    r8 = (xarr(ib)-x)/  (xarr(ib)-xarr(ib-1))
+    r9 = (x-xarr(ib-1))/(xarr(ib)-xarr(ib-1))
+    r10 = (xarr(ib+1)-x)/(xarr(ib+1)-xarr(ib))
+    r11 = (x-xarr(ib))  /(xarr(ib+1)-xarr(ib))
+    r12 = (xarr(ib+2)-x)/(xarr(ib+2)-xarr(ib+1))
 
-    r1d=1.0/(xarr(ib+1)-xarr(ib-2))
-    r2d=-1.0/(xarr(ib+2)-xarr(ib-1))
-    r3d=1.0/(xarr(ib)-xarr(ib-2))
-    r4d=-1.0/(xarr(ib+1)-xarr(ib-1))
-    r5d=1.0/(xarr(ib+1)-xarr(ib-1))
-    r6d=-1.0/(xarr(ib+2)-xarr(ib))
-    r7d=1.0/(xarr(ib-1)-xarr(ib-2))
-    r8d=-1.0/  (xarr(ib)-xarr(ib-1))
-    r9d=1.0/(xarr(ib)-xarr(ib-1))
-   r10d=-1.0/(xarr(ib+1)-xarr(ib))
-   r11d=1.0/(xarr(ib+1)-xarr(ib))
-   r12d=-1.0/(xarr(ib+2)-xarr(ib+1))
+    r1d = 1.0/(xarr(ib+1)-xarr(ib-2))
+    r2d = -1.0/(xarr(ib+2)-xarr(ib-1))
+    r3d = 1.0/(xarr(ib)-xarr(ib-2))
+    r4d = -1.0/(xarr(ib+1)-xarr(ib-1))
+    r5d = 1.0/(xarr(ib+1)-xarr(ib-1))
+    r6d = -1.0/(xarr(ib+2)-xarr(ib))
+    r7d = 1.0/(xarr(ib-1)-xarr(ib-2))
+    r8d = -1.0/  (xarr(ib)-xarr(ib-1))
+    r9d = 1.0/(xarr(ib)-xarr(ib-1))
+    r10d = -1.0/(xarr(ib+1)-xarr(ib))
+    r11d = 1.0/(xarr(ib+1)-xarr(ib))
+    r12d = -1.0/(xarr(ib+2)-xarr(ib+1))
 
     if (interval == ib-2) then
-         val=r1*r3*r7
-         vald=r1d*r3*r7+r1*r3d*r7+r1*r3*r7d
+      val = r1*r3*r7
+      vald = r1d*r3*r7+r1*r3d*r7+r1*r3*r7d
     else if (interval == ib-1) then
-         val=r1*r3*r8 + r1*r4*r9 + r2*r5*r9
-         vald=r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
-         vald=vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
-         vald=vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
+      val = r1*r3*r8 + r1*r4*r9 + r2*r5*r9
+      vald = r1d*r3*r8+r1*r3d*r8+r1*r3*r8d
+      vald = vald+r1d*r4*r9+r1*r4d*r9+r1*r4*r9d
+      vald = vald+r2d*r5*r9+r2*r5d*r9+r2*r5*r9d
     else if (interval == ib) then
-         val=r1*r4*r10 + r2*r5*r10 + r2*r6*r11
-         vald=r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
-         vald=vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
-         vald=vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
+      val = r1*r4*r10 + r2*r5*r10 + r2*r6*r11
+      vald = r1d*r4*r10+r1*r4d*r10+r1*r4*r10d
+      vald = vald+r2d*r5*r10+r2*r5d*r10+r2*r5*r10d
+      vald = vald+r2d*r6*r11+r2*r6d*r11+r2*r6*r11d
     else if (interval == ib+1) then
-         val=r2*r6*r12
-         vald=r2d*r6*r12+r2*r6d*r12+r2*r6*r12d
+      val = r2*r6*r12
+      vald = r2d*r6*r12+r2*r6d*r12+r2*r6*r12d
     else
-      val=0.0
+      val = 0.0
     endif
   endif
 
@@ -1758,153 +1768,4 @@
   enddo
 
   end subroutine vbspl
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine ylm(XLAT,XLON,LMAX,Y,WK1,WK2,WK3)
-
-  implicit none
-
-  complex :: TEMP,FAC,DFAC
-
-  integer :: LMAX
-
-!
-!     WK1,WK2,WK3 SHOULD BE DIMENSIONED AT LEAST (LMAX+1)*4
-!
-  real(kind=4), dimension(LMAX+1) :: WK1,WK2,WK3
-  real(kind=4) :: XLAT,XLON
-  real(kind=4), dimension((LMAX+1)**2) :: Y
-
-  real(kind=4), parameter :: RADIAN = 57.2957795
-
-  integer :: IM,IL1,IND,LM1,L
-
-  real(kind=4) :: THETA,PHI
-
-  THETA=(90.-XLAT)/RADIAN
-  PHI=XLON/RADIAN
-
-  IND = 0
-  LM1=LMAX+1
-
-  DO IL1 = 1,LM1
-
-    ! index L goes from 0 to LMAX
-    L=IL1-1
-
-    CALL legndr(THETA,L,L,WK1,WK2,WK3)
-
-    FAC=(1.0,0.0)
-    DFAC=CEXP(CMPLX(0.0,PHI))
-
-    ! loops over M
-    do IM = 1,IL1
-      ! index IM goes maximum from 1 to LMAX+1
-      TEMP=FAC*CMPLX(WK1(IM),0.0)
-      IND=IND+1
-      Y(IND)=REAL(TEMP)
-      if (IM == 1) goto 20
-      IND=IND+1
-      Y(IND)=AIMAG(TEMP)
- 20   FAC=FAC*DFAC
-    enddo
-
-  enddo
-
-  end subroutine ylm
-
-!
-!-------------------------------------------------------------------------------------------------
-!
-
-  subroutine legndr(THETA,L,M,X,XP,XCOSEC)
-
-  implicit none
-
-  integer :: i,M,MP1,k,l,LP1
-
-  real(kind=4) :: THETA,DSFL3,COSEC,SFL3
-
-  real(kind=4) :: X(M+1),XP(M+1),XCOSEC(M+1)
-
-  double precision :: SMALL,sumval,COMPAR,CT,ST,FCT,COT,X1,X2,X3,F1,F2,XM,TH
-
-  double precision, parameter :: FPI = 12.56637062D0
-
-!!!!!! illegal statement, removed by Dimitri Komatitsch   DFLOAT(I)=FLOAT(I)
-
-  sumval = 0.D0
-  LP1=L+1
-  TH=THETA
-  CT=DCOS(TH)
-  ST=DSIN(TH)
-  MP1=M+1
-  FCT=DSQRT(dble(2*L+1)/FPI)
-  SFL3=SQRT(FLOAT(L*(L+1)))
-  COMPAR=dble(2*L+1)/FPI
-  DSFL3=SFL3
-  SMALL=1.D-16*COMPAR
-
-  do I = 1,MP1
-    X(I)=0.0
-    XCOSEC(I)=0.0
-    XP(I)=0.0
-  enddo
-
-  if (L > 1 .and. ABS(THETA) > 1.E-5) goto 3
-  X(1)=FCT
-  if (L == 0) return
-  X(1)=CT*FCT
-  X(2)=-ST*FCT/DSFL3
-  XP(1)=-ST*FCT
-  XP(2)=-.5D0*CT*FCT*DSFL3
-  if (ABS(THETA) < 1.E-5) XCOSEC(2)=XP(2)
-  if (ABS(THETA) >= 1.E-5) XCOSEC(2)=X(2)/ST
-  return
-
- 3 X1=1.D0
-  X2=CT
-
-  do I=2,L
-    X3=(dble(2*I-1)*CT*X2-dble(I-1)*X1)/dble(I)
-    X1=X2
-    X2=X3
-  enddo
-
-  COT=CT/ST
-  COSEC=1.0/ST
-  X3=X2*FCT
-  X2=dble(L)*(X1-CT*X2)*FCT/ST
-  X(1)=X3
-  X(2)=X2
-  sumval=X3*X3
-  XP(1)=-X2
-  XP(2)=dble(L*(L+1))*X3-COT*X2
-  X(2)=-X(2)/SFL3
-  XCOSEC(2)=X(2)*COSEC
-  XP(2)=-XP(2)/SFL3
-  sumval=sumval+2.D0*X(2)*X(2)
-  if (sumval-COMPAR > SMALL) return
-  X1=X3
-  X2=-X2/DSQRT(dble(L*(L+1)))
-
-  do I=3,MP1
-    K=I-1
-    F1=DSQRT(dble((L+I-1)*(L-I+2)))
-    F2=DSQRT(dble((L+I-2)*(L-I+3)))
-    XM=K
-    X3=-(2.D0*COT*(XM-1.D0)*X2+F2*X1)/F1
-    sumval=sumval+2.D0*X3*X3
-    if (sumval-COMPAR > SMALL .and. I /= LP1) return
-    X(I)=X3
-    XCOSEC(I)=X(I)*COSEC
-    X1=X2
-    XP(I)=-(F1*X2+XM*COT*X3)
-    X2=X3
-  enddo
-
-  end subroutine legndr
 

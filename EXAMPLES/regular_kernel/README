@@ -1,0 +1,34 @@
+------------------------------------
+README
+------------------------------------
+
+Example of a global simulation for output kernels on a regular grid
+
+This example creates a spherical global mesh, using a 3D shear-wave speed model s40rts (Ritsema et al., 2010), 
+and runs a spectral-element simulation. The simulation is setup to use 6 CPU cores (MPI processes).
+The runtime is about 5 min.
+
+
+1. forward simulation:
+----------------------
+
+type:
+./run_this_example.sh
+
+to setup this directory for the simulation and to run a corresponding
+script "run_mesher_solver.bash".
+
+Reference seismograms for comparisons are provided in the directory: REF_SEIS/
+
+
+2. kernel simulation:
+---------------------
+
+type:
+./run_this_example_kernel.sh
+
+This will run both a forward and backward/kernel simulation, creating adjoint sources according to script create_adjoint_sources.sh.
+
+
+Please modify the setup and scripts according to your specifics.
+

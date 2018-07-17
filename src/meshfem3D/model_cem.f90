@@ -277,17 +277,18 @@ end module cem_par
 !
 
 
-  subroutine build_global_coordinates (nspec, nglob, iregion_code)
+  subroutine build_global_coordinates (iregion_code)
 
   use constants
   use cem_par
 
   use meshfem3D_par, only: &
+    nspec, nglob, &
     ibool,xstore,ystore,zstore
 
   implicit none
 
-  integer, intent (in) :: nspec, nglob, iregion_code
+  integer, intent (in) :: iregion_code
   integer              :: i, j, k, iglob, ispec, region
 
   double precision, parameter :: R_020_KM=6351.0d0, R_052_KM=6319.0d0

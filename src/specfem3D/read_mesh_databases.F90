@@ -104,9 +104,6 @@
   endif
   allocate(addressing(NCHUNKS_VAL,0:NPROC_XI_VAL-1,0:NPROC_ETA_VAL-1))
   call read_mesh_databases_addressing()
-  if (.not. SAVE_REGULAR_KL) then
-    deallocate(addressing)
-  endif
 
   ! sets up MPI interfaces, inner/outer elements and mesh coloring
   if (SYNC_READING ) call synchronize_all()
@@ -128,14 +125,13 @@
   endif
 
   ! kernels on regular grids
-  if (SAVE_REGULAR_KL) then
+  if (SAVE_REGULAR_KL .and. SIMULATION_TYPE == 3) then
     if (SYNC_READING ) call synchronize_all()
     if (myrank == 0) then
       write(IMAIN,*) '  reading in regular kernel databases...'
       call flush_IMAIN()
     endif
     call read_mesh_databases_regular_kl()
-    deallocate(addressing)
   endif
 
 #ifdef USE_SERIAL_CASCADE_FOR_IOs
@@ -143,6 +139,9 @@
   you_can_start_doing_IOs = .true.
   if (myrank < NPROC_XI_VAL*NPROC_ETA_VAL-1) call send_singlel(you_can_start_doing_IOs,myrank+1,itag)
 #endif
+
+  ! frees arrays
+  deallocate(addressing)
 
   ! user output
   call synchronize_all()
@@ -1615,75 +1614,86 @@
   ! local parameters
   integer, dimension(:), allocatable :: slice_number
   integer :: i,isp,ier
-  ! grid parameters
-  type kl_reg_grid_variables
-    sequence
-    real dlat
-    real dlon
-    integer nlayer
-    real rlayer(NM_KL_REG_LAYER)
-    integer ndoubling(NM_KL_REG_LAYER)
-    integer nlat(NM_KL_REG_LAYER)
-    integer nlon(NM_KL_REG_LAYER)
-    integer npts_total
-    integer npts_before_layer(NM_KL_REG_LAYER+1)
-  end type kl_reg_grid_variables
-  type (kl_reg_grid_variables) KL_REG_GRID
+
+  ! checks if anything to do; setup only needed for kernel simulations
+  if (SIMULATION_TYPE /= 3) return
+
+  ! checks setup
+  if (ADIOS_FOR_KERNELS) &
+    call exit_mpi(myrank,'saving regular kernels in ADIOS file format is not supported yet')
+  ! assuming 6 chunks full global simulations right now
+  if (NCHUNKS_VAL /= 6 .or. NPROC_XI_VAL /= NPROC_ETA_VAL) &
+    call exit_MPI(myrank, 'Only deal with 6 chunks at this moment')
 
   ! allocates arrays
-  allocate(points_slice(NM_KL_REG_PTS_VAL), &
-           ispec_reg(NM_KL_REG_PTS_VAL), &
-           hxir_reg(NGLLX, NM_KL_REG_PTS_VAL), &
-           hetar_reg(NGLLY, NM_KL_REG_PTS_VAL), &
-           hgammar_reg(NGLLZ, NM_KL_REG_PTS_VAL),stat=ier)
-  if (ier /= 0) stop 'Error allocating arrays points_slice,..'
+  allocate(points_slice_reg(NM_KL_REG_PTS), &
+           ispec_reg(NM_KL_REG_PTS), &
+           hxir_reg(NGLLX, NM_KL_REG_PTS), &
+           hetar_reg(NGLLY, NM_KL_REG_PTS), &
+           hgammar_reg(NGLLZ, NM_KL_REG_PTS),stat=ier)
+  if (ier /= 0) stop 'Error allocating arrays points_slice_reg,..'
 
-  call read_kl_regular_grid(KL_REG_GRID)
+  allocate(kl_reg_grid%rlayer(NM_KL_REG_LAYER), &
+           kl_reg_grid%ndoubling(NM_KL_REG_LAYER), &
+           kl_reg_grid%nlat(NM_KL_REG_LAYER), &
+           kl_reg_grid%nlon(NM_KL_REG_LAYER), &
+           kl_reg_grid%npts_before_layer(NM_KL_REG_LAYER+1),stat=ier)
+  if (ier /= 0) stop 'Error allocating kl_reg_grid arrays'
+
+  ! reads in mesh inputs from file (see: PATHNAME_KL_REG = 'DATA/kl_reg_grid.txt' in constants.h)
+  call read_kl_regular_grid(kl_reg_grid)
+
+  ! user output
+  if (myrank == 0) then
+    write(IMAIN,*) '  locating regular kernel grid points...'
+    call flush_IMAIN()
+  endif
 
   if (myrank == 0) then
     ! master process
-    allocate(slice_number(KL_REG_GRID%npts_total),stat=ier)
+    allocate(slice_number(kl_reg_grid%npts_total),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating slice_number array')
 
-    ! print *, 'slice npts =', KL_REG_GRID%npts_total
-    call find_regular_grid_slice_number(slice_number, KL_REG_GRID)
+    ! print *, 'slice npts =', kl_reg_grid%npts_total
+    call find_regular_grid_slice_number(slice_number, kl_reg_grid)
 
     do i = NPROCTOT_VAL-1,0,-1
-      npoints_slice = 0
-      do isp = 1,KL_REG_GRID%npts_total
+      npoints_slice_reg = 0
+      do isp = 1,kl_reg_grid%npts_total
         if (slice_number(isp) == i) then
-          npoints_slice = npoints_slice + 1
-          if (npoints_slice > NM_KL_REG_PTS) stop 'Exceeding NM_KL_REG_PTS limit'
-          points_slice(npoints_slice) = isp
+          npoints_slice_reg = npoints_slice_reg + 1
+          if (npoints_slice_reg > NM_KL_REG_PTS) stop 'Exceeding NM_KL_REG_PTS limit'
+          points_slice_reg(npoints_slice_reg) = isp
         endif
       enddo
 
       if (i /= 0) then
-        call send_singlei(npoints_slice,i,i)
-        if (npoints_slice > 0) then
-          call send_i(points_slice,npoints_slice,i,2*i)
+        call send_singlei(npoints_slice_reg,i,i)
+        if (npoints_slice_reg > 0) then
+          call send_i(points_slice_reg,npoints_slice_reg,i,2*i)
         endif
       endif
     enddo
 
     open(unit=IOUT,file=trim(OUTPUT_FILES)//'/kl_grid_slice.txt',status='unknown',action='write',iostat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error opening file kl_grid_slice.txt for writing')
-    write(IOUT,*) slice_number
+    write(IOUT,*) kl_reg_grid%npts_total
+    write(IOUT,*) slice_number(:)
     close(IOUT)
 
     deallocate(slice_number)
   else
     ! slave processes
-    call recv_singlei(npoints_slice,0,myrank)
-    if (npoints_slice > 0) then
-      call recv_i(points_slice,npoints_slice,0,2*myrank)
+    call recv_singlei(npoints_slice_reg,0,myrank)
+    if (npoints_slice_reg > 0) then
+      call recv_i(points_slice_reg,npoints_slice_reg,0,2*myrank)
     endif
   endif
 
   ! this is the core part that takes up most of the computation time,
   ! and presumably the more processors involved the faster.
-  if (npoints_slice > 0) then
-    call locate_regular_points(npoints_slice, points_slice, KL_REG_GRID, &
+  if (npoints_slice_reg > 0) then
+    call locate_regular_points(npoints_slice_reg, points_slice_reg, kl_reg_grid, &
                                NSPEC_CRUST_MANTLE, &
                                xstore_crust_mantle, ystore_crust_mantle, zstore_crust_mantle, &
                                ibool_crust_mantle, &
@@ -1693,8 +1703,7 @@
 
   ! user output
   if (myrank == 0) then
-    write(IMAIN,*) ' '
-    write(IMAIN,*) 'Finished locating kernel output regular grid'
+    write(IMAIN,*) '  Finished locating kernel output regular grid'
     write(IMAIN,*) ' '
     call flush_IMAIN()
   endif

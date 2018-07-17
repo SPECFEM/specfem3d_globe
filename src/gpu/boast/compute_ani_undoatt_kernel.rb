@@ -66,8 +66,9 @@ module BOAST
       decl ijk_ispec = Int("ijk_ispec")
       decl tx = Int("tx")
       decl iglob = Int("iglob")
-      decl  offset = Int("offset")
-
+      if type == :ani then
+        decl  offset = Int("offset")
+      end
       decl eps_trace_over_3 = Real("eps_trace_over_3")
       decl b_eps_trace_over_3 = Real("b_eps_trace_over_3")
       if type == :ani then

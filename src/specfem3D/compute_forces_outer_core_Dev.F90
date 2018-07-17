@@ -405,7 +405,7 @@
     endif
 
   enddo   ! spectral element loop
-!$OMP enddo
+!$OMP ENDDO
 
     ! updates acceleration
 #ifdef FORCE_VECTORIZATION
@@ -418,7 +418,7 @@
       accelfluid(iglob) = accelfluid(iglob) + sum_terms(ijk_spec,1,1,1)
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 #else
   ! updates for non-vectorization case
 !$OMP DO SCHEDULE(GUIDED)
@@ -430,7 +430,7 @@
       accelfluid(iglob) = accelfluid(iglob) + sum_terms(INDEX_IJK,ispec)
     ENDDO_LOOP_IJK
   enddo
-!$OMP enddo
+!$OMP ENDDO
 #endif
 !$OMP END PARALLEL
 

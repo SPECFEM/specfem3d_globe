@@ -26,21 +26,23 @@
 !=====================================================================
 
 
-  subroutine check_mesh_resolution(iregion_code,nspec,nglob,xstore,ystore,zstore, &
+  subroutine check_mesh_resolution(iregion_code,xstore,ystore,zstore, &
                                    kappavstore,kappahstore,muvstore,muhstore,rhostore)
 
   use constants
 
-  use meshfem3D_par, only: DT,myrank,ibool, &
+  use meshfem3D_par, only: &
+    nspec,nglob, &
+    DT,myrank,ibool, &
     xstore_glob,ystore_glob,zstore_glob,SAVE_MESH_FILES, &
     ANGULAR_WIDTH_ETA_IN_DEGREES,ANGULAR_WIDTH_XI_IN_DEGREES,NEX_XI,NEX_ETA, &
     dt_max_glob,pmax_glob
 
-  use create_regions_mesh_par2, only: prname
+  use regions_mesh_par2, only: prname
 
   implicit none
 
-  integer,intent(in) :: iregion_code,nspec,nglob
+  integer,intent(in) :: iregion_code
 
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
@@ -210,7 +212,7 @@
     val_ispec_dt(ispec) = dt_max
 
   enddo ! ispec
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   ! collects for all slices
@@ -318,7 +320,7 @@
 
   use meshfem3D_models_par, only: ANISOTROPIC_INNER_CORE,ANISOTROPIC_3D_MANTLE
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
@@ -666,7 +668,7 @@
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,HUGEVAL
 
-  use create_regions_mesh_par2, only: &
+  use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore, &
     etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore

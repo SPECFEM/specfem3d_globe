@@ -136,7 +136,7 @@
 
   call bcast_all_l(this_region_has_a_doubling,MAX_NUMBER_OF_MESH_LAYERS)
 
-  call bcast_all_i(NSPEC,MAX_NUM_REGIONS)
+  call bcast_all_i(NSPEC_REGIONS,MAX_NUM_REGIONS)
   call bcast_all_i(NSPEC2D_XI,MAX_NUM_REGIONS)
   call bcast_all_i(NSPEC2D_ETA,MAX_NUM_REGIONS)
   call bcast_all_i(NSPEC2DMAX_XMIN_XMAX,MAX_NUM_REGIONS)
@@ -147,7 +147,7 @@
   call bcast_all_i(NGLOB1D_RADIAL,MAX_NUM_REGIONS)
   call bcast_all_i(NGLOB2DMAX_XMIN_XMAX,MAX_NUM_REGIONS)
   call bcast_all_i(NGLOB2DMAX_YMIN_YMAX,MAX_NUM_REGIONS)
-  call bcast_all_i(NGLOB,MAX_NUM_REGIONS)
+  call bcast_all_i(NGLOB_REGIONS,MAX_NUM_REGIONS)
   call bcast_all_i(DIFF_NSPEC1D_RADIAL,NB_SQUARE_CORNERS*NB_CUT_CASE)
   call bcast_all_i(DIFF_NSPEC2D_ETA,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)
   call bcast_all_i(DIFF_NSPEC2D_XI,NB_SQUARE_EDGES_ONEDIR*NB_CUT_CASE)

@@ -28,7 +28,7 @@
   subroutine get_MPI_interfaces(myrank,NGLOB,NSPEC, &
                                     test_flag,my_neighbors,nibool_neighbors,ibool_neighbors, &
                                     num_interfaces,max_nibool_interfaces, &
-                                    max_nibool,MAX_neighborS, &
+                                    max_nibool,MAX_NEIGHBORS, &
                                     ibool, &
                                     is_on_a_slice_edge, &
                                     IREGION,add_central_cube,idoubling,INCLUDE_CENTRAL_CUBE, &
@@ -41,9 +41,9 @@
 
   real(kind=CUSTOM_REAL),dimension(NGLOB),intent(in) :: test_flag
 
-  integer,intent(in) :: max_nibool,MAX_neighborS
-  integer, dimension(MAX_neighborS),intent(inout) :: my_neighbors,nibool_neighbors
-  integer, dimension(max_nibool,MAX_neighborS),intent(inout) :: ibool_neighbors
+  integer,intent(in) :: max_nibool,MAX_NEIGHBORS
+  integer, dimension(MAX_NEIGHBORS),intent(inout) :: my_neighbors,nibool_neighbors
+  integer, dimension(max_nibool,MAX_NEIGHBORS),intent(inout) :: ibool_neighbors
 
   integer,intent(inout) :: num_interfaces,max_nibool_interfaces
 
@@ -162,9 +162,9 @@
         ! updates interfaces array
         if (.not. is_done) then
           iinterface = iinterface + 1
-          if (iinterface > MAX_neighborS) then
-            print *,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_neighborS
-            call exit_mpi(myrank,'interface face exceeds MAX_neighborS range')
+          if (iinterface > MAX_NEIGHBORS) then
+            print *,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBORS
+            call exit_mpi(myrank,'interface face exceeds MAX_NEIGHBORS range')
           endif
           ! adds as neighbor new interface
           my_neighbors(iinterface) = rank
@@ -200,10 +200,10 @@
 
             ! checks that we take each global point (on edges and corners) only once
             call add_interface_point(iglob,rank,icurrent, &
-                                        nibool_neighbors,MAX_neighborS, &
-                                        ibool_neighbors,max_nibool, &
-                                        work_test_flag,NGLOB,myrank, &
-                                        .true.,add_central_cube)
+                                     nibool_neighbors,MAX_NEIGHBORS, &
+                                     ibool_neighbors,max_nibool, &
+                                     work_test_flag,NGLOB,myrank, &
+                                     .true.,add_central_cube)
             ! debug
             if (work_test_flag(iglob) < 0) then
               if (IREGION == IREGION_INNER_CORE .and. INCLUDE_CENTRAL_CUBE) then
@@ -298,9 +298,9 @@
         ! updates interfaces array
         if (.not. is_done) then
           iinterface = iinterface + 1
-          if (iinterface > MAX_neighborS) then
-            print *,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_neighborS
-            call exit_mpi(myrank,'interface edge exceeds MAX_neighborS range')
+          if (iinterface > MAX_NEIGHBORS) then
+            print *,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBORS
+            call exit_mpi(myrank,'interface edge exceeds MAX_NEIGHBORS range')
           endif
           ! adds as neighbor new interface
           my_neighbors(iinterface) = rank
@@ -353,10 +353,10 @@
 
           ! checks that we take each global point (on edges and corners) only once
           call add_interface_point(iglob,rank,icurrent, &
-                                        nibool_neighbors,MAX_neighborS, &
-                                        ibool_neighbors,max_nibool, &
-                                        work_test_flag,NGLOB,myrank, &
-                                        .true.,add_central_cube)
+                                   nibool_neighbors,MAX_NEIGHBORS, &
+                                   ibool_neighbors,max_nibool, &
+                                   work_test_flag,NGLOB,myrank, &
+                                   .true.,add_central_cube)
 
           ! debug
           if (work_test_flag(iglob) < 0) then
@@ -451,9 +451,9 @@
         ! updates interfaces array
         if (.not. is_done) then
           iinterface = iinterface + 1
-          if (iinterface > MAX_neighborS) then
-            print *,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_neighborS
-            call exit_mpi(myrank,'interface corner exceed MAX_neighborS range')
+          if (iinterface > MAX_NEIGHBORS) then
+            print *,'Error interfaces rank:',myrank,'iinterface = ',iinterface,MAX_NEIGHBORS
+            call exit_mpi(myrank,'interface corner exceed MAX_NEIGHBORS range')
           endif
           ! adds as neighbor new interface
           my_neighbors(iinterface) = rank
@@ -465,10 +465,10 @@
         ! adds this corner as interface point and removes neighbor flag from face,
         ! checks that we take each global point (on edges and corners) only once
         call add_interface_point(iglob,rank,icurrent, &
-                                    nibool_neighbors,MAX_neighborS, &
-                                    ibool_neighbors,max_nibool, &
-                                    work_test_flag,NGLOB,myrank, &
-                                    .false.,add_central_cube)
+                                 nibool_neighbors,MAX_NEIGHBORS, &
+                                 ibool_neighbors,max_nibool, &
+                                 work_test_flag,NGLOB,myrank, &
+                                 .false.,add_central_cube)
 
         ! debug
         if (work_test_flag(iglob) < 0 ) call exit_mpi(myrank,'Error corner flag')
@@ -642,10 +642,10 @@
 !
 
   subroutine add_interface_point(iglob,rank,icurrent, &
-                                    nibool_neighbors,MAX_neighborS, &
-                                    ibool_neighbors,max_nibool, &
-                                    work_test_flag,NGLOB,myrank, &
-                                    is_face_edge,add_central_cube)
+                                 nibool_neighbors,MAX_NEIGHBORS, &
+                                 ibool_neighbors,max_nibool, &
+                                 work_test_flag,NGLOB,myrank, &
+                                 is_face_edge,add_central_cube)
 
 
   implicit none
@@ -653,9 +653,9 @@
   integer,intent(in) :: iglob,rank,icurrent
   integer,intent(in) :: myrank
 
-  integer,intent(in) :: MAX_neighborS,max_nibool
-  integer, dimension(MAX_neighborS),intent(inout) :: nibool_neighbors
-  integer, dimension(max_nibool,MAX_neighborS),intent(inout) :: ibool_neighbors
+  integer,intent(in) :: MAX_NEIGHBORS,max_nibool
+  integer, dimension(MAX_NEIGHBORS),intent(inout) :: nibool_neighbors
+  integer, dimension(max_nibool,MAX_NEIGHBORS),intent(inout) :: ibool_neighbors
 
   integer,intent(in) :: NGLOB
   integer,dimension(NGLOB) :: work_test_flag

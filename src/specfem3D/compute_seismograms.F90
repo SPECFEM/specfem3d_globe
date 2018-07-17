@@ -152,7 +152,7 @@
   double precision :: uxd,uyd,uzd,hlagrange
   double precision :: eps_trace,dxx,dyy,dxy,dxz,dyz
   double precision :: eps_loc(NDIM,NDIM), eps_loc_new(NDIM,NDIM)
-  double precision :: stf
+  double precision :: stf,timeval
 
   real(kind=CUSTOM_REAL) :: displ_s(NDIM,NGLLX,NGLLY,NGLLZ)
   real(kind=CUSTOM_REAL) :: eps_s(NDIM,NDIM), eps_m_s, &
@@ -257,9 +257,9 @@
     seismograms(5,irec_local,it-it_adj_written) = real(eps_loc_new(1,3), kind=CUSTOM_REAL)
     seismograms(6,irec_local,it-it_adj_written) = real(eps_loc_new(2,3), kind=CUSTOM_REAL)
     seismograms(7:9,irec_local,it-it_adj_written) = real(scale_displ*(nu_source(:,1,irec)*uxd + &
-                                                                   nu_source(:,2,irec)*uyd + &
-                                                                   nu_source(:,3,irec)*uzd), &
-                                                      kind=CUSTOM_REAL)
+                                                                      nu_source(:,2,irec)*uyd + &
+                                                                      nu_source(:,3,irec)*uzd), &
+                                                                      kind=CUSTOM_REAL)
 
     ! interpolators
     ! note: we explicitly copy the store arrays to local temporary arrays here
@@ -281,18 +281,23 @@
                 etax_crust_mantle(1,1,1,ispec),etay_crust_mantle(1,1,1,ispec),etaz_crust_mantle(1,1,1,ispec), &
                 gammax_crust_mantle(1,1,1,ispec),gammay_crust_mantle(1,1,1,ispec),gammaz_crust_mantle(1,1,1,ispec))
 
-    stf = comp_source_time_function(dble(NSTEP-it)*DT-t0-tshift_src(irec),hdur_Gaussian(irec))
+    timeval = dble(NSTEP-it)*DT-t0-tshift_src(irec)
+
+    stf = comp_source_time_function(timeval,hdur_Gaussian(irec))
+
     stf_deltat = stf * deltat
 
+    ! moment derivatives
     moment_der(:,:,irec_local) = moment_der(:,:,irec_local) + eps_s(:,:) * stf_deltat
+
+    ! location derivatives
     sloc_der(:,irec_local) = sloc_der(:,irec_local) + eps_m_l_s(:) * stf_deltat
 
-    Kp_deltat= -1.0d0/sqrt(PI)/hdur_Gaussian(irec)*exp(-((dble(NSTEP-it)*DT-t0-tshift_src(irec))/hdur_Gaussian(irec))**2) &
-                       * deltat * scale_t
-    Hp_deltat= (dble(NSTEP-it)*DT-t0-tshift_src(irec))/hdur_Gaussian(irec)*Kp_deltat
+    ! derivatives for time shift and hduration
+    Kp_deltat= -1.0d0/sqrt(PI)/hdur_Gaussian(irec) * exp(-(timeval/hdur_Gaussian(irec))**2) * deltat * scale_t
+    Hp_deltat= timeval/hdur_Gaussian(irec) * Kp_deltat
 
     stshift_der(irec_local) = stshift_der(irec_local) + eps_m_s * Kp_deltat
-
     shdur_der(irec_local) = shdur_der(irec_local) + eps_m_s * Hp_deltat
 
   enddo

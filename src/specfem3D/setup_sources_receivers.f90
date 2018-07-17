@@ -78,17 +78,13 @@
 
   ! local parameters
   double precision :: min_tshift_src_original
-  integer :: isource,sum_stf
+  integer :: isource,ier
   character(len=MAX_STRING_LEN) :: filename
-  integer :: ier
-
-  ! makes smaller hdur for movies
-  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .true.
 
   ! user output
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'sources:'
+    write(IMAIN,*) 'sources:',NSOURCES
     call flush_IMAIN()
   endif
 
@@ -151,8 +147,8 @@
                      xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
                      ELLIPTICITY_VAL,min_tshift_src_original)
 
-  if (abs(minval(tshift_src)) > TINYVAL) &
-    call exit_MPI(myrank,'one tshift_src must be zero, others must be positive')
+  ! determines onset time
+  call setup_stf_constants(min_tshift_src_original)
 
   ! count number of sources located in this slice
   nsources_local = 0
@@ -162,13 +158,63 @@
     enddo
   endif
 
+  ! determines number of times steps for simulation
+  call setup_timesteps()
+
+  ! prints source time functions and spectrum to output files
+  if (PRINT_SOURCE_TIME_FUNCTION) call print_stf_file()
+
+  ! get information about event name and location
+  ! (e.g. needed for SAC seismograms)
+
+  ! The following line is added for get_event_info subroutine.
+  ! Because the way NSOURCES_SAC was declared has been changed.
+  ! The rest of the changes in this program is just the updates of the subroutines that
+  ! I did changes, e.g., adding/removing parameters. by Ebru Bozdag
+  call get_event_info_parallel(yr_SAC,jda_SAC,mo_SAC, da_SAC, ho_SAC,mi_SAC,sec_SAC, &
+                               event_name_SAC,t_cmt_SAC,t_shift_SAC, &
+                               elat_SAC,elon_SAC,depth_SAC,mb_SAC,ms_SAC,cmt_lat_SAC, &
+                               cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES, &
+                               Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
+
+  ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
+  ! checks if anything to do for noise simulations
+  if (NOISE_TOMOGRAPHY /= 0) then
+    if (myrank == 0) then
+      write(IMAIN,*) 'noise simulation will ignore CMT sources'
+    endif
+  endif
+
+  end subroutine setup_sources
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_stf_constants(min_tshift_src_original)
+
+  use specfem_par
+  use specfem_par_movie
+  implicit none
+
+  double precision,intent(in) :: min_tshift_src_original
+
+  ! local parameters
+  integer :: isource
+
+  ! makes smaller hdur for movies
+  logical,parameter :: USE_SMALLER_HDUR_MOVIE = .true.
+
+  if (abs(minval(tshift_src)) > TINYVAL) &
+    call exit_MPI(myrank,'one tshift_src must be zero, others must be positive')
+
   ! filter source time function by Gaussian with hdur = HDUR_MOVIE when writing movies or shakemaps
   if (MOVIE_SURFACE .or. MOVIE_VOLUME) then
     ! smaller hdur_movie will do
     if (USE_SMALLER_HDUR_MOVIE) then
       ! hdur_movie gets assigned an automatic value based on the simulation resolution
       ! this will make that a bit smaller to have a higher-frequency movie output
-      HDUR_MOVIE = 0.5* HDUR_MOVIE
+      HDUR_MOVIE = 0.5 * HDUR_MOVIE
     endif
 
     ! new hdur for simulation
@@ -184,31 +230,41 @@
   hdur_Gaussian(:) = hdur(:)/SOURCE_DECAY_MIMIC_TRIANGLE
 
   ! define t0 as the earliest start time
-  t0 = - 1.5d0*minval( tshift_src(:) - hdur(:) )
+  if (USE_FORCE_POINT_SOURCE) then
+    ! point force sources
+    ! (might start depending on the frequency given by hdur)
+    ! note: point force sources will give the dominant frequency in hdur, thus the main period is 1/hdur.
+    !       also, these sources might use a Ricker source time function instead of a Gaussian.
+    !       For a Ricker source time function, a start time ~1.2 * main_period is a good choice.
+    t0 = 0.d0
+    do isource = 1,NSOURCES
+      select case(force_stf(isource))
+      case (0)
+        ! Gaussian source time function
+        t0 = min(t0,1.5d0 * (tshift_src(isource) - hdur(isource)))
+      case (1)
+        ! Ricker source time function
+        t0 = min(t0,1.2d0 * (tshift_src(isource) - 1.0d0/hdur(isource)))
+      case (2)
+        ! Heaviside
+        t0 = min(t0,1.5d0 * (tshift_src(isource) - hdur(isource)))
+      case default
+        stop 'unsupported force_stf value!'
+      end select
+    enddo
+    ! start time defined as positive value, will be subtracted
+    t0 = - t0
+  else
+    ! moment tensors
+    ! (based on Heaviside functions)
+    t0 = - 1.5d0 * minval( tshift_src(:) - hdur(:) )
+  endif
 
   ! uses an external file for source time function, which starts at time 0.0
   if (EXTERNAL_SOURCE_TIME_FUNCTION) then
     hdur(:) = 0.d0
     t0      = 0.d0
   endif
-
-  ! point force sources will start depending on the frequency given by hdur
-    !-------------POINT FORCE-----------------------------------------------
-  if (USE_FORCE_POINT_SOURCE) then
-    ! note: point force sources will give the dominant frequency in hdur,
-    !          thus the main period is 1/hdur.
-    !          also, these sources use a Ricker source time function instead of a Gaussian.
-    !          for a Ricker source time function, a start time ~1.2 * main_period is a good choice
-    sum_stf=sum(force_stf)
-    if (sum_stf == NSOURCES) then
-      t0 = - 1.2d0 * minval(tshift_src(:) - 1.0d0/hdur(:))
-    else if (sum_stf == 0) then
-      ! defined above
-    else
-      stop 'mixed force_stf values not supported!'
-    endif
-  endif
-    !-------------POINT FORCE-----------------------------------------------
 
   ! checks if user set USER_T0 to fix simulation start time
   ! note: USER_T0 has to be positive
@@ -261,40 +317,7 @@
     call exit_mpi(myrank,'Error negative USER_T0 parameter in constants.h')
   endif
 
-  ! determines number of times steps for simulation
-  call setup_timesteps()
-
-  ! prints source time functions to output files
-  if (PRINT_SOURCE_TIME_FUNCTION .and. myrank == 0) then
-    do isource = 1,NSOURCES
-        ! print source time function and spectrum
-         call print_stf(NSOURCES,isource,Mxx,Myy,Mzz,Mxy,Mxz,Myz, &
-                        tshift_src,hdur,force_stf,min_tshift_src_original,NSTEP,DT)
-    enddo
-  endif
-
-  ! get information about event name and location
-  ! (e.g. needed for SAC seismograms)
-
-  ! The following line is added for get_event_info subroutine.
-  ! Because the way NSOURCES_SAC was declared has been changed.
-  ! The rest of the changes in this program is just the updates of the subroutines that
-  ! I did changes, e.g., adding/removing parameters. by Ebru Bozdag
-  call get_event_info_parallel(yr_SAC,jda_SAC,mo_SAC, da_SAC, ho_SAC,mi_SAC,sec_SAC, &
-                              event_name_SAC,t_cmt_SAC,t_shift_SAC, &
-                              elat_SAC,elon_SAC,depth_SAC,mb_SAC,ms,cmt_lat_SAC, &
-                              cmt_lon_SAC,cmt_depth_SAC,cmt_hdur_SAC,NSOURCES, &
-                              Mrr,Mtt,Mpp,Mrt,Mrp,Mtp)
-
-  ! noise simulations ignore the CMTSOLUTIONS sources but employ a noise-spectrum source S_squared instead
-  ! checks if anything to do for noise simulations
-  if (NOISE_TOMOGRAPHY /= 0) then
-    if (myrank == 0) then
-      write(IMAIN,*) 'noise simulation will ignore CMT sources'
-    endif
-  endif
-
-  end subroutine setup_sources
+  end subroutine setup_stf_constants
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -391,7 +414,7 @@
   integer :: nrec_simulation
   integer :: nadj_files_found,nadj_files_found_tot
   integer :: ier
-  integer,dimension(:),allocatable :: tmp_rec_local_all
+  integer,dimension(0:NPROCTOT_VAL-1) :: tmp_rec_local_all
   integer :: maxrec,maxproc(1)
   double precision :: sizeval
 
@@ -514,18 +537,7 @@
   endif
   call synchronize_all()
 
-  ! statistics about allocation memory for seismograms & source_adjoint
-  ! gathers info about receivers on master
-  if (myrank == 0) then
-    ! only master process needs full arrays allocated
-    allocate(tmp_rec_local_all(NPROCTOT_VAL),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_rec_local_all')
-  else
-    ! dummy arrays
-    allocate(tmp_rec_local_all(1),stat=ier)
-    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary array tmp_rec_local_all')
-  endif
-
+  ! statistics about allocation memory for seismograms & adj_sourcearrays
   ! user output info
   ! sources
   if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
@@ -547,7 +559,7 @@
   ! seismograms
   ! gather from slaves on master
   tmp_rec_local_all(:) = 0
-  tmp_rec_local_all(1) = nrec_local
+  tmp_rec_local_all(0) = nrec_local
   if (NPROCTOT_VAL > 1) then
     call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
   endif
@@ -555,7 +567,8 @@
   if (myrank == 0) then
     ! determines maximum number of local receivers and corresponding rank
     maxrec = maxval(tmp_rec_local_all(:))
-    maxproc = maxloc(tmp_rec_local_all(:))
+    ! note: MAXLOC will determine the lower bound index as '1'.
+    maxproc = maxloc(tmp_rec_local_all(:)) - 1
     ! seismograms array size in MB
     if (SIMULATION_TYPE == 1 .or. SIMULATION_TYPE == 3) then
       ! seismograms need seismograms(NDIM,nrec_local,NTSTEP_BETWEEN_OUTPUT_SEISMOS)
@@ -583,7 +596,7 @@
   if (SIMULATION_TYPE == 2 .or. SIMULATION_TYPE == 3) then
     ! gather from slaves on master
     tmp_rec_local_all(:) = 0
-    tmp_rec_local_all(1) = nadj_rec_local
+    tmp_rec_local_all(0) = nadj_rec_local
     if (NPROCTOT_VAL > 1) then
       call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
     endif
@@ -591,7 +604,8 @@
     if (myrank == 0) then
       ! determines maximum number of local receivers and corresponding rank
       maxrec = maxval(tmp_rec_local_all(:))
-      maxproc = maxloc(tmp_rec_local_all(:))
+      ! note: MAXLOC will determine the lower bound index as '1'.
+      maxproc = maxloc(tmp_rec_local_all(:)) - 1
       !do i = 1, NPROCTOT_VAL
       !  if (tmp_rec_local_all(i) > maxrec) then
       !    maxrec = tmp_rec_local_all(i)
@@ -623,7 +637,7 @@
     call gather_all_singlei(nrec_local,tmp_rec_local_all,NPROCTOT_VAL)
     if (myrank == 0) then
       open(unit=9977,file='imbalance_of_nrec_local.dat',status='unknown')
-      do i = 1,NPROCTOT_VAL
+      do i = 0,NPROCTOT_VAL-1
         write(9977,*) i,tmp_rec_local_all(i)
       enddo
       close(9977)
@@ -632,7 +646,7 @@
     call gather_all_singlei(nadj_rec_local,tmp_rec_local_all,NPROCTOT_VAL)
     if (myrank == 0) then
       open(unit=9977,file='imbalance_of_nadj_rec_local.dat',status='unknown')
-      do i = 1,NPROCTOT_VAL
+      do i = 0,NPROCTOT_VAL-1
         write(9977,*) i,tmp_rec_local_all(i)
       enddo
       close(9977)
@@ -662,8 +676,6 @@
 
     call synchronize_all()
   endif
-
-  deallocate(tmp_rec_local_all)
 
   end subroutine setup_receivers
 
@@ -911,15 +923,20 @@
                 call exit_MPI(myrank,'error force point source: component vector has (almost) zero norm')
               endif
 
-              ! we use an tilted force defined by its magnitude and the projections
+              ! normalizes vector
+              comp_dir_vect_source_E(isource) = comp_dir_vect_source_E(isource) / norm
+              comp_dir_vect_source_N(isource) = comp_dir_vect_source_N(isource) / norm
+              comp_dir_vect_source_Z_UP(isource) = comp_dir_vect_source_Z_UP(isource) / norm
+
+              ! we use a tilted force defined by its magnitude and the projections
               ! of an arbitrary (non-unitary) direction vector on the E/N/Z_UP basis
-              ! WARNING: first index of nu_source is the orientation which has the
-              ! order N-E-Z NOT E-N-Z, i.e, 1=North, 2=East, 3=Z
+              !
+              ! note: nu_source(iorientation,:,isource) is the rotation matrix from ECEF to local N-E-UP
+              !       (defined in src/specfem3D/locate_sources.f90)
               sourcearrayd(:,i,j,k) = factor_force_source(isource) * hlagrange * &
                                       ( nu_source(1,:,isource) * comp_dir_vect_source_N(isource) + &
                                         nu_source(2,:,isource) * comp_dir_vect_source_E(isource) + &
-                                        nu_source(3,:,isource) * comp_dir_vect_source_Z_UP(isource) ) / norm
-
+                                        nu_source(3,:,isource) * comp_dir_vect_source_Z_UP(isource) )
             enddo
           enddo
         enddo
@@ -1117,6 +1134,11 @@
     ! note: nrec_local is zero, Fortran 90/95 should allow zero-sized array allocation...
     allocate(seismograms(NDIM,0,NTSTEP_BETWEEN_OUTPUT_SEISMOS),stat=ier)
     if (ier /= 0) stop 'Error while allocating zero seismograms'
+    ! dummy allocation
+    allocate(hxir_store(1,1), &
+             hetar_store(1,1), &
+             hgammar_store(1,1),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating dummy receiver interpolators')
   endif
 
   end subroutine setup_receivers_precompute_intp
