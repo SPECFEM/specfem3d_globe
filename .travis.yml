@@ -26,37 +26,37 @@ env:
     #   CUDA_VERSION - specifies CUDA toolkit version
 
     # code coverage: using coverage flags
-    - TEST="" TESTCOV=1 TESTMAKE=1 CUDA=false
+    - TESTMAKE=1 TESTCOV=1 TEST="" CUDA=false
 
     # code coverage: vectorization & openmp, using coverage flags
-    - TEST="--enable-vectorization" TESTCOV=1 TESTMAKE=2 CUDA=false
+    - TESTMAKE=2 TESTCOV=1 TEST="--enable-vectorization" CUDA=false
 
     # default test (with > make tests)
-    - TEST="" TESTCOV=0 TESTMAKE=0 CUDA=false
+    - TESTMAKE=0 TESTCOV=0 TEST="" CUDA=false
 
     # regional example w/ default configuration
-    - TEST="" TESTCOV=0 TESTMAKE=1 CUDA=false
+    - TESTMAKE=1 TESTCOV=0 TEST="" CUDA=false
 
     # regional example w/ vectorization
-    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=1 CUDA=false
+    - TESTMAKE=1 TESTCOV=0 TEST="--enable-vectorization" CUDA=false
 
     # regional example w/ vectorization & openmp
-    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=1 CUDA=false
+    - TESTMAKE=1 TESTCOV=0 TEST="--enable-vectorization --enable-openmp" CUDA=false
 
     # regional example with debug bounds checking
-    - TEST="--enable-debug" TESTCOV=0 TESTMAKE=2 CUDA=false
+    - TESTMAKE=2 TESTCOV=0 TEST="--enable-debug" CUDA=false
 
     # regional example with NGLL = 6
-    - TEST="" TESTCOV=0 TESTMAKE=3 CUDA=false
+    - TESTMAKE=3 TESTCOV=0 TEST="" CUDA=false
 
     # globe_small example
-    - TEST="--enable-vectorization" TESTCOV=0 TESTMAKE=4 CUDA=false
+    - TESTMAKE=4 TESTCOV=0 TEST="--enable-vectorization" CUDA=false
 
     # globe_small example with openmp
-    - TEST="--enable-vectorization --enable-openmp" TESTCOV=0 TESTMAKE=4 CUDA=false
+    - TESTMAKE=4 TESTCOV=0 TEST="--enable-vectorization --enable-openmp" CUDA=false
 
     # point force example
-    - TEST="" TESTCOV=0 TESTMAKE=5 CUDA=false
+    - TESTMAKE=5 TESTCOV=0 TEST="" CUDA=false
 
 
 before_install:

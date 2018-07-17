@@ -4,12 +4,12 @@ SGLOBE-rani
 
 3D global shear-wave isotropic and radially anisotropic model from a joint inversion for multiple data sets
 
-SGLOBE-rani is a global radially anisotropic shear wave speed model with radial anisotropy allowed in the whole mantle. 
-It is based on a seismic data set of over 43M seismic surface wave (fundamental and overtones) and body wave measurements. 
-It models simultaneously crustal thickness and mantle structure, and its reference model is PREM. 
+SGLOBE-rani is a global radially anisotropic shear wave speed model with radial anisotropy allowed in the whole mantle.
+It is based on a seismic data set of over 43M seismic surface wave (fundamental and overtones) and body wave measurements.
+It models simultaneously crustal thickness and mantle structure, and its reference model is PREM.
 
-NOTE: Kustowski et al., 2008 and Chang et al., 2014 showed that the anisotropic structure in the lowermost mantle 
-      retrieved from global tomographic inversions can be strongly affected by leakage effects, so we discourage 
+NOTE: Kustowski et al., 2008 and Chang et al., 2014 showed that the anisotropic structure in the lowermost mantle
+      retrieved from global tomographic inversions can be strongly affected by leakage effects, so we discourage
       interpreting SGLOBE-rani's anisotropic structure below ~1500 km depth.
 
 reference:
@@ -22,7 +22,7 @@ implementation:
 
   P-wave velocity perturbations (dvp) taken from P12 of S20RTS,
   density perturbations (drho) scaled from Vsv perturbations (dvsv);
-  
+
   The mantle model is defined between Moho and CMB;
   uses PREM as 1D reference (also for attenuation & eta-parameter)
 

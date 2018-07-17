@@ -11,7 +11,7 @@
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
-! the Free Software Foundation; either version 2 of the License, or
+! the Free Software Foundation; either version 3 of the License, or
 ! (at your option) any later version.
 !
 ! This program is distributed in the hope that it will be useful,
@@ -31,12 +31,12 @@
 !
 ! 3D global shear-wave isotropic and radially anisotropic model from a joint inversion for multiple data sets
 !
-! SGLOBE-rani is a global radially anisotropic shear wave speed model with radial anisotropy allowed in the whole mantle. 
-! It is based on a seismic data set of over 43M seismic surface wave (fundamental and overtones) and body wave measurements. 
-! It models simultaneously crustal thickness and mantle structure, and its reference model is PREM. 
+! SGLOBE-rani is a global radially anisotropic shear wave speed model with radial anisotropy allowed in the whole mantle.
+! It is based on a seismic data set of over 43M seismic surface wave (fundamental and overtones) and body wave measurements.
+! It models simultaneously crustal thickness and mantle structure, and its reference model is PREM.
 !
-! NOTE: Kustowski et al., 2008 and Chang et al., 2014 showed that the anisotropic structure in the lowermost mantle 
-!       retrieved from global tomographic inversions can be strongly affected by leakage effects, so we discourage 
+! NOTE: Kustowski et al., 2008 and Chang et al., 2014 showed that the anisotropic structure in the lowermost mantle
+!       retrieved from global tomographic inversions can be strongly affected by leakage effects, so we discourage
 !       interpreting SGLOBE-rani’s anisotropic structure below ~1500 km depth.
 !
 ! reference:
@@ -45,7 +45,7 @@
 !   J. Geophys. Res., 120, 4278-4300, https://doi.org/10.1002/2014JB011824.
 !
 ! implementation:
-! Elodie Kendall, 2018 - spherical harmonics model, up to degree 35 
+! Elodie Kendall, 2018 - spherical harmonics model, up to degree 35
 !                        (routines based on model_s40rts.f90 implementation)
 !
 !                        P-wave velocity perturbations (dvp) taken from P12 of S20RTS/S40RTS by default;
@@ -65,7 +65,7 @@
   !a = positive m  (radial, theta, phi) --> (k,l,m) (maybe other way around??)
   !b = negative m  (radial, theta, phi) --> (k,l,-m)
   double precision,dimension(:,:,:),allocatable :: &
-    SGLOBE_V_dvsv_a,SGLOBE_V_dvsv_b,SGLOBE_V_dvp_a,SGLOBE_V_dvp_b,&
+    SGLOBE_V_dvsv_a,SGLOBE_V_dvsv_b,SGLOBE_V_dvp_a,SGLOBE_V_dvp_b, &
     SGLOBE_V_dvsh_a,SGLOBE_V_dvsh_b
 
   ! splines
@@ -101,10 +101,10 @@
            SGLOBE_V_qq0(NK_20+1,NK_20+1), &
            SGLOBE_V_qq(3,NK_20+1,NK_20+1), &
            stat=ier)
-  if( ier /= 0 ) call exit_MPI(myrank,'error allocating SGLOBE_V arrays')
+  if ( ier /= 0 ) call exit_MPI(myrank,'error allocating SGLOBE_V arrays')
 
   ! the variables read are declared and stored in structure SGLOBE_V
-  if(myrank == 0) call read_model_SGLOBE()
+  if (myrank == 0) call read_model_SGLOBE()
 
   ! broadcast the information read on the master to the nodes
   call bcast_all_dp(SGLOBE_V_dvsv_a,(NK_20+1)*(NS_35+1)*(NS_35+1))
@@ -123,7 +123,7 @@
 !
 
   subroutine read_model_sglobe()
-  
+
   use constants
   use model_sglobe_par
 
@@ -138,7 +138,7 @@
   ! SGLOBE degree 35 S model from Chang at al.
   ! dvsv
   open(unit=10,file=SGLOBEv,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file SGLOBE.dat')
+  if ( ier /= 0 ) call exit_MPI(0,'error opening file SGLOBE.dat')
 
   SGLOBE_V_dvsv_a(:,:,:) = 0.d0
   SGLOBE_V_dvsv_b(:,:,:) = 0.d0
@@ -151,7 +151,7 @@
 
   ! dvsh
   open(unit=10,file=SGLOBEh,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file SGLOBE.dat')
+  if ( ier /= 0 ) call exit_MPI(0,'error opening file SGLOBE.dat')
 
   SGLOBE_V_dvsh_a(:,:,:) = 0.d0
   SGLOBE_V_dvsh_b(:,:,:) = 0.d0
@@ -161,10 +161,10 @@
     enddo
   enddo
   close(10)
- 
+
   ! P12 degree 12 P model from Ritsema
   open(unit=10,file=P12,status='old',action='read',iostat=ier)
-  if( ier /= 0 ) call exit_MPI(0,'error opening file P12.dat')
+  if ( ier /= 0 ) call exit_MPI(0,'error opening file P12.dat')
 
   SGLOBE_V_dvp_a(:,:,:) = 0.d0
   SGLOBE_V_dvp_b(:,:,:) = 0.d0
@@ -233,7 +233,7 @@
   ! model defined between Moho and CMB
   r_moho = RMOHO_ / R_EARTH_
   r_cmb = RCMB_ / R_EARTH_
-  if(radius >= r_moho .or. radius <= r_cmb) return
+  if (radius >= r_moho .or. radius <= r_cmb) return
 
   xr = -1.0d0+2.0d0*(radius-r_cmb)/(r_moho-r_cmb)
   do k = 0,NK_20
@@ -281,7 +281,7 @@
   ! scales density perturbation from Vsv
   drho = SCALE_RHO*dvsv
 
-  ! alternative Vp perturbation: 
+  ! alternative Vp perturbation:
   ! instead of taking dvp from P12 (like S20RTS), uses a scaling from Vs as mentioned in Chang et al. (2015)
   if (USE_VP_SCALING) then
     dvs = sqrt( SCALE_VP * (dvsv**2 + dvsh**2) )
@@ -293,7 +293,7 @@
 !----------------------------------
 
   subroutine sglobe_splhsetup()
-  
+
   use constants
   use model_sglobe_par
 
@@ -327,7 +327,7 @@
 
   do i = 1,NK_20+1
     do j = 1,NK_20+1
-      if(i == j) then
+      if (i == j) then
         SGLOBE_V_qq0(j,i)=1.0d0
       else
         SGLOBE_V_qq0(j,i)=0.0d0
@@ -370,57 +370,57 @@
   I = MIN0(I,II)
 
 !   SEE IF X IS INCREASING OR DECREASING.
-  IF (X(I2)-X(I1) <  0) goto 1
-  IF (X(I2)-X(I1) >= 0) goto 2
+  if (X(I2)-X(I1) < 0) goto 1
+  if (X(I2)-X(I1) >= 0) goto 2
 
 !   X IS DECREASING.  CHANGE I AS NECESSARY.
 1 continue
-  IF (S-X(I) <= 0) goto 3
-  IF (S-X(I) >  0) goto 4
+  if (S-X(I) <= 0) goto 3
+  if (S-X(I) > 0) goto 4
 
 4 continue
   I = I-1
 
-  IF (I-I1 <  0) goto 11
-  IF (I-I1 == 0) goto 6
-  IF (I-I1 >  0) goto 1
+  if (I-I1 < 0) goto 11
+  if (I-I1 == 0) goto 6
+  if (I-I1 > 0) goto 1
 
 3 continue
-  IF (S-X(I+1) <  0) goto 5
-  IF (S-X(I+1) >= 0) goto 6
+  if (S-X(I+1) < 0) goto 5
+  if (S-X(I+1) >= 0) goto 6
 
 5 continue
   I = I+1
 
-  IF (I-II <  0) goto 3
-  IF (I-II == 0) goto 6
-  IF (I-II >  0) goto 7
+  if (I-II < 0) goto 3
+  if (I-II == 0) goto 6
+  if (I-II > 0) goto 7
 
 !   X IS INCREASING.  CHANGE I AS NECESSARY.
 2 continue
-  IF (S-X(I+1) <= 0) goto 8
-  IF (S-X(I+1) >  0) goto 9
+  if (S-X(I+1) <= 0) goto 8
+  if (S-X(I+1) > 0) goto 9
 
 9 continue
   I = I+1
 
-  IF (I-II <  0) goto 2
-  IF (I-II == 0) goto 6
-  IF (I-II >  0) goto 7
+  if (I-II < 0) goto 2
+  if (I-II == 0) goto 6
+  if (I-II > 0) goto 7
 
 8 continue
-  IF (S-X(I) <  0) goto 10
-  IF (S-X(I) >= 0) goto 6
+  if (S-X(I) < 0) goto 10
+  if (S-X(I) >= 0) goto 6
 
 10 continue
   I = I-1
-  IF (I-I1 <  0) goto 11
-  IF (I-I1 == 0) goto 6
-  IF (I-I1 >  0) goto 8
+  if (I-I1 < 0) goto 11
+  if (I-I1 == 0) goto 6
+  if (I-I1 > 0) goto 8
 
 7 continue
   I = II
-  GOTO 6
+  goto 6
 
 11 continue
   I = I1
@@ -464,9 +464,9 @@
   Y0 = 0.0d0
 
 !   BAIL OUT IF THERE ARE LESS THAN TWO POINTS TOTAL
-  IF (I2-I1  < 0) return
-  IF (I2-I1 == 0) goto 17
-  IF (I2-I1  > 0) goto 8
+  if (I2-I1 < 0) return
+  if (I2-I1 == 0) goto 17
+  if (I2-I1 > 0) goto 8
 
 8 continue
   A0 = X(J1-1)
@@ -475,13 +475,13 @@
   do I=J1,I2
     B0 = A0
     A0 = X(I)
-    IF(DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) GOTO 4
+    if (DABS((A0-B0)/DMAX1(A0,B0)) < SMALL) goto 4
   enddo
 
 17 continue
   J1 = J1-1
   J2 = I2-2
-  GOTO 5
+  goto 5
 
 4 continue
   J1 = J1-1
@@ -489,9 +489,9 @@
 
 !   SEE IF THERE ARE ENOUGH POINTS TO INTERPOLATE (AT LEAST THREE).
 5 continue
-  IF (J2+1-J1 <  0) goto 9
-  IF (J2+1-J1 == 0) goto 10
-  IF (J2+1-J1 >  0) goto 11
+  if (J2+1-J1 < 0) goto 9
+  if (J2+1-J1 == 0) goto 10
+  if (J2+1-J1 > 0) goto 11
 
 !   ONLY TWO POINTS.  USE LINEAR INTERPOLATION.
 10 continue
@@ -501,7 +501,7 @@
     Q(J,J1)=YY(J)
     Q(J,J2)=YY(J)
   enddo
-  GOTO 12
+  goto 12
 
 !   MORE THAN TWO POINTS.  DO SPLINE INTERPOLATION.
 11  continue
@@ -573,7 +573,7 @@
 
 !   SEE IF THIS DISCONTINUITY IS THE LAST.
 12 continue
-  IF(J2-I2 < 0) then
+  if (J2-I2 < 0) then
     goto 6
   else
     return
@@ -582,8 +582,8 @@
 !   NO.  GO BACK FOR MORE.
 6 continue
   J1 = J2+2
-  IF(J1-I2 <= 0) goto 8
-  IF(J1-I2 >  0) goto 7
+  if (J1-I2 <= 0) goto 8
+  if (J1-I2 > 0) goto 7
 
 !   THERE IS ONLY ONE POINT LEFT AFTER THE LATEST DISCONTINUITY.
 7 continue

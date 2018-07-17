@@ -291,7 +291,7 @@
     case (REFERENCE_MODEL_PREM)
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
       if (TRANSVERSE_ISOTROPY) then
-        ! specific 3D models with PREM references which would become too fast at shorter periods (<40s Love waves)
+        ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
         if (THREE_D_MODEL == THREE_D_MODEL_S20RTS &
             .or. THREE_D_MODEL == THREE_D_MODEL_S40RTS &
             .or. THREE_D_MODEL == THREE_D_MODEL_SGLOBE) then
