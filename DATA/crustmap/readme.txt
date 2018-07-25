@@ -3,11 +3,10 @@ CRUSTMAPS Version 0.0.0.1
 ---------------------------------------------------------------------------------------------------
 HOW TO USE THE INCLUDED CRUSTMAPS:
 
-to use CRUSTMAPS uncomment in constants.h.in (before ./configure):
+to use CRUSTMAPS append "_crustmaps" to your model name. for example:
+MODEL    = s20rts_crustmaps
 
-"
-!!  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
-"
+
 
 SPECFEM3D_GLOBE is set to use the crustmaps provided in the SPECFEM3D_GLOBE/DATA/crustmap/ folder.
 
