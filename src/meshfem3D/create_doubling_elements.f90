@@ -398,7 +398,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   ! end index

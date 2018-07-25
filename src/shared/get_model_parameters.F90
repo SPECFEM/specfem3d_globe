@@ -46,7 +46,7 @@
 
   use constants
 
-  use shared_parameters,only: MODEL, &
+  use shared_parameters, only: MODEL, &
     REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL, &
     ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
     CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
@@ -543,14 +543,14 @@
 
   use constants
 
-  use shared_parameters,only: &
+  use shared_parameters, only: &
     ROCEAN,RMIDDLE_CRUST, &
     RMOHO,R80,R120,R220,R400,R600,R670,R771, &
     RTOPDDOUBLEPRIME,RCMB,RICB, &
     RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
     RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
-  use shared_parameters,only: &
+  use shared_parameters, only: &
     HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL,REFERENCE_1D_MODEL
 
   implicit none

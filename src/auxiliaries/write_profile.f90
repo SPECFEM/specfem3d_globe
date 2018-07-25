@@ -38,13 +38,13 @@
 ! - vala hjorleifsdottir (vala@geofisica.unam.mx)
 
 ! note:
-! This program writes profiles of material properties for the model chosen in Par_file.  
+! This program writes profiles of material properties for the model chosen in Par_file.
 ! It samples directly the original choosen input MODEL. It does not sample the GLL-mesh which is output by the mesher.
 ! Thus, there might be slight differences, e.g., in how TISO properties are used in the solver.
 !
-! Most of the code is from get_model.f90 and is marked with comments.  
-! Copy paste the corresponding part from the most recent get_model.f90 and paste it into write_profile.f90.   
-! Updated calls to subroutines may be necessary, in particular to read_compute_parameters which often changes.  
+! Most of the code is from get_model.f90 and is marked with comments.
+! Copy paste the corresponding part from the most recent get_model.f90 and paste it into write_profile.f90.
+! Updated calls to subroutines may be necessary, in particular to read_compute_parameters which often changes.
 !
 ! The code should write profiles by default every 2x2 degrees for the entire globe.
 !
@@ -55,7 +55,7 @@
 ! - default for 2x2 degree profiles around the globe
 !   ./bin/xwrite_profile
 !
-! - for a 5x5 degree 
+! - for a 5x5 degree
 !   ./bin/xwrite_profile 5 5
 !
 ! - for a single profile at location lat/lon = 47.37/-25.0
@@ -79,11 +79,11 @@
 
   ! colatitude loop range (in degrees)
   integer,parameter :: COLAT_istart = 0  ! 0
-  integer,parameter :: COLAT_iend   = 89 ! 89  for 2x2 increments -> [0,178]
+  integer,parameter :: COLAT_iend   = 89 ! 89  for 2x2 increments - > [0,178]
 
   ! longitude loop range (in degrees)
   integer,parameter :: LON_istart   = 0   ! 0
-  integer,parameter :: LON_iend     = 179 ! 179  for 2x2 increments -> [0,358]
+  integer,parameter :: LON_iend     = 179 ! 179  for 2x2 increments - > [0,358]
 
   ! sampling intervals
   double precision,parameter :: INCR_lat = 2.d0 ! 2 degrees
@@ -158,7 +158,7 @@
     call abort_mpi()
   endif
 
-  ! initializes 
+  ! initializes
   ! default 2x2 degree grid
   delta_lat = INCR_lat
   delta_lon = INCR_lon
@@ -238,7 +238,7 @@
   ! gets parameters and loads crustal/mantle model
   call write_profile_setup()
 
-!< this part is from create_regions_mesh -> initialize_layers()
+! < this part is from create_regions_mesh -> initialize_layers()
   if (ONE_CRUST) then
     NUMBER_OF_MESH_LAYERS = MAX_NUMBER_OF_MESH_LAYERS - 1
   else
@@ -463,7 +463,7 @@
         endif !rmin == rmax_last
       enddo !ilayer
 
-      ! adds ocean layer profile 
+      ! adds ocean layer profile
       call write_profile_ocean(r_prem,elevation,iline,iline_ocean)
 
       ! discontinuities info
@@ -490,7 +490,7 @@
 
   subroutine usage()
 
-  use meshfem3D_models_par,only: myrank
+  use meshfem3D_models_par, only: myrank
 
   implicit none
 
@@ -516,7 +516,7 @@
 
   implicit none
 
-!< this part is from meshfem3D and setup_model (read parfile and output info)
+! < this part is from meshfem3D and setup_model (read parfile and output info)
   if (myrank == 0) print *,'reading parameter file...'
 
   ! read the parameter file and compute additional parameters
@@ -797,7 +797,7 @@
   ! convert from rthetaphi to xyz to use in function calls.
   call rthetaphi_2_xyz_dble(xmesh,ymesh,zmesh,r_prem,theta,phi)
 
-!< start GET_MODEL
+! < start GET_MODEL
   ! checks r_prem,rmin/rmax and assigned idoubling
   call get_model_check_idoubling(r_prem,xmesh,ymesh,zmesh,rmin,rmax,idoubling, &
                       RICB,RCMB,RTOPDDOUBLEPRIME, &
@@ -834,7 +834,7 @@
                         c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66, &
                         elem_in_crust,moho)
 
-      !print*,'crustal: ',r_prem,R_DEEPEST_CRUST,elem_in_crust,vpv,vph,vsv,vsh,eta_aniso
+      !print *,'crustal: ',r_prem,R_DEEPEST_CRUST,elem_in_crust,vpv,vph,vsv,vsh,eta_aniso
     endif
   endif
 
@@ -884,7 +884,7 @@
   ! for stretching
   double precision :: gamma
 
-!< start add_topography
+! < start add_topography
   if (TOPOGRAPHY) then
     if (idoubling == IFLAG_CRUST .or. &
         idoubling == IFLAG_80_MOHO .or. &
@@ -927,7 +927,7 @@
   integer :: ilayers_ocean,nlayers_ocean
   double precision :: r_ocean
 
-!< ocean
+! < ocean
   ! This part adds the ocean to profile where needed
   if ( (TOPOGRAPHY .or. OCEANS) .or. ((.not. CRUSTAL) .and. (ROCEAN < R_EARTH)) ) then
 
@@ -938,11 +938,11 @@
     !       on waveforms, the ocean loading is approximated using the (actual) ocean thickness.
     !
     !       Here for the models, we want to output a profile which includes the (original) ocean layer.
-    !       When TOPOGRAPHY is selected, the actual ocean thickness will be considered as in the meshing part 
+    !       When TOPOGRAPHY is selected, the actual ocean thickness will be considered as in the meshing part
     !       with a minimum thickness threshold.
     !
     !       For cases where OCEANS is selected to include the ocean loading effect on waveforms, a corresponding mass matrix
-    !       will be created which includes the actual ocean thickness if TOPOGRAPHY is selected or 
+    !       will be created which includes the actual ocean thickness if TOPOGRAPHY is selected or
     !       a default PREM ocean thickness (3km).
 
     ! initializes ocean profile layers

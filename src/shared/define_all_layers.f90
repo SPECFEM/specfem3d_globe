@@ -277,7 +277,7 @@
       ! layer instead of two.
 
       !daniel debug
-      !print*,'one_crust case in define_all_layers'
+      !print *,'one_crust case in define_all_layers'
 
       NUMBER_OF_MESH_LAYERS = 13
       layer_offset = 0
@@ -409,7 +409,7 @@
       !   doubling at the base of the crust
 
       !daniel debug
-      !print*,'default case in define_all_layers'
+      !print *,'default case in define_all_layers'
 
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1

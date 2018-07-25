@@ -977,7 +977,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   call get_global(npointot,xp,yp,zp,ibool,locval,ifseg,nglob_new)
