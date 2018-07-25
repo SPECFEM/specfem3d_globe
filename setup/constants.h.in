@@ -188,14 +188,6 @@
 !!-----------------------------------------------------------
 !! (uncomment desired model)
 
-! crustal model constants
-  integer, parameter :: ICRUST_CRUST1 = 1
-  integer, parameter :: ICRUST_CRUST2 = 2
-  integer, parameter :: ICRUST_CRUSTMAPS = 3
-  integer, parameter :: ICRUST_EPCRUST = 4
-  integer, parameter :: ICRUST_CRUST_SH = 5
-
-!-------------------------------
 ! crustal model cap smoothing - extension range in degree
 ! note: using a smaller range, e.g. 0.5 degrees, leads to undefined Jacobian error at different places.
 !       this is probably due to stretching elements below sharp gradients, especially with deep moho values.
@@ -208,21 +200,8 @@
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
-  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for gravity integral calculations
+  logical, parameter :: INCLUDE_ICE_IN_CRUST       = .false. ! always set this to false except for gravity integral calculations
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
-
-! default crustal model
-! (used as default when CRUSTAL flag is set for simulation)
-!-- uncomment for using Crust1.0
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
-!-- uncomment for using Crust2.0
-  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
-!-- uncomment for using General Crustmaps instead
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
-!-- uncomment for using EPcrust instead (European regional model)
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
-!-- uncomment for using SHcrust
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST_SH
 
 
 !!-----------------------------------------------------------
@@ -690,6 +669,14 @@
   integer, parameter :: REFERENCE_MODEL_1DREF = 5
   integer, parameter :: REFERENCE_MODEL_JP1D  = 6
   integer, parameter :: REFERENCE_MODEL_SEA1D = 7
+
+! crustal model constants
+  integer, parameter :: ICRUST_CRUST1    = 1    ! Crust1.0
+  integer, parameter :: ICRUST_CRUST2    = 2    ! Crust2.0
+  integer, parameter :: ICRUST_CRUSTMAPS = 3    ! Crustmaps
+  integer, parameter :: ICRUST_EPCRUST   = 4    ! EPcrust
+  integer, parameter :: ICRUST_CRUST_SH  = 5    ! Spherical-Harmonics Crust
+  integer, parameter :: ICRUST_EUCRUST   = 6    ! EUcrust07
 
 ! define flag for 3D Earth model
   integer, parameter :: THREE_D_MODEL_S20RTS   = 101

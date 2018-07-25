@@ -25,52 +25,15 @@
 !
 !=====================================================================
 
-  subroutine get_model_parameters(MODEL,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-                        ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
-                        CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
-                        ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
-                        OCEANS,TOPOGRAPHY, &
-                        ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R120,R220,R400,R600,R670,R771, &
-                        RTOPDDOUBLEPRIME,RCMB,RICB,RMOHO_FICTITIOUS_IN_MESHER, &
-                        R80_FICTITIOUS_IN_MESHER,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
-                        CEM_REQUEST, CEM_ACCEPT)
-
-  use constants
+  subroutine get_model_parameters()
 
   implicit none
 
-  character(len=MAX_STRING_LEN) MODEL
-
-  integer REFERENCE_1D_MODEL,THREE_D_MODEL
-
-  logical ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
-    CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
-    ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY,CEM_REQUEST,CEM_ACCEPT
-
-  logical OCEANS,TOPOGRAPHY
-
-  double precision ROCEAN,RMIDDLE_CRUST, &
-    RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-    RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
-
-  double precision RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
-
   ! turns on/off corresponding 1-D/3-D model flags
-  call get_model_parameters_flags(MODEL,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-                        ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
-                        CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
-                        ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
-                        OCEANS,TOPOGRAPHY,CEM_REQUEST,CEM_ACCEPT)
+  call get_model_parameters_flags()
 
   ! sets radius for each discontinuity and ocean density values
-  call get_model_parameters_radii(REFERENCE_1D_MODEL,ROCEAN,RMIDDLE_CRUST, &
-                                  RMOHO,R80,R120,R220,R400,R600,R670,R771, &
-                                  RTOPDDOUBLEPRIME,RCMB,RICB, &
-                                  RMOHO_FICTITIOUS_IN_MESHER, &
-                                  R80_FICTITIOUS_IN_MESHER, &
-                                  RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
-                                  HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL)
-
+  call get_model_parameters_radii()
 
   end subroutine get_model_parameters
 
@@ -79,33 +42,25 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-
-  subroutine get_model_parameters_flags(MODEL,REFERENCE_1D_MODEL,THREE_D_MODEL, &
-                        ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
-                        CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
-                        ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
-                        OCEANS,TOPOGRAPHY,CEM_REQUEST,CEM_ACCEPT)
+  subroutine get_model_parameters_flags()
 
   use constants
 
+  use shared_parameters,only: MODEL, &
+    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL, &
+    ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
+    CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
+    ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
+    OCEANS,TOPOGRAPHY, &
+    CEM_REQUEST,CEM_ACCEPT
+
   implicit none
 
-  character(len=MAX_STRING_LEN) :: MODEL
-
-  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
-
-  logical :: ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
-         CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
-         ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
-         CEM_REQUEST,CEM_ACCEPT
-  logical :: OCEANS,TOPOGRAPHY
-
   ! local parameters
-  character(len=4) :: ending
-  character(len=8) :: ending_1Dcrust
-
-  character(len=MAX_STRING_LEN) :: MODEL_ROOT
-  logical :: impose_1Dcrust
+  character(len=64) :: ending
+  character(len=MAX_STRING_LEN) :: MODEL_ROOT,MODEL_L
+  integer :: impose_crust
+  integer :: irange,i
 
   ! defaults:
   !
@@ -125,30 +80,93 @@
   ! CRUSTAL : flag set to .true. if a 3D crustal model (e.g. Crust-2.0) will be used or
   !  to .false. for a 1D crustal model.
 
+  ! converts all string characters to lowercase (to make user input case-insensitive)
+  MODEL_L = MODEL
+  irange = iachar('a') - iachar('A')
+  do i = 1,len_trim(MODEL_L)
+    if (lge(MODEL_L(i:i),'A') .and. lle(MODEL_L(i:i),'Z')) then
+      MODEL_L(i:i) = achar(iachar(MODEL_L(i:i)) + irange)
+    endif
+  enddo
+
   ! extract ending of model name
-  ending = ' '
-  if (len_trim(MODEL) > 4 ) ending = MODEL(len_trim(MODEL)-3:len_trim(MODEL))
+  ending = ''
+  if (len_trim(MODEL_L) > 4 ) ending = MODEL_L(len_trim(MODEL_L)-3:len_trim(MODEL_L))
 
   ! determines if the anisotropic inner core option should be turned on
-  if (ending == '_AIC') then
+  if (trim(ending) == '_AIC') then
     ANISOTROPIC_INNER_CORE = .true.
     ! in case it has an ending for the inner core, remove it from the name
-    MODEL_ROOT = MODEL(1: len_trim(MODEL)-4)
+    MODEL_ROOT = MODEL_L(1:len_trim(MODEL_L)-4)
   else
     ANISOTROPIC_INNER_CORE = .false.
     ! sets root name of model to original one
-    MODEL_ROOT = MODEL
+    MODEL_ROOT = MODEL_L
   endif
 
+  ! crustal option by name ending
+  impose_crust = 0
+  ending = ''
+
+  ! 1D crust options
+  ! checks with '_onecrust' option
+  if (len_trim(MODEL_ROOT) > 9 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-8:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_onecrust') then
+    impose_crust = -1 ! negative flag for 1Dcrust option with 1-layer
+    ! in case it has an ending for the 1D crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-9)
+  endif
   ! checks with '_1Dcrust' option
-  impose_1Dcrust = .false.
-  ending_1Dcrust = ' '
-  if (len_trim(MODEL_ROOT) > 8 ) &
-    ending_1Dcrust = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
-  if (ending_1Dcrust == '_1Dcrust') then
-    impose_1Dcrust = .true.
-    ! in case it has an ending for the inner core, remove it from the name
-    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL)-8)
+  if (len_trim(MODEL_ROOT) > 8 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_1dcrust') then
+    impose_crust = -2 ! negative flag for 1Dcrust option with 2-layers
+    ! in case it has an ending for the 1D crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-8)
+  endif
+
+  ! 3D crust options
+  ! checks with '_crustmaps' option
+  if (len_trim(MODEL_ROOT) > 10 ) &
+    ending = MODEL_ROOT(len_trim(MODEL_ROOT)-9:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_crustmaps') then
+    impose_crust = ICRUST_CRUSTMAPS
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-10)
+  endif
+  ! checks with '_crust1.0' option
+  if (len_trim(MODEL_ROOT) > 9 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-8:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_crust1.0') then
+    impose_crust = ICRUST_CRUST1
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-9)
+  endif
+  ! checks with '_crust2.0' option
+  if (len_trim(MODEL_ROOT) > 9 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-8:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_crust2.0') then
+    impose_crust = ICRUST_CRUST2
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-9)
+  endif
+  ! checks with '_epcrust' option
+  if (len_trim(MODEL_ROOT) > 8 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_epcrust') then
+    impose_crust = ICRUST_EPCRUST
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-8)
+  endif
+  ! checks with '_eucrust' option
+  if (len_trim(MODEL_ROOT) > 8 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_eucrust') then
+    impose_crust = ICRUST_EUCRUST
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-8)
+  endif
+  ! checks with '_crustSH' option
+  if (len_trim(MODEL_ROOT) > 8 ) ending = MODEL_ROOT(len_trim(MODEL_ROOT)-7:len_trim(MODEL_ROOT))
+  if (trim(ending) == '_crustsh') then
+    impose_crust = ICRUST_CRUST_SH
+    ! in case it has an ending for the crust, remove it from the name
+    MODEL_ROOT = MODEL_ROOT(1: len_trim(MODEL_L)-8)
   endif
 
 
@@ -162,6 +180,10 @@
 
   ! uses PREM as the 1D reference model by default
   REFERENCE_1D_MODEL = REFERENCE_MODEL_PREM
+
+  ! default crustal model
+  ! (used Crust2.0 as default when CRUSTAL flag is set for simulation)
+  REFERENCE_CRUSTAL_MODEL = ICRUST_CRUST2
 
   ! uses no anisotropic 3D model by default
   ANISOTROPIC_3D_MANTLE = .false.
@@ -191,73 +213,55 @@
   TRANSVERSE_ISOTROPY = .false.
 
   ! model specifics
+  select case (trim(MODEL_ROOT))
 
   ! 1-D models
-  if (MODEL_ROOT == '1D_isotropic_prem') then
+  case ('1d_isotropic_prem')
     HONOR_1D_SPHERICAL_MOHO = .true.
 
-  else if (MODEL_ROOT == '1D_transversely_isotropic_prem') then
+  case ('1d_transversely_isotropic_prem')
     HONOR_1D_SPHERICAL_MOHO = .true.
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == '1D_iasp91' .or. MODEL_ROOT == '1D_1066a' .or. &
-           MODEL_ROOT == '1D_ak135f_no_mud' .or. MODEL_ROOT == '1D_jp3d' .or. &
-           MODEL_ROOT == '1D_sea99') then
+  case ('1d_iasp91','1d_1066a','1d_ak135f_no_mud','1d_jp3d','1d_sea99')
     HONOR_1D_SPHERICAL_MOHO = .true.
-    if (MODEL_ROOT == '1D_iasp91') then
+    if (MODEL_ROOT == '1d_iasp91') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
-    else if (MODEL_ROOT == '1D_1066a') then
+    else if (MODEL_ROOT == '1d_1066a') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if (MODEL_ROOT == '1D_ak135f_no_mud') then
+    else if (MODEL_ROOT == '1d_ak135f_no_mud') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
-    else if (MODEL_ROOT == '1D_jp3d') then
+    else if (MODEL_ROOT == '1d_jp3d') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
-    else if (MODEL_ROOT == '1D_sea99') then
+    else if (MODEL_ROOT == '1d_sea99') then
       REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     else
       stop 'reference 1D Earth model unknown'
     endif
 
-  else if (MODEL_ROOT == '1D_ref') then
+  case ('1d_ref')
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == '1D_ref_iso') then
+  case ('1d_ref_iso')
     HONOR_1D_SPHERICAL_MOHO = .true.
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
-
-  else if (MODEL_ROOT == '1D_isotropic_prem_onecrust') then
-    HONOR_1D_SPHERICAL_MOHO = .true.
-    ONE_CRUST = .true.
-
-  else if (MODEL_ROOT == '1D_transversely_isotropic_prem_onecrust') then
-    TRANSVERSE_ISOTROPY = .true.
-    HONOR_1D_SPHERICAL_MOHO = .true.
-    ONE_CRUST = .true.
-
-  else if (MODEL_ROOT == '1D_iasp91_onecrust' .or. MODEL_ROOT == '1D_1066a_onecrust' &
-        .or. MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
-    HONOR_1D_SPHERICAL_MOHO = .true.
-    ONE_CRUST = .true.
-    if (MODEL_ROOT == '1D_iasp91_onecrust') then
-      REFERENCE_1D_MODEL = REFERENCE_MODEL_IASP91
-    else if (MODEL_ROOT == '1D_1066a_onecrust') then
-      REFERENCE_1D_MODEL = REFERENCE_MODEL_1066A
-    else if (MODEL_ROOT == '1D_ak135f_no_mud_onecrust') then
-      REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
-    else
-      stop 'reference 1D Earth model unknown'
-    endif
 
   ! 3-D models
-  else if (MODEL_ROOT == 'transversely_isotropic_prem_plus_3D_crust_2.0') then
+  case ('transversely_isotropic_prem_plus_3d_crust_2.0')
     CASE_3D = .true.
     CRUSTAL = .true.
     ONE_CRUST = .true.
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 's20rts') then
+  case ('transversely_isotropic_prem_plus_3d')
+    CASE_3D = .true.
+    CRUSTAL = .true.
+    ONE_CRUST = .true.
+    TRANSVERSE_ISOTROPY = .true.
+
+  case ('s20rts')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -265,7 +269,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S20RTS
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 's40rts') then
+  case ('s40rts')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -273,9 +277,11 @@
     THREE_D_MODEL = THREE_D_MODEL_S40RTS
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 'full_sh') then
+  case ('full_sh')
     ! uses PREM by default
     !REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
+    ! uses SH crustal model by default
+    REFERENCE_CRUSTAL_MODEL = ICRUST_CRUST_SH
     !ATTENUATION_3D = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -284,7 +290,7 @@
     THREE_D_MODEL = THREE_D_MODEL_MANTLE_SH
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 'sea99_jp3d1994') then
+  case ('sea99_jp3d1994')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -292,7 +298,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     THREE_D_MODEL = THREE_D_MODEL_SEA99_JP3D
 
-  else if (MODEL_ROOT == 'sea99') then
+  case ('sea99')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -300,7 +306,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_SEA1D
     THREE_D_MODEL = THREE_D_MODEL_SEA99
 
-  else if (MODEL_ROOT == 'jp3d1994') then
+  case ('jp3d1994')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -308,7 +314,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_JP1D
     THREE_D_MODEL = THREE_D_MODEL_JP3D
 
-  else if (MODEL_ROOT == 's362ani') then
+  case ('s362ani')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -317,7 +323,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 's362iso') then
+  case ('s362iso')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -325,7 +331,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
 
-  else if (MODEL_ROOT == 's362wmani') then
+  case ('s362wmani')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -334,7 +340,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362WMANI
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 's362ani_prem') then
+  case ('s362ani_prem')
     CASE_3D = .true.
     CRUSTAL = .true.
     TRANSVERSE_ISOTROPY = .true.
@@ -342,7 +348,7 @@
     ONE_CRUST = .true.
     THREE_D_MODEL = THREE_D_MODEL_S362ANI_PREM
 
-  else if (MODEL_ROOT == 's362ani_3DQ') then
+  case ('s362ani_3dq')
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -352,7 +358,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
- else if (MODEL_ROOT == 's362iso_3DQ') then
+  case ('s362iso_3dq')
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -361,7 +367,7 @@
     REFERENCE_1D_MODEL = REFERENCE_MODEL_1DREF
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
 
-  else if (MODEL_ROOT == 's29ea') then
+  case ('s29ea')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -370,7 +376,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S29EA
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 'sglobe') then
+  case ('sglobe')
     ! uses PREM as reference
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -379,7 +385,7 @@
     THREE_D_MODEL = THREE_D_MODEL_SGLOBE
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 'sglobe_iso') then
+  case ('sglobe_iso')
     ! uses PREM as reference
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -388,12 +394,12 @@
     THREE_D_MODEL = THREE_D_MODEL_SGLOBE
     TRANSVERSE_ISOTROPY = .false. ! converts to isotropic model
 
-  else if (MODEL_ROOT == '3D_attenuation') then
+  case ('3d_attenuation')
     ATTENUATION_3D = .true.
     CASE_3D = .true.
     ONE_CRUST = .true.
 
-  else if (MODEL_ROOT == '3D_anisotropic') then
+  case ('3d_anisotropic')
     ANISOTROPIC_3D_MANTLE = .true.
     CASE_3D = .true. ! crustal moho stretching
     ONE_CRUST = .true. ! 1 element layer in top crust region
@@ -403,7 +409,7 @@
     ! REFERENCE_1D_MODEL = REFERENCE_MODEL_AK135F_NO_MUD
     ! TRANSVERSE_ISOTROPY = .false. ! for AK135 ref model
 
-  else if (MODEL_ROOT == 'heterogen') then
+  case ('heterogen')
     CASE_3D = .true.
     CRUSTAL = .true.
     HETEROGEN_3D_MANTLE = .true.
@@ -414,20 +420,20 @@
     TRANSVERSE_ISOTROPY = .true.
 
 #ifdef CEM
-  else if (MODEL_ROOT == 'CEM_REQUEST') then
+  case ('cem_request')
     CEM_REQUEST         = .true.
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 'CEM_ACCEPT') then
+  case ('cem_accept')
     CEM_ACCEPT          = .true.
     TRANSVERSE_ISOTROPY = .true.
 
-  else if (MODEL_ROOT == 'CEM_GLL') then
+  case ('cem_gll')
     THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.
 #endif
 
-  else if (MODEL_ROOT == 'PPM') then
+  case ('ppm')
     ! superimposed based on isotropic-prem
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -436,7 +442,7 @@
     THREE_D_MODEL = THREE_D_MODEL_PPM
     TRANSVERSE_ISOTROPY = .true. ! to use transverse-isotropic prem
 
-  else if (MODEL_ROOT == 'GLL' .or. MODEL_ROOT == 'gll') then
+  case ('gll')
     ! model will be given on local basis, at all GLL points,
     ! as from meshfem3d output from routine save_arrays_solver()
     !
@@ -455,7 +461,7 @@
     !  model, based upon the S29EA model, but putting mgll_v as parameter to this
     !  routine involves too many changes. )
 
-  else if (MODEL == 'gapp2') then
+  case ('gapp2')
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -464,31 +470,51 @@
     THREE_D_MODEL = THREE_D_MODEL_GAPP2
     TRANSVERSE_ISOTROPY = .true.
 
-  else
+  case default
     print *
     print *,'Error model: ',trim(MODEL)
     stop 'model not implemented yet, edit get_model_parameters.f90, or ensure you have run ./configure correctly, and recompile'
-  endif
-
-  ! suppress the crustal layers
-  if (SUPPRESS_CRUSTAL_MESH) then
-    CRUSTAL = .false.
-    OCEANS = .false.
-    ONE_CRUST = .false.
-    TOPOGRAPHY = .false.
-  endif
+  end select
 
   ! additional option for 3D mantle models:
   ! this takes crust from reference 1D model rather than a 3D crust;
-  if (impose_1Dcrust) then
+  if (impose_crust < 0) then
+    ! imposes 1Dcrust options
     ! no 3D crust
     CRUSTAL = .false.
     ! no crustal moho stretching
     CASE_3D = .false.
     ! mesh honors the 1D moho depth
     HONOR_1D_SPHERICAL_MOHO = .true.
-    ! 2 element layers in top crust region rather than just one
+    select case (impose_crust)
+    case (-1)
+      ! onecrust option, single layer
+      ONE_CRUST = .true.
+    case (-2)
+      ! 1Dcrust option, default 2-element layers in top crust region (rather than just one)
+      ONE_CRUST = .false.
+    case default
+      stop 'Invalid impose_crust value for 1D crust'
+    end select
+  endif
+
+  ! 3D crustal maps
+  if (impose_crust > 0) then
+    ! sets 3D crustal model
+    REFERENCE_CRUSTAL_MODEL = impose_crust
+    ! 3D crustal structure flags
+    HONOR_1D_SPHERICAL_MOHO = .false.
+    CRUSTAL = .true.
+    CASE_3D = .true.
+    ONE_CRUST = .true.
+  endif
+
+  ! suppress the crustal layers (only mantle values, extended to surface)
+  if (SUPPRESS_CRUSTAL_MESH) then
+    CRUSTAL = .false.
     ONE_CRUST = .false.
+    OCEANS = .false.
+    TOPOGRAPHY = .false.
   endif
 
   ! checks flag consistency for crust
@@ -506,7 +532,6 @@
        REFERENCE_1D_MODEL == REFERENCE_MODEL_SEA1D) .and. TRANSVERSE_ISOTROPY) &
         stop 'models IASP91, AK135, 1066A, JP1D and SEA1D are currently isotropic'
 
-
   end subroutine get_model_parameters_flags
 
 !
@@ -514,32 +539,25 @@
 !
 
 
-  subroutine get_model_parameters_radii(REFERENCE_1D_MODEL,ROCEAN,RMIDDLE_CRUST, &
-                                  RMOHO,R80,R120,R220,R400,R600,R670,R771, &
-                                  RTOPDDOUBLEPRIME,RCMB,RICB, &
-                                  RMOHO_FICTITIOUS_IN_MESHER, &
-                                  R80_FICTITIOUS_IN_MESHER, &
-                                  RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
-                                  HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL)
-
+  subroutine get_model_parameters_radii()
 
   use constants
 
+  use shared_parameters,only: &
+    ROCEAN,RMIDDLE_CRUST, &
+    RMOHO,R80,R120,R220,R400,R600,R670,R771, &
+    RTOPDDOUBLEPRIME,RCMB,RICB, &
+    RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER, &
+    RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
+
+  use shared_parameters,only: &
+    HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL,REFERENCE_1D_MODEL
+
   implicit none
 
-! parameters read from parameter file
-  integer REFERENCE_1D_MODEL
 
-  double precision ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
-
-  double precision RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
-
-  logical HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL
-
-! radii in PREM or IASP91
-! and normalized density at fluid-solid interface on fluid size for coupling
+! sets radii in PREM or IASP91 and normalized density at fluid-solid interface on fluid size for coupling
+!
 ! ROCEAN: radius of the ocean (m)
 ! RMIDDLE_CRUST: radius of the middle crust (m)
 ! RMOHO: radius of the Moho (m)
@@ -578,7 +596,7 @@
 
   ! density ocean
   RHO_OCEANS = 1020.0 / RHOAV   ! value common to all models
-  ! densities fluid outer core
+  ! densities fluid outer core (PREM)
   RHO_TOP_OC = 9903.4384 / RHOAV
   RHO_BOTTOM_OC = 12166.5885 / RHOAV
 
@@ -684,6 +702,7 @@
     RTOPDDOUBLEPRIME = 3631000.d0
     RCMB = 3482000.d0
     RICB = 1217000.d0
+
     RHO_TOP_OC = 9900.2379 / RHOAV
     RHO_BOTTOM_OC = 12168.6383 / RHOAV
 
@@ -704,10 +723,6 @@
     ! values for SEA1D that are not discontinuities
     R600 = 5771000.d0
     R771 = 5611000.d0
-
-    RHO_TOP_OC = 9903.4384 / RHOAV
-    RHO_BOTTOM_OC = 12166.5885 / RHOAV
-
   endif
 
   ! honor the PREM Moho or define a fictitious Moho in order to have even radial sampling

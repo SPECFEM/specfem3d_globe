@@ -593,7 +593,7 @@
   vptyp(:) = crust_vp(:,icolat,ilon)
   vstyp(:) = crust_vs(:,icolat,ilon)
   rhtyp(:) = crust_rho(:,icolat,ilon)
-  thtp(:) = crust_thickness(:,icolat,ilon)
+  thtp(:)  = crust_thickness(:,icolat,ilon)
 
   ! get distance to Moho from the bottom of the ocean or the ice
   ! value could be used for checking, but is unused so far...

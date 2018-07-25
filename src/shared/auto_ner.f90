@@ -51,7 +51,8 @@
   use constants, only: DEGREES_TO_RADIANS, NGLLX, &
     REFERENCE_MODEL_PREM,REFERENCE_MODEL_IASP91,REFERENCE_MODEL_AK135F_NO_MUD, &
     REFERENCE_MODEL_1066A,REFERENCE_MODEL_1DREF,REFERENCE_MODEL_JP1D,REFERENCE_MODEL_SEA1D
-  use shared_compute_parameters, only: REFERENCE_1D_MODEL
+
+  use shared_parameters, only: REFERENCE_1D_MODEL
 
   implicit none
 
@@ -176,16 +177,16 @@
 !
 !-------------------------------------------------------------------------------------------------
 !
-  subroutine auto_attenuation_periods(WIDTH, NEX_MAX, MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+  subroutine auto_attenuation_periods(WIDTH, NEX_MAX)
 
   use constants, only: N_SLS,NGLLX
+
+  use shared_parameters, only: MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
 
   implicit none
 
   double precision,intent(in) :: WIDTH
-
   integer, intent(in) :: NEX_MAX
-  integer, intent(out) :: MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD
 
   ! local parameters
   double precision :: TMP
@@ -255,25 +256,28 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine auto_ner(WIDTH, NEX_MAX, &
-                      NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
-                      NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-                      NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-                      R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
-                      HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
+  subroutine auto_ner(WIDTH, NEX_MAX)
 
   use constants, only: R_EARTH
 
+  use shared_parameters, only: &
+    CASE_3D !, CRUSTAL, HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL
+
+  use shared_parameters, only: &
+    NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
+    NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
+    NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
+    R_CENTRAL_CUBE
+
+  use shared_parameters, only: &
+    R80,R220,R400,R600,R670,R771, &
+    RTOPDDOUBLEPRIME,RCMB,&
+    RMOHO_FICTITIOUS_IN_MESHER
+
   implicit none
 
-  double precision WIDTH
-  integer NEX_MAX
-  integer NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
-       NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-       NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB
-  double precision R_CENTRAL_CUBE
-  logical CASE_3D,CRUSTAL,HONOR_1D_SPHERICAL_MOHO
-  integer REFERENCE_1D_MODEL
+  double precision,intent(in) :: WIDTH
+  integer,intent(in) :: NEX_MAX
 
   ! local parameters
   integer,          parameter                :: NUM_REGIONS = 14
@@ -282,11 +286,11 @@
   double precision, dimension(NUM_REGIONS-1) :: ratio_top
   double precision, dimension(NUM_REGIONS-1) :: ratio_bottom
   integer,          dimension(NUM_REGIONS-1) :: NER
-  integer NEX_ETA
-  double precision ROCEAN,RMIDDLE_CRUST, &
-          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
-  double precision RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
+
+!  double precision :: ROCEAN,RMIDDLE_CRUST, &
+!          RMOHO,R80,R120,R220,R400,R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
+!          RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
+!  double precision :: RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
   ! This is PREM in Kilometers, well ... kinda, not really ....
   !radius(1)  = 6371.00d0 ! Surface
@@ -304,14 +308,8 @@
   !radius(13) = 1371.00d0 !    5000 - 4th Mesh Doubling Interface
   !radius(14) =  982.00d0 ! Top Central Cube
 
-  ! gets model specific radii used to determine number of elements in radial direction
-  call get_model_parameters_radii(REFERENCE_1D_MODEL,ROCEAN,RMIDDLE_CRUST, &
-                                  RMOHO,R80,R120,R220,R400,R600,R670,R771, &
-                                  RTOPDDOUBLEPRIME,RCMB,RICB, &
-                                  RMOHO_FICTITIOUS_IN_MESHER, &
-                                  R80_FICTITIOUS_IN_MESHER, &
-                                  RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
-                                  HONOR_1D_SPHERICAL_MOHO,CASE_3D,CRUSTAL)
+  ! uses model specific radii to determine number of elements in radial direction
+  ! (set by earlier call to routine get_model_parameters_radii())
 
   radius(1)  = R_EARTH ! Surface
   radius(2)  = RMOHO_FICTITIOUS_IN_MESHER !    Moho - 1st Mesh Doubling Interface
@@ -321,9 +319,12 @@
   radius(6)  = R600   !     600
   radius(7)  = R670   !     670
   radius(8)  = R771   !     771
+
   radius(9)  = 4712000.0d0 !    1650 - 2nd Mesh Doubling: Geochemical Layering; Kellogg et al. 1999, Science
+
   radius(10) = RTOPDDOUBLEPRIME   !     D_double_prime ~ 3630
   radius(11) = RCMB   !     CMB ~ 3480
+
   radius(12) = 2511000.0d0 !    3860 - 3rd Mesh Doubling Interface
   radius(13) = 1371000.0d0 !    5000 - 4th Mesh Doubling Interface
   radius(14) =  982000.0d0 ! Top Central Cube
@@ -331,7 +332,7 @@
   ! radii in km
   radius(:) = radius(:) / 1000.0d0
 
-  call find_r_central_cube(NEX_MAX, radius(14), NEX_ETA)
+  call find_r_central_cube(NEX_MAX, radius(14))
 
   ! Mesh Doubling
   scaling(1)     = 1  ! SURFACE TO MOHO
@@ -387,6 +388,7 @@
   NER_CMB_TOPDDOUBLEPRIME  = NER(10)
   NER_OUTER_CORE           = NER(11) + NER(12)
   NER_TOP_CENTRAL_CUBE_ICB = NER(13)
+
   R_CENTRAL_CUBE           = radius(14) * 1000.0d0
 
   end subroutine auto_ner
@@ -451,18 +453,17 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine find_r_central_cube(nex_xi_in, rcube, nex_eta_in)
+  subroutine find_r_central_cube(nex_xi_in, rcube)
 
   implicit none
 
-  integer,intent(in) :: nex_xi_in
-  double precision,intent(out) :: rcube
-  integer,intent(out) :: nex_eta_in
-
-  ! local parameters
   integer, parameter :: NBNODE = 8
   double precision, parameter :: alpha = 0.41d0
 
+  integer,intent(in) :: nex_xi_in
+  double precision,intent(out) :: rcube
+
+  ! local parameters
   integer :: npts
   integer :: nex_xi
   integer :: nex_eta
@@ -480,7 +481,6 @@
   rcubestep    = 1.0d0
   rcube_test   =  930.0d0
   rcubemax     = 1100.0d0
-  nex_eta_in   = -1
   ximin        = 1e7
   rcube        = rcube_test
 
@@ -514,7 +514,6 @@
      if (xi < ximin) then
         ximin      = xi
         rcube      = rcube_test
-        nex_eta_in = nex_eta
      endif
      rcube_test = rcube_test + rcubestep
   enddo
@@ -533,13 +532,16 @@
 
   double precision, parameter :: RICB_KM = 1221.0d0
 
-  integer nex_xi, ner
-  double precision rcube, alpha
-  integer ix
-  double precision ratio_x, factx, xi
-  double precision x, y
-  double precision surfx, surfy
-  double precision dist_cc_icb, somme, dist_moy
+  integer,intent(in) :: nex_xi
+  double precision,intent(in) :: rcube, alpha
+  integer,intent(out) :: ner
+
+  ! local parameters
+  integer :: ix
+  double precision :: ratio_x, factx, xi
+  double precision :: x, y
+  double precision :: surfx, surfy
+  double precision :: dist_cc_icb, somme, dist_moy
 
   somme = 0.0d0
 
@@ -572,17 +574,22 @@
 
   implicit none
 
-  integer :: npts,ispec,istart_left,istart_right,i
   integer, parameter :: NBNODE = 8
-  double precision pts(NBNODE+1,2),points(npts,2)
 
-    istart_left = 1
-    istart_right = (ispec-1)*NBNODE + 1
-    do i = 0,NBNODE-1
-      pts(istart_left + i,1) = points(istart_right + i,1)
-      pts(istart_left + i,2) = points(istart_right + i,2)
-    enddo
-    pts(NBNODE+1,:) = pts(1,:)  ! use first point as the last point
+  double precision,intent(in) :: points(npts,2)
+  double precision,intent(out) :: pts(NBNODE+1,2)
+  integer,intent(in) :: npts,ispec
+
+  ! local parameters
+  integer :: istart_left,istart_right,i
+
+  istart_left = 1
+  istart_right = (ispec-1)*NBNODE + 1
+  do i = 0,NBNODE-1
+    pts(istart_left + i,1) = points(istart_right + i,1)
+    pts(istart_left + i,2) = points(istart_right + i,2)
+  enddo
+  pts(NBNODE+1,:) = pts(1,:)  ! use first point as the last point
 
   end subroutine get_element
 
@@ -594,10 +601,14 @@
 
   implicit none
 
-  integer ie, ix1,ix2,ix3
   integer, parameter :: NBNODE = 8
-  double precision edgemax, edgemin, edge
-  double precision pts(NBNODE+1, 2)
+
+  double precision,intent(in) :: pts(NBNODE+1, 2)
+  double precision,intent(out) :: edgemax, edgemin
+
+  ! local parameters
+  integer :: ie, ix1,ix2,ix3
+  double precision :: edge
 
   edgemax = -1e7
   edgemin = -edgemax
@@ -622,19 +633,22 @@
   implicit none
 
   integer, parameter :: NBNODE = 8
-  integer npts
-  integer nspec_chunks, nspec_cube
 
-  double precision rcube
-  double precision alpha
-  double precision points(npts, 2)
-  double precision x, y
+  integer,intent(in) :: npts
+  integer,intent(out) :: nspec_chunks, nspec_cube
 
-  integer nex_eta, nex_xi
-  integer ic, ix, iy, in
+  double precision,intent(in) :: rcube
+  double precision,intent(out) :: points(npts, 2)
+
+  integer :: nex_eta, nex_xi
+
+  ! local parameters
+  double precision :: alpha
+  double precision :: x, y
+  integer :: ic, ix, iy, in
   integer, parameter, dimension(NBNODE) :: iaddx(NBNODE) = (/0,1,2,2,2,1,0,0/)
   integer, parameter, dimension(NBNODE) :: iaddy(NBNODE) = (/0,0,0,1,2,2,2,1/)
-  integer k
+  integer :: k
 
   k = 1
   alpha = 0.41d0
@@ -678,13 +692,14 @@
 
   implicit none
 
-  integer ix, iy, nbx, nby
-  double precision radius, alpha
-  double precision x, y
+  integer,intent(in) :: ix, iy, nbx, nby
+  double precision,intent(in) :: radius, alpha
+  double precision,intent(out) :: x, y
 
-  double precision ratio_x, ratio_y
-  double precision factx, facty
-  double precision xi, eta
+  ! local parameters
+  double precision :: ratio_x, ratio_y
+  double precision :: factx, facty
+  double precision :: xi, eta
 
   ratio_x = (ix * 1.0d0) / (nbx * 1.0d0)
   ratio_y = (iy * 1.0d0) / (nby * 1.0d0)
@@ -712,16 +727,17 @@
 
   double precision, parameter :: RICB_KM = 1221.0d0
 
-  integer ix, iy, nbx, nby, ic
-  double precision rcube, alpha
-  double precision x, y
+  integer,intent(in) :: ix, iy, nbx, nby, ic
+  double precision,intent(in) :: rcube, alpha
+  double precision,intent(out) :: x, y
 
-  double precision ratio_x, ratio_y
-  double precision factx, xi
-  double precision xcc, ycc
-  double precision xsurf, ysurf
-  double precision deltax, deltay
-  double precision temp
+  ! local parameters
+  double precision :: ratio_x, ratio_y
+  double precision :: factx, xi
+  double precision :: xcc, ycc
+  double precision :: xsurf, ysurf
+  double precision :: deltax, deltay
+  double precision :: temp
 
   ratio_x = (ix * 1.0d0) / (nbx * 1.0d0)
   ratio_y = (iy * 1.0d0) / (nby * 1.0d0)

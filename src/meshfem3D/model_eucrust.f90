@@ -111,6 +111,8 @@
   ! user output
   write(IMAIN,*)
   write(IMAIN,*) 'incorporating crustal model: EuCrust07'
+  write(IMAIN,*) '  latitude  area: min/max = ',latitude_min,'/',latitude_max
+  write(IMAIN,*) '  longitude area: min/max = ',longitude_min,'/',longitude_max
   write(IMAIN,*)
 
   ! initializes
@@ -121,13 +123,18 @@
   eucrust_ucdepth(:) = ZERO
 
   ! opens data file
-  open(unit=IIN,file=filename,status='old',action='read',iostat=ier)
+  open(unit=IIN,file=trim(filename),status='old',action='read',iostat=ier)
   if (ier /= 0) then
     write(IMAIN,*) 'Error opening "', trim(filename), '": ', ier
     call flush_IMAIN()
     ! stop
     call exit_MPI(0, 'Error model eucrust')
   endif
+
+  ! file format:
+  ! X      Y       UC    LC    AVCRUST Topo   Basement UC/LC Moho
+  !-24.875 34.375  5.48  6.73  6.31    -5.30  5.30     7.48  11.76
+  ! ..
 
   ! skip first line
   read(IIN,*)
@@ -158,28 +165,50 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  subroutine model_eucrust(lat,lon,x,vp,found_crust)
+  subroutine model_eucrust(lat,lon,x,vpc,mohoc,found_crust,point_in_area)
 
   use model_eucrust_par
 
   implicit none
 
-  double precision :: lat,lon,x,vp
-  logical :: found_crust
+  double precision,intent(in) :: lat,lon,x
+  double precision,intent(inout) :: vpc,mohoc
+  logical,intent(out) :: found_crust,point_in_area
+  ! local parameters
+  double precision :: vp,moho
 
   ! initializes
   vp = 0.d0
+  moho = 0.d0
+  found_crust = .false.
+  point_in_area = .false.
+
+  ! min/max area:
+  !
+  ! EUcrust07 lat/lon range: lat[34.375,71.375] / lon [-24.875,35.375]
+  !
+  ! input value lat/lon given in range: lat[-90,90] / lon[-180,180]
+
+  !debug
+  !print *,'EUcrust: ',lat,lon,latitude_min,latitude_max,longitude_min,longitude_max
 
   ! checks region range
-  found_crust = .false.
   if (lon < longitude_min .or. lon > longitude_max ) return
   if (lat < latitude_min .or. lat > latitude_max ) return
+  point_in_area = .true.
 
   ! smoothing over 1.0 degrees
-  call eu_cap_smoothing(lat,lon,x,vp,found_crust)
+  call eu_cap_smoothing(lat,lon,x,vp,moho,found_crust)
 
   ! without smoothing
-  !vp = crust_eu(lat,lon,x,vp,found_crust)
+  !call crust_eu(lat,lon,x,vp,moho,found_crust)
+
+  mohoc = moho
+  if (found_crust) then
+    vpc = vp
+    !debug
+    !print *,'EUcrust: ',lat,lon,x,vpc,mohoc
+  endif
 
   end subroutine model_eucrust
 
@@ -187,7 +216,7 @@
 !--------------------------------------------------------------------------------------------------
 !
 
-  double precision function crust_eu(lat,lon,x,vp,found_crust)
+  subroutine crust_eu(lat,lon,x,vp,moho,found_crust)
 
 ! returns Vp at the specific location lat/lon
 
@@ -196,8 +225,9 @@
 
   implicit none
 
-  double precision :: lat,lon,x,vp !,vs,rho,moho
-  logical :: found_crust
+  double precision,intent(in) :: lat,lon,x
+  double precision,intent(out) :: vp,moho !,vs,rho
+  logical,intent(out) :: found_crust
 
   double precision :: h_basement,h_uc,h_moho,x3,x4,x5
   double precision :: scaleval
@@ -206,59 +236,58 @@
   integer,parameter :: ilons = 242  ! number of different longitudes
   integer,parameter :: ilats = 149  ! number of different latitudes
 
-  ! checks region range
+  ! initializes
   found_crust = .false.
-  crust_eu = 0.0
+  vp = 0.d0
+  moho = 0.d0
+
+  ! checks region range
   if (lon < longitude_min .or. lon > longitude_max ) return
   if (lat < latitude_min .or. lat > latitude_max ) return
 
   ! search
   do i = 1,ilons-1
     if (lon >= eucrust_lon(i) .and. lon < eucrust_lon(i+1)) then
-          do j = 0,ilats-1
-            if (lat >= eucrust_lat(i+j*ilons) .and. lat < eucrust_lat(i+(j+1)*ilons)) then
+      do j = 0,ilats-1
+        if (lat >= eucrust_lat(i+j*ilons) .and. lat < eucrust_lat(i+(j+1)*ilons)) then
 
-              h_basement = eucrust_basement(i+j*ilons)
-              h_uc = eucrust_ucdepth(i+j*ilons)
-              h_moho = eucrust_mohodepth(i+j*ilons)
+          h_basement = eucrust_basement(i+j*ilons)
+          h_uc = eucrust_ucdepth(i+j*ilons)
+          h_moho = eucrust_mohodepth(i+j*ilons)
 
-              x3=(R_EARTH - h_basement*1000.0d0)/R_EARTH
-              x4=(R_EARTH - h_uc*1000.0d0)/R_EARTH
-              x5=(R_EARTH - h_moho*1000.0d0)/R_EARTH
+          x3 = (R_EARTH - h_basement*1000.0d0)/R_EARTH
+          x4 = (R_EARTH - h_uc*1000.0d0)/R_EARTH
+          x5 = (R_EARTH - h_moho*1000.0d0)/R_EARTH
 
-              scaleval = dsqrt(PI*GRAV*RHOAV)
+          scaleval = dsqrt(PI*GRAV*RHOAV)
 
-              if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST &
-                .and. h_basement > MINIMUM_SEDIMENT_THICKNESS) then
-                ! above sediment basement, returns average upper crust value
-                ! since no special sediment values are given
-                found_crust = .true.
-                vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
-                crust_eu = vp
-                return
-              else if (x > x4) then
-                found_crust = .true.
-                vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
-                crust_eu = vp
-                return
-              else if (x > x5) then
-                found_crust = .true.
-                vp = eucrust_vp_lowercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
-                crust_eu = vp
-                return
-              endif
-              return
-            endif
-          enddo
+          if (x > x3 .and. INCLUDE_SEDIMENTS_IN_CRUST &
+            .and. h_basement > MINIMUM_SEDIMENT_THICKNESS) then
+            ! above sediment basement, returns average upper crust value
+            ! since no special sediment values are given
+            found_crust = .true.
+            vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+          else if (x > x4) then
+            found_crust = .true.
+            vp = eucrust_vp_uppercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+          else if (x > x5) then
+            found_crust = .true.
+            vp = eucrust_vp_lowercrust(i+j*ilons) *1000.0d0/(R_EARTH*scaleval)
+          endif
+          moho = h_moho*1000.0d0/R_EARTH
+          ! in case location below moho, no vp value will be found
+          return
         endif
       enddo
+    endif
+  enddo
 
-  end function crust_eu
+  end subroutine crust_eu
 
 !
 !--------------------------------------------------------------------------------------------------
 !
-  subroutine eu_cap_smoothing(lat,lon,radius,value,found)
+  subroutine eu_cap_smoothing(lat_in,lon_in,radius,vp,moho,found)
 
 ! smooths with a cap of size CAP (in degrees)
 ! using NTHETA points in the theta direction (latitudinal)
@@ -271,41 +300,48 @@
   implicit none
 
   ! argument variables
-  double precision lat,lon,radius
-  double precision :: value
-  logical :: found
+  double precision,intent(in) :: lat_in,lon_in,radius
+  double precision,intent(out) :: vp,moho
+  logical,intent(out) :: found
 
   integer, parameter :: NTHETA = 4
   integer, parameter :: NPHI = 10
   double precision, parameter :: CAP = 1.0d0 * DEGREES_TO_RADIANS  ! 1 degree smoothing
 
-  double precision,external :: crust_eu
-
   ! local variables
-  integer i,j,k !,icolat,ilon,ier
-  integer itheta,iphi,npoints
-  double precision theta,phi,sint,cost,sinp,cosp,dtheta,dphi,cap_area,wght,total,valuel
-  double precision r_rot,theta_rot,phi_rot
-  double precision rotation_matrix(3,3),x(3),xc(3)
-  double precision xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
+  integer :: i,j,k !,icolat,ilon,ier
+  integer :: itheta,iphi,npoints
+  double precision :: lat,lon,theta,phi
+  double precision :: sint,cost,sinp,cosp,dtheta,dphi,cap_area,wght,total
+  double precision :: val,valmoho
+  double precision :: r_rot,theta_rot,phi_rot
+  double precision :: rotation_matrix(3,3),x(3),xc(3)
+  double precision :: xlon(NTHETA*NPHI),xlat(NTHETA*NPHI),weight(NTHETA*NPHI)
 
-  ! get integer colatitude and longitude of crustal cap
+  ! initializes
+  found = .false.
+  lat = lat_in
+  lon = lon_in
+
+  ! checks lat/lon
   ! -90 < lat < 90 -180 < lon < 180
   if (lat > 90.0d0 .or. lat < -90.0d0 .or. lon > 180.0d0 .or. lon < -180.0d0) &
-    stop 'Error in latitude/longitude range in crust'
-  if (lat == 90.0d0) lat=89.9999d0
-  if (lat == -90.0d0) lat=-89.9999d0
-  if (lon == 180.0d0) lon=179.9999d0
-  if (lon == -180.0d0) lon=-179.9999d0
+    stop 'Error in latitude/longitude range in EUcrust'
+
+  if (lat == 90.0d0) lat = 89.9999d0
+  if (lat == -90.0d0) lat = -89.9999d0
+  if (lon == 180.0d0) lon = 179.9999d0
+  if (lon == -180.0d0) lon = -179.9999d0
 
   !call icolat_ilon(lat,lon,icolat,ilon)
   !crustaltype=abbreviation(icolat,ilon)
   !call get_crust_structure(crustaltype,velp,vels,rho,thick,code,thlr,velocp,velocs,dens,ier)
 
-  !  uncomment the following line to use as is, without smoothing
+  !uncomment the following line to use as is, without smoothing
   !  value = func(lat,lon,x,value,found)
   !  return
 
+  ! set up CAP smoothing weights
   theta = (90.0-lat)*DEGREES_TO_RADIANS
   phi = lon*DEGREES_TO_RADIANS
 
@@ -334,41 +370,36 @@
   i = 0
   total = 0.0
   do itheta = 1,NTHETA
-
     theta = 0.5*dble(2*itheta-1)*CAP/dble(NTHETA)
     cost = cos(theta)
     sint = sin(theta)
     wght = sint*dtheta*dphi/cap_area
-
     do iphi = 1,NPHI
-
       i = i+1
-      !get the weight associated with this integration point (same for all phi)
+      ! get the weight associated with this integration point (same for all phi)
       weight(i) = wght
       total = total + weight(i)
       phi = dble(2*iphi-1)*PI/dble(NPHI)
       cosp = cos(phi)
       sinp = sin(phi)
-      !     x,y,z coordinates of integration point in cap at North pole
+      ! x,y,z coordinates of integration point in cap at North pole
       xc(1) = sint*cosp
       xc(2) = sint*sinp
       xc(3) = cost
-      !     get x,y,z coordinates in cap around point of interest
-      do j=1,3
+      ! get x,y,z coordinates in cap around point of interest
+      do j = 1,3
         x(j) = 0.0
-        do k=1,3
+        do k = 1,3
           x(j) = x(j)+rotation_matrix(j,k)*xc(k)
         enddo
       enddo
-      !     get latitude and longitude (degrees) of integration point
+      ! get latitude and longitude (degrees) of integration point
       call xyz_2_rthetaphi_dble(x(1),x(2),x(3),r_rot,theta_rot,phi_rot)
       call reduce(theta_rot,phi_rot)
       xlat(i) = (PI_OVER_TWO-theta_rot)*RADIANS_TO_DEGREES
       xlon(i) = phi_rot*RADIANS_TO_DEGREES
       if (xlon(i) > 180.0) xlon(i) = xlon(i)-360.0
-
     enddo
-
   enddo
 
   if (abs(total-1.0) > 0.001) stop 'Error in cap integration for crust2.0'
@@ -377,18 +408,20 @@
 
   ! at this point:
   !
-  ! xlat(i),xlon(i) are point locations to be used for interpolation
-  ! with weights weight(i)
-
+  ! xlat(i),xlon(i) are point locations to be used for interpolation with weights weight(i)
+  !
   ! integrates value
-  value = 0.0d0
+  vp = 0.0d0
+  moho = 0.d0
   do i = 1,npoints
-    valuel = crust_eu(xlat(i),xlon(i),radius,value,found)
-    value = value + weight(i)*valuel
+    ! get crust values
+    call crust_eu(xlat(i),xlon(i),radius,val,valmoho,found)
+    ! adds weighted contribution
+    vp = vp + weight(i)*val
+    moho = moho + weight(i)*valmoho
   enddo
 
-  if (abs(value) < TINYVAL) found = .false.
+  if (abs(vp) < TINYVAL) found = .false.
 
   end subroutine eu_cap_smoothing
-
 

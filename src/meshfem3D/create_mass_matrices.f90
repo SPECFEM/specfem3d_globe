@@ -717,7 +717,7 @@
   use constants
 
   use meshfem3D_models_par, only: &
-    TOPOGRAPHY,ibathy_topo,CASE_3D
+    OCEANS,TOPOGRAPHY,ibathy_topo,CASE_3D
 
   use meshfem3D_par, only: &
     myrank,RHO_OCEANS,nspec
@@ -746,6 +746,9 @@
   integer :: ispec,i,j,k,iglob,ispec2D
 
   logical :: do_ocean_load
+
+  ! checks if anything to do
+  if (.not. OCEANS) return
 
   ! user output
   if (myrank == 0) then

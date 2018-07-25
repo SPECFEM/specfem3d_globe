@@ -186,21 +186,25 @@
   ! radii of layers
   double precision :: ROCEAN,RMIDDLE_CRUST,RMOHO,R80,R120,R220,R400, &
                       R600,R670,R771,RTOPDDOUBLEPRIME,RCMB,RICB, &
-                      R_CENTRAL_CUBE,RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS, &
+                      R_CENTRAL_CUBE, &
                       RMOHO_FICTITIOUS_IN_MESHER,R80_FICTITIOUS_IN_MESHER
+
+  ! densities
+  double precision :: RHO_TOP_OC,RHO_BOTTOM_OC,RHO_OCEANS
 
   ! movies
   double precision :: MOVIE_TOP,MOVIE_BOTTOM,MOVIE_EAST,MOVIE_WEST, &
                       MOVIE_NORTH,MOVIE_SOUTH
   ! model flags
-  integer :: REFERENCE_1D_MODEL,THREE_D_MODEL
+  integer :: REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL
+
   logical :: TRANSVERSE_ISOTROPY,ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE, &
              CRUSTAL,ONE_CRUST,ISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
              CEM_REQUEST,CEM_ACCEPT
   logical :: ATTENUATION_3D
   logical :: INCLUDE_CENTRAL_CUBE,INFLATE_CENTRAL_CUBE
-  logical :: EMULATE_ONLY = .false.
 
+  logical :: EMULATE_ONLY = .false.
 
 ! honor PREM Moho or not
 ! doing so drastically reduces the stability condition and therefore the time step

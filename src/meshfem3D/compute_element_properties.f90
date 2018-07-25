@@ -42,59 +42,58 @@
                                         xigll,yigll,zigll,ispec_is_tiso)
   use constants
   use meshfem3D_models_par, only: myrank, &
-    TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D, &
-    TRANSVERSE_ISOTROPY,USE_FULL_TISO_MANTLE,REFERENCE_1D_MODEL,THREE_D_MODEL, &
+    TOPOGRAPHY,ELLIPTICITY,CRUSTAL,CASE_3D,THREE_D_MODEL, &
     ibathy_topo,nspl,rspl,espl,espl2
 
   implicit none
 
   ! correct number of spectral elements in each block depending on chunk type
-  integer :: ispec,nspec,nspec_stacey
+  integer,intent(in) :: ispec,nspec,nspec_stacey
 
 ! arrays with the mesh in double precision
-  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: xstore,ystore,zstore
 
 ! code for the four regions of the mesh
-  integer :: iregion_code
+  integer,intent(in) :: iregion_code
 
 ! meshing phase
-  integer :: ipass
+  integer,intent(in) :: ipass
 
 ! 3D shape functions and their derivatives
-  double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ) :: shape3D
+  double precision, dimension(NGNOD,NGLLX,NGLLY,NGLLZ),intent(in) :: shape3D
 
-  double precision, dimension(NGNOD) :: xelm,yelm,zelm
+  double precision, dimension(NGNOD),intent(inout) :: xelm,yelm,zelm
 
 ! parameters needed to store the radii of the grid points
 ! in the spherically symmetric Earth
-  integer,dimension(nspec) :: idoubling
-  double precision :: rmin,rmax
+  integer,dimension(nspec),intent(in) :: idoubling
+  double precision,intent(in) :: rmin,rmax
 
 ! for model density and anisotropy
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: rhostore,dvpstore,kappavstore, &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: rhostore,dvpstore,kappavstore, &
     kappahstore,muvstore,muhstore,eta_anisostore
 
 ! the 21 coefficients for an anisotropic medium in reduced notation
-  integer :: nspec_ani
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani) :: &
+  integer,intent(in) :: nspec_ani
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_ani),intent(out) :: &
     c11store,c12store,c13store,c14store,c15store,c16store,c22store, &
     c23store,c24store,c25store,c26store,c33store,c34store,c35store, &
     c36store,c44store,c45store,c46store,c55store,c56store,c66store
 
 ! arrays with mesh parameters
-  integer :: nspec_actually
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually) :: &
+  integer,intent(in) :: nspec_actually
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_actually),intent(out) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore,gammaxstore,gammaystore,gammazstore
 
 ! Stacey, indices for Clayton-Engquist absorbing conditions
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey) :: rho_vp,rho_vs
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec_stacey),intent(out) :: rho_vp,rho_vs
 
   ! Parameters used to calculate Jacobian based upon 125 GLL points
-  double precision :: xigll(NGLLX)
-  double precision :: yigll(NGLLY)
-  double precision :: zigll(NGLLZ)
+  double precision,intent(in) :: xigll(NGLLX)
+  double precision,intent(in) :: yigll(NGLLY)
+  double precision,intent(in) :: zigll(NGLLZ)
 
-  logical, dimension(nspec) :: ispec_is_tiso
+  logical, dimension(nspec),intent(out) :: ispec_is_tiso
 
   ! local parameters
   ! Parameter used to decide whether this element is in the crust or not
@@ -102,12 +101,10 @@
   ! flag for transverse isotropic elements
   logical :: elem_is_tiso
 
-  ! note: at this point, the mesh is still perfectly spherical
-  elem_is_tiso = .false.
+! note: at this point, the mesh is still perfectly spherical
 
   ! flag if element completely in crust (all corners above moho)
   elem_in_crust = .false.
-
   ! flag if element completely in mantle (all corners below moho)
   elem_in_mantle = .false.
 
@@ -145,103 +142,11 @@
       endif
     endif
 
-    ! sets transverse isotropic flag for elements in mantle
-    if (TRANSVERSE_ISOTROPY) then
-      ! modifies tiso to have it for all mantle elements
-      ! preferred for example, when using 1Dref (STW model)
-      if (USE_FULL_TISO_MANTLE) then
-        ! all elements below the actual moho will be used for transverse isotropy
-        ! note: this will increase the computation time by ~ 45 %
-        if (USE_OLD_VERSION_7_0_0_FORMAT) then
-          if (elem_in_mantle) elem_is_tiso = .true.
-        else
-          if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
-            .or. idoubling(ispec) == IFLAG_670_220 &
-            .or. idoubling(ispec) == IFLAG_220_80 &
-            .or. idoubling(ispec) == IFLAG_80_MOHO &
-            .or. idoubling(ispec) == IFLAG_CRUST) then
-            elem_is_tiso = .true.
-          endif
-        endif
-
-      else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
-        ! transverse isotropic mantle between fictitious moho to 670km depth
-        ! preferred for Harvard (Kustowski's) models using STW 1D reference, i.e.
-        ! THREE_D_MODEL_S362ANI
-        ! THREE_D_MODEL_S362WMANI
-        ! THREE_D_MODEL_S29EA
-        ! THREE_D_MODEL_GLL
-        ! which show significant transverse isotropy also below 220km depth
-        if (USE_OLD_VERSION_5_1_5_FORMAT) then
-          ! assigns TI only to elements below (2-layer) fictitious moho down to 670
-          if (idoubling(ispec) == IFLAG_220_80 &
-            .or. idoubling(ispec) == IFLAG_80_MOHO &
-            .or. idoubling(ispec) == IFLAG_670_220) then
-            elem_is_tiso = .true.
-          endif
-        else if (USE_OLD_VERSION_7_0_0_FORMAT) then
-          ! assigns TI to elements in mantle elements just below actual moho down to 670
-          if (idoubling(ispec) == IFLAG_670_220 &
-              .or. idoubling(ispec) == IFLAG_220_80 &
-              .or. idoubling(ispec) == IFLAG_80_MOHO &
-              .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle) ) then
-            elem_is_tiso = .true.
-          endif
-        else
-          ! assigns TI to elements in crust and mantle down to 670
-          if (idoubling(ispec) == IFLAG_670_220 &
-              .or. idoubling(ispec) == IFLAG_220_80 &
-              .or. idoubling(ispec) == IFLAG_80_MOHO &
-              .or. idoubling(ispec) == IFLAG_CRUST) then
-            elem_is_tiso = .true.
-          endif
-          ! S362wmani allows radial anisotropy throughout the mantle
-          if (THREE_D_MODEL == THREE_D_MODEL_S362WMANI) then
-            ! allows tiso down to CMB
-            if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. elem_in_mantle) elem_is_tiso = .true.
-          endif
-        endif
-
-      else
-        ! default reference models
-        ! for example, PREM assigns transverse isotropy between Moho and 220km
-        if (USE_OLD_VERSION_5_1_5_FORMAT) then
-          ! assigns TI only to elements below (2-layer) fictitious moho down to 670
-          if (idoubling(ispec) == IFLAG_220_80 &
-              .or. idoubling(ispec) == IFLAG_80_MOHO) then
-            ! default case for PREM reference models:
-            ! models use only transverse isotropy between moho and 220 km depth
-            elem_is_tiso = .true.
-            ! checks mantle flag to be sure
-            if (elem_in_mantle .eqv. .false. ) stop 'Error mantle flag confused between moho and 220'
-          endif
-        else if (USE_OLD_VERSION_7_0_0_FORMAT) then
-          ! assigns TI to elements in mantle elements just below actual moho down to 670
-          if (idoubling(ispec) == IFLAG_220_80 &
-              .or. idoubling(ispec) == IFLAG_80_MOHO &
-              .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle )) then
-            ! default case for PREM reference models:
-            ! models use only transverse isotropy between moho and 220 km depth
-            elem_is_tiso = .true.
-          endif
-        else
-          ! assigns TI to elements in crust and mantle elements down to 670,
-          ! to allow for tiso in crust and below actual moho (especially for oceanic crusts);
-          ! the crustal models will decide if model parameters are tiso or iso
-          if (idoubling(ispec) == IFLAG_220_80 &
-              .or. idoubling(ispec) == IFLAG_80_MOHO &
-              .or. idoubling(ispec) == IFLAG_CRUST) then
-            ! default case for PREM reference models:
-            ! models use only transverse isotropy between moho and 220 km depth
-            elem_is_tiso = .true.
-          endif
-        endif
-      endif
-    endif
-
   endif ! IREGION_CRUST_MANTLE
 
   ! sets element tiso flag
+  call compute_element_tiso_flag(elem_is_tiso,elem_in_mantle,iregion_code,ispec,nspec,idoubling)
+  ! stores as element flags
   ispec_is_tiso(ispec) = elem_is_tiso
 
   ! interpolates and stores GLL point locations
@@ -423,3 +328,125 @@
   end subroutine compute_element_GLL_locations
 
 
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine compute_element_tiso_flag(elem_is_tiso,elem_in_mantle,iregion_code,ispec,nspec,idoubling)
+
+! sets transverse isotropic flag for elements in crust/mantle
+
+  use constants
+
+  use meshfem3D_models_par, only: &
+    TRANSVERSE_ISOTROPY,USE_FULL_TISO_MANTLE,REFERENCE_1D_MODEL,THREE_D_MODEL
+
+  implicit none
+
+  logical,intent(out) :: elem_is_tiso
+  logical,intent(in) :: elem_in_mantle
+  integer,intent(in) :: iregion_code,ispec
+  integer,intent(in) :: nspec
+  integer,dimension(nspec),intent(in) :: idoubling
+
+  ! initializes
+  elem_is_tiso = .false.
+
+  ! checks if anything to do
+  if (.not. TRANSVERSE_ISOTROPY) return
+  if (iregion_code /= IREGION_CRUST_MANTLE) return
+
+  ! transverse isotropic models
+  ! modifies tiso to have it for all mantle elements
+  ! preferred for example, when using 1Dref (STW model)
+  if (USE_FULL_TISO_MANTLE) then
+    ! all elements below the actual moho will be used for transverse isotropy
+    ! note: this will increase the computation time by ~ 45 %
+    if (USE_OLD_VERSION_7_0_0_FORMAT) then
+      if (elem_in_mantle) elem_is_tiso = .true.
+    else
+      if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
+        .or. idoubling(ispec) == IFLAG_670_220 &
+        .or. idoubling(ispec) == IFLAG_220_80 &
+        .or. idoubling(ispec) == IFLAG_80_MOHO &
+        .or. idoubling(ispec) == IFLAG_CRUST) then
+        elem_is_tiso = .true.
+      endif
+    endif
+
+  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+    ! transverse isotropic mantle between fictitious moho to 670km depth
+    ! preferred for Harvard (Kustowski's) models using STW 1D reference, i.e.
+    ! THREE_D_MODEL_S362ANI
+    ! THREE_D_MODEL_S362WMANI
+    ! THREE_D_MODEL_S29EA
+    ! THREE_D_MODEL_GLL
+    ! which show significant transverse isotropy also below 220km depth
+    if (USE_OLD_VERSION_5_1_5_FORMAT) then
+      ! assigns TI only to elements below (2-layer) fictitious moho down to 670
+      if (idoubling(ispec) == IFLAG_220_80 &
+        .or. idoubling(ispec) == IFLAG_80_MOHO &
+        .or. idoubling(ispec) == IFLAG_670_220) then
+        elem_is_tiso = .true.
+      endif
+    else if (USE_OLD_VERSION_7_0_0_FORMAT) then
+      ! assigns TI to elements in mantle elements just below actual moho down to 670
+      if (idoubling(ispec) == IFLAG_670_220 &
+          .or. idoubling(ispec) == IFLAG_220_80 &
+          .or. idoubling(ispec) == IFLAG_80_MOHO &
+          .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle) ) then
+        elem_is_tiso = .true.
+      endif
+    else
+      ! assigns TI to elements in crust and mantle down to 670
+      if (idoubling(ispec) == IFLAG_670_220 &
+          .or. idoubling(ispec) == IFLAG_220_80 &
+          .or. idoubling(ispec) == IFLAG_80_MOHO &
+          .or. idoubling(ispec) == IFLAG_CRUST) then
+        elem_is_tiso = .true.
+      endif
+      ! S362wmani allows radial anisotropy throughout the mantle
+      if (THREE_D_MODEL == THREE_D_MODEL_S362WMANI) then
+        ! allows tiso down to CMB
+        if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. elem_in_mantle) elem_is_tiso = .true.
+      endif
+    endif
+
+  else
+    ! default reference models
+    ! for example, PREM assigns transverse isotropy between Moho and 220km
+    if (USE_OLD_VERSION_5_1_5_FORMAT) then
+      ! assigns TI only to elements below (2-layer) fictitious moho down to 670
+      if (idoubling(ispec) == IFLAG_220_80 &
+          .or. idoubling(ispec) == IFLAG_80_MOHO) then
+        ! default case for PREM reference models:
+        ! models use only transverse isotropy between moho and 220 km depth
+        elem_is_tiso = .true.
+        ! checks mantle flag to be sure
+        if (elem_in_mantle .eqv. .false. ) stop 'Error mantle flag confused between moho and 220'
+      endif
+    else if (USE_OLD_VERSION_7_0_0_FORMAT) then
+      ! assigns TI to elements in mantle elements just below actual moho down to 670
+      if (idoubling(ispec) == IFLAG_220_80 &
+          .or. idoubling(ispec) == IFLAG_80_MOHO &
+          .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle )) then
+        ! default case for PREM reference models:
+        ! models use only transverse isotropy between moho and 220 km depth
+        elem_is_tiso = .true.
+      endif
+    else
+      ! assigns TI to elements in crust and mantle elements down to 670,
+      ! to allow for tiso in crust and below actual moho (especially for oceanic crusts);
+      ! the crustal models will decide if model parameters are tiso or iso
+      if (idoubling(ispec) == IFLAG_220_80 &
+          .or. idoubling(ispec) == IFLAG_80_MOHO &
+          .or. idoubling(ispec) == IFLAG_CRUST) then
+        ! default case for PREM reference models:
+        ! models use only transverse isotropy between moho and 220 km depth
+        elem_is_tiso = .true.
+      endif
+    endif
+  endif
+
+  end subroutine compute_element_tiso_flag

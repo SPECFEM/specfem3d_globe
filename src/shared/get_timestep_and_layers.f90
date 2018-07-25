@@ -374,8 +374,7 @@
 
   ! gets attenuation min/max range
   if (.not. ATTENUATION_RANGE_PREDEFINED) then
-     call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, &
-                                   MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+     call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX)
   endif
 
   ! note: global estimate above for DT is empirical for chunk sizes of 90 degrees.
@@ -394,16 +393,10 @@
     !         ANGULAR_WIDTH_ETA_IN_DEGREES = 90.0d0 in read_parameter_file.f90
 
     ! gets number of element-layers
-    call auto_ner(min_chunk_width_in_degrees, NEX_MAX, &
-                  NER_CRUST, NER_80_MOHO, NER_220_80, NER_400_220, NER_600_400, &
-                  NER_670_600, NER_771_670, NER_TOPDDOUBLEPRIME_771, &
-                  NER_CMB_TOPDDOUBLEPRIME, NER_OUTER_CORE, NER_TOP_CENTRAL_CUBE_ICB, &
-                  R_CENTRAL_CUBE, CASE_3D, CRUSTAL, &
-                  HONOR_1D_SPHERICAL_MOHO, REFERENCE_1D_MODEL)
+    call auto_ner(min_chunk_width_in_degrees, NEX_MAX)
 
     ! gets attenuation min/max range
-    call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX, &
-                                  MIN_ATTENUATION_PERIOD, MAX_ATTENUATION_PERIOD)
+    call auto_attenuation_periods(min_chunk_width_in_degrees, NEX_MAX)
 
     ! gets time step size
     call auto_time_stepping(min_chunk_width_in_degrees, NEX_MAX, dt_auto)
@@ -453,10 +446,10 @@
     ! CASE_3D: indicates element stretching to honor e.g. moho depths and/or upper/lower crusts
     if (CRUSTAL .and. CASE_3D) then
       ! reduces time step size for CRUST1.0 crustal model
-      if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUST1) &
+      if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUST1) &
         DT = DT*(1.d0 - 0.1d0)
       ! reduces time step size for crustmaps crustal model
-      if (ITYPE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
+      if (REFERENCE_CRUSTAL_MODEL == ICRUST_CRUSTMAPS) &
         DT = DT*(1.d0 - 0.3d0)
     endif
   endif
