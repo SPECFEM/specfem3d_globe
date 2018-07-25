@@ -576,9 +576,9 @@
 
   integer, parameter :: NBNODE = 8
 
+  integer,intent(in) :: npts,ispec
   double precision,intent(in) :: points(npts,2)
   double precision,intent(out) :: pts(NBNODE+1,2)
-  integer,intent(in) :: npts,ispec
 
   ! local parameters
   integer :: istart_left,istart_right,i
