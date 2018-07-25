@@ -41,7 +41,8 @@ view.CenterAxesVisibility = 0
 view.OrientationAxesVisibility = 0
 
 # to avoid segmentation fault
-view.UseOffscreenRenderingForScreenshots = 0
+if servermanager.vtkSMProxyManager.GetVersionMajor() <= 5 and servermanager.vtkSMProxyManager.GetVersionMinor() < 5:
+    view.UseOffscreenRenderingForScreenshots = 0
 
 # sets view size for display
 #view.ViewSize = [1920,1080] # width x height
