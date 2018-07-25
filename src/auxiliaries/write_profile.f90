@@ -455,7 +455,7 @@
             iline = iline + 1
 
             ! debug
-            !write(6,'(i3,11F10.4)') &
+            !write(*,'(i3,11F10.4)') &
             ! iline,sngl(rmin*R_EARTH_KM),sngl(rmax*R_EARTH_KM),sngl(r_prem*R_EARTH_KM),sngl(r*R_EARTH_KM), &
             ! sngl(vpv),sngl(vph),sngl(vsv),sngl(vsh),sngl(rho),sngl(eta_aniso),sngl(Qmu)
 

@@ -111,7 +111,7 @@
             enddo
           enddo
         enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
       endif
     endif
 
@@ -147,7 +147,7 @@
             enddo
           enddo
         enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
       endif
     endif
 
@@ -181,7 +181,7 @@
           enddo
         enddo
       enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
     endif
 
     !   ymax
@@ -214,7 +214,7 @@
           enddo
         enddo
       enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
     endif
 
     ! zmin
@@ -245,7 +245,7 @@
           enddo
         enddo
       enddo
-!$OMP ENDDO NOWAIT
+!$OMP enddo NOWAIT
     endif
 
 !$OMP END PARALLEL

@@ -415,7 +415,7 @@
     endif
 
   enddo ! of spectral element loop NSPEC_CRUST_MANTLE
-!$OMP ENDDO
+!$OMP enddo
 
   ! updates acceleration
 #ifdef FORCE_VECTORIZATION
@@ -437,7 +437,7 @@
       accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sum_terms(3,ijk_spec,1,1,1)
     enddo
   enddo
-!$OMP ENDDO
+!$OMP enddo
 
 #else
     ! updates for non-vectorization case
@@ -477,7 +477,7 @@
 !$OMP END CRITICAL
 #endif
   enddo
-!$OMP ENDDO
+!$OMP enddo
 #endif
 
 !$OMP END PARALLEL
