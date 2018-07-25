@@ -151,7 +151,7 @@
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
 
-  ! now only one region
+      ! now only one region
       ner( 1) = NER_CRUST + NER_80_MOHO
       ner( 2) = 0
       ner( 3) = 0
@@ -168,12 +168,12 @@
       ner(13) = elem_doubling_middle_outer_core
       ner(14) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+      ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:9) = 1
       ratio_sampling_array(10:12) = 2
       ratio_sampling_array(13:14) = 4
 
-  ! value of the doubling index flag in each radial region of the mesh
+      ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
       doubling_index(4) = IFLAG_220_80
       doubling_index(5:7) = IFLAG_670_220
@@ -181,16 +181,15 @@
       doubling_index(12:13) = IFLAG_OUTER_CORE_NORMAL
       doubling_index(14) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+      ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
       this_region_has_a_doubling(10) = .true.
       this_region_has_a_doubling(13) = .true.
       last_doubling_layer = 13
 
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
-
+      ! define the top and bottom radii of all the regions of the mesh in the radial direction
+      ! the first region is the crust at the surface of the Earth
+      ! the last region is in the inner core near the center of the Earth
       r_top(1) = R_EARTH
       r_bottom(1) = R80_FICTITIOUS_IN_MESHER
 
@@ -233,7 +232,7 @@
       r_top(14) = RICB
       r_bottom(14) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+      ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
       rmins(1) = R80_FICTITIOUS_IN_MESHER / R_EARTH
 
@@ -277,6 +276,9 @@
       ! simulations (larger time step), 1D models can be run with just one average crustal
       ! layer instead of two.
 
+      !daniel debug
+      !print*,'one_crust case in define_all_layers'
+
       NUMBER_OF_MESH_LAYERS = 13
       layer_offset = 0
 
@@ -294,13 +296,13 @@
       ner(12) = elem_doubling_middle_outer_core
       ner(13) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+      ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
       ratio_sampling_array(2:8) = 2
       ratio_sampling_array(9:11) = 4
       ratio_sampling_array(12:13) = 8
 
-  ! value of the doubling index flag in each radial region of the mesh
+      ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1) = IFLAG_CRUST
       doubling_index(2) = IFLAG_80_MOHO
       doubling_index(3) = IFLAG_220_80
@@ -309,23 +311,23 @@
       doubling_index(11:12) = IFLAG_OUTER_CORE_NORMAL
       doubling_index(13) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+      ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
       this_region_has_a_doubling(2)  = .true.
       this_region_has_a_doubling(9)  = .true.
       this_region_has_a_doubling(12) = .true.
       last_doubling_layer = 12
 
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
+      ! define the top and bottom radii of all the regions of the mesh in the radial direction
+      ! the first region is the crust at the surface of the Earth
+      ! the last region is in the inner core near the center of the Earth
 
-  !!!!!!!!!!! DK DK: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
-  !!!!!!!!!!! DK DK: i.e. if there is no thick crust there, some elements above the Moho
-  !!!!!!!!!!! DK DK: should be anisotropic but anisotropy is currently only
-  !!!!!!!!!!! DK DK: stored between d220 and MOHO to save memory? Clarify this one day.
-  !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
-  !!!!!!!!!!! DK DK: should partly deal with this problem.
+      !!!!!!!!!!! DK DK: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
+      !!!!!!!!!!! DK DK: i.e. if there is no thick crust there, some elements above the Moho
+      !!!!!!!!!!! DK DK: should be anisotropic but anisotropy is currently only
+      !!!!!!!!!!! DK DK: stored between d220 and MOHO to save memory? Clarify this one day.
+      !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
+      !!!!!!!!!!! DK DK: should partly deal with this problem.
 
       r_top(1) = R_EARTH
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
@@ -366,7 +368,7 @@
       r_top(13) = RICB
       r_bottom(13) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+      ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
       rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
@@ -406,6 +408,9 @@
       !   contains the crustal layers
       !   doubling at the base of the crust
 
+      !daniel debug
+      !print*,'default case in define_all_layers'
+
       NUMBER_OF_MESH_LAYERS = 14
       layer_offset = 1
       if ((RMIDDLE_CRUST-RMOHO_FICTITIOUS_IN_MESHER) < (R_EARTH-RMIDDLE_CRUST)) then
@@ -413,7 +418,7 @@
         ner( 2) = floor (NER_CRUST / 2.d0)
       else
         ner( 1) = floor (NER_CRUST / 2.d0)      ! regional mesh: ner(1) = 1 since NER_CRUST=3
-        ner( 2) = ceiling (NER_CRUST / 2.d0)    !                          ner(2) = 2
+        ner( 2) = ceiling (NER_CRUST / 2.d0)    !                ner(2) = 2
       endif
       ner( 3) = NER_80_MOHO
       ner( 4) = NER_220_80
@@ -428,13 +433,13 @@
       ner(13) = elem_doubling_middle_outer_core
       ner(14) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+      ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:2) = 1
       ratio_sampling_array(3:9) = 2
       ratio_sampling_array(10:12) = 4
       ratio_sampling_array(13:14) = 8
 
-  ! value of the doubling index flag in each radial region of the mesh
+      ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1:2) = IFLAG_CRUST
       doubling_index(3) = IFLAG_80_MOHO
       doubling_index(4) = IFLAG_220_80
@@ -443,7 +448,7 @@
       doubling_index(12:13) = IFLAG_OUTER_CORE_NORMAL
       doubling_index(14) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+      ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
       this_region_has_a_doubling(3)  = .true.
       this_region_has_a_doubling(10) = .true.
@@ -451,9 +456,9 @@
       this_region_has_a_doubling(14) = .false.
       last_doubling_layer = 13
 
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
+      ! define the top and bottom radii of all the regions of the mesh in the radial direction
+      ! the first region is the crust at the surface of the Earth
+      ! the last region is in the inner core near the center of the Earth
 
       r_top(1) = R_EARTH
       r_bottom(1) = RMIDDLE_CRUST
@@ -497,7 +502,7 @@
       r_top(14) = RICB
       r_bottom(14) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+      ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
       rmins(1) = RMIDDLE_CRUST / R_EARTH
 
@@ -549,7 +554,7 @@
       NUMBER_OF_MESH_LAYERS = 15
       layer_offset = 1
 
-  ! now only one region
+      ! now only one region
       ner( 1) = NER_CRUST + NER_80_MOHO
       ner( 2) = 0
       ner( 3) = 0
@@ -567,13 +572,13 @@
       ner(14) = elem_doubling_bottom_outer_core
       ner(15) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+      ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:9) = 1
       ratio_sampling_array(10:12) = 2
       ratio_sampling_array(13) = 4
       ratio_sampling_array(14:15) = 8
 
-  ! value of the doubling index flag in each radial region of the mesh
+      ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1:3) = IFLAG_CRUST !!!!! IFLAG_80_MOHO
       doubling_index(4) = IFLAG_220_80
       doubling_index(5:7) = IFLAG_670_220
@@ -581,16 +586,16 @@
       doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
       doubling_index(15) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+      ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
       this_region_has_a_doubling(10) = .true.
       this_region_has_a_doubling(13) = .true.
       this_region_has_a_doubling(14) = .true.
       last_doubling_layer = 14
 
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
+      ! define the top and bottom radii of all the regions of the mesh in the radial direction
+      ! the first region is the crust at the surface of the Earth
+      ! the last region is in the inner core near the center of the Earth
 
       r_top(1) = R_EARTH
       r_bottom(1) = R80_FICTITIOUS_IN_MESHER
@@ -637,7 +642,7 @@
       r_top(15) = RICB
       r_bottom(15) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+      ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
       rmins(1) = R80_FICTITIOUS_IN_MESHER / R_EARTH
 
@@ -699,14 +704,14 @@
       ner(13) = elem_doubling_bottom_outer_core
       ner(14) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+      ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1) = 1
       ratio_sampling_array(2:8) = 2
       ratio_sampling_array(9:11) = 4
       ratio_sampling_array(12) = 8
       ratio_sampling_array(13:14) = 16
 
-  ! value of the doubling index flag in each radial region of the mesh
+      ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1) = IFLAG_CRUST
       doubling_index(2) = IFLAG_80_MOHO
       doubling_index(3) = IFLAG_220_80
@@ -715,7 +720,7 @@
       doubling_index(11:13) = IFLAG_OUTER_CORE_NORMAL
       doubling_index(14) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+      ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
       this_region_has_a_doubling(2)  = .true.
       this_region_has_a_doubling(9)  = .true.
@@ -723,16 +728,16 @@
       this_region_has_a_doubling(13) = .true.
       last_doubling_layer = 13
 
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
+      ! define the top and bottom radii of all the regions of the mesh in the radial direction
+      ! the first region is the crust at the surface of the Earth
+      ! the last region is in the inner core near the center of the Earth
 
-  !!!!!!!!!!! DK DK: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
-  !!!!!!!!!!! DK DK: i.e. if there is no thick crust there, some elements above the Moho
-  !!!!!!!!!!! DK DK: should be anisotropic but anisotropy is currently only
-  !!!!!!!!!!! DK DK: stored between d220 and MOHO to save memory? Clarify this one day.
-  !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
-  !!!!!!!!!!! DK DK: should partly deal with this problem.
+      !!!!!!!!!!! DK DK: beware, is there a bug when 3D crust crosses anisotropy in the mantle?
+      !!!!!!!!!!! DK DK: i.e. if there is no thick crust there, some elements above the Moho
+      !!!!!!!!!!! DK DK: should be anisotropic but anisotropy is currently only
+      !!!!!!!!!!! DK DK: stored between d220 and MOHO to save memory? Clarify this one day.
+      !!!!!!!!!!! DK DK: The Moho stretching and squishing that Jeroen added to V4.0
+      !!!!!!!!!!! DK DK: should partly deal with this problem.
 
       r_top(1) = R_EARTH
       r_bottom(1) = RMOHO_FICTITIOUS_IN_MESHER
@@ -776,7 +781,7 @@
       r_top(14) = RICB
       r_bottom(14) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+      ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
       rmins(1) = RMOHO_FICTITIOUS_IN_MESHER / R_EARTH
 
@@ -839,14 +844,14 @@
       ner(14) = elem_doubling_bottom_outer_core
       ner(15) = NER_TOP_CENTRAL_CUBE_ICB
 
-  ! value of the doubling ratio in each radial region of the mesh
+      ! value of the doubling ratio in each radial region of the mesh
       ratio_sampling_array(1:2) = 1
       ratio_sampling_array(3:9) = 2
       ratio_sampling_array(10:12) = 4
       ratio_sampling_array(13) = 8
       ratio_sampling_array(14:15) = 16
 
-  ! value of the doubling index flag in each radial region of the mesh
+      ! value of the doubling index flag in each radial region of the mesh
       doubling_index(1:2) = IFLAG_CRUST
       doubling_index(3) = IFLAG_80_MOHO
       doubling_index(4) = IFLAG_220_80
@@ -855,7 +860,7 @@
       doubling_index(12:14) = IFLAG_OUTER_CORE_NORMAL
       doubling_index(15) = IFLAG_INNER_CORE_NORMAL
 
-  ! define the three regions in which we implement a mesh doubling at the top of that region
+      ! define the three regions in which we implement a mesh doubling at the top of that region
       this_region_has_a_doubling(:)  = .false.
       this_region_has_a_doubling(3)  = .true.
       this_region_has_a_doubling(10) = .true.
@@ -863,9 +868,9 @@
       this_region_has_a_doubling(14) = .true.
       last_doubling_layer = 14
 
-  ! define the top and bottom radii of all the regions of the mesh in the radial direction
-  ! the first region is the crust at the surface of the Earth
-  ! the last region is in the inner core near the center of the Earth
+      ! define the top and bottom radii of all the regions of the mesh in the radial direction
+      ! the first region is the crust at the surface of the Earth
+      ! the last region is in the inner core near the center of the Earth
 
       r_top(1) = R_EARTH
       r_bottom(1) = RMIDDLE_CRUST
@@ -912,7 +917,7 @@
       r_top(15) = RICB
       r_bottom(15) = R_CENTRAL_CUBE
 
-  ! new definition of rmins & rmaxs
+      ! new definition of rmins & rmaxs
       rmaxs(1) = ONE
       rmins(1) = RMIDDLE_CRUST / R_EARTH
 

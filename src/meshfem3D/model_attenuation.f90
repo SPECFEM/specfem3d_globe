@@ -68,6 +68,8 @@
   implicit none
 
   integer,intent(in) :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
+
+  ! local parameters
   integer :: ier
 
   allocate(AM_V%Qtau_s(N_SLS),stat=ier)

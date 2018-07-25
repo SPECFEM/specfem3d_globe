@@ -52,16 +52,16 @@
   implicit none
 
   ! input parameter
-  integer:: ispec,nspec
+  integer,intent(in) :: ispec,nspec
 
-  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
+  double precision, dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
 
-  double precision, dimension(NGLLX):: xigll
-  double precision, dimension(NGLLY):: yigll
-  double precision, dimension(NGLLZ):: zigll
+  double precision, dimension(NGLLX),intent(in) :: xigll
+  double precision, dimension(NGLLY),intent(in) :: yigll
+  double precision, dimension(NGLLZ),intent(in) :: zigll
 
   ! output results
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: &
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(out) :: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
     gammaxstore,gammaystore,gammazstore
 
@@ -205,7 +205,7 @@
           call exit_MPI(myrank,'3D Jacobian undefined in recalc_jacobian_gll3D.f90')
         endif
 
-        !     invert the relation (Fletcher p. 50 vol. 2)
+        ! invert the relation (Fletcher p. 50 vol. 2)
         jacobian_inv = ONE / jacobian
 
         xix = (yeta*zgamma-ygamma*zeta) * jacobian_inv
@@ -251,32 +251,32 @@
 
   ! output results:     jacobian2D,normal
   subroutine recalc_jacobian_gll2D(ispecb, &
-                                xelm2D,yelm2D,zelm2D,xigll,yigll, &
-                                jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
+                                   xelm2D,yelm2D,zelm2D,xigll,yigll, &
+                                   jacobian2D,normal,NGLLA,NGLLB,NSPEC2DMAX_AB)
 
   use constants
 
   implicit none
 
   ! input parameters
-  integer:: ispecb,NSPEC2DMAX_AB,NGLLA,NGLLB
+  integer,intent(in) :: ispecb,NSPEC2DMAX_AB,NGLLA,NGLLB
 
-  double precision,dimension(NGLLA,NGLLB)::xelm2D,yelm2D,zelm2D
+  double precision,dimension(NGLLA,NGLLB),intent(in) :: xelm2D,yelm2D,zelm2D
 
-  double precision,dimension(NGLLA)::xigll
-  double precision,dimension(NGLLB)::yigll
+  double precision,dimension(NGLLA),intent(in) :: xigll
+  double precision,dimension(NGLLB),intent(in) :: yigll
 
   ! output results
-  real(kind=CUSTOM_REAL),dimension(NGLLA,NGLLB,NSPEC2DMAX_AB)::jacobian2D
-  real(kind=CUSTOM_REAL),dimension(3,NGLLA,NGLLB,NSPEC2DMAX_AB)::normal
+  real(kind=CUSTOM_REAL),dimension(NGLLA,NGLLB,NSPEC2DMAX_AB),intent(out) :: jacobian2D
+  real(kind=CUSTOM_REAL),dimension(3,NGLLA,NGLLB,NSPEC2DMAX_AB),intent(out) :: normal
 
   ! local parameters in this subroutine
-  integer::i,j,i1,j1
-  double precision::xxi,xeta,yxi,yeta,zxi,zeta, &
+  integer :: i,j,i1,j1
+  double precision :: xxi,xeta,yxi,yeta,zxi,zeta, &
     xi,eta,xmesh,ymesh,zmesh,hlagrange,hlagrange_xi,hlagrange_eta, &
     sumshape,sumdershapexi,sumdershapeeta,unx,uny,unz,jacobian,jacobian_inv
-  double precision,dimension(NGLLA)::hxir,hpxir
-  double precision,dimension(NGLLB)::hetar,hpetar
+  double precision,dimension(NGLLA) :: hxir,hpxir
+  double precision,dimension(NGLLB) :: hetar,hpetar
 
   do j = 1,NGLLB
      do i = 1,NGLLA

@@ -78,9 +78,9 @@
   integer,intent(in) :: iregion_code
   integer,intent(in) :: ipass
 
-  integer :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
+  integer,intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA
 
-  integer :: offset_proc_xi,offset_proc_eta
+  integer,intent(in) :: offset_proc_xi,offset_proc_eta
 
   ! local parameters
   integer :: ispec,nspec_tiso
