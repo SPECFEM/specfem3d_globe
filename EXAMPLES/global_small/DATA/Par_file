@@ -43,12 +43,20 @@ NPROC_ETA                       = 1
 # fully 3D models:
 # transversely_isotropic_prem_plus_3D_crust_2.0, 3D_anisotropic, 3D_attenuation,
 # s20rts, s40rts, s362ani, s362iso, s362wmani, s362ani_prem, s362ani_3DQ, s362iso_3DQ,
-# s29ea, s29ea,sea99_jp3d1994,sea99,jp3d1994,heterogen,full_sh
+# s29ea, s29ea,sea99_jp3d1994,sea99,jp3d1994,heterogen,full_sh,sglobe
 #
-# 3D models with 1D crust: append "_1Dcrust" the the 3D model name
+# 3D crustal models:
+# crust1.0, crust2.0, EPcrust, EuCRUST, crustmaps, crustSH
+#
+# 3D models with 3D crust: append "_**crustname**" to the mantle model name
+#                          to take a 3D crustal model (by default crust2.0 is taken for 3D mantle models)
+#                          e.g. s20rts_crust1.0, s362ani_crustmaps, full_sh_crustSH, sglobe_EPcrust, etc.
+#
+# 3D models with 1D crust: append "_1Dcrust" to the 3D model name
 #                          to take the 1D crustal model from the
 #                          associated reference model rather than the default 3D crustal model
-# e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
+#                          e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
+#
 MODEL                           = s362ani
 
 # parameters describing the Earth model
@@ -249,8 +257,8 @@ SAVE_TRANSVERSE_KL_ONLY         = .true.
 APPROXIMATE_HESS_KL             = .true.
 
 # forces transverse isotropy for all mantle elements
-# (default is to use transverse isotropy only between MOHO and 220)
-# means we allow radial anisotropy between the bottom of the crust to the bottom of the transition zone, i.e., 660~km depth.
+# (default is to use transverse isotropy only between crust and 220)
+# means we allow radial anisotropy throughout the whole crust/mantle region
 USE_FULL_TISO_MANTLE            = .false.
 
 # output kernel mask to zero out source region
