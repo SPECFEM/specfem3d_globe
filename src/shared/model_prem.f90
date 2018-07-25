@@ -571,10 +571,13 @@
     ! fills with PREM mantle only till moho depth
     if (r > R80 .and. r <= RMOHO) then
       rho = 2.6910d0 + 0.6924d0*x
+
       vpv = 0.8317d0 + 7.2180d0*x
       vph = 3.5908d0 + 4.6172d0*x
+
       vsv = 5.8582d0 - 1.4678d0*x
       vsh = -1.0839d0 + 5.7176d0*x
+
       eta_aniso = 3.3687d0 - 2.4778d0*x
 
       ! non-dimensionalize
@@ -598,23 +601,23 @@
       ! P-velocity
       vpv = 0.8317d0 + 7.2180d0*x
       vph = 3.5908d0 + 4.6172d0*x
-      ! Voigt average:  v_avg**2 = ( 2 vpv**2 + vph**2 ) / 3
-      vp = sqrt(2.d0 * vpv**2 + vph**2) / 3.d0
 
+      ! Voigt average:  v_avg**2 = ( 2 vpv**2 + vph**2 ) / 3
+      vp = sqrt( (2.d0 * vpv**2 + vph**2) / 3.d0 )
       vpv = vp
       vph = vp
 
       ! S-velocity
       vsv = 5.8582d0 - 1.4678d0*x
       vsh = -1.0839d0 + 5.7176d0*x
-      ! Voigt average:  v_avg**2 = ( 2 vsv**2 + vsh**2 ) / 3
-      vs = sqrt(2.d0 * vsv**2 + vsh**2) / 3.d0
 
+      ! Voigt average:  v_avg**2 = ( 2 vsv**2 + vsh**2 ) / 3
+      vs = sqrt( (2.d0 * vsv**2 + vsh**2) / 3.d0 )
       vsv = vs
       vsh = vs
 
       ! no radial anisotropy by default
-      eta_aniso = 1.0
+      eta_aniso = 1.d0
 
       ! non-dimensionalize
       ! time scaling (s^{-1}) is done with scaleval
