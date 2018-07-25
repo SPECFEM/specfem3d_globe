@@ -99,13 +99,32 @@
 
   implicit none
 
-  real(kind=CUSTOM_REAL) :: x,y,z,r,theta,phi
+  real(kind=CUSTOM_REAL),intent(in) :: r,theta,phi
+  real(kind=CUSTOM_REAL),intent(out) :: x,y,z
 
   x = r * sin(theta) * cos(phi)
   y = r * sin(theta) * sin(phi)
   z = r * cos(theta)
 
   end subroutine rthetaphi_2_xyz
+
+
+!-------------------------------------------------------------
+
+  subroutine rthetaphi_2_xyz_dble(x,y,z,r,theta,phi)
+
+! convert r theta phi to x y z
+
+  implicit none
+
+  double precision,intent(in) :: r,theta,phi
+  double precision,intent(out) :: x,y,z
+
+  x = r * sin(theta) * cos(phi)
+  y = r * sin(theta) * sin(phi)
+  z = r * cos(theta)
+
+  end subroutine rthetaphi_2_xyz_dble
 
 
 !-------------------------------------------------------------
