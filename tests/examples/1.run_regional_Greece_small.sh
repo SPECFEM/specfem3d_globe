@@ -74,5 +74,5 @@ fi
 # cleanup
 rm -rf ./DATABASES_MPI ./OUTPUT_FILES ./DATA ./run_this_example.sh ./run_mesher_solver.bash ./REF_SEIS
 
-echo "successful compilation" >> $testdir/results.log
+echo "successful run" >> $testdir/results.log
 
