@@ -352,6 +352,7 @@ DEFAULT = \
 	xconvolve_source_timefunction \
 	xcreate_movie_AVS_DX \
 	xcreate_movie_GMT_global \
+	xwrite_profile \
 	$(EMPTY_MACRO)
 
 ifeq ($(ADIOS), yes)
@@ -416,6 +417,7 @@ help:
 	@echo "    xconvolve_source_timefunction"
 	@echo "    xcreate_movie_AVS_DX"
 	@echo "    xcreate_movie_GMT_global"
+	@echo "    xwrite_profile"
 	@echo ""
 	@echo "additional executables:"
 	@echo "- auxiliary executables: [make aux]"
@@ -428,6 +430,7 @@ endif
 	@echo "    xcombine_surf_data"
 	@echo "    xcombine_AVS_DX"
 	@echo "    xconvolve_source_timefunction"
+	@echo "    xwrite_profile"
 	@echo ""
 	@echo "- movie executables: [make movies]"
 	@echo "    xcreate_movie_AVS_DX"

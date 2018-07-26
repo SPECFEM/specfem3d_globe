@@ -58,6 +58,9 @@ env:
     # point force example
     - TESTMAKE=5 TESTCOV=0 TEST="" CUDA=false
 
+    # regular kernel example
+    - TESTMAKE=6 TESTCOV=0 TEST="--enable-vectorization" CUDA=false
+
 
 before_install:
   # informations on git

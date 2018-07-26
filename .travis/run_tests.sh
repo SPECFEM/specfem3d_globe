@@ -15,6 +15,7 @@ case "$TESTMAKE" in
   3) dir=EXAMPLES/regional_Greece_small/ ;;
   4) dir=EXAMPLES/global_small/ ;;
   5) dir=EXAMPLES/point_force/ ;;
+  6) dir=EXAMPLES/regular_kernel/ ;;
   *) dir=EXAMPLES/regional_Greece_small/ ;;
 esac
 
@@ -156,6 +157,18 @@ if [ "$TESTCOV" == "1" ] && [ "$TESTMAKE" == "1" ]; then
   cd $WORKDIR
 fi
 echo -en 'travis_fold:end:coverage.point-force\\r'
+
+echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regular-kernel\\r'
+if [ "$TESTCOV" == "1" ] && [ "$TESTMAKE" == "1" ]; then
+  ##
+  ## testing regular_kernel
+  ##
+  cd EXAMPLES/regular_kernel/
+  sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
+  ./run_this_example.sh
+  cd $WORKDIR
+fi
+echo -en 'travis_fold:end:coverage.regular-kernel\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.global-small\\r'
 if [ "$TESTCOV" == "1" ] && [ "$TESTMAKE" == "2" ]; then
