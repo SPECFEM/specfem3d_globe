@@ -133,7 +133,6 @@
   ! depth increment
   double precision :: delta
 
-
   character(len=MAX_STRING_LEN) :: outfile
   character(len=7) :: str_info
 
@@ -156,6 +155,23 @@
     endif
     call usage()
     call abort_mpi()
+  endif
+
+  ! main output file
+  ! used by some of the mesher subroutines, only written to by process 0
+  if (myrank == 0) then
+    if (IMAIN /= ISTANDARD_OUTPUT) &
+      open(unit=IMAIN,file=trim(OUTPUT_FILES)//'/output_write_profile.txt',status='unknown')
+
+    write(IMAIN,*) '**************'
+    write(IMAIN,*) 'xwrite_profile'
+    write(IMAIN,*) '**************'
+
+    ! command line when calling
+    call get_command(arg)
+    write(IMAIN,*) 'called by: ',trim(arg)
+    write(IMAIN,*)
+    call flush_IMAIN()
   endif
 
   ! initializes
@@ -225,7 +241,7 @@
   if (myrank == 0) then
     print *,'write profile:'
     print *,'  initial   latitude/longitude = ',sngl(90.d0 - initial_colat),sngl(initial_lon), '(degrees)'
-    print *,'  initial colatitude/longitude = ',sngl(initial_colat),sngl(initial_lon), '(degrees)'
+    print *,'          colatitude/longitude = ',sngl(initial_colat),sngl(initial_lon), '(degrees)'
     print *
     print *,'  colatitude loop start/end = ',icolat_start,icolat_end
     print *,'  increment lat = ',delta_lat
@@ -260,7 +276,7 @@
       if (phi_degrees > 360.0) phi_degrees = phi_degrees - 360.d0
 
       ! file name
-      write(outfile,'(a,i04.4,a,i04.4)') 'OUTPUT_FILES/CARDS_th',int(theta_degrees),'_ph',int(phi_degrees)
+      write(outfile,'(a,i04.4,a,i04.4)') trim(OUTPUT_FILES)//'/CARDS_th',int(theta_degrees),'_ph',int(phi_degrees)
       if (myrank == 0) print *, 'file: ',trim(outfile)
 
       ! colat/lon in rad
@@ -478,7 +494,16 @@
     enddo !sum over phi
   enddo !sum over theta
 
-  if (myrank == 0) print *,'done'
+  ! closes main output file
+  if (myrank == 0) then
+    write(IMAIN,*)
+    write(IMAIN,*) 'see profiles written in directory: ',trim(OUTPUT_FILES)
+    write(IMAIN,*)
+    write(IMAIN,*) 'End of xwrite_profile'
+    write(IMAIN,*)
+    call flush_IMAIN()
+    close(IMAIN)
+  endif
 
   call finalize_mpi()
 
@@ -524,100 +549,106 @@
 
   ! user output
   if (myrank == 0) then
-    print *
     ! model
-    print *,'model: ',trim(MODEL)
+    print *,''
+    print *, 'model: ',trim(MODEL)
+    print *,''
+
+    ! file output
+    write(IMAIN,*) 'model: ',trim(MODEL)
     ! mesh streching
     if (CRUSTAL .and. CASE_3D) then
       if (REGIONAL_MOHO_MESH) then
         if (SUPPRESS_MOHO_STRETCHING) then
-          print *,'  no element stretching for 3-D moho surface'
+          write(IMAIN,*) '  no element stretching for 3-D moho surface'
         else
-          print *,'  incorporating element stretching for regional 3-D moho surface'
+          write(IMAIN,*) '  incorporating element stretching for regional 3-D moho surface'
         endif
       else
         if (SUPPRESS_MOHO_STRETCHING .or. (.not. TOPOGRAPHY)) then
-          print *,'  no element stretching for 3-D moho surface'
+          write(IMAIN,*) '  no element stretching for 3-D moho surface'
         else
-          print *,'  incorporating element stretching for 3-D moho surface'
+          write(IMAIN,*) '  incorporating element stretching for 3-D moho surface'
         endif
       endif
     else
-      print *,'  no element stretching for 3-D moho surface'
+      write(IMAIN,*) '  no element stretching for 3-D moho surface'
     endif
-    print *
+    write(IMAIN,*)
     ! model user parameters
     if (OCEANS) then
-      print *,'  incorporating the oceans using equivalent load'
+      write(IMAIN,*) '  incorporating the oceans using equivalent load'
     else
-      print *,'  no oceans'
+      write(IMAIN,*) '  no oceans'
     endif
     if (ELLIPTICITY) then
-      print *,'  incorporating ellipticity'
+      write(IMAIN,*) '  incorporating ellipticity'
     else
-      print *,'  no ellipticity'
+      write(IMAIN,*) '  no ellipticity'
     endif
     if (TOPOGRAPHY) then
-      print *,'  incorporating surface topography'
+      write(IMAIN,*) '  incorporating surface topography'
     else
-      print *,'  no surface topography'
+      write(IMAIN,*) '  no surface topography'
     endif
     if (GRAVITY) then
-      print *,'  incorporating self-gravitation (Cowling approximation)'
+      write(IMAIN,*) '  incorporating self-gravitation (Cowling approximation)'
     else
-      print *,'  no self-gravitation'
+      write(IMAIN,*) '  no self-gravitation'
     endif
     if (ROTATION) then
-      print *,'  incorporating rotation'
+      write(IMAIN,*) '  incorporating rotation'
     else
-      print *,'  no rotation'
+      write(IMAIN,*) '  no rotation'
     endif
     if (ATTENUATION) then
-      print *,'  incorporating attenuation using ',N_SLS,' standard linear solids'
-      if (ATTENUATION_3D) print *,'  using 3D attenuation model'
+      write(IMAIN,*) '  incorporating attenuation using ',N_SLS,' standard linear solids'
+      if (ATTENUATION_3D) write(IMAIN,*) '  using 3D attenuation model'
     else
-      print *,'  no attenuation'
+      write(IMAIN,*) '  no attenuation'
     endif
-    print *
+    write(IMAIN,*)
     ! model mesh parameters
     if (ISOTROPIC_3D_MANTLE) then
-      print *,'  incorporating 3-D lateral variations'
+      write(IMAIN,*) '  incorporating 3-D lateral variations'
     else
-      print *,'  no 3-D lateral variations'
+      write(IMAIN,*) '  no 3-D lateral variations'
     endif
     if (HETEROGEN_3D_MANTLE) then
-      print *,'  incorporating heterogeneities in the mantle'
+      write(IMAIN,*) '  incorporating heterogeneities in the mantle'
     else
-      print *,'  no heterogeneities in the mantle'
+      write(IMAIN,*) '  no heterogeneities in the mantle'
     endif
     if (CRUSTAL) then
-      print *,'  incorporating crustal variations'
+      write(IMAIN,*) '  incorporating crustal variations'
     else
-      print *,'  no crustal variations'
+      write(IMAIN,*) '  no crustal variations'
     endif
     if (ONE_CRUST) then
-      print *,'  using one layer only in crust'
+      write(IMAIN,*) '  using one layer only in crust'
     else
-      print *,'  using unmodified 1D crustal model with two layers'
+      write(IMAIN,*) '  using unmodified 1D crustal model with two layers'
     endif
     if (TRANSVERSE_ISOTROPY) then
-      print *,'  incorporating transverse isotropy'
+      write(IMAIN,*) '  incorporating transverse isotropy'
     else
-      print *,'  no transverse isotropy'
+      write(IMAIN,*) '  no transverse isotropy'
     endif
     if (ANISOTROPIC_INNER_CORE) then
-      print *,'  incorporating anisotropic inner core'
+      write(IMAIN,*) '  incorporating anisotropic inner core'
     else
-      print *,'  no inner-core anisotropy'
+      write(IMAIN,*) '  no inner-core anisotropy'
     endif
     if (ANISOTROPIC_3D_MANTLE) then
-      print *,'  incorporating anisotropic mantle'
+      write(IMAIN,*) '  incorporating anisotropic mantle'
     else
-      print *,'  no general mantle anisotropy'
+      write(IMAIN,*) '  no general mantle anisotropy'
     endif
-    print *
-    print *,'reading model...'
+    write(IMAIN,*)
+    write(IMAIN,*)
   endif
+
+  if (myrank == 0) print *,'reading model...'
 
   ! loads 3D models
   call meshfem3D_models_broadcast(NSPEC_REGIONS,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
@@ -625,10 +656,8 @@
                                   LOCAL_PATH)
 
   ! user output
-  if (myrank == 0) then
-    print *,'done reading model'
-    print *
-  endif
+  if (myrank == 0) print *,''
+
 !> end part from meshfem3D
 
   end subroutine write_profile_setup
