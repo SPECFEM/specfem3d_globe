@@ -69,7 +69,7 @@
 
 ! input, output and main MPI I/O files
 ! note: careful with these unit numbers, we mostly use units in the 40-50 range.
-!       cray fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
+!       cray Fortran e.g. reserves 0,5,6 (standard error,input,output units) and 100-102
   integer, parameter :: ISTANDARD_OUTPUT = 6
   integer, parameter :: IIN = 40,IOUT = 41
 ! uncomment this to write messages to a text file
@@ -188,14 +188,6 @@
 !!-----------------------------------------------------------
 !! (uncomment desired model)
 
-! crustal model constants
-  integer, parameter :: ICRUST_CRUST1 = 1
-  integer, parameter :: ICRUST_CRUST2 = 2
-  integer, parameter :: ICRUST_CRUSTMAPS = 3
-  integer, parameter :: ICRUST_EPCRUST = 4
-  integer, parameter :: ICRUST_CRUST_SH = 5
-
-!-------------------------------
 ! crustal model cap smoothing - extension range in degree
 ! note: using a smaller range, e.g. 0.5 degrees, leads to undefined Jacobian error at different places.
 !       this is probably due to stretching elements below sharp gradients, especially with deep moho values.
@@ -208,21 +200,8 @@
 
 ! use sedimentary layers in crustal model
   logical, parameter :: INCLUDE_SEDIMENTS_IN_CRUST = .true.
-  logical, parameter :: INCLUDE_ICE_IN_CRUST = .false. ! always set this to false except for gravity integral calculations
+  logical, parameter :: INCLUDE_ICE_IN_CRUST       = .false. ! always set this to false except for gravity integral calculations
   double precision, parameter :: MINIMUM_SEDIMENT_THICKNESS = 2.d0 ! minimim thickness in km
-
-! default crustal model
-! (used as default when CRUSTAL flag is set for simulation)
-!-- uncomment for using Crust1.0
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST1
-!-- uncomment for using Crust2.0
-  integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST2
-!-- uncomment for using General Crustmaps instead
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUSTMAPS
-!-- uncomment for using EPcrust instead (European regional model)
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_EPCRUST
-!-- uncomment for using SHcrust
-! integer, parameter :: ITYPE_CRUSTAL_MODEL = ICRUST_CRUST_SH
 
 
 !!-----------------------------------------------------------
@@ -262,13 +241,6 @@
 ! maximum number of sources and receivers to locate simultaneously
   integer, parameter :: NSOURCES_SUBSET_MAX = 100
   integer, parameter :: NREC_SUBSET_MAX = 200
-
-! use a force source located exactly at a grid point instead of a CMTSOLUTION source
-! this can be useful e.g. for asteroid impact simulations
-! in which the source is a vertical force, normal force, impact etc.
-  logical, parameter :: USE_FORCE_POINT_SOURCE = .false.
-  double precision, parameter :: FACTOR_FORCE_SOURCE = 1.d15
-  integer, parameter :: COMPONENT_FORCE_SOURCE = 3  ! takes direction in comp E/N/Z = 1/2/3
 
 ! use this t0 as earliest starting time rather than the automatically calculated one
 ! (must be positive and bigger than the automatically one to be effective;
@@ -375,7 +347,15 @@
   integer, parameter :: ADIOS_BUFFER_SIZE_IN_MB = 200
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD = "MPI"
   character(len=*), parameter :: ADIOS_TRANSPORT_METHOD_UNDO_ATT = "MPI"   ! or check with: "POSIX"
-  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ""
+  character(len=*), parameter :: ADIOS_METHOD_PARAMS_UNDO_ATT =  ''
+
+!!-----------------------------------------------------------
+!!
+!! ASDF parameters
+!!
+!!-----------------------------------------------------------
+
+ logical, parameter :: OUTPUT_PROVENANCE = .false.
 
 !!-----------------------------------------------------------
 !!
@@ -401,9 +381,11 @@
 !! new version compatibility
 !!
 !!-----------------------------------------------------------
-! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), custom_real for attenuation arrays (Qmu_store, tau_e_store)
+! old version 5.1.5 uses full 3d attenuation arrays (set to .true.), CUSTOM_REAL for attenuation arrays (Qmu_store, tau_e_store)
 ! new version uses optional full 3d attenuation
   logical, parameter :: USE_OLD_VERSION_5_1_5_FORMAT = .false.
+! for comparison against older versions: in version 7.0 tiso was constrained to below moho, new version allows also in crust
+  logical, parameter :: USE_OLD_VERSION_7_0_0_FORMAT = .false.
 
 
 !!-----------------------------------------------------------
@@ -449,6 +431,7 @@
 !! for gravity integrals
 !!
 !!-----------------------------------------------------------
+! (for using gravity integral computations, please make sure you compile with double-precision --enable-double-precision)
 
   logical, parameter :: GRAVITY_INTEGRALS = .false.
 
@@ -498,9 +481,6 @@
 ! how often (every how many spectral elements computed) we print a timestamp to monitor the behavior of the code
   integer, parameter :: NSPEC_DISPLAY_INTERVAL = 100
 
-! for the FORCE_VECTORIZATION 1D version of some loops
-  integer, parameter :: NTOTAL_OBSERVATION = NX_OBSERVATION * NY_OBSERVATION * NCHUNKS_MAX
-
 
 !!-----------------------------------------------------------
 !!
@@ -528,7 +508,13 @@
   integer, parameter :: NSTEP_FOR_BENCHMARK = 300
   logical, parameter :: SET_INITIAL_FIELD_TO_1_IN_BENCH = .true.
 
-! compute an alpha sensitivity kernel directly by dumping the whole forward
+! for validation of undoing of attenuation versus an exact solution saved to disk
+! should never be needed any more, it was developed and used for Figure 3 of
+! D. Komatitsch, Z. Xie, E. Bozdag, E. Sales de Andrade, D. Peter, Q. Liu and J. Tromp,
+! Anelastic sensitivity kernels with parsimonious storage for adjoint tomography and full waveform inversion,
+! Geophysical Journal International, vol. 206(3), p. 1467-1478, doi: 10.1093/gji/ggw224 (2016).
+!
+! Compute an alpha sensitivity kernel directly by dumping the whole forward
 ! run to disk instead of rebuilding it backwards from the final time step in a second stage;
 ! used for debugging and validation purposes only, in order to have an exact reference for the sensitivity kernels.
 ! use wisely, this requires several terabytes (yes, tera) of disk space.
@@ -684,20 +670,29 @@
   integer, parameter :: REFERENCE_MODEL_JP1D  = 6
   integer, parameter :: REFERENCE_MODEL_SEA1D = 7
 
+! crustal model constants
+  integer, parameter :: ICRUST_CRUST1    = 1    ! Crust1.0
+  integer, parameter :: ICRUST_CRUST2    = 2    ! Crust2.0
+  integer, parameter :: ICRUST_CRUSTMAPS = 3    ! Crustmaps
+  integer, parameter :: ICRUST_EPCRUST   = 4    ! EPcrust
+  integer, parameter :: ICRUST_CRUST_SH  = 5    ! Spherical-Harmonics Crust
+  integer, parameter :: ICRUST_EUCRUST   = 6    ! EUcrust07
+
 ! define flag for 3D Earth model
-  integer, parameter :: THREE_D_MODEL_S20RTS   = 1
-  integer, parameter :: THREE_D_MODEL_S362ANI   = 2
-  integer, parameter :: THREE_D_MODEL_S362WMANI = 3
-  integer, parameter :: THREE_D_MODEL_S362ANI_PREM  = 4
-  integer, parameter :: THREE_D_MODEL_S29EA  = 5
-  integer, parameter :: THREE_D_MODEL_SEA99_JP3D  = 6
-  integer, parameter :: THREE_D_MODEL_SEA99  = 7
-  integer, parameter :: THREE_D_MODEL_JP3D  = 8
-  integer, parameter :: THREE_D_MODEL_PPM  = 9     ! format for point profile models
-  integer, parameter :: THREE_D_MODEL_GLL  = 10    ! format for iterations with GLL mesh
-  integer, parameter :: THREE_D_MODEL_S40RTS = 11
-  integer, parameter :: THREE_D_MODEL_GAPP2  = 12
-  integer, parameter :: THREE_D_MODEL_MANTLE_SH  = 13
+  integer, parameter :: THREE_D_MODEL_S20RTS   = 101
+  integer, parameter :: THREE_D_MODEL_S362ANI   = 102
+  integer, parameter :: THREE_D_MODEL_S362WMANI = 103
+  integer, parameter :: THREE_D_MODEL_S362ANI_PREM  = 104
+  integer, parameter :: THREE_D_MODEL_S29EA  = 105
+  integer, parameter :: THREE_D_MODEL_SEA99_JP3D  = 106
+  integer, parameter :: THREE_D_MODEL_SEA99  = 107
+  integer, parameter :: THREE_D_MODEL_JP3D  = 108
+  integer, parameter :: THREE_D_MODEL_PPM  = 109     ! format for point profile models
+  integer, parameter :: THREE_D_MODEL_GLL  = 110    ! format for iterations with GLL mesh
+  integer, parameter :: THREE_D_MODEL_S40RTS = 111
+  integer, parameter :: THREE_D_MODEL_GAPP2  = 112
+  integer, parameter :: THREE_D_MODEL_MANTLE_SH  = 113
+  integer, parameter :: THREE_D_MODEL_SGLOBE = 114
 
 ! number of standard linear solids for attenuation
   integer, parameter :: N_SLS = 3
@@ -771,6 +766,7 @@
 
 ! number of lines per source in CMTSOLUTION file
   integer, parameter :: NLINES_PER_CMTSOLUTION_SOURCE = 13
+  integer, parameter :: NLINES_PER_FORCESOLUTION_SOURCE = 11
 
 ! number of iterations to solve the system for xi and eta
 ! setting it to 5 instead of 4 ensures that the result obtained is not compiler dependent
@@ -910,14 +906,14 @@
 
 ! coefficients from Table 1, Berland et al. (2006)
   real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: ALPHA_LDDRK = &
-    (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL,&
+    (/0.0_CUSTOM_REAL,-0.737101392796_CUSTOM_REAL, -1.634740794341_CUSTOM_REAL, &
       -0.744739003780_CUSTOM_REAL,-1.469897351522_CUSTOM_REAL,-2.813971388035_CUSTOM_REAL/)
 
   real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: BETA_LDDRK = &
-    (/0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,0.381530948900_CUSTOM_REAL,&
+    (/0.032918605146_CUSTOM_REAL,0.823256998200_CUSTOM_REAL,0.381530948900_CUSTOM_REAL, &
       0.200092213184_CUSTOM_REAL,1.718581042715_CUSTOM_REAL,0.27_CUSTOM_REAL/)
 
   real(kind=CUSTOM_REAL), dimension(NSTAGE), parameter :: C_LDDRK = &
-    (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL,&
+    (/0.0_CUSTOM_REAL,0.032918605146_CUSTOM_REAL,0.249351723343_CUSTOM_REAL, &
       0.466911705055_CUSTOM_REAL,0.582030414044_CUSTOM_REAL,0.847252983783_CUSTOM_REAL/)
 

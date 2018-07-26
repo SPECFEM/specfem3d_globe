@@ -26,21 +26,21 @@
  ! total for full 6-chunk mesh:
  ! ---------------------------
  !
- ! exact total number of spectral elements in entire mesh =
- !    57760.000000000000
- ! approximate total number of points in entire mesh =
- !    3864173.0000000000
- ! approximate total number of degrees of freedom in entire mesh =
- !    11016699.000000000
+ ! exact total number of spectral elements in entire mesh = 
+ !    57760.000000000000     
+ ! approximate total number of points in entire mesh = 
+ !    3864173.0000000000     
+ ! approximate total number of degrees of freedom in entire mesh = 
+ !    11016699.000000000     
  !
  ! resolution of the mesh at the surface:
  ! -------------------------------------
  !
  ! spectral elements along a great circle =          128
  ! GLL points along a great circle =          512
- ! average distance between points in degrees =   0.703125000
- ! average distance between points in km =    78.1839294
- ! average size of a spectral element in km =    312.735718
+ ! average distance between points in degrees =   0.703125000    
+ ! average distance between points in km =    78.1839294    
+ ! average size of a spectral element in km =    312.735718    
  !
 
  ! approximate static memory needed by the solver:
@@ -52,10 +52,10 @@
  !  by typing "size -d bin/xspecfem3D"
  !  after compiling the code with the DATA/Par_file you plan to use)
  !
- ! size of static arrays per slice =    460.29471599999999       MB
- !                                 =    438.97124862670898       MiB
- !                                 =   0.46029471599999999       GB
- !                                 =   0.42868285998702049       GiB
+ ! size of static arrays per slice =    575.88350000000003       MB
+ !                                 =    549.20530319213867       MiB
+ !                                 =   0.57588349999999999       GB
+ !                                 =   0.53633330389857292       GiB
  !
  ! (should be below to 80% or 90% of the memory installed per core)
  ! (if significantly more, the job will not run by lack of memory )
@@ -64,12 +64,12 @@
  ! (but that can be perfectly acceptable if you can afford it and
  !  want faster results by using more cores)
  !
- ! size of static arrays for all slices =    2761.7682960000002       MB
- !                                      =    2633.8274917602539       MiB
- !                                      =    2.7617682960000001       GB
- !                                      =    2.5720971599221230       GiB
- !                                      =    2.7617682960000001E-003  TB
- !                                      =    2.5118136327364482E-003  TiB
+ ! size of static arrays for all slices =    3455.3009999999999       MB
+ !                                      =    3295.2318191528320       MiB
+ !                                      =    3.4553010000000000       GB
+ !                                      =    3.2179998233914375       GiB
+ !                                      =    3.4553010000000000E-003  TB
+ !                                      =    3.1425779525307007E-003  TiB
  !
 
  integer, parameter :: NEX_XI_VAL =           32
@@ -174,8 +174,6 @@
  integer, parameter :: NGLOB_CRUST_MANTLE_3DMOVIE = 1
 
  integer, parameter :: NSPEC_OUTER_CORE_3DMOVIE = 1
- integer, parameter :: NM_KL_REG_PTS_VAL = 1
-
  integer, parameter :: NGLOB_XY_CM =            1
  integer, parameter :: NGLOB_XY_IC =            1
 
@@ -184,7 +182,7 @@
  logical, parameter :: FORCE_VECTORIZATION_VAL = .true.
 
  logical, parameter :: UNDO_ATTENUATION_VAL = .true.
- integer, parameter :: NT_DUMP_ATTENUATION_VAL =          387
+ integer, parameter :: NT_DUMP_ATTENUATION_VAL =          372
 
  double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL =    90.000000
  double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL =    90.000000
