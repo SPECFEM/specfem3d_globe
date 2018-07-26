@@ -70,9 +70,9 @@ else
     echo "configuration: default"
     ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
   fi
-  # we output to console
-  sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
 fi
+# we output to console
+sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
 
 # regional w/ NGLL = 6
 if [ "$TESTMAKE" == "3" ]; then
