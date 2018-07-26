@@ -184,7 +184,7 @@
       veloc(i,1) = veloc(i,1) + deltatover2 * accel(i,1)
       accel(i,1) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   else
@@ -248,7 +248,7 @@
       veloc_cm(i,1) = veloc_cm(i,1) + deltatover2 * accel_cm(i,1)
       accel_cm(i,1) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo NOWAIT
+!$OMP ENDDO NOWAIT
 
 ! inner core
 !$OMP DO
@@ -257,7 +257,7 @@
       veloc_ic(i,1) = veloc_ic(i,1) + deltatover2 * accel_ic(i,1)
       accel_ic(i,1) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo  NOWAIT
+!$OMP ENDDO  NOWAIT
 
 ! outer core
 !$OMP DO
@@ -266,7 +266,7 @@
       veloc_oc(i) = veloc_oc(i) + deltatover2 * accel_oc(i)
       accel_oc(i) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   else
@@ -285,7 +285,7 @@
       veloc_cm(:,i) = veloc_cm(:,i) + deltatover2 * accel_cm(:,i)
       accel_cm(:,i) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo  NOWAIT
+!$OMP ENDDO  NOWAIT
 
 ! inner core
 !$OMP DO
@@ -294,7 +294,7 @@
       veloc_ic(:,i) = veloc_ic(:,i) + deltatover2 * accel_ic(:,i)
       accel_ic(:,i) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo  NOWAIT
+!$OMP ENDDO  NOWAIT
 
 ! outer core
 !$OMP DO
@@ -303,7 +303,7 @@
       veloc_oc(i) = veloc_oc(i) + deltatover2 * accel_oc(i)
       accel_oc(i) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   endif
@@ -341,7 +341,7 @@
     veloc(i) = veloc(i) + deltatover2 * accel(i)
     accel(i) = 0._CUSTOM_REAL
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine update_displ_acoustic
@@ -434,7 +434,7 @@
   do i = 1,NGLOB
     veloc_outer_core(i) = veloc_outer_core(i) + deltatover2 * accel_outer_core(i)
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end subroutine update_veloc_acoustic
@@ -548,14 +548,14 @@
     do i = 1,NGLOB_CM * NDIM
       veloc_crust_mantle(i,1) = veloc_crust_mantle(i,1) + deltatover2*accel_crust_mantle(i,1)
     enddo
-!$OMP enddo NOWAIT
+!$OMP ENDDO NOWAIT
 
     ! inner core
 !$OMP DO
     do i = 1,NGLOB_IC * NDIM
       veloc_inner_core(i,1) = veloc_inner_core(i,1) + deltatover2*accel_inner_core(i,1)
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   else
@@ -571,14 +571,14 @@
     do i = 1,NGLOB_CM
       veloc_crust_mantle(:,i) = veloc_crust_mantle(:,i) + deltatover2*accel_crust_mantle(:,i)
     enddo
-!$OMP enddo NOWAIT
+!$OMP ENDDO NOWAIT
 
     ! inner core
 !$OMP DO
     do i = 1,NGLOB_IC
       veloc_inner_core(:,i) = veloc_inner_core(:,i) + deltatover2*accel_inner_core(:,i)
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   endif

@@ -157,7 +157,7 @@
       enddo
     enddo
   enddo ! of loop on ispec
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
 ! copy the initial mass matrix if needed
@@ -324,7 +324,7 @@
         enddo
       enddo
     enddo ! of loop on ispec
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   end select
@@ -862,7 +862,7 @@
       enddo
     enddo
   enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 
   ! add regular mass matrix to ocean load contribution

@@ -54,13 +54,13 @@
    reading in addressing...
  Spatial distribution of the slices
                         0
-  
+
      2       1       4
-  
+
                         5
-  
+
                         3
-  
+
    reading in MPI databases...
    for overlapping of communications with calculations:
 
@@ -74,7 +74,7 @@
    percentage of volume elements in inner core    45.8333321     %
 
 
- Elapsed time for reading mesh in seconds =   0.232259989    
+ Elapsed time for reading mesh in seconds =   0.232259989
 
 
  sources:           1
@@ -89,10 +89,10 @@
    source located in slice            4
                   in element         8526
 
-   using moment tensor source: 
-     xi coordinate of source in that element:  -0.58368927071452426     
-     eta coordinate of source in that element:  -0.59821803376616112     
-     gamma coordinate of source in that element:  -0.60017658180726396     
+   using moment tensor source:
+     xi coordinate of source in that element:  -0.58368927071452426
+     eta coordinate of source in that element:  -0.59821803376616112
+     gamma coordinate of source in that element:  -0.60017658180726396
 
    source time function:
      using (quasi) Heaviside source time function
@@ -102,19 +102,19 @@
 
    magnitude of the source:
         scalar moment M0 =    1.1665702100602432E+026  dyne-cm
-     moment magnitude Mw =    6.6779407786960121     
+     moment magnitude Mw =    6.6779407786960121
 
 
    original (requested) position of the source:
 
-         latitude:    36.789999999999999     
-        longitude:    27.559999999999999     
+         latitude:    36.789999999999999
+        longitude:    27.559999999999999
             depth:    12.000000000000000       km
 
    position of the source that will be used:
 
-         latitude:    36.790000000000013     
-        longitude:    27.560000000000002     
+         latitude:    36.790000000000013
+        longitude:    27.560000000000002
             depth:    11.999999999999526       km
 
    Error in location of the source:    1.06098463E-12  km
@@ -215,14 +215,14 @@
    using Deville products
    inverse table of ibool done
    fused array done
-   bandwidth test (STREAM TRIAD): 
+   bandwidth test (STREAM TRIAD):
       memory accesses =    19.7758369     MB
       timing  min/max =    3.46279144E-03 s /    8.89897346E-03 s
       timing      avg =    4.43038950E-03 s
       bandwidth       =    4.35906172     GB/s
 
 
- Elapsed time for preparing timerun in seconds =   0.701195002    
+ Elapsed time for preparing timerun in seconds =   0.701195002
 
 
  time loop:
@@ -241,14 +241,14 @@
  Time:  -0.119583331      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.04266621E-06
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.00033815E-24
- Elapsed time in seconds =   0.63271117210388184     
+ Elapsed time in seconds =   0.63271117210388184
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =   0.12654223442077636     
+ Mean elapsed time per time step in seconds =   0.12654223442077636
  Time steps done =            5  out of          700
  Time steps remaining =          695
- Estimated remaining time in seconds =    87.946852922439575     
+ Estimated remaining time in seconds =    87.946852922439575
  Estimated remaining time in hh:mm:ss =      0 h 01 m 27 s
- Estimated total run time in seconds =    88.579564094543457     
+ Estimated total run time in seconds =    88.579564094543457
  Estimated total run time in hh:mm:ss =      0 h 01 m 28 s
  We have done   0.714285731     % of that
  The run will finish approximately on (in local time): Thu Jul 26, 2018 23:36
@@ -261,14 +261,14 @@
  Time:   0.266354173      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.54402254E-02
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.03527443E-24
- Elapsed time in seconds =    33.909991025924683     
+ Elapsed time in seconds =    33.909991025924683
  Elapsed time in hh:mm:ss =      0 h 00 m 33 s
- Mean elapsed time per time step in seconds =   0.16954995512962343     
+ Mean elapsed time per time step in seconds =   0.16954995512962343
  Time steps done =          200  out of          700
  Time steps remaining =          500
- Estimated remaining time in seconds =    84.774977564811707     
+ Estimated remaining time in seconds =    84.774977564811707
  Estimated remaining time in hh:mm:ss =      0 h 01 m 24 s
- Estimated total run time in seconds =    118.68496859073639     
+ Estimated total run time in seconds =    118.68496859073639
  Estimated total run time in hh:mm:ss =      0 h 01 m 58 s
  We have done    28.5714283     % of that
  The run will finish approximately on (in local time): Thu Jul 26, 2018 23:37
@@ -277,14 +277,14 @@
  Time:   0.662187517      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.38649845E-02
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.06726925E-24
- Elapsed time in seconds =    68.186282157897949     
+ Elapsed time in seconds =    68.186282157897949
  Elapsed time in hh:mm:ss =      0 h 01 m 08 s
- Mean elapsed time per time step in seconds =   0.17046570539474487     
+ Mean elapsed time per time step in seconds =   0.17046570539474487
  Time steps done =          400  out of          700
  Time steps remaining =          300
- Estimated remaining time in seconds =    51.139711618423462     
+ Estimated remaining time in seconds =    51.139711618423462
  Estimated remaining time in hh:mm:ss =      0 h 00 m 51 s
- Estimated total run time in seconds =    119.32599377632141     
+ Estimated total run time in seconds =    119.32599377632141
  Estimated total run time in hh:mm:ss =      0 h 01 m 59 s
  We have done    57.1428566     % of that
  The run will finish approximately on (in local time): Thu Jul 26, 2018 23:37
@@ -293,14 +293,14 @@
  Time:    1.05802083      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.43633389E-02
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.09640158E-24
- Elapsed time in seconds =    102.53481817245483     
+ Elapsed time in seconds =    102.53481817245483
  Elapsed time in hh:mm:ss =      0 h 01 m 42 s
- Mean elapsed time per time step in seconds =   0.17089136362075805     
+ Mean elapsed time per time step in seconds =   0.17089136362075805
  Time steps done =          600  out of          700
  Time steps remaining =          100
- Estimated remaining time in seconds =    17.089136362075806     
+ Estimated remaining time in seconds =    17.089136362075806
  Estimated remaining time in hh:mm:ss =      0 h 00 m 17 s
- Estimated total run time in seconds =    119.62395453453064     
+ Estimated total run time in seconds =    119.62395453453064
  Estimated total run time in hh:mm:ss =      0 h 01 m 59 s
  We have done    85.7142868     % of that
  The run will finish approximately on (in local time): Thu Jul 26, 2018 23:37
@@ -309,14 +309,14 @@
  Time:    1.25593746      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    2.43690535E-02
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.11059033E-24
- Elapsed time in seconds =    119.77800107002258     
+ Elapsed time in seconds =    119.77800107002258
  Elapsed time in hh:mm:ss =      0 h 01 m 59 s
- Mean elapsed time per time step in seconds =   0.17111143010003227     
+ Mean elapsed time per time step in seconds =   0.17111143010003227
  Time steps done =          700  out of          700
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    119.77800107002258     
+ Estimated total run time in seconds =    119.77800107002258
  Estimated total run time in hh:mm:ss =      0 h 01 m 59 s
  We have done    100.000000     % of that
 
@@ -329,7 +329,7 @@
  Writing the seismograms by master proc alone took    7.3403120040893555E-002  seconds
 
  Time-Loop Complete. Timing info:
- Total elapsed time in seconds =    120.01965403556824     
+ Total elapsed time in seconds =    120.01965403556824
  Total elapsed time in hh:mm:ss =      0 h 02 m 00 s
  finalizing simulation
 

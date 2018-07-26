@@ -512,7 +512,7 @@
         ENDDO_LOOP_IJK
       endif
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
   enddo !iphase
 
@@ -556,7 +556,7 @@
         ENDDO_LOOP_IJK
       endif
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
   enddo !iphase
 
@@ -600,7 +600,7 @@
         ENDDO_LOOP_IJK
       endif
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
   enddo !iphase
 
@@ -621,21 +621,21 @@
       veloc_crust_mantle(i,1) = 0._CUSTOM_REAL
       accel_crust_mantle(i,1) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP DO
     do i = 1,NGLOB_OUTER_CORE
       displ_outer_core(i) = init_value
       veloc_outer_core(i) = 0._CUSTOM_REAL
       accel_outer_core(i) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP DO
     do i = 1,NGLOB_INNER_CORE * NDIM
       displ_inner_core(i,1) = init_value
       veloc_inner_core(i,1) = 0._CUSTOM_REAL
       accel_inner_core(i,1) = 0._CUSTOM_REAL
     enddo
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
   else
     do i = 1,NGLOB_CRUST_MANTLE

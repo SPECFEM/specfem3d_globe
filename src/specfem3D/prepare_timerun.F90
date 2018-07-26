@@ -504,7 +504,7 @@
     rstore_crust_mantle(3,i) = phival
   enddo
 #ifdef DANIEL_TEST_OMP_RSTORE
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 #endif
 
@@ -525,7 +525,7 @@
     rstore_outer_core(3,i) = phival
   enddo
 #ifdef DANIEL_TEST_OMP_RSTORE
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 #endif
 
@@ -546,7 +546,7 @@
     rstore_inner_core(3,i) = phival
   enddo
 #ifdef DANIEL_TEST_OMP_RSTORE
-!$OMP enddo
+!$OMP ENDDO
 !$OMP END PARALLEL
 #endif
 

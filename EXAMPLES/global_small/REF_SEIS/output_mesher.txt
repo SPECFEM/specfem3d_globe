@@ -48,13 +48,13 @@
 
  Spatial distribution of the slices
                         0
-  
+
      2       1       4
-  
+
                         5
-  
+
                         3
-  
+
 
  incorporating crustal model: CRUST2.0
 
@@ -72,7 +72,7 @@
 
 
  Radial Meshing parameters:
-   CHUNK WIDTH XI/ETA =   90.000000000000000      /   90.000000000000000     
+   CHUNK WIDTH XI/ETA =   90.000000000000000      /   90.000000000000000
    NEX XI/ETA =          32 /          32
 
    NER_CRUST:                          2
@@ -91,7 +91,7 @@
    R_CENTRAL_CUBE =    950.000000      km
 
  Mesh resolution:
-   DT =   0.11874999999999999     
+   DT =   0.11874999999999999
    Minimum period =    136.00000000000000       (s)
 
    MIN_ATTENUATION_PERIOD =          138
@@ -106,11 +106,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           10
      10.0%    current clock (NOT elapsed) time is: 22h 53min 02sec
    creating layer            2 out of           10
@@ -139,11 +139,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           10
      10.0%    current clock (NOT elapsed) time is: 22h 53min 17sec
    creating layer            2 out of           10
@@ -175,9 +175,9 @@
 
    Max element edge size =    890.984314      (km)
    Min element edge size =    14.9970064      (km)
-   Max/min ratio =    59.4108124    
+   Max/min ratio =    59.4108124
 
-   Max Jacobian eigenvalue ratio =   0.432912558    
+   Max Jacobian eigenvalue ratio =   0.432912558
    Min Jacobian eigenvalue ratio =    3.16540636E-02
 
    Minimum period resolved =    28.2742100      (s)
@@ -185,7 +185,7 @@
    Maximum suggested time step =   0.165000007      (s)
 
    for DT :   0.118749999      (s)
-   Max stability for wave velocities =   0.385888398    
+   Max stability for wave velocities =   0.385888398
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -248,7 +248,7 @@
    total unique MPI interface points:      177024
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
 
  for overlapping of communications with calculations:
 
@@ -256,7 +256,7 @@
  percentage of volume elements in crust/mantle    79.3165436     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -265,10 +265,10 @@
 
    ...saving AVS or DX mesh files
 
-    calculated top area:    12.566370413808141     
-             exact area:    12.566370614359172     
- calculated bottom area:    3.7492198692531131     
-             exact area:    3.7492349663512523     
+    calculated top area:    12.566370413808141
+             exact area:    12.566370614359172
+ calculated bottom area:    3.7492198692531131
+             exact area:    3.7492349663512523
 
  *******************************************
  creating mesh in region            2
@@ -278,11 +278,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 22h 54min 19sec
    creating layer            2 out of            2
@@ -295,11 +295,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 22h 54min 19sec
    creating layer            2 out of            2
@@ -315,9 +315,9 @@
 
    Max element edge size =    910.548462      (km)
    Min element edge size =    70.5769730      (km)
-   Max/min ratio =    12.9014950    
+   Max/min ratio =    12.9014950
 
-   Max Jacobian eigenvalue ratio =   0.445263296    
+   Max Jacobian eigenvalue ratio =   0.445263296
    Min Jacobian eigenvalue ratio =    5.24087101E-02
 
    Minimum period resolved =    21.8780518      (s)
@@ -388,12 +388,12 @@
    total assembled MPI interface points:       38976
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in outer core    51.1627922     %
  percentage of volume elements in outer core    48.8372078     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -402,10 +402,10 @@
 
    ...saving AVS or DX mesh files
 
-    calculated top area:    3.7492198692531131     
-             exact area:    3.7492349663512523     
- calculated bottom area:   0.46189904624941130     
-             exact area:   0.46192896649225867     
+    calculated top area:    3.7492198692531131
+             exact area:    3.7492349663512523
+ calculated bottom area:   0.46189904624941130
+             exact area:   0.46192896649225867
 
  *******************************************
  creating mesh in region            3
@@ -415,11 +415,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 22h 54min 20sec
 
@@ -431,11 +431,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 22h 54min 20sec
 
@@ -450,10 +450,10 @@
 
    Max element edge size =    476.602142      (km)
    Min element edge size =    135.745483      (km)
-   Max/min ratio =    3.51099825    
+   Max/min ratio =    3.51099825
 
-   Max Jacobian eigenvalue ratio =    1.00000000    
-   Min Jacobian eigenvalue ratio =   0.246194005    
+   Max Jacobian eigenvalue ratio =    1.00000000
+   Min Jacobian eigenvalue ratio =   0.246194005
 
    Minimum period resolved =    111.885880      (s)
    Minimum period resolved (empirical) =    136.000000      (s)
@@ -527,12 +527,12 @@
    total assembled MPI interface points:        5830
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in inner core    54.1666679     %
  percentage of volume elements in inner core    45.8333321     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -541,23 +541,23 @@
 
    ...saving AVS or DX mesh files
 
-    calculated top area:   0.46189904624941130     
-             exact area:   0.46192896649225867     
- calculated bottom area:   0.21169909735011902     
-             more or less similar area (central cube):   0.17787790385168645     
+    calculated top area:   0.46189904624941130
+             exact area:   0.46192896649225867
+ calculated bottom area:   0.21169909735011902
+             more or less similar area (central cube):   0.17787790385168645
 
- calculated volume:    4.1887900911695741     
-      exact volume:    4.1887902047863905     
+ calculated volume:    4.1887900911695741
+      exact volume:    4.1887902047863905
 
- computed total Earth mass for this density model and mesh: 
+ computed total Earth mass for this density model and mesh:
        5.97938066E+24  kg
     (should be not too far from 5.974E+24 kg)
 
- average density for this density model and mesh: 
+ average density for this density model and mesh:
        5520.07275      kg/m3
     (should be not too far from 5514 kg/m3)
 
- position of the center of mass of the Earth for this density model and mesh: 
+ position of the center of mass of the Earth for this density model and mesh:
     x =  -0.795741498      km
     y =  -0.915847540      km
     z =   -1.54515517      km
@@ -577,14 +577,14 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.118749999    
+ the time step of the solver will be DT =   0.118749999
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    78.327898979187012     
+ Elapsed time for mesh generation and buffer creation in seconds =    78.327898979187012
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 01 m 18 s
 
  End of mesh generation

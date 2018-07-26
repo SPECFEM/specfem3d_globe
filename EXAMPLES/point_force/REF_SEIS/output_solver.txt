@@ -54,13 +54,13 @@
    reading in addressing...
  Spatial distribution of the slices
                         0
-  
+
      2       1       4
-  
+
                         5
-  
+
                         3
-  
+
    reading in MPI databases...
    for overlapping of communications with calculations:
 
@@ -74,7 +74,7 @@
    percentage of volume elements in inner core    45.8333321     %
 
 
- Elapsed time for reading mesh in seconds =   0.197118044    
+ Elapsed time for reading mesh in seconds =   0.197118044
 
 
  sources:           1
@@ -89,20 +89,20 @@
    source located in slice            1
                   in element         8568
 
-   using force point source: 
-     xi coordinate of source in that element:  -0.88830158197642961     
+   using force point source:
+     xi coordinate of source in that element:  -0.88830158197642961
      eta coordinate of source in that element:   -5.0880043269300325E-002
-     gamma coordinate of source in that element:   0.99984306001727885     
+     gamma coordinate of source in that element:   0.99984306001727885
 
-     component of direction vector in East direction:    0.0000000000000000     
-     component of direction vector in North direction:   -1.0000000000000000     
-     component of direction vector in Vertical direction:   -1.0000000000000000     
+     component of direction vector in East direction:    0.0000000000000000
+     component of direction vector in North direction:   -1.0000000000000000
+     component of direction vector in Vertical direction:   -1.0000000000000000
 
      nu1 =   0.20497886669976489       0.53337041113384653       0.82067025578693387      North
      nu2 =   0.93344150206805865      -0.35872965059627615        8.5239846201435044E-017 East
      nu3 =  -0.29439875411320338      -0.76604767626433345       0.57140207495826312      Vertical
 
-     at (x,y,z) coordinates =  -0.29439875411320338      -0.76604767626433368       0.57140207495826323     
+     at (x,y,z) coordinates =  -0.29439875411320338      -0.76604767626433368       0.57140207495826323
 
    source time function:
      using Gaussian source time function
@@ -116,14 +116,14 @@
 
    original (requested) position of the source:
 
-         latitude:    35.027799999999999     
-        longitude:   -111.02220000000000     
+         latitude:    35.027799999999999
+        longitude:   -111.02220000000000
             depth:    0.0000000000000000       km
 
    position of the source that will be used:
 
-         latitude:    35.027800000000013     
-        longitude:   -111.02220000000001     
+         latitude:    35.027800000000013
+        longitude:   -111.02220000000001
             depth:   -1.4146461779773745E-012  km
 
    Error in location of the source:    1.58162253E-12  km
@@ -243,14 +243,14 @@
    using Deville products
    inverse table of ibool done
    fused array done
-   bandwidth test (STREAM TRIAD): 
+   bandwidth test (STREAM TRIAD):
       memory accesses =    19.7758369     MB
       timing  min/max =    3.27992439E-03 s /    4.71496582E-03 s
       timing      avg =    3.71928210E-03 s
       bandwidth       =    5.19249153     GB/s
 
 
- Elapsed time for preparing timerun in seconds =   0.720920086    
+ Elapsed time for preparing timerun in seconds =   0.720920086
 
 
  time loop:
@@ -271,14 +271,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.00041180E-24
  Max of strain, eps_trace_over_3_crust_mantle =   1.04633342E-11
  Max of strain, epsilondev_crust_mantle  =   1.86652915E-11
- Elapsed time in seconds =   0.83245706558227539     
+ Elapsed time in seconds =   0.83245706558227539
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
- Mean elapsed time per time step in seconds =   0.16649141311645507     
+ Mean elapsed time per time step in seconds =   0.16649141311645507
  Time steps done =            5  out of         1600
  Time steps remaining =         1595
- Estimated remaining time in seconds =    265.55380392074585     
+ Estimated remaining time in seconds =    265.55380392074585
  Estimated remaining time in hh:mm:ss =      0 h 04 m 25 s
- Estimated total run time in seconds =    266.38626098632812     
+ Estimated total run time in seconds =    266.38626098632812
  Estimated total run time in hh:mm:ss =      0 h 04 m 26 s
  We have done   0.312500000     % of that
  The run will finish approximately on (in local time): Thu Jul 26, 2018 23:14
@@ -293,14 +293,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.08943653E-24
  Max of strain, eps_trace_over_3_crust_mantle =   8.19430301E-10
  Max of strain, epsilondev_crust_mantle  =   1.77438009E-09
- Elapsed time in seconds =    115.70990395545959     
+ Elapsed time in seconds =    115.70990395545959
  Elapsed time in hh:mm:ss =      0 h 01 m 55 s
- Mean elapsed time per time step in seconds =   0.23141980791091918     
+ Mean elapsed time per time step in seconds =   0.23141980791091918
  Time steps done =          500  out of         1600
  Time steps remaining =         1100
- Estimated remaining time in seconds =    254.56178870201109     
+ Estimated remaining time in seconds =    254.56178870201109
  Estimated remaining time in hh:mm:ss =      0 h 04 m 14 s
- Estimated total run time in seconds =    370.27169265747068     
+ Estimated total run time in seconds =    370.27169265747068
  Estimated total run time in hh:mm:ss =      0 h 06 m 10 s
  We have done    31.2500000     % of that
  The run will finish approximately on (in local time): Thu Jul 26, 2018 23:16
@@ -311,14 +311,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.14136636E-24
  Max of strain, eps_trace_over_3_crust_mantle =   4.91556129E-10
  Max of strain, epsilondev_crust_mantle  =   1.07511111E-09
- Elapsed time in seconds =    223.21365189552307     
+ Elapsed time in seconds =    223.21365189552307
  Elapsed time in hh:mm:ss =      0 h 03 m 43 s
- Mean elapsed time per time step in seconds =   0.22321365189552306     
+ Mean elapsed time per time step in seconds =   0.22321365189552306
  Time steps done =         1000  out of         1600
  Time steps remaining =          600
- Estimated remaining time in seconds =    133.92819113731383     
+ Estimated remaining time in seconds =    133.92819113731383
  Estimated remaining time in hh:mm:ss =      0 h 02 m 13 s
- Estimated total run time in seconds =    357.14184303283690     
+ Estimated total run time in seconds =    357.14184303283690
  Estimated total run time in hh:mm:ss =      0 h 05 m 57 s
  We have done    62.5000000     % of that
  The run will finish approximately on (in local time): Thu Jul 26, 2018 23:16
@@ -329,14 +329,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.20410121E-24
  Max of strain, eps_trace_over_3_crust_mantle =   3.55581870E-10
  Max of strain, epsilondev_crust_mantle  =   9.29429256E-10
- Elapsed time in seconds =    331.62436699867249     
+ Elapsed time in seconds =    331.62436699867249
  Elapsed time in hh:mm:ss =      0 h 05 m 31 s
- Mean elapsed time per time step in seconds =   0.22108291133244831     
+ Mean elapsed time per time step in seconds =   0.22108291133244831
  Time steps done =         1500  out of         1600
  Time steps remaining =          100
- Estimated remaining time in seconds =    22.108291133244830     
+ Estimated remaining time in seconds =    22.108291133244830
  Estimated remaining time in hh:mm:ss =      0 h 00 m 22 s
- Estimated total run time in seconds =    353.73265813191733     
+ Estimated total run time in seconds =    353.73265813191733
  Estimated total run time in hh:mm:ss =      0 h 05 m 53 s
  We have done    93.7500000     % of that
  The run will finish approximately on (in local time): Thu Jul 26, 2018 23:16
@@ -347,14 +347,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    2.02280561E-24
  Max of strain, eps_trace_over_3_crust_mantle =   3.08966575E-10
  Max of strain, epsilondev_crust_mantle  =   7.99510680E-10
- Elapsed time in seconds =    353.64733600616455     
+ Elapsed time in seconds =    353.64733600616455
  Elapsed time in hh:mm:ss =      0 h 05 m 53 s
- Mean elapsed time per time step in seconds =   0.22102958500385284     
+ Mean elapsed time per time step in seconds =   0.22102958500385284
  Time steps done =         1600  out of         1600
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    353.64733600616455     
+ Estimated total run time in seconds =    353.64733600616455
  Estimated total run time in hh:mm:ss =      0 h 05 m 53 s
  We have done    100.000000     % of that
 
@@ -364,7 +364,7 @@
  Writing the seismograms in parallel took   0.27870297431945801       seconds
 
  Time-Loop Complete. Timing info:
- Total elapsed time in seconds =    354.16515588760376     
+ Total elapsed time in seconds =    354.16515588760376
  Total elapsed time in hh:mm:ss =      0 h 05 m 54 s
  finalizing simulation
 

@@ -550,9 +550,9 @@
   ! user output
   if (myrank == 0) then
     ! model
-    print *,''
+    print *
     print *, 'model: ',trim(MODEL)
-    print *,''
+    print *
 
     ! file output
     write(IMAIN,*) 'model: ',trim(MODEL)
@@ -656,7 +656,7 @@
                                   LOCAL_PATH)
 
   ! user output
-  if (myrank == 0) print *,''
+  if (myrank == 0) print *
 
 !> end part from meshfem3D
 
