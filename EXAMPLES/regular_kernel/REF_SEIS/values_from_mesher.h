@@ -20,7 +20,7 @@
  ! total elements per slice =         9424
  ! total points per slice =       631223
  !
- ! the time step of the solver will be DT =   0.118749999      (s)
+ ! the time step of the solver will be DT =   0.180500001      (s)
  ! the (approximate) minimum period resolved will be =    136.000000      (s)
  !
  ! total for full 6-chunk mesh:
@@ -52,10 +52,10 @@
  !  by typing "size -d bin/xspecfem3D"
  !  after compiling the code with the DATA/Par_file you plan to use)
  !
- ! size of static arrays per slice =    419.10752000000002       MB
- !                                 =    399.69207763671875       MiB
- !                                 =   0.41910752000000001       GB
- !                                 =   0.39032429456710815       GiB
+ ! size of static arrays per slice =    315.43952000000002       MB
+ !                                 =    300.82656860351562       MiB
+ !                                 =   0.31543951999999997       GB
+ !                                 =   0.29377594590187073       GiB
  !
  ! (should be below to 80% or 90% of the memory installed per core)
  ! (if significantly more, the job will not run by lack of memory )
@@ -64,12 +64,12 @@
  ! (but that can be perfectly acceptable if you can afford it and
  !  want faster results by using more cores)
  !
- ! size of static arrays for all slices =    2514.6451200000001       MB
- !                                      =    2398.1524658203125       MiB
- !                                      =    2.5146451200000000       GB
- !                                      =    2.3419457674026489       GiB
- !                                      =    2.5146451200000002E-003  TB
- !                                      =    2.2870564134791493E-003  TiB
+ ! size of static arrays for all slices =    1892.6371200000001       MB
+ !                                      =    1804.9594116210938       MiB
+ !                                      =    1.8926371200000001       GB
+ !                                      =    1.7626556754112244       GiB
+ !                                      =    1.8926371199999999E-003  TB
+ !                                      =    1.7213434330187738E-003  TiB
  !
 
  integer, parameter :: NEX_XI_VAL =           32
@@ -86,7 +86,7 @@
  integer, parameter :: NSPECMAX_ANISO_IC =            1
 
  integer, parameter :: NSPECMAX_ISO_MANTLE =         8640
- integer, parameter :: NSPECMAX_TISO_MANTLE =         8640
+ integer, parameter :: NSPECMAX_TISO_MANTLE =            1
  integer, parameter :: NSPECMAX_ANISO_MANTLE =            1
 
  integer, parameter :: NSPEC_CRUST_MANTLE_ATTENUATION =            1
@@ -114,7 +114,7 @@
 
  integer, parameter :: NGLOB_CRUST_MANTLE_OCEANS =            1
 
- logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .true.
+ logical, parameter :: TRANSVERSE_ISOTROPY_VAL = .false.
 
  logical, parameter :: ANISOTROPIC_3D_MANTLE_VAL = .false.
 
@@ -182,7 +182,7 @@
  logical, parameter :: FORCE_VECTORIZATION_VAL = .true.
 
  logical, parameter :: UNDO_ATTENUATION_VAL = .false.
- integer, parameter :: NT_DUMP_ATTENUATION_VAL =          403
+ integer, parameter :: NT_DUMP_ATTENUATION_VAL =          417
 
  double precision, parameter :: ANGULAR_WIDTH_ETA_IN_DEGREES_VAL =    90.000000
  double precision, parameter :: ANGULAR_WIDTH_XI_IN_DEGREES_VAL =    90.000000

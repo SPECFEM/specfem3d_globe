@@ -1,13 +1,13 @@
- PDEW2017  7 20 22 31 11.20  36.9200   27.4100   7.0 0.0 6.6 DODECANESE ISLANDS, GREE
-event name:     201707202231A
-time shift:      5.1600
-half duration:   5.1000
-latitude:       36.7900
-longitude:      27.5600
+ PDEW2016 10 30  6 40 18.70  42.8600   13.1000   8.0 0.0 6.6 CENTRAL ITALY                           
+event name:     201610300640A  
+time shift:      5.3500
+half duration:   4.8000
+latitude:       42.7500
+longitude:      13.1600
 depth:          12.0000
-Mrr:      -1.060000e+26
-Mtt:       1.130000e+26
-Mpp:      -7.910000e+24
-Mrt:      -3.850000e+25
-Mrp:      -7.640000e+24
-Mtp:      -5.870000e+24
+Mrr:      -9.510000e+25
+Mtt:       1.870000e+25
+Mpp:       7.640000e+25
+Mrt:       3.340000e+24
+Mrp:      -2.770000e+25
+Mtp:      -2.880000e+25

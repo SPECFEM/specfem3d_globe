@@ -2,8 +2,8 @@
 #################################################
 
 # reference adjoint station
-network="II"
-station="RAYN"
+network="MN"   # "II"
+station="BLY"  # "RAYN"
 compE="MXE"
 compN="MXN"
 compZ="MXZ"

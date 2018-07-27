@@ -57,7 +57,7 @@ NPROC_ETA                       = 1
 #                          associated reference model rather than the default 3D crustal model
 #                          e.g. s20rts_1Dcrust, s362ani_1Dcrust, etc.
 #
-MODEL                           = s40rts
+MODEL                           = 1D_ak135f_no_mud
 
 # parameters describing the Earth model
 OCEANS                          = .false.
@@ -71,7 +71,7 @@ ATTENUATION                     = .false.
 ABSORBING_CONDITIONS            = .false.
 
 # record length in minutes
-RECORD_LENGTH_IN_MINUTES        = 1.0d0
+RECORD_LENGTH_IN_MINUTES        = 1.2d0
 
 # to undo attenuation for sensitivity kernel calculations or forward runs with SAVE_FORWARD
 # use one (and only one) of the two flags below. UNDO_ATTENUATION is much better (it is exact)

@@ -2,9 +2,9 @@
 README
 ------------------------------------
 
-Example of a global simulation for output kernels on a regular grid
+Example of a global simulation for a test output of kernels on a regular grid
 
-This example creates a spherical global mesh, using a 3D shear-wave speed model s40rts (Ritsema et al., 2010), 
+This example creates a spherical global mesh, using a 1D model AK135 (Kennett et al., 1995), 
 and runs a spectral-element simulation. The simulation is setup to use 6 CPU cores (MPI processes).
 The runtime is about 5 min.
 
