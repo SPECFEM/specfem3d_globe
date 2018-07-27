@@ -153,10 +153,10 @@
 
 ! non-dimensionalize
 ! time scaling (s^{-1}) is done with scaleval
-  scaleval=dsqrt(PI*GRAV*RHOAV)
-  rho=rho*1000.0d0/RHOAV
-  vp=vp*1000.0d0/(R_EARTH*scaleval)
-  vs=vs*1000.0d0/(R_EARTH*scaleval)
+  scaleval = dsqrt(PI*GRAV*RHOAV)
+  rho = rho*1000.0d0/RHOAV
+  vp = vp*1000.0d0/(R_EARTH*scaleval)
+  vs = vs*1000.0d0/(R_EARTH*scaleval)
 
   end subroutine model_1066a
 
@@ -1150,7 +1150,7 @@
 
 ! strip the crust and replace it by mantle if we use an external crustal model
   if (SUPPRESS_CRUSTAL_MESH .or. USE_EXTERNAL_CRUSTAL_MODEL) then
-    do i=NR_1066A-3,NR_1066A
+    do i = NR_1066A-3,NR_1066A
       M1066a_V_density_1066a(i) = M1066a_V_density_1066a(NR_1066A-4)
       M1066a_V_vp_1066a(i) = M1066a_V_vp_1066a(NR_1066A-4)
       M1066a_V_vs_1066a(i) = M1066a_V_vs_1066a(NR_1066A-4)

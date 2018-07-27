@@ -26,9 +26,13 @@
 !=====================================================================
 
 !--------------------------------------------------------------------------------------------------
-! JT 2015
-! transversely isotropic perturbation model, SH lmax = 20 for mantle and 21 splines vertically, lmax = 40 for crust with one layer
+! Generic transversely isotropic perturbation models based on spherical harmonics expansion:
+! SH lmax = 20 for mantle and 21 splines vertically,
+!    lmax = 40 for crust with one layer
+!
 ! PREM as a background model so far, 3D ATTENUATION is not yet incorporated.
+!
+! Jeannot Trampert, 2015
 !--------------------------------------------------------------------------------------------------
 
 
