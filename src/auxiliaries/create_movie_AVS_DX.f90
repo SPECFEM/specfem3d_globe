@@ -151,21 +151,25 @@
   ! runs the main program
   ! sets flags
   if (iformat == 1) then
+    ! OpenDX format
     USE_OPENDX = .true.
     USE_AVS = .false.
     USE_GMT = .false.
     UNIQUE_FILE = .false.
   else if (iformat == 2) then
+    ! AVS UCD format
     USE_OPENDX = .false.
     USE_AVS = .true.
     USE_GMT = .false.
     UNIQUE_FILE = .false.
   else if (iformat == 3) then
+    ! AVS UCD format
     USE_OPENDX = .false.
     USE_AVS = .true.
     USE_GMT = .false.
     UNIQUE_FILE = .true.
   else if (iformat == 4) then
+    ! GMT format
     USE_OPENDX = .false.
     USE_AVS = .false.
     USE_GMT = .true.
@@ -623,6 +627,7 @@
 
     ! create file name and open file
     if (USE_OPENDX) then
+      ! OpenDX format
       if (USE_COMPONENT == 1) then
         write(outputname,"('/DX_movie_',i6.6,'.Z.dx')") it
       else if (USE_COMPONENT == 2) then
@@ -633,7 +638,9 @@
       open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
       write(11,*) 'object 1 class array type float rank 1 shape 3 items ',nglob,' data follows'
     else if (USE_AVS) then
+      ! AVS UCD format
       if (UNIQUE_FILE .and. iframe == 1) then
+        ! single file containing all time steps
         if (USE_COMPONENT == 1) then
           outputname = '/AVS_movie_all.Z.inp'
         else if (USE_COMPONENT == 2) then
@@ -642,11 +649,19 @@
           outputname = '/AVS_movie_all.E.inp'
         endif
         open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
+        write(11,'(a)') '#'
+        write(11,'(a)') '# AVS UCD file created by xcreate_movie_AVS_DX'
+        write(11,'(a)') '# contains movie data for multiple time steps'
+        write(11,'(a)') '#'
+        ! format description: http://dav.lbl.gov/archive/NERSC/Software/express/help6.2/help/reference/dvmac/Time0060.htm
+        ! note: Paraview 5.5 doesn't recognize this anymore, seems to be outdated.
+        !       Paraview uses single file per time step...see below
         write(11,*) nframes
-        write(11,*) 'data'
+        write(11,'(a)') 'data'
         write(11,"('step',i1,' image',i1)") 1,1
         write(11,*) nglob,' ',nspectot_AVS_max
       else if (.not. UNIQUE_FILE) then
+        ! file for each time stepe
         if (USE_COMPONENT == 1) then
           write(outputname,"('/AVS_movie_',i6.6,'.Z.inp')") it
         else if (USE_COMPONENT == 2) then
@@ -655,9 +670,19 @@
           write(outputname,"('/AVS_movie_',i6.6,'.E.inp')") it
         endif
         open(unit=11,file=trim(OUTPUT_FILES)//trim(outputname),status='unknown')
+        write(11,'(a)') '#'
+        write(11,'(a)') '# AVS UCD file created by xcreate_movie_AVS_DX'
+        write(11,'(a,i6.6)') '# contains movie data for single time step: ',it
+        write(11,'(a)') '#'
+        ! file format description: http://www.cs.cmu.edu/~viper/Data/avs-field-description.ps
+        ! format:  number of nodes, the number of cells, and the length of the vector of data
+        !          associated with the nodes, cells, and the model.
+        ! < num_nodes> < num_cells> < num_ndata> < num_cdata> < num_mdata>
+        !
         write(11,*) nglob,' ',nspectot_AVS_max,' 1 0 0'
       endif
     else if (USE_GMT) then
+      ! GMT format
       if (USE_COMPONENT == 1) then
         write(outputname,"('/gmt_movie_',i6.6,'.Z.xyz')") it
       else if (USE_COMPONENT == 2) then
@@ -756,6 +781,7 @@
         write(11,*) 'attribute "ref" string "positions"'
         write(11,*) 'object 3 class array type float rank 0 items ',nglob,' data follows'
       else
+        ! AVS UCD formant
         if (UNIQUE_FILE) then
           ! step number for AVS multistep file
           if (iframe > 1) then
@@ -772,8 +798,8 @@
           write(11,*) '1 0'
         endif
         ! dummy text for labels
-        write(11,*) '1 1'
-        write(11,*) 'a, b'
+        write(11,*) '1 1'  ! num data components, size of each component (dummy)
+        write(11,*) 'a, b' ! component name, units name
       endif
 
       ! output data values
