@@ -35,8 +35,6 @@
 !! \param nglob Number of mesh points
 !! \param idoubling Array of information on every mesh point
 !! \param ibool Array of information on every mesh point
-!! \param iregion_code The region the absorbing condition is written for. Check
-!!                     constant.h files to see what these regions are.
 !! \param xstore Array with the x coordinates of the mesh points
 !! \param ystore Array with the y coordinates of the mesh points
 !! \param zstore Array with the z coordinates of the mesh points
@@ -48,8 +46,7 @@
 !!                    in argument
 !! \param NSPEC2D_BOTTOM Integer to compute the size of the arrays
 !!                       in argument
-  subroutine save_arrays_solver_adios(idoubling,ibool, &
-                                      iregion_code,xstore,ystore,zstore, &
+  subroutine save_arrays_solver_adios(idoubling,ibool,xstore,ystore,zstore, &
                                       NSPEC2DMAX_XMIN_XMAX, NSPEC2DMAX_YMIN_YMAX, &
                                       NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
@@ -63,7 +60,7 @@
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, LOCAL_PATH, &
     ADIOS_FOR_SOLVER_MESHFILES, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION, &
-    nspec,nglob
+    nspec,nglob,iregion_code
 
   use regions_mesh_par2, only: &
     xixstore,xiystore,xizstore,etaxstore,etaystore,etazstore, &
@@ -94,8 +91,6 @@
   ! doubling mesh flag
   integer, dimension(nspec) :: idoubling
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: ibool
-
-  integer :: iregion_code
 
   ! arrays with the mesh in double precision
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec) :: xstore,ystore,zstore
@@ -129,6 +124,7 @@
 
   ! create a prefix for the file name such as LOCAL_PATH/regX_
   call create_name_database_adios(reg_name,iregion_code,LOCAL_PATH)
+
   write(region_name,"('reg',i1, '/')") iregion_code
   write(region_name_scalar,"('reg',i1)") iregion_code
 
@@ -831,9 +827,9 @@
   if (SAVE_MESH_FILES) then
     ! outputs model files in binary format
     if (ADIOS_FOR_SOLVER_MESHFILES) then
-      call save_arrays_solver_meshfiles_adios(iregion_code)
+      call save_arrays_solver_meshfiles_adios()
     else
-      call save_arrays_solver_meshfiles(nspec)
+      call save_arrays_solver_meshfiles()
     endif
   endif
 
@@ -846,15 +842,14 @@
 !> \brief Save the meshfiles that will be used by the solver in an ADIOS format.
 !!
 !! \param myrank The MPI rank of the current process.
-!! \param iregion_code Code of the region considered. See constant.h for details
 !! \param reg_name Output file prefix with the name of the region included
 !! \param nspec Number of GLL points per spectral elements
-  subroutine save_arrays_solver_meshfiles_adios(iregion_code)
+  subroutine save_arrays_solver_meshfiles_adios()
 
   use constants
 
   use meshfem3D_par, only: &
-    LOCAL_PATH,nspec
+    LOCAL_PATH,nspec,iregion_code
 
   use meshfem3D_models_par, only: &
     TRANSVERSE_ISOTROPY,ATTENUATION, &
@@ -869,8 +864,6 @@
   use manager_adios
 
   implicit none
-
-  integer :: nspec, iregion_code
 
   ! local parameters
   integer :: i,j,k,ispec

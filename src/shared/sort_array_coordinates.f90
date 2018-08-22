@@ -43,8 +43,9 @@
   double precision, dimension(npointot), intent(inout) :: x, y, z
   integer, dimension(npointot), intent(inout) :: ibool
 
-  integer, dimension(npointot), intent(out) :: iglob, locval, ninseg
-  logical, dimension(npointot), intent(out) :: ifseg
+  integer, dimension(npointot), intent(inout) :: iglob
+  integer, dimension(npointot), intent(inout) :: locval, ninseg
+  logical, dimension(npointot), intent(inout) :: ifseg
   integer, intent(out) :: nglob
 
   ! local parameters

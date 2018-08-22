@@ -25,8 +25,7 @@
 !
 !=====================================================================
 
-  subroutine save_arrays_solver(idoubling,ibool, &
-                                iregion_code,xstore,ystore,zstore, &
+  subroutine save_arrays_solver(idoubling,ibool,xstore,ystore,zstore, &
                                 NSPEC2D_TOP,NSPEC2D_BOTTOM)
 
   use constants
@@ -36,9 +35,9 @@
     ANISOTROPIC_INNER_CORE,ATTENUATION
 
   use meshfem3D_par, only: &
+    nspec,nglob,iregion_code, &
     NCHUNKS,ABSORBING_CONDITIONS,SAVE_MESH_FILES, &
     ROTATION,EXACT_MASS_MATRIX_FOR_ROTATION, &
-    nspec,nglob, &
     OUTPUT_FILES,xstore_glob,ystore_glob,zstore_glob
 
   use regions_mesh_par2, only: &
@@ -64,8 +63,6 @@
   ! doubling mesh flag
   integer,dimension(nspec),intent(in) :: idoubling
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
-
-  integer,intent(in) :: iregion_code
 
   ! arrays with the mesh in double precision
   double precision,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: xstore,ystore,zstore
@@ -484,10 +481,10 @@
 !
 
 
-  subroutine save_arrays_solver_MPI(iregion_code)
+  subroutine save_arrays_solver_MPI()
 
   use meshfem3D_par, only: &
-    LOCAL_PATH, &
+    iregion_code,LOCAL_PATH, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE, &
     ADIOS_FOR_MPI_ARRAYS
 
@@ -498,8 +495,6 @@
   use MPI_inner_core_par
 
   implicit none
-
-  integer,intent(in):: iregion_code
 
   select case (iregion_code)
   case (IREGION_CRUST_MANTLE)
@@ -588,25 +583,25 @@
 
   implicit none
 
-  integer :: iregion_code
+  integer,intent(in) :: iregion_code
 
-  character(len=MAX_STRING_LEN) :: LOCAL_PATH
+  character(len=MAX_STRING_LEN),intent(in) :: LOCAL_PATH
 
   ! MPI interfaces
-  integer :: num_interfaces,max_nibool_interfaces
-  integer, dimension(num_interfaces) :: my_neighbors
-  integer, dimension(num_interfaces) :: nibool_interfaces
-  integer, dimension(max_nibool_interfaces,num_interfaces) :: &
+  integer,intent(in) :: num_interfaces,max_nibool_interfaces
+  integer, dimension(num_interfaces),intent(in) :: my_neighbors
+  integer, dimension(num_interfaces),intent(in) :: nibool_interfaces
+  integer, dimension(max_nibool_interfaces,num_interfaces),intent(in) :: &
     ibool_interfaces
 
   ! inner/outer elements
-  integer :: nspec_inner,nspec_outer
-  integer :: num_phase_ispec
-  integer,dimension(num_phase_ispec,2) :: phase_ispec_inner
+  integer,intent(in) :: nspec_inner,nspec_outer
+  integer,intent(in) :: num_phase_ispec
+  integer,dimension(num_phase_ispec,2),intent(in) :: phase_ispec_inner
 
   ! mesh coloring
-  integer :: num_colors_outer,num_colors_inner
-  integer, dimension(num_colors_outer + num_colors_inner) :: &
+  integer,intent(in) :: num_colors_outer,num_colors_inner
+  integer, dimension(num_colors_outer + num_colors_inner),intent(in) :: &
     num_elem_colors
 
   ! local parameters

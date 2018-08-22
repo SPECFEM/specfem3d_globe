@@ -2009,14 +2009,14 @@ contains
          buffered   = 'YES', &
          iostat = E_IO)
     ! writing header of file
-    write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)' < ?xml version="1.0"? > '
-    write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)' < VTKFile type="'//trim(topology)//'" version="0.1" byte_order="BigEndian" > '
+    write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)'<?xml version="1.0"?>'
+    write(unit=Unit_VTK,fmt='(A)',                iostat=E_IO)'<VTKFile type="'//trim(topology)//'" version="0.1" byte_order="BigEndian">'
     indent = 2
     select case(trim(topology))
     case('RectilinearGrid','StructuredGrid')
-      write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < '//trim(topology)//' WholeExtent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+      write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<'//trim(topology)//' WholeExtent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     case('UnstructuredGrid')
-      write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < '//trim(topology)//' > '
+      write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<'//trim(topology)//'>'
     endselect
     indent = indent + 2
   case('BINARY')
@@ -2031,14 +2031,14 @@ contains
          buffered   = 'YES', &
          iostat     = E_IO)
     ! writing header of file
-    write(unit=Unit_VTK,                     iostat=E_IO)' < ?xml version="1.0"? > '//end_rec
-    write(unit=Unit_VTK,                     iostat=E_IO)' < VTKFile type="'//trim(topology)//'" version="0.1" byte_order="BigEndian" > '//end_rec
+    write(unit=Unit_VTK,                     iostat=E_IO)'<?xml version="1.0"?>'//end_rec
+    write(unit=Unit_VTK,                     iostat=E_IO)'<VTKFile type="'//trim(topology)//'" version="0.1" byte_order="BigEndian">'//end_rec
     indent = 2
     select case(trim(topology))
     case('RectilinearGrid','StructuredGrid')
-      write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < '//trim(topology)//' WholeExtent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+      write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<'//trim(topology)//' WholeExtent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     case('UnstructuredGrid')
-      write(s_buffer,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < '//trim(topology)//' > '
+      write(s_buffer,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<'//trim(topology)//'>'
     endselect
     write(unit=Unit_VTK,                     iostat=E_IO)trim(s_buffer)//end_rec
     indent = indent + 2
@@ -2294,30 +2294,30 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < Points > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<Points>'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" NumberOfComponents="3" Name="Point" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" NumberOfComponents="3" Name="Point" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FR8P//')',    iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /Points > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</Points>'
   case(f_out_binary)
-    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     indent = indent + 2
     write(unit=Unit_VTK,                   iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < Points > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<Points>'//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NN*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R8',3*NN
     write(unit=Unit_VTK_Append,            iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /Points > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</Points>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2346,30 +2346,30 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < Points > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<Points>'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" NumberOfComponents="3" Name="Point" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" NumberOfComponents="3" Name="Point" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FR4P//')',    iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /Points > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</Points>'
   case(f_out_binary)
-    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     indent = indent + 2
     write(unit=Unit_VTK,                   iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < Points > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<Points>'//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NN*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R4',3*NN
     write(unit=Unit_VTK_Append,            iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /Points > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</Points>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2397,50 +2397,50 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < Coordinates > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<Coordinates>'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="X" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="X" format="ascii">'
     write(unit=Unit_VTK,fmt=FR8P,               iostat=E_IO)(X(n1),n1=nx1,nx2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="Y" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="Y" format="ascii">'
     write(unit=Unit_VTK,fmt=FR8P,               iostat=E_IO)(Y(n1),n1=ny1,ny2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="Z" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="Z" format="ascii">'
     write(unit=Unit_VTK,fmt=FR8P,               iostat=E_IO)(Z(n1),n1=nz1,nz2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /Coordinates > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</Coordinates>'
   case(f_out_binary)
-    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     indent = indent + 2
     write(unit=Unit_VTK,                   iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < Coordinates > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<Coordinates>'//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="X" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="X" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = (nx2-nx1+1)*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R8',nx2-nx1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(X(n1),n1=nx1,nx2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="Y" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="Y" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = (ny2-ny1+1)*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R8',ny2-ny1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(Y(n1),n1=ny1,ny2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="Z" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="Z" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = (nz2-nz1+1)*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R8',nz2-nz1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(Z(n1),n1=nz1,nz2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /Coordinates > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</Coordinates>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2468,50 +2468,50 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+    write(unit=Unit_VTK,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < Coordinates > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<Coordinates>'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="X" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="X" format="ascii">'
     write(unit=Unit_VTK,fmt=FR4P,               iostat=E_IO)(X(n1),n1=nx1,nx2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="Y" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="Y" format="ascii">'
     write(unit=Unit_VTK,fmt=FR4P,               iostat=E_IO)(Y(n1),n1=ny1,ny2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="Z" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="Z" format="ascii">'
     write(unit=Unit_VTK,fmt=FR4P,               iostat=E_IO)(Z(n1),n1=nz1,nz2)
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</DataArray>'
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//' < /Coordinates > '
+    write(unit=Unit_VTK,fmt='(A)',              iostat=E_IO)repeat(' ',indent)//'</Coordinates>'
   case(f_out_binary)
-    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'" > '
+    write(s_buffer,fmt='(A,6'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece Extent="',nx1,nx2,ny1,ny2,nz1,nz2,'">'
     indent = indent + 2
     write(unit=Unit_VTK,                   iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < Coordinates > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<Coordinates>'//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="X" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="X" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = (nx2-nx1+1)*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R4',nx2-nx1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(X(n1),n1=nx1,nx2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="Y" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="Y" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = (ny2-ny1+1)*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R4',ny2-ny1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(Y(n1),n1=ny1,ny2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     write(s_buffer,fmt='(I8)',             iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="Z" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="Z" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = (nz2-nz1+1)*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,            iostat=E_IO)N_Byte,'R4',nz2-nz1+1
     write(unit=Unit_VTK_Append,            iostat=E_IO)(Z(n1),n1=nz1,nz2)
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//' < /Coordinates > '//end_rec
+    write(unit=Unit_VTK,                   iostat=E_IO)repeat(' ',indent)//'</Coordinates>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2538,30 +2538,30 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'" > '
+    write(unit=Unit_VTK,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'">'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < Points > '
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'<Points>'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" NumberOfComponents="3" Name="Point" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" NumberOfComponents="3" Name="Point" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FR8P//')',                iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < /Points > '
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'</Points>'
   case(f_out_binary)
-    write(s_buffer,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'" > '
+    write(s_buffer,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'">'
     indent = indent + 2
     write(unit=Unit_VTK,                               iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < Points > '//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'<Points>'//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',                         iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NN*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,                        iostat=E_IO)N_Byte,'R8',3*NN
     write(unit=Unit_VTK_Append,                        iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < /Points > '//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'</Points>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2588,30 +2588,30 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'" > '
+    write(unit=Unit_VTK,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'">'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < Points > '
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'<Points>'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" NumberOfComponents="3" Name="Point" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" NumberOfComponents="3" Name="Point" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FR4P//')',                iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//' < /Points > '
+    write(unit=Unit_VTK,fmt='(A)',                          iostat=E_IO)repeat(' ',indent)//'</Points>'
   case(f_out_binary)
-    write(s_buffer,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//' < Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'" > '
+    write(s_buffer,fmt='(A,'//FI4P//',A,'//FI4P//',A)',iostat=E_IO)repeat(' ',indent)//'<Piece NumberOfPoints="',NN,'" NumberOfCells="',NC,'">'
     indent = indent + 2
     write(unit=Unit_VTK,                               iostat=E_IO)trim(s_buffer)//end_rec
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < Points > '//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'<Points>'//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)',                         iostat=E_IO)ioffset
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" NumberOfComponents="3" Name="Point" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NN*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,                        iostat=E_IO)N_Byte,'R4',3*NN
     write(unit=Unit_VTK_Append,                        iostat=E_IO)(X(n1),Y(n1),Z(n1),n1=1,NN)
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//' < /Points > '//end_rec
+    write(unit=Unit_VTK,                               iostat=E_IO)repeat(' ',indent)//'</Points>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2632,9 +2632,9 @@ contains
   indent = indent - 2
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /Piece > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</Piece>'
   case(f_out_binary)
-    write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < /Piece > '//end_rec
+    write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'</Piece>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2762,45 +2762,45 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < Cells > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<Cells>'
     indent = indent + 2
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="connectivity" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="connectivity" format="ascii">'
     write(unit=Unit_VTK,fmt=FI4P, iostat=E_IO)(connect(n1),n1=1,size(connect))
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="offsets" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="offsets" format="ascii">'
     write(unit=Unit_VTK,fmt=FI4P, iostat=E_IO)(offset(n1),n1=1,NC)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="types" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="types" format="ascii">'
     write(unit=Unit_VTK,fmt=FI1P, iostat=E_IO)(cell_type(n1),n1=1,NC)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)', iostat=E_IO)repeat(' ',indent)//' < /Cells > '
+    write(unit=Unit_VTK,fmt='(A)', iostat=E_IO)repeat(' ',indent)//'</Cells>'
   case(f_out_binary)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < Cells > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<Cells>'//end_rec
     indent = indent + 2
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="connectivity" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="connectivity" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = size(connect)*sizeof(Tipo_I4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I4',size(connect)
     write(unit=Unit_VTK_Append,iostat=E_IO)(connect(n1),n1=1,size(connect))
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="offsets" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="offsets" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = NC*sizeof(Tipo_I4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I4',NC
     write(unit=Unit_VTK_Append,iostat=E_IO)(offset(n1),n1=1,NC)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="types" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="types" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = NC*sizeof(Tipo_I1)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I1',NC
     write(unit=Unit_VTK_Append,iostat=E_IO)(cell_type(n1),n1=1,NC)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
     indent = indent - 2
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /Cells > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</Cells>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -2862,20 +2862,20 @@ contains
     case('CELL')
       select case(trim(Upper_Case(var_block_action)))
       case('OPEN')
-        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < CellData > '
+        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<CellData>'
         indent = indent + 2
       case('CLOSE')
         indent = indent - 2
-        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /CellData > '
+        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</CellData>'
       endselect
     case('NODE')
       select case(trim(Upper_Case(var_block_action)))
       case('OPEN')
-        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < PointData > '
+        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<PointData>'
         indent = indent + 2
       case('CLOSE')
         indent = indent - 2
-        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /PointData > '
+        write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</PointData>'
       endselect
     endselect
   case(f_out_binary)
@@ -2883,20 +2883,20 @@ contains
     case('CELL')
       select case(trim(Upper_Case(var_block_action)))
       case('OPEN')
-        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < CellData > '//end_rec
+        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'<CellData>'//end_rec
         indent = indent + 2
       case('CLOSE')
         indent = indent - 2
-        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < /CellData > '//end_rec
+        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'</CellData>'//end_rec
       endselect
     case('NODE')
       select case(trim(Upper_Case(var_block_action)))
       case('OPEN')
-        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < PointData > '//end_rec
+        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'<PointData>'//end_rec
         indent = indent + 2
       case('CLOSE')
         indent = indent - 2
-        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < /PointData > '//end_rec
+        write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'</PointData>'//end_rec
       endselect
     endselect
   endselect
@@ -3038,17 +3038,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
     write(unit=Unit_VTK,fmt=FR8P, iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'R8',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3073,17 +3073,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
     write(unit=Unit_VTK,fmt=FR4P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'R4',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3108,17 +3108,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
     write(unit=Unit_VTK,fmt=FI8P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_I8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I8',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3143,17 +3143,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
     write(unit=Unit_VTK,fmt=FI4P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_I4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I4',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3178,17 +3178,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
     write(unit=Unit_VTK,fmt=FI2P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_I2)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I2',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3213,17 +3213,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="1" format="ascii">'
     write(unit=Unit_VTK,fmt=FI1P, iostat=E_IO)var
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="1" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = NC_NN*sizeof(Tipo_I1)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I1',NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(var(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3250,17 +3250,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FR8P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float64" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_R8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'R8',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3287,17 +3287,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FR4P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Float32" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_R4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'R4',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3324,17 +3324,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FI8P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int64" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_I8)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I8',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3361,17 +3361,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FI4P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int32" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_I4)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I4',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3398,17 +3398,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FI2P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int16" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_I2)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I2',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3435,17 +3435,17 @@ contains
   !--------------------------------------------------------------------------------------------------------------------------------
   select case(f_out)
   case(f_out_ascii)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii" > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="3" format="ascii">'
     write(unit=Unit_VTK,fmt='(3'//FI1P//')',iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//' < /DataArray > '
+    write(unit=Unit_VTK,fmt='(A)',          iostat=E_IO)repeat(' ',indent)//'</DataArray>'
   case(f_out_binary)
     write(s_buffer,fmt='(I8)', iostat=E_IO)ioffset
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'" > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<DataArray type="Int8" Name="'//trim(varname)//'" NumberOfComponents="3" format="appended" offset="',trim(s_buffer),'">'//end_rec
     N_Byte  = 3*NC_NN*sizeof(Tipo_I1)
     ioffset = ioffset + sizeof(Tipo_I4) + N_Byte
     write(unit=Unit_VTK_Append,iostat=E_IO)N_Byte,'I1',3*NC_NN
     write(unit=Unit_VTK_Append,iostat=E_IO)(varX(n1),varY(n1),varZ(n1),n1=1,NC_NN)
-    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /DataArray > '//end_rec
+    write(unit=Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</DataArray>'//end_rec
   endselect
   return
   !--------------------------------------------------------------------------------------------------------------------------------
@@ -3485,12 +3485,12 @@ contains
   select case(f_out)
   case(f_out_ascii)
     indent = indent - 2
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//' < /'//trim(topology)//' > '
-    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)' < /VTKFile > '
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)repeat(' ',indent)//'</'//trim(topology)//'>'
+    write(unit=Unit_VTK,fmt='(A)',iostat=E_IO)'</VTKFile>'
   case(f_out_binary)
     indent = indent - 2
-    write(unit  =Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < /'//trim(topology)//' > '//end_rec
-    write(unit  =Unit_VTK,       iostat=E_IO)repeat(' ',indent)//' < AppendedData encoding="raw" > '//end_rec
+    write(unit  =Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'</'//trim(topology)//'>'//end_rec
+    write(unit  =Unit_VTK,       iostat=E_IO)repeat(' ',indent)//'<AppendedData encoding="raw">'//end_rec
     write(unit  =Unit_VTK,       iostat=E_IO)'_'
     endfile(unit=Unit_VTK_Append,iostat=E_IO)
     rewind(unit =Unit_VTK_Append,iostat=E_IO)
@@ -3531,8 +3531,8 @@ contains
     enddo
     100 continue
     write(unit=Unit_VTK,iostat=E_IO)end_rec
-    write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//' < /AppendedData > '//end_rec
-    write(unit=Unit_VTK,iostat=E_IO)' < /VTKFile > '//end_rec
+    write(unit=Unit_VTK,iostat=E_IO)repeat(' ',indent)//'</AppendedData>'//end_rec
+    write(unit=Unit_VTK,iostat=E_IO)'</VTKFile>'//end_rec
     ! closing AppendData file
     close(unit=Unit_VTK_Append,iostat=E_IO)
   endselect

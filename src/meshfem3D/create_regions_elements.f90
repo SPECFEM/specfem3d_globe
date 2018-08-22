@@ -25,7 +25,7 @@
 !
 !=====================================================================
 
-  subroutine create_regions_elements(iregion_code,ipass, &
+  subroutine create_regions_elements(ipass, &
                                      NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                                      offset_proc_xi,offset_proc_eta)
 
@@ -34,7 +34,8 @@
   use constants, only: CUSTOM_REAL,MAX_STRING_LEN
 
   use meshfem3D_par, only: &
-    nspec,idoubling,is_on_a_slice_edge, &
+    nspec,iregion_code, &
+    idoubling,is_on_a_slice_edge, &
     xstore,ystore,zstore, &
     IMAIN,myrank, &
     IREGION_CRUST_MANTLE,IREGION_OUTER_CORE,IREGION_INNER_CORE,IFLAG_IN_FICTITIOUS_CUBE, &
@@ -75,7 +76,6 @@
 
   implicit none
 
-  integer,intent(in) :: iregion_code
   integer,intent(in) :: ipass
 
   integer,intent(in) :: NEX_PER_PROC_XI,NEX_PER_PROC_ETA

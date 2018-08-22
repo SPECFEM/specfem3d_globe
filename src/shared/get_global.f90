@@ -41,8 +41,8 @@
 
   double precision, dimension(npointot), intent(inout) :: xp,yp,zp
 
-  integer, dimension(npointot), intent(out) :: iglob,locval
-  logical, dimension(npointot), intent(out) :: ifseg
+  integer, dimension(npointot), intent(inout) :: iglob,locval
+  logical, dimension(npointot), intent(inout) :: ifseg
   integer, intent(out) :: nglob_new
 
   ! local variables
@@ -52,9 +52,11 @@
   ! dynamically allocate arrays
   allocate(ninseg(npointot),stat=ier)
   if (ier /= 0) stop 'Error while allocating ninseg'
+  ninseg(:) = 0
 
   allocate(idummy(npointot),stat=ier)
   if (ier /= 0) stop 'Error while allocating idummy'
+  idummy(:) = 0
 
   call sort_array_coordinates(npointot,xp,yp,zp,idummy,iglob,locval,ifseg,nglob_new,ninseg)
 

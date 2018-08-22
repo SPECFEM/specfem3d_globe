@@ -34,6 +34,7 @@
   ! local parameters
   integer :: ipass
   integer :: ier
+  integer :: offset_proc_xi,offset_proc_eta
 
   ! user output
   if (myrank == 0) then
@@ -71,6 +72,9 @@
   ichunk = ichunk_slice(myrank)
   iproc_xi = iproc_xi_slice(myrank)
   iproc_eta = iproc_eta_slice(myrank)
+
+  offset_proc_xi = mod(iproc_xi_slice(myrank),2)
+  offset_proc_eta = mod(iproc_eta_slice(myrank),2)
 
   ! volume of the final mesh, and Earth mass computed in the final mesh
   ! and gravity integrals
@@ -126,20 +130,25 @@
              zstore(NGLLX,NGLLY,NGLLZ,nspec), &
              stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating memory for arrays')
+    idoubling(:) = 0
+    ibool(:,:,:,:) = 0
+    xstore(:,:,:,:) = 0.d0
+    ystore(:,:,:,:) = 0.d0
+    zstore(:,:,:,:) = 0.d0
 
     ! this for non blocking MPI
     allocate(is_on_a_slice_edge(nspec),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating is_on_a_slice_edge array')
-
+    is_on_a_slice_edge(:) = .false.
 
     ! create all the regions of the mesh
     ! perform two passes in this part to be able to save memory
     do ipass = 1,2
-      call create_regions_mesh(iregion_code,npointot, &
+      call create_regions_mesh(npointot, &
                                NEX_PER_PROC_XI,NEX_PER_PROC_ETA, &
                                NSPEC2DMAX_XMIN_XMAX(iregion_code),NSPEC2DMAX_YMIN_YMAX(iregion_code), &
                                NSPEC2D_BOTTOM(iregion_code),NSPEC2D_TOP(iregion_code), &
-                               mod(iproc_xi_slice(myrank),2),mod(iproc_eta_slice(myrank),2), &
+                               offset_proc_xi,offset_proc_eta, &
                                ipass)
 
       ! If we're in the request stage of CEM, exit.

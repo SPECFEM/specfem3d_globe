@@ -44,7 +44,6 @@ void FC_FUNC_(get_absorb_adios,GET_ABSORB_ADIOS)(int* iregion,
 void FC_FUNC_(read_gll_model_adios,READ_GLL_MODEL_ADIOS)(void) {}
 
 void FC_FUNC_(save_arrays_solver_adios,SAVE_ARRAYS_SOLVER_ADIOS)(int* idoubling, int* ibool,
-                                                                 int* iregion_code,
                                                                  realw* xstore, realw* ystore, realw* zstore,
                                                                  int* NSPEC2DMAX_XMIN_XMAX, int* NSPEC2DMAX_YMIN_YMAX,
                                                                  int* NSPEC2D_TOP, int* NSPEC2D_BOTTOM) {}
