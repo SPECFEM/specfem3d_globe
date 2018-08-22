@@ -125,8 +125,10 @@
   implicit none
 
   ! local parameters
-  integer :: irec,irec_local,i,j,k,iglob
+  real(kind=CUSTOM_REAL),dimension(NDIM) :: stf_array
+  integer :: irec,irec_local,num_loc,i,j,k,iglob,ispec
   integer :: ivec_index
+  integer,dimension(nadj_rec_local) :: rec_local
   logical :: ibool_read_adj_arrays
 
   ! note: we check if nadj_rec_local > 0 before calling this routine, but better be safe...
@@ -143,88 +145,141 @@
   ! adds adjoint sources
   if (.not. GPU_MODE) then
     ! on CPU
-    irec_local = 0
-    do irec = 1,nrec
 
+! work-around a cray compiler issue with the loop below.
+! the issue occurs when running debugging flag -g without optimization specifier (-O0). the compiler still tries to
+! optimize the routines, but runs into the following internal error:
+!
+!*** Optimization assertion failure:
+!   'Analyze_aliases'
+!
+!   Error detected     ::  File 'pdgcs/v_df.c', line 8282
+!   Initiated from     ::  Line 1562 (v_main.c)
+!   Optimizer built    ::  2017-12-05 (production)
+!
+!   File               ::  src/specfem3D/compute_add_sources.f90
+!   function           ::  compute_add_sources_adjoint
+!   at or near line    ::  229
+!
+!problematic part:
+!    irec_local = 0
+!    do irec = 1,nrec
+!
+!      ! adds source (only if this proc carries the source)
+!      if (myrank == islice_selected_rec(irec)) then
+!        irec_local = irec_local + 1
+!        do ..
+!         ..
+!        enddo
+!      endif
+!    enddo <-- this is the line mentioned in the error
+!
+! the work-around gets first all local receivers and then loops only over
+! these local ones (without the need of the if-case)
+!
+! note: cray compilation with -g but without -O0 still fails for routines in compute_stacey_*.f90
+!       cray version 8.6.x needs -O0 when debugging flags are used. as a work around, the following
+!       debugging flags work for crayftn: -g -G0 -O0 -Rb -eF -rm -eC -eD -ec -en -eI -ea
+
+    ! fill local receivers first
+    irec_local = 0
+    rec_local(:) = 0
+    do irec = 1,nrec
       ! adds source (only if this proc carries the source)
       if (myrank == islice_selected_rec(irec)) then
         irec_local = irec_local + 1
-
-        ! adjoint source array index
-        ivec_index = iadj_vec(it)
-
-        ! adds source contributions
-        do k = 1,NGLLZ
-          do j = 1,NGLLY
-            do i = 1,NGLLX
-              iglob = ibool_crust_mantle(i,j,k,ispec_selected_rec(irec))
-
-              ! adds adjoint source acting at this time step (it):
-              !
-              ! note: we use index iadj_vec(it) which is the corresponding time step
-              !          for the adjoint source acting at this time step (it)
-              !
-              ! see routine: setup_sources_receivers_adjindx() how this adjoint index array is set up
-              !
-              !           e.g. total length NSTEP = 3000, chunk length NTSTEP_BETWEEN_READ_ADJSRC= 1000
-              !           then for it = 1,..1000, first block has iadjsrc(1,1) with start = 2001 and end = 3000;
-              !           corresponding iadj_vec(it) goes from
-              !           iadj_vec(1) = 1000, iadj_vec(2) = 999 to iadj_vec(1000) = 1,
-              !           that is, originally the idea was
-              !           source_adjoint(.. iadj_vec(1) ) corresponds to adjoint source trace at time index 3000
-              !           source_adjoint(.. iadj_vec(2) ) corresponds to adjoint source trace at time index 2999
-              !           ..
-              !           source_adjoint(.. iadj_vec(1000) ) corresponds to adjoint source trace at time index 2001
-              !           then a new block will be read, etc, and it is going down till to adjoint source trace at time index 1
-              !
-              ! now comes the tricky part:
-              !           adjoint source traces are based on the seismograms from the forward run;
-              !           such seismograms have a time step index 1 which corresponds to time -t0
-              !           then time step index 2 which corresponds to -t0 + DT, and
-              !           the last time step in the file at time step NSTEP corresponds to time -t0 + (NSTEP-1)*DT
-              !           (see how we add the sources to the simulation in compute_add_sources() and
-              !             how we write/save the seismograms and wavefields at the end of the time loop).
-              !
-              !           then you use that seismogram and take e.g. the velocity of it for a traveltime adjoint source
-              !
-              !           now we read it in again, and remember the last time step in
-              !           the file at NSTEP corresponds to -t0 + (NSTEP-1)*DT
-              !
-              !           the same time step is saved for the forward wavefields to reconstruct them;
-              !           however, the Newmark time scheme acts at the very beginning of this time loop
-              !           such that we have the backward/reconstructed wavefield updated by
-              !           a single time step into the direction -DT and b_displ(it=1) would  corresponds to -t0 + (NSTEP-1)*DT - DT
-              !           after the Newmark (predictor) time step update.
-              !           however, we will read the backward/reconstructed wavefield at the end of the first time loop,
-              !           such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT (which is the one saved in the files).
-              !
-              !           for the kernel calculations, we want:
-              !             adjoint wavefield at time t, starting from 0 to T
-              !             and forward wavefield at time T-t, starting from T down to 0
-              !           let's say time 0 corresponds to -t0 = -t0 + (it - 1)*DT at it=1
-              !             and time T corresponds to -t0 + (NSTEP-1)*DT  at it = NSTEP
-              !
-              !           as seen before, the time for the forward wavefield b_displ(it=1) would then
-              !           correspond to time -t0 + (NSTEP-1)*DT - DT, which is T - DT.
-              !           the corresponding time for the adjoint wavefield thus would be 0 + DT
-              !           and the adjoint source index would be iadj_vec(it+1)
-              !           however, iadj_vec(it+1) which would go from 999 down to 0. 0 is out of bounds.
-              !           we thus would have to read in the adjoint source trace beginning from 2999 down to 0.
-              !           index 0 is not defined in the adjoint source trace, and would be set to zero.
-              !
-              !           however, since this complicates things, we read the backward/reconstructed
-              !           wavefield at the end of the first time loop, such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT.
-              !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
-              !           have a zero contribution to adjoint kernels.
-              accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                            + source_adjoint(:,irec_local,ivec_index)*(hxir_store(irec_local,i)*&
-                                             hetar_store(irec_local,j)*hgammar_store(irec_local,k))
-            enddo
-          enddo
-        enddo
+        rec_local(irec_local) = irec
       endif
-
     enddo
+    num_loc = irec_local
+
+    ! checks
+    if (irec_local /= nadj_rec_local) then
+      print *,'Invalid number of local adjoint receivers in compute_add_sources_adjoint() routine:',irec_local,nadj_rec_local
+    endif
+
+    do irec_local = 1,num_loc
+
+      ! adds source (only if this proc carries the source)
+      irec = rec_local(irec_local)
+
+      ispec = ispec_selected_rec(irec)
+
+      ! adjoint source array index
+      ivec_index = iadj_vec(it)
+
+      stf_array(:) = source_adjoint(:,irec_local,ivec_index)
+
+      ! adds source contributions
+      do k = 1,NGLLZ
+        do j = 1,NGLLY
+          do i = 1,NGLLX
+            iglob = ibool_crust_mantle(i,j,k,ispec)
+
+            ! adds adjoint source acting at this time step (it):
+            !
+            ! note: we use index iadj_vec(it) which is the corresponding time step
+            !          for the adjoint source acting at this time step (it)
+            !
+            ! see routine: setup_sources_receivers_adjindx() how this adjoint index array is set up
+            !
+            !           e.g. total length NSTEP = 3000, chunk length NTSTEP_BETWEEN_READ_ADJSRC= 1000
+            !           then for it = 1,..1000, first block has iadjsrc(1,1) with start = 2001 and end = 3000;
+            !           corresponding iadj_vec(it) goes from
+            !           iadj_vec(1) = 1000, iadj_vec(2) = 999 to iadj_vec(1000) = 1,
+            !           that is, originally the idea was
+            !           source_adjoint(.. iadj_vec(1) ) corresponds to adjoint source trace at time index 3000
+            !           source_adjoint(.. iadj_vec(2) ) corresponds to adjoint source trace at time index 2999
+            !           ..
+            !           source_adjoint(.. iadj_vec(1000) ) corresponds to adjoint source trace at time index 2001
+            !           then a new block will be read, etc, and it is going down till to adjoint source trace at time index 1
+            !
+            ! now comes the tricky part:
+            !           adjoint source traces are based on the seismograms from the forward run;
+            !           such seismograms have a time step index 1 which corresponds to time -t0
+            !           then time step index 2 which corresponds to -t0 + DT, and
+            !           the last time step in the file at time step NSTEP corresponds to time -t0 + (NSTEP-1)*DT
+            !           (see how we add the sources to the simulation in compute_add_sources() and
+            !             how we write/save the seismograms and wavefields at the end of the time loop).
+            !
+            !           then you use that seismogram and take e.g. the velocity of it for a traveltime adjoint source
+            !
+            !           now we read it in again, and remember the last time step in
+            !           the file at NSTEP corresponds to -t0 + (NSTEP-1)*DT
+            !
+            !           the same time step is saved for the forward wavefields to reconstruct them;
+            !           however, the Newmark time scheme acts at the very beginning of this time loop
+            !           such that we have the backward/reconstructed wavefield updated by
+            !           a single time step into the direction -DT and b_displ(it=1) would  corresponds to -t0 + (NSTEP-1)*DT - DT
+            !           after the Newmark (predictor) time step update.
+            !           however, we will read the backward/reconstructed wavefield at the end of the first time loop,
+            !           such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT (which is the one saved in the files).
+            !
+            !           for the kernel calculations, we want:
+            !             adjoint wavefield at time t, starting from 0 to T
+            !             and forward wavefield at time T-t, starting from T down to 0
+            !           let's say time 0 corresponds to -t0 = -t0 + (it - 1)*DT at it=1
+            !             and time T corresponds to -t0 + (NSTEP-1)*DT  at it = NSTEP
+            !
+            !           as seen before, the time for the forward wavefield b_displ(it=1) would then
+            !           correspond to time -t0 + (NSTEP-1)*DT - DT, which is T - DT.
+            !           the corresponding time for the adjoint wavefield thus would be 0 + DT
+            !           and the adjoint source index would be iadj_vec(it+1)
+            !           however, iadj_vec(it+1) which would go from 999 down to 0. 0 is out of bounds.
+            !           we thus would have to read in the adjoint source trace beginning from 2999 down to 0.
+            !           index 0 is not defined in the adjoint source trace, and would be set to zero.
+            !
+            !           however, since this complicates things, we read the backward/reconstructed
+            !           wavefield at the end of the first time loop, such that b_displ(it=1) corresponds to -t0 + (NSTEP-1)*DT.
+            !           assuming that until that end the backward/reconstructed wavefield and adjoint fields
+            !           have a zero contribution to adjoint kernels.
+            accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
+                          + stf_array(:) * (hxir_store(irec_local,i) * hetar_store(irec_local,j) * hgammar_store(irec_local,k))
+          enddo ! NGLLX
+        enddo ! NGLLY
+      enddo ! NGLLZ
+
+    enddo ! irec_local
 
   else
 
@@ -371,7 +426,7 @@
               iglob = ibool_crust_mantle(i,j,k,ispec)
 
               b_accel_crust_mantle(:,iglob) = b_accel_crust_mantle(:,iglob) &
-                + sourcearrays(:,i,j,k,isource)*stf_used
+                + sourcearrays(:,i,j,k,isource) * stf_used
 
             enddo
           enddo
