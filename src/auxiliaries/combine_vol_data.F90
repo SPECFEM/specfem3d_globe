@@ -43,18 +43,20 @@ program combine_vol_data
   include "OUTPUT_FILES/values_from_mesher.h"
 
   integer,parameter :: MAX_NUM_NODES = 2000
-  integer :: ir, irs, ire, ires
-  character(len=MAX_STRING_LEN) :: arg(7), filename, outdir
-  character(len=MAX_STRING_LEN) :: data_file
-  integer, dimension(MAX_NUM_NODES) :: node_list, nspec, nglob
+  integer, dimension(MAX_NUM_NODES) :: node_list, nspec_list, nglob_list
   integer, dimension(MAX_NUM_NODES) :: npoint, nelement
+
+  ! dp: or use NPROCTOT_VAL to avoid setting max_num_nodes?
+  !integer, dimension(NPROCTOT_VAL) :: node_list, nspec_list, nglob_list
+
+  integer :: ir, irs, ire, ires
   integer :: iproc, num_node, i,j,k,ispec, it, di, dj, dk
   integer :: np, ne
   integer :: ier
 
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: data
   real(kind=CUSTOM_REAL),dimension(NGLOB_CRUST_MANTLE) :: xstore, ystore, zstore
-  integer :: ibool(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE)
+  integer,dimension(NGLLX,NGLLY,NGLLZ,NSPEC_CRUST_MANTLE) :: ibool
 
   integer :: num_ibool(NGLOB_CRUST_MANTLE)
   logical :: mask_ibool(NGLOB_CRUST_MANTLE)
@@ -89,6 +91,9 @@ program combine_vol_data
 
   integer, dimension(NSPEC_INNER_CORE) :: idoubling_inner_core ! to get rid of fictitious elements in central cube
 
+  character(len=MAX_STRING_LEN) :: arg(7)
+  character(len=MAX_STRING_LEN) :: filename, outdir
+  character(len=MAX_STRING_LEN) :: data_file, var_name
 
 #ifdef USE_VTK_INSTEAD_OF_MESH
   ! VTK
@@ -106,13 +111,13 @@ program combine_vol_data
 
 #ifdef ADIOS_INPUT
   integer :: sizeprocs
-  character(len=MAX_STRING_LEN) :: var_name, value_file_name, mesh_file_name
+  character(len=MAX_STRING_LEN) :: value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
 #else
   integer :: iregion,njunk
   character(len=MAX_STRING_LEN) :: prname_topo, prname_file, dimension_file
   character(len=MAX_STRING_LEN) :: in_file_dir, in_topo_dir
-  character(len=MAX_STRING_LEN) :: sline
+  character(len=MAX_STRING_LEN) :: sline,slice_list_name
 #endif
 
   ! starts here---------------------------------------------------------------
@@ -152,6 +157,15 @@ program combine_vol_data
       print *, ' '
       print *, ' Usage: xcombine_vol_data slice_list filename input_topo_dir input_file_dir '
       print *, '        output_dir high/low-resolution [region]'
+      print *, ' with'
+      print *, '   slice_list          - text file containing slice numbers to combine (or use name "all" for all slices)'
+      print *, '   filename            - root file name of files proc***_filename.bin ("vp", "vsh", "alpha_kernel",..)'
+      print *, '   input_topo_dir      - directory containing mesh topology (e.g. DATABASES_MPI/)'
+      print *, '   input_file_dir      - directory containing data files to combine (e.g. also in directory DATABASES_MPI/)'
+      print *, '   output_dir          - directory for output files (e.g. OUTPUT_FILES/)'
+      print *, '   high/low-resolution - 0 == low, 1 == high-resolution'
+      print *, '   region              - (optional) region number, only use 1 == crust/mantle, 2 == outer core, 3 == inner core'
+      print *, ' '
       print *, ' ***** Notice: now allow different input dir for topo and kernel files ******** '
       print *, '   expect to have the topology and filename.bin(NGLLX,NGLLY,NGLLZ,nspec) '
       print *, '   already collected to input_topo_dir and input_file_dir'
@@ -179,21 +193,39 @@ program combine_vol_data
 
   ! get slices id
   num_node = 0
-  open(unit = IIN, file = trim(arg(1)), status = 'old',iostat = ier)
-  if (ier /= 0) then
-    print *,'no file: ',trim(arg(1))
-    stop 'Error opening slices file'
-  endif
+  slice_list_name = trim(arg(1))
+  if (trim(slice_list_name) == 'all') then
+    ! uses all slices to combine
+    do i = 0,NPROCTOT_VAL-1
+      num_node = num_node + 1
+      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
+      node_list(num_node) = i
+    enddo
+  else
+    ! reads in slice file with specified slices
+    open(unit = IIN, file = trim(slice_list_name), status = 'old',iostat = ier)
+    if (ier /= 0) then
+      print *,'no file: ',trim(slice_list_name)
+      stop 'Error opening slices file'
+    endif
 
-  do while (1 == 1)
-    read(IIN,'(a)',iostat=ier) sline
-    if (ier /= 0) exit
-    read(sline,*,iostat=ier) njunk
-    if (ier /= 0) exit
-    num_node = num_node + 1
-    node_list(num_node) = njunk
-  enddo
-  close(IIN)
+    ! file format uses one slice number per line
+    ! example content of 'slices.txt':
+    !  0
+    !  11
+    !  14
+    ! end of file to combine 3 slices (from process numbers 0, 11 and 14)
+    do while (1 == 1)
+      read(IIN,'(a)',iostat=ier) sline
+      if (ier /= 0) exit
+      read(sline,*,iostat=ier) njunk
+      if (ier /= 0) exit
+      num_node = num_node + 1
+      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
+      node_list(num_node) = njunk
+    enddo
+    close(IIN)
+  endif
 
   ! output info
   print *, 'slice list: '
@@ -201,7 +233,7 @@ program combine_vol_data
   print *, ' '
 
   ! file to collect
-  filename = arg(2)
+  var_name = arg(2)
 
   ! input and output dir
   in_topo_dir= arg(3)
@@ -217,9 +249,9 @@ program combine_vol_data
   enddo
   call read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
                        var_name, value_file_name, mesh_file_name, &
-                       outdir, ires, irs, ire)
-  filename = var_name
+                       outdir, ires, irs, ire, NPROCTOT_VAL)
 #endif
+  filename = var_name
 
   ! output info
   print *, 'regions: start =', irs, ' to end =', ire
@@ -294,36 +326,36 @@ program combine_vol_data
        print *,'file:',trim(dimension_file)
        stop 'Error opening file'
       endif
-      read(IIN) nspec(it)
-      read(IIN) nglob(it)
+      read(IIN) nspec_list(it)
+      read(IIN) nglob_list(it)
       close(IIN)
 #else
       ! adios reading
-      call read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob(it), nspec(it))
+      call read_scalars_adios_mesh(mesh_handle, iproc, ir, nglob_list(it), nspec_list(it))
 #endif
 
       ! check
-      if (nspec(it) > NSPEC_CRUST_MANTLE ) stop 'Error file nspec too big, please check compilation'
-      if (nglob(it) > NGLOB_CRUST_MANTLE ) stop 'Error file nglob too big, please check compilation'
+      if (nspec_list(it) > NSPEC_CRUST_MANTLE ) stop 'Error file nspec too big, please check compilation'
+      if (nglob_list(it) > NGLOB_CRUST_MANTLE ) stop 'Error file nglob too big, please check compilation'
 
       ! theoretical number of points and elements
-      npoint(it) = nglob(it)
+      npoint(it) = nglob_list(it)
       if (ires == 0) then
         ! low resolution
-        nelement(it) = nspec(it)
+        nelement(it) = nspec_list(it)
       else if (ires == 1) then
         ! high resolution
-        nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1)
+        nelement(it) = nspec_list(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1)
       else if (ires == 2) then
         ! mid resolution
-        nelement(it) = nspec(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1) / 8
+        nelement(it) = nspec_list(it) * (NGLLX-1) * (NGLLY-1) * (NGLLZ-1) / 8
       endif
 
     enddo
 
-    print *, 'nspec(it) = ', nspec(1:num_node)
-    print *, 'nglob(it) = ', nglob(1:num_node)
-    print *, 'nelement(it) = ', nelement(1:num_node)
+    print *, 'nspec_list(it) = ', nspec_list(1:num_node)
+    print *, 'nglob_list(it) = ', nglob_list(1:num_node)
+    print *, 'nelement(it)   = ', nelement(1:num_node)
 
 #ifdef USE_VTK_INSTEAD_OF_MESH
     ! VTK
@@ -374,7 +406,7 @@ program combine_vol_data
         print *,'Error opening file: ',trim(data_file)
         stop 'Error opening file'
       endif
-      read(IIN,iostat=ier) data(:,:,:,1:nspec(it))
+      read(IIN,iostat=ier) data(:,:,:,1:nspec_list(it))
       if (ier /= 0) then
         print *,'Error reading file: ',trim(data_file)
         stop 'Error reading data'
@@ -382,12 +414,12 @@ program combine_vol_data
       close(IIN)
 #else
       ! adios reading
-      call read_values_adios(value_handle, var_name, iproc, ir, nspec(it), data)
+      call read_values_adios(value_handle, var_name, iproc, ir, nspec_list(it), data)
       data_file = trim(var_name)
 #endif
       ! output info
       print *,trim(data_file)
-      print *,'  min/max value: ',minval(data(:,:,:,1:nspec(it))),maxval(data(:,:,:,1:nspec(it)))
+      print *,'  min/max value: ',minval(data(:,:,:,1:nspec_list(it))),maxval(data(:,:,:,1:nspec_list(it)))
       print *
 
       ! topology file
@@ -405,17 +437,17 @@ program combine_vol_data
       ystore(:) = 0.0
       zstore(:) = 0.0
       ibool(:,:,:,:) = -1
-      read(IIN) nspec(it)
-      read(IIN) nglob(it)
-      read(IIN) xstore(1:nglob(it))
-      read(IIN) ystore(1:nglob(it))
-      read(IIN) zstore(1:nglob(it))
-      read(IIN) ibool(:,:,:,1:nspec(it))
-      if (ir == 3) read(IIN) idoubling_inner_core(1:nspec(it)) ! flag that can indicate fictitious elements
+      read(IIN) nspec_list(it)
+      read(IIN) nglob_list(it)
+      read(IIN) xstore(1:nglob_list(it))
+      read(IIN) ystore(1:nglob_list(it))
+      read(IIN) zstore(1:nglob_list(it))
+      read(IIN) ibool(:,:,:,1:nspec_list(it))
+      if (ir == 3) read(IIN) idoubling_inner_core(1:nspec_list(it)) ! flag that can indicate fictitious elements
       close(IIN)
 #else
       ! adios reading
-      call read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob(it), nspec(it), xstore, ystore, zstore, ibool)
+      call read_coordinates_adios_mesh(mesh_handle, iproc, ir, nglob_list(it), nspec_list(it), xstore, ystore, zstore, ibool)
 #endif
 
       !average data on global points
@@ -431,7 +463,7 @@ program combine_vol_data
         data_avg(:) = 0.0
         ibool_count(:) = 0
 
-        do ispec = 1,nspec(it)
+        do ispec = 1,nspec_list(it)
           ! checks if element counts
           if (ir == 3) then
             ! inner core
@@ -453,7 +485,7 @@ program combine_vol_data
           enddo
         enddo
         ! averages data
-        do iglob = 1,nglob(it)
+        do iglob = 1,nglob_List(it)
           if (ibool_count(iglob) > 0) then
             data_avg(iglob) = data_avg(iglob)/ibool_count(iglob)
           endif
@@ -465,7 +497,7 @@ program combine_vol_data
       numpoin = 0
 
       ! write point file
-      do ispec = 1,nspec(it)
+      do ispec = 1,nspec_list(it)
         ! checks if element counts
         if (ir == 3) then
           ! inner core
@@ -533,7 +565,7 @@ program combine_vol_data
 
       ! write elements file
       numpoin = 0
-      do ispec = 1, nspec(it)
+      do ispec = 1, nspec_list(it)
         ! checks if element counts
         if (ir == 3) then
           ! inner core
@@ -633,48 +665,13 @@ program combine_vol_data
 
 #ifdef USE_VTK_INSTEAD_OF_MESH
     ! VTK
-    ! opens unstructured grid file
+    ! outputs unstructured grid file
     write(mesh_file,'(a,i1,a)') trim(outdir)//'/' // 'reg_',ir,'_'//trim(filename)//'.vtk'
-    open(IOUT_VTK,file=mesh_file(1:len_trim(mesh_file)),status='unknown',iostat=ier)
-    if (ier /= 0 ) stop 'Error opening VTK output file'
-    write(IOUT_VTK,'(a)') '# vtk DataFile Version 3.1'
-    write(IOUT_VTK,'(a)') 'material model VTK file'
-    write(IOUT_VTK,'(a)') 'ASCII'
-    write(IOUT_VTK,'(a)') 'DATASET UNSTRUCTURED_GRID'
 
-    ! points
-    write(IOUT_VTK, '(a,i16,a)') 'POINTS ', np, ' float'
-    do i = 1,np
-      write(IOUT_VTK,'(3e18.6)') total_dat_xyz(1,i),total_dat_xyz(2,i),total_dat_xyz(3,i)
-    enddo
-    write(IOUT_VTK,*) ''
-
-    ! cells
-    ! note: indices for VTK start at 0
-    write(IOUT_VTK,'(a,i12,i12)') "CELLS ",ne,ne*9
-    do i = 1,ne
-      write(IOUT_VTK,'(9i12)') 8,total_dat_con(1,i),total_dat_con(2,i),total_dat_con(3,i),total_dat_con(4,i), &
-                            total_dat_con(5,i),total_dat_con(6,i),total_dat_con(7,i),total_dat_con(8,i)
-    enddo
-    write(IOUT_VTK,*) ''
-    ! VTK
-    ! type: hexahedrons
-    write(IOUT_VTK,'(a,i12)') "CELL_TYPES ",ne
-    write(IOUT_VTK,'(6i12)') (12,it = 1,ne)
-    write(IOUT_VTK,*) ''
-
-    write(IOUT_VTK,'(a,i12)') "POINT_DATA ",np
-    write(IOUT_VTK,'(a)') "SCALARS "//trim(filename)//" float"
-    write(IOUT_VTK,'(a)') "LOOKUP_TABLE default"
-    do i = 1,np
-        write(IOUT_VTK,*) total_dat(i)
-    enddo
-    write(IOUT_VTK,*) ''
-    close(IOUT_VTK)
+    call write_VTK_movie_data(ne,np,total_dat_xyz,total_dat_con,total_dat,mesh_file,var_name)
 
     ! free arrays for this region
     deallocate(total_dat,total_dat_xyz,total_dat_con)
-
 
     print *,'written: ',trim(mesh_file)
     print *
@@ -687,7 +684,7 @@ program combine_vol_data
     call write_integer_fd(pfd,np)
     call close_file_fd(pfd)
 
-    command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '//trim(em_mesh_file)//' > '//trim(mesh_file)
+    command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '//trim(em_mesh_file)//'>'//trim(mesh_file)
     print *, ' '
     print *, 'cat mesh files: '
     print *, trim(command_name)
@@ -701,9 +698,7 @@ program combine_vol_data
   call finalize_mpi()
 #endif
 
-
   print *, 'Done writing mesh files'
   print *, ' '
-
 
 end program combine_vol_data
