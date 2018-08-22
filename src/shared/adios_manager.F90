@@ -105,7 +105,14 @@ contains
   use constants, only: ADIOS_BUFFER_SIZE_IN_MB
 
 #ifdef ADIOS_INPUT
-  use adios_write_mod, only: adios_init_noxml,adios_set_max_buffer_size
+  use adios_write_mod, only: adios_init_noxml
+#ifdef ADIOS_VERSION_OLD
+  ! ADIOS versions <= 1.9
+  ! adios_set_max_buffer_size not defined yet
+#else
+  ! ADIOS versions >= 1.10
+  use adios_write_mod, only: adios_set_max_buffer_size
+#endif
 #endif
 
   implicit none
