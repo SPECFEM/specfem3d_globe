@@ -63,9 +63,9 @@ end subroutine print_usage_adios
 
 subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
                            var_name, value_file_name, mesh_file_name, &
-                           outdir, ires, irs, ire)
+                           outdir, ires, irs, ire, NPROCTOT)
 
-  use constants, only: IIN
+  use constants, only: IIN,MAX_STRING_LEN
 
   implicit none
   ! Arguments
@@ -75,27 +75,40 @@ subroutine read_args_adios(arg, MAX_NUM_NODES, node_list, num_node, &
   integer, intent(out) :: num_node, ires, irs, ire
   character(len=*), intent(out) :: var_name, value_file_name, mesh_file_name, &
                                    outdir
+  integer, intent(in) :: NPROCTOT
+
   ! Variables
-  character(len=256) :: sline
-  integer :: ios, njunk, iregion
+  character(len=MAX_STRING_LEN) :: sline,slice_list_name
+  integer :: i, ios, njunk, iregion
 
   if ((command_argument_count() == 6) .or. (command_argument_count() == 7)) then
     num_node = 0
-    open(unit = IIN, file = trim(arg(1)), status = 'unknown',iostat = ios)
-    if (ios /= 0) then
-      print *,'Error opening slice file ',trim(arg(1))
-      stop
+    slice_list_name = arg(1)
+    if (trim(slice_list_name) == 'all') then
+      ! combines all slices
+      do i = 0,NPROCTOT-1
+        num_node = num_node + 1
+        if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
+        node_list(num_node) = i
+      enddo
+    else
+      ! reads in slices file
+      open(unit = IIN, file = trim(slice_list_name), status = 'unknown',iostat = ios)
+      if (ios /= 0) then
+        print *,'Error opening slice file ',trim(slice_list_name)
+        stop
+      endif
+      do while ( 1 == 1)
+        read(IIN,'(a)',iostat=ios) sline
+        if (ios /= 0) exit
+        read(sline,*,iostat=ios) njunk
+        if (ios /= 0) exit
+        num_node = num_node + 1
+        if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
+        node_list(num_node) = njunk
+      enddo
+      close(IIN)
     endif
-    do while ( 1 == 1)
-      read(IIN,'(a)',iostat=ios) sline
-      if (ios /= 0) exit
-      read(sline,*,iostat=ios) njunk
-      if (ios /= 0) exit
-      num_node = num_node + 1
-      if (num_node > MAX_NUM_NODES ) stop 'Error number of slices exceeds MAX_NUM_NODES...'
-      node_list(num_node) = njunk
-    enddo
-    close(IIN)
     var_name = arg(2)
     value_file_name = arg(3)
     mesh_file_name = arg(4)
