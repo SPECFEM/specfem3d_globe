@@ -706,6 +706,8 @@ COND_OCL_FALSE
 COND_OCL_TRUE
 COND_CUDA_PLUS_FALSE
 COND_CUDA_PLUS_TRUE
+COND_CUDA9_FALSE
+COND_CUDA9_TRUE
 COND_CUDA8_FALSE
 COND_CUDA8_TRUE
 COND_CUDA7_FALSE
@@ -2845,8 +2847,16 @@ else
   COND_CUDA8_FALSE=
 fi
 
+ if test x"$want_cuda" = xcuda9; then
+  COND_CUDA9_TRUE=
+  COND_CUDA9_FALSE='#'
+else
+  COND_CUDA9_TRUE='#'
+  COND_CUDA9_FALSE=
+fi
+
 # cuda linking for cuda 5x and 6x
- if test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6 -o "$want_cuda" = cuda7 -o "$want_cuda" = cuda8; then
+ if test "$want_cuda" = cuda5 -o "$want_cuda" = cuda6 -o "$want_cuda" = cuda7 -o "$want_cuda" = cuda8 -o "$want_cuda" = cuda9; then
   COND_CUDA_PLUS_TRUE=
   COND_CUDA_PLUS_FALSE='#'
 else
@@ -8144,6 +8154,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA8_TRUE}" && test -z "${COND_CUDA8_FALSE}"; then
   as_fn_error $? "conditional \"COND_CUDA8\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_CUDA9_TRUE}" && test -z "${COND_CUDA9_FALSE}"; then
+  as_fn_error $? "conditional \"COND_CUDA9\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_CUDA_PLUS_TRUE}" && test -z "${COND_CUDA_PLUS_FALSE}"; then
