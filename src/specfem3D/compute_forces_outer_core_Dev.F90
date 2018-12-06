@@ -149,6 +149,7 @@
     MYBETA_LDDRK(:) = BETA_LDDRK(:)
   endif
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deriv, &
 !$OMP num_elements, phase_ispec_inner, iphase, ibool, displfluid, &

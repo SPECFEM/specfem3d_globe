@@ -217,11 +217,13 @@
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_cm,iglob_oc,iglob_ic,ispec_selected
 
   ! for surface elements exactly on the CMB
-!$OMP PARALLEL DEFAULT(SHARED) &
+
+! openmp solver
+!$OMP PARALLEL if (nspec2D_top > 500) &
+!$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,ispec_selected,i,j,k,k_corresp,iglob_cm,iglob_ic,iglob_oc, &
 !$OMP displ_x,displ_y,displ_z,nx,ny,nz,displ_n,weight) &
 !$OMP FIRSTPRIVATE(wgllwgll_xy)
-
 !$OMP DO
   do ispec2D = 1,nspec2D_top !NSPEC2D_TOP(IREGION_OUTER_CORE)
 
@@ -351,7 +353,10 @@
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_cm,iglob_oc,ispec_selected
 
   ! for surface elements exactly on the CMB
-!$OMP PARALLEL DEFAULT(SHARED) &
+
+! openmp solver
+!$OMP PARALLEL if (nspec2D_top > 500) &
+!$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,ispec_selected,i,j,k,k_corresp,iglob_cm,iglob_oc, &
 !$OMP displ_x,displ_y,displ_z,nx,ny,nz,displ_n,weight) &
 !$OMP FIRSTPRIVATE(wgllwgll_xy)
@@ -440,7 +445,10 @@
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob_oc,iglob_ic,ispec_selected
 
   ! for surface elements exactly on the ICB
-!$OMP PARALLEL DEFAULT(SHARED) &
+
+! openmp solver
+!$OMP PARALLEL if (nspec_bottom > 500) &
+!$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,ispec_selected,i,j,k,k_corresp,iglob_ic,iglob_oc, &
 !$OMP displ_x,displ_y,displ_z,nx,ny,nz,displ_n,weight) &
 !$OMP FIRSTPRIVATE(wgllwgll_xy)
@@ -714,11 +722,13 @@
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob,iglob_mantle,iglob_inner_core,ispec_selected
 
   ! for surface elements exactly on the CMB
-!$OMP PARALLEL DEFAULT(SHARED) &
+
+! openmp solver
+!$OMP PARALLEL if (nspec_bottom > 500) &
+!$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,ispec_selected,i,j,k,k_corresp,iglob,iglob_mantle,iglob_inner_core, &
 !$OMP nx,ny,nz,pressure,weight) &
 !$OMP FIRSTPRIVATE(wgllwgll_xy)
-
 !$OMP DO
   do ispec2D = 1,nspec_bottom ! NSPEC2D_BOTTOM(IREGION_CRUST_MANTLE)
 
@@ -860,7 +870,10 @@
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob,iglob_mantle,ispec_selected
 
   ! for surface elements exactly on the CMB
-!$OMP PARALLEL DEFAULT(SHARED) &
+
+! openmp solver
+!$OMP PARALLEL if (nspec_bottom > 500) &
+!$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,ispec_selected,i,j,k,k_corresp,iglob,iglob_mantle, &
 !$OMP nx,ny,nz,pressure,weight) &
 !$OMP FIRSTPRIVATE(wgllwgll_xy)
@@ -957,7 +970,10 @@
   integer :: i,j,k,k_corresp,ispec,ispec2D,iglob,iglob_inner_core,ispec_selected
 
   ! for surface elements exactly on the ICB
-!$OMP PARALLEL DEFAULT(SHARED) &
+
+! openmp solver
+!$OMP PARALLEL if (nspec2D_top > 500) &
+!$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,ispec_selected,i,j,k,k_corresp,iglob,iglob_inner_core, &
 !$OMP nx,ny,nz,pressure,weight) &
 !$OMP FIRSTPRIVATE(wgllwgll_xy)
@@ -1003,7 +1019,6 @@
         accel_inner_core(2,iglob_inner_core) = accel_inner_core(2,iglob_inner_core) - weight*ny*pressure
 !$OMP ATOMIC
         accel_inner_core(3,iglob_inner_core) = accel_inner_core(3,iglob_inner_core) - weight*nz*pressure
-
       enddo
     enddo
   enddo
@@ -1052,6 +1067,8 @@
   integer :: ipoin,iglob
 
   ! for surface elements exactly at the top of the crust (ocean bottom)
+
+! openmp solver
 !$OMP PARALLEL if (npoin_oceans > 1000) &
 !$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ipoin,iglob, &
@@ -1080,8 +1097,11 @@
     additional_term_y = (rmass - rmassy_crust_mantle(iglob)) * force_normal_comp
     additional_term_z = (rmass - rmassz_crust_mantle(iglob)) * force_normal_comp
 
+!$OMP ATOMIC
     accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + additional_term_x * nx
+!$OMP ATOMIC
     accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + additional_term_y * ny
+!$OMP ATOMIC
     accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + additional_term_z * nz
   enddo
 !$OMP ENDDO

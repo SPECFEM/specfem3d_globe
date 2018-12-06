@@ -54,6 +54,7 @@
 
   if (.not. GPU_MODE) then
     ! on CPU
+! openmp solver
 !$OMP PARALLEL if (NSOURCES > 100) &
 !$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(isource,timeval,iglob,stf_used,stf,ispec,i,j,k)
@@ -79,10 +80,12 @@
           do j = 1,NGLLY
             do i = 1,NGLLX
               iglob = ibool_crust_mantle(i,j,k,ispec)
-
-              accel_crust_mantle(:,iglob) = accel_crust_mantle(:,iglob) &
-                + sourcearrays(:,i,j,k,isource)*stf_used
-
+!$OMP ATOMIC
+              accel_crust_mantle(1,iglob) = accel_crust_mantle(1,iglob) + sourcearrays(1,i,j,k,isource)*stf_used
+!$OMP ATOMIC
+              accel_crust_mantle(2,iglob) = accel_crust_mantle(2,iglob) + sourcearrays(2,i,j,k,isource)*stf_used
+!$OMP ATOMIC
+              accel_crust_mantle(3,iglob) = accel_crust_mantle(3,iglob) + sourcearrays(3,i,j,k,isource)*stf_used
             enddo
           enddo
         enddo

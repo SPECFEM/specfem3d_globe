@@ -492,6 +492,7 @@
   if (ier /= 0) stop 'Error allocating rstore for crust/mantle'
 
 #ifdef DANIEL_TEST_OMP_RSTORE
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED(xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle,rstore_crust_mantle) &
 !$OMP PRIVATE(i,rval,thetaval,phival)
@@ -513,6 +514,7 @@
   if (ier /= 0) stop 'Error allocating rstore for outer core'
 
 #ifdef DANIEL_TEST_OMP_RSTORE
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED(xstore_outer_core,ystore_outer_core,zstore_outer_core,rstore_outer_core) &
 !$OMP PRIVATE(i,rval,thetaval,phival)
@@ -534,6 +536,7 @@
   if (ier /= 0) stop 'Error allocating rstore for inner core'
 
 #ifdef DANIEL_TEST_OMP_RSTORE
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED(xstore_inner_core,ystore_inner_core,zstore_inner_core,rstore_inner_core) &
 !$OMP PRIVATE(i,rval,thetaval,phival)

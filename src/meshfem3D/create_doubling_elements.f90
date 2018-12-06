@@ -217,7 +217,7 @@
 
   ! loop on all the elements in the 2 x 2 blocks
 
-!daniel: still debugging...
+! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ix_elem,iy_elem,ispec_superbrick,ignod, &
 !$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &

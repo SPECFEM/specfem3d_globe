@@ -99,6 +99,8 @@
 !----------------------------------------------------------------
 
 ! first create the main standard mass matrix with no corrections
+
+! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i,j,k,iglob,weight, &
 !$OMP xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl)
@@ -135,6 +137,7 @@
 
           case (IREGION_CRUST_MANTLE, IREGION_INNER_CORE)
             ! distinguish between single and double precision for reals
+!$OMP ATOMIC
             rmassz(iglob) = rmassz(iglob) + &
                    real(dble(rhostore(i,j,k,ispec)) * dble(jacobianl) * weight, kind=CUSTOM_REAL)
 
@@ -144,6 +147,7 @@
             ! no anisotropy in the fluid, use kappav
 
             ! distinguish between single and double precision for reals
+!$OMP ATOMIC
             rmassz(iglob) = rmassz(iglob) + &
                    real(dble(jacobianl) * weight * dble(rhostore(i,j,k,ispec)) / dble(kappavstore(i,j,k,ispec)), &
                         kind=CUSTOM_REAL)
@@ -279,6 +283,7 @@
 
   case (IREGION_CRUST_MANTLE, IREGION_INNER_CORE)
 
+! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i,j,k,iglob,weight, &
 !$OMP xixl,xiyl,xizl,etaxl,etayl,etazl,gammaxl,gammayl,gammazl,jacobianl)
@@ -311,13 +316,17 @@
                             + xizl*(etaxl*gammayl-etayl*gammaxl))
 
             ! distinguish between single and double precision for reals
+!$OMP ATOMIC
             rmassx(iglob) = rmassx(iglob) &
                 - two_omega_earth_dt * 0.5_CUSTOM_REAL*real(dble(jacobianl) * weight, kind=CUSTOM_REAL)
+!$OMP ATOMIC
             rmassy(iglob) = rmassy(iglob) &
                 + two_omega_earth_dt * 0.5_CUSTOM_REAL*real(dble(jacobianl) * weight, kind=CUSTOM_REAL)
 
+!$OMP ATOMIC
             b_rmassx(iglob) = b_rmassx(iglob) &
                 - b_two_omega_earth_dt * 0.5_CUSTOM_REAL*real(dble(jacobianl) * weight, kind=CUSTOM_REAL)
+!$OMP ATOMIC
             b_rmassy(iglob) = b_rmassy(iglob) &
                 + b_two_omega_earth_dt * 0.5_CUSTOM_REAL*real(dble(jacobianl) * weight, kind=CUSTOM_REAL)
           enddo
@@ -778,6 +787,8 @@
 
   ! add contribution of the oceans
   ! for surface elements exactly at the top of the crust (ocean bottom)
+
+! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,i,j,iglob,x,y,z,r,theta,phi,lat,lon,elevation,height_oceans,weight)
 !$OMP DO
@@ -807,7 +818,7 @@
 
           if (.not. USE_OLD_VERSION_5_1_5_FORMAT) then
             ! adds small margins
-  !! DK DK: added a test to only do this if we are on the axis
+            !! DK DK: added a test to only do this if we are on the axis
             if (abs(theta) > 89.99d0) then
               theta = theta + 0.0000001d0
               phi = phi + 0.0000001d0
@@ -857,6 +868,7 @@
         iglob = ibool(i,j,k,ispec)
 
         ! distinguish between single and double precision for reals
+!$OMP ATOMIC
         rmass_ocean_load(iglob) = rmass_ocean_load(iglob) + real(weight, kind=CUSTOM_REAL)
 
       enddo

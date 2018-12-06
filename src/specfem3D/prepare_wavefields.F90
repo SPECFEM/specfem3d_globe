@@ -481,7 +481,10 @@
       ! inner elements
       num_elements = nspec_inner_crust_mantle
     endif
-!$OMP PARALLEL DEFAULT(NONE) &
+
+! openmp solver
+!$OMP PARALLEL if (num_elements > 500) &
+!$OMP DEFAULT(NONE) &
 !$OMP SHARED(init_value,num_elements,iphase,phase_ispec_inner_crust_mantle,ibool_crust_mantle, &
 !$OMP displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle) &
 !$OMP PRIVATE( ispec,ispec_p, &
@@ -525,7 +528,9 @@
       ! inner elements
       num_elements = nspec_inner_outer_core
     endif
-!$OMP PARALLEL DEFAULT(NONE) &
+! openmp solver
+!$OMP PARALLEL if (num_elements > 500) &
+!$OMP DEFAULT(NONE) &
 !$OMP SHARED(init_value,num_elements,iphase,phase_ispec_inner_outer_core,ibool_outer_core, &
 !$OMP displ_outer_core,veloc_outer_core,accel_outer_core) &
 !$OMP PRIVATE( ispec,ispec_p, &
@@ -569,7 +574,9 @@
       ! inner elements
       num_elements = nspec_inner_inner_core
     endif
-!$OMP PARALLEL DEFAULT(NONE) &
+
+!$OMP PARALLEL if (num_elements > 500) &
+!$OMP DEFAULT(NONE) &
 !$OMP SHARED(init_value,num_elements,iphase,phase_ispec_inner_inner_core,ibool_inner_core, &
 !$OMP displ_inner_core,veloc_inner_core,accel_inner_core) &
 !$OMP PRIVATE( ispec,ispec_p, &
@@ -609,6 +616,7 @@
   ! the initialization follows the Newmark update routines, where the looping is directly over global points
 
   if (FORCE_VECTORIZATION_VAL) then
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED(init_value, &
 !$OMP displ_crust_mantle,veloc_crust_mantle,accel_crust_mantle, &

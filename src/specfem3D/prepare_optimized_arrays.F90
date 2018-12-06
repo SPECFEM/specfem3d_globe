@@ -647,7 +647,9 @@
     ! Newmark time scheme update
     if (FORCE_VECTORIZATION_VAL) then
 
-!$OMP PARALLEL DEFAULT(NONE) &
+! openmp solver
+!$OMP PARALLEL &
+!$OMP DEFAULT(NONE) &
 !$OMP SHARED(displ,veloc,accel,deltat) &
 !$OMP PRIVATE(i)
 !$OMP DO
@@ -667,7 +669,9 @@
 
     else
 
-!$OMP PARALLEL DEFAULT(NONE) &
+! openmp solver
+!$OMP PARALLEL &
+!$OMP DEFAULT(NONE) &
 !$OMP SHARED(displ,veloc,accel,deltat) &
 !$OMP PRIVATE(i)
 !$OMP DO

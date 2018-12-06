@@ -79,7 +79,11 @@
   ! crust & mantle
   if (.not. GPU_MODE) then
     ! on CPU
-!$OMP PARALLEL DEFAULT(SHARED) &
+
+! openmp solver
+!$OMP PARALLEL if (nspec2D_xmin_crust_mantle > 100 .and. nspec2D_xmax_crust_mantle > 100 &
+!$OMP        .and. nspec2D_ymin_crust_mantle > 100 .and. nspec2D_ymax_crust_mantle > 100) &
+!$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,i,j,k,iglob,vx,vy,vz,vn,nx,ny,nz,tx,ty,tz,weight) &
 !$OMP FIRSTPRIVATE(wgllwgll_xz,wgllwgll_yz)
 

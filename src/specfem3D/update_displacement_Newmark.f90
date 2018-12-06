@@ -173,11 +173,11 @@
   ! Newmark time scheme update
   if (FORCE_VECTORIZATION_VAL) then
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( NGLOB, displ, veloc, accel, &
 !$OMP deltat, deltatsqover2, deltatover2 ) &
 !$OMP PRIVATE(i)
-
 !$OMP DO
     do i = 1,NGLOB * NDIM
       displ(i,1) = displ(i,1) + deltat * veloc(i,1) + deltatsqover2 * accel(i,1)
@@ -230,6 +230,7 @@
   ! Newmark time scheme update
   if (FORCE_VECTORIZATION_VAL) then
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deltat, deltatsqover2, deltatover2, &
 !$OMP NGLOB_CM, displ_cm, veloc_cm, accel_cm, &
@@ -271,6 +272,7 @@
 
   else
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deltat, deltatsqover2, deltatover2, &
 !$OMP NGLOB_CM, displ_cm, veloc_cm, accel_cm, &
@@ -329,6 +331,7 @@
   ! local parameters
   integer :: i
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( NGLOB, displ, veloc, accel, &
 !$OMP deltat, deltatsqover2, deltatover2 ) &
@@ -427,6 +430,8 @@
   ! Newmark time scheme
 
   ! update velocity
+
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED(deltatover2, NGLOB, veloc_outer_core, accel_outer_core) &
 !$OMP PRIVATE(i)
@@ -537,6 +542,7 @@
 
   if (FORCE_VECTORIZATION_VAL) then
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deltatover2, &
 !$OMP NGLOB_CM, veloc_crust_mantle, accel_crust_mantle, &
@@ -560,6 +566,7 @@
 
   else
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(NONE) &
 !$OMP SHARED( deltatover2, &
 !$OMP NGLOB_CM, veloc_crust_mantle, accel_crust_mantle, &

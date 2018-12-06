@@ -90,7 +90,10 @@
   ! (rmassx holds inverted mass matrix; numerically multiplication is faster than division)
   if (ROTATION_VAL) then
     ! adds contributions due to rotation
-!$OMP PARALLEL DEFAULT(NONE) &
+
+! openmp solver
+!$OMP PARALLEL &
+!$OMP DEFAULT(NONE) &
 !$OMP SHARED(two_omega_earth, &
 !$OMP NGLOB_CM, accel_cm, veloc_cm, rmassx_cm, rmassy_cm, rmassz_cm, &
 !$OMP NGLOB_IC, accel_ic, veloc_ic, rmassx_ic, rmassy_ic, rmassz_ic) &
@@ -117,7 +120,8 @@
 
   else
     ! no rotation
-!$OMP PARALLEL DEFAULT(NONE) &
+!$OMP PARALLEL &
+!$OMP DEFAULT(NONE) &
 !$OMP SHARED(two_omega_earth, &
 !$OMP NGLOB_CM, accel_cm, veloc_cm, rmassx_cm, rmassy_cm, rmassz_cm, &
 !$OMP NGLOB_IC, accel_ic, veloc_ic, rmassx_ic, rmassy_ic, rmassz_ic) &
@@ -178,7 +182,9 @@
   ! note: mass matrices for fluid region has no Stacey or rotation correction
   !       it is also the same for forward and backward/reconstructed wavefields
 
-!$OMP PARALLEL DEFAULT(NONE) &
+! openmp solver
+!$OMP PARALLEL &
+!$OMP DEFAULT(NONE) &
 !$OMP SHARED(NGLOB, accel, rmass) &
 !$OMP PRIVATE(i)
 !$OMP DO

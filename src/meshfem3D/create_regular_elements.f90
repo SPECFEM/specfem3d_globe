@@ -208,7 +208,7 @@
 
   ! loop on all the elements
 
-!daniel: still debugging...
+! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ielem,ix_elem,iy_elem,iz_elem,ix,iy,iz,ignod, &
 !$OMP offset_x,offset_y,offset_z,xelm,yelm,zelm, &

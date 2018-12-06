@@ -105,6 +105,7 @@
     ! on CPU
     ! crust_mantle
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec, &
 #ifdef FORCE_VECTORIZATION
@@ -503,6 +504,7 @@
 
     ! acoustic kernels
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec, &
 #ifdef FORCE_VECTORIZATION
@@ -715,6 +717,7 @@
     ! on CPU
     ! inner_core
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec, &
 #ifdef FORCE_VECTORIZATION
@@ -887,6 +890,7 @@
     ! on CPU
     ! crust_mantle
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec, &
 #ifdef FORCE_VECTORIZATION

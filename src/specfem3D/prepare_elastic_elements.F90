@@ -110,6 +110,8 @@
     ! only shifting for attenuation case
     if (ATTENUATION_VAL) then
       icount = 0
+
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec, &
 #ifdef FORCE_VECTORIZATION
@@ -175,7 +177,8 @@
       endif
       ! check
       if (icount > NSPECMAX_ANISO_MANTLE) stop 'Error invalid number of aniso elements in prepare_timerun_aniso'
-    endif
+    endif ! ATTENUATION_VAL
+
   else
     ! iso/tiso mantle elements
     if (myrank == 0) then
@@ -186,22 +189,19 @@
     ! crust/mantle
     icount = 0
     icount_iso = 0
-!$OMP PARALLEL DEFAULT(SHARED) &
-!$OMP PRIVATE(ispec,iglob, &
-#ifdef FORCE_VECTORIZATION
-!$OMP ijk, &
-#else
-!$OMP i,j,k, &
-#endif
-!$OMP kappavl,muvl,kappahl,muhl, &
-!$OMP rhovphsq,sinphifour,cosphisq,sinphisq,costhetasq,rhovsvsq,sinthetasq, &
-!$OMP cosphifour,costhetafour,rhovpvsq,sinthetafour,rhovshsq,cosfourphi, &
-!$OMP costwotheta,cosfourtheta,sintwophisq,costheta,sinphi,sintheta,cosphi, &
-!$OMP sintwotheta,costwophi,sintwophi,costwothetasq,costwophisq,phi,theta, &
-!$OMP twoetaminone,etaminone,eta_aniso, &
-!$OMP two_eta_aniso,four_eta_aniso,six_eta_aniso, &
-!$OMP templ1,templ1_cos,templ2,templ2_cos,templ3,templ3_two,templ3_cos, &
-!$OMP one_minus_sum_beta_use,mul)
+
+! openmp solver
+!$OMP PARALLEL if (NSPEC_CRUST_MANTLE > 10) &
+!$OMP DEFAULT(PRIVATE) &
+!$OMP SHARED(ispec_is_tiso_crust_mantle, kappavstore_crust_mantle,muvstore_crust_mantle, &
+!$OMP kappahstore_crust_mantle,muhstore_crust_mantle, &
+!$OMP one_minus_sum_beta_crust_mantle,eta_anisostore_crust_mantle,ibool_crust_mantle,rstore_crust_mantle, &
+!$OMP c11store_crust_mantle,c12store_crust_mantle,c13store_crust_mantle,c14store_crust_mantle, &
+!$OMP c15store_crust_mantle,c16store_crust_mantle,c22store_crust_mantle,c23store_crust_mantle, &
+!$OMP c24store_crust_mantle,c25store_crust_mantle,c26store_crust_mantle,c33store_crust_mantle, &
+!$OMP c34store_crust_mantle,c35store_crust_mantle,c36store_crust_mantle,c44store_crust_mantle, &
+!$OMP c45store_crust_mantle,c46store_crust_mantle,c55store_crust_mantle,c56store_crust_mantle, &
+!$OMP c66store_crust_mantle)
 !$OMP DO
     do ispec = 1,NSPEC_CRUST_MANTLE
 
@@ -453,6 +453,8 @@
     ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
     ! calculation in updating the memory variables
     if (ATTENUATION_VAL) then
+
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i_SLS, &
 #ifdef FORCE_VECTORIZATION
@@ -485,7 +487,7 @@
       enddo
 !$OMP ENDDO
 !$OMP END PARALLEL
-    endif
+    endif ! ATTENUATION_VAL
   endif
 
   ! inner core
@@ -500,6 +502,8 @@
 
       ! anisotropic inner core elements
       icount = 0
+
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec, &
 #ifdef FORCE_VECTORIZATION
@@ -588,6 +592,8 @@
       endif
 
       icount_iso = 0
+
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec, &
 #ifdef FORCE_VECTORIZATION
@@ -635,6 +641,8 @@
 
     ! since we scale muv and c11,.. stores we must divide with this factor to use the relaxed moduli for the modulus defect
     ! calculation in updating the memory variables
+
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,i_SLS, &
 #ifdef FORCE_VECTORIZATION

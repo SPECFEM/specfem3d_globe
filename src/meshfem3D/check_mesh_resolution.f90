@@ -104,6 +104,7 @@
   dt_max_reg = HUGEVAL
   cmax_reg = - HUGEVAL
 
+! openmp mesher
 !$OMP PARALLEL DEFAULT(PRIVATE) &
 !$OMP SHARED(nspec,nglob,iregion_code, &
 !$OMP xstore,ystore,zstore, &

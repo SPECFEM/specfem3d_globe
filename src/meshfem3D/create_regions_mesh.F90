@@ -959,6 +959,8 @@
 
   ! we need to create a copy of the x, y and z arrays because sorting in get_global will swap
   ! these arrays and therefore destroy them
+
+! openmp mesher
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec,ieoff,ilocnum,i,j,k)
 !$OMP DO

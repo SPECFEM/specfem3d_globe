@@ -162,6 +162,7 @@
     num_elements = nspec_inner
   endif
 
+! openmp solver
 !$OMP PARALLEL DEFAULT(SHARED) &
 !$OMP SHARED( deriv, &
 !$OMP num_elements,iphase,phase_ispec_inner, &
