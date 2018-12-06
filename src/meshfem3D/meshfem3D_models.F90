@@ -618,6 +618,16 @@
 
       case (THREE_D_MODEL_SGLOBE)
         ! 3D SGLOBE-rani model (Chang)
+
+        ! normally mantle perturbations are taken from 24.4km (R_MOHO) up.
+        ! we need to add the if statement for sgloberani_iso or sgloberani_aniso to take from 50km up:
+        if (r_prem > RCMB/R_EARTH .and. r_prem < 6321000.d0/R_EARTH) then
+          r_used = r
+        else   ! if (r_prem >= 6321000.d0/R_EARTH) then
+          ! this will then "extend the mantle up to the surface" from 50km depth
+          r_used = 6321000.d0/R_EARTH
+        endif
+
         call mantle_sglobe(r_used,theta,phi,dvsv,dvsh,dvp,drho)
 
         if (TRANSVERSE_ISOTROPY) then

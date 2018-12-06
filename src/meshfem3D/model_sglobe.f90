@@ -126,19 +126,30 @@
 
   use constants
   use model_sglobe_par
-
+  use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY
   implicit none
 
   ! local parameters
   integer :: k,l,m,ier
+  character(len=MAX_STRING_LEN) :: filename
+
   character(len=*), parameter :: SGLOBEv = 'DATA/sglobe/dvsv.dat'
   character(len=*), parameter :: SGLOBEh = 'DATA/sglobe/dvsh.dat'
+  character(len=*), parameter :: SGLOBE_iso = 'DATA/sglobe/dvs_iso.dat'
   character(len=*), parameter :: P12 = 'DATA/s20rts/P12.dat'
 
   ! SGLOBE degree 35 S model from Chang at al.
   ! dvsv
-  open(unit=10,file=SGLOBEv,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) call exit_MPI(0,'error opening file SGLOBE.dat')
+  if (.not. TRANSVERSE_ISOTROPY) then
+    ! isotropic case
+    ! we can either use the voigt averaging (done in meshfem3D_models.f90) based on the vsv and vsh files
+    ! or use the provided dv_iso.dat here:
+    filename = SGLOBE_iso
+  else
+    filename = SGLOBEv
+  endif
+  open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) call exit_MPI(0,'error opening file in DATA/sglobe/')
 
   SGLOBE_V_dvsv_a(:,:,:) = 0.d0
   SGLOBE_V_dvsv_b(:,:,:) = 0.d0
@@ -150,8 +161,16 @@
   close(10)
 
   ! dvsh
-  open(unit=10,file=SGLOBEh,status='old',action='read',iostat=ier)
-  if ( ier /= 0 ) call exit_MPI(0,'error opening file SGLOBE.dat')
+  if (.not. TRANSVERSE_ISOTROPY) then
+    ! isotropic case
+    ! we can either use the voigt averaging (done in meshfem3D_models.f90) based on the vsv and vsh files
+    ! or use the provided dv_iso.dat here:
+    filename = SGLOBE_iso
+  else
+    filename = SGLOBEh
+  endif
+  open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
+  if ( ier /= 0 ) call exit_MPI(0,'error opening file in DATA/sglobe')
 
   SGLOBE_V_dvsh_a(:,:,:) = 0.d0
   SGLOBE_V_dvsh_b(:,:,:) = 0.d0
@@ -163,7 +182,8 @@
   close(10)
 
   ! P12 degree 12 P model from Ritsema
-  open(unit=10,file=P12,status='old',action='read',iostat=ier)
+  filename = P12
+  open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
   if ( ier /= 0 ) call exit_MPI(0,'error opening file P12.dat')
 
   SGLOBE_V_dvp_a(:,:,:) = 0.d0

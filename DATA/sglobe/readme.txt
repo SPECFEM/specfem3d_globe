@@ -28,4 +28,14 @@ implementation:
 
   The isotropic version takes the Voigt average for Vs and Vp from vsv & vsh and vpv & vph, respectively.
 
+  Par_file options are:
+
+  MODEL = sglobe
+    anisotropic version uses files
+    - joint_ani_21spl_wogbadwm_1.3aniso_10000_l35_eff_16995.6_mis_0.2450_sh.sph as dvsh.dat
+    - joint_ani_21spl_wogbadwm_1.3aniso_10000_l35_eff_16995.6_mis_0.2450_sv.sph as dvsv.dat
+
+  MODEL = sglobe_iso
+    isotropic version (Voigt) uses file
+    - joint_ani_21spl_wogbadwm_1.3aniso_10000_l35_effnum_16995.6_misfit_0.2450_v.sph as dvs_iso.dat
 
