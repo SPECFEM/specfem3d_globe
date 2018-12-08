@@ -27,7 +27,7 @@ mpirun -np 2 ./check_cuda_device
 #include <cuda.h>
 
 #ifdef WITH_MPI
-// #include <mpi.h>
+#include <mpi.h>
 #endif
 
 #include <sys/time.h>
