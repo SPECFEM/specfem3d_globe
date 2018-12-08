@@ -287,9 +287,7 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
         offset_nonpadded = mp->nspec_outer_outer_core * NGLL3;
       }
     } else {
-
       // poor element count, only use 1 color per inner/outer run
-
       if (*iphase == 1) {
         // outer elements
         nb_colors = 1;
@@ -321,6 +319,10 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
         nb_blocks_to_compute = num_elements;
       }
 
+      // debug
+      //printf("debug: compute_forces_outer_core_gpu - iphase %d color %d out of %d, nspec elements %d, offset %d, offset_nonpadded % d, blocks %d\n",
+      //       *iphase,icolor,nb_colors,mp->NSPEC_OUTER_CORE,offset,offset_nonpadded,nb_blocks_to_compute);
+
       INITIALIZE_OFFSET();
 
       //create cl_mem object _buffer + _ + _offset
@@ -338,6 +340,12 @@ void FC_FUNC_ (compute_forces_outer_core_gpu,
       INIT_OFFSET(d_B_array_rotation, offset_nonpadded);
       INIT_OFFSET(d_b_A_array_rotation, offset_nonpadded);
       INIT_OFFSET(d_b_B_array_rotation, offset_nonpadded);
+
+      // debug
+      //gpu_int_mem my_buffer = mp->d_ibool_outer_core;
+      //my_buffer.cuda = my_buffer.cuda + offset_nonpadded;
+      //printf("debug: d_ibool_outer_core %p offset_buffer %p my_buffer %p \n",
+      //       (void *) mp->d_ibool_outer_core.cuda, (void *) d_ibool_outer_core_offset_nonpadded.cuda, (void*) my_buffer.cuda);
 
       outer_core (nb_blocks_to_compute, mp,
                   *iphase,

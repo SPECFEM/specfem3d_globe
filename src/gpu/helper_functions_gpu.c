@@ -505,6 +505,7 @@ void gpuInitialize_buffers(Mesh *mp) {
   #define GPU_REALW_BUFFER INIT_DUMMY_BUFFER
   #define GPU_INT_BUFFER INIT_DUMMY_BUFFER
   #define GPU_DOUBLE_BUFFER INIT_DUMMY_BUFFER
+
   #include "gpu_buffer_list.c"
   #undef INIT_DUMMY_BUFFER
 #endif
@@ -515,6 +516,7 @@ void gpuInitialize_buffers(Mesh *mp) {
   #define GPU_REALW_BUFFER INIT_DUMMY_BUFFER
   #define GPU_INT_BUFFER INIT_DUMMY_BUFFER
   #define GPU_DOUBLE_BUFFER INIT_DUMMY_BUFFER
+
   #include "gpu_buffer_list.c"
   #undef INIT_DUMMY_BUFFER
 #endif
@@ -769,7 +771,7 @@ void exit_on_gpu_error (const char *kernel_name) {
 #endif
 
   if (error) {
-    fprintf(stderr,"Error after %s: %s\n", kernel_name, strerr);
+    fprintf(stderr,"GPU Error: after %s: %s\n", kernel_name, strerr);
 
     // outputs error file
     FILE *fp;
@@ -783,7 +785,7 @@ void exit_on_gpu_error (const char *kernel_name) {
     sprintf(filename,"OUTPUT_FILES/error_message_%06d.txt",myrank);
     fp = fopen (filename, "a+");
     if (fp != NULL) {
-      fprintf (fp, "Error after %s: %s\n", kernel_name, strerr);
+      fprintf (fp, "GPU Error: after %s: %s\n", kernel_name, strerr);
       fclose (fp);
     }
 

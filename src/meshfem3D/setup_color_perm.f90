@@ -79,9 +79,9 @@
       perm(:) = 0
 
       call setup_color(nspec,nglob,ibool,perm, &
-                      idomain,is_on_a_slice_edge, &
-                      num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-                      SAVE_MESH_FILES)
+                       idomain,is_on_a_slice_edge, &
+                       num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                       SAVE_MESH_FILES)
 
       ! checks
       if (minval(perm) /= 1) &
@@ -95,11 +95,11 @@
         write(IMAIN,*) '     mesh permutation:'
       endif
       call setup_permutation(nspec,nglob,ibool, &
-                            idomain,perm, &
-                            num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
-                            num_elem_colors_crust_mantle, &
-                            num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
-                            SAVE_MESH_FILES)
+                             idomain,perm, &
+                             num_colors_outer_crust_mantle,num_colors_inner_crust_mantle, &
+                             num_elem_colors_crust_mantle, &
+                             num_phase_ispec_crust_mantle,phase_ispec_inner_crust_mantle, &
+                             SAVE_MESH_FILES)
 
       deallocate(perm)
     else
@@ -131,9 +131,9 @@
       perm(:) = 0
 
       call setup_color(nspec,nglob,ibool,perm, &
-                      idomain,is_on_a_slice_edge, &
-                      num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-                      SAVE_MESH_FILES)
+                       idomain,is_on_a_slice_edge, &
+                       num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                       SAVE_MESH_FILES)
 
       ! checks
       if (minval(perm) /= 1) &
@@ -147,11 +147,11 @@
         write(IMAIN,*) '     mesh permutation:'
       endif
       call setup_permutation(nspec,nglob,ibool, &
-                            idomain,perm, &
-                            num_colors_outer_outer_core,num_colors_inner_outer_core, &
-                            num_elem_colors_outer_core, &
-                            num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
-                            SAVE_MESH_FILES)
+                             idomain,perm, &
+                             num_colors_outer_outer_core,num_colors_inner_outer_core, &
+                             num_elem_colors_outer_core, &
+                             num_phase_ispec_outer_core,phase_ispec_inner_outer_core, &
+                             SAVE_MESH_FILES)
 
       deallocate(perm)
     else
@@ -183,9 +183,9 @@
       perm(:) = 0
 
       call setup_color(nspec,nglob,ibool,perm, &
-                      idomain,is_on_a_slice_edge, &
-                      num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-                      SAVE_MESH_FILES)
+                       idomain,is_on_a_slice_edge, &
+                       num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                       SAVE_MESH_FILES)
 
       ! checks
       ! inner core contains fictitious elements not counted for
@@ -202,11 +202,11 @@
         write(IMAIN,*) '     mesh permutation:'
       endif
       call setup_permutation(nspec,nglob,ibool, &
-                            idomain,perm, &
-                            num_colors_outer_inner_core,num_colors_inner_inner_core, &
-                            num_elem_colors_inner_core, &
-                            num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
-                            SAVE_MESH_FILES)
+                             idomain,perm, &
+                             num_colors_outer_inner_core,num_colors_inner_inner_core, &
+                             num_elem_colors_inner_core, &
+                             num_phase_ispec_inner_core,phase_ispec_inner_inner_core, &
+                             SAVE_MESH_FILES)
 
       deallocate(perm)
     else
@@ -224,9 +224,9 @@
 !
 
   subroutine setup_color(nspec,nglob,ibool,perm, &
-                            idomain,is_on_a_slice_edge, &
-                            num_phase_ispec_d,phase_ispec_inner_d, &
-                            SAVE_MESH_FILES)
+                         idomain,is_on_a_slice_edge, &
+                         num_phase_ispec_d,phase_ispec_inner_d, &
+                         SAVE_MESH_FILES)
 
 ! sets up mesh coloring
 
@@ -469,8 +469,6 @@
       call exit_MPI(myrank, 'zero elements in a color of the mesh')
     endif
   enddo
-
-
 
   ! sets up domain coloring arrays
   select case (idomain)

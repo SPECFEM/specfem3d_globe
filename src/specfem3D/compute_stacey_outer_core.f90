@@ -79,8 +79,8 @@
 
 ! openmp solver
 !$OMP PARALLEL if (nspec2D_xmin_outer_core > 100 .and. nspec2D_xmax_outer_core > 100 &
-!$OMP        .and. nspec2D_ymin_outer_core > 100 .and. nspec2D_ymax_outer_core > 100 &
-!$OMP        .and. nspec2D_zmin_outer_core > 100) &
+!$OMP .and. nspec2D_ymin_outer_core > 100 .and. nspec2D_ymax_outer_core > 100 &
+!$OMP .and. nspec2D_zmin_outer_core > 100) &
 !$OMP DEFAULT(SHARED) &
 !$OMP PRIVATE(ispec2D,ispec,i,j,k,iglob,sn,weight) &
 !$OMP FIRSTPRIVATE(wgllwgll_xy,wgllwgll_xz,wgllwgll_yz)

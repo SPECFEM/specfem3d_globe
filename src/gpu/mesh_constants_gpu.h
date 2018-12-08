@@ -1129,7 +1129,7 @@ realw get_device_array_maximum_value (gpu_realw_mem d_array, int size);
   INIT_OFFSET_OCL(_buffer_, _offset_);           \
   INIT_OFFSET_CUDA(_buffer_, _offset_);
 
-#define PASS_OFFSET(_buffer_, _offset_) _buffer_ ##_##  _offset_
+#define PASS_OFFSET(_buffer_, _offset_) _buffer_##_##_offset_
 
 #ifndef RELEASE_OFFSET_OCL
 #define RELEASE_OFFSET_OCL(_buffer_, _offset_) {}
