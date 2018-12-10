@@ -375,7 +375,15 @@
       endif
     endif
 
-  else if (REFERENCE_1D_MODEL == REFERENCE_MODEL_1DREF) then
+    ! all done
+    return
+  endif
+
+  ! TISO flags distributions
+
+  ! reference model specifics
+  select case (REFERENCE_1D_MODEL)
+  case (REFERENCE_MODEL_1DREF)
     ! transverse isotropic mantle between fictitious moho to 670km depth
     ! preferred for Harvard (Kustowski's) models using STW 1D reference, i.e.
     ! THREE_D_MODEL_S362ANI
@@ -406,18 +414,13 @@
           .or. idoubling(ispec) == IFLAG_CRUST) then
         elem_is_tiso = .true.
       endif
-      ! S362wmani allows radial anisotropy throughout the mantle
-      if (THREE_D_MODEL == THREE_D_MODEL_S362WMANI) then
-        ! allows tiso down to CMB
-        if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. elem_in_mantle) elem_is_tiso = .true.
-      endif
     endif
 
-  else
+  case default
     ! default reference models
     ! for example, PREM assigns transverse isotropy between Moho and 220km
     if (USE_OLD_VERSION_5_1_5_FORMAT) then
-      ! assigns TI only to elements below (2-layer) fictitious moho down to 670
+      ! assigns TI only to elements below (2-layer) fictitious moho
       if (idoubling(ispec) == IFLAG_220_80 &
           .or. idoubling(ispec) == IFLAG_80_MOHO) then
         ! default case for PREM reference models:
@@ -427,7 +430,7 @@
         if (elem_in_mantle .eqv. .false. ) stop 'Error mantle flag confused between moho and 220'
       endif
     else if (USE_OLD_VERSION_7_0_0_FORMAT) then
-      ! assigns TI to elements in mantle elements just below actual moho down to 670
+      ! assigns TI to elements in mantle elements just below actual moho
       if (idoubling(ispec) == IFLAG_220_80 &
           .or. idoubling(ispec) == IFLAG_80_MOHO &
           .or. (idoubling(ispec) == IFLAG_CRUST .and. elem_in_mantle )) then
@@ -436,7 +439,7 @@
         elem_is_tiso = .true.
       endif
     else
-      ! assigns TI to elements in crust and mantle elements down to 670,
+      ! assigns TI to elements in crust and mantle elements (down to 220),
       ! to allow for tiso in crust and below actual moho (especially for oceanic crusts);
       ! the crustal models will decide if model parameters are tiso or iso
       if (idoubling(ispec) == IFLAG_220_80 &
@@ -447,6 +450,25 @@
         elem_is_tiso = .true.
       endif
     endif
-  endif
+  end select
+
+  ! 3D mantle model specific additions
+  select case (THREE_D_MODEL)
+  case (THREE_D_MODEL_S362WMANI)
+    ! S362wmani allows radial anisotropy throughout the mantle
+    ! allows tiso down to CMB
+    if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. elem_in_mantle) elem_is_tiso = .true.
+
+
+  case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
+    ! sgloberani models allow for additional tiso layer down to 670
+    ! (based on PREM, it will have tiso already from crust down to 220)
+    if (idoubling(ispec) == IFLAG_670_220) elem_is_tiso = .true.
+
+  case default
+    ! nothing special to add
+    continue
+
+  end select
 
   end subroutine compute_element_tiso_flag
