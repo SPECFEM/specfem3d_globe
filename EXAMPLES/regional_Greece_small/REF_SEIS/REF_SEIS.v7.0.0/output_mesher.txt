@@ -1,0 +1,396 @@
+
+ ****************************
+ *** Specfem3D MPI Mesher ***
+ ****************************
+
+ Version: 7.0.0
+
+
+ There are  4  MPI processes
+ Processes are numbered from 0 to  3
+
+ There are  64  elements along xi in each chunk
+ There are  64  elements along eta in each chunk
+
+ There are  2  slices along xi in each chunk
+ There are  2  slices along eta in each chunk
+ There is a total of  4  slices in each chunk
+ There are  1  chunks in the global mesh
+ There is a total of  4  slices in the global mesh
+
+ NGLLX =  5
+ NGLLY =  5
+ NGLLZ =  5
+
+ Shape functions defined by NGNOD =  27  control nodes
+ Surface shape functions defined by NGNOD2D =  9  control nodes
+
+ model: 1D_transversely_isotropic_prem
+   incorporating the oceans using equivalent load
+   incorporating ellipticity
+   incorporating surface topography
+   incorporating self-gravitation (Cowling approximation)
+   incorporating rotation
+   incorporating attenuation using  3  standard linear solids
+
+   no 3-D lateral variations
+   no heterogeneities in the mantle
+   no crustal variations
+   using unmodified 1D crustal model with two layers
+   incorporating anisotropy
+   no inner-core anisotropy
+   no general mantle anisotropy
+
+ Reference radius of the Earth used is  6371.  km
+
+ Central cube is at a radius of  1042.  km
+ creating global slice addressing
+
+
+ incorporating topography
+   topography/bathymetry: min/max =  -7747,  5507
+
+ additional mesh optimizations
+
+ moho:
+   no element stretching for 3-D moho surface
+
+ internal topography 410/660:
+   no element stretching for 3-D internal surfaces
+
+
+
+ *******************************************
+ creating mesh in region  1
+ this region is the crust and mantle
+ *******************************************
+
+
+ first pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer  1 out of  11
+      9.1%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  2 out of  11
+     18.2%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  3 out of  11
+     27.3%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  4 out of  11
+     36.4%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  5 out of  11
+     45.5%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  6 out of  11
+     54.5%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  7 out of  11
+     63.6%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  8 out of  11
+     72.7%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  9 out of  11
+     81.8%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  10 out of  11
+     90.9%    current clock (NOT elapsed) time is: 08h 18min 21sec
+   creating layer  11 out of  11
+    100.0%    current clock (NOT elapsed) time is: 08h 18min 21sec
+
+
+   ...creating global addressing
+
+   ...creating MPI buffers
+
+ second pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer  1 out of  11
+      9.1%    current clock (NOT elapsed) time is: 08h 18min 23sec
+   creating layer  2 out of  11
+     18.2%    current clock (NOT elapsed) time is: 08h 18min 23sec
+   creating layer  3 out of  11
+     27.3%    current clock (NOT elapsed) time is: 08h 18min 23sec
+   creating layer  4 out of  11
+     36.4%    current clock (NOT elapsed) time is: 08h 18min 23sec
+   creating layer  5 out of  11
+     45.5%    current clock (NOT elapsed) time is: 08h 18min 24sec
+   creating layer  6 out of  11
+     54.5%    current clock (NOT elapsed) time is: 08h 18min 24sec
+   creating layer  7 out of  11
+     63.6%    current clock (NOT elapsed) time is: 08h 18min 24sec
+   creating layer  8 out of  11
+     72.7%    current clock (NOT elapsed) time is: 08h 18min 24sec
+   creating layer  9 out of  11
+     81.8%    current clock (NOT elapsed) time is: 08h 18min 24sec
+   creating layer  10 out of  11
+     90.9%    current clock (NOT elapsed) time is: 08h 18min 24sec
+   creating layer  11 out of  11
+    100.0%    current clock (NOT elapsed) time is: 08h 18min 24sec
+
+
+   ...precomputing Jacobian
+
+   ...creating chunk buffers
+
+ ----- creating chunk buffers -----
+
+ There are  2  slices along xi in each chunk
+ There are  2  slices along eta in each chunk
+ There is a total of  4  slices in each chunk
+ There are  1  chunks
+ There is a total of  4  slices in all the chunks
+
+ There is a total of  2  messages to assemble faces between chunks
+
+
+ only one chunk, no need to create chunk buffers
+
+
+   ...preparing MPI interfaces
+
+ crust/mantle region:
+   #max of points in MPI buffers along xi npoin2D_xi =  10497
+   #max of array elements transferred npoin2D_xi*NDIM =  31491
+
+   #max of points in MPI buffers along eta npoin2D_eta =  10497
+   #max of array elements transferred npoin2D_eta*NDIM =  31491
+
+ crust mantle MPI:
+   maximum interfaces: 3
+   MPI addressing maximum interfaces: 3
+   MPI addressing : all interfaces okay
+
+   total MPI interface points :  84684
+   unique MPI interface points:  83268
+   maximum valence            :  3
+   total unique MPI interface points: 83268
+
+
+   ...element inner/outer separation
+
+ for overlapping of communications with calculations:
+
+ percentage of edge elements in crust/mantle  11.576705 %
+ percentage of volume elements in crust/mantle  88.4232941 %
+
+
+   ...element mesh coloring
+   mesh coloring:  F
+
+   ...creating mass matrix
+     updates mass matrix with Stacey boundary corrections
+     updates mass matrix with ocean load
+
+   ...saving binary files
+
+    calculated top area:  0.12056606904525
+ calculated bottom area:  3.59782794958821567E-2
+
+ *******************************************
+ creating mesh in region  2
+ this region is the outer core
+ *******************************************
+
+
+ first pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer  1 out of  2
+     50.0%    current clock (NOT elapsed) time is: 08h 18min 28sec
+   creating layer  2 out of  2
+    100.0%    current clock (NOT elapsed) time is: 08h 18min 28sec
+
+
+   ...creating global addressing
+
+   ...creating MPI buffers
+
+ second pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer  1 out of  2
+     50.0%    current clock (NOT elapsed) time is: 08h 18min 28sec
+   creating layer  2 out of  2
+    100.0%    current clock (NOT elapsed) time is: 08h 18min 28sec
+
+
+   ...precomputing Jacobian
+
+   ...creating chunk buffers
+
+ ----- creating chunk buffers -----
+
+ There are  2  slices along xi in each chunk
+ There are  2  slices along eta in each chunk
+ There is a total of  4  slices in each chunk
+ There are  1  chunks
+ There is a total of  4  slices in all the chunks
+
+ There is a total of  2  messages to assemble faces between chunks
+
+
+ only one chunk, no need to create chunk buffers
+
+
+   ...preparing MPI interfaces
+
+ outer core region:
+   #max of points in MPI buffers along xi npoin2D_xi =  2825
+   #max of array elements transferred npoin2D_xi*NDIM =  8475
+
+   #max of points in MPI buffers along eta npoin2D_eta =  2825
+   #max of array elements transferred npoin2D_eta*NDIM =  8475
+
+ outer core MPI:
+   maximum interfaces: 3
+   MPI addressing maximum interfaces: 3
+   MPI addressing : all interfaces okay
+
+   total MPI interface points :  23052
+   unique MPI interface points:  22148
+   maximum valence            :  3
+   total assembled MPI interface points: 22148
+
+
+   ...element inner/outer separation
+ percentage of edge elements in outer core  28.3928547 %
+ percentage of volume elements in outer core  71.6071472 %
+
+
+   ...element mesh coloring
+   mesh coloring:  F
+
+   ...creating mass matrix
+     updates mass matrix with Stacey boundary corrections
+
+   ...saving binary files
+
+    calculated top area:  3.59782794958821567E-2
+ calculated bottom area:  4.42916164990301512E-3
+
+ *******************************************
+ creating mesh in region  3
+ this region is the inner core
+ *******************************************
+
+
+ first pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer  1 out of  1
+    100.0%    current clock (NOT elapsed) time is: 08h 18min 29sec
+
+
+   ...creating global addressing
+
+   ...creating MPI buffers
+
+ second pass
+
+   ...allocating arrays
+
+   ...setting up layers
+
+   ...creating mesh elements
+   creating layer  1 out of  1
+    100.0%    current clock (NOT elapsed) time is: 08h 18min 29sec
+
+
+   ...precomputing Jacobian
+
+   ...creating chunk buffers
+
+ ----- creating chunk buffers -----
+
+ There are  2  slices along xi in each chunk
+ There are  2  slices along eta in each chunk
+ There is a total of  4  slices in each chunk
+ There are  1  chunks
+ There is a total of  4  slices in all the chunks
+
+ There is a total of  2  messages to assemble faces between chunks
+
+
+ only one chunk, no need to create chunk buffers
+
+
+   ...preparing MPI interfaces
+
+ inner core region:
+   #max of points in MPI buffers along xi npoin2D_xi =  221
+   #max of array elements transferred npoin2D_xi*NDIM =  663
+
+   #max of points in MPI buffers along eta npoin2D_eta =  221
+   #max of array elements transferred npoin2D_eta*NDIM =  663
+
+ inner core MPI:
+   maximum interfaces: 3
+   MPI addressing maximum interfaces: 3
+   MPI addressing : all interfaces okay
+
+   total MPI interface points :  1820
+   unique MPI interface points:  1716
+   maximum valence            :  3
+   total assembled MPI interface points: 1716
+
+
+   ...element inner/outer separation
+ percentage of edge elements in inner core  43.7499962 %
+ percentage of volume elements in inner core  56.2500038 %
+
+
+   ...element mesh coloring
+   mesh coloring:  F
+
+   ...creating mass matrix
+     updates mass matrix with Stacey boundary corrections
+
+   ...saving binary files
+
+    calculated top area:  4.42916164990301512E-3
+ calculated bottom area:  3.22571377161188447E-3
+
+ calculated volume:  3.99974065853663172E-2
+
+ Repartition of elements in regions:
+ ----------------------------------
+
+ total number of elements in each slice:  12432
+
+  - crust and mantle:  90.6048889  %
+  - outer core:  9.00900936  %
+  - inner core:  0.386100382  %
+
+ for some mesh statistics, see comments in file OUTPUT_FILES/values_from_mesher.h
+
+ Load balancing = 100 % by definition
+
+
+ the time step of the solver will be DT =  0.126792654
+
+ using single precision for the calculations
+
+ smallest and largest possible floating-point numbers are:  1.175494351E-38,  3.402823466E+38
+
+
+ Elapsed time for mesh generation and buffer creation in seconds =  11.828670024871826
+ Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 11 s
+
+ End of mesh generation
+
