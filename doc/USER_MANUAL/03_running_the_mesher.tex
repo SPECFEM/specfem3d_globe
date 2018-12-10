@@ -230,6 +230,10 @@ for a discussion on how to specify your own 3D model.
 \item [{\texttt{full\_sh}}] For a user-specified, transversely isotropic 3D model given in spherical harmonics. Coefficients for the crustal model (up to degree 40) are stored in files named \texttt{C**.dat} and \texttt{MOHO.dat}, coefficients for the mantle model (up to degree 20) are stored in files named \texttt{M**.dat}.\\
 All model files reside in directory \texttt{DATA/full\_sphericalharmonic\_model/}. Note that to use the crustal model, one has to set the crustal type value \texttt{ITYPE\_CRUSTAL\_MODEL = ICRUST\_CRUST\_SH} in file \texttt{setup/constants.h}. This crustal model can be transversely isotropic as well.
 %
+\item [{\texttt{sgloberani\_iso}}] Uses 3D mantle model SGLOBE-rani \citep{Chang2015} with {\it isotropic} model perturbations and 3D crustal model Crust2.0 \citep{BaLaMa00}. The model is parametrised horizontally in spherical harmonics up to \texttt{lmax=35} and with 21 depth splines for the radial direction. Note that SGLOBE-rani uses transversely isotropic PREM as a background model, and that we use the PREM radial attenuation model when \texttt{ATTENUATION} is incorporated.
+%
+\item [{\texttt{sgloberani\_aniso}}] Uses 3D mantle model SGLOBE-rani \citep{Chang2015} with {\it anisotropic} model perturbations and 3D crustal model Crust2.0 \citep{BaLaMa00}. We take model perturbations from 50km up to the surface. Note that SGLOBE-rani uses transversely isotropic PREM as a background model, and that we use the PREM radial attenuation model when \texttt{ATTENUATION} is incorporated.
+%
 \end{description}
 %%
 \item [{\textmd{NOTE:}}]~\\

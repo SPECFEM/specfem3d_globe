@@ -18,7 +18,7 @@ reference:
   J. Geophys. Res., 120, 4278-4300, https://doi.org/10.1002/2014JB011824.
 
 implementation:
-  The model parameterization uses spherical harmonics up to degree 35 (horizontally) and 20 vertical splines.
+  The model parameterization uses spherical harmonics up to degree 35 (horizontally) and 21 vertical splines.
 
   P-wave velocity perturbations (dvp) taken from P12 of S20RTS,
   density perturbations (drho) scaled from Vsv perturbations (dvsv);
@@ -26,16 +26,18 @@ implementation:
   The mantle model is defined between Moho and CMB;
   uses PREM as 1D reference (also for attenuation & eta-parameter)
 
-  The isotropic version takes the Voigt average for Vs and Vp from vsv & vsh and vpv & vph, respectively.
+  The isotropic version takes the Voigt average for Vs from vsv & vsh.
 
   Par_file options are:
 
-  MODEL = sglobe
+  * MODEL = sgloberani_aniso
+
     anisotropic version uses files
     - joint_ani_21spl_wogbadwm_1.3aniso_10000_l35_eff_16995.6_mis_0.2450_sh.sph as dvsh.dat
     - joint_ani_21spl_wogbadwm_1.3aniso_10000_l35_eff_16995.6_mis_0.2450_sv.sph as dvsv.dat
 
-  MODEL = sglobe_iso
+  * MODEL = sgloberani_iso
+
     isotropic version (Voigt) uses file
     - joint_ani_21spl_wogbadwm_1.3aniso_10000_l35_effnum_16995.6_misfit_0.2450_v.sph as dvs_iso.dat
 
