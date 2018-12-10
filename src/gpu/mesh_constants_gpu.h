@@ -235,10 +235,6 @@ typedef float realw;
 
 // CUDA compiler specifications
 // (optional) use launch_bounds specification to increase compiler optimization
-#ifdef GPU_DEVICE_Maxwell
-#undef USE_LAUNCH_BOUNDS
-#endif
-
 #ifdef GPU_DEVICE_K20
 // note: main kernel is Kernel_2_crust_mantle_impl() which is limited by register usage to only 5 active blocks
 //       while shared memory usage would allow up to 7 blocks (see profiling with nvcc...)
@@ -253,22 +249,32 @@ typedef float realw;
 //
 // using launch_bounds leads to ~ 20% performance increase on Kepler GPUs
 // (uncomment if not desired)
-//#pragma message ("\nCompiling with: USE_LAUNCH_BOUNDS enabled for K20\n")
+#pragma message ("\nCompiling with: USE_LAUNCH_BOUNDS enabled for K20\n")
 #define USE_LAUNCH_BOUNDS
 #define LAUNCH_MIN_BLOCKS 7
+#endif
+
+#ifdef GPU_DEVICE_Maxwell
+#undef USE_LAUNCH_BOUNDS
 #endif
 
 #ifdef GPU_DEVICE_Pascal
 // Pascal P100: by default, the crust_mantle_impl_kernel_forward kernel uses 80 registers.
 //              80 * 128 threads -> 10240 registers    for Pascal: total of 65536 -> limits active blocks to 6
 //              using launch bounds to increase the number of blocks will lead to register spilling.
-//              for Pascal, the spilling slows down the kernels by ~6%
+//              For Pascal, the spilling slows down the kernels by ~6%
 #undef USE_LAUNCH_BOUNDS
-#define LAUNCH_MIN_BLOCKS 6
+//#define LAUNCH_MIN_BLOCKS 6
 #endif
 
 #ifdef GPU_DEVICE_Volta
+// Volta V100: Using --ptxas-options -v flags, by default
+//             crust_mantle_impl_kernel_forward kernel Used 81 registers, 6200 bytes smem, 948 bytes cmem[0]
+//             81 * 128 threads -> 10368 registers     for Volta: total of 65536 -> limits active blocks to 6
+//             using launch bounds to increase the number of blocks to 7 will lead to register spilling.
+//             For Volta, the spilling slows down the kernels by ~5%
 #undef USE_LAUNCH_BOUNDS
+//#define LAUNCH_MIN_BLOCKS 6  // with 6 blocks, kernel uses 80 registers and would lead to ~1% speed up
 #endif
 
 
