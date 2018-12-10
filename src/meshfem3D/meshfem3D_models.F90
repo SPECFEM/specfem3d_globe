@@ -139,7 +139,7 @@
         ! GAP model
         call model_gapp2_broadcast()
 
-      case (THREE_D_MODEL_SGLOBE)
+      case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
         ! SGLOBE-rani model
         call model_sglobe_broadcast()
 
@@ -299,7 +299,7 @@
         ! gets PREM values
         select case (THREE_D_MODEL)
         ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
-        case (THREE_D_MODEL_SGLOBE)
+        case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
           ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
           call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
                     idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
@@ -616,7 +616,7 @@
         vsh = vsh*(1.0d0+dvs)
         rho = rho*(1.0d0+drho)
 
-      case (THREE_D_MODEL_SGLOBE)
+      case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
         ! 3D SGLOBE-rani model (Chang)
 
         ! normally mantle perturbations are taken from 24.4km (R_MOHO) up.

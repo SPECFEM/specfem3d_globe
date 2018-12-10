@@ -52,7 +52,11 @@
 !                        density perturbations (drho) scaled from Vsv perturbations (dvsv);
 !                        mantle model defined between Moho and CMB;
 !                        uses PREM as 1D reference (also for attenuation & eta-parameter)
-!
+!                        
+!                        3D mantle model perturbations:
+!                          - sgloberani_aniso: uses transversely isotropic model perturbations dvsv and dvsh
+!                          - sgloberani_iso  : uses isotropic model perturbations dvs
+!                        both with respect to transversely isotropic PREM
 !--------------------------------------------------------------------------------------------------
 
   module model_sglobe_par
@@ -126,7 +130,7 @@
 
   use constants
   use model_sglobe_par
-  use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY
+  use meshfem3D_models_par, only: THREE_D_MODEL
   implicit none
 
   ! local parameters
@@ -140,12 +144,13 @@
 
   ! SGLOBE degree 35 S model from Chang at al.
   ! dvsv
-  if (.not. TRANSVERSE_ISOTROPY) then
+  if (THREE_D_MODEL == THREE_D_MODEL_SGLOBE_ISO) then
     ! isotropic case
-    ! we can either use the voigt averaging (done in meshfem3D_models.f90) based on the vsv and vsh files
-    ! or use the provided dv_iso.dat here:
+    ! one could also use the voigt averaging (done in meshfem3D_models.f90) based on the vsv and vsh files,
+    ! we use the provided dv_iso.dat here:
     filename = SGLOBE_iso
   else
+    ! transversely isotropic model perturbations dvsv
     filename = SGLOBEv
   endif
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)
@@ -161,12 +166,13 @@
   close(10)
 
   ! dvsh
-  if (.not. TRANSVERSE_ISOTROPY) then
+  if (THREE_D_MODEL == THREE_D_MODEL_SGLOBE_ISO) then
     ! isotropic case
-    ! we can either use the voigt averaging (done in meshfem3D_models.f90) based on the vsv and vsh files
-    ! or use the provided dv_iso.dat here:
+    ! one could also use the voigt averaging (done in meshfem3D_models.f90) based on the vsv and vsh files,
+    ! we use the provided dv_iso.dat here:
     filename = SGLOBE_iso
   else
+    ! transversely isotropic model perturbations dvsh
     filename = SGLOBEh
   endif
   open(unit=10,file=trim(filename),status='old',action='read',iostat=ier)

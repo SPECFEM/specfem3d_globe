@@ -376,7 +376,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S29EA
     TRANSVERSE_ISOTROPY = .true.
 
-  case ('sglobe')
+  case ('sgloberani_aniso')
     ! uses PREM as reference
     CASE_3D = .true.
     CRUSTAL = .true.
@@ -385,14 +385,14 @@
     THREE_D_MODEL = THREE_D_MODEL_SGLOBE
     TRANSVERSE_ISOTROPY = .true.
 
-  case ('sglobe_iso')
+  case ('sgloberani_iso')
     ! uses PREM as reference
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
     ONE_CRUST = .true.
-    THREE_D_MODEL = THREE_D_MODEL_SGLOBE
-    TRANSVERSE_ISOTROPY = .false. ! converts to isotropic model
+    THREE_D_MODEL = THREE_D_MODEL_SGLOBE_ISO
+    TRANSVERSE_ISOTROPY = .true. ! still based on transversely isotropic PREM
 
   case ('3d_attenuation')
     ATTENUATION_3D = .true.
