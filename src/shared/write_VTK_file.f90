@@ -1132,64 +1132,64 @@
 
   ! XML file header
   ! see: https://www.vtk.org/Wiki/VTK_XML_Formats
-  write(IOUT_VTK,'(a)') '<?xml version="1.0"?>'! avoid white space at beginning of line
-  write(IOUT_VTK,'(a)') '<VTKFile type="UnstructuredGrid" version="0.1">'
-  write(IOUT_VTK,'(a)') '<UnstructuredGrid>'
-  write(IOUT_VTK,'(a)') '<Piece NumberOfPoints="'// trim(adjustl(str1)) // '" NumberOfCells="' // trim(adjustl(str2)) // '">'
+  write(IOUT_VTK,'(a)') ' < ?xml version="1.0"? > '! avoid white space at beginning of line
+  write(IOUT_VTK,'(a)') ' < VTKFile type="UnstructuredGrid" version="0.1" > '
+  write(IOUT_VTK,'(a)') ' < UnstructuredGrid > '
+  write(IOUT_VTK,'(a)') ' < Piece NumberOfPoints="'// trim(adjustl(str1)) // '" NumberOfCells="' // trim(adjustl(str2)) // '" > '
 
   ! points
-  write(IOUT_VTK,'(a)') '<Points>'
-  write(IOUT_VTK,'(a)') '<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii">'
+  write(IOUT_VTK,'(a)') ' < Points > '
+  write(IOUT_VTK,'(a)') ' < DataArray type="Float32" Name="Points" NumberOfComponents="3" format="ascii" > '
   do i = 1,np
     write(IOUT_VTK,*) real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
   enddo
-  write(IOUT_VTK,'(a)') '</DataArray>'
-  write(IOUT_VTK,'(a)') '</Points>'
+  write(IOUT_VTK,'(a)') ' < /DataArray > '
+  write(IOUT_VTK,'(a)') ' < /Points > '
 
   ! cells
-  write(IOUT_VTK,'(a)') '<Cells>'
+  write(IOUT_VTK,'(a)') ' < Cells > '
   ! connectivity
-  write(IOUT_VTK,'(a)') '<DataArray type="Int64" Name="connectivity" format="ascii">'
+  write(IOUT_VTK,'(a)') ' < DataArray type="Int64" Name="connectivity" format="ascii" > '
   ! note: indices for VTK start at 0
   do i = 1,ne
     write(IOUT_VTK,*) total_dat_con(1,i),total_dat_con(2,i),total_dat_con(3,i),total_dat_con(4,i), &
                       total_dat_con(5,i),total_dat_con(6,i),total_dat_con(7,i),total_dat_con(8,i)
   enddo
-  write(IOUT_VTK,'(a)') '</DataArray>'
+  write(IOUT_VTK,'(a)') ' < /DataArray > '
   ! offsets
-  write(IOUT_VTK,'(a)') '<DataArray type="Int64" Name="offsets" format="ascii">'
+  write(IOUT_VTK,'(a)') ' < DataArray type="Int64" Name="offsets" format="ascii" > '
   write(IOUT_VTK,*) ((it*8),it = 1,ne)
-  write(IOUT_VTK,'(a)') '</DataArray>'
+  write(IOUT_VTK,'(a)') ' < /DataArray > '
 
   ! type: hexahedrons
-  write(IOUT_VTK,'(a)') '<DataArray type="UInt8" Name="types" format="ascii">'
+  write(IOUT_VTK,'(a)') ' < DataArray type="UInt8" Name="types" format="ascii" > '
   write(IOUT_VTK,*) (12,it = 1,ne)
-  write(IOUT_VTK,'(a)') '</DataArray>'
-  write(IOUT_VTK,'(a)') '</Cells>'
+  write(IOUT_VTK,'(a)') ' < /DataArray > '
+  write(IOUT_VTK,'(a)') ' < /Cells > '
 
   ! empty cell data
-  write(IOUT_VTK,'(a)') '<CellData>' // '</CellData>'
+  write(IOUT_VTK,'(a)') ' < CellData > ' // ' < /CellData > '
 
   ! data values
-  write(IOUT_VTK,'(a)') '<PointData Scalars="Scalars_">'
-  write(IOUT_VTK,'(a)') '<DataArray type="Float32" Name="' // trim(var_name) // '" format="ascii">'
+  write(IOUT_VTK,'(a)') ' < PointData Scalars="Scalars_" > '
+  write(IOUT_VTK,'(a)') ' < DataArray type="Float32" Name="' // trim(var_name) // '" format="ascii" > '
   do i = 1,np
     write(IOUT_VTK,*) real(total_dat(i),kind=4)
   enddo
-  write(IOUT_VTK,'(a)') '</DataArray>'
-  write(IOUT_VTK,'(a)') '</PointData>'
+  write(IOUT_VTK,'(a)') ' < /DataArray > '
+  write(IOUT_VTK,'(a)') ' < /PointData > '
 
   ! finishes XML file
-  write(IOUT_VTK,'(a)') '</Piece>'
-  write(IOUT_VTK,'(a)') '</UnstructuredGrid>'
+  write(IOUT_VTK,'(a)') ' < /Piece > '
+  write(IOUT_VTK,'(a)') ' < /UnstructuredGrid > '
 
   ! in case of appended data format, with offsets:
-  !write(IOUT_VTK,'(a)') '<AppendedData encoding="raw">'
+  !write(IOUT_VTK,'(a)') ' < AppendedData encoding="raw">'
   !write(IOUT_VTK,'(a)') '_'
   !write(IOUT_VTK,*) (real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4),i=1,np)
-  !write(IOUT_VTK,'(a)') '</AppendedData>'
+  !write(IOUT_VTK,'(a)') ' < /AppendedData>'
 
-  write(IOUT_VTK,'(a)') '</VTKFile>'
+  write(IOUT_VTK,'(a)') ' < /VTKFile > '
   close(IOUT_VTK)
 
   end subroutine write_VTU_movie_data
@@ -1264,15 +1264,15 @@
 
   ! XML file header
   ! see: https://www.vtk.org/Wiki/VTK_XML_Formats
-  write(IOUT_VTK) '<?xml version="1.0"?>' // LF
-  write(IOUT_VTK) '<VTKFile type="UnstructuredGrid" version="0.1" byte_order="'// trim(str_endian) // '">' // LF
-  write(IOUT_VTK) '<UnstructuredGrid>' // LF
-  write(IOUT_VTK) '<Piece NumberOfPoints="'// str1 // '" NumberOfCells="' // str2 // '">' // LF
+  write(IOUT_VTK) ' < ?xml version="1.0"? > ' // LF
+  write(IOUT_VTK) ' < VTKFile type="UnstructuredGrid" version="0.1" byte_order="'// trim(str_endian) // '" > ' // LF
+  write(IOUT_VTK) ' < UnstructuredGrid > ' // LF
+  write(IOUT_VTK) ' < Piece NumberOfPoints="'// str1 // '" NumberOfCells="' // str2 // '" > ' // LF
 
   ! points
-  write(IOUT_VTK) '<Points>' // LF
+  write(IOUT_VTK) ' < Points > ' // LF
   ! binary format: not working properly yet - using appended instead
-  !write(IOUT_VTK) '<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" encoding="raw">' // LF
+  !write(IOUT_VTK) ' < DataArray type="Float32" Name="Points" NumberOfComponents="3" format="binary" encoding="raw">' // LF
   !! number of bytes to follow
   !! see format description: https://www.vtk.org/Wiki/VTK_XML_Formats#Uncompressed_Data
   !len_bytes = 3 * np * SIZE_REAL
@@ -1280,63 +1280,63 @@
   !do i = 1,np
   !  write(IOUT_VTK) real(total_dat_xyz(1,i),kind=4),real(total_dat_xyz(2,i),kind=4),real(total_dat_xyz(3,i),kind=4)
   !enddo
-  !write(IOUT_VTK) '</DataArray>' // LF
+  !write(IOUT_VTK) ' < /DataArray>' // LF
   !
   ! appended format:
-  write(IOUT_VTK) '<DataArray type="Float32" Name="Points" NumberOfComponents="3" format="appended" offset="' &
-                   // str3 // '"/>' // LF
+  write(IOUT_VTK) ' < DataArray type="Float32" Name="Points" NumberOfComponents="3" format="appended" offset="' &
+                   // str3 // '"/ > ' // LF
   ! updates offset
   ! array length in bytes
   len_bytes = 3 * np * SIZE_REAL
   ! new offset: data array size (len_bytes) + 4 bytes for length specifier at the beginning
   offset = offset + len_bytes + 4
   write(str3,'(i12)') offset
-  write(IOUT_VTK) '</Points>'//LF
+  write(IOUT_VTK) ' < /Points > '//LF
 
   ! cells
-  write(IOUT_VTK) '<Cells>' // LF
+  write(IOUT_VTK) ' < Cells > ' // LF
   ! connectivity
-  write(IOUT_VTK) '<DataArray type="Int32" Name="connectivity" format="appended" offset="' // str3 // '"/>' // LF
+  write(IOUT_VTK) ' < DataArray type="Int32" Name="connectivity" format="appended" offset="' // str3 // '"/ > ' // LF
   ! updates offset
   len_bytes = 8 * ne * SIZE_INTEGER
   offset = offset + len_bytes + 4
   write(str3,'(i12)') offset
 
   ! offsets
-  write(IOUT_VTK) '<DataArray type="Int32" Name="offsets" format="appended" offset="' // str3 // '"/>' // LF
+  write(IOUT_VTK) ' < DataArray type="Int32" Name="offsets" format="appended" offset="' // str3 // '"/ > ' // LF
   ! updates offset
   len_bytes = ne * SIZE_INTEGER
   offset = offset + len_bytes + 4
   write(str3,'(i12)') offset
 
   ! type: hexahedrons
-  write(IOUT_VTK) '<DataArray type="Int32" Name="types" format="appended" offset="' // str3 // '"/>' // LF
+  write(IOUT_VTK) ' < DataArray type="Int32" Name="types" format="appended" offset="' // str3 // '"/ > ' // LF
   ! updates offset
   len_bytes = ne * SIZE_INTEGER
   offset = offset + len_bytes + 4
   write(str3,'(i12)') offset
-  write(IOUT_VTK) '</Cells>' // LF
+  write(IOUT_VTK) ' < /Cells > ' // LF
 
   ! empty cell data
-  write(IOUT_VTK) '<CellData>' // '</CellData>' // LF
+  write(IOUT_VTK) ' < CellData > ' // ' < /CellData > ' // LF
   ! data values
-  write(IOUT_VTK) '<PointData Scalars="Scalars_">' // LF
-  write(IOUT_VTK) '<DataArray type="Float32" Name="' // trim(var_name) // '" format="appended" offset="' &
-                  // str3 // '"/>' // LF
+  write(IOUT_VTK) ' < PointData Scalars="Scalars_" > ' // LF
+  write(IOUT_VTK) ' < DataArray type="Float32" Name="' // trim(var_name) // '" format="appended" offset="' &
+                  // str3 // '"/ > ' // LF
   ! updates offset
   !len_bytes = np * SIZE_REAL
   !offset = offset + len_bytes + 4
   !write(str3,'(i12)') offset
 
-  write(IOUT_VTK) '</PointData>' // LF
+  write(IOUT_VTK) ' < /PointData > ' // LF
 
   ! finishes XML file
-  write(IOUT_VTK) '</Piece>' // LF
-  write(IOUT_VTK) '</UnstructuredGrid>' // LF
+  write(IOUT_VTK) ' < /Piece > ' // LF
+  write(IOUT_VTK) ' < /UnstructuredGrid > ' // LF
 
   ! in case of appended data format, with offsets:
-  !write(IOUT_VTK) '<AppendedData encoding="base64">' // LF
-  write(IOUT_VTK) '<AppendedData encoding="raw">' // LF
+  !write(IOUT_VTK) ' < AppendedData encoding="base64">' // LF
+  write(IOUT_VTK) ' < AppendedData encoding="raw" > ' // LF
   write(IOUT_VTK) '_'
   ! points
   len_bytes = 3 * np * SIZE_REAL
@@ -1376,8 +1376,8 @@
     write(IOUT_VTK) real(total_dat(i),kind=4)
   enddo
 
-  write(IOUT_VTK) '</AppendedData>' // LF
-  write(IOUT_VTK) '</VTKFile>' // LF
+  write(IOUT_VTK) ' < /AppendedData > ' // LF
+  write(IOUT_VTK) ' < /VTKFile > ' // LF
   close(IOUT_VTK)
 
   end subroutine write_VTU_movie_data_binary

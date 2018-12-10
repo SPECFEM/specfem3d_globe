@@ -338,7 +338,7 @@ program combine_surf_data
   call close_file_fd(efd)
 
   ! cat files
-  command_name='cat '//trim(pt_mesh_file)//' '//trim(em_mesh_file)//'>'//trim(mesh_file)
+  command_name='cat '//trim(pt_mesh_file)//' '//trim(em_mesh_file)//' > '//trim(mesh_file)
   print *, ' '
   print *, 'cat mesh files ...'
   print *, trim(command_name)

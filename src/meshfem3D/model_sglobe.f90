@@ -52,7 +52,7 @@
 !                        density perturbations (drho) scaled from Vsv perturbations (dvsv);
 !                        mantle model defined between Moho and CMB;
 !                        uses PREM as 1D reference (also for attenuation & eta-parameter)
-!                        
+!
 !                        3D mantle model perturbations:
 !                          - sgloberani_aniso: uses transversely isotropic model perturbations dvsv and dvsh
 !                          - sgloberani_iso  : uses isotropic model perturbations dvs
