@@ -452,18 +452,37 @@
     endif
   end select
 
+  ! note: for this new implementation, we will allow to have crustal elements computed as tiso.
+  !       the crustal model will decide if the vpv,vph,vsv,vsh,eta values are actually isotropic or not.
+  !       the additional costs for treating these elements as tiso have become quite small.
+  !
+  !       older implementations used also the flag elem_in_mantle to distinguish elements in the IFLAG_CRUST layer
+  !       which were below the actual moho (needed for the case of 3D crustal models and thin oceanic moho).
+  !       this flag however becomes obsolete in this newer implementation. it is kept for backward compatibility,
+  !       in case one wants to run a simulation with USE_OLD_VERSION_5_1_5_FORMAT or USE_OLD_VERSION_7_0_0_FORMAT turned on.
+
   ! 3D mantle model specific additions
   select case (THREE_D_MODEL)
+
   case (THREE_D_MODEL_S362WMANI)
     ! S362wmani allows radial anisotropy throughout the mantle
     ! allows tiso down to CMB
-    if (idoubling(ispec) == IFLAG_MANTLE_NORMAL .or. elem_in_mantle) elem_is_tiso = .true.
+    if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
+        .or. elem_in_mantle) then
+      elem_is_tiso = .true.
+    endif
 
+  case (THREE_D_MODEL_SGLOBE)
+    ! sgloberani_aniso model allows for additional tiso throughout the mantle
+    ! (from above based on PREM, it will have tiso already set from crust down to 220)
+    if (idoubling(ispec) == IFLAG_MANTLE_NORMAL &
+        .or. idoubling(ispec) == IFLAG_670_220 &
+        .or. elem_in_mantle) then
+      elem_is_tiso = .true.
+    endif
 
-  case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
-    ! sgloberani models allow for additional tiso layer down to 670
-    ! (based on PREM, it will have tiso already from crust down to 220)
-    if (idoubling(ispec) == IFLAG_670_220) elem_is_tiso = .true.
+    ! note: THREE_D_MODEL_SGLOBE_ISO
+    !       sgloberani_iso model based on PREM, it will have tiso already set from crust down to 220
 
   case default
     ! nothing special to add

@@ -296,29 +296,34 @@
     case (REFERENCE_MODEL_PREM)
       ! PREM (by Dziewonski & Anderson) - used also as background for 3D models
       if (TRANSVERSE_ISOTROPY) then
-        ! gets PREM values
-        select case (THREE_D_MODEL)
+        ! default PREM:
+        !   gets anisotropic PREM parameters, with radial anisotropic extension (from moho to surface for crustal model)
+        call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
+                  Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+                  R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+
         ! specific 3D models with PREM references which would become too fast at shorter periods ( < 40s Love waves)
-        case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
-          ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
-          call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
-                    idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-        ! daniel debug: eventually also Ritsema models, check...
+        !select case (THREE_D_MODEL)
+        !
+        ! eventually sgloberani, check...
+        !case (THREE_D_MODEL_SGLOBE,THREE_D_MODEL_SGLOBE_ISO)
+        !  ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
+        !  call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
+        !            idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
+        !            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
+        !
+        ! eventually also Ritsema models, check...
         !case (THREE_D_MODEL_S20RTS,THREE_D_MODEL_S40RTS)
         !  ! gets anisotropic PREM parameters, with isotropic extension (from moho to surface for crustal model)
         !  call model_prem_aniso_extended_isotropic(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso,Qkappa,Qmu, &
         !            idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
         !            R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-        case default
-          ! default PREM
-          ! gets anisotropic PREM parameters, with radial anisotropic extension (from moho to surface for crustal model)
-          call model_prem_aniso(r_prem,rho,vpv,vph,vsv,vsh,eta_aniso, &
-                    Qkappa,Qmu,idoubling,CRUSTAL,ONE_CRUST,RICB,RCMB,RTOPDDOUBLEPRIME, &
-                    R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)
-        end select
+        !
+        !case default
+        !  continue
+        !end select
       else
-        ! isotropic model
+        ! isotropic PREM model
         call model_prem_iso(r_prem,rho,drhodr,vp,vs,Qkappa,Qmu,idoubling,CRUSTAL, &
                   ONE_CRUST,.true.,RICB,RCMB,RTOPDDOUBLEPRIME, &
                   R600,R670,R220,R771,R400,R80,RMOHO,RMIDDLE_CRUST,ROCEAN)

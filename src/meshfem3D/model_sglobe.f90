@@ -45,7 +45,8 @@
 !   J. Geophys. Res., 120, 4278-4300, https://doi.org/10.1002/2014JB011824.
 !
 ! implementation:
-! Elodie Kendall, 2018 - spherical harmonics model, up to degree 35
+!   Elodie Kendall, Laura Parisi 2018
+!   - spherical harmonics model, up to degree 35
 !                        (routines based on model_s40rts.f90 implementation)
 !
 !                        P-wave velocity perturbations (dvp) taken from P12 of S20RTS/S40RTS by default;
@@ -140,6 +141,7 @@
   character(len=*), parameter :: SGLOBEv = 'DATA/sglobe/dvsv.dat'
   character(len=*), parameter :: SGLOBEh = 'DATA/sglobe/dvsh.dat'
   character(len=*), parameter :: SGLOBE_iso = 'DATA/sglobe/dvs_iso.dat'
+
   character(len=*), parameter :: P12 = 'DATA/s20rts/P12.dat'
 
   ! SGLOBE degree 35 S model from Chang at al.

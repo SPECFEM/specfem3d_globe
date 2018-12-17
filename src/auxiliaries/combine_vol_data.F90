@@ -684,7 +684,7 @@ program combine_vol_data
     call write_integer_fd(pfd,np)
     call close_file_fd(pfd)
 
-    command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '//trim(em_mesh_file)//' > '//trim(mesh_file)
+    command_name='cat '//trim(pt_mesh_file2)//' '//trim(pt_mesh_file1)//' '//trim(em_mesh_file)//'>'//trim(mesh_file)
     print *, ' '
     print *, 'cat mesh files: '
     print *, trim(command_name)

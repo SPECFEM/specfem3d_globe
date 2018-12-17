@@ -377,7 +377,7 @@
     TRANSVERSE_ISOTROPY = .true.
 
   case ('sgloberani_aniso')
-    ! uses PREM as reference
+    ! anisotropic perturbations to PREM
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
@@ -386,7 +386,7 @@
     TRANSVERSE_ISOTROPY = .true.
 
   case ('sgloberani_iso')
-    ! uses PREM as reference
+    ! isotropic perturbations to PREM
     CASE_3D = .true.
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
