@@ -8,14 +8,12 @@ if [ -f $HOME/.tmprc ]; then source $HOME/.tmprc; fi
 # setup
 ###########################################################
 # chooses example directory
-case "$TESTMAKE" in
+case "$TESTDIR" in
   0) dir=./ ;;
   1) dir=EXAMPLES/regional_Greece_small/ ;;
-  2) dir=EXAMPLES/regional_Greece_small/ ;;
-  3) dir=EXAMPLES/regional_Greece_small/ ;;
-  4) dir=EXAMPLES/global_small/ ;;
-  5) dir=EXAMPLES/point_force/ ;;
-  6) dir=EXAMPLES/regular_kernel/ ;;
+  2) dir=EXAMPLES/global_small/ ;;
+  3) dir=EXAMPLES/point_force/ ;;
+  4) dir=EXAMPLES/regular_kernel/ ;;
   *) dir=EXAMPLES/regional_Greece_small/ ;;
 esac
 
@@ -26,7 +24,7 @@ echo $WORKDIR
 echo
 echo "**********************************************************"
 echo
-echo "configuration test: TESTMAKE=${TESTMAKE} TEST=${TEST} FLAGS=${TESTFLAGS}"
+echo "configuration test: TESTID=${TESTID} TESTDIR=${TESTDIR} TESTCOV=${TESTCOV} TESTFLAGS=${TESTFLAGS}"
 echo
 echo "    test directory: $dir"
 echo
@@ -62,21 +60,21 @@ echo "configuration:"
 
 if [ "$TESTCOV" == "1" ]; then
   echo "configuration: for coverage"
-  ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0" CFLAGS="-coverage -O0"
+  ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} FLAGS_CHECK="-fprofile-arcs -ftest-coverage -O0" CFLAGS="-coverage -O0"
 else
   if [ "$CUDA" == "true" ]; then
     echo "configuration: for cuda"
-    ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
+    ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS} CUDA_LIB="${CUDA_HOME}/lib64" CUDA_INC="${CUDA_HOME}/include" CUDA_FLAGS="-Xcompiler -Wall,-Wno-unused-function,-Wno-unused-const-variable,-Wfatal-errors -g -G"
   else
     echo "configuration: default"
-    ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TEST}
+    ./configure FC=${FC} MPIFC=${MPIFC} CC=${CC} ${TESTFLAGS}
   fi
 fi
 # we output to console
 sed -i "s:IMAIN .*:IMAIN = ISTANDARD_OUTPUT:" setup/constants.h
 
 # regional w/ NGLL = 6
-if [ "$TESTMAKE" == "3" ]; then
+if [ "$TESTID" == "8" ]; then
   sed -i "s:NGLLX =.*:NGLLX = 6:" setup/constants.h
 fi
 echo -en 'travis_fold:end:configure\\r'
@@ -100,7 +98,7 @@ cd $dir
 
 
 # testing small example (short & quick for all configurations)
-if [ "$TESTMAKE" == "0" ]; then
+if [ "$TESTID" == "3" ]; then
   # runs default tests
   make tests
 else
@@ -108,17 +106,17 @@ else
   sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.5:" DATA/Par_file
 
   # regional w/ debug-checking
-  if [ "$TESTMAKE" == "2" ]; then
+  if [ "$TESTID" == "7" ]; then
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   fi
 
   # regional w/ NGLL = 6
-  if [ "$TESTMAKE" == "3" ]; then
+  if [ "$TESTID" == "8" ]; then
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.0:" DATA/Par_file
   fi
 
   # global small
-  if [ "$TESTMAKE" == "4" ]; then
+  if [ "$TESTID" == "9" ]; then
     sed -i "s:^RECORD_LENGTH_IN_MINUTES .*:RECORD_LENGTH_IN_MINUTES = 0.1:" DATA/Par_file
   fi
 
@@ -131,7 +129,7 @@ else
   ./run_this_example.sh
 
   # seismogram comparison
-  if [ "$TESTCOV" == "0" ] && [ ! "$TESTMAKE" == "2" ] && [ ! "$TESTMAKE" == "3" ]; then
+  if [ "$TESTCOV" == "0" ] && [ ! "$TESTID" == "7" ] && [ ! "$TESTID" == "8" ]; then
     my_test
   fi
   cd $WORKDIR
@@ -141,13 +139,10 @@ echo -en 'travis_fold:end:tests\\r'
 
 # code coverage: https://codecov.io/gh/geodynamics/specfem3d/
 # additional runs for coverage
+#
 # note: log becomes too long, trying to fold each test output
-
-##
-## global example
-##
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.point-force\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTMAKE" == "1" ]; then
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing point_force
   ##
@@ -159,7 +154,7 @@ fi
 echo -en 'travis_fold:end:coverage.point-force\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.regular-kernel\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTMAKE" == "1" ]; then
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "1" ]; then
   ##
   ## testing regular_kernel
   ##
@@ -171,7 +166,7 @@ fi
 echo -en 'travis_fold:end:coverage.regular-kernel\\r'
 
 echo 'Coverage...' && echo -en 'travis_fold:start:coverage.global-small\\r'
-if [ "$TESTCOV" == "1" ] && [ "$TESTMAKE" == "2" ]; then
+if [ "$TESTCOV" == "1" ] && [ "$TESTID" == "2" ]; then
   ##
   ## testing global_small
   ##
