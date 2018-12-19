@@ -868,20 +868,20 @@
   ! checks if memory available
   if (UNDO_ATTENUATION) then
     if (static_memory_size_GB >= MEMORY_INSTALLED_PER_CORE_IN_GB) then
-      print *,''
+      print *
       print *,'Invalid setup: simulation too big (for UNDO_ATTENUATION)!'
       print *,'  installed memory per core    = ',sngl(MEMORY_INSTALLED_PER_CORE_IN_GB)
       print *,'  needed static memory (in GB) = ',sngl(static_memory_size_GB)
-      print *,''
+      print *
       stop 'you are using more memory than what you told us is installed!!! there is an error'
     endif
 
     if (static_memory_size_GB >= what_we_can_use_in_GB) then
-      print *,''
+      print *
       print *,'Invalid setup: simulation too big (for UNDO_ATTENUATION)!'
       print *,'  memory usable per core       = ',sngl(what_we_can_use_in_GB)
       print *,'  needed static memory (in GB) = ',sngl(static_memory_size_GB)
-      print *,''
+      print *
       stop 'you are using more memory than what you allowed us to use!!! there is an error'
     endif
   endif
