@@ -817,7 +817,7 @@
   use shared_parameters, only: NGLOB_REGIONS,NSPEC_REGIONS,NSTEP, &
     ROTATION,ATTENUATION,GPU_MODE, &
     MEMORY_INSTALLED_PER_CORE_IN_GB,PERCENT_OF_MEM_TO_USE_PER_CORE,NOISE_TOMOGRAPHY, &
-    NSPEC2D_TOP
+    NSPEC2D_TOP,UNDO_ATTENUATION
 
   use constants, only: NGLLX,NGLLY,NGLLZ,NDIM,N_SLS,CUSTOM_REAL, &
     IREGION_CRUST_MANTLE,IREGION_INNER_CORE,IREGION_OUTER_CORE
@@ -830,20 +830,23 @@
 
   double precision :: what_we_can_use_in_GB
 
-  if (MEMORY_INSTALLED_PER_CORE_IN_GB < 0.1d0) &
-       stop 'less than 100 MB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
+  ! checks for undo attenuation setup
+  if (UNDO_ATTENUATION) then
+    if (MEMORY_INSTALLED_PER_CORE_IN_GB < 0.1d0) &
+         stop 'less than 100 MB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
 !! DK DK the value below will probably need to be increased one day, on future machines
-  if (MEMORY_INSTALLED_PER_CORE_IN_GB > 512.d0) &
-       stop 'more than 512 GB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
+    if (MEMORY_INSTALLED_PER_CORE_IN_GB > 512.d0) &
+         stop 'more than 512 GB per core for MEMORY_INSTALLED_PER_CORE_IN_GB does not seem realistic; exiting...'
 
-  if (PERCENT_OF_MEM_TO_USE_PER_CORE < 50.d0) &
-       stop 'less than 50% for PERCENT_OF_MEM_TO_USE_PER_CORE does not seem realistic; exiting...'
-  if (PERCENT_OF_MEM_TO_USE_PER_CORE > 100.d0) &
-       stop 'more than 100% for PERCENT_OF_MEM_TO_USE_PER_CORE makes no sense; exiting...'
+    if (PERCENT_OF_MEM_TO_USE_PER_CORE < 50.d0) &
+         stop 'less than 50% for PERCENT_OF_MEM_TO_USE_PER_CORE does not seem realistic; exiting...'
+    if (PERCENT_OF_MEM_TO_USE_PER_CORE > 100.d0) &
+         stop 'more than 100% for PERCENT_OF_MEM_TO_USE_PER_CORE makes no sense; exiting...'
 !! DK DK will need to remove the .and. .not. GPU_MODE test here
 !! DK DK if the undo_attenuation buffers are stored on the GPU instead of on the host
-  if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
-       stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'
+    if (PERCENT_OF_MEM_TO_USE_PER_CORE > 92.d0 .and. .not. GPU_MODE) &
+         stop 'more than 92% for PERCENT_OF_MEM_TO_USE_PER_CORE when not using GPUs is risky; exiting...'
+  endif
 
   what_we_can_use_in_GB = MEMORY_INSTALLED_PER_CORE_IN_GB * PERCENT_OF_MEM_TO_USE_PER_CORE / 100.d0
 
@@ -862,11 +865,26 @@
 !
 ! if (GPU_MODE) static_memory_size_GB = 0.d0
 
-  if (static_memory_size_GB >= MEMORY_INSTALLED_PER_CORE_IN_GB) &
-    stop 'you are using more memory than what you told us is installed!!! there is an error'
+  ! checks if memory available
+  if (UNDO_ATTENUATION) then
+    if (static_memory_size_GB >= MEMORY_INSTALLED_PER_CORE_IN_GB) then
+      print *,''
+      print *,'Invalid setup: simulation too big (for UNDO_ATTENUATION)!'
+      print *,'  installed memory per core    = ',sngl(MEMORY_INSTALLED_PER_CORE_IN_GB)
+      print *,'  needed static memory (in GB) = ',sngl(static_memory_size_GB)
+      print *,''
+      stop 'you are using more memory than what you told us is installed!!! there is an error'
+    endif
 
-  if (static_memory_size_GB >= what_we_can_use_in_GB) &
-    stop 'you are using more memory than what you allowed us to use!!! there is an error'
+    if (static_memory_size_GB >= what_we_can_use_in_GB) then
+      print *,''
+      print *,'Invalid setup: simulation too big (for UNDO_ATTENUATION)!'
+      print *,'  memory usable per core       = ',sngl(what_we_can_use_in_GB)
+      print *,'  needed static memory (in GB) = ',sngl(static_memory_size_GB)
+      print *,''
+      stop 'you are using more memory than what you allowed us to use!!! there is an error'
+    endif
+  endif
 
 ! compute the size to store in memory at each time step
   size_to_store_at_each_time_step = 0
