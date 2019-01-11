@@ -33,7 +33,11 @@ extern EXTERN_LANG
 void FC_FUNC_ (compute_seismograms_gpu,
                COMPUTE_SEISMOGRAMS_GPU) (long *Mesh_pointer_f,
                                          realw* seismograms,
-                                         int* seismo_currentf,int* itf, double* scale_displf,int* NTSTEP_BETWEEN_OUTPUT_SEISMOSf,int* NSTEPf) {
+                                         int* seismo_currentf,
+                                         int* itf,
+                                         double* scale_displf,
+                                         int* NTSTEP_BETWEEN_OUTPUT_SEISMOSf,
+                                         int* NSTEPf) {
   TRACE ("compute_seismograms_gpu");
 
   //get Mesh from Fortran integer wrapper

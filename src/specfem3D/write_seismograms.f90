@@ -76,32 +76,34 @@
                                                number_receiver_global,ispec_selected_rec,ispec_selected_source, &
                                                ibool_crust_mantle)
         endif
-      ! for forward and kernel simulations, seismograms are computed by the GPU, thus no need to transfer the wavefield
-    else
-      if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) &
-        call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,scale_displ,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP)
-      endif
 
-    endif
+      ! for forward and kernel simulations, seismograms are computed by the GPU, thus no need to transfer the wavefield
+      else
+        if (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN) ) ) then
+          call compute_seismograms_gpu(Mesh_pointer,seismograms,seismo_current,it,scale_displ,NTSTEP_BETWEEN_OUTPUT_SEISMOS,NSTEP)
+        endif
+      endif
+    endif ! GPU_MODE
 
     ! computes traces at interpolated receiver locations
     select case (SIMULATION_TYPE)
     case (1)
       if (.not. GPU_MODE) &
         call compute_seismograms(NGLOB_CRUST_MANTLE,displ_crust_mantle, &
-                               seismo_current,seismograms)
+                                 seismo_current,seismograms)
     case (2)
         call compute_seismograms_adjoint(displ_crust_mantle, &
-                                       eps_trace_over_3_crust_mantle, &
-                                       epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
-                                       epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
-                                       it_adj_written, &
-                                       moment_der,sloc_der,stshift_der,shdur_der, &
-                                       seismograms)
+                                         eps_trace_over_3_crust_mantle, &
+                                         epsilondev_xx_crust_mantle,epsilondev_yy_crust_mantle,epsilondev_xy_crust_mantle, &
+                                         epsilondev_xz_crust_mantle,epsilondev_yz_crust_mantle, &
+                                         it_adj_written, &
+                                         moment_der,sloc_der,stshift_der,shdur_der, &
+                                         seismograms)
     case (3)
-      if (.not. GPU_MODE .or. (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) ) &
+      if (.not. GPU_MODE .or. (.not. ( SIMULATION_TYPE == 3 .and. (.not. SAVE_SEISMOGRAMS_IN_ADJOINT_RUN)) ) ) then
         call compute_seismograms(NGLOB_CRUST_MANTLE_ADJOINT,b_displ_crust_mantle, &
-                               seismo_current,seismograms)
+                                 seismo_current,seismograms)
+      endif
     end select
   endif ! nrec_local
 
