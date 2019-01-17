@@ -28,7 +28,6 @@
 */
 
 #include "mesh_constants_gpu.h"
-#include <string.h>
 
 // debugging
 const int DEBUG_VERBOSE_OUTPUT = 0;

@@ -390,7 +390,7 @@ void FC_FUNC_ (compute_forces_inner_core_gpu,
         // for idoubling array
         offset_ispec = mp->nspec_outer_inner_core;
         // for strain
-        if (! mp->NSPEC_INNER_CORE_STRAIN_ONLY == 1) {
+        if (! (mp->NSPEC_INNER_CORE_STRAIN_ONLY == 1)) {
           offset_nonpadded_strain = (mp->nspec_outer_inner_core) * NGLL3;
         }
       }

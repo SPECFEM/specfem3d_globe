@@ -49,6 +49,7 @@
       vsh_new,vph_new,eta_new
     ! number of elements (crust/mantle elements)
     integer :: nspec
+    integer :: dummy_pad ! padding 4 bytes to align the structure
   end type model_gll_variables
   type (model_gll_variables) :: MGLL_V
 
