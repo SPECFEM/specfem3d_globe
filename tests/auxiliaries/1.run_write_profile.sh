@@ -1,8 +1,8 @@
 #!/bin/bash
 ###################################################
 
-# test name
-NAME="xwrite_profile"
+# executable
+var=xwrite_profile
 
 # relative location of SPECFEM3D_GLOBE EXAMPLES/ directory for test
 EXAMPLES="../../EXAMPLES/global_s362ani_shakemovie"
@@ -43,10 +43,14 @@ my_test(){
 }
 
 testdir=`pwd`
+me=`basename "$0"`
+
+#checks if ROOT valid
+if [ -z "${ROOT}" ]; then export ROOT=../../ ; fi
 
 # title
 echo >> $testdir/results.log
-echo "$NAME in: $testdir" >> $testdir/results.log
+echo "$me in: $testdir" >> $testdir/results.log
 echo >> $testdir/results.log
 
 #cleanup output
@@ -73,7 +77,7 @@ ln -s ../../../DATA/topo_bathy
 cd ../
 
 
-make xwrite_profile >> $testdir/results.log 2>&1
+make $var >> $testdir/results.log 2>&1
 # checks exit code
 if [[ $? -ne 0 ]]; then
   echo >> $testdir/results.log
