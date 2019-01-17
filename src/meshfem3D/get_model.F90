@@ -159,7 +159,7 @@
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
-#ifdef CEM
+#ifdef USE_CEM
                               ,ispec,i,j,k &
 #endif
                               )

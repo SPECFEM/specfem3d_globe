@@ -143,6 +143,7 @@ meshfem3D_MODULES = \
 	$(FC_MODDIR)/model_eucrust_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_full_sh_crust_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_full_sh_mantle_par.$(FC_MODEXT) \
+	$(FC_MODDIR)/model_gll_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_heterogen_mantle_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_jp3d_par.$(FC_MODEXT) \
 	$(FC_MODDIR)/model_ppm_par.$(FC_MODEXT) \
@@ -271,6 +272,8 @@ $O/write_AVS_DX_output_adios.check_adios.o: \
 	$O/write_AVS_DX_surface_data_adios.check_adios_module.o
 
 $O/get_absorb_adios.check_adios.o: $O/adios_manager.shared_adios_module.o
+
+$O/model_gll_adios.check_adios.o: $O/model_gll.check.o
 
 $O/model_attenuation.check.o: \
 	$O/model_1dref.check.o \

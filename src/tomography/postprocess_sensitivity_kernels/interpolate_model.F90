@@ -72,7 +72,7 @@
   use kdtree_search, only: kdtree_setup,kdtree_set_verbose,kdtree_delete,kdtree_find_nearest_neighbor, &
     kdtree_num_nodes,kdtree_nodes_location,kdtree_nodes_index
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   use manager_adios
   use adios_helpers_mod, only: define_adios_scalar,define_adios_global_array1D
 #endif
@@ -177,7 +177,7 @@
   character(len=MAX_STRING_LEN) :: solver_file
 
   ! ADIOS
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   integer :: local_dim,global_dim
   character(len=MAX_STRING_LEN) :: group_name
   integer(kind=8) :: group,group_size_inc
@@ -220,7 +220,7 @@
         print *,' Usage: xinterpolate_model old-topo-dir/ old-model-dir/ new-topo-dir/ model-output-dir/ (midpoint-search)'
         print *,' '
         print *,' with'
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
         print *,'   old-topo-dir/     - old mesh directory with topology files (e.g. solver_data.bp)'
         print *,'   old-model-dir/    - directoy which holds old model files (e.g. model_gll.bp)'
         print *,'   new-topo-dir/     - new mesh directory with topology files (e.g. solver_data.bp)'
@@ -284,7 +284,7 @@
     print *
   endif
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   call synchronize_all()
   ! initializes ADIOS
   if (myrank == 0) then
@@ -297,7 +297,7 @@
   !  master process gets old, source mesh dimension
   if (myrank == 0) then
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
     ! user output
     print *, 'reading in ADIOS solver file: ',trim(dir_topo1)//'/solver_data.bp'
 
@@ -380,7 +380,7 @@
   if (USE_TRANSVERSE_ISOTROPY) then
     ! transversly isotropic (TI) model
     nparams = 6
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
     fname(1:6) = (/character(len=16) :: "reg1/vpv","reg1/vph","reg1/vsv","reg1/vsh","reg1/eta","reg1/rho"/)
 #else
     fname(1:6) = (/character(len=16) :: "vpv","vph","vsv","vsh","eta","rho"/)
@@ -400,7 +400,7 @@
     fname(nparams) = "qmu"
   endif
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! adios only for model_gll.bp implemented which uses vpv,vph,..,rho
   if (nparams /= 6) &
     stop 'ADIOS version only works for purely transversely isotropic model file model_gll.bp so far...'
@@ -463,7 +463,7 @@
       endif
     endif
     print *
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
     print *,'file format: ADIOS files'
     print *
 #endif
@@ -584,7 +584,7 @@
   z1(:,:) = 0.0_CUSTOM_REAL
   ibool1(:,:,:,:,:) = 0
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! single adios file for all old process slices
   ! opens adios file
   write(solver_file,'(a,a)') trim(dir_topo1)//'/solver_data.bp'
@@ -606,7 +606,7 @@
       endif
 
       ! reads in old arrays
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
 print *,myrank,'adios file rank',rank
       ! reads in scalars for rank
       call read_adios_scalar_int(rank,"reg1/nspec",nspec)
@@ -653,7 +653,7 @@ print *,myrank,'adios file rank',rank
     enddo
   enddo
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! closes file
   call close_file_adios_read()
 #endif
@@ -678,7 +678,7 @@ print *,myrank,'adios file rank',rank
   ! reads in old model files
   model1(:,:,:,:,:,:) = 0.0_CUSTOM_REAL
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! single adios file for all old model arrays
   ! opens adios file
   write(solver_file,'(a,a)') trim(dir_topo1)//'/model_gll.bp'
@@ -704,7 +704,7 @@ print *,myrank,'adios file rank',rank
         ! debug user output
         if (myrank == 0) print *, '  for parameter: ',trim(fname(iker))
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
         ! reads in array
         call read_adios_array_gll(rank,nspec,fname(iker),model1(:,:,:,:,iker,iprocnum-1))
 #else
@@ -722,7 +722,7 @@ print *,myrank,'adios file rank',rank
     enddo
   enddo
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! closes file
   call close_file_adios_read()
 #endif
@@ -750,7 +750,7 @@ print *,myrank,'adios file rank',rank
   endif
 
   ! checks new mesh locations
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! single adios file for all process slices
   ! opens adios file
   write(solver_file,'(a,a)') trim(dir_topo2)//'/solver_data.bp'
@@ -1045,7 +1045,7 @@ print *,myrank,'adios file rank',rank
     print *, 'writing out new model files'
   endif
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! sets up adios group
   group_name = "MODELS_GROUP"
   group_size_inc = 0
@@ -1074,7 +1074,7 @@ print *,myrank,'adios file rank',rank
       print *, '  for parameter: ',trim(fname(iker))
     endif
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
 !  call finalize_adios()
 !  stop 'safety stop: ADIOS support not fully implemented yet...'
     ! writes previously defined ADIOS variables
@@ -1092,7 +1092,7 @@ print *,myrank,'adios file rank',rank
 
   enddo
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! closing performs actual write
   call close_file_adios()
 #endif
@@ -1107,7 +1107,7 @@ print *,myrank,'adios file rank',rank
   if (myrank == 0) then
     print *
     print *, 'check new model files in directory: ',trim(output_model_dir)
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
     print *, 'see file: ',trim(solver_file)
 #else
     print *, 'see files: ',trim(output_model_dir) // '/proc***_reg1_**.bin'
@@ -1116,7 +1116,7 @@ print *,myrank,'adios file rank',rank
     print *
   endif
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! finalizes adios
   call finalize_adios()
 #endif

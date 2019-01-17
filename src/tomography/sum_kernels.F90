@@ -49,7 +49,7 @@ program sum_kernels_globe
 
   use tomography_par
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   use manager_adios
 #endif
 
@@ -66,7 +66,7 @@ program sum_kernels_globe
   call world_rank(myrank)
 
   if (myrank == 0) then
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
     write(*,*) 'sum_kernels_globe (ADIOS version):'
 #else
     write(*,*) 'sum_kernels_globe:'
@@ -110,7 +110,7 @@ program sum_kernels_globe
   endif
   call synchronize_all()
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   call synchronize_all()
   ! initializes ADIOS
   if (myrank == 0) then
@@ -180,7 +180,7 @@ program sum_kernels_globe
 
   if (myrank == 0) write(*,*) 'done writing all kernels, see directory OUTPUT_SUM/'
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! finalizes adios
   call finalize_adios()
 #endif
@@ -198,7 +198,7 @@ end program sum_kernels_globe
 
   use tomography_par
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   use manager_adios
   use adios_helpers_mod, only: define_adios_scalar,define_adios_global_array1D
 #endif
@@ -216,7 +216,7 @@ end program sum_kernels_globe
   real(kind=CUSTOM_REAL), dimension(:,:,:,:),allocatable :: mask_source
 
   ! ADIOS
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   integer :: is,ie
   integer :: local_dim
   integer(kind=8) :: group
@@ -252,7 +252,7 @@ end program sum_kernels_globe
   endif
 
   ! ADIOS setup group size
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! start setting up full file group size when first kernel is called
   if (is_first_call) then
     ! reset flag
@@ -325,7 +325,7 @@ end program sum_kernels_globe
   do iker = 1, nker
     ! user output
     if (myrank == 0) then
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
     write(*,*) 'reading in event kernel for: ',trim(kernel_name_adios)
 #else
     write(*,*) 'reading in event kernel for: ',trim(kernel_name)
@@ -334,7 +334,7 @@ end program sum_kernels_globe
     endif
 
     ! sensitivity kernel / frechet derivative
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
     write(k_file,'(a,a)') 'INPUT_KERNELS/'//trim(kernel_list(iker)),'/kernels.bp'
     ! debug
     !write(*,*) 'adios kernel name: ',trim(kernel_name_adios)
@@ -374,14 +374,14 @@ end program sum_kernels_globe
   enddo
 
   ! user output
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name_adios),' into file kernels_sum.bp'
 #else
   if (myrank == 0) write(*,*) 'writing out summed kernel for: ',trim(kernel_name)
 #endif
 
   ! stores summed kernels
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! appends to adios file
   write(k_file,'(a)') 'OUTPUT_SUM/' // 'kernels_sum.bp'
   call open_file_adios_write_append(k_file,group_name)

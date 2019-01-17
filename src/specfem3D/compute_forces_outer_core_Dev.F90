@@ -458,7 +458,7 @@
 
   use constants_solver, only: CUSTOM_REAL
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm, only: libxsmm_smm_5_25_5,libxsmm_smm_25_5_5
 #endif
 

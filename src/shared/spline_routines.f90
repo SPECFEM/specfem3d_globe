@@ -31,18 +31,18 @@
 
   implicit none
 
-! tangent to the spline imposed at the first and last points
-  double precision, intent(in) :: tangent_first_point,tangent_last_point
-
 ! number of input points and coordinates of the input points
   integer, intent(in) :: npoint
   double precision, dimension(npoint), intent(in) :: xpoint,ypoint
 
+! tangent to the spline imposed at the first and last points
+  double precision, intent(in) :: tangent_first_point,tangent_last_point
+
 ! spline coefficients output by the routine
   double precision, dimension(npoint), intent(out) :: spline_coefficients
 
+  ! local parameters
   integer :: i
-
   double precision, dimension(:), allocatable :: temporary_array
 
   allocate(temporary_array(npoint))
@@ -96,8 +96,8 @@
 ! ordinate evaluated by the routine for the spline at this abscissa
   double precision, intent(out):: y_spline_obtained
 
+  ! local parameters
   integer :: index_loop,index_lower,index_higher
-
   double precision :: coef1,coef2
 
 ! initialize to the whole interval

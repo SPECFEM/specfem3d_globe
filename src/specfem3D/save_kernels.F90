@@ -254,7 +254,7 @@
   real(kind=CUSTOM_REAL) :: muvl,kappavl,muhl,kappahl
   real(kind=CUSTOM_REAL) :: alphav_sq,alphah_sq,betav_sq,betah_sq,bulk_sq
 
-#ifdef CEM
+#ifdef USE_CEM
   character(len=MAX_STRING_LEN) :: filename
 #endif
 
@@ -634,7 +634,7 @@
   endif ! ADIOS_FOR_KERNELS
 
   ! Output these kernels as netcdf files -- one per processor.
-#ifdef CEM
+#ifdef USE_CEM
   if (SAVE_TRANSVERSE_KL_ONLY) then
     filename = trim(OUTPUT_FILES)//'/alphavKernelCrustMantle.nc'
     call write_kernel_netcdf(filename, alphav_kl_crust_mantle)

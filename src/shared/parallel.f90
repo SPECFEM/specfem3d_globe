@@ -77,6 +77,7 @@ end module my_mpi
 
   implicit none
 
+  ! local parameters
   integer :: myrank,ier
 
 ! initialize the MPI communicator and start the NPROCTOT MPI processes.

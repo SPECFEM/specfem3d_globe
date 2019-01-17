@@ -184,14 +184,13 @@ $O/%.sharedmpi.o: $S/%.f90 $O/shared_par.shared_module.o $O/read_parameter_file.
 ## adios
 
 $O/%.shared_adios_module.o: $S/%.f90 $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.shared_adios_module.o: $S/%.F90 $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 $O/%.shared_adios.o: $S/%.f90 $O/adios_manager.shared_adios_module.o $O/adios_helpers_writers.shared_adios_module.o $O/adios_helpers_definitions.shared_adios_module.o $O/shared_par.shared_module.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
-
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<
 
 ## ADIOS2
 # special two step build process for adios2_helpers_read

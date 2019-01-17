@@ -46,7 +46,7 @@
     ATTENUATION,USE_FULL_TISO_MANTLE
 
   use shared_compute_parameters, only: &
-    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL, &
+    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL,MODEL_GLL, &
     HONOR_1D_SPHERICAL_MOHO,CRUSTAL,ONE_CRUST,CASE_3D,TRANSVERSE_ISOTROPY, &
     ISOTROPIC_3D_MANTLE,ANISOTROPIC_3D_MANTLE,HETEROGEN_3D_MANTLE, &
     ATTENUATION_3D, &
@@ -102,21 +102,6 @@
     integer :: nsls        ! nsls  = Number of Standard Linear Solids
   end type attenuation_simplex_variables
   ! attenuation_simplex_variables
-
-  ! GLL model_variables
-  type model_gll_variables
-    sequence
-    ! tomographic iteration model on GLL points
-    double precision :: scale_velocity,scale_density
-    ! isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vs_new,vp_new,rho_new
-    ! transverse isotropic model
-    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vsv_new,vpv_new, &
-      vsh_new,vph_new,eta_new
-    logical :: MODEL_GLL
-    logical,dimension(3) :: dummy_pad ! padding 3 bytes to align the structure
-  end type model_gll_variables
-  type (model_gll_variables) :: MGLL_V
 
   ! bathymetry and topography: use integer array to store values
   integer, dimension(:,:),allocatable :: ibathy_topo

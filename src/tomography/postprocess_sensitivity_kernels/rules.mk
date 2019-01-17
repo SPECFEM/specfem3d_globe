@@ -359,7 +359,7 @@ $O/%.postprocess.o: $S/%.F90 $O/postprocess_par.postprocess_module.o $O/parallel
 
 ### ADIOS
 $O/%.postprocess_adios.o: $S/%.F90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
-	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(ADIOS_DEF)
+	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $< $(FC_DEFINE)USE_ADIOS_INSTEAD_OF_MESH
 
 $O/%.postprocess_adios.o: $S/%.f90 $O/postprocess_par.postprocess_module.o $O/parallel.sharedmpi.o $O/adios_helpers.shared_adios.o
 	${FCCOMPILE_CHECK} ${FCFLAGS_f90} -c -o $@ $<

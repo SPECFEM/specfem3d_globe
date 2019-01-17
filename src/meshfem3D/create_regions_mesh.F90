@@ -69,7 +69,7 @@
     SAVE_BOUNDARY_MESH,SUPPRESS_CRUSTAL_MESH,REGIONAL_MOHO_MESH, &
     OCEANS
 
-#ifdef CEM
+#ifdef USE_CEM
   use meshfem3D_models_par, only: CEM_REQUEST
 #endif
 
@@ -184,7 +184,7 @@
                                       NSPEC2DMAX_YMIN_YMAX, NSPEC2D_BOTTOM)
 
     ! Only go into here if we're requesting xyz files for CEM
-#ifdef CEM
+#ifdef USE_CEM
     if (CEM_REQUEST) then
 
       call build_global_coordinates(iregion_code)

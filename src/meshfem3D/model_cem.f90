@@ -35,10 +35,10 @@ module cem_par
   double precision :: scale_GPa
 
   integer, dimension (:), allocatable :: regCode
-  integer, parameter                  :: shuOn=1
-  integer, parameter                  :: comLvl=9
-  integer, parameter                  :: comOn=1
-  integer, parameter                  :: NDIMS=3
+  integer, parameter                  :: shuOn  = 1
+  integer, parameter                  :: comLvl = 9
+  integer, parameter                  :: comOn  = 1
+  integer, parameter                  :: NDIMS  = 3
   integer                             :: nnodes_cem
   integer                             :: nelem_cem
   integer                             :: rank
@@ -46,7 +46,6 @@ module cem_par
   real, dimension (:,:), allocatable :: xyzOut
 
   type par
-
     double precision, dimension (:), allocatable :: vsv, vsh, vpv, vph, rho
     double precision, dimension (:), allocatable :: c11, c12, c13, c14
     double precision, dimension (:), allocatable :: c15, c16, c26, c33
@@ -54,9 +53,7 @@ module cem_par
     double precision, dimension (:), allocatable :: c34, c35, c36, c44
     double precision, dimension (:), allocatable :: c55, c56, c66, c45
     double precision, dimension (:), allocatable :: c46
-
   end type par
-
   type (par) :: reg1Bc, reg2Bc, reg3Bc
 
 end module cem_par

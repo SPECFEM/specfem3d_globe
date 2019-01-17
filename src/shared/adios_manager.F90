@@ -47,7 +47,7 @@ module manager_adios
   ! initialized flag
   logical :: is_adios_initialized
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   ! adios error message
   character(len=1024) :: err_message
   character(len=*),parameter :: ADIOS_VERBOSITY = "verbose=1" ! lowest level: verbose=1
@@ -68,7 +68,7 @@ module manager_adios
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   public :: close_file_adios_read
   public :: init_adios_group
   public :: set_adios_group_size
@@ -104,7 +104,7 @@ contains
 
   use constants, only: ADIOS_BUFFER_SIZE_IN_MB
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   use adios_write_mod, only: adios_init_noxml
 #ifdef ADIOS_VERSION_OLD
   ! ADIOS versions <= 1.9
@@ -118,7 +118,7 @@ contains
   implicit none
 
   ! local parameters
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   integer :: ier
 #endif
 
@@ -128,7 +128,7 @@ contains
   myrank_adios = -1
   file_handle_adios = 0
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
 
   ! gets MPI communicator for adios calls
   call world_duplicate(comm_adios)
@@ -187,21 +187,21 @@ contains
 
 !> Finalize ADIOS. Must be called once everything is written down.
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   use adios_write_mod, only: adios_finalize
 #endif
 
   implicit none
 
   ! local parameters
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   integer :: ier
 #endif
 
   ! synchronizes all first
   call synchronize_all_comm(comm_adios)
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   ! finalize
   call adios_finalize(myrank_adios, ier)
   if (ier /= 0 ) stop 'Error cleaning up ADIOS: calling adios_finalize() routine failed'
@@ -223,7 +223,7 @@ contains
 
   subroutine close_file_adios()
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   use adios_write_mod, only: adios_close
   use adios_read_mod, only: adios_errmsg
 #endif
@@ -231,7 +231,7 @@ contains
   implicit none
 
   ! Variables
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS
   integer :: ier
 
   ! closes file
@@ -264,11 +264,10 @@ contains
 ! ADIOS wrapper routines (only available with adios compilation support)
 !
 !-------------------------------------------------------------------------------
-
+#ifdef USE_ADIOS
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine close_file_adios_read()
 
@@ -287,8 +286,6 @@ contains
 
   end subroutine close_file_adios_read
 
-#endif
-
 !
 !---------------------------------------------------------------------------------
 !
@@ -296,7 +293,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine init_adios_group(adios_group,group_name)
 
@@ -335,7 +331,6 @@ contains
 
   end subroutine init_adios_group
 
-#endif
 
 !
 !---------------------------------------------------------------------------------
@@ -343,7 +338,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine set_adios_group_size(groupsize)
 
@@ -365,7 +359,6 @@ contains
 
   end subroutine set_adios_group_size
 
-#endif
 
 
 !
@@ -375,7 +368,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine open_file_adios_read(filename)
 
@@ -421,15 +413,12 @@ contains
 
   end subroutine open_file_adios_read
 
-#endif
-
 !
 !---------------------------------------------------------------------------------
 !
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine open_file_adios_read_only_rank(rank,filename)
 
@@ -487,15 +476,12 @@ contains
 
   end subroutine open_file_adios_read_only_rank
 
-#endif
-
 !
 !-------------------------------------------------------------------------------
 !
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine open_file_adios_write(filename,group_name)
 
@@ -534,8 +520,6 @@ contains
 
   end subroutine open_file_adios_write
 
-#endif
-
 
 !
 !-------------------------------------------------------------------------------
@@ -543,7 +527,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine open_file_adios_write_append(filename,group_name)
 
@@ -582,7 +565,6 @@ contains
 
   end subroutine open_file_adios_write_append
 
-#endif
 
 
 !
@@ -591,7 +573,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine read_adios_scalar_int(rank,scalar_name,scalar)
 
@@ -627,7 +608,6 @@ contains
 
   end subroutine read_adios_scalar_int
 
-#endif
 
 !
 !---------------------------------------------------------------------------------
@@ -635,7 +615,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine read_adios_scalar_int_only_rank(rank,scalar_name,scalar)
 
@@ -686,7 +665,6 @@ contains
 
   end subroutine read_adios_scalar_int_only_rank
 
-#endif
 
 !
 !---------------------------------------------------------------------------------
@@ -694,7 +672,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine show_adios_file_variables(filename)
 
@@ -784,7 +761,6 @@ contains
 
   end subroutine show_adios_file_variables
 
-#endif
 
 
 !
@@ -793,7 +769,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine read_adios_array_gll(rank,nspec,array_name,array_gll)
 
@@ -849,7 +824,6 @@ contains
 
   end subroutine read_adios_array_gll
 
-#endif
 
 !
 !---------------------------------------------------------------------------------
@@ -857,7 +831,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine read_adios_array_gll_int(rank,nspec,array_name,array_gll)
 
@@ -911,7 +884,6 @@ contains
 
   end subroutine read_adios_array_gll_int
 
-#endif
 
 !
 !---------------------------------------------------------------------------------
@@ -919,7 +891,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine read_adios_array_1d(rank,nsize,array_name,array_1d)
 
@@ -986,8 +957,6 @@ contains
 
   end subroutine read_adios_array_1d
 
-#endif
-
 
 !
 !---------------------------------------------------------------------------------
@@ -995,7 +964,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine read_adios_array_1d_int(rank,nsize,array_name,array_1d)
 
@@ -1046,7 +1014,6 @@ contains
 
   end subroutine read_adios_array_1d_int
 
-#endif
 
 !-------------------------------------------------------------------------------
 ! ADIOS writing
@@ -1054,7 +1021,6 @@ contains
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine write_adios_scalar_int(scalar_name,scalar)
 
@@ -1084,13 +1050,11 @@ contains
 
   end subroutine write_adios_scalar_int
 
-#endif
 
 !-------------------------------------------------------------------------------
 
 ! only available with ADIOS compilation support
 ! to clearly separate adios version and non-adios version of same tools
-#ifdef ADIOS_INPUT
 
   subroutine write_adios_array_gll(rank,nspec,array_name,array_gll)
 

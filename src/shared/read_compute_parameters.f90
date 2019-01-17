@@ -25,7 +25,36 @@
 !
 !=====================================================================
 
+
   subroutine read_compute_parameters()
+
+! call this read_compute_parameters() routine to read the Par_file and get the necessary parameter setup for the computations
+!
+! note: we split the read_compute_parameters() routine into two separate routine calls
+!       to make it easier for testing the reading of the parameter file, i.e., read_parameter_file(), and
+!       calling the compute_parameters routine, i.e., rcp_compute_parameters(), by unit testing:
+!       > make tests
+!       for example for test programs in tests/meshfem3D/
+
+  use shared_parameters
+
+  implicit none
+
+  ! reads in Par_file values
+  call read_parameter_file()
+
+  ! sets parameters for computation
+  call rcp_compute_parameters()
+
+  end subroutine read_compute_parameters
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine rcp_compute_parameters()
+
+! sets parameters for computation based on Par_file settings
 
   use constants, only: &
     TINYVAL,R_EARTH_KM,DEGREES_TO_RADIANS, &
@@ -52,9 +81,6 @@
   integer :: last_doubling_layer, cut_doubling, nglob_int_surf_xi, nglob_int_surf_eta,nglob_ext_surf, &
               normal_doubling, nglob_center_edge, nglob_corner_edge, nglob_border_edge
   integer :: tmp_sum_nglob2D_xi, tmp_sum_nglob2D_eta,divider,nglob_edges_h,nglob_edge_v,to_remove
-
-  ! reads in Par_file values
-  call read_parameter_file()
 
   ! count the total number of sources in the CMTSOLUTION file
   call count_number_of_sources(NSOURCES)
@@ -253,7 +279,7 @@
      ATT5 = 1
   endif
 
-  end subroutine read_compute_parameters
+  end subroutine rcp_compute_parameters
 
 !
 !-------------------------------------------------------------------------------------------------

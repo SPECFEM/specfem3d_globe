@@ -36,7 +36,7 @@
   use manager_adios
   use manager_adios2
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm
 #endif
 
@@ -135,7 +135,7 @@
     call asdf_cleanup()
   endif
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! finalizes LIBXSMM
   call libxsmm_finalize()
 #endif

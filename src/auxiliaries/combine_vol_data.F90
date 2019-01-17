@@ -33,7 +33,7 @@ program combine_vol_data
 
   ! combines the database files on several slices.
   ! the local database file needs to have been collected onto the frontend (copy_local_database.pl)
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   use adios_read_mod
   use combine_vol_data_adios_mod
 #endif
@@ -109,7 +109,7 @@ program combine_vol_data
   character(len=MAX_STRING_LEN) :: pt_mesh_file1, pt_mesh_file2, mesh_file, em_mesh_file
 #endif
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   integer :: sizeprocs
   character(len=MAX_STRING_LEN) :: value_file_name, mesh_file_name
   integer(kind=8) :: value_handle, mesh_handle
@@ -124,7 +124,7 @@ program combine_vol_data
   ier = 0 ! avoids compiler warning in case of ADIOS and VTK output
 
   ! ADIOS MPI initialization
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   ! starts mpi
   call init_mpi()
   call world_size(sizeprocs)
@@ -148,7 +148,7 @@ program combine_vol_data
              stop 'This program needs that NSPEC_CRUST_MANTLE > NSPEC_OUTER_CORE and NSPEC_INNER_CORE'
 
   ! reads input arguments
-#ifndef ADIOS_INPUT
+#ifndef USE_ADIOS_INSTEAD_OF_MESH
   do i = 1, 7
     call get_command_argument(i,arg(i))
 
@@ -285,7 +285,7 @@ program combine_vol_data
   ! sets up ellipticity splines in order to remove ellipticity from point coordinates
   if (CORRECT_ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   call init_adios(value_file_name, mesh_file_name, value_handle, mesh_handle)
 #endif
 
@@ -315,7 +315,7 @@ program combine_vol_data
       iproc = node_list(it)
 
       print *, 'Reading slice ', iproc
-#ifndef ADIOS_INPUT
+#ifndef USE_ADIOS_INSTEAD_OF_MESH
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
@@ -394,7 +394,7 @@ program combine_vol_data
       print *, 'Reading slice ', iproc
 
       ! reads in kernel/data values
-#ifndef ADIOS_INPUT
+#ifndef USE_ADIOS_INSTEAD_OF_MESH
       write(prname_topo,'(a,i6.6,a,i1,a)') trim(in_topo_dir)//'/proc',iproc,'_reg',ir,'_'
       write(prname_file,'(a,i6.6,a,i1,a)') trim(in_file_dir)//'/proc',iproc,'_reg',ir,'_'
 
@@ -424,7 +424,7 @@ program combine_vol_data
 
       ! topology file
       ! reads in mesh coordinates and local-to-global mapping (ibool)
-#ifndef ADIOS_INPUT
+#ifndef USE_ADIOS_INSTEAD_OF_MESH
       data_file = trim(prname_topo) // 'solver_data.bin'
       !print *, trim(data_file)
 
@@ -692,7 +692,7 @@ program combine_vol_data
 #endif
   enddo
 
-#ifdef ADIOS_INPUT
+#ifdef USE_ADIOS_INSTEAD_OF_MESH
   call clean_adios(value_handle, mesh_handle)
   ! shuts down mpi
   call finalize_mpi()

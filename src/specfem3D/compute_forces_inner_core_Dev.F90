@@ -424,7 +424,7 @@
 
   use constants_solver, only: CUSTOM_REAL
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm, only: libxsmm_smm_5_25_5
 #endif
 
@@ -438,7 +438,7 @@
   ! local parameters
   integer :: i,j
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! matrix-matrix multiplication C = alpha A * B + beta C
   ! with A(n1,n2) 5x5-matrix, B(n2,n3) 5x25-matrix and C(n1,n3) 5x25-matrix
   ! static version using MNK="5 25, 5" ALPHA=1 BETA=0
@@ -489,7 +489,7 @@
 
   use constants_solver, only: CUSTOM_REAL
 
-#ifdef XSMM
+#ifdef USE_XSMM
   use my_libxsmm, only: libxsmm_smm_25_5_5
 #endif
 
@@ -503,7 +503,7 @@
   ! local parameters
   integer :: i,j
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! matrix-matrix multiplication C = alpha A * B + beta C
   ! with A(n1,n2) 25x5-matrix, B(n2,n3) 5x5-matrix and C(n1,n3) 25x5-matrix
   ! static version

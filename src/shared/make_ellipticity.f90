@@ -188,6 +188,7 @@
   ! spline epsilonval
   yp1 = 0.0d0
   ypn = (5.0d0/2.0d0)*(bom**2)/g_a-2.0d0*epsilonval(NR)
+
   call spline_construction(rspl,espl,nspl,yp1,ypn,espl2)
 
   end subroutine make_ellipticity
@@ -206,13 +207,14 @@
   implicit none
 
   real(kind=CUSTOM_REAL) :: x,y,z
-  integer nspl
-  double precision rspl(NR),espl(NR),espl2(NR)
-  double precision x1,y1,z1
+  integer :: nspl
+  double precision :: rspl(NR),espl(NR),espl2(NR)
 
-  double precision ell
-  double precision r,theta,phi,factor
-  double precision cost,p20
+  ! local parameters
+  double precision :: x1,y1,z1
+  double precision :: ell
+  double precision :: r,theta,phi,factor
+  double precision :: cost,p20
 
   ! gets spherical coordinates
   x1 = x

@@ -33,22 +33,19 @@
 ! used for iterative inversion procedures
 !--------------------------------------------------------------------------------------------------
 
-subroutine read_gll_model_adios(MGLL_V,NSPEC)
+  subroutine read_gll_model_adios()
 
   use constants
 
-  use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY,model_gll_variables
+  use shared_parameters, only: TRANSVERSE_ISOTROPY
 
   use adios_read_mod
   use adios_helpers_mod
   use manager_adios, only: open_file_adios_read,file_handle_adios
 
+  use model_gll_par
+
   implicit none
-
-  ! GLL model_variables
-  type (model_gll_variables) MGLL_V
-
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC
 
   ! local parameters
   integer :: local_dim
@@ -74,7 +71,7 @@ subroutine read_gll_model_adios(MGLL_V,NSPEC)
   ! Setup the ADIOS library to read the file
   call open_file_adios_read(file_name)
 
-  local_dim = NGLLX * NGLLY * NGLLZ * nspec(IREGION_CRUST_MANTLE)
+  local_dim = NGLLX * NGLLY * NGLLZ * MGLL_V%nspec
   start(1) = local_dim*myrank
   count(1) = local_dim
   call adios_selection_boundingbox (sel , 1, start, count)
@@ -84,32 +81,32 @@ subroutine read_gll_model_adios(MGLL_V,NSPEC)
     ! isotropic model
     ! vp mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/vp/array", 0, 1, &
-        MGLL_V%vp_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
+        MGLL_V%vp_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/vs/array", 0, 1, &
-        MGLL_V%vs_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
+        MGLL_V%vs_new(:,:,:,1:MGLL_V%nspec), adios_err)
   else
     ! transverse isotropic model
     ! WARNING previously wronly name 'vps' in the adios files
     ! vp mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/vpv/array", 0, 1, &
-        MGLL_V%vpv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
+        MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/vph/array", 0, 1, &
-        MGLL_V%vph_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
+        MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
     ! vs mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/vsv/array", 0, 1, &
-        MGLL_V%vsv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
+        MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec), adios_err)
     call adios_schedule_read(file_handle_adios, sel, "reg1/vsh/array", 0, 1, &
-        MGLL_V%vsh_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
+        MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
     ! eta mesh
     call adios_schedule_read(file_handle_adios, sel, "reg1/eta/array", 0, 1, &
-        MGLL_V%eta_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
+        MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec), adios_err)
   endif
 
   ! rho mesh
   call adios_schedule_read(file_handle_adios, sel, "reg1/rho/array", 0, 1, &
-      MGLL_V%rho_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE)), adios_err)
+      MGLL_V%rho_new(:,:,:,1:MGLL_V%nspec), adios_err)
 
   call adios_perform_reads(file_handle_adios, adios_err)
   call check_adios_err(myrank,adios_err)

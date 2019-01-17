@@ -651,9 +651,7 @@
   if (myrank == 0) print *,'reading model...'
 
   ! loads 3D models
-  call meshfem3D_models_broadcast(NSPEC_REGIONS,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-                                  R80,R220,R670,RCMB,RICB, &
-                                  LOCAL_PATH)
+  call meshfem3D_models_broadcast()
 
   ! user output
   if (myrank == 0) print *

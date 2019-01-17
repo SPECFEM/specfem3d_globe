@@ -33,51 +33,76 @@
 ! used for iterative inversion procedures
 !--------------------------------------------------------------------------------------------------
 
-  subroutine model_gll_broadcast(MGLL_V,NSPEC)
+  module model_gll_par
+
+  use constants, only: CUSTOM_REAL
+
+  ! GLL model_variables
+  type model_gll_variables
+    sequence
+    ! tomographic iteration model on GLL points
+    double precision :: scale_velocity,scale_density
+    ! isotropic model
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vs_new,vp_new,rho_new
+    ! transverse isotropic model
+    real(kind=CUSTOM_REAL),dimension(:,:,:,:),allocatable :: vsv_new,vpv_new, &
+      vsh_new,vph_new,eta_new
+    ! number of elements (crust/mantle elements)
+    integer :: nspec
+  end type model_gll_variables
+  type (model_gll_variables) :: MGLL_V
+
+  end module model_gll_par
+
+!
+!--------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_gll_broadcast()
 
 ! standard routine to setup model
 
   use constants
-  use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY,model_gll_variables
-  use meshfem3D_par, only: ADIOS_FOR_MODELS
+
+  use shared_parameters, only: TRANSVERSE_ISOTROPY,NSPEC_REGIONS,ADIOS_FOR_MODELS
+
+  use model_gll_par
 
   implicit none
-
-  ! GLL model_variables
-  type (model_gll_variables) MGLL_V
-
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC
 
   ! local parameters
   double precision :: scaleval
   real(kind=CUSTOM_REAL) :: minvalue,maxvalue,min_all,max_all
   integer :: ier
 
+  ! sets number of elements (crust/mantle region)
+  MGLL_V%nspec = NSPEC_REGIONS(IREGION_CRUST_MANTLE)
+
   ! allocates arrays
   ! differs for isotropic model or transverse isotropic models
   if (.not. TRANSVERSE_ISOTROPY) then
     ! isotropic model
-    allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
-              MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
+    allocate( MGLL_V%vp_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%vs_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vp_new,.. arrays')
   else
     ! transverse isotropic model
-    allocate( MGLL_V%vpv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
-              MGLL_V%vph_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
-              MGLL_V%vsv_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
-              MGLL_V%vsh_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), &
-              MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
+    allocate( MGLL_V%vpv_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%vph_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%vsv_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%vsh_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), &
+              MGLL_V%eta_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating vpv_new,.. arrays')
 
   endif
-  allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,NSPEC(IREGION_CRUST_MANTLE)), stat=ier)
+  allocate( MGLL_V%rho_new(NGLLX,NGLLY,NGLLZ,MGLL_V%nspec), stat=ier)
   if (ier /= 0 ) call exit_MPI(myrank,'Error allocating rho_new,.. arrays')
 
   ! reads in model files for each process
   if (ADIOS_FOR_MODELS) then
-    call read_gll_model_adios(MGLL_V,NSPEC)
+    call read_gll_model_adios()
   else
-    call read_gll_model(MGLL_V,NSPEC)
+    call read_gll_model()
   endif
 
   ! checks velocity range
@@ -183,6 +208,7 @@
   scaleval = dsqrt(PI*GRAV*RHOAV)
   MGLL_V%scale_velocity = 1000.0d0/(R_EARTH*scaleval)
   MGLL_V%scale_density =  1000.0d0/RHOAV
+
   if (.not. TRANSVERSE_ISOTROPY) then
       ! non-dimensionalize isotropic values
       MGLL_V%vp_new = MGLL_V%vp_new * MGLL_V%scale_velocity
@@ -206,17 +232,14 @@
 !
 
 
-  subroutine read_gll_model(MGLL_V,NSPEC)
+  subroutine read_gll_model()
 
   use constants
-  use meshfem3D_models_par, only: TRANSVERSE_ISOTROPY,model_gll_variables
+  use shared_parameters, only: TRANSVERSE_ISOTROPY
+
+  use model_gll_par
 
   implicit none
-
-  ! GLL model_variables
-  type (model_gll_variables) MGLL_V
-
-  integer, dimension(MAX_NUM_REGIONS) :: NSPEC
 
   ! local parameters
   integer :: ier
@@ -241,7 +264,7 @@
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vp.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(IIN) MGLL_V%vp_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    read(IIN) MGLL_V%vp_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! vs mesh
@@ -251,7 +274,7 @@
       print *,'Error opening: ',prname(1:len_trim(prname))//'vs.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(IIN) MGLL_V%vs_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    read(IIN) MGLL_V%vs_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
   else
@@ -264,7 +287,7 @@
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vpv.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(IIN) MGLL_V%vpv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    read(IIN) MGLL_V%vpv_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     open(unit=IIN,file=prname(1:len_trim(prname))//'vph.bin', &
@@ -273,7 +296,7 @@
       write(IMAIN,*) 'Error opening: ',prname(1:len_trim(prname))//'vph.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(IIN) MGLL_V%vph_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    read(IIN) MGLL_V%vph_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! vs mesh
@@ -283,7 +306,7 @@
       print *,'Error opening: ',prname(1:len_trim(prname))//'vsv.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(IIN) MGLL_V%vsv_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    read(IIN) MGLL_V%vsv_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     open(unit=IIN,file=prname(1:len_trim(prname))//'vsh.bin', &
@@ -292,7 +315,7 @@
       print *,'Error opening: ',prname(1:len_trim(prname))//'vsh.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(IIN) MGLL_V%vsh_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    read(IIN) MGLL_V%vsh_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
     ! eta mesh
@@ -302,7 +325,7 @@
       print *,'Error opening: ',prname(1:len_trim(prname))//'eta.bin'
       call exit_MPI(myrank,'Error model GLL')
     endif
-    read(IIN) MGLL_V%eta_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+    read(IIN) MGLL_V%eta_new(:,:,:,1:MGLL_V%nspec)
     close(IIN)
 
   endif
@@ -314,7 +337,75 @@
     print *,'Error opening: ',prname(1:len_trim(prname))//'rho.bin'
     call exit_MPI(myrank,'Error model GLL')
   endif
-  read(IIN) MGLL_V%rho_new(:,:,:,1:nspec(IREGION_CRUST_MANTLE))
+  read(IIN) MGLL_V%rho_new(:,:,:,1:MGLL_V%nspec)
   close(IIN)
 
   end subroutine read_gll_model
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine model_gll_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,ispec,i,j,k)
+
+! sets model parameters for specified GLL point (i,j,k,ispec)
+
+  use constants, only: myrank
+
+  use shared_parameters, only: TRANSVERSE_ISOTROPY
+
+  use model_gll_par
+
+  implicit none
+
+  double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,dvp,eta_aniso
+  integer,intent(in) :: ispec,i,j,k
+
+  ! local parameters
+  double precision :: vp,vs
+
+  ! isotropic model
+  if (.not. TRANSVERSE_ISOTROPY) then
+
+    !check
+    if (ispec > MGLL_V%nspec) then
+      call exit_MPI(myrank,'model GLL: ispec too big')
+    endif
+
+    ! takes stored GLL values from file
+    ! ( note that these values are non-dimensionalized)
+    vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
+    vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
+    rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+
+    ! isotropic model
+    vpv = vp
+    vph = vp
+    vsv = vs
+    vsh = vs
+    rho = rho
+    eta_aniso = 1.0d0
+
+  ! transverse isotropic model
+  else
+
+    !check
+    if (ispec > MGLL_V%nspec) then
+      call exit_MPI(myrank,'model GLL: ispec too big')
+    endif
+
+    ! takes stored GLL values from file
+    vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
+    vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
+    vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
+    vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
+    rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
+    eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
+
+  endif
+
+  ! no mantle vp perturbation
+  dvp = 0.0d0
+
+  end subroutine model_gll_impose_val
+

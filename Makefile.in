@@ -195,10 +195,9 @@ endif
 @COND_MIC_FALSE@MIC = no
 
 @COND_MIC_TRUE@MIC_FLAGS = -mmic #-qopt-report2 -qopt-report-phase=vec
-@COND_MIC_FALSE@MIC_FLAGS =
 
-FCFLAGS += $(MIC_FLAGS)
-CPPFLAGS += $(MIC_FLAGS)
+@COND_MIC_TRUE@FCFLAGS += $(MIC_FLAGS)
+@COND_MIC_TRUE@CPPFLAGS += $(MIC_FLAGS)
 
 #######################################
 ####
@@ -212,7 +211,7 @@ CPPFLAGS += $(MIC_FLAGS)
 @COND_XSMM_TRUE@XSMM = yes
 @COND_XSMM_FALSE@XSMM = no
 
-@COND_XSMM_TRUE@FCFLAGS += $(FC_DEFINE)XSMM -I@LIBXSMM_INC@
+@COND_XSMM_TRUE@FCFLAGS += $(FC_DEFINE)USE_XSMM -I@LIBXSMM_INC@
 @COND_XSMM_TRUE@MPILIBS += -L@LIBXSMM_LIBS@ -lxsmmf -lxsmm -L@BLAS_LIBS@ -lblas
 
 #######################################
@@ -225,10 +224,7 @@ CPPFLAGS += $(MIC_FLAGS)
 @COND_OMP_TRUE@OPENMP = yes
 @COND_OMP_FALSE@OPENMP = no
 
-@COND_OMP_TRUE@OMP_FLAGS = @OMP_FCFLAGS@ $(FC_DEFINE)USE_OPENMP #$(FC_DEFINE)USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
-@COND_OMP_FALSE@OMP_FLAGS =
-
-FCFLAGS += $(OMP_FLAGS)
+@COND_OMP_TRUE@FCFLAGS += $(FC_DEFINE)USE_OPENMP @OMP_FCFLAGS@  #$(FC_DEFINE)USE_OPENMP_ATOMIC_INSTEAD_OF_CRITICAL
 
 #######################################
 ####
@@ -240,9 +236,9 @@ FCFLAGS += $(OMP_FLAGS)
 @COND_VTK_TRUE@VTK = yes
 @COND_VTK_FALSE@VTK = no
 
-CPPFLAGS += @VTK_INCLUDES@
-LDFLAGS += @VTK_LDFLAGS@
-MPILIBS += @VTK_LIBS@
+@COND_VTK_TRUE@CPPFLAGS += @VTK_INCLUDES@
+@COND_VTK_TRUE@LDFLAGS += @VTK_LDFLAGS@
+@COND_VTK_TRUE@MPILIBS += @VTK_LIBS@
 
 #######################################
 ####
@@ -254,11 +250,8 @@ MPILIBS += @VTK_LIBS@
 @COND_ADIOS_TRUE@ADIOS = yes
 @COND_ADIOS_FALSE@ADIOS = no
 
-@COND_ADIOS_TRUE@ADIOS_DEF = $(FC_DEFINE)ADIOS_INPUT
-@COND_ADIOS_FALSE@ADIOS_DEF =
-
-FCFLAGS += @ADIOS_FCFLAGS@
-MPILIBS += @ADIOS_LIBS@
+@COND_ADIOS_TRUE@FCFLAGS += $(FC_DEFINE)USE_ADIOS @ADIOS_FCFLAGS@
+@COND_ADIOS_TRUE@MPILIBS += @ADIOS_LIBS@
 
 #######################################
 ####
@@ -295,6 +288,7 @@ MPILIBS += @ASDF_LIBS@
 #### with configure: ./configure --with-vec ..
 ####
 #######################################
+
 @COND_VECTORIZATION_TRUE@FORCE_VECTORIZATION = yes
 @COND_VECTORIZATION_FALSE@FORCE_VECTORIZATION = no
 
@@ -304,12 +298,14 @@ MPILIBS += @ASDF_LIBS@
 #### with configure: ./configure --with-cem CEM_LIBS=.. CEM_FCFLAGS=..
 ####
 #######################################
+# (requires Netcdf support)
 
 @COND_CEM_TRUE@CEM = yes
 @COND_CEM_FALSE@CEM = no
 
-FCFLAGS += @CEM_FCFLAGS@
-MPILIBS += @CEM_LIBS@
+# adds compiler flag
+@COND_CEM_TRUE@FCFLAGS += ${FC_DEFINE}USE_CEM @CEM_FCFLAGS@
+@COND_CEM_TRUE@MPILIBS += @CEM_LIBS@
 
 
 #######################################

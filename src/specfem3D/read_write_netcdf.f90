@@ -27,7 +27,7 @@
 
 
 ! note: only called for Comprehensive Earth Model (CEM) routines
-!       check with: #ifdef CEM
+!       check with: #ifdef USE_CEM
 
 
   subroutine write_coordinates_netcdf(fName)

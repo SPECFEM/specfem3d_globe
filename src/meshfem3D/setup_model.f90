@@ -54,9 +54,7 @@
                       NSPEC2D_ETA_FACE,NGLOB1D_RADIAL_CORNER)
 
   ! distributes 3D models
-  call meshfem3D_models_broadcast(NSPEC_REGIONS,MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-                                  R80,R220,R670,RCMB,RICB, &
-                                  LOCAL_PATH)
+  call meshfem3D_models_broadcast()
 
   ! infos about additional mesh optimizations
   if (myrank == 0) then

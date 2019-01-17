@@ -1022,7 +1022,7 @@ end module specfem_par_movie
 
 !=====================================================================
 
-#ifdef XSMM
+#ifdef USE_XSMM
 
 module my_libxsmm
 

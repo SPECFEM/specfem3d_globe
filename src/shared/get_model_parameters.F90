@@ -47,7 +47,7 @@
   use constants
 
   use shared_parameters, only: MODEL, &
-    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL, &
+    REFERENCE_1D_MODEL,REFERENCE_CRUSTAL_MODEL,THREE_D_MODEL,MODEL_GLL, &
     ANISOTROPIC_3D_MANTLE,ANISOTROPIC_INNER_CORE,ATTENUATION_3D, &
     CASE_3D,CRUSTAL,HETEROGEN_3D_MANTLE,HONOR_1D_SPHERICAL_MOHO, &
     ISOTROPIC_3D_MANTLE,ONE_CRUST,TRANSVERSE_ISOTROPY, &
@@ -203,6 +203,7 @@
   HETEROGEN_3D_MANTLE = .false.
   ISOTROPIC_3D_MANTLE = .false.
   HONOR_1D_SPHERICAL_MOHO = .false.
+  MODEL_GLL = .false.
 
   ! no CEM by default
   CEM_REQUEST = .false.
@@ -419,7 +420,7 @@
     THREE_D_MODEL = THREE_D_MODEL_S362ANI
     TRANSVERSE_ISOTROPY = .true.
 
-#ifdef CEM
+#ifdef USE_CEM
   case ('cem_request')
     CEM_REQUEST         = .true.
     TRANSVERSE_ISOTROPY = .true.
@@ -429,8 +430,13 @@
     TRANSVERSE_ISOTROPY = .true.
 
   case ('cem_gll')
+    MODEL_GLL = .true.
     THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.
+#else
+  case ('cem_request','cem_accept','cem_gll')
+    print *,'Error model ',trim(MODEL),': package compiled without CEM model support. Please re-configure with --with-cem support.'
+    stop 'Invalid CEM model requested, compiled without CEM support'
 #endif
 
   case ('ppm')
@@ -451,16 +457,13 @@
     CRUSTAL = .true.
     ISOTROPIC_3D_MANTLE = .true.
     ONE_CRUST = .true.
+    MODEL_GLL = .true.
     REFERENCE_1D_MODEL = GLL_REFERENCE_1D_MODEL
     THREE_D_MODEL = THREE_D_MODEL_GLL
     TRANSVERSE_ISOTROPY = .true.
-    ! note: after call to this routine we will set
-    ! mgll_v%model_gll flag and reset
-    ! THREE_D_MODEL = THREE_D_MODEL_S29EA
-    ! (not done here because we will use mgll_v%model_gll flag to identify this
-    !  model, based upon the S29EA model, but putting mgll_v as parameter to this
-    !  routine involves too many changes. )
-
+    ! note: after call to this routine we will reset
+    !       THREE_D_MODEL = THREE_D_MODEL_S29EA
+    !       to initialize 3D mesh structure based on the initial 3D model (like 420/660 topography,..)
   case ('gapp2')
     CASE_3D = .true.
     CRUSTAL = .true.

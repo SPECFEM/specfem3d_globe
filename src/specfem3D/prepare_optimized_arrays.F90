@@ -50,7 +50,7 @@
   ! prepare fused array for computational kernel
   call prepare_fused_array()
 
-#ifdef XSMM
+#ifdef USE_XSMM
   ! prepares LIBXSMM small matrix multiplication functions
   call prepare_xsmm()
 #endif
@@ -525,7 +525,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-#ifdef XSMM
+#ifdef USE_XSMM
   subroutine prepare_xsmm()
 
   use constants, only: CUSTOM_REAL,SIZE_DOUBLE,m1,m2,IMAIN

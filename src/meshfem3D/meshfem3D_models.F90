@@ -25,43 +25,18 @@
 !
 !=====================================================================
 
-  subroutine meshfem3D_models_broadcast(NSPEC, &
-                                        MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD, &
-                                        R80,R220,R670,RCMB,RICB, &
-                                        LOCAL_PATH)
+  subroutine meshfem3D_models_broadcast()
 
 ! preparing model parameter coefficients on all processes
+
+  use shared_parameters, only: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD,LOCAL_PATH,R80,R220,R670,RCMB,RICB
 
   use meshfem3D_models_par
 
   implicit none
 
-  integer, dimension(MAX_NUM_REGIONS),intent(in) :: NSPEC
-
-  integer,intent(in) :: MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD
-
-  double precision,intent(in) :: R80,R220,R670,RCMB,RICB
-
-  character(len=MAX_STRING_LEN),intent(in) :: LOCAL_PATH
-
   ! local parameters
   integer :: ier
-
-!---
-!
-! ADD YOUR MODEL HERE
-!
-!---
-
-  ! GLL model uses S29EA as reference 3D model
-  if (THREE_D_MODEL == THREE_D_MODEL_GLL) then
-    ! sets to initial reference model from which iterations started
-    THREE_D_MODEL = GLL_REFERENCE_MODEL
-    ! sets flag to use GLL model
-    MGLL_V%MODEL_GLL = .true.
-  else
-    MGLL_V%MODEL_GLL = .false.
-  endif
 
   ! sets up spline coefficients for ellipticity
   if (ELLIPTICITY) call make_ellipticity(nspl,rspl,espl,espl2,ONE_CRUST)
@@ -79,7 +54,59 @@
     call model_topo_bathy_broadcast(ibathy_topo,LOCAL_PATH)
   endif
 
+!---
+!
+! ADD YOUR MODEL HERE
+!
+!---
+
   ! reads 1D reference models
+  call meshfem3D_reference_model_broadcast()
+
+  ! reads in 3D mantle models
+  call meshfem3D_mantle_broadcast()
+
+  ! reads in crustal model
+  call meshfem3D_crust_broadcast()
+
+  ! attenuation
+  if (ATTENUATION) then
+    call model_attenuation_broadcast(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+
+    ! 3D attenuation
+    if (ATTENUATION_3D) then
+      ! Colleen's model defined originally between 24.4km and 650km
+      call model_atten3D_QRFSI12_broadcast()
+    else
+      ! sets up attenuation coefficients according to the chosen, "pure" 1D model
+      ! (including their 1D-crustal profiles)
+      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,CRUSTAL)
+    endif
+
+  endif
+
+  end subroutine meshfem3D_models_broadcast
+
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine meshfem3D_reference_model_broadcast()
+
+! preparing model parameter coefficients on all processes for reference models
+
+  use meshfem3D_models_par
+
+  implicit none
+
+!---
+!
+! ADD YOUR MODEL HERE
+!
+!---
+
   ! re-defines/initializes models 1066a and ak135 and ref
   ! ( with possible external crustal model: if CRUSTAL is set to true
   !    it strips the 1-D crustal profile and replaces it with mantle properties)
@@ -97,8 +124,34 @@
       call model_sea1d_broadcast(CRUSTAL)
   end select
 
+  end subroutine meshfem3D_reference_model_broadcast
 
-  ! reads in 3D mantle models
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+
+  subroutine meshfem3D_mantle_broadcast()
+
+! preparing model parameter coefficients on all processes for mantle models
+
+  use meshfem3D_models_par
+
+  implicit none
+
+!---
+!
+! ADD YOUR MODEL HERE
+!
+!---
+
+  ! GLL model uses S29EA as reference 3D model
+  if (THREE_D_MODEL == THREE_D_MODEL_GLL) then
+    ! sets to initial reference model from which iterations started
+    THREE_D_MODEL = GLL_REFERENCE_MODEL
+  endif
+
+  ! 3D mantle models
   if (ISOTROPIC_3D_MANTLE) then
 
     select case (THREE_D_MODEL)
@@ -160,37 +213,17 @@
 
   ! Enclose this in an ifdef so we don't link to netcdf
   ! if we don't need it.
-#ifdef CEM
+#ifdef USE_CEM
   if (CEM_REQUEST .or. CEM_ACCEPT) &
     call model_cem_broadcast()
 #endif
 
-  ! crustal model
-  if (CRUSTAL) &
-    call meshfem3D_crust_broadcast()
-
   ! GLL model
-  if (MGLL_V%MODEL_GLL ) &
-    call model_gll_broadcast(MGLL_V,NSPEC)
+  if (MODEL_GLL) &
+    call model_gll_broadcast()
 
-  ! attenuation
-  if (ATTENUATION) then
-    call model_attenuation_broadcast(MIN_ATTENUATION_PERIOD,MAX_ATTENUATION_PERIOD)
+  end subroutine meshfem3D_mantle_broadcast
 
-    ! 3D attenuation
-    if (ATTENUATION_3D) then
-      ! Colleen's model defined originally between 24.4km and 650km
-      call model_atten3D_QRFSI12_broadcast()
-    else
-      ! sets up attenuation coefficients according to the chosen, "pure" 1D model
-      ! (including their 1D-crustal profiles)
-      call model_attenuation_setup(REFERENCE_1D_MODEL,RICB,RCMB,R670,R220,R80,CRUSTAL)
-    endif
-
-  endif
-
-
-  end subroutine meshfem3D_models_broadcast
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -199,11 +232,14 @@
 
   subroutine meshfem3D_crust_broadcast()
 
-! preparing model parameter coefficients on all processes
+! preparing model parameter coefficients on all processes for crustal models
 
   use meshfem3D_models_par
 
   implicit none
+
+  ! checks if anything to do
+  if (.not. CRUSTAL) return
 
 !---
 !
@@ -246,7 +282,6 @@
       stop 'crustal model type not defined'
 
   end select
-
 
   end subroutine meshfem3D_crust_broadcast
 
@@ -397,7 +432,7 @@
                               xmesh,ymesh,zmesh,r, &
                               c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26, &
                               c33,c34,c35,c36,c44,c45,c46,c55,c56,c66 &
-#ifdef CEM
+#ifdef USE_CEM
                               ,ispec,i,j,k &
 #endif
                               )
@@ -418,7 +453,7 @@
   double precision :: c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33, &
                    c34,c35,c36,c44,c45,c46,c55,c56,c66
 
-#ifdef CEM
+#ifdef USE_CEM
   ! CEM needs these to determine iglob
   integer, intent (in) :: ispec, i, j, k
 #endif
@@ -724,7 +759,7 @@
     endif
   endif ! ANISOTROPIC_3D_MANTLE
 
-#ifdef CEM
+#ifdef USE_CEM
   if (CEM_ACCEPT) then
     call request_cem (vsh, vsv, vph, vpv, rho, iregion_code, ispec, i, j, k)
   endif
@@ -1122,56 +1157,16 @@
 
   implicit none
 
-  double precision :: vpv,vph,vsv,vsh,rho,dvp,eta_aniso
-  integer :: iregion_code,ispec,i,j,k
+  double precision,intent(inout) :: vpv,vph,vsv,vsh,rho,dvp,eta_aniso
+  integer,intent(in) :: iregion_code,ispec,i,j,k
 
-  ! local parameters
-  double precision :: vp,vs
+  ! checks if anything to do
+  if (.not. MODEL_GLL) return
+  ! only valid for crust/mantle region at the moment...
+  if (iregion_code /= IREGION_CRUST_MANTLE) return
 
-  ! model GLL
-  if (MGLL_V%MODEL_GLL .and. iregion_code == IREGION_CRUST_MANTLE) then
-
-    ! isotropic model
-    if (.not. TRANSVERSE_ISOTROPY) then
-
-      !check
-      if (ispec > size(MGLL_V%vp_new(1,1,1,:))) then
-        call exit_MPI(myrank,'model GLL: ispec too big')
-      endif
-
-      ! takes stored GLL values from file
-      ! ( note that these values are non-dimensionalized)
-      vp = dble( MGLL_V%vp_new(i,j,k,ispec) )
-      vs = dble( MGLL_V%vs_new(i,j,k,ispec) )
-      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
-      ! isotropic model
-      vpv = vp
-      vph = vp
-      vsv = vs
-      vsh = vs
-      rho = rho
-      eta_aniso = 1.0d0
-
-    ! transverse isotropic model
-    else
-
-      !check
-      if (ispec > size(MGLL_V%vpv_new(1,1,1,:))) then
-        call exit_MPI(myrank,'model GLL: ispec too big')
-      endif
-
-      ! takes stored GLL values from file
-      vph = dble( MGLL_V%vph_new(i,j,k,ispec) )
-      vpv = dble( MGLL_V%vpv_new(i,j,k,ispec) )
-      vsh = dble( MGLL_V%vsh_new(i,j,k,ispec) )
-      vsv = dble( MGLL_V%vsv_new(i,j,k,ispec) )
-      rho = dble( MGLL_V%rho_new(i,j,k,ispec) )
-      eta_aniso = dble( MGLL_V%eta_new(i,j,k,ispec) )
-    endif
-    ! no mantle vp perturbation
-    dvp = 0.0d0
-
-  endif ! MODEL_GLL
+  ! over-impose values from model GLL values
+  call model_gll_impose_val(vpv,vph,vsv,vsh,rho,dvp,eta_aniso,ispec,i,j,k)
 
   end subroutine meshfem3D_models_impose_val
 
