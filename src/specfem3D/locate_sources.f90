@@ -29,60 +29,81 @@
 !----  locate_sources finds the correct position of the sources
 !----
 
-  subroutine locate_sources(nspec,nglob,ibool, &
-                            xstore,ystore,zstore, &
-                            ELLIPTICITY,min_tshift_src_original)
+  subroutine locate_sources()
 
   use constants_solver
 
   use shared_input_parameters, only: OUTPUT_FILES
 
   use specfem_par, only: &
-    NSOURCES, &
-    tshift_src,theta_source,phi_source, &
-    DT,hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
+    NSOURCES,DT, &
     rspl,espl,espl2,nspl,ibathy_topo, &
     LOCAL_TMP_PATH,SIMULATION_TYPE,TOPOGRAPHY, &
     xigll,yigll,zigll, &
+    SAVE_SOURCE_MASK
+
+  ! sources
+  use specfem_par,only: &
+    hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
     xi_source,eta_source,gamma_source,nu_source, &
     islice_selected_source,ispec_selected_source, &
-    SAVE_SOURCE_MASK, &
+    tshift_src,theta_source,phi_source
+
+  ! forces
+  use specfem_par,only: &
     USE_FORCE_POINT_SOURCE,force_stf,factor_force_source, &
     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
+
+  use specfem_par, only: &
+    nspec => NSPEC_CRUST_MANTLE
+
+  use specfem_par_crustmantle, only: &
+    ibool => ibool_crust_mantle, &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+
+  ! for point search
+  use specfem_par,only: &
+    iaddx,iaddy,iaddr,typical_size_squared, &
+    lat_min,lat_max,lon_min,lon_max,xyz_midpoints
 
   use specfem_par_movie, only: vtkdata_source_x,vtkdata_source_y,vtkdata_source_z
 
   implicit none
 
-  integer,intent(in) :: nspec,nglob
-  integer,intent(in) :: ibool(NGLLX,NGLLY,NGLLZ,nspec)
-
-  ! arrays containing coordinates of the points
-  real(kind=CUSTOM_REAL), dimension(nglob),intent(in) :: xstore,ystore,zstore
-
-  logical,intent(in) :: ELLIPTICITY
-
-  double precision,intent(out) :: min_tshift_src_original
-
   ! local parameters
-  integer :: isource
   integer :: iprocloop
+  integer :: isource
   integer :: i,j,k,ispec,iglob
   integer :: ier
 
-  double precision :: ell
-  double precision :: elevation
-  double precision :: r0,dcost,p20
-  double precision :: theta,phi
-  double precision :: dist_squared,typical_size_squared
-  double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta
-
   ! topology of the control points of the surface element
   integer :: iax,iay,iaz
-  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
 
   ! coordinates of the control points of the surface element
   double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
+
+  ! point locations
+  double precision, allocatable, dimension(:,:) :: xyz_target
+  double precision, allocatable, dimension(:) :: x_found,y_found,z_found
+  double precision, allocatable, dimension(:,:) :: x_found_all,y_found_all,z_found_all
+
+  double precision, dimension(NSOURCES) :: final_distance
+
+  double precision :: x_target,y_target,z_target
+
+  integer :: isource_in_this_subset,isources_already_done
+  integer, dimension(:), allocatable :: ispec_selected_source_subset
+  double precision, dimension(:), allocatable :: final_distance_subset
+
+  integer, dimension(:,:), allocatable :: ispec_selected_source_all
+
+  double precision, dimension(:,:), allocatable :: xi_source_all,eta_source_all,gamma_source_all, &
+     final_distance_all
+
+  double precision, dimension(:), allocatable :: xi_source_subset,eta_source_subset,gamma_source_subset
+
+  double precision, dimension(NSOURCES) :: srclat,srclon,srcdepth
+  double precision, dimension(6,NSOURCES) :: moment_tensor
 
   integer :: iter_loop
   integer :: ia
@@ -92,28 +113,18 @@
   double precision :: gammax,gammay,gammaz
   double precision :: dgamma
 
-  double precision, dimension(NSOURCES) :: final_distance_source
-  double precision, dimension(:), allocatable :: final_distance_source_subset
+  double precision :: lat,lon,radius,depth,r_target
 
-  double precision :: x_target_source,y_target_source,z_target_source
-  double precision :: r_target_source
+  double precision :: theta,phi
+  double precision :: sint,cost,sinp,cosp
 
-  integer :: isources_already_done,isource_in_this_subset
-  integer, dimension(:), allocatable :: ispec_selected_source_subset
+  double precision :: ell
+  double precision :: elevation
+  double precision :: r0,p20
+  double precision :: dist_squared
+  double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta
 
-  integer, dimension(:,:), allocatable :: ispec_selected_source_all
-  double precision, dimension(:,:), allocatable :: xi_source_all,eta_source_all,gamma_source_all, &
-     final_distance_source_all,x_found_source_all,y_found_source_all,z_found_source_all
-
-  double precision, dimension(:), allocatable :: xi_source_subset,eta_source_subset,gamma_source_subset
-
-  double precision, dimension(NSOURCES) :: lat,long,depth
-  double precision, dimension(6,NSOURCES) :: moment_tensor
-  double precision :: radius
-
-  double precision, dimension(:), allocatable :: x_found_source,y_found_source,z_found_source
-  double precision :: r_found_source
-  double precision :: st,ct,sp,cp
+  double precision :: r_found
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp
   double precision :: colat_source
   double precision :: distmin_squared,distmin_not_squared
@@ -121,10 +132,10 @@
   integer :: ix_initial_guess_source,iy_initial_guess_source,iz_initial_guess_source
   integer :: NSOURCES_SUBSET_current_size
 
-  logical :: located_target
-
   integer :: iorientation
-  double precision :: stazi,stdip,thetan,phin,n(3)
+  double precision :: stazi,stdip
+  double precision :: n(3),thetan,phin
+
   integer :: imin,imax,jmin,jmax,kmin,kmax
   double precision :: f0,t0_ricker,scaleF
 
@@ -157,54 +168,14 @@
 
   ! make sure we clean the future final array
   ispec_selected_source(:) = 0
-  final_distance_source(:) = HUGEVAL
+  final_distance(:) = HUGEVAL
 
   ! read all the sources
-  if (USE_FORCE_POINT_SOURCE) then
-    ! point forces
-    if (myrank == 0) then
-      ! only master process reads in FORCESOLUTION file
-      call get_force(tshift_src,hdur,lat,long,depth,DT,NSOURCES, &
-                     min_tshift_src_original,force_stf,factor_force_source, &
-                     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
-    endif
-    ! broadcasts specific point force infos
-    call bcast_all_i(force_stf,NSOURCES)
-    call bcast_all_dp(factor_force_source,NSOURCES)
-    call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)
-    call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)
-    call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)
-  else
-    ! CMT moment tensors
-    if (myrank == 0) then
-      ! only master process reads in CMTSOLUTION file
-      call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,lat,long,depth,moment_tensor, &
-                   DT,NSOURCES,min_tshift_src_original)
-    endif
-    ! broadcast ispecific moment tensor infos
-    call bcast_all_dp(moment_tensor,6*NSOURCES)
-  endif
-
-  ! broadcast the information read on the master to the nodes
-  call bcast_all_dp(tshift_src,NSOURCES)
-  call bcast_all_dp(hdur,NSOURCES)
-  call bcast_all_dp(lat,NSOURCES)
-  call bcast_all_dp(long,NSOURCES)
-  call bcast_all_dp(depth,NSOURCES)
-  call bcast_all_singledp(min_tshift_src_original)
-
-  ! define topology of the control element
-  call hex_nodes(iaddx,iaddy,iaddr)
-
-  ! compute typical size of elements at the surface
-  typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.0 * NEX_XI_VAL)
-
-  ! use 10 times the distance as a criterion for source detection
-  typical_size_squared = (10. * typical_size_squared)**2
+  call read_source_locations()
 
   ! initializes source mask
   if (SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3) then
-    allocate(mask_source(NGLLX,NGLLY,NGLLZ,NSPEC),stat=ier)
+    allocate(mask_source(NGLLX,NGLLY,NGLLZ,nspec),stat=ier)
     if (ier /= 0 ) call exit_mpi(myrank,'Error allocating mask source array')
     mask_source(:,:,:,:) = 1.0_CUSTOM_REAL
   endif
@@ -227,14 +198,15 @@
     NSOURCES_SUBSET_current_size = min(NSOURCES_SUBSET_MAX, NSOURCES - isources_already_done)
 
     ! allocate arrays specific to each subset
-    allocate(final_distance_source_subset(NSOURCES_SUBSET_current_size), &
-             ispec_selected_source_subset(NSOURCES_SUBSET_current_size), &
+    allocate(ispec_selected_source_subset(NSOURCES_SUBSET_current_size), &
              xi_source_subset(NSOURCES_SUBSET_current_size), &
              eta_source_subset(NSOURCES_SUBSET_current_size), &
              gamma_source_subset(NSOURCES_SUBSET_current_size), &
-             x_found_source(NSOURCES_SUBSET_current_size), &
-             y_found_source(NSOURCES_SUBSET_current_size), &
-             z_found_source(NSOURCES_SUBSET_current_size),stat=ier)
+             x_found(NSOURCES_SUBSET_current_size), &
+             y_found(NSOURCES_SUBSET_current_size), &
+             z_found(NSOURCES_SUBSET_current_size), &
+             final_distance_subset(NSOURCES_SUBSET_current_size), &
+             xyz_target(NDIM,NSOURCES_SUBSET_current_size),stat=ier)
     if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary source arrays')
 
     ! arrays to collect data
@@ -243,10 +215,10 @@
                xi_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
                eta_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
                gamma_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               final_distance_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               x_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               y_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
-               z_found_source_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1),stat=ier)
+               x_found_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
+               y_found_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
+               z_found_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1), &
+               final_distance_all(NSOURCES_SUBSET_current_size,0:NPROCTOT_VAL-1),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary source arrays for gather')
     else
       ! dummy arrays
@@ -254,19 +226,12 @@
                xi_source_all(1,1), &
                eta_source_all(1,1), &
                gamma_source_all(1,1), &
-               final_distance_source_all(1,1), &
-               x_found_source_all(1,1), &
-               y_found_source_all(1,1), &
-               z_found_source_all(1,1),stat=ier)
+               x_found_all(1,1), &
+               y_found_all(1,1), &
+               z_found_all(1,1), &
+               final_distance_all(1,1),stat=ier)
       if (ier /= 0 ) call exit_MPI(myrank,'Error allocating temporary source dummy arrays for gather')
     endif
-    ! use -1 as a flag to detect if gather fails for some reason
-    ispec_selected_source_all(:,:) = -1
-
-    ! make sure we clean the subset array before the gather
-    ispec_selected_source_subset(:) = 0
-    final_distance_source_subset(:) = HUGEVAL
-    final_distance_source_all(:,:) = HUGEVAL
 
     ! loop over sources within this subset
     do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
@@ -274,11 +239,24 @@
       ! mapping from source number in current subset to real source number in all the subsets
       isource = isource_in_this_subset + isources_already_done
 
-      ! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
-      call lat_2_geocentric_colat_dble(lat(isource),theta)
+      ! source lat/lon in degrees
+      lat = srclat(isource)
+      lon = srclon(isource)
 
-      phi = long(isource)*DEGREES_TO_RADIANS
+      ! limits longitude to [0.0,360.0]
+      if (lon < 0.d0 ) lon = lon + 360.d0
+      if (lon > 360.d0 ) lon = lon - 360.d0
+
+      ! convert geographic latitude lat (degrees) to geocentric colatitude theta (radians)
+      call lat_2_geocentric_colat_dble(lat,theta)
+
+      phi = lon*DEGREES_TO_RADIANS
       call reduce(theta,phi)
+
+      sint = sin(theta)
+      cost = cos(theta)
+      sinp = sin(phi)
+      cosp = cos(phi)
 
       ! get the moment tensor
       Mrr = moment_tensor(1,isource)
@@ -289,26 +267,25 @@
       Mtp = moment_tensor(6,isource)
 
       ! convert from a spherical to a Cartesian representation of the moment tensor
-      st = dsin(theta)
-      ct = dcos(theta)
-      sp = dsin(phi)
-      cp = dcos(phi)
+      Mxx(isource) = sint*sint*cosp*cosp*Mrr + cost*cost*cosp*cosp*Mtt + sinp*sinp*Mpp &
+          + 2.0d0*sint*cost*cosp*cosp*Mrt - 2.0d0*sint*sinp*cosp*Mrp - 2.0d0*cost*sinp*cosp*Mtp
 
-      Mxx(isource) = st*st*cp*cp*Mrr+ct*ct*cp*cp*Mtt+sp*sp*Mpp &
-          +2.0d0*st*ct*cp*cp*Mrt-2.0d0*st*sp*cp*Mrp-2.0d0*ct*sp*cp*Mtp
-      Myy(isource) = st*st*sp*sp*Mrr+ct*ct*sp*sp*Mtt+cp*cp*Mpp &
-          +2.0d0*st*ct*sp*sp*Mrt+2.0d0*st*sp*cp*Mrp+2.0d0*ct*sp*cp*Mtp
-      Mzz(isource) = ct*ct*Mrr+st*st*Mtt-2.0d0*st*ct*Mrt
-      Mxy(isource) = st*st*sp*cp*Mrr+ct*ct*sp*cp*Mtt-sp*cp*Mpp &
-          +2.0d0*st*ct*sp*cp*Mrt+st*(cp*cp-sp*sp)*Mrp+ct*(cp*cp-sp*sp)*Mtp
-      Mxz(isource) = st*ct*cp*Mrr-st*ct*cp*Mtt &
-          +(ct*ct-st*st)*cp*Mrt-ct*sp*Mrp+st*sp*Mtp
-      Myz(isource) = st*ct*sp*Mrr-st*ct*sp*Mtt &
-          +(ct*ct-st*st)*sp*Mrt+ct*cp*Mrp-st*cp*Mtp
+      Myy(isource) = sint*sint*sinp*sinp*Mrr + cost*cost*sinp*sinp*Mtt + cosp*cosp*Mpp &
+          + 2.0d0*sint*cost*sinp*sinp*Mrt + 2.0d0*sint*sinp*cosp*Mrp + 2.0d0*cost*sinp*cosp*Mtp
+
+      Mzz(isource) = cost*cost*Mrr + sint*sint*Mtt - 2.0d0*sint*cost*Mrt
+
+      Mxy(isource) = sint*sint*sinp*cosp*Mrr + cost*cost*sinp*cosp*Mtt - sinp*cosp*Mpp &
+          + 2.0d0*sint*cost*sinp*cosp*Mrt + sint*(cosp*cosp-sinp*sinp)*Mrp + cost*(cosp*cosp-sinp*sinp)*Mtp
+
+      Mxz(isource) = sint*cost*cosp*Mrr - sint*cost*cosp*Mtt &
+          + (cost*cost-sint*sint)*cosp*Mrt - cost*sinp*Mrp + sint*sinp*Mtp
+
+      Myz(isource) = sint*cost*sinp*Mrr - sint*cost*sinp*Mtt &
+          + (cost*cost-sint*sint)*sinp*Mrt + cost*cosp*Mrp - sint*cosp*Mtp
 
       ! record three components for each station
       do iorientation = 1,3
-
         !   North
         if (iorientation == 1) then
           stazi = 0.d0
@@ -332,114 +309,149 @@
         ! we use the same convention as in Harvard normal modes for the orientation
 
         !   vertical component
-        n(1) = dcos(thetan)
+        n(1) = cos(thetan)
         !   N-S component
-        n(2) = - dsin(thetan)*dcos(phin)
+        n(2) = - sin(thetan)*cos(phin)
         !   E-W component
-        n(3) = dsin(thetan)*dsin(phin)
+        n(3) = sin(thetan)*sin(phin)
 
         !   get the Cartesian components of n in the model: nu
-        nu_source(iorientation,1,isource) = n(1)*st*cp + n(2)*ct*cp - n(3)*sp
-        nu_source(iorientation,2,isource) = n(1)*st*sp + n(2)*ct*sp + n(3)*cp
-        nu_source(iorientation,3,isource) = n(1)*ct - n(2)*st
-
+        nu_source(iorientation,1,isource) = n(1)*sint*cosp + n(2)*cost*cosp - n(3)*sinp
+        nu_source(iorientation,2,isource) = n(1)*sint*sinp + n(2)*cost*sinp + n(3)*cosp
+        nu_source(iorientation,3,isource) = n(1)*cost - n(2)*sint
       enddo
+
+      ! point depth (in m)
+      depth = srcdepth(isource)*1000.0d0
 
       ! normalized source radius
       r0 = R_UNIT_SPHERE
 
       ! finds elevation of position
       if (TOPOGRAPHY) then
-        call get_topo_bathy(lat(isource),long(isource),elevation,ibathy_topo)
+        call get_topo_bathy(lat,lon,elevation,ibathy_topo)
         r0 = r0 + elevation/R_EARTH
       endif
-      if (ELLIPTICITY) then
-        dcost = dcos(theta)
-! this is the Legendre polynomial of degree two, P2(cos(theta)), see the discussion above eq (14.4) in Dahlen and Tromp (1998)
-        p20 = 0.5d0*(3.0d0*dcost*dcost-1.0d0)
-        radius = r0 - depth(isource)*1000.0d0/R_EARTH
-! get ellipticity using spline evaluation
+
+      ! ellipticity
+      if (ELLIPTICITY_VAL) then
+        ! this is the Legendre polynomial of degree two, P2(cos(theta)),
+        ! see the discussion above eq (14.4) in Dahlen and Tromp (1998)
+        p20 = 0.5d0*(3.0d0*cost*cost-1.0d0)
+
+        ! todo: check if we need radius or r0 for evaluation below...
+        !       (receiver location routine takes r0)
+        radius = r0 - depth/R_EARTH
+
+        ! get ellipticity using spline evaluation
         call spline_evaluation(rspl,espl,espl2,nspl,radius,ell)
-! this is eq (14.4) in Dahlen and Tromp (1998)
+
+        ! this is eq (14.4) in Dahlen and Tromp (1998)
         r0 = r0*(1.0d0-(2.0d0/3.0d0)*ell*p20)
       endif
 
       ! subtracts source depth (given in km)
-      r_target_source = r0 - depth(isource)*1000.0d0/R_EARTH
+      r_target = r0 - depth/R_EARTH
 
       ! compute the Cartesian position of the source
-      x_target_source = r_target_source*dsin(theta)*dcos(phi)
-      y_target_source = r_target_source*dsin(theta)*dsin(phi)
-      z_target_source = r_target_source*dcos(theta)
+      x_target = r_target*sint*cosp
+      y_target = r_target*sint*sinp
+      z_target = r_target*cost
+
+      ! stores Cartesian positions
+      xyz_target(1,isource_in_this_subset) = x_target
+      xyz_target(2,isource_in_this_subset) = y_target
+      xyz_target(3,isource_in_this_subset) = z_target
+    enddo
+
+    ! define the interval in which we look for points
+    if (USE_FORCE_POINT_SOURCE) then
+      ! force sources will be put on an exact GLL point
+      !imin = 1
+      !imax = NGLLX
+
+      !jmin = 1
+      !jmax = NGLLY
+
+      !kmin = 1
+      !kmax = NGLLZ
+      !! VM VM exclude edges to ensure this point is not shared with other elements
+      !! unless a error location on source can occurs with FORCE POINTSOURCE
+      imin = 2
+      imax = NGLLX - 1
+
+      jmin = 2
+      jmax = NGLLY - 1
+
+      kmin = 2
+      kmax = NGLLZ - 1
+    else
+      ! double-couple CMTSOLUTION
+      ! loop only on points inside the element
+      ! exclude edges to ensure this point is not shared with other elements
+      imin = 2
+      imax = NGLLX - 1
+
+      jmin = 2
+      jmax = NGLLY - 1
+
+      kmin = 2
+      kmax = NGLLZ - 1
+    endif
+
+    ! make sure we clean the subset array before the gather
+    ispec_selected_source_subset(:) = 0
+    final_distance_subset(:) = HUGEVAL
+    final_distance_all(:,:) = HUGEVAL
+
+    ! find point locations
+    do isource_in_this_subset = 1,NSOURCES_SUBSET_current_size
 
       ! set distance to huge initial value
       distmin_squared = HUGEVAL
 
-      ! flag to check that we located at least one target element
-      located_target = .false.
-      !ix_initial_guess_source = 0
-      !iy_initial_guess_source = 0
-      !iz_initial_guess_source = 0
-      ix_initial_guess_source = 1
-      iy_initial_guess_source = 1
-      iz_initial_guess_source = 1
+      ! initializes located target
+      ! if we have not located a target element, the point is not in this slice
+      ! therefore use first element only for fictitious iterative search
+      ispec_selected_source_subset(isource_in_this_subset) = 1
+      ix_initial_guess_source = MIDX
+      iy_initial_guess_source = MIDY
+      iz_initial_guess_source = MIDZ
 
+      ! gets target position
+      x_target = xyz_target(1,isource_in_this_subset)
+      y_target = xyz_target(2,isource_in_this_subset)
+      z_target = xyz_target(3,isource_in_this_subset)
+
+      ! searches through all elements
       do ispec = 1,nspec
 
         ! exclude elements that are too far from target
         if (USE_DISTANCE_CRITERION) then
-          iglob = ibool(MIDX,MIDY,MIDZ,ispec)
-          dist_squared = (x_target_source - dble(xstore(iglob)))**2 &
-                       + (y_target_source - dble(ystore(iglob)))**2 &
-                       + (z_target_source - dble(zstore(iglob)))**2
-          !  we compare squared distances instead of distances themselves to significantly speed up calculations
-          if (dist_squared > typical_size_squared) cycle
-        endif
-
-        ! define the interval in which we look for points
-        if (USE_FORCE_POINT_SOURCE) then
-          ! force sources will be put on an exact GLL point
-          !imin = 1
-          !imax = NGLLX
-
-          !jmin = 1
-          !jmax = NGLLY
-
-          !kmin = 1
-          !kmax = NGLLZ
-          !! VM VM exclude edges to ensure this point is not shared with other elements
-          !! unless a error location on source can occurs with FORCE POINTSOURCE
-          imin = 2
-          imax = NGLLX - 1
-
-          jmin = 2
-          jmax = NGLLY - 1
-
-          kmin = 2
-          kmax = NGLLZ - 1
-        else
-          ! double-couple CMTSOLUTION
-          ! loop only on points inside the element
-          ! exclude edges to ensure this point is not shared with other elements
-          imin = 2
-          imax = NGLLX - 1
-
-          jmin = 2
-          jmax = NGLLY - 1
-
-          kmin = 2
-          kmax = NGLLZ - 1
+          ! checks if receiver in this slice
+          if (lat >= lat_min .and. lat <= lat_max .and. &
+              lon >= lon_min .and. lon <= lon_max) then
+            ! exclude elements that are too far from target
+            dist_squared = (x_target - xyz_midpoints(1,ispec))*(x_target - xyz_midpoints(1,ispec)) &
+                         + (y_target - xyz_midpoints(2,ispec))*(y_target - xyz_midpoints(2,ispec)) &
+                         + (z_target - xyz_midpoints(3,ispec))*(z_target - xyz_midpoints(3,ispec))
+            !  we compare squared distances instead of distances themselves to significantly speed up calculations
+            if (dist_squared > typical_size_squared) cycle
+          else
+            ! point not in this slice
+            cycle
+          endif
         endif
 
         do k = kmin,kmax
           do j = jmin,jmax
             do i = imin,imax
+              iglob = ibool(i,j,k,ispec)
+              dist_squared = (x_target - dble(xstore(iglob)))*(x_target - dble(xstore(iglob))) &
+                           + (y_target - dble(ystore(iglob)))*(y_target - dble(ystore(iglob))) &
+                           + (z_target - dble(zstore(iglob)))*(z_target - dble(zstore(iglob)))
 
               ! keep this point if it is closer to the receiver
-              iglob = ibool(i,j,k,ispec)
-              dist_squared = (x_target_source - dble(xstore(iglob)))**2 &
-                           + (y_target_source - dble(ystore(iglob)))**2 &
-                           + (z_target_source - dble(zstore(iglob)))**2
               !  we compare squared distances instead of distances themselves to significantly speed up calculations
               if (dist_squared < distmin_squared) then
                 distmin_squared = dist_squared
@@ -447,7 +459,6 @@
                 ix_initial_guess_source = i
                 iy_initial_guess_source = j
                 iz_initial_guess_source = k
-                located_target = .true.
               endif
 
             enddo
@@ -456,9 +467,8 @@
 
         ! calculates a Gaussian mask around source point
         if (SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3) then
-          call calc_mask_source(mask_source,ispec,NSPEC,typical_size_squared, &
-                                x_target_source,y_target_source,z_target_source, &
-                                ibool,xstore,ystore,zstore,NGLOB)
+          call calc_mask_source(mask_source,ispec,typical_size_squared, &
+                                x_target,y_target,z_target)
         endif
 
       ! end of loop on all the elements in current slice
@@ -467,22 +477,6 @@
       ! *******************************************
       ! find the best (xi,eta,gamma) for the source
       ! *******************************************
-
-      ! if we have not located a target element, the source is not in this slice
-      ! therefore use first element only for fictitious iterative search
-      if (.not. located_target) then
-        ispec_selected_source_subset(isource_in_this_subset) = 1
-        ix_initial_guess_source = MIDX
-        iy_initial_guess_source = MIDY
-        iz_initial_guess_source = MIDZ
-      endif
-
-      ! store xi,eta,gamma and x,y,z of point found
-      ! note: they have range [1.0d0,NGLLX/Y/Z], used for point sources
-      !          see e.g. in compute_add_sources.f90
-      xi_source_subset(isource_in_this_subset) = dble(ix_initial_guess_source)
-      eta_source_subset(isource_in_this_subset) = dble(iy_initial_guess_source)
-      gamma_source_subset(isource_in_this_subset) = dble(iz_initial_guess_source)
 
 !      ! for point sources, the location will be exactly at a GLL point
 !      ! otherwise this tries to find best location
@@ -497,23 +491,18 @@
 !
 !        iglob = ibool(ix_initial_guess_source,iy_initial_guess_source, &
 !            iz_initial_guess_source,ispec_selected_source_subset(isource_in_this_subset))
-!        x_found_source(isource_in_this_subset) = xstore(iglob)
-!        y_found_source(isource_in_this_subset) = ystore(iglob)
-!        z_found_source(isource_in_this_subset) = zstore(iglob)
+!        x_found(isource_in_this_subset) = xstore(iglob)
+!        y_found(isource_in_this_subset) = ystore(iglob)
+!        z_found(isource_in_this_subset) = zstore(iglob)
 !
 !        ! compute final distance between asked and found (converted to km)
-!        final_distance_source_subset(isource_in_this_subset) = &
-!          dsqrt((x_target_source-x_found_source(isource_in_this_subset))**2 + &
-!                (y_target_source-y_found_source(isource_in_this_subset))**2 + &
-!                (z_target_source-z_found_source(isource_in_this_subset))**2)*R_EARTH/1000.d0
+!        final_distance_subset(isource_in_this_subset) = &
+!          dsqrt((x_target-x_found(isource_in_this_subset))**2 + &
+!                (y_target-y_found(isource_in_this_subset))**2 + &
+!                (z_target-z_found(isource_in_this_subset))**2)*R_EARTH/1000.d0
 !
 !      else
 !    !-------------POINT FORCE-----------------------------------------------
-
-        ! use initial guess in xi, eta and gamma
-        xi = xigll(ix_initial_guess_source)
-        eta = yigll(iy_initial_guess_source)
-        gamma = zigll(iz_initial_guess_source)
 
         ! define coordinates of the control points of the element
         do ia = 1,NGNOD
@@ -558,6 +547,18 @@
 
         enddo
 
+        ! store xi,eta,gamma and x,y,z of point found
+        ! note: they have range [1.0d0,NGLLX/Y/Z], used for point sources
+        !          see e.g. in compute_add_sources.f90
+        xi_source_subset(isource_in_this_subset) = dble(ix_initial_guess_source)
+        eta_source_subset(isource_in_this_subset) = dble(iy_initial_guess_source)
+        gamma_source_subset(isource_in_this_subset) = dble(iz_initial_guess_source)
+
+        ! use initial guess in xi, eta and gamma
+        xi = xigll(ix_initial_guess_source)
+        eta = yigll(iy_initial_guess_source)
+        gamma = zigll(iz_initial_guess_source)
+
         ! iterate to solve the non linear system
         do iter_loop = 1,NUM_ITER
 
@@ -566,9 +567,9 @@
                                   xix,xiy,xiz,etax,etay,etaz,gammax,gammay,gammaz)
 
           ! compute distance to target location
-          dx = - (x - x_target_source)
-          dy = - (y - y_target_source)
-          dz = - (z - z_target_source)
+          dx = - (x - x_target)
+          dy = - (y - y_target)
+          dz = - (z - z_target)
 
           ! compute increments
           dxi  = xix*dx + xiy*dy + xiz*dz
@@ -597,6 +598,7 @@
           if (gamma > 1.10d0) gamma = 1.10d0
           if (gamma < -1.10d0) gamma = -1.10d0
 
+        ! end of non linear iterations
         enddo
 
         ! compute final coordinates of point found
@@ -607,30 +609,35 @@
         xi_source_subset(isource_in_this_subset) = xi
         eta_source_subset(isource_in_this_subset) = eta
         gamma_source_subset(isource_in_this_subset) = gamma
-        x_found_source(isource_in_this_subset) = x
-        y_found_source(isource_in_this_subset) = y
-        z_found_source(isource_in_this_subset) = z
+
+        x_found(isource_in_this_subset) = x
+        y_found(isource_in_this_subset) = y
+        z_found(isource_in_this_subset) = z
 
         ! compute final distance between asked and found (converted to km)
-        final_distance_source_subset(isource_in_this_subset) = &
-          dsqrt((x_target_source-x)**2 + &
-                (y_target_source-y)**2 + &
-                (z_target_source-z)**2)*R_EARTH/1000.d0
+        distmin_not_squared = dsqrt((x_target-x)**2 + &
+                                    (y_target-y)**2 + &
+                                    (z_target-z)**2)*R_EARTH_KM
+
+        final_distance_subset(isource_in_this_subset) = distmin_not_squared
 
 !      endif ! USE_FORCE_POINT_SOURCE
 
     ! end of loop on all the sources
     enddo
-    ! synchronizes processes
-    call synchronize_all()
+
+    ! for MPI version, gather information from all the nodes
+    ! use -1 as a flag to detect if gather fails for some reason
+    ispec_selected_source_all(:,:) = -1
 
     ! now gather information from all the nodes
     call gather_all_i(ispec_selected_source_subset,NSOURCES_SUBSET_current_size, &
-      ispec_selected_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+                      ispec_selected_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
 
-    ! checks that the gather operation went well
+    ! this is executed by main process only
     if (myrank == 0) then
-      if (minval(ispec_selected_source_all(:,:)) <= 0) then
+      ! check that the gather operation went well
+      if (any(ispec_selected_source_all(:,:) == -1)) then
         print *,'Error ispec all: procs = ',NPROCTOT_VAL,'sources subset size = ',NSOURCES_SUBSET_current_size
         print *,ispec_selected_source_all(:,:)
         call exit_MPI(myrank,'gather operation failed for source')
@@ -638,19 +645,19 @@
     endif
 
     call gather_all_dp(xi_source_subset,NSOURCES_SUBSET_current_size, &
-      xi_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+                       xi_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
     call gather_all_dp(eta_source_subset,NSOURCES_SUBSET_current_size, &
-      eta_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+                       eta_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
     call gather_all_dp(gamma_source_subset,NSOURCES_SUBSET_current_size, &
-      gamma_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(final_distance_source_subset,NSOURCES_SUBSET_current_size, &
-      final_distance_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(x_found_source,NSOURCES_SUBSET_current_size, &
-      x_found_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(y_found_source,NSOURCES_SUBSET_current_size, &
-      y_found_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
-    call gather_all_dp(z_found_source,NSOURCES_SUBSET_current_size, &
-      z_found_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+                       gamma_source_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(final_distance_subset,NSOURCES_SUBSET_current_size, &
+                       final_distance_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(x_found,NSOURCES_SUBSET_current_size, &
+                       x_found_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(y_found,NSOURCES_SUBSET_current_size, &
+                       y_found_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
+    call gather_all_dp(z_found,NSOURCES_SUBSET_current_size, &
+                       z_found_all,NSOURCES_SUBSET_current_size,NPROCTOT_VAL)
 
     ! this is executed by main process only
     if (myrank == 0) then
@@ -664,20 +671,22 @@
         ! loop on all the results to determine the best slice
         distmin_not_squared = HUGEVAL
         do iprocloop = 0,NPROCTOT_VAL-1
-          if (final_distance_source_all(isource_in_this_subset,iprocloop) < distmin_not_squared) then
+          if (final_distance_all(isource_in_this_subset,iprocloop) < distmin_not_squared) then
             ! stores this slice's info
-            distmin_not_squared = final_distance_source_all(isource_in_this_subset,iprocloop)
+            distmin_not_squared = final_distance_all(isource_in_this_subset,iprocloop)
             islice_selected_source(isource) = iprocloop
             ispec_selected_source(isource) = ispec_selected_source_all(isource_in_this_subset,iprocloop)
+
             xi_source(isource) = xi_source_all(isource_in_this_subset,iprocloop)
             eta_source(isource) = eta_source_all(isource_in_this_subset,iprocloop)
             gamma_source(isource) = gamma_source_all(isource_in_this_subset,iprocloop)
-            x_found_source(isource_in_this_subset) = x_found_source_all(isource_in_this_subset,iprocloop)
-            y_found_source(isource_in_this_subset) = y_found_source_all(isource_in_this_subset,iprocloop)
-            z_found_source(isource_in_this_subset) = z_found_source_all(isource_in_this_subset,iprocloop)
+
+            x_found(isource_in_this_subset) = x_found_all(isource_in_this_subset,iprocloop)
+            y_found(isource_in_this_subset) = y_found_all(isource_in_this_subset,iprocloop)
+            z_found(isource_in_this_subset) = z_found_all(isource_in_this_subset,iprocloop)
           endif
         enddo
-        final_distance_source(isource) = distmin_not_squared
+        final_distance(isource) = distmin_not_squared
 
         ! source info
         write(IMAIN,*)
@@ -708,8 +717,8 @@
           write(IMAIN,*) '    nu2 = ',nu_source(2,:,isource),'East'
           write(IMAIN,*) '    nu3 = ',nu_source(3,:,isource),'Vertical'
           write(IMAIN,*)
-          write(IMAIN,*) '    at (x,y,z) coordinates = ',x_found_source(isource_in_this_subset), &
-            y_found_source(isource_in_this_subset),z_found_source(isource_in_this_subset)
+          write(IMAIN,*) '    at (x,y,z) coordinates = ',x_found(isource_in_this_subset), &
+            y_found(isource_in_this_subset),z_found(isource_in_this_subset)
         else
           ! moment tensor
           write(IMAIN,*) '  using moment tensor source: '
@@ -801,15 +810,15 @@
         write(IMAIN,*)
 
         ! writes out actual source position to VTK file
-        write(IOUT_VTK,'(3e18.6)') sngl(x_found_source(isource_in_this_subset)), &
-                                   sngl(y_found_source(isource_in_this_subset)), &
-                                   sngl(z_found_source(isource_in_this_subset))
+        write(IOUT_VTK,'(3e18.6)') sngl(x_found(isource_in_this_subset)), &
+                                   sngl(y_found(isource_in_this_subset)), &
+                                   sngl(z_found(isource_in_this_subset))
 
         ! get latitude, longitude and depth of the source that will be used
-        call xyz_2_rthetaphi_dble(x_found_source(isource_in_this_subset), &
-                                  y_found_source(isource_in_this_subset), &
-                                  z_found_source(isource_in_this_subset), &
-                                  r_found_source,theta_source(isource),phi_source(isource))
+        call xyz_2_rthetaphi_dble(x_found(isource_in_this_subset), &
+                                  y_found(isource_in_this_subset), &
+                                  z_found(isource_in_this_subset), &
+                                  r_found,theta_source(isource),phi_source(isource))
         call reduce(theta_source(isource),phi_source(isource))
 
         ! converts geocentric to geographic colatitude
@@ -821,9 +830,9 @@
         write(IMAIN,*)
         write(IMAIN,*) '  original (requested) position of the source:'
         write(IMAIN,*)
-        write(IMAIN,*) '        latitude: ',lat(isource)
-        write(IMAIN,*) '       longitude: ',long(isource)
-        write(IMAIN,*) '           depth: ',depth(isource),' km'
+        write(IMAIN,*) '        latitude: ',srclat(isource)
+        write(IMAIN,*) '       longitude: ',srclon(isource)
+        write(IMAIN,*) '           depth: ',srcdepth(isource),' km'
         write(IMAIN,*)
 
         ! compute real position of the source
@@ -831,15 +840,15 @@
         write(IMAIN,*)
         write(IMAIN,*) '        latitude: ',(PI_OVER_TWO-colat_source)*RADIANS_TO_DEGREES
         write(IMAIN,*) '       longitude: ',phi_source(isource)*RADIANS_TO_DEGREES
-        write(IMAIN,*) '           depth: ',(r0-r_found_source)*R_EARTH/1000.0d0,' km'
+        write(IMAIN,*) '           depth: ',(r0-r_found)*R_EARTH/1000.0d0,' km'
         write(IMAIN,*)
 
         ! display error in location estimate
-        write(IMAIN,*) '  Error in location of the source: ',sngl(final_distance_source(isource)),' km'
+        write(IMAIN,*) '  Error in location of the source: ',sngl(final_distance(isource)),' km'
 
         ! add warning if estimate is poor
         ! (usually means source outside the mesh given by the user)
-        if (final_distance_source(isource) > 50.d0) then
+        if (final_distance(isource) > 5.d0) then
           write(IMAIN,*)
           write(IMAIN,*) '*****************************************************'
           write(IMAIN,*) '*****************************************************'
@@ -851,9 +860,9 @@
 
         ! stores location for VTK visualization
         if (isource == 1) then
-          vtkdata_source_x = sngl(x_found_source(isource_in_this_subset))
-          vtkdata_source_y = sngl(y_found_source(isource_in_this_subset))
-          vtkdata_source_z = sngl(z_found_source(isource_in_this_subset))
+          vtkdata_source_x = sngl(x_found(isource_in_this_subset))
+          vtkdata_source_y = sngl(y_found(isource_in_this_subset))
+          vtkdata_source_z = sngl(z_found(isource_in_this_subset))
         endif
 
       enddo ! end of loop on all the sources within current source subset
@@ -861,20 +870,22 @@
     endif ! end of section executed by main process only
 
     ! deallocate arrays specific to each subset
-    deallocate(final_distance_source_subset)
     deallocate(ispec_selected_source_subset)
     deallocate(xi_source_subset,eta_source_subset,gamma_source_subset)
-    deallocate(x_found_source,y_found_source,z_found_source)
     deallocate(ispec_selected_source_all)
-    deallocate(xi_source_all,eta_source_all,gamma_source_all,final_distance_source_all)
-    deallocate(x_found_source_all,y_found_source_all,z_found_source_all)
+    deallocate(xi_source_all,eta_source_all,gamma_source_all,final_distance_all)
+
+    deallocate(xyz_target)
+    deallocate(x_found,y_found,z_found)
+    deallocate(x_found_all,y_found_all,z_found_all)
+    deallocate(final_distance_subset)
 
   enddo ! end of loop over all source subsets
 
   ! display maximum error in location estimate
   if (myrank == 0) then
     write(IMAIN,*)
-    write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance_source)),' km'
+    write(IMAIN,*) 'maximum error in location of the sources: ',sngl(maxval(final_distance)),' km'
     write(IMAIN,*)
     call flush_IMAIN()
 
@@ -897,8 +908,8 @@
 
   ! stores source mask
   if (SAVE_SOURCE_MASK .and. SIMULATION_TYPE == 3) then
-    call save_mask_source(mask_source,NSPEC,LOCAL_TMP_PATH)
-    deallocate( mask_source )
+    call save_mask_source(mask_source,nspec,LOCAL_TMP_PATH)
+    deallocate(mask_source)
   endif
 
   ! elapsed time since beginning of source detection
@@ -913,35 +924,82 @@
   endif
   call synchronize_all()
 
+  contains
+
+    subroutine read_source_locations()
+
+    use specfem_par, only: min_tshift_src_original
+
+    implicit none
+
+    if (USE_FORCE_POINT_SOURCE) then
+      ! point forces
+      if (myrank == 0) then
+        ! only master process reads in FORCESOLUTION file
+        call get_force(tshift_src,hdur,srclat,srclon,srcdepth,DT,NSOURCES, &
+                       min_tshift_src_original,force_stf,factor_force_source, &
+                       comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP)
+      endif
+      ! broadcasts specific point force infos
+      call bcast_all_i(force_stf,NSOURCES)
+      call bcast_all_dp(factor_force_source,NSOURCES)
+      call bcast_all_dp(comp_dir_vect_source_E,NSOURCES)
+      call bcast_all_dp(comp_dir_vect_source_N,NSOURCES)
+      call bcast_all_dp(comp_dir_vect_source_Z_UP,NSOURCES)
+    else
+      ! CMT moment tensors
+      if (myrank == 0) then
+        ! only master process reads in CMTSOLUTION file
+        call get_cmt(yr,jda,mo,da,ho,mi,sec,tshift_src,hdur,srclat,srclon,srcdepth,moment_tensor, &
+                     DT,NSOURCES,min_tshift_src_original)
+      endif
+      ! broadcast ispecific moment tensor infos
+      call bcast_all_dp(moment_tensor,6*NSOURCES)
+    endif
+
+    ! broadcast the information read on the master to the nodes
+    call bcast_all_dp(tshift_src,NSOURCES)
+    call bcast_all_dp(hdur,NSOURCES)
+    call bcast_all_dp(srclat,NSOURCES)
+    call bcast_all_dp(srclon,NSOURCES)
+    call bcast_all_dp(srcdepth,NSOURCES)
+    call bcast_all_singledp(min_tshift_src_original)
+
+    end subroutine read_source_locations
+
   end subroutine locate_sources
 
 !
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine calc_mask_source(mask_source,ispec,NSPEC,typical_size_squared, &
-                              x_target_source,y_target_source,z_target_source, &
-                              ibool,xstore,ystore,zstore,NGLOB)
+  subroutine calc_mask_source(mask_source,ispec,typical_size_squared, &
+                              x_target,y_target,z_target)
 
 ! calculate a Gaussian function mask in the crust_mantle region
 ! which is 0 around the source locations and 1 everywhere else
 
   use constants
 
+  use specfem_par, only: &
+    nspec => NSPEC_CRUST_MANTLE
+
+  use specfem_par_crustmantle, only: &
+    ibool => ibool_crust_mantle, &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+
   implicit none
 
-  integer :: ispec,NSPEC,NGLOB
+  integer,intent(in) :: ispec
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: mask_source
-  real(kind=CUSTOM_REAL), dimension(NGLOB) :: xstore,ystore,zstore
-  integer, dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: ibool
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(inout) :: mask_source
 
-  double precision :: typical_size_squared
-  double precision :: x_target_source,y_target_source,z_target_source
+  double precision,intent(in) :: typical_size_squared
+  double precision,intent(in) :: x_target,y_target,z_target
 
   ! local parameters
-  integer i,j,k,iglob
-  double precision dist_squared,sigma_squared
+  integer :: i,j,k,iglob
+  double precision :: dist_squared,sigma_squared
 
   ! standard deviation for Gaussian
   ! (removes factor of 100 added for search radius from typical_size_squared)
@@ -954,9 +1012,9 @@
 
         ! gets distance (squared) to source
         iglob = ibool(i,j,k,ispec)
-        dist_squared = (x_target_source - dble(xstore(iglob)))**2 &
-                     + (y_target_source - dble(ystore(iglob)))**2 &
-                     + (z_target_source - dble(zstore(iglob)))**2
+        dist_squared = (x_target - dble(xstore(iglob)))**2 &
+                     + (y_target - dble(ystore(iglob)))**2 &
+                     + (z_target - dble(zstore(iglob)))**2
 
         ! adds Gaussian function value to mask
         ! (mask value becomes 0 closer to source location, 1 everywhere else )
@@ -973,7 +1031,7 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine save_mask_source(mask_source,NSPEC,LOCAL_TMP_PATH)
+  subroutine save_mask_source(mask_source,nspec,LOCAL_TMP_PATH)
 
 ! saves a mask in the crust_mantle region which is 0 around the source locations
 ! and 1 everywhere else
@@ -982,9 +1040,9 @@
 
   implicit none
 
-  integer :: NSPEC
+  integer,intent(in) :: nspec
 
-  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,NSPEC) :: mask_source
+  real(kind=CUSTOM_REAL), dimension(NGLLX,NGLLY,NGLLZ,nspec) :: mask_source
   character(len=MAX_STRING_LEN) :: LOCAL_TMP_PATH
 
   ! local parameters
@@ -993,9 +1051,11 @@
 
   ! stores into file
   call create_name_database(prname,myrank,IREGION_CRUST_MANTLE,LOCAL_TMP_PATH)
+
   open(unit=IOUT,file=trim(prname)//'mask_source.bin', &
-        status='unknown',form='unformatted',action='write',iostat=ier)
+       status='unknown',form='unformatted',action='write',iostat=ier)
   if (ier /= 0 ) call exit_mpi(myrank,'Error opening mask_source.bin file')
+
   write(IOUT) mask_source
   close(IOUT)
 

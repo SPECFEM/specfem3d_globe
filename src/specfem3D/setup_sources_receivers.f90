@@ -27,8 +27,14 @@
 
   subroutine setup_sources_receivers()
 
-  use specfem_par
+  use specfem_par,only: IMAIN,myrank,NSOURCES,NSTEP, &
+    theta_source,phi_source,TOPOGRAPHY,ibathy_topo, &
+    USE_DISTANCE_CRITERION,xyz_midpoints
+
   implicit none
+
+  ! setup for point search
+  call setup_point_search_arrays()
 
   ! locates sources and determines simulation start time t0
   call setup_sources()
@@ -63,7 +69,84 @@
     if (allocated(ibathy_topo) ) deallocate(ibathy_topo)
   endif
 
+  if (USE_DISTANCE_CRITERION) deallocate(xyz_midpoints)
+
   end subroutine setup_sources_receivers
+
+!
+!-------------------------------------------------------------------------------------------------
+!
+
+  subroutine setup_point_search_arrays()
+
+  use constants,only: &
+    NDIM,MIDX,MIDY,MIDZ,TWO_PI,R_UNIT_SPHERE,USE_DISTANCE_CRITERION
+
+  use specfem_par, only: &
+    NEX_XI_VAL,LAT_LON_MARGIN,myrank
+
+  use specfem_par, only: &
+    nspec => NSPEC_CRUST_MANTLE,nglob => NGLOB_CRUST_MANTLE
+
+  use specfem_par_crustmantle, only: &
+    ibool => ibool_crust_mantle, &
+    xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
+
+  ! for point search
+  use specfem_par,only: &
+    iaddx,iaddy,iaddr,typical_size_squared, &
+    lat_min,lat_max,lon_min,lon_max,xyz_midpoints
+
+  implicit none
+
+  ! local parameters
+  integer :: ispec,iglob,ier
+
+  ! define topology of the control element
+  call hex_nodes(iaddx,iaddy,iaddr)
+
+  ! compute typical size of elements at the surface
+  typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.d0 * NEX_XI_VAL)
+
+  ! use 10 times the distance as a criterion for source detection
+  typical_size_squared = (10.d0 * typical_size_squared)**2
+
+  ! limits receiver search
+  if (USE_DISTANCE_CRITERION) then
+    ! retrieves latitude/longitude range of this slice
+    call xyz_2_latlon_minmax(nspec,nglob,ibool,xstore,ystore,zstore,lat_min,lat_max,lon_min,lon_max)
+
+    ! adds search margin
+    lat_min = lat_min - LAT_LON_MARGIN
+    lat_max = lat_max + LAT_LON_MARGIN
+
+    lon_min = lon_min - LAT_LON_MARGIN
+    lon_max = lon_max + LAT_LON_MARGIN
+
+    ! limits latitude to [-90.0,90.0]
+    if (lat_min < -90.d0 ) lat_min = -90.d0
+    if (lat_max > 90.d0 ) lat_max = 90.d0
+
+    ! limits longitude to [0.0,360.0]
+    if (lon_min < 0.d0 ) lon_min = 0.d0
+    if (lon_min > 360.d0 ) lon_min = 360.d0
+    if (lon_max < 0.d0 ) lon_max = 0.d0
+    if (lon_max > 360.d0 ) lon_max = 360.d0
+
+    ! prepares midpoints coordinates
+    allocate(xyz_midpoints(NDIM,nspec),stat=ier)
+    if (ier /= 0 ) call exit_MPI(myrank,'Error allocating array xyz_midpoints')
+
+    ! store x/y/z coordinates of center point
+    do ispec = 1,nspec
+      iglob = ibool(MIDX,MIDY,MIDZ,ispec)
+      xyz_midpoints(1,ispec) =  dble(xstore(iglob))
+      xyz_midpoints(2,ispec) =  dble(ystore(iglob))
+      xyz_midpoints(3,ispec) =  dble(zstore(iglob))
+    enddo
+  endif
+
+  end subroutine setup_point_search_arrays
 
 !
 !-------------------------------------------------------------------------------------------------
@@ -77,7 +160,6 @@
   implicit none
 
   ! local parameters
-  double precision :: min_tshift_src_original
   integer :: isource,ier
   character(len=MAX_STRING_LEN) :: filename
 
@@ -143,12 +225,10 @@
   endif
 
   ! locate sources in the mesh
-  call locate_sources(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
-                     xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                     ELLIPTICITY_VAL,min_tshift_src_original)
+  call locate_sources()
 
   ! determines onset time
-  call setup_stf_constants(min_tshift_src_original)
+  call setup_stf_constants()
 
   ! count number of sources located in this slice
   nsources_local = 0
@@ -191,13 +271,11 @@
 !-------------------------------------------------------------------------------------------------
 !
 
-  subroutine setup_stf_constants(min_tshift_src_original)
+  subroutine setup_stf_constants()
 
   use specfem_par
   use specfem_par_movie
   implicit none
-
-  double precision,intent(in) :: min_tshift_src_original
 
   ! local parameters
   integer :: isource
@@ -460,9 +538,7 @@
   endif
 
   ! locate receivers in the crust in the mesh
-  call locate_receivers(NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool_crust_mantle, &
-                        xstore_crust_mantle,ystore_crust_mantle,zstore_crust_mantle, &
-                        yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
+  call locate_receivers(yr_SAC,jda_SAC,ho_SAC,mi_SAC,sec_SAC, &
                         theta_source(1),phi_source(1) )
 
   ! count number of receivers located in this slice

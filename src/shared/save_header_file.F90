@@ -453,7 +453,7 @@
   else
     ! global mesh, chunks of 90 degrees
     num_elem_gc = 4 * NEX_XI
-    num_gll_gc = 4*NEX_XI*(NGLLX-1)
+    num_gll_gc = 4 * NEX_XI*(NGLLX-1)
     avg_dist_deg = 360.d0 / dble(4) / dble(NEX_XI*(NGLLX-1))
     avg_dist_km = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI*(NGLLX-1))
     avg_element_size = TWO_PI / dble(4) * R_EARTH_KM / dble(NEX_XI)

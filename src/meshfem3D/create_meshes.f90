@@ -39,8 +39,13 @@
   ! user output
   if (myrank == 0) then
     write(IMAIN,*) 'Radial Meshing parameters:'
-    write(IMAIN,*) '  CHUNK WIDTH XI/ETA =', ANGULAR_WIDTH_XI_IN_DEGREES,'/',ANGULAR_WIDTH_ETA_IN_DEGREES
-    write(IMAIN,*) '  NEX XI/ETA =', NEX_XI,'/',NEX_ETA
+    write(IMAIN,*) '  NCHUNKS                = ',NCHUNKS
+    write(IMAIN,*)
+    write(IMAIN,*) '  CENTER LAT/LON:          ',sngl(CENTER_LATITUDE_IN_DEGREES),'/',sngl(CENTER_LONGITUDE_IN_DEGREES)
+    write(IMAIN,*) '  GAMMA_ROTATION_AZIMUTH:  ',sngl(GAMMA_ROTATION_AZIMUTH)
+    write(IMAIN,*)
+    write(IMAIN,*) '  CHUNK WIDTH XI/ETA:      ',sngl(ANGULAR_WIDTH_XI_IN_DEGREES),'/',sngl(ANGULAR_WIDTH_ETA_IN_DEGREES)
+    write(IMAIN,*) '  NEX XI/ETA:              ', NEX_XI,'/',NEX_ETA
     write(IMAIN,*)
     write(IMAIN,*) '  NER_CRUST:               ', NER_CRUST
     write(IMAIN,*) '  NER_80_MOHO:             ', NER_80_MOHO

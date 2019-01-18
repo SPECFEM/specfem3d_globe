@@ -283,6 +283,7 @@ module specfem_par
   double precision, dimension(:), allocatable :: theta_source,phi_source
   double precision :: Mrr,Mtt,Mpp,Mrt,Mrp,Mtp,Mw,M0
   double precision :: t0
+  double precision :: min_tshift_src_original
 
   ! External source time function.
   double precision, dimension(:), allocatable :: stfArray_external
@@ -476,6 +477,24 @@ module specfem_par
 
   ! for saving/reading stacey boundary contributions
   logical :: SAVE_STACEY
+
+  !-----------------------------------------------------------------
+  ! point search
+  !-----------------------------------------------------------------
+  ! topology of the control points of the surface element
+  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+
+  ! distance
+  double precision, allocatable, dimension(:,:) :: xyz_midpoints
+
+  ! search range
+  double precision :: lat_min,lat_max,lon_min,lon_max
+
+  ! search margin in degrees
+  double precision,parameter :: LAT_LON_MARGIN = 2.d0
+
+  ! typical element size squared (at surface)
+  double precision :: typical_size_squared
 
 end module specfem_par
 
