@@ -481,13 +481,13 @@ module specfem_par
   !-----------------------------------------------------------------
   ! point search
   !-----------------------------------------------------------------
-  ! topology of the control points of the surface element
-  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! (i,j,k) indices of the control/anchor points of the element
+  integer :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
-  ! distance
+  ! coordinates of element midpoints
   double precision, allocatable, dimension(:,:) :: xyz_midpoints
 
-  ! search range
+  ! search range: single slice dimensions
   double precision :: lat_min,lat_max,lon_min,lon_max
 
   ! search margin in degrees

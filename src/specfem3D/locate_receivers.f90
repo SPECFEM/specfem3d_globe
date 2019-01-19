@@ -61,7 +61,8 @@
 
   ! for point search
   use specfem_par,only: &
-    iaddx,iaddy,iaddr,typical_size_squared, &
+    typical_size_squared, &
+    anchor_iax,anchor_iay,anchor_iaz, &
     lat_min,lat_max,lon_min,lon_max,xyz_midpoints
 
   implicit none
@@ -75,9 +76,6 @@
   integer :: irec
   integer :: i,j,k,ispec,iglob
   integer :: ier
-
-! topology of the control points of the surface element
-  integer :: iax,iay,iaz
 
 ! coordinates of the control points of the surface element
   double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
@@ -532,45 +530,10 @@
 
       ! define coordinates of the control points of the element
       do ia = 1,NGNOD
-
-        iax = 0
-        if (iaddx(ia) == 0) then
-          iax = 1
-        else if (iaddx(ia) == 1) then
-          iax = MIDX
-        else if (iaddx(ia) == 2) then
-          iax = NGLLX
-        else
-          call exit_MPI(myrank,'incorrect value of iaddx')
-        endif
-
-        iay = 0
-        if (iaddy(ia) == 0) then
-          iay = 1
-        else if (iaddy(ia) == 1) then
-          iay = MIDY
-        else if (iaddy(ia) == 2) then
-          iay = NGLLY
-        else
-          call exit_MPI(myrank,'incorrect value of iaddy')
-        endif
-
-        iaz = 0
-        if (iaddr(ia) == 0) then
-          iaz = 1
-        else if (iaddr(ia) == 1) then
-          iaz = MIDZ
-        else if (iaddr(ia) == 2) then
-          iaz = NGLLZ
-        else
-          call exit_MPI(myrank,'incorrect value of iaddr')
-        endif
-
-        iglob = ibool(iax,iay,iaz,ispec_iterate)
+        iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec_iterate)
         xelm(ia) = dble(xstore(iglob))
         yelm(ia) = dble(ystore(iglob))
         zelm(ia) = dble(zstore(iglob))
-
       enddo
 
       ! use initial guess in xi and eta

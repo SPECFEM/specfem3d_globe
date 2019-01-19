@@ -123,7 +123,7 @@
   double precision, dimension(NGLLZ) :: wzgll
 
   ! topology of the control points of the surface element
-  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  integer :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! typical element size in old mesh used as search radius
   double precision :: typical_size
@@ -517,8 +517,8 @@
   call zwgljd(yigll,wygll,NGLLY,GAUSSALPHA,GAUSSBETA)
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
-  ! define topology of the control element
-  call hex_nodes(iaddx,iaddy,iaddr)
+  ! define indices of the control element
+  call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
 
   ! source mesh
   ! compute typical size of elements at the surface
@@ -996,12 +996,12 @@ print *,myrank,'adios file rank',rank
         ! brute-force search over all GLL points
         call get_model_values_bruteforce(ispec,nspec,nglob,ibool2,x2,y2,z2,nparams,model2, &
                                          nspec_max_old,nglob_max_old,nproc_chunk1,ibool1,x1,y1,z1,model1, &
-                                         iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff)
+                                         anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size,myrank,model_maxdiff)
       else
         ! kdtree search
         call get_model_values_kdtree(ispec,nspec,nglob,ibool2,x2,y2,z2,nparams,model2, &
                                      nspec_max_old,nglob_max_old,nproc_chunk1,ibool1,x1,y1,z1,model1, &
-                                     iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff, &
+                                     anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size,myrank,model_maxdiff, &
                                      USE_MIDPOINT_SEARCH,DO_SEPARATION_410_650,DO_SEPARATION_TOPO,USE_FALLBACK)
       endif
     enddo ! ispec
@@ -1132,7 +1132,7 @@ print *,myrank,'adios file rank',rank
 
   subroutine get_model_values_bruteforce(ispec,nspec,nglob,ibool2,x2,y2,z2,nparams,model2, &
                                          nspec_max_old,nglob_max_old,nproc_chunk1,ibool1,x1,y1,z1,model1, &
-                                         iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff)
+                                         anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size,myrank,model_maxdiff)
 
 
   use constants, only: CUSTOM_REAL,NGLLX,NGLLY,NGLLZ,NGNOD
@@ -1154,8 +1154,8 @@ print *,myrank,'adios file rank',rank
   real(kind=CUSTOM_REAL),dimension(nglob_max_old,0:nproc_chunk1-1),intent(in) :: x1,y1,z1
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_max_old,nparams,0:nproc_chunk1-1),intent(in) :: model1
 
-  ! topology of the control points of the surface element
-  integer,intent(in) :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! indices of the control points of the surface element
+  integer,intent(in) :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX),intent(in) :: xigll
@@ -1201,7 +1201,7 @@ print *,myrank,'adios file rank',rank
                     ispec_selected,rank_selected, &
                     nspec_max_old,nglob_max_old,nproc_chunk1, &
                     ibool1,x1,y1,z1, &
-                    iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
+                    anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size, &
                     i_selected,j_selected,k_selected)
 
         ! interpolate model values
@@ -1236,7 +1236,7 @@ print *,myrank,'adios file rank',rank
 
   subroutine get_model_values_kdtree(ispec,nspec,nglob,ibool2,x2,y2,z2,nparams,model2, &
                                      nspec_max_old,nglob_max_old,nproc_chunk1,ibool1,x1,y1,z1,model1, &
-                                     iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size,myrank,model_maxdiff, &
+                                     anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size,myrank,model_maxdiff, &
                                      USE_MIDPOINT_SEARCH,DO_SEPARATION_410_650,DO_SEPARATION_TOPO,USE_FALLBACK)
 
 
@@ -1261,8 +1261,8 @@ print *,myrank,'adios file rank',rank
   real(kind=CUSTOM_REAL),dimension(nglob_max_old,0:nproc_chunk1-1),intent(in) :: x1,y1,z1
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec_max_old,nparams,0:nproc_chunk1-1),intent(in) :: model1
 
-  ! topology of the control points of the surface element
-  integer,intent(in) :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! indices of the control points of the surface element
+  integer,intent(in) :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX),intent(in) :: xigll
@@ -1509,7 +1509,7 @@ print *,myrank,'adios file rank',rank
                            ispec_selected,rank_selected, &
                            nspec_max_old,nglob_max_old,nproc_chunk1, &
                            ibool1,x1,y1,z1, &
-                           iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
+                           anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size, &
                            i_selected,j_selected,k_selected)
 
         ! checks closest GLL point
@@ -1647,7 +1647,7 @@ print *,myrank,'adios file rank',rank
                     ispec_selected,rank_selected, &
                     nspec,nglob,nproc, &
                     ibool,xstore,ystore,zstore, &
-                    iaddx,iaddy,iaddr, &
+                    anchor_iax,anchor_iay,anchor_iaz, &
                     xigll,yigll,zigll,typical_size, &
                     i_selected,j_selected,k_selected)
 
@@ -1670,8 +1670,8 @@ print *,myrank,'adios file rank',rank
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec,0:nproc-1),intent(in) :: ibool
   real(kind=CUSTOM_REAL),dimension(nglob,0:nproc-1),intent(in) :: xstore,ystore,zstore
 
-  ! topology of the control points of the surface element
-  integer,intent(in) :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! indices of the control points of the surface element
+  integer,intent(in) :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX),intent(in) :: xigll
@@ -1740,7 +1740,7 @@ print *,myrank,'adios file rank',rank
                      ispec_selected,rank_selected, &
                      nspec,nglob,nproc, &
                      ibool,xstore,ystore,zstore, &
-                     iaddx,iaddy,iaddr, &
+                     anchor_iax,anchor_iay,anchor_iaz, &
                      xigll,yigll,zigll,typical_size, &
                      i_selected,j_selected,k_selected)
 
@@ -1756,7 +1756,7 @@ print *,myrank,'adios file rank',rank
                            ispec_selected,rank_selected, &
                            nspec,nglob,nproc, &
                            ibool,xstore,ystore,zstore, &
-                           iaddx,iaddy,iaddr, &
+                           anchor_iax,anchor_iay,anchor_iaz, &
                            xigll,yigll,zigll,typical_size, &
                            i_selected,j_selected,k_selected)
 
@@ -1779,8 +1779,8 @@ print *,myrank,'adios file rank',rank
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec,0:nproc-1),intent(in) :: ibool
   real(kind=CUSTOM_REAL),dimension(nglob,0:nproc-1),intent(in) :: xstore,ystore,zstore
 
-  ! topology of the control points of the surface element
-  integer,intent(in) :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! indices of the control points of the surface element
+  integer,intent(in) :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX),intent(in) :: xigll
@@ -1799,7 +1799,7 @@ print *,myrank,'adios file rank',rank
   integer :: i,j,k,iglob !,ispec,rank
   double precision :: dist
   double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
-  integer :: iax,iay,iaz
+
   ! coordinates of the control points of the surface element
   double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
   integer :: iter_loop
@@ -1872,37 +1872,8 @@ print *,myrank,'adios file rank',rank
   if (DO_REFINE_LOCATION) then
 
     ! define coordinates of the control points of the element
-    do ia=1,NGNOD
-      if (iaddx(ia) == 0) then
-        iax = 1
-      else if (iaddx(ia) == 1) then
-        iax = (NGLLX+1)/2
-      else if (iaddx(ia) == 2) then
-        iax = NGLLX
-      else
-        stop 'incorrect value of iaddx'
-      endif
-      if (iaddy(ia) == 0) then
-        iay = 1
-      else if (iaddy(ia) == 1) then
-        iay = (NGLLY+1)/2
-      else if (iaddy(ia) == 2) then
-        iay = NGLLY
-      else
-        stop 'incorrect value of iaddy'
-      endif
-      if (iaddr(ia) == 0) then
-        iaz = 1
-      else if (iaddr(ia) == 1) then
-        iaz = (NGLLZ+1)/2
-      else if (iaddr(ia) == 2) then
-        iaz = NGLLZ
-      else
-        stop 'incorrect value of iaddr'
-      endif
-
-      iglob = ibool(iax,iay,iaz,ispec_selected,rank_selected)
-
+    do ia = 1,NGNOD
+      iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec_selected,rank_selected)
       xelm(ia) = dble(xstore(iglob,rank_selected))
       yelm(ia) = dble(ystore(iglob,rank_selected))
       zelm(ia) = dble(zstore(iglob,rank_selected))

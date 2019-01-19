@@ -214,7 +214,7 @@
   real(kind=CUSTOM_REAL), dimension(NGLLZ,NM_KL_REG_PTS), intent(out) :: hgammar_reg
 
   ! GLL number of anchors
-  integer, dimension(NGNOD) :: iaddx, iaddy, iaddr
+  integer, dimension(NGNOD) :: anchor_iax,anchor_iay,anchor_iaz
 
   integer :: i, j, k, isp, ilayer, ilat, ilon, iglob, ix_in, iy_in, iz_in
   integer :: ispec_in, ispec, iter_loop, ia, ipoint
@@ -235,7 +235,7 @@
 
   !---------------------------
 
-  call hex_nodes2(iaddx,iaddy,iaddr)
+  call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
 
   ! compute typical size of elements at the surface
   typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.0 * NEX_XI)
@@ -314,7 +314,7 @@
 
     ! anchors
     do ia = 1, NGNOD
-      iglob = ibool(iaddx(ia), iaddy(ia), iaddr(ia), ispec_in)
+      iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec_in)
       xelm(ia) = dble(xstore(iglob))
       yelm(ia) = dble(ystore(iglob))
       zelm(ia) = dble(zstore(iglob))
@@ -367,56 +367,6 @@
 
 !==============================================================
 
-  subroutine hex_nodes2(iaddx,iaddy,iaddz)
-
-  use constants
-
-  implicit none
-
-  integer, dimension(NGNOD), intent(out) :: iaddx,iaddy,iaddz
-  integer :: ia
-
-  ! define topology of the control element
-  call hex_nodes(iaddx,iaddy,iaddz)
-
-  ! define coordinates of the control points of the element
-  do ia = 1,NGNOD
-
-     if (iaddx(ia) == 0) then
-        iaddx(ia) = 1
-     else if (iaddx(ia) == 1) then
-        iaddx(ia) = (NGLLX+1)/2
-     else if (iaddx(ia) == 2) then
-        iaddx(ia) = NGLLX
-     else
-        stop 'incorrect value of iaddx'
-     endif
-
-     if (iaddy(ia) == 0) then
-        iaddy(ia) = 1
-     else if (iaddy(ia) == 1) then
-        iaddy(ia) = (NGLLY+1)/2
-     else if (iaddy(ia) == 2) then
-        iaddy(ia) = NGLLY
-     else
-        stop 'incorrect value of iaddy'
-     endif
-
-     if (iaddz(ia) == 0) then
-        iaddz(ia) = 1
-     else if (iaddz(ia) == 1) then
-        iaddz(ia) = (NGLLZ+1)/2
-     else if (iaddz(ia) == 2) then
-        iaddz(ia) = NGLLZ
-     else
-        stop 'incorrect value of iaddz'
-     endif
-
-  enddo
-
-  end subroutine hex_nodes2
-
-!==============================================================
 
   subroutine lagrange_any2(xi,NGLL,xigll,h)
 

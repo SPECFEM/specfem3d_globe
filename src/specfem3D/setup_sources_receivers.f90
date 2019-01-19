@@ -94,16 +94,14 @@
 
   ! for point search
   use specfem_par,only: &
-    iaddx,iaddy,iaddr,typical_size_squared, &
+    typical_size_squared, &
+    anchor_iax,anchor_iay,anchor_iaz, &
     lat_min,lat_max,lon_min,lon_max,xyz_midpoints
 
   implicit none
 
   ! local parameters
   integer :: ispec,iglob,ier
-
-  ! define topology of the control element
-  call hex_nodes(iaddx,iaddy,iaddr)
 
   ! compute typical size of elements at the surface
   typical_size_squared = TWO_PI * R_UNIT_SPHERE / (4.d0 * NEX_XI_VAL)
@@ -145,6 +143,9 @@
       xyz_midpoints(3,ispec) =  dble(zstore(iglob))
     enddo
   endif
+
+  ! define (i,j,k) indices of the control/anchor points
+  call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
 
   end subroutine setup_point_search_arrays
 

@@ -91,7 +91,7 @@
   double precision, dimension(NGLLZ) :: wzgll
 
   ! topology of the control points of the surface element
-  integer :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  integer :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! typical element size in old mesh used as search radius
   double precision :: typical_size
@@ -388,7 +388,7 @@
   call zwgljd(zigll,wzgll,NGLLZ,GAUSSALPHA,GAUSSBETA)
 
   ! define topology of the control element
-  call hex_nodes(iaddx,iaddy,iaddr)
+  call hex_nodes_anchor_ijk(anchor_iax,anchor_iay,anchor_iaz)
 
   ! source mesh
   ! compute typical size of elements at the surface
@@ -656,7 +656,7 @@
   ! kdtree search
   call get_model_values_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
                                       NSPEC_CRUST_MANTLE,NGLOB_CRUST_MANTLE,ibool,xstore,ystore,zstore,model, &
-                                      iaddx,iaddy,iaddr,xigll,yigll,zigll, &
+                                      anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll, &
                                       typical_size,myrank,model_maxdiff)
 
   ! frees tree memory
@@ -1259,7 +1259,7 @@
 
   subroutine get_model_values_cross_section(nglob_target,x2,y2,z2,model2,model_distance2, &
                                             nspec,nglob,ibool,xstore,ystore,zstore,model, &
-                                            iaddx,iaddy,iaddr,xigll,yigll,zigll, &
+                                            anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll, &
                                             typical_size,myrank,model_maxdiff)
 
 
@@ -1283,8 +1283,8 @@
   real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: xstore,ystore,zstore
   real(kind=CUSTOM_REAL),dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: model
 
-  ! topology of the control points of the surface element
-  integer,intent(in) :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! indices of the control points of the surface element
+  integer,intent(in) :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX),intent(in) :: xigll
@@ -1437,7 +1437,7 @@
                              xi,eta,gamma, &
                              ispec_selected,nspec,nglob, &
                              ibool,xstore,ystore,zstore, &
-                             iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
+                             anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size, &
                              i_selected,j_selected,k_selected,dist_min, &
                              is_inside_element,element_size)
 
@@ -1520,7 +1520,7 @@
                                xi,eta,gamma, &
                                ispec_selected,nspec,nglob, &
                                ibool,xstore,ystore,zstore, &
-                               iaddx,iaddy,iaddr,xigll,yigll,zigll,typical_size, &
+                               anchor_iax,anchor_iay,anchor_iaz,xigll,yigll,zigll,typical_size, &
                                i_selected,j_selected,k_selected,dist_min, &
                                is_inside_element,element_size)
 
@@ -1694,7 +1694,7 @@
                                  xi_target,eta_target,gamma_target, &
                                  ispec_selected,nspec,nglob, &
                                  ibool,xstore,ystore,zstore, &
-                                 iaddx,iaddy,iaddr, &
+                                 anchor_iax,anchor_iay,anchor_iaz, &
                                  xigll,yigll,zigll,typical_size, &
                                  i_selected,j_selected,k_selected,dist_min, &
                                  is_inside_element,element_size)
@@ -1718,8 +1718,8 @@
   integer,dimension(NGLLX,NGLLY,NGLLZ,nspec),intent(in) :: ibool
   real(kind=CUSTOM_REAL),dimension(nglob),intent(in) :: xstore,ystore,zstore
 
-  ! topology of the control points of the surface element
-  integer,intent(in) :: iaddx(NGNOD),iaddy(NGNOD),iaddr(NGNOD)
+  ! indices of the control points of the surface element
+  integer,intent(in) :: anchor_iax(NGNOD),anchor_iay(NGNOD),anchor_iaz(NGNOD)
 
   ! Gauss-Lobatto-Legendre points of integration and weights
   double precision, dimension(NGLLX),intent(in) :: xigll
@@ -1744,7 +1744,6 @@
   integer :: i,j,k,iglob !,ispec,rank
   double precision :: dist
   double precision :: xi,eta,gamma,dx,dy,dz,dxi,deta,dgamma
-  integer :: iax,iay,iaz
   ! coordinates of the control points of the surface element
   double precision :: xelm(NGNOD),yelm(NGNOD),zelm(NGNOD)
   integer :: iter_loop
@@ -1817,37 +1816,8 @@
   final_distance = HUGEVAL
 
   ! define coordinates of the control points of the element
-  do ia=1,NGNOD
-    if (iaddx(ia) == 0) then
-      iax = 1
-    else if (iaddx(ia) == 1) then
-      iax = (NGLLX+1)/2
-    else if (iaddx(ia) == 2) then
-      iax = NGLLX
-    else
-      stop 'incorrect value of iaddx'
-    endif
-    if (iaddy(ia) == 0) then
-      iay = 1
-    else if (iaddy(ia) == 1) then
-      iay = (NGLLY+1)/2
-    else if (iaddy(ia) == 2) then
-      iay = NGLLY
-    else
-      stop 'incorrect value of iaddy'
-    endif
-    if (iaddr(ia) == 0) then
-      iaz = 1
-    else if (iaddr(ia) == 1) then
-      iaz = (NGLLZ+1)/2
-    else if (iaddr(ia) == 2) then
-      iaz = NGLLZ
-    else
-      stop 'incorrect value of iaddr'
-    endif
-
-    iglob = ibool(iax,iay,iaz,ispec_selected)
-
+  do ia = 1,NGNOD
+    iglob = ibool(anchor_iax(ia),anchor_iay(ia),anchor_iaz(ia),ispec_selected)
     xelm(ia) = dble(xstore(iglob))
     yelm(ia) = dble(ystore(iglob))
     zelm(ia) = dble(zstore(iglob))
