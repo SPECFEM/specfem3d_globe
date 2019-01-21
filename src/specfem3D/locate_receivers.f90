@@ -510,7 +510,8 @@
 
     do irec = 1,nrec
 
-      if (DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0) then
+      if (DISPLAY_DETAILS_STATIONS .or. final_distance(irec) > 0.01d0 .or. nrec < 50) then
+
         write(IMAIN,*)
         write(IMAIN,*) 'Station #',irec,': ',trim(network_name(irec))//'.'//trim(station_name(irec))
         write(IMAIN,*) '       original latitude: ',sngl(stlat(irec))

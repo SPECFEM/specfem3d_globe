@@ -496,6 +496,11 @@ module specfem_par
   ! typical element size squared (at surface)
   double precision :: typical_size_squared
 
+  ! adjacency arrays
+  integer,dimension(:),allocatable :: xadj   ! adjacency indexing
+  integer,dimension(:),allocatable :: adjncy ! adjacency
+  integer :: num_neighbors_all
+
 end module specfem_par
 
 
