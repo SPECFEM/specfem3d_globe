@@ -66,7 +66,7 @@
 
 
  Radial Meshing parameters:
-   CHUNK WIDTH XI/ETA =   30.000000000000000      /   30.000000000000000     
+   CHUNK WIDTH XI/ETA =   30.000000000000000      /   30.000000000000000
    NEX XI/ETA =          16 /          16
 
    NER_CRUST:                          2
@@ -85,7 +85,7 @@
    R_CENTRAL_CUBE =    930.000000      km
 
  Mesh resolution:
-   DT =   0.11874999999999999     
+   DT =   0.11874999999999999
    Minimum period =    90.666666666666657       (s)
 
    MIN_ATTENUATION_PERIOD =           92
@@ -100,11 +100,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           10
      10.0%    current clock (NOT elapsed) time is: 23h 15min 32sec
    creating layer            2 out of           10
@@ -133,11 +133,11 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of           10
      10.0%    current clock (NOT elapsed) time is: 23h 15min 33sec
    creating layer            2 out of           10
@@ -160,7 +160,7 @@
     100.0%    current clock (NOT elapsed) time is: 23h 15min 37sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -171,9 +171,9 @@
 
    Max element edge size =    593.347900      (km)
    Min element edge size =    5.32537460      (km)
-   Max/min ratio =    111.418999    
+   Max/min ratio =    111.418999
 
-   Max Jacobian eigenvalue ratio =   0.645097673    
+   Max Jacobian eigenvalue ratio =   0.645097673
    Min Jacobian eigenvalue ratio =    2.55990028E-02
 
    Minimum period resolved =    33.4810715      (s)
@@ -181,7 +181,7 @@
    Maximum suggested time step =    7.10000023E-02  (s)
 
    for DT :   0.118749999      (s)
-   Max stability for wave velocities =   0.916890144    
+   Max stability for wave velocities =   0.916890144
  ----------------------------------
 
    saving vtk mesh files for resolution res_minimum_period...
@@ -224,7 +224,7 @@
    total unique MPI interface points:       14676
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
 
  for overlapping of communications with calculations:
 
@@ -232,7 +232,7 @@
  percentage of volume elements in crust/mantle    61.6666679     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -243,7 +243,7 @@
 
    ...saving AVS or DX mesh files
 
-    calculated top area:   0.26727005739359655     
+    calculated top area:   0.26727005739359655
  calculated bottom area:    7.9821086326286317E-002
 
  *******************************************
@@ -254,11 +254,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
    creating layer            2 out of            2
@@ -271,18 +271,18 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            2
      50.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
    creating layer            2 out of            2
     100.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -293,9 +293,9 @@
 
    Max element edge size =    612.976562      (km)
    Min element edge size =    70.4752121      (km)
-   Max/min ratio =    8.69776154    
+   Max/min ratio =    8.69776154
 
-   Max Jacobian eigenvalue ratio =   0.657615066    
+   Max Jacobian eigenvalue ratio =   0.657615066
    Min Jacobian eigenvalue ratio =    8.09978470E-02
 
    Minimum period resolved =    21.8633385      (s)
@@ -346,12 +346,12 @@
    total assembled MPI interface points:        3716
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in outer core    81.3953476     %
  percentage of volume elements in outer core    18.6046524     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -372,11 +372,11 @@
 
  first pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
 
@@ -387,16 +387,16 @@
 
  second pass
 
-   ...allocating arrays 
+   ...allocating arrays
 
-   ...setting up layers 
+   ...setting up layers
 
-   ...creating mesh elements 
+   ...creating mesh elements
    creating layer            1 out of            1
     100.0%    current clock (NOT elapsed) time is: 23h 15min 38sec
 
 
-   ...fills global mesh points 
+   ...fills global mesh points
 
    ...checking mesh resolution and time step
 
@@ -407,10 +407,10 @@
 
    Max element edge size =    318.452393      (km)
    Min element edge size =    145.270370      (km)
-   Max/min ratio =    2.19213581    
+   Max/min ratio =    2.19213581
 
-   Max Jacobian eigenvalue ratio =   0.599292696    
-   Min Jacobian eigenvalue ratio =   0.452104300    
+   Max Jacobian eigenvalue ratio =   0.599292696
+   Min Jacobian eigenvalue ratio =   0.452104300
 
    Minimum period resolved =    51.8369484      (s)
    Minimum period resolved (empirical) =    90.6666641      (s)
@@ -460,12 +460,12 @@
    total assembled MPI interface points:         324
 
 
-   ...element inner/outer separation 
+   ...element inner/outer separation
  percentage of edge elements in inner core    100.000000     %
  percentage of volume elements in inner core    0.00000000     %
 
 
-   ...element mesh coloring 
+   ...element mesh coloring
    mesh coloring:  F
 
    ...creating mass matrix
@@ -494,14 +494,14 @@
  Load balancing = 100 % by definition
 
 
- the time step of the solver will be DT =   0.118749999    
+ the time step of the solver will be DT =   0.118749999
 
  using single precision for the calculations
 
  smallest and largest possible floating-point numbers are:    1.17549435E-38   3.40282347E+38
 
 
- Elapsed time for mesh generation and buffer creation in seconds =    38.521116018295288     
+ Elapsed time for mesh generation and buffer creation in seconds =    38.521116018295288
  Elapsed time for mesh generation and buffer creation in hh:mm:ss =    0 h 00 m 38 s
 
  End of mesh generation

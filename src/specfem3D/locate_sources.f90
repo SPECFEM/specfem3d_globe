@@ -42,14 +42,14 @@
     SAVE_SOURCE_MASK
 
   ! sources
-  use specfem_par,only: &
+  use specfem_par, only: &
     hdur,Mxx,Myy,Mzz,Mxy,Mxz,Myz,Mw,M0, &
     xi_source,eta_source,gamma_source,nu_source, &
     islice_selected_source,ispec_selected_source, &
     tshift_src,theta_source,phi_source
 
   ! forces
-  use specfem_par,only: &
+  use specfem_par, only: &
     USE_FORCE_POINT_SOURCE,force_stf,factor_force_source, &
     comp_dir_vect_source_E,comp_dir_vect_source_N,comp_dir_vect_source_Z_UP
 
@@ -747,7 +747,7 @@
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
 
   ! for point search
-  use specfem_par,only: &
+  use specfem_par, only: &
     typical_size_squared
 
   implicit none

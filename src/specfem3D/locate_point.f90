@@ -43,7 +43,7 @@
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
 
   ! for point search
-  use specfem_par,only: &
+  use specfem_par, only: &
     typical_size_squared, &
     lat_min,lat_max,lon_min,lon_max,xyz_midpoints, &
     xadj,adjncy
@@ -118,7 +118,7 @@
   endif
 
   ! debug
-  !print*,'target located:',target_located,'lat',sngl(lat),sngl(lat_min),sngl(lat_max),'lon',sngl(lon),sngl(lon_min),sngl(lon_max)
+  !print *,'target located:',target_located,'lat',sngl(lat),sngl(lat_min),sngl(lat_max),'lon',sngl(lon),sngl(lon_min),sngl(lon_max)
 
   if (target_located) then
     ! point in this slice
@@ -301,7 +301,7 @@
     endif
 
     !debug
-    !print*,'initial guess ',ix_initial_guess,iy_initial_guess,iz_initial_guess,ispec_selected,use_adjacent_elements_search
+    !print *,'initial guess ',ix_initial_guess,iy_initial_guess,iz_initial_guess,ispec_selected,use_adjacent_elements_search
 
   endif ! target_located
 
@@ -354,7 +354,7 @@
     endif
 
     !debug
-    !print*,'best guess ',xi,eta,gamma,use_adjacent_elements_search,'distance',sqrt(distmin_squared)*R_EARTH_KM
+    !print *,'best guess ',xi,eta,gamma,use_adjacent_elements_search,'distance',sqrt(distmin_squared)*R_EARTH_KM
 
     ! loops over neighbors and try to find better location
     if (use_adjacent_elements_search) then
@@ -363,7 +363,7 @@
       num_neighbors = xadj(ispec_selected+1)-xadj(ispec_selected)
 
       ! debug
-      !print*,'neighbors',num_neighbors,ispec_selected,xadj(ispec_selected+1),xadj(ispec_selected)
+      !print *,'neighbors',num_neighbors,ispec_selected,xadj(ispec_selected+1),xadj(ispec_selected)
 
       ! loops over neighbors
       do i_n = 1,num_neighbors
@@ -403,7 +403,7 @@
       enddo ! num_neighbors
 
       !debug
-      !print*,'best neighbor ',xi,eta,gamma,ispec_selected,'distance',sqrt(distmin_squared)*R_EARTH_KM
+      !print *,'best neighbor ',xi,eta,gamma,ispec_selected,'distance',sqrt(distmin_squared)*R_EARTH_KM
 
     endif ! use_adjacent_element_search
 
@@ -441,7 +441,7 @@
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
 
   ! for point search
-  use specfem_par,only: &
+  use specfem_par, only: &
     anchor_iax,anchor_iay,anchor_iaz, &
     xigll,yigll,zigll
 

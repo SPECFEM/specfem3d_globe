@@ -70,7 +70,7 @@
  topography:
    topography/bathymetry: min/max =        -7747        5507
 
- Elapsed time for reading topo/bathy in seconds =   0.106142998    
+ Elapsed time for reading topo/bathy in seconds =   0.106142998
 
 
  sources:           1
@@ -85,10 +85,10 @@
    source located in slice            0
                   in element          540
 
-   using moment tensor source: 
-     xi coordinate of source in that element:  -0.40904079132597598     
-     eta coordinate of source in that element:   0.82347381479882531     
-     gamma coordinate of source in that element:  -0.61784948329517975     
+   using moment tensor source:
+     xi coordinate of source in that element:  -0.40904079132597598
+     eta coordinate of source in that element:   0.82347381479882531
+     gamma coordinate of source in that element:  -0.61784948329517975
 
    source time function:
      using (quasi) Heaviside source time function
@@ -98,19 +98,19 @@
 
    magnitude of the source:
         scalar moment M0 =    3.4203166489794478E+025  dyne-cm
-     moment magnitude Mw =    6.3227110670020323     
+     moment magnitude Mw =    6.3227110670020323
 
 
    original (requested) position of the source:
 
-         latitude:    63.920000000000002     
-        longitude:   -21.170000000000002     
+         latitude:    63.920000000000002
+        longitude:   -21.170000000000002
             depth:    12.000000000000000       km
 
    position of the source that will be used:
 
-         latitude:    63.920000000000016     
-        longitude:   -21.170000000000005     
+         latitude:    63.920000000000016
+        longitude:   -21.170000000000005
             depth:    11.999999999999526       km
 
    Error in location of the source:    8.10340402E-13  km
@@ -123,7 +123,7 @@
  End of source detection - done
 
 
- Each source is being convolved with HDUR_MOVIE =    25.000000000000000     
+ Each source is being convolved with HDUR_MOVIE =    25.000000000000000
 
 
  printing the source-time function
@@ -219,7 +219,7 @@
    using Deville products
    inverse table of ibool done
    fused array done
-   bandwidth test (STREAM TRIAD): 
+   bandwidth test (STREAM TRIAD):
       memory accesses =    1.33116531     MB
       timing  min/max =    4.88758087E-05 s /    7.82012939E-05 s
       timing      avg =    6.55174226E-05 s
@@ -244,17 +244,17 @@
  Time step #            5
  Time:  -0.622836828      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    1.16010710E-07
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000    
- Max of strain, eps_trace_over_3_crust_mantle =   0.00000000    
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
+ Max of strain, eps_trace_over_3_crust_mantle =   0.00000000
  Max of strain, epsilondev_crust_mantle  =   3.97881034E-11
  Elapsed time in seconds =    3.7565946578979492E-002
  Elapsed time in hh:mm:ss =      0 h 00 m 00 s
  Mean elapsed time per time step in seconds =    7.5131893157958981E-003
  Time steps done =            5  out of         4500
  Time steps remaining =         4495
- Estimated remaining time in seconds =    33.771785974502563     
+ Estimated remaining time in seconds =    33.771785974502563
  Estimated remaining time in hh:mm:ss =      0 h 00 m 33 s
- Estimated total run time in seconds =    33.809351921081543     
+ Estimated total run time in seconds =    33.809351921081543
  Estimated total run time in hh:mm:ss =      0 h 00 m 33 s
  We have done   0.111111112     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:16
@@ -266,17 +266,17 @@
  Time step #          500
  Time:   0.356850654      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.61205005E-03
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000    
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
  Max of strain, eps_trace_over_3_crust_mantle =   6.40279591E-14
  Max of strain, epsilondev_crust_mantle  =   4.53645441E-07
- Elapsed time in seconds =    4.1503670215606689     
+ Elapsed time in seconds =    4.1503670215606689
  Elapsed time in hh:mm:ss =      0 h 00 m 04 s
  Mean elapsed time per time step in seconds =    8.3007340431213387E-003
  Time steps done =          500  out of         4500
  Time steps remaining =         4000
- Estimated remaining time in seconds =    33.202936172485352     
+ Estimated remaining time in seconds =    33.202936172485352
  Estimated remaining time in hh:mm:ss =      0 h 00 m 33 s
- Estimated total run time in seconds =    37.353303194046021     
+ Estimated total run time in seconds =    37.353303194046021
  Estimated total run time in hh:mm:ss =      0 h 00 m 37 s
  We have done    11.1111107     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:16
@@ -284,17 +284,17 @@
  Time step #         1000
  Time:    1.34643400      minutes
  Max norm displacement vector U in solid in all slices for forward prop. (m) =    7.63906166E-03
- Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000    
+ Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    0.00000000
  Max of strain, eps_trace_over_3_crust_mantle =   1.00222010E-11
  Max of strain, epsilondev_crust_mantle  =   4.64554518E-07
- Elapsed time in seconds =    8.0853760242462158     
+ Elapsed time in seconds =    8.0853760242462158
  Elapsed time in hh:mm:ss =      0 h 00 m 08 s
  Mean elapsed time per time step in seconds =    8.0853760242462162E-003
  Time steps done =         1000  out of         4500
  Time steps remaining =         3500
- Estimated remaining time in seconds =    28.298816084861755     
+ Estimated remaining time in seconds =    28.298816084861755
  Estimated remaining time in hh:mm:ss =      0 h 00 m 28 s
- Estimated total run time in seconds =    36.384192109107971     
+ Estimated total run time in seconds =    36.384192109107971
  Estimated total run time in hh:mm:ss =      0 h 00 m 36 s
  We have done    22.2222214     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:15
@@ -305,14 +305,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    3.62421647E-29
  Max of strain, eps_trace_over_3_crust_mantle =   2.00716718E-11
  Max of strain, epsilondev_crust_mantle  =   4.64535134E-07
- Elapsed time in seconds =    12.006515026092529     
+ Elapsed time in seconds =    12.006515026092529
  Elapsed time in hh:mm:ss =      0 h 00 m 12 s
  Mean elapsed time per time step in seconds =    8.0043433507283532E-003
  Time steps done =         1500  out of         4500
  Time steps remaining =         3000
- Estimated remaining time in seconds =    24.013030052185059     
+ Estimated remaining time in seconds =    24.013030052185059
  Estimated remaining time in hh:mm:ss =      0 h 00 m 24 s
- Estimated total run time in seconds =    36.019545078277588     
+ Estimated total run time in seconds =    36.019545078277588
  Estimated total run time in hh:mm:ss =      0 h 00 m 36 s
  We have done    33.3333321     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:15
@@ -323,14 +323,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    1.49714279E-21
  Max of strain, eps_trace_over_3_crust_mantle =   5.35095301E-11
  Max of strain, epsilondev_crust_mantle  =   4.64858658E-07
- Elapsed time in seconds =    16.702497005462646     
+ Elapsed time in seconds =    16.702497005462646
  Elapsed time in hh:mm:ss =      0 h 00 m 16 s
  Mean elapsed time per time step in seconds =    8.3512485027313239E-003
  Time steps done =         2000  out of         4500
  Time steps remaining =         2500
- Estimated remaining time in seconds =    20.878121256828308     
+ Estimated remaining time in seconds =    20.878121256828308
  Estimated remaining time in hh:mm:ss =      0 h 00 m 20 s
- Estimated total run time in seconds =    37.580618262290955     
+ Estimated total run time in seconds =    37.580618262290955
  Estimated total run time in hh:mm:ss =      0 h 00 m 37 s
  We have done    44.4444427     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:15
@@ -341,14 +341,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    2.20974233E-16
  Max of strain, eps_trace_over_3_crust_mantle =   4.92221368E-11
  Max of strain, epsilondev_crust_mantle  =   4.65030695E-07
- Elapsed time in seconds =    22.186758041381836     
+ Elapsed time in seconds =    22.186758041381836
  Elapsed time in hh:mm:ss =      0 h 00 m 22 s
  Mean elapsed time per time step in seconds =    8.8747032165527352E-003
  Time steps done =         2500  out of         4500
  Time steps remaining =         2000
- Estimated remaining time in seconds =    17.749406433105470     
+ Estimated remaining time in seconds =    17.749406433105470
  Estimated remaining time in hh:mm:ss =      0 h 00 m 17 s
- Estimated total run time in seconds =    39.936164474487306     
+ Estimated total run time in seconds =    39.936164474487306
  Estimated total run time in hh:mm:ss =      0 h 00 m 39 s
  We have done    55.5555573     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:16
@@ -359,14 +359,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    9.39853782E-16
  Max of strain, eps_trace_over_3_crust_mantle =   4.65433317E-11
  Max of strain, epsilondev_crust_mantle  =   4.64975955E-07
- Elapsed time in seconds =    27.014611005783081     
+ Elapsed time in seconds =    27.014611005783081
  Elapsed time in hh:mm:ss =      0 h 00 m 27 s
  Mean elapsed time per time step in seconds =    9.0048703352610272E-003
  Time steps done =         3000  out of         4500
  Time steps remaining =         1500
- Estimated remaining time in seconds =    13.507305502891541     
+ Estimated remaining time in seconds =    13.507305502891541
  Estimated remaining time in hh:mm:ss =      0 h 00 m 13 s
- Estimated total run time in seconds =    40.521916508674622     
+ Estimated total run time in seconds =    40.521916508674622
  Estimated total run time in hh:mm:ss =      0 h 00 m 40 s
  We have done    66.6666641     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:16
@@ -377,14 +377,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    2.80073265E-15
  Max of strain, eps_trace_over_3_crust_mantle =   4.41966463E-11
  Max of strain, epsilondev_crust_mantle  =   4.65185934E-07
- Elapsed time in seconds =    31.391084909439087     
+ Elapsed time in seconds =    31.391084909439087
  Elapsed time in hh:mm:ss =      0 h 00 m 31 s
  Mean elapsed time per time step in seconds =    8.9688814026968825E-003
  Time steps done =         3500  out of         4500
  Time steps remaining =         1000
- Estimated remaining time in seconds =    8.9688814026968817     
+ Estimated remaining time in seconds =    8.9688814026968817
  Estimated remaining time in hh:mm:ss =      0 h 00 m 08 s
- Estimated total run time in seconds =    40.359966312135967     
+ Estimated total run time in seconds =    40.359966312135967
  Estimated total run time in hh:mm:ss =      0 h 00 m 40 s
  We have done    77.7777786     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:16
@@ -395,14 +395,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    5.54104263E-15
  Max of strain, eps_trace_over_3_crust_mantle =   2.23817197E-11
  Max of strain, epsilondev_crust_mantle  =   4.65236326E-07
- Elapsed time in seconds =    35.646335840225220     
+ Elapsed time in seconds =    35.646335840225220
  Elapsed time in hh:mm:ss =      0 h 00 m 35 s
  Mean elapsed time per time step in seconds =    8.9115839600563043E-003
  Time steps done =         4000  out of         4500
  Time steps remaining =          500
- Estimated remaining time in seconds =    4.4557919800281525     
+ Estimated remaining time in seconds =    4.4557919800281525
  Estimated remaining time in hh:mm:ss =      0 h 00 m 04 s
- Estimated total run time in seconds =    40.102127820253372     
+ Estimated total run time in seconds =    40.102127820253372
  Estimated total run time in hh:mm:ss =      0 h 00 m 40 s
  We have done    88.8888855     % of that
  The run will finish approximately on (in local time): Thu Jan 17, 2019 23:16
@@ -413,14 +413,14 @@
  Max non-dimensional potential Ufluid in fluid in all slices for forward prop. =    8.80076465E-15
  Max of strain, eps_trace_over_3_crust_mantle =   2.82129042E-11
  Max of strain, epsilondev_crust_mantle  =   4.65269181E-07
- Elapsed time in seconds =    39.626857995986938     
+ Elapsed time in seconds =    39.626857995986938
  Elapsed time in hh:mm:ss =      0 h 00 m 39 s
  Mean elapsed time per time step in seconds =    8.8059684435526538E-003
  Time steps done =         4500  out of         4500
  Time steps remaining =            0
- Estimated remaining time in seconds =    0.0000000000000000     
+ Estimated remaining time in seconds =    0.0000000000000000
  Estimated remaining time in hh:mm:ss =      0 h 00 m 00 s
- Estimated total run time in seconds =    39.626857995986938     
+ Estimated total run time in seconds =    39.626857995986938
  Estimated total run time in hh:mm:ss =      0 h 00 m 39 s
  We have done    100.000000     % of that
 
@@ -430,7 +430,7 @@
  Writing the seismograms in parallel took    4.1712045669555664E-002  seconds
 
  Time-Loop Complete. Timing info:
- Total elapsed time in seconds =    39.676488876342773     
+ Total elapsed time in seconds =    39.676488876342773
  Total elapsed time in hh:mm:ss =      0 h 00 m 39 s
  finalizing simulation
 

@@ -27,7 +27,7 @@
 
   subroutine setup_sources_receivers()
 
-  use specfem_par,only: myrank,IMAIN,NSOURCES,NSTEP, &
+  use specfem_par, only: myrank,IMAIN,NSOURCES,NSTEP, &
     theta_source,phi_source, &
     TOPOGRAPHY,ibathy_topo, &
     USE_DISTANCE_CRITERION,xyz_midpoints,xadj,adjncy
@@ -89,7 +89,7 @@
 
   subroutine setup_point_search_arrays()
 
-  use constants,only: &
+  use constants, only: &
     NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN,TWO_PI,R_UNIT_SPHERE,USE_DISTANCE_CRITERION
 
   use specfem_par, only: &
@@ -103,7 +103,7 @@
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
 
   ! for point search
-  use specfem_par,only: &
+  use specfem_par, only: &
     typical_size_squared, &
     anchor_iax,anchor_iay,anchor_iaz, &
     lat_min,lat_max,lon_min,lon_max,xyz_midpoints
@@ -221,7 +221,7 @@
 
   subroutine setup_adjacency_neighbors()
 
-  use constants,only: &
+  use constants, only: &
     NDIM,NGLLX,NGLLY,NGLLZ,MIDX,MIDY,MIDZ,IMAIN,R_EARTH_KM
 
   use specfem_par, only: myrank
@@ -234,7 +234,7 @@
     xstore => xstore_crust_mantle,ystore => ystore_crust_mantle,zstore => zstore_crust_mantle
 
   ! for point search
-  use specfem_par,only: typical_size_squared, &
+  use specfem_par, only: typical_size_squared, &
     xadj,adjncy,num_neighbors_all
 
   use kdtree_search, only: kdtree_setup,kdtree_delete, &

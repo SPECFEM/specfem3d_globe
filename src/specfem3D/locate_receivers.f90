@@ -587,7 +587,7 @@
     endif
     call flush_IMAIN()
 
-    ! replaces list of all receivers with list of only those which were found 
+    ! replaces list of all receivers with list of only those which were found
     ! (in particular: for a 1-chunk simulation, only stations in this chunk)
     nrec = nrec_found
 
