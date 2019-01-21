@@ -96,6 +96,24 @@
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
+/* Define GIT branch for package source. */
+#undef SPECFEM3D_GLOBE_GIT_BRANCH
+
+/* Define date of GIT commit for package source. */
+#undef SPECFEM3D_GLOBE_GIT_DATE
+
+/* Define GIT hash for package source. */
+#undef SPECFEM3D_GLOBE_GIT_HASH
+
+/* Define git revision commit for package source. */
+#undef SPECFEM3D_GLOBE_GIT_REVISION
+
+/* Set to 0 if source is from GIT, 1 otherwise. */
+#undef SPECFEM3D_GLOBE_RELEASE_VERSION
+
+/* Define SPECFEM3D_GLOBE version */
+#undef SPECFEM3D_GLOBE_VERSION
+
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 

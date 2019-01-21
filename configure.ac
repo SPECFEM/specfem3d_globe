@@ -9,7 +9,7 @@ dnl You must have recent versions of Autoconf and Automake installed.
 ############################################################
 
 AC_PREREQ(2.61)
-AC_INIT([Specfem3D_Globe], [7.0.2], [see the wiki], [Specfem3DGlobe])
+AC_INIT([Specfem3D_Globe], [7.0.3], [see the wiki], [Specfem3DGlobe])
 AC_CONFIG_SRCDIR([src/specfem3D/specfem3D.F90])
 
 AC_CONFIG_HEADER([setup/config.h])
@@ -422,9 +422,6 @@ AS_IF([test x"$want_cem" != xno], [
     AC_ARG_VAR(CEM_FCFLAGS, [CEM Fortran compiler flags])
     AC_ARG_VAR(CEM_LIBS, [CEM extra libraries for linking programs])
 
-    # adds compiler flag
-    FLAGS_CHECK="${FLAGS_CHECK} ${FC_DEFINE}CEM"
-
     # daniel: todo add NetCDF checking for Fortran, something like:
     # netcdf checking
     #AC_LANG_PUSH(Fortran)
@@ -443,6 +440,22 @@ AS_IF([test x"$want_cem" != xno], [
     #AC_LANG_POP([Fortran])
 ])
 
+##
+## Git version info
+##
+AS_BOX([git version info])
+CIG_PKG_GIT(SPECFEM3D_GLOBE)
+AC_DEFINE_UNQUOTED([SPECFEM3D_GLOBE_VERSION], ["$PACKAGE_VERSION"], [Define SPECFEM3D_GLOBE version])
+#AC_DEFINE_UNQUOTED([SPECFEM3D_GLOBE_DOI], ["10.5281/zenodo.xxxxx"], [Define SPECFEM3D_GLOBE doi])
+AS_IF([test -d $srcdir/.git], [
+    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
+    AC_MSG_NOTICE([building from git repository])
+    AC_SUBST(GIT_VERSION_DEPS)
+], [
+    dnl Only substitute if not in a git repository.
+    AC_MSG_NOTICE([not a git repository])
+    AC_CONFIG_FILES([setup/version.fh])
+])
 
 ############################################################
 
@@ -456,25 +469,21 @@ AC_CONFIG_FILES([
     setup/precision.h
     setup/config.fh
 ])
-AS_IF([test -d $srcdir/.git], [
-    GIT_VERSION_DEPS="$srcdir/.git/logs/HEAD"
-    AC_MSG_NOTICE([building from git repository])
-    AC_SUBST(GIT_VERSION_DEPS)
-], [
-    dnl Only substitute if not in a git repository.
-    AC_MSG_NOTICE([not a git repository])
-    AC_CONFIG_FILES([setup/version.fh])
-])
+
 AC_CONFIG_FILES([
     DATA/Par_file:DATA/Par_file
     DATA/CMTSOLUTION:DATA/CMTSOLUTION
     DATA/STATIONS:DATA/STATIONS
 ])
+
 AC_CONFIG_LINKS([
+    DATA/cemRequest:DATA/cemRequest
+    DATA/crust1.0:DATA/crust1.0
     DATA/crust2.0:DATA/crust2.0
     DATA/crustmap:DATA/crustmap
     DATA/epcrust:DATA/epcrust
     DATA/eucrust-07:DATA/eucrust-07
+    DATA/full_sphericalharmonic_model:DATA/full_sphericalharmonic_model
     DATA/heterogen:DATA/heterogen
     DATA/Lebedev_sea99:DATA/Lebedev_sea99
     DATA/Montagner_model:DATA/Montagner_model
@@ -484,10 +493,12 @@ AC_CONFIG_LINKS([
     DATA/s20rts:DATA/s20rts
     DATA/s362ani:DATA/s362ani
     DATA/s40rts:DATA/s40rts
+    DATA/sglobe:DATA/sglobe
     DATA/Simons_model:DATA/Simons_model
     DATA/topo_bathy:DATA/topo_bathy
     DATA/Zhao_JP_model:DATA/Zhao_JP_model
 ])
+
 AC_CONFIG_COMMANDS([bin], [AS_MKDIR_P(bin)])
 AC_CONFIG_COMMANDS([obj], [AS_MKDIR_P(obj)])
 AC_CONFIG_COMMANDS([OUTPUT_FILES], [AS_MKDIR_P(OUTPUT_FILES)])
